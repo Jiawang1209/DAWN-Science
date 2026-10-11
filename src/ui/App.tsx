@@ -65,8 +65,8 @@ import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则, 剥掉粘贴标记 } from "../files/mentions.js"
-import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
-import { Button, Loader } from "./primitives.js"
+import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 键盘图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
+import { Button, EmptyState, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type FeishuStatus, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
@@ -91,7 +91,7 @@ import { setSlashItems, 退回输入框, type SlashItem, type 退回的图 } fro
 import { 到坞里问 } from "./state/ask-in-dock.js"
 import { UsagePanel, type 用量数据 } from "./usage.js"
 import { ConfirmDialog, NoticeDialog, type ConfirmRequest } from "./confirm.js"
-import { ConnectionDialog, RemoteSection, type ConnectionDraft } from "./remote.js"
+import { ConnectionDialog, type ConnectionDraft } from "./remote.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { TeamPanel } from "./team-panel.js"
@@ -111,6 +111,9 @@ import type { 转录槽 } from "./state/transcript-slot.js"
 import { SideChat, type 坞格对话回调, type 槽现值 } from "./side-chat.js"
 import { $artifacts, setArtifacts, setCellCount } from "./state/catalog.js"
 import { 回到那段, 通知回段门, type 回到那段依赖 } from "./open-session-route.js"
+import { ShortcutPanel } from "./shortcut-panel.js"
+import { $paletteOpen, closePalette } from "./state/view.js"
+import { SearchPanel } from "./search-panel.js"
 import { ContentSearchResults, type 搜到的一段, type 搜到的一处 } from "./content-search.js"
 import { 拆词, type 跳转目标 } from "../protocol/search-match.js"
 import { $kernels, setKernels as setKernelsAtom, setQueued } from "./state/transcript.js"
@@ -172,8 +175,6 @@ import {
   setConnectionState,
   setSessionCwd,
   $connections,
-  $remoteOpen,
-  toggleRemoteOpen,
   setDraft,
   note,
   resyncSession,
@@ -263,6 +264,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const projects = useStore($projects)
   const sessions = useStore($sessions)
   const tempSessions = useStore($tempSessions)
+  // 排序覆盖临时及当前项目会话，重复摘要只保留一份。
+  const 排序会话 = useMemo(() => [...new Map([...tempSessions, ...sessions].map(s => [s.sessionId, s])).values()]
+    .filter(s => s.kind !== "pty"), [tempSessions, sessions])
   const sessionRecovery = useStore($sessionRecovery)
   const 跑着的会话 = useStore($跑着的会话)
   const 未读的 = useStore($未读)
@@ -341,16 +345,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 草稿不会丢：它住在 `$drafts` 这个 store 里，不在组件里。
    */
   const lang = useStore($lang)
-  /**
-   * 侧栏的搜索（2026-08-13，作者要的）。
-   *
-   * **短命的交互细节留在组件里，不进全局 store**（`state/index.ts` 的头注：
-   * *「一个新的全局 store 是在主张『很多互不相邻的界面都需要它』」*）。
-   * 这里只有两处用它——顶栏那颗按钮与侧栏那个框，而它们都在这一层底下。
-   *
-   * **关掉就清空**：留着上次搜的词，下次打开会是「一进来就已经过滤掉大半」，
-   * 人会以为对话不见了。命令面板那条查询词也是这么处理的，同一个理由。
-   */
+  /** 搜索浮层的短期状态留在 App；关闭清空查询与模式，不影响侧栏分区。 */
+  const 搜索按钮 = useRef<HTMLButtonElement>(null)
+  const 快捷键按钮 = useRef<HTMLButtonElement>(null)
+  const [快捷键开着, 设快捷键开着] = useState(false)
+  const 命令面板开着 = useStore($paletteOpen)
+  useEffect(() => { if (命令面板开着) 设快捷键开着(false) }, [命令面板开着])
   const [搜索开着, 设搜索开着] = useState(false)
   const [搜索词, 设搜索词] = useState("")
   /**
@@ -1795,20 +1795,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     }
   }
 
-  const remoteOpen = useStore($remoteOpen)
   const [connDraft, setConnDraft] = useState<
     (ConnectionDraft & { hasSecret?: boolean }) | undefined
   >(undefined)
   const [connBusy, setConnBusy] = useState<string | undefined>(undefined)
   const [connProblem, setConnProblem] = useState<string | undefined>(undefined)
   const [connSaving, setConnSaving] = useState(false)
+  const [connIntent, setConnIntent] = useState<"add" | "edit">("add")
+  const [connProblemId, setConnProblemId] = useState<string | undefined>()
 
+  const savingConnection = useRef(false)
+  const creatingRemoteTasks = useRef(new Set<string>())
   const saveConnection = async (d: ConnectionDraft) => {
+    if (savingConnection.current) return
+    savingConnection.current = true
     setConnSaving(true)
     setConnProblem(undefined)
     try {
-      await client.get("saveConnection", {
-        ...(d.id ? { id: d.id } : {}),
+      const saved = await client.get<import("../protocol/index.js").RemoteConnection>("saveConnection", {
+        ...((d.id ?? connDraft?.id) ? { id: d.id ?? connDraft?.id } : {}),
         label: d.label,
         ...(d.group ? { group: d.group } : {}),
         host: d.host.trim(),
@@ -1823,12 +1828,25 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          */
         ...(d.secret === undefined ? {} : { secret: d.secret }),
       })
+      setConnDraft({ ...d, id: saved.id, hasSecret: saved.hasSecret })
+      setConnProblemId(saved.id)
       await loadConnections(client)
+      if (connIntent === "add") {
+        setConnBusy(saved.id)
+        try {
+          await client.get("connectRemote", { id: saved.id })
+        } finally {
+          setConnBusy(undefined)
+        }
+        await loadConnections(client)
+      }
       setConnDraft(undefined)
     } catch (e) {
       // **失败就留在对话框里**：关掉它等于把人填的东西一起丢了
       setConnProblem(e instanceof Error ? e.message : String(e))
+      await loadConnections(client).catch(refreshError => console.error("[connections] 刷新连接状态失败", refreshError))
     } finally {
+      savingConnection.current = false
       setConnSaving(false)
     }
   }
@@ -1912,6 +1930,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     /** 建好了不切过去（坞里「另开一段」用，2026-09-24）：主区不动，id 回给调用点 */
     opts: { 不切过去?: boolean; agentId?: string; contextFromSessionId?: string } = {},
   ): Promise<string | undefined> => {
+    if (creatingRemoteTasks.current.has(c.id)) return undefined
+    setConnProblemId(c.id)
     // **只从手能到服务器的里面挑**（T3）；codex-acp / cli / kernel 会在本机跑，不算
     const agentId = opts.agentId ?? 远端能用的agentIds[0]
     if (!agentId) {
@@ -1920,6 +1940,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       )
       return
     }
+    creatingRemoteTasks.current.add(c.id)
     setConnBusy(c.id)
     setConnProblem(undefined)
     try {
@@ -1954,6 +1975,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       if (opts.不切过去) note(e instanceof Error ? e.message : String(e))
       return undefined
     } finally {
+      creatingRemoteTasks.current.delete(c.id)
       setConnBusy(undefined)
     }
   }
@@ -1968,6 +1990,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const connectRemote = async (id: string) => {
     setConnBusy(id)
+    setConnProblemId(id)
     setConnProblem(undefined)
     try {
       await client.get("connectRemote", { id })
@@ -3966,12 +3989,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       },
       /** 命令面板「优化输入」（2026-09-29）：叫主区那颗按钮自己的「去增强」——与点它、⌘⇧E 同一个函数 */
       enhanceInput: 请求优化输入,
-      /** 命令面板「搜索对话内容」：打开侧栏搜索并切到按内容；侧栏收着先展开（与放大镜那颗同一条） */
+      /** 命令面板「搜索对话内容」：打开搜索浮层并切到按内容，保留侧栏状态 */
       openContentSearch: () => {
         设搜索开着(true)
         设搜索模式("内容")
         设搜索聚焦((n) => n + 1)
-        if ($sidebarCollapsed.get()) setSidebarCollapsed(false)
       },
       /** 压缩当前这段（2026-09-27）。与仪表弹层、`/compact` 同一个 `压缩` */
       compactContext: () => {
@@ -4889,7 +4911,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     },
   ]
   return (
-    <div className="app-shell" key={lang}>
+    <div className="app-shell" key={lang} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
       <div className="topbar">
         {/**
           * **顺序：标志 → 折叠 → 搜索**（2026-08-13，作者定的）。
@@ -4903,26 +4925,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           */}
         <div className="brand-stack">
           <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
-            DAWN Science
+            <span className="brand-mark" aria-hidden="true">D</span><span>DAWN Science</span>
           </Button>
-          {更新回执 ? (
-            <span className="brand-version">v{更新回执.状态.当前.replace(/^v/, "")}</span>
-          ) : null}
+
         </div>
-        {/**
-          * **折叠侧栏**（2026-08-13，作者要的）。
-          *
-          * 实测 WorkBuddy 那颗在**侧栏自己的顶栏里**（32×32 的 ghost 图标按钮，
-          * 右对齐，标签「收起侧边栏」）。**我们没有放在那儿，理由要写清楚**：
-          * 侧栏收起之后它自己也没了，于是这个能力**只剩一条藏在别处的出路**。
-          *
-          * 这正是本项目已经报过两次的那个形状（*「看不见的能力等于不存在」*：
-          * 没标签的 `＋`、`opacity: 0` 的删除键，两次作者的话都是「没有这个功能」）。
-          * 放在顶栏——它横跨整个窗口，**两个状态下都在同一个位置**，
-          * 收起之后还能原地点回来。
-          *
-          * 一颗按钮管两态，标签跟着换：不是两颗，那样就是「一个动作两个家」。
-          */}
+        {/* 三个按钮紧跟品牌，间距8px；折叠后入口仍保留，窄侧栏时品牌名称可截断。 */}
         <Button
           variant="ghost"
           size="icon"
@@ -4933,35 +4940,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         >
           <侧栏图标 />
         </Button>
-        {/**
-          * **搜索**（2026-08-13，作者要的，紧挨着折叠那颗）。
-          *
-          * **它搜的是名字与路径，不是对话内容**——后者要后端出一个全文检索，
-          * 现在没有。一颗看起来什么都能搜、其实只搜标题的按钮，
-          * 比一颗说清楚自己搜什么的更坏（不变式 5：不假装有我们没有的东西），
-          * 所以输入框的占位符直接把范围写出来。
-          *
-          * **侧栏收着的时候按它要先把侧栏打开**：输入框长在侧栏里，
-          * 收着的时候按下去屏幕上什么都不会发生——那就是「点了没反应」。
-          */}
         <Button
-          variant="ghost"
-          size="icon"
-          className="side-search-toggle"
-          aria-label={t("搜索")}
-          aria-expanded={搜索开着}
+          ref={搜索按钮} variant="ghost" size="icon" className="side-search-toggle"
+          aria-label={t("搜索")} aria-haspopup="dialog" aria-expanded={搜索开着}
+          onClick={() => { 设快捷键开着(false); closePalette(); 设搜索开着(true); 设搜索聚焦(n => n + 1) }}
+        ><搜索图标 /></Button>
+        <Button ref={快捷键按钮} variant="ghost" size="icon" className="shortcut-toggle"
+          aria-label={t("快捷键速查")} aria-haspopup="dialog" aria-expanded={快捷键开着}
           onClick={() => {
-            const 要开 = !搜索开着
-            设搜索开着(要开)
-            if (!要开) {
-              设搜索词("")
-              设搜索模式("名字")
-            }
-            if (要开 && sidebarCollapsed) setSidebarCollapsed(false)
+            设搜索开着(false); 设搜索词(""); 设搜索模式("名字"); closePalette(); 设快捷键开着(true)
           }}
-        >
-          <搜索图标 />
-        </Button>
+        ><键盘图标 /></Button>
         <span className="spacer" />
         {/**
           * **「返回」对所有非对话屏都给**（2026-08-10）。
@@ -5010,6 +4999,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         />
       </div>
 
+      {快捷键开着 ? <ShortcutPanel onClose={() => 设快捷键开着(false)} returnFocusRef={快捷键按钮} /> : null}
+      {搜索开着 ? <SearchPanel
+        query={搜索词} mode={搜索模式} focusSignal={搜索聚焦} returnFocusRef={搜索按钮}
+        projects={projects} tasks={tasks}
+        sessionOf={id => tempSessions.find(x => x.sessionId === id) ?? sessions.find(x => x.sessionId === id)}
+        serverName={id => connections.find(x => x.id === id)?.label}
+        onChange={设搜索词} onMode={设搜索模式}
+        onClose={() => { 设搜索开着(false); 设搜索词(""); 设搜索模式("名字") }}
+        onProject={id => {
+          setActiveProjectId(id); setActiveSessionId(undefined); setView("conversation")
+          设搜索开着(false); 设搜索词(""); 设搜索模式("名字")
+        }}
+        onTask={task => {
+          if (!task.sessionId) {
+            note(t("这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）"))
+            return
+          }
+          void 回到那段(task.sessionId, 回段依赖()).catch(fail)
+          设搜索开着(false); 设搜索词(""); 设搜索模式("名字")
+        }}
+        content={<ContentSearchResults query={搜索词} search={全文搜} onOpen={(card, hit) => {
+          const result = 打开搜到的(card, hit)
+          设搜索开着(false); 设搜索词(""); 设搜索模式("名字")
+          return result
+        }} />}
+      /> : null}
+
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
       <ConfirmDialog request={confirming} onCancel={() => setConfirming(undefined)} />
       <NoticeDialog notice={key没过} onClose={() => 设key没过(undefined)} />
@@ -5024,13 +5040,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         <ConnectionDialog
           draft={connDraft}
           saving={connSaving}
+          connectAfterSave={connIntent === "add"}
           {...(connProblem ? { problem: connProblem } : {})}
           onCancel={() => {
             setConnDraft(undefined)
             setConnProblem(undefined)
           }}
           onSave={(d) => void saveConnection(d)}
-          {...(connDraft.id
+          {...(connDraft.id && connIntent === "edit"
             ? {
                 /**
                   * 这台服务器上的解释器（远程内核，2026-09-03）。只有编辑已有的那台才给——
@@ -5135,7 +5152,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 松手时 `drop()` 在这个集合里查不到 from/to，一声不吭地 return——
            * 作者报的「服务器里面的会话，我不能挪动鼠标更换位置」。
            */
-          排序全集={tempSessions.filter((x) => x.kind !== "pty")}
+          排序全集={排序会话}
           /** 展开那个项目里的会话，嵌在它自己那一行下面 */
           projectSessions={sessions.filter((x) => x.kind !== "pty")}
           agents={agentIds}
@@ -5159,23 +5176,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onDeleteSession={askDeleteSession}
           onDeleteMany={askDeleteMany}
           onDeleteProjects={askDeleteProjects}
-          {...(搜索开着
-            ? {
-                search: {
-                  value: 搜索词,
-                  onChange: 设搜索词,
-                  onClose: () => {
-                    设搜索开着(false)
-                    设搜索词("")
-                    设搜索模式("名字")
-                  },
-                  mode: 搜索模式,
-                  onMode: 设搜索模式,
-                  内容结果: <ContentSearchResults query={搜索词} search={全文搜} onOpen={打开搜到的} />,
-                  聚焦: 搜索聚焦,
-                },
-              }
-            : {})}
           /**
            * 单条删除也走 `deleteTask`（2026-08-12）。
            *
@@ -5199,48 +5199,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 「远端连接」那一区（②-B · R3）。**整块在这里组装**——
            * 侧栏只负责它坐在哪里，不负责它怎么取数。
            */
-          remote={
-            <RemoteSection
-              connections={connections}
-              open={remoteOpen}
-              onToggle={toggleRemoteOpen}
-              {...(connBusy ? { busyId: connBusy } : {})}
-              {...(connProblem ? { problem: connProblem } : {})}
-              onAdd={() =>
-                setConnDraft({ label: "", host: "", username: "", hasSecret: false })
-              }
-              onEdit={(c) =>
-                setConnDraft({
-                  id: c.id,
-                  label: c.label,
-                  ...(c.group ? { group: c.group } : {}),
-                  host: c.host,
-                  port: c.port,
-                  username: c.username,
-                  ...(c.privateKeyPath ? { privateKeyPath: c.privateKeyPath } : {}),
-                  // **口令不带进来**：它从不回显。`hasSecret` 只说配过没有
-                  hasSecret: c.hasSecret,
-                })
-              }
-              onConnect={(c) => void connectRemote(c.id)}
-              /**
-               * **这一区不再列这台机器上的对话**（2026-08-14 作者定的）：
-               * 它们已经在侧栏那个「服务器」收纳里了（服务器 → 每台机器 → 会话）。
-               * 两处都列就是同一个东西有两个家。
-               */
-              onNewSession={(c) => void startRemoteSession(c)}
-              {...(sessionId ? { activeSessionId: sessionId } : {})}
-              onDisconnect={(c) => {
-                setConnProblem(undefined)
-                void client
-                  .get("disconnectRemote", { id: c.id })
-                  .then(() => loadConnections(client))
-                  .catch((e: unknown) =>
-                    setConnProblem(e instanceof Error ? e.message : String(e)),
-                  )
-              }}
-            />
-          }
+          connections={connections}
+          serverActions={{
+            busyId: connBusy,
+            problem: connProblem,
+            problemId: connProblemId,
+            onAdd: () => { setConnIntent("add"); setConnProblem(undefined); setConnProblemId(undefined); setConnDraft({ label: "", host: "", username: "", hasSecret: false }) },
+            onEdit: (c) => { setConnIntent("edit"); setConnProblem(undefined); setConnProblemId(undefined); setConnDraft({ id: c.id, label: c.label, group: c.group, host: c.host, port: c.port, username: c.username, privateKeyPath: c.privateKeyPath, hasSecret: c.hasSecret }) },
+            onConnect: (id) => { void connectRemote(id) },
+            onNewTask: (c) => { void startRemoteSession(c) },
+            onDisconnect: (id) => {
+              setConnProblem(undefined); setConnProblemId(id)
+              void client.get("disconnectRemote", { id }).then(() => loadConnections(client))
+                .catch((e: unknown) => setConnProblem(e instanceof Error ? e.message : String(e)))
+            },
+          }}
           tasks={tasks}
           onNewTask={回到初始画面}
           onNewTaskIn={(workspace) =>
@@ -5879,7 +5852,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <TeamPanel key={团队格会话 ?? sessionId} />
             ) : rightDockTenant === "artifacts" ? (
               /** **产物那一格**（2026-08-26）：下载与文件格同一契约——只有远端会话才给（本地文件没有「下载」这一说） */
-              <ArtifactsPanel
+              !sessionId ? <EmptyState
+                title={t("开始任务后查看产物")}
+                description={t("分析生成的图表、脚本和说明会显示在这里。")}
+              /> : <ArtifactsPanel
                 key={sessionId}
                 data={artifacts}
                 focus={产物焦点 && 产物焦点.sessionId === sessionId ? { path: 产物焦点.path, nonce: 产物焦点.nonce } : undefined}
@@ -6079,6 +6055,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           </Button>
         ) : null}
         <StatusNotices notes={notes} />
+          {更新回执 ? (
+            <span className="brand-version">v{更新回执.状态.当前.replace(/^v/, "")}</span>
+          ) : null}
       </div>
     </div>
   )

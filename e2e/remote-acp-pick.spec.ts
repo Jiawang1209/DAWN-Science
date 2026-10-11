@@ -67,7 +67,7 @@ const 老配置 = `agents:
 `
 
 async function 展开远端(page: import("@playwright/test").Page) {
-  const head = page.getByRole("button", { name: /远端服务器/ })
+  const head = page.getByRole("button", { name: /^服务器/ })
   await expect(head).toBeVisible()
   if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
 }
@@ -78,14 +78,15 @@ async function 加一台(page: import("@playwright/test").Page, label: string) {
   await page.locator("#conn-user").fill("dawn")
   await page.locator("#conn-label").fill(label)
   await page.locator("#conn-secret").fill("dawn")
-  await page.getByRole("button", { name: "保存", exact: true }).click()
+  await page.getByRole("button", { name: "保存并连接", exact: true }).click()
+  await expect(page.getByRole("dialog", { name: "添加服务器", exact: true })).toHaveCount(0)
 }
 
 test("**服务器上的新对话：模型选择器里有 claude-acp、没有 codex-acp，点了就换成它**", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, "假机器")
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
   // ① 页面不变，还是那段新对话；pill 上先是 DeepSeek（配置里第一个）
@@ -95,17 +96,17 @@ test("**服务器上的新对话：模型选择器里有 claude-acp、没有 cod
   // ② 打开选择器：ACP 单独一组，能上服务器的在、不能的不在
   await pill.locator(".model-trigger").click()
   const 菜单 = page.getByRole("menu", { name: "切换模型" })
-  await expect(菜单.locator(".model-group-head", { hasText: "ACP 适配器" })).toBeVisible()
-  await expect(菜单.getByRole("menuitem", { name: /claude-acp/ }), "能上服务器的 ACP 没列出来").toBeVisible()
-  await expect(菜单.getByRole("menuitem", { name: /codex-acp/ }), "手到不了服务器的 ACP 不该出现").toHaveCount(0)
+  await expect(菜单.locator(".model-group-head", { hasText: "claude-acp" })).toBeVisible()
+  await expect(菜单.locator(".model-group", { has: page.locator(".model-group-head", { hasText: "claude-acp" }) }).getByRole("menuitem", { name: "Sonnet", exact: true }), "能上服务器的 ACP 没列出来").toBeVisible()
+  await expect(菜单.locator(".model-group-head", { hasText: "codex-acp" }), "手到不了服务器的 ACP 不该出现").toHaveCount(0)
 
   // ③ 点它：还在同一台机器上，头上标着 ACP；
   //    模型 pill 没了——ACP 会话不画它（2026-08-19 定的，`acp-agent.spec.ts` 守着）
-  await 菜单.getByRole("menuitem", { name: /claude-acp/ }).click()
+  await 菜单.locator(".model-group", { has: page.locator(".model-group-head", { hasText: "claude-acp" }) }).getByRole("menuitem", { name: "Sonnet", exact: true }).click()
   await 等进了对话(page)
   await expect(page.locator(".conv-remote .conv-remote-host")).toHaveText("假机器")
   await expect(page.locator(".conv-head .kind")).toHaveText("ACP")
-  await expect(page.locator(".composer-card .model-pill")).toHaveCount(0)
+  await expect(page.locator(".composer-card .model-pill")).toHaveCount(1)
 
   // ④ **空会话被顶替，不是多出一条**：那台机器底下只有这一段
   await expect(page.locator(".side-server").locator("li")).toHaveCount(1)
@@ -133,11 +134,11 @@ test.describe("T3 之前接入的老条目", () => {
     await page.getByRole("button", { name: "返回", exact: true }).click()
     await 展开远端(page)
     await 加一台(page, "假机器")
-    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+    await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
     await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
     await page.locator(".composer .model-pill .model-trigger").click()
     await expect(
-      page.getByRole("menu", { name: "切换模型" }).getByRole("menuitem", { name: /claude-code-acp/ }),
+      page.getByRole("menu", { name: "切换模型" }).locator(".model-group", { has: page.locator(".model-group-head", { hasText: "claude-code-acp" }) }).getByRole("menuitem", { name: "Sonnet", exact: true }),
     ).toBeVisible()
   })
 })

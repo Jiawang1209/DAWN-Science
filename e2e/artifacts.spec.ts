@@ -31,8 +31,8 @@ test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () 
 
     const 条 = page.getByRole("group", { name: "本轮生成的文件" })
     await expect(条).toBeVisible({ timeout: 60_000 })
-    await expect(条.getByText("GENERATED · 1")).toBeVisible()
-    await 条.getByRole("button", { name: /volcano_data\.csv/ }).click()
+    await expect(条.getByText("已生成 1 个文件")).toBeVisible()
+    await 条.getByRole("button", { name: "查看产物", exact: true }).click()
 
     await expect(page.getByRole("tab", { name: "产物", exact: true })).toHaveAttribute("aria-selected", "true")
     await expect(page.locator(".preview")).toBeVisible()
@@ -73,9 +73,9 @@ test.describe("临时会话（非 git）：同样出 GENERATED 条", () => {
 
     const 条 = page.getByRole("group", { name: "本轮生成的文件" })
     await expect(条).toBeVisible({ timeout: 60_000 })
-    await expect(条.getByText("GENERATED · 1")).toBeVisible()
+    await expect(条.getByText("已生成 1 个文件")).toBeVisible()
     await expect(page.getByText("本轮产出未知")).toHaveCount(0)
-    await 条.getByRole("button", { name: /volcano_data\.csv/ }).click()
+    await 条.getByRole("button", { name: "查看产物", exact: true }).click()
 
     await expect(page.getByRole("tab", { name: "产物", exact: true })).toHaveAttribute("aria-selected", "true")
     await expect(page.locator(".preview")).toBeVisible()
@@ -146,5 +146,30 @@ test.describe("外部 CLI 会话：本轮产出未知，不列 agent 声称的�
     await expect(page.getByText("外部 CLI 的文件操作不可见")).toBeVisible()
     // 限在主区：侧栏的会话标题是用户那句话本身，按钮名里天然带着 fake.csv；要验的是**对话里没有一枚 chip**
     await expect(page.getByRole("main").getByRole("button", { name: /fake\.csv/ })).toHaveCount(0)
+  })
+})
+
+test.describe("页面迭代：长结果清单", () => {
+  test.use({ dawnOptions: { toolCall: { toolName: "bash", args: { command: "mkdir -p outputs; for n in {1..60}; do printf 'UI fixture\\n' > outputs/result_$n.txt; done" } } } })
+  test("完整清单可以滚到末尾，回到清单后仍可打开文件", async ({ dawn }) => {
+    const { page } = dawn
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await 在项目里开会话(page)
+    await page.locator("main.main textarea").fill("生成长结果清单")
+    await page.locator("main.main textarea").press("Enter")
+    await expect(page.getByRole("group", { name: "本轮生成的文件" }).last()).toContainText("已生成 60 个文件", { timeout: 60_000 })
+    const { 进坞 } = await import("./fixtures.js")
+    await 进坞(page, "产物")
+    const last = page.locator(".artifacts-list .artifact-open").last()
+    await page.locator(".dock-body").hover()
+    await page.mouse.wheel(0, 5000)
+    await expect(last).toBeInViewport()
+    await last.click()
+    await expect(page.locator(".preview")).toContainText("UI fixture")
+    await page.getByRole("button", { name: "回到清单", exact: true }).click()
+    await page.locator(".dock-body").hover()
+    await page.mouse.wheel(0, 5000)
+    await expect(last).toBeInViewport()
+    await page.screenshot({ path: "tmp/ui-refresh-verification/after/long-result-list.png", animations: "disabled", caret: "hide" })
   })
 })

@@ -86,8 +86,10 @@ describe("附栏上的上下文仪表", () => {
   for (const [名, s] of [["native", native], ["ACP", acp]] as const) {
     it(`${名}：仪表紧挨在权限那颗左边（DOM 上是它的前一个兄弟）`, () => {
       const { container } = 摆({ session: s, ...(s.kind === "native" ? { onCompact: async () => {} } : {}) })
-      const 仪表 = container.querySelector(".composer-footer > .ctx-meter")
+      const 仪表 = container.querySelector(".composer-status > .ctx-meter")
       expect(仪表).toBeTruthy()
+      expect(仪表!.closest(".composer-footer")).toBeTruthy()
+      expect(仪表!.closest(".composer-card")).toBeTruthy()
       expect(仪表!.nextElementSibling?.classList.contains("perm-pill")).toBe(true)
     })
   }
@@ -99,4 +101,16 @@ describe("附栏上的上下文仪表", () => {
     expect(screen.queryByText("这一轮还在跑，做完再压缩")).toBeNull()
     expect(screen.getByText("正在压缩上下文，压完再说")).toBeTruthy()
   })
+})
+
+it("远端输入框显示真实目录，查看路径不调用本机选目录或改草稿", () => {
+  const onPickWorkspace = vi.fn()
+  const onSend = vi.fn()
+  render(<ConversationView session={{ ...native, remote: { connectionId: "remote-a", label: "生态服务器", cwd: "/home/research/soil" } }} items={说完} onSend={onSend} onPickWorkspace={onPickWorkspace} />)
+  const path = screen.getByRole("button", { name: "工作目录：/home/research/soil" })
+  fireEvent.click(path)
+  expect(screen.getByRole("dialog", { name: "工作目录" }).textContent).toContain("/home/research/soil")
+  expect(screen.queryByRole("button", { name: "另选文件夹…" })).toBeNull()
+  expect(onPickWorkspace).not.toHaveBeenCalled()
+  expect(onSend).not.toHaveBeenCalled()
 })

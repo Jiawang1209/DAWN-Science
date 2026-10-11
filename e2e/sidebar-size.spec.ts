@@ -265,10 +265,16 @@ test("**项目那一列的高度由条数决定，不吃掉剩余空间**", asyn
   expect(列.height - 行高).toBeLessThan(8)
 
   /**
-   * 而且「会话」那条标题**紧跟在项目列后面**，不是被顶到屏幕底部。
+   * 新版项目后有常驻服务器区；扣除它真实占用的高度后，不能留无内容的白地。
    * 这一条才是作者真正看见的那件事。
    */
-  const 分区 = await page.locator(".sidebar .side-section").all()
-  const 会话头 = (await 分区[分区.length - 1]!.boundingBox())!
-  expect(会话头.y - (列.y + 列.height)).toBeLessThan(40)
+  const 服务器 = (await page.locator(".server-navigation").boundingBox())!
+  expect(服务器.y).toBeGreaterThanOrEqual(列.y + 列.height)
+  const 最近头 = (await page.locator(".server-navigation + .side-section").boundingBox())!
+  expect(最近头.y).toBeGreaterThanOrEqual(服务器.y + 服务器.height)
+  expect(最近头.y - (列.y + 列.height) - 服务器.height).toBeLessThan(40)
+  // 最近清单也是实际内容；会话分区与它的前一个实际元素之间仍不能留白占位。
+  const 会话间距 = await page.locator(".sidebar .side-section").last().evaluate(el =>
+    el.getBoundingClientRect().top - el.previousElementSibling!.getBoundingClientRect().bottom)
+  expect(会话间距).toBeLessThan(40)
 })

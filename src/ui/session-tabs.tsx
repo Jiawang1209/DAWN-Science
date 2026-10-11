@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, type DragEvent, type MouseEvent } from "re
 import { createPortal } from "react-dom"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
-import { 加号描边图标 } from "./icons.js"
+import { 加号描边图标, 关闭图标 } from "./icons.js"
 
 export interface 分栏项 {
   sessionId: string
@@ -156,7 +156,7 @@ export function SessionTabs({
                 aria-label={tf("关掉「{0}」（收进归档）", x.title)}
                 onClick={() => onClose(x.sessionId)}
               >
-                ×
+                <关闭图标 />
               </Button>
             ) : null}
           </div>

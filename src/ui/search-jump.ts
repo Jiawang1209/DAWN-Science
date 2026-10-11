@@ -43,7 +43,7 @@ export function 标词(el: HTMLElement, 词们: readonly string[]): number {
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const 原 = n.nodeValue ?? ""
-    const 小 = 原.toLowerCase()
+    const 小 = 原.normalize("NFKC").toLowerCase()
     // 小写改了长度的极少数字符：不标，免得标歪（与 `取片段` 同一条）
     if (小.length !== 原.length) continue
     for (const w of 词们) {

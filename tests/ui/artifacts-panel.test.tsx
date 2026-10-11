@@ -203,3 +203,16 @@ describe("ArtifactsPanel —— 取失败要出声", () => {
     expect(onReload).toHaveBeenCalledTimes(1)
   })
 })
+
+it("预览时保留紧凑文件列表，迟到读取不能覆盖新选择", async () => {
+  const first = 挂起<FileContent>()
+  const readFile = vi.fn((path: string) => path === "a.txt" ? first.promise
+    : Promise.resolve({ kind: "text", mediaType: "text/plain", bytes: 6, text: "second" } as FileContent))
+  render(<ArtifactsPanel data={{ artifacts: [art("a.txt"), art("b.txt")], unknown: [] }} {...noop} readFile={readFile} />)
+  fireEvent.click(screen.getByRole("button", { name: "a.txt" }))
+  fireEvent.click(screen.getByRole("button", { name: "b.txt" }))
+  await screen.findByText("second")
+  await act(async () => first.resolve({ kind: "text", mediaType: "text/plain", bytes: 5, text: "first" }))
+  expect(screen.queryByText("first")).toBeNull()
+  expect(screen.getByRole("button", { name: "a.txt" })).toBeTruthy()
+})

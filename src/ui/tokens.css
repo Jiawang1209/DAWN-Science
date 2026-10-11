@@ -75,11 +75,12 @@
    * 亮 / 暗各一个——暗底上同一个色要提亮一档才不会沉进背景（绿的就是 #10a37f → #19c37d）；
    * 按钮上的字也各一个——浅色主题色配白字读不出来，由 JS 按亮度判。
    */
-  --theme-user-accent: #10a37f;
-  --theme-user-accent-dark: #19c37d;
+  --theme-user-accent: #208a7b;
+  --theme-user-accent-dark: #47b9a9;
   --theme-user-on-accent: #ffffff;
   --theme-user-on-accent-dark: #0d0d0d;
   --theme-accent: var(--theme-user-accent);
+
 
   /* 面。亮色下内容区是纯白，浮在略深的应用底之上 */
   /**
@@ -101,8 +102,8 @@
    * 代价：白面（panel / elevated）放在白底上不再「浮」出来——靠描边与阴影分层；
    * 小的白块（头像圆、思考秒数）改用 `--dawn-fill-*`。
    */
-  --theme-surface-app: var(--theme-gray-0);
-  --theme-surface-sidebar: var(--theme-gray-50);
+  --theme-surface-app: #f6f6f3;
+  --theme-surface-sidebar: #f6f6f3;
   --theme-surface-panel: var(--theme-gray-0);
   --theme-surface-elevated: var(--theme-gray-0);
   /**
@@ -296,7 +297,7 @@
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, var(--theme-base) 6%, transparent);
 
   /* ── 骨架尺寸（规范 §3.1 / §3.3 / §3.5）─────────────────────── */
-  --dawn-topbar-h: 46px;
+  --dawn-topbar-h: 60px;
   --dawn-statusbar-h: 24px;
   /**
    * 侧栏宽度。实测 WorkBuddy 是 **264px**。
@@ -397,6 +398,9 @@
   --dawn-font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", system-ui, sans-serif;
   --dawn-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --dawn-ui-size: 13px;
+  --dawn-fs-title-brand: 20px;
+  --dawn-fs-display-conversation: 28px;
+  --dawn-fs-sub-navigation: 16px;
   --dawn-ui-leading: 1.55;
   /**
    * 对话正文（2026-08-12 放松）。
@@ -405,13 +409,13 @@
    * 作者三次说「太死板」，症结在这里而不在宽度
    * （宽度上限 768px 一直生效，我先前判断错了，量了才知道）。
    *
-   * WorkBuddy 那张截图上是约 15px / 1.7。这里取 `15px / 25px`（1.67）：
+   * WorkBuddy 那张截图上是约 15px / 1.7。第二轮取 `17px / 29.75px`（1.75），已存字号继续优先：
    * **中日文没有词间空隙，行距不够时整段会糊成一块**，
    * 比西文更吃这个数。
    */
-  --dawn-chat-size: 15px;
+  --dawn-chat-size: 17px;
   /**
-   * **26.25px = 15 × 1.75**（2026-08-12 从 25 调上来，CDP 实测）。
+   * **默认 29.75px = 17 × 1.75**（2026-08-12 从 25 调上来，CDP 实测）。
    *
    * WorkBuddy 对话里这个数出现在**四个地方**：说话人名、状态行、
    * 用户气泡里的文字、输入框——`15px / 26.25px`，一个不差。
@@ -419,6 +423,7 @@
    * 是继承出来的怪值，不是设计值。**取它反复出现的那个数**。
    */
   --dawn-chat-leading: calc(var(--dawn-chat-size) * 1.75);
+  --dawn-composer-field-min-h: max(44px, calc(var(--dawn-chat-leading) + var(--dawn-space-4)));
   /**
    * 代码比正文小两号、行距也更紧。量来的：WorkBuddy `13px / 1.6`。
    *

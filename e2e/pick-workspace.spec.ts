@@ -56,7 +56,7 @@ test("**选完文件夹，文件树立刻转到那个目录**", async ({ dawn })
   ).toHaveCount(0)
 
   // ② 选
-  await page.getByRole("button", { name: "选择工作目录" }).click()
+  await page.getByRole("button", { name: "工作目录" }).click()
 
   // ③ chip 上写着它了
   await expect(page.locator(".ws-chip-label")).toContainText("选文件夹就进项目")
@@ -94,7 +94,7 @@ test("**选完文件夹：项目收纳立刻出现，但一段会话都没建**"
   const { page } = dawn
 
   const 行数 = await page.locator(".sidebar .sess-item").count()
-  await page.getByRole("button", { name: "选择工作目录" }).click()
+  await page.getByRole("button", { name: "工作目录" }).click()
   await expect(page.locator(".ws-chip-label")).toContainText("选文件夹就进项目")
 
   // ① 收纳出现了，而且写着那个文件夹的名字
@@ -121,7 +121,7 @@ test("**选完文件夹：项目收纳立刻出现，但一段会话都没建**"
 test("**说了第一句话，那一段就挂在这个项目底下**", async ({ dawn }) => {
   const { page } = dawn
 
-  await page.getByRole("button", { name: "选择工作目录" }).click()
+  await page.getByRole("button", { name: "工作目录" }).click()
   await expect(page.locator(".ws-chip-label")).toContainText("选文件夹就进项目")
 
   const box = page.getByPlaceholder(/今天帮你做些什么/)
@@ -154,7 +154,7 @@ test("**说了第一句话，那一段就挂在这个项目底下**", async ({ d
 test("**在外面往目录里丢文件，切回窗口树就跟上**", async ({ dawn }) => {
   const { page } = dawn
 
-  await page.getByRole("button", { name: "选择工作目录" }).click()
+  await page.getByRole("button", { name: "工作目录" }).click()
   await 进坞(page, "文件")
   await expect(
     page.locator(".right-dock").getByRole("button", { name: /^认得出的文件\.md/ }),
@@ -207,7 +207,7 @@ test("**在外面往目录里丢文件，切回窗口树就跟上**", async ({ d
 test("**文件行写着修改时间与类型图标；按「刷新」不切窗口也能看见新文件**", async ({ dawn }) => {
   const { page } = dawn
 
-  await page.getByRole("button", { name: "选择工作目录" }).click()
+  await page.getByRole("button", { name: "工作目录" }).click()
   await 进坞(page, "文件")
   const 坞 = page.locator(".right-dock")
   await expect(坞.getByRole("button", { name: /^认得出的文件\.md/ })).toBeVisible({ timeout: 15_000 })

@@ -141,11 +141,12 @@ describe("坞格的几种状态（审查 M7）", () => {
     侧槽.reset()
   })
 
-  it("输入卡看得出边：挂着态的底是主区那块 `surface-app`，不是与卡面同值的 `surface-panel`（2026-09-25 作者 A）", () => {
+  it("侧边对话沿用主对话工作面，输入卡有常驻描边", () => {
     const css = readFileSync(join(import.meta.dirname, "../../src/ui/styles.css"), "utf8")
     const tok = readFileSync(join(import.meta.dirname, "../../src/ui/tokens.css"), "utf8")
-    expect(css).toMatch(/\.side-chat:not\(\.side-chat-empty\) \{ background: var\(--dawn-surface-app\); \}/)
-    // 根因：坞底 panel 与卡面 input 在明暗两套里同值——哪天它们分开了，这条注释与判据都该重看
+    expect(css).toMatch(/\.side-chat:not\(\.side-chat-empty\) \{ background: var\(--dawn-surface-panel\); \}/)
+    expect(css).toMatch(/\.composer-card\s*\{[^}]*border:\s*1px solid var\(--dawn-stroke-accent\)/)
+    // 亮色工作面与卡面同值，常驻描边保留输入边界。
     const 亮 = tok.slice(0, tok.indexOf("--theme-surface-app: var(--theme-gray-900)"))
     expect(亮.match(/--theme-surface-panel: ([^;]+);/)![1]).toBe(亮.match(/--theme-surface-input: ([^;]+);/)![1])
     // 刻度尺只在坞宽到放得下时画

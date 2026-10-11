@@ -205,7 +205,7 @@ export function 创建转录槽() {
     if (归属 !== undefined) 回显归属.set(id, 归属)
     $items.set([
       ...$items.get(),
-      { type: "turn", id, who: "user", text, final: true, ...(images && images.length > 0 ? { images: [...images] } : {}) },
+      { type: "turn", id, who: "user", text, final: true, at: Date.now(), ...(images && images.length > 0 ? { images: [...images] } : {}) },
     ])
     return () => {
       const prev = $items.get()

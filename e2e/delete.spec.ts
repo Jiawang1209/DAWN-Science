@@ -87,7 +87,8 @@ test("移除项目：确认框摆真数字，**且磁盘上的文件夹还在**"
    * 「移除项目」这个项目级动作从那儿移走了——项目行上的那颗与它
    * 本来就是同一个动作（App 里同一个 `askDeleteProject`）。
    */
-  await page.getByRole("button", { name: /删除项目：/ }).click()
+  await page.getByRole("button", { name: /项目操作：/ }).click()
+  await page.getByRole("menuitem", { name: /删除项目：/ }).click()
 
   // **真数字**：刚建了一个会话，确认框上就得是 1
   await expect(page.locator(".confirm-detail")).toContainText("1")

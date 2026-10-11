@@ -41,7 +41,7 @@ import {
 
 const 主区 = (page: Page) => page.locator("main.main")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
-const 框 = (区: Locator) => 区.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (区: Locator) => 区.locator("textarea.composer-field")
 async function 说(区: Locator, 话: string) {
   await 框(区).fill(话)
   await 框(区).press("Enter")
@@ -229,7 +229,7 @@ test("**等你点头**：「请求批准」档下「演一次权限」→ 卡弹
   await 开一段临时会话(page, "通知五")
   await 等进了对话(page)
   await expect.poll(() => 几条(app, "done"), { timeout: 30_000 }).toBe(1)
-  const 扳机 = page.locator(".composer-footer .perm-pill-trigger")
+  const 扳机 = page.locator(".composer-status .perm-pill-trigger")
   await 扳机.click()
   await page.getByRole("menuitemradio", { name: /^请求批准/ }).click()
   await expect(扳机).toHaveText(/^请求批准/)

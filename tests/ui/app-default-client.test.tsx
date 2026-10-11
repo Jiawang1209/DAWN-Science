@@ -20,6 +20,7 @@ import { WORKBENCH_PROTOCOL_VERSION, OPERATIONS } from "../../src/protocol/index
 
 const original = window.dawn
 type Bridge = NonNullable<typeof window.dawn>
+const updateReceipt = { 自动检查: false, 状态: { 阶段: "idle", 当前: "0.0.25" } }
 
 afterEach(() => {
   if (original) window.dawn = original
@@ -42,6 +43,8 @@ function installBridge() {
               maxPageSize: 200,
               readOnly: false,
             }
+          : op === "getUpdateState" || op === "checkUpdate"
+            ? updateReceipt
           : op === "listCredentials"
             ? { configured: [], encrypted: true }
             : op === "getProviders"
@@ -104,7 +107,9 @@ describe("App · 默认 client 路径（生产环境唯一走的那条）", () =
   it("显式传入的 client 仍然被采用 —— 修复不能把注入点弄丢", async () => {
     installBridge()
     const get = vi.fn(async (op: string) =>
-      op === "getProviders"
+      op === "getUpdateState" || op === "checkUpdate"
+        ? updateReceipt
+      : op === "getProviders"
         ? { agents: [], providers: [] }
         : op === "listCredentials"
           ? { configured: [], encrypted: true }

@@ -73,7 +73,7 @@ async function switchTo(page: Page, label: string) {
   await page.waitForTimeout(200)
 }
 
-test("默认跟随系统，且系统是亮的时候界面就是亮的", async ({ dawn }) => {
+test("首次使用默认亮色，应用底为浅色", async ({ dawn }) => {
   const { page } = dawn
   await expect(page.locator("html.dawn-light")).toHaveCount(1)
   const { rgb } = parseColor((await styleOf(page, "body")).bg)

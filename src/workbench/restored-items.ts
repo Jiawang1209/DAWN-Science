@@ -9,11 +9,12 @@ import type { TranscriptItem } from "../protocol/events.js"
  *
  * **id 由它给**（2026-09-27 从 `backend.ts` 搬出来的理由）：文字是 `r{下标}`，压缩标记 `rc{下标}`，工具用调用 id（缺了是 `rt{下标}`）。
  * 续接恢复的转录与全文搜索的结果都用这一套——搜到的 `itemId` 就是点开后那一条的 id。
- * `at` 不读：界面的条目没有时刻这一格。
+ * 文字保留记录中的时刻；缺失不拿恢复时间替代。
  */
 export function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
   if (x.kind === "text") {
-    return { type: "turn", id: `r${i}`, who: x.who, text: x.text, final: true }
+    return { type: "turn", id: `r${i}`, who: x.who, text: x.text, final: true,
+      ...(x.at !== undefined && Number.isInteger(x.at) && x.at >= 0 && x.at <= 8_640_000_000_000_000 ? { at: x.at } : {}) }
   }
   // 这里压缩过（2026-09-27）：还原成一条已压完的标记。pi 的记录里没存起因，就不写原因（界面也就不写）
   if (x.kind === "compaction") {

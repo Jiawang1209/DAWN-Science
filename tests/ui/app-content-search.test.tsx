@@ -124,7 +124,9 @@ async function 搜并点第一处() {
   fireEvent.click(await screen.findByRole("button", { name: /^搜索$/ }))
   fireEvent.click(screen.getByRole("button", { name: "按内容" }))
   fireEvent.change(screen.getByPlaceholderText("搜说过的话、回复、跑过的代码（至少两个字）"), { target: { value: "鲸落" } })
-  fireEvent.click(await within(侧栏()).findByText("你："))
+  expect(侧栏().querySelector(".side-search-field")).toBeNull()
+  expect(within(侧栏()).getByText("乙会话")).toBeTruthy()
+  fireEvent.click(await within(screen.getByRole("dialog", {name:"搜索"})).findByText("你："))
 }
 
 /** 关掉搜索（三列回来），在侧栏里点那一行 */

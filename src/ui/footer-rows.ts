@@ -16,15 +16,16 @@ export const $主区附栏行数 = atom<number | undefined>(undefined)
 
 let 谁在报: object | undefined
 
-/** 附栏里看得见的子项排成了几行（按各自的上沿分组；折行的那条 `::before` 不是元素，不算） */
+/** 附栏里看得见的子项排成了几行（按各自的垂直中线分组；折行的那条 `::before` 不是元素，不算） */
 export function 数行(footer: HTMLElement): number {
-  const 上沿 = new Set<number>()
+  const 中线们: number[] = []
   for (const c of Array.from(footer.children)) {
     const el = c as HTMLElement
     if (el.offsetWidth === 0 && el.offsetHeight === 0) continue
-    上沿.add(Math.round(el.offsetTop / 8))
+    const 中线 = el.offsetTop + el.offsetHeight / 2
+    if (!中线们.some(y => Math.abs(y - 中线) <= 4)) 中线们.push(中线)
   }
-  return Math.max(1, 上沿.size)
+  return Math.max(1, 中线们.length)
 }
 
 /**

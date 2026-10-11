@@ -82,6 +82,17 @@ describe("宽度", () => {
 })
 
 describe("读回来", () => {
+  it("首次打开为图表保留至少 440px，同时让 1280px 窗口的正文保有 420px", () => {
+    const width = loadRightDock().width
+    expect(width).toBeGreaterThanOrEqual(440)
+    expect(1280 - 248 - width).toBeGreaterThanOrEqual(420)
+  })
+
+  it("已有的紧凑面板宽度优先于新的默认布局", () => {
+    localStorage.setItem(RIGHT_DOCK_WIDTH_KEY, "380")
+    expect(loadRightDock().width).toBe(380)
+  })
+
   it("没存过就是默认——**缺失不等于某个具体值**", () => {
     const r = loadRightDock()
     expect(r).toEqual({ tenant: "files", width: RIGHT_DOCK_DEFAULT })

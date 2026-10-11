@@ -5,6 +5,8 @@
  * `base: "./"` 使产物用相对路径，`file://` 加载才不会 404。
  */
 import { defineConfig, type Plugin } from "vite"
+import { readdirSync, readFileSync } from "node:fs"
+import { join } from "node:path"
 import react from "@vitejs/plugin-react"
 
 /**
@@ -79,10 +81,21 @@ function cspPlugin(): Plugin {
   }
 }
 
+/** Fonts/CMaps/decoders ship locally; document bytes still come only from readFile. */
+function pdfAssetsPlugin(): Plugin {
+  return { name: "dawn-pdf-assets", apply: "build", generateBundle() {
+    this.emitFile({ type: "asset", fileName: "pdf-assets/LICENSE", source: readFileSync(join(import.meta.dirname, "node_modules/pdfjs-dist/LICENSE")) })
+    for (const folder of ["cmaps", "standard_fonts", "wasm"]) {
+      const root = join(import.meta.dirname, "node_modules/pdfjs-dist", folder)
+      for (const file of readdirSync(root)) this.emitFile({ type: "asset", fileName: `pdf-assets/${folder}/${file}`, source: readFileSync(join(root, file)) })
+    }
+  } }
+}
+
 export default defineConfig({
   root: "src/ui",
   base: "./",
-  plugins: [react(), cspPlugin()],
+  plugins: [react(), cspPlugin(), pdfAssetsPlugin()],
   build: {
     outDir: "../../dist/ui",
     emptyOutDir: true,

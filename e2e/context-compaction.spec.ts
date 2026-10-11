@@ -167,7 +167,7 @@ test.describe("窄附栏", () => {
     // 2026-09-28 起处处只写环 + 数：「上下文」三个字不画——量画出来的字，不信 toBeVisible（opacity 那类坑）
     expect(await 钮.evaluate((el) => (el as HTMLElement).innerText.trim())).toBe("<1%")
     const 卡 = await 坞.locator(".composer-card").boundingBox()
-    const 权限 = await 坞.locator(".composer-footer .perm-pill").boundingBox()
+    const 权限 = await 坞.locator(".composer-status .perm-pill").boundingBox()
     expect(卡 && 权限).toBeTruthy()
     expect(权限!.x).toBeGreaterThanOrEqual(卡!.x)
     expect(权限!.x + 权限!.width).toBeLessThanOrEqual(卡!.x + 卡!.width)

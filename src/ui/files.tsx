@@ -16,7 +16,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { 在组词 } from "./ime.js"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
+import { VisualFilePreview, type PreviewNavigation } from "./visual-file-preview.js"
 import { AgentMarkdown } from "./markdown.js"
+import { ScriptPreview } from "./script-preview.js"
 import {
   三角图标,
   刷新图标,
@@ -41,7 +43,7 @@ import { t, tf, msgid } from "./i18n/index.js"
 import { useStore } from "@nanostores/react"
 import { SideSash } from "./sash.js"
 import { HoverCard, 浮层事件, type 悬停浮层, type 详情行 } from "./hover-card.js"
-import { $fileTreeHeight, $fileTreeWidth, FILE_TREE_MIN, setFileTreeHeight, setFileTreeWidth } from "./state/right-dock.js"
+import { $fileTreeHeight, $fileTreeWidth, FILE_TREE_MIN, clampFileTree, setFileTreeHeight, setFileTreeWidth } from "./state/right-dock.js"
 import { 年月日时分 } from "./format.js"
 /**
  * 目录与文件内容的类型**从协议推导**，不在这里再抄一份。
@@ -483,6 +485,8 @@ export function FilePreview({
   onDownload,
   onDelete,
   进废纸篓,
+  navigation,
+  fitContainer = false,
 }: {
   path: string | undefined
   content: FileContent | undefined
@@ -493,11 +497,14 @@ export function FilePreview({
   onDelete?: (path: string) => void
   /** 这台机器上删了还回得来吗。**本地 true、远端 false** */
   进废纸篓?: boolean
+  navigation?: PreviewNavigation | undefined
+  fitContainer?: boolean
 }) {
   if (!path) {
     return <EmptyState title={t("选一个文件")} description={t("上面是这台机器上的目录。")} />
   }
   if (!content) return <Loader label={t("正在读文件")} />
+  if (content.kind === "pdf" || content.kind === "image") return <VisualFilePreview path={path} content={content} onOpenExternally={onOpenExternally} onDownload={onDownload} onDelete={onDelete} 进废纸篓={进废纸篓} navigation={navigation} fitContainer={fitContainer} />
 
   return (
     <div className="preview">
@@ -527,21 +534,13 @@ export function FilePreview({
 
       {content.kind === "table" ? (
         <数据表 t={content.table} />
-      ) : content.kind === "pdf" ? (
-        <PdfPreview base64={content.base64} path={path} onOpenExternally={onOpenExternally} />
-      ) : content.kind === "image" ? (
-        <img
-          className="preview-img"
-          src={`data:${content.mediaType};base64,${content.base64}`}
-          alt={tf("预览：{0}", path)}
-        />
       ) : content.kind === "text" ? (
         <>
-          {/* markdown 走渲染，别的按原文——**代码不该被当成 markdown 改写** */}
+          {/* Markdown渲染，脚本只上色；不通过Markdown重写代码原文。 */}
           {content.mediaType === "text/markdown" ? (
             <AgentMarkdown text={content.text} streaming={false} />
           ) : (
-            <pre className="preview-text">{content.text}</pre>
+            <ScriptPreview path={path} text={content.text} mediaType={content.mediaType} />
           )}
           {content.truncated ? (
             <p className="hint">
@@ -565,53 +564,6 @@ export function FilePreview({
   )
 }
 
-/**
- * PDF（②-A′ · F5）。交给 **Chromium 自带的阅读器**——它就在这个进程里，
- * 而自己拿 pdf.js 再实现一遍是拿一个几百 KB 的依赖去换一个已经有的东西。
- *
- * ## 为什么是 blob，不是 `file://` 也不是 `data:`
- *
- * - **`file://` 会开第二条读盘的路**，那意味着路径守卫要在两个地方各写一遍——
- *   而两份守卫迟早有一份落后（②-A′ · F1 的全部重量就在那一份上）。
- * - **`data:` 在 frame 里被 Chromium 拦掉**（navigation to data: URL 的老限制）。
- *
- * blob 用的是**渲染进程已经拿到的字节**，不新增任何读取能力，
- * CSP 里因此只需要 `object-src blob:` 这一条。
- */
-function PdfPreview({
-  base64,
-  path,
-  onOpenExternally,
-}: {
-  base64: string
-  path: string
-  onOpenExternally: (path: string) => void
-}) {
-  const url = useMemo(() => {
-    const bin = atob(base64)
-    const bytes = new Uint8Array(bin.length)
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-    return URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }))
-  }, [base64])
-
-  /**
-   * **用完要还。** blob URL 活到文档结束为止——翻十个 PDF 就是十份字节
-   * 一直躺在内存里，而它们的原件还在磁盘上好好的。
-   */
-  useEffect(() => () => URL.revokeObjectURL(url), [url])
-
-  return (
-    <>
-      <embed className="preview-pdf" src={url} type="application/pdf" aria-label={tf("预览：{0}", path)} />
-      {/* **留一条出路**：内嵌阅读器不是万能的，而人可能只是想拿它去打印 */}
-      <div className="state-action">
-        <Button variant="text" size="sm" onClick={() => onOpenExternally(path)}>
-          {t("用系统程序打开")}
-        </Button>
-      </div>
-    </>
-  )
-}
 
 /* ── 整个视图 ────────────────────────────────────────────────────── */
 
@@ -1046,23 +998,44 @@ export function FilesView({
   const 树宽 = useStore($fileTreeWidth)
   const 树高 = useStore($fileTreeHeight)
   const 容器 = useRef<HTMLDivElement>(null)
-  const 容器宽 = () => 容器.current?.clientWidth ?? 0
-  // 减掉「这是哪台机器」那一条：它占的是第一行，树从第二行起
-  const 容器高 = () =>
-    (容器.current?.clientHeight ?? 0) -
-    (容器.current?.querySelector<HTMLElement>(".files-where")?.offsetHeight ?? 0)
+  const [可用, 设可用] = useState({ width: 0, height: 0 })
+  // 文件读取期间仍按后缀识别，切换两张图时不闪回旧树高。
+  const 文件类 = selected ? 文件类按名字(selected, "file") : undefined
+  const 视觉文件 = content ? content.kind === "pdf" || content.kind === "image" : 文件类 === "pdf" || 文件类 === "image"
+  const [手调视觉树, 设手调视觉树] = useState(false)
+  useEffect(() => { if (!视觉文件) 设手调视觉树(false) }, [视觉文件])
+  useEffect(() => {
+    const el = 容器.current
+    if (!el) return
+    const measure = () => {
+      const fixed = [...el.querySelectorAll<HTMLElement>(":scope > .files-where, :scope > .xfer, :scope > .files-row-note")]
+        .reduce((sum, child) => sum + child.getBoundingClientRect().height, 0)
+      const next = { width: el.clientWidth, height: Math.max(0, el.clientHeight - fixed) }
+      设可用(prev => prev.width === next.width && prev.height === next.height ? prev : next)
+    }
+    const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure)
+    observer?.observe(el)
+    for (const child of el.querySelectorAll<HTMLElement>(":scope > .files-where, :scope > .xfer, :scope > .files-row-note")) observer?.observe(child)
+    window.addEventListener("resize", measure)
+    measure()
+    return () => { observer?.disconnect(); window.removeEventListener("resize", measure) }
+  }, [铺开, 传输 !== undefined, 行注 !== undefined])
+  const 显示树高 = 可用.height > 0
+    ? clampFileTree(视觉文件 && !手调视觉树 ? Math.min(树高, 可用.height * .3) : 树高, 可用.height)
+    : 树高
+  const 显示树宽 = 可用.width > 0 ? clampFileTree(树宽, 可用.width) : 树宽
   return (
     <div
       ref={容器}
-      className={铺开 ? "files-view files-wide" : "files-view"}
+      className={`files-view${铺开 ? " files-wide" : ""}${视觉文件 ? " files-view-visual" : ""}`}
       /**
        * **树那一栏的尺寸由人拖**（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动」*）。
        * 宽坞是列宽、窄坞是行高——两个数两个键，上下界按容器此刻的尺寸夹。
        */
       style={
         铺开
-          ? { gridTemplateColumns: `${树宽}px minmax(0, 1fr)` }
-          : { gridTemplateRows: `auto ${树高}px minmax(0, 1fr)` }
+          ? { gridTemplateColumns: `${显示树宽}px minmax(0, 1fr)` }
+          : { gridTemplateRows: `auto auto ${显示树高}px auto minmax(0, 1fr)` }
       }
     >
       <HoverCard 浮着的={浮着的} />
@@ -1248,10 +1221,16 @@ export function FilesView({
         <SideSash
           attach="edge"
           orientation={铺开 ? "vertical" : "horizontal"}
-          width={铺开 ? 树宽 : 树高}
+          width={铺开 ? 显示树宽 : 显示树高}
           min={FILE_TREE_MIN}
-          max={铺开 ? 容器宽() : 容器高()}
-          onResize={(px, phase) => (铺开 ? setFileTreeWidth(px, 容器宽(), phase === "commit") : setFileTreeHeight(px, 容器高(), phase === "commit"))}
+          max={Math.max(FILE_TREE_MIN, (铺开 ? 可用.width : 可用.height) - 160)}
+          onResize={(px, phase) => {
+            if (铺开) setFileTreeWidth(px, 可用.width, phase === "commit")
+            else {
+              if (视觉文件) 设手调视觉树(true)
+              setFileTreeHeight(px, 可用.height, phase === "commit")
+            }
+          }}
           label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
         />
       </div>
@@ -1273,6 +1252,7 @@ export function FilesView({
           path={selected}
           content={content}
           onOpenExternally={onOpenExternally}
+          fitContainer
           {...(onDownload ? { onDownload } : {})}
           {...(onDelete ? { onDelete } : {})}
           {...(进废纸篓 === undefined ? {} : { 进废纸篓 })}

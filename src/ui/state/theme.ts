@@ -43,7 +43,7 @@ export type ThemeChoice = "system" | "light" | "dark"
  */
 export const THEME_STORAGE_KEY = "dawn.global.theme"
 
-export const $theme = atom<ThemeChoice>("system")
+export const $theme = atom<ThemeChoice>("light")
 
 const CHOICES: ReadonlySet<string> = new Set<ThemeChoice>(["system", "light", "dark"])
 
@@ -119,8 +119,8 @@ function watchSystem(): void {
 /**
  * 启动时读回上次的选择并立即应用。
  *
- * **没存过返回 `system`，而不是猜一个**——缺失不等于某个具体值。
- * 存了不认识的值同样回落到 `system`，**并且出声**：静默回落会让
+ * **首次使用默认亮色**；显式选择过跟随系统的用户仍保留 `system`。
+ * 存了不认识的值回落到 `light`，**并且出声**：静默回落会让
  * 「我明明选过暗色」变成一个查不出来的怪事。
  */
 export function loadTheme(): ThemeChoice {
@@ -128,14 +128,14 @@ export function loadTheme(): ThemeChoice {
   try {
     stored = localStorage.getItem(THEME_STORAGE_KEY)
   } catch (e) {
-    console.error("[theme] 无法读取已保存的主题，回落到跟随系统：", e)
+    console.error("[theme] 无法读取已保存的主题，回落到亮色：", e)
   }
 
-  let choice: ThemeChoice = "system"
+  let choice: ThemeChoice = "light"
   if (isChoice(stored)) {
     choice = stored
   } else if (stored !== null) {
-    console.error(`[theme] 存储里的主题值无法识别：${JSON.stringify(stored)}，回落到跟随系统`)
+    console.error(`[theme] 存储里的主题值无法识别：${JSON.stringify(stored)}，回落到亮色`)
   }
 
   $theme.set(choice)

@@ -13,14 +13,18 @@
 import { test, expect, 在项目里开会话, 等进了对话 } from "./fixtures.js"
 import { existsSync } from "node:fs"
 
-test("**每一行项目上就有删除**，不用先翻到项目概览", async ({ dawn }) => {
+test("每一行项目都有常驻操作菜单，删除不用先翻到项目概览", async ({ dawn }) => {
   const { page } = dawn
   /**
    * **T3-a 起要先有一个带路径的任务**：项目那一栏是从任务的路径长出来的，
    * 没有任务就没有那一行。这不是绕路——**它就是新模型里「有一个项目」的意思**。
    */
   await 在项目里开会话(page)
-  const 删 = page.getByRole("button", { name: /删除项目：/ })
+  const 操作 = page.getByRole("button", { name: /项目操作：/ })
+  await expect(操作).toBeVisible()
+  expect(await 操作.evaluate(el => getComputedStyle(el).opacity)).toBe("1")
+  await 操作.click()
+  const 删 = page.getByRole("menuitem", { name: /删除项目：/ })
   await expect(删).toBeVisible()
   // `toBeVisible` 对 `opacity: 0` 仍然算可见——**必须直接量**（2026-08-10 的教训）
   expect(await 删.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
@@ -35,7 +39,8 @@ test("**确认框摆真数字**，并说清哪些东西不会动", async ({ dawn
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("留个记录")
 
-  await page.getByRole("button", { name: /删除项目：/ }).click()
+  await page.getByRole("button", { name: /项目操作：/ }).click()
+  await page.getByRole("menuitem", { name: /删除项目：/ }).click()
   const 确认 = page.locator(".confirm")
   await expect(确认).toBeVisible()
   // 会话数是**问后端要的真数字**，不是界面猜的
@@ -52,7 +57,8 @@ test("删掉之后，它的会话**一条都不剩**；工作区的文件一个�
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".proj-session-list .sess")).toHaveCount(1)
 
-  await page.getByRole("button", { name: /删除项目：/ }).click()
+  await page.getByRole("button", { name: /项目操作：/ }).click()
+  await page.getByRole("menuitem", { name: /删除项目：/ }).click()
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
 
   /**

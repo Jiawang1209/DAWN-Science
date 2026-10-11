@@ -89,7 +89,7 @@ async function startSession(page: Page, 首句 = "开始") {
  * 「两处长得一样的东西等于没有判据」的另一面）。
  */
 const 分类计数: ReadonlyArray<[string, string]> = [
-  ["Skills", "6"],
+  ["Skills", "7"],
   ["子 Agent", "22"],
   ["插件", "3"],
   ["MCP 服务器", "0"],
@@ -285,6 +285,8 @@ for (const theme of ["亮色", "暗色"] as const) {
   for (const screen of SCREENS) {
     test(`${screen.name} · ${theme}`, async ({ dawn }) => {
       const { page } = dawn
+      // 基线固定于 1280×808 内容区；外部桌面环境可能收窄新窗口，不能让它改变视觉验收尺寸。
+      await page.setViewportSize({ width: 1280, height: 808 })
       await setTheme(page, theme)
       await screen.go(page)
 
@@ -359,6 +361,8 @@ for (const theme of ["亮色", "暗色"] as const) {
            * 与 `.dur` / `.sub` 同一条理由。
            */
           page.locator(".session-list .sess-when"),
+          // 用户提问时间来自真实发送时刻，不把墙上时钟写入视觉基线。
+          page.locator(".turn-time"),
           /**
            * **摘要那一行里的「几个模型」来自 pi 的模型目录**，目录一更新它就变。
            * 和时钟是同一类：**外面世界的东西不进逐像素基线**。

@@ -2,7 +2,7 @@ import { atom } from "nanostores"
 
 export type ChatSize = 13 | 14 | 15 | 16 | 17 | 18 | 19
 export const CHAT_SIZE_KEY = "dawn.global.chat-font-size"
-export const DEFAULT_CHAT_SIZE: ChatSize = 15
+export const DEFAULT_CHAT_SIZE: ChatSize = 17
 export const $chatSize = atom<ChatSize>(DEFAULT_CHAT_SIZE)
 
 function 是字号(value: number): value is ChatSize {
@@ -32,14 +32,14 @@ export function loadChatSize(): ChatSize {
   try {
     saved = localStorage.getItem(CHAT_SIZE_KEY)
   } catch (error) {
-    console.error("[chat-size] 无法读取对话字号，使用默认 15px：", error)
+    console.error(`[chat-size] 无法读取对话字号，使用默认 ${DEFAULT_CHAT_SIZE}px：`, error)
   }
 
   let size = DEFAULT_CHAT_SIZE
   if (saved !== null) {
     const parsed = Number(saved)
     if (是字号(parsed)) size = parsed
-    else console.error(`[chat-size] 存储的对话字号无法识别：${JSON.stringify(saved)}，使用默认 15px`)
+    else console.error(`[chat-size] 存储的对话字号无法识别：${JSON.stringify(saved)}，使用默认 ${DEFAULT_CHAT_SIZE}px`)
   }
 
   $chatSize.set(size)

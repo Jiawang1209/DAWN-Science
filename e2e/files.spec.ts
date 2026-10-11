@@ -10,6 +10,7 @@ import { test, expect, 进坞, 在项目里开会话 } from "./fixtures.js"
 import { tmpdir } from "node:os"
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { PDFDocument, rgb } from "pdf-lib"
 
 /** 1×1 的红点 png。**真图，不是占位串**——要验的就是它能被解码渲染 */
 const PNG = Buffer.from(
@@ -59,18 +60,9 @@ test("markdown 走渲染，其它文本按原文", async ({ dawn }) => {
 
 test("**PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP 拦下", async ({ dawn }) => {
   const { page, workspace } = dawn
-  /**
-   * 一个最小的合法 PDF。**真文件，不是占位字节**——
-   * Chromium 的阅读器拿到坏文件会给一片白，而那正是我们要区分的失败样子。
-   */
-  const PDF = [
-    "%PDF-1.1",
-    "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
-    "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
-    "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj",
-    "trailer<</Root 1 0 R>>",
-  ].join("\n")
-  writeFileSync(join(workspace, "报告.pdf"), PDF)
+  const pdf = await PDFDocument.create()
+  pdf.addPage([200, 200]).drawRectangle({ x: 30, y: 30, width: 140, height: 140, color: rgb(0, .6, .4) })
+  writeFileSync(join(workspace, "报告.pdf"), await pdf.save())
 
   const 违规: string[] = []
   page.on("console", (m) => {
@@ -80,16 +72,10 @@ test("**PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP �
   await 进坞(page, "文件")
   await page.getByRole("button", { name: /^报告\.pdf/ }).click()
 
-  const embed = page.locator(".preview-pdf")
-  await expect(embed).toBeVisible()
-  // **走的是 blob**：既不给渲染进程 file://，也不用会被 frame 拦掉的 data:
-  expect(await embed.getAttribute("src")).toMatch(/^blob:/)
-  await expect(page.locator(".preview-head .sub")).toContainText("application/pdf")
-
-  /**
-   * **这一条是这批改动的要害。** `object-src` 少写一个 `blob:`，
-   * 上面的断言全部照样通过——`<embed>` 元素在、src 是 blob:、只是里面一片白。
-   */
+  const canvas = page.locator(".visual-preview canvas")
+  await expect(canvas).toHaveAttribute("data-rendered", "true")
+  await expect(page.locator("embed")).toHaveCount(0)
+  // 实际绘制完成后再断言策略，元素挂载不代表内容可见。
   expect(违规, `PDF 被 CSP 拦下了：\n${违规.join("\n")}`).toEqual([])
 })
 
@@ -202,6 +188,16 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   writeFileSync(join(workspace, "大图.png"), 造大图(2400, 3600))
 
   await 进坞(page, "文件")
+  // 此用例复现旧版 380px 窄坞；新版默认 480px，先用真实把手回到原复现条件。
+  const dockSash = page.getByRole('separator', { name: '调整面板宽度', exact: true })
+  const dockBox = (await page.locator('.right-dock').boundingBox())!
+  const sashBox = (await dockSash.boundingBox())!
+  const sashX = sashBox.x + sashBox.width / 2, sashY = sashBox.y + sashBox.height / 2
+  await page.mouse.move(sashX, sashY)
+  await page.mouse.down()
+  await page.mouse.move(sashX + dockBox.width - 380, sashY, { steps: 8 })
+  await page.mouse.up()
+
 
   // ① 入口看得见。**`toBeVisible` 对 opacity:0 仍然算可见，所以直接量**
   const 加宽 = page.getByRole("button", { name: "加宽" })
@@ -212,8 +208,10 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
   const img = page.locator(".preview-img")
   await expect(img).toBeVisible()
   const 窄的时候 = (await img.boundingBox())!
-  // 这就是作者看到的那张图：坞默认 380px，图被挤到三百出头
-  expect(窄的时候.width).toBeLessThan(400)
+  // 页面迭代的默认坞宽已为 480px；按真实容器判断，不沿用旧版 380px 的常量。
+  const 初始预览 = (await page.locator('.file-preview').boundingBox())!
+  expect(窄的时候.width).toBeLessThanOrEqual(初始预览.width)
+  expect(窄的时候.width).toBeGreaterThan(200)
 
   // ② 加宽
   await 加宽.click()

@@ -121,6 +121,7 @@ export const 草稿输入框 = forwardRef<HTMLTextAreaElement, 草稿输入框�
       }}
       onCompositionEnd={(e) => {
         组词中.current = false
+        delete e.currentTarget.dataset.composing
         /**
          * **以框里的为准**：这一刻框里就是人刚刚组完的那句话。
          * 主动冲一次，而不是等下一个 `input`——有些输入法根本不会再发。
@@ -135,6 +136,7 @@ export const 草稿输入框 = forwardRef<HTMLTextAreaElement, 草稿输入框�
       }}
       onCompositionStart={(e) => {
         组词中.current = true
+        e.currentTarget.dataset.composing = "true"
         onCompositionStart?.(e)
       }}
       ref={框}

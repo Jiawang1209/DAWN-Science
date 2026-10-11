@@ -21,7 +21,7 @@
  * 入口与它统领的那一列必须挨着、空着的时候不许白占空隙、
  * `⋯` 不许被列表裁掉。
  */
-import { test, expect, 开一段临时会话, 等进了对话, 进设置 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 在项目里开会话, 等进了对话, 进设置 } from "./fixtures.js"
 
 /**
  * **一个入口。**
@@ -115,6 +115,8 @@ test("**同一个路径合并成一个项目**，底下挂两段", async ({ dawn
   await expect(项目.locator(".proj-session-list .sess-item")).toHaveCount(1)
 
   // 在同一个项目里再开一段——**入口就在它自己那一行上**
+  await 项目.locator(".row").first().click()
+  await expect(项目.locator(".proj-session-list")).toHaveCount(0)
   await 项目.getByRole("button", { name: /里开一段新对话/ }).click()
   await expect(项目.locator(".proj-session-list .sess-item")).toHaveCount(2, { timeout: 30_000 })
 
@@ -140,13 +142,14 @@ test("**空着的时候不留白地**，加一条会话就正好多一行", asyn
   const 侧栏底 = async () =>
     (await page.locator(".sidebar").evaluate((el) => el.getBoundingClientRect().bottom)) as number
 
-  // 空态：入口下面直到底部那些常驻入口之间，没有列表占位
+  // 空态：服务器管理入口常驻；没有虚构的项目或会话列表占位。
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
-  await expect(page.locator(".side-section")).toHaveCount(0)
+  await expect(page.locator(".server-navigation .side-section")).toHaveCount(1)
+  await expect(page.locator(".side-section").filter({ hasNot: page.locator(".server-add") })).toHaveCount(0)
 
   // **开口那一刻才建出来**（2026-08-12）：「新建任务」只回初始画面
   await 入口.click()
-  const box = page.getByPlaceholder(/今天帮你做些什么/)
+  const box = page.locator("textarea.composer-field")
   await expect(box).toBeVisible({ timeout: 60_000 })
   await box.fill("说一句")
   await box.press("Enter")
@@ -219,7 +222,7 @@ test("**菜单开在行的右侧，且没被列表裁掉**", async ({ dawn }) =>
  * 要么不相等。所以它该有一条扫描，而不是靠下一次有人看出来。
  * （本项目的第二条准入规则：能判定的设计规则，配一个扫描测试。）
  */
-test("**固定区那几行，图标与文字同一条左缘**", async ({ dawn }) => {
+test("**新建按钮内容居中，底部固定操作保持共同左缘**", async ({ dawn }) => {
   const { page } = dawn
   const 左缘 = async (sel: string) =>
     await page.locator(sel).first().evaluate((el) => {
@@ -229,47 +232,41 @@ test("**固定区那几行，图标与文字同一条左缘**", async ({ dawn })
         行: Math.round(el.getBoundingClientRect().x),
         图标: icon ? Math.round(icon.getBoundingClientRect().x) : -1,
         文字: name ? Math.round(name.getBoundingClientRect().x) : -1,
+        文字右缘: name ? name.getBoundingClientRect().right : -1,
+        行中心: el.getBoundingClientRect().x + el.getBoundingClientRect().width / 2,
       }
     })
 
-  const 新建 = await 左缘(".side-action")
-  const 远端 = await 左缘(".remote-head")
+  const 新建 = await 左缘(".side-actions .side-action")
+  const 定时 = await 左缘(".side-bottom .side-action")
 
   expect(新建.图标).toBeGreaterThan(0)
-  expect(远端.图标).toBeGreaterThan(0)
-  // **逐项相等**：只比行的左缘不够——图标或文字任一处歪了，人一眼就看得见
-  expect(远端.行).toBe(新建.行)
-  expect(远端.图标).toBe(新建.图标)
-  expect(远端.文字).toBe(新建.文字)
+  expect(定时.图标).toBeGreaterThan(0)
+  // 第二轮参考图：独立主按钮居中，低频操作沿左缘。
+  expect(定时.行).toBe(新建.行)
+  expect(Math.abs((新建.图标 + 新建.文字右缘) / 2 - 新建.行中心)).toBeLessThan(2)
+  expect(定时.图标 - 定时.行).toBe(12)
+  expect(定时.文字).toBeGreaterThan(定时.图标)
 })
 
-/**
- * **顶部四项 + 一条横线**（2026-08-12，作者定的顺序）。
- *
- * 作者：*「左边侧边栏，从上到下设置一下固定的：第一个新建任务……
- * 然后画一个横线，下面是项目 然后是会话。」*
- *
- * 这条盯的是**顺序与分界**：四项在线上面，项目/会话在线下面。
- * 「上面是我能用什么、下面是我做过什么」——那条线是这句话的可见形式。
- */
-test("**固定入口在横线上面，项目与会话在下面**", async ({ dawn }) => {
+/** 页面迭代：本机新建 → 项目 → 服务器 → 会话；低频工具固定在底部。 */
+test("本机新建、项目、服务器、会话和底部工具按优先级排列", async ({ dawn }) => {
   const { page } = dawn
+  await 在项目里开会话(page)
   await 开一段临时会话(page)
-
-  const y = async (sel: string) =>
-    (await page.locator(sel).first().boundingBox())!.y
-
-  const 横线 = await y(".side-divider")
-  // 2026-08-23：技能 / 子 Agent / 插件 / MCP / 远程助理并进了设置，横线上面只剩新建任务、远端、定时
-  for (const 名 of ["新建任务", "定时"]) {
-    expect(await y(`.sidebar >> role=button[name=/^${名}/]`), `${名} 应在横线上面`).toBeLessThan(横线)
+  const y = async (selector: string) => (await page.locator(selector).first().boundingBox())!.y
+  const section = (name: string) => page.locator(".side-section-toggle").filter({ hasText: name })
+  const project = (await section("项目").boundingBox())!.y
+  const server = await y(".server-navigation")
+  const session = (await section("会话").boundingBox())!.y
+  expect(await y(".side-actions")).toBeLessThan(project)
+  expect(project).toBeLessThan(server)
+  expect(server).toBeLessThan(session)
+  expect(session).toBeLessThan(await y(".side-bottom"))
+  await expect(page.locator(".side-bottom").getByRole("button", { name: "定时", exact: true })).toBeVisible()
+  for (const name of ["Skills", "子 Agent", "插件", "MCP 服务器", "远程助理"]) {
+    await expect(page.locator(".sidebar").getByRole("button", { name, exact: true })).toHaveCount(0)
   }
-  for (const 名 of ["Skills", "子 Agent", "插件", "MCP 服务器", "远程助理"]) {
-    expect(await page.locator(`.sidebar >> role=button[name=/^${名}/]`).count(), `${名} 不该还在侧栏上`).toBe(0)
-  }
-  expect(await y(".remote-head"), "远端连接应在横线上面").toBeLessThan(横线)
-  // 分区标题（项目 / 会话）在线下面
-  expect(await y(".side-section")).toBeGreaterThan(横线)
 })
 
 /**

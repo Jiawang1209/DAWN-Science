@@ -365,7 +365,11 @@ for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
     // 空占位文字不撑高；真实内容仍能增高，清空后收回。
     const input = 框(坞(page))
     const 空高 = await input.evaluate(el => el.getBoundingClientRect().height)
-    expect(空高).toBe(44)
+    const 一行高度 = await input.evaluate(el => {
+      const s = getComputedStyle(el)
+      return Math.max(44, parseFloat(s.lineHeight) + parseFloat(s.paddingTop) + parseFloat(s.paddingBottom))
+    })
+    expect(空高).toBeCloseTo(一行高度, 1)
     expect(await input.evaluate(el => el.scrollHeight)).toBeLessThanOrEqual(
       await input.evaluate(el => el.clientHeight + 1),
     )

@@ -422,6 +422,7 @@ export class SessionTranscripts {
       type: "turn",
       id: `u${e.turnSeq}`,
       who: "user",
+      at: this.now(),
       text,
       final: true,
       ...(images && images.length > 0 ? { images: [...images] } : {}),

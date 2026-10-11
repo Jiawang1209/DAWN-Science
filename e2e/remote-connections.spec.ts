@@ -17,7 +17,7 @@
 import Database from "better-sqlite3"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
-import { test, expect, 开一段临时会话, 进设置, 进坞 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 在项目里开会话, 进设置, 进坞 } from "./fixtures.js"
 
 test.use({
   dawnOptions: {
@@ -31,7 +31,7 @@ test.use({
 /** 打开那一区。**默认收起**——没有远端的人不该为此多占一行 */
 async function 展开远端(page: import("@playwright/test").Page) {
   // **2026-08-14 改名**：「远端连接」→「远端服务器」（作者定的）
-  const head = page.getByRole("button", { name: /远端服务器/ })
+  const head = page.getByRole("button", { name: /^服务器/ })
   await expect(head).toBeVisible()
   if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
 }
@@ -44,10 +44,27 @@ async function 加一台(
   await page.locator("#conn-host").fill(opts.host ?? "fake.example")
   await page.locator("#conn-user").fill(opts.user ?? "dawn")
   if (opts.label) await page.locator("#conn-label").fill(opts.label)
-  if (opts.group) await page.locator("#conn-group").fill(opts.group)
+  if (opts.group) { await page.locator(".conn-advanced summary").click(); await page.locator("#conn-group").fill(opts.group) }
   // 假服务器认的口令写死为 `dawn`（见 src/remote/fake-ssh.ts）
   await page.locator("#conn-secret").fill(opts.secret ?? "dawn")
-  await page.getByRole("button", { name: "保存", exact: true }).click()
+  await page.getByRole("button", { name: "保存并连接", exact: true }).click()
+  const dialog = page.getByRole("dialog", { name: "添加服务器", exact: true })
+  if (opts.secret && opts.secret !== "dawn") {
+    await expect(dialog.getByRole("alert")).toBeVisible()
+    await dialog.getByRole("button", { name: "取消", exact: true }).click()
+  } else await expect(dialog).toHaveCount(0)
+}
+
+/** 管理菜单中的连接操作，保持真实断开/重连路径。 */
+async function 管理(row: import("@playwright/test").Locator, name: string) {
+  const trigger = row.getByRole("button", { name: /管理服务器：|Manage server:/ })
+  if ((name === "连接" || name === "Connect") && await row.getAttribute("data-state") === "ready") {
+    await trigger.click()
+    await row.getByRole("menuitem", { name: /^(断开|Disconnect)$/ }).click()
+    await expect(row).toHaveAttribute("data-state", "idle")
+  }
+  await trigger.click()
+  await row.getByRole("menuitem", { name, exact: true }).click()
 }
 
 test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
@@ -64,43 +81,20 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
   await expect(row.locator(".remote-label")).toHaveText("实验室")
   // **分组是一个标签，不是树**；没分组的不会被塞进一个叫「未分组」的假分组
   await expect(page.locator(".remote-group-name")).toHaveText("集群")
-  await expect(row.locator(".remote-sub")).toContainText("dawn@fake.example")
-  /**
-   * **刚加的写 `exited`，且没有原因行**——我们还没试过，谈不上「连不上」。
-   *
-   * 2026-08-19 之后这一格在**连过**的机器上写时间，但这一台没连过——
-   * 没有时间可写，`exited` 就是准确的那个词（作者：
-   * *「连接不上为什么不直接写 exited 呢？」*）。
-   */
-  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await row.locator(".side-subhead").hover()
+  await expect(page.getByText("dawn@fake.example:22", { exact: true })).toBeVisible()
+  // 添加后已保存并连接；状态使用真实返回，失败理由不会凭空出现。
+  await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "已连接")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
 
-  await row.getByRole("button", { name: "连接" }).click()
-  // **两种语言下都是 `alive` / `connecting` / `exited`**（2026-08-16 作者定的）
-  // ——夹具跑在中文，而这一列本来就不跟语言变
-  await expect(row.locator(".remote-status")).toHaveText("alive", { timeout: 15_000 })
+  await 管理(row, "连接")
+  // 已连接时管理 helper 不会重复连接；记录状态仍保持 ready。
+  await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "已连接", { timeout: 15_000 })
   await expect(row).toHaveAttribute("data-state", "ready")
 
-  await row.getByRole("button", { name: "断开" }).click()
-  /**
-   * **人按的断开：那一格写「刚刚」**（2026-08-19，作者要的）。
-   *
-   * 刚刚才连上过，所以「上次连上是多久前」的答案就是「刚刚」——
-   * 这一格现在是**真信息**，而不是一个对所有没连着的机器都成立的 `exited`。
-   *
-   * ## 三种「没连着」现在分得比以前更开
-   *
-   * | | 那一格 | 原因行 |
-   * |---|---|---|
-   * | 刚加的、没试过 | 没连过 | 无 |
-   * | 连不上（口令错等） | 没连过 | **有** |
-   * | 连过又断了 | **一个时间** | 无 |
-   *
-   * 2026-08-16 那一版三种全写 `exited`，只能靠原因行与点的颜色分。
-   * 所以这里仍然连着断言「没有原因行」——**没了它，这条用例与
-   * 「连不上」那条就再没有区别**，而那正是我们分不清两种断开的那一刻。
-   */
-  await expect(row.locator(".remote-status")).toHaveText("刚刚")
+  await 管理(row, "断开")
+  // 主动断开同时显示未连接与上次连接时间；没有认证/网络错误原因。
+  await expect(row.locator(".server-meta")).toContainText("刚刚")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
   await expect(row).toHaveAttribute("data-state", "idle")
 })
@@ -111,20 +105,20 @@ test("**连不上时说清是为什么**，就在那一行上", async ({ dawn })
   await 加一台(page, { label: "口令错的", secret: "不对的口令" })
 
   const row = page.locator(".remote-row").first()
-  await row.getByRole("button", { name: "连接" }).click()
+  await 管理(row, "连接")
 
   /**
    * 一句「连不上」什么都没说：口令错、主机不通、私钥读不到，
    * 要人去改的东西完全不同。所以底层那句话要原样上来。
    */
-  await expect(page.locator(".remote-problem")).toContainText(/authentication/i, {
+  await expect(row.locator(".remote-reason")).toContainText(/authentication/i, {
     timeout: 15_000,
   })
   /**
    * **一次都没连上过，所以这一格仍是 `exited`**——而原因行说清是为什么。
    * 与「刚加的还没试过」的区别全在那一行原因上（这一点 2026-08-16 就是如此）。
    */
-  await expect(row.locator(".remote-status")).toHaveText("exited")
+  await expect(row.locator(".remote-status")).toHaveText("未连接")
   await expect(row.locator(".remote-reason")).toBeVisible()
 })
 
@@ -134,7 +128,7 @@ test("**口令不回显**，且改别的字段不会把它弄丢", async ({ dawn
   await 加一台(page, { label: "甲" })
 
   const row = page.locator(".remote-row").first()
-  await row.getByRole("button", { name: "编辑" }).click()
+  await 管理(row, "编辑")
 
   // **框是空的**：回显一次，它就落进了截图、日志和录屏
   await expect(page.locator("#conn-secret")).toHaveValue("")
@@ -142,13 +136,14 @@ test("**口令不回显**，且改别的字段不会把它弄丢", async ({ dawn
   await expect(page.locator("#conn-secret")).toHaveAttribute("placeholder", /已配置/)
 
   // 只改分组，**不碰口令那个框**
+  await page.locator(".conn-advanced summary").click()
   await page.locator("#conn-group").fill("挪过去")
   await page.getByRole("button", { name: "保存", exact: true }).click()
   await expect(page.locator(".remote-group-name")).toHaveText("挪过去")
 
   // 口令还在：连得上就是证据（假服务器认的口令是 `dawn`）
-  await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
-  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("alive", {
+  await 管理(page.locator(".remote-row").first(), "连接")
+  await expect(page.locator(".remote-row").first().locator(".server-dot")).toHaveAttribute("aria-label", "已连接", {
     timeout: 15_000,
   })
 })
@@ -163,8 +158,9 @@ test("**入口看得见**：不是悬停才出现的 ＋", async ({ dawn }) => {
    */
   const opacity = await add.evaluate((el) => getComputedStyle(el).opacity)
   expect(Number(opacity)).toBeGreaterThan(0.5)
-  // 而且带文字，不是一个光秃秃的符号
-  await expect(add).toContainText("添加服务器")
+  // 常驻加号带可访问名称，与标题多选同排。
+  await expect(add).toHaveAccessibleName("添加服务器")
+  await expect(add.locator("svg")).toBeVisible()
 })
 
 test("删掉一台：**先说会连带发生什么**，再删", async ({ dawn }) => {
@@ -172,7 +168,7 @@ test("删掉一台：**先说会连带发生什么**，再删", async ({ dawn })
   await 展开远端(page)
   await 加一台(page, { label: "要删的" })
 
-  await page.locator(".remote-row").first().getByRole("button", { name: "编辑" }).click()
+  await 管理(page.locator(".remote-row").first(), "编辑")
   await page.getByRole("button", { name: "删除", exact: true }).click()
 
   // 不可逆的动作要说清连带后果**与不会发生什么**
@@ -195,7 +191,7 @@ test("**在服务器上开一段对话**：起点是家目录，命令打到那�
   await 加一台(page, { label: "假机器" })
 
   const row = page.locator(".remote-row").first()
-  await row.getByRole("button", { name: /新对话/ }).click()
+  await row.getByRole("button", { name: "新建远端任务", exact: true }).click()
 
   /**
    * **头上那一条必须显示「在哪台机器的哪个目录」。**
@@ -209,27 +205,16 @@ test("**在服务器上开一段对话**：起点是家目录，命令打到那�
   // 假服务器的家目录是 /home/dawn，显示成 `~`
   await expect(头.locator(".conv-remote-cwd")).toHaveText("~")
 
-  /**
-   * **这一区不再列对话了**（2026-08-14 作者定的，判据跟着翻面）。
-   *
-   * 原来这条钉的是「侧栏那一行也挂上了这段对话」，理由是作者报过
-   * *「在服务器的对话，不能删除，也不能挪动顺序」*——那时这里画的是一个
-   * 只能点的行，所以改成了与别处同一种 `.sess-item`。
-   *
-   * **那个诉求现在由另一条路满足**：远端对话成了一等任务
-   * （`b399f49`），落在侧栏「服务器」收纳里，天然能改名/置顶/批量删。
-   * 于是这里再列一份就是**同一个东西有两个家**，作者要求撤掉。
-   *
-   * 判据翻面而不是删除：**理由留在这儿**，下一个人看到的不是一条凭空消失的规则。
-   */
-  await expect(row.locator(".sess-item"), "这一区不该再列对话了").toHaveCount(0)
+  // 统一目录只列一次：连接记录下直接包含对应任务。
+  await expect(row.locator(".sess-item")).toHaveCount(1)
+
 })
 
 test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
   await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这儿有什么")
@@ -269,7 +254,7 @@ test("**断开 → 连接 → 同一段会话里的命令仍然打到远端**", 
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
   const row = page.locator(".remote-row").first()
-  await row.getByRole("button", { name: /新对话/ }).click()
+  await row.getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
   // 先说一句，证明这段会话活着、工具已经绑好
@@ -279,10 +264,10 @@ test("**断开 → 连接 → 同一段会话里的命令仍然打到远端**", 
   await expect(page.locator(".tool").first().locator(".tool-head")).toBeVisible()
 
   // 断开、再连上——**中间要人按**，这一条纪律没变
-  await row.getByRole("button", { name: "断开" }).click()
-  await expect(row.getByRole("button", { name: "连接", exact: true })).toBeVisible()
-  await row.getByRole("button", { name: "连接", exact: true }).click()
-  await expect(row.getByRole("button", { name: "断开" })).toBeVisible({ timeout: 30_000 })
+  await 管理(row, "断开")
+  await expect(row).toHaveAttribute("data-state", "idle")
+  await 管理(row, "连接")
+  await expect(row).toHaveAttribute("data-state", "ready", { timeout: 30_000 })
 
   // 同一段会话里再说一句：命令必须还是打到那台机器
   await page.getByPlaceholder(/今天帮你做些什么/).fill("再看一眼")
@@ -312,7 +297,7 @@ test("**在服务器上开的对话，出现在侧栏的「服务器」收纳里
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
 
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   // 等它真的开起来（头上那一条是这条线的既有判据）
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
@@ -341,7 +326,7 @@ test("**同一台机器上的多段对话，收在同一台底下**", async ({ d
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
 
-  const 新对话 = page.locator(".remote-row").first().getByRole("button", { name: /新对话/ })
+  const 新对话 = page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true })
   await 新对话.click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 展开远端(page)
@@ -352,258 +337,82 @@ test("**同一台机器上的多段对话，收在同一台底下**", async ({ d
   await expect(page.locator(".side-server li")).toHaveCount(2)
 })
 
-/**
- * **服务器行与下面的会话行落在同一条线上**（2026-08-16，作者报的两件）：
- *
- * > *「服务器的连接和未连接，能不能和下面会话中的 exited 保持对齐呢」*
- * > *「服务器的位置也要和下面的会话也对齐一下」*
- *
- * 改之前量到的：服务器行通铺 `0 → 264`，会话行内缩 `12 → 216`；
- * 状态词一个在 231、一个在 178，**差 53px**。
- *
- * 这里比的是**两者之间的差**，不是写死的坐标——侧栏可以被拖宽，
- * 而「同一列里只有一条起跑线」不该随宽度变。
- *
- * **2026-08-19 换了半个锚。** 会话行右端那一格从 `alive` 换成了
- * 「多久之前」（`.sess-when`，作者要的，形状取自 Hermes）。
- * 服务器那一行**仍然写 `alive` / `exited`**——那三个词是作者 2026-08-16 定的，
- * 管的是连接不是会话。
- *
- * 所以这条判据的意思一个字没变：**那一列右缘只有一条竖线**。
- * 只是右边那一格现在装的是别的内容——而这恰恰是它值得留着的理由：
- * 换内容最容易顺手换掉宽度，而那时对齐会悄悄坏掉。
- */
-test("**服务器行与会话行同一条线**：左缘、名字、状态词都对齐", async ({ dawn }) => {
+/** 页面迭代：成功连接只保留名称同排的绿点，状态通过可访问名称与悬停说明表达。 */
+test("服务器名、连接状态与会话保持清楚的层级", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await expect(page.locator(".session-list li .sess-when").first()).toBeVisible()
-
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await expect(page.locator(".remote-status").first()).toBeVisible()
-
-  const 量 = await page.evaluate(() => {
-    const 盒 = (sel: string) => {
-      const e = document.querySelector(sel) as HTMLElement | null
-      if (!e) return null
-      const r = e.getBoundingClientRect()
-      return { 左: r.left, 右: r.right, 字号: getComputedStyle(e).fontSize }
-    }
-    return {
-      服务器行: 盒(".remote-row"),
-      服务器名: 盒(".remote-label"),
-      服务器状态: 盒(".remote-status"),
-      会话行: 盒(".session-list li .row"),
-      会话名: 盒(".session-list li .sess-title"),
-      会话状态: 盒(".session-list li .sess-when"),
-    }
-  })
-  for (const [名, 盒] of Object.entries(量)) expect(盒, `没量到 ${名}`).not.toBeNull()
-  const m = 量 as { [K in keyof typeof 量]: NonNullable<(typeof 量)[K]> }
-
-  const 差 = (a: number, b: number) => Math.abs(a - b)
-  /**
-   * 左缘不再与会话行比（2026-08-22）：作者要会话比它的父级（机器名 / 项目名）更靠右、分出层次，
-   * 会话行因此缩进到 72。服务器行是面板里的顶层项，左缘照固定入口行那一列（`.side-action .row`）。
-   * **右缘与状态词仍与会话行同线**——那才是作者 2026-08-16 两次报的东西。
-   */
-  const 入口行 = (await page.locator(".side-action").first().boundingBox())!
-  expect(差(m.服务器行.左, 入口行.x), "服务器行与固定入口行的左内缩不一样").toBeLessThanOrEqual(2)
-  expect(差(m.服务器行.右, m.会话行.右), "服务器行没给行尾那一格留位置").toBeLessThanOrEqual(2)
-  // 行尾那一格是**右对齐**的一列：右缘才是它的那条线
-  expect(差(m.服务器状态.右, m.会话状态.右), "行尾那一格落不到同一条竖线上").toBeLessThanOrEqual(2)
-  expect(m.服务器状态.字号, "行尾那一格字号不同档").toBe(m.会话状态.字号)
+  const row = page.locator(".remote-row").first()
+  await expect(row.locator(".remote-label")).toHaveText("假机器")
+  await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "已连接")
+  const name = await row.locator(".remote-label").boundingBox()
+  const status = await row.locator(".server-dot").boundingBox()
+  expect(Math.abs(status!.y + status!.height / 2 - name!.y - name!.height / 2)).toBeLessThanOrEqual(2)
+  await expect(row.locator(".server-meta")).toHaveCount(0)
 })
 
-/**
- * **切了语言，这一列不变**（2026-08-16 作者定的：
- * *「无论是中文模式，还是英文模式，我们都是 alive/connecting/exited」*）。
- *
- * 今天这条用例改过两次方向，两次都对着当时的决定：
- * 先是「切得动」（中文 `连接/断连` ↔ 英文 `alive/exited`），
- * 现在是「切不动」。**留着它是因为两个方向都需要判据**——
- * 「不变」同样是一句会被无意打破的承诺：任何人给这三个词套上 `t()`，
- * 中文界面下它们就会变回中文，而那正是作者不要的。
- *
- * 顺带守住下面这件：**会话行那一列也是 `alive` / `exited`**，
- * 两列在两种语言下读的是同一套词。
- */
-test("**切了语言，那三个词不变**：alive / connecting / exited", async ({ dawn }) => {
+/** 连接状态随语言显示，connectionId 与 ready/disconnected 事实不随文案改变。 */
+test("连接状态随界面语言显示，连接身份与实际状态保持", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  const 状态 = page.locator(".remote-row").first().locator(".remote-status")
-  /**
-   * **这条判据 2026-08-19 一个字没改，只是覆盖面小了一点**：
-   * 连过又断了的那一格现在写时间，而时间本来就不跟语言变。
-   * 剩下的三个词理由不变：**给它们套上 `t()`，中文界面下就会变回中文**，
-   * 而那正是作者 2026-08-16 不要的。
-   */
-  await expect(状态).toHaveText("exited")
-
-  await page.locator(".remote-row").first().getByRole("button", { name: "连接" }).click()
-  await expect(状态).toHaveText("alive", { timeout: 15_000 })
-
+  const row = page.locator(".remote-row").first()
+  await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "已连接")
+  const id = await row.getAttribute("data-connection-id")
   await page.getByRole("button", { name: "设置", exact: true }).click()
   await page.getByRole("button", { name: "外观", exact: true }).click()
   await page.getByRole("radio", { name: "English" }).click()
-  await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 10_000 })
-  await page.keyboard.press("Escape")
-
+  await expect(page.getByRole("button", { name: "New task" })).toBeVisible()
   await 展开远端英文(page)
-  // 同一台机器、同一个状态，**换了语言也还是这个词**
-  await expect(状态, "有人给这三个词套上了 t()").toHaveText("alive")
-
-  await page.locator(".remote-row").first().getByRole("button", { name: "Disconnect" }).click()
-  // 断开之后写的是时间——**时间本来就不跟语言变**
-  await expect(状态).toHaveText("just now")
+  await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "Connected")
+  await expect(row).toHaveAttribute("data-connection-id", id!)
+  await 管理(row, "Disconnect")
+  await expect(row.locator(".remote-status")).toHaveText("Not connected")
+  await expect(row.locator(".server-meta")).toContainText("just now")
 })
 
-/** 英文界面下那一区的标题是 `Remote servers` */
+/** 英文界面仍使用同一服务器目录。 */
 async function 展开远端英文(page: import("@playwright/test").Page) {
-  const head = page.getByRole("button", { name: /Remote servers/ })
+  const head = page.getByRole("button", { name: /^Servers/ })
   await expect(head).toBeVisible()
   if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
 }
 
-/**
- * **那三颗动作永远在一行里，且没被裁掉**（2026-08-16，作者三句）：
- *
- * > *「新对话、连接、编辑，竟然出现了换行折叠，这是不行的，不好看」*
- * > *「不是宽度的问题，是折叠换行的效果不好看」*
- * > *「你就模仿下面会话收纳里面，会话标题不换行，不折叠就好了」*
- *
- * 原来的症状是**词被拆开**：「连接」竖成「连／接」。`flex-wrap` 本来就是 `nowrap`——
- * 断的是**每颗按钮内部**，因为 flex 项目能缩到 `min-content`，
- * 而中文的 `min-content` 是一个字。
- *
- * 这条用例挑的是**最紧的那个组合**：英文（词更长）＋ 侧栏拖到最窄（`SIDEBAR_MIN` = 200）。
- * 中文能过说明不了什么——出事的一定是英文那一侧。
- */
-test("**服务器那三颗动作不换行、不被裁**：英文 + 最窄侧栏", async ({ dawn }) => {
+/** 原三颗行内动作已收进管理菜单；最窄侧栏下连接/编辑仍完整可用。 */
+test("最窄侧栏仍能打开服务器管理菜单，操作不被裁掉", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-
-  await page.getByRole("button", { name: "设置", exact: true }).click()
-  await page.getByRole("button", { name: "外观", exact: true }).click()
-  await page.getByRole("radio", { name: "English" }).click()
-  await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 10_000 })
-  await page.keyboard.press("Escape")
-  /**
-   * **2026-09-16 起「设置」开的是右边那一栏**，而这条用例量的是侧栏。
-   * 不关掉它，屏幕上就有两条 `.side-sash`（侧栏那条 + 那一栏那条），
-   * 下面 `page.locator(".side-sash")` 当场撞 strict mode。
-   * 关掉而不是把定位器写窄：这条用例本来就该在「只有侧栏」的那一屏上量——
-   * 右边多一列 380px 会改变整个网格，而它验的是最窄侧栏下那三颗按钮的排布。
-   * 走 `.dock-close` 而不是再点一次「设置」：这时界面已经切成英文了。
-   */
-  await page.locator(".settings-column .dock-close").click()
-  await 展开远端英文(page)
-
-  /**
-   * 把侧栏收到最窄（下界 200 由 `clampWidth` 把住，多按也停在那儿）。
-   *
-   * **走键盘而不是合成指针拖动**：拖动这条路在这里量到过只走了 13px 就停
-   * （`dragging` 是 React 状态，前几个 `pointermove` 落在它变 true 之前），
-   * 于是用例是在一条 251 宽的侧栏上做的——**全绿，什么也没证明**。
-   * 键盘那条一步 16px，确定、且本身就是一条真实的无障碍路径。
-   *
-   * **宽度是异步落下来的**：按完立刻量，量到的还是旧值（这里踩过一次，
-   * 症状是「按了六下还是 260」，看着像键盘那条路坏了）。所以用轮询等它落定。
-   */
-  const sash = page.locator(".side-sash")
+  const sash = page.locator('.side-sash').first()
   await sash.focus()
-  for (let i = 0; i < 6; i++) await sash.press("ArrowLeft")
-  await expect
-    .poll(() => page.evaluate(() => Math.round(document.querySelector(".sidebar")!.getBoundingClientRect().width)), {
-      message: "侧栏没收到最窄",
-      timeout: 5000,
-    })
-    .toBe(200)
-
-  const m = await page.evaluate(() => {
-    const box = document.querySelector(".remote-actions") as HTMLElement
-    const r = box.getBoundingClientRect()
-    return {
-      侧栏宽: Math.round(document.querySelector(".sidebar")!.getBoundingClientRect().width),
-      容器右: r.right,
-      行高: r.height,
-      颗: [...box.querySelectorAll("button")].map((b) => {
-        const q = b.getBoundingClientRect()
-        return { 字: b.textContent?.trim() ?? "", 顶: Math.round(q.top), 右: q.right, 高: Math.round(q.height) }
-      }),
-    }
-  })
-  /**
-   * **先验前提**：拖到底了吗。
-   *
-   * 拖不动的话，下面三条就是在一条 264 的宽侧栏上做的——全绿，什么也没证明。
-   * 这类「前提悄悄没成立」的假绿，本项目栽过不止一次。
-   */
-  expect(m.侧栏宽, "没拖到最窄，下面几条就白做了").toBe(200)
-  expect(m.颗.length, "这一行本来有三颗").toBe(3)
-
-  // ① 同一个 `top` = 在同一行上。**这是「不换行」的事实形式**
-  const 顶 = [...new Set(m.颗.map((c) => c.顶))]
-  expect(顶, `换行了：${JSON.stringify(m.颗)}`).toHaveLength(1)
-
-  // ② 每颗都只有一行高。整颗不换行、词内也不断
-  for (const c of m.颗) {
-    expect(c.高, `「${c.字}」被拆成了两行`).toBeLessThanOrEqual(m.行高)
+  for (let i = 0; i < 8; i++) await sash.press("ArrowLeft")
+  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(200)
+  const row = page.locator('.remote-row').first()
+  await row.getByRole('button', { name: '管理服务器：假机器', exact: true }).click()
+  for (const name of ['断开', '编辑']) {
+    const action = row.getByRole('menuitem', { name, exact: true })
+    await expect(action).toBeVisible()
+    const box = await action.boundingBox()
+    const sidebar = await page.locator('.sidebar').boundingBox()
+    expect(box!.x).toBeGreaterThanOrEqual(sidebar!.x)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(sidebar!.x + sidebar!.width)
   }
-
-  // ③ 没被裁掉。`overflow: hidden` 是兜底，**不该在最窄处就用上**
-  const 末 = m.颗[m.颗.length - 1]!
-  expect(末.右, `「${末.字}」被裁掉了 ${Math.round(末.右 - m.容器右)}px`).toBeLessThanOrEqual(m.容器右)
 })
 
-/**
- * **真放不下时是裁掉，不是换行**——照 `.sess-title` 那一副
- * （作者：*「你就模仿下面会话收纳里面，会话标题不换行，不折叠就好了」*）。
- *
- * 上一条用例证明的是「当前这几个词在最窄的侧栏里放得下」。**它证明不了机制**：
- * 眼下还剩 8px 余量，于是把 `white-space: nowrap` 和 `flex-wrap: nowrap`
- * 一起撤掉，那条用例照样绿——变异测试当场量到了这件事。
- *
- * 所以这里**主动把一颗按钮的字撑长**，逼出那个条件。撑长之后只有两种结局：
- * 裁掉（对）或者换行（错），而它们在几何上是分得开的——行高变不变。
- */
-test("**动作条挤爆时裁掉而不换行**", async ({ dawn }) => {
+/** 新建远端任务属于具体机器行，图标不另占一行。 */
+test("远端新建入口固定为机器行图标，不额外占行", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await expect(page.locator(".remote-actions")).toBeVisible()
-
-  const m = await page.evaluate(() => {
-    const box = document.querySelector(".remote-actions") as HTMLElement
-    const 原高 = box.getBoundingClientRect().height
-    const 颗 = [...box.querySelectorAll("button")]
-    // **在同一个 evaluate 里改完就量**：React 没有机会重画回去
-    颗[0]!.textContent = "＋ 新对话 这是一个长得离谱的名字 用来把这一行挤爆 for good measure"
-    const r = box.getBoundingClientRect()
-    return {
-      原高,
-      现高: r.height,
-      容器右: r.right,
-      颗: 颗.map((b) => {
-        const q = b.getBoundingClientRect()
-        return { 字: (b.textContent ?? "").slice(0, 8), 顶: Math.round(q.top), 高: Math.round(q.height), 右: q.right }
-      }),
-    }
-  })
-
-  // ① 行没变高 = 谁都没换行（换行了这里会翻倍）
-  expect(m.现高, `挤爆之后这一行从 ${m.原高} 长到了 ${m.现高}`).toBeLessThanOrEqual(m.原高)
-
-  // ② 三颗仍在同一条基线上
-  expect([...new Set(m.颗.map((c) => c.顶))], `换行了：${JSON.stringify(m.颗)}`).toHaveLength(1)
-
-  // ③ 每颗都还是一行高——词内也没被拆（中文的 `min-content` 是一个字）
-  for (const c of m.颗) expect(c.高, `「${c.字}…」被拆成了两行`).toBeLessThanOrEqual(m.原高)
-
-  // ④ 容器没被撑宽：超出的那截落在框外，由 `.sidebar` 的 `overflow-x: hidden` 裁掉
-  expect(m.颗[m.颗.length - 1]!.右, "容器被撑开了，那就不是裁").toBeGreaterThan(m.容器右)
+  const row = page.locator('.side-subhead-row').first()
+  const button = row.getByRole('button', { name: '新建远端任务', exact: true })
+  await expect(button).toBeVisible()
+  expect(await button.textContent()).toBe('')
+  const b = (await button.boundingBox())!, r = (await row.boundingBox())!
+  expect(b.y).toBeGreaterThanOrEqual(r.y)
+  expect(b.y + b.height).toBeLessThanOrEqual(r.y + r.height)
+  expect(b.width).toBeLessThanOrEqual(32)
 })
 
 /**
@@ -615,7 +424,8 @@ test("**动作条挤爆时裁掉而不换行**", async ({ dawn }) => {
  * 而下一个被加进侧栏的长词照样会断——那正是今天这件事的来路：
  * 上一轮修好了服务器那三颗动作，分区标题却还在断。
  *
- * 扫的是几何：**内容高度超过一个行高 = 断了**。中英各扫一遍，
+ * 扫的是每个入口的几何；200px 时标题与添加入口允许分行，入口文字自身不能拆开。
+ * **内容高度超过一个行高 = 断了**。中英各扫一遍，
  * 且把侧栏收到最窄——**英文 + 最窄是最紧的那个组合**，
  * 实测也只有它抓得出东西（`Remote servers` 断成两行，52px）。
  */
@@ -627,7 +437,7 @@ test("**侧栏所有固定入口都不换行**：中英 × 最窄侧栏", async 
     page.evaluate(() => {
       const 断了: { 字: string; 高: number; 行高: number }[] = []
       const 选 =
-        ".sidebar .row, .sidebar .side-section, .sidebar .side-head, .sidebar .remote-group-name"
+        ".sidebar .row, .sidebar .side-section-toggle, .sidebar .server-add, .sidebar .side-head, .sidebar .remote-group-name"
       for (const e of document.querySelectorAll(选)) {
         const cs = getComputedStyle(e)
         const 行高 = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4
@@ -635,9 +445,16 @@ test("**侧栏所有固定入口都不换行**：中英 × 最窄侧栏", async 
           e.getBoundingClientRect().height -
           parseFloat(cs.paddingTop) -
           parseFloat(cs.paddingBottom)
-        // 留 1.4 倍的余地：`min-height` 撑出来的那点不算断行
-        if (内 > 行高 * 1.4) {
-          断了.push({ 字: (e.textContent ?? "").trim().slice(0, 20), 高: Math.round(内), 行高: Math.round(行高) })
+        // 量文字自身是否换行；触达区域的 min-height 不能算成第二行。
+        const walker = document.createTreeWalker(e, NodeFilter.SHOW_TEXT)
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          if (!node.textContent?.trim()) continue
+          const range = document.createRange(); range.selectNodeContents(node)
+          const lines = new Set([...range.getClientRects()].map(r => Math.round(r.top)))
+          if (lines.size > 1) {
+            断了.push({ 字: node.textContent.trim().slice(0, 20), 高: Math.round(内), 行高: Math.round(行高) })
+          }
         }
       }
       return 断了
@@ -679,7 +496,7 @@ test("**远端会话的文件面板长在那台服务器上**，不是本机", a
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
   await 进坞(page, "文件")
@@ -706,7 +523,7 @@ test("远端树上，目录点得开，文件点了是预览", async ({ dawn }) 
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 进坞(page, "文件")
 
@@ -722,7 +539,7 @@ test("远端文件面板按名字搜，结果是那台机器上的", async ({ da
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 进坞(page, "文件")
 
@@ -747,7 +564,7 @@ test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn
   const { page, dir } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 进坞(page, "文件")
 
@@ -779,7 +596,7 @@ test("下载同一个文件两次，第二份另存，不覆盖第一份", async
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 进坞(page, "文件")
   await page.locator(".right-dock .files-view").getByRole("button", { name: /^读我\.md/ }).click()
@@ -842,7 +659,7 @@ test.describe("下载落点", () => {
     // ── 一路走到磁盘：加一台 → 开对话 → 下一个文件
     await 展开远端(page)
     await 加一台(page, { label: "假机器" })
-    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+    await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
     await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
     await 进坞(page, "文件")
     await page.locator(".right-dock .files-view").getByRole("button", { name: /^读我\.md/ }).click()
@@ -869,7 +686,7 @@ test("本地文件没有「下载」那颗按钮", async ({ dawn }) => {
   const { page, workspace } = dawn
   const { writeFileSync } = await import("node:fs")
   writeFileSync(`${workspace}/本地的.md`, "# 本地\n")
-  await 开一段临时会话(page)
+  await 在项目里开会话(page)
   await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: /^本地的\.md/ }).click()
@@ -894,7 +711,7 @@ test.describe("上传", () => {
 
     await 展开远端(page)
     await 加一台(page, { label: "假机器" })
-    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+    await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
     await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
     await 进坞(page, "文件")
 
@@ -941,7 +758,7 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
   writeFileSync(`${workspace}/要删的.txt`, "删我\n")
 
   // ── 本地：文案是「移到废纸篓」，确认框说找得回来
-  await 开一段临时会话(page)
+  await 在项目里开会话(page)
   await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: /^要删的\.txt/ }).click()
@@ -959,7 +776,7 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
   // ── 远端：文案是「永久删除」，确认框说找不回来
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   /**
    * **不用再点一次「文件」**——坞还开着，而面板**跟着会话走**。
@@ -1016,7 +833,7 @@ test("删目录：「⋯」常驻可见，确认框说得出有多少个文件",
   writeFileSync(`${workspace}/要删的目录/b.txt`, "2\n")
   writeFileSync(`${workspace}/要删的目录/深一层/c.txt`, "3\n")
 
-  await 开一段临时会话(page)
+  await 在项目里开会话(page)
   await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   const 那颗 = 面板.getByRole("button", { name: /目录操作：要删的目录/ })
@@ -1057,7 +874,7 @@ test("拖拽：落在哪一行就亮哪一行；拿不到本机路径要出声",
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
   await 进坞(page, "文件")
 
@@ -1186,10 +1003,10 @@ test("**隔了几天再看，那一行写的是「上次连上是多久前」**"
   await 加一台(page, { label: "老机器" })
 
   const row = page.locator(".remote-row").first()
-  await row.getByRole("button", { name: "连接" }).click()
-  await expect(row.locator(".remote-status")).toHaveText("alive", { timeout: 15_000 })
-  await row.getByRole("button", { name: "断开" }).click()
-  await expect(row.locator(".remote-status")).toHaveText("刚刚")
+  await 管理(row, "连接")
+  await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "已连接", { timeout: 15_000 })
+  await 管理(row, "断开")
+  await expect(row.locator(".server-meta")).toContainText("刚刚")
 
   // 把那一刻挪到三天前
   const db = new Database(dbPath)
@@ -1200,7 +1017,7 @@ test("**隔了几天再看，那一行写的是「上次连上是多久前」**"
   await page.reload()
   await 展开远端(page)
 
-  await expect(page.locator(".remote-row").first().locator(".remote-status")).toHaveText("3d")
+  await expect(page.locator(".remote-row").first().locator(".server-meta")).toContainText("3d")
 })
 
 /**
@@ -1235,7 +1052,7 @@ test.describe("远端建会话的准入", () => {
     const { page } = dawn
     await 展开远端(page)
     await 加一台(page, { label: "假机器" })
-    await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+    await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
 
     const 头 = page.locator(".conv-remote")
     await expect(头).toBeVisible({ timeout: 30_000 })
@@ -1268,7 +1085,7 @@ test("**服务器收纳里的机器名（短的）贴着三角，不漂到中间
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { host: "gs1.cn", user: "u" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".side-server")).toHaveCount(1)
   const 贴 = await page.evaluate(() => {
     // 2026-08-23 三角与名字之间加了服务器图标（学项目行）；量的是名字与它前一个东西的间距
@@ -1284,7 +1101,7 @@ test("**服务器收纳里的机器名：一行截断，悬停弹全名**", asyn
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { host: "example.org.very.long.hostname.example", user: "user" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".side-server")).toHaveCount(1)
   const 名 = page.locator(".side-subhead .name")
   expect(await 名.evaluate((el) => el.scrollWidth > el.clientWidth + 1), "名字没截断").toBe(true)
@@ -1297,23 +1114,24 @@ test("**服务器收纳里的机器名：一行截断，悬停弹全名**", asyn
     return r.getBoundingClientRect().left - 前.right
   })
   expect(贴, "机器名没贴着三角").toBeLessThan(12)
-  // 计数仍在数字那一列（与会话时间同线）
-  const 数右 = await page.locator(".side-subhead .side-count").evaluate((el) => Math.round(el.getBoundingClientRect().right))
-  const 时间右 = await page.locator(".sess-when").first().evaluate((el) => Math.round(el.getBoundingClientRect().right))
-  expect(数右).toBe(时间右)
+  // 新布局把连接状态与菜单分开；名字仍在侧栏内截断。
+  const labelBox = await 名.boundingBox()
+  const sidebarBox = await page.locator(".sidebar").boundingBox()
+  expect(labelBox!.x + labelBox!.width).toBeLessThanOrEqual(sidebarBox!.x + sidebarBox!.width)
   await 名.hover()
   await expect(page.locator(".sess-hover-card")).toContainText("user@example.org.very.long.hostname.example")
 })
 
 /** **多选时，机器那一行的勾选框与底下会话的时间同一条右缘**（2026-08-22 作者要的） */
-test("**机器行的勾选框落在时间那一列**", async ({ dawn }) => {
+test("**机器行的批量勾选框在菜单旁保持可见**", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "假机器" })
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".side-server")).toHaveCount(1)
   await page.getByRole("button", { name: "多选服务器" }).click()
   const 勾右 = await page.locator(".side-subhead-row .sess-check").evaluate((el) => Math.round(el.getBoundingClientRect().right))
-  const 时间右 = await page.locator(".server-session-list .sess-when").first().evaluate((el) => Math.round(el.getBoundingClientRect().right))
-  expect(勾右).toBe(时间右)
+  const 菜单左 = await page.locator(".server-menu-anchor").evaluate((el) => Math.round(el.getBoundingClientRect().left))
+  expect(勾右).toBeLessThanOrEqual(菜单左)
+  await expect(page.locator(".side-subhead-row .sess-check")).toBeVisible()
 })

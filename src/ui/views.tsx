@@ -13,6 +13,10 @@ import type { QuestionAnswer } from "../protocol/index.js"
  * 打开 app 时要做的事是跟 agent 说话。
  */
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { buildServerGroups } from "./server-navigation.js"
+import { ServerSidebar, type ServerSidebarProps } from "./server-sidebar.js"
+import { ProjectActions } from "./project-actions.js"
+import type { RemoteConnection } from "../protocol/index.js"
 import type { View } from "./state/view.js"
 import { HoverCard, 浮层事件, 详情图, type 悬停浮层, type 详情行 } from "./hover-card.js"
 import { PaneBoundary } from "./pane-boundary.js"
@@ -33,6 +37,7 @@ import {
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_MIN,
   全部房客,
+  常用房客,
   type 坞房客,
 } from "./state/right-dock.js"
 import type { TranscriptItem, QueuedMessage } from "../protocol/index.js"
@@ -45,13 +50,15 @@ import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
 import { 方案卡, 先出方案开关 } from "./plan-card.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
-import { 扫引用, 扫内核指令, 剥掉粘贴标记 } from "../files/mentions.js"
+import { 剥掉粘贴标记 } from "../files/mentions.js"
+import { ComposerHighlight } from "./composer-highlight.js"
 import { 在打艾特, 艾特选完, 抠掉引用 } from "./at-file.js"
 import { TurnNavigator } from "./turn-navigator.js"
 import { 默认转录预算 } from "./transcript-budget.js"
 import { 是回显 } from "./state/transcript-slot.js"
 import { 定位命中, type 跳转目标 } from "../protocol/search-match.js"
 import { 滚到并高亮, 清高亮 } from "./search-jump.js"
+import { ConversationSearch } from "./conversation-search.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
 import { $待批准的会话, $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
@@ -62,7 +69,7 @@ import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名, 目录显示名 } from "./format.js"
-import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
 import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
 
@@ -164,7 +171,7 @@ function WorkspaceEntry({
       <span className="ws-chip-group">
         <Button variant="ghost" size="sm" className="ws-chip" onClick={onPick}>
           <文件夹图标 />
-          <span className="ws-chip-label">{t("选择工作目录")}</span>
+          <span className="ws-chip-label">{t("工作目录")}</span>
           <下拉图标 />
         </Button>
       </span>
@@ -999,35 +1006,11 @@ export function 可令牌名(名: string): string {
 }
 
 /**
- * 输入框底下的**引用高亮层**（2026-08-25，作者要的，学 Codex）：
- * textarea 自己画不了子串样式——底下垫一层排版完全相同的镜像（同 class 拿同一套字号与内距，
- * 文字透明），只给 `@文件名` 那几段涂灰底圆角。手敲 @ / 粘贴 / 拖拽走的都是同一份 `扫引用`，
- * 所以三个来源一起亮。光标、输入法、选区全在 textarea 上，不受影响；滚动由外面同步进来。
+ * 输入框镜像层：保留既有引用灰底，并给Markdown原始标记和围栏脚本着色。
+ * 主对话、首页及坞内会话共用；光标、输入法和选区仍在textarea上，滚动由外面同步。
  */
 export function 引用高亮层({ text, 滚 }: { text: string; 滚: number }) {
-  const 层 = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (层.current) 层.current.scrollTop = 滚
-  })
-  const 引用们 = [...扫引用(text), ...扫内核指令(text)].sort((a, b) => a.start - b.start)
-  if (引用们.length === 0) return null
-  const 段: React.ReactNode[] = []
-  let pos = 0
-  for (const r of 引用们) {
-    if (r.start > pos) 段.push(text.slice(pos, r.start))
-    段.push(
-      <span key={r.start} className="hl-ref">
-        {text.slice(r.start, r.end)}
-      </span>,
-    )
-    pos = r.end
-  }
-  if (pos < text.length) 段.push(text.slice(pos))
-  return (
-    <div ref={层} className="control composer-field composer-hl" aria-hidden="true">
-      {段}
-    </div>
-  )
+  return <ComposerHighlight text={text} scrollTop={滚} />
 }
 
 /**
@@ -1223,6 +1206,17 @@ export function RightDock({
 }) {
   const 产物数 = useStore($artifacts)?.artifacts.length ?? 0
   const cell数 = useStore($cellCount)
+  const [more, setMore] = useState(false)
+  const moreBox = useRef<HTMLDivElement>(null)
+  const moreTrigger = useRef<HTMLButtonElement>(null)
+  const visible = 常用房客.includes(tenant) ? 常用房客 : [...常用房客, tenant]
+  useEffect(() => {
+    if (!more) return
+    moreBox.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    const close = (e: PointerEvent) => { if (!moreBox.current?.contains(e.target as Node) && !moreTrigger.current?.contains(e.target as Node)) setMore(false) }
+    document.addEventListener("pointerdown", close)
+    return () => document.removeEventListener("pointerdown", close)
+  }, [more])
   /**
    * **当前那格滚进视野**（2026-09-27）。标签条放不下时横着滚、没有滚动条——点 chip 切到「子 agent」、
    * 从命令面板切到「对话」时，选中的那格可能正好在看不见的那一截里。只动这一条的 `scrollLeft`，不碰外面的滚动。
@@ -1267,7 +1261,7 @@ export function RightDock({
         */}
       <header className="dock-head">
         <div ref={标签条} className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
-          {全部房客.map((who) => (
+          {visible.map((who) => (
             <Button
               key={who}
               variant="ghost"
@@ -1286,6 +1280,20 @@ export function RightDock({
               {who === "notebook" && cell数 > 0 ? <span className="dock-tab-badge">{cell数}</span> : null}
             </Button>
           ))}
+        </div>
+        <div className="dock-more" ref={moreBox}>
+          <Button ref={moreTrigger} variant="ghost" size="icon" aria-label={t("更多面板")} aria-haspopup="menu" aria-expanded={more} onClick={() => setMore(!more)}>⋯</Button>
+          {more ? <div className="dock-more-menu" role="menu" aria-label={t("更多面板")} onKeyDown={e => {
+            if (e.key === "Escape") { setMore(false); moreTrigger.current?.focus() }
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault()
+              const items = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]
+              const index = items.indexOf(document.activeElement as HTMLButtonElement)
+              items[(index + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus()
+            }
+          }}>
+            {全部房客.filter(who => !常用房客.includes(who)).map(who => <Button key={who} variant="ghost" size="sm" role="menuitem" onClick={() => { setMore(false); onPick(who); moreTrigger.current?.focus() }}>{房客名(who)}</Button>)}
+          </div> : null}
         </div>
         <Button
           variant="ghost"
@@ -1347,7 +1355,8 @@ export function SessionSidebar({
   onOpenSettings,
   onDeleteProject,
   settingsActive,
-  remote,
+  connections = [],
+  serverActions,
   tasks,
   onNewTask,
   onPickTask,
@@ -1388,8 +1397,7 @@ export function SessionSidebar({
   /**
    * **当前展开那个项目里的会话**（2026-08-11）。
    *
-   * 与上面那个 `排序全集` 是两拨人：那一拨是**临时会话**
-   * （没有指定项目的），这一拨属于某个项目。
+   * 这一拨也包含在上面的 `排序全集` 中；排序集合另外包含临时会话。
    */
   projectSessions?: readonly SessionSummary[] | undefined
   /** 在某个项目里开一段新会话 */
@@ -1439,12 +1447,12 @@ export function SessionSidebar({
   /** 没有可用 agent 时的去处。**说清为什么还不够，要能点到能解决它的地方** */
   onOpenSettings?: (() => void) | undefined
   /**
-   * 「远端连接」那一区（②-B · R3）。**整块由外面传进来**——
-   * 侧栏只负责它坐在哪里，不负责它怎么取数。
+   * 单一服务器目录：连接与任务在这里归组，请求由 App 回调持有。
    *
    * **不给就整区不出现**：一个点了没反应的区比没有更坏。
    */
-  remote?: React.ReactNode | undefined
+  connections?: readonly RemoteConnection[] | undefined
+  serverActions?: Pick<ServerSidebarProps, "onAdd" | "onEdit" | "onConnect" | "onDisconnect" | "onNewTask" | "busyId" | "problem" | "problemId"> | undefined
   /**
    * 任务（T2）。**它将取代上面那两列**（会话 / 项目）——
    * 但这一批先并排放着：那两个名字被几十条 e2e 当作选择器用，
@@ -1723,13 +1731,8 @@ export function SessionSidebar({
    * 顺序：服务器优先于工作目录。远端任务即使设了路径也归服务器这一列，
    * 否则同一段会话会同时满足两边，而**一段会话只该有一个家**。
    */
-  const 服务器组: [string, TaskSummary[]][] = []
-  for (const t of 全部任务) {
-    if (!t.connectionId) continue
-    const 已有 = 服务器组.find(([c]) => c === t.connectionId)
-    if (已有) 已有[1].push(t)
-    else 服务器组.push([t.connectionId, [t]])
-  }
+  const 服务器目录 = buildServerGroups(connections, 全部任务)
+  const 服务器组: [string, TaskSummary[]][] = 服务器目录.filter(g => g.tasks.length > 0).map(g => [g.id, g.tasks])
 
   /** 服务器那一列能批量删的。**就是这一列里的全部**——它们都是任务 */
   const 服务器可批量的 = 服务器组.flatMap(([, 些]) => 些)
@@ -2025,9 +2028,18 @@ export function SessionSidebar({
     const to = 排序全集.find((x) => x.sessionId === targetId)
     setDragging(undefined)
     if (!from || !to || from.sessionId === to.sessionId) return
+    if (from.projectId !== to.projectId) return
     if (from.pinned !== to.pinned) return
 
-    const ids = 排序全集.map((x) => x.sessionId)
+    // 同一数据库项目可能装着多台服务器；拖动只改变当前收纳里的顺序。
+    const fromTask = tasks?.find((x) => x.sessionId === from.sessionId)
+    const toTask = tasks?.find((x) => x.sessionId === to.sessionId)
+    if (!fromTask || !toTask) return
+    if (fromTask.connectionId !== toTask.connectionId) return
+    if (!fromTask.connectionId && fromTask.workspace !== toTask.workspace) return
+
+    // reorderSessions 是按项目保存的；混入别的项目会让调用方取错归属。
+    const ids = 排序全集.filter((x) => x.projectId === from.projectId).map((x) => x.sessionId)
     const next = ids.filter((id) => id !== from.sessionId)
     next.splice(next.indexOf(to.sessionId), 0, from.sessionId)
     onReorderSessions?.(next)
@@ -2153,24 +2165,6 @@ export function SessionSidebar({
           * **不存在的能力不该看起来存在**——这是「看不见的能力等于不存在」的反面。
           */}
         {/* 技能 / 子 agent / 插件 / MCP / 远程助理 2026-08-23 起在设置的「扩展」一组里（作者：「前 4 个内容保留，剩下的都并入设置」） */}
-        {remote ?? null}
-        {/**
-          * **「已归档」只在真有归档的时候出现**（2026-08-22）。看不见的能力等于不存在，
-          * 但一个永远空的入口也是噪音——作者问过「会影响侧栏吗」，答案是：没归档过就一个像素都不变。
-          */}
-        {onShowSchedule ? (
-          <Row active={view === "schedule"} className="side-action" onClick={onShowSchedule}>
-            <时钟描边图标 className="row-icon" />
-            <span className="name">{t("定时")}</span>
-          </Row>
-        ) : null}
-        {onShowArchived && (archivedCount ?? 0) > 0 ? (
-          <Row active={view === "archived"} className="side-action" onClick={onShowArchived}>
-            <归档描边图标 className="row-icon" />
-            <span className="name">{t("已归档")}</span>
-            <span className="side-count">{archivedCount}</span>
-          </Row>
-        ) : null}
       </div>
       {/**
         * **一条横线**（作者明确要的）。
@@ -2211,30 +2205,9 @@ export function SessionSidebar({
         *
         * **一条都没有时整块不出现**：一个写着 `(0)` 的标题占一行、什么都没说。
         */}
-      {最近的.length > 0 ? (
-        <>
-          <p className="side-section">
-            <Button
-              variant="text"
-              size="inline"
-              className="side-section-toggle"
-              aria-expanded={!收起了("最近")}
-              onClick={() => 切收起("最近")}
-            >
-              <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
-              {/* 与项目 / 服务器 / 会话同一条：收起实心、展开描边（2026-08-23 作者指出「最近」漏了） */}
-              {收起了("最近") ? <时钟图标 className="side-section-icon" /> : <时钟描边图标 className="side-section-icon" />}
-              <span className="side-section-title">{t("最近")}</span>
-              <span className="side-count side-section-count">{最近的.length}</span>
-            </Button>
-          </p>
-          {收起了("最近") ? null : <ul className="session-list recent-list">{最近的.map((t) => 任务行(t, false))}</ul>}
-        </>
-      ) : null}
-
       {项目组.length > 0 ? (
         <>
-          <p className="side-section">
+          <p className="side-section side-section-primary" data-section="projects">
             {/* **整个收纳也能收起来**（2026-08-15 作者要的）：标题可点，三角靠旋转表达两态 */}
             <Button
               variant="text"
@@ -2392,51 +2365,11 @@ export function SessionSidebar({
                         </span>
                       </span>
                     </Row>
-                    {/**
-                      * **在这个项目里再开一段**（T3-a 保留下来的）。
-                      *
-                      * 没有它，往同一个文件夹加第二段对话就得
-                      * 「新建任务 → 再把同一个路径选一遍」——**它已经知道路径了**。
-                      *
-                      * 措辞刻意避开「新建任务」四个字：侧栏顶上那颗就叫这个，
-                      * 两处同名会让「按名字找按钮」变成靠运气的事，
-                      * 读屏与测试都一样。2026-08-11 撞过一次。
-                      */}
-                    <div className="row-actions">
-                      {onNewTaskIn ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="row-more"
-                          aria-label={tf("在「{0}」里开一段新对话", 基名(路径))}
-                          onClick={() => onNewTaskIn(路径)}
-                        >
-                          <加号图标 />
-                        </Button>
-                      ) : null}
-                      {/**
-                        * **删除项目留在这一行上**（作者 2026-08-11 要的）。
-                        *
-                        * *「删除项目的话，项目里面包含的之前的所有对话，则都删除掉了。」*
-                        * 项目在新模型里是**从路径长出来的**，但这个动作不是——
-                        * 它要收掉的是那些对话，而**磁盘上的文件一个都不动**
-                        * （路径是用户自己选的目录，绝对不能删）。
-                        *
-                        * projectId 从它下面第一段会话上取：任务只记路径，
-                        * **不重复记一份项目 id**——两处记同一件事迟早不一致。
-                        */}
-                      {onDeleteProject && 项目id(里面的) ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="row-more"
-                          aria-label={tf("删除项目：{0}", 基名(路径))}
-                          onClick={() => onDeleteProject(项目id(里面的)!)}
-                        >
-                          <删除图标 />
-                        </Button>
-                      ) : null}
-                    </div>
+                    <ProjectActions
+                      name={基名(路径)}
+                      onNew={onNewTaskIn ? () => { 设展开(路径, true); onNewTaskIn(路径) } : undefined}
+                      onDelete={onDeleteProject && 项目id(里面的) ? () => onDeleteProject(项目id(里面的)!) : undefined}
+                    />
                   </div>
                   {展开 ? (
                     <ul className="proj-session-list">
@@ -2464,53 +2397,41 @@ export function SessionSidebar({
         * **名字取不到就显示连接 id**：编一个「未命名服务器」出来，
         * 与「这台服务器就叫这个」在屏幕上分不开。
         */}
-      {服务器组.length > 0 ? (
-        <>
-          <p className="side-section">
-            {/**
-              * **带图标**（2026-08-14 作者要的）。
-              * 它与「项目」「会话」是并列的三个收纳，图标让这一点一眼可见。
-              */}
-            <Button
-              variant="text"
-              size="inline"
-              className="side-section-toggle"
-              aria-expanded={!收起了("服务器")}
-              onClick={() => 切收起("服务器")}
-            >
-              <三角图标 className={`twisty${收起了("服务器") ? "" : " open"}`} />
-              {/* 实心＝收起、描边＝展开，与另外两个收纳同一套 */}
-              {收起了("服务器") ? (
-                <服务器图标 className="side-section-icon" />
-              ) : (
-                <服务器描边图标 className="side-section-icon" />
-              )}
-              <span className="side-section-title">{t("服务器")}</span>
-              <span className="side-count side-section-count">{服务器组.length}</span>
-            </Button>
-            {/**
-              * **看得见的是「多选」，读屏听见的是「多选服务器」**——
-              * 与项目、会话那两颗同一副做法（2026-08-13 定的）：
-              * 三处是同一件事就该同一个名字，而
-              * `getByRole(name)` 是子串匹配，所以**可及名字必须互不为子串**
-              * （「多选项目」「多选会话」「多选服务器」谁也不是谁的子串）。
-              */}
-            {onDeleteMany ? (
-              <Button
-                variant="text"
-                size="inline"
-                className="side-bulk"
-                aria-label={选服务器中 ? t("结束多选服务器") : t("多选服务器")}
-                onClick={() => 进选择("服务器")}
-              >
-                {选服务器中 ? t("完成") : t("多选")}
-              </Button>
-            ) : null}
-          </p>
-          {/**
-            * 选择模式下那一条：**已选几段、全选、删除**。
-            * 数字常驻——按下之前就该知道自己要删掉几个。
-            */}
+      {serverActions ? <ServerSidebar
+        {...serverActions}
+        groups={服务器目录}
+        folded={收起了}
+        onToggle={切收起}
+        renderTask={(task) => 任务行(task, true)}
+        renderSelection={({ id: connectionId, tasks: 些 }) => <>
+                {选服务器中 && 些.length > 0 ? (
+                  <input
+                    type="checkbox"
+                    className="sess-check"
+                    checked={些.every((x) => 已选!.has(x.taskId))}
+                    ref={(el) => {
+                      if (el) {
+                        const 勾了 = 些.filter((x) => 已选!.has(x.taskId)).length
+                        el.indeterminate = 勾了 > 0 && 勾了 < 些.length
+                      }
+                    }}
+                    onChange={() =>
+                      设多选((前) => {
+                        const 集合 = new Set(前?.集合 ?? [])
+                        const 全在 = 些.every((x) => 集合.has(x.taskId))
+                        for (const x of 些) {
+                          if (全在) 集合.delete(x.taskId)
+                          else 集合.add(x.taskId)
+                        }
+                        return { 列: "服务器", 集合 }
+                      })
+                    }
+                    aria-label={tf("选择这台服务器：{0}", 服务器名?.(connectionId) ?? connectionId)}
+                  />
+                ) : null}
+        </>}
+        headerActions={onDeleteMany && 服务器可批量的.length > 0 ? <Button variant="text" size="inline" className="server-bulk" aria-label={选服务器中 ? t("结束多选服务器") : t("多选服务器")} onClick={() => 进选择("服务器")}>{选服务器中 ? t("完成") : t("多选")}</Button> : null}
+        toolbar={<>
           {选服务器中 ? (
             <div className="side-bulkbar">
               <span className="side-bulk-count">{tf("已选 {0}", String(已选!.size))}</span>
@@ -2550,89 +2471,9 @@ export function SessionSidebar({
               </Button>
             </div>
           ) : null}
-          {/**
-            * **一个收纳，里面再列各台机器**（2026-08-14 改的形状）。
-            *
-            * 上一版做成了「每台服务器各自一个分区标题」——作者看过之后指出那是错的：
-            * *「会话有一个收纳叫做会话，项目有一个收纳叫做项目，
-            * 其实服务器有一个收纳，那就叫服务器。」*
-            *
-            * 差别在屏幕上很大：机器一多，那种做法会摊出好几个平级标题；
-            * 而「项目」那一列不管几个项目都只占一个标题。
-            */}
-          {收起了("服务器") ? null : 服务器组.map(([connectionId, 些]) => (
-            <div key={connectionId} className="side-server">
-              {/**
-                * **每台机器都能收起来**（2026-08-15 作者要的）。
-                * 照项目那一列的做法：整行可点，三角靠旋转表达两态——
-                * 两个不同的字形会让展开看起来像换了个东西。
-                */}
-              {/**
-                * **一行两样：可点的标题 + 整台的勾选框**（2026-08-15 作者要的位置）。
-                *
-                * 作者：*「IP 整体选中的时候，选择框应该在 IP 的后面，现在不在一个水平线上。」*
-                *
-                * 勾选框**不能塞进那颗按钮里**——`<input>` 嵌在 `<button>` 里是无效的，
-                * 而且点它会连带触发折叠。所以外面套一行，两者并排、同一条基线。
-                */}
-              <div className="side-subhead-row">
-                <Button
-                  variant="text"
-                  size="inline"
-                  className="side-subhead"
-                  aria-expanded={!收起了(connectionId)}
-                  onClick={() => 切收起(connectionId)}
-                  /* 名字截断了就弹卡给全名——与会话标题同一套（2026-08-22 作者：「和下面 title 一样的效果」） */
-                  {...浮层事件(设浮着的, 服务器名?.(connectionId) ?? connectionId, undefined, undefined, "服务器", { 标题: ".name", 容器: ".sidebar", 开在: "右边" })}
-                >
-                  <三角图标 className={`twisty${收起了(connectionId) ? "" : " open"}`} />
-                  {/* 与项目行同一副形状：三角 + 图标 + 名字（2026-08-23 作者：「服务器收纳下面图标+IP 也应该学项目那一行」） */}
-                  <服务器图标 />
-                  {/* **名字取不到就显示 id**：编一个占位名与「它就叫这个」分不开 */}
-                  <span className="name">{服务器名?.(connectionId) ?? connectionId}</span>
-                  <span className="side-count">{些.length}</span>
-                </Button>
-                {/**
-                  * **多选时整台也能选**（2026-08-15 作者要的：
-                  * *「服务器的多选，也可以删除不同的 IP，现在仅仅是一个 IP 下的不同会话」*）。
-                  *
-                  * 勾这一台 = 勾上它底下的全部。**半选状态如实画成 indeterminate**——
-                  * 只勾了其中两段却显示成全勾，人会以为按删除会删掉整台。
-                  */}
-                {选服务器中 ? (
-                  <input
-                    type="checkbox"
-                    className="sess-check"
-                    checked={些.every((x) => 已选!.has(x.taskId))}
-                    ref={(el) => {
-                      if (el) {
-                        const 勾了 = 些.filter((x) => 已选!.has(x.taskId)).length
-                        el.indeterminate = 勾了 > 0 && 勾了 < 些.length
-                      }
-                    }}
-                    onChange={() =>
-                      设多选((前) => {
-                        const 集合 = new Set(前?.集合 ?? [])
-                        const 全在 = 些.every((x) => 集合.has(x.taskId))
-                        for (const x of 些) {
-                          if (全在) 集合.delete(x.taskId)
-                          else 集合.add(x.taskId)
-                        }
-                        return { 列: "服务器", 集合 }
-                      })
-                    }
-                    aria-label={tf("选择这台服务器：{0}", 服务器名?.(connectionId) ?? connectionId)}
-                  />
-                ) : null}
-              </div>
-              {收起了(connectionId) ? null : (
-                <ul className="server-session-list">{些.map((t) => 任务行(t, true))}</ul>
-              )}
-            </div>
-          ))}
-        </>
-      ) : null}
 
+        </>}
+      /> : null}
       {/**
         * **会话 = 没给路径的那些。**
         *
@@ -2642,7 +2483,7 @@ export function SessionSidebar({
         */}
       {散的.length > 0 ? (
         <>
-          <p className="side-section">
+          <p className="side-section side-section-secondary" data-section="sessions">
             <Button
               variant="text"
               size="inline"
@@ -2729,6 +2570,28 @@ export function SessionSidebar({
       ) : null}
 
 
+      {最近的.length > 0 ? (
+        <>
+          <p className="side-section side-section-secondary" data-section="recent">
+            <Button
+              variant="text"
+              size="inline"
+              className="side-section-toggle"
+              aria-expanded={!收起了("最近")}
+              onClick={() => 切收起("最近")}
+            >
+              <三角图标 className={`twisty${收起了("最近") ? "" : " open"}`} />
+              {/* 与项目 / 服务器 / 会话同一条：收起实心、展开描边（2026-08-23 作者指出「最近」漏了） */}
+              {收起了("最近") ? <时钟图标 className="side-section-icon" /> : <时钟描边图标 className="side-section-icon" />}
+              <span className="side-section-title">{t("最近")}</span>
+              <span className="side-count side-section-count">{最近的.length}</span>
+            </Button>
+          </p>
+          {收起了("最近") ? null : <ul className="session-list recent-list">{最近的.map((t) => 任务行(t, false))}</ul>}
+        </>
+      ) : null}
+
+
       {/**
         * **搜了却什么都没有，要说出来**（2026-08-13）。
         *
@@ -2752,6 +2615,24 @@ export function SessionSidebar({
         */}
       </div>
       <div className="side-bottom">
+        {/**
+          * **「已归档」只在真有归档的时候出现**（2026-08-22）。看不见的能力等于不存在，
+          * 但一个永远空的入口也是噪音——作者问过「会影响侧栏吗」，答案是：没归档过就一个像素都不变。
+          */}
+        {onShowSchedule ? (
+          <Row active={view === "schedule"} className="side-action side-action-schedule" onClick={onShowSchedule}>
+            <闹钟描边图标 className="row-icon" />
+            <span className="name">{t("定时")}</span>
+          </Row>
+        ) : null}
+        {onShowArchived && (archivedCount ?? 0) > 0 ? (
+          <Row active={view === "archived"} className="side-action side-action-archive" onClick={onShowArchived}>
+            <归档描边图标 className="row-icon" />
+            <span className="name">{t("已归档")}</span>
+            <span className="side-count">{archivedCount}</span>
+          </Row>
+        ) : null}
+
         {/**
           * 「有新版本」那一行（2026-09-06）：**在「设置」上面、常驻可见**。
           * 没有新版时它渲染成 null，这里一行都不占。
@@ -2779,7 +2660,8 @@ export function SessionSidebar({
         */}
         {onOpenSettings ? (
           <Row active={settingsActive ?? false} className="panel-entry" onClick={onOpenSettings}>
-            {t("设置")}
+            <设置图标 className="row-icon" />
+            <span className="name">{t("设置")}</span>
           </Row>
         ) : null}
       </div>
@@ -4737,6 +4619,29 @@ export function ConversationView({
    * 滚之前**逐帧找那个节点**（最多 12 帧）：放进预算、工具组展开、工具行展开是接连几次提交，两帧不一定够。
    */
   const 对话根 = useRef<HTMLDivElement>(null)
+  const [会话搜索开, 设会话搜索开] = useState(false)
+  const [会话搜索目标, 设会话搜索目标] = useState<跳转目标 | undefined>(undefined)
+  const [会话搜索错误, 设会话搜索错误] = useState<string | undefined>(undefined)
+  const 会话搜索按钮 = useRef<HTMLButtonElement>(null)
+  const 会话搜索序 = useRef(0)
+  const 跳会话命中 = useCallback((id: string, words: string[]) => {
+    设会话搜索错误(undefined)
+    if (!id) { 设会话搜索目标(undefined); 设搜索命中id(undefined); 清高亮(); return }
+    会话搜索序.current = Math.max(Date.now(), 会话搜索序.current + 1)
+    设会话搜索目标({ sessionId: session.sessionId, itemId: id, nth: 0, 词们: words, 起: 会话搜索序.current })
+  }, [session.sessionId])
+  const 关会话搜索 = () => {
+    设会话搜索开(false)
+    设会话搜索目标(undefined)
+    设搜索命中id(undefined)
+    设会话搜索错误(undefined)
+    清高亮()
+    会话搜索按钮.current?.focus()
+  }
+  useEffect(() => {
+    设会话搜索开(false)
+    设会话搜索目标(undefined)
+  }, [session.sessionId, 搜索跳到])
   /**
    * 贴底滚动的把手（2026-09-28，Task 8 e2e 抓到的，计划「风险 2」）：跳之前先 `stopScroll()` 撒手。
    * 不撒手的话，正看着的这段（贴着底）里点一处预算之外的命中——放进预算让内容变长，库认为还「贴着底」，
@@ -4753,25 +4658,35 @@ export function ConversationView({
     清高亮()
   }, [session.sessionId])
   useEffect(() => {
-    const 目标 = 搜索跳到
+    const 目标 = 会话搜索目标 ?? 搜索跳到
     if (!目标 || 目标.sessionId !== session.sessionId || 已跳.current === 目标.起) return
     const id = 定位命中(items, 目标)
     if (id) {
-      已跳.current = 目标.起
       设搜索命中id(id)
       贴底.current?.stopScroll()
       行回调最新.current.确保可见(id)
+      // 命中折叠过程内的工具/消息时，先打开所属过程，再由行/工具组展开命中。
+      const owner = 可收过程.find(group => group.itemIds.includes(id))
+      if (owner) 设轮次过程展开(old => ({ ...old, [owner.turnId]: true }))
       let 剩 = 12
+      let frame = 0
       const 试 = () => {
         贴底.current?.stopScroll()
-        if (滚到并高亮(对话根.current, id, 目标.词们) || --剩 <= 0) {
-          on跳完Ref.current?.()
+        const found = 滚到并高亮(对话根.current, id, 目标.词们)
+        if (found || --剩 <= 0) {
+          已跳.current = 目标.起
+          if (!found) {
+            const message = t("未能定位匹配内容，请重试")
+            if (会话搜索目标) 设会话搜索错误(message)
+            else on跳空?.(message)
+          }
+          if (!会话搜索目标) on跳完Ref.current?.()
           return
         }
-        requestAnimationFrame(试)
+        frame = requestAnimationFrame(试)
       }
-      requestAnimationFrame(试)
-      return
+      frame = requestAnimationFrame(试)
+      return () => cancelAnimationFrame(frame)
     }
     const 限 = setTimeout(
       () => {
@@ -4782,7 +4697,7 @@ export function ConversationView({
       Math.max(0, 目标.起 + 3_000 - Date.now()),
     )
     return () => clearTimeout(限)
-  }, [搜索跳到, items, session.sessionId, on跳空])
+  }, [搜索跳到, 会话搜索目标, items, session.sessionId, on跳空, 可收过程])
   /**
    * 框里有没有东西可发。**只有图也算**（协议 4.12）：
    * 「看看这张图」这种意图人常常懒得打字。
@@ -4835,6 +4750,8 @@ export function ConversationView({
           {紧凑 ? 坞头?.标题 : <h1 className="conv-title">{session.title ?? t("新对话")}</h1>}
           <SessionUsage items={items} />
         </div>
+        <Button ref={会话搜索按钮} variant="ghost" size="sm" className="conv-search-toggle"
+          aria-expanded={会话搜索开} onClick={() => 会话搜索开 ? 关会话搜索() : 设会话搜索开(true)}>{t("查找内容")}</Button>
         {/**
           * **不是内置那条时说一声**（2026-08-12）。
           *
@@ -4937,6 +4854,8 @@ export function ConversationView({
           */}
         {坞头?.动作}
       </header>
+      {会话搜索开 ? <ConversationSearch key={session.sessionId} items={items} onJump={跳会话命中} onClose={关会话搜索} /> : null}
+      {会话搜索开 && 会话搜索错误 ? <p className="hint" role="alert">{会话搜索错误}</p> : null}
       {坞头?.注}
 
       {/**
@@ -5688,8 +5607,19 @@ export function ConversationView({
               {canRedirect ? t("回车排到这一轮后面 · Cmd/Ctrl+回车调整方向") : t("回车排到这一轮后面")}
             </p>
           ) : null}
+          {/**
+            * **输入卡自己的那一行**（2026-08-12，作者截图指的就是这里）。
+            *
+            * 实测 WorkBuddy 的 `wb-input-footer`：与输入卡同宽、高 32、
+            * `padding: 0 12px`、`gap: 4`，里面是一颗颗 chip
+            * （`选择工作空间 ⌄`、`默认权限 ⌄`）。
+            *
+            * **我上一版把它放在了对话标题栏的右上角**——那是我自己想的位置，
+            * 从没量过它在哪。作者：*「这不是我想要的效果。」*
+            * 摆在输入卡下面才对：它说的是**这一句话会在哪儿执行**，
+            * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
+            */}
           <div className="composer-controls">
-            <span className="composer-gap" aria-hidden="true" />
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
               * 不摆一个点开是空的菜单。
@@ -5818,23 +5748,12 @@ export function ConversationView({
               </Button>
             )}
           </div>
-          {/**
-            * **输入卡自己的那一行**（2026-08-12，作者截图指的就是这里）。
-            *
-            * 实测 WorkBuddy 的 `wb-input-footer`：与输入卡同宽、高 32、
-            * `padding: 0 12px`、`gap: 4`，里面是一颗颗 chip
-            * （`选择工作空间 ⌄`、`默认权限 ⌄`）。
-            *
-            * **我上一版把它放在了对话标题栏的右上角**——那是我自己想的位置，
-            * 从没量过它在哪。作者：*「这不是我想要的效果。」*
-            * 摆在输入卡下面才对：它说的是**这一句话会在哪儿执行**，
-            * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
-            */}
         </div>
 
-          {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
+          {/* 同卡下层：准备工具在左，上下文与权限在右；模型和发送留在上层。 */}
           {/* 主区那张报自己几行、坞里那张跟着排（2026-09-29，与主区同高，见 `footer-rows.ts`） */}
-          <div className="composer-footer" ref={附栏ref} data-follow-main={紧凑 && 主区附栏行数 === 1 ? "one-row" : undefined}>
+          <div className="composer-footer" ref={附栏ref} data-follow-main={紧凑 && 主区附栏行数 ? (主区附栏行数 === 1 ? "one-row" : "two-rows") : undefined}>
+            <div className="composer-tools">
             {/**
               * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
               * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
@@ -5913,10 +5832,10 @@ export function ConversationView({
               * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
               * **这句话带着什么、在哪儿执行**。它们归一行。
               */}
-            {onPickWorkspace || workspace ? (
+            {session.remote || onPickWorkspace || workspace ? (
               <WorkspaceEntry
-                {...(workspace ? { workspace } : {})}
-                {...(onPickWorkspace ? { onPick: onPickWorkspace } : {})}
+                {...(session.remote ? { workspace: session.remote.cwd } : workspace ? { workspace } : {})}
+                {...(!session.remote && onPickWorkspace ? { onPick: onPickWorkspace } : {})}
               />
             ) : null}
             {/**
@@ -5935,20 +5854,9 @@ export function ConversationView({
                 aria-pressed={dockOpen ?? false}
                 onClick={onToggleDock}
               >
-                {/**
-                  * **就叫「终端」**（2026-08-16 作者定的）。
-                  *
-                  * 此前叫「终端面板」，理由是「终端」两个字是「打开终端」
-                  * 「＋ 新终端」的一部分——那是**拿人看的字去解决机器找元素的问题**，
-                  * 代价付错了地方（同一副错误 2026-08-13 在「批量／多选」上付过一次）。
-                  * 现在换成把那几处多余的「终端」去掉：面板自己就叫终端，
-                  * 里面的按钮再说一遍「终端」本来就是废话。
-                  *
-                  * 顺带修掉一处：**这里原本是裸中文，压根没走 `t()`**，
-                  * 于是英文界面上它一直是「终端面板」四个字。
-                  */}
+                {/* 工具栏统一四字名称，终端入口仍为打开/收起面板。 */}
                 <终端图标 />
-                {t("终端")}
+                {t("终端面板")}
               </Button>
             ) : null}
             {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
@@ -5982,6 +5890,8 @@ export function ConversationView({
                 }
               />
             ) : null}
+            </div>
+        <div className="composer-status">
             {/**
               * 前三样说「带什么、在哪跑」，右边说「怎么改」：权限那颗是唯一入口（2026-08-23）。
               * **模型（含 ACP 的）与推理强度已钉到顶行**（2026-08-27，作者 #3/#4），
@@ -6013,6 +5923,7 @@ export function ConversationView({
               />
             ) : null}
             {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}
+        </div>
           </div>
         </div>
       </form>
@@ -6454,6 +6365,7 @@ function TranscriptRowImpl({
       </div>
       {/** **这一轮生成了什么**（2026-08-26）：紧贴气泡下面，点一条进坞的「产物」格 */}
       {generated && onOpenArtifact ? <GeneratedStrip 产物={generated} onOpen={onOpenArtifact} loadThumb={loadThumb} /> : null}
+      {mine ? item.at !== undefined ? <time className="turn-time" dateTime={new Date(item.at).toISOString()}>{年月日时分(new Date(item.at).toISOString())}</time> : <span className="turn-time">{t("时间不明")}</span> : null}
 
       {/**
        * **操作在这一段的下面**（2026-08-11 挪下来，作者提，仿 Codex）。
@@ -7427,8 +7339,8 @@ export function EmptyConversation({
           <div className="welcome-mark" aria-hidden="true">
             D
           </div>
-          <h2 className="welcome-title">{t("开始一段对话")}</h2>
-          <p className="welcome-sub">{t("当前工作区已就绪。挑一个起手，或者直接说你要做什么。")}</p>
+          <h2 className="welcome-title">{t("今天想分析什么？")}</h2>
+          <p className="welcome-sub">{t("直接输入问题，按需选择本机文件夹。")}</p>
 
           {/**
            * 建议卡片。**点了要真的发生事情**——建会话，并把这句话发出去。
@@ -7449,7 +7361,7 @@ export function EmptyConversation({
               <li key={o.标题}>
                 <Button
                   variant="outline"
-                  size="card"
+                  size="card-compact"
                   onClick={() => 开场(first, t(o.发出去的话))}
                 >
                   <span className="opener-title">{t(o.标题)}</span>
@@ -7719,8 +7631,18 @@ export function EmptyConversation({
                 */}
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
+              {/**
+                * **与对话里那张同一颗 chip、同一处位置**（2026-08-12）。
+                *
+                * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个
+                * 选择工作目录，因为只有选择了，才归类为项目，如果不选择目录，
+                * 那么就是会话。」*
+                *
+                * 放在这儿而不是建完之后再设：**归类的那个决定应该在开口之前
+                * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
+                * 而一开始就选对，什么都不用搬。
+                */}
               <div className="composer-controls">
-                <span className="composer-gap" aria-hidden="true" />
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
                   *
@@ -7776,21 +7698,11 @@ export function EmptyConversation({
                   <上箭头图标 />
                 </Button>
               </div>
-              {/**
-                * **与对话里那张同一颗 chip、同一处位置**（2026-08-12）。
-                *
-                * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个
-                * 选择工作目录，因为只有选择了，才归类为项目，如果不选择目录，
-                * 那么就是会话。」*
-                *
-                * 放在这儿而不是建完之后再设：**归类的那个决定应该在开口之前
-                * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
-                * 而一开始就选对，什么都不用搬。
-                */}
             </div>
 
-              {/* 卡底下那条附栏（2026-08-22，学 WorkBuddy）：带什么、在哪跑、怎么改——都是「准备」，与「写、发」分开摆，底色也分开 */}
+              {/* 同卡下层：准备工具在左，上下文与权限在右；模型和发送留在上层。 */}
               <div className="composer-footer" ref={空态附栏ref}>
+                <div className="composer-tools">
                 {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
                 <AttachButton
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
@@ -7846,7 +7758,7 @@ export function EmptyConversation({
                 {onToggleDock ? (
                   <Button variant="ghost" size="sm" className="dock-toggle" aria-pressed={dockOpen ?? false} onClick={onToggleDock}>
                     <终端图标 />
-                    {t("终端")}
+                    {t("终端面板")}
                   </Button>
                 ) : null}
                 {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
@@ -7862,8 +7774,11 @@ export function EmptyConversation({
                 />
                 {/* 生成方案（2026-09-27；09-28 搬到附栏「优化输入」后面）：与对话里同一处。还没有会话，按下只记住「第一句按生成方案发」 */}
                 {先出方案 ? <先出方案开关 on={先出方案.on} 不能的原因={先出方案.不能的原因} onToggle={先出方案.onToggle} /> : null}
+                </div>
+            <div className="composer-status">
                 {/* 空态屏上那颗改的是**默认**（还没有会话） */}
                 {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}
+            </div>
               </div>
             </div>
           </form>

@@ -20,7 +20,9 @@ import { test, expect, 开一段临时会话, 进坞 } from "./fixtures.js"
 test("一条都没有时不画空列表，且新建入口可点", async ({ dawn }) => {
   const { page } = dawn
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
-  await expect(page.locator(".sidebar .side-section")).toHaveCount(0)
+  await expect(page.locator(".server-navigation .side-section")).toHaveCount(1)
+  await expect(page.getByRole("button", { name: "添加服务器", exact: true })).toBeEnabled()
+  await expect(page.locator(".proj-list, .session-list")).toHaveCount(0)
   // 出路：新建按钮可点
   await expect(page.getByRole("button", { name: "新建任务" })).toBeEnabled()
 })
@@ -140,10 +142,15 @@ test("坞开得起来也收得回去，**对话全程都在**；那颗按钮两�
   await 颗.click()
   await expect(page.locator(".right-dock")).toBeVisible()
   await expect(颗).toHaveText(/^面板：/)
-  // **四个房客的名字一直摆在坞头上**——不用先拉开一个菜单才知道有它们
-  for (const 名 of ["审阅", "文件", "概览", "网页"]) {
+  // 常用三项常驻；其余入口收进更多，但仍可达。
+  for (const 名 of ["文件", "产物", "笔记本"]) {
     await expect(page.getByRole("tab", { name: 名, exact: true })).toBeVisible()
   }
+  await page.getByRole("button", { name: "更多面板", exact: true }).click()
+  for (const 名 of ["审阅", "概览", "网页"]) {
+    await expect(page.getByRole("menuitem", { name: 名, exact: true })).toBeVisible()
+  }
+  await page.keyboard.press("Escape")
   await page.getByRole("tab", { name: "文件", exact: true }).click()
   await expect(page.locator(".right-dock .files-view")).toBeVisible()
   await expect(颗, "开着时名字要跟着房客走").toHaveText("面板：文件")

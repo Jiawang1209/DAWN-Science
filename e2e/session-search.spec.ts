@@ -146,7 +146,7 @@ test("**两个字的中文也搜**：搜「回归」命中 agent 那句「我跑
   await expect(处.locator("mark.cs-mark").first()).toHaveText("回归")
   // 一个字不搜，而且说出来
   await page.locator(".side-search-field").fill("回")
-  await expect(page.locator(".side-empty")).toHaveText("至少两个字")
+  await expect(page.locator(".search-panel .side-empty")).toHaveText("至少两个字")
   await expect(page.locator(".cs-card")).toHaveCount(0)
 })
 
@@ -169,8 +169,8 @@ test("**归档了的也搜得到**：卡上标「已归档」，点开 = 取消�
   // 放回去了：侧栏「已归档」那一行随之消失（只有它一段）。
   // 按 `.side-action` 找：结果卡的标题行也是按钮、名字里也带「已归档」（那张卡是搜的那一刻的样子）
   await expect(page.locator(".side-action").filter({ hasText: "已归档" })).toHaveCount(0)
-  // 按内容时三列让位；关掉搜索框，那一段回到侧栏
-  await page.locator(".side-search-field").press("Escape")
+  // 选中结果后浮层关闭；侧栏一直保留原来的导航。
+  await expect(page.getByRole("dialog", { name: "搜索", exact: true })).toHaveCount(0)
   await expect(page.locator(".sess-item").filter({ hasText: "收起来的座头鲸" })).toHaveCount(1)
 })
 
@@ -249,4 +249,57 @@ test("**打字快时只留最后一次的结果**：先搜一个词、紧接着�
   expect(全部.length).toBeGreaterThan(0)
   // 只比高亮：卡片标题取自第一句（「独角鲸的样本量」），整张卡里出现「独角鲸」是对的
   expect(全部.every((x) => x === "链路是通的")).toBe(true)
+})
+
+
+test("搜索浮层：按钮入口、名称跳转、键盘关闭和折叠侧栏独立", async ({ dawn }) => {
+  const { page } = dawn
+  await 开一段临时会话(page, "搜索浮层里的山雀")
+  const rows = await page.locator(".sidebar .sess-item").count()
+  const trigger = page.getByRole("button", {name:"搜索",exact:true})
+  expect((await trigger.boundingBox())!.width).toBeLessThanOrEqual(40)
+  await trigger.click()
+  const dialog = page.getByRole("dialog", {name:"搜索",exact:true})
+  const field = dialog.locator("input")
+  await expect(field).toBeFocused()
+  await field.fill("山雀")
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(rows)
+  await expect(page.locator(".sidebar .side-search-field")).toHaveCount(0)
+  await field.press("ArrowDown")
+  await expect(dialog.locator(".search-name-result")).toBeFocused()
+  await page.keyboard.press("Enter")
+  await expect(dialog).toHaveCount(0)
+  await expect(page.locator(".conv-title")).toContainText("山雀")
+  await expect(trigger).toBeFocused()
+  await page.getByRole("button", {name:"收起侧边栏",exact:true}).click()
+  await trigger.click()
+  await expect(page.getByRole("button", {name:"展开侧边栏",exact:true})).toBeVisible()
+  await expect(field).toHaveValue("")
+  await field.press("Escape")
+  await expect(dialog).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await page.locator(".search-backdrop").click({position:{x:5,y:5}})
+  await expect(dialog).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  await page.getByRole("button", {name:"展开侧边栏",exact:true}).click()
+  mkdirSync("tmp/ui-refresh-verification/search",{recursive:true})
+  for (const width of [1080,1440]) {
+    await page.setViewportSize({width,height:900})
+    await trigger.click()
+    await field.fill("山雀")
+    const bounds = (await dialog.locator(".search-panel").boundingBox())!
+    expect(bounds.x).toBeGreaterThanOrEqual(16)
+    expect(bounds.x+bounds.width).toBeLessThanOrEqual(width-16)
+    expect(bounds.y+bounds.height).toBeLessThanOrEqual(900)
+    await page.screenshot({path:`tmp/ui-refresh-verification/search/light-${width}.png`,animations:"disabled",caret:"hide"})
+    await field.press("Escape")
+  }
+  await page.getByRole("button", {name:"设置",exact:true}).click()
+  await page.getByRole("button", {name:"展开",exact:true}).click()
+  await page.getByRole("radio", {name:"暗色",exact:true}).click()
+  await page.getByRole("button", {name:"返回",exact:true}).click()
+  await trigger.click()
+  await field.fill("山雀")
+  await page.screenshot({path:"tmp/ui-refresh-verification/search/dark-1440.png",animations:"disabled",caret:"hide"})
 })

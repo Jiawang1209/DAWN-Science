@@ -3,12 +3,23 @@ import { act, fireEvent, render, screen } from "@testing-library/react"
 import {
   ConversationView,
   EmptyConversation,
-  SessionSidebar,
+  SessionSidebar as RealSessionSidebar,
   TerminalView,
 } from "../../src/ui/views.js"
+import type { ComponentProps } from "react"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../../src/protocol/index.js"
 import { SIDEBAR_FOLDED_KEY, SIDEBAR_PROJECTS_OPEN_KEY } from "../../src/ui/state/sidebar.js"
 import { 标记待批准, 标记在跑, 标未读 } from "../../src/ui/state/catalog.js"
+
+// 服务器目录现由连接配置与操作回调注入；旧样例的名字也放进权威连接配置。
+function SessionSidebar(props: ComponentProps<typeof RealSessionSidebar>) {
+  const ids = [...new Set((props.tasks ?? []).flatMap(task => task.connectionId ? [task.connectionId] : []))]
+  const connections = ids.flatMap(id => {
+    const label = props.服务器名?.(id)
+    return label ? [{ id, label, host: "isolated.example", port: 22, username: "test", hasSecret: false, sortOrder: 0, createdAt: "2026-10-11T00:00:00Z", state: { kind: "ready" as const } }] : []
+  })
+  return <RealSessionSidebar {...props} connections={props.connections ?? connections} />
+}
 
 /** 侧栏收起 / 展开 2026-09-28 起跨重启记着——每条用例从「没表达过偏好」开始，不吃上一条收起的 */
 beforeEach(() => {
@@ -52,6 +63,7 @@ const base = {
   onOpenProject: noop,
   onNewSession: noop as (a: string) => void,
   onShowPanel: noop,
+  serverActions: { onAdd: noop, onEdit: noop, onConnect: noop, onDisconnect: noop, onNewTask: noop },
 }
 
 const task = (over: Partial<TaskSummary> = {}): TaskSummary => ({
@@ -61,6 +73,43 @@ const task = (over: Partial<TaskSummary> = {}): TaskSummary => ({
   sortOrder: 1,
   createdAt: "2026-08-08T00:00:00Z",
   ...over,
+})
+
+describe("侧栏拖动排序的范围", () => {
+  const setup = (target: Partial<SessionSummary> = {}, targetTask: Partial<TaskSummary> = {}) => {
+    const list = [session({ sessionId: "temp", projectId: "scratch" }), session({ sessionId: "a", title: "甲" }), session({ sessionId: "b", title: "乙", ...target }), session({ sessionId: "c", title: "丙" })]
+    const tasks = [task({ taskId: "ta", sessionId: "a", workspace: "/w" }), task({ taskId: "tb", sessionId: "b", workspace: "/w", ...targetTask }), task({ taskId: "tc", sessionId: "c", workspace: "/w" })]
+    const onReorderSessions = vi.fn()
+    const { container } = render(<SessionSidebar {...base} 排序全集={list} tasks={tasks}
+      sessionOf={id => list.find(s => s.sessionId === id)} sessionRank={id => list.findIndex(s => s.sessionId === id)}
+      onReorderSessions={onReorderSessions} />)
+    for (const item of container.querySelectorAll(".proj-item")) fireEvent.click(item.querySelector(".row")!)
+    const rows = container.querySelectorAll(".proj-session-list .sess-item")
+    return { rows, onReorderSessions }
+  }
+
+  it("只提交当前项目的顺序，不混入临时项目会话", () => {
+    const { rows, onReorderSessions } = setup()
+    fireEvent.dragStart(rows[2]!)
+    fireEvent.dragOver(rows[0]!)
+    fireEvent.drop(rows[0]!)
+    expect(onReorderSessions).toHaveBeenCalledExactlyOnceWith(["c", "a", "b"])
+  })
+
+  it.each([
+    ["另一项目", { projectId: "p2" }, {}],
+    ["置顶分界", { pinned: true }, {}],
+    ["另一文件夹", {}, { workspace: "/other" }],
+  ])("不通过拖动越过%s", (_label, target, targetTask) => {
+    const { rows, onReorderSessions } = setup(target, targetTask)
+    // 两个文件夹各有自己的列表；按完整项目区域查找目标。
+    const source = screen.getByText("甲").closest(".sess-item")!
+    const destination = screen.getByText("乙").closest(".sess-item")!
+    fireEvent.dragStart(source)
+    fireEvent.drop(destination)
+    expect(onReorderSessions).not.toHaveBeenCalled()
+    expect(rows.length).toBeGreaterThan(0)
+  })
 })
 
 /**
@@ -529,7 +578,7 @@ describe("侧栏 · 服务器多选", () => {
 
   it("**看得见的是「多选」** —— 与项目、会话那两颗同一个字", () => {
     const c = 画()
-    const 颗 = [...c.querySelectorAll(".side-bulk")].find((b) =>
+    const 颗 = [...c.querySelectorAll(".side-bulk, .server-bulk")].find((b) =>
       (b.getAttribute("aria-label") ?? "").includes("服务器"),
     )
     expect(颗, "服务器那一列没有多选入口").toBeTruthy()
@@ -541,7 +590,7 @@ describe("侧栏 · 服务器多选", () => {
    * 三颗都叫「多选」时，靠它们各自的 `aria-label` 区分。
    */
   it("**读屏听见的是「多选服务器」** —— 与另两颗互不为子串", () => {
-    const 名 = [...画().querySelectorAll(".side-bulk")].map((b) => b.getAttribute("aria-label"))
+    const 名 = [...画().querySelectorAll(".side-bulk, .server-bulk")].map((b) => b.getAttribute("aria-label"))
     expect(名).toContain("多选服务器")
     for (const a of 名) {
       for (const b of 名) {
@@ -553,7 +602,7 @@ describe("侧栏 · 服务器多选", () => {
   it("**按下之后行上真的长出勾选框** —— 第一版就是这里没接", () => {
     const c = 画()
     expect(c.querySelectorAll(".server-session-list input[type=checkbox]").length).toBe(0)
-    const 颗 = [...c.querySelectorAll(".side-bulk")].find((b) =>
+    const 颗 = [...c.querySelectorAll(".side-bulk, .server-bulk")].find((b) =>
       (b.getAttribute("aria-label") ?? "").includes("服务器"),
     ) as HTMLElement
     fireEvent.click(颗)
@@ -570,7 +619,7 @@ describe("侧栏 · 服务器多选", () => {
   it("选择模式下有「已选 N / 全选 / 删除」", () => {
     const c = 画()
     fireEvent.click(
-      [...c.querySelectorAll(".side-bulk")].find((b) =>
+      [...c.querySelectorAll(".side-bulk, .server-bulk")].find((b) =>
         (b.getAttribute("aria-label") ?? "").includes("服务器"),
       ) as HTMLElement,
     )
@@ -698,11 +747,13 @@ describe("侧栏 · 收起来", () => {
     ["会话", () => 画([任务(), 任务()])],
     ["项目", () => 画([任务({ workspace: "/w/a" })])],
     ["服务器", () => 画([任务({ connectionId: "c1" })])],
-  ])("**「%s」展开时描边、收起时实心** —— 三角之外的第二个记号", (名, 起) => {
+  ])("「%s」折叠状态与图标正确", (名, 起) => {
     const c = 起()
     expect(收纳图标(c, 名), "展开着却不是描边").toBe("none")
     点收纳(c, 名)
-    expect(收纳图标(c, 名), "收起了却还是描边").toBe("currentColor")
+    expect(收纳图标(c, 名)).toBe("currentColor")
+    const toggle = [...c.querySelectorAll(".side-section-toggle")].find(el => el.textContent?.includes(名))!
+    expect(toggle.getAttribute("aria-expanded")).toBe("false")
   })
 
   /** 一台机器单独收起，**不影响同一收纳里的另一台** */
@@ -739,7 +790,7 @@ describe("侧栏 · 整台服务器一起选", () => {
       />,
     ).container
     fireEvent.click(
-      [...c.querySelectorAll(".side-bulk")].find((b) =>
+      [...c.querySelectorAll(".side-bulk, .server-bulk")].find((b) =>
         (b.getAttribute("aria-label") ?? "").includes("服务器"),
       ) as HTMLElement,
     )

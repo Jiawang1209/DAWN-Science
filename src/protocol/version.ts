@@ -574,7 +574,8 @@
  * 8.10（2026-10-08）：新增结构化 question 条目与 answerQuestion 操作，问答状态随快照同步。
  */
 /** 8.11: optional native-session next-prompt suggestion. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.11"
+/** 8.12: optional turn.at for actual message timestamps, including restored history. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.12"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

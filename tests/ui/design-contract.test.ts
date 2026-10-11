@@ -438,12 +438,11 @@ describe("设计契约 · 已经踩过的坑", () => {
     }
   })
 
-  it("**附栏里权限那颗的每个前邻都进了 auto 那条的 `:not`** —— 否则那条特异性更高，右侧多出一道缝", () => {
-    // 2026-09-27 复审 I2：上下文仪表插在 `.sess-config` 与 `.perm-pill` 之间，兄弟选择器断了——
-    // native 上仪表掉到左边，ACP 上两个 `margin-left: auto` 撑出一道缝。
+  it("**底栏状态里权限那颗的每个前邻都进了 auto 那条的 `:not`** —— 否则那条特异性更高，右侧多出一道缝", () => {
+    // 状态组内防止权限与上下文之间出现第二个 auto 间距。
     const css = read("styles.css")
-    const 前邻 = new Set([...css.matchAll(/\.composer-footer\s*>?\s*\.([\w-]+)\s*\+\s*\.perm-pill\s*\{/g)].map((m) => m[1]))
-    const auto = /\.composer-footer > \.perm-pill((?::not\([^)]*\))+)\s*\{\s*margin-left:\s*auto/.exec(css)
+    const 前邻 = new Set([...css.matchAll(/\.composer-status\s*>?\s*\.([\w-]+)\s*\+\s*\.perm-pill\s*\{/g)].map((m) => m[1]))
+    const auto = /\.composer-status > \.perm-pill((?::not\([^)]*\))+)\s*\{\s*margin-left:\s*auto/.exec(css)
     expect(auto, "找不到权限那颗的 margin-left: auto 规则").toBeTruthy()
     const 排除 = new Set([...auto![1]!.matchAll(/:not\(\.([\w-]+) \+ \.perm-pill\)/g)].map((m) => m[1]))
     expect(前邻.has("ctx-meter"), "仪表后面的权限那颗要有自己的间距").toBe(true)
@@ -1501,12 +1500,14 @@ describe("设计契约 · 过程压低、人话抬高", () => {
     expect(规则块(css(), '.md [data-streamdown="code-block"]')).not.toMatch(/--dawn-shadow-/)
   })
 
-  it("**底色学 dsh**（C16）：亮色对话区纯白；暗色对话区比侧栏深", () => {
+  it("浅色外壳与白色工作面分层；暗色仍保留深浅层级", () => {
     const tok = readFileSync(join(UI_DIR, "tokens.css"), "utf8")
     const 亮 = tok.slice(0, tok.indexOf(":root.dawn-dark {"))
     const 暗 = tok.slice(tok.indexOf(":root.dawn-dark {"))
     const 档 = (块: string, 名: string) => Number(块.match(new RegExp(`--theme-surface-${名}: var\\(--theme-gray-(\\d+)\\)`))?.[1])
-    expect(档(亮, "app"), "亮色对话区要是 gray-0（纯白）").toBe(0)
+    expect(档(亮, "panel"), "工作面保持纯白").toBe(0)
+    expect(亮).toMatch(/--theme-surface-app: #f6f6f3;/)
+    expect(亮).toMatch(/--theme-surface-sidebar: #f6f6f3;/)
     expect(档(暗, "app"), "暗色对话区要比侧栏深（档号越大越深）").toBeGreaterThan(档(暗, "sidebar"))
   })
 
@@ -1538,7 +1539,7 @@ describe("设计契约 · 对话节奏与 diff 统计", () => {
     expect(规则块(text, ".tool-group")).toMatch(/margin: *2px 0/)
     expect(规则块(text, ".completed-process-head")).toMatch(/margin: *var\(--dawn-space-4\)/)
     expect(text).toMatch(/\.tool \+ \.turn,\s*\.tool-group \+ \.turn \{ *margin-top: *var\(--dawn-space-4\)/)
-    expect(规则块(text, ".turn + .turn")).toMatch(/margin-top: *var\(--dawn-space-10\)/)
+    expect(规则块(text, ".turn + .turn")).toMatch(/margin-top: *var\(--dawn-space-6\)/)
   })
 
   it("**代码块标题与复制操作随长代码滚动仍可见**", () => {
@@ -1570,19 +1571,19 @@ describe("设计契约 · 对话字号只有一根轴", () => {
     return 取块(text, text.indexOf("{", i)).replace(/\/\*[\s\S]*?\*\//g, "")
   }
 
-  it("**字号根值 15px；行高与代码字都由它派生**", () => {
-    expect(tokens()).toMatch(/--dawn-chat-size: *15px/)
+  it("**字号根值 17px；行高与代码字都由它派生**", () => {
+    expect(tokens()).toMatch(/--dawn-chat-size: *17px/)
     expect(tokens()).toMatch(/--dawn-chat-leading: *calc\(var\(--dawn-chat-size\) \* 1\.75\)/)
     expect(规则块(css(), ".turns")).toMatch(/--dawn-ui-size: *calc\(var\(--dawn-chat-size\) \* 0\.866667\)/)
     expect(规则块(css(), ".turns")).toMatch(/--dawn-code-size: *calc\(var\(--dawn-chat-size\) - 2px\)/)
   })
 
   it("**对话里的文字层级、说话人头像与动作图标跟字号缩放**", () => {
-    expect(规则块(css(), ".md h1")).toMatch(/font-size: *1\.2em/)
-    expect(规则块(css(), ".md h2")).toMatch(/font-size: *\.933333em/)
-    expect(规则块(css(), ".md h3")).toMatch(/font-size: *\.866667em/)
-    expect(规则块(css(), ".turn .who")).toMatch(/font-size: *\.8em/)
-    expect(规则块(css(), ".who-avatar")).toMatch(/width: *calc\(var\(--dawn-chat-size\) \* 1\.6\)/)
+    expect(规则块(css(), ".md h1")).toMatch(/font-size: *1\.4em/)
+    expect(规则块(css(), ".md h2")).toMatch(/font-size: *1\.2em/)
+    expect(规则块(css(), ".md h3")).toMatch(/font-size: *1\.05em/)
+    expect(规则块(css(), ".turn .who")).toMatch(/font-size: *1em/)
+    expect(规则块(css(), ".who-avatar")).toMatch(/width: *calc\(var\(--dawn-chat-size\) \* 2\)/)
     expect(规则块(css(), ".turn-actions .btn-icon")).toMatch(/width: *calc\(var\(--dawn-chat-size\) \* 1\.866667\)/)
   })
 })

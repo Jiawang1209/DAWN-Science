@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react"
 import type { Artifact } from "../protocol/index.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
-import { FilePreview, type FileContent } from "./files.js"
+import { FilePreview, 类型图标, type FileContent } from "./files.js"
+import { 文件类按名字 } from "./file-kind.js"
 import { t, tf } from "./i18n/index.js"
 
 /**
@@ -154,9 +155,10 @@ export function ArtifactsPanel({
   }
 
   if (看的) {
+    const visual = 内容?.kind === "pdf" || 内容?.kind === "image"
     return (
-      <div className="artifacts-pane">
-        <header className="artifacts-head">
+      <div className="artifacts-pane artifacts-preview">
+        {!visual ? <header className="artifacts-head">
           <Button variant="ghost" size="sm" onClick={() => 设看的(undefined)}>
             {t("回到清单")}
           </Button>
@@ -164,7 +166,7 @@ export function ArtifactsPanel({
           <Button variant="ghost" size="sm" onClick={() => onOpenInFiles(看的)}>
             {t("在文件里定位")}
           </Button>
-        </header>
+        </header> : null}
         {读错 ? (
           <EmptyState
             title={t("读不到这个文件")}
@@ -180,9 +182,21 @@ export function ArtifactsPanel({
             path={看的}
             content={内容}
             onOpenExternally={onOpenExternally}
+            {...(visual ? { navigation: { onBack: () => 设看的(undefined), onLocate: () => onOpenInFiles(看的) } } : {})}
             {...(onDownload ? { onDownload } : {})}
           />
         )}
+        <ul className="artifacts-compact" aria-label={t("产物")}>
+          {data.artifacts.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
+            <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>
+              <span className="artifact-row-icon"><类型图标 类={文件类按名字(a.path, "file")} /></span>
+              <span className="name">{a.path.split("/").pop()}</span>
+              <span className="kind-tag">{a.kind.toUpperCase()}</span>
+              {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
+            </Button>
+          </li>)}
+        </ul>
+        {data.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", data.unknown.length)}</p> : null}
       </div>
     )
   }

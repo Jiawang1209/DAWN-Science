@@ -44,13 +44,13 @@ const html = () => document.documentElement
 beforeEach(() => {
   setSystemPrefersDark(false)
   html().className = ""
-  $theme.set("system")
+  $theme.set("light")
   localStorage.clear()
 })
 
 describe("主题选择 · 三态", () => {
-  it("默认跟随系统 —— 没选过就不该替人做主", () => {
-    expect($theme.get()).toBe("system")
+  it("默认浅色，已存选择另外恢复", () => {
+    expect($theme.get()).toBe("light")
   })
 
   it("选暗色 → html 上挂 .dawn-dark", () => {
@@ -122,16 +122,16 @@ describe("主题选择 · 持久化", () => {
     expect(html().classList.contains("dawn-dark")).toBe(true)
   })
 
-  it("**没选过时返回 system，而不是猜一个** —— 缺失不等于某个具体值", () => {
-    expect(loadTheme()).toBe("system")
+  it("首次使用默认浅色", () => {
+    expect(loadTheme()).toBe("light")
   })
 })
 
 describe("主题选择 · 坏数据与不可用的存储", () => {
-  it("存了不认识的值 → 回落到跟随系统，**且出声**", () => {
+  it("存了不认识的值 → 回落到浅色，**且出声**", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {})
     localStorage.setItem(THEME_STORAGE_KEY, "深色模式")
-    expect(loadTheme()).toBe("system")
+    expect(loadTheme()).toBe("light")
     // 静默回落会让"我明明选过暗色"变成一个查不出来的怪事
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
@@ -151,13 +151,13 @@ describe("主题选择 · 坏数据与不可用的存储", () => {
     spy.mockRestore()
   })
 
-  it("localStorage 读不出来时，回落到跟随系统并出声", () => {
+  it("localStorage 读不出来时，回落到浅色并出声", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {})
     const saved = Storage.prototype.getItem
     Storage.prototype.getItem = () => {
       throw new Error("SecurityError")
     }
-    expect(loadTheme()).toBe("system")
+    expect(loadTheme()).toBe("light")
     expect(spy).toHaveBeenCalled()
     Storage.prototype.getItem = saved
     spy.mockRestore()
@@ -171,4 +171,14 @@ describe("主题选择 · applyTheme 可以作用在任意元素上", () => {
     expect(el.classList.contains("dawn-dark")).toBe(true)
     expect(html().classList.contains("dawn-dark")).toBe(false)
   })
+})
+
+it("首次使用默认浅色，显式跟随系统仍生效", () => {
+  localStorage.removeItem(THEME_STORAGE_KEY)
+  setSystemPrefersDark(true)
+  expect(loadTheme()).toBe("light")
+  expect(html().classList.contains("dawn-light")).toBe(true)
+  localStorage.setItem(THEME_STORAGE_KEY, "system")
+  expect(loadTheme()).toBe("system")
+  expect(html().classList.contains("dawn-dark")).toBe(true)
 })

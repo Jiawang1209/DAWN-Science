@@ -51,6 +51,8 @@ export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overvie
  * 「对话」2026-09-24 加（spec `2026-09-24-侧边对话`）：坞里跑第二段对话，排在最后。
  * 「子 agent」2026-09-27 加（spec `2026-09-27-子agent看得见`），排在「团队」前——两者都是「谁在替主 agent 干活」。
  */
+export const 常用房客: readonly 坞房客[] = ["files", "artifacts", "notebook"]
+
 export const 全部房客: readonly 坞房客[] = ["review", "files", "artifacts", "notebook", "overview", "web", "subagent", "team", "chat"]
 
 export const RIGHT_DOCK_TENANT_KEY = "dawn.global.right-dock-tenant"
@@ -58,7 +60,7 @@ export const RIGHT_DOCK_WIDTH_KEY = "dawn.global.right-dock-width"
 
 /** 够放一棵树加一块预览。再窄，文件名就开始被截 */
 export const RIGHT_DOCK_MIN = 280
-export const RIGHT_DOCK_DEFAULT = 380
+export const RIGHT_DOCK_DEFAULT = 480
 /**
  * 再宽，正文栏就低于 `.body` 里那个 `minmax(420px, 1fr)` 的承诺。
  *

@@ -81,7 +81,7 @@ function 在前(a: Element, b: Element): boolean {
   return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
 }
 
-describe("顶行：模型与推理强度钉在发送键左边", () => {
+describe("发送控件：模型与推理强度钉在发送键左边", () => {
   it("**内置会话**：推理 pill 落在 .composer-controls 里、模型之后发送之前；底部菜单里没有它", () => {
     const { container } = render(
       <ConversationView
@@ -110,11 +110,12 @@ describe("顶行：模型与推理强度钉在发送键左边", () => {
     expect(在前(模型pill, 推理pill)).toBe(true)
     expect(在前(推理pill, 发送)).toBe(true)
 
-    // 推理强度不在附栏
-    expect(container.querySelector(".composer-footer .config-pill")).toBeNull()
+    // 模型与推理留在输入上层；准备工具和权限在同卡下层。
+    expect(container.querySelector(".composer-box .config-pill")).toBe(推理pill)
+    expect(container.querySelector(".composer-status .config-pill")).toBeNull()
 
     // 底部那颗 SessionConfigMenu 只收剩下的开关，打开看：有「详细程度」，没有「推理强度」
-    const 底菜单 = container.querySelector(".composer-footer .sess-config:not(.config-pill)")!
+    const 底菜单 = container.querySelector(".composer-status .sess-config:not(.config-pill)")!
     expect(底菜单).not.toBeNull()
     fireEvent.click(底菜单.querySelector(".sess-config-trigger")!)
     const 弹层 = 底菜单.querySelector(".sess-config-menu")!
@@ -148,7 +149,7 @@ describe("顶行：模型与推理强度钉在发送键左边", () => {
     expect(在前(推理pill, 发送)).toBe(true)
 
     // 底部菜单只剩「详细程度」——模型 / 推理强度 / 权限档一个都不在里面
-    const 底菜单 = container.querySelector(".composer-footer .sess-config:not(.config-pill)")!
+    const 底菜单 = container.querySelector(".composer-status .sess-config:not(.config-pill)")!
     fireEvent.click(底菜单.querySelector(".sess-config-trigger")!)
     const 弹层 = 底菜单.querySelector(".sess-config-menu")!
     expect(弹层.textContent).toContain("详细程度")
@@ -169,7 +170,7 @@ describe("顶行：模型与推理强度钉在发送键左边", () => {
         权限={{ 当前: "ask-risky", 跟随默认: false, onPick: () => {} }}
       />,
     )
-    expect(container.querySelector(".composer-footer .perm-pill")).not.toBeNull()
+    expect(container.querySelector(".composer-status .perm-pill")).not.toBeNull()
     // 权限没跑到顶行去
     expect(container.querySelector(".composer-controls .perm-pill")).toBeNull()
   })

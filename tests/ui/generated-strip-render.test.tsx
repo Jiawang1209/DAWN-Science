@@ -2,13 +2,20 @@
  * 产物条的渲染（2026-08-26，审查 B / D）：取失败要出声、chip 的可达名不与坞里清单行同名。
  */
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor, fireEvent } from "@testing-library/react"
+import { render as baseRender, screen, waitFor, fireEvent } from "@testing-library/react"
 import { GeneratedStrip } from "../../src/ui/generated-strip.js"
 
 const art = (path: string, kind: "table" | "image" = "table", exists = true) =>
   ({ path, kind, bornRunId: "r", bornToolCallId: "c", bornAt: "2026-08-26T10:00:00.000Z", exists }) as const
 
 describe("GeneratedStrip", () => {
+  // 以下验证原文件 chip 行为；新版需先显式展开清单。
+  const render = (ui: Parameters<typeof baseRender>[0]) => {
+    const result = baseRender(ui)
+    const expand = screen.queryByRole("button", { name: "展开文件列表" })
+    if (expand) fireEvent.click(expand)
+    return result
+  }
   it("load_failed → 「产物清单没取到」+ 原因，不画 GENERATED", () => {
     render(<GeneratedStrip 产物={{ kind: "unknown", reason: "load_failed", error: "ECONNRESET" }} onOpen={vi.fn()} />)
     expect(screen.getByText("本轮产出未知")).toBeTruthy()
@@ -32,7 +39,7 @@ describe("GeneratedStrip", () => {
 
   it("chip 按生成先后排，不按字母序（b 先建就 b 在前）", () => {
     render(<GeneratedStrip 产物={{ kind: "some", unknownCount: 0, artifacts: [art("out/b.csv"), art("out/a.csv")] }} onOpen={vi.fn()} />)
-    const 名字 = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"))
+    const 名字 = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label")).filter(n => n?.startsWith("打开产物"))
     expect(名字).toEqual(["打开产物 out/b.csv", "打开产物 out/a.csv"])
   })
 
@@ -86,4 +93,15 @@ describe("GeneratedStrip", () => {
     expect(screen.getByText("已不存在")).toBeTruthy()
     expect(container.querySelector(".generated-chip img")).toBeNull()
   })
+})
+
+it("默认只显示结果摘要，展开后保留文件入口", () => {
+  const onOpen = vi.fn()
+  baseRender(<GeneratedStrip 产物={{ kind: "some", unknownCount: 1, artifacts: [art("out/a.csv")] }} onOpen={onOpen} />)
+  expect(screen.getByText("已生成 1 个文件")).toBeTruthy()
+  expect(screen.queryByRole("button", { name: "打开产物 out/a.csv" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "查看产物" }))
+  expect(onOpen).toHaveBeenCalledWith("out/a.csv")
+  fireEvent.click(screen.getByRole("button", { name: "展开文件列表" }))
+  expect(screen.getByRole("button", { name: "打开产物 out/a.csv" })).toBeTruthy()
 })

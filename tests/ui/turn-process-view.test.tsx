@@ -52,6 +52,7 @@ describe("完成回合的过程收纳", () => {
     expect(container.querySelector(".kout-rich")).toBeTruthy()
     expect(container.querySelector(".generated-strip")).toBeTruthy()
     expect(container.querySelector(".kout-rich img")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "展开文件列表" }))
     await waitFor(() => expect(container.querySelector(".generated-chip img")).toBeTruthy())
     expect(container.querySelector('[data-item-id="tool1"]')).toBeNull()
     expect(container.querySelector(".thought")).toBeNull()

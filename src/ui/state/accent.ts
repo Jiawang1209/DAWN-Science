@@ -17,7 +17,7 @@ import { setValue } from "./identity.js"
 export const ACCENT_STORAGE_KEY = "dawn.global.accent"
 
 /** 默认绿：与 tokens.css 里写的那一对一致，是**同一个数的两个家**——这里的单元测试读 tokens.css 对它 */
-export const DEFAULT_ACCENT = "#10a37f"
+export const DEFAULT_ACCENT = "#208a7b"
 
 /** 预置色：名字给人看，值给 CSS。深浅都挑成「白字压得住」的一档 */
 export const ACCENT_PRESETS: readonly { name: string; hex: string }[] = [

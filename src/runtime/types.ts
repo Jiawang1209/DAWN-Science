@@ -535,7 +535,7 @@ export interface ContextUsage {
  * 所以它只回到界面上，不经过记账员。
  *
  * `at`（2026-09-27，会话全文搜索）：这一条的时刻（毫秒，pi 消息上的 `timestamp`）。**拿不到就没有这个字段**。
- * 续接不用它（`还原成条目` 不读）；全文搜索拿它给结果排序、写日期。
+ * 续接的文字条目保留它显示提问时间；全文搜索拿它给结果排序、写日期。
  */
 export type RestoredItem =
   | { kind: "text"; who: "user" | "agent"; text: string; at?: number }

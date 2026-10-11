@@ -358,7 +358,7 @@ describe("MVP 主路径 · 给任务选工作目录", () => {
   it("用原生目录选择器，不是让人往 prompt 里粘路径", async () => {
     const h = harness()
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /选择工作目录/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /工作目录/ }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
 
     // 选完之后开口，任务就带着这个目录建出来
@@ -374,11 +374,11 @@ describe("MVP 主路径 · 给任务选工作目录", () => {
   it("用户取消选择 ⇒ 什么都不做，不报错", async () => {
     const h = harness({ pick: null })
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: /选择工作目录/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /工作目录/ }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
 
-    // chip 还写着「选择工作目录」——**没设就说没设**，不编一个出来
-    expect(await screen.findByRole("button", { name: /选择工作目录/ })).toBeDefined()
+    // chip 还写着「工作目录」——**没设就说没设**，不编一个出来
+    expect(await screen.findByRole("button", { name: /工作目录/ })).toBeDefined()
 
     const box = (await screen.findByPlaceholderText(/今天帮你做些什么/)) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "开始" } })
@@ -475,7 +475,8 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
      * 顶右角那颗只管开合，三个房客的名字一直摆在坞的头上。
      */
     fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
-    fireEvent.click(screen.getByRole("tab", { name: "审阅" }))
+    fireEvent.click(screen.getByRole("button", { name: "更多面板" }))
+    fireEvent.click(screen.getByRole("menuitem", { name: "审阅" }))
 
     expect(await screen.findByText("src/model.py")).toBeDefined()
     expect(screen.getByText(/可能包含你自己的修改/)).toBeDefined()
@@ -496,7 +497,8 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
      * **概览 2026-08-20 搬进坞**：入口是坞头部的标签条，不再是侧栏一行。
      */
     fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
-    fireEvent.click(screen.getByRole("tab", { name: "概览" }))
+    fireEvent.click(screen.getByRole("button", { name: "更多面板" }))
+    fireEvent.click(screen.getByRole("menuitem", { name: "概览" }))
     /**
      * 2026-08-11：1200 现在写作 `1.2k`（作者：*「token 的消耗，
      * 变换一下单位 k tokens」*）。**断言的意图没变**——
@@ -529,7 +531,8 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     await openAndStart(h)
     // 概览 2026-08-20 搬进坞：先开坞，再点标签
     fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
-    fireEvent.click(screen.getByRole("tab", { name: "概览" }))
+    fireEvent.click(screen.getByRole("button", { name: "更多面板" }))
+    fireEvent.click(screen.getByRole("menuitem", { name: "概览" }))
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
 
     const before = h.calls.filter((c) => c.op === "listRuns").length
@@ -710,7 +713,7 @@ describe("PTY 会话：终端就是这个会话本身", () => {
   it("**侧栏有「终端」入口，且是能点的**", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
-    const 入口 = await screen.findByRole("button", { name: "终端" })
+    const 入口 = await screen.findByRole("button", { name: "终端面板" })
     expect((入口 as HTMLButtonElement).disabled).toBe(false)
   })
 })

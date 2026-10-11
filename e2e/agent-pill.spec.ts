@@ -37,7 +37,7 @@ test("模型 pill 在输入卡里，且**几何上确实靠右靠下**", async (
    * 一条通栏的容器——拿它当参照，量到的是「卡到窗口边缘还有多远」，
    * 与「控件贴不贴右」无关。**断言的意图没变，参照系跟着搬。**
    */
-  const area = (await page.locator(".composer-box").boundingBox())!
+  const area = (await page.locator(".composer-card").boundingBox())!
   const text = (await page.locator(".composer textarea").boundingBox())!
   const row = (await page.locator(".composer .composer-controls").boundingBox())!
   const send = (await page.locator(".composer button[type=submit]").boundingBox())!

@@ -63,8 +63,9 @@ test("长代码滚动时**语言标题与复制操作仍钉在视口上沿**", a
 
   const codeBlock = page.locator('.md [data-code-highlighted]').first()
   const code = codeBlock.locator("pre")
-  expect((await code.boundingBox())!.height).toBeGreaterThan(600)
   await expect(codeBlock).toHaveAttribute("data-code-highlighted", "true")
+  // 流式结束时会从原文pre切到懒加载高亮；等实际代码盒出现再量，判据不变。
+  await expect.poll(async () => (await code.boundingBox())?.height ?? 0).toBeGreaterThan(600)
 
   const header = codeBlock.locator('[data-streamdown="code-block-header"]')
   const actions = codeBlock.locator('[data-streamdown="code-block-actions"]')

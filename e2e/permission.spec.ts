@@ -48,7 +48,7 @@ test("空态屏上换一档，进会话再回来还是那一档 —— 存下去
 
   // 新开的会话跟着默认走
   await 在项目里开会话(page)
-  await expect(page.locator(".composer-footer .perm-pill-trigger"), "新会话没有跟上改过的默认").toHaveText(/^自动拦截/)
+  await expect(page.locator(".composer-status .perm-pill-trigger"), "新会话没有跟上改过的默认").toHaveText(/^自动拦截/)
   // 真存下去了：后端读出来也是这一档
   const 默认档 = await page.evaluate(async () => {
     const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { mode?: string } }> } }
@@ -88,7 +88,7 @@ test.describe("问一句", () => {
     writeFileSync(join(workspace, "old.txt"), "之前就有")
     await 在项目里开会话(page)
     // 会话里那颗：只改这一段
-    const 扳机 = page.locator(".composer-footer .perm-pill-trigger")
+    const 扳机 = page.locator(".composer-status .perm-pill-trigger")
     await expect(扳机).toHaveText(/^完全访问/)
     await 扳机.click()
     await page.getByRole("menuitemradio", { name: /^请求批准/ }).click()

@@ -53,7 +53,7 @@ test("**没设的时候，入口就在输入卡下面那一行**", async ({ dawn
    *
    * **常驻，不做悬停才出现**（本项目为此被报过两次「没有这个功能」）。
    */
-  const chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
+  const chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
   await expect(chip).toBeVisible()
 })
 
@@ -101,7 +101,7 @@ test.describe("设完之后", () => {
      * 从按钮到后端到刷新的整条接线都是真走的。
      * 绕过界面直接打 IPC 验的是后端，而**接线才是本项目翻过车的地方**。
      */
-    await page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ }).click()
+    await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
 
     /**
      * ① **对话里留了一行。**
@@ -111,9 +111,9 @@ test.describe("设完之后", () => {
      */
     await expect(page.locator(".turns")).toContainText("已归入项目", { timeout: 30_000 })
 
-    // ② chip 上写着它现在在哪，不再是「选择工作目录」
+    // ② chip 上写着它现在在哪，不再是「工作目录」
     await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
-      /选择工作目录/,
+      /工作目录/,
     )
 
     // ③ 侧栏：从「会话」栏挪到了「项目」栏
@@ -143,7 +143,7 @@ test.describe("设完之后", () => {
 /**
  * **在开口之前就把归类定下来**（2026-08-12）。
  *
- * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
+ * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个工作目录，
  * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
  *
  * 这条与上面那条是**两条不同的路**：那条是「先聊起来，需要换地方再换」
@@ -164,12 +164,12 @@ test.describe("空态就选好目录", () => {
   test("**选了目录再开口 → 直接进「项目」栏**", async ({ dawn }) => {
     const { page } = dawn
     // 空态自己就是一张输入卡，下面挂着同一颗 chip
-    const chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
+    const chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
     await expect(chip).toBeVisible()
     await chip.click()
-    // 选完之后 chip 上写的是路径，不再是「选择工作目录」
+    // 选完之后 chip 上写的是路径，不再是「工作目录」
     await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
-      /选择工作目录/,
+      /工作目录/,
     )
 
     await page.getByPlaceholder(/今天帮你做些什么/).fill("从空态直接开始")
@@ -219,10 +219,10 @@ test.describe("开场卡", () => {
   test("**选了目录再点开场卡 → 进「项目」栏，不是「会话」栏**", async ({ dawn }) => {
     const { page } = dawn
 
-    const chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
+    const chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
     await chip.click()
     await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
-      /选择工作目录/,
+      /工作目录/,
     )
 
     await page.getByRole("button", { name: /看看这里有什么/ }).click()
@@ -247,7 +247,7 @@ test.describe("开场卡", () => {
  * agent 已经在用的目录抽走——界面说没有目录，历史里却全是那个目录的路径；
  * 账本也按项目组织，挪出去就与那个项目的产出记录脱钩了。
  *
- * 「文件夹选错了」这个场景没有丢：**「选择工作目录」还在，可以再选一次**
+ * 「文件夹选错了」这个场景没有丢：**「工作目录」还在，可以再选一次**
  * （2026-09-29 起，已在项目里再选另一个 = 在那边另起一段，见文件末尾两条）。这条用例把两件事一起钉住——
  * **删掉一个能力时，必须同时说清替代路径还在**，否则下一个人会把它加回来。
  */
@@ -264,7 +264,7 @@ test.describe("选好目录之后", () => {
      * 而那是把「这个动作无害」当成了「这个动作有用」。
      * **选错文件夹的答案是再点一次 chip 换成对的那个**，不是清空。
      */
-    const 空态chip = page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ })
+    const 空态chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
     await 空态chip.click()
     await expect(
       page.locator(".composer-card").getByRole("button", { name: "改回普通对话" }),
@@ -292,7 +292,7 @@ test.describe("选好目录之后", () => {
    */
   test("**chip 只写文件夹名；点开看得到整条路径，能另选**", async ({ dawn }) => {
     const { page } = dawn
-    await page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ }).click()
+    await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
 
     const 底栏 = page.locator(".composer-card")
     const 名 = 目标2.split(/[\\/]/).pop()!
@@ -347,7 +347,7 @@ test.describe("普通对话聊了几句再选目录", () => {
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     await 最后一轮说完(page)
 
-    await page.locator(".composer-card").getByRole("button", { name: /选择工作目录/ }).click()
+    await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
     await expect(page.locator(".turns")).toContainText("已归入项目", { timeout: 30_000 })
     // 之前那句还在屏幕上（同一段对话，不是新开的）
     await expect(page.locator(".turns").getByText("先记住：暗号是蓝鲸", { exact: true })).toBeVisible()

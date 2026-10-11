@@ -25,20 +25,18 @@ test("对话字号按一根轴缩放，并在重载后保留", async ({ dawn }) 
   })
 
   expect(await 读取样式()).toEqual({
-    根字号: "15px",
-    正文: 15,
-    行高: "26.25px",
-    标题: [18, 14, 13],
-    头像: 24,
-    操作图标: 28,
+    根字号: "17px",
+    正文: 17,
+    行高: "29.75px",
+    标题: [23.8, 20.4, 17.9],
+    头像: 34,
+    操作图标: 31.7,
   })
 
   await 进设置(page, "外观")
   const slider = page.getByRole("slider", { name: "对话字号" })
-  await expect(slider).toHaveValue("15")
+  await expect(slider).toHaveValue("17")
   await slider.focus()
-  await slider.press("ArrowRight")
-  await slider.press("ArrowRight")
   await slider.press("ArrowRight")
   await expect(slider).toHaveValue("18")
   await page.getByRole("button", { name: "设置", exact: true }).click()
@@ -47,8 +45,8 @@ test("对话字号按一根轴缩放，并在重载后保留", async ({ dawn }) 
     根字号: "18px",
     正文: 18,
     行高: "31.5px",
-    标题: [21.6, 16.8, 15.6],
-    头像: 28.8,
+    标题: [25.2, 21.6, 18.9],
+    头像: 36,
     操作图标: 33.6,
   })
 

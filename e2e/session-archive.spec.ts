@@ -26,7 +26,7 @@ test("**收进归档：侧栏那一行消失、「已归档」入口出现；放
 
   await expect(page.locator(名字).filter({ hasText: "要归档的那段" })).toHaveCount(0)
   await expect(page.locator(".session-list > li")).toHaveCount(1)
-  const 入口 = page.getByRole("button", { name: /已归档/ })
+  const 入口 = page.locator(".side-bottom").getByRole("button", { name: /^已归档(?: \d+)?$/ })
   await expect(入口).toBeVisible()
   await expect(入口).toContainText("1")
 
@@ -39,7 +39,7 @@ test("**收进归档：侧栏那一行消失、「已归档」入口出现；放
   await expect(屏.locator('[role="status"]')).toContainText("回到了")
   await expect(page.locator(名字).filter({ hasText: "要归档的那段" })).toBeVisible()
   // 空了之后入口也没了
-  await expect(page.getByRole("button", { name: /已归档/ })).toHaveCount(0)
+  await expect(page.locator(".side-bottom").getByRole("button", { name: /^已归档(?: \d+)?$/ })).toHaveCount(0)
 })
 
 test("**归档当前正在看的那段**：选中清掉、不留一个指向空的选中；点「已归档」里那一行 = 放回去并打开", async ({ dawn }) => {
@@ -50,7 +50,7 @@ test("**归档当前正在看的那段**：选中清掉、不留一个指向空�
   await expect(page.locator(".session-list > li")).toHaveCount(0)
   await expect(page.locator(".conv-title")).toHaveCount(0)
 
-  await page.getByRole("button", { name: /已归档/ }).click()
+  await page.locator(".side-bottom").getByRole("button", { name: /^已归档(?: \d+)?$/ }).click()
   await page.locator(".archived-page .archived-row-main").first().click()
   await expect(page.locator(".conv-title")).toContainText("正看着的")
   await expect(page.locator(".sess-item.current")).toContainText("正看着的")
@@ -84,7 +84,7 @@ test("**多选也能收进归档**；「清空归档」先问，问完把归档�
   await page.getByRole("button", { name: "全选" }).click()
   await page.getByRole("button", { name: "收进归档" }).click()
   await expect(page.locator(".session-list > li")).toHaveCount(0)
-  const 入口 = page.getByRole("button", { name: /已归档/ })
+  const 入口 = page.locator(".side-bottom").getByRole("button", { name: /^已归档(?: \d+)?$/ })
   await expect(入口).toContainText("2")
 
   await 入口.click()

@@ -133,6 +133,7 @@ function GeneratedChip({ a, onOpen, loadThumb }: { a: Artifact; onOpen: (path: s
 }
 
 export function GeneratedStrip({ 产物, onOpen, loadThumb }: { 产物: 轮产物; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
+  const [expanded, setExpanded] = useState(false)
   if (产物.kind === "none") return null
   if (产物.kind === "unknown") {
     return (
@@ -148,20 +149,25 @@ export function GeneratedStrip({ 产物, onOpen, loadThumb }: { 产物: 轮产�
       </p>
     )
   }
+  const firstAvailable = 产物.artifacts.find(a => a.exists !== false)
   const 显示 = 产物.artifacts.slice(0, 折叠阈值)
   const 还有 = 产物.artifacts.length - 显示.length
   return (
     <div className="generated-strip" role="group" aria-label={t("本轮生成的文件")}>
       <span className="label">
-        {tf("GENERATED · {0}", 产物.artifacts.length)}
+        {tf("已生成 {0} 个文件", 产物.artifacts.length)}
         {产物.unknownCount > 0 ? <span className="caveat"> · {tf("另有 {0} 次运行产出未知", 产物.unknownCount)}</span> : null}
       </span>
-      <ul className="generated-chips">
+      <div className="generated-actions">
+        {firstAvailable ? <Button variant="text" size="inline" onClick={() => onOpen(firstAvailable.path)}>{t("查看产物")}</Button> : null}
+        <Button variant="text" size="inline" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? t("收起文件列表") : t("展开文件列表")}</Button>
+      </div>
+      {expanded ? <ul className="generated-chips">
         {显示.map((a) => (
           <GeneratedChip key={a.path} a={a} onOpen={onOpen} loadThumb={loadThumb} />
         ))}
-        {还有 > 0 ? <li className="caveat">{tf("还有 {0} 个，在坞的「产物」里看全部", 还有)}</li> : null}
-      </ul>
+        {还有 > 0 ? <li className="caveat">{tf("还有 {0} 个，在「产物」里看全部", 还有)}</li> : null}
+      </ul> : null}
     </div>
   )
 }

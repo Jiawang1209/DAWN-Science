@@ -13,14 +13,14 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe("外观里的对话字号", () => {
-  it("范围是 13–19，默认 15px", () => {
+  it("范围是 13–19，默认 17px", () => {
     render(<AppearancePanel />)
     const slider = screen.getByRole("slider", { name: "对话字号" }) as HTMLInputElement
     expect(slider.min).toBe("13")
     expect(slider.max).toBe("19")
     expect(slider.step).toBe("1")
-    expect(slider.value).toBe("15")
-    expect(screen.getByText("15px")).toBeTruthy()
+    expect(slider.value).toBe("17")
+    expect(screen.getByText("17px")).toBeTruthy()
   })
 
   it("拖动后即时改根字号并记住选择", () => {

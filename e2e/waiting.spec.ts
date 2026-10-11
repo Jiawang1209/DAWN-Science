@@ -91,7 +91,7 @@ test.describe("跑起来的时候", () => {
      * ② 它在输入卡里面——**不是在别处又长出一颗**。
      * 「中止的入口应该在手已经在的地方」，判据就是这个包含关系。
      */
-    expect(await page.locator(".composer-box .send-btn").count()).toBe(1)
+    expect(await page.locator(".composer-card .send-btn").count()).toBe(1)
 
     // ③ 回音到了就变回「发送」
     await expect(page.locator(".turns").getByText(/假模型已应答/)).toBeVisible({ timeout: 30_000 })

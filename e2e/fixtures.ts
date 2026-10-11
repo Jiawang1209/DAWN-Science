@@ -217,7 +217,13 @@ export async function 开坞(page: Page): Promise<void> {
 /** 进坞里的某一格。**走标签条**——切换器已经从顶右角的菜单搬到坞头部了 */
 export async function 进坞(page: Page, 房客: string): Promise<void> {
   await 开坞(page)
-  await page.getByRole("tab", { name: 房客, exact: true }).click()
+  const label = 房客
+  const tab = page.getByRole("tab", { name: label, exact: true })
+  if (await tab.count()) await tab.click()
+  else {
+    await page.getByRole("button", { name: "更多面板", exact: true }).click()
+    await page.getByRole("menuitem", { name: label, exact: true }).click()
+  }
 }
 
 export async function 进审阅(page: Page): Promise<void> {
@@ -333,6 +339,8 @@ export interface DawnOptions {
   env?: Record<string, string>
   /** 给数组 = 每条各一个状态机，按顺序取第一条说「调」的（2026-09-24，侧边对话） */
   toolCall?: MockToolCallSpec | readonly MockToolCallSpec[]
+  /** Only isolated visual fixtures override the final model response. */
+  reply?: string
   /**
    * **不给基底 `models.json`**（2026-08-11）。
    *
@@ -582,6 +590,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     await 发布源?.已就绪
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
+      ...(dawnOptions.reply !== undefined ? { reply: dawnOptions.reply } : {}),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
       ...(dawnOptions.thinkingHoldMs ? { thinkingHoldMs: dawnOptions.thinkingHoldMs } : {}),
       ...(dawnOptions.failStatus ? { failStatus: dawnOptions.failStatus } : {}),

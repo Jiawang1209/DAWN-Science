@@ -571,71 +571,38 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
   await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toHaveCount(0)
 })
 
-/**
- * **输入卡 = 卡内一行 + 卡底一条附栏**（2026-08-22 作者拿 WorkBuddy 的图点名要的；
- * 它取代了 2026-08-16 的「一行六格」——那时作者要的是一行，今天说「对话框的地方实在是太多了」）。
- *
- * > *「把输入文件、选择文件夹、prompt 增强放入对话框整体的下面，用不同颜色进行区分，学习一下 workbuddy」*
- *
- * 盯四件，都是几何事实：
- *   ① 卡内那一行：只有右边的模型与发送（2026-08-22 作者又把终端也挪下去了），**一行**；
- *   ② 附栏在卡内那一行**下面**，上传 / 目录 / 终端 / 优化输入在那里，也是**一行**；
- *   ③ 附栏的底色与卡内不同——「不同颜色区分」是作者的原话；
- *   ④ 那几颗都带图标也都带字——本项目为「看不见的能力等于不存在」栽过两次。
- */
-test("**输入卡：卡内一行（模型 · 发送），卡底一条附栏（上传 · 目录 · 终端 · 优化输入）**", async ({ dawn }) => {
+/** 宽屏共用底栏：工具按顺序在左，模型与发送靠右，所有控件留在卡内。 */
+test("输入卡双层：工具与权限齐行，模型发送留在上层，图标文字完整且不溢出", async ({ dawn }) => {
   const { page } = dawn
+  await page.setViewportSize({ width: 1920, height: 900 })
   await 开一段临时会话(page)
   await 等进了对话(page)
-
-  const 量 = (sel: string) =>
-    page.evaluate((s) => {
-      const row = document.querySelector(s) as HTMLElement
-      const 格 = [...row.children].map((e) => {
-        const q = e.getBoundingClientRect()
-        return {
-          类: (e as HTMLElement).className.split(" ")[0] ?? "",
-          字: (e.textContent ?? "").trim(),
-          图标: e.querySelectorAll("svg").length,
-          左: q.left,
-          右: q.right,
-          中: q.top + q.height / 2,
-        }
-      })
-      const r = row.getBoundingClientRect()
-      return { 顶: r.top, 底: r.bottom, 行高: r.height, 底色: getComputedStyle(row).backgroundColor, 格 }
-    }, sel)
-  const 行 = await 量(".composer-controls")
-  const 栏 = await 量(".composer-footer")
-
-  // ① 卡内那一行：一行，空档 | 模型 · 发送——右边那组贴右
-  expect(行.行高, `卡内那一行折了（${行.行高}px）`).toBeLessThanOrEqual(40)
-  const 行中线 = 行.格.filter((g) => g.类 !== "composer-gap").map((g) => g.中)
-  expect(Math.max(...行中线) - Math.min(...行中线)).toBeLessThanOrEqual(2)
-  const 空档 = 行.格.find((g) => g.类 === "composer-gap")!
-  const 发送 = 行.格[行.格.length - 1]!
-  expect(发送.左).toBeGreaterThanOrEqual(空档.右 - 1)
-
-  // ② 附栏在下面、一行，上传 / 目录 / 增强都在那里
-  expect(栏.顶).toBeGreaterThanOrEqual(行.底 - 1)
-  expect(栏.行高, `附栏折了（${栏.行高}px）`).toBeLessThanOrEqual(40)
-  const 上传 = 栏.格.find((g) => g.字.includes("上传文件"))!
-  const 目录 = 栏.格.find((g) => g.字.includes("选择工作目录") || g.类.startsWith("ws-"))!
-  const 终端 = 栏.格.find((g) => g.字 === "终端")!
-  const 优化 = 栏.格.find((g) => g.字.includes("优化输入"))!
-  for (const [名, g] of Object.entries({ 上传, 目录, 终端, 优化 })) expect(g, `附栏上没有「${名}」`).toBeTruthy()
-  expect(上传.左).toBeLessThan(目录.左)
-  expect(目录.左).toBeLessThan(终端.左)
-  expect(终端.左).toBeLessThan(优化.左)
-  // 卡内那一行上**不再有**它们
-  expect(行.格.some((g) => g.字.includes("上传文件") || g.类.startsWith("ws-") || g.字 === "终端")).toBe(false)
-
-  // ③ 两种底色
-  const 卡内底色 = await page.locator(".composer-box").evaluate((el) => getComputedStyle(el).backgroundColor)
-  expect(栏.底色 === 卡内底色 || 栏.底色 === "rgba(0, 0, 0, 0)" ? "同色" : "异色", "附栏与卡内同一种底色，分不开").toBe("异色")
-
-  // ④ 图标 + 文字都在
-  expect(上传.图标, "「上传文件」没有那个带圈的加号").toBeGreaterThanOrEqual(1)
-  expect(终端.图标, "「终端」没有图标").toBeGreaterThanOrEqual(1)
-  expect(目录.图标, "「选择工作目录」没有图标").toBeGreaterThanOrEqual(1)
+  const footer = page.locator(".composer-footer")
+  const card = (await page.locator(".composer-card").boundingBox())!
+  const selectors = [".attach-trigger", ".ws-chip", ".dock-toggle", ".enhance-main", ".perm-pill-trigger"]
+  const bounds = []
+  for (const selector of selectors) {
+    const control = footer.locator(selector).first()
+    await expect(control).toBeVisible()
+    const b = (await control.boundingBox())!
+    expect(b.x).toBeGreaterThanOrEqual(card.x)
+    expect(b.x + b.width).toBeLessThanOrEqual(card.x + card.width)
+    bounds.push(b)
+  }
+  const centers = bounds.map(b => b.y + b.height / 2)
+  expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(2)
+  for (let i = 1; i < bounds.length; i++) expect(bounds[i]!.x).toBeGreaterThanOrEqual(bounds[i - 1]!.x + bounds[i - 1]!.width)
+  expect(card.x + card.width - bounds.at(-1)!.x - bounds.at(-1)!.width).toBeLessThan(24)
+  const upper = page.locator(".composer-box .composer-controls")
+  await expect(upper.locator(".model-trigger")).toBeVisible()
+  const send = (await upper.locator(".send-btn").boundingBox())!
+  expect(send.y + send.height).toBeLessThanOrEqual(bounds[0]!.y)
+  for (const selector of [".attach-trigger", ".ws-chip", ".dock-toggle"]) {
+    expect(await footer.locator(selector).first().locator("svg").count()).toBeGreaterThanOrEqual(1)
+  }
+  await expect(footer.locator(".attach-trigger")).toContainText("上传文件")
+  await expect(footer.locator(".ws-chip")).toContainText("工作目录")
+  await expect(footer.locator(".dock-toggle")).toContainText("终端")
+  await expect(footer.locator(".enhance-main")).toContainText("优化输入")
+  expect(await footer.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
 })

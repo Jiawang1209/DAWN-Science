@@ -531,8 +531,12 @@ describe("MVP 主路径 · 看见它改了什么、花了多少", () => {
     await openAndStart(h)
     // 概览 2026-08-20 搬进坞：先开坞，再点标签
     fireEvent.click(screen.getByRole("button", { name: /^面板/ }))
-    fireEvent.click(screen.getByRole("button", { name: "更多面板" }))
-    fireEvent.click(screen.getByRole("menuitem", { name: "概览" }))
+    const overview = screen.queryByRole("tab", { name: "概览" })
+    if (overview) fireEvent.click(overview)
+    else {
+      fireEvent.click(screen.getByRole("button", { name: "更多面板" }))
+      fireEvent.click(screen.getByRole("menuitem", { name: "概览" }))
+    }
     await waitFor(() => expect(h.calls.some((c) => c.op === "getRun")).toBe(true))
 
     const before = h.calls.filter((c) => c.op === "listRuns").length

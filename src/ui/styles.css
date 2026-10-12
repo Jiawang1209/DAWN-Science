@@ -5537,26 +5537,11 @@ pre {
 /** 关闭那颗。**图标按钮也要有名字**——`aria-label` 在组件里给了 */
 .right-dock .dock-close { color: var(--dawn-text-3); flex: 0 0 auto; }
 .right-dock .dock-close:hover { color: var(--dawn-text-1); }
-/**
- * 坞头部那条标签条（2026-08-18）。**三个名字一直摆着**——
- * 顶右角那颗因此只剩开合，不再藏着两个没人知道的房客。
- */
-.right-dock .dock-tabs-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
-.right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; }
-/**
- * 第八格「对话」进来之后（2026-09-24）八个名字在默认宽度 380 下放不下，末一格压到了关闭那颗上。
- * 两件事：左右内边距收一点（默认宽度下八格正好放得下）；再窄（最窄 280）时这一条**自己横着滚**，
- * 关闭那颗不许被挤走——它是收起坞的出路。
- */
-.right-dock .dock-tabs-row { flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
-.right-dock .dock-tabs-row::-webkit-scrollbar { display: none; }
-/*
- * 第九格「子 agent」2026-09-27 进来之后又放不下了（量过：九格 377px，默认宽度下这一条只有 322px，
- * 末一格「对话」整个滚到看不见的地方——没有滚动条，等于没有这一格）。再收：格间距 0、左右内边距 3px，
- * 头部左右内边距 space-2（上面那条）。默认 380 下九格放得下；更窄时照旧横着滚，当前那格自己滚进视野（`RightDock`）。
- */
-.right-dock .dock-tabs-row { gap: 0; }
-.right-dock .dock-tab-btn { flex: 0 0 auto; padding-left: 3px; padding-right: 3px; }
+/* 标签按实测宽度分配；不压缩字号、内距或操作按钮。 */
+.right-dock .dock-tabs-row { display: flex; align-items: center; gap: 0; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+.right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; padding-left: 3px; padding-right: 3px; }
+/* 不占布局，但保留固有宽度供 ResizeObserver 测量；同时从焦点与可访问树移除。 */
+.right-dock [data-overflow="true"] { position: absolute; visibility: hidden; pointer-events: none; width: max-content; }
 .right-dock .dock-tab-btn:hover { color: var(--dawn-text-1); }
 /** 产物格的计数角标 `产物 (N)`（spec 2026-08-26-产物 §5）：只在有产物时画，可访问名不受它影响 */
 .right-dock .dock-tab-badge { margin-left: 4px; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }

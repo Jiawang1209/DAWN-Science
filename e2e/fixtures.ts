@@ -217,6 +217,11 @@ export async function 开坞(page: Page): Promise<void> {
 /** 进坞里的某一格。**走标签条**——切换器已经从顶右角的菜单搬到坞头部了 */
 export async function 进坞(page: Page, 房客: string): Promise<void> {
   await 开坞(page)
+  // 入口数量随真实宽度变化：等既有展开动画及宽度观察完成，再选择标签或更多。
+  await page.locator(".body").evaluate(async el => {
+    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => {})))
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  })
   const label = 房客
   const tab = page.getByRole("tab", { name: label, exact: true })
   if (await tab.count()) await tab.click()

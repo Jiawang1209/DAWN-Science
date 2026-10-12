@@ -12,7 +12,8 @@ import type { QuestionAnswer } from "../protocol/index.js"
  * 当成了首页——但那是**偶尔查**的东西，不是**打开时要看**的东西。
  * 打开 app 时要做的事是跟 agent 说话。
  */
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { dockTabOrder, useDockTabs } from "./dock-tabs.js"
 import { buildServerGroups } from "./server-navigation.js"
 import { ServerSidebar, type ServerSidebarProps } from "./server-sidebar.js"
 import { ProjectActions } from "./project-actions.js"
@@ -36,8 +37,6 @@ import { 待发条 } from "./queued-strip.js"
 import {
   RIGHT_DOCK_MAX,
   RIGHT_DOCK_MIN,
-  全部房客,
-  常用房客,
   type 坞房客,
 } from "./state/right-dock.js"
 import type { TranscriptItem, QueuedMessage } from "../protocol/index.js"
@@ -1209,28 +1208,27 @@ export function RightDock({
   const [more, setMore] = useState(false)
   const moreBox = useRef<HTMLDivElement>(null)
   const moreTrigger = useRef<HTMLButtonElement>(null)
-  const visible = 常用房客.includes(tenant) ? 常用房客 : [...常用房客, tenant]
+  const head = useRef<HTMLElement>(null)
+  const visible = useDockTabs(tenant, head)
+  const overflow = dockTabOrder.filter(who => !visible.includes(who))
+  const overflowKey = overflow.join(",")
+  useLayoutEffect(() => {
+    if (overflow.length || !more) return
+    setMore(false)
+    if (moreBox.current?.contains(document.activeElement) || document.activeElement === moreTrigger.current) {
+      head.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus({ preventScroll: true })
+    }
+  }, [overflow.length, more])
   useEffect(() => {
     if (!more) return
-    moreBox.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    // 调宽后聚焦项可能升入标签条；只有原焦点已离开菜单时才回收到剩余项。
+    const menu = moreBox.current?.querySelector('[role="menu"]')
+    const focused = document.activeElement
+    if (focused === document.body || focused === moreTrigger.current) menu?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
     const close = (e: PointerEvent) => { if (!moreBox.current?.contains(e.target as Node) && !moreTrigger.current?.contains(e.target as Node)) setMore(false) }
     document.addEventListener("pointerdown", close)
     return () => document.removeEventListener("pointerdown", close)
-  }, [more])
-  /**
-   * **当前那格滚进视野**（2026-09-27）。标签条放不下时横着滚、没有滚动条——点 chip 切到「子 agent」、
-   * 从命令面板切到「对话」时，选中的那格可能正好在看不见的那一截里。只动这一条的 `scrollLeft`，不碰外面的滚动。
-   */
-  const 标签条 = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const 条 = 标签条.current
-    const 格 = 条?.querySelector<HTMLElement>(".dock-tab-btn.current")
-    if (!条 || !格) return
-    const 条框 = 条.getBoundingClientRect()
-    const 格框 = 格.getBoundingClientRect()
-    if (格框.left < 条框.left) 条.scrollLeft -= 条框.left - 格框.left
-    else if (格框.right > 条框.right) 条.scrollLeft += 格框.right - 条框.right
-  }, [tenant, width])
+  }, [more, overflowKey])
   return (
     /**
       * **宽度是那一列给的，不在这儿写死**（2026-08-21 作者截图抓到的：窗口没最大化时
@@ -1250,24 +1248,20 @@ export function RightDock({
         attach="edge"
         label={t("调整面板宽度")}
       />
-      {/**
-        * **标签条，不是一个标题**（2026-08-18）。
-        *
-        * 三个房客的名字一直摆在这儿，**不用先拉开一个菜单才知道有它们**。
-        * 顶右角那颗因此只剩开合——身份归这一条。
-        *
-        * `role="tablist"` / `role="tab"` 不是装饰：读屏据此念出
-        * 「三个之中的第几个」，而那正是这条改动想给的东西。
-        */}
-      <header className="dock-head">
-        <div ref={标签条} className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
-          {visible.map((who) => (
+      {/* 只调整入口数量；所有标签保留真实尺寸用于测量，溢出项由更多菜单承接。 */}
+      <header ref={head} className="dock-head">
+        <div className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
+          {dockTabOrder.map((who) => (
             <Button
               key={who}
               variant="ghost"
               size="sm"
               role="tab"
               aria-selected={tenant === who}
+              data-dock-tab={who}
+              data-overflow={!visible.includes(who) || undefined}
+              aria-hidden={!visible.includes(who) || undefined}
+              tabIndex={visible.includes(who) ? 0 : -1}
               /* 可访问名固定为房客名：日后按钮里再塞计数徽章，`getByRole("tab", { name, exact })` 也不动 */
               aria-label={房客名(who)}
               className={`dock-tab-btn${tenant === who ? " current" : ""}`}
@@ -1281,8 +1275,8 @@ export function RightDock({
             </Button>
           ))}
         </div>
-        <div className="dock-more" ref={moreBox}>
-          <Button ref={moreTrigger} variant="ghost" size="icon" aria-label={t("更多面板")} aria-haspopup="menu" aria-expanded={more} onClick={() => setMore(!more)}>⋯</Button>
+        <div className="dock-more" ref={moreBox} data-overflow={!overflow.length || undefined} aria-hidden={!overflow.length || undefined}>
+          <Button ref={moreTrigger} tabIndex={overflow.length ? 0 : -1} variant="ghost" size="icon" aria-label={t("更多面板")} aria-haspopup="menu" aria-expanded={more} onClick={() => setMore(!more)}>⋯</Button>
           {more ? <div className="dock-more-menu" role="menu" aria-label={t("更多面板")} onKeyDown={e => {
             if (e.key === "Escape") { setMore(false); moreTrigger.current?.focus() }
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -1292,7 +1286,7 @@ export function RightDock({
               items[(index + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus()
             }
           }}>
-            {全部房客.filter(who => !常用房客.includes(who)).map(who => <Button key={who} variant="ghost" size="sm" role="menuitem" onClick={() => { setMore(false); onPick(who); moreTrigger.current?.focus() }}>{房客名(who)}</Button>)}
+            {overflow.map(who => <Button key={who} variant="ghost" size="sm" role="menuitem" onClick={() => { setMore(false); onPick(who); moreTrigger.current?.focus() }}>{房客名(who)}</Button>)}
           </div> : null}
         </div>
         <Button

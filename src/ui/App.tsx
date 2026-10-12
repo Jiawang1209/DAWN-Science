@@ -18,6 +18,7 @@ import { StatusNotices } from "./status-notices.js"
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import rpIcon from "../../packaging/icon.svg"
 import { 图廊根 } from "./case-cards.js"
 import { useStore } from "@nanostores/react"
 import type { ProjectSummary, ResponseOf, SessionSummary, SessionUpdate } from "../protocol/index.js"
@@ -1938,6 +1939,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       setConnProblem(
         t("没有能在服务器上干活的 agent——API 模型可以，标了「能上服务器」的 ACP 适配器（如 Claude Code）也可以"),
       )
+      note(t("当前模型不支持远端会话，请在设置中添加支持服务器的模型"))
       return
     }
     creatingRemoteTasks.current.add(c.id)
@@ -1969,10 +1971,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       await 取写权(t.sessionId)
       return t.sessionId
     } catch (e) {
-      // **开不起来要说清为什么**，就在那一区里
+      // 侧栏只表达连接状态；新建失败仍需给用户反馈，避免点击后无响应。
       setConnProblem(e instanceof Error ? e.message : String(e))
-      // 从坞里点的：人盯着的是坞，侧栏那一区他未必看得见——状态栏也说一句（规格 7.5）
-      if (opts.不切过去) note(e instanceof Error ? e.message : String(e))
+      note(opts.不切过去 ? (e instanceof Error ? e.message : String(e)) : t("未能创建远端会话，请检查服务器设置后重试"))
       return undefined
     } finally {
       creatingRemoteTasks.current.delete(c.id)
@@ -4925,7 +4926,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           */}
         <div className="brand-stack">
           <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
-            <span className="brand-mark" aria-hidden="true">D</span><span>DAWN Science</span>
+            <img className="brand-mark" src={rpIcon} alt="" aria-hidden="true" /><span>DAWN Science</span>
           </Button>
 
         </div>

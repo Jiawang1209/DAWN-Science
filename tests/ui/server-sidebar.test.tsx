@@ -48,11 +48,13 @@ it("多选与添加入口在标题行内，批量工具仍独立显示", () => {
   expect(container.querySelector('.side-section')?.contains(screen.getByText('已选 0'))).toBe(false)
 })
 
-it("未连接状态与失败原因仍显示文字", () => {
-  const disconnected = { ...connection, state: { kind: 'disconnected' as const, reason: '连接已断开' } }
-  render(<ServerSidebar {...props()} groups={[{ id: 's1', connection: disconnected, tasks: [] }]} />)
+it("连接失败只显示未连接，不展示技术错误文本", () => {
+  const disconnected = { ...connection, state: { kind: 'disconnected' as const, reason: 'read ETIMEDOUT' } }
+  render(<ServerSidebar {...props()} problemId="s1" problem="All configured authentication methods failed" groups={[{ id: 's1', connection: disconnected, tasks: [] }]} />)
   expect(screen.getByText('未连接')).toBeTruthy()
-  expect(screen.getByRole('alert').textContent).toBe('连接已断开')
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(screen.queryByText('read ETIMEDOUT')).toBeNull()
+  expect(screen.queryByText('All configured authentication methods failed')).toBeNull()
 })
 
 

@@ -238,6 +238,9 @@
   --dawn-accent-soft: color-mix(in srgb, var(--theme-accent) var(--mix-accent-soft), transparent);
   /* 卡片的描边（2026-08-23 作者定的：「卡片里面应该是白色背景，然后边框使用绿色的线」）——强调色兑淡一档，满饱和的绿框会和发送键抢 */
   --dawn-stroke-accent: color-mix(in srgb, var(--theme-accent) 45%, transparent);
+  /* Human-decision cards: quiet themed edges and readable selected text. */
+  --dawn-decision-stroke: color-mix(in srgb, var(--dawn-accent) 22%, var(--dawn-surface-input));
+  --dawn-decision-text: color-mix(in srgb, var(--dawn-accent) 30%, var(--dawn-text-1));
   --dawn-on-accent: var(--theme-user-on-accent);
   /**
    * **活着**（正在跑、已连上、已绑定）**跟着主题色走**；**对错**（`--dawn-success` / `--dawn-danger`）**不跟**。

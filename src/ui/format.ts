@@ -144,8 +144,9 @@ export function 基名(p: string): string {
  *   不换成「3 个月」是因为月长不齐，而这一列不值得引入一套历法。
  *
  * @param 现在 由调用方给，**不在函数里读时钟**——读时钟的纯函数没法测。
+ * @param 一分钟内 默认保留「刚刚」；服务器状态行使用 `<1m`，与其余短单位一致。
  */
-export function 多久之前(iso: string, 现在: number): string {
+export function 多久之前(iso: string, 现在: number, 一分钟内 = t("刚刚")): string {
   const 那一刻 = new Date(iso).getTime()
   // **认不出来的时间要说出来**，不是显示成「刚刚」——那是编造
   if (Number.isNaN(那一刻)) return t("时间不明")
@@ -154,7 +155,7 @@ export function 多久之前(iso: string, 现在: number): string {
    * **未来的时刻也写「刚刚」**。它只可能来自时钟回拨或跨时区的记录，
    * 而写成「-3h」除了让人怀疑程序坏了之外没有任何用。
    */
-  if (毫秒 < 60_000) return t("刚刚")
+  if (毫秒 < 60_000) return 一分钟内
   const 分 = Math.floor(毫秒 / 60_000)
   if (分 < 60) return `${分}m`
   const 时 = Math.floor(分 / 60)

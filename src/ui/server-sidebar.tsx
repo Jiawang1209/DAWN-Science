@@ -4,7 +4,7 @@ import type { ServerGroup } from "./server-navigation.js"
 import { Button } from "./primitives.js"
 import { HoverCard, 浮层事件, type 悬停浮层 } from "./hover-card.js"
 import { 服务器图标, 服务器描边图标, 三角图标, 加号描边图标, 新建会话图标 } from "./icons.js"
-import { 多久之前 } from "./format.js"
+import { 多久之前, 年月日时分 } from "./format.js"
 import { t, tf } from "./i18n/index.js"
 
 export interface ServerSidebarProps {
@@ -55,23 +55,30 @@ export function ServerSidebar(p: ServerSidebarProps) {
       </div>
     </div>
     {p.toolbar}
-    {p.problem && !p.problemId ? <p className="remote-problem" role="alert">{p.problem}</p> : null}
     {!folded && p.groups.length === 0 ? <p className="server-empty">{t("还没有服务器")}</p> : null}
     {folded ? null : p.groups.map(group => {
       const c = group.connection
       const busy = p.busyId === group.id || c?.state.kind === "connecting"
       const ready = c?.state.kind === "ready"
       const state = !c ? t("连接已移除") : ready ? t("已连接") : c.state.kind === "connecting" ? t("连接中") : t("未连接")
-      const reason = p.problemId === group.id && p.problem ? p.problem : c?.state.kind === "disconnected" ? c.state.reason : undefined
       const label = c?.label ?? group.id
+      const lastConnected = c?.lastConnectedAt ? 多久之前(c.lastConnectedAt, Date.now(), "<1m") : undefined
+      const lastConnectedLabel = c?.lastConnectedAt ? tf("上次成功连接：{0}", 年月日时分(c.lastConnectedAt)) : undefined
+      const details = c ? [
+        { 图: "服务器" as const, 文: `${c.username}@${c.host}:${c.port}` },
+        ...(!ready && lastConnectedLabel ? [{ 图: "时钟" as const, 文: lastConnectedLabel }] : []),
+      ] : undefined
       return <div key={group.id} className="side-server remote-row" data-connection-id={group.id} data-state={c?.state.kind ?? "removed"}>
         {c?.group ? <span className="remote-group-name">{c.group}</span> : null}
         <div className="side-subhead-row">
-            <Button variant="ghost" size="inline" className="side-subhead" {...浮层事件(设浮着的, label, state, c ? [{ 图: "服务器", 文: `${c.username}@${c.host}:${c.port}` }] : undefined, "服务器", { 标题: ".name", 容器: ".sidebar", 开在: "右边" })} aria-expanded={!p.folded(group.id)} onClick={() => p.onToggle(group.id)}>
+            <Button variant="ghost" size="inline" className="side-subhead" {...浮层事件(设浮着的, label, state, details, "服务器", { 标题: ".name", 容器: ".sidebar", 开在: "右边" })} aria-expanded={!p.folded(group.id)} onClick={() => p.onToggle(group.id)}>
               <三角图标 className={`twisty${p.folded(group.id) ? "" : " open"}`} />
               {p.folded(group.id) ? <服务器图标 /> : <服务器描边图标 />}
               <span className="name remote-label">{label}</span>
-              <span className={`server-dot${ready ? " ready" : ""}`} role="img" aria-label={state} />
+              {ready ? <span className="server-dot ready" role="img" aria-label={state} /> : <><span className={`server-dot compact${c?.state.kind === "disconnected" ? " failed" : c?.state.kind === "connecting" ? " connecting" : ""}`} role="img" aria-label={state} /><span className="server-meta remote-sub">
+                <span className="remote-status">{state}</span>
+                {lastConnected ? <span className="server-last" aria-label={lastConnectedLabel}>{lastConnected}</span> : null}
+              </span></>}
             </Button>
           {p.renderSelection(group)}
           {c ? <Button variant="ghost" size="inline" className="server-new" aria-label={t("新建远端任务")} disabled={busy} onClick={() => {
@@ -95,8 +102,6 @@ export function ServerSidebar(p: ServerSidebarProps) {
             </div> : null}
           </div> : null}
         </div>
-        {!ready ? <div className="server-meta remote-sub"><span className="remote-status">{state}</span>{c?.lastConnectedAt ? <span>{tf("上次连接：{0}", 多久之前(c.lastConnectedAt, Date.now()))}</span> : null}</div> : null}
-        {reason ? <p className="remote-reason" role="alert">{reason}</p> : null}
         {p.folded(group.id) ? null : <>
           <ul className="server-session-list">{group.tasks.map(p.renderTask)}</ul>
         </>}

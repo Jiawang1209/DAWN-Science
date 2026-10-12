@@ -83,6 +83,18 @@ describe("多久之前", () => {
     expect(之前(59 * 秒)).toBe("刚刚")
   })
 
+  it("服务器可指定一分钟内为 <1m，仍沿用分钟、小时、天的边界", () => {
+    const 简短 = (ms: number) => 多久之前(new Date(现在 - ms).toISOString(), 现在, "<1m")
+    expect(简短(0)).toBe("<1m")
+    expect(简短(59 * 秒)).toBe("<1m")
+    expect(简短(60 * 秒)).toBe("1m")
+    expect(简短(5 * 分)).toBe("5m")
+    expect(简短(7 * 时)).toBe("7h")
+    expect(简短(3 * 天)).toBe("3d")
+    expect(简短(-1 * 时)).toBe("<1m")
+    expect(多久之前("不是时间", 现在, "<1m")).toBe("时间不明")
+  })
+
   it("满一分钟才进 m", () => {
     expect(之前(60 * 秒)).toBe("1m")
     expect(之前(59 * 分)).toBe("59m")

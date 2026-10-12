@@ -3,3 +3,9 @@ declare module "*.css" {
   const content: string
   export default content
 }
+
+/** Vite bundles the shared packaging asset into the renderer. */
+declare module "*.svg" {
+  const url: string
+  export default url
+}

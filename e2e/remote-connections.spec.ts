@@ -94,12 +94,12 @@ test("**整条路**：加一台 → 连上 → 断开", async ({ dawn }) => {
 
   await 管理(row, "断开")
   // 主动断开同时显示未连接与上次连接时间；没有认证/网络错误原因。
-  await expect(row.locator(".server-meta")).toContainText("刚刚")
+  await expect(row.locator(".server-meta")).toContainText("<1m")
   await expect(row.locator(".remote-reason")).toHaveCount(0)
   await expect(row).toHaveAttribute("data-state", "idle")
 })
 
-test("**连不上时说清是为什么**，就在那一行上", async ({ dawn }) => {
+test("连接失败的服务器行只显示未连接，不展示技术错误", async ({ dawn }) => {
   const { page } = dawn
   await 展开远端(page)
   await 加一台(page, { label: "口令错的", secret: "不对的口令" })
@@ -107,19 +107,12 @@ test("**连不上时说清是为什么**，就在那一行上", async ({ dawn })
   const row = page.locator(".remote-row").first()
   await 管理(row, "连接")
 
-  /**
-   * 一句「连不上」什么都没说：口令错、主机不通、私钥读不到，
-   * 要人去改的东西完全不同。所以底层那句话要原样上来。
-   */
-  await expect(row.locator(".remote-reason")).toContainText(/authentication/i, {
-    timeout: 15_000,
-  })
-  /**
-   * **一次都没连上过，所以这一格仍是 `exited`**——而原因行说清是为什么。
-   * 与「刚加的还没试过」的区别全在那一行原因上（这一点 2026-08-16 就是如此）。
-   */
+  await expect(row).toHaveAttribute("data-state", "disconnected")
   await expect(row.locator(".remote-status")).toHaveText("未连接")
-  await expect(row.locator(".remote-reason")).toBeVisible()
+  await expect(row.locator(".remote-reason")).toHaveCount(0)
+  await row.locator(".side-subhead").hover()
+  await expect(page.locator(".sess-hover-card")).toContainText("未连接")
+  await expect(page.locator(".sess-hover-card")).not.toContainText(/authentication/i)
 })
 
 test("**口令不回显**，且改别的字段不会把它弄丢", async ({ dawn }) => {
@@ -369,7 +362,7 @@ test("连接状态随界面语言显示，连接身份与实际状态保持", as
   await expect(row).toHaveAttribute("data-connection-id", id!)
   await 管理(row, "Disconnect")
   await expect(row.locator(".remote-status")).toHaveText("Not connected")
-  await expect(row.locator(".server-meta")).toContainText("just now")
+  await expect(row.locator(".server-meta")).toContainText("<1m")
 })
 
 /** 英文界面仍使用同一服务器目录。 */
@@ -988,7 +981,7 @@ test("**服务器收纳里的会话，拖到哪就排到哪**", async ({ dawn })
  *
  * 作者：*「远端服务器也需要激活的时候 alive，非 alive 的话，就是显示时间。」*
  *
- * 上面那条「整条路」已经验了刚断开时写「刚刚」。这一条补的是**隔了几天之后**——
+ * 上面那条「整条路」已经验了刚断开时写 `<1m`。这一条补的是**隔了几天之后**——
  * 而它同时是那条**回填**的端到端判据：
  *
  * 那一列（`last_connected_at`）是 schema v14 才加的，对作者现有的每一台
@@ -1006,7 +999,7 @@ test("**隔了几天再看，那一行写的是「上次连上是多久前」**"
   await 管理(row, "连接")
   await expect(row.locator(".server-dot")).toHaveAttribute("aria-label", "已连接", { timeout: 15_000 })
   await 管理(row, "断开")
-  await expect(row.locator(".server-meta")).toContainText("刚刚")
+  await expect(row.locator(".server-meta")).toContainText("<1m")
 
   // 把那一刻挪到三天前
   const db = new Database(dbPath)

@@ -14,6 +14,7 @@ import type { QuestionAnswer } from "../protocol/index.js"
  */
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { dockTabOrder, useDockTabs } from "./dock-tabs.js"
+import rpIcon from "../../packaging/icon.svg"
 import { buildServerGroups } from "./server-navigation.js"
 import { ServerSidebar, type ServerSidebarProps } from "./server-sidebar.js"
 import { ProjectActions } from "./project-actions.js"
@@ -7328,11 +7329,7 @@ export function EmptyConversation({
     <div className="conversation empty-conv">
       {first ? (
         <div className="welcome">
-          {/* 标记，不是 logo：一个 56×56 的方块（规范 §3.4 的尺寸），
-              用品牌色，**不引入任何图片资源** */}
-          <div className="welcome-mark" aria-hidden="true">
-            D
-          </div>
+          <img className="welcome-mark" src={rpIcon} alt="" aria-hidden="true" />
           <h2 className="welcome-title">{t("今天想分析什么？")}</h2>
           <p className="welcome-sub">{t("直接输入问题，按需选择本机文件夹。")}</p>
 

@@ -1967,7 +1967,6 @@ pre {
   padding: var(--dawn-space-6) var(--dawn-space-4);
   text-align: center;
 }
-/* 标记，不是 logo：56×56（规范 §3.4），**不引入任何图片资源** */
 /**
  * 空态里那张输入卡（2026-08-12）。
  *
@@ -1983,15 +1982,11 @@ pre {
 }
 
 .welcome-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 56px;
   height: 56px;
   border-radius: var(--dawn-radius-lg);
-  background: var(--dawn-accent-soft);
-  color: var(--dawn-accent);
-  font-size: 28px;
-  font-weight: var(--dawn-weight-semibold);
+  object-fit: contain;
 }
 .welcome-title { margin: 0; font-size: var(--dawn-fs-title); font-weight: var(--dawn-weight-semibold); }
 .welcome-sub { margin: 0; color: var(--dawn-text-3); }

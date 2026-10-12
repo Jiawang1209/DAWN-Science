@@ -14,7 +14,7 @@ const mediaLanguages: Record<string, BundledLanguage> = {
 }
 
 /** 两个坞入口共用的只读脚本预览：异步上色，原文始终可读。 */
-export function ScriptPreview({ path, text, mediaType }: { path: string; text: string; mediaType: string }) {
+export function ScriptPreview({ path, text, mediaType, wrap = true }: { path: string; text: string; mediaType: string; wrap?: boolean }) {
   const extension = path.split(/[\\/]/).pop()?.split(".").pop()?.toLowerCase() ?? ""
   const language = languages[extension] ?? mediaLanguages[mediaType]
   const [result, setResult] = useState<{ text: string; language: string; tokens?: ThemedTokenWithVariants[]; failed?: boolean }>()
@@ -44,7 +44,7 @@ export function ScriptPreview({ path, text, mediaType }: { path: string; text: s
     } as CSSProperties}>{token.content}</span></Fragment>
   })
   return <>
-    <pre className="preview-text preview-code" data-language={language} data-highlighted={Boolean(colored)}>
+    <pre className="preview-text preview-code" role="region" aria-label={path} data-language={language} data-highlighted={Boolean(colored)} style={{ whiteSpace: wrap ? "pre-wrap" : "pre", wordBreak: wrap ? "break-word" : "normal", overflowWrap: wrap ? "anywhere" : "normal" }} tabIndex={0}>
       <code>{colored ? <>{colored}{text.slice(end)}</> : text}</code>
     </pre>
     {current?.failed ? <p className="hint">{t("语法高亮暂不可用，已显示原文。")}</p> : null}

@@ -216,3 +216,31 @@ it("预览时保留紧凑文件列表，迟到读取不能覆盖新选择", asyn
   expect(screen.queryByText("first")).toBeNull()
   expect(screen.getByRole("button", { name: "a.txt" })).toBeTruthy()
 })
+
+
+it("产物展开阅读隐藏导航与清单但保持节点和代码滚动，切换文件退出阅读", async () => {
+  const data = { artifacts: [art("a.txt"), art("b.txt")], unknown: [] }
+  const readFile = vi.fn().mockResolvedValue(文本内容())
+  const { container, rerender } = render(<ArtifactsPanel data={data} {...noop} readFile={readFile} focus={{ path: "a.txt", nonce: 1 }} />)
+  await screen.findByText("hi")
+  const list = container.querySelector<HTMLElement>(".artifacts-compact")!
+  const head = container.querySelector<HTMLElement>(".artifacts-head")!
+  const pre = container.querySelector<HTMLElement>(".preview-text")!
+  list.scrollTop = 75
+  pre.scrollTop = 180
+  fireEvent.click(screen.getByRole("button", { name: "展开阅读" }))
+  expect(list.hidden).toBe(true)
+  expect(head.hidden).toBe(true)
+  expect(container.querySelector(".preview-text")).toBe(pre)
+  expect(pre.scrollTop).toBe(180)
+  fireEvent.click(screen.getByRole("button", { name: "还原" }))
+  expect(list.hidden).toBe(false)
+  expect(head.hidden).toBe(false)
+  expect(list.scrollTop).toBe(75)
+  expect(pre.scrollTop).toBe(180)
+  fireEvent.click(screen.getByRole("button", { name: "展开阅读" }))
+  rerender(<ArtifactsPanel data={data} {...noop} readFile={readFile} focus={{ path: "b.txt", nonce: 2 }} />)
+  await screen.findByRole("button", { name: "展开阅读" })
+  expect(screen.queryByRole("button", { name: "还原" })).toBeNull()
+  expect(list.hidden).toBe(false)
+})

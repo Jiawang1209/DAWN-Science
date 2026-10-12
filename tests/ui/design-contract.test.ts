@@ -1977,3 +1977,58 @@ describe("结构化澄清问答", () => {
     expect(read("App.tsx")).toContain('sessionId: s.sessionId, requestId')
   })
 })
+
+
+describe("脚本文本阅读样式", () => {
+  it("上下保留主题色外框，代码不再套框，目录紧凑且只突出文件名", () => {
+    const css = read("styles.css")
+    const block = (selector: string) => {
+      const start = css.indexOf(selector + " {")
+      expect(start, `missing ${selector}`).toBeGreaterThanOrEqual(0)
+      return 取块(css, css.indexOf("{", start))
+    }
+    const code = block(".preview-code")
+    expect(code).toContain("border: 0")
+    expect(code).toContain("padding: 0")
+    expect(code).toContain("font-size: var(--dawn-code-size)")
+    expect(code).toContain("line-height: 1.55")
+    expect(code).toContain("overflow: auto")
+    expect(block(".preview-script")).toContain("overflow: hidden")
+    expect(block(".preview-script")).toContain("border: 1px solid var(--dawn-accent)")
+    expect(block(".preview-script")).toContain("border-radius: var(--dawn-radius-sm)")
+    expect(block(".preview-script")).toContain("padding: var(--dawn-space-3)")
+    expect(block(".right-dock .preview-script")).toContain("background: var(--dawn-surface-sidebar)")
+    expect(block(".file-preview:has(> .preview-script)")).toContain("overflow: hidden")
+    const tree = block(".file-tree")
+    expect(tree).toContain("border: 1px solid var(--dawn-accent)")
+    expect(tree).toContain("border-radius: var(--dawn-radius-sm)")
+    expect(tree).toContain("margin: var(--dawn-space-3)")
+    expect(tree).toContain("padding: var(--dawn-space-2)")
+    const selectedName = block(".tree-row.active .name")
+    expect(selectedName).toContain("color: var(--dawn-accent)")
+    expect(selectedName).toContain("font-weight: var(--dawn-weight-semibold)")
+    expect(block(".file-tree-box")).not.toMatch(/border-(bottom|right):/)
+    expect(block(".files-wide .file-tree-box")).not.toMatch(/border-(bottom|right):/)
+    const files = read("files.tsx")
+    const row = files.slice(files.indexOf("function FileRow("), files.indexOf("function DirNode("))
+    expect(row).toContain('className="file-when"')
+    expect(row).toContain('` · ${bytes(e.size)}`')
+    expect(row).toContain("年月日时分(e.modifiedAt)")
+    expect(read("state/right-dock.ts")).toContain("FILE_TREE_HEIGHT_DEFAULT = 160")
+  })
+  it("脚本头单行排列，文件名可滚动，低预览高度时保留代码空间", () => {
+    const css = read("styles.css")
+    const head = css.match(/\.preview-script > \.preview-head\s*\{([^}]*)\}/)?.[1]
+    expect(head, "脚本头必须单独约束高度，避免裁切阅读操作和代码").toBeTruthy()
+    expect(head).toContain("max-height: 50%")
+    expect(head).toContain("overflow: auto")
+    expect(head).toContain("min-height: 0")
+    const name = css.match(/\.preview-script > \.preview-head \.name\s*\{([^}]*)\}/)?.[1]
+    expect(name, "文件名保持一行并可滚动").toBeTruthy()
+    expect(head).toContain("flex-wrap: nowrap")
+    expect(name).toContain("white-space: nowrap")
+    expect(name).toContain("overflow: auto")
+    expect(name).not.toMatch(/line-clamp|text-overflow\s*:\s*ellipsis/)
+  })
+
+})

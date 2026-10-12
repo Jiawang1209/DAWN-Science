@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from './primitives.js'
+import { PreviewCloseButton } from './preview-close-button.js'
 import { PdfCanvas } from './pdf-canvas.js'
 import { PDF文件图标, 图片文件图标, 返回图标, 下载图标, 关闭图标, 放大预览图标, 外部打开图标 } from './icons.js'
 import { t, tf } from './i18n/index.js'
@@ -8,13 +9,14 @@ import type { FileContent } from './files.js'
 
 type VisualContent = Extract<FileContent, { kind: 'image' | 'pdf' }>
 export type PreviewNavigation = { onBack: () => void; onLocate: () => void }
-export function VisualFilePreview({ path, content, onOpenExternally, onDownload, onDelete, 进废纸篓, navigation, fitContainer = false }: {
+export function VisualFilePreview({ path, content, onOpenExternally, onDownload, onDelete, 进废纸篓, navigation, fitContainer = false, onClosePreview }: {
   path: string; content: VisualContent; onOpenExternally: (path: string) => void
   onDownload?: ((path: string) => void) | undefined
   onDelete?: ((path: string) => void) | undefined
   进废纸篓?: boolean | undefined
   navigation?: PreviewNavigation | undefined
   fitContainer?: boolean
+  onClosePreview?: (() => void) | undefined
 }) {
   const [expanded, setExpanded] = useState(false)
   const [menu, setMenu] = useState(false)
@@ -52,6 +54,7 @@ export function VisualFilePreview({ path, content, onOpenExternally, onDownload,
             {onDelete ? <Button variant="ghost" size="sm" role="menuitem" onClick={() => { setMenu(false); onDelete(path) }}>{进废纸篓 ? t("移到废纸篓") : t("永久删除")}</Button> : null}
           </div> : null}
         </div> : null}
+        {onClosePreview ? <PreviewCloseButton onClose={onClosePreview} /> : null}
       </div>
     </header>
     {image()}

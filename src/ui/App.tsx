@@ -1195,6 +1195,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   /* ── 文件浏览（②-A′ · F3/F4） ─────────────────────────────────── */
 
+  const [filePreviewOpen, setFilePreviewOpen] = useState(true)
   const [filePath, setFilePath] = useState<string | undefined>(undefined)
   const [fileContent, setFileContent] = useState<FileContent | undefined>(undefined)
   /**
@@ -1261,6 +1262,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 那正是把文件从整屏搬进坞的全部理由。
        */
       点开文件面板()
+      setFilePreviewOpen(true)
       setFilePath(path)
       setFileContent(undefined)
       // **跟着当前会话所在的机器**（批 3）：远端会话读那台服务器上的
@@ -3642,6 +3644,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     if (树记忆身份.current === 文件面板身份) return
     树记忆身份.current = 文件面板身份
+    setFilePreviewOpen(true)
     const m = 读记忆(文件面板身份, 树根)
     设树记忆(m)
     // 选中的那个文件也跟着回来——**没有就清掉**，不把上一棵树的文件留在预览里。
@@ -3699,6 +3702,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 造文件面板 = (铺开: boolean) => (
       <FilesView
+        previewOpen={filePreviewOpen}
+        onClosePreview={() => setFilePreviewOpen(false)}
         key={`${文件面板身份}#${铺开 ? "宽" : "窄"}`}
         {...(铺开
           ? {

@@ -259,7 +259,7 @@ export const FILE_TREE_WIDTH_KEY = "dawn.global.file-tree-width"
 export const FILE_TREE_HEIGHT_KEY = "dawn.global.file-tree-height"
 /** 宽坞（左右摆）时树的宽；窄坞（上下摆）时树的高。**两个量，两个键**——它们是两种摆法里的两个数 */
 export const FILE_TREE_WIDTH_DEFAULT = 220
-export const FILE_TREE_HEIGHT_DEFAULT = 200
+export const FILE_TREE_HEIGHT_DEFAULT = 160
 export const FILE_TREE_MIN = 120
 
 export const $fileTreeWidth = atom<number>(FILE_TREE_WIDTH_DEFAULT)

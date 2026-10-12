@@ -230,7 +230,8 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
    * 我的理由是导航靠窗口边）；次日作者说换过来——他常用的文件管理器全是
    * 左树右内容，手习惯往左找。两边理由都留在 `styles.css` 里。
    */
-  const 树 = (await page.locator(".file-tree").boundingBox())!
+  // 外框有 12px 留白；并排布局比较实际网格容器，避免把内边距当作错位。
+  const 树 = (await page.locator(".file-tree-box").boundingBox())!
   const 预览 = (await page.locator(".file-preview").boundingBox())!
   expect(树.x, "树跑到预览右边了——作者要的是左树右预览").toBeLessThan(预览.x)
   // 而且是**并排**，不是上下摞（摞着的话两者 y 会差一整栏）
@@ -255,7 +256,8 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
 test("**树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住**", async ({ dawn }) => {
   const { app, page } = dawn
   await 进坞(page, "文件")
-  const 树 = page.locator(".file-tree")
+  // 拖动保存的是整个树区域尺寸，包含文件框上下各 12px 的留白。
+  const 树 = page.locator(".file-tree-box")
   await expect(树).toBeVisible()
   const 缝 = page.locator(".file-tree-box .side-sash")
   const 拖 = async (dx: number, dy: number) => {

@@ -2,7 +2,7 @@
  * 坞的「产物」格（spec 2026-08-26-产物 §5）：本会话生成了什么，实时列出来，点一个能看。
  * 只有清单与预览两个视图；版本 / 来源 / 批注在下一轮。
  */
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { Artifact } from "../protocol/index.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
@@ -102,10 +102,27 @@ export function ArtifactsPanel({
   /** 清单取失败时「重试」按这个；缺省就不给那颗 */
   onReload?: (() => void) | undefined
 }) {
+  const listRoot = useRef<HTMLDivElement>(null)
+  const returnFocusPath = useRef<string | undefined>(undefined)
   const [看的, 设看的] = useState<string | undefined>(undefined)
   const [内容, 设内容] = useState<FileContent | undefined>(undefined)
   const [读错, 设读错] = useState<string | undefined>(undefined)
   const [重试次数, 设重试次数] = useState(0)
+  const [readingPath, setReadingPath] = useState<string>()
+  const readingExpanded = readingPath === 看的 && 看的 !== undefined && 内容?.kind === "text" && 内容.mediaType !== "text/markdown"
+  useEffect(() => { setReadingPath(undefined) }, [看的])
+  const closePreview = () => {
+    returnFocusPath.current = 看的
+    setReadingPath(undefined)
+    设看的(undefined)
+  }
+  useLayoutEffect(() => {
+    if (看的 || !returnFocusPath.current) return
+    const button = [...(listRoot.current?.querySelectorAll<HTMLButtonElement>('button[aria-label]') ?? [])]
+      .find(el => el.getAttribute('aria-label') === returnFocusPath.current)
+    button?.focus({ preventScroll: true })
+    returnFocusPath.current = undefined
+  }, [看的])
 
   /**
    * `readFile` 常常是父组件每次渲染新建的内联函数（`(p) => client.readFile(p)`）。
@@ -158,7 +175,7 @@ export function ArtifactsPanel({
     const visual = 内容?.kind === "pdf" || 内容?.kind === "image"
     return (
       <div className="artifacts-pane artifacts-preview">
-        {!visual ? <header className="artifacts-head">
+        {!visual ? <header className="artifacts-head" hidden={readingExpanded}>
           <Button variant="ghost" size="sm" onClick={() => 设看的(undefined)}>
             {t("回到清单")}
           </Button>
@@ -182,11 +199,14 @@ export function ArtifactsPanel({
             path={看的}
             content={内容}
             onOpenExternally={onOpenExternally}
+            onClosePreview={closePreview}
+            readingExpanded={readingExpanded}
+            onToggleReading={() => setReadingPath(readingExpanded ? undefined : 看的)}
             {...(visual ? { navigation: { onBack: () => 设看的(undefined), onLocate: () => onOpenInFiles(看的) } } : {})}
             {...(onDownload ? { onDownload } : {})}
           />
         )}
-        <ul className="artifacts-compact" aria-label={t("产物")}>
+        <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
           {data.artifacts.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
             <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>
               <span className="artifact-row-icon"><类型图标 类={文件类按名字(a.path, "file")} /></span>
@@ -213,7 +233,7 @@ export function ArtifactsPanel({
   }
 
   return (
-    <div className="artifacts-pane">
+    <div className="artifacts-pane" ref={listRoot}>
       {data.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", data.unknown.length)}</p> : null}
       {[...组.entries()]
         .sort(([a], [b]) => a.localeCompare(b))

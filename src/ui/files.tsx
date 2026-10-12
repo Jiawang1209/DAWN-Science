@@ -12,13 +12,15 @@
  * agent 写了哪些文件，那是最短的路径。这里的目录树是**补充**：
  * agent 没碰过的数据文件、上一次会话留下的东西，那些只能靠翻。
  */
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { 在组词 } from "./ime.js"
 import type { ResponseOf } from "../protocol/index.js"
 import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { VisualFilePreview, type PreviewNavigation } from "./visual-file-preview.js"
 import { AgentMarkdown } from "./markdown.js"
 import { ScriptPreview } from "./script-preview.js"
+import { PreviewCloseButton } from "./preview-close-button.js"
 import {
   三角图标,
   刷新图标,
@@ -125,7 +127,29 @@ export interface 行操作 {
   onNote: (msg: string) => void
 }
 
-function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: string; name: string; kind: "file" | "dir"; 操作: 行操作; 位置: { top: number; left: number }; onClose: () => void }) {
+type TreeMenuPosition = { top: number; left: number; anchorLeft?: number }
+
+function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: string; name: string; kind: "file" | "dir"; 操作: 行操作; 位置: TreeMenuPosition; onClose: () => void }) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState({ top: 位置.top, left: 位置.left })
+  useLayoutEffect(() => {
+    const place = () => {
+      const menu = menuRef.current
+      if (!menu) return
+      const margin = 8
+      const width = menu.offsetWidth, height = menu.offsetHeight
+      const preferredLeft = 位置.left + width > window.innerWidth - margin && 位置.anchorLeft !== undefined
+        ? 位置.anchorLeft - width - 6
+        : 位置.left
+      setPosition({
+        left: Math.max(margin, Math.min(preferredLeft, window.innerWidth - width - margin)),
+        top: Math.max(margin, Math.min(位置.top, window.innerHeight - height - margin)),
+      })
+    }
+    place()
+    window.addEventListener("resize", place)
+    return () => window.removeEventListener("resize", place)
+  }, [位置])
   const { 相对, 绝对 } = 操作.路径(path)
   const 复制 = (文本: string, 成了: string) => {
     onClose()
@@ -135,10 +159,10 @@ function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: stri
       // **复制失败要出声**：剪贴板被拒（焦点不在窗口里）时，人以为粘出来的是刚才那条
       .catch((e: unknown) => 操作.onNote(tf("复制不了：{0}", e instanceof Error ? e.message : String(e))))
   }
-  return (
+  return createPortal(
     <>
       <div className="menu-scrim" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose() }} />
-      <div className="row-menu tree-row-menu" role="menu" aria-label={kind === "dir" ? tf("目录操作：{0}", name) : tf("文件操作：{0}", name)} style={{ top: 位置.top, left: 位置.left }}>
+      <div ref={menuRef} className="row-menu tree-row-menu" role="menu" aria-label={kind === "dir" ? tf("目录操作：{0}", name) : tf("文件操作：{0}", name)} style={position}>
         <Button variant="ghost" size="inline" role="menuitem" onClick={() => 复制(相对, tf("已复制相对路径：{0}", 相对))}>
           {t("复制相对路径")}
         </Button>
@@ -156,22 +180,22 @@ function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: stri
           </Button>
         ) : null}
       </div>
-    </>
+    </>, document.body
   )
 }
 
 /** 菜单开在哪：按钮旁边（点「⋯」）或指针处（右键）。下面放不下就往上翻 */
-function 菜单位置(e: { clientX: number; clientY: number }, 按钮?: HTMLElement | null): { top: number; left: number } {
+function 菜单位置(e: { clientX: number; clientY: number }, 按钮?: HTMLElement | null): TreeMenuPosition {
   const 高 = 160
   if (按钮) {
     const r = 按钮.getBoundingClientRect()
-    return { top: Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8), left: r.right + 6 }
+    return { top: Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8), left: r.right + 6, anchorLeft: r.left }
   }
   return { top: Math.min(Math.max(8, e.clientY), window.innerHeight - 高 - 8), left: Math.min(e.clientX, window.innerWidth - 220) }
 }
 
 /** 行上那颗「⋯」+ 它开出来的菜单。文件行与目录行共用 */
-function 行操作钮({ path, name, kind, 操作, 菜单, 设菜单 }: { path: string; name: string; kind: "file" | "dir"; 操作: 行操作; 菜单: { top: number; left: number } | undefined; 设菜单: (p: { top: number; left: number } | undefined) => void }) {
+function 行操作钮({ path, name, kind, 操作, 菜单, 设菜单 }: { path: string; name: string; kind: "file" | "dir"; 操作: 行操作; 菜单: TreeMenuPosition | undefined; 设菜单: (p: TreeMenuPosition | undefined) => void }) {
   const 按钮 = useRef<HTMLButtonElement>(null)
   return (
     <span className="row-actions">
@@ -201,10 +225,10 @@ const 所在目录 = (path: string) => {
 
 /** 文件那一行。拆出来是因为每一行要有自己的菜单状态 */
 function FileRow({ path, entry: e, depth, selected, onSelect, 操作, 浮 }: { path: string; entry: Listing["entries"][number]; depth: number; selected: string | undefined; onSelect: (path: string) => void; 操作?: 行操作; 浮?: ((x: 悬停浮层 | undefined) => void) | undefined }) {
-  const [菜单, 设菜单] = useState<{ top: number; left: number } | undefined>(undefined)
+  const [菜单, 设菜单] = useState<TreeMenuPosition | undefined>(undefined)
   /**
    * 悬停卡（2026-08-21 作者要的：*「鼠标悬浮在文件/文件夹上的时候，弹出文件信息，模仿左边侧边栏」*）。
-   * 行上那截时间 · 大小在树拖窄时会被省略掉，**卡上是全的**：所在目录、修改时间、大小。
+   * 文件行保留文件名、修改时间和大小，**详情卡上是全的**：所在目录、修改时间、大小。
    */
   const 详情: 详情行[] = [
     { 图: "文件夹", 文: 所在目录(path) },
@@ -234,16 +258,6 @@ function FileRow({ path, entry: e, depth, selected, onSelect, 操作, 浮 }: { p
                       <类型图标 类={文件类按名字(e.name, "file")} />
                       {e.name}
                     </span>
-                    {/**
-                      * **什么时候改的**（2026-08-19 起）。作者：*「我只需要在文件树里看到
-                      * 生成了什么数据就好，有时间戳我就知道哪个文件是新生成的了。」*
-                      *
-                      * 服务器上的目录多半不是 git 仓库，时间戳是那儿唯一现成的
-                      * 「什么是新的」。第一版写的是相对时间（`刚刚 / 3m`），
-                      * 作者次日改成**正规的年月日时分**——理由见 `年月日时分`。
-                      * 目录行不写——目录的 mtime 含糊（里面动一个文件它就变），
-                      * 与目录不报大小同一口径。
-                      */}
                     <span className="sub">
                       <span className="file-when">{年月日时分(e.modifiedAt)}</span>
                       {e.size === undefined ? "" : ` · ${bytes(e.size)}`}
@@ -308,7 +322,7 @@ function DirNode({
   }
   /** 有东西悬在这一行上。**放置高亮**——不给的话人不知道会落到哪个目录 */
   const [悬着, 设悬着] = useState(false)
-  const [菜单, 设菜单] = useState<{ top: number; left: number } | undefined>(undefined)
+  const [菜单, 设菜单] = useState<TreeMenuPosition | undefined>(undefined)
   const [listing, setListing] = useState<Listing | undefined>(undefined)
   const [error, setError] = useState<string | undefined>(undefined)
 
@@ -487,6 +501,9 @@ export function FilePreview({
   进废纸篓,
   navigation,
   fitContainer = false,
+  readingExpanded = false,
+  onToggleReading,
+  onClosePreview,
 }: {
   path: string | undefined
   content: FileContent | undefined
@@ -499,37 +516,55 @@ export function FilePreview({
   进废纸篓?: boolean
   navigation?: PreviewNavigation | undefined
   fitContainer?: boolean
+  /** 阅读只在所属坞里展开，由容器隐藏导航；不改变坞宽度。 */
+  readingExpanded?: boolean
+  onToggleReading?: () => void
+  onClosePreview?: (() => void) | undefined
 }) {
   if (!path) {
     return <EmptyState title={t("选一个文件")} description={t("上面是这台机器上的目录。")} />
   }
   if (!content) return <Loader label={t("正在读文件")} />
-  if (content.kind === "pdf" || content.kind === "image") return <VisualFilePreview path={path} content={content} onOpenExternally={onOpenExternally} onDownload={onDownload} onDelete={onDelete} 进废纸篓={进废纸篓} navigation={navigation} fitContainer={fitContainer} />
+  if (content.kind === "pdf" || content.kind === "image") return <VisualFilePreview path={path} content={content} onOpenExternally={onOpenExternally} onDownload={onDownload} onDelete={onDelete} 进废纸篓={进废纸篓} navigation={navigation} fitContainer={fitContainer} onClosePreview={onClosePreview} />
+  const script = content.kind === "text" && content.mediaType !== "text/markdown"
+  const details = <span className="sub">{content.mediaType} · {bytes(content.bytes)}</span>
+  const actions = <>
+    {script ? <>
+      {onToggleReading ? <Button variant="ghost" size="sm" aria-expanded={readingExpanded} onClick={onToggleReading}>
+        {readingExpanded ? t("还原") : t("展开阅读")}
+      </Button> : null}
+    </> : null}
+    {onDownload ? (
+      <Button variant="ghost" size="sm" onClick={() => onDownload(path)}>
+        {t("下载")}
+      </Button>
+    ) : null}
+    {/**
+      * **本地删和远端删不是同一个操作，所以文案必须不同**（批 5）。
+      *
+      * 本地走 Electron 的废纸篓（后悔得回来），远端只有 SFTP `unlink`
+      * （没了就是没了）。同一颗按钮、同一个「删除」二字，
+      * 一边可恢复一边不可恢复——**这次的代价是数据**。
+      */}
+    {onDelete && !script ? (
+      <Button variant="ghost" size="sm" onClick={() => onDelete(path)}>
+        {进废纸篓 ? t("移到废纸篓") : t("永久删除")}
+      </Button>
+    ) : null}
+  </>
 
   return (
-    <div className="preview">
-      <header className="preview-head">
-        <span className="name">{path}</span>
-        <span className="sub">
-          {content.mediaType} · {bytes(content.bytes)}
-        </span>
-        {onDownload ? (
-          <Button variant="ghost" size="sm" onClick={() => onDownload(path)}>
-            {t("下载")}
-          </Button>
-        ) : null}
-        {/**
-          * **本地删和远端删不是同一个操作，所以文案必须不同**（批 5）。
-          *
-          * 本地走 Electron 的废纸篓（后悔得回来），远端只有 SFTP `unlink`
-          * （没了就是没了）。同一颗按钮、同一个「删除」二字，
-          * 一边可恢复一边不可恢复——**这次的代价是数据**。
-          */}
-        {onDelete ? (
-          <Button variant="ghost" size="sm" onClick={() => onDelete(path)}>
-            {进废纸篓 ? t("移到废纸篓") : t("永久删除")}
-          </Button>
-        ) : null}
+    <div className={`preview${script ? " preview-script" : ""}`}>
+      <header className="preview-head" tabIndex={script ? 0 : undefined}>
+        {script ? <>
+          <span className="name" tabIndex={0} aria-label={path}>{path.split("/").pop() || path}</span>
+          <div className="script-preview-actions">{actions}</div>
+          {onClosePreview ? <PreviewCloseButton onClose={onClosePreview} /> : null}
+        </> : <>
+          <span className="name">{path}</span>
+          {details}
+          {actions}
+        </>}
       </header>
 
       {content.kind === "table" ? (
@@ -540,7 +575,7 @@ export function FilePreview({
           {content.mediaType === "text/markdown" ? (
             <AgentMarkdown text={content.text} streaming={false} />
           ) : (
-            <ScriptPreview path={path} text={content.text} mediaType={content.mediaType} />
+            <ScriptPreview key={path} path={path} text={content.text} mediaType={content.mediaType} wrap={true} />
           )}
           {content.truncated ? (
             <p className="hint">
@@ -782,6 +817,8 @@ function SearchResults({
 }
 
 export function FilesView({
+  previewOpen = true,
+  onClosePreview,
   selected,
   content,
   loadDir,
@@ -809,6 +846,8 @@ export function FilesView({
   展开,
   onToggle,
 }: {
+  previewOpen?: boolean
+  onClosePreview?: (() => void) | undefined
   selected: string | undefined
   content: FileContent | undefined
   loadDir: (path: string) => Promise<Listing>
@@ -907,6 +946,39 @@ export function FilesView({
   onInsert?: ((text: string) => void) | undefined
 }) {
   const [跳到, 设跳到] = useState("")
+  const treeFocusPending = useRef(false)
+  const treeScrollBeforeReading = useRef<number | undefined>(undefined)
+  const treeScrollAtClose = useRef<{ before: number; closed?: number } | undefined>(undefined)
+  const closePreview = () => {
+    const tree = 容器.current?.querySelector<HTMLElement>('.file-tree, .files-search-results')
+    // hidden 树的 getter 为0，展开阅读用隐藏前的位置。
+    const before = readingExpanded ? treeScrollBeforeReading.current : tree?.scrollTop
+    treeScrollAtClose.current = before === undefined ? undefined : { before }
+    treeFocusPending.current = true
+    setReadingPath(undefined)
+    onClosePreview?.()
+  }
+  useLayoutEffect(() => {
+    const tree = 容器.current?.querySelector<HTMLElement>('.file-tree, .files-search-results')
+    if (treeFocusPending.current && !previewOpen) {
+      treeFocusPending.current = false
+      const target = tree?.querySelector<HTMLElement>('.active') ?? tree?.querySelector<HTMLElement>('button') ?? 容器.current?.querySelector<HTMLInputElement>('.files-jump')
+      target?.focus({ preventScroll: true })
+    }
+    const saved = treeScrollAtClose.current
+    if (!previewOpen && tree && saved) {
+      tree.scrollTop = saved.before
+      // 目录变高会自然夹限，记下夹限后的实际值，以区分后续新滚动。
+      saved.closed = tree.scrollTop
+    } else if (previewOpen && saved) {
+      if (tree && tree.scrollTop === saved.closed) tree.scrollTop = saved.before
+      treeScrollAtClose.current = undefined
+    }
+  }, [previewOpen])
+  const [readingPath, setReadingPath] = useState<string>()
+  const readingExpanded = previewOpen && readingPath === selected && selected !== undefined && content?.kind === "text" && content.mediaType !== "text/markdown"
+  // 换文件立即退出，并清掉旧路径，返回旧文件也不继承阅读状态。
+  useEffect(() => { setReadingPath(undefined) }, [selected, previewOpen])
   /**
    * **搜索模式**（2026-08-21，dock-polish ③）。放大镜一按，路径框换成搜索框，
    * 树换成结果单；Esc 或再按一次放大镜退出。两个框**占位符不同**——
@@ -1027,19 +1099,23 @@ export function FilesView({
   return (
     <div
       ref={容器}
-      className={`files-view${铺开 ? " files-wide" : ""}${视觉文件 ? " files-view-visual" : ""}`}
+      className={`files-view${铺开 ? " files-wide" : ""}${视觉文件 ? " files-view-visual" : ""}${readingExpanded ? " files-view-reading" : ""}${!previewOpen ? " files-preview-closed" : ""}`}
       /**
        * **树那一栏的尺寸由人拖**（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动」*）。
        * 宽坞是列宽、窄坞是行高——两个数两个键，上下界按容器此刻的尺寸夹。
        */
       style={
-        铺开
+        !previewOpen
+          ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "auto auto minmax(0, 1fr) auto", gridTemplateAreas: '"where" "note" "tree" "xfer"' }
+          : readingExpanded
+          ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "auto minmax(0, 1fr) auto", gridTemplateAreas: '"note" "preview" "xfer"' }
+          : 铺开
           ? { gridTemplateColumns: `${显示树宽}px minmax(0, 1fr)` }
           : { gridTemplateRows: `auto auto ${显示树高}px auto minmax(0, 1fr)` }
       }
     >
       <HoverCard 浮着的={浮着的} />
-      <div className="files-where">
+      <div className="files-where" hidden={readingExpanded}>
         <span className="files-where-name">{机器 ?? t("本机")}</span>
         {搜着 && search ? (
           <input
@@ -1163,7 +1239,7 @@ export function FilesView({
           {行注}
         </p>
       ) : null}
-      <div className="file-tree-box">
+      <div className="file-tree-box" hidden={readingExpanded}>
       {搜着 && search ? (
         <SearchResults
           查询={查询.trim()}
@@ -1218,7 +1294,7 @@ export function FilesView({
         </ul>
       </nav>
       )}
-        <SideSash
+        {previewOpen ? <SideSash
           attach="edge"
           orientation={铺开 ? "vertical" : "horizontal"}
           width={铺开 ? 显示树宽 : 显示树高}
@@ -1232,7 +1308,7 @@ export function FilesView({
             }
           }}
           label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
-        />
+        /> : null}
       </div>
       {/**
         * **传输条属于这个面板，不属于预览**（2026-08-17，e2e 撞出来的）。
@@ -1247,17 +1323,23 @@ export function FilesView({
         * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
         */}
       {传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}
-      <section className="file-preview">
+      {previewOpen ? <section className="file-preview">
         <FilePreview
           path={selected}
           content={content}
           onOpenExternally={onOpenExternally}
           fitContainer
+          {...(onClosePreview ? { onClosePreview: closePreview } : {})}
+          readingExpanded={readingExpanded}
+          onToggleReading={() => {
+            if (!readingExpanded) treeScrollBeforeReading.current = 容器.current?.querySelector<HTMLElement>('.file-tree, .files-search-results')?.scrollTop
+            setReadingPath(readingExpanded ? undefined : selected)
+          }}
           {...(onDownload ? { onDownload } : {})}
           {...(onDelete ? { onDelete } : {})}
           {...(进废纸篓 === undefined ? {} : { 进废纸篓 })}
         />
-      </section>
+      </section> : null}
     </div>
   )
 }

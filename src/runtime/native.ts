@@ -1,3 +1,7 @@
+import { recoverBotTeam } from "../bot/recovery.js"
+import { Type } from "typebox"
+import { botInstructions, type BotRuntimeBridge } from "../bot/runtime.js"
+import { 加成员, 加任务, 找成员, 取消任务, 发消息, botTeamOriginScope } from "../team/state.js"
 import { QuestionRequests } from "../questions/requests.js"
 import { createAskUserQuestionTool } from "../tools/ask-user-question.js"
 import { type QuestionAnswer } from "../protocol/questions.js"
@@ -78,7 +82,7 @@ import { memoryTools, 技能沉淀指引, type Memory开关, type Memory依赖 }
 import { createLookAtImageTool } from "../tools/look-at-image.js"
 import { createReadMainSessionTool, READ_MAIN_SESSION } from "../tools/read-main-session.js"
 import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
-import { 团队调度器 } from "../team/scheduler.js"
+import { 团队调度器, 状态文本 } from "../team/scheduler.js"
 import { createTeamTools, 队长协议 } from "../team/tools.js"
 import { 描述图片 } from "./vision.js"
 import { createMcpTools, MCP只读标记 } from "../tools/mcp-tool.js"
@@ -546,6 +550,132 @@ function 最后一次真回复(messages: readonly unknown[]): number | undefined
 }
 
 export class NativeRuntime implements AgentRuntime {
+  private botBridge: BotRuntimeBridge | undefined
+  private readonly botTeams = new Map<string, { scheduler: 团队调度器; current: { id: string | undefined }; create: (botId: string) => Promise<void> }>()
+  configureBots(bridge: BotRuntimeBridge): void { this.botBridge = bridge }
+  botBusy(sessionId: string): boolean { return (this.sessions.get(sessionId)?.inFlight ?? 0) > 0 }
+  botArtifacts(owner: string, teamId: string, taskId: string, attemptId: string, artifacts: string[]): void {
+    const control = this.botTeams.get(owner)
+    if (!control) return
+    control.scheduler.改(teamId, team => {
+      const task = team.tasks.find(t => t.id === taskId)
+      if (task?.attemptId === attemptId && ["completed", "failed"].includes(task.status)) task.artifacts = artifacts
+    })
+  }
+  botAttention(owner: string, memberSession: string, attention?: "question" | "permission"): void {
+    const control = this.botTeams.get(owner)
+    if (!control?.current.id) return
+    control.scheduler.改(control.current.id, team => {const member = team.members.find(m => m.sessionId === memberSession);if(member){if(attention)member.attention=attention;else delete member.attention}})
+  }
+  botAssigned(botId: string): boolean {
+    for (const control of this.botTeams.values()) if (control.current.id) {
+      const team = control.scheduler.读(control.current.id), member = team.members.find(m => m.botId === botId && m.status !== "removed")
+      if (member && (member.status === "working" || team.tasks.some(t => (t.assignee === member.name || !t.assignee) && !["completed", "failed", "cancelled"].includes(t.status)))) return true
+    }
+    return false
+  }
+  botTeamWorking(sessionId: string): boolean {
+    const control = this.botTeams.get(sessionId)
+    if (!control?.current.id) return false
+    const team = control.scheduler.读(control.current.id)
+    return team.tasks.some(t => !["completed", "failed", "cancelled"].includes(t.status) && team.members.some(m => m.botId && (m.name === t.assignee || !t.assignee)) && !t.dependencies.some(id => team.tasks.some(up => up.id === id && ["failed", "cancelled"].includes(up.status))))
+  }
+  botModel(sessionId: string): {provider: string; model: string} | undefined {
+    const model = this.sessions.get(sessionId)?.session.model
+    return model ? {provider: model.provider, model: model.id} : undefined
+  }
+  botTask(sessionId: string, teamId: string, taskId: string) {
+    const control = this.botTeams.get(sessionId)
+    if (!control || !/^[a-zA-Z0-9_-]+$/.test(teamId)) throw new UserFacingError("所属团队不可用")
+    const team = control.scheduler.读(teamId), task = team.tasks.find(t => t.id === taskId)
+    if (team.captainSessionId !== sessionId) throw new UserFacingError("任务不属于这段主会话")
+    const member = team.members.find(m => m.name === task?.assignee)
+    if (!task || !member?.botId) throw new UserFacingError("没有这项 Bot 任务")
+    return {control, team, task, member}
+  }
+  stopBotTeam(sessionId: string): void {
+    const control = this.botTeams.get(sessionId)
+    if (!control?.current.id) return
+    const id = control.current.id, original = control.scheduler.读(id)
+    // A shared task would otherwise be claimed during abort cleanup.
+    if (original.members.some(m => m.botId) && original.members.filter(m => m.status !== "removed").every(m => m.botId)) {
+      control.scheduler.改(id, team => {for (const task of team.tasks) if (!task.assignee && !["completed", "failed", "cancelled"].includes(task.status)) 取消任务(team, task.id)})
+    }
+    for (const task of original.tasks) if (!["completed", "failed", "cancelled"].includes(task.status) && original.members.some(m => m.botId && m.name === task.assignee)) this.stopBotTask(sessionId, id, task.id)
+    control.scheduler.中止全部(id)
+  }
+  stopBotTask(sessionId: string, teamId: string, taskId: string): void {
+    const {control, team: original} = this.botTask(sessionId, teamId, taskId)
+    if (original.finishedAt) throw new UserFacingError("团队已经结束")
+    control.scheduler.stopTask(teamId, taskId)
+
+  }
+  async messageBotTask(sessionId: string, teamId: string, taskId: string, instruction: string): Promise<void> {
+    const {control, member, team: original} = this.botTask(sessionId, teamId, taskId)
+    if (original.finishedAt) throw new UserFacingError("团队已经结束")
+    control.scheduler.改(teamId, team => { 发消息(team, {from: "captain", to: member.name, content: instruction}) })
+    await control.scheduler.踢一下(teamId)
+  }
+  botMember(owner: string, teamId: string, botId: string) {
+    const control = this.botTeams.get(owner)
+    if (!control || control.current.id !== teamId) throw new UserFacingError("所属团队当前不可用")
+    const member = control.scheduler.读(teamId).members.find(m => m.botId === botId && m.status !== "removed")
+    if (!member) throw new UserFacingError("Bot 不属于当前协作团队")
+    return member
+  }
+  botCurrentTeam(owner: string, teamId: string) {
+    const control = this.botTeams.get(owner)
+    if (!control || control.current.id !== teamId) throw new UserFacingError("所属团队当前不可用")
+    const team = control.scheduler.读(teamId)
+    if (team.captainSessionId !== owner || team.finishedAt) throw new UserFacingError("团队已经结束或不属于当前主会话")
+    return team
+  }
+  private botTeamSnapshot(owner: string, team: import("../team/types.js").团队) {
+    const origin = botTeamOriginScope(team)
+    // Never retain a stamped live owner identity from a historical or imported snapshot.
+    const {botOwnerContext: _previous, ...stored} = team as typeof team & {botOwnerContext?: unknown}
+    const snapshot = {...stored, ...(origin ? {botOriginScopeKey: origin} : {})}
+    try {
+      const botOwnerContext = this.botBridge?.ownerContext?.(owner)
+      return {...snapshot, ...(origin && botOwnerContext?.key === origin ? {botOwnerContext} : {})}
+    } catch {
+      // Deleted, moved or ambiguous legacy owners stay fail-closed in the Bot dock.
+      return snapshot
+    }
+  }
+  async messageBotTeam(owner: string, teamId: string, input: {requestId: string; message: string; toBotId?: string}): Promise<void> {
+    if (this.configOptions(owner)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("生成方案期间不能启动 Bot 任务。")
+    this.botCurrentTeam(owner, teamId)
+    const control = this.botTeams.get(owner)!
+    control.scheduler.messageTeam(teamId, {id: input.requestId, message: input.message, ...(input.toBotId ? {toBotId: input.toBotId} : {})})
+    await control.scheduler.踢一下(teamId)
+  }
+  private botMemberCall(owner: string, teamId: string, memberName: string, name: string): string {
+    const control = this.botTeams.get(owner)
+    if (!control || control.current.id !== teamId) throw new UserFacingError("所属团队当前不可用")
+    if (name !== "team_status") throw new UserFacingError("Bot 消息必须使用 bot_say 或 bot_message。")
+    return 状态文本(control.scheduler.读(teamId), memberName)
+  }
+  async dispatchBotTask(sessionId: string, botId: string, instruction: string): Promise<{ teamId: string; taskId: string; memberSessionId?: string }> {
+    if (this.configOptions(sessionId)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("生成方案期间不能启动 Bot 任务。")
+    const control = this.botTeams.get(sessionId)
+    const bot = this.botBridge?.list().find(b => b.id === botId && b.enabled && !b.archivedAt)
+    if (!control || !bot) throw new UserFacingError("Bot 或主对话当前不可用。")
+    if (!instruction.trim()) throw new UserFacingError("请填写 Bot 任务。")
+    if (!control.current.id || control.scheduler.读(control.current.id).finishedAt) await control.create(botId)
+    const teamId = control.current.id!
+    let taskId = ""
+    control.scheduler.改(teamId, team => {
+      let member = team.members.find(m => m.botId === botId && m.status !== "removed")
+      if (!member) member = 加成员(team, { name: `bot_${bot.id.replace(/-/g, "").slice(0, 30)}`, agent: `bot-${bot.id}`, botId, botScopeKey: this.botBridge?.scopeKey?.(sessionId), role: bot.role, botInstructions: botInstructions(bot), ...(() => {const model = bot.model ?? this.botModel(sessionId);return model ? {provider: model.provider, model: model.model} : {}})() })
+      taskId = 加任务(team, { subject: instruction.trim().slice(0, 120), description: instruction, assignee: member.name }).id
+    })
+    control.scheduler.resumeTeam(teamId)
+    void control.scheduler.踢一下(teamId).catch(e => this.emit({ kind: "notice", sessionId, text: String(e), failed: true }))
+    const memberSessionId = control.scheduler.读(teamId).members.find(m => m.botId === botId)?.sessionId
+    return { teamId, taskId, ...(memberSessionId ? { memberSessionId } : {}) }
+  }
+
   private readonly sessions = new Map<SessionId, NativeSession>()
   private readonly sinks = new Map<SessionId, Set<EventSink>>()
   /**
@@ -1186,7 +1316,31 @@ export class NativeRuntime implements AgentRuntime {
           )
 
     const entry = this.opts.subagentChildEntry
-    if (!entry) return [...(base ?? []), ...观察过的外部]
+    if (!entry || spec.bot) {
+      const bot = spec.bot
+      const memberTools = bot?.member && bot.ownerSessionId && bot.teamId && bot.memberName ? [
+        {name: "team_status", label: "team_status", description: "查看所属团队任务状态", parameters: Type.Object({}), execute: async () => ({content: [{type: "text" as const, text: this.botMemberCall(bot.ownerSessionId!, bot.teamId!, bot.memberName!, "team_status")}], details: undefined})},
+        {name: "bot_colleagues", label: "bot_colleagues", description: "查询当前协作团队的专业 Bot 与稳定 ID；私聊和其他项目不可见", parameters: Type.Object({}), execute: async () => {
+          const control = this.botTeams.get(bot.ownerSessionId!)
+          if (!control || control.current.id !== bot.teamId) throw new UserFacingError("所属团队当前不可用")
+          const peers = control.scheduler.读(bot.teamId!).members.filter(m => m.botId && m.status !== "removed").map(m => ({botId: m.botId, name: m.name, role: m.role}))
+          return {content: [{type: "text" as const, text: JSON.stringify(peers)}], details: undefined}
+        }},
+        {name: "bot_say", label: "bot_say", description: "在所属团队对话发表进展、意见或补充，所有成员后续轮次可读。不会自动唤醒全员；需要实际回答或交接请使用 bot_message。不要发布内部推理或私聊内容。", parameters: Type.Object({message: Type.String()}, {additionalProperties: false}), execute: async (callId: string, args: {message: string}) => {
+          const control = this.botTeams.get(bot.ownerSessionId!)
+          if (!control || control.current.id !== bot.teamId) throw new UserFacingError("所属团队当前不可用")
+          control.scheduler.sayBot(bot.teamId!, bot.memberName!, {id: callId, message: args.message})
+          return {content: [{type: "text" as const, text: "发言已发表到团队对话。"}], details: undefined}
+        }},
+        {name: "bot_message", label: "bot_message", description: "向同团队 Bot 提问、追问或交接工作，处理队友请求时也可以反问或向第三位队友核查。发出后结束本轮，实际回应自动接回正确讨论；不轮询、不假装收到回答。", parameters: Type.Object({to: Type.String(), message: Type.String(), kind: Type.Optional(Type.Union([Type.Literal("request"), Type.Literal("handoff")]))}, {additionalProperties: false}), execute: async (callId: string, args: {to: string; message: string; kind?: "request" | "handoff"}) => {
+          const control = this.botTeams.get(bot.ownerSessionId!)
+          if (!control || control.current.id !== bot.teamId) throw new UserFacingError("所属团队当前不可用")
+          const exchange = control.scheduler.requestBot(bot.teamId!, bot.memberName!, {id: callId, to: args.to, message: args.message, ...(args.kind ? {kind: args.kind} : {})})
+          return {content: [{type: "text" as const, text: JSON.stringify({exchangeId: exchange.id, status: exchange.status, notice: "请求已记录。结束本轮等待；队友的实际回应会自动返回，再继续原任务。"})}], details: undefined}
+        }},
+      ] : []
+      return [...(base ?? []), ...观察过的外部, ...memberTools]
+    }
 
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       sessionId: spec.sessionId,
@@ -1236,6 +1390,7 @@ export class NativeRuntime implements AgentRuntime {
       return loadSubagentsFrom(this.子agent层(spec.workspace), { 自带停用: this.opts.subagents?.自带停用 }).agents.filter((a) => !a.disabled)
     }
     let 团队轮序 = 0
+    const 团队轮标识 = new Map<string, number>()
     const 调度器 = new 团队调度器({
       sessionDir: spec.sessionDir,
       定义,
@@ -1249,38 +1404,63 @@ export class NativeRuntime implements AgentRuntime {
           ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
         },
       },
-      onChange: (team) => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: team as never }),
+      ...(this.botBridge ? {
+        memberRunner: (request: import("../team/scheduler.js").BotMemberRun) => this.botBridge!.run(spec.sessionId, request),
+        onResult: (event: Parameters<BotRuntimeBridge["result"]>[1]) => this.botBridge!.result(spec.sessionId, event),
+      } : {}),
+      onChange: (team) => {
+        this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, team) as never })
+        for (const task of team.tasks) if (task.status === "cancelled") {
+          const member = team.members.find(m => m.botId && m.name === task.assignee)
+          if (member) void Promise.resolve(this.botBridge?.cancel?.(spec.sessionId, {team, member, taskId: task.id, attemptId: `cancelled-${task.attempt}`})).catch(error => console.error("[Bot] 取消记录失败", error))
+        }
+      },
       onTurn: (e) => {
         const toolCallId = `team:${e.team.id}`
         if (e.phase === "start") {
-          this.emit({ kind: "subagent_start", sessionId: spec.sessionId, toolCallId, index: 团队轮序++, agent: `${e.member}${e.taskId ? ` · ${e.taskId}` : ""}`, task: e.taskId ?? "消息" })
+          const index = 团队轮序++
+          团队轮标识.set(e.runId, index)
+          this.emit({ kind: "subagent_start", sessionId: spec.sessionId, toolCallId, index, agent: `${e.member}${e.taskId ? ` · ${e.taskId}` : ""}`, task: e.taskId ?? "消息" })
         } else {
-          this.emit({ kind: "subagent_end", sessionId: spec.sessionId, toolCallId, index: 团队轮序 - 1, ok: e.ok ?? false, ...(e.error ? { error: e.error } : {}) })
+          const index = 团队轮标识.get(e.runId)
+          if (index === undefined) return
+          团队轮标识.delete(e.runId)
+          this.emit({ kind: "subagent_end", sessionId: spec.sessionId, toolCallId, index, ok: e.ok ?? false, ...(e.error ? { error: e.error } : {}) })
         }
       },
     })
-    const 当前团队 = { id: 读当前团队(spec.sessionDir) }
+    const 当前团队: { id: string | undefined } = { id: 读当前团队(spec.sessionDir) }
     const 团队工具 = createTeamTools({
       sessionId: spec.sessionId,
       调度器,
       定义,
+      resolveBot: id => { const bot = this.botBridge?.list().find(b => b.id === id);return bot ? {...bot, scopeKey: this.botBridge?.scopeKey?.(spec.sessionId), model: bot.model ?? this.botModel(spec.sessionId) ?? {provider: native.provider, model: native.model}} : undefined },
       当前: { get: () => 当前团队.id, set: (id) => { 当前团队.id = id; 记当前团队(spec.sessionDir, id) } },
       已知模型: async () => (await this.runtime()).getModels().map((m) => ({ provider: m.provider, model: m.id })),
     })
+    this.botTeams.set(spec.sessionId, { scheduler: 调度器, current: 当前团队, create: async (botId) => {
+      const result = await 团队工具.find(t => t.name === "team_create")!.execute("bot-dispatch", { name: "Bot Team", goal: "完成用户委派的科研任务", members: [{ name: `bot_${botId.replace(/-/g, "").slice(0, 30)}`, botId }] } as never)
+      if (result.isError) throw new UserFacingError(result.content.map(c => c.text).join("\n"))
+    } })
+    const botListTool = this.botBridge ? [{ name: "bot_list", label: "bot_list", description: "列出用户配置的专业 Bot。用户要求组建 Bot Team 时，先查名册，按职责自动选择成员，用 team_create 的 botId 分工；依赖按顺序，最后汇总真实脚本、图表与说明。", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text" as const, text: JSON.stringify(this.botBridge!.list().filter(b => b.enabled && !b.archivedAt).map(({id,name,role,model}) => ({id,name,role,model}))) }], details: undefined }) }] : []
     this.团队收尾.set(spec.sessionId, () => {
       if (当前团队.id) 调度器.中止全部(当前团队.id)
     })
     // 会话重开时把团队快照推一遍：界面那一格才知道它还在
     if (当前团队.id) {
       try {
-        const t = 调度器.读(当前团队.id)
-        queueMicrotask(() => this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: t as never }))
+        let t = 调度器.读(当前团队.id)
+        if (spec.resume && recoverBotTeam(t)) t = 调度器.改(当前团队.id, team => { recoverBotTeam(team) })
+        queueMicrotask(() => {
+          this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, t) as never })
+          void Promise.resolve(this.botBridge?.recover?.(spec.sessionId, t)).catch(error => console.error("[Bot] 恢复结果失败", error))
+        })
       } catch {
         当前团队.id = undefined
       }
     }
 
-    return [...(base ?? []), ...观察过的外部, tool, ...团队工具]
+    return [...(base ?? []), ...观察过的外部, tool, ...团队工具, ...botListTool]
   }
 
   /**
@@ -1545,10 +1725,13 @@ export class NativeRuntime implements AgentRuntime {
       },
       appendSystemPromptOverride: (base) => [
         ...base,
+        ...(spec.bot ? [spec.bot.instructions] : []),
+        ...(spec.bot?.member ? ["Bot 团队对话：每轮输入附有团队公开讨论。用 bot_say 发表简洁进展/意见；用 bot_colleagues 确认成员，再用 bot_message 提问、反问或交接。处理队友请求时也可向发起者追问或请第三位队友核查。请求后结束本轮等待，不轮询、假装收到回答或提前完成任务。[bot-request:…] 的最后回复自动交回请求者；收到 [bot-reply:…] 后接回本轮正在处理的请求或原任务，不能把子请求当成原任务完成。[team-user:…] 是用户的团队发言，结合公开讨论与最新要求处理，回应将公开发表。重要进展与最终回复进入同一团队对话；私聊全文与内部推理不共享。只基于实际工具结果和队友回应交付，失败/未核验必须说明。"] : []),
         // 记忆快照（2026-08-25）：建会话时渲染一次——确认的记忆下一段会话生效
         ...(记忆快照 ? [记忆快照] : []),
         // 队长协议（team-board）：模型不知道该怎么分工，就不会分工
-        ...(this.opts.subagentChildEntry ? [队长协议] : []),
+        ...(this.opts.subagentChildEntry && !spec.bot ? [队长协议] : []),
+        ...(this.botBridge && !spec.bot ? ["Bot Team：成员可以用 bot_message 请求队友核查和交接；不要把所有合作简化为预先排好的流水线。按需要安排成员，给核查、回应、调整和交付留出空间。用户要求专业 Bot 组队时，先调用 bot_list，从已有且启用的 Bot 按职责自动选人，以 botId 建 team_create。不额外要求逐次组队确认，不自动创建新 Bot，不为凑人数升级模型。能力缺口应说明并由主对话补足或索取必要输入。任务按依赖排序，写清输入、方法和输出路径（outputs）；只能汇总实际完成、已核验的脚本、注释说明、表格及图形。成员失败或取消必须明确说明，不能把部分交付说成全部完成。"] : []),
         // 删除指引（2026-08-23，学自 dsh-auto-mode）：帮规划的，不是安全边界——边界在门上
         删除指引,
         // 内核指引（2026-08-27）：有 run_code 才说；不给 kernels 的装配（CLI、测试替身）一个字不受影响
@@ -2516,7 +2699,7 @@ ${描述}`
       systemPrompt?: string
       tools?: unknown[]
       messages?: unknown[]
-      model?: { contextWindow?: number; id?: string }
+      model?: { contextWindow?: number; id?: string; provider?: string }
     }
     const size = (v: unknown): number =>
       v === undefined ? 0 : Buffer.byteLength(typeof v === "string" ? v : JSON.stringify(v), "utf8")
@@ -2524,6 +2707,7 @@ ${描述}`
       // `exactOptionalPropertyTypes`：**缺省与「值为 undefined」不是一回事**，
       // 所以拿不到就不给这个字段，而不是给一个 undefined
       ...(st.model?.id ? { model: st.model.id } : {}),
+      ...(st.model?.provider ? { provider: st.model.provider } : {}),
       ...(st.model?.contextWindow ? { contextWindow: st.model.contextWindow } : {}),
       ...this.已用(s),
       ...(() => {
@@ -2945,6 +3129,7 @@ ${描述}`
   }
 
   async abort(sessionId: SessionId): Promise<void> {
+    this.stopBotTeam(sessionId)
     /**
      * **先撤待发单，再中止**（2026-09-23）。反过来的话，中止与撤单之间 pi 可能把一条送进去、
      * 又开一段；而且 pi 中止之后不再续跑，排着的那几条就永远卡在它的队列里。
@@ -3705,6 +3890,7 @@ ${描述}`
   }
 
   async stop(sessionId: SessionId): Promise<void> {
+    this.stopBotTeam(sessionId)
     // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
     // 记一笔并等启动结束——start() 的收尾会据此把刚起来的立刻停掉。
     if (this.起中.has(sessionId) && !this.sessions.has(sessionId)) {
@@ -3717,6 +3903,7 @@ ${描述}`
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
     this.sessions.delete(sessionId)
+    this.botTeams.delete(sessionId)
     /**
      * **回退做到一半不拆**（Task 5 复审）：`navigateTree` / 留话做到一半就 `dispose`，对话那一半会停在半路。
      * 表里已经摘掉了——这期间谁也发不进话；等它做完（成败都行，它自己出声）再往下拆。

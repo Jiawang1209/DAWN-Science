@@ -37,7 +37,7 @@ import { setValue } from "./identity.js"
  * **`browser` 现在不在这个联合里**——它一点都还没有（全项目 0 处 `webview`），
  * 摆一个点开是空的房客，比不摆更坏。它单开一轮，那时再加进来。
  */
-export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overview" | "web" | "subagent" | "team" | "chat"
+export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overview" | "web" | "subagent" | "team" | "chat" | "bot"
 
 /**
  * **「概览」2026-08-20 从整屏搬进坞**（作者定的：「换个入口……
@@ -53,7 +53,7 @@ export type 坞房客 = "review" | "files" | "artifacts" | "notebook" | "overvie
  */
 export const 常用房客: readonly 坞房客[] = ["files", "artifacts", "notebook"]
 
-export const 全部房客: readonly 坞房客[] = ["review", "files", "artifacts", "notebook", "overview", "web", "subagent", "team", "chat"]
+export const 全部房客: readonly 坞房客[] = ["review", "files", "artifacts", "notebook", "overview", "web", "subagent", "team", "chat", "bot"]
 
 export const RIGHT_DOCK_TENANT_KEY = "dawn.global.right-dock-tenant"
 export const RIGHT_DOCK_WIDTH_KEY = "dawn.global.right-dock-width"

@@ -5,6 +5,7 @@
  * 队长 = 当前会话。成员的工具（`team_send` / `team_status`）不在这里——那是子进程里的，见 `subagent/child.ts`。
  * `团队错误` 是模型的错（id 写错、依赖不存在、令牌对不上）：原样回给模型让它改，不崩。
  */
+import { botInstructions, type RuntimeBot } from "../bot/runtime.js"
 import { Type } from "typebox"
 import type { SubagentDefinition } from "../subagent/definitions.js"
 import { 团队调度器, 状态文本 } from "./scheduler.js"
@@ -19,6 +20,7 @@ interface ToolResult {
 const text = (s: string, isError = false): ToolResult => ({ content: [{ type: "text", text: s }], ...(isError ? { isError: true } : {}), details: undefined })
 
 export interface 团队工具选项 {
+  resolveBot?: (id: string) => RuntimeBot | undefined
   sessionId: string
   调度器: 团队调度器
   定义: () => readonly SubagentDefinition[]
@@ -30,7 +32,8 @@ export interface 团队工具选项 {
 
 const 成员项 = Type.Object({
   name: Type.String({ description: "团队里叫什么（唯一；字母数字下划线连字符）" }),
-  agent: Type.String({ description: "用名册里哪个子 agent 当人设" }),
+  agent: Type.Optional(Type.String({ description: "用名册里哪个子 agent 当人设" })),
+  botId: Type.Optional(Type.String({ description: "固定 Bot ID；与 agent 二选一，先用 bot_list 查询" })),
   role: Type.Optional(Type.String({ description: "一句话说它负责什么" })),
   model: Type.Optional(Type.String({ description: "可选，写成 provider/model（如 deepseek/deepseek-flash）。**缺省跟你当前的模型**；只在人明确要求不同分工用不同模型时才给" })),
 })
@@ -39,6 +42,7 @@ const 任务项 = Type.Object({
   subject: Type.String({ description: "一句标题" }),
   description: Type.Optional(Type.String({ description: "要做什么、产物放哪。可以写 {t1} 引上游任务的结果" })),
   assignee: Type.Optional(Type.String({ description: "成员名；不给就进共享池，谁空闲谁领；\"captain\" = 队长自己做" })),
+  outputs: Type.Optional(Type.Array(Type.String(), {description: "将写入的产物路径；共享路径按占用排队。未声明时保守地独占工作目录。"})),
   dependencies: Type.Optional(Type.Array(Type.String(), { description: "要先完成的任务 id（必须是前面已经建好的）" })),
 })
 
@@ -64,7 +68,7 @@ export function createTeamTools(opts: 团队工具选项) {
       label: "team_create",
       description:
         "建一支团队并成为队长：一次给齐成员与带依赖的任务表，调度器会自动把就绪任务派给空闲成员（各自一个子进程、各自可续的会话），" +
-        `最多 ${团队上限.maxMembers} 个成员、${团队上限.maxTasks} 个任务、同时跑 ${团队上限.maxConcurrent} 个。` +
+        `最多 ${团队上限.maxMembers} 个成员、${团队上限.maxTasks} 个活动任务、同时跑 ${团队上限.maxConcurrent} 个。` +
         "一个队长同时只带一个团队。建完用 team_wait 等进展，team_status 看全景；阻塞了先 team_reassign；全部终态后汇总给人，再 team_finish。",
       parameters: Type.Object({
         name: Type.String({ description: "团队名" }),
@@ -72,14 +76,22 @@ export function createTeamTools(opts: 团队工具选项) {
         members: Type.Array(成员项, { description: "成员" }),
         tasks: Type.Optional(Type.Array(任务项, { description: "任务表，按依赖顺序写（上游在前）" })),
       }),
-      async execute(_id: string, p: { name: string; goal: string; members: { name: string; agent: string; role?: string; model?: string }[]; tasks?: { id?: string; subject: string; description?: string; assignee?: string; dependencies?: string[] }[] }) {
+      async execute(_id: string, p: { name: string; goal: string; members: { name: string; agent?: string; botId?: string; role?: string; model?: string }[]; tasks?: { id?: string; subject: string; description?: string; assignee?: string; outputs?: string[]; dependencies?: string[] }[] }) {
         return 跑(async () => {
           if (opts.当前.get()) throw new 团队错误(`已经有一支活着的团队（${opts.当前.get()}），先 team_finish 再建新的。`)
           const 名册 = opts.定义()
           const team = 建团队({ name: p.name, goal: p.goal, captainSessionId: opts.sessionId })
           for (const m of p.members ?? []) {
-            if (!名册.some((d) => d.name === m.agent)) throw new 团队错误(`名册里没有叫「${m.agent}」的子 agent。有的是：${名册.map((d) => d.name).join(" / ") || "（一个都没有）"}`)
-            加成员(team, { ...m, ...(await 解析模型(m.model, opts.已知模型)) })
+            if (m.botId) {
+              if (m.agent || m.model) throw new 团队错误("Bot 使用自己的配置，请勿同时填写 agent 或 model。")
+              const bot = opts.resolveBot?.(m.botId)
+              if (!bot || !bot.enabled || bot.archivedAt) throw new 团队错误(`Bot「${m.botId}」不存在或已停用。`)
+              if (bot.model) await 解析模型(`${bot.model.provider}/${bot.model.model}`, opts.已知模型)
+              加成员(team, { name: m.name, agent: `bot-${bot.id}`, botId: bot.id, ...(bot.scopeKey ? {botScopeKey: bot.scopeKey} : {}), role: bot.role, botInstructions: botInstructions(bot), ...(bot.model ? { provider: bot.model.provider, model: bot.model.model } : {}) })
+            } else {
+              if (!m.agent || !名册.some((d) => d.name === m.agent)) throw new 团队错误(`名册里没有叫「${m.agent}」的子 agent。有的是：${名册.map((d) => d.name).join(" / ") || "（一个都没有）"}`)
+              加成员(team, { ...m, agent: m.agent, ...(await 解析模型(m.model, opts.已知模型)) })
+            }
           }
           for (const t of p.tasks ?? []) 加任务(team, t)
           写团队(调.dir(team.id), team)
@@ -95,7 +107,7 @@ export function createTeamTools(opts: 团队工具选项) {
       label: "team_add_task",
       description: "往当前团队加一项任务（可带依赖、指派）。加完调度器会自动派。",
       parameters: 任务项,
-      async execute(_id: string, p: { id?: string; subject: string; description?: string; assignee?: string; dependencies?: string[] }) {
+      async execute(_id: string, p: { id?: string; subject: string; description?: string; assignee?: string; outputs?: string[]; dependencies?: string[] }) {
         return 跑(async () => {
           const id = 当前团队()
           let 新: string = ""

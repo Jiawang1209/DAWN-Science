@@ -1,3 +1,4 @@
+import { $botSession, resyncBot } from "./bots.js"
 import { 标记待回答 } from "./catalog.js"
 /**
  * 把后端的真相同步进缓存。
@@ -231,6 +232,7 @@ export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined)
  * 「这条响应属于另一个会话」。少任何一道都会让旧内容倒灌进新会话。
  */
 export function resyncSession(c: WorkbenchClient, sessionId: string): Promise<void> {
+  if (sessionId === $botSession.get()?.sessionId) return resyncBot(c, sessionId)
   // 子转录跳了号（2026-09-27）：它不是一段会话，走自己的那条
   if (是子转录id(sessionId)) return resyncSubagent(c, sessionId)
   // 坞里那段跳了号（侧边对话，2026-09-24）：快照灌进侧槽，**不领 `guard()` 的号**——理由见 `resyncSide`

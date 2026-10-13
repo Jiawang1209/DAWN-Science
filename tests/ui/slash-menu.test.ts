@@ -60,3 +60,9 @@ describe("/plan（先出方案，2026-09-27）", () => {
     expect(按能压滤([{ kind: "command", name: "plan", description: "" }], false)).toHaveLength(1)
   })
 })
+
+it("Bot selection inserts its stable ID and can filter by role", () => {
+  const bot = { kind: "bot" as const, name: "stable-id", title: "统计助手", description: "混合模型" }
+  expect(斜杠选完(bot, "/统计")).toBe("/bot:stable-id ")
+  expect(筛斜杠([bot], "/混合")).toEqual([bot])
+})

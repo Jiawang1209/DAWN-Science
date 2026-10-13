@@ -79,6 +79,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 | **Right dock** | Files (local / remote), transfers, notebook, generated artifacts, web preview, watching the agent's browser |
 | **`@` references** | `@` a workspace file in the input box — path and type are passed, not contents |
 | **Multi-agent** | 22 bundled sub-agents; team mode with a lead, resumable members and a task board with dependencies |
+| **Professional Bots** | Manage reusable native/API assistants in the Bot dock, chat privately within a workspace, dispatch with `/`, discuss in one shared chat with individual avatars and bubbles, follow up with peers, hand off work and accept user intervention, or let the main conversation form a team and collect verified scripts, notes and figures with inline previews |
 | **Three permission levels** | Allow all / ask / block, plus a hard-deny list |
 | **Skills & plugins** | Skills with three-level toggles and import; Office (Word/Excel/PowerPoint/PDF, 14 tools), browser (15 tools) and long-term memory (three-track confirmation) plugins |
 | **Remote assistant** | WeChat / Feishu channels — scan a QR code, keep asking from your phone |
@@ -310,6 +311,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 | **右侧坞** | 文件（本地/远端）、传输、笔记本、产物清单、网页预览、agent 浏览器旁观 |
 | **`@` 引用** | 输入框里 `@` 工作区文件——喂路径和类型，不喂内容 |
 | **多智能体** | 22 份自带子 agent 名册；团队模式：队长 + 可续聊成员 + 带依赖的任务板 |
+| **专业 Bot** | 坞中管理固定职责助手、按工作区直接交流；主对话自动从已配置 Bot 组队，`/` 随时派单；成员在同一团队对话中追问/交接，用户随时插话；独立头像、名字、专业角色及消息气泡展示交流，汇总已核验脚本、说明及图表，成果可在消息内展开预览并用 × 收起。首版支持 native/API，ACP/CLI 不作为 Bot 成员 |
 | **权限三档** | 全放行 / 问一句 / 拦下；硬拒清单 |
 | **技能与插件** | 技能三档开关、导入；Office（Word/Excel/PPT/PDF 14 工具）、浏览器（15 工具）、记忆（三轨确认制）插件 |
 | **远程助理** | 微信 / 飞书通道，扫码接入，手机上继续问 |

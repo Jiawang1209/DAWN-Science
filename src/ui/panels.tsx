@@ -213,6 +213,7 @@ export function ChangesPanel({
  * 把「不可见」显示成 0 会让人以为免费，那是错的。
  */
 export interface ContextUsage {
+  provider?: string
   model?: string
   contextWindow?: number
   /** pi 算的「上下文里现在有多少」（2026-09-27 口径）。**缺省 = 还没有过回复或刚压缩过，不是 0** */

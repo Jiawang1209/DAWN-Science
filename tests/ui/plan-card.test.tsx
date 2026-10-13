@@ -304,6 +304,14 @@ describe("空态", () => {
     })
     expect(次序).toEqual(["plan:true", "start:分析一下"])
   })
+  it("方案期的 Bot 开场被拒时保留完整命令与草稿", async () => {
+    const onStart = vi.fn(async () => { throw Error("请先退出生成方案，再调遣 Bot") })
+    render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={() => {}} 先出方案={{ on: false, onToggle: () => {} }} />)
+    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: "/plan /bot:stable-id 检查数据" } })
+    await act(async () => { fireEvent.keyDown(box, { key: "Enter" }) })
+    await waitFor(() => expect(box.value).toBe("/plan /bot:stable-id 检查数据"))
+  })
   it("按下之后原因来了（换成不支持的 agent）：不显示按下", () => {
     render(<EmptyConversation agents={["claude-acp"]} onStart={() => {}} onOpenSettings={() => {}} 先出方案={{ on: true, 不能的原因: "这个 agent 不归 DAWN 管工具，生成方案用不了", onToggle: () => {} }} />)
     expect(screen.getByRole("button", { name: "生成方案" }).getAttribute("aria-pressed")).toBe("false")

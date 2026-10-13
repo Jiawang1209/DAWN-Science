@@ -1,3 +1,8 @@
+import { readOnlyBotCallbacks } from "./bot-member-view.js"
+import { BotPane } from "./bot-pane.js"
+import { BotTeamCards } from "./bot-task-card.js"
+import { $bots, $botSession, $botOwner, $botOwnerScope, $botTask, $botMemberView, Bot槽, clearBotSession, selectBotSession, resyncBot, receiveBotUpdate, loadBots, BotDispatchQueue, parseBotCommand, sendBotTaskSupplement, botArtifactPreviewPath } from "./state/bots.js"
+import {visibleBotTeam} from "./bot-team-scope.js"
 import { 标记待回答 } from "./state/catalog.js"
 import { StatusNotices } from "./status-notices.js"
 /**
@@ -276,6 +281,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const runDetail = useStore($runDetail)
   const provenance = useStore($provenance)
   const providers = useStore($providers)
+  const botProfiles = useStore($bots)
+  const botSession = useStore($botSession)
+  const storedBotTeam = useStore($团队)
+  const botDispatches = useMemo(() => new BotDispatchQueue(), [])
+
   const creds = useStore($credentials)
   const 目录到手 = useStore($providersLoaded)
   const 凭证到手 = useStore($credentialsLoaded)
@@ -672,7 +682,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * **而那种泄漏不出声**。
              */
             // **坞里那段答完了不退订**：它一直挂在人眼前，退订了它的下一句就再也到不了侧槽
-            if (u.sessionId !== $activeSessionId.get() && u.sessionId !== $侧边会话id.get()) {
+            if (u.sessionId !== $activeSessionId.get() && u.sessionId !== $侧边会话id.get() && !(u.sessionId === $botSession.get()?.sessionId && $rightDockOpen.get() && $rightDockTenant.get() === "bot")) {
               client.forgetRevision(u.sessionId)
               client.get("unsubscribeSession", { sessionId: u.sessionId }).catch(fail)
             }
@@ -717,6 +727,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }
           return
         }
+        if (receiveBotUpdate(u, id => void resyncBot(client, id).catch(fail))) return
         if (u.sessionId !== $activeSessionId.get()) return
         if (u.type === "item") upsertItem(u.item)
         if (u.type === "append" && !appendItem(u.id, u.field, u.delta)) void resyncSession(client, u.sessionId)
@@ -1370,6 +1381,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 当前工作区路径 = sessionId
     ? (tasks.find((t) => t.sessionId === sessionId)?.workspace ?? tasks.find((t) => t.sessionId === sessionId)?.scratchWorkspace)
     : undefined
+  /** Bot room reads the same scoped files without changing the dock tenant. */
+  const readBotArtifact = useCallback((path: string) => {
+    return 读产物(botArtifactPreviewPath(path, 当前工作区路径, !!文件所在))
+  }, [读产物, 当前工作区路径, 文件所在])
+
+  const botOwnerScope = JSON.stringify([sessionId, 当前工作区路径, session?.projectId, session?.remote?.connectionId, session?.remote?.cwd])
+  const botTeam = visibleBotTeam(storedBotTeam, sessionId, {workspace: 当前工作区路径, projectId: session?.projectId, connectionId: session?.remote?.connectionId, remoteCwd: session?.remote?.cwd})
   const [艾特设置, 设艾特设置] = useState<艾特设置>({ ignorePasted: true, globalRules: [] })
   /** 线那头回的东西不信到底：缺字段就按默认（测试里的假 client 对不认识的操作回 `{}`） */
   const 整理艾特设置 = (r: Partial<艾特设置> | undefined): 艾特设置 => ({
@@ -1985,10 +2003,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const 恢复会话 = async (id: string) => {
     if ($sessionRecovery.get()[id]?.pending) return
-    await (id === $activeSessionId.get() ? resyncSession(client, id) : resyncSide(client, id))
+    await (id === $botSession.get()?.sessionId ? resyncBot(client, id) : id === $activeSessionId.get() ? resyncSession(client, id) : resyncSide(client, id))
     const pid = $activeProjectId.get()
     await Promise.all([loadTempSessions(client), ...(pid ? [loadSessions(client, pid)] : [])])
-    if (!$sessionRecovery.get()[id]?.error) await 取写权(id)
+    if (!$sessionRecovery.get()[id]?.error && !(id === $botSession.get()?.sessionId && ($botTask.get() || $botMemberView.get()))) await 取写权(id)
   }
 
   const connectRemote = async (id: string) => {
@@ -2299,6 +2317,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 首次打开与跳号重取同一个函数（`resyncSubagent`）。**槽不在这里清**：`看子agent` 换 id 之前已同步清过
    * （在这里清是绘制之后——有一帧是「新 id + 旧过程」，2026-09-27 审查）。
    */
+  useEffect(() => {
+    if ($botOwner.get() !== sessionId || $botOwnerScope.get() !== botOwnerScope) { clearBotSession(); $botOwner.set(sessionId); $botOwnerScope.set(botOwnerScope) }
+    if (ready) void loadBots(client).catch(fail)
+  }, [ready, client, sessionId, botOwnerScope])
+  useEffect(() => {
+    const id = botSession?.sessionId
+    if (!ready || !id || !rightDockOpen || rightDockTenant !== "bot") return
+    void resyncBot(client, id).catch(fail)
+    if (!$botTask.get() && !$botMemberView.get()) void 取写权(id)
+    const timer = setInterval(() => { if (!$botTask.get() && !$botMemberView.get()) void 取写权(id) }, 150_000)
+    return () => {
+      clearInterval(timer)
+      if (id === $activeSessionId.get() || id === $侧边会话id.get() || $跑着的会话.get().has(id)) return
+      client.forgetRevision(id)
+      client.get("unsubscribeSession", { sessionId: id }).catch(fail)
+    }
+  }, [ready, client, botSession?.sessionId, 取写权, rightDockOpen, rightDockTenant])
+
   const 子id = useStore($子转录id)
   const 团队格会话 = useStore($团队格会话)
   useEffect(() => {
@@ -3169,6 +3205,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * cli：只能由配置声明（Spike H）——两个外部 CLI 都没有「列出可选项」的接口。
    */
   const currentModelOf = (s: SessionSummary): { provider?: string; model: string } | undefined => {
+    if (s.sessionId === botSession?.sessionId) return sessionModels[s.sessionId]
     const agentCfg = agentCfgOf(s)
     return (
       sessionModels[s.sessionId] ??
@@ -4056,10 +4093,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       // 先出方案（2026-09-27，D4）：选了写 `/plan `，发的时候界面拦下来切开关、不送给模型。外部 agent 那段也列着——发了说原因
       { kind: "command" as const, name: "plan", title: t("生成方案"), description: t("先写分析方案，你批了再动手；方案期只看不改") },
       { kind: "command" as const, name: "compact", title: t("压缩上下文"), description: t("把早先的对话换成一段摘要交给模型，腾出上下文；后面可以跟一句要保留什么") },
+      ...botProfiles.filter(b => b.enabled && !b.archivedAt).map(b => ({ kind: "bot" as const, name: b.id, title: b.name, description: b.role, group: "Bot" })),
       ...技能单,
       ...子agent名册.map((a) => ({ kind: "subagent" as const, name: a.name, ...(a.title ? { title: a.title } : {}), description: a.description, ...(a.group ? { group: a.group } : {}) })),
     ])
-  }, [技能单, 子agent名册])
+  }, [技能单, 子agent名册, botProfiles])
   /**
    * 侧栏那两个数**动了才重取**（2026-08-22 作者：「不用每五秒刷，有增加的时候自然就增加」）：
    * 技能屏 / 子 agent 屏做完一件事（导入、删除、启停）报一声，这里 +1；切项目、切屏也重取。
@@ -4145,9 +4183,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const currentServiceLabel = currentServiceLabelOf(s)
     const switchProblem = 换模型问题[s.sessionId]
     return {
+      allowBotDispatch: 槽 === 主槽 && s.kind === "native",
       // 主区那段用主区的根；坞里那段用它自己的（见 `坞引用文件`）
       护粘贴: 艾特设置.ignorePasted,
-      ...(槽 === 主槽 ? { 引用文件, onOpenReference: 打开引用 } : { 引用文件: 坞引用文件, onOpenReference: 坞打开引用 }),
+      ...(槽 === 主槽 ? { 引用文件, onOpenReference: 打开引用 } : 槽 === Bot槽 ? {
+        引用文件: s.remote && s.remote.connectionId !== 文件所在?.connectionId ? undefined : 引用文件 && s.remote ? { ...引用文件, 根: s.remote.cwd } : 引用文件,
+        onOpenReference: (path: string) => openFile(s.remote ? `${s.remote.cwd.replace(/\/+$/, "")}/${path}` : path),
+        ...(当前工作区路径 ? { workspace: 当前工作区路径 } : {}),
+      } : { 引用文件: 坞引用文件, onOpenReference: 坞打开引用 }),
       loadLocalImage: 读本机图,
       loadGalleryRoots: 载图廊根们,
       /** 点子 agent 的 chip → 坞里「子 agent」那一格（2026-09-27）。坞里那段派的一样点得开：子转录 id 里带着它自己的会话 id，不会串 */
@@ -4444,11 +4487,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        * 真的那条经事件回灌进来时在同一次落地里顶掉它（`transcript-slot.ts` 的 `回显`）。
        * PTY 不给：终端自己回显，后端也不推人话，回显会永远挂着。
        */
-      ...(s.kind !== "pty" ? { onEcho: 槽.回显 } : {}),
-      onSend: (text, images, behavior) =>
-        // **转录不做本地乐观追加**（回显除外，见上）：事件流是对话的唯一事实来源。
-        // 两条路各写一半迟早对不上——自己发的话会经事件回灌进来。
-        (behavior === "redirect" ? 锁着调整(s.sessionId, 写进去(s.sessionId, text, images, behavior)) : 写进去(s.sessionId, text, images, behavior))
+      ...(s.kind !== "pty" ? { onEcho: (text: string, images?: readonly string[]) => parseBotCommand(text) ? () => {} : 槽.回显(text, images) } : {}),
+      onSend: (text, images, behavior) => {
+        const command = parseBotCommand(text)
+        if (command) {
+          if (槽 !== 主槽 || s.kind !== "native") return Promise.reject(new Error(t("仅主对话支持 Bot 调遣")))
+          if (images?.length) return Promise.reject(new Error(t("Bot 调遣请在任务文字中引用文件路径")))
+          if (!botProfiles.some(b => b.id === command.botId && b.enabled && !b.archivedAt)) return Promise.reject(new Error(t("这个 Bot 不可用")))
+          return botDispatches.send(s.sessionId, text, request => client.get("dispatchBotTask", request)).then(() => {
+            // A later intentional repeat is a new task; failed responses retain their request ID.
+            queueMicrotask(() => botDispatches.acknowledge(s.sessionId, text))
+          })
+        }
+        // 转录由实际会话事件回灌，发送失败仍返回给 composer 恢复草稿。
+        return (behavior === "redirect" ? 锁着调整(s.sessionId, 写进去(s.sessionId, text, images, behavior)) : 写进去(s.sessionId, text, images, behavior))
           .then(() => {
             /**
              * 标题是第一句话定的，而**它落在后端**——不重取一次，
@@ -4470,7 +4522,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                */
               void loadTempSessions(client)
             }
-          }),
+          })
+      },
     }
   }
 
@@ -5470,6 +5523,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   />
                 )
               })()}
+              <BotTeamCards team={botTeam} names={new Map(botProfiles.map(b => [b.id, b.name]))} onOpenFile={path => {
+                try { openFile(botArtifactPreviewPath(path, 当前工作区路径, !!session.remote)) } catch (error) { fail(error) }
+              }}
+                onView={taskId => {
+                  if (!botTeam) return
+                  const target = { ownerSessionId: session.sessionId, teamId: botTeam.id, taskId }
+                  client.get<{ session: SessionSummary }>("openBotTask", target).then(r => {
+                    if ($activeSessionId.get() !== target.ownerSessionId || $botOwnerScope.get() !== botOwnerScope) return
+                    $botTask.set(target)
+                    const member = botTeam.members.find(m => m.name === botTeam.tasks.find(task => task.id === taskId)?.assignee)
+                    selectBotSession(r.session, member?.botId)
+                    坞上位(); setRightDockTenant("bot"); setRightDockOpen(true)
+                  }).catch(fail)
+                }}
+                onStop={taskId => client.get("stopBotTask", { ownerSessionId: session.sessionId, teamId: botTeam!.id, taskId })}
+                onMessage={(taskId, instruction) => client.get("messageBotTask", { ownerSessionId: session.sessionId, teamId: botTeam!.id, taskId, instruction })} />
               <ConversationView
                 key={session.sessionId}
                 session={session}
@@ -5597,11 +5666,32 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                * *「默认的 App 的面板，也应该和新建任务一样，带有一个选择工作目录，
                * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
                */
-              onStart={(agentId, firstMessage, workspace, images, files) =>
-                // **返回 promise**：空态那张卡要据此在失败时把字、图、文件还回去
-                // 按下之后换成了不支持的 agent：那一下作废（不带着去建会话，否则新建任务会当场失败）
-                新建任务({ agentId, firstMessage, workspace, images, files, 先出方案: 空态方案.current && !空态方案不能 }).then(() => 设空态方案(false))
-              }
+              onStart={async (agentId, firstMessage, workspace, images, files) => {
+                const command = firstMessage && parseBotCommand(firstMessage)
+                if (command) {
+                  if (空态方案.current) throw new Error(t("请先退出生成方案，再调遣 Bot"))
+                  if (providers.agents.find(a => a.agentId === agentId)?.kind !== "native") throw new Error(t("仅主对话支持 Bot 调遣"))
+                  if (images?.length || files?.length) throw new Error(t("Bot 调遣请在任务文字中引用文件路径"))
+                  if (!command.instruction) throw new Error(t("请填写 Bot 的任务"))
+                  if (!botProfiles.some(b => b.id === command.botId && b.enabled && !b.archivedAt)) throw new Error(t("这个 Bot 不可用"))
+                  // Create an empty native owner; the command goes only to deterministic dispatch.
+                  const owner = await 新建任务({ agentId, workspace })
+                  if (!owner) throw new Error(t("先打开主对话，再与 Bot 交流"))
+                  setDraft(owner, firstMessage!)
+                  try {
+                    await botDispatches.send(owner, firstMessage!, input => client.get("dispatchBotTask", input))
+                    setDraft(owner, "")
+                    botDispatches.acknowledge(owner, firstMessage!)
+                  } catch (error) {
+                    // Keep the accepted owner and stable retry ID when the response is lost.
+                    fail(error)
+                    throw error
+                  }
+                } else {
+                  await 新建任务({ agentId, firstMessage, workspace, images, files, 先出方案: 空态方案.current && !空态方案不能 })
+                }
+                设空态方案(false)
+              }}
               先出方案={{
                 // 有原因时不显示按下（按下 + 灰着 = 自相矛盾）
                 on: 空态方案开 && !空态方案不能,
@@ -5853,6 +5943,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   })
                 }}
               />
+            ) : rightDockTenant === "bot" ? (
+              <BotPane client={client} ownerSessionId={sessionId} ownerScope={botOwnerScope} team={botTeam}
+                readArtifact={readBotArtifact}
+                onViewMember={async botId => {
+                  if (!sessionId || !botTeam || botTeam.captainSessionId !== sessionId) return
+                  const target = {ownerSessionId: sessionId, teamId: botTeam.id, botId}
+                  const r = await client.get<{session: SessionSummary}>("openBotMember", target)
+                  if ($activeSessionId.get() !== target.ownerSessionId || $botOwnerScope.get() !== botOwnerScope) return
+                  $botTask.set(undefined)
+                  selectBotSession(r.session, botId)
+                  $botMemberView.set(target)
+                }} projectLabel={session?.remote?.label ?? projects.find(p => p.projectId === session?.projectId)?.name}
+                models={providers.providers.flatMap(p => (p.available ?? []).map(model => ({ provider: p.providerId, model })))}
+                conversation={(s, state) => {
+                  const callbacks = { ...对话回调(s, Bot槽, state), acpAgents: [], onPickAcpModel: undefined, onLoadAcpModels: undefined }
+                  if ($botMemberView.get()) return readOnlyBotCallbacks(callbacks)
+                  const task = $botTask.get()
+                  return task ? { ...callbacks, onEcho: undefined, canRedirect: false, models: [], services: undefined, onPickModel: undefined, onSwitchService: undefined,
+                    onSend: (instruction, images) => sendBotTaskSupplement(task, instruction, images?.length ?? 0, input => client.get("messageBotTask", input)),
+                    onAbort: () => { client.get("stopBotTask", task).catch(fail) },
+                  } : callbacks
+                }} />
             ) : rightDockTenant === "team" ? (
               /** 按它画的那一段重挂（2026-09-29）：展开 / 收起的是那一段的成员与任务，换段不带过去 */
               <TeamPanel key={团队格会话 ?? sessionId} />

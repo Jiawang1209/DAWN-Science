@@ -45,6 +45,8 @@ function installBridge() {
             }
           : op === "getUpdateState" || op === "checkUpdate"
             ? updateReceipt
+          : op === "listBots"
+            ? { bots: [] }
           : op === "listCredentials"
             ? { configured: [], encrypted: true }
             : op === "getProviders"
@@ -83,7 +85,9 @@ describe("App · 默认 client 路径（生产环境唯一走的那条）", () =
     // （2026-09-24 +1：侧边对话启动时报一次配对 `setSideSession`——坞里没挂也要报「没有」，后端才会关掉那件工具）
     // （2026-09-27 +1：桌面通知启动时报一次界面语言 `desktopSetNotify({ lang })`——通知里的字跟界面走）
     // （2026-09-28 +1：头一批名单取回后拉一次 `takePendingOpenSession`——点通知时界面还没在听，那一段记在主进程里等这一拉）
-    expect(invokes.length).toBeLessThan(22)
+    // Bot registry is loaded once to populate main slash dispatch.
+    expect(invokes.filter(x => x === "listBots")).toHaveLength(1)
+    expect(invokes.length).toBeLessThan(23)
   })
 
   it("IPC 监听器只注册一次 —— 每次渲染都注册会把内存吃穿", async () => {

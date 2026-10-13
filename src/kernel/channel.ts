@@ -692,7 +692,15 @@ export async function attachKernelChannel(
  * 症状恰恰是「等 kernel_info_reply 等到超时」，
  * 而真正的原因在 stderr 里躺着。只报「超时」等于把线索扔了。
  */
-export async function launchKernelChannel(
+// spawnteract probes free ports without reserving them until the child binds.
+// Keep launch + handshake serial; already-started kernels execute independently.
+let localLaunchQueue: Promise<void> = Promise.resolve()
+export function launchKernelChannel(opts: LaunchOptions): Promise<KernelChannel & { ready(): Promise<void>; 连接信息: KernelConnectionInfo }> {
+  const pending = localLaunchQueue.then(() => launchKernelChannelOnce(opts))
+  localLaunchQueue = pending.then(() => {}, () => {})
+  return pending
+}
+async function launchKernelChannelOnce(
   opts: LaunchOptions,
 ): Promise<KernelChannel & { ready(): Promise<void>; 连接信息: KernelConnectionInfo }> {
   /**

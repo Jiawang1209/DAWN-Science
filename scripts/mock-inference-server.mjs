@@ -1,3 +1,4 @@
+import {botCollaborationTool, botCollaborationReply} from "./mock-bot-collaboration.mjs"
 /**
  * 本地 OpenAI 兼容的假推理服务器。
  *
@@ -339,6 +340,67 @@ export const 塞满用量 = { prompt_tokens: 120000, completion_tokens: 8, total
  *   返回值非空时，改为让模型「调用一个工具」——用来在 e2e 里确定性地触发工具路径
  * @returns {Promise<{url: string, port: number, requests: any[], keyChecks: any[], close: () => Promise<void>}>}
  */
+/** Deterministic Bot acceptance flow; all filesystem effects still use real runtime tools. */
+const BOT_DATA_CODE = `import csv,json,pathlib
+rows=list(csv.DictReader(open('input.csv')))
+pathlib.Path('results').mkdir(exist_ok=True)
+pathlib.Path('notes').mkdir(exist_ok=True)
+report={'n':len(rows),'missing':sum(v=='' for row in rows for v in row.values())}
+pathlib.Path('results/quality.json').write_text(json.dumps(report))
+pathlib.Path('notes/data.md').write_text('Checked input.csv; rows='+str(report['n'])+'; missing='+str(report['missing']))
+print('已检查数据：[质量报告](results/quality.json) [检查说明](notes/data.md)')`
+const BOT_MODEL_SCRIPT = `# Ordinary least squares for a deterministic five-row acceptance fixture.
+# This verifies execution and delivery; it is not a scientific-method benchmark.
+import csv,json,pathlib
+assert json.load(open('results/quality.json'))['missing']==0
+rows=list(csv.DictReader(open('input.csv')))
+x=[float(r['x']) for r in rows];y=[float(r['y']) for r in rows]
+mx=sum(x)/len(x);my=sum(y)/len(y)
+slope=sum((a-mx)*(b-my) for a,b in zip(x,y))/sum((a-mx)**2 for a in x)
+intercept=my-slope*mx
+pathlib.Path('results/model.json').write_text(json.dumps({'n':len(x),'slope':slope,'intercept':intercept}))
+pathlib.Path('results/model.csv').write_text('n,slope,intercept\\n'+str(len(x))+','+str(slope)+','+str(intercept)+'\\n')
+pathlib.Path('notes/method.md').write_text('OLS with intercept. Toy fixture only; no inferential or population-validity claim.')
+`
+const BOT_PLOT_SCRIPT = `# Read the computed coefficients, then draw an editable SVG.
+import json,pathlib
+m=json.load(open('results/model.json'))
+pathlib.Path('figures').mkdir(exist_ok=True)
+svg='<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="white"/><path d="M40 200 L360 40" stroke="teal" stroke-width="2"/><text x="40" y="225">y = '+str(m['slope'])+'x + '+str(m['intercept'])+'; n='+str(m['n'])+'</text></svg>'
+pathlib.Path('figures/regression.svg').write_text(svg)
+`
+function botMemberCommand(role) {
+  const script = role === 'data' ? BOT_DATA_CODE : role === 'stats'
+    ? `import pathlib\npathlib.Path('scripts').mkdir(exist_ok=True)\npathlib.Path('scripts/model.py').write_text(${JSON.stringify(BOT_MODEL_SCRIPT)})\nexec(compile(open('scripts/model.py').read(),'scripts/model.py','exec'))\nprint('已执行统计：[分析脚本](scripts/model.py) [系数表](results/model.csv) [方法说明](notes/method.md)')`
+    : `import pathlib\npathlib.Path('scripts').mkdir(exist_ok=True)\npathlib.Path('scripts/plot.py').write_text(${JSON.stringify(BOT_PLOT_SCRIPT)})\nexec(compile(open('scripts/plot.py').read(),'scripts/plot.py','exec'))\nprint('已生成图形：[绘图脚本](scripts/plot.py) [回归图](figures/regression.svg)')`
+  return `python3 - <<'DAWN_BOT_PY'\n${script}\nDAWN_BOT_PY`
+}
+function botAcceptanceTool(body) {
+  const 文本 = content => typeof content === 'string' ? content : Array.isArray(content) ? content.map(part => part?.text ?? '').join('') : ''
+  const messages=body.messages??[], last=messages.at(-1)
+  const system=文本(messages.find(m=>m.role==='system'||m.role==='developer')?.content)
+  const user=文本(messages.findLast(m=>m.role==='user')?.content)
+  if (last?.role==='user' && user.startsWith('任务 ')) {
+    const role=system.includes('BOT_ACCEPT_DATA')?'data':system.includes('BOT_ACCEPT_STATS')?'stats':system.includes('BOT_ACCEPT_PLOT')?'plot':undefined
+    if(role)return {toolName:'bash',args:{command:botMemberCommand(role)}}
+  }
+  if(!user.includes('Bot协作验收')||user.includes('[bot-result:'))return undefined
+  if(last?.role==='user')return {toolName:'bot_list',args:{}}
+  const call=messages.findLast(m=>m.role==='assistant'&&m.tool_calls?.length)?.tool_calls?.at(-1)?.function?.name
+  if(last?.role==='tool'&&call==='bot_list') {
+    let bots=[];try{bots=JSON.parse(文本(last.content))}catch{return undefined}
+    if(bots.length<3)return undefined
+    const data=bots.find(b=>/数据/.test(b.role))??bots[0],stats=bots.find(b=>/统计/.test(b.role))??bots[1],plot=bots.find(b=>/绘图/.test(b.role))??bots[2]
+    return {toolName:'team_create',args:{name:'Bot 科研验收',goal:'检查 input.csv、实际执行回归并交付脚本和图表',members:[{name:'data',botId:data.id},{name:'stats',botId:stats.id},{name:'plot',botId:plot.id}],tasks:[
+      {id:'t1',subject:'检查数据',description:'读取 input.csv，检查缺失和类型，保存质量说明。',assignee:'data',outputs:['results/quality.json','notes/data.md']},
+      {id:'t2',subject:'统计分析',description:'基于 {t1}，拟合 y ~ x 并执行脚本，保存系数与方法说明。',assignee:'stats',dependencies:['t1'],outputs:['scripts/model.py','results/model.csv','results/model.json','notes/method.md']},
+      {id:'t3',subject:'绘制回归图',description:'读取 {t2} 的实际模型系数生成 SVG，保留绘图脚本。',assignee:'plot',dependencies:['t2'],outputs:['scripts/plot.py','figures/regression.svg']},
+    ]}}
+  }
+  if(last?.role==='tool'&&(call==='team_create'||call==='team_wait')&&!文本(last.content).includes('所有任务都到终态'))return {toolName:'team_wait',args:{timeoutSec:10}}
+  return undefined
+}
+
 export function startMockInferenceServer(opts = {}) {
   const 默认回复 = opts.reply ?? CANNED_REPLY
   /** 收到的请求原样留存，供测试断言「我们到底发了什么给模型」 */
@@ -466,7 +528,8 @@ export function startMockInferenceServer(opts = {}) {
       const 判定 = 最后一句.includes("只回一个 JSON 对象")
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
       const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
-      const reply = 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
+      const reply = botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"
@@ -493,9 +556,9 @@ export function startMockInferenceServer(opts = {}) {
               ? MARKDOWN_REPLY
               : 用户说的.includes("案例卡片")
                 ? 案例卡片回复
-                : 默认回复
+                : 默认回复)
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
       const finishReason = !摘要 && 最后一句.includes("演一次截断") ? "length" : "stop"

@@ -1,0 +1,61 @@
+import { test, expect, 在项目里开会话, 进坞, CANNED_REPLY } from "./fixtures.js"
+
+test("Bot direct chat retains draft and history independently of main and side chat", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  await 进坞(page, "Bot")
+  const dock = page.locator("aside.right-dock")
+  await dock.getByRole("button", { name: "创建 Bot", exact: true }).click()
+  await dock.getByLabel("名称", { exact: true }).fill("统计助手")
+  await dock.getByLabel("专业职责", { exact: true }).fill("统计建模")
+  await dock.getByLabel("工作指令", { exact: true }).fill("检查统计假设，保留脚本。")
+  await dock.getByRole("combobox", { name: "模型", exact: true }).selectOption(JSON.stringify({ provider: "deepseek", model: "deepseek-v4-deep" }))
+  await dock.getByRole("button", { name: "保存", exact: true }).click()
+  await dock.getByRole("button", { name: "与统计助手交流", exact: true }).click()
+  const box = dock.getByPlaceholder(/今天帮你做些什么/)
+  await expect(dock.locator(".composer .model-pill")).toContainText("deepseek-v4-deep")
+  await box.fill("检查数据")
+  await box.press("Enter")
+  await expect(dock.locator(".turns").getByText(CANNED_REPLY, { exact: true })).toBeVisible()
+  await expect(page.locator("main.main .turns")).not.toContainText("检查数据")
+  await box.fill("下次再问的草稿")
+  await 进坞(page, "文件")
+  await 进坞(page, "Bot")
+  await expect(dock.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("下次再问的草稿")
+  await expect(dock.locator(".turns")).toContainText("检查数据")
+  await dock.getByRole("button", { name: "Bot 清单", exact: true }).click()
+  await dock.getByRole("button", { name: "与统计助手交流", exact: true }).click()
+  await expect(dock.locator(".turns")).toContainText("检查数据")
+  await expect(dock.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("下次再问的草稿")
+})
+
+test("Bot management and direct preview stay within a narrow dock in both themes", async ({ dawn }, testInfo) => {
+  const { page, app } = dawn
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setContentSize(1600, 900))
+  await 在项目里开会话(page)
+  await 进坞(page, "Bot")
+  const dock = page.locator("aside.right-dock")
+  await dock.getByRole("button", { name: "创建 Bot", exact: true }).click()
+  await dock.getByLabel("名称", { exact: true }).fill("专业统计分析与模型诊断助手")
+  await dock.getByLabel("专业职责", { exact: true }).fill("模型拟合、假设检查和可复现脚本")
+  await dock.getByLabel("工作指令", { exact: true }).fill("检查模型，保留脚本和注释。")
+  await dock.getByRole("button", { name: "保存", exact: true }).click()
+  await dock.getByRole("button", { name: "与专业统计分析与模型诊断助手交流", exact: true }).click()
+  await expect(dock.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await dock.getByPlaceholder(/今天帮你做些什么/).fill("请说明检查步骤")
+  await dock.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+  await expect(dock.locator(".turns")).toContainText(CANNED_REPLY)
+  for (const width of [280, 480, 720]) {
+    await page.locator(".body").evaluate((el, width) => el.style.setProperty("--dawn-dock-w", `${width}px`), width)
+    await expect.poll(() => dock.evaluate(el => el.getBoundingClientRect().width)).toBe(width)
+    const bounds = await dock.locator(".conv-head").evaluate(el => {
+      const r = el.getBoundingClientRect()
+      return { width: el.clientWidth, scroll: el.scrollWidth, right: r.right, children: [...el.querySelectorAll<HTMLElement>("button, .bot-chat-title")].map(x => x.getBoundingClientRect().right) }
+    })
+    expect(bounds.scroll).toBeLessThanOrEqual(bounds.width + 1)
+    for (const right of bounds.children) expect(right).toBeLessThanOrEqual(bounds.right + 1)
+    await dock.screenshot({ path: testInfo.outputPath(`bot-light-${width}.png`) })
+  }
+  await page.evaluate(() => { document.documentElement.classList.remove("dawn-light"); document.documentElement.classList.add("dawn-dark") })
+  await dock.screenshot({ path: testInfo.outputPath("bot-dark-720.png") })
+})

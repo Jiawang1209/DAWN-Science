@@ -52,6 +52,19 @@ const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
     listProjects: async () => [project],
+    listBots: async () => {throw new Error("Bot operation not configured in this fixture")},
+    createBot: async () => {throw new Error("Bot operation not configured in this fixture")},
+    updateBot: async () => {throw new Error("Bot operation not configured in this fixture")},
+    archiveBot: async () => {throw new Error("Bot operation not configured in this fixture")},
+    openBotConversation: async () => {throw new Error("Bot operation not configured in this fixture")},
+    listBotSessions: async () => {throw new Error("Bot operation not configured in this fixture")},
+    dispatchBotTask: async () => {throw new Error("Bot operation not configured in this fixture")},
+    stopBotTask: async () => {throw new Error("Bot operation not configured in this fixture")},
+    messageBotTask: async () => {throw new Error("Bot operation not configured in this fixture")},
+    messageBotTeam: async () => {throw new Error("Bot operation not configured in this fixture")},
+    openBotTask: async () => {throw new Error("Bot operation not configured in this fixture")},
+    openBotMember: async () => {throw new Error("Bot operation not configured in this fixture")},
+
     // 应用内更新的六个（2026-09-06）：**桩要覆盖全协议，少一个就编译不过**
     getUpdateState: async () => 更新桩,
     checkUpdate: async () => 更新桩,

@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 16
+export const SCHEMA_VERSION = 17
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -722,6 +722,69 @@ function 迁移步骤(db: Database.Database): void {
   if (!hasColumn(db, "runs", "tool_call_id")) {
     db.exec(`ALTER TABLE runs ADD COLUMN tool_call_id TEXT`)
   }
+
+  // v17: Bot identities, historical session bindings and durable dispatch/outbox.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bots (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+      role TEXT NOT NULL CHECK (length(trim(role)) > 0),
+      instructions TEXT NOT NULL CHECK (length(trim(instructions)) > 0),
+      model TEXT CHECK (model IS NULL OR json_valid(model)),
+      enabled INTEGER NOT NULL CHECK (enabled IN (0,1)),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      archived_at TEXT,
+      CHECK (archived_at IS NULL OR enabled = 0)
+    );
+    CREATE TABLE IF NOT EXISTS bot_session_bindings (
+      session_id TEXT PRIMARY KEY,
+      bot_id TEXT NOT NULL REFERENCES bots(id),
+      scope_key TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK (kind IN ('direct','team')),
+      team_id TEXT NOT NULL DEFAULT '',
+      owner_session_id TEXT,
+      current INTEGER NOT NULL CHECK (current IN (0,1)),
+      created_at TEXT NOT NULL,
+      CHECK ((kind = 'direct' AND team_id = '') OR
+             (kind = 'team' AND length(team_id) > 0 AND owner_session_id IS NOT NULL))
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_bot_binding_current
+      ON bot_session_bindings(bot_id, scope_key, kind, team_id) WHERE current = 1;
+    CREATE INDEX IF NOT EXISTS idx_bot_binding_history ON bot_session_bindings(bot_id, scope_key, created_at);
+    CREATE TABLE IF NOT EXISTS bot_dispatches (
+      request_id TEXT PRIMARY KEY,
+      owner_session_id TEXT NOT NULL,
+      bot_id TEXT NOT NULL REFERENCES bots(id),
+      scope_key TEXT NOT NULL,
+      instruction TEXT NOT NULL CHECK (length(trim(instruction)) > 0),
+      status TEXT NOT NULL CHECK (status IN ('pending','dispatched','completed','failed','cancelled')),
+      team_id TEXT,
+      task_id TEXT,
+      member_session_id TEXT,
+      error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_bot_dispatch_owner ON bot_dispatches(owner_session_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_bot_dispatch_task ON bot_dispatches(team_id, task_id);
+    CREATE TABLE IF NOT EXISTS bot_results (
+      result_id TEXT PRIMARY KEY,
+      request_id TEXT REFERENCES bot_dispatches(request_id),
+      owner_session_id TEXT NOT NULL,
+      bot_id TEXT NOT NULL REFERENCES bots(id),
+      team_id TEXT NOT NULL,
+      task_id TEXT NOT NULL,
+      attempt_id TEXT NOT NULL,
+      member_session_id TEXT,
+      status TEXT NOT NULL CHECK (status IN ('completed','failed','cancelled')),
+      summary TEXT NOT NULL,
+      artifacts TEXT NOT NULL CHECK (json_valid(artifacts)),
+      created_at TEXT NOT NULL,
+      delivered_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_bot_results_pending ON bot_results(owner_session_id, created_at) WHERE delivered_at IS NULL;
+  `)
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

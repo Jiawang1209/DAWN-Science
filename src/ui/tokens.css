@@ -260,6 +260,21 @@
   --dawn-success: #00692a;
   --dawn-warning: #e25507;
 
+  /* Stable Bot identities; names and roles remain the primary identification. */
+  --theme-bot-identity-0: #28796e;
+  --theme-bot-identity-1: #3269a8;
+  --theme-bot-identity-2: #7754aa;
+  --theme-bot-identity-3: #946124;
+  --theme-bot-identity-4: #a25575;
+  --theme-bot-identity-5: #507441;
+  --dawn-bot-identity-0: var(--theme-bot-identity-0);
+  --dawn-bot-identity-1: var(--theme-bot-identity-1);
+  --dawn-bot-identity-2: var(--theme-bot-identity-2);
+  --dawn-bot-identity-3: var(--theme-bot-identity-3);
+  --dawn-bot-identity-4: var(--theme-bot-identity-4);
+  --dawn-bot-identity-5: var(--theme-bot-identity-5);
+  --dawn-bot-identity: var(--dawn-bot-identity-0);
+
   /** 遮罩：模态背后那层压暗。恒以灰阶最深那一档为底，两个主题只差浓度 */
   --dawn-scrim: color-mix(in srgb, var(--theme-gray-1000) var(--mix-scrim), transparent);
 
@@ -693,6 +708,12 @@
   --dawn-danger: #ff6764;
   --dawn-success: #40c977;
   --dawn-warning: #ffd240;
+  --theme-bot-identity-0: #78c9bd;
+  --theme-bot-identity-1: #8ab7ed;
+  --theme-bot-identity-2: #baa0e8;
+  --theme-bot-identity-3: #dbb376;
+  --theme-bot-identity-4: #df9db8;
+  --theme-bot-identity-5: #abc78e;
 
   /**
    * **暗色的"高度"靠一圈亮描边 + 深投影，不能只靠投影。**

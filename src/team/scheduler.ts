@@ -2,21 +2,36 @@
  * 团队调度器（team-board，2026-08-22，学自 dsh-agent-teams `scheduler.ts`）。
  *
  * **事件驱动，不轮询。** 每次状态变了（建任务、转派、一轮结束、来了消息）都 `踢一下()`：
- * 对每个空闲成员——先送未送达的邮件，再挑一项就绪任务领了起一轮；同时跑着的成员不超过 `maxConcurrent`。
+ * 对每个空闲成员——先送未送达的邮件，再挑一项就绪任务领了起一轮；同时跑着的成员轮次不超过 `maxConcurrent`。
  * 一轮结束：结果出示领取时的令牌去结算；令牌对不上（中途被转派 / 接管）就**丢掉并出声**。
  *
  * 真相在磁盘：每次变更「读 → 变 → 写」，内存里不留一份会过期的副本。
- * 一个会话一个调度器；成员之间、队长与成员之间都是进程边界。
+ * 一个会话一个调度器。旧子 agent 使用独立子进程；托管 Bot 使用注入的 Native 执行器与各自持久会话。
  */
 import { join } from "node:path"
+import { randomUUID } from "node:crypto"
 import type { SubagentDefinition } from "../subagent/definitions.js"
 import { 跑一轮, type 跑一轮选项 } from "./runner.js"
 import {
-  读团队, 写团队, 团队目录, 团队错误, 挑就绪任务, 领取, 开始做, 结算, 未送达的消息, 标记送达, 找成员, 发消息, 成员手上的任务, 统计, 未满足的依赖, 代入上游, 死掉的依赖,
+  读团队, 写团队, 团队目录, 团队错误, 挑就绪任务, 领取, 开始做, 结算, 未送达的消息, 标记送达, 找成员, 发消息, 成员手上的任务, 统计, 未满足的依赖, 代入上游, 死掉的依赖, 取消任务,
 } from "./state.js"
-import { 团队上限, type 团队, type 成员 } from "./types.js"
+import { 团队上限, type 团队, type 成员, type BotExchange, type BotTeamMessage } from "./types.js"
+import { enqueueBotExchange, reconcileBotExchanges, sourceIsCurrent, botRequestPrompt, botReplyPrompt, type BotRequestInput, type BotMessageInput, appendBotMessage, appendBotEvent, validateBotMessage, botRoomPrompt } from "../bot/collaboration.js"
+
+export interface BotMemberRun {
+  team: 团队
+  member: 成员
+  taskId?: string | undefined
+  collaboration?: { exchangeId: string; phase: "request" | "reply" } | undefined
+  conversation?: { messageId: string } | undefined
+  prompt: string
+  signal: AbortSignal
+  onSession: (sessionId: string) => void
+}
 
 export interface 调度器选项 {
+  memberRunner?: (request: BotMemberRun) => Promise<{ ok: boolean; output: string; error?: string }>
+  onResult?: (event: { team: 团队; member: 成员; taskId: string; attemptId: string; result: { ok: boolean; output: string; error?: string } }) => void | Promise<void>
   sessionDir: string
   /** 名册：按名字找定义（每轮重读，改了定义不用重启） */
   定义: () => readonly SubagentDefinition[]
@@ -24,7 +39,7 @@ export interface 调度器选项 {
   /** 状态变了（给界面与账本） */
   onChange: (team: 团队) => void
   /** 一轮开始 / 结束（账本记 Run 用） */
-  onTurn?: (e: { team: 团队; member: string; taskId?: string | undefined; phase: "start" | "end"; ok?: boolean; error?: string }) => void
+  onTurn?: (e: { runId: string; team: 团队; member: string; taskId?: string | undefined; phase: "start" | "end"; ok?: boolean; error?: string }) => void
   /** 一轮最多跑多久 */
   turnTimeoutMs?: number
   now?: () => number
@@ -32,6 +47,9 @@ export interface 调度器选项 {
 
 export class 团队调度器 {
   private readonly 跑着 = new Map<string, AbortController>()
+  private readonly stoppedTeams = new Set<string>()
+  private readonly stoppedAttempts = new Set<string>()
+  private readonly botTurns = new Map<string, { task?: { taskId: string; attemptId: string } | undefined; collaboration?: BotMemberRun["collaboration"]; handlingExchangeId?: string | undefined; conversation?: BotMemberRun["conversation"]; requested: Set<string>; botId: string; scope?: string | undefined; sessionId?: string | undefined }>()
   private 踢中 = false
   private 再踢 = false
   private readonly 等着的 = new Set<() => void>()
@@ -52,11 +70,79 @@ export class 团队调度器 {
   改(teamId: string, f: (team: 团队) => void): 团队 {
     const team = this.读(teamId)
     f(team)
+    reconcileBotExchanges(team, this.now())
     写团队(this.dir(teamId), team)
+    // Persist invalidation before aborting delegated tools; their late completion cannot publish a reply.
+    for (const [key, turn] of this.botTurns) {
+      if (!key.startsWith(`${teamId}/`)) continue
+      if (turn.conversation) {
+        const member = key.slice(teamId.length + 1)
+        const delivery = team.conversationTurns?.find(d => d.messageId === turn.conversation!.messageId && d.member === member && d.botId === turn.botId)
+        if (delivery?.status !== "working") this.跑着.get(key)?.abort()
+      }
+      if (!turn.collaboration) continue
+      const exchange = team.collaboration?.find(x => x.id === (turn.handlingExchangeId ?? turn.collaboration!.exchangeId))
+      if (!exchange || exchange.status === "cancelled" || exchange.status === "interrupted" || !sourceIsCurrent(team, exchange)) this.跑着.get(key)?.abort()
+    }
     this.opts.onChange(team)
     for (const w of this.等着的) w()
     this.等着的.clear()
     return team
+  }
+
+  /** Called only from the managed Bot tool context while its original task turn is active. */
+  requestBot(teamId: string, from: string, input: BotRequestInput): BotExchange {
+    const key = `${teamId}/${from}`
+    const turn = this.botTurns.get(key)
+    if (!turn || !this.跑着.has(key) || this.跑着.get(key)!.signal.aborted) throw new 团队错误("Bot 协作请求必须来自正在执行的活动 Bot 轮次。")
+    if (!turn.task && !turn.handlingExchangeId && !turn.conversation) throw new 团队错误("Bot 协作请求必须来自原任务、公共消息或回复续接轮次。")
+    let exchange!: BotExchange
+    this.改(teamId, team => {
+      const sender = 找成员(team, from)
+      if (sender?.botId !== turn.botId || sender.botScopeKey !== turn.scope) throw new 团队错误("活动 Bot 的身份或项目范围已改变。")
+      const parent = turn.handlingExchangeId ? team.collaboration?.find(x => x.id === turn.handlingExchangeId) : undefined
+      if (turn.handlingExchangeId && parent?.status !== "working") throw new 团队错误("父协作已失效。")
+      exchange = enqueueBotExchange(team, from, parent?.taskId ?? turn.task?.taskId, parent?.attemptId ?? turn.task?.attemptId, input, this.now(), {
+        parentExchangeId: parent?.id, rootOwner: parent?.rootOwner ?? parent?.from ?? from,
+        rootOwnerBotId: parent?.rootOwnerBotId ?? parent?.fromBotId ?? turn.botId,
+        rootMessageId: parent?.rootMessageId ?? turn.conversation?.messageId,
+      })
+    })
+    if (exchange.resumedAt === undefined) turn.requested.add(exchange.id)
+    return exchange
+  }
+
+  /** Authenticated public statement. Publishing alone never wakes other Bots. */
+  sayBot(teamId: string, from: string, input: BotMessageInput): BotTeamMessage {
+    const key = `${teamId}/${from}`; const turn = this.botTurns.get(key)
+    if (!turn || !this.跑着.has(key) || this.跑着.get(key)!.signal.aborted) throw new 团队错误("公开消息必须来自正在执行的活动 Bot 轮次。")
+    validateBotMessage(input)
+    let message!: BotTeamMessage
+    this.改(teamId, team => {
+      const member = 找成员(team, from)
+      if (team.finishedAt || member?.status === "removed" || member?.botId !== turn.botId || member.botScopeKey !== turn.scope) throw new 团队错误("活动 Bot 的身份或项目范围已改变。")
+      message = appendBotMessage(team, {id: input.id, role: "bot", from, botId: turn.botId, content: input.message, createdAt: this.now(), kind: "message"})
+    })
+    return message
+  }
+
+  /** User identity is assigned here, never accepted from model/tool content. */
+  messageTeam(teamId: string, input: BotMessageInput & {toBotId?: string | undefined}): BotTeamMessage {
+    validateBotMessage(input)
+    let message!: BotTeamMessage
+    this.改(teamId, team => {
+      if (team.finishedAt || this.stoppedTeams.has(teamId)) throw new 团队错误("团队已停止，不能发送新消息。")
+      const prior = team.conversation?.find(m => m.id === input.id)
+      const candidate: BotTeamMessage = {id: input.id, role: "user", from: "user", content: input.message, createdAt: this.now(), kind: "message", ...(input.toBotId ? {toBotId: input.toBotId} : {})}
+      if (prior) { message = appendBotMessage(team, candidate); return }
+      const members = team.members.filter(m => m.botId && m.status !== "removed" && (!input.toBotId || m.botId === input.toBotId))
+      if (!members.length || (input.toBotId && members.length !== 1)) throw new 团队错误("接收 Bot 必须是同团队的唯一活动成员。")
+      if (new Set(members.map(m => m.botScopeKey)).size !== 1) throw new 团队错误("Bot 项目范围不一致，不能广播消息。")
+      message = appendBotMessage(team, candidate)
+      for (const member of members) (team.conversationTurns ??= []).push({messageId: message.id, member: member.name, botId: member.botId!, scopeKey: member.botScopeKey, status: "queued", updatedAt: this.now()})
+    })
+    void this.踢一下(teamId).catch(error => console.error("[Bot] 公共消息调度失败", error))
+    return message
   }
 
   /**
@@ -85,13 +171,50 @@ export class 团队调度器 {
     return [...this.跑着.keys()].map((k) => k.split("/")[1]!)
   }
 
+  /** Cancel only this assignment root; member-wide stop is a separate operation. */
+  stopTask(teamId: string, taskId: string): void {
+    const original = this.读(teamId).tasks.find(task => task.id === taskId)
+    if (original?.attemptId) this.stoppedAttempts.add(`${teamId}/${taskId}/${original.attemptId}`)
+    this.改(teamId, team => { 取消任务(team, taskId, this.now()) })
+    // 改 reconciles and aborts only descendants of the invalidated root.
+    for (const [key, turn] of this.botTurns) {
+      if (key.startsWith(`${teamId}/`) && turn.task?.taskId === taskId) this.跑着.get(key)?.abort()
+    }
+  }
+
   /** 中止某个成员正在跑的那一轮（转派 / 移除 / 结束团队时） */
   中止(teamId: string, member: string): void {
     this.跑着.get(`${teamId}/${member}`)?.abort()
+    for (const task of this.读(teamId).tasks) if (task.assignee === member && task.attemptId) this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
+    this.改(teamId, team => {
+      for (const turn of team.conversationTurns ?? []) if (turn.member === member && ["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
+      for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted" && (exchange.from === member || exchange.to === member || exchange.rootOwner === member)) {
+        exchange.status = "cancelled"; exchange.reply = "协作取消：成员执行已停止。"; exchange.updatedAt = this.now()
+      }
+    })
+  }
+
+  /** Only a new, explicitly requested dispatch may reopen scheduling after a team-wide stop. */
+  resumeTeam(teamId: string): void {
+    if (this.读(teamId).finishedAt) throw new 团队错误("团队已经结束，不能恢复执行。")
+    this.stoppedTeams.delete(teamId)
   }
 
   中止全部(teamId: string): void {
+    this.stoppedTeams.add(teamId)
+    const team = this.读(teamId)
+    const bots = new Set(team.members.filter(member => member.botId).map(member => member.name))
+    // A later intentional dispatch reopens the team, never these previously stopped attempts.
+    for (const task of team.tasks) if (task.assignee && bots.has(task.assignee) && task.attemptId && ["claimed", "in_progress"].includes(task.status)) {
+      this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
+    }
     for (const [k, c] of this.跑着) if (k.startsWith(`${teamId}/`)) c.abort()
+    this.改(teamId, team => {
+      for (const turn of team.conversationTurns ?? []) if (["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
+      for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted") {
+        exchange.status = "cancelled"; exchange.reply = "协作取消：团队执行已停止。"; exchange.updatedAt = this.now()
+      }
+    })
   }
 
   /**
@@ -115,12 +238,39 @@ export class 团队调度器 {
 
   private 派一轮(teamId: string): void {
     const team = this.读(teamId)
-    if (team.finishedAt) return
+    if (team.finishedAt || this.stoppedTeams.has(teamId)) return
     for (const m of team.members) {
       if (m.status === "removed") continue
       if (this.跑着.has(`${teamId}/${m.name}`)) continue
       if (this.跑着.size >= 团队上限.maxConcurrent) return
-      const 信 = 未送达的消息(team, m.name)
+      const current = this.读(teamId)
+      if (m.botId) {
+        // One persistent Bot session must never receive concurrent turns, including across teams.
+        if ([...this.botTurns.values()].some(turn => (turn.botId === m.botId && turn.scope === m.botScopeKey) || (!!m.sessionId && turn.sessionId === m.sessionId))) continue
+        const incoming = current.collaboration?.find(x => x.to === m.name && x.status === "queued" && sourceIsCurrent(current, x) && !this.botTurns.get(`${teamId}/${x.from}`)?.requested.has(x.id))
+        if (incoming) {
+          this.改(teamId, t => { const x = t.collaboration!.find(x => x.id === incoming.id)!; x.status = "working"; x.updatedAt = this.now() })
+          void this.起一轮(teamId, m.name, undefined, botRequestPrompt(incoming), { exchangeId: incoming.id, phase: "request" })
+          continue
+        }
+        const intervention = current.conversationTurns?.find(t => t.member === m.name && t.botId === m.botId && t.status === "queued" && t.scopeKey === m.botScopeKey)
+        if (intervention) {
+          const message = current.conversation!.find(msg => msg.id === intervention.messageId)!
+          this.改(teamId, t => { const delivery = t.conversationTurns!.find(d => d.messageId === message.id && d.member === m.name)!; delivery.status = "working"; delivery.updatedAt = this.now() })
+          void this.起一轮(teamId, m.name, undefined, `[team-user:${message.id}]\n用户在团队公共对话中说：\n${message.content}\n\n请回应这条消息；这是独立轮次，不结算你暂停的原任务。可按需要请求同团队 Bot。`, undefined, {messageId: message.id})
+          continue
+        }
+        const reply = current.collaboration?.find(x => x.from === m.name && ["replied", "failed", "cancelled"].includes(x.status) && x.resumedAt === undefined && sourceIsCurrent(current, x) && !this.stoppedAttempts.has(`${teamId}/${x.taskId}/${x.attemptId}`))
+        if (reply) {
+          this.改(teamId, t => { const x = t.collaboration!.find(x => x.id === reply.id)!; x.resumedAt = this.now(); x.updatedAt = this.now() })
+          const parent = reply.parentExchangeId ? current.collaboration?.find(x => x.id === reply.parentExchangeId) : undefined
+          void this.起一轮(teamId, m.name, parent || reply.rootMessageId ? undefined : { taskId: reply.taskId!, attemptId: reply.attemptId! }, botReplyPrompt(reply, parent), { exchangeId: reply.id, phase: "reply" }, reply.rootMessageId && !parent ? {messageId: reply.rootMessageId} : undefined)
+          continue
+        }
+        // The original task stays in_progress while awaiting its peer; do not dispatch mailbox turns into it.
+        if (current.collaboration?.some(x => x.from === m.name && x.resumedAt === undefined && sourceIsCurrent(current, x))) continue
+      }
+      const 信 = 未送达的消息(current, m.name)
       if (信.length > 0) {
         // 先送信：消息本身就是一轮的输入
         this.改(teamId, (t) => 标记送达(t, 信.map((x) => x.id), this.now()))
@@ -148,20 +298,39 @@ export class 团队调度器 {
     }
   }
 
-  private async 起一轮(teamId: string, member: string, 任务: { taskId: string; attemptId: string } | undefined, prompt: string): Promise<void> {
+  private async 起一轮(teamId: string, member: string, 任务: { taskId: string; attemptId: string } | undefined, prompt: string, collaboration?: BotMemberRun["collaboration"], conversation?: BotMemberRun["conversation"]): Promise<void> {
     const key = `${teamId}/${member}`
     const ctrl = new AbortController()
+    const runId = randomUUID()
     this.跑着.set(key, ctrl)
     let team = this.改(teamId, (t) => {
       const m = 找成员(t, member)
       if (m) m.status = "working"
-      if (任务) 开始做(t, 任务.taskId, 任务.attemptId, this.now())
+      if (任务) {
+        开始做(t, 任务.taskId, 任务.attemptId, this.now())
+        const assigned = t.tasks.find(task => task.id === 任务.taskId)!
+        if (m?.botId && !collaboration) appendBotEvent(t, {id: `assignment:${任务.taskId}:${任务.attemptId}`, role: "captain", from: "captain", toBotId: m.botId, content: `请负责：${assigned.subject}${assigned.description ? `\n${assigned.description}` : ""}`, createdAt: this.now(), kind: "request"})
+      }
     })
     const m = 找成员(team, member)!
+    const child = collaboration?.phase === "reply" ? team.collaboration?.find(x => x.id === collaboration.exchangeId) : undefined
+    const handlingExchangeId = collaboration?.phase === "request" ? collaboration.exchangeId : child?.parentExchangeId
+    const botTurn = m.botId ? { task: 任务, collaboration, conversation, handlingExchangeId, requested: new Set<string>(), botId: m.botId, scope: m.botScopeKey, sessionId: m.sessionId } : undefined
+    if (botTurn) this.botTurns.set(key, botTurn)
     const def = this.opts.定义().find((d) => d.name === m.agent)
-    this.opts.onTurn?.({ team, member, taskId: 任务?.taskId, phase: "start" })
+    this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
     let 结果: { ok: boolean; output: string; error?: string }
-    if (!def) {
+    if (m.botId && this.opts.memberRunner) {
+      try {
+        结果 = await this.opts.memberRunner({ team, member: m, taskId: 任务?.taskId, collaboration, conversation, prompt: prompt + botRoomPrompt(team), signal: ctrl.signal, onSession: (sessionId) => {
+          if (this.跑着.get(key) !== ctrl || ctrl.signal.aborted) return
+          if (botTurn) botTurn.sessionId = sessionId
+          this.改(teamId, t => { const member = 找成员(t, m.name); if (member) member.sessionId = sessionId })
+        } })
+      } catch (error) {
+        结果 = { ok: false, output: "", error: error instanceof Error ? error.message : String(error) }
+      }
+    } else if (!def || m.botId) {
       结果 = { ok: false, output: "", error: `名册里没有叫「${m.agent}」的子 agent（成员「${member}」用的人设）。` }
     } else {
       const 成员目录 = join(this.dir(teamId), m.sessionDir)
@@ -186,18 +355,47 @@ export class 团队调度器 {
         },
       )
     }
+    if (m.botId) {
+      const bytes = Buffer.byteLength(结果.output, "utf8")
+      const limit = handlingExchangeId || conversation ? 16 * 1024 : 团队上限.maxOutputBytes
+      if (bytes > limit) 结果 = {ok: false, output: "", error: `Bot 最终回复 ${bytes} 字节，超过 ${limit === 团队上限.maxOutputBytes ? "64 KiB" : "16 KiB"} 上限；省略全部 ${bytes} 字节，未接收截断的回复或产物列表。请提供更短摘要与完整产物列表。`}
+      if (结果.error && Buffer.byteLength(结果.error, "utf8") > 16 * 1024) 结果 = {ok: false, output: "", error: `Bot 错误报告 ${Buffer.byteLength(结果.error, "utf8")} 字节，超过 16 KiB 上限；省略全部错误原文，未接收截断的结果。`}
+    }
+    if (m.botId && ctrl.signal.aborted) 结果 = { ok: false, output: "", error: "Bot 执行已停止。" }
     this.跑着.delete(key)
+    this.botTurns.delete(key)
     // 结算：令牌对不上就丢掉并出声（转派 / 接管 / 取消都会让它对不上）
     let 丢了: string | undefined
+    let yielded = false
     team = this.改(teamId, (t) => {
       const mm = 找成员(t, member)
       if (mm && mm.status !== "removed") {
         mm.status = "idle"
         mm.turns += 1
       }
-      if (任务) {
+      const outstanding = t.collaboration?.some(x => x.from === member && x.resumedAt === undefined && x.parentExchangeId === handlingExchangeId && (handlingExchangeId || (conversation ? x.rootMessageId === conversation.messageId : x.taskId === 任务?.taskId && x.attemptId === 任务?.attemptId)) && sourceIsCurrent(t, x))
+      if (handlingExchangeId) {
+        const exchange = t.collaboration?.find(x => x.id === handlingExchangeId)
+        yielded = !ctrl.signal.aborted && !!outstanding
+        if (exchange?.status === "working" && sourceIsCurrent(t, exchange) && mm?.status !== "removed" && !ctrl.signal.aborted && !yielded) {
+          exchange.status = 结果.ok ? "replied" : "failed"
+          exchange.reply = 结果.ok ? 结果.output : `协作失败：${结果.error ?? "没有说原因"}`
+          exchange.updatedAt = this.now()
+          if (结果.ok) appendBotEvent(t, {id: `reply:${exchange.id}`, role: "bot", from: member, botId: m.botId!, toBotId: exchange.fromBotId, content: exchange.reply, createdAt: this.now(), exchangeId: exchange.id, kind: "reply"})
+        }
+      } else if (conversation) {
+        const delivery = t.conversationTurns?.find(d => d.messageId === conversation.messageId && d.member === member && d.botId === m.botId)
+        yielded = !ctrl.signal.aborted && !!outstanding
+        if (delivery?.status === "working" && !ctrl.signal.aborted && !yielded && mm?.status !== "removed") {
+          delivery.status = 结果.ok ? "replied" : "failed"; delivery.reply = 结果.ok ? 结果.output : `回复失败：${结果.error ?? "没有说原因"}`; delivery.updatedAt = this.now()
+          if (结果.ok) appendBotEvent(t, {id: `answer:${conversation.messageId}:${m.botId}`, role: "bot", from: member, botId: m.botId!, content: delivery.reply, createdAt: this.now(), kind: "reply"})
+        }
+      } else if (任务) {
+        yielded = !ctrl.signal.aborted && !!outstanding
+        if (yielded) return
         try {
           结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因" }, this.now())
+          if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
         } catch (e) {
           丢了 = e instanceof Error ? e.message : String(e)
         }
@@ -214,7 +412,11 @@ export class 团队调度器 {
         console.error("[团队] 记不下迟到结果的说明：", e instanceof Error ? e.message : String(e))
       }
     }
-    this.opts.onTurn?.({ team, member, taskId: 任务?.taskId, phase: "end", ok: 结果.ok, ...(结果.error ? { error: 结果.error } : {}) })
+    if (任务 && !丢了 && !yielded) {
+      try { await this.opts.onResult?.({ team, member: 找成员(team, member) ?? m, taskId: 任务.taskId, attemptId: 任务.attemptId, result: 结果 }) }
+      catch(error) { console.error("[Bot] 结果持久化失败", error); this.改(teamId, t => 发消息(t, {from: "captain", to: "captain", content: "成员结果已保存在任务中，但自动送达失败；请通过 team_status 读取结果。"})) }
+    }
+    this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "end", ok: 结果.ok, ...(结果.error ? { error: 结果.error } : {}) })
     // 它空闲了、任务图变了——再踢
     await this.踢一下(teamId)
   }
@@ -255,6 +457,7 @@ function 派单文本(team: 团队, taskId: string): string {
     描述.text ? `\n${描述.text}` : "",
     上游.length ? `\n上游任务的结果：\n${上游.join("\n")}` : "",
     描述.missing.length ? `\n（注意：文本里的 ${描述.missing.map((x) => `{${x}}`).join("、")} 还没有结果，留了原样）` : "",
+    t.outputs?.length ? `\n产物预留路径：${t.outputs.join("、")}。写入限于这些路径；需要新增共享产物时先通知队长。` : "",
     "\n做完之后，最后一条回复写清结果——它会原样记为这项任务的 output，下游任务靠它。",
   ].join("\n")
 }

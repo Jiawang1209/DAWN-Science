@@ -25,14 +25,31 @@ export function 团队目录(sessionDir: string, teamId: string): string {
   return join(sessionDir, "teams", teamId)
 }
 
+/** A legacy origin is recoverable only from complete, unanimous historical Bot scopes. */
+export function botTeamOriginScope(team: 团队): string | undefined {
+  if (team.botOriginScopeKey) return team.botOriginScopeKey
+  const bots = team.members.filter(member => member.botId)
+  if (!bots.length || bots.some(member => !member.botScopeKey)) return undefined
+  const scopes = new Set(bots.map(member => member.botScopeKey))
+  return scopes.size === 1 ? bots[0]!.botScopeKey : undefined
+}
+
 export function 读团队(dir: string): 团队 | undefined {
   const f = join(dir, "team.json")
   if (!existsSync(f)) return undefined
-  return JSON.parse(readFileSync(f, "utf8")) as 团队
+  const team = JSON.parse(readFileSync(f, "utf8")) as 团队
+  const origin = botTeamOriginScope(team)
+  if (!team.botOriginScopeKey && origin) { team.botOriginScopeKey = origin; 写团队(dir, team) }
+  return team
 }
 
 /** 原子写：先写临时文件再改名，崩在半路也不会留下半份 */
 export function 写团队(dir: string, team: 团队): void {
+  const existing = join(dir, "team.json")
+  const original = existsSync(existing) ? botTeamOriginScope(JSON.parse(readFileSync(existing, "utf8")) as 团队) : undefined
+  const origin = original ?? botTeamOriginScope(team)
+  if (original && team.botOriginScopeKey && team.botOriginScopeKey !== original) throw new 团队错误("团队的原始 Bot 项目范围不能改变。")
+  if (origin) team.botOriginScopeKey = origin
   mkdirSync(dir, { recursive: true })
   const f = join(dir, "team.json")
   const tmp = join(dirname(f), `.team.${process.pid}.${Date.now()}.tmp`)
@@ -63,15 +80,23 @@ export function 建团队(input: {
   }
 }
 
-export function 加成员(team: 团队, m: { name: string; agent: string; role?: string | undefined; provider?: string | undefined; model?: string | undefined }, now = Date.now()): 成员 {
+export function 加成员(team: 团队, m: { name: string; agent: string; role?: string | undefined; provider?: string | undefined; model?: string | undefined; botScopeKey?: string | undefined; botId?: string | undefined; botInstructions?: string | undefined }, now = Date.now()): 成员 {
+  if (m.botId && team.members.some(x => x.botId === m.botId && x.status !== "removed")) throw new 团队错误("同一个 Bot 不能重复加入团队。")
   const name = m.name.trim()
   if (!合法名.test(name)) throw new 团队错误(`成员名「${m.name}」不合规：只许字母、数字、下划线、连字符，1–40 个字符。`)
   if (name === "captain") throw new 团队错误("「captain」是队长的名字，成员不能叫这个。")
   if (team.members.some((x) => x.name === name && x.status !== "removed")) throw new 团队错误(`已经有一个叫「${name}」的成员。`)
   if (team.members.filter((x) => x.status !== "removed").length >= 团队上限.maxMembers) throw new 团队错误(`一支团队最多 ${团队上限.maxMembers} 个成员。`)
+  const origin = botTeamOriginScope(team)
+  if (m.botId && origin && m.botScopeKey !== origin) throw new 团队错误("Bot 项目范围与团队原始范围不一致。")
+  if (m.botId && m.botScopeKey && !team.members.some(member => member.botId)) team.botOriginScopeKey = m.botScopeKey
+  else if (origin) team.botOriginScopeKey = origin
   const 成员: 成员 = {
     name,
     agent: m.agent.trim(),
+    ...(m.botScopeKey ? {botScopeKey: m.botScopeKey} : {}),
+    ...(m.botId ? { botId: m.botId } : {}),
+    ...(m.botInstructions ? { botInstructions: m.botInstructions } : {}),
     ...(m.role?.trim() ? { role: m.role.trim() } : {}),
     ...(m.provider?.trim() && m.model?.trim() ? { provider: m.provider.trim(), model: m.model.trim() } : {}),
     status: "idle",
@@ -89,10 +114,10 @@ export function 找成员(team: 团队, name: string): 成员 | undefined {
 
 export function 加任务(
   team: 团队,
-  t: { id?: string | undefined; subject: string; description?: string | undefined; assignee?: string | undefined; dependencies?: readonly string[] | undefined },
+  t: { id?: string | undefined; subject: string; description?: string | undefined; assignee?: string | undefined; outputs?: readonly string[] | undefined; dependencies?: readonly string[] | undefined },
   now = Date.now(),
 ): 任务 {
-  if (team.tasks.length >= 团队上限.maxTasks) throw new 团队错误(`一支团队最多 ${团队上限.maxTasks} 个任务。`)
+  if (team.tasks.filter(task => !终态.includes(task.status)).length >= 团队上限.maxTasks) throw new 团队错误(`一支团队最多 ${团队上限.maxTasks} 个活动任务。`)
   const subject = t.subject.trim()
   if (!subject) throw new 团队错误("任务要有一句标题。")
   let id = t.id?.trim()
@@ -120,6 +145,7 @@ export function 加任务(
     status: "pending",
     ...(assignee ? { assignee } : {}),
     dependencies: deps,
+    ...(t.outputs ? {outputs: [...new Set(t.outputs)]} : {}),
     attempt: 0,
     createdAt: now,
     updatedAt: now,

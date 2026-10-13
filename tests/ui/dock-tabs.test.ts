@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 import { fitDockTabs, dockTabOrder } from "../../src/ui/dock-tabs.js"
 const widths = new Map(dockTabOrder.map(who => [who, 60]))
 it("宽时全部可见，不为已经消失的更多按钮占位", () => {
-  expect(fitDockTabs(widths, 540, 40, 0, "files")).toEqual([...dockTabOrder])
+  expect(fitDockTabs(widths, dockTabOrder.length * 60, 40, 0, "files")).toEqual([...dockTabOrder])
 })
 it("窄时先预留更多按钮与当前面板，再按固定顺序放入其他标签", () => {
   expect(fitDockTabs(widths, 220, 40, 0, "chat")).toEqual(["files", "artifacts", "chat"])

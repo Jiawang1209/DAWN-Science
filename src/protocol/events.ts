@@ -459,6 +459,11 @@ export const TeamSnapshotSchema = z
         .object({
           name: z.string(),
           agent: z.string(),
+          botId: z.string().min(1).optional(),
+          botScopeKey: z.string().min(1).optional(),
+          attention: z.enum(["question", "permission"]).optional(),
+          sessionId: z.string().min(1).optional(),
+          botInstructions: z.string().optional(),
           role: z.string().optional(),
           provider: z.string().optional(),
           model: z.string().optional(),
@@ -477,6 +482,8 @@ export const TeamSnapshotSchema = z
           description: z.string().optional(),
           status: z.enum(["pending", "claimed", "in_progress", "completed", "failed", "cancelled"]),
           assignee: z.string().optional(),
+          outputs: z.array(z.string()).optional(),
+          artifacts: z.array(z.string()).optional(),
           dependencies: z.array(z.string()),
           output: z.string().optional(),
           attempt: z.number(),
@@ -491,6 +498,26 @@ export const TeamSnapshotSchema = z
         .object({ id: z.string(), from: z.string(), to: z.string(), content: z.string(), ts: z.number(), deliveredAt: z.number().optional() })
         .strict(),
     ),
+    collaboration: z.array(z.object({
+      id: z.string().min(1), from: z.string().min(1), to: z.string().min(1),
+      fromBotId: z.string().min(1), toBotId: z.string().min(1),
+      kind: z.enum(["request", "handoff"]), message: z.string(), reply: z.string().optional(),
+      status: z.enum(["queued", "working", "replied", "failed", "cancelled", "interrupted"]),
+      taskId: z.string().optional(), attemptId: z.string().optional(),
+      parentExchangeId: z.string().optional(), rootOwner: z.string().optional(), rootOwnerBotId: z.string().optional(), rootMessageId: z.string().optional(),
+      createdAt: z.number(), updatedAt: z.number(), resumedAt: z.number().optional(),
+    }).strict()).optional(),
+    botOriginScopeKey: z.string().min(1).optional(),
+    botOwnerContext: z.object({key: z.string().min(1), workspace: z.string().min(1), projectId: z.string().optional(), connectionId: z.string().optional(), remoteCwd: z.string().optional()}).strict().optional(),
+    conversation: z.array(z.object({
+      id: z.string().min(1), role: z.enum(["bot", "user", "captain", "system"]), from: z.string(), botId: z.string().optional(),
+      content: z.string(), createdAt: z.number(), toBotId: z.string().optional(), exchangeId: z.string().optional(),
+      kind: z.enum(["message", "request", "handoff", "reply", "result", "status"]),
+    }).strict()).optional(),
+    conversationTurns: z.array(z.object({
+      messageId: z.string().min(1), member: z.string(), botId: z.string(), scopeKey: z.string().optional(),
+      status: z.enum(["queued", "working", "replied", "failed", "cancelled", "interrupted"]), reply: z.string().optional(), updatedAt: z.number(),
+    }).strict()).optional(),
     taskSeq: z.number(),
   })
   .strict()

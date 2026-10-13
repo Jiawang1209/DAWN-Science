@@ -21,6 +21,7 @@ export function 在打斜杠(draft: string): boolean {
  * 打的是 `/skill:…` 就写 `/skill:名 `（把那套规矩叫进主对话），否则写「用子 agent「名」来做：」（派出去）。
  */
 export function 斜杠选完(item: SlashItem, draft = ""): string {
+  if (item.kind === "bot") return `/bot:${item.name} `
   if (item.kind === "team") return "/team "
   if (item.kind === "command") return `/${item.name} `
   if (item.kind === "skill" || /^\/skill:/i.test(draft)) return `/skill:${item.name} `
@@ -105,12 +106,14 @@ export function SlashMenu({
           onMouseMove={() => { if (i !== selected) onHover(i) }}
           onClick={() => onPick(x)}
         >
-          <span className="slash-kind tag">{x.kind === "skill" ? t("技能") : x.kind === "team" ? t("团队") : x.kind === "command" ? t("指令") : t("子 agent")}</span>
+          <span className="slash-kind tag">{x.kind === "bot" ? "Bot" : x.kind === "skill" ? t("技能") : x.kind === "team" ? t("团队") : x.kind === "command" ? t("指令") : t("子 agent")}</span>
           <span className="slash-name">{x.title ?? x.name}</span>
           {x.kind === "skill" ? (
             <span className="slash-slug">{`/skill:${x.name}`}</span>
           ) : x.kind === "command" ? (
             <span className="slash-slug">{`/${x.name}`}</span>
+          ) : x.kind === "bot" ? (
+            <span className="slash-slug">Bot</span>
           ) : x.kind === "team" ? (
             x.title ? <span className="slash-slug">/team</span> : null
           ) : (

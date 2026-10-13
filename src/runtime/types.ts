@@ -80,6 +80,8 @@ export type 回退做法 = "both" | "files" | "conversation"
 export type 回退回执 = 回退结果 & { editorText?: string; conversationError?: string; noteError?: string }
 
 export interface SessionSpec {
+  /** 固定 Bot 配置快照；与其私聊、团队成员的生命周期分开。 */
+  bot?: { instructions: string; member: boolean; ownerSessionId?: string; teamId?: string; memberName?: string }
   sessionId: SessionId
   workspace: string
   /** per-session 隔离配置目录，绝不使用用户全局配置 */
@@ -509,6 +511,7 @@ export type EventSink = (event: AgentEvent) => void
  * 拿字节占比去凑一个 token 分解就是编造。
  */
 export interface ContextUsage {
+  provider?: string
   model?: string
   /** 模型自带的上下文上限（token）。**真数** */
   contextWindow?: number

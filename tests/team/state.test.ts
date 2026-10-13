@@ -204,3 +204,13 @@ describe("消息、上游代入、结束、落盘", () => {
     }
   })
 })
+
+it("已完成历史任务保留但不占活动任务额度",()=>{
+ const team=一支()
+ for(let i=0;i<32;i++){const task=加任务(team,{subject:`历史${i}`,assignee:"甲"});const {attemptId}=领取(team,task.id,"甲");结算(team,task.id,attemptId,{ok:true,output:"done"})}
+ const fresh=加任务(team,{subject:"新任务",assignee:"甲"})
+ expect(fresh.status).toBe("pending");expect(team.tasks).toHaveLength(33)
+ for(let i=1;i<32;i++)加任务(team,{subject:`待执行${i}`})
+ expect(()=>加任务(team,{subject:"活动超限"})).toThrow(/32/)
+ expect(team.tasks).toHaveLength(64)
+})

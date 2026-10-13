@@ -575,7 +575,10 @@
  */
 /** 8.11: optional native-session next-prompt suggestion. */
 /** 8.12: optional turn.at for actual message timestamps, including restored history. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.12"
+/** 8.13: Bot CRUD, scoped history and dispatch; optional Bot team fields. */
+/** 8.14: persistent Bot peer requests, handoffs and correlated replies in team snapshots. */
+/** 8.15: shared Bot Team conversation, nested clarification and user messages. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.15"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -14,6 +14,7 @@ import { QuestionAnswerSchema } from "./questions.js"
  * `getCapabilities` / `listProjects` 这类不属于任何单一项目的操作，故改为可选。
  */
 import { z } from "zod"
+import { BotCreateSchema, BotUpdateSchema, BotProfileSchema } from "../bot/types.js"
 import { FaultI18nSchema } from "./fault-i18n.js"
 import {
   ArtifactSchema,
@@ -253,6 +254,63 @@ export const InterpreterCandidateSchema = z
 export type InterpreterCandidate = z.infer<typeof InterpreterCandidateSchema>
 
 export const OPERATIONS = {
+  listBots: {
+    request: z.object({ includeArchived: z.boolean().optional() }).strict(),
+    response: z.object({ bots: z.array(BotProfileSchema) }).strict(),
+    mutating: false,
+  },
+  createBot: {
+    request: BotCreateSchema,
+    response: z.object({ bot: BotProfileSchema }).strict(),
+    mutating: true,
+  },
+  updateBot: {
+    request: z.object({ botId: z.string().min(1), patch: BotUpdateSchema }).strict(),
+    response: z.object({ bot: BotProfileSchema }).strict(),
+    mutating: true,
+  },
+  archiveBot: {
+    request: z.object({ botId: z.string().min(1) }).strict(),
+    response: z.object({ bot: BotProfileSchema }).strict(),
+    mutating: true,
+  },
+  openBotConversation: {
+    request: z.object({ botId: z.string().min(1), ownerSessionId: z.string().min(1), newConversation: z.boolean().optional() }).strict(),
+    response: z.object({ session: SessionSummarySchema }).strict(),
+    mutating: true,
+    sideEffects: true,
+  },
+  listBotSessions: {
+    request: z.object({ botId: z.string().min(1), ownerSessionId: z.string().min(1) }).strict(),
+    response: z.object({ sessions: z.array(SessionSummarySchema) }).strict(),
+    mutating: false,
+  },
+  dispatchBotTask: {
+    request: z.object({ requestId: z.string().min(1), ownerSessionId: z.string().min(1), botId: z.string().min(1), instruction: z.string().trim().min(1).max(100000) }).strict(),
+    response: z.object({ teamId: z.string().min(1), taskId: z.string().min(1), memberSessionId: z.string().min(1).optional() }).strict(),
+    mutating: true,
+    sideEffects: true,
+  },
+  stopBotTask: {
+    request: z.object({ ownerSessionId: z.string().min(1), teamId: z.string().min(1), taskId: z.string().min(1) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(), mutating: true, sideEffects: true,
+  },
+  messageBotTask: {
+    request: z.object({ ownerSessionId: z.string().min(1), teamId: z.string().min(1), taskId: z.string().min(1), instruction: z.string().trim().min(1).max(100000) }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(), mutating: true, sideEffects: true,
+  },
+  messageBotTeam: {
+    request: z.object({ ownerSessionId: z.string().min(1), teamId: z.string().min(1), requestId: z.string().min(1).max(200), message: z.string().trim().min(1).max(16000), toBotId: z.string().min(1).optional() }).strict(),
+    response: z.object({ ok: z.literal(true) }).strict(), mutating: true, sideEffects: true,
+  },
+  openBotTask: {
+    request: z.object({ ownerSessionId: z.string().min(1), teamId: z.string().min(1), taskId: z.string().min(1) }).strict(),
+    response: z.object({ session: SessionSummarySchema }).strict(), mutating: true, sideEffects: true,
+  },
+  openBotMember: {
+    request: z.object({ ownerSessionId: z.string().min(1), teamId: z.string().min(1), botId: z.string().min(1) }).strict(),
+    response: z.object({ session: SessionSummarySchema }).strict(), mutating: true, sideEffects: true,
+  },
   // ── 只读 ──
   getCapabilities: {
     request: Empty,
@@ -1907,6 +1965,7 @@ export const OPERATIONS = {
   getContextUsage: {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
     response: z.object({
+      provider: z.string().optional(),
       model: z.string().optional(),
       /** 模型自带的上下文上限（token）。**真数**；缺省 = 不知道 */
       contextWindow: z.int().min(0).optional(),

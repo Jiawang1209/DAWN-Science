@@ -1,3 +1,5 @@
+import { BotOutputLocks, canonicalOutputPaths } from "../bot/output-locks.js"
+import { verifiedArtifacts } from "../bot/context.js"
 /**
  * Workbench 的真实后端（补 Part 1 的收口）。
  *
@@ -10,6 +12,15 @@
  * msgid 是带 `{0}` 的中文原文，**插值走 args、不拼模板串**——拼进去的译不了（B15，2026-09-01）；
  * 原样透传别人的话用 `fault原样`，每一处登记在 `tests/workbench/fault-i18n.test.ts` 的名单里。
  */
+import { BotService, BotDispatchRejected } from "../bot/service.js"
+import { BotDelivery } from "../bot/delivery.js"
+import { runBotTurn } from "../bot/team-runner.js"
+import { botInstructions } from "../bot/runtime.js"
+import { recoverBotTeam } from "../bot/recovery.js"
+import { 写团队 } from "../team/state.js"
+import type { BotStore } from "../store/bots.js"
+import type { NativeRuntime } from "../runtime/native.js"
+import type { BotProfile } from "../bot/types.js"
 import { probeAcpModels } from "../runtime/acp/models.js"
 import type { ProviderRegistry } from "../config/schema.js"
 import { 插件册 } from "../tools/plugins.js"
@@ -160,6 +171,8 @@ export interface CredentialsPort {
 }
 
 export interface WorkbenchBackendOptions {
+  bots?: BotStore
+  configureBots?: (bridge: import("../bot/runtime.js").BotRuntimeBridge) => void
   sessionDiagnostic?: ((line: string) => void) | undefined
   /**
    * 这台跑在假 SSH 上（`DAWN_FAKE_SSH=1`，7.31）。**只为 `fakeSshControl` 放不放行**——
@@ -541,6 +554,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
 
   const 会话事件接线 = new Map<string, () => void>()
+  const pausedBotOwners = new Set<string>()
+  const botOutputLocks = new BotOutputLocks()
+  const directBotTurns = new Map<string, Set<AbortController>>()
 
   /** 创建、恢复与工作目录迁移共用；收摊等 exited 再退订，保留停止期间的最后一笔账。 */
   function 接上会话事件(sessionId: string): void {
@@ -553,6 +569,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           console.error("[账本] 记事件失败，转录照常：", err)
         }
         if (!接队列事件(sessionId, e)) events.ingest(sessionId, e)
+        // PTY exit/output can arrive after disposal; they never carry Bot attention.
+        const binding = ["permission_request", "permission_settled", "question", "idle"].includes(e.kind)
+          ? opts.bots?.bindingOfSession(sessionId) : undefined
+        if (binding?.kind === "team" && binding.ownerSessionId) {
+          if (e.kind === "permission_request") (sessions.runtimeOf(binding.ownerSessionId) as NativeRuntime | undefined)?.botAttention?.(binding.ownerSessionId, sessionId, "permission")
+          else if (e.kind === "question") (sessions.runtimeOf(binding.ownerSessionId) as NativeRuntime | undefined)?.botAttention?.(binding.ownerSessionId, sessionId, e.question.state === "pending" ? "question" : undefined)
+          else if (e.kind === "permission_settled" || e.kind === "idle") (sessions.runtimeOf(binding.ownerSessionId) as NativeRuntime | undefined)?.botAttention?.(binding.ownerSessionId, sessionId)
+        }
+        if (e.kind === "idle") queueMicrotask(() => { void botDelivery?.flush(sessionId).catch(error => console.error("[Bot] 结果送达失败", error)) })
       } finally {
         if (e.kind === "exited") {
           会话事件接线.get(sessionId)?.()
@@ -1210,6 +1235,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     workspaceOverride?: string,
     remoteSpec?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
     contextFromSessionId?: string,
+    bot?: import("../runtime/types.js").SessionSpec["bot"],
   ) {
     const project = requireProject(projectId)
     /**
@@ -1238,6 +1264,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       sessions
         .create(agentId, workspace, {
           projectId,
+          ...(bot ? {bot} : {}),
           ...(remoteSpec ? { remote: remoteSpec } : {}),
           ...(contextFromSessionId ? { contextFromSessionId } : {}),
         })
@@ -1930,7 +1957,214 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     })
   })
 
+  const botRuntime = (id: string) => {
+    const rt = sessions.runtimeOf(id) as NativeRuntime | undefined
+    if (!rt || typeof rt.dispatchBotTask !== "function") throw new Error("Bot Team 第一版只支持 native/API 主会话")
+    return rt
+  }
+  const validateBot = (bot: BotProfile, owner?: import("../store/sessions.js").SessionRecord) => {
+    if (owner && registry.agents[owner.agentId]?.kind !== "native") throw new Error("Bot 第一版只支持 native/API 主会话")
+
+  }
+  const validateBotModel = async (bot: BotProfile) => {
+    validateBot(bot)
+    if (bot.model && models && !(await models.available(bot.model.provider)).includes(bot.model.model)) throw new Error("Bot 的模型已不可用，请重新选择")
+  }
+  const openBotSession = async (id: string) => {
+    const rec = sessions.get(id)
+    if (!rec?.projectId) return undefined
+    if (!sessions.isLive(id)) {
+      await backend.subscribeSession({sessionId: id})
+      await backend.unsubscribeSession({sessionId: id})
+    }
+    return projects.sessions(rec.projectId, 服务器名).find(row => row.sessionId === id)
+  }
+  const createBotSession = async (bot: BotProfile, owner: import("../store/sessions.js").SessionRecord, context: import("../runtime/types.js").SessionSpec["bot"]) => {
+    if (!owner.projectId) throw new Error("主会话尚未绑定工作区")
+    await validateBotModel(bot)
+    await openBotSession(owner.id)
+    const model = bot.model ?? botRuntime(owner.id).botModel(owner.id)
+    const remoteParams = owner.connectionId ? await 造远端参数(owner.connectionId, owner.remoteCwd) : undefined
+    const summary = await 起一个会话(owner.projectId, owner.agentId, owner.workspace, remoteParams?.spec as never, undefined, context)
+    remoteParams?.认领(summary.sessionId)
+    try {if (model) await sessions.setModel(summary.sessionId, model.provider, model.model)}
+    catch (error) {await sessions.remove(summary.sessionId).catch(() => {});throw error}
+    return summary
+  }
+  const botService = opts.bots ? new BotService({
+    store: opts.bots, owner: id => sessions.get(id), validate: validateBot,
+    active: botId => sessions.list().some(s => (sessions.runtimeOf(s.id) as NativeRuntime | undefined)?.botAssigned?.(botId)),
+    busy: id => !!directBotTurns.get(id)?.size || ((sessions.runtimeOf(id) as NativeRuntime | undefined)?.botBusy?.(id) ?? false),
+    open: openBotSession,
+    create: (bot, owner) => createBotSession(bot, owner, {instructions: botInstructions(bot), member: false}),
+    dispatch: async (owner, bot, instruction) => {
+      try {
+        await openBotSession(owner)
+        await validateBotModel(opts.bots!.get(bot)!)
+        if (botRuntime(owner).configOptions?.(owner)?.find(o => o.id === "dawn.plan")?.current) throw new Error("生成方案期间不能启动 Bot 任务。")
+      } catch (error) {throw new BotDispatchRejected(error)}
+      const result = await botRuntime(owner).dispatchBotTask(owner, bot, instruction)
+      pausedBotOwners.delete(owner)
+      botDelivery?.resume(owner)
+      return result
+    },
+  }) : undefined
+  const requireBots = () => { if (!botService || !opts.bots) throw new Error("本次运行没有装配 Bot") ;return botService }
+  const botOperation = async <T>(work: () => Promise<T> | T, details?: (error: unknown) => Record<string, unknown>): Promise<T> => {
+    try { return await work() } catch(error) { throw fault原样("invalid_request", error instanceof Error ? error.message : String(error), details?.(error)) }
+  }
+  const botDelivery = opts.bots ? new BotDelivery({
+    store: opts.bots,
+    busy: id => pausedBotOwners.has(id) || !sessions.isLive(id) || botRuntime(id).botBusy(id) || botRuntime(id).botTeamWorking(id),
+    history: async id => JSON.stringify(await sessions.history(id)),
+    send: async (id, text) => {
+      // The current controller keeps its lease; an internal result is never a takeover.
+      const holder = sessions.leases.current(id)?.holder ?? "engine"
+      if (!sessions.leases.current(id)) sessions.leases.acquire(id, holder)
+      const result = await runBotTurn({sessionId: id, signal: new AbortController().signal, attach: sink => sessions.attach(id, sink), abort: async () => {await sessions.abort(id);await botRuntime(id).waitForIdle(id)}, write: () => sessions.write(id, text, holder)})
+      if (!result.ok) throw new Error(result.error ?? "队长未接收结果")
+    },
+  }) : undefined
+  const botBridge: import("../bot/runtime.js").BotRuntimeBridge = {
+    list: () => opts.bots?.list() ?? [],
+    scopeKey: owner => requireBots().scope(owner).key,
+    ownerContext: ownerId => {
+      const {owner,key}=requireBots().scope(ownerId)
+      return {key,workspace:owner.workspace,...(owner.projectId?{projectId:owner.projectId}:{}),...(owner.connectionId?{connectionId:owner.connectionId,remoteCwd:owner.remoteCwd!}:{})}
+    },
+    recover: async (owner, team) => {
+      for (const task of team.tasks) {
+        const member = team.members.find(m => m.name === task.assignee && m.botId)
+        if (!member || !["completed", "failed", "cancelled"].includes(task.status)) continue
+        if (task.status === "cancelled") {await botBridge.cancel?.(owner, {team, member, taskId: task.id, attemptId: `cancelled-${task.attempt}`});continue}
+        const attemptId = task.attemptId ?? `interrupted-${task.attempt}`
+        const resultId = `${team.id}:${task.id}:${attemptId}`
+        if (opts.bots?.getResult(resultId)) continue
+        const output = task.output ?? "任务已中断，尚无可核验交付"
+        await botBridge.result(owner, {team, member, taskId: task.id, attemptId, result: {ok: task.status === "completed", output, ...(task.status === "failed" ? {error: output} : {})}})
+      }
+    },
+    cancel: async (owner, {team, member, taskId, attemptId}) => {
+      const dispatch = opts.bots?.dispatchForTask(team.id, taskId)
+      if (dispatch) opts.bots!.updateDispatch(dispatch.requestId, {status: "cancelled"})
+      if (!member.botId || !opts.bots) return
+      const resultId = `${team.id}:${taskId}:cancelled`
+      if (opts.bots.getResult(resultId)) return
+      opts.bots.enqueueResult({resultId, ...(dispatch ? {requestId: dispatch.requestId} : {}), ownerSessionId: owner, botId: member.botId, teamId: team.id, taskId, attemptId: attemptId ?? "pending", ...(member.sessionId ? {memberSessionId: member.sessionId} : {}), status: "cancelled", summary: "任务已取消；不采用取消后到达的结果。", artifacts: []})
+      await botDelivery?.flush(owner)
+    },
+    run: async (ownerId, request) => {
+      const service = requireBots(), {owner, key} = service.scope(ownerId)
+      if (request.member.botScopeKey && request.member.botScopeKey !== key) throw new Error("主会话的工作目录已变化，请在当前目录重新派单")
+      const profile = service.profile(request.member.botId!)
+      const declared = request.team.tasks.find(t => t.id === request.taskId)?.outputs
+      let outputs: string[] | undefined
+      if (owner.connectionId && declared?.length && !declared.includes("*")) {
+        const quote = (value: string) => "'" + value.replace(/'/g, "'\\''") + "'"
+        const paths = await import("node:path")
+        const resolved = await 连着的(owner.connectionId).exec(`realpath -m -- ${declared.map(p => quote(paths.posix.resolve(owner.remoteCwd!, p))).join(" ")}`, {cwd: owner.remoteCwd!})
+        const canonical = resolved.stdout.trim().split("\n")
+        // Unknown canonicalization is exclusive, never a silent local fallback.
+        if (resolved.code === 0 && canonical.length === declared.length && canonical.every(p => p.startsWith("/"))) outputs = canonical
+      } else if (!owner.connectionId) outputs = canonicalOutputPaths(declared, owner.workspace)
+      const release = await botOutputLocks.acquire(key, outputs, request.signal)
+      try {
+      // Active team members keep the configuration snapshot recorded at team creation.
+      const frozen = {...profile, instructions: request.member.botInstructions ?? botInstructions(profile),
+        ...(request.member.provider && request.member.model ? {model: {provider: request.member.provider, model: request.member.model}} : {})}
+      let binding = opts.bots!.getBinding({botId: profile.id, scopeKey: key, kind: "team", teamId: request.team.id})
+      let session = binding ? await openBotSession(binding.sessionId) : undefined
+      if (!session) {
+        session = await createBotSession(frozen, owner, {instructions: frozen.instructions, member: true, ownerSessionId: ownerId, teamId: request.team.id, memberName: request.member.name})
+        binding = {botId: profile.id, scopeKey: key, kind: "team", teamId: request.team.id, ownerSessionId: ownerId, sessionId: session.sessionId}
+        opts.bots!.setBinding(binding)
+      }
+      request.onSession(session.sessionId)
+      const sid = session.sessionId
+      return await runBotTurn({sessionId: sid, signal: request.signal, attach: sink => sessions.attach(sid, sink), abort: async () => {await sessions.abort(sid);await botRuntime(sid).waitForIdle(sid)}, write: () => {
+        const holder = sessions.leases.current(sid)?.holder ?? "engine"
+        if (!sessions.leases.current(sid)) sessions.leases.acquire(sid, holder)
+        sessions.write(sid, request.prompt, holder)
+      }})
+      } finally {release()}
+    },
+    result: async (owner, event) => {
+      if (!event.member.botId || !opts.bots) return
+      const dispatch = opts.bots.dispatchForTask(event.team.id, event.taskId)
+      const record = event.member.sessionId ? sessions.get(event.member.sessionId) : undefined
+      const refs = record ? await verifiedArtifacts(event.result.output, record.remoteCwd ?? record.workspace, async path => {
+        if (record.connectionId) {
+          const quote = (value: string) => "'" + value.replace(/'/g, "'\\''") + "'"
+          const checked = await 连着的(record.connectionId).exec(`realpath -- ${quote(record.remoteCwd!)} ${quote(path)}`, {cwd: record.remoteCwd!})
+          const [root, target] = checked.stdout.trim().split("\n")
+          if (checked.code !== 0 || !root || !target || !target.startsWith(root + "/")) return false
+          // Use the remote file interface only; loss of SSH never falls back to local fs.
+          await 连着的(record.connectionId).readFile(path); return true
+        }
+        const fs = await import("node:fs/promises"), paths = await import("node:path")
+        const [root, target, stat] = await Promise.all([fs.realpath(record.workspace), fs.realpath(path), fs.stat(path)])
+        return target.startsWith(root + paths.sep) && stat.isFile()
+      }, !!record.connectionId) : {artifacts: [], unverified: []}
+      opts.bots.enqueueResult({resultId: `${event.team.id}:${event.taskId}:${event.attemptId}`, ...(dispatch ? {requestId: dispatch.requestId} : {}), ownerSessionId: owner,
+        botId: event.member.botId, teamId: event.team.id, taskId: event.taskId, attemptId: event.attemptId, ...(event.member.sessionId ? {memberSessionId: event.member.sessionId} : {}),
+        status: event.result.ok ? "completed" : "failed", summary: (event.result.ok ? event.result.output : event.result.error ?? "任务失败") + (refs.unverified.length ? `\n未核验产物：${refs.unverified.join("、")}` : ""), artifacts: refs.artifacts})
+      ;(sessions.runtimeOf(owner) as NativeRuntime | undefined)?.botArtifacts?.(owner, event.team.id, event.taskId, event.attemptId, refs.artifacts)
+      if (dispatch) opts.bots.updateDispatch(dispatch.requestId, {status: event.result.ok ? "completed" : "failed", ...(event.member.sessionId ? {memberSessionId: event.member.sessionId} : {})})
+      void botDelivery?.flush(owner).catch(error => console.error("[Bot] 结果回传失败", error))
+    },
+  }
+  async function recoverBotHistory(owner: string): Promise<void> {
+    const record = sessions.get(owner)
+    if (!record || opts.bots?.bindingOfSession(owner)) return
+    const root = join(record.sessionDir, "teams")
+    if (!existsSync(root)) return
+    for (const name of readdirSync(root)) {
+      const file = join(root, name, "team.json")
+      if (!existsSync(file)) continue
+      try { const team = JSON.parse(readFileSync(file, "utf8")) as import("../team/types.js").团队
+        if (team.captainSessionId === owner) {
+          if (recoverBotTeam(team)) 写团队(join(root, name), team)
+          await botBridge.recover?.(owner, team)
+        }
+      } catch(error) {console.error("[Bot] 历史任务恢复失败", error)}
+    }
+  }
+  opts.configureBots?.(botBridge)
+  function scopedBotMember(ownerSessionId: string, teamId: string, botId: string) {
+    const {key} = requireBots().scope(ownerSessionId)
+    const member = botRuntime(ownerSessionId).botMember(ownerSessionId, teamId, botId)
+    if (member.botScopeKey !== key) throw new Error("主会话的项目目录已变化，不能打开或补充原范围的 Bot 协作")
+    if (member.sessionId) {
+      const binding = opts.bots!.getBinding({botId, scopeKey: key, kind: "team", teamId})
+      if (binding?.sessionId !== member.sessionId || binding.ownerSessionId !== ownerSessionId) throw new Error("Bot 协作会话的项目范围不一致")
+    }
+    return member
+  }
   const backend: WorkbenchBackend = {
+    listBots: async ({includeArchived}) => botOperation(() => {requireBots();return {bots: opts.bots!.list(includeArchived === undefined ? {} : {includeArchived})}}),
+    createBot: async input => botOperation(async () => {requireBots();await validateBotModel({...input, id: "new", enabled: input.enabled ?? true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()});return {bot: opts.bots!.create(input)}}),
+    updateBot: async ({botId, patch}) => botOperation(async () => {requireBots();const previous = opts.bots!.get(botId);if (!previous) throw new Error("Bot 不存在");const candidate = {...previous, ...patch, model: patch.model === null ? undefined : patch.model ?? previous.model};await validateBotModel(candidate as BotProfile);return {bot: opts.bots!.update(botId, patch)}}),
+    archiveBot: async ({botId}) => botOperation(() => ({bot: requireBots().archive(botId)})),
+    openBotConversation: async ({botId, ownerSessionId, newConversation}) => botOperation(async () => ({session: await requireBots().open(botId, ownerSessionId, newConversation)})),
+    listBotSessions: async ({botId, ownerSessionId}) => botOperation(async () => {const bindings = await requireBots().history(botId, ownerSessionId);const result = await Promise.all(bindings.map(b => {const rec = sessions.get(b.sessionId);return rec?.projectId ? projects.sessions(rec.projectId, 服务器名).find(s => s.sessionId === rec.id) : undefined}));return {sessions: result.filter((s): s is NonNullable<typeof s> => !!s)}}),
+    dispatchBotTask: async input => botOperation(() => requireBots().dispatch(input), error => ({dispatchRejected: error instanceof BotDispatchRejected})),
+    stopBotTask: async ({ownerSessionId, teamId, taskId}) => botOperation(() => {requireBots().scope(ownerSessionId);botRuntime(ownerSessionId).stopBotTask(ownerSessionId, teamId, taskId);return {ok: true as const}}),
+    messageBotTask: async ({ownerSessionId, teamId, taskId, instruction}) => botOperation(async () => {requireBots().scope(ownerSessionId);const {member}=botRuntime(ownerSessionId).botTask(ownerSessionId, teamId, taskId);scopedBotMember(ownerSessionId, teamId, member.botId!);const target=member.sessionId??ownerSessionId;const expanded=剥掉粘贴标记((await 附上引用(target, instruction)).text);await botRuntime(ownerSessionId).messageBotTask(ownerSessionId, teamId, taskId, expanded);return {ok: true as const}}),
+    messageBotTeam: async ({ownerSessionId, teamId, requestId, message, toBotId}) => botOperation(async () => {
+      requireBots().scope(ownerSessionId)
+      await openBotSession(ownerSessionId)
+      const runtime = botRuntime(ownerSessionId), team = runtime.botCurrentTeam(ownerSessionId, teamId)
+      const members = team.members.filter(m => m.botId && m.status !== "removed")
+      if (!members.length) throw new Error("当前团队没有可用 Bot")
+      for (const member of members) scopedBotMember(ownerSessionId, teamId, member.botId!)
+      if (toBotId && !members.some(m => m.botId === toBotId)) throw new Error("Bot 不属于当前协作团队")
+      const expanded = 剥掉粘贴标记((await 附上引用(ownerSessionId, message)).text)
+      await runtime.messageBotTeam(ownerSessionId, teamId, {requestId, message: expanded, ...(toBotId ? {toBotId} : {})})
+      return {ok: true as const}
+    }),
+    openBotMember: async ({ownerSessionId, teamId, botId}) => botOperation(async () => {requireBots().scope(ownerSessionId);await openBotSession(ownerSessionId);const member = scopedBotMember(ownerSessionId, teamId, botId);if (!member.sessionId) throw new Error("成员会话尚未启动");const session = await openBotSession(member.sessionId);if (!session) throw new Error("成员会话不存在");return {session}}),
+    openBotTask: async ({ownerSessionId, teamId, taskId}) => botOperation(async () => {requireBots().scope(ownerSessionId);await openBotSession(ownerSessionId);const {member} = botRuntime(ownerSessionId).botTask(ownerSessionId, teamId, taskId);scopedBotMember(ownerSessionId, teamId, member.botId!);if (!member.sessionId) throw new Error("成员会话尚未启动");const session = await openBotSession(member.sessionId);if (!session) throw new Error("成员会话不存在");return {session}}),
+
     listProjects: async () => projects.list(),
 
     /**
@@ -2136,7 +2370,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     listSessions: async ({ projectId }) => {
       requireProject(projectId)
-      return projects.sessions(projectId, 服务器名)
+      return projects.sessions(projectId, 服务器名).filter(row => !opts.bots?.bindingOfSession(row.sessionId))
     },
 
     listRuns: async ({ projectId, sessionId, pageSize, after }) => {
@@ -2221,6 +2455,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          * 失败原因要显示，并允许可恢复的 API 会话在原处重试。
          */
         const 记录 = sessions.get(sessionId)
+        const restoringBots = !!记录 && !sessions.isLive(sessionId)
         // 本进程仍在运行才是活跃的依据；修复被另一个旧实例误写的数据库状态。
         if (记录?.state === "exited" && sessions.isLive(sessionId)) await sessions.resume(sessionId)
         /** 续接为什么没成。**留着**，下面那句订阅失败时要拿它说话 */
@@ -2269,6 +2504,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // 旧快照可读不等于恢复成功；不能让下面的 subscribe 吞掉真实失败。
         try {
           if (没续上因为) throw new Error(没续上因为)
+          queueMicrotask(() => { void (restoringBots ? recoverBotHistory(sessionId) : Promise.resolve()).then(() => botDelivery?.flush(sessionId)).catch(error => console.error("[Bot] 恢复送达失败", error)) })
           return events.subscribe(sessionId)
         } catch (err) {
           // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
@@ -2441,7 +2677,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 分开做是为了让每一批都能自己验证：这里验的是
      * 「路径设了没有、取消得掉吗、列表对不对」，不牵扯会话生命周期。
      */
-    listTasks: async () => 任务库().list(),
+    // Scratch paths belong to the live session, not the user-selected task workspace.
+    // Include the existing protocol field on refresh as well as createTask's response.
+    listTasks: async () => 任务库().list().map(task => {
+      const owner = task.sessionId ? sessions.get(task.sessionId) : undefined
+      return {...task, ...(!task.workspace && !task.connectionId && owner?.workspace ? {scratchWorkspace: owner.workspace} : {})}
+    }),
 
     createTask: async ({ agentId, workspace, connectionId, contextFromSessionId }) => {
       const store = 任务库()
@@ -3304,6 +3545,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     writeToSession: async ({ sessionId, data, as, images, behavior }) => {
+      if (as === "user") {pausedBotOwners.delete(sessionId);botDelivery?.resume(sessionId)}
       /**
        * **图片在这一层读盘、缩放、转 base64**（协议 4.12，2026-08-13）。
        *
@@ -3378,7 +3620,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           const withdrawn = 交回排着的(sessionId, 没排回, (停止次数.get(sessionId) ?? 0) !== 停过)
           return withdrawn.length ? { withdrawn } : {}
         }
-        sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)
+        const botBinding = opts.bots?.bindingOfSession(sessionId)
+        if (botBinding?.kind === "direct") {
+          const bot = opts.bots!.get(botBinding.botId)
+          if (!bot?.enabled || bot.archivedAt) throw new Error("Bot 已停用或封存；历史仍可查看")
+          const controller = new AbortController(), turns = directBotTurns.get(sessionId) ?? new Set<AbortController>()
+          turns.add(controller);directBotTurns.set(sessionId, turns)
+          let release: (() => void) | undefined
+          try {
+            release = await botOutputLocks.acquire(botBinding.scopeKey, undefined, controller.signal)
+            const result = await runBotTurn({sessionId, signal: controller.signal, attach: sink => sessions.attach(sessionId, sink), abort: async () => {await sessions.abort(sessionId);await botRuntime(sessionId).waitForIdle(sessionId)}, write: () => sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)})
+            if (!result.ok) throw new Error(result.error ?? "Bot 未完成这一轮")
+          } finally {release?.();turns.delete(controller);if (!turns.size)directBotTurns.delete(sessionId)}
+        } else sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)
         // **写成功了才清**：写失败（没租约、会话不在）时那几段还得留着，下一次再带
         不在场缓冲.delete(sessionId)
         // 用户的发言回灌进事件流，**界面不做本地乐观追加**——
@@ -3441,6 +3695,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     stopSession: async ({ sessionId }) => {
+      pausedBotOwners.add(sessionId)
+      for (const turn of directBotTurns.get(sessionId) ?? []) turn.abort()
       opts.sessionDiagnostic?.(`会话 ${sessionId} 收到关闭请求`)
       停止次数.set(sessionId, (停止次数.get(sessionId) ?? 0) + 1)
       /**
@@ -3481,6 +3737,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     abortSession: async ({ sessionId }) => {
+      pausedBotOwners.add(sessionId)
+      for (const turn of directBotTurns.get(sessionId) ?? []) turn.abort()
       停止次数.set(sessionId, (停止次数.get(sessionId) ?? 0) + 1)
       /**
        * **先把排着的撤下来交回界面，再中止**（2026-09-23）。停止是「这一轮不做了」——

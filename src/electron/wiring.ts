@@ -1,3 +1,4 @@
+import { BotStore } from "../store/bots.js"
 /**
  * 装配层（Task 2.7）。
  *
@@ -1223,6 +1224,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })()
 
   const backend = createWorkbenchBackend({
+    bots: new BotStore(db),
+    configureBots: bridge => nativeRuntime.configureBots(bridge),
     sessionDiagnostic: opts.sessionDiagnostic,
     ...(更新服务 ? { 更新: 更新服务 } : {}),
     // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）

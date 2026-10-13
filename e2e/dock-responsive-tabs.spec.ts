@@ -1,3 +1,4 @@
+import { 全部房客 } from "../src/ui/state/right-dock.js"
 import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 test("标签随实际坞宽度展开收回，当前面板始终可见且菜单只含溢出项", async ({ dawn }, testInfo) => {
@@ -20,7 +21,7 @@ test("标签随实际坞宽度展开收回，当前面板始终可见且菜单�
   await page.locator(".dock-head").screenshot({ path: testInfo.outputPath("dock-medium-header.png") })
   await size(720)
   await expect.poll(() => tabs.count()).toBeGreaterThan(narrow)
-  await expect(tabs).toHaveCount(9)
+  await expect(tabs).toHaveCount(全部房客.length)
   await expect(page.getByRole("button", { name: "更多面板", exact: true })).toHaveCount(0)
   await page.mouse.move(0, 0)
   await page.screenshot({ path: testInfo.outputPath("dock-wide.png") })
@@ -30,11 +31,11 @@ test("标签随实际坞宽度展开收回，当前面板始终可见且菜单�
   const selected = page.getByRole("tab", { name: "对话", exact: true })
   await expect(selected).toHaveAttribute("aria-selected", "true")
   await expect(selected).toBeInViewport()
-  await expect.poll(() => tabs.count()).toBeLessThan(9)
+  await expect.poll(() => tabs.count()).toBeLessThan(全部房客.length)
   await page.getByRole("button", { name: "更多面板", exact: true }).click()
   const visible = await tabs.allTextContents()
   const hidden = await page.getByRole("menuitem").allTextContents()
-  expect(hidden.length + visible.length).toBe(9)
+  expect(hidden.length + visible.length).toBe(全部房客.length)
   for (const name of hidden) expect(visible).not.toContain(name)
   await page.getByRole("menu").press("Escape")
   await page.mouse.move(0, 0)
@@ -94,9 +95,9 @@ test("真实拖拽与英文深色下标签自适应，展开时菜单收起并�
     await expect.poll(() => page.locator(".right-dock").evaluate(el => el.getBoundingClientRect().width)).toBe(expected)
   }
   await resize(240)
-  await expect(page.locator('.right-dock [role="tab"]:visible')).toHaveCount(9)
+  await expect(page.locator('.right-dock [role="tab"]:visible')).toHaveCount(全部房客.length)
   await resize(-440)
-  await expect.poll(() => page.locator('.right-dock [role="tab"]:visible').count()).toBeLessThan(9)
+  await expect.poll(() => page.locator('.right-dock [role="tab"]:visible').count()).toBeLessThan(全部房客.length)
   await expect(page.getByRole("tab", { name: "对话", exact: true })).toBeInViewport()
   await page.getByRole("button", { name: "更多面板", exact: true }).click()
   await expect(page.getByRole("menuitem").first()).toBeFocused()

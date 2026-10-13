@@ -1101,7 +1101,7 @@ export { SideSash }
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "subagent" ? t("子 agent") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
+  return who === "bot" ? "Bot" : who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "subagent" ? t("子 agent") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
@@ -1109,7 +1109,7 @@ const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAge
 export function 房客快捷键(who: 坞房客): string {
   if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
   // **网页、概览、产物、笔记本、对话暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
-  if (who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat" || who === "subagent") return ""
+  if (who === "bot" || who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat" || who === "subagent") return ""
   return 是Mac ? "⌘P" : "Ctrl+P"
 }
 
@@ -3839,6 +3839,7 @@ export function ConversationView({
   models,
   model,
   onSend,
+  allowBotDispatch = false,
   onEcho,
   onPickModel,
   onAbort,
@@ -3859,6 +3860,7 @@ export function ConversationView({
   onCompact,
   取上下文用量,
   disabled,
+  readOnlyReason,
   terminalTrimmed,
   kernelInstanceId,
   workspace,
@@ -4002,6 +4004,7 @@ export function ConversationView({
    * @param behavior 上一轮**还在跑**时这一条怎么进去（协议 8.0，2026-09-25）：
    *   `followUp` 排队（回车）、`redirect` 调整方向（Cmd/Ctrl+回车，只有 native）。不忙时不给。
    */
+  allowBotDispatch?: boolean | undefined
   onSend: (
     text: string,
     images?: readonly 图片来源[],
@@ -4072,6 +4075,7 @@ export function ConversationView({
   护粘贴?: boolean | undefined
   onOpenReference?: ((path: string) => void) | undefined
   disabled?: boolean | undefined
+  readOnlyReason?: string | undefined
   /** 终端 scrollback 被裁过。**如实标注，但不是故障**——终端本就有限回滚 */
   terminalTrimmed?: boolean | undefined
   /**
@@ -4317,7 +4321,7 @@ export function ConversationView({
   }, [退回的图, session.sessionId])
   const 全部斜杠 = useStore($slashItems)
   // `/compact` 那一条只给能压的那段（native）；外部 agent 那边 `/compact` 原样发给它，不替它列
-  const 斜杠单 = useMemo(() => 按能压滤(全部斜杠, !!onCompact), [全部斜杠, onCompact])
+  const 斜杠单 = useMemo(() => 按能压滤(全部斜杠, !!onCompact).filter(x => x.kind !== "bot" || allowBotDispatch), [全部斜杠, onCompact, allowBotDispatch])
   const [斜杠选中, 设斜杠选中] = useState(0)
   const [斜杠关了, 设斜杠关了] = useState(false)
   // `@` 菜单：光标位置由输入框报（onSelect），选中下标与 `/` 那份同理由输入框管
@@ -5402,7 +5406,7 @@ export function ConversationView({
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
             }}
-            placeholder={disabled ? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
+            placeholder={disabled ? readOnlyReason ?? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
               /**
@@ -7402,6 +7406,7 @@ export function EmptyConversation({
               e.preventDefault()
               // **与对话里那一份同一条**：组词期间不同步，发送就只能信 DOM（2026-09-18）
               let t = (输入框.current?.value ?? 草稿).trim()
+              const 原话 = t
               // **只有图、没有字也算一句话**（与对话里那一份同一条）
               if (!t && 空态图.length === 0 && 空态文件.length === 0) return
               /**
@@ -7450,7 +7455,7 @@ export function EmptyConversation({
                     : onStart(first, t || undefined, 工作目录),
               ).catch((e: unknown) => {
                 设开场出错(e instanceof Error ? e.message : String(e))
-                设草稿(t)
+                设草稿(原话)
                 设空态图(这次的图)
                 设空态文件(这次的文件)
               })

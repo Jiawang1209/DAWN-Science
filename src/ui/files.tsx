@@ -20,6 +20,7 @@ import { Button, EmptyState, Loader, Row } from "./primitives.js"
 import { VisualFilePreview, type PreviewNavigation } from "./visual-file-preview.js"
 import { AgentMarkdown } from "./markdown.js"
 import { ScriptPreview } from "./script-preview.js"
+import { PdfCanvas } from "./pdf-canvas.js"
 import { PreviewCloseButton } from "./preview-close-button.js"
 import {
   三角图标,
@@ -567,6 +568,19 @@ export function FilePreview({
         </>}
       </header>
 
+      <FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} />
+    </div>
+  )
+}
+
+
+/** Shared read-only content; callers own their toolbar and collapse behavior. */
+export function FilePreviewContent({path,content,onOpenExternally}: {
+  path: string; content: FileContent; onOpenExternally?: ((path: string) => void) | undefined
+}) {
+  if(content.kind === "image") return <div className="visual-preview-stage"><img className="preview-img" src={`data:${content.mediaType};base64,${content.base64}`} alt={tf("预览：{0}",path)} /></div>
+  if(content.kind === "pdf") return <PdfCanvas path={path} base64={content.base64}/>
+  return <>
       {content.kind === "table" ? (
         <数据表 t={content.table} />
       ) : content.kind === "text" ? (
@@ -588,15 +602,14 @@ export function FilePreview({
           {/* **说清是什么、多大**，并给一条出路 */}
           <p className="unknown">{t("不能在应用里预览")}</p>
           <p className="caveat">{content.reason}</p>
-          <div className="state-action">
+          {onOpenExternally ? <div className="state-action">
             <Button variant="outline" size="sm" onClick={() => onOpenExternally(path)}>
               {t("用系统程序打开")}
             </Button>
-          </div>
+          </div> : null}
         </div>
       )}
-    </div>
-  )
+  </>
 }
 
 

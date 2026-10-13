@@ -217,6 +217,8 @@ function 字面msgid(文: string | undefined): string[] | undefined {
  * 是另一个模块的责任）。多一处、少一处都要来这里改数字：这是「有意识的决定」的形状。
  */
 const 原样透传名单: Record<string, number> = {
+  // Bot 生命周期与派单校验由独立服务抛出，保留其具体失败原因。
+  "error instanceof Error ? error.message : String(error)": 1,
   // 9 → 10（远程内核，2026-09-03）：`probeInterpreters` 的远端分支——连不上的原因是那台机器说的，原样转述
   "e instanceof Error ? e.message : String(e)": 10,
   "err instanceof Error ? err.message : String(err)": 4,

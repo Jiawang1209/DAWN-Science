@@ -2,11 +2,11 @@
  * 团队（team-board，2026-08-22，学自 NanmiCoder/dsh-agent-teams；解读见
  * `ccb_hive_code_learn/dsh-agent-teams-解读.md`）。
  *
- * 一支团队 = 一个队长（当前会话）+ 若干成员（名册里的子 agent，**各自一个子进程、各自一份可续的会话目录**）
+ * 一支团队 = 一个队长（当前会话）+ 若干成员（旧子 agent 使用各自子进程；托管 Bot 使用 Native 执行器与各自持久会话）
  * + 一张带依赖的任务表 + 一个邮箱。真相在磁盘：`<会话目录>/teams/<id>/team.json`。
  *
- * 进程边界不变（不变式 1：验证者拿不到生产者的上下文）；「可续聊」靠**同一个成员下次起新进程续它那份会话文件**，
- * 不是同进程里留一个活着的子会话。
+ * 旧子 agent 仍遵循独立进程边界，下一轮通过会话文件续接。托管 Bot 的上下文与执行由注入的成员执行器管理；
+ * 协作交换另行持久化，不能把对方的一轮回复当成自己原任务的结算。
  */
 
 export type 任务状态 = "pending" | "claimed" | "in_progress" | "completed" | "failed" | "cancelled"
@@ -21,6 +21,9 @@ export interface 任务 {
   /** 成员名，或 `captain`（队长自己做）。没有 = 进共享池，谁空闲谁领 */
   assignee?: string
   /** 这些任务全部 `completed` 之后才能领 */
+  outputs?: string[] | undefined
+  /** Verified deliverables returned by a managed Bot member. */
+  artifacts?: string[] | undefined
   dependencies: string[]
   /** 完成 / 失败时写的结果 */
   output?: string
@@ -38,6 +41,11 @@ export interface 任务 {
 export type 成员状态 = "idle" | "working" | "removed"
 
 export interface 成员 {
+  botScopeKey?: string | undefined
+  attention?: "question" | "permission" | undefined
+  botId?: string
+  sessionId?: string
+  botInstructions?: string
   /** 团队内唯一的显示名，也是邮箱名 */
   name: string
   /** 名册里的子 agent 名（决定人设与模型） */
@@ -68,7 +76,53 @@ export interface 消息 {
   deliveredAt?: number
 }
 
+export interface BotTeamMessage {
+  id: string
+  role: "bot" | "user" | "captain" | "system"
+  from: string
+  botId?: string
+  content: string
+  createdAt: number
+  toBotId?: string
+  exchangeId?: string
+  kind: "message" | "request" | "handoff" | "reply" | "result" | "status"
+}
+
+/** Delivery metadata is durable; conversation contains public content only. */
+export interface BotConversationTurn {
+  messageId: string
+  member: string
+  botId: string
+  scopeKey?: string | undefined
+  status: "queued" | "working" | "replied" | "failed" | "cancelled" | "interrupted"
+  reply?: string
+  updatedAt: number
+}
+
+export interface BotExchange {
+  parentExchangeId?: string
+  rootOwner?: string
+  rootOwnerBotId?: string
+  rootMessageId?: string
+  id: string
+  from: string
+  to: string
+  fromBotId: string
+  toBotId: string
+  kind: "request" | "handoff"
+  message: string
+  reply?: string
+  status: "queued" | "working" | "replied" | "failed" | "cancelled" | "interrupted"
+  taskId?: string
+  attemptId?: string
+  createdAt: number
+  updatedAt: number
+  resumedAt?: number
+}
+
 export interface 团队 {
+  /** Scope captured on the first Bot binding; survives removal, ending and owner rehoming. */
+  botOriginScopeKey?: string
   id: string
   name: string
   goal: string
@@ -78,6 +132,9 @@ export interface 团队 {
   members: 成员[]
   tasks: 任务[]
   messages: 消息[]
+  collaboration?: BotExchange[]
+  conversation?: BotTeamMessage[]
+  conversationTurns?: BotConversationTurn[]
   taskSeq: number
 }
 
@@ -93,7 +150,7 @@ export const 团队上限 = {
   maxConcurrent: 4,
   /** 一支团队最多几个成员 */
   maxMembers: 8,
-  /** 一支团队最多几个任务 */
+  /** 一支团队最多几个未结束任务；历史记录保留 */
   maxTasks: 32,
   /** 一轮输出最多多少字节（与 subagent 同一个数） */
   maxOutputBytes: 64 * 1024,

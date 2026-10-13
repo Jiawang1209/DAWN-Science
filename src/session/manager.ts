@@ -9,7 +9,7 @@
  * 「怎么跟进程说话」全部委托给 AgentRuntime。
  */
 import { randomUUID } from "node:crypto"
-import { cpSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs"
+import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import type { AgentDef, ProviderRegistry } from "../config/schema.js"
 import type { NewSessionRecord, SessionRecord, SessionStore } from "../store/sessions.js"
@@ -212,6 +212,7 @@ export class SessionManager {
     workspace: string,
     opts: {
       projectId?: string
+      bot?: SessionSpec["bot"]
       /** 从同一 native agent 的会话完整分叉历史；不复用会话目录。 */
       contextFromSessionId?: string
       /**
@@ -260,11 +261,16 @@ export class SessionManager {
       ...(opts.remote ? { connectionId: opts.remote.connectionId, remoteCwd: opts.remote.cwd.get() } : {}),
     }
     this.store.insert(rec) // 先落库
+    if (opts.bot) {
+      mkdirSync(sessionDir, {recursive: true})
+      writeFileSync(join(sessionDir, "bot-context.json"), JSON.stringify(opts.bot), {mode: 0o600})
+    }
 
     const spec: SessionSpec = {
       sessionId: id,
       workspace,
       sessionDir,
+      ...(opts.bot ? {bot: opts.bot} : {}),
       ...(opts.remote ? { remote: { executor: opts.remote.executor, cwd: opts.remote.cwd } } : {}),
       ...(forkTranscript ? { forkFrom: forkTranscript } : {}),
     }
@@ -461,8 +467,12 @@ export class SessionManager {
       throw new UserFacingError(`provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`)
     }
 
+    const botPath = join(rec.sessionDir, "bot-context.json")
+    const bot: SessionSpec["bot"] = existsSync(botPath) ? JSON.parse(readFileSync(botPath, "utf8")) : undefined
+    if (bot && (typeof bot.instructions !== "string" || typeof bot.member !== "boolean")) throw new UserFacingError("Bot 会话配置损坏，无法恢复")
     const spec: SessionSpec = {
       sessionId,
+      ...(bot ? {bot} : {}),
       workspace: rec.workspace,
       sessionDir: rec.sessionDir,
       native: { provider: def.provider, model: def.model },

@@ -110,3 +110,13 @@ export type { 方案, 对照结果 } from "./plan.js"
 
 export { ASK_USER_QUESTION, QuestionSchema, QuestionsSchema, QuestionAnswerSchema, QuestionRecordSchema, validateQuestionAnswer } from "./questions.js"
 export type { Question, QuestionAnswer, QuestionRecord } from "./questions.js"
+
+export {
+  BotModelSchema, BotCreateSchema, BotUpdateSchema, BotProfileSchema,
+  BotScopeSchema, BotSessionBindingSchema, BotDispatchInputSchema,
+  BotDispatchPatchSchema, BotDispatchSchema, BotResultInputSchema, BotResultSchema,
+} from "../bot/types.js"
+export type {
+  BotModel, BotCreate, BotUpdate, BotProfile, BotScope, BotSessionBinding,
+  BotDispatchInput, BotDispatchPatch, BotDispatch, BotResultInput, BotResult,
+} from "../bot/types.js"

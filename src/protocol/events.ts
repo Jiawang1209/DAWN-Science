@@ -710,6 +710,8 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
    * **而那正是「以为在 A 目录、其实在 B 目录」的来源**。
    */
   z.object({ ...envelope, type: z.literal("cwd"), cwd: z.string().min(1) }).strict(),
+  /** 持久标题元信息，按 sessionId 同步。revision 为当前转录版本，不推进、不参与转录连续性校验。 */
+  z.object({ ...envelope, type: z.literal("title"), title: z.string().min(1) }).strict(),
   /** 团队变了（team-board，7.22）：整份换掉——它给的就是整份新的，合并只会多一种「合错了」 */
   z.object({ ...envelope, type: z.literal("team"), team: TeamSnapshotSchema }).strict(),
   /**

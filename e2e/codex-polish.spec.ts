@@ -2,7 +2,7 @@
  * codex-polish（2026-08-22，学自 dsh-codex-ui）五件小事：
  * ① 轮次导航——三轮起右侧出一排刻度，点一格跳到那一轮；
  * ② 会话菜单补五项——在新会话中继续 / 在访达中打开工作目录 / 复制工作目录 / 复制标题 / 复制会话 ID；
- * ③ 会话统计条——头部那一行写「N 轮」与用量；
+ * ③ 会话统计条——输入框下方写「N 轮」与用量；
  * ④ 导出对话为 markdown——真的落一个文件在隔离的下载目录里；
  * ⑤ 未读圆点——不在看的那段来了回复就亮一粒，点开就灭。
  */
@@ -10,25 +10,24 @@ import { test, expect, CANNED_REPLY, 开一段临时会话 } from "./fixtures.js
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-const 输入框 = /今天帮你做些什么/
-
 async function 说(page: import("@playwright/test").Page, 话: string): Promise<void> {
-  await page.getByPlaceholder(输入框).fill(话)
+  await page.locator("main.main .composer-card").getByRole("textbox").fill(话)
   await page.keyboard.press("Enter")
   await expect(page.locator(".turns").getByText(话, { exact: true })).toBeVisible()
   await expect(page.locator(".turns .turn.agent").last()).toContainText(CANNED_REPLY, { timeout: 30_000 })
 }
 
-test("**③ 统计条**：头部写轮数；**④ 导出**：下载目录里多一个 .md，内容有每一轮", async ({ dawn }) => {
+test("**③ 统计条**：输入框下方写轮数；**④ 导出**：下载目录里多一个 .md，内容有每一轮", async ({ dawn }) => {
   const { page, dir } = dawn
   await 开一段临时会话(page)
   await 说(page, "第一句话")
   await 说(page, "第二句话")
   const 头 = page.locator(".conv-head")
-  await expect(头.locator(".session-usage")).toContainText("2 轮")
+  await expect(page.locator(".composer .session-usage")).toContainText("2 轮")
 
   const 下载 = join(dir, "downloads")
-  await 头.getByRole("button", { name: "导出对话" }).click()
+  await 头.locator(".conv-actions-trigger").click()
+  await 头.getByRole("menuitem", { name: "导出对话", exact: true }).click()
   // 提示是浮出来的（2026-08-27 作者改的：别钉在按钮后面），显示一会儿再淡去、然后从 DOM 里消失
   const 提示 = 头.locator(".export-toast")
   await expect(提示).toContainText("已导出 2 轮")
@@ -84,7 +83,7 @@ test("**② 菜单五项**：复制三项走剪贴板并出声；「在新会话
   await page.getByRole("menuitem", { name: "在新会话中继续", exact: true }).click()
   await expect(page.locator(".session-list > li")).toHaveCount(2)
   // 新的那段成了当前，草稿里带着上一段的回复
-  await expect(page.getByPlaceholder(输入框)).toHaveValue(new RegExp(CANNED_REPLY.slice(0, 8)))
+  await expect(page.locator("main.main .composer-card").getByRole("textbox")).toHaveValue(new RegExp(CANNED_REPLY.slice(0, 8)))
 })
 
 test.describe("⑤ 未读圆点", () => {
@@ -102,7 +101,7 @@ test("**⑤ 未读圆点**：不在看的那段来了回复就亮，点开就灭
   const 乙 = page.locator(".sess-item").filter({ hasText: "乙段" })
   await expect(page.locator(".sess-unread")).toHaveCount(0)
   // 在乙段说话，立刻切去甲段，乙段的回复到了就该亮
-  await page.getByPlaceholder(输入框).fill("乙的问题")
+  await page.locator("main.main .composer-card").getByRole("textbox").fill("乙的问题")
   await page.keyboard.press("Enter")
   await 甲.locator(".name").click()
   await expect(page.locator(".conv-title")).toContainText("甲段")

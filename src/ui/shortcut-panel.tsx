@@ -29,6 +29,7 @@ export function ShortcutPanel({ onClose, returnFocusRef }: {
       { title: t("审阅面板"), keys: mac ? "⌃ ⇧ G" : "Ctrl Shift G" },
     ] },
     { title: t("对话输入"), rows: [
+      { title: t("查找当前对话"), keys: `${mod} F` },
       { title: t("发送；运行中排到后面"), keys: "Enter" },
       { title: t("输入换行"), keys: "Shift Enter" },
       { title: t("运行中调整方向"), keys: `${mod} Enter` },

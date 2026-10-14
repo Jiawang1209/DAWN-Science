@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs"
 import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 async function checkComposer(area: import('@playwright/test').Locator) {
@@ -56,7 +57,7 @@ test('确认稿：品牌与三个按钮紧凑排列，收起后仍可展开，�
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-label', '收起侧边栏')
   const version = page.locator('.statusbar .brand-version')
-  await expect(version).toContainText('0.0.25')
+  await expect(version).toContainText(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version)
   await expect(page.locator('.topbar .brand-version')).toHaveCount(0)
   const b = (await version.boundingBox())!
   expect(b.x + b.width).toBeGreaterThan(await page.evaluate(() => window.innerWidth - 24))

@@ -30,6 +30,7 @@
  */
 import { atom } from "nanostores"
 import { setValue } from "./identity.js"
+import { SIDEBAR_MIN } from "./sidebar.js"
 
 /**
  * 坞里住着谁。
@@ -131,9 +132,6 @@ export function clampDockWidth(px: number): number {
  * `var(--dawn-sidebar-w) minmax(420px, 1fr) minmax(0, var(--dawn-dock-w))`）。
  */
 const 对话最窄 = 420
-/** 侧栏的下限。**只在拿不到它此刻真实宽度时兜底** */
-const SIDEBAR_MIN = 200
-
 /**
  * 这个窗口此刻**最宽能给坞多少**（2026-08-19 修的一个既有缺陷）。
  *

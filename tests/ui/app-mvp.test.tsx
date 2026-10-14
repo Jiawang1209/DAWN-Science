@@ -427,11 +427,12 @@ describe("MVP 主路径 · 说一句话，看见回复", () => {
     fireEvent.submit(box.form!)
     await waitFor(() => expect(h.calls.some((c) => c.op === "writeToSession")).toBe(true))
 
-    // 事件还没回来：只有回显那一条，它没有操作行（复制 / 修改要一个后端认得的 id）
+    // 事件还没回来：只有回显那一条，只有时间，不提供操作按钮（复制 / 修改要一个后端认得的 id）
     const 人话 = () => document.querySelectorAll(".turn.user")
     expect(人话()).toHaveLength(1)
     expect(人话()[0]!.hasAttribute("data-echo")).toBe(true)
-    expect(人话()[0]!.querySelector(".turn-actions")).toBeNull()
+    expect(人话()[0]!.querySelector(".turn-actions button")).toBeNull()
+    expect(人话()[0]!.querySelector(".turn-actions .turn-time")).not.toBeNull()
 
     h.push({
       workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,

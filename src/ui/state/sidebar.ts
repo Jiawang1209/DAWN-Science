@@ -18,7 +18,7 @@
  * ```
  *
  * **上下界它没写在样式里**（在 JS 里），所以那两个数是我们自己定的：
- * 200 是「分区标题连同计数还排得下」的下限，420 是「正文栏还有 420 可用」的上限。
+ * 336 是「完整品牌与三个按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
  * 这两个数只有这一个家。
  *
  * ## 为什么是 `global` 而不是 `window`
@@ -37,10 +37,10 @@ import { setValue } from "./identity.js"
 export const SIDEBAR_WIDTH_KEY = "dawn.global.sidebar-width"
 export const SIDEBAR_COLLAPSED_KEY = "dawn.global.sidebar-collapsed"
 
-/** 实测 WorkBuddy 的侧栏是 264px，我们的令牌本来就是这个数 */
-export const SIDEBAR_DEFAULT = 248 // 2026-08-22 作者定的（此前照 WorkBuddy 的 264）：数字列 188 + 10 + 三角 16 + 10
-/** 再窄，「会话 12」这种分区标题就开始被挤 */
-export const SIDEBAR_MIN = 200
+/** 2026-10-14：完整DAWN Science与三个按钮同排，侧栏对齐这组导航。 */
+export const SIDEBAR_DEFAULT = 336
+/** 再窄会挤到品牌与操作按钮；旧存储宽度也经过此下限清洗。 */
+export const SIDEBAR_MIN = 336
 /** 再宽，正文栏就低于 `.body` 里那个 `minmax(420px, 1fr)` 的承诺 */
 export const SIDEBAR_MAX = 420
 

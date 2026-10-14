@@ -30,7 +30,10 @@ export function SessionTabs({
   onClose,
   onPutInDock,
   onReorder,
+  topbar = false,
 }: {
+  /** 放在应用顶栏时，选中页签承担当前会话标题。 */
+  topbar?: boolean
   tabs: readonly 分栏项[]
   current: string
   onPick: (sessionId: string) => void
@@ -47,6 +50,7 @@ export function SessionTabs({
   onReorder?: ((orderedIds: string[]) => void) | undefined
 }) {
   const 当前 = useRef<HTMLDivElement>(null)
+  const root = useRef<HTMLDivElement>(null)
   const [拖动中, 设拖动中] = useState<string | undefined>(undefined)
   const [落点, 设落点] = useState<string | undefined>(undefined)
   /** 右键开着的那格菜单：哪一段、开在哪 */
@@ -88,12 +92,18 @@ export function SessionTabs({
   // 切到哪个就把哪个滚进视野——分栏多了会横向滚
   useEffect(() => {
     // jsdom 没有 scrollIntoView（同 slash-menu 那处）——CI 的 mac runner 上它以未处理异常的形式把整轮测试打红过（2026-08-28）
-    const el = 当前.current
-    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ inline: "nearest", block: "nearest" })
-  }, [current])
+    const showCurrent = () => {
+      const el = 当前.current
+      if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ inline: "nearest", block: "nearest" })
+    }
+    showCurrent()
+    const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(showCurrent)
+    if (root.current) observer?.observe(root.current)
+    return () => observer?.disconnect()
+  }, [current, tabs.length])
   if (tabs.length === 0) return null
   return (
-    <div className="session-tabs" role="tablist" aria-label={t("同一处的会话")}>
+    <div ref={root} className={`session-tabs${topbar ? " session-tabs-topbar" : ""}`} role="tablist" aria-label={t("同一处的会话")}>
       {tabs.map((x) => {
         const 选中 = x.sessionId === current
         return (
@@ -144,7 +154,7 @@ export function SessionTabs({
             >
               <span className="session-tab-dot" aria-hidden="true" />
               {/* 全名给悬浮看——顶格里只留截断后的那截。title 摆在这个 span（不是按钮）上，设计契约禁按钮用原生 title */}
-              <span className="session-tab-title" data-authored="1" title={x.title}>{x.title}</span>
+              <span className={`session-tab-title${topbar && 选中 ? " conv-title" : ""}`} data-authored="1" title={x.title}>{x.title}</span>
               {x.inDock ? <span className="session-tab-dock">{t("坞")}</span> : null}
             </Button>
             {/* 走 primitive，几何仍归 `.session-tab-close`（2026-09-08：那条扫描修好后露出来的） */}

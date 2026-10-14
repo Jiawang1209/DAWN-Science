@@ -133,7 +133,8 @@ test.describe("侧边对话 · native", () => {
       await expect(格.locator("header")).toHaveCount(1)
       const 头 = 格.locator("header.conv-head")
       await expect(头.locator(".side-chat-title")).toHaveText("你好")
-      await expect(头.locator(".session-usage")).toContainText("3 轮")
+      await expect(头.locator(".session-usage")).toHaveCount(0)
+      await expect(格.locator(".composer .session-usage")).toContainText("3 轮")
       for (const 名 of ["导出对话", "换到主区", "从坞里拿下"]) {
         const b = 头.getByRole("button", { name: 名, exact: true })
         await expect(b).toBeVisible()
@@ -142,7 +143,7 @@ test.describe("侧边对话 · native", () => {
       // 大字：与主区 `.conv-title` 同一档
       const [坞字, 主字] = await Promise.all([
         头.locator(".side-chat-title").evaluate((el) => getComputedStyle(el).fontSize),
-        主区(page).locator(".conv-title").evaluate((el) => getComputedStyle(el).fontSize),
+        page.locator(".topbar .conv-title").evaluate((el) => getComputedStyle(el).fontSize),
       ])
       expect(坞字).toBe(主字)
       // 导出的是坞里这段：mock 回的轮数就是它的 3 轮
@@ -183,7 +184,7 @@ test.describe("侧边对话 · native", () => {
 
     await test.step("换到主区：主区是坞里那段，坞里是原主那段", async () => {
       await 换.click()
-      await expect(主区(page).locator(".conv-title")).toContainText("你好")
+      await expect(page.locator(".topbar .conv-title")).toContainText("你好")
       await expect(坞(page).locator(".side-chat-title")).toContainText("跑个长的")
       await expect(坞(page).locator(".turns")).toContainText("我去跑一下。")
       /** 先等主区真换成坞里那段的内容，再断言原主那段不在——否则否定句可能赶在重渲染之前成立 */
@@ -210,7 +211,7 @@ test.describe("侧边对话 · 临时会话", () => {
     const { page } = dawn
     await 开一段临时会话(page, "起个头")
     /** 前提：主区真是一段临时会话——散的会话没有分栏，「会话」那一组里只有它 */
-    await expect(主区(page).locator(".conv-title")).toContainText("起个头")
+    await expect(page.locator(".topbar .conv-title")).toContainText("起个头")
     await expect(主区(page).locator(".session-tabs")).toHaveCount(0)
     await expect(page.locator(".session-list > li")).toHaveCount(1)
 
@@ -227,7 +228,7 @@ test.describe("侧边对话 · 临时会话", () => {
     await 说(坞(page), "坞里开的头")
     await expect(坞(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
     /** 主区还是原来那段：标题没换、坞里那句没串过去 */
-    await expect(主区(page).locator(".conv-title")).toContainText("起个头")
+    await expect(page.locator(".topbar .conv-title")).toContainText("起个头")
     await expect(主区(page).locator(".turns")).not.toContainText("坞里开的头")
     /** 新那段是一段临时会话：落进侧栏「会话」那一组，不是哪个项目底下 */
     await expect(page.locator(".session-list > li")).toHaveCount(2, { timeout: 30_000 })

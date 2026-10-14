@@ -71,7 +71,7 @@ import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则, 剥掉粘贴标记 } from "../files/mentions.js"
-import { 概览图标, 外观图标, 文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 键盘图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
+import { 概览图标, 外观图标, 文件夹图标, 文件夹描边图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 键盘图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
@@ -180,6 +180,7 @@ import {
   $tasks,
   setConnectionState,
   setSessionCwd,
+  setSessionTitle,
   $connections,
   setDraft,
   note,
@@ -331,6 +332,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const rightDockWidth = useStore($rightDockWidth)
   const sidebarWidth = useStore($sidebarWidth)
   const sidebarCollapsed = useStore($sidebarCollapsed)
+  const [conversationHeaderTarget, setConversationHeaderTarget] = useState<HTMLDivElement | null>(null)
   /**
    * 视口宽（审查 debug I8）：文件面板「两栏还是上下摞」的判据依赖 `坞的上界`,而它读 `window.innerWidth`。
    * 没有这个监听,窗口拉窄后组件不重渲染——坞被上界夹到放不下两栏了,判据却还按存储的宽给两栏,挤成一团。
@@ -627,6 +629,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * **当前目录变了**（②-B · R4′）。模型 `cd` 之后头上那一条要立刻跟上——
          * 慢一步，人看到的就是上一个目录。
          */
+        if (u.type === "title") {
+          setSessionTitle(u.sessionId, u.title)
+          return
+        }
         if (u.type === "cwd") {
           setSessionCwd(u.sessionId, u.cwd)
           return
@@ -4969,9 +4975,73 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       body: <关于一格 回执={更新回执} 动作={更新动作} 查着={更新查着} />,
     },
   ]
+  const 会话页签 = view === "conversation" && session && session.kind !== "pty" ? (() => {
+    const 远端 = session.remote?.connectionId
+    const 项目 = projects.find((p) => p.projectId === session.projectId)
+    // 侧栏「会话」那一组的也不画（与坞的 `t:` 同一个判据；宿主可能是占着临时根的普通项目，只看 `temporary` 会漏）
+    if (!远端 && (!项目 || 项目.temporary || 在会话那一组(session, tasks))) return null
+    // 远端会话住在 `tempSessions`（2026-08-23 审查抓的：只筛 `sessions` 时远端那一条分栏永远是空的）
+    const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
+    if (!同处.some(x => x.sessionId === session.sessionId)) 同处.push(session)
+    return (
+      <SessionTabs
+        topbar
+        tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), inDock: x.sessionId === 侧边id, canDock: 能进坞(x) }))}
+        current={session.sessionId}
+        onPick={(id) => {
+          标未读(id, false)
+          setActiveSessionId(id)
+        }}
+        onClose={(id) => {
+          // 关掉当前这段之前，先跳到相邻的一段，别把人晾在空屏上
+          if (id === session.sessionId) {
+            const 兄弟 = 同处.find((x) => x.sessionId !== id)
+            if (兄弟) setActiveSessionId(兄弟.sessionId)
+          }
+          void 归档几段([id]).catch(fail)
+        }}
+        onReorder={reorderSessions}
+        /**
+         * 右键「放进坞里」（侧边对话，2026-09-24）。**同一段只在一处、主区赢**（Task 5 那个 effect）：
+         * 放的是主区这段，就得先把主区切到同处另一段——与上面 `onClose` 同一条——
+         * 而且**与挂进坞同步做完、中间不许有 await**，否则「主区赢」那一拍会把刚挂上的又拿下来。
+         * 同处没有别的可切：说一句，不做（放进去主区就空了，而且远端那边连「地方」都跟着没了）。
+         */
+        onPutInDock={(id) => {
+          const 做法 = 放进坞的做法({ id, 地方: $侧边地方.get(), 主区: session.sessionId, 在坞: $侧边会话id.get(), 同处 })
+          if (做法.做 === "说") {
+            // 每条不做的路都**说一句**（规格 7.5）——菜单一收什么都没发生，人只会以为没点上
+            note(
+              做法.因为 === "没地方"
+                ? 坞没处说 ?? t("还没弄清这段在哪一处，稍后再放进坞里")
+                : 做法.因为 === "终端"
+                  ? t("终端不是对话，放不进坞里")
+                  : t("这里只有这一段，放进坞里主区就空了"),
+            )
+            return
+          }
+          // 挂进坞与切主区**同步做完、中间不许有 await**——否则「主区赢」那一拍会把刚挂上的又拿下来
+          挂进坞(做法.地方, 做法.id)
+          if (做法.然后主区切到) setActiveSessionId(做法.然后主区切到)
+          打开坞里的对话()
+        }}
+        onNew={
+          远端
+            ? () => {
+                const c = connections.find((x) => x.id === 远端)
+                if (c) void startRemoteSession({ id: c.id, label: c.label })
+              }
+            : 项目
+              ? () => void 新建任务({ workspace: 项目.workspace }).catch(fail)
+              : undefined
+        }
+      />
+    )
+  })() : null
   return (
-    <div className="app-shell" key={lang} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
+    <div className="app-shell" key={lang} data-sidebar-collapsed={sidebarCollapsed} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
       <div className="topbar">
+        <div className="topbar-navigation">
         {/**
           * **顺序：标志 → 折叠 → 搜索**（2026-08-13，作者定的）。
           *
@@ -4983,12 +5053,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           * （32×32，间距 36），我们照这个关系排。
           */}
         <div className="brand-stack">
-          <Button variant="text" size="inline" className="brand" onClick={回到初始画面}>
-            <img className="brand-mark" src={rpIcon} alt="" aria-hidden="true" /><span>DAWN Science</span>
+          <Button variant="text" size="inline" className="brand" aria-label="DAWN Science" onClick={回到初始画面}>
+            <img className="brand-mark" src={rpIcon} alt="" aria-hidden="true" /><span className="brand-name">DAWN Science</span>
           </Button>
 
         </div>
-        {/* 三个按钮紧跟品牌，间距8px；折叠后入口仍保留，窄侧栏时品牌名称可截断。 */}
+        {/* 三个按钮紧跟完整品牌，间距8px；加宽侧栏确保名称始终一行，折叠后也保留。 */}
         <Button
           variant="ghost"
           size="icon"
@@ -5010,7 +5080,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             设搜索开着(false); 设搜索词(""); 设搜索模式("名字"); closePalette(); 设快捷键开着(true)
           }}
         ><键盘图标 /></Button>
-        <span className="spacer" />
+        </div>
+        <div className="topbar-conversation" data-tabs={Boolean(会话页签)}>
+          {会话页签 ? <div className="topbar-session-group"><文件夹描边图标 className="conv-title-icon" />{会话页签}</div> : null}
+          <div className="topbar-conversation-slot" ref={setConversationHeaderTarget} />
+        </div>
         {/**
           * **「返回」对所有非对话屏都给**（2026-08-10）。
           *
@@ -5461,68 +5535,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </div>
           ) : session ? (
             <>
-              {/* 同一处（同一个项目文件夹 / 同一台服务器）的会话横着排一行（2026-08-23 作者要的）；散的会话没有「同一处」，不画 */}
-              {(() => {
-                const 远端 = session.remote?.connectionId
-                const 项目 = projects.find((p) => p.projectId === session.projectId)
-                // 侧栏「会话」那一组的也不画（与坞的 `t:` 同一个判据；宿主可能是占着临时根的普通项目，只看 `temporary` 会漏）
-                if (!远端 && (!项目 || 项目.temporary || 在会话那一组(session, tasks))) return null
-                // 远端会话住在 `tempSessions`（2026-08-23 审查抓的：只筛 `sessions` 时远端那一条分栏永远是空的）
-                const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
-                return (
-                  <SessionTabs
-                    tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), inDock: x.sessionId === 侧边id, canDock: 能进坞(x) }))}
-                    current={session.sessionId}
-                    onPick={(id) => {
-                      标未读(id, false)
-                      setActiveSessionId(id)
-                    }}
-                    onClose={(id) => {
-                      // 关掉当前这段之前，先跳到相邻的一段，别把人晾在空屏上
-                      if (id === session.sessionId) {
-                        const 兄弟 = 同处.find((x) => x.sessionId !== id)
-                        if (兄弟) setActiveSessionId(兄弟.sessionId)
-                      }
-                      void 归档几段([id]).catch(fail)
-                    }}
-                    onReorder={reorderSessions}
-                    /**
-                     * 右键「放进坞里」（侧边对话，2026-09-24）。**同一段只在一处、主区赢**（Task 5 那个 effect）：
-                     * 放的是主区这段，就得先把主区切到同处另一段——与上面 `onClose` 同一条——
-                     * 而且**与挂进坞同步做完、中间不许有 await**，否则「主区赢」那一拍会把刚挂上的又拿下来。
-                     * 同处没有别的可切：说一句，不做（放进去主区就空了，而且远端那边连「地方」都跟着没了）。
-                     */
-                    onPutInDock={(id) => {
-                      const 做法 = 放进坞的做法({ id, 地方: $侧边地方.get(), 主区: session.sessionId, 在坞: $侧边会话id.get(), 同处 })
-                      if (做法.做 === "说") {
-                        // 每条不做的路都**说一句**（规格 7.5）——菜单一收什么都没发生，人只会以为没点上
-                        note(
-                          做法.因为 === "没地方"
-                            ? 坞没处说 ?? t("还没弄清这段在哪一处，稍后再放进坞里")
-                            : 做法.因为 === "终端"
-                              ? t("终端不是对话，放不进坞里")
-                              : t("这里只有这一段，放进坞里主区就空了"),
-                        )
-                        return
-                      }
-                      // 挂进坞与切主区**同步做完、中间不许有 await**——否则「主区赢」那一拍会把刚挂上的又拿下来
-                      挂进坞(做法.地方, 做法.id)
-                      if (做法.然后主区切到) setActiveSessionId(做法.然后主区切到)
-                      打开坞里的对话()
-                    }}
-                    onNew={
-                      远端
-                        ? () => {
-                            const c = connections.find((x) => x.id === 远端)
-                            if (c) void startRemoteSession({ id: c.id, label: c.label })
-                          }
-                        : 项目
-                          ? () => void 新建任务({ workspace: 项目.workspace }).catch(fail)
-                          : undefined
-                    }
-                  />
-                )
-              })()}
               <BotTeamCards team={botTeam} names={new Map(botProfiles.map(b => [b.id, b.name]))} onOpenFile={path => {
                 try { openFile(botArtifactPreviewPath(path, 当前工作区路径, !!session.remote)) } catch (error) { fail(error) }
               }}
@@ -5540,6 +5552,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 onStop={taskId => client.get("stopBotTask", { ownerSessionId: session.sessionId, teamId: botTeam!.id, taskId })}
                 onMessage={(taskId, instruction) => client.get("messageBotTask", { ownerSessionId: session.sessionId, teamId: botTeam!.id, taskId, instruction })} />
               <ConversationView
+                headerTarget={conversationHeaderTarget}
+                headerHasTabs={Boolean(会话页签)}
                 key={session.sessionId}
                 session={session}
                 搜索跳到={跳到}

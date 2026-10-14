@@ -413,6 +413,7 @@ export function startMockInferenceServer(opts = {}) {
    * 而那些用例验的不是它。分开记，两边都还是真的：验证发没发看 `keyChecks`，对话发了什么看 `requests`。
    */
   const keyChecks = []
+  const titleRequests = []
   /** 与 `src/workbench/key-validate.ts` 的 `KEY_CHECK_PROMPT` 是同一句——这是 .mjs 脚本，抄了一份字面量，改要两边一起改 */
   const KEY_CHECK_PROMPT = "DAWN key check"
 
@@ -440,9 +441,11 @@ export function startMockInferenceServer(opts = {}) {
       }
       const 文本 = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => x?.text ?? "").join("") : "")
       const 最后一句 = 文本([...(body.messages ?? [])].reverse().find((m) => m.role === "user")?.content)
+      const 系统原文 = 文本(body.system) || 文本(body.messages?.find?.((m) => m.role === "system" || m.role === "developer")?.content)
+      const 是标题 = 系统原文.includes("为会话生成简短主题标题")
       // **整句相等**才是验证（2026-09-01 终审 F6）：`includes` 会把一句提到「DAWN key check」的对话也劫走
       const 是key验证 = 最后一句.trim() === KEY_CHECK_PROMPT
-      ;(是key验证 ? keyChecks : requests).push({ url: req.url, body })
+      ;(是key验证 ? keyChecks : 是标题 ? titleRequests : requests).push({ url: req.url, body })
 
       // 学 Kimi 的脾气（2026-09-28 作者撞的）：kimi-k2.6 / k3 这几个**只收 temperature 0.6**，带别的值就 400。
       // 验 key 那一问此前固定带 0，于是一把好 key 被说成「没能验证……可能是网络」。模型名里带 `kimi` 就照这样挑剔
@@ -463,7 +466,7 @@ export function startMockInferenceServer(opts = {}) {
       // 演一次失败（桌面通知，2026-09-27）：只这一问 401，会话里其它问照常。
       // 摘要请求不算——它的 user 那条装着整段对话原文，里面的「演一次失败」是被摘要的话
       const 是摘要 = 是摘要请求(文本(body.messages?.find?.((m) => m.role === "system" || m.role === "developer")?.content))
-      if (!是key验证 && !是摘要 && 最后一句用户话(body)?.includes("演一次失败")) {
+      if (!是key验证 && !是摘要 && !是标题 && 最后一句用户话(body)?.includes("演一次失败")) {
         res.writeHead(401, { "content-type": "application/json" })
         res.end(JSON.stringify({ error: { message: "mock：演一次失败", type: "invalid_request_error" } }))
         return
@@ -522,14 +525,20 @@ export function startMockInferenceServer(opts = {}) {
        * user 里带「只回一个 JSON 对象」= 一次判定，按正文里有没有「相关」「开发」「README」回 JSON。
        */
       // 有的模型 pi 用 `developer` 角色放系统提示词——两种都认
-      const 系统原文 = 文本(body.messages?.find?.((m) => m.role === "system" || m.role === "developer")?.content)
+      let 会话标题
+      if (是标题) {
+        const request = JSON.parse(最后一句).request
+        会话标题 = /500米.*8月|8月.*500米/.test(request) ? "500米8月偏差校正"
+          : /30米.*NDVI|NDVI.*30米/.test(request) ? "30米NDVI质量检查"
+          : [...request.split("\n").find(line => line.trim())?.trim() ?? "新会话"].slice(0, 20).join("")
+      }
       const 摘要 = 是摘要请求(系统原文)
       const 增强 = 系统原文.includes("只输出改写后的提示词")
       const 判定 = 最后一句.includes("只回一个 JSON 对象")
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
       const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
       const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
-      const reply = botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const reply = 会话标题 ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"
@@ -558,10 +567,10 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复)
 
-      const tool = 摘要 ? undefined : (opts.toolCall?.(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
-      const 用量 = !摘要 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
+      const tool = 摘要 || 是标题 ? undefined : (opts.toolCall?.(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const 用量 = !摘要 && !是标题 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
-      const finishReason = !摘要 && 最后一句.includes("演一次截断") ? "length" : "stop"
+      const finishReason = !摘要 && !是标题 && 最后一句.includes("演一次截断") ? "length" : "stop"
 
       /**
        * **Anthropic Messages 协议的端点也答**（B9，2026-09-01，规则 ①）。
@@ -654,6 +663,7 @@ export function startMockInferenceServer(opts = {}) {
         port,
         requests,
         keyChecks,
+        titleRequests,
         close: () => new Promise((r) => server.close(() => r())),
       })
     })

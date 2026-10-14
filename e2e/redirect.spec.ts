@@ -95,7 +95,7 @@ test.describe("调整方向 · 假模型", () => {
     const { page } = dawn
     await 在项目里开会话(page)
     await 忙起来(主区(page))
-    const 标题 = await 主区(page).locator(".conv-title").innerText()
+    const 标题 = await page.locator(".topbar .conv-title").innerText()
     await 说(主区(page), "旁边问一句：这个目录多大")
     await 一条(主区(page), "旁边问一句").getByRole("button", { name: "到坞里问", exact: true }).click()
 
@@ -110,7 +110,7 @@ test.describe("调整方向 · 假模型", () => {
     /** 停下之后框里是空的：那句已经去了坞里，没有被当成排着的退回来 */
     await expect(框(主区(page))).toHaveValue("")
     await expect(坞(page).locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
-    await expect(主区(page).locator(".conv-title")).toHaveText(标题)
+    await expect(page.locator(".topbar .conv-title")).toHaveText(标题)
     await expect(主区(page).locator(".turns")).not.toContainText("旁边问一句")
   })
 

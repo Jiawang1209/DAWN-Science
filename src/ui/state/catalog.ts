@@ -361,3 +361,23 @@ export function 标记待回答(sessionId: string, pending: boolean): void {
   if (pending) next.add(sessionId); else next.delete(sessionId)
   $待回答的会话.set(next)
 }
+
+let titleRevision = 0
+const latestTitles = new Map<string, { revision: number; title: string }>()
+
+/** 请求开始后到达的标题推送优先于该请求的旧快照。后续新请求仍以后端为准。 */
+export function sessionTitleSnapshotMerger<T extends { sessionId?: string | undefined; title?: string | undefined }>(): (rows: T[]) => T[] {
+  const revision = titleRevision
+  return rows => rows.map(row => {
+    const newer = row.sessionId ? latestTitles.get(row.sessionId) : undefined
+    return newer && newer.revision > revision ? { ...row, title: newer.title } : row
+  })
+}
+
+/** 同一会话在主列表、临时/远端列表与任务投影中的标题一并更新。 */
+export function setSessionTitle(sessionId: string, title: string): void {
+  latestTitles.set(sessionId, { revision: ++titleRevision, title })
+  setSessions($sessions.get().map(s => s.sessionId === sessionId ? { ...s, title } : s))
+  setTempSessions($tempSessions.get().map(s => s.sessionId === sessionId ? { ...s, title } : s))
+  setTasks($tasks.get().map(task => task.sessionId === sessionId ? { ...task, title } : task))
+}

@@ -42,7 +42,7 @@ import type { EnvironmentStore } from "../store/environments.js"
 import { 探测机器, 本地执行 } from "../env/probe.js"
 import { 科研目录, 约定正文, pi会读的指令文件, 我们写的指令文件 } from "../policy/science-layout.js"
 import type { ShellEnvironment } from "../env/snapshot.js"
-import { deriveSessionTitle } from "../session/title.js"
+import { AutoSessionTitles } from "../session/auto-title.js"
 import { readFile } from "node:fs/promises"
 import { 内核请求标记 } from "../kernel/shortcuts.js"
 import { 请求内核语言, 展开引用, 剥掉粘贴标记, 规则的毛病, type 文件规则 } from "../files/mentions.js"
@@ -553,6 +553,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
 
+  const autoTitles = new AutoSessionTitles({
+    get: id => sessions.get(id), list: () => sessions.list(),
+    setInitial: (id, title) => projects.setSessionTitle(id, title),
+    rename: (id, title) => { sessions.rename(id, title) },
+    canSummarize: id => registry.agents[sessions.get(id)?.agentId ?? ""]?.kind === "native",
+    ask: askOnce ? async (id, req) => (await askOnce({ sessionId: id }, req)).text : undefined,
+    changed: (id, title) => events.setTitle(id, title),
+  })
   const 会话事件接线 = new Map<string, () => void>()
   const pausedBotOwners = new Set<string>()
   const botOutputLocks = new BotOutputLocks()
@@ -2681,7 +2689,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     // Include the existing protocol field on refresh as well as createTask's response.
     listTasks: async () => 任务库().list().map(task => {
       const owner = task.sessionId ? sessions.get(task.sessionId) : undefined
-      return {...task, ...(!task.workspace && !task.connectionId && owner?.workspace ? {scratchWorkspace: owner.workspace} : {})}
+      return {...task, ...(owner?.title ? { title: owner.title } : {}), ...(!task.workspace && !task.connectionId && owner?.workspace ? {scratchWorkspace: owner.workspace} : {})}
     }),
 
     createTask: async ({ agentId, workspace, connectionId, contextFromSessionId }) => {
@@ -3615,8 +3623,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             ...(附图.length ? { images: 附图 } : {}),
           })
           不在场缓冲.delete(sessionId)
-          const title = deriveSessionTitle(data)
-          if (title) projects.setSessionTitle(sessionId, title)
+          autoTitles.start(sessionId, data)
           const withdrawn = 交回排着的(sessionId, 没排回, (停止次数.get(sessionId) ?? 0) !== 停过)
           return withdrawn.length ? { withdrawn } : {}
         }
@@ -3640,8 +3647,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // PTY 会话由中枢自行忽略：终端本来就会回显，再补一条是重复。
         if (as === "user" && queueId) {
           // 转录与记账都等 `queue_delivered`；名字照定（会话一般早有名字，这里只是不漏）
-          const title = deriveSessionTitle(data)
-          if (title) projects.setSessionTitle(sessionId, title)
+          autoTitles.start(sessionId, data)
         } else if (as === "user") {
           /**
            * **第一句话定名字**（2026-08-10）。写在这里而不是运行时里：
@@ -3652,8 +3658,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
            * 先读后写有窗口，而「第二句话把标题改掉了」的症状是
            * 侧栏上的名字会自己变，人会以为点错了会话。
            */
-          const title = deriveSessionTitle(data)
-          if (title) projects.setSessionTitle(sessionId, title)
+          autoTitles.start(sessionId, data)
           /**
            * **转录里存缩略图，不存原图**（协议 4.14，2026-08-13）。
            *
@@ -4816,6 +4821,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     renameSession: async ({ sessionId, title }) => {
+      autoTitles.cancel(sessionId)
       // **空串等于清掉**，回到自动标题——不是存一个空标题
       if (!sessions.rename(sessionId, title)) throw fault("not_found", "没有这个会话：{0}", sessionId)
       return {}

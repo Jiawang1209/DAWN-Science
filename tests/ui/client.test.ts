@@ -185,3 +185,23 @@ describe("客户端 · 没有桥时", () => {
     if (original) window.dawn = original
   })
 })
+
+describe("客户端 · 标题元信息独立于转录 revision", () => {
+  it("后台漏过转录也能连续收到标题，且标题不改变主会话的转录基准", () => {
+    let emit: (raw: unknown) => void = () => {}
+    const c = createClient(undefined, cb => { emit = cb; return () => {} })
+    const onUpdate = vi.fn(), onResync = vi.fn()
+    c.subscribeUpdates({ onUpdate, onResync })
+    const send = (body: object) => emit({ workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: "background", ...body })
+    send({ type: "title", revision: 1, title: "初始主题" })
+    // 此时后台会话的转录未订阅，revision 2 不会进入本客户端。
+    send({ type: "title", revision: 3, title: "500米8月偏差校正" })
+    expect(onUpdate).toHaveBeenCalledTimes(2)
+    expect(onResync).not.toHaveBeenCalled()
+    c.expectRevision("background", 10)
+    send({ type: "title", revision: 10, title: "手动改名" })
+    send({ type: "bytes", revision: 11, data: "下一条真实转录" })
+    expect(onUpdate).toHaveBeenLastCalledWith(expect.objectContaining({ type: "bytes", revision: 11 }))
+    expect(onResync).not.toHaveBeenCalled()
+  })
+})

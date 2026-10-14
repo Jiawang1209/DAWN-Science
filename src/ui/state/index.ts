@@ -85,6 +85,7 @@ export {
   标未读,
   $未读,
   setSessionCwd,
+  setSessionTitle,
   $remoteOpen,
   toggleRemoteOpen,
   setRemoteOpen,

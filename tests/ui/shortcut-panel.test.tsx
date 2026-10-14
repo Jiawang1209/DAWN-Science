@@ -14,7 +14,7 @@ it.each([
     const { ShortcutPanel: PlatformPanel } = await import("../../src/ui/shortcut-panel.js")
     const { unmount } = render(<PlatformPanel onClose={vi.fn()} />)
     const keys = Array.from(screen.getByRole("dialog").querySelectorAll("kbd"), k => k.textContent)
-    expect(keys).toEqual([command, files, review, "Enter", "Shift Enter", enter, enhance, "Esc", "Tab", "↑ ↓", enter, "Ctrl C"])
+    expect(keys).toEqual([command, files, review, platform === "MacIntel" ? "⌘ F" : "Ctrl F", "Enter", "Shift Enter", enter, enhance, "Esc", "Tab", "↑ ↓", enter, "Ctrl C"])
     unmount()
   } finally {
     platformGetter.mockRestore()

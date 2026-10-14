@@ -254,6 +254,18 @@ export class SessionTranscripts {
     }
   }
 
+  /** 标题是会话元信息，不创建转录发言或占用模型回合。 */
+  setTitle(sessionId: SessionId, title: string): void {
+    const e = this.entries.get(sessionId)
+    if (!e || e.子转录) return
+    // 标题是名单元信息：不推进转录 revision，后台未订阅转录时也需要交付。
+    const update = SessionUpdateSchema.parse({ workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION,
+      sessionId, revision: Math.max(1, e.revision), type: "title", title })
+    for (const cb of [...this.全听, ...this.listeners]) {
+      try { cb(update) } catch (error) { console.warn("[会话标题] 推送失败：", error) }
+    }
+  }
+
   /** 此刻的转录条目，**不订阅、不改状态**（提示词增强读对话历史用）。没追踪的回空 */
   peekItems(sessionId: SessionId): readonly TranscriptItem[] {
     return this.entries.get(sessionId)?.items ?? []

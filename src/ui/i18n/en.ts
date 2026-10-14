@@ -60,6 +60,7 @@ export const EN: Readonly<Record<string, string>> = {
   "成员会话尚未启动": "The member conversation has not started yet",
 
   "查找内容": "Find in conversation",
+  "查找当前对话": "Find in this conversation",
   "未能定位匹配内容，请重试": "Could not locate the match. Please try again.",
   "当前会话内容搜索": "Current conversation search",
   "搜索当前会话内容": "Search this conversation",

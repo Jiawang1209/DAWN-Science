@@ -21,7 +21,7 @@ import { test, expect, CANNED_REPLY, 在项目里开会话, 等进了对话, 进
 const 原样 = "# e2e 工作区\n"
 const 主区 = (page: Page) => page.locator("main.main")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
-const 框 = (区: Locator) => 区.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (区: Locator) => 区.locator(".composer-card").getByRole("textbox")
 
 async function 开会话(page: Page) {
   await 在项目里开会话(page)

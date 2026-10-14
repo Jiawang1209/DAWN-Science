@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { ConversationSearch } from "../../src/ui/conversation-search.js"
 import { ConversationView, TranscriptRow } from "../../src/ui/views.js"
 import { 还原成条目 } from "../../src/workbench/restored-items.js"
@@ -7,6 +7,52 @@ import { 年月日时分 } from "../../src/ui/format.js"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 
 describe("当前会话内容搜索", () => {
+  it.each(["ctrlKey", "metaKey"])("%s+F 打开并重选当前关键词；Escape 返回输入框且保留草稿", (modifier) => {
+    const session = { sessionId: "find", projectId: "p1", agentId: "ds-chat", kind: "native" as const, pinned: false, sortOrder: 0, state: "alive" as const, createdAt: "2026-10-14T00:00:00Z" }
+    const r = render(<ConversationView session={session} items={[]} onSend={vi.fn()} />)
+    const composer = r.container.querySelector(".composer-card textarea") as HTMLTextAreaElement
+    composer.focus()
+    fireEvent.keyDown(composer, { key: "f", [modifier]: true, isComposing: true })
+    expect(screen.queryByRole("searchbox")).toBeNull()
+    fireEvent.keyDown(composer, { key: "f", [modifier]: true })
+    const search = screen.getByRole("searchbox") as HTMLInputElement
+    expect(document.activeElement).toBe(search)
+    fireEvent.change(search, { target: { value: "鲸落" } })
+    fireEvent.keyDown(search, { key: "f", [modifier]: true })
+    expect(search.selectionStart).toBe(0)
+    expect(search.selectionEnd).toBe(2)
+    fireEvent.keyDown(search, { key: "Escape" })
+    expect(screen.queryByRole("searchbox")).toBeNull()
+    expect(document.activeElement).toBe(composer)
+  })
+
+  it("并排会话只查找焦点所在侧边；外部弹窗不触发主会话查找", () => {
+    const session = { sessionId: "main", projectId: "p1", agentId: "ds-chat", kind: "native" as const, pinned: false, sortOrder: 0, state: "alive" as const, createdAt: "2026-10-14T00:00:00Z" }
+    const r = render(<><ConversationView session={session} items={[]} onSend={vi.fn()} /><ConversationView session={{ ...session, sessionId: "side" }} 紧凑 items={[]} onSend={vi.fn()} /><div role="dialog"><input aria-label="外部输入" /></div></>)
+    const roots = r.container.querySelectorAll(".conversation")
+    const composer = roots[1]!.querySelector("textarea")!
+    composer.focus()
+    fireEvent.keyDown(composer, { key: "f", ctrlKey: true })
+    expect(within(roots[0] as HTMLElement).queryByRole("searchbox")).toBeNull()
+    const search = within(roots[1] as HTMLElement).getByRole("searchbox")
+    expect(document.activeElement).toBe(search)
+    fireEvent.keyDown(search, { key: "Escape" })
+    fireEvent.keyDown(screen.getByLabelText("外部输入"), { key: "f", metaKey: true })
+    expect(screen.queryByRole("searchbox")).toBeNull()
+    for (const scope of ["dialog", "menu", "term-host"]) {
+      const overlay = document.createElement("div")
+      if (scope === "term-host") overlay.className = scope
+      else overlay.setAttribute("role", scope)
+      const field = document.createElement("input")
+      overlay.append(field)
+      roots[0]!.append(overlay)
+      field.focus()
+      fireEvent.keyDown(field, { key: "f", ctrlKey: true })
+      expect(screen.queryByRole("searchbox")).toBeNull()
+      overlay.remove()
+    }
+  })
+
   it("会话内旧历史超预算仍可定位；切换会话收起并清空搜索", async () => {
     const session = { sessionId: "s1", projectId: "p1", agentId: "ds-chat", kind: "native" as const, pinned: false, sortOrder: 0, state: "alive" as const, createdAt: "2026-10-11T00:00:00Z" }
     const items = Array.from({ length: 48 }, (_, i) => ({ type: "turn" as const, id: `u${i}`, who: "user" as const, text: i === 0 ? "旧历史鲸落" : `普通问题${i}`, final: true }))
@@ -54,6 +100,7 @@ describe("用户消息时间", () => {
     const item = 还原成条目({ kind: "text", who: "user", text: "历史问题", at }, 0)
     expect(item).toMatchObject({ at })
     const { container, rerender } = render(<TranscriptRow item={item} agentId="DeepSeek" />)
+    expect(container.querySelector(".turn-actions time")).not.toBeNull()
     expect(container.querySelector("time")?.getAttribute("dateTime")).toBe(new Date(at).toISOString())
     expect(container.querySelector("time")?.textContent).toBe(年月日时分(new Date(at).toISOString()))
     rerender(<TranscriptRow item={{ type: "turn", id: "old", who: "user", text: "旧记录", final: true }} agentId="DeepSeek" />)

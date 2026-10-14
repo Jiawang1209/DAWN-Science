@@ -37,6 +37,7 @@ import {
   setRunDetail,
   setRuns,
   setSessions,
+  sessionTitleSnapshotMerger,
   setTempSessions,
   setProviders,
   setContextUsage,
@@ -63,13 +64,10 @@ export function fail(e: unknown): void {
 }
 
 /** 临时会话：**跨项目的一问**，见 `listTemporarySessions` 的说明 */
-export const loadTempSessions = (c: WorkbenchClient): Promise<void> =>
-  c
-    .get<SessionSummary[]>("listTemporarySessions")
-    .then((v) => {
-      setTempSessions(v)
-    })
-    .catch(fail)
+export const loadTempSessions = (c: WorkbenchClient): Promise<void> => {
+  const merge = sessionTitleSnapshotMerger<SessionSummary>()
+  return c.get<SessionSummary[]>("listTemporarySessions").then(v => { setTempSessions(merge(v)) }).catch(fail)
+}
 
 /**
  * 远端连接名单（②-B · R3）。
@@ -89,13 +87,10 @@ export const loadConnections = (c: WorkbenchClient): Promise<void> =>
  * 任务列表（T2）。**失败要出声**：取不回来的列表与空列表在界面上长得一样，
  * 而后者会被读成「你还没建过任务」。
  */
-export const loadTasks = (c: WorkbenchClient): Promise<void> =>
-  c
-    .get<TaskSummary[]>("listTasks")
-    .then((v) => {
-      setTasks(v)
-    })
-    .catch(fail)
+export const loadTasks = (c: WorkbenchClient): Promise<void> => {
+  const merge = sessionTitleSnapshotMerger<TaskSummary>()
+  return c.get<TaskSummary[]>("listTasks").then(v => { setTasks(merge(v)) }).catch(fail)
+}
 
 export const loadProjects = (c: WorkbenchClient): Promise<void> =>
   c.get<ProjectSummary[]>("listProjects").then((v) => {
@@ -181,11 +176,10 @@ export const loadContextUsage = async (
 export const loadProviders = (c: WorkbenchClient): Promise<void> =>
   c.get<Providers>("getProviders").then(setProviders).catch(fail)
 
-export const loadSessions = (c: WorkbenchClient, projectId: string): Promise<void> =>
-  c.get<SessionSummary[]>("listSessions", { projectId }).then((v) => {
-      setSessions(v)
-    })
-    .catch(fail)
+export const loadSessions = (c: WorkbenchClient, projectId: string): Promise<void> => {
+  const merge = sessionTitleSnapshotMerger<SessionSummary>()
+  return c.get<SessionSummary[]>("listSessions", { projectId }).then(v => { setSessions(merge(v)) }).catch(fail)
+}
 
 /**
  * @param sessionId 给了就只取**这段会话**的 Run（2026-08-20，作者定的：

@@ -247,8 +247,8 @@ export class ProjectManager {
    * 第一句话定名字。**只在还没有标题时写**——判空在 SQL 里，不在调用方，
    * 先读后写的窗口会让「第二句话把标题改掉」，症状是侧栏上的名字自己变了。
    */
-  setSessionTitle(sessionId: string, title: string): void {
-    this.sessionStore.setTitleIfAbsent(sessionId, title)
+  setSessionTitle(sessionId: string, title: string): boolean {
+    return this.sessionStore.setTitleIfAbsent(sessionId, title)
   }
 
   /** 列出项目下的 Run，最近的在前——项目面板的历史栏要的就是这个顺序 */

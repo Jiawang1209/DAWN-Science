@@ -320,7 +320,7 @@
   /**
    * 侧栏宽度。实测 WorkBuddy 是 **264px**。
    *
-   * **这里只有默认值；上下界（200–420）住在 `state/sidebar.ts`**（2026-08-13）。
+   * **这里只有默认值；上下界（336–420）住在 `state/sidebar.ts`**（2026-08-13）。
    * 人拖过之后 `.body` 上会有一个内联的同名变量把它盖掉——
    * 覆盖是显式的，而在两处各写一遍范围就是同一条规则的两个家。
    *
@@ -329,7 +329,7 @@
    * 而写着的却像是一条会跟着窗口变的规则。窄窗口那件事由
    * `@media (max-width: 768px)` 管（整条侧栏收掉），不由它管。
    */
-  --dawn-sidebar-w: 224px; /* 2026-08-22 作者定的：数字 188 + 10 + 三角 16 + 10 = 224 */
+  --dawn-sidebar-w: 336px; /* 2026-10-14：完整品牌与三个按钮同排，与state默认值一致 */
   /**
    * 右侧坞那一列此刻多宽（2026-08-17）。
    *
@@ -353,7 +353,7 @@
    *
    * 默认值与 `--dawn-sidebar-w` 一致；人拖过之后由 `App.tsx` 覆盖它。
    */
-  --dawn-sidebar-content-w: 224px;
+  --dawn-sidebar-content-w: 336px;
   /** 列表行高。行与行的节奏由它决定，不由内容的行高决定 */
   /** 实测 WorkBuddy 的侧栏行是 **31px**（`padding: 5px 12px` + 21px 行高） */
   --dawn-row-h: 31px;
@@ -417,7 +417,7 @@
   --dawn-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --dawn-ui-size: 13px;
   --dawn-fs-title-brand: 20px;
-  --dawn-fs-display-conversation: 28px;
+  --dawn-fs-display-conversation: 16px;
   --dawn-fs-sub-navigation: 16px;
   --dawn-ui-leading: 1.55;
   /**

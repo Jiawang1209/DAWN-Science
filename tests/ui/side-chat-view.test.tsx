@@ -104,7 +104,7 @@ describe("坞格的几种状态（审查 M7）", () => {
     expect(getComputedStyle(screen.getByRole("button", { name: "换到主区" })).opacity).not.toBe("0")
   })
 
-  it("挂着且有回调时：与主区同一条 `.conv-head`——大标题 + 用量、导出对话、换到主区、×；只有一行头，没有 `.conv-title`（2026-09-25）", () => {
+  it("挂着且有回调时：与主区同一条 `.conv-head`——标题、导出对话、换到主区、×；只有一行头，没有 `.conv-title`（2026-09-25）", () => {
     const 轮 = (id: string, who: "user" | "agent", text: string): TranscriptItem =>
       ({ type: "turn", id, who, text, final: true, ...(who === "agent" ? { usage: { input: 12, output: 8 } } : {}) }) as TranscriptItem
     侧槽.setItems([
@@ -124,9 +124,10 @@ describe("坞格的几种状态（审查 M7）", () => {
     expect(头们).toHaveLength(1)
     const 头 = 头们[0]!
     expect(头.classList.contains("conv-head")).toBe(true)
-    // 标题住在主区那一格（`.conv-head-text`），用量在它下面；`.conv-title` 留给主区当判据
+    // 标题仍在坞内会话头，用量独立跟随输入框。
     expect(头.querySelector(".conv-head-text .side-chat-head .side-chat-title")!.textContent).toBe("坞里这段")
-    expect(头.querySelector(".conv-head-text .session-usage")).not.toBeNull()
+    expect(头.querySelector(".session-usage")).toBeNull()
+    expect(container.querySelector(".composer .composer-session-usage .session-usage")).not.toBeNull()
     expect(container.querySelector(".conv-title")).toBeNull()
     for (const 名 of ["导出对话", "换到主区", "从坞里拿下"]) {
       const b = screen.getByRole("button", { name: 名 })

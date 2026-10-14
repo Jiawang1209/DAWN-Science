@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN } from "../src/ui/state/sidebar.js"
 /**
  * 侧栏能折叠、能拖宽（2026-08-13）。**跑真实构建产物。**
  *
@@ -81,13 +82,13 @@ test("**往右拖变宽，往左拖变窄**", async ({ dawn }) => {
   await 等宽(page).toBe(起宽 + 60)
   const 宽了 = 起宽 + 60
 
-  // 往左 80（默认 224 起：+60 − 80 = 204，仍在 `SIDEBAR_MIN` 200 之上；此前是 −120，那是默认 264 时的数）
+  // 往左80；完整品牌所需最小宽度处夹住。
   const box2 = (await sash.boundingBox())!
   await page.mouse.move(box2.x + box2.width / 2, box2.y + 200)
   await page.mouse.down()
   await page.mouse.move(box2.x + box2.width / 2 - 80, box2.y + 200, { steps: 10 })
   await page.mouse.up()
-  await 等宽(page).toBe(宽了 - 80)
+  await 等宽(page).toBe(Math.max(SIDEBAR_MIN, 宽了 - 80))
 })
 
 /**
@@ -104,8 +105,8 @@ test("**一路往左拖，也停在下界上**", async ({ dawn }) => {
   await page.mouse.move(0, box.y + 200, { steps: 12 })
   await page.mouse.up()
 
-  // `SIDEBAR_MIN` = 200
-  await 等宽(page).toBe(200)
+  // 与品牌单行所需的宽度下限一致
+  await 等宽(page).toBe(SIDEBAR_MIN)
 })
 
 /**

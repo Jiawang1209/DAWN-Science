@@ -13,6 +13,7 @@ import type { QuestionAnswer } from "../protocol/index.js"
  * 打开 app 时要做的事是跟 agent 说话。
  */
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { dockTabOrder, useDockTabs } from "./dock-tabs.js"
 import rpIcon from "../../packaging/icon.svg"
 import { buildServerGroups } from "./server-navigation.js"
@@ -27,6 +28,7 @@ import { useNextPrompt } from "./next-prompt.js"
 import { 草稿输入框 } from "./composer-field.js"
 import { useStore } from "@nanostores/react"
 import { $主区附栏行数, use报主区附栏行数 } from "./footer-rows.js"
+import { useComposerUsageSpace } from "./composer-usage-space.js"
 import type { ProjectSummary, SessionSummary, TaskSummary } from "../protocol/index.js"
 import { $items, $待发, 在压缩, 有回音了, type 会话开关 } from "./state/transcript.js"
 import { ContextMeter, 读仪表, 是压缩命令, use上下文用量 } from "./context-meter.js"
@@ -59,6 +61,7 @@ import { 是回显 } from "./state/transcript-slot.js"
 import { 定位命中, type 跳转目标 } from "../protocol/search-match.js"
 import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 import { ConversationSearch } from "./conversation-search.js"
+import { ConversationActions } from "./conversation-actions.js"
 
 export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
 import { $待批准的会话, $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
@@ -69,7 +72,7 @@ import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名, 目录显示名 } from "./format.js"
-import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标, 搜索图标 } from "./icons.js"
 import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
 
@@ -3755,6 +3758,13 @@ function 同账(a: readonly TranscriptItem[], b: readonly TranscriptItem[]): boo
   })
 }
 
+function ComposerSessionUsage({ items }: { items: readonly TranscriptItem[] }) {
+  const { ref, height } = useComposerUsageSpace()
+  return <div className="composer-session-usage" style={{ minHeight: height }} data-reserved={height > 0}>
+    <div className="composer-session-usage-content" ref={ref}><SessionUsage items={items} /></div>
+  </div>
+}
+
 function SessionUsageImpl({ items }: { items: readonly TranscriptItem[] }) {
   /**
    * **整段会话的账**（codex-polish ③，2026-08-22，学自 dsh-codex-ui 底部那条）：
@@ -3870,7 +3880,13 @@ export function ConversationView({
   待发: 传进来的待发,
   紧凑,
   坞头,
+  headerTarget,
+  headerHasTabs,
 }: {
+  /** 主对话的会话头进入应用顶栏；坞内会话留在原位。 */
+  headerTarget?: HTMLElement | null | undefined
+  /** App顶栏已有同处页签时不再重复画单标题；页签DOM不随会话卸载。 */
+  headerHasTabs?: boolean
   session: SessionSummary
   /** 待发单（侧边对话，2026-09-24）。**缺省 = 读主槽 `$待发`**——与 `items` 同一个套路 */
   待发?: readonly QueuedMessage[] | undefined
@@ -4622,6 +4638,26 @@ export function ConversationView({
   const [会话搜索目标, 设会话搜索目标] = useState<跳转目标 | undefined>(undefined)
   const [会话搜索错误, 设会话搜索错误] = useState<string | undefined>(undefined)
   const 会话搜索按钮 = useRef<HTMLButtonElement>(null)
+  const 会话搜索来源 = useRef<HTMLElement | null>(null)
+  const [会话搜索聚焦, 设会话搜索聚焦] = useState(0)
+  const 开会话搜索 = useCallback(() => {
+    if (!对话根.current?.querySelector(".conversation-search")) 会话搜索来源.current = document.activeElement as HTMLElement | null
+    设会话搜索开(true)
+    设会话搜索聚焦(n => n + 1)
+  }, [])
+  useEffect(() => {
+    const find = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing || e.keyCode === 229 || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "f") return
+      const target = e.target instanceof HTMLElement ? e.target : document.activeElement as HTMLElement | null
+      if (target?.closest('[role="dialog"], [role="menu"], .xterm, .term-host')) return
+      const focusedConversation = target?.closest(".conversation")
+      if (focusedConversation ? focusedConversation !== 对话根.current : 紧凑 || target?.closest(".right-dock, .settings-column, .dock")) return
+      e.preventDefault()
+      开会话搜索()
+    }
+    document.addEventListener("keydown", find)
+    return () => document.removeEventListener("keydown", find)
+  }, [开会话搜索, 紧凑, session.sessionId])
   const 会话搜索序 = useRef(0)
   const 跳会话命中 = useCallback((id: string, words: string[]) => {
     设会话搜索错误(undefined)
@@ -4635,7 +4671,9 @@ export function ConversationView({
     设搜索命中id(undefined)
     设会话搜索错误(undefined)
     清高亮()
-    会话搜索按钮.current?.focus()
+    const origin = 会话搜索来源.current
+    if (origin?.isConnected) origin.focus()
+    else 会话搜索按钮.current?.focus()
   }
   useEffect(() => {
     设会话搜索开(false)
@@ -4738,19 +4776,33 @@ export function ConversationView({
         ? t("这段会话还没准备好生成方案，稍等再试")
         : undefined
 
-  return (
-    <div className="conversation" ref={对话根}>
-      {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
-          这里留下的是会话生死与中止入口，它们属于顶部 */}
-      <header className="conv-head">
+  const 导出对话 = () => {
+    if (!onExport || 导出中) return
+    设导出中(true)
+    onExport()
+      .then((r) => 设导出说((旧) => ({ text: tf("已导出 {0} 轮到 {1}", r.turns, r.path), bad: false, nonce: (旧?.nonce ?? 0) + 1 })))
+      .catch((e: unknown) =>
+        设导出说((旧) => ({ text: tf("导不了：{0}", e instanceof Error ? e.message : String(e)), bad: true, nonce: (旧?.nonce ?? 0) + 1 })),
+      )
+      .finally(() => 设导出中(false))
+  }
+
+  const 主顶栏 = !紧凑 ? headerTarget : undefined
+  const 会话头 = (
+      <header className={主顶栏 ? "conv-head conv-head-topbar" : "conv-head"}>
         {/* 会话标题：**人一进来最想知道的是「我在哪段对话里」** */}
-        {/* 标题一行、用量第二行（2026-08-23 作者：「title 应该是换行之后，才是 token 的消耗」） */}
-        <div className="conv-head-text">
-          {紧凑 ? 坞头?.标题 : <h1 className="conv-title">{session.title ?? t("新对话")}</h1>}
-          <SessionUsage items={items} />
-        </div>
-        <Button ref={会话搜索按钮} variant="ghost" size="sm" className="conv-search-toggle"
-          aria-expanded={会话搜索开} onClick={() => 会话搜索开 ? 关会话搜索() : 设会话搜索开(true)}>{t("查找内容")}</Button>
+        {/* 主区标题进入顶栏，坞内保留本地会话头；累计用量在输入卡下方。 */}
+        {!(主顶栏 && headerHasTabs) ? <div className="conv-head-text">
+          {紧凑 ? 坞头?.标题 : <>
+            {主顶栏 ? workspace || session.remote ? <文件夹描边图标 className="conv-title-icon" /> : <对话描边图标 className="conv-title-icon" /> : null}
+            <h1 className="conv-title" title={session.title ?? t("新对话")}>{session.title ?? t("新对话")}</h1>
+          </>}
+        </div> : null}
+        {主顶栏 ? <span className="export-anchor"><ConversationActions key={session.sessionId} title={session.title ?? t("新对话")} triggerRef={会话搜索按钮} onFind={开会话搜索}
+          onExport={onExport && items.some(x => x.type === "turn") ? 导出对话 : undefined} exporting={导出中} />
+          {导出说 ? <导出提示 {...导出说} onDone={() => 设导出说(undefined)} /> : null}</span> :
+          <Button ref={会话搜索按钮} variant="ghost" size="sm" className="conv-search-toggle" aria-label={t("查找内容")}
+            aria-expanded={会话搜索开} onClick={() => 会话搜索开 ? 关会话搜索() : 开会话搜索()}>{t("查找内容")}</Button>}
         {/**
           * **不是内置那条时说一声**（2026-08-12）。
           *
@@ -4792,23 +4844,16 @@ export function ConversationView({
          * 含了 `缓存`」——各家口径不同，我还没验过。
          * **一个口径不明的合计，比没有合计更容易让人算错账。**
          */}
-        {onExport && items.some((x) => x.type === "turn") ? (
+        {!主顶栏 && onExport && items.some((x) => x.type === "turn") ? (
           /* 浮出提示锚在按钮上（2026-08-27）：此前是一个 span 钉在按钮后面，作者要它浮出来、显示一会儿再淡去 */
           <span className="export-anchor">
             <Button
               variant="ghost"
               size="sm"
+              aria-label={t("导出对话")}
               className="conv-export"
               disabled={导出中}
-              onClick={() => {
-                设导出中(true)
-                onExport()
-                  .then((r) => 设导出说((旧) => ({ text: tf("已导出 {0} 轮到 {1}", r.turns, r.path), bad: false, nonce: (旧?.nonce ?? 0) + 1 })))
-                  .catch((e: unknown) =>
-                    设导出说((旧) => ({ text: tf("导不了：{0}", e instanceof Error ? e.message : String(e)), bad: true, nonce: (旧?.nonce ?? 0) + 1 })),
-                  )
-                  .finally(() => 设导出中(false))
-              }}
+              onClick={导出对话}
             >
               {t("导出对话")}
             </Button>
@@ -4853,7 +4898,14 @@ export function ConversationView({
           */}
         {坞头?.动作}
       </header>
-      {会话搜索开 ? <ConversationSearch key={session.sessionId} items={items} onJump={跳会话命中} onClose={关会话搜索} /> : null}
+  )
+
+  return (
+    <div className="conversation" ref={对话根}>
+      {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
+          这里留下的是会话生死与中止入口，它们属于顶部 */}
+      {主顶栏 ? createPortal(会话头, 主顶栏) : 会话头}
+      {会话搜索开 ? <ConversationSearch key={session.sessionId} items={items} focusSignal={会话搜索聚焦} onJump={跳会话命中} onClose={关会话搜索} /> : null}
       {会话搜索开 && 会话搜索错误 ? <p className="hint" role="alert">{会话搜索错误}</p> : null}
       {坞头?.注}
 
@@ -5925,6 +5977,7 @@ export function ConversationView({
         </div>
           </div>
         </div>
+        <ComposerSessionUsage items={items} />
       </form>
     </div>
   )
@@ -6201,6 +6254,7 @@ function TranscriptRowImpl({
    * 复制 / 修改 / 回到这句之前都要一个后端认得的 id，它还没有。真的一到就在同一次落地里顶掉它。
    */
   const 回显 = 是回显(item.id)
+  const 时间 = mine ? item.at !== undefined ? <time className="turn-time" dateTime={new Date(item.at).toISOString()}>{年月日时分(new Date(item.at).toISOString())}</time> : <span className="turn-time">{t("时间不明")}</span> : null
   return (
     <div className={`turn ${item.who}`} data-turn-id={item.id} {...(回显 ? { "data-echo": "" } : {})}>
       {/**
@@ -6364,7 +6418,7 @@ function TranscriptRowImpl({
       </div>
       {/** **这一轮生成了什么**（2026-08-26）：紧贴气泡下面，点一条进坞的「产物」格 */}
       {generated && onOpenArtifact ? <GeneratedStrip 产物={generated} onOpen={onOpenArtifact} loadThumb={loadThumb} /> : null}
-      {mine ? item.at !== undefined ? <time className="turn-time" dateTime={new Date(item.at).toISOString()}>{年月日时分(new Date(item.at).toISOString())}</time> : <span className="turn-time">{t("时间不明")}</span> : null}
+      {mine && (回显 || !item.final) ? <div className="turn-actions">{时间}</div> : null}
 
       {/**
        * **操作在这一段的下面**（2026-08-11 挪下来，作者提，仿 Codex）。
@@ -6384,6 +6438,7 @@ function TranscriptRowImpl({
        */}
       {item.final && !回显 ? (
         <div className="turn-actions">
+          {时间}
           <CopyButton text={item.text} label={mine ? t("复制我说的这段") : t("复制这段回答")} />
           {/**
            * **只有自己说的话能改。**
@@ -6411,12 +6466,13 @@ function TranscriptRowImpl({
               variant="ghost"
               size="inline"
               className="rewind-btn"
+              aria-label={t("回到这句之前")}
               disabled={!!rewindBlocked}
               aria-description={rewindBlocked}
               onClick={() => onRewind(item.id)}
             >
               <回退图标 />
-              {t("回到这句之前")}
+              <span className="rewind-label">{t("回到这句之前")}</span>
             </Button>
           ) : null}
           {/**
@@ -7777,6 +7833,7 @@ export function EmptyConversation({
             </div>
               </div>
             </div>
+            <ComposerSessionUsage items={[]} />
           </form>
         </div>
       ) : (

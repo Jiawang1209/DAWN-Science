@@ -161,6 +161,11 @@ describe("会话快照", () => {
 describe("增量更新", () => {
   const base = { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: "s1" }
 
+  it("标题元信息只携带会话标题，不伪装为发言", () => {
+    expect(SessionUpdateSchema.safeParse({ ...base, type: "title", revision: 1, title: "500米8月偏差校正" }).success).toBe(true)
+    expect(SessionUpdateSchema.safeParse({ ...base, type: "title", revision: 1, title: "" }).success).toBe(false)
+  })
+
   it("item 更新带 revision 与条目", () => {
     expect(
       SessionUpdateSchema.safeParse({ ...base, type: "item", revision: 1, item: turn() }).success,
@@ -451,10 +456,11 @@ describe("协议版本 · 5.5", () => {
    *
    * **8.7（2026-09-28）**：添加模型服务时的「测试」——只读操作 `testProviderKey`。
    * 8.8（2026-10-01）：失败 notice 可带 `rawError`。
+   * 8.16（2026-10-14）：会话标题摘要完成后新增 title 元信息推送。
    * 8.9（2026-10-01）：会话更新新增 `append`，增量追加 agent turn 的 `text` / `thinking`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.15")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.16")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

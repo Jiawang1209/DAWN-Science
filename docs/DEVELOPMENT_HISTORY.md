@@ -8,6 +8,46 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-14 — 完整单行品牌、加宽侧栏与菜单导出
+
+- **Type**: style / fix / feat / test / docs
+- **Motivation**: 用户要求恢复DAWN Science完整名称，明确必须单行，通过增加侧栏宽度与三个按钮对齐；下载入口收入⋯菜单。
+- **What**: 移除品牌隐藏、折行和缩小规则，保留32px图标/20px单行名称；默认及最小侧栏统一336px，上限420px，旧存储由原clamp归一。右坞兜底复用侧栏下限。导出移入会话更多菜单，保留原落盘位置/忙碌禁用/结果提示，扩展菜单方向/Home/End导航与焦点恢复，侧边原文字入口保留。
+- **Impact**: 继续`codex/compact-conversation-header`工作树，未提交、合并、推送或替换安装版。无协议、依赖、版本变化。
+- **Verification**: 用户批准集成前全量复核396文件4446项通过、10项原设置跳过；类型检查及构建通过，详见`docs/reviews/2026-10-14-chat-topbar-premerge-verification.md`。布局与菜单先红后绿；最终171项相关单测、22项Electron及类型检查/构建/diff检查通过。真实读取隔离下载目录和项目docs内Markdown核对导出结果，验证默认/最小/宽侧栏/收起/重开与900px单行对齐，截图实看。两项此前已确认失败的旧sidebar搜索断言未纳入通过项。详情见`docs/reviews/2026-10-14-brand-export-menu-verification.md`。
+
+### 2026-10-14 — 项目及服务器会话页签统一进入全局顶栏
+
+- **Type**: style / fix / test / docs
+- **Motivation**: 用户要求同项目单个会话也在顶部，多个会话在标题区域并列，取消下方旧页签行。
+- **What**: App顶栏直接承载稳定SessionTabs，选中标签替代独立标题；ConversationView仅将动作/元信息portal到相邻插槽。项目/服务器单段或多段都横排，散会话保留单标题；页签16px/24px/500，窄窗横向收纳且当前页签随窗口变化保持可见。切换、关闭、新建、排序、未读/运行及放坞回调保留。
+- **Impact**: 继续`codex/compact-conversation-header`工作树，未提交、合并、推送或替换安装版。无协议、依赖或版本变更。页签DOM不随会话切换卸载，键盘焦点与滚动位置保留。
+- **Verification**: 2项新布局用例先红后绿；复审发现的切换丢焦点用Enter聚焦断言先红再修复并复审确认。最终135项单测、18项Electron（含服务器/宽侧栏/900px）及类型检查/构建/diff检查通过。单段、多段、窄窗、服务器亮暗截图实看。详见`docs/reviews/2026-10-14-topbar-session-tabs-verification.md`。
+
+### 2026-10-14 — 会话查找快捷键与顶栏导航对齐
+
+- **Type**: feat / style / fix / test / docs
+- **Motivation**: 用户指出顶栏两个放大镜范围难区分，要求保留Ctrl+F/Command+F会话内查找，并让左侧折叠、搜索、快捷键区域与默认侧栏对齐。
+- **What**: 复用ConversationSearch，按焦点选择主区/侧边会话，重复按键选中原关键词，Escape返回来源焦点并保留草稿；IME、额外修饰键、弹窗/菜单/终端避让，嵌套会话弹层也避让。主顶栏会话查找收进更多菜单，保留侧边文字入口，速查新增平台键位。导航块宽度随侧栏，窄块只留品牌图标和可访问名称，三按钮顺序及8px间距保持，折叠后入口保留。
+- **Impact**: 继续`codex/compact-conversation-header`工作树；未提交、合并、推送或替换安装版。无协议、依赖和版本变更；既有全局搜索范围保持。
+- **Verification**: 快捷键3项单测及2项Electron布局/交互先红后绿；相关111项单测、类型检查和构建通过。复审发现的会话内嵌套弹层抢焦点问题已用先红后绿测试修复。归档搜索跳转高亮用例在当前分支与干净main的重新构建上同样失败，单独记录，不计入通过项。最终6文件23项Electron通过（59.5秒），亮暗及边界截图实看，diff检查通过；结果与范围见`docs/reviews/2026-10-14-conversation-find-navigation-verification.md`。
+
+### 2026-10-14 — 输入框下方累计统计与消息单行时间、操作
+
+- **Type**: style / fix / test / docs
+- **Motivation**: 用户要求参考DeepSeek Harness，把轮数、输入/输出/缓存及命中率放到输入框下方；用户消息时间戳与复制、编辑、撤回同一行。
+- **What**: SessionUsage从会话头移到输入卡外侧下方，12px灰色居中，主侧会话独立累计；未上报usage不造数值。时间戳进入操作行，窄栏撤回仅保留带可访问名称的图标，短气泡独立定宽。可见输入卡同步统计自然高度，保持主侧等高、底边对齐，隐藏/卸载释放占位。
+- **Impact**: 继续`codex/compact-conversation-header`独立工作树；未提交、合并、推送或替换安装版。无新依赖/协议/版本变更，既有用量聚合与复制/编辑/撤回动作保留。
+- **Verification**: 布局先红后绿；移位发现的28px主侧底差已修复。相关Vitest8文件186项通过，Electron34个不同用例通过，另定向重跑2项覆盖占位释放；类型检查、构建及diff检查通过。亮暗和窄栏截图实看，两次只读复审无阻塞项。详情见`docs/reviews/2026-10-14-composer-statistics-message-meta-verification.md`。
+
+### 2026-10-14 — 紧凑会话顶栏与自动概括标题
+
+- **Type**: style / feat / fix / test / docs
+- **Motivation**: 用户要求缩小会话标题、与侧栏折叠按钮同一行对齐，并补充标题应改写概括、区分同项目/服务器内的多个会话。
+- **What**: 主会话头通过portal进入应用顶栏，标题16px/24px/500、正常字距、单行省略；搜索/导出图标化，累计用量保留。新API会话独立生成简短主题标题，同组去重、跨组隔离，手动改名取消迟到摘要；标题持久化并同步侧栏/页签/任务投影/顶栏。标题元信息独立于转录revision，列表旧响应不能覆盖新标题。外壳显式零下限网格列防止长标题撑宽窗口；mock摘要请求不触发主对话工具。
+- **Impact**: 保留在`codex/compact-conversation-header`独立工作树，未提交、合并、推送或替换安装版。协议8.16，无新依赖或数据库迁移，版本仍0.0.27。已有标题不批量改写；外部运行时或模型不可用时短标题回退。
+- **Verification**: 最终Vitest395文件4440项通过、10项原设置跳过；类型检查、构建、diff检查通过。28项不同Electron回归通过，包含项目/服务器多会话、重复标题、重载、窄窗口/宽侧栏、搜索/导出、侧边并行与真内核停止。亮暗截图实看；只读审查发现的后台标题revision问题已修复并复审通过。既有两条旧搜索断言在基线已失败，未修改或计入最终28项。详情见`docs/reviews/2026-10-14-compact-conversation-header-verification.md`；固定推理/假SSH不代表真实模型质量或真实SSH验收。
+
 ### 2026-10-13 — Bot 功能合并前验收与 main 集成
 
 - **Type**: feat / test / docs

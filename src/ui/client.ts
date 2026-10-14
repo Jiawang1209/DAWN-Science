@@ -258,17 +258,20 @@ export function createClient(
           return
         }
 
-        const prev = lastRevision.get(u.sessionId)
-        if (prev !== undefined && u.revision !== prev + 1) {
-          // 已经在等新快照了就别再喊——否则跳号之后每一条都会触发一次重取
-          if (!resyncing.has(u.sessionId)) {
-            resyncing.add(u.sessionId)
-            onResync(u.sessionId)
+        // 名单标题可在未订阅转录时到达，不参与转录跳号判断或基准更新。
+        if (u.type !== "title") {
+          const prev = lastRevision.get(u.sessionId)
+          if (prev !== undefined && u.revision !== prev + 1) {
+            // 已经在等新快照了就别再喊——否则跳号之后每一条都会触发一次重取
+            if (!resyncing.has(u.sessionId)) {
+              resyncing.add(u.sessionId)
+              onResync(u.sessionId)
+            }
+            // **不交付**：快照会覆盖这一切，交付一条错位的更新只会让界面先错一下
+            return
           }
-          // **不交付**：快照会覆盖这一切，交付一条错位的更新只会让界面先错一下
-          return
+          lastRevision.set(u.sessionId, u.revision)
         }
-        lastRevision.set(u.sessionId, u.revision)
 
         try {
           onUpdate(u)

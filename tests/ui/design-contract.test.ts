@@ -1954,6 +1954,15 @@ describe("设计契约 · 先出方案", () => {
     expect(交的.length, "找不到 `customTools:`——建会话那一句改了形状，这条扫描要跟着改").toBeGreaterThan(0)
     expect(交的.every((x) => x === "方案期包过的"), `交给 pi 的是 ${交的.join("、")}`).toBe(true)
   })
+  it("明确讨论约束与统一指引必须装入 native 工具入口", () => {
+    const src = readFileSync(join(import.meta.dirname, "../../src/runtime/native.ts"), "utf8")
+    expect(src).toContain("讨论执行指引,")
+    const gate = src.slice(src.indexOf("private 套方案期门("), src.indexOf("private 收方案("))
+    expect(gate).toContain("讨论拒绝理由(name,")
+    expect(gate).toContain("sessionManager.getBranch()")
+    expect(gate.indexOf("if (讨论理由)")).toBeLessThan(gate.indexOf("await this.记轮基线"))
+    expect(src).not.toContain("if (!gate && !provenance) return undefined")
+  })
 
   it("**开关旁那行原因字不许截成省略号**：按钮上不许挂 title，截掉就没处读了（D7，2026-09-28 审查）", () => {
     const 块 = read("styles.css").match(/\.plan-toggle-why\s*\{([^}]*)\}/)

@@ -76,6 +76,7 @@ import { 子目录段 } from "../protocol/subagent-id.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { 本轮内核语言, 内核请求标记 } from "../kernel/shortcuts.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
+import { 讨论执行指引, 讨论拒绝理由 } from "../policy/execution-boundary.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
 import { memoryTools, 技能沉淀指引, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
@@ -870,7 +871,6 @@ export class NativeRuntime implements AgentRuntime {
     for (const sink of [...(this.sinks.get(event.sessionId) ?? [])]) sink(event)
   }
 
-  /** 把 pi 的工具定义套上授权门。不给 gate 时返回 undefined，走 pi 的内置工具。 */
   /** 子 agent 的三层：项目 > 全局 > 自带 */
   private 子agent层(workspace: string): { dir: string; from: "builtin" | "global" | "project" }[] {
     const s = this.opts.subagents ?? {}
@@ -954,8 +954,7 @@ export class NativeRuntime implements AgentRuntime {
   private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"]): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
-    // 两样都不要就别包——包装本身也有成本
-    if (!gate && !provenance) return undefined
+    // 即使没有权限 / 溯源，也显式注册内置工具，确保外层讨论门和方案门没有旁路。
     const probe = provenance ? new ProvenanceProbe(cwd) : undefined
     const emit = (e: AgentEvent) => this.emit(e)
     /** 本会话产物（2026-08-23）：删自己建的不算删除。一个会话一份 */
@@ -1580,7 +1579,7 @@ export class NativeRuntime implements AgentRuntime {
      * **回退这一轮：每一件工具执行前，先等这一句的「开头」拍完**（2026-09-27，spec §4.1）。
      * 包在 `toolsFor()` 的返回值外面而不是它里面那两条 return 上——内置、内核、MCP、插件、`subagent`、团队一件不漏，
      * 也不必记得「两条 return 都要带上」。同一句后面的工具不再拍（`开轮` 自己判重）；并行的几件排在存档那条链上，等同一张。
-     * `toolsFor()` 回 undefined（既无授权门也关了溯源）时 pi 走自己的内置工具、套不上——那种装配只在测试里有，照实不拍。
+     * 内置工具始终显式注册；关闭权限或溯源也不能绕过外层讨论 / 方案门。
      */
     const 存档开 = !spec.remote && this.opts.checkpoints !== false
     const customTools = 存档开 && 原工具 ? 原工具.map((d) => this.套上存档(spec.sessionId, d)) : 原工具
@@ -1725,6 +1724,7 @@ export class NativeRuntime implements AgentRuntime {
       },
       appendSystemPromptOverride: (base) => [
         ...base,
+        讨论执行指引,
         ...(spec.bot ? [spec.bot.instructions] : []),
         ...(spec.bot?.member ? ["Bot 团队对话：每轮输入附有团队公开讨论。用 bot_say 发表简洁进展/意见；用 bot_colleagues 确认成员，再用 bot_message 提问、反问或交接。处理队友请求时也可向发起者追问或请第三位队友核查。请求后结束本轮等待，不轮询、假装收到回答或提前完成任务。[bot-request:…] 的最后回复自动交回请求者；收到 [bot-reply:…] 后接回本轮正在处理的请求或原任务，不能把子请求当成原任务完成。[team-user:…] 是用户的团队发言，结合公开讨论与最新要求处理，回应将公开发表。重要进展与最终回复进入同一团队对话；私聊全文与内部推理不共享。只基于实际工具结果和队友回应交付，失败/未核验必须说明。"] : []),
         // 记忆快照（2026-08-25）：建会话时渲染一次——确认的记忆下一段会话生效
@@ -3742,7 +3742,8 @@ ${描述}`
   }
 
   /**
-   * 方案期门（spec §4.1）。**每次调用现查簿**：阶段在会话中途会变，门是建会话时装上的——传值的话改了开关不生效。
+   * 讨论 / 方案期门。**每次调用现查当前分支与簿**：限制与阶段会在会话中途改变。
+   * 讨论限制先判，拒绝的调用不拍存档、不进入权限确认或溯源。
    * 拒绝回 `isError` 结果，不抛异常（Spike A-2）。放行的那次先给已批准的方案拍这一轮的底（`记轮基线`），再往里走。
    * `mcp只读` 读的是 `MCP只读标记`：它一路经过 `套上溯源`、`套上存档` 的展开（`...def`）留到这里。
    */
@@ -3753,6 +3754,8 @@ ${描述}`
     return {
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
+        const 讨论理由 = 讨论拒绝理由(name, this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? [], mcp只读)
+        if (讨论理由) return { content: [{ type: "text", text: 讨论理由 }], isError: true, details: undefined }
         const 簿 = this.方案簿(spec.sessionId)
         const 决定 = 方案期判(name, params ?? {}, {
           方案期: 簿.阶段 === "planning",

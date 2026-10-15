@@ -26,6 +26,7 @@ import { PaneBoundary } from "./pane-boundary.js"
 import { 在组词 } from "./ime.js"
 import { useNextPrompt } from "./next-prompt.js"
 import { 草稿输入框 } from "./composer-field.js"
+import { useFilenamePaste } from "./composer-paste.js"
 import { useStore } from "@nanostores/react"
 import { $主区附栏行数, use报主区附栏行数 } from "./footer-rows.js"
 import { useComposerUsageSpace } from "./composer-usage-space.js"
@@ -4356,6 +4357,10 @@ export function ConversationView({
       设光标(r.caret)
     })
   }
+  const 粘文件名 = useFilenamePaste(session.sessionId, (value, caret) => {
+    setDraft(session.sessionId, value)
+    设光标(caret)
+  }, 收源路径们)
   const 存草稿 = useRef("")
   // 换会话就归位——**在别人的历史里翻到一半，那个位置没有意义**
   useEffect(() => 设位置(-1), [session.sessionId])
@@ -5440,20 +5445,7 @@ export function ConversationView({
                * 问主进程系统剪贴板里有没有真路径；有 → chip；没有 → 把这段文本原样还进草稿——
                * **宁可多问一次，不把文件名漏进消息里让模型去猜**。
                */
-              const 文 = e.clipboardData?.getData("text/plain") ?? ""
-              // **整段就是一个裸文件名**才动手：无空白、无 @、带扩展名。像「看看 @a.csv」这种句子照常粘——拦错一句话比漏一个文件更坏
-              if ((e.clipboardData?.files.length ?? 0) === 0 && /^[^\s@]{1,255}\.[A-Za-z0-9]{1,8}$/.test(文.trim())) {
-                e.preventDefault()
-                void window.dawn?.clipboardFiles?.().then((路径们) => {
-                  if (路径们 && 路径们.length > 0) {
-                    收源路径们(路径们)
-                  } else {
-                    // 不是文件，就是一段普通文本——原样还回，不吞
-                    setDraft(session.sessionId, draft ? `${draft}${文}` : 文)
-                  }
-                }).catch(() => setDraft(session.sessionId, draft ? `${draft}${文}` : 文))
-                return
-              }
+              if (粘文件名(e)) return
               if (粘的是图(e)) e.preventDefault()
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
@@ -7295,6 +7287,10 @@ export function EmptyConversation({
     设空态文件((前) => [...前, ...新的.filter((x) => !前.some((y) => y.源路径 === x.源路径))])
     空插令牌(新的.map((x) => x.令牌))
   }, [空插令牌])
+  const 粘文件名 = useFilenamePaste("welcome", (value, caret) => {
+    设草稿(value)
+    设光标(caret)
+  }, 空源收)
   const 空uri收 = useCallback((dt: DataTransfer | null): boolean => {
     const 列 = (dt?.getData("text/uri-list") ?? "").split(/\r?\n/).map((l) => l.trim()).filter((l) => l.startsWith("file://"))
     if (列.length === 0) return false
@@ -7592,19 +7588,7 @@ export function EmptyConversation({
                     e.preventDefault()
                     return
                   }
-                  const 空文 = e.clipboardData?.getData("text/plain") ?? ""
-                  if ((e.clipboardData?.files.length ?? 0) === 0 && /^[^\s@]{1,255}\.[A-Za-z0-9]{1,8}$/.test(空文.trim())) {
-                    e.preventDefault()
-                    void window.dawn?.clipboardFiles?.().then((路径们) => {
-                      if (路径们 && 路径们.length > 0) {
-                        空源收(路径们)
-                      } else {
-                        // 不是文件就是普通文本——原样还回，不吞
-                        设草稿((前) => (前 ? `${前}${空文}` : 空文))
-                      }
-                    }).catch(() => 设草稿((前) => (前 ? `${前}${空文}` : 空文)))
-                    return
-                  }
+                  if (粘文件名(e)) return
                   if (粘的是图(e)) e.preventDefault()
                   else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
                 }}

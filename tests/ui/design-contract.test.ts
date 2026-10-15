@@ -2041,3 +2041,13 @@ describe("脚本文本阅读样式", () => {
   })
 
 })
+
+
+it("紧凑导航的CSS初值与宽度状态一致，分组和归档共用名称列", () => {
+  const state = read("state/sidebar.ts"), tokens = read("tokens.css"), styles = read("styles.css")
+  const width = state.match(/SIDEBAR_DEFAULT = (\d+)/)![1]
+  expect(tokens).toContain(`--dawn-sidebar-w: ${width}px`)
+  expect(tokens).toContain(`--dawn-sidebar-content-w: ${width}px`)
+  expect(styles).toContain("grid-template-columns: 16px 16px var(--dawn-sidebar-label-w) max-content")
+  expect(styles).toContain("flex: 0 0 calc(var(--dawn-sidebar-label-w) + var(--dawn-space-4))")
+})

@@ -45,6 +45,11 @@ it("多选与添加入口在标题行内，批量工具仍独立显示", () => {
   const { container } = render(<ServerSidebar {...props()} headerActions={<button>多选</button>} toolbar={<div>已选 0</div>} />)
   expect(container.querySelector('.side-section')?.contains(screen.getByRole('button', { name: '多选' }))).toBe(true)
   expect(screen.getByRole('button', { name: '添加服务器' }).textContent).toBe('')
+  // 视觉与Tab顺序一致：添加在前，多选保持末尾一列。
+  const actions = container.querySelector('.server-head-actions')!
+  expect([...actions.querySelectorAll('button')]).toEqual([
+    screen.getByRole('button', { name: '添加服务器' }), screen.getByRole('button', { name: '多选' }),
+  ])
   expect(container.querySelector('.side-section')?.contains(screen.getByText('已选 0'))).toBe(false)
 })
 

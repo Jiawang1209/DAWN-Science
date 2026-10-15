@@ -48,10 +48,10 @@ export function ServerSidebar(p: ServerSidebarProps) {
         {p.groups.length > 0 ? <span className="side-count side-section-count">{p.groups.length}</span> : null}
       </Button>
       <div className="server-head-actions">
-        {p.headerActions}
         <Button variant="ghost" size="inline" className="server-add" aria-label={t("添加服务器")} onClick={p.onAdd}>
           <加号描边图标 />
         </Button>
+        {p.headerActions}
       </div>
     </div>
     {p.toolbar}

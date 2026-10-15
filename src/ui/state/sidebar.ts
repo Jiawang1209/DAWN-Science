@@ -18,7 +18,7 @@
  * ```
  *
  * **上下界它没写在样式里**（在 JS 里），所以那两个数是我们自己定的：
- * 336 是「完整品牌与三个按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
+ * 292 是「完整品牌与三个按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
  * 这两个数只有这一个家。
  *
  * ## 为什么是 `global` 而不是 `window`
@@ -37,10 +37,10 @@ import { setValue } from "./identity.js"
 export const SIDEBAR_WIDTH_KEY = "dawn.global.sidebar-width"
 export const SIDEBAR_COLLAPSED_KEY = "dawn.global.sidebar-collapsed"
 
-/** 2026-10-14：完整DAWN Science与三个按钮同排，侧栏对齐这组导航。 */
-export const SIDEBAR_DEFAULT = 336
+/** 2026-10-16：按钮间距收紧后，完整品牌与三个按钮在292px侧栏内同排。 */
+export const SIDEBAR_DEFAULT = 292
 /** 再窄会挤到品牌与操作按钮；旧存储宽度也经过此下限清洗。 */
-export const SIDEBAR_MIN = 336
+export const SIDEBAR_MIN = 292
 /** 再宽，正文栏就低于 `.body` 里那个 `minmax(420px, 1fr)` 的承诺 */
 export const SIDEBAR_MAX = 420
 

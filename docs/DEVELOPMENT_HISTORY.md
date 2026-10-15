@@ -8,6 +8,46 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-16 — 侧栏最终版本验收与本地main集成
+
+- **Type**: style / test / docs
+- **Motivation**: 用户实看292px侧栏、18px品牌后确认采用当前版本并授权合并入main。
+- **What**: 收口292–420px侧栏、18px完整单行品牌、32px标志、28×32px导航按钮与4px间距，以及分组/归档计数、多选对齐和圆圈加号；同步右坞测试使用共享侧栏下限，避免残留336px预期。
+- **Impact**: 本次仅本地提交与main快进集成，不推送、不替换安装版；保留分支工作树和隔离预览证据。无协议、数据库、依赖或版本变化，现有有效宽度偏好保留。
+- **Verification**: 合并前全量Vitest400文件4523项通过、10项按原设置跳过（87.43秒）；11项定向Electron回归通过（30.5秒），类型检查、构建与diff检查通过。复审发现的右坞旧断言已修正并27项复验、二次复审关闭。两项旧搜索断言在未改main同样失败，单列记录；未放宽视觉基线或容差。详情见 `docs/reviews/2026-10-16-sidebar-spacing-verification.md`。
+
+### 2026-10-16 — 侧栏跟随18px品牌导航收窄至292px
+
+- **Type**: style / test / docs
+- **Motivation**: 用户要求品牌缩小后，侧栏也与logo、名称及三个按钮的总宽度对齐，再看实际预览，不合并。
+- **What**: 按实际末按钮右缘287.16px，将默认及最小侧栏设为292px，保留约4.84px边缘留白。上限420px与有效已存宽度偏好保留；品牌18px、图标32px、按钮28×32px、按钮间4px及品牌到首按钮8px不变。预览单独重置隔离资料的宽度至292px。
+- **Impact**: 继续 `codex/sidebar-spacing`；未提交、合并、推送或替换安装版，无依赖、协议或数据库变更。
+- **Verification**: 宽度单测和实际Electron宽度断言先复现304px旧值，修改后113项相关单测、11项Electron回归、类型检查、构建及diff检查通过；最终回归及预览几何见 `docs/reviews/2026-10-16-sidebar-spacing-verification.md` 的292px补充。
+
+### 2026-10-16 — 品牌字号按反馈调整至18px
+
+- **Type**: style / test / docs
+- **Motivation**: 用户批准DAWN Science字号从20px改成18px，其他保持不变，先看实际预览、不合并。
+- **What**: 仅调整品牌字号令牌，使用处仅为顶栏品牌文字；名称保持完整单行。304px侧栏、28×32px按钮、32px图标、4px按钮间距及8px品牌到首按钮间距保留。
+- **Impact**: 继续 `codex/sidebar-spacing`；未提交、合并、推送或替换安装版。无依赖、协议或数据库变更。
+- **Verification**: 现有Electron字号断言先复现20px旧值，修改后113项相关单测、11项Electron回归、类型检查及构建通过；实际预览确认18px、304px侧栏和28×32px按钮，释放约12px横向空间。本轮验证及实际预览见 `docs/reviews/2026-10-16-sidebar-spacing-verification.md` 的18px补充。
+
+### 2026-10-16 — 按实看反馈继续收窄侧栏至304px
+
+- **Type**: style / test / docs
+- **Motivation**: 用户认为320px仍宽，批准304px侧栏及28px按钮占位，品牌名称、字号保持不变，继续分支预览不合并。
+- **What**: 默认及最小侧栏304px，上限420px；三个顶栏按钮统一28×32px，复用导航动作宽度令牌，同时覆盖原min-width。品牌图标32px、名称20px、品牌到首按钮8px及按钮间4px保留；既有分组/计数/多选排版保留。
+- **Impact**: 继续 `codex/sidebar-spacing`；无协议、数据库、依赖或版本变化，已存有效宽度保留；未提交、合并、推送或替换安装版。
+- **Verification**: 宽度单测及真实Electron按钮占位断言先红后绿；113项相关单测、11项Electron回归、类型检查、构建及diff检查通过。最终验证与实际预览证据见 `docs/reviews/2026-10-16-sidebar-spacing-verification.md` 的304px补充。
+
+### 2026-10-16 — 收紧导航按钮并统一侧栏字号与计数列
+
+- **Type**: style / test / docs
+- **Motivation**: 用户实看main后要求按钮间距4px、默认侧栏320px，服务器添加与多选换位，分组字号与底部一致、计数留白并对齐，新建任务加号带圆圈；在新分支预览，不合并。
+- **What**: 保持完整单行品牌，品牌到首按钮8px；默认及最小侧栏320px，上限420px，保留已有有效宽度。服务器添加在多选左侧，各组末尾多选统一占位；四组与底部使用14px，计数列右移4px，归档共用左缘，英文名称列随lang加宽。复用圆加号图标。
+- **Impact**: 独立 `codex/sidebar-spacing` 工作树；无协议、数据库、依赖或版本变更。未合并、推送或替换安装版。
+- **Verification**: 宽度/按钮顺序及英文名称碰撞先红后绿；113项相关单测、类型检查、构建通过；最终10项定向Electron回归通过，两项旧搜索断言在未改main同样失败并单列记录。实际Electron检查320/420px、窄窗、亮暗与中英文，详情见 `docs/reviews/2026-10-16-sidebar-spacing-verification.md`。
+
 ### 2026-10-15 — 修复光标粘贴并约束讨论阶段的执行
 
 - **Type**: fix / feat / test / docs

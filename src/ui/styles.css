@@ -415,7 +415,7 @@ pre {
   border-bottom: 1px solid var(--dawn-stroke-4);
   background: var(--dawn-surface-panel);
 }
-/* 收纳按钮保留32px点击范围，紧跟品牌；折叠后入口保留。 */
+/* 收纳入口紧跟品牌；顶栏最终占位在topbar-navigation中统一。 */
 .side-toggle {
   color: var(--dawn-text-2);
   min-width: 32px;
@@ -4152,15 +4152,17 @@ pre {
  */
 /**
  * 分区标题那一行的两列（2026-10-11 统一）：
- * - 「多选」与添加服务器共用末尾 32px 操作列，按中心对齐。
+ * - 「多选」共用末尾操作列，添加服务器位于它的左侧。
  * - 分区计数（最近 / 项目 / 服务器 / 会话）**紧跟标题、自成一列、靠左**——
  *   标题占固定宽（「服务器」三个字是最宽的），计数才能落在同一条竖线上。
  *   作者先说「靠右 18px」，随即更正为「靠左边，而不是靠右边」。
  */
 .side-bulk { margin-left: auto; font-weight: 400; }
+/* 英文标签更长，但四组与归档仍共用同一计数列。 */
+.sidebar:lang(en) { --dawn-sidebar-label-w: calc(var(--dawn-fs-sub) * 4.5); }
 .side-section-toggle {
   display: grid;
-  grid-template-columns: 16px 16px calc(var(--dawn-fs-sub) * 3) max-content;
+  grid-template-columns: 16px 16px var(--dawn-sidebar-label-w) max-content;
   column-gap: var(--dawn-space-1);
   align-items: center;
   justify-content: start;
@@ -4169,7 +4171,7 @@ pre {
 .side-section-toggle .side-section-icon { margin-right: 0; }
 .side-section-title { display: inline-block; min-width: 0; }
 /* 两个类名：`.side-count` 那条 `margin-left: auto` 写在后面，单类名压不过它 */
-.side-section .side-section-count { margin-left: 0; flex: 0 0 auto; }
+.side-section .side-section-count { margin-left: var(--dawn-space-1); flex: 0 0 auto; }
 /**
  * 选择模式那一条。**数字常驻**：「删掉 3 段对话」比「删掉选中的」
  * 可判断得多——按下之前就该知道自己要删掉几个。
@@ -8040,12 +8042,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .artifacts-head { flex: 0 0 auto; }
 
 /* 第二轮：导航、输入操作与结果预览共用更清楚的尺寸层级。 */
-.sidebar .side-section { font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-medium); letter-spacing: normal; margin-top: var(--dawn-space-4); padding-right: var(--dawn-space-3); }
+.sidebar .side-section { font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-medium); letter-spacing: normal; margin-top: var(--dawn-space-4); padding-right: var(--dawn-space-3); }
 .sidebar .side-section .side-bulk,
-.sidebar .side-section .server-bulk,
+.sidebar .side-section .server-bulk { width: max-content; min-width: var(--dawn-space-8); flex: 0 0 auto; justify-content: center; }
 .sidebar .side-section .server-add { width: var(--dawn-space-8); flex: 0 0 var(--dawn-space-8); justify-content: center; }
-/* 两项并存时，多选按文字占位，末尾添加仍占同一 32px 列；200px 窄栏带滚动条也不挤歪。 */
-.sidebar .server-head-actions .server-bulk { width: auto; flex-basis: auto; }
 /* 导航图标统一跟随外观强调色；状态圆点仍由各自状态规则管理。 */
 .sidebar .side-section .side-section-icon,
 .sidebar .proj-head .row-icon,
@@ -8068,6 +8068,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .sidebar .side-bottom .row-icon { margin-right: 0; flex: 0 0 auto; }
 .sidebar .side-bottom .row .name { flex: 1 1 auto; }
+/* 底部没有展开三角：名称列补足16px，让归档与分组计数共用左缘。 */
+.sidebar .side-bottom .side-action-archive .name { flex: 0 0 calc(var(--dawn-sidebar-label-w) + var(--dawn-space-4)); }
+.sidebar .side-bottom .side-action-archive .side-count { margin-inline: 0; }
 .sidebar .side-subhead-row .side-subhead { min-height: 40px; font-size: var(--dawn-fs-sub-navigation); }
 .sidebar .side-bottom .row { min-height: 36px; font-size: var(--dawn-fs-sub); }
 .sidebar .server-meta { color: var(--dawn-text-3); }
@@ -8099,7 +8102,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .server-navigation .server-meta { display: none; }
   .server-dot.compact { display: block; }
 }
-.sidebar .side-section-secondary { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-medium); }
+.sidebar .side-section-secondary { color: var(--dawn-text-3); font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-medium); }
 .sidebar .side-section-secondary .side-bulk { font-size: var(--dawn-fs-meta); }
 .sidebar .recent-list .row,
 .sidebar .loose-list .row,
@@ -8423,12 +8426,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .topbar-navigation {
   display: flex;
   align-items: center;
-  gap: var(--dawn-space-2);
+  gap: var(--dawn-space-1);
   flex: 0 0 auto;
   width: calc(var(--dawn-sidebar-content-w) - var(--dawn-space-4));
   min-width: 0;
 }
-.topbar-navigation .brand-stack { flex: 0 0 auto; max-width: none; }
+.topbar-navigation > :is(.side-toggle, .side-search-toggle, .shortcut-toggle) {
+  flex: 0 0 var(--dawn-nav-action-w);
+  min-width: var(--dawn-nav-action-w);
+  width: var(--dawn-nav-action-w);
+  height: var(--dawn-space-8);
+  padding: 0;
+}
+.topbar-navigation .brand-stack { flex: 0 0 auto; max-width: none; margin-right: var(--dawn-space-1); }
 .topbar .brand-name { flex: 0 0 auto; overflow: visible; text-overflow: clip; white-space: nowrap; }
 .conv-actions { position: relative; flex: 0 0 auto; }
 .conv-actions-trigger { flex: 0 0 auto; }

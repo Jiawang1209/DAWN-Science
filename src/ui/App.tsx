@@ -5058,7 +5058,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           </Button>
 
         </div>
-        {/* 三个按钮紧跟完整品牌，间距8px；加宽侧栏确保名称始终一行，折叠后也保留。 */}
+        {/* 品牌到首按钮8px，三个按钮之间4px；完整名称始终一行，折叠后也保留。 */}
         <Button
           variant="ghost"
           size="icon"

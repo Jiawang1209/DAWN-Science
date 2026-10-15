@@ -77,7 +77,7 @@ import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹
 import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
 
-import { t, tf, msgid } from "./i18n/index.js"
+import { t, tf, msgid, $lang } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
 import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import { 按类分组 } from "./agent-groups.js"
@@ -2045,7 +2045,7 @@ export function SessionSidebar({
   }
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" lang={$lang.get()}>
       {/**
         * **悬停时那张全文卡**（2026-08-15 作者要的，形态取自 Codex）。
         *
@@ -2135,7 +2135,7 @@ export function SessionSidebar({
       ) : null}
       <div className="side-actions">
         <Row className="side-action" disabled={!fallbackAgent} onClick={onNewTask}>
-          <加号描边图标 className="row-icon" />
+          <圆加号图标 className="row-icon" />
           <span className="name">{t("新建任务")}</span>
         </Row>
         {/**

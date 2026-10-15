@@ -23,6 +23,7 @@ import {
   点开房客,
   全部房客,
 } from "../../src/ui/state/right-dock.js"
+import { SIDEBAR_MIN } from "../../src/ui/state/sidebar.js"
 import { 房客名 } from "../../src/ui/views.js"
 
 beforeEach(() => {
@@ -169,8 +170,8 @@ describe("点房客", () => {
  * 而屏幕上没有任何东西说这件事发生了：**它长得就像「树没渲染出来」**。
  */
 describe("**坞的上界跟着窗口走**", () => {
-  it("拿不到实际侧栏宽度时，按完整品牌所需的336px下限预留", () => {
-    expect(坞的上界(1280)).toBe(524)
+  it("拿不到实际侧栏宽度时，按当前共享侧栏下限预留", () => {
+    expect(坞的上界(1280)).toBe(1280 - SIDEBAR_MIN - 420)
   })
   it("窗口够宽时就是 `RIGHT_DOCK_MAX`", () => {
     expect(坞的上界(1920, 264)).toBe(RIGHT_DOCK_MAX)

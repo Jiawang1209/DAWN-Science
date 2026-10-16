@@ -78,29 +78,36 @@ export function QuestionCard({ sessionId, record, onAnswer }: {
       </div>
     </div>
     {!progress.collapsed ? <>
-      <h3>{q.question}</h3>
-      <div className="question-options" role="group" aria-label={q.question}>
-        {q.options?.map((o, i) => <label key={o.label} className={draft.selected.includes(o.label) ? "question-option selected" : "question-option"}>
-          <input className="control question-choice" type={q.multi_select ? "checkbox" : "radio"} name={`${sessionId}:${record.requestId}:${q.id}`} checked={draft.selected.includes(o.label)} disabled={sending}
-            onChange={() => change({ selected: q.multi_select ? draft.selected.includes(o.label) ? draft.selected.filter((x) => x !== o.label) : [...draft.selected, o.label] : [o.label], custom: q.multi_select ? draft.custom : "" })} />
-          <span className="question-number" aria-hidden>{i + 1}</span><span><strong>{o.label}</strong>{o.description ? <span className="question-description">{o.description}</span> : null}</span>
-        </label>)}
-      </div>
-      <textarea className="control question-answer" aria-label={t("输入你的答案")} placeholder={t("输入你的答案")} value={draft.custom} disabled={sending} rows={1}
-        onChange={(e) => change({ custom: e.target.value, selected: q.multi_select ? draft.selected : [] })}
-        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat && !在组词(e)) { e.preventDefault(); next() } }} />
-      <div className="question-card-actions">
-        <div className="question-progress">
-          <Button variant="ghost" size="icon" aria-label={t("上一题")} disabled={sending || index === 0} onClick={() => store.set({ ...progress, index: index - 1 })}><返回图标 /></Button>
-          <span>{index + 1}/{record.questions.length}</span>
-          <Button variant="ghost" size="icon" aria-label={t("后一题")} disabled={sending || index === record.questions.length - 1} onClick={() => store.set({ ...progress, index: index + 1 })}><返回图标 className="question-next-icon" /></Button>
-        </div>
-        <div className="question-primary-actions">
-        <Button variant="outline" size="xs" disabled={sending} onClick={skip}>{t("跳过")}</Button>
-        <Button variant="primary" size="xs" disabled={sending || !answered(draft)} onClick={next}>{index === record.questions.length - 1 ? t("提交答案") : t("下一题")}</Button>
+      <div className="question-card-body" key={q.id}>
+        <h3>{q.question}</h3>
+        <div className="question-options" role="group" aria-label={q.question}>
+          {q.options?.map((o, i) => <label key={o.label} className={draft.selected.includes(o.label) ? "question-option selected" : "question-option"}>
+            <input className="control question-choice" type={q.multi_select ? "checkbox" : "radio"} name={`${sessionId}:${record.requestId}:${q.id}`} checked={draft.selected.includes(o.label)} disabled={sending}
+              onChange={() => change({ selected: q.multi_select ? draft.selected.includes(o.label) ? draft.selected.filter((x) => x !== o.label) : [...draft.selected, o.label] : [o.label], custom: q.multi_select ? draft.custom : "" })} />
+            <span className="question-number" aria-hidden>{i + 1}</span><span><strong>{o.label}</strong>{o.description ? <span className="question-description">{o.description}</span> : null}</span>
+          </label>)}
         </div>
       </div>
-    </> : <p className="hint">{t("等你回答")}</p>}
-    {problem ? <p className="caveat" role="alert">{problem}</p> : null}
+      <div className="question-card-footer">
+        <textarea className="control question-answer" aria-label={t("输入你的答案")} placeholder={t("输入你的答案")} value={draft.custom} disabled={sending} rows={1}
+          onChange={(e) => change({ custom: e.target.value, selected: q.multi_select ? draft.selected : [] })}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat && !在组词(e)) { e.preventDefault(); next() } }} />
+        <div className="question-card-actions">
+          <div className="question-progress">
+            <Button variant="ghost" size="icon" aria-label={t("上一题")} disabled={sending || index === 0} onClick={() => store.set({ ...progress, index: index - 1 })}><返回图标 /></Button>
+            <span>{index + 1}/{record.questions.length}</span>
+            <Button variant="ghost" size="icon" aria-label={t("后一题")} disabled={sending || index === record.questions.length - 1} onClick={() => store.set({ ...progress, index: index + 1 })}><返回图标 className="question-next-icon" /></Button>
+          </div>
+          <div className="question-primary-actions">
+          <Button variant="outline" size="xs" disabled={sending} onClick={skip}>{t("跳过")}</Button>
+          <Button variant="primary" size="xs" disabled={sending || !answered(draft)} onClick={next}>{index === record.questions.length - 1 ? t("提交答案") : t("下一题")}</Button>
+          </div>
+        </div>
+        {problem ? <p className="question-card-problem caveat" role="alert">{problem}</p> : null}
+      </div>
+    </> : <div className="question-card-collapsed">
+      <p className="hint">{t("等你回答")}</p>
+      {problem ? <p className="question-card-problem caveat" role="alert">{problem}</p> : null}
+    </div>}
   </section>
 }

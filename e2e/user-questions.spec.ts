@@ -18,7 +18,8 @@ test("结构化澄清：多题、单选、多选补充、跳过；模型收到�
   titleSize: parseFloat(getComputedStyle(el.querySelector("h3")!).fontSize),
   textSize: parseFloat(getComputedStyle(el).fontSize),
  }))
- expect(geometry.height).toBeLessThanOrEqual(300)
+ expect(await card.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
+ expect(await card.locator(".question-card-body").evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
  expect(geometry.answerHeight).toBeLessThanOrEqual(36)
  expect(geometry.titleSize).toBeLessThanOrEqual(geometry.textSize)
  await testInfo.attach("question-geometry", { body: JSON.stringify(geometry), contentType: "application/json" })

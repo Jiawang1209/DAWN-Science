@@ -44,6 +44,16 @@ it("未回答不能前进，提交失败保持答案可重试，收起不是取�
  fireEvent.click(screen.getByRole("button", { name: "提交答案" }))
  await waitFor(() => expect(answer).toHaveBeenCalledTimes(2))
 })
+it("收起后取消提问失败，错误仍然可见且能够重试", async () => {
+ const answer = vi.fn().mockRejectedValueOnce(new Error("取消失败，请重试")).mockResolvedValue(undefined)
+ render(<QuestionCard sessionId="cancel-collapsed" record={record} onAnswer={answer} />)
+ fireEvent.click(screen.getByRole("button", { name: "收起提问" }))
+ fireEvent.click(screen.getByRole("button", { name: "不再提问" }))
+ await screen.findByRole("alert")
+ expect(screen.getByRole("alert").textContent).toBe("取消失败，请重试")
+ fireEvent.click(screen.getByRole("button", { name: "不再提问" }))
+ await waitFor(() => expect(answer).toHaveBeenCalledTimes(2))
+})
 it("会话重挂载保留草稿，另一会话不继承；组词与修饰回车不提交", async () => {
  const one = { ...record, requestId: "draft", questions: [record.questions[0]!] }
  const answer = vi.fn().mockResolvedValue(undefined)

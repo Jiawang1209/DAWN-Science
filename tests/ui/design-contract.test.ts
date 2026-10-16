@@ -1973,6 +1973,18 @@ describe("设计契约 · 先出方案", () => {
 
 // Structured questions are a human interaction, outside process folding and permissions.
 describe("结构化澄清问答", () => {
+  it("仅正文可滚动，回答区不参与正文收缩", () => {
+    const css = read("styles.css")
+    const rule = (selector: string) => {
+      const start = css.indexOf(`${selector} {`)
+      expect(start).toBeGreaterThanOrEqual(0)
+      return 取块(css, css.indexOf("{", start))
+    }
+    expect(rule(".question-card")).toMatch(/overflow:\s*hidden/)
+    expect(rule(".question-card")).not.toMatch(/overflow-y:\s*auto|max-height:\s*min\(300px/)
+    expect(rule(".question-card-body")).toMatch(/overflow-y:\s*auto/)
+    expect(rule(".question-card-footer")).toMatch(/flex:\s*0 0 auto/)
+  })
   it("卡片独立于输入组件，按会话回答；UI 不调用权限操作", () => {
     const card = read("question-card.tsx")
     expect(card).not.toMatch(/answerPermission|runtime\//)

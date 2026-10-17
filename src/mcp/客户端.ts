@@ -29,6 +29,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import { 是远端MCP } from "../config/schema.js"
 import type { McpServer } from "../config/schema.js"
 import { 工具全名 } from "./名单.js"
+import { legacyMlaiReads } from "./readonly-compat.js"
 
 /**
  * 起一台服务器最多等多久。**一台起不来不该让整段会话开不了。**
@@ -56,7 +57,7 @@ export interface MCP工具 {
   /** JSON Schema，直接来自服务器。**原样转交，不翻译** */
   入参: unknown
   /**
-   * 服务器自己声明的 `annotations.readOnlyHint`（先出方案，2026-09-27，D6）。**只在 true 时有**。
+   * 服务器声明只读，或缺声明的旧 MLAI 通过内置窄契约兼容。其他工具不推断。
    * 它是服务器的一面之词：方案期据它放行，**仍要过原来那道 MCP 门**（信不信得过、哪一档）。
    */
   只读?: true
@@ -278,6 +279,7 @@ export class MCP池 {
       })
 
       const 列 = await 限时(client.listTools(), this.上限, `列 ${名} 的工具超时`)
+      const 兼容只读 = legacyMlaiReads(client.getServerVersion(), 列.tools)
       const 工具: MCP工具[] = 列.tools.map((t) => ({
         全名: 工具全名(名, t.name),
         服务器名: 名,
@@ -285,7 +287,7 @@ export class MCP池 {
         /** **描述缺席就如实说缺席**，不编一句——模型会照着编出来的那句去用它 */
         描述: t.description ?? `${名} 提供的工具 ${t.name}（这台服务器没有给出说明）`,
         入参: t.inputSchema,
-        ...(t.annotations?.readOnlyHint === true ? { 只读: true as const } : {}),
+        ...(t.annotations?.readOnlyHint === true || 兼容只读.has(t.name) ? { 只读: true as const } : {}),
       }))
       this.连着.set(k, { client, transport, 工具, stderr尾巴: 尾巴 })
       return { 服务器名: 名, 工具 }

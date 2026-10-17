@@ -32,6 +32,7 @@ const 假封面 = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg==",
   "base64",
 )
+const legacyMlai = process.argv.includes("--legacy-mlai") || process.env.DAWN_MCP_TEST_LEGACY_MLAI === "1"
 
 /**
  * 需要一个环境变量才肯起来的那一档。
@@ -63,11 +64,23 @@ server.tool("echo", "把收到的话原样回给你。测试用。", { message: 
  * 第三篇没有 cover；第二篇 id 很长，假模型的回复里会把它截短——那正是卡片要认出来的情形。
  */
 // 2026-09-27（先出方案 D6）：照真 MLAI 该有的样子声明只读——方案期据它放行；`写一行` 明说不是只读，`echo` 不声明
-server.tool("search_cases", "假的案例检索。测试用。", { query: z.string().optional() }, { readOnlyHint: true }, async () => ({
+server.registerTool("search_cases", {
+  description: "假的案例检索。测试用。",
+  inputSchema: { query: z.string().optional(), ...(process.argv.includes("--changed-search") ? { execute: z.boolean().optional() } : {}) },
+  annotations: process.argv.includes("--deny-search") ? { readOnlyHint: false } : legacyMlai ? {} : { readOnlyHint: true },
+}, async ({ query }) => ({
   content: [
     {
       type: "text",
-      text: JSON.stringify([
+      text: JSON.stringify(query === "guide-alpha" ? [
+        { case_id: "20251017-e2e-alpha-diversity", title: "Alpha多样性分析测试案例", language: "r", cover: "figures/1.preview.png", task: ["community_diversity"] },
+      ] : query === "guide-beta" ? [
+        { case_id: "20251017-e2e-beta-diversity", title: "Beta多样性分析测试案例", language: "r", cover: "figures/2.preview.png", task: ["community_diversity"] },
+      ] : query === "large-case-cards" ? [
+        ...Array.from({ length: 40 }, (_, i) => ({ case_id: `e2e-unmentioned-${i}`, title: `未推荐案例 ${i}`, language: "r", notes: "大检索结果的额外说明".repeat(100) })),
+        { case_id: "20251016-network-layout", title: "MLAI 案例库：网络可视化R包ggNetView_网络布局浅览", language: "r", cover: "figures/1.preview.png" },
+        { case_id: "20250825-network-wgcna", title: "MLAI 案例库：网络可视化R包ggNetView_2.无缝对接WGCNA", language: "r", cover: "figures/2.preview.png" },
+      ] : [
         { case_id: "e2e-deseq2-full-id", title: "R包DESeq2作差异基因分析", language: "r", cover: "figures/1.preview.png", task: ["differential_expression"] },
         { case_id: "20251019-xacaaee-python-mantel-butterfly", title: "Python Mantel 蝴蝶状热图", language: "python", cover: "figures/2.preview.png", figure_types: ["mantel_heatmap"] },
         { case_id: "e2e-nocover", title: "没有被提到的那一篇", language: "r" },
@@ -75,6 +88,11 @@ server.tool("search_cases", "假的案例检索。测试用。", { query: z.stri
     },
   ],
 }))
+if (legacyMlai) {
+  server.tool("get_case", "读取测试案例。", { case_id: z.string(), figure_limit: z.number().optional() }, async ({ case_id }) => ({ content: [{ type: "text", text: JSON.stringify({ case_id, title: "测试案例" }) }] }))
+  server.tool("list_taxonomy", "读取测试词表。", { dimension: z.string().optional() }, async () => ({ content: [{ type: "text", text: "{}" }] }))
+  server.tool("get_asset", "读取测试资产。", { case_id: z.string(), path: z.string() }, async () => ({ content: [{ type: "text", text: "测试资产" }] }))
+}
 
 server.tool("boom", "总是报错。测试用。", {}, async () => ({
   isError: true,
@@ -108,7 +126,7 @@ let 收到的授权 = null
 
 /** 造一台装好工具的服务器。**stdio 用一份，HTTP 每个请求一份** */
 function 造一台() {
-  const s = new McpServer({ name: "dawn-mcp-test", version: "0.0.1" })
+  const s = new McpServer({ name: legacyMlai && !process.argv.includes("--other-service") ? "MLAI-science" : "dawn-mcp-test", version: "0.0.1" })
   装上工具(s)
   s.tool("我收到的头", "回报这次连接带来的 Authorization。测试用。", {}, async () => ({
     content: [{ type: "text", text: `Authorization=${收到的授权 ?? "（没有）"}` }],

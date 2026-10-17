@@ -51,6 +51,18 @@ function 假改写(最后一句) {
  * 这里只负责「正文里提到了哪几篇」——第二篇故意写成截短的 id，真机上模型就是这么写的。
  */
 export const 案例卡片回复 = "库里找到两篇：`e2e-deseq2-full-id` 做差异表达；`20251019-xacaaee` 画 Mantel 热图。你想照哪一篇做？"
+/** 只用于加载与卡片接线验收，固定回复不证明真实模型的规划质量。 */
+export const 科研分析路线回复 = [
+  "这是隔离接线验收。S1 查看 Alpha 多样性，S2 查看 Beta 多样性；输入仍需核对，当前仅讨论。",
+  "",
+  "| 步骤 | 候选 | 核对程度 |",
+  "| --- | --- | --- |",
+  "| S1 | C1：`20251017-e2e-alpha-diversity` Alpha多样性分析测试案例 · R | 仅元数据初筛 |",
+  "| S2 | C2：`20251017-e2e-beta-diversity` Beta多样性分析测试案例 · R | 仅元数据初筛 |",
+  "",
+  "请选择要展开的步骤或候选；尚未执行分析。",
+].join("\n")
+export const 大结果案例卡片回复 = "推荐先看网络布局浅览（20251016），再看无缝对接 WGCNA（20250825）。请选择要学习的案例。"
 
 export const MARKDOWN_REPLY = [
   "# 一级标题",
@@ -563,6 +575,10 @@ export function startMockInferenceServer(opts = {}) {
               ? LONG_CODE_REPLY
             : 用户说的.includes("markdown")
               ? MARKDOWN_REPLY
+              : 用户说的.includes("科研分析路线验收")
+                ? 科研分析路线回复
+              : 用户说的.includes("大结果标题案例卡片")
+                ? 大结果案例卡片回复
               : 用户说的.includes("案例卡片")
                 ? 案例卡片回复
                 : 默认回复)

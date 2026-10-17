@@ -1,0 +1,154 @@
+{
+  "counts": {
+    "read": 1,
+    "mlai-science__list_taxonomy": 1,
+    "mlai-science__search_cases": 10,
+    "mlai-science__get_case": 2
+  },
+  "calls": [
+    {
+      "name": "read",
+      "arguments": {
+        "path": "/Users/liuyue/.codex/worktrees/research-analysis-guide/dawn-science/dist/skills/analyze-like-case/references/comprehensive-analysis.md",
+        "offset": null,
+        "limit": null
+      }
+    },
+    {
+      "name": "mlai-science__list_taxonomy",
+      "arguments": {
+        "dimension": "tasks"
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "query": "phyloseq import ASV OTU count table taxonomy table sample metadata rarefaction curve",
+        "language": [
+          "r"
+        ],
+        "task": [
+          "community_diversity"
+        ],
+        "limit": 8
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "query": "alpha diversity indices richness Shannon Simpson boxplot comparison between groups",
+        "language": [
+          "r"
+        ],
+        "task": [
+          "community_diversity"
+        ],
+        "limit": 8
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "query": "beta diversity NMDS PCoA PERMANOVA Bray-Curtis community composition",
+        "language": [
+          "r"
+        ],
+        "task": [
+          "community_diversity"
+        ],
+        "limit": 8
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "query": "differential abundance taxa between groups DESeq2 ANCOM abundance differences",
+        "language": [
+          "r"
+        ],
+        "limit": 8
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "language": [
+          "r"
+        ],
+        "limit": 8,
+        "query": "RDA CCA 约束排序 环境因子 envfit 方差分解 Mantel 检验 群落"
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "language": [
+          "r"
+        ],
+        "limit": 8,
+        "query": "co-occurrence network microbial community igraph node edge keystone taxa"
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "language": [
+          "r"
+        ],
+        "limit": 8,
+        "query": "random forest classification prediction microbial community feature importance"
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "language": [
+          "r"
+        ],
+        "limit": 8,
+        "query": "taxonomic composition relative abundance stacked bar plot phylum genus"
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "language": [
+          "r"
+        ],
+        "limit": 8,
+        "query": "差异物种 火山图 DESeq2 微生物 属水平 相对丰度差异",
+        "task": [
+          "differential_expression"
+        ]
+      }
+    },
+    {
+      "name": "mlai-science__search_cases",
+      "arguments": {
+        "language": [
+          "r"
+        ],
+        "limit": 8,
+        "query": "phyloseq 构建 ASV 表 导入 分类表 样本数据 OTU table import"
+      }
+    },
+    {
+      "name": "mlai-science__get_case",
+      "arguments": {
+        "case_id": "00000000-weblog9e4e-isme-duo-yang-xing-he-duo-yang-xing-cpa",
+        "figure_limit": 0
+      }
+    },
+    {
+      "name": "mlai-science__get_case",
+      "arguments": {
+        "case_id": "00000000-weblogff97-mst012-wei-sheng-wu-gong-xian-wang-luo-gou-jian",
+        "figure_limit": 0
+      }
+    }
+  ],
+  "sideEffectCalls": [],
+  "discussionDenials": [],
+  "directOrigin": "http://127.0.0.1:8765",
+  "bridgeRequired": false
+}

@@ -25,6 +25,7 @@
  * **不发事件、不要求界面道歉**：把正常契约当成故障来播报，是把噪音当成诚实。
  */
 import { z } from "zod"
+import { CaseResultSchema } from "./cases.js"
 import { QuestionRecordSchema } from "./questions.js"
 import { RemoteStateSchema, 更新状态Schema } from "./entities.js"
 
@@ -111,6 +112,8 @@ const ToolItem = z
     status: z.enum(["running", "ok", "error"]),
     /** 结果正文（可能已截断）。running 时没有 */
     result: z.string().optional(),
+    /** 完整工具输出中提取的案例字段，不受 result 文本预算影响。 */
+    caseResults: z.array(CaseResultSchema).optional(),
     /**
      * 结果被截断了。**必须出声**（规格 7.5）。
      *

@@ -48,6 +48,7 @@ import {
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
 import { budgetToolResult } from "./tool-output.js"
+import { 提取案例字段 } from "../cases/results.js"
 import { 还原历史, 取文本, 分支转消息, 换上方案卡 } from "./history.js"
 import { lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 
@@ -2240,6 +2241,7 @@ export class NativeRuntime implements AgentRuntime {
         const content = e.result?.content ?? []
         const toolName = String(e.toolName ?? "?")
         const full = content.map((c) => c.text ?? "").join("")
+        const caseResults = 提取案例字段(toolName, full)
         // **此前这里是 `.slice(0, 2000)`：硬砍、不出声、不留路径。**
         // 现在全文写盘、摘要进事件流、字节数如实上报（规格 7.5）
         const sessionDir = this.sessions.get(sessionId)?.sessionDir
@@ -2258,6 +2260,7 @@ export class NativeRuntime implements AgentRuntime {
            */
           isError: Boolean(e.isError || e.result?.isError),
           text: out.text,
+          ...(caseResults ? { caseResults } : {}),
           truncated: out.truncated,
           bytes: out.bytes,
           ...(out.fullOutputPath ? { fullOutputPath: out.fullOutputPath } : {}),

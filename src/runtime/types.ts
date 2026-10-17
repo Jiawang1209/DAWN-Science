@@ -487,6 +487,8 @@ export type AgentEvent =
       bytes: number
       /** 全文落盘位置。写盘失败时缺省 */
       fullOutputPath?: string
+      /** 截断前提取的案例摘要；不含代码、笔记或图片数据。 */
+      caseResults?: import("../protocol/cases.js").案例[]
       /** 停止 / 调整方向时被停下的（2026-09-25）：运行时在 `abort()` 期间收到的结束都带它。只在 true 时出现 */
       interrupted?: true
     }
@@ -542,7 +544,7 @@ export interface ContextUsage {
  */
 export type RestoredItem =
   | { kind: "text"; who: "user" | "agent"; text: string; at?: number }
-  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; isError?: boolean; at?: number }
+  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; caseResults?: import("../protocol/cases.js").案例[]; isError?: boolean; at?: number }
   /** 这里压缩过（2026-09-27）：pi 记录里的 `compaction` 条目，落在它发生的位置。记录里没存起因 */
   | { kind: "compaction"; summary: string; tokensBefore: number }
   /**

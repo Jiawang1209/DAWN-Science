@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { NativeRuntime } from '../../src/runtime/native.js'
 import type { NativeRuntimeOptions } from '../../src/runtime/native.js'
 import type { SessionManager } from '@earendil-works/pi-coding-agent'
+import { MCP池 } from '../../src/mcp/客户端.js'
 
 type Result = { isError?: boolean; content: { text: string }[] }
 type Pi = { getToolDefinition(name: string): { execute: (...args: unknown[]) => Promise<Result> }; messages: unknown[] }
@@ -20,6 +21,34 @@ async function setup(id = 'boundary', dir = mkdtempSync(join(tmpdir(), 'dawn-bou
 }
 
 describe('明确讨论限制的真实工具门', () => {
+  it.each([false, true])('旧 MLAI 检索穿过讨论门，权限拒绝仍生效：deny=%s', async deny => {
+    const pool = new MCP池({ 取密: () => undefined })
+    const config = { command: process.execPath, args: [join(process.cwd(), 'scripts/mcp-test-server.mjs'), '--legacy-mlai'] }
+    const listed = await pool.备好('cases', config)
+    const invoke = vi.spyOn(pool, '调')
+    const x = await setup('legacy-mlai', undefined, false, { mcp: {
+      池: pool,
+      取工具: async () => ({ 工具: listed.工具, 名单: [{ 名: 'cases', 服务器: config }], 问题: [] }),
+      门: () => deny ? { kind: 'deny', reason: '服务器权限拒绝' } : { kind: 'allow' },
+    } })
+    try {
+      x.say('只讨论，暂不运行代码。请查询真实案例。')
+      const result = await x.call('cases__search_cases', { query: 'guide-alpha' })
+      if (deny) {
+        expect(result.content[0]!.text).toContain('权限拒绝')
+        expect(invoke).not.toHaveBeenCalled()
+      } else {
+        expect(result.content[0]!.text).toContain('20251017-e2e-alpha-diversity')
+        expect(invoke).toHaveBeenCalledTimes(1)
+      }
+      expect((await x.call('cases__写一行', {})).isError).toBe(true)
+      expect((await x.call('run_code', { language: 'python', code: '1' })).isError).toBe(true)
+      expect((await x.call('bash', { command: 'touch should-not-exist' })).isError).toBe(true)
+      expect((await x.call('write', { path: 'should-not-exist', content: 'ran' })).isError).toBe(true)
+      expect(existsSync(join(x.dir, 'should-not-exist'))).toBe(false)
+      expect(x.run).not.toHaveBeenCalled()
+    } finally { await x.rt.stop(x.id); await pool.全关(); rmSync(x.dir, { recursive: true, force: true }) }
+  })
   it('只讨论时禁止 run_code、bash 和写文件；read 仍可用', async () => {
     const x = await setup()
     try {

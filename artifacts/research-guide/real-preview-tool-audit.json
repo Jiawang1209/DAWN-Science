@@ -1,0 +1,14 @@
+{
+  "toolCalls": {
+    "read": 1,
+    "mlai-science__list_taxonomy": 2,
+    "mlai-science__search_cases": 12,
+    "mlai-science__get_case": 1,
+    "mlai-science__search_chunks": 1
+  },
+  "sideEffectCalls": [],
+  "initialDiscussionDenials": [
+    "mlai-science__list_taxonomy"
+  ],
+  "scope": "real model preview; tool names checked, no scientific analysis execution"
+}

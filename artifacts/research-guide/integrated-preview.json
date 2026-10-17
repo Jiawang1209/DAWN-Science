@@ -1,0 +1,11 @@
+{
+  "branch": "codex/research-analysis-guide",
+  "previewDir": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-research-guide-preview-x0XAwO",
+  "model": "deepseek-flash",
+  "mlaiOrigin": "http://127.0.0.1:8765",
+  "bridgeOrigin": "http://127.0.0.1:8767",
+  "bridgePid": 88734,
+  "electronPid": 88425,
+  "cards": 8,
+  "loadedCovers": 7
+}

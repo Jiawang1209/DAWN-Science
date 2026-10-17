@@ -66,6 +66,48 @@ describe("本轮提到的案例", () => {
   it("正文一个都没提 → 不出卡", () => {
     expect(本轮提到的案例("库里热图很多，你想画哪种？", 表)).toEqual([])
   })
+
+  it("只写唯一标题也出卡，按正文顺序排列，与 ID 提及合并去重", () => {
+    expect(本轮提到的案例("先看 Python Mantel 蝴蝶状热图，再看 R包DESeq2作差异基因分析；20191101-sxbxy3b71-deseq2。", 表)
+      .map((c) => c.案例.case_id)).toEqual(["20251019-xacaaee-python-mantel", "20191101-sxbxy3b71-deseq2"])
+  })
+
+  it("识别去掉库名前缀与 ggNetView 系列前缀的标题，忽略空白", () => {
+    const known = 从工具结果收案例([{ name: "mlai-science__search_cases", result: JSON.stringify([
+      { case_id: "20251016-layout", title: "MLAI 案例库：网络可视化R包ggNetView_网络布局浅览" },
+      { case_id: "20250825-wgcna", title: "MLAI 案例库：网络可视化R包ggNetView_2.无缝对接WGCNA" },
+    ]) }])
+    expect(本轮提到的案例("无缝对接 WGCNA（20250825），再看网络布局浅览（20251016）", known)
+      .map((c) => c.案例.case_id)).toEqual(["20250825-wgcna", "20251016-layout"])
+  })
+
+  it("同名标题不猜；短标题和泛泛提及不出卡，完整 ID 仍可消歧", () => {
+    const known = 从工具结果收案例([{ name: "mlai-science__search_cases", result: JSON.stringify([
+      { case_id: "e2e-layout-a", title: "MLAI 案例库：网络布局浅览" },
+      { case_id: "e2e-layout-b", title: "网络布局浅览" },
+      { case_id: "e2e-short-c", title: "R" },
+    ]) }])
+    expect(本轮提到的案例("R 语言的网络布局浅览", known)).toEqual([])
+    expect(本轮提到的案例("选择 case_id: e2e-layout-b", known).map((c) => c.案例.case_id)).toEqual(["e2e-layout-b"])
+  })
+
+  it("一个标题包含另一个标题时，只认明确提到的长标题；短标题另行出现才出卡", () => {
+    const known = 从工具结果收案例([{ name: "mlai-science__search_cases", result: JSON.stringify([
+      { case_id: "e2e-basic", title: "网络布局浅览" },
+      { case_id: "e2e-extended", title: "网络布局浅览进阶" },
+    ]) }])
+    expect(本轮提到的案例("推荐网络布局浅览进阶", known).map((c) => c.案例.case_id)).toEqual(["e2e-extended"])
+    expect(本轮提到的案例("推荐网络布局浅览进阶，再看网络布局浅览", known).map((c) => c.案例.case_id)).toEqual(["e2e-extended", "e2e-basic"])
+  })
+})
+
+describe("独立案例字段", () => {
+  it("有精简案例字段时不再解析截断正文，旧记录仍能解析完整正文", () => {
+    const cases = [{ case_id: "20251016-layout", title: "网络布局浅览", language: "r" }]
+    expect([...从工具结果收案例([{ name: "mlai-science__search_cases", result: "[mlai-science] [{截断", caseResults: cases }]).values()]
+      .map((x) => x.案例)).toEqual(cases)
+    expect(从工具结果收案例([{ name: "mlai-science__search_cases", result: 检索结果 }]).size).toBe(2)
+  })
 })
 
 describe("地址与那句话", () => {

@@ -579,7 +579,8 @@
 /** 8.14: persistent Bot peer requests, handoffs and correlated replies in team snapshots. */
 /** 8.15: shared Bot Team conversation, nested clarification and user messages. */
 /** 8.16 (2026-10-14): 会话标题摘要完成后按 sessionId 推送 title 元信息。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.16"
+/** 8.17 (2026-10-17): tool 条目可选 caseResults，案例卡片不再依赖截断正文。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.17"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

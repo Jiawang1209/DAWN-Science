@@ -849,6 +849,7 @@ export class SessionTranscripts {
           status: event.isError || event.interrupted ? "error" : "ok",
           ...(event.interrupted ? { interrupted: true as const } : {}),
           result: event.text,
+          ...(event.caseResults ? { caseResults: event.caseResults } : {}),
           // **截断的三件套一起走。** 只传正文等于把「这是残缺品」这个事实丢掉，
           // 界面就只能猜——那正是修复前的样子（规格 7.5）
           resultTruncated: event.truncated,

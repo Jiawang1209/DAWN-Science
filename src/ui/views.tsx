@@ -7000,11 +7000,11 @@ function ToolRow({
  */
 function 本轮案例(items: readonly TranscriptItem[], 下标: number, 正文: string): 本轮案例[] {
   let i = 下标 - 1
-  const tools: { name: string; result?: string | undefined }[] = []
+  const tools: Extract<TranscriptItem, { type: "tool" }>[] = []
   while (i >= 0) {
     const x = items[i]!
     if (x.type === "turn" && x.who === "user") break
-    if (x.type === "tool") tools.push({ name: x.name, result: x.result })
+    if (x.type === "tool") tools.push(x)
     i--
   }
   if (tools.length === 0) return []

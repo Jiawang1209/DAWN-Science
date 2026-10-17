@@ -12,6 +12,7 @@ import { ASK_USER_QUESTION, QuestionsSchema, validateQuestionAnswer } from "../p
  * 所以三处都调 `还原历史`，由结构保证一致，而不是由几份相似的代码碰巧一致。
  */
 import type { RestoredItem } from "./types.js"
+import { 提取案例字段 } from "../cases/results.js"
 import { 出方案工具名, type 方案 } from "../protocol/plan.js"
 
 /** pi 记下的一条消息。**只声明我们真的读的那几个字段** */
@@ -105,6 +106,10 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
     }
   }
   return 出.map((item): RestoredItem => {
+    if (item.kind === "tool" && item.result) {
+      const caseResults = 提取案例字段(item.name, item.result)
+      if (caseResults) item = { ...item, caseResults }
+    }
     if (item.kind !== "tool" || item.name !== ASK_USER_QUESTION) return item
     const parsed = QuestionsSchema.safeParse((item.input as { questions?: unknown } | undefined)?.questions)
     if (!parsed.success) return item

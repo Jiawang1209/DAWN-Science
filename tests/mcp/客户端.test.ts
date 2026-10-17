@@ -72,6 +72,21 @@ describe("MCP 客户端 · 对着真服务器", () => {
     expect(找("echo")).not.toHaveProperty("只读")
   })
 
+  it("旧 MLAI 缺声明时，已知检索/读取可用，未知工具和写工具不推断", async () => {
+    const r = await 池.备好("案例库别名", 一台({ args: [服务器脚本, "--legacy-mlai"] }))
+    expect(r.失败).toBeUndefined()
+    for (const name of ["search_cases", "get_case", "list_taxonomy", "get_asset"]) {
+      expect(r.工具.find(t => t.工具名 === name)?.只读, name).toBe(true)
+    }
+    for (const name of ["echo", "写一行", "boom"]) expect(r.工具.find(t => t.工具名 === name)).not.toHaveProperty("只读")
+  })
+
+  it.each(["--deny-search", "--changed-search", "--other-service"])("旧 MLAI 兼容不覆盖显式拒绝、扩展参数或其他服务：%s", async flag => {
+    const r = await 池.备好("mlai-science", 一台({ args: [服务器脚本, "--legacy-mlai", flag] }))
+    expect(r.失败).toBeUndefined()
+    expect(r.工具.find(t => t.工具名 === "search_cases")).not.toHaveProperty("只读")
+  })
+
   /** **工具名带服务器前缀**：两台各有一个 `echo` 时，模型要分得清打给谁 */
   it("工具名带服务器前缀", async () => {
     const r = await 池.备好("testbox", 一台())

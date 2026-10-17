@@ -18,6 +18,19 @@
 import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
 
 test.describe("自带技能", () => {
+  test("科研分析技能沿用原调用名，完整展开综合路线与执行边界", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:analyze-like-case 我要做土壤微生物扩增子分析，先讨论路线和案例，不运行")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    const requests = JSON.stringify(dawn.requests)
+    expect(requests).toContain("analyze-like-case")
+    expect(requests).toContain("references/comprehensive-analysis.md")
+    expect(requests).toContain("选择确定的是案例及其对应步骤")
+    expect(requests).toContain("只讨论、先设计、暂不运行")
+  })
+
   test("分析交付技能可以通过 /skill:analysis-delivery 展开正文", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
@@ -84,6 +97,7 @@ test.describe("两屏", () => {
     await expect(屏).toContainText("dataset-first-look")
     await expect(屏).toContainText("reproducible-analysis")
     await expect(屏).toContainText("analysis-delivery")
+    await expect(屏.locator(".skill-row", { hasText: "analyze-like-case" })).toContainText("科研分析向导")
     await expect(屏).toContainText("writing-skills")
     /** **来处要标出来**：自带的与你写的不是一回事 */
     await expect(屏).toContainText("自带")

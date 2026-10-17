@@ -36,5 +36,6 @@ export function 还原成条目(x: RestoredItem, i: number): TranscriptItem {
     input: x.input,
     status: x.isError ? "error" : "ok",
     ...(x.result === undefined ? {} : { result: x.result }),
+    ...(x.caseResults ? { caseResults: x.caseResults } : {}),
   }
 }

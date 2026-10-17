@@ -12,6 +12,7 @@
 import { spawn, type ChildProcess } from "node:child_process"
 import { createServer } from "node:net"
 import { join } from "node:path"
+import { mkdirSync, readFileSync } from "node:fs"
 import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 
 let 子进程: ChildProcess | undefined
@@ -26,7 +27,7 @@ test.beforeAll(async () => {
     })
   })
   子进程 = spawn(process.execPath, [join(process.cwd(), "scripts", "mcp-test-server.mjs")], {
-    env: { ...process.env, DAWN_MCP_HTTP_PORT: String(端口) },
+    env: { ...process.env, DAWN_MCP_HTTP_PORT: String(端口), DAWN_MCP_TEST_LEGACY_MLAI: "1" },
     stdio: ["ignore", "ignore", "pipe"],
   })
   await new Promise<void>((res, rej) => {
@@ -39,8 +40,118 @@ test.beforeAll(async () => {
     })
   })
 })
+
+test.describe("大结果标题案例卡片", () => {
+  test.use({
+    dawnOptions: async ({}, use) => {
+      await use({
+        toolCall: { toolName: "mlai-science__search_cases", args: { query: "large-case-cards" } },
+        providersYaml: `mcp:
+  mlai-science:
+    url: http://127.0.0.1:${端口}/mcp
+agents:
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-flash
+    capabilities: [chat]
+`,
+      })
+    },
+  })
+
+  test("超预算结果、只写标题：封面与选择可用，真正重启后仍显示", async ({ dawn }) => {
+    await 开一段临时会话(dawn.page, "大结果标题案例卡片")
+    await 等进了对话(dawn.page)
+    const cards = dawn.page.locator(".case-card")
+    await expect(cards).toHaveCount(2, { timeout: 30_000 })
+    await expect(cards.nth(0)).toContainText("网络布局浅览")
+    await expect(cards.nth(1)).toContainText("无缝对接WGCNA")
+    await expect(cards.locator("img.case-cover")).toHaveCount(2)
+    await expect.poll(async () => cards.locator("img").evaluateAll((images) => images.every((x) => (x as HTMLImageElement).naturalWidth > 0))).toBe(true)
+    // 验的是原来的截断链路确实被触发，而非把预算加大绕过去。
+    const process = dawn.page.locator(".completed-process-head")
+    if (await process.getAttribute("aria-expanded") === "false") await process.click()
+    await expect(process).toHaveAttribute("aria-expanded", "true")
+    await dawn.page.locator(".tool-head").click()
+    await expect(dawn.page.locator(".tool-spill")).toContainText("已截断")
+    await process.click()
+    mkdirSync("artifacts/case-cards", { recursive: true })
+    await dawn.page.mouse.move(1100, 35)
+    await dawn.page.locator(".case-cards").scrollIntoViewIfNeeded()
+    await dawn.page.screenshot({ path: "artifacts/case-cards/live-light.png" })
+    await cards.nth(0).locator(".case-open").click()
+    await expect.poll(async () => (await 视图(dawn.app))?.url ?? "").toContain("/gallery/case/20251016-network-layout")
+    const page = await dawn.重开()
+    await page.locator(".session-list .sess-item .row").first().click()
+    const restored = page.locator(".case-card")
+    await expect(restored).toHaveCount(2, { timeout: 30_000 })
+    await expect(restored.locator("img.case-cover")).toHaveCount(2)
+    await expect.poll(async () => restored.locator("img").evaluateAll((images) => images.every((x) => (x as HTMLImageElement).naturalWidth > 0))).toBe(true)
+    await page.mouse.move(1100, 35)
+    await page.locator(".case-cards").scrollIntoViewIfNeeded()
+    await page.screenshot({ path: "artifacts/case-cards/restored-light.png" })
+    await restored.nth(1).getByRole("button", { name: "照这篇做", exact: true }).click()
+    await expect(page.locator(".turn.user").last()).toContainText("case_id: 20250825-network-wgcna")
+  })
+})
 test.afterAll(() => {
   子进程?.kill()
+})
+
+test.describe("科研分析向导的路线与卡片接线", () => {
+  test.use({
+    dawnOptions: async ({}, use) => {
+      await use({
+        toolCall: [
+          { toolName: "mlai-science__search_cases", args: { query: "guide-alpha" } },
+          { toolName: "mlai-science__search_cases", args: { query: "guide-beta" } },
+        ],
+        providersYaml: `mcp:
+  mlai-science:
+    url: http://127.0.0.1:${端口}/mcp
+agents:
+  ds-chat:
+    kind: native
+    provider: deepseek
+    model: deepseek-flash
+    capabilities: [chat]
+`,
+      })
+    },
+  })
+
+  test("两步查询产生对应卡片，选择回传完整 ID，技能引用随构建发布", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:analyze-like-case 科研分析路线验收：已有ASV表，请先给路线和案例，暂不运行")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    const cards = page.locator(".case-card")
+    await expect(cards).toHaveCount(2, { timeout: 30_000 })
+    await expect(page.locator(".turn.agent")).toContainText("S1")
+    await expect(page.locator(".turn.agent")).toContainText("S2")
+    const route = page.locator(".turn.agent table")
+    await expect(route.getByRole("row")).toHaveCount(3)
+    await expect(route.getByRole("row").nth(1)).toContainText("S1")
+    await expect(route.getByRole("row").nth(1)).toContainText("C1")
+    await expect(route.getByRole("row").nth(2)).toContainText("S2")
+    await expect(route.getByRole("row").nth(2)).toContainText("C2")
+    await expect(cards.nth(0)).toContainText("Alpha多样性分析测试案例")
+    await expect(cards.nth(1)).toContainText("Beta多样性分析测试案例")
+    await expect.poll(async () => cards.locator("img").evaluateAll((images) => images.length === 2 && images.every((x) => (x as HTMLImageElement).naturalWidth > 0))).toBe(true)
+    const requests = JSON.stringify(dawn.requests)
+    expect(requests).toContain("guide-alpha")
+    expect(requests).toContain("guide-beta")
+    expect(requests).toContain("references/comprehensive-analysis.md")
+    const reference = "skills/analyze-like-case/references/comprehensive-analysis.md"
+    expect(readFileSync(join(process.cwd(), "dist", reference), "utf8")).toBe(readFileSync(join(process.cwd(), reference), "utf8"))
+    mkdirSync("artifacts/research-guide", { recursive: true })
+    await page.mouse.move(1100, 35)
+    await route.screenshot({ path: "artifacts/research-guide/route-table.png" })
+    await page.locator(".case-cards").screenshot({ path: "artifacts/research-guide/route-cards.png" })
+    await cards.nth(1).getByRole("button", { name: "照这篇做", exact: true }).click()
+    await expect(page.locator(".turn.user").last()).toContainText("case_id: 20251017-e2e-beta-diversity")
+  })
 })
 
 async function 视图(app: import("@playwright/test").ElectronApplication) {

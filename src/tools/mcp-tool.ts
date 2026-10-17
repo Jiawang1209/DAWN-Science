@@ -54,7 +54,7 @@ export interface MCP工具装配 {
 
 /**
  * 方案期门认这个标记（先出方案，2026-09-27，D6；Task 5 的 `套方案期门` 读它，喂给 `方案期判` 的 `mcp只读`）。
- * **只挂在服务器声明 `readOnlyHint: true` 的那几个上**——没声明、声明 false 的都没有它，方案期一律拒。
+ * 标记来自服务器显式声明或客户端对旧 MLAI 的窄契约兼容；显式 false 和未知工具不被兼容规则放行。
  */
 export const MCP只读标记 = "dawnMcpReadOnly"
 

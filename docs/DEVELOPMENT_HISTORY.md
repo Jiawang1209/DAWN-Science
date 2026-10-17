@@ -13,8 +13,8 @@
 - **Type**: fix / test / docs
 - **Motivation**: 用户要求仅在dawn-science补齐只读兼容，去掉临时兼容层，直连检索与卡片通过后合并main，明确不修改MLAI项目。
 - **What**: MCP客户端按握手名、核心工具、已知读取名单和输入契约补缺失只读标记；不覆盖显式非只读或破坏/开放声明，不推断未知工具/新参数，不绕过权限门。移除临时Python代理脚本并停止8767进程，隔离预览直接连接现有8765服务。
-- **Impact**: 本轮仅DAWN代码、测试及文档；无MLAI代码/配置/语料/服务变更，无新增依赖或迁移。用户授权本地提交并快进main，不推送或替换安装版，保留原工作树。
-- **Verification**: 旧客户端与Electron路径先失败；最终403文件4547项单测通过、10项原设置跳过，100项相关测试、21项Electron、typecheck、build和diff检查通过。真实DeepSeek直连完成路线与八个案例推荐，八张封面全部加载并可恢复；工具记录无代码执行/写入或讨论拒绝。详细范围及合并后复验见 `docs/reviews/2026-10-17-direct-mlai-main-verification.md`。
+- **Impact**: 本轮仅DAWN代码、测试及文档；无MLAI代码/配置/语料/服务变更，无新增依赖或迁移。按用户授权，功能提交6fdc9914已本地提交并快进main，不推送或替换安装版，保留原工作树。
+- **Verification**: 旧客户端与Electron路径先失败；最终403文件4547项单测通过、10项原设置跳过，100项相关测试、21项Electron、typecheck、build和diff检查通过。真实DeepSeek直连完成路线与八个案例推荐，八张封面全部加载并可恢复；工具记录无代码执行/写入或讨论拒绝。合并后main又通过121项相关测试、12项Electron、typecheck/build；main实际预览展开S4再查两个案例，两张封面正常显示。详细范围见 `docs/reviews/2026-10-17-direct-mlai-main-verification.md`。
 
 ### 2026-10-17 — 整合科研分析向导与卡片修复并启动真实预览
 

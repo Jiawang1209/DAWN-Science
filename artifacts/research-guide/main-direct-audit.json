@@ -1,0 +1,12 @@
+{
+  "counts": {
+    "read": 1,
+    "mlai-science__list_taxonomy": 2,
+    "mlai-science__search_cases": 11,
+    "mlai-science__get_case": 4
+  },
+  "sideEffectCalls": [],
+  "discussionDenials": [],
+  "branch": "main",
+  "directOrigin": "http://127.0.0.1:8765"
+}

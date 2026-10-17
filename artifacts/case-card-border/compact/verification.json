@@ -1,0 +1,17 @@
+{
+  "source": "file:///Users/liuyue/.codex/worktrees/case-card-accent-border/dawn-science/dist/ui/index.html",
+  "before": {
+    "height": 423.4140625,
+    "summary": true
+  },
+  "after": {
+    "columns": 3,
+    "summaryCount": 0,
+    "loadedCovers": 8,
+    "cards": 8,
+    "firstCardHeight": 332.1640625,
+    "border": "1px solid color(srgb 0.12549 0.541176 0.482353 / 0.45)",
+    "overflow": false,
+    "titles": true
+  }
+}

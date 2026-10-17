@@ -1,0 +1,22 @@
+[
+  {
+    "label": "相关案例（8 个）",
+    "count": 8,
+    "columns": 3,
+    "numberNodes": 0,
+    "summaryNodes": 0,
+    "loadedCovers": 8,
+    "overflow": false,
+    "languageIcons": 8
+  },
+  {
+    "label": "相关案例（2 个）",
+    "count": 2,
+    "columns": 3,
+    "numberNodes": 0,
+    "summaryNodes": 0,
+    "loadedCovers": 2,
+    "overflow": false,
+    "languageIcons": 2
+  }
+]

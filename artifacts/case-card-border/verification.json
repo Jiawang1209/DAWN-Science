@@ -1,0 +1,33 @@
+{
+  "before": {
+    "width": "0px",
+    "style": "none",
+    "color": "rgb(13, 13, 13)",
+    "radius": "15px",
+    "shadow": "color(srgb 0.0509804 0.0509804 0.0509804 / 0.06) 0px 1px 2px 0px, color(srgb 0.0509804 0.0509804 0.0509804 / 0.06) 0px 6px 16px -4px"
+  },
+  "light": {
+    "width": "1px",
+    "style": "solid",
+    "color": "color(srgb 0.12549 0.541176 0.482353 / 0.45)",
+    "radius": "15px",
+    "shadow": "color(srgb 0.0509804 0.0509804 0.0509804 / 0.06) 0px 1px 2px 0px, color(srgb 0.0509804 0.0509804 0.0509804 / 0.06) 0px 6px 16px -4px"
+  },
+  "dark": {
+    "width": "1px",
+    "style": "solid",
+    "color": "color(srgb 0.278431 0.72549 0.662745 / 0.45)",
+    "radius": "15px",
+    "shadow": "color(srgb 1 1 1 / 0.16) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.55) 0px 6px 14px -4px"
+  },
+  "blue": {
+    "width": "1px",
+    "style": "solid",
+    "color": "color(srgb 0.184314 0.435294 0.921569 / 0.45)",
+    "radius": "15px",
+    "shadow": "color(srgb 0.0509804 0.0509804 0.0509804 / 0.06) 0px 1px 2px 0px, color(srgb 0.0509804 0.0509804 0.0509804 / 0.06) 0px 6px 16px -4px"
+  },
+  "cards": 10,
+  "loadedCovers": 10,
+  "source": "file:///Users/liuyue/.codex/worktrees/case-card-accent-border/dawn-science/dist/ui/index.html"
+}

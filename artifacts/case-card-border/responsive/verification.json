@@ -1,0 +1,45 @@
+{
+  "source": "file:///Users/liuyue/.codex/worktrees/case-card-accent-border/dawn-science/dist/ui/index.html",
+  "checks": [
+    {
+      "viewport": 1512,
+      "gridWidth": 795,
+      "columns": 3,
+      "cardWidth": 257.0625,
+      "overflow": false,
+      "loaded": true
+    },
+    {
+      "viewport": 1200,
+      "gridWidth": 742,
+      "columns": 3,
+      "cardWidth": 239.328125,
+      "overflow": false,
+      "loaded": true
+    },
+    {
+      "viewport": 1000,
+      "gridWidth": 556,
+      "columns": 2,
+      "cardWidth": 272,
+      "overflow": false,
+      "loaded": true
+    },
+    {
+      "viewport": 800,
+      "gridWidth": 398,
+      "columns": 1,
+      "cardWidth": 398,
+      "overflow": false,
+      "loaded": true
+    },
+    {
+      "viewport": 640,
+      "gridWidth": 504,
+      "columns": 2,
+      "cardWidth": 246,
+      "overflow": false,
+      "loaded": true
+    }
+  ]
+}

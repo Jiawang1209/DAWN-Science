@@ -14,7 +14,8 @@
  */
 import { useEffect, useState } from "react"
 import { Button, Loader } from "./primitives.js"
-import { t } from "./i18n/index.js"
+import { R图标, Python图标, 终端图标 } from "./icons.js"
+import { t, tf } from "./i18n/index.js"
 import { 封面地址, 详情地址, 选这篇的话, type 本轮案例 } from "./case-cards.js"
 
 const 语言名 = (l: string) => (l.toLowerCase() === "r" ? "R" : l.toLowerCase() === "python" ? "Python" : l)
@@ -89,31 +90,40 @@ export function 案例卡片们({
       还在 = false
     }
   }, [载图廊根们])
+  if (案例们.length === 0) return null
   return (
-    <div className="case-cards">
-      {案例们.map(({ 服务器, 案例: c, n }) => {
-        const 问着 = 图廊根们 === undefined
-        const 根 = 图廊根们?.[服务器]
-        return (
-          <div className="case-card" key={c.case_id}>
-            <Button
-              variant="ghost"
-              size="card"
-              className="case-open"
-              disabled={!根}
-              onClick={() => 根 && onOpen(详情地址(根, c))}
-            >
-              <封面 地址={根 ? 封面地址(根, c) : undefined} 有图廊={问着 || Boolean(根)} 取图={问着 ? undefined : 取图} 问着={问着} />
-              <span className="case-meta">{c.language ? `${n} · ${语言名(c.language)}` : String(n)}</span>
-              <span className="case-title">{c.title ?? c.case_id}</span>
-              {c.summary ? <span className="case-summary">{c.summary}</span> : null}
-            </Button>
-            <Button variant="secondary" size="sm" className="case-pick" disabled={!onPick} onClick={() => onPick?.(选这篇的话(c))}>
-              {t("照这篇做")}
-            </Button>
-          </div>
-        )
-      })}
-    </div>
+    <>
+      <p className="case-cards-count">{tf("相关案例（{0} 个）", 案例们.length)}</p>
+      <div className="case-cards">
+        {案例们.map(({ 服务器, 案例: c }) => {
+          const 问着 = 图廊根们 === undefined
+          const 根 = 图廊根们?.[服务器]
+          return (
+            <div className="case-card" key={c.case_id}>
+              <Button
+                variant="ghost"
+                size="card"
+                className="case-open"
+                disabled={!根}
+                onClick={() => 根 && onOpen(详情地址(根, c))}
+              >
+                <封面 地址={根 ? 封面地址(根, c) : undefined} 有图廊={问着 || Boolean(根)} 取图={问着 ? undefined : 取图} 问着={问着} />
+                <span className="case-title" title={c.title ?? c.case_id}>{c.title ?? c.case_id}</span>
+              </Button>
+              <div className="case-actions">
+                <Button variant="secondary" size="sm" className="case-pick" disabled={!onPick} onClick={() => onPick?.(选这篇的话(c))}>
+                  {t("照这篇做")}
+                </Button>
+                {c.language ? (
+                  <span className="case-language" role="img" aria-label={语言名(c.language)} title={语言名(c.language)}>
+                    {c.language.toLowerCase() === "r" ? <R图标 className="case-language-icon" /> : c.language.toLowerCase() === "python" ? <Python图标 className="case-language-icon" /> : <终端图标 className="case-language-icon" />}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
   )
 }

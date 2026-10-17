@@ -1,0 +1,26 @@
+[
+  {
+    "id": "C1",
+    "language": "R",
+    "iconText": "R",
+    "interactive": false
+  },
+  {
+    "id": "C2",
+    "language": "Python",
+    "iconText": "Py",
+    "interactive": false
+  },
+  {
+    "id": "C3",
+    "language": "Julia",
+    "iconText": null,
+    "interactive": false
+  },
+  {
+    "id": "C4",
+    "language": null,
+    "iconText": null,
+    "interactive": false
+  }
+]

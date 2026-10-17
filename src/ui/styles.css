@@ -6203,12 +6203,14 @@ pre {
 
 /* 消息底下那张「网页预览」卡（批 2，2026-08-18，形状照作者的截图） */
 /**
- * 对话里的 MLAI 案例卡片（2026-09-15）。两列网格，窄了收成一列。
- * 面照 `.dock-overview > .panel`：阴影 + 圆角，不划边框（视觉重做那条：深度靠影子，不靠线）。
+ * 对话里的 MLAI 案例卡片（2026-09-15）。宽度足够时三列，窄了自动收成两列或一列。
+ * 圆角与阴影上加一圈浅主题色边框，随主题色切换。
  */
+.case-cards-count { margin: var(--dawn-space-3) 0 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
 .case-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  /* 每张至少14rem；三等分作为另一条下限，宽窗口也最多三列。极窄时不撑出容器。 */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(14rem, calc((100% - 2 * var(--dawn-space-3)) / 3))), 1fr));
   gap: var(--dawn-space-3);
   margin-top: var(--dawn-space-3);
 }
@@ -6218,8 +6220,9 @@ pre {
   gap: var(--dawn-space-2);
   padding-bottom: var(--dawn-space-3);
   background: var(--dawn-surface-panel);
+  border: 1px solid var(--dawn-stroke-accent);
   border-radius: var(--dawn-radius-lg);
-  box-shadow: var(--dawn-shadow-md);
+  box-shadow: var(--dawn-shadow-md-bordered);
   overflow: hidden;
 }
 /* 卡片主体就是「看详情」那颗按钮：几何由 `size="card"` 给，这里只让它吃满宽、封面贴顶 */
@@ -6242,7 +6245,6 @@ pre {
   font-size: var(--dawn-fs-meta);
 }
 .case-cover-loading { display: flex; align-items: center; justify-content: center; }
-.case-meta { margin-top: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .case-title {
   color: var(--dawn-text-1);
   font-weight: var(--dawn-weight-semibold);
@@ -6251,9 +6253,11 @@ pre {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.case-summary { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
-/* 「照这篇做」：常驻、左对齐在卡片底边内侧 */
-.case-pick { align-self: flex-start; margin-left: var(--dawn-space-3); }
+/* 底行：左侧选择按钮，右侧仅显示语言图标；语言名称通过悬停和辅助标签说明。 */
+.case-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-3); padding: 0 var(--dawn-space-3); }
+.case-pick { flex: 0 0 auto; }
+.case-language { display: inline-flex; align-items: center; margin-left: auto; color: var(--dawn-text-3); }
+.case-language-icon { width: 16px; height: 16px; flex: 0 0 auto; }
 
 .weblink-card {
   display: flex;

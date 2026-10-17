@@ -185,6 +185,7 @@ export const EN: Readonly<Record<string, string>> = {
   "展开全部（还有 {0} 行）": "Show all ({0} more lines)",
   "已跑 {0}": "running {0}",
   "照这篇做": "Follow this case",
+  "相关案例（{0} 个）": "Related cases ({0})",
   "没有封面": "no cover",
   "这台 MCP 没有图廊": "this MCP server has no gallery",
   "封面没取到": "cover unavailable",

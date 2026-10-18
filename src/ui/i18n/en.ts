@@ -16,6 +16,7 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "历史文件引用（未保存当时文件事实）": "Historical file reference (file facts were not saved for this revision)",
   "历史预览：此处读取当前文件": "Historical reference: preview reads the current file",
   "历史版本暂不可用，请刷新或查看当前路线": "This history revision is unavailable. Refresh or view the current route.",
   "查看当前路线": "View current route",

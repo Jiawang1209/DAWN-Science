@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 历史路线文件引用不借用后续文件事实
+
+- **Type**: fix
+- **Motivation**: 规格审查复现旧版本留有文件引用时，列表借用当前版本的 observed/exists/missing/unknown，可能把后续生成误认成旧版本证据。
+- **What**: 历史交付行统一标注“历史文件引用（未保存当时文件事实）”，不读取当前 evidence.deliverables；当前版本仍显示真实四态事实。保留历史预览读取当前路径及展开阅读时的说明。
+- **Impact**: 不改变文件读取或后端证据契约，历史元数据与当前路径事实保持分离。
+- **Verification**: 四种文件事实回归先 4 RED，再 4 GREEN；4 文件 134 项定向测试、typecheck/build/git diff --check 通过。日志 /tmp/analysis-route-history-file-red.log、/tmp/analysis-route-history-file-green.log、/tmp/analysis-route-history-file-build.log。未重复 Electron 或全量，由主任务继续验收。
+
 ### 2026-10-18 — 会话分析路线摘要与逐步路线坞
 
 - **Type**: feat

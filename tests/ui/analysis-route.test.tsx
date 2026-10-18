@@ -124,6 +124,38 @@ describe("session analysis route", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "路线版本" }), { target: { value: "1" } })
     expect(screen.queryByText("已观察到本步运行")).toBeNull()
   })
+  it.each([
+    ["observed", "观察到工具生成"],
+    ["exists", "文件存在"],
+    ["missing", "文件缺失"],
+    ["unknown", "存在性未知"],
+  ] as const)("does not borrow current %s file facts for a historical route reference", (state, currentFact) => {
+    const p = props()
+    const historical = route(1)
+    historical.steps[0]!.deliverables = [{ path: "results/report.md" }]
+    const current = structuredClone(historical)
+    current.revision = 2
+    current.steps[0]!.status = "delivered"
+    render(
+      <AnalysisRoutePanel
+        {...p}
+        result={{
+          supported: true,
+          route: current,
+          history: [historical],
+          evidence: {
+            tools: [],
+            deliverables: [{ stepId: "S1", path: "results/report.md", state }],
+          },
+        }}
+      />,
+    )
+    expect(screen.getByText(currentFact)).toBeTruthy()
+    fireEvent.change(screen.getByRole("combobox", { name: "路线版本" }), { target: { value: "1" } })
+    expect(screen.queryByText(currentFact)).toBeNull()
+    expect(screen.getByText("历史文件引用（未保存当时文件事实）")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "results/report.md" })).toBeTruthy()
+  })
   it("does not present current metadata as a missing selected history revision", () => {
     const p = props()
     const { rerender } = render(

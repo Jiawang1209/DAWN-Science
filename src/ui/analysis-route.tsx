@@ -480,10 +480,12 @@ export function AnalysisRoutePanel(props: AnalysisRoutePanelProps) {
                     </span>
                   </Button>
                   <span className="route-file-fact">
-                    {fileFact(
-                      result.evidence?.deliverables.find((fact) => fact.stepId === step.id && fact.path === file.path)
-                        ?.state ?? "unknown",
-                    )}
+                    {historical
+                      ? t("历史文件引用（未保存当时文件事实）")
+                      : fileFact(
+                          result.evidence?.deliverables.find((fact) => fact.stepId === step.id && fact.path === file.path)
+                            ?.state ?? "unknown",
+                        )}
                   </span>
                   {file.note ? <p>{file.note}</p> : null}
                 </li>

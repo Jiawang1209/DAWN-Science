@@ -1271,7 +1271,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       throw error
     }
   }, [client, ready, sessionId, session?.kind, routeController])
-  useEffect(() => { void reloadRoute().catch(() => {}) }, [reloadRoute, routeResult?.route?.revision, busy])
+  // The first read can precede native resume and contain only inactive metadata.
+  // Resume restores tool evidence without changing the route revision; reread on
+  // its explicit state transition rather than retaining those unknown facts.
+  useEffect(() => { void reloadRoute().catch(() => {}) }, [reloadRoute, routeResult?.route?.revision, busy, session?.state])
 
 
   const searchFiles = useCallback(

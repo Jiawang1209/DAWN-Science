@@ -115,6 +115,7 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
   await project.locator(".proj-session-list .sess-item .row").first().click()
   await expect(page.locator(".analysis-route-summary")).toContainText("1 / 3")
   await page.locator(".analysis-route-summary").click()
+  await expect(pane().locator(".route-deliverables")).toContainText("观察到工具生成")
   await pane().locator(".route-step").first().getByRole("button", { name: /S1/ }).click()
   await expect(pane()).toContainText("已选参考")
   await pane().getByRole("button", { name: "results/reports/analysis-route-S1.md", exact: true }).click()

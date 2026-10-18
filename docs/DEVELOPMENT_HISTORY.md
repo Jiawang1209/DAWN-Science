@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 原生会话恢复后重读路线文件证据
+
+- **Type**: fix
+- **Motivation**: 实际重启验收复现路线和交付数已恢复，但首次 get 早于 Native resume，文件事实持续停在 inactive 读取的“存在性未知”，须手动刷新才恢复。
+- **What**: 路线读取 effect 订阅既有 session.state 明确变化，在恢复完成的 alive 状态重读证据；路线 revision、会话/请求代次守卫保持，不轮询或重放动作。
+- **Impact**: 同 revision 的恢复也能自动取得已持久化工具生成证据，不改变历史文件或后端 CAS。
+- **Verification**: 真正关闭重启的 Electron 回归先 RED，持续 25 秒仍未知；修复后无需手动刷新恢复“观察到工具生成”，路线 Electron 2 项通过。UI 定向 5 文件 140 项、typecheck/build/git diff --check 通过。日志 /tmp/analysis-route-resume-evidence-red.log、/tmp/analysis-route-resume-evidence-green.log、/tmp/analysis-route-resume-evidence-ui.log、/tmp/analysis-route-resume-evidence-build.log。未操作主任务的 visible 预览或旧数据。
+
 ### 2026-10-18 — 路线元数据工具明确无工作区产出
 
 - **Type**: fix

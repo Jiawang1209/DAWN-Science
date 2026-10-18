@@ -24,7 +24,8 @@ const fileFact = (state: AnalysisRouteEvidence['deliverables'][number]['state'])
 })[state]
 type Selection = {server:string;caseId:string}
 
-export function AnalysisRouteStep({route,step,tab,onTab,historical,locked,evidence,roots,rootsError,onRetryRoots,onAction,onFile,onOpenWeb,onTool,canLocateTool,workingStepId,awaitingInput}: {
+export function AnalysisRouteStep({route,step,tab,onTab,historical,locked,evidence,roots,rootsError,onRetryRoots,onAction,onFile,onOpenWeb,onTool,canLocateTool,workingStepId,awaitingInput,onPrepareDelivery}: {
+  onPrepareDelivery?:((paths:string[])=>void)|undefined
   workingStepId:string|undefined; awaitingInput:boolean
   route:AnalysisRoute; step:RouteStep; tab:RouteTab; onTab:(tab:RouteTab)=>void
   historical:boolean; locked:boolean; evidence:AnalysisRouteEvidence|undefined
@@ -77,6 +78,7 @@ export function AnalysisRouteStep({route,step,tab,onTab,historical,locked,eviden
     </div>
     <div id="route-step-panel" role="tabpanel" aria-labelledby={`route-tab-${tab==='files'?'files':'log'}`}>
       {tab==='files' ? <div className="route-deliverables">
+        {onPrepareDelivery&&step.deliverables.length?<Button variant='outline' size='sm' onClick={()=>onPrepareDelivery(step.deliverables.map(f=>f.path))}>{t("整理本步交付")}</Button>:null}
         {step.deliverables.length===0 ? <p className="caveat">{t("尚无交付文件")}</p> : groups.map(group=>{
           const files=step.deliverables.filter(file=>group.kinds.length ? group.kinds.includes(文件类按名字(file.path, "file")) : !known.has(文件类按名字(file.path, "file")))
           if(!files.length) return null

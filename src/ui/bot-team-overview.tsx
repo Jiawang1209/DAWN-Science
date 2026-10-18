@@ -10,6 +10,7 @@ import {botFileKindLabel,botMemberLabel,summarizeBotTeam,type BotFileKind} from 
 import {updateBotRoom,type BotRoomState} from "./state/bot-room.js"
 
 export interface BotTaskActions {
+ onPrepareDelivery?:((paths:string[])=>void)|undefined
  onTaskView?:(taskId:string)=>void
  onTaskStop?:(taskId:string)=>Promise<unknown>
  onTaskMessage?:(taskId:string,instruction:string)=>Promise<unknown>
@@ -71,7 +72,7 @@ export function BotTeamOverview(p:{team:TeamSnapshot;room:BotRoomState;roomKey:s
    {output?<div className="bot-overview-result"><span className="hint">{result||selected.task?.output?t("任务返回内容"):t("协作回应")}</span><AgentMarkdown text={output} streaming={false}/></div>:null}
    <div className="bot-overview-actions"><Button variant="outline" size="sm" onClick={()=>navigate({page:"files",file:undefined})}>{t("查看交付文件")}</Button><Button variant="ghost" size="sm" onClick={()=>p.onView(selected.member.botId!)}>{selected.state==="question"?t("查看问题"):selected.state==="permission"?t("查看权限请求"):t("查看执行对话")}</Button></div>
    {!selectedFiles.length?<p className="hint">{t("本成员尚无文件交付；回应内容与任务完成状态分别记录。")}</p>:null}
-  </section>:page==="files"?<section className="bot-overview-detail"><h3>{selected?tf("{0} 的交付",p.name(selected.member.botId,selected.member.name)):t("团队交付")}</h3><p className="hint">{tf("{0} 个已核验文件",String(files.length))}</p>{fileList(files)}</section>:<p className="hint">{t("成员已离队，请返回团队总览。")}</p>}
+  </section>:page==="files"?<section className="bot-overview-detail"><h3>{selected?tf("{0} 的交付",p.name(selected.member.botId,selected.member.name)):t("团队交付")}</h3><p className="hint">{tf("{0} 个已核验文件",String(files.length))}</p>{p.onPrepareDelivery&&files.length?<Button variant="outline" size="sm" onClick={()=>p.onPrepareDelivery!(files.map(f=>f.path))}>{t("整理这些交付文件")}</Button>:null}{fileList(files)}</section>:<p className="hint">{t("成员已离队，请返回团队总览。")}</p>}
   </div>
   {preview&&p.readArtifact?<BotArtifactPreview key={previewKey} path={preview} readArtifact={p.readArtifact} onClose={closePreview}/>:null}
  </div>

@@ -23,3 +23,7 @@ it('scientific demo resumes only the chosen Chinese presentation, and pause is n
  expect(scene.toolCall(withChoice('先暂停'))).toBeUndefined()
  expect(scene.toolCall(withChoice('中文简报')).toolName).toBe('write')
 })
+it('does not let the delivery demo override an explicitly selected scenario',async()=>{
+ const server=await startMockInferenceServer({scenario:{toolCall:()=>undefined,reply:()=> 'explicit delivery scenario'}})
+ try{const result=await reply(server,{...body,messages:[{role:'user',content:'演示科研分析交付'}]});expect(result.choices[0].message.content).toBe('explicit delivery scenario')}finally{await server.close()}
+})

@@ -1,3 +1,4 @@
+import {$deliveryViews} from './delivery.js'
 import { $routeViews } from "./route-navigation.js"
 import { $botRooms } from "./bot-room.js"
 import { clearBotSession, $bots, $botOwner } from "./bots.js"
@@ -271,6 +272,7 @@ import { $sessionRecovery } from "./session-recovery.js"
  * 那条路径也应当走这里，而不是各自 `set()` 一遍。
  */
 export function resetAllState(): void {
+  $deliveryViews.set(new Map())
   $routeViews.set(new Map())
   clearBotSession(); $bots.set([]); $botOwner.set(undefined); $botRooms.set({})
   $sessionRecovery.set({})

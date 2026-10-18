@@ -1,3 +1,4 @@
+import {DeliveryService, type DeliveryOptions} from '../delivery/service.js'
 import { withSessionContext } from './session-input-context.js'
 import { BotOutputLocks, canonicalOutputPaths } from "../bot/output-locks.js"
 import { verifiedArtifacts } from "../bot/context.js"
@@ -554,6 +555,99 @@ const 诊断图PNG =
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
+
+  const analysisDeliveries = new Map<
+    string,
+    { service: DeliveryService; options: DeliveryOptions }
+  >();
+  function stopAnalysisDeliveries(sessionId: string) {
+    for (const [key, slot] of analysisDeliveries) {
+      if (slot.options.sessionId === sessionId) {
+        slot.service.dispose();
+        analysisDeliveries.delete(key);
+      }
+    }
+  }
+  function deliveryContext(sessionId: string) {
+    const rec = sessions.get(sessionId);
+    if (!rec) throw fault("not_found", "没有这段会话：{0}", sessionId);
+    if (rec.connectionId)
+      return {
+        supported: false as const,
+        reason: "第一版交付整理仅支持本机工作区；远端文件仍可预览。",
+      };
+    let reason: string | undefined;
+    if (registry.agents[rec.agentId]?.kind !== "native" || !askOnce)
+      reason = "交付整理需要当前会话的 API 模型；不会改用其他模型。";
+    const locations = [
+      ...(skills?.项目目录名 ? [join(rec.workspace, skills.项目目录名)] : []),
+      ...(skills?.全局目录 ? [skills.全局目录] : []),
+      ...(skills?.自带目录 ? [skills.自带目录] : []),
+    ];
+    const found = loadSkills({
+      cwd: rec.workspace,
+      agentDir: join(homedir(), ".pi"),
+      skillPaths: locations,
+      includeDefaults: false,
+    });
+    const selected: string[] = [];
+    for (const name of ["analysis-delivery", "scientific-review"]) {
+      const skill = found.skills.find((s) => s.name === name);
+      if (!skill) {
+        if (name === "analysis-delivery")
+          reason ??= "当前可见技能中没有 analysis-delivery，请先启用该技能。";
+        continue;
+      }
+      const content = readFileSync(skill.filePath, "utf8");
+      const builtin =
+        skills?.自带目录 &&
+        (skill.filePath === skills.自带目录 ||
+          skill.filePath.startsWith(skills.自带目录 + sep));
+      const mode =
+        (builtin ? (skills?.自带档?.(name) ?? 自带技能档(name)) : undefined) ??
+        读调用策略(content);
+      if (mode === "off" || (name === "scientific-review" && mode === "manual")) {
+        if (name === "analysis-delivery")
+          reason ??= "analysis-delivery 已停用；请在技能设置中启用后重试。";
+        continue;
+      }
+      if (Buffer.byteLength(content) > 128 * 1024)
+        throw new UserFacingError("交付技能超过读取上限，请精简当前覆盖版本。");
+      selected.push(
+        `\n<skill name="${name}" path="${skill.filePath}">\n${content}\n</skill>`,
+      );
+    }
+    const scope = JSON.stringify([rec.id, rec.workspace, rec.sessionDir]);
+    let slot = analysisDeliveries.get(scope);
+    const ask: DeliveryOptions["ask"] = async (request) => {
+      if (sessions.get(rec.id)?.workspace !== rec.workspace)
+        throw new UserFacingError("会话工作区已变更，交付整理已停止。");
+      if (!askOnce || reason)
+        throw new UserFacingError(reason ?? "当前模型不可用");
+      const result = await askOnce({ sessionId: rec.id }, request);
+      if (sessions.get(rec.id)?.workspace !== rec.workspace)
+        throw new UserFacingError("会话工作区已变更，交付整理已停止。");
+      return result;
+    };
+    if (!slot) {
+      const options: DeliveryOptions = {
+        sessionId: rec.id,
+        workspace: rec.workspace,
+        sessionDir: rec.sessionDir,
+        ask,
+        skills: selected.join("\n"),
+        interpreters: settings?.interpreters() ?? {},
+      };
+      slot = { options, service: new DeliveryService(options) };
+      analysisDeliveries.set(scope, slot);
+    } else
+      Object.assign(slot.options, {
+        ask,
+        skills: selected.join("\n"),
+        interpreters: settings?.interpreters() ?? {},
+      });
+    return { supported: !reason, reason, service: slot.service };
+  }
 
   const autoTitles = new AutoSessionTitles({
     get: id => sessions.get(id), list: () => sessions.list(),
@@ -1578,6 +1672,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
   /** 删一个会话：停进程 → 删记录 → 删任务 → **最后**会话目录进废纸篓（顺序见里面）。`deleteSession` 与「删掉全部归档」共用 */
   const 删一个会话 = async (sessionId: string): Promise<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }> => {
+    stopAnalysisDeliveries(sessionId)
       const rec = sessions.get(sessionId)
       if (!rec) throw fault("not_found", "没有这个会话：{0}", sessionId)
       // **在删记录之前**摘坞：记录一没，`setSideTool` 就找不到它归哪个运行时，native 那边的开关会一直留着
@@ -2829,6 +2924,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const 去处 = workspace ?? projects.temporaryWorkspace(要有临时根())
         const 归属 = workspace ? projects.open(workspace) : projects.ensureTemporary(要有临时根())
         try {
+          stopAnalysisDeliveries(t.sessionId)
           await sessions.rehome(t.sessionId, 去处, 归属.projectId)
           接上会话事件(t.sessionId)
         } catch (e) {
@@ -3821,6 +3917,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 回答一版方案（先出方案，2026-09-27，spec §4.5）。**只转达、不替人发执行话**——那句由界面走 `writeToSession`，是人的一条发言。
      * 分码照运行时的原话：没有这一版 → not_found；不是最新 / 已经答过 → conflict；存不下来（权限、磁盘、远端断线）→ internal_error，原样说。
      */
+    listAnalysisDeliveries: async ({sessionId}) => {
+      const ctx=deliveryContext(sessionId)
+      return {supported:ctx.supported,...(ctx.reason?{reason:ctx.reason}:{}),records:ctx.service?.list()??[]}
+    },
+    createAnalysisDelivery: async ({sessionId,...request}) => {
+      const ctx=deliveryContext(sessionId)
+      if(!ctx.supported||!ctx.service)throw new UserFacingError(ctx.reason??'交付整理不可用')
+      return ctx.service.create(request)
+    },
+    verifyAnalysisDelivery: async ({sessionId,...request}) => {
+      const ctx=deliveryContext(sessionId)
+      if(!ctx.supported||!ctx.service)throw new UserFacingError(ctx.reason??'交付验证不可用')
+      return ctx.service.verify(request)
+    },
+    cancelAnalysisDelivery: async ({sessionId,id}) => ({ok:deliveryContext(sessionId).service?.cancel(id)??false}),
     getAnalysisRoute: async ({ sessionId, includeHistory }) => {
       if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
       return sessions.getAnalysisRoute(sessionId, includeHistory)
@@ -5067,6 +5178,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       // **连已归档的一起**（2026-08-23 审查抓的）：`listByProject` 不列归档的，它们的会话不停、任务不清，行却被 `deleteByProject` 删了——侧栏留一条指向不存在会话的「新任务」
       const 全部会话 = [...sessions.listByProject(projectId), ...sessions.listArchived().filter((r) => r.projectId === projectId)]
       for (const rec of 全部会话) {
+        stopAnalysisDeliveries(rec.id)
         if (rec.state !== "exited") await sessions.stop(rec.id).catch(() => {})
         events.forget(rec.id)
         侧边忘掉(rec.id)

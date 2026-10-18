@@ -128,3 +128,6 @@ export type { AnalysisRoute, AnalysisRouteDraft, RouteStep, RouteAction, RouteAc
 
 export { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema, AnalysisRouteEvidenceSchema } from './analysis-route.js'
 export type { AnalysisRouteReadResult, AnalysisRouteActionRequest, AnalysisRouteActionResult, AnalysisRouteEvidence } from './analysis-route.js'
+
+export {DeliveryRecordSchema, DeliveryCreateSchema, DeliveryVerifySchema} from './delivery.js'
+export type {DeliveryRecord, DeliveryCreate, DeliveryPlan, DeliveryVerify} from './delivery.js'

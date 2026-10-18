@@ -179,6 +179,9 @@ test("Bot Team holds a continuous discussion with reverse questions and queued u
  await expect(roster).toBeVisible()
  expect(await roster.locator(".bot-overview-member").evaluateAll(rows=>rows.every((el,i)=>!i||el.getBoundingClientRect().top>=rows[i-1]!.getBoundingClientRect().bottom-1))).toBe(true)
  await dock.screenshot({path:testInfo.outputPath("bot-overview-dark-280.png")})
+ await main.getByRole("button",{name:/查看交付/}).click()
+ await dock.getByRole("button",{name:"整理这些交付文件",exact:true}).click()
+ await expect(dock.getByRole("region",{name:"分析交付",exact:true}).getByRole("checkbox",{name:/model\.py/})).toBeChecked()
 })
 
 test("team attention opens a real pending question and the answered run resumes into verified deliveries",async({dawn},testInfo)=>{

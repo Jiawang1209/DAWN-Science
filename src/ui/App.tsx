@@ -1,3 +1,5 @@
+import {AnalysisDeliveryPanel} from './analysis-delivery.js'
+import {beginDelivery,deliverySelectionPaths} from './state/delivery.js'
 import {botRoomKey,updateBotRoom} from "./state/bot-room.js"
 import { AnalysisRoutePanel, createRouteIntent } from "./analysis-route.js"
 import { RouteController, performRouteAction, resolveRouteFile } from "./state/analysis-route.js"
@@ -108,7 +110,6 @@ import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
 import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
-import { ArtifactsPanel } from "./artifacts.js"
 import { loadArtifacts, resyncSide, resyncSubagent } from "./state/sync.js"
 import { $sessionRecovery } from "./state/session-recovery.js"
 import { setSessionState } from "./state/catalog.js"
@@ -1427,6 +1428,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [读产物, 当前工作区路径, 文件所在])
 
   const botOwnerScope = JSON.stringify([sessionId, 当前工作区路径, session?.projectId, session?.remote?.connectionId, session?.remote?.cwd])
+  const prepareAnalysisDelivery = !sessionId || session?.remote ? undefined : (paths:string[]) => {
+    if($activeSessionId.get()!==sessionId)return
+    try {
+      beginDelivery(botOwnerScope,deliverySelectionPaths(paths,当前工作区路径))
+      坞上位();setRightDockTenant('artifacts');setRightDockOpen(true)
+    } catch(error) { fail(error) }
+  }
+
   const botTeam = visibleBotTeam(storedBotTeam, sessionId, {workspace: 当前工作区路径, projectId: session?.projectId, connectionId: session?.remote?.connectionId, remoteCwd: session?.remote?.cwd})
   const [艾特设置, 设艾特设置] = useState<艾特设置>({ ignorePasted: true, globalRules: [] })
   /** 线那头回的东西不信到底：缺字段就按默认（测试里的假 client 对不认识的操作回 `{}`） */
@@ -6013,7 +6022,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }}
               />
             ) : rightDockTenant === "bot" ? (
-              <BotPane client={client} ownerSessionId={sessionId} ownerScope={botOwnerScope} team={botTeam}
+              <BotPane onPrepareDelivery={prepareAnalysisDelivery} client={client} ownerSessionId={sessionId} ownerScope={botOwnerScope} team={botTeam}
                 readArtifact={readBotArtifact}
                 onViewMember={async botId => {
                   if (!sessionId || !botTeam || botTeam.captainSessionId !== sessionId) return
@@ -6039,6 +6048,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <TeamPanel key={团队格会话 ?? sessionId} />
             ) : rightDockTenant === "route" ? (
               !session ? <EmptyState title={t("开始任务后查看路线")} description={t("每段会话保留自己的分析步骤和产物记录。")} /> : <AnalysisRoutePanel
+                onPrepareDelivery={prepareAnalysisDelivery}
                 key={JSON.stringify([session.sessionId, session.remote?.connectionId, session.remote?.cwd, 当前工作区路径])}
                 scopeKey={JSON.stringify([session.sessionId, session.remote?.connectionId, session.remote?.cwd, 当前工作区路径])}
                 result={routeResult}
@@ -6088,8 +6098,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               !sessionId ? <EmptyState
                 title={t("开始任务后查看产物")}
                 description={t("分析生成的图表、脚本和说明会显示在这里。")}
-              /> : <ArtifactsPanel
-                key={sessionId}
+              /> : <AnalysisDeliveryPanel
+                key={botOwnerScope}
+                client={client}
+                sessionId={sessionId}
+                scopeKey={botOwnerScope}
                 data={artifacts}
                 focus={产物焦点 && 产物焦点.sessionId === sessionId ? { path: 产物焦点.path, nonce: 产物焦点.nonce } : undefined}
                 readFile={读产物}

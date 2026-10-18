@@ -146,6 +146,9 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
   await pane().getByRole("tab", {name:/本步产物 /}).click()
   await pane().getByRole("button", { name: "results/reports/analysis-route-S1.md", exact: true }).click()
   await expect(pane().locator(".route-file-preview")).toContainText("未运行科研代码")
+  await pane().getByRole("button",{name:"收起预览",exact:true}).click()
+  await pane().getByRole("button",{name:"整理本步交付",exact:true}).click()
+  await expect(page.getByRole("region",{name:"分析交付",exact:true}).getByRole("checkbox",{name:/analysis-route-S1\.md/})).toBeChecked()
 })
 
 test("无路线入口只发送规划意图；步骤依赖阻塞且允许本地展开", async ({ dawn }) => {

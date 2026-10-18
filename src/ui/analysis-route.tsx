@@ -48,6 +48,7 @@ export interface AnalysisRoutePanelProps {
   loadGalleryRoots: () => Promise<Record<string, string>>
   onOpenWeb: (url: string) => void
   onOpenExternally: (path: string) => void
+  onPrepareDelivery?: ((paths: string[]) => void) | undefined
   onTool?: ((id: string) => void) | undefined
   canLocateTool?: ((id: string) => boolean) | undefined
 }
@@ -271,6 +272,7 @@ export function AnalysisRoutePanel(props: AnalysisRoutePanelProps) {
         </div>
       </>:selectedStep?<AnalysisRouteStep route={route} step={selectedStep} tab={view.tab} onTab={tab=>updateView({tab})} historical={historical} workingStepId={historical?undefined:workingId} awaitingInput={Boolean(props.awaitingInput)} locked={locked} evidence={result.evidence} roots={roots} rootsError={rootsError} onRetryRoots={()=>setRootsRetry(value=>value+1)}
         onAction={(action,selection)=>{updateView({stepId:selectedStep.id});void run(()=>onAction(selectedStep.id,action,selection))}}
+        onPrepareDelivery={props.onPrepareDelivery}
         onFile={path=>{updateView({path,reading:false});setRetry(value=>value+1)}} onOpenWeb={onOpenWeb} onTool={onTool} canLocateTool={props.canLocateTool}/>:null}
     </div>
   </section>

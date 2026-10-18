@@ -22,6 +22,7 @@
 | **子 agent 名册**：22 份自带、三层、一份两用（学自 dsh-agency-agents） | `specs/2026-08-22-子agent名册-design.md` |
 | **子 Agent 按需资源**：普通子任务/旧 Team 通过父侧只读查询技能与相关记忆；manual/off 不可见、项目/分支隔离，Bot 沿用原装配 | `specs/2026-10-18-child-agent-resources-design.md` · `plans/2026-10-18-child-agent-resources.md` · `docs/reviews/2026-10-18-child-agent-resources-verification.md` |
 | **共用科研审查规则**：scientific-review 按需提供设计/数据/产物/重跑清单；重点角色保留工具与执行边界、分别报告运行和发现 | `specs/2026-10-18-scientific-review-rules-design.md` · `plans/2026-10-18-scientific-review-rules.md` · `docs/reviews/2026-10-18-scientific-review-rules-verification.md` |
+| **分析交付**：坞产物内显式选文件，生成脚本、README 和结果解读，独立验证与整理状态分开留存；路线/Bot 共用入口 | `docs/superpowers/specs/2026-10-18-analysis-delivery-workflow-design.md` · `docs/superpowers/plans/2026-10-18-analysis-delivery-workflow.md` · `docs/reviews/2026-10-18-analysis-delivery-workflow-verification.md` |
 | **定时任务**：到点开一段全新会话跑任务说明（学自 dsh-automation） | `specs/2026-08-22-定时任务-design.md` |
 | **会话归档**：藏不是删；删会话真删会话目录（学自 dsh-archive-manager） | `specs/2026-08-22-会话归档-design.md` |
 | **技能管理**：三档开关写进 SKILL.md、导入、删除（学自 dsh-skills-manager） | `specs/2026-08-21-技能管理-design.md` |

@@ -22,6 +22,7 @@ const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 export function BotPane(p: {
   client: WorkbenchClient; ownerSessionId: string | undefined; ownerScope?: string | undefined; projectLabel?: string | undefined
   team?: TeamSnapshot | undefined
+  onPrepareDelivery?:((paths:string[])=>void)|undefined
   readArtifact?: ReadBotArtifact | undefined
   onViewMember?: ((botId: string) => Promise<void>) | undefined
   models: readonly { provider?: string | undefined; model: string }[]
@@ -85,7 +86,7 @@ export function BotPane(p: {
         <Button variant="ghost" size="sm" role="tab" aria-selected={view === "assistants"} onClick={() => setBotPage("assistants")}>{t("助手")}</Button>
         <Button variant="ghost" size="sm" role="tab" aria-selected={view === "collaboration"} onClick={() => setBotPage("collaboration")}>{t("团队对话")}</Button>
       </div>
-      {view === "collaboration" ? <BotCollaboration team={p.team} ownerSessionId={p.ownerSessionId} scopeKey={p.ownerScope} bots={bots} readArtifact={p.readArtifact} onTaskView={taskId=>void perform(async()=>{
+      {view === "collaboration" ? <BotCollaboration onPrepareDelivery={p.onPrepareDelivery} team={p.team} ownerSessionId={p.ownerSessionId} scopeKey={p.ownerScope} bots={bots} readArtifact={p.readArtifact} onTaskView={taskId=>void perform(async()=>{
         const scope=viewScope.current
         const target={ownerSessionId:p.ownerSessionId!,teamId:p.team!.id,taskId}
         const r=await p.client.get<{session:SessionSummary}>("openBotTask",target)

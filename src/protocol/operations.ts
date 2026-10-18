@@ -1,3 +1,4 @@
+import {DeliveryCreateSchema, DeliveryRecordSchema, DeliveryVerifySchema} from './delivery.js'
 import { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema } from './analysis-route.js'
 import { QuestionAnswerSchema } from "./questions.js"
 /**
@@ -1817,6 +1818,26 @@ export const OPERATIONS = {
    *
    * 不是最新那一版 / 已经答过 → `conflict`；查无此版 → `not_found`；非 native → `invalid_request`。要写权（租约）。
    */
+  listAnalysisDeliveries: {
+    request: z.object({sessionId: z.string().min(1)}).strict(),
+    response: z.object({supported:z.boolean(),reason:z.string().optional(),records:z.array(DeliveryRecordSchema)}).strict(),
+    mutating: false,
+  },
+  createAnalysisDelivery: {
+    request: DeliveryCreateSchema.extend({sessionId:z.string().min(1)}),
+    response: DeliveryRecordSchema,
+    mutating: true,
+  },
+  verifyAnalysisDelivery: {
+    request: DeliveryVerifySchema.extend({sessionId:z.string().min(1)}),
+    response: DeliveryRecordSchema,
+    mutating: true,
+  },
+  cancelAnalysisDelivery: {
+    request: z.object({sessionId:z.string().min(1),id:z.string().min(1)}).strict(),
+    response:z.object({ok:z.boolean()}).strict(),
+    mutating:true,
+  },
   getAnalysisRoute: {
     request:z.object({sessionId:z.string().min(1),includeHistory:z.boolean().optional()}).strict(),
     response:AnalysisRouteReadResultSchema,mutating:false,

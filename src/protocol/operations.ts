@@ -1,3 +1,4 @@
+import { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema } from './analysis-route.js'
 import { QuestionAnswerSchema } from "./questions.js"
 /**
  * Workbench Protocol 的操作契约（Task 2.2）。
@@ -1814,6 +1815,14 @@ export const OPERATIONS = {
    *
    * 不是最新那一版 / 已经答过 → `conflict`；查无此版 → `not_found`；非 native → `invalid_request`。要写权（租约）。
    */
+  getAnalysisRoute: {
+    request:z.object({sessionId:z.string().min(1),includeHistory:z.boolean().optional()}).strict(),
+    response:AnalysisRouteReadResultSchema,mutating:false,
+  },
+  actOnAnalysisRoute: {
+    request:AnalysisRouteActionRequestSchema.safeExtend({sessionId:z.string().min(1)}),
+    response:AnalysisRouteActionResultSchema,mutating:true,
+  },
   answerPlan: {
     request: z
       .object({

@@ -142,6 +142,8 @@ export function createRunCodeTool(opts: {
   中断等待毫秒?: number
   /** 只约束已经送达的本轮消息；未指定时保留自动选语言的行为。 */
   允许语言?: () => readonly 内核语言[] | undefined
+  /** Runtime evidence hook: fires only when the kernel actually starts this call. */
+  onExecutionStarted?: (toolCallId:string)=>void
 }) {
   return {
     name: "run_code",
@@ -196,6 +198,7 @@ export function createRunCodeTool(opts: {
       const 跑 = opts.内核.执行(opts.对话, lang, code, {
         开始了: () => {
           已开始 = true
+          opts.onExecutionStarted?.(_toolCallId)
         },
         ...(signal ? { signal } : {}),
       })

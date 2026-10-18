@@ -121,6 +121,7 @@ interface Entry {
    * 这段对话挂着的内核状态列表（笔记本，2026-08-26）。缺省 = 没有内核——
    * 不是 native 会话，或还没起过内核。与 `team` 同一纪律：整份换掉。
    */
+  analysisRoute?: import("../protocol/analysis-route.js").AnalysisRoute | undefined
   kernels?: KernelState[] | undefined
   /** 待发单（2026-09-23）。缺省 = 没有待发；整份换掉 */
   queued?: QueuedMessage[] | undefined
@@ -551,6 +552,11 @@ export class SessionTranscripts {
        * 它给的就是整份新的，合并只会多一种「合错了」的失效方式。
        */
       /** 团队变了（team-board）：整份换掉，推一条 `team` 更新；快照里也带着 */
+      case "analysis_route": {
+        e.analysisRoute = structuredClone(event.route)
+        this.bump(sessionId, e, { type: 'analysisRoute', route: e.analysisRoute })
+        return
+      }
       case "team_changed": {
         e.team = event.team
         this.bump(sessionId, e, { type: "team", team: event.team })
@@ -1339,6 +1345,7 @@ export class SessionTranscripts {
       ...(e.kernelInstanceId ? { kernelInstanceId: e.kernelInstanceId } : {}),
       ...(e.configOptions?.length ? { configOptions: e.configOptions } : {}),
       ...(e.pendingPermission ? { pendingPermission: e.pendingPermission } : {}),
+      ...(e.analysisRoute ? {analysisRoute:structuredClone(e.analysisRoute)} : {}),
       ...(e.team ? { team: e.team } : {}),
       ...(e.kernels ? { kernels: e.kernels } : {}),
       ...(e.queued ? { queued: e.queued } : {}),

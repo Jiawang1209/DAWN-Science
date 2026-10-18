@@ -1,3 +1,9 @@
+import { existsSync } from 'node:fs'
+import { AnalysisRouteBook } from './analysis-route-book.js'
+import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
+import { createAnalysisRouteTools } from '../tools/analysis-route.js'
+import { AnalysisRouteActionRequestSchema, parseRouteActionMessage, routeActionMessage, routeContinueBlockers, type AnalysisRoute, type AnalysisRouteDraft, type AnalysisRouteReadResult, type AnalysisRouteActionRequest, type AnalysisRouteActionResult } from '../protocol/analysis-route.js'
+import { routeDeliverableEvidence } from './analysis-route-files.js'
 import { recoverBotTeam } from "../bot/recovery.js"
 import { Type } from "typebox"
 import { botInstructions, type BotRuntimeBridge } from "../bot/runtime.js"
@@ -687,6 +693,152 @@ export class NativeRuntime implements AgentRuntime {
    * 所以 `stop` 不摘它：配对的生死归后端对照表，拿下 / 归档 / 删除时由后端 `setSideTool(id, false)`。
    */
   private readonly 侧边工具开 = new Set<SessionId>()
+  /** One writable metadata book per ordinary main session. Historical readers
+   * never enter this map. A corrupt book stays unavailable until repaired. */
+  private readonly routeBooks = new Map<SessionId, {
+    book?: AnalysisRouteBook
+    error?: string
+    spec: SessionSpec
+    tools: Map<string, RouteToolEvidence>
+  }>()
+
+  getAnalysisRoute(sessionId: SessionId, sessionDir: string, includeHistory = false): AnalysisRouteReadResult {
+    const entry = this.routeBooks.get(sessionId)
+    if (entry?.spec.bot || (!entry && existsSync(join(sessionDir, 'bot-context.json')))) {
+      return { supported: false, reason: 'Bot 会话暂不支持分析路线' }
+    }
+    try {
+      if (entry?.error) throw new Error(entry.error)
+      // Temporary history reads never interrupt or rewrite stored state.
+      const book = entry?.book ?? new AnalysisRouteBook(join(sessionDir, 'analysis-route.json'))
+      const route = book.read()
+      const tools = entry ? this.routeEvidence(sessionId) : []
+      return {
+        supported: true,
+        ...(route ? {
+          route,
+          evidence: {
+            tools: tools.map(({ toolCallId, name, status, stepId, execution }) => ({
+              toolCallId, name, status,
+              ...(stepId ? { stepId } : {}),
+              ...(execution ? { execution } : {}),
+            })),
+            deliverables: routeDeliverableEvidence(route, tools, entry?.spec.workspace, Boolean(entry?.spec.remote)),
+          },
+        } : {}),
+        ...(includeHistory ? { history: book.history() } : {}),
+      }
+    } catch (error) {
+      return {
+        supported: true,
+        error: { code: 'ROUTE_ERROR', message: error instanceof Error ? error.message : String(error) },
+      }
+    }
+  }
+
+  actOnAnalysisRoute(sessionId: SessionId, input: AnalysisRouteActionRequest): AnalysisRouteActionResult {
+    const request = AnalysisRouteActionRequestSchema.parse(input)
+    const entry = this.routeBooks.get(sessionId)
+    if (!entry || entry.spec.bot) throw Object.assign(new Error('此会话不支持分析路线操作'), { routeCode: 'UNSUPPORTED' })
+    const state = this.sessions.get(sessionId)
+    if (!state) throw Object.assign(new Error('路线写入需要活动会话'), { routeCode: 'SESSION_INACTIVE' })
+    if (state.inFlight || state.session.isStreaming || state.转述中 || state.回退中 || state.中止中) {
+      throw Object.assign(new Error('会话正在运行、停止或回退，请稍后再操作路线'), { routeCode: 'SESSION_BUSY' })
+    }
+    if (!entry.book || entry.error) throw Object.assign(new Error(entry.error ?? '路线簿不可用'), { routeCode: 'ROUTE_ERROR' })
+    const route = entry.book.read()
+    if (!route || request.routeId !== route.routeId || request.expectedRevision !== route.revision) {
+      throw Object.assign(new Error('路线身份或版本已变化，请刷新后重试'), { routeCode: 'STALE_ROUTE' })
+    }
+    if (!route.steps.some(step => step.id === request.stepId)) {
+      throw Object.assign(new Error('没有此路线步骤'), { routeCode: 'STEP_NOT_FOUND' })
+    }
+    if (request.action === 'view' || request.action === 'search' || request.action === 'continue') {
+      if (request.action === 'continue') {
+        const blockers = routeContinueBlockers(route, request.stepId)
+        if (blockers.length) throw Object.assign(new Error(blockers.join('；')), { routeCode: 'ROUTE_BLOCKED' })
+      }
+      // The UI sends this through the existing writeToSession path. No prompt,
+      // in_progress state or scientific execution is started by this operation.
+      return { route, message: routeActionMessage(route, request.stepId, request.action) }
+    }
+    const next = entry.book.act(route.revision, request.stepId, request.action, request.selection)
+    this.emit({ kind: 'analysis_route', sessionId, route: next })
+    return { route: next }
+  }
+
+  private routeEvidence(sessionId: SessionId): RouteToolEvidence[] {
+    const entry = this.routeBooks.get(sessionId)
+    return collectRouteToolEvidence(
+      this.sessions.get(sessionId)?.sessionManager.getBranch() ?? [],
+      [...(entry?.tools.values() ?? [])],
+    )
+  }
+
+  private updateAnalysisRoute(sessionId: SessionId, expectedRevision: number, draft: AnalysisRouteDraft, reason?: string): AnalysisRoute {
+    const entry = this.routeBooks.get(sessionId)
+    if (!entry || entry.spec.bot || !entry.book) throw new Error(entry?.error ?? '此会话没有可写分析路线簿')
+    const previous = entry.book.read()
+    const user = latestRouteUserText(this.sessions.get(sessionId)?.sessionManager.getBranch() ?? [])
+    const action = parseRouteActionMessage(user)
+    if (action?.action === 'search') {
+      const withoutCandidates = (route: AnalysisRouteDraft) => ({
+        ...route, steps: route.steps.map(step => ({ ...step, cases: [] })),
+      })
+      if (!previous) throw new Error('检索动作需要既有路线')
+      const { routeId: _id, revision: _revision, updatedAt: _at, ...before } = previous
+      if (JSON.stringify(withoutCandidates(before)) !== JSON.stringify(withoutCandidates(draft))) {
+        throw new Error('检索动作只能更新真实候选案例；不能改变目标、输入、进度、执行或审查记录')
+      }
+    }
+    validateRouteEvidence(draft, previous, this.routeEvidence(sessionId), user)
+    // Preserve previously observed candidates after context compaction.
+    for (const step of draft.steps) {
+      const prior = previous?.steps.find(item => item.id === step.id)
+      for (const candidate of prior?.cases ?? []) {
+        if (!step.cases.some(item => item.server === candidate.server && item.caseId === candidate.caseId)) {
+          step.cases.push(candidate)
+        }
+      }
+    }
+    const route = entry.book.replace(expectedRevision, draft, reason)
+    this.emit({ kind: 'analysis_route', sessionId, route })
+    return route
+  }
+
+  private observeRouteExecution(sessionId: SessionId, id: string): void {
+    const tools = this.routeBooks.get(sessionId)?.tools
+    if (!tools) return
+    const old = tools.get(id)
+    tools.set(id, { toolCallId: id, name: old?.name ?? '?', status: 'done', result: '', ...old, execution: 'ran' })
+  }
+
+  private validateRouteMessage(sessionId: SessionId, text: string): void {
+    const action = parseRouteActionMessage(text)
+    if (!action) return
+    const entry = this.routeBooks.get(sessionId)
+    const route = entry?.book?.read()
+    if (!entry || entry.spec.bot || !route || route.routeId !== action.routeId || route.revision !== action.revision
+      || !route.steps.some(step => step.id === action.stepId)) {
+      throw Object.assign(new Error('路线身份、步骤或版本已变化，请刷新后重新操作'), { routeCode: 'STALE_ROUTE' })
+    }
+    if (action.action === 'continue') {
+      const blockers = routeContinueBlockers(route, action.stepId)
+      if (blockers.length) throw Object.assign(new Error(blockers.join('；')), { routeCode: 'ROUTE_BLOCKED' })
+    }
+  }
+
+  private interruptAnalysisRoute(sessionId: SessionId, reason: string, review = false): void {
+    const entry = this.routeBooks.get(sessionId)
+    if (!entry?.book || entry.spec.bot) return
+    try {
+      const route = review ? entry.book.markNeedsReview(reason) : entry.book.interrupt(reason)
+      if (route) this.emit({ kind: 'analysis_route', sessionId, route })
+    } catch (error) {
+      this.emit({ kind: 'notice', sessionId, text: `分析路线状态未能保存：${error instanceof Error ? error.message : String(error)}` })
+    }
+  }
+
   /**
    * 每段会话一本方案簿（先出方案，2026-09-27）。**按会话 id 记，`stop` 不摘**：它落盘在会话目录，
    * 续接时 `start` 重新读一遍；摘了的话停止与重开之间那一拍，已批准文件的保护就不在了。
@@ -870,6 +1022,16 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   private emit(event: AgentEvent): void {
+    if (event.kind === 'tool_files') {
+      const tools = this.routeBooks.get(event.sessionId)?.tools
+      if (tools) {
+        const old = tools.get(event.toolCallId)
+        tools.set(event.toolCallId, {
+          toolCallId: event.toolCallId, name: old?.name ?? '?', status: 'done', result: '', ...old,
+          filesWritten: event.filesWritten,
+        })
+      }
+    }
     for (const sink of [...(this.sinks.get(event.sessionId) ?? [])]) sink(event)
   }
 
@@ -962,6 +1124,7 @@ export class NativeRuntime implements AgentRuntime {
     /** 本会话产物（2026-08-23）：删自己建的不算删除。一个会话一份 */
     const 产物 = this.产物登记(sessionId)
     const 问 = (title: string, reason: string, signal: AbortSignal | undefined) => this.问权限(sessionId, title, reason, signal)
+    const observed = (id: string) => this.observeRouteExecution(sessionId, id)
     const wrap = (definition: Record<string, unknown>) => {
       const original = (definition.execute as (...a: unknown[]) => Promise<unknown>).bind(definition)
       const name = String(definition.name)
@@ -1001,6 +1164,7 @@ export class NativeRuntime implements AgentRuntime {
           // 包装器天然是同步点，而普通事件订阅不阻塞
           const handle = await probe?.begin(name, params)
           try {
+            if (name === 'bash' || name === 'powershell') observed(toolCallId)
             const r = await original(toolCallId, params, signal, onUpdate, ctx)
             if (!(r as { isError?: boolean } | undefined)?.isError) {
               for (const [p, 有] of 之前) 产物.登记新建(p, 有)
@@ -1238,7 +1402,7 @@ export class NativeRuntime implements AgentRuntime {
      */
     const 内核工具 =
       this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
-        ? [createRunCodeTool({ 对话: spec.sessionId, 内核: this.opts.kernels, 允许语言: () => 本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? []) })]
+        ? [createRunCodeTool({ onExecutionStarted:(id)=>this.observeRouteExecution(spec.sessionId,id), 对话: spec.sessionId, 内核: this.opts.kernels, 允许语言: () => 本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? []) })]
         : []
 
     /**
@@ -1571,6 +1735,21 @@ export class NativeRuntime implements AgentRuntime {
     const 簿 = new 方案簿(join(spec.sessionDir, 方案簿文件名))
     this.方案簿们.set(spec.sessionId, { 簿, workspace: spec.workspace, sessionDir: spec.sessionDir, 远端: spec.remote?.executor })
     if (簿.读坏了) this.emit({ kind: "notice", sessionId: spec.sessionId, text: 簿.读坏了 })
+    const routeEntry: {
+      book?: AnalysisRouteBook; error?: string; spec: SessionSpec; tools: Map<string, RouteToolEvidence>
+    } = { spec, tools: new Map() }
+    if (!spec.bot) {
+      try {
+        routeEntry.book = new AnalysisRouteBook(join(spec.sessionDir, 'analysis-route.json'))
+      } catch (error) {
+        routeEntry.error = error instanceof Error ? error.message : String(error)
+        this.emit({ kind: 'notice', sessionId: spec.sessionId, text: routeEntry.error })
+      }
+    }
+    this.routeBooks.set(spec.sessionId, routeEntry)
+    if (!spec.bot) this.interruptAnalysisRoute(spec.sessionId, '会话恢复，先前进行中的步骤未正常收尾')
+    const restoredRoute = routeEntry.book?.read()
+    if (restoredRoute) this.emit({ kind: 'analysis_route', sessionId: spec.sessionId, route: restoredRoute })
     const 原工具 = this.toolsFor(
       spec,
       native,
@@ -1607,7 +1786,11 @@ export class NativeRuntime implements AgentRuntime {
         ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
         : []),
     ]
-    const 方案期包过的 = [...(customTools ?? []), questionTool, ...方案工具].map((d) => this.套方案期门(d as Record<string, unknown>, spec))
+    const routeTools = spec.bot ? [] : createAnalysisRouteTools({
+      read: () => this.getAnalysisRoute(spec.sessionId, spec.sessionDir),
+      update: (revision, route, reason) => this.updateAnalysisRoute(spec.sessionId, revision, route, reason),
+    })
+    const 方案期包过的 = [...(customTools ?? []), questionTool, ...方案工具, ...routeTools].map((d) => this.套方案期门(d as Record<string, unknown>, spec))
     this.方案工具名们.set(
       spec.sessionId,
       方案期工具.filter((n) => 方案期包过的.some((d) => d.name === n)),
@@ -2312,6 +2495,7 @@ export class NativeRuntime implements AgentRuntime {
    * 失败经事件流出声，不静默吞。
    */
   write(sessionId: SessionId, data: string, behavior?: 送法, queueId?: string): void {
+    this.validateRouteMessage(sessionId, data)
     this.送一轮(sessionId, data, undefined, behavior, queueId)
   }
 
@@ -2476,6 +2660,7 @@ ${描述}`
     /** 有它才进待发单（2026-09-23）：后端据此把这句话的转录推迟到真送到的那一刻 */
     queueId?: string,
   ): Promise<void> | undefined {
+    this.validateRouteMessage(sessionId, data)
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     this.不许在回退(s)
@@ -2601,6 +2786,7 @@ ${描述}`
       // 回退这一轮：这一轮收尾拍一张结尾（只 stat）。不等它——`开轮` / `回退` 排在同一条链上，自然在它之后（2026-09-27）
       void this.存档们.get(sessionId)?.收尾()
       // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
+      this.interruptAnalysisRoute(sessionId, '本轮已结束，步骤仍未交付；请核对当前状态与阻塞原因')
       this.emit({ kind: "idle", sessionId })
     }
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
@@ -3155,6 +3341,7 @@ ${描述}`
       await s.session.abort()
     } finally {
       s.中止中 -= 1
+      this.interruptAnalysisRoute(sessionId, '用户已停止本轮执行')
     }
   }
 
@@ -3654,6 +3841,7 @@ ${描述}`
         const r = await s.session.navigateTree(位.entry)
         if (r.cancelled) throw new Error("pi 取消了这次跳转")
         对话撤了 = true
+        this.interruptAnalysisRoute(sessionId, '会话对话已回退，原有路线与证据保留；请核对当前上下文', true)
         if (r.editorText !== undefined) 回执 = { ...回执, editorText: r.editorText }
         // `navigateTree` 经 `_restoreToolsFromTranscript` 重建了工具集：侧边工具、方案期那几件按标记再设一次
         this.按标记设侧边工具(s.session, this.侧边工具开.has(sessionId))
@@ -3761,6 +3949,9 @@ ${描述}`
     return {
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
+        const branch = this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? []
+        const routeDenial = routeTurnDenial(name, branch, mcp只读)
+        if (routeDenial) return { content: [{ type: 'text', text: routeDenial }], isError: true, details: undefined }
         const 讨论理由 = 讨论拒绝理由(name, this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? [], mcp只读)
         if (讨论理由) return { content: [{ type: "text", text: 讨论理由 }], isError: true, details: undefined }
         const 簿 = this.方案簿(spec.sessionId)
@@ -3772,7 +3963,30 @@ ${描述}`
         })
         if (决定.kind === "deny") return { content: [{ type: "text", text: 决定.reason }], isError: true, details: undefined }
         await this.记轮基线(spec.sessionId)
-        return original(toolCallId, params, signal, onUpdate, ctx)
+        const currentStep = parseRouteActionMessage(latestRouteUserText(branch))?.stepId
+        let result: unknown
+        try {
+          result = await original(toolCallId, params, signal, onUpdate, ctx)
+        } catch (error) {
+          result = { content: [{ type: 'text', text: error instanceof Error ? error.message : String(error) }], isError: true }
+        }
+        const response = result as { isError?: boolean; content?: { text?: string }[]; details?: Record<string, unknown> }
+        const tools = this.routeBooks.get(spec.sessionId)?.tools
+        const old = tools?.get(toolCallId)
+        const output = (response.content ?? []).map(block => block.text ?? '').join('')
+        const failed = response.isError || /内核]（代码报错）|内核]（已中断）/.test(output)
+        const execution = old?.execution ? (failed ? 'failed' as const : 'ran' as const) : 'not_observed' as const
+        const observation = {
+          execution,
+          ...(currentStep ? { stepId: currentStep } : {}),
+          ...(old?.filesWritten ? { filesWritten: old.filesWritten } : {}),
+        }
+        tools?.set(toolCallId, {
+          toolCallId, name, status: response.isError ? 'error' : 'done', result: output, input: params, ...observation,
+        })
+        // Persist app observations in the actual tool result. Models cannot supply
+        // these details; a denied outer gate returns before this point.
+        return { ...response, details: { ...response.details, analysisRouteEvidence: observation } }
       },
     }
   }
@@ -3912,6 +4126,7 @@ ${描述}`
     if (!s) return
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
+    this.interruptAnalysisRoute(sessionId, '会话已停止')
     this.sessions.delete(sessionId)
     this.botTeams.delete(sessionId)
     /**

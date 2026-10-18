@@ -99,7 +99,7 @@ export function routeActionMessage(route: AnalysisRoute, stepId: string, action:
   const reference = `${actionMarker}${JSON.stringify({ routeId: route.routeId, revision: route.revision, stepId, action })}\n`
   if (action === "view") return `${reference}请解释此步骤「${step.title}」的目的、输入、预期输出和已记录证据。本轮范围是解释与读取；此入口不批准代码执行或科研文件写入，原有授权范围保持不变。`
   if (action === "search") return `${reference}请为此步骤「${step.title}」检索和说明真实候选案例。本轮范围是读取与检索；此入口不批准代码执行或科研文件写入，案例仍由我选择，原有授权范围保持不变。`
-  return `${reference}请仅继续选定步骤「${step.title}」。保留会话原有授权和方案门；需要批准时先停下，检查前置依赖与阻塞原因。不要自动执行其他步骤，此请求仅指向本步，不批准整条路线，也不解除此前用户的讨论限制。执行前须核对下游输入及前置实际产物；脚本已交付并不表示运行产物已准备好。`
+  return `${reference}请仅继续选定步骤「${step.title}」。保留会话原有授权和方案门；需要批准时先停下，检查前置依赖与阻塞原因。此请求不批准自动执行其他步骤，仅指向本步，不批准整条路线，也不解除此前用户的讨论限制。执行前须核对下游输入及前置实际产物；脚本已交付并不表示运行产物已准备好。`
 }
 
 /** Pure metadata preconditions shared by UI/runtime. A delivered dependency is only
@@ -124,3 +124,38 @@ export function routeContinueBlockers(route: AnalysisRoute, stepId: string): str
   }
   return [...new Set(blockers)]
 }
+
+/** Application-observed facts, separate from the agent's route records.
+ * observed = a successful producing tool recorded this exact output path;
+ * exists = only filesystem existence; unknown includes unobserved remote paths.
+ */
+export const AnalysisRouteEvidenceSchema = z.object({
+  tools: z.array(z.object({
+    toolCallId: text, name: text, status: z.enum(['done', 'error']), stepId: text.optional(),
+    execution: z.enum(['ran', 'failed', 'not_observed']).optional(),
+  }).strict()),
+  deliverables: z.array(z.object({
+    stepId: text, path: text, state: z.enum(['observed', 'exists', 'missing', 'unknown']),
+  }).strict()),
+}).strict()
+export type AnalysisRouteEvidence = z.infer<typeof AnalysisRouteEvidenceSchema>
+export const AnalysisRouteReadResultSchema = z.object({
+  supported: z.boolean(), reason: text.optional(), route: AnalysisRouteSchema.optional(),
+  history: z.array(AnalysisRouteSchema).optional(),
+  error: z.object({ code: text, message: text }).strict().optional(),
+  evidence: AnalysisRouteEvidenceSchema.optional(),
+}).strict()
+export type AnalysisRouteReadResult = z.infer<typeof AnalysisRouteReadResultSchema>
+export const AnalysisRouteActionRequestSchema = z.object({
+  routeId: text, expectedRevision: z.number().int().positive(), stepId: text,
+  action: z.enum(['view', 'search', 'continue', 'select', 'skip', 'restore']), selection: selection.optional(),
+}).strict().superRefine((request, ctx) => {
+  if ((request.action === 'select') !== Boolean(request.selection)) {
+    ctx.addIssue({ code: 'custom', path: ['selection'], message: '仅 select 动作必须提供 selection' })
+  }
+})
+export type AnalysisRouteActionRequest = z.infer<typeof AnalysisRouteActionRequestSchema>
+export const AnalysisRouteActionResultSchema = z.object({
+  route: AnalysisRouteSchema.optional(), message: text.optional(),
+}).strict()
+export type AnalysisRouteActionResult = z.infer<typeof AnalysisRouteActionResultSchema>

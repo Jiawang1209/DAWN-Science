@@ -31,11 +31,11 @@ const 放 = { kind: "allow" }
 
 describe("方案期：名单", () => {
   it("只读的几件放（含 pi 的 ls / grep / find：不过 shell）", () => {
-    for (const n of ["read", "look_at_image", "read_main_session", "propose_plan", "inspect_data", "ls", "grep", "find"]) {
+    for (const n of ["read", "look_at_image", "read_main_session", "propose_plan", "inspect_data", "ls", "grep", "find", "get_analysis_route", "update_analysis_route"]) {
       expect(方案期判(n, {}, 语境()), n).toEqual(放)
     }
     expect([...方案期放行].sort()).toEqual(
-      ["ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session"].sort(),
+      ["ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
     )
   })
 

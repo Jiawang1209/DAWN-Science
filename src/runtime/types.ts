@@ -190,6 +190,7 @@ export interface 会话开关 {
 }
 
 export type AgentEvent =
+  | {kind:"analysis_route";sessionId:SessionId;route:import("../protocol/analysis-route.js").AnalysisRoute}
   | { kind: "started"; sessionId: SessionId; pid: number }
   | { kind: "output"; sessionId: SessionId; data: string }
   /**
@@ -687,5 +688,7 @@ export interface AgentRuntime {
    */
   configOptions?(sessionId: SessionId): readonly 会话开关[] | undefined
   resize?(sessionId: SessionId, cols: number, rows: number): void
+  getAnalysisRoute?(sessionId:SessionId,sessionDir:string,includeHistory?:boolean):import('../protocol/analysis-route.js').AnalysisRouteReadResult
+  actOnAnalysisRoute?(sessionId:SessionId,request:import('../protocol/analysis-route.js').AnalysisRouteActionRequest):import('../protocol/analysis-route.js').AnalysisRouteActionResult
   stop(sessionId: SessionId): Promise<void>
 }

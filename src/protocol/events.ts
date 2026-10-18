@@ -1,3 +1,4 @@
+import { AnalysisRouteSchema } from './analysis-route.js'
 /**
  * 会话快照与增量更新（返工 R4 重写）。
  *
@@ -639,6 +640,7 @@ export const SessionSnapshotSchema = z
      * 这段会话带的团队（team-board，7.22，学自 dsh-agent-teams）。**真相在磁盘**，这里是一份快照：
      * 成员、任务（含依赖、attempt、结果）、邮箱。缺省 = 这段会话没建过团队。
      */
+    analysisRoute: AnalysisRouteSchema.optional(),
     team: TeamSnapshotSchema.optional(),
     /**
      * 这段对话挂着的内核状态列表（笔记本，2026-08-26）。**一段普通对话可以同时挂
@@ -716,6 +718,7 @@ export const SessionUpdateSchema = z.discriminatedUnion("type", [
   /** 持久标题元信息，按 sessionId 同步。revision 为当前转录版本，不推进、不参与转录连续性校验。 */
   z.object({ ...envelope, type: z.literal("title"), title: z.string().min(1) }).strict(),
   /** 团队变了（team-board，7.22）：整份换掉——它给的就是整份新的，合并只会多一种「合错了」 */
+  z.object({...envelope,type:z.literal("analysisRoute"),route:AnalysisRouteSchema}).strict(),
   z.object({ ...envelope, type: z.literal("team"), team: TeamSnapshotSchema }).strict(),
   /**
    * 这段对话挂着的内核状态变了（笔记本，2026-08-26）：**整份换掉**，与 `team` 同一纪律——

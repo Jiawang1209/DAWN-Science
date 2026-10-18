@@ -36,4 +36,11 @@ describe("科研分析技能的发现与资源合同", () => {
   it("旧版选择前一律禁止 get_case 的规则不再与候选只读核对冲突", () => {
     expect(text()).not.toMatch(/不许顺手\s*[`]?get_case/)
   })
+  it("结构化路线工具可用时明确读版本、CAS、证据保留与不支持时的文本退路", () => {
+    const combined=text()+readFileSync(join(root,"references/comprehensive-analysis.md"),"utf8")
+    for (const token of ["get_analysis_route","update_analysis_route","expectedRevision","dataContext","needsReview","not_run","toolCallIds","manual/off"]) expect(combined).toContain(token)
+    expect(combined).toMatch(/不支持.*文本|工具不可用.*文本/)
+    expect(combined).not.toContain("不要承诺分组卡片、批量勾选或前端路线状态管理")
+  })
+
 })

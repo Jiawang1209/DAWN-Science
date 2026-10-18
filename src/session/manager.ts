@@ -653,6 +653,33 @@ export class SessionManager {
     return rt.redirect(sessionId, 那句)
   }
 
+  getAnalysisRoute(sessionId: SessionId, includeHistory = false): import('../protocol/analysis-route.js').AnalysisRouteReadResult {
+    const record = this.store.get(sessionId)
+    if (!record) throw Object.assign(new Error('没有这段会话'), { routeCode: 'SESSION_NOT_FOUND' })
+    const runtime = this.runtimeForSession(sessionId)
+    if (!runtime?.getAnalysisRoute || this.registry.agents[record.agentId]?.kind !== 'native') {
+      return { supported: false, reason: '分析路线仅支持普通原生 API 主会话；Bot、子 Agent、ACP 和 CLI 暂不支持' }
+    }
+    return runtime.getAnalysisRoute(sessionId, record.sessionDir, includeHistory)
+  }
+
+  actOnAnalysisRoute(
+    sessionId: SessionId,
+    request: import('../protocol/analysis-route.js').AnalysisRouteActionRequest,
+    as: Holder,
+  ): import('../protocol/analysis-route.js').AnalysisRouteActionResult {
+    const record = this.store.get(sessionId)
+    if (!record) throw Object.assign(new Error('没有这段会话'), { routeCode: 'SESSION_NOT_FOUND' })
+    const lease = this.leases.current(sessionId)
+    if (!lease || lease.holder !== as) throw Object.assign(new Error('未持有当前会话的写入租约'), { routeCode: 'LEASE_CONFLICT' })
+    const runtime = this.bound.get(sessionId)
+    if (!runtime) throw Object.assign(new Error('路线写入需要活动会话'), { routeCode: 'SESSION_INACTIVE' })
+    if (!runtime.actOnAnalysisRoute || this.registry.agents[record.agentId]?.kind !== 'native') {
+      throw Object.assign(new Error('此会话不支持分析路线'), { routeCode: 'UNSUPPORTED' })
+    }
+    return runtime.actOnAnalysisRoute(sessionId, request)
+  }
+
   /** 这段会话有没有先出方案（2026-09-27）。**只有 native 有，有无即判据** */
   supportsPlan(sessionId: SessionId): boolean {
     return typeof this.bound.get(sessionId)?.answerPlan === "function"

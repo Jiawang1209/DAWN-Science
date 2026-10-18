@@ -39,6 +39,8 @@ describe("操作注册表", () => {
         "applyUpdate",
         "fetchLocalImage",
         "editQueue",
+        "getAnalysisRoute",
+        "actOnAnalysisRoute",
         "answerPlan",
         "answerQuestion",
         "setSideSession",

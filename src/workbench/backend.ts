@@ -1,3 +1,4 @@
+import { withSessionContext } from './session-input-context.js'
 import { BotOutputLocks, canonicalOutputPaths } from "../bot/output-locks.js"
 import { verifiedArtifacts } from "../bot/context.js"
 /**
@@ -596,6 +597,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     会话事件接线.set(sessionId, 退订)
     // start 在 attach 之前发生；迁移沿用旧转录，需要明确恢复 alive 与当前开关。
     events.ingest(sessionId, { kind: "started", sessionId, pid: sessions.get(sessionId)?.pid ?? 0 })
+    const routeRead = sessions.getAnalysisRoute(sessionId)
+    if (routeRead.route) events.ingest(sessionId, { kind: 'analysis_route', sessionId, route: routeRead.route })
     const 开关 = sessions.configOptions(sessionId)
     if (开关 && 开关.length > 0) events.ingest(sessionId, { kind: "config_options", sessionId, options: 开关 })
   }
@@ -2513,6 +2516,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         try {
           if (没续上因为) throw new Error(没续上因为)
           queueMicrotask(() => { void (restoringBots ? recoverBotHistory(sessionId) : Promise.resolve()).then(() => botDelivery?.flush(sessionId)).catch(error => console.error("[Bot] 恢复送达失败", error)) })
+          const routeRead = sessions.getAnalysisRoute(sessionId)
+          if (routeRead.route && events.peek(sessionId)?.analysisRoute?.revision !== routeRead.route.revision) {
+            events.ingest(sessionId, { kind: 'analysis_route', sessionId, route: routeRead.route })
+          }
           return events.subscribe(sessionId)
         } catch (err) {
           // 「会话不在本进程中活动」是业务性失败——进程重启后旧会话就是这个状态，
@@ -3587,7 +3594,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       data = 剥掉粘贴标记(data)
       // 你不在场时在内核里跑过的（笔记本，spec §4）：拼进模型看的那份，转录里仍只是你那句话
       const 攒的 = as === "user" ? 缓冲前缀(sessionId) : undefined
-      const 带前缀 = 攒的 ? `${攒的}\n\n${发出去的}` : 发出去的
+      const 带前缀 = withSessionContext(发出去的, 攒的)
       /**
        * **忙着发的话先进待发单，送到那一刻才进转录**（2026-09-23，学自 Codex）。
        * 此前写的这一刻就 `userTurn`——转录里那句话落在 agent 这一轮的中间，看着像已经送到了，
@@ -3688,6 +3695,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          *   - 其余(图片收不下等)→ `invalid_request`:是这次请求本身的问题。
          */
         const 消息 = err instanceof Error ? err.message : String(err)
+        const routeCode = (err as { routeCode?: string }).routeCode
+        if (routeCode) throw fault原样("conflict", 消息, { code: routeCode })
         // 回退期间运行时拒收（2026-09-27）：认得出的这一句译得了；conflict——等回退完再发就行
         if (/正在回退/.test(消息)) throw fault("conflict", "正在回退，回退完再发")
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)
@@ -3798,6 +3807,21 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 回答一版方案（先出方案，2026-09-27，spec §4.5）。**只转达、不替人发执行话**——那句由界面走 `writeToSession`，是人的一条发言。
      * 分码照运行时的原话：没有这一版 → not_found；不是最新 / 已经答过 → conflict；存不下来（权限、磁盘、远端断线）→ internal_error，原样说。
      */
+    getAnalysisRoute: async ({ sessionId, includeHistory }) => {
+      if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
+      return sessions.getAnalysisRoute(sessionId, includeHistory)
+    },
+    actOnAnalysisRoute: async ({ sessionId, ...request }) => {
+      try {
+        return sessions.actOnAnalysisRoute(sessionId, request, 'user')
+      } catch (error) {
+        const code = (error as { routeCode?: string }).routeCode ?? 'ROUTE_ERROR'
+        const workbenchCode = code === 'SESSION_NOT_FOUND' || code === 'STEP_NOT_FOUND' ? 'not_found'
+          : code === 'UNSUPPORTED' ? 'invalid_request'
+          : code === 'ROUTE_ERROR' ? 'internal_error' : 'conflict'
+        throw fault原样(workbenchCode, error instanceof Error ? error.message : String(error), { code })
+      }
+    },
     answerPlan: async ({ sessionId, planId, action, text }) => {
       if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
       if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有生成方案——只有 native 会话有")

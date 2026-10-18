@@ -33,6 +33,8 @@ function backend(): WorkbenchBackend {
     cancelUpdate: async () => 更新桩,
     editQueue: async () => ({}),
     answerQuestion: async () => ({}),
+    getAnalysisRoute: async () => ({supported:false,reason:"fake runtime"}),
+    actOnAnalysisRoute: async () => ({}),
     answerPlan: async () => ({}),
     setSideSession: async () => ({}),
     compactSession: async () => ({}),

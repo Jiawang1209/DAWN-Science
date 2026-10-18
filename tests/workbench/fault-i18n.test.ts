@@ -217,8 +217,8 @@ function 字面msgid(文: string | undefined): string[] | undefined {
  * 是另一个模块的责任）。多一处、少一处都要来这里改数字：这是「有意识的决定」的形状。
  */
 const 原样透传名单: Record<string, number> = {
-  // Bot 生命周期与派单校验由独立服务抛出，保留其具体失败原因。
-  "error instanceof Error ? error.message : String(error)": 1,
+  // Bot 生命周期、派单与分析路线守卫由独立服务抛出，保留具体失败原因。
+  "error instanceof Error ? error.message : String(error)": 2,
   // 9 → 10（远程内核，2026-09-03）：`probeInterpreters` 的远端分支——连不上的原因是那台机器说的，原样转述
   "e instanceof Error ? e.message : String(e)": 10,
   "err instanceof Error ? err.message : String(err)": 4,
@@ -230,7 +230,8 @@ const 原样透传名单: Record<string, number> = {
   // 8 → 11（上下文压缩，2026-09-27）：`compactSession` 同一副分码——租约 / 没活着 / 其余，运行时的话原样转述
   // 11 → 14（回退这一轮，2026-09-27）：`回退的错` 同一副分码——认得出的几句走 fault，余下租约 / 没活着 / 其余原样转述
   // 14 → 18（先出方案，2026-09-27）：`answerPlan`——租约 / 没这一版 / 不是最新或答过 / 存不下来，运行时的话原样转述
-  "消息": 18,
+  // 18 → 19：路线动作在真实发送时再次校验，透传结构化冲突原因。
+  "消息": 19,
   "毛病": 2,
   "msg": 1,
 }

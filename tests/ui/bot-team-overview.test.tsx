@@ -1,0 +1,63 @@
+import {expect,it,vi} from "vitest"
+import {render,screen,fireEvent,within,waitFor} from "@testing-library/react"
+import {BotCollaboration} from "../../src/ui/bot-collaboration.js"
+import type {TeamSnapshot} from "../../src/protocol/index.js"
+const team={id:"t",captainSessionId:"main",name:"协作分析",goal:"保留原始数据，分析并绘图",members:[{name:"stats",botId:"s",status:"idle"}],tasks:[{id:"t1",subject:"分析",assignee:"stats",status:"completed",attemptId:"a",attempt:1,updatedAt:2,dependencies:[],artifacts:["/w/figure.svg"]}],conversation:[{id:"result:t1:a",role:"bot",botId:"s",from:"stats",kind:"result",content:"已返回分析；仍需复核。",createdAt:2}],messages:[],taskSeq:1} as unknown as TeamSnapshot
+it("defaults to overview; result and recipient selection are independent; delivery previews close",async()=>{
+ const read=vi.fn(async()=>({kind:"image" as const,mediaType:"image/svg+xml",base64:"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=",bytes:41}))
+ render(<BotCollaboration team={team} ownerSessionId="main" bots={[{id:"s",name:"统计助手"}]} onView={async()=>{}} onSend={async()=>{}} readArtifact={read}/>)
+ expect(screen.queryByRole("log")).toBeNull()
+ const row=screen.getByRole("group",{name:"团队成员"})
+ expect(row.textContent).toContain("任务已返回");expect(row.textContent).toContain("可接新任务")
+ fireEvent.change(screen.getByLabelText("给团队发消息"),{target:{value:"尚未发送"}})
+ fireEvent.click(within(row).getByRole("button",{name:"查看统计助手的结果"}))
+ expect(within(screen.getByRole("region",{name:"成员结果"})).getByText("已返回分析；仍需复核。")).toBeTruthy()
+ expect((screen.getByLabelText("发言对象") as HTMLSelectElement).value).toBe("")
+ fireEvent.click(screen.getByRole("button",{name:"查看交付文件"}))
+ fireEvent.click(screen.getByRole("button",{name:"查看产物：figure.svg"}))
+ expect(screen.queryByRole("button",{name:"查看产物：figure.svg"})).toBeNull()
+ await screen.findByRole("button",{name:"收起预览"})
+ await vi.waitFor(()=>expect(read).toHaveBeenCalledWith("/w/figure.svg"))
+ fireEvent.click(await screen.findByRole("button",{name:"收起预览"}))
+ expect(screen.queryByRole("region",{name:"预览：/w/figure.svg"})).toBeNull()
+ expect(document.activeElement).toBe(screen.getByRole("button",{name:"查看产物：figure.svg"}))
+ expect((screen.getByLabelText("给团队发消息") as HTMLTextAreaElement).value).toBe("尚未发送")
+})
+it("text-only task output remains readable without a manufactured file or scientific pass",()=>{
+ render(<BotCollaboration team={{...team,conversation:[],tasks:[{...team.tasks[0]!,output:"仅返回方法限制，尚未计算。",artifacts:[]}]}} ownerSessionId="main" bots={[{id:"s",name:"统计助手"}]} onView={async()=>{}}/>)
+ fireEvent.click(screen.getByRole("button",{name:"查看统计助手的结果"}))
+ expect(screen.getByText("仅返回方法限制，尚未计算。")).toBeTruthy()
+ expect(screen.queryByText("审查通过")).toBeNull()
+ fireEvent.click(screen.getByRole("button",{name:"查看交付文件"}))
+ expect(screen.queryByRole("button",{name:/查看产物/})).toBeNull()
+})
+it("retrying a task invalidates old deliveries and reloads a reused path only for the new completed attempt",async()=>{
+ const read=vi.fn(async()=>({kind:"text" as const,text:"result",mediaType:"text/plain",bytes:6}))
+ const props={team,ownerSessionId:"main",bots:[{id:"s",name:"统计助手"}],onView:async()=>{},readArtifact:read}
+ const view=render(<BotCollaboration {...props}/>)
+ fireEvent.click(screen.getByRole("button",{name:/查看交付 ·/}))
+ fireEvent.click(screen.getByRole("button",{name:"查看产物：figure.svg"}))
+ await waitFor(()=>expect(read).toHaveBeenCalledTimes(1))
+ const retry={...team,tasks:[{...team.tasks[0]!,status:"in_progress" as const,attempt:2,attemptId:"b",artifacts:[]}]}
+ view.rerender(<BotCollaboration {...props} team={retry}/>)
+ expect(screen.queryByRole("button",{name:"收起预览"})).toBeNull()
+ expect(screen.queryByRole("button",{name:"查看产物：figure.svg"})).toBeNull()
+ view.rerender(<BotCollaboration {...props} team={{...retry,tasks:[{...retry.tasks[0]!,status:"completed",artifacts:["/w/figure.svg"]}]}}/>)
+ await waitFor(()=>expect(read).toHaveBeenCalledTimes(2))
+ view.rerender(<BotCollaboration {...props} ownerSessionId="other"/>)
+ expect(screen.queryByRole("button",{name:"收起预览"})).toBeNull()
+})
+it("task supplements and their failure survive file navigation without changing the team recipient",async()=>{
+ const message=vi.fn(async()=>{throw Error("补充失败")})
+ render(<BotCollaboration team={team} ownerSessionId="main" bots={[{id:"s",name:"统计助手"}]} onView={async()=>{}} onTaskView={()=>{}} onTaskStop={async()=>{}} onTaskMessage={message}/>)
+ fireEvent.click(screen.getByRole("button",{name:"查看统计助手的结果"}))
+ fireEvent.click(screen.getByRole("button",{name:"补充要求"}))
+ fireEvent.change(screen.getByLabelText("补充要求"),{target:{value:"补充诊断"}})
+ fireEvent.click(screen.getByRole("button",{name:"提交补充"}))
+ await screen.findByText("补充失败")
+ fireEvent.click(screen.getByRole("button",{name:"查看交付文件"}))
+ fireEvent.click(screen.getByRole("button",{name:"返回"}))
+ expect((screen.getByLabelText("补充要求") as HTMLTextAreaElement).value).toBe("补充诊断")
+ expect(screen.getByRole("alert").textContent).toBe("补充失败")
+ expect(message).toHaveBeenCalledWith("t1","补充诊断")
+})

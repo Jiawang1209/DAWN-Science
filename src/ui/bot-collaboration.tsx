@@ -4,13 +4,15 @@ import {BotArtifactPreview,type ReadBotArtifact} from "./bot-artifact-preview.js
 import {AgentMarkdown} from "./markdown.js"
 import {$botRooms,botRoomKey,readBotRoom,updateBotRoom,type BotRoomInput} from "./state/bot-room.js"
 import type {TeamSnapshot} from "../protocol/index.js"
+import {summarizeBotTeam} from "./bot-team-summary.js"
+import {BotTeamOverview,type BotTaskActions} from "./bot-team-overview.js"
 import {BotAvatar} from "./bot-avatar.js"
 import {Button} from "./primitives.js"
 import {t,tf} from "./i18n/index.js"
 
 type RoomMessage=NonNullable<TeamSnapshot["conversation"]>[number]
 export type BotTeamInput = BotRoomInput
-interface Props {
+interface Props extends BotTaskActions {
   team:TeamSnapshot|undefined;ownerSessionId:string|undefined;scopeKey?:string|undefined
   bots:readonly {id:string;name:string;role?:string}[];onView:(botId:string)=>Promise<void>
   onSend?:((input:BotTeamInput)=>Promise<void>)|undefined
@@ -45,13 +47,13 @@ function TeamConversation(p:Props) {
   const target=room.target
   const targetAvailable=!target||members.some(m=>m.botId===target)
   useLayoutEffect(()=>{
-    if(!log.current)return
+    if(!log.current||room.page!=="discussion")return
     const saved=readBotRoom(key)
     if(saved.pinned){log.current.scrollTop=log.current.scrollHeight;setNewMessages(false)}
     else if(firstLayout.current) {log.current.scrollTop=saved.scrollTop;if(messages.length>saved.messageCount)setNewMessages(true)}
     else if(messages.length>saved.messageCount)setNewMessages(true)
     firstLayout.current=false
-  },[key,messages.length,room.pinned])
+  },[key,messages.length,room.pinned,room.page])
   const name=(id:string|undefined,fallback:string)=>p.bots.find(b=>b.id===id)?.name??fallback
   async function view(id:string){updateBotRoom(key,{error:undefined});try{await p.onView(id)}catch(e){updateBotRoom(key,{error:e instanceof Error?e.message:String(e)})}}
   function choose(to:string){updateBotRoom(key,{target:to,receipt:undefined})}
@@ -69,18 +71,14 @@ function TeamConversation(p:Props) {
     finally{updateBotRoom(key,{busy:false})}
   }
   if(!team)return <p className="hint bot-collaboration-empty">{t("当前对话还没有 Bot 协作记录")}</p>
-  const working=members.filter(m=>m.status==="working").map(m=>name(m.botId,m.name))
+  const working=summarizeBotTeam(team).members.filter(m=>m.state==="working").map(m=>name(m.member.botId,m.member.name))
   return <section className="bot-collaboration" aria-label={t("团队对话")}>
-    <header className="bot-room-head"><strong title={team.goal}>{team.name}</strong><span className="hint">{tf("{0} 位成员",String(members.length))}</span></header>
-    <div className="bot-room-members" role="group" aria-label={t("团队成员")}>
-      {members.map(member=>{
-        const speaker=name(member.botId,member.name),state=memberState(team,member)
-        return <Button key={member.botId} variant="ghost" size="sm" className="bot-room-member" aria-label={tf("向{0}发言",speaker)} aria-pressed={target===member.botId} disabled={busy||!!team.finishedAt||!p.onSend} aria-description={member.role} onClick={()=>choose(member.botId!)}>
-          <BotAvatar id={member.botId!} name={speaker}/><span className="bot-room-member-label"><strong>{speaker}</strong><span className="hint" data-state={state}>{memberLabel(state)}</span></span>
-        </Button>
-      })}
-    </div>
-    <ol ref={log} role="log" aria-label={t("团队消息")} aria-live="polite" onScroll={()=>{if(log.current){const pinned=log.current.scrollHeight-log.current.scrollTop-log.current.clientHeight<64;updateBotRoom(key,{pinned,scrollTop:log.current.scrollTop,messageCount:messages.length});if(pinned)setNewMessages(false)}}}>
+    <header className="bot-room-head">
+      {(room.page??"overview")!=="overview"?<Button variant="ghost" size="sm" onClick={()=>updateBotRoom(key,room.file&&summarizeBotTeam(team).files.some(f=>f.path===room.file)?{file:undefined}:{page:room.page==="files"&&room.memberId?"member":"overview",file:undefined})}>{t("返回")}</Button>:<strong>{t("团队协作")}</strong>}
+      <Button variant="ghost" size="sm" aria-pressed={room.page==="discussion"} onClick={()=>updateBotRoom(key,{page:room.page==="discussion"?"overview":"discussion",file:undefined})}>{room.page==="discussion"?t("团队总览"):tf("完整讨论 · {0}",String(messages.length))}</Button>
+    </header>
+    {room.page!=="discussion"?<BotTeamOverview {...p} team={team} room={room} roomKey={key} name={name} onView={id=>void view(id)} onChoose={choose} canSend={!busy&&!team.finishedAt&&!!p.onSend}/>:null}
+    <ol hidden={room.page!=="discussion"} ref={log} role="log" aria-label={t("团队消息")} aria-live="polite" onScroll={()=>{if(log.current){const pinned=log.current.scrollHeight-log.current.scrollTop-log.current.clientHeight<64;updateBotRoom(key,{pinned,scrollTop:log.current.scrollTop,messageCount:messages.length});if(pinned)setNewMessages(false)}}}>
       {!messages.length?<li className="hint bot-room-empty">{t("团队发言会连续显示在这里")}</li>:messages.map(m=>{
         const exchange=team.collaboration?.find(x=>x.id===m.exchangeId)
         const pending=(m.kind==="request"||m.kind==="handoff")&&exchange&&["queued","working"].includes(exchange.status)
@@ -117,7 +115,7 @@ function TeamConversation(p:Props) {
         </li>
       })}
     </ol>
-    {newMessages?<Button variant="ghost" size="sm" onClick={()=>{updateBotRoom(key,{pinned:true});setNewMessages(false);if(log.current)log.current.scrollTop=log.current.scrollHeight}}>{t("有新消息，回到底部")}</Button>:null}
+    {newMessages&&room.page==="discussion"?<Button variant="ghost" size="sm" onClick={()=>{updateBotRoom(key,{pinned:true});setNewMessages(false);if(log.current)log.current.scrollTop=log.current.scrollHeight}}>{t("有新消息，回到底部")}</Button>:null}
     {error?<p role="alert" className="bot-error">{error}</p>:null}
     {team.finishedAt?<p className="hint">{t("团队已结束")}</p>:p.onSend?<form className="bot-room-composer" onSubmit={e=>{e.preventDefault();void send()}}>
       {working.length?<p className="hint bot-room-working" role="status">{tf("正在交流：{0}",working.join("、"))}</p>:null}
@@ -132,22 +130,6 @@ function TeamConversation(p:Props) {
   </section>
 }
 
-type Member=TeamSnapshot["members"][number]
-type MemberState="question"|"permission"|"working"|"waiting_peer"|"queued"|"failed"|"idle"|"ended"
-function memberState(team:TeamSnapshot,member:Member):MemberState {
-  if(team.finishedAt)return "ended"
-  if(member.attention)return member.attention
-  if(member.status==="working")return "working"
-  if(team.collaboration?.some(x=>x.fromBotId===member.botId&&x.resumedAt===undefined&&["queued","working","replied","failed"].includes(x.status)))return "waiting_peer"
-  if(team.conversationTurns?.some(d=>d.botId===member.botId&&["queued","working"].includes(d.status))||team.tasks.some(task=>task.assignee===member.name&&["pending","claimed","in_progress"].includes(task.status)))return "queued"
-  const latest=team.tasks.filter(task=>task.assignee===member.name).sort((a,b)=>b.updatedAt-a.updatedAt)[0]
-  const delivery=team.conversationTurns?.filter(d=>d.botId===member.botId).sort((a,b)=>b.updatedAt-a.updatedAt)[0]
-  if(delivery&&delivery.updatedAt>(latest?.updatedAt??0))return delivery.status==="failed"||delivery.status==="interrupted"?"failed":"idle"
-  return latest?.status==="failed"?"failed":"idle"
-}
-function memberLabel(state:MemberState):string {
-  switch(state){case "question":return t("待回答");case "permission":return t("待批准");case "working":return t("处理中");case "waiting_peer":return t("等待队友");case "queued":return t("等待执行");case "failed":return t("需处理");case "ended":return t("已结束");default:return t("待命")}
-}
 function deliveryLabel(state:NonNullable<TeamSnapshot["conversationTurns"]>[number]["status"]):string {
   switch(state){case "queued":return t("等待处理");case "working":return t("处理中");case "replied":return t("已回应");case "failed":return t("处理失败");case "cancelled":return t("已取消");case "interrupted":return t("已中断")}
 }

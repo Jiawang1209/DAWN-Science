@@ -1,7 +1,14 @@
 import { atom } from "nanostores"
 
 export interface BotRoomInput { requestId: string; message: string; toBotId?: string }
+export interface BotTaskForm {expanded:boolean;draft:string;busy:boolean;error?:string|undefined}
 export interface BotRoomState {
+  page?: "overview" | "member" | "files" | "discussion" | undefined
+  memberId?: string | undefined
+  file?: string | undefined
+  /** Opening the dock from a main-chat summary is an explicit scoped request. */
+  openRequest?: string | undefined
+  taskForms?:Readonly<Record<string,BotTaskForm>>|undefined
   draft: string
   target: string
   busy: boolean

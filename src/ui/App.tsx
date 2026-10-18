@@ -1,3 +1,4 @@
+import {botRoomKey,updateBotRoom} from "./state/bot-room.js"
 import { AnalysisRoutePanel, createRouteIntent } from "./analysis-route.js"
 import { RouteController, performRouteAction, resolveRouteFile } from "./state/analysis-route.js"
 import type { AnalysisRouteReadResult, AnalysisRouteActionResult, RouteAction } from "../protocol/analysis-route.js"
@@ -5595,22 +5596,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </div>
           ) : session ? (
             <>
-              <BotTeamCards team={botTeam} names={new Map(botProfiles.map(b => [b.id, b.name]))} onOpenFile={path => {
-                try { openFile(botArtifactPreviewPath(path, 当前工作区路径, !!session.remote)) } catch (error) { fail(error) }
-              }}
-                onView={taskId => {
-                  if (!botTeam) return
-                  const target = { ownerSessionId: session.sessionId, teamId: botTeam.id, taskId }
-                  client.get<{ session: SessionSummary }>("openBotTask", target).then(r => {
-                    if ($activeSessionId.get() !== target.ownerSessionId || $botOwnerScope.get() !== botOwnerScope) return
-                    $botTask.set(target)
-                    const member = botTeam.members.find(m => m.name === botTeam.tasks.find(task => task.id === taskId)?.assignee)
-                    selectBotSession(r.session, member?.botId)
-                    坞上位(); setRightDockTenant("bot"); setRightDockOpen(true)
-                  }).catch(fail)
-                }}
-                onStop={taskId => client.get("stopBotTask", { ownerSessionId: session.sessionId, teamId: botTeam!.id, taskId })}
-                onMessage={(taskId, instruction) => client.get("messageBotTask", { ownerSessionId: session.sessionId, teamId: botTeam!.id, taskId, instruction })} />
+              <BotTeamCards team={botTeam} names={new Map(botProfiles.map(b => [b.id, b.name]))}
+                onOpenTeam={page=>{
+                  if(!botTeam)return
+                  clearBotSession()
+                  updateBotRoom(botRoomKey(session.sessionId,botOwnerScope,botTeam.id),{page,memberId:undefined,file:undefined,openRequest:crypto.randomUUID()})
+                  坞上位();setRightDockTenant("bot");setRightDockOpen(true)
+                }}/>
               <ConversationView
                 headerTarget={conversationHeaderTarget}
                 headerHasTabs={Boolean(会话页签)}

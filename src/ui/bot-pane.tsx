@@ -1,3 +1,4 @@
+import {$botRooms,botRoomKey} from "./state/bot-room.js"
 import type { ReadBotArtifact } from "./bot-artifact-preview.js"
 import { BotAvatar } from "./bot-avatar.js"
 import { BotCollaboration } from "./bot-collaboration.js"
@@ -28,8 +29,10 @@ export function BotPane(p: {
 }) {
   const bots = useStore($bots), storedSession = useStore($botSession), selected = useStore($selectedBot)
   const memberView = useStore($botMemberView)
+  const rooms=useStore($botRooms),openRequest=rooms[botRoomKey(p.ownerSessionId,p.ownerScope,p.team?.id)]?.openRequest
   const [view, setBotPage] = useState<"assistants" | "collaboration">("assistants")
   const shownTeam = useRef<string | undefined>(undefined)
+  const viewScope=useRef("");viewScope.current=botRoomKey(p.ownerSessionId,p.ownerScope,p.team?.id)
   const session = $botOwner.get() === p.ownerSessionId && $botOwnerScope.get() === p.ownerScope ? storedSession : undefined
   const [editing, setEditing] = useState<BotProfile | "new">()
   const [error, setError] = useState<string>()
@@ -46,6 +49,7 @@ export function BotPane(p: {
     if (p.team?.captainSessionId !== p.ownerSessionId) { shownTeam.current = undefined; setBotPage("assistants"); return }
     if ((p.team?.collaboration?.length || p.team?.conversation?.length) && shownTeam.current !== p.team.id && !session && !editing) {shownTeam.current = p.team.id; setBotPage("collaboration")}
   }, [p.team, p.ownerSessionId, session, editing])
+  useEffect(()=>{if(openRequest&&p.team?.captainSessionId===p.ownerSessionId){setBotPage("collaboration");setEditing(undefined);setHistory(undefined)}},[openRequest,p.ownerSessionId,p.team?.id])
   const bot = bots.find(b => b.id === selected)
   async function perform(action: () => Promise<void>) {
     if (busy) return
@@ -69,7 +73,7 @@ export function BotPane(p: {
   return <div className={`bot-pane${session ? " bot-chat side-chat" : view === "collaboration" ? " bot-team-chat" : ""}`}>
     {error ? <p role="alert" className="bot-error">{error}</p> : null}
     {session ? <BotConversation readOnly={!!memberView || (!!bot && (!bot.enabled || !!bot.archivedAt))} session={session} botId={bot?.id ?? selected ?? session.sessionId} name={bot?.name ?? session.title ?? "Bot"} projectLabel={p.projectLabel} conversation={p.conversation}
-      onBack={() => { clearBotSession(); setHistory(undefined); if (memberView) setBotPage("collaboration") }}
+      onBack={() => { const fromTeam=!!memberView||!!$botTask.get(); clearBotSession(); setHistory(undefined); if(fromTeam)setBotPage("collaboration") }}
       onHistory={bot && !memberView && !$botTask.get() ? () => void perform(async () => {
         const ownerSessionId = p.ownerSessionId!
         const r = await p.client.get<{ sessions: SessionSummary[] }>("listBotSessions", { botId: bot.id, ownerSessionId })
@@ -81,7 +85,14 @@ export function BotPane(p: {
         <Button variant="ghost" size="sm" role="tab" aria-selected={view === "assistants"} onClick={() => setBotPage("assistants")}>{t("助手")}</Button>
         <Button variant="ghost" size="sm" role="tab" aria-selected={view === "collaboration"} onClick={() => setBotPage("collaboration")}>{t("团队对话")}</Button>
       </div>
-      {view === "collaboration" ? <BotCollaboration team={p.team} ownerSessionId={p.ownerSessionId} scopeKey={p.ownerScope} bots={bots} readArtifact={p.readArtifact} onView={p.onViewMember ?? (async () => { throw Error(t("成员会话尚未启动")) })} onSend={async input => {
+      {view === "collaboration" ? <BotCollaboration team={p.team} ownerSessionId={p.ownerSessionId} scopeKey={p.ownerScope} bots={bots} readArtifact={p.readArtifact} onTaskView={taskId=>void perform(async()=>{
+        const scope=viewScope.current
+        const target={ownerSessionId:p.ownerSessionId!,teamId:p.team!.id,taskId}
+        const r=await p.client.get<{session:SessionSummary}>("openBotTask",target)
+        if(!alive.current||viewScope.current!==scope||$botOwner.get()!==p.ownerSessionId||$botOwnerScope.get()!==p.ownerScope)return
+        $botTask.set(target)
+        selectBotSession(r.session,p.team!.members.find(m=>m.name===p.team!.tasks.find(t=>t.id===taskId)?.assignee)?.botId)
+      })} onTaskStop={taskId=>p.client.get("stopBotTask",{ownerSessionId:p.ownerSessionId!,teamId:p.team!.id,taskId})} onTaskMessage={(taskId,instruction)=>p.client.get("messageBotTask",{ownerSessionId:p.ownerSessionId!,teamId:p.team!.id,taskId,instruction})} onView={p.onViewMember ?? (async () => { throw Error(t("成员会话尚未启动")) })} onSend={async input => {
         if (!p.ownerSessionId || !p.team || p.team.captainSessionId !== p.ownerSessionId) throw Error(t("先打开主对话，再与 Bot 交流"))
         await p.client.get("messageBotTeam", {ownerSessionId: p.ownerSessionId, teamId: p.team.id, ...input})
       }} /> : <>

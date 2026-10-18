@@ -70,7 +70,7 @@ function context(body) {
  return {messages,last,system,user,fullUser,call,role}
 }
 export function botCollaborationTool(body) {
- const {last,user,call,role,messages}=context(body)
+ const {last,user,call,role,messages,system}=context(body)
  if(role) {
   if(last?.role==='user') {
    if(role==='stats'&&user.startsWith('[team-user:')&&user.includes('协作分析验收'))return {toolName:'bash',args:{command:codeCommand(userRequestCode)}}
@@ -86,8 +86,13 @@ export function botCollaborationTool(body) {
   }
   if(role==='data'&&last?.role==='tool'&&call==='bash'&&text(last.content).includes('DICTIONARY_CODE=-999'))return {toolName:'bot_message',args:{to:'stats',message:'字典确认 -999 是缺失编码。请确认缺失值处理策略：本次演示是将缺失行排除后拟合，还是需要另做插补？我会保留原始文件。'}}
   if(role==='stats'&&last?.role==='tool'&&call==='bash') {
-   if(text(last.content).includes('OBSERVED_INPUT='))return {toolName:'bot_colleagues',args:{}}
+   if(text(last.content).includes('OBSERVED_INPUT='))return system.includes('BOT_COLLAB_CONFIRM')?{toolName:'ask_user_question',args:{questions:[{id:'missing',header:'缺失值策略',question:'这是协作验收样例。第六行 y=-999，是否保留原文件并排除缺失行后拟合？',options:[{label:'排除缺失行',description:'保留 input.csv，记录排除条数，再继续协作分析'},{label:'先暂停核查',description:'暂不拟合，等待更多数据说明'}]}]}}:{toolName:'bot_colleagues',args:{}}
    if(text(last.content).includes('MODEL_COMPUTED='))return {toolName:'bot_say',args:{message:'已根据数据助手的核查完成拟合，模型结果已保存。接下来请绘图助手协作出图。'}}
+  }
+  if(role==='stats'&&last?.role==='tool'&&call==='ask_user_question') {
+   let result;try{result=JSON.parse(text(last.content))}catch{return undefined}
+   if(!result.cancelled&&result.answers?.some(a=>a.id==='missing'&&a.selected?.includes('排除缺失行')))return {toolName:'bot_colleagues',args:{}}
+   return undefined
   }
   if(role==='stats'&&last?.role==='tool'&&call==='bot_say')return {toolName:'bot_message',args:{to:'plot',kind:'handoff',message:'请读取 results/model.json 与 results/clean.csv 生成 figures/regression.svg，保存 scripts/plot.py。请结合团队对话里的用户补充要求，遇到不明确之处可以向我确认。'}}
   if(role==='stats'&&last?.role==='tool'&&call==='bot_colleagues') {
@@ -115,6 +120,7 @@ export function botCollaborationReply(body) {
  }
  if(role&&last?.role==='user'&&user.startsWith('[team-user:'))return '收到补充，我会按这条要求核对后续交付。'
  if(role&&last?.role==='tool') {
+  if(call==='ask_user_question')return '本轮没有收到继续拟合的选择；暂不清洗或拟合，请补充处理策略。'
   if(call==='bot_message')return '已发出协作请求，等待队友的实际回应后继续原任务。'
   if(call==='bash') {
    const output=text(last.content)
@@ -126,7 +132,7 @@ export function botCollaborationReply(body) {
   }
  }
  if(!role&&messages.some(m=>m.role==='user'&&text(m.content).includes('Bot交流验收'))) {
-  if(user.includes('[bot-result:'))return '已完成协作交付：数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。连续交流可在坞的“团队对话”查看，核验过的产物可从任务卡打开。'
+  if(user.includes('[bot-result:'))return '协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。'
   if(last?.role==='tool'&&call==='team_wait'&&text(last.content).includes('所有任务都到终态'))return '专业 Bot 已通过请求、回应和交接完成这次分析；正在汇总实际交付。'
  }
  return undefined

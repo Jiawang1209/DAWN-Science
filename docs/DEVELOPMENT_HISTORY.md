@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — Bot 协作状态、团队总览与交付入口合并至本地 main
+
+- **Type**: chore
+- **Motivation**: 用户验看实际预览及协作案例后，授权将本次修改一起合并到本地 main，明确不推送、不替换已安装软件。
+- **What**: 本地主目录从 `6bcbd43e` 快进至 `1e996722`，包含 Bot 共用状态投影、主对话团队摘要、坞内单行成员总览、成员结果、集中交付/文件预览，以及讨论/草稿/回执和任务补充留存；快进无冲突。
+- **Impact**: 未推送远端，未打包安装或替换 `/Applications/DAWN Science.app`。保留 `codex/bot-collaboration-clarity` 分支、独立工作树、现有隔离预览和忽略目录中的科研案例/截图。
+- **Verification**: 合并前41项定向检查通过；合并后在主目录 typecheck、主进程/UI构建通过，全量432文件4,785项通过、10项原跳过，8项实际Electron Bot协作/问答/交付/派单/直接对话回归通过。日志 `/tmp/dawn-bot-merge-preflight.log`、`/tmp/dawn-bot-main-typecheck.log`、`/tmp/dawn-bot-main-build.log`、`/tmp/dawn-bot-main-tests.log`、`/tmp/dawn-bot-main-e2e.log`。git diff --check通过；确定性推理仍仅用于工程验收。
+
 ### 2026-10-18 — Bot 协作统一状态、团队总览与交付入口
 
 - **Type**: feat

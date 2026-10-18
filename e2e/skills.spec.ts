@@ -18,6 +18,20 @@
 import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
 
 test.describe("自带技能", () => {
+  test("共用科研审查规范可显式展开，保留静态审查和独立验证边界", async ({ dawn }) => {
+    const { page } = dawn
+    await 开一段临时会话(page)
+    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:scientific-review 只审不运行：核对样本量和可复现性")
+    await page.getByRole("button", { name: "发送", exact: true }).click()
+    await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
+    const requests = JSON.stringify(dawn.requests)
+    expect(requests).toContain("## 共用底线")
+    expect(requests).toContain("references/checklist.md")
+    expect(requests).toContain("references/reporting.md")
+    expect(requests).toContain("不重启、不清空用户正在使用的内核")
+    expect(requests).toContain("运行成功不等于科学结论已获独立核验")
+  })
+
   test("科研分析技能沿用原调用名，完整展开综合路线与执行边界", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
@@ -60,6 +74,7 @@ test.describe("自带技能", () => {
     expect(全部, "自带技能没进系统提示——四层接线断了一层").toContain("dataset-first-look")
     expect(全部).toContain("reproducible-analysis")
     expect(全部).toContain("analysis-delivery")
+    expect(全部).toContain("scientific-review")
     /**
      * **教它怎么写技能的那一个**（2026-08-15 作者提的）。
      *
@@ -97,6 +112,7 @@ test.describe("两屏", () => {
     await expect(屏).toContainText("dataset-first-look")
     await expect(屏).toContainText("reproducible-analysis")
     await expect(屏).toContainText("analysis-delivery")
+    await expect(屏).toContainText("scientific-review")
     await expect(屏.locator(".skill-row", { hasText: "analyze-like-case" })).toContainText("科研分析向导")
     await expect(屏).toContainText("writing-skills")
     /** **来处要标出来**：自带的与你写的不是一回事 */

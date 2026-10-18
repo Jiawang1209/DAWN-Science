@@ -10,6 +10,41 @@ const pdf: FileContent = { kind: 'pdf', mediaType: 'application/pdf', base64: 'Z
 const markdown: FileContent = { kind: 'text', mediaType: 'text/markdown', text: '# Review\n\nResult', bytes: 16 }
 const table: FileContent = { kind: 'table', mediaType: 'text/csv', bytes: 2, table: { columns: [], rows: [], rowsRead: 0, delimiter: ',', totalRows: 0 } }
 
+it.each([['out/a.R', script], ['out/review.md', markdown], ['out/data.csv', table]] as const)('产物 %s 共用文件预览卡片，单行标题与阅读操作，无重复路径和类型栏', async (path, content) => {
+  const a = { path, kind: 'other' as const, bornRunId: 'r', bornAt: '2026-10-18T10:00:00Z', exists: true }
+  const { container } = render(<ArtifactsPanel data={{ artifacts: [a], unknown: [] }} readFile={vi.fn().mockResolvedValue(content)} onOpenInFiles={vi.fn()} onOpenExternally={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: path }))
+  await waitFor(() => expect(container.querySelector('.preview')).toBeTruthy())
+  const preview = container.querySelector('.preview')!
+  expect(preview.classList.contains(content === script ? 'preview-script' : 'preview-document')).toBe(true)
+  expect(preview.querySelector('.preview-head .name')?.textContent).toBe(path.split('/').pop())
+  expect(preview.querySelector('.sub')).toBeNull()
+  expect(container.querySelector('.artifacts-head .name')).toBeNull()
+  const list = container.querySelector<HTMLElement>('.artifacts-compact')!
+  const navigation = container.querySelector<HTMLElement>('.artifacts-head')!
+  fireEvent.click(screen.getByRole('button', { name: '展开阅读' }))
+  expect(list.hidden).toBe(true)
+  expect(navigation.hidden).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: '还原' }))
+  expect(container.querySelector('.artifacts-compact')).toBe(list)
+  expect(list.hidden).toBe(false)
+  expect(navigation.hidden).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: path }))
+})
+
+it.each([markdown, table])('文件入口的报告和表格沿用相同的展开阅读与还原', async content => {
+  render(<FilesView selected="result" content={content} loadDir={vi.fn(async path => ({ path, entries: [], ignored: 0, omitted: 0 }))} onSelect={vi.fn()} onOpenExternally={vi.fn()} />)
+  const where = document.querySelector<HTMLElement>('.files-where')!
+  const tree = document.querySelector<HTMLElement>('.file-tree-box')!
+  fireEvent.click(screen.getByRole('button', { name: '展开阅读' }))
+  expect(where.hidden).toBe(true)
+  expect(tree.hidden).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: '还原' }))
+  expect(where.hidden).toBe(false)
+  expect(tree.hidden).toBe(false)
+})
+
 it.each([['analysis.py', script], ['figure.png', image], ['report.pdf', pdf], ['review.md', markdown], ['data.csv', table]] as const)('%s 预览有常驻图标收起入口，仍保留既有操作', (path, content) => {
   const close = vi.fn(), download = vi.fn()
   render(<FilePreview path={path} content={content} onOpenExternally={vi.fn()} onDownload={download} onClosePreview={close} />)
@@ -96,6 +131,7 @@ it('产物读取中及失败后也能收起，迟到结果不会重开预览', a
   const a = { path: 'out/review.md', kind: 'markdown' as const, bornRunId: 'r', bornToolCallId: 'c', bornAt: '2026-10-18T10:00:00Z', exists: true }
   const { container } = render(<ArtifactsPanel data={{ artifacts: [a], unknown: [] }} readFile={readFile} onOpenInFiles={vi.fn()} onOpenExternally={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', { name: a.path }))
+  expect(container.querySelector('.artifacts-preview')?.firstElementChild?.className).toBe('artifacts-head')
   fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
   await act(async () => { complete(markdown); await Promise.resolve() })
   expect(container.querySelector('.artifacts-preview')).toBeNull()
@@ -103,6 +139,7 @@ it('产物读取中及失败后也能收起，迟到结果不会重开预览', a
   expect(document.activeElement).toBe(row)
   fireEvent.click(row)
   await screen.findByText('read failed')
+  expect(container.querySelector('.artifacts-preview')?.firstElementChild?.className).toBe('artifacts-head')
   expect(screen.getAllByRole('button', { name: '收起预览' })).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
   expect(container.querySelector('.artifacts-preview')).toBeNull()

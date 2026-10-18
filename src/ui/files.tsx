@@ -496,6 +496,10 @@ export interface 传输态 {
   方向?: "下载" | "上传"
 }
 
+export function canExpandFilePreview(content: FileContent | undefined): boolean {
+  return content?.kind === "text" || content?.kind === "table"
+}
+
 export function FilePreview({
   path,
   content,
@@ -531,13 +535,10 @@ export function FilePreview({
   if (!content) return <Loader label={t("正在读文件")} />
   if (content.kind === "pdf" || content.kind === "image") return <VisualFilePreview path={path} content={content} onOpenExternally={onOpenExternally} onDownload={onDownload} onDelete={onDelete} 进废纸篓={进废纸篓} navigation={navigation} fitContainer={fitContainer} onClosePreview={onClosePreview} />
   const script = content.kind === "text" && content.mediaType !== "text/markdown"
-  const details = <span className="sub">{content.mediaType} · {bytes(content.bytes)}</span>
   const actions = <>
-    {script ? <>
-      {onToggleReading ? <Button variant="ghost" size="sm" aria-expanded={readingExpanded} onClick={onToggleReading}>
+    {canExpandFilePreview(content) && onToggleReading ? <Button variant="ghost" size="sm" aria-expanded={readingExpanded} onClick={onToggleReading}>
         {readingExpanded ? t("还原") : t("展开阅读")}
       </Button> : null}
-    </> : null}
     {onDownload ? (
       <Button variant="ghost" size="sm" onClick={() => onDownload(path)}>
         {t("下载")}
@@ -558,21 +559,11 @@ export function FilePreview({
   </>
 
   return (
-    <div className={`preview${script ? " preview-script" : ""}${onClosePreview ? " preview-collapsible" : ""}`}>
-      <header className="preview-head" tabIndex={script ? 0 : undefined}>
-        {script ? <>
-          <span className="name" tabIndex={0} aria-label={path}>{path.split("/").pop() || path}</span>
-          <div className="script-preview-actions">{actions}</div>
-          {onClosePreview ? <PreviewCloseButton onClose={onClosePreview} /> : null}
-        </> : onClosePreview ? <>
-          <span className="name" aria-label={path}>{path.split("/").pop() || path}</span>
-          <PreviewCloseButton onClose={onClosePreview} />
-          <div className="preview-meta">{details}{actions}</div>
-        </> : <>
-          <span className="name">{path}</span>
-          {details}
-          {actions}
-        </>}
+    <div className={`preview${script ? " preview-script" : " preview-document"}${onClosePreview ? " preview-collapsible" : ""}`}>
+      <header className="preview-head" tabIndex={0}>
+        <span className="name" tabIndex={0} aria-label={path}>{path.split("/").pop() || path}</span>
+        <div className="script-preview-actions">{actions}</div>
+        {onClosePreview ? <PreviewCloseButton onClose={onClosePreview} /> : null}
       </header>
 
       {script ? <FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} /> : (
@@ -998,7 +989,7 @@ export function FilesView({
     }
   }, [previewOpen])
   const [readingPath, setReadingPath] = useState<string>()
-  const readingExpanded = previewOpen && readingPath === selected && selected !== undefined && content?.kind === "text" && content.mediaType !== "text/markdown"
+  const readingExpanded = previewOpen && readingPath === selected && selected !== undefined && canExpandFilePreview(content)
   // 换文件立即退出，并清掉旧路径，返回旧文件也不继承阅读状态。
   useEffect(() => { setReadingPath(undefined) }, [selected, previewOpen])
   /**

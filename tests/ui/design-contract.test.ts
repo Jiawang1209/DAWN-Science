@@ -2015,6 +2015,15 @@ describe("结构化澄清问答", () => {
 
 
 describe("脚本文本阅读样式", () => {
+  it("文档和脚本共用预览外框、单行标题和坞底色，正文独立滚动", () => {
+    const css = read("styles.css")
+    expect(css).toMatch(/\.preview-document,\s*\.preview-script\s*\{[^}]*border: 1px solid var\(--dawn-accent\)/)
+    expect(css).toMatch(/\.preview-document > \.preview-head,\s*\.preview-script > \.preview-head\s*\{[^}]*flex-wrap: nowrap/)
+    expect(css).toMatch(/\.right-dock \.preview-document,\s*\.right-dock \.preview-script\s*\{[^}]*background: var\(--dawn-surface-sidebar\)/)
+    expect(css).toMatch(/\.preview-document > \.preview-body\s*\{[^}]*min-height: 0;[^}]*overflow: auto/)
+    expect(css).toMatch(/\.script-preview-actions\s*\{[^}]*flex: 0 1 auto;[^}]*min-width: 0;[^}]*overflow: auto/)
+
+  })
   it("上下保留主题色外框，代码不再套框，目录紧凑且只突出文件名", () => {
     const css = read("styles.css")
     const block = (selector: string) => {

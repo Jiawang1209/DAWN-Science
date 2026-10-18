@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { Artifact } from "../protocol/index.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
-import { FilePreview, 类型图标, type FileContent } from "./files.js"
+import { canExpandFilePreview, FilePreview, 类型图标, type FileContent } from "./files.js"
 import { 文件类按名字 } from "./file-kind.js"
 import { t, tf } from "./i18n/index.js"
 import { PreviewCloseButton } from "./preview-close-button.js"
@@ -112,7 +112,7 @@ export function ArtifactsPanel({
   const [读错, 设读错] = useState<string | undefined>(undefined)
   const [重试次数, 设重试次数] = useState(0)
   const [readingPath, setReadingPath] = useState<string>()
-  const readingExpanded = readingPath === 看的 && 看的 !== undefined && 内容?.kind === "text" && 内容.mediaType !== "text/markdown"
+  const readingExpanded = readingPath === 看的 && 看的 !== undefined && canExpandFilePreview(内容)
   useEffect(() => { setReadingPath(undefined) }, [看的])
   useLayoutEffect(() => {
     // 读取中的外层关闭入口换成文件自身的关闭入口时，只接回原本属于关闭按钮的焦点。
@@ -182,20 +182,22 @@ export function ArtifactsPanel({
 
   if (看的) {
     const visual = 内容?.kind === "pdf" || 内容?.kind === "image"
+    const pending = !内容 || Boolean(读错)
+    const navigation = !visual ? <header className="artifacts-head" hidden={readingExpanded}>
+      <Button variant="ghost" size="sm" onClick={closePreview}>
+        {t("回到清单")}
+      </Button>
+      {!内容 || 读错 ? <span className="name">{看的.split("/").pop()}</span> : null}
+      <Button variant="ghost" size="sm" onClick={() => onOpenInFiles(看的)}>
+        {t("在文件里定位")}
+      </Button>
+      {!内容 || 读错 ? <PreviewCloseButton onClose={closePreview} /> : null}
+    </header> : null
     return (
       <div ref={previewRoot} className="artifacts-pane artifacts-preview"
         onFocusCapture={e => { focusedClose.current = e.target.closest<HTMLElement>('.preview-close-button') }}
         onBlurCapture={e => { if (e.target.isConnected) focusedClose.current = null }}>
-        {!visual ? <header className="artifacts-head" hidden={readingExpanded}>
-          <Button variant="ghost" size="sm" onClick={closePreview}>
-            {t("回到清单")}
-          </Button>
-          <span className="name">{看的}</span>
-          <Button variant="ghost" size="sm" onClick={() => onOpenInFiles(看的)}>
-            {t("在文件里定位")}
-          </Button>
-          {!内容 || 读错 ? <PreviewCloseButton onClose={closePreview} /> : null}
-        </header> : null}
+        {pending ? navigation : null}
         {读错 ? (
           <EmptyState
             title={t("读不到这个文件")}
@@ -218,6 +220,7 @@ export function ArtifactsPanel({
             {...(onDownload ? { onDownload } : {})}
           />
         )}
+        {!pending ? navigation : null}
         <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
           {data.artifacts.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
             <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>

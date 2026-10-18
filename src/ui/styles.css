@@ -2522,6 +2522,7 @@ pre {
   font-size: var(--dawn-code-size);
   line-height: 1.55;
 }
+.preview-document,
 .preview-script {
   display: flex;
   flex-direction: column;
@@ -2533,6 +2534,7 @@ pre {
   min-width: 0;
   overflow: hidden;
 }
+.preview-document > .preview-head,
 .preview-script > .preview-head {
   flex-direction: row;
   flex-wrap: nowrap;
@@ -2545,15 +2547,18 @@ pre {
 }
 .script-preview-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: auto;
   align-items: center;
   gap: var(--dawn-space-1);
   margin-inline-start: auto;
 }
 /* 文件名保留全文，窄坞中可横向滚动；操作和关闭入口始终同排。 */
+.preview-document > .preview-head .name,
 .preview-script > .preview-head .name {
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: 3ch;
   white-space: nowrap;
   overflow: auto;
   overflow-wrap: normal;
@@ -2562,27 +2567,8 @@ pre {
 .file-preview:has(> .preview-script) {
   overflow: hidden;
 }
-/* Markdown、表格与其他文件也保留固定的标题/收起入口，只滚动内容。 */
-.preview-collapsible:not(.preview-script) {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-.preview-collapsible:not(.preview-script) > .preview-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  flex: 0 0 auto;
-}
-.preview-collapsible:not(.preview-script) > .preview-head .name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.preview-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
-.preview-collapsible > .preview-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+/* 共享预览卡片：标题和操作固定，只让正文滚动。 */
+.preview-document > .preview-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .file-preview:has(> .preview-collapsible) { overflow: hidden; }
 .files-where[hidden],
 .file-tree-box[hidden],
@@ -7491,7 +7477,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 /* ── 坞「产物」格（spec 2026-08-26-产物 §5，Task 11） ── */
 .artifacts-pane { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: var(--dawn-space-2); }
-.artifacts-head { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.artifacts-head { display: flex; justify-content: space-between; align-items: center; gap: var(--dawn-space-2); }
 .artifacts-head .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .artifacts-group { display: flex; flex-direction: column; gap: 4px; }
 .artifacts-group-title { display: flex; justify-content: space-between; font-size: var(--dawn-fs-label); color: var(--dawn-text-3); letter-spacing: var(--dawn-fs-label-tracking); text-transform: uppercase; margin: var(--dawn-space-1) 0; }
@@ -8304,6 +8290,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-footer .attach-trigger, .composer-footer .ws-chip, .composer-footer .dock-toggle, .composer-footer .enhance-main, .composer-footer .plan-toggle { font-size: var(--dawn-fs-meta); }
 .right-dock .dock-body { background: transparent; }
 .right-dock .preview { background: var(--dawn-surface-panel); }
+.right-dock .preview-document,
 .right-dock .preview-script { background: var(--dawn-surface-sidebar); }
 @container (max-width: 760px) {
   .composer-tools .enhance-word, .composer-tools .plan-toggle-word { display: none; }

@@ -86,10 +86,10 @@ it.each([
   ["figure.png", { kind: "image", mediaType: "image/png", base64: "ZZ", bytes: 2 }],
   ["report.pdf", { kind: "pdf", mediaType: "application/pdf", base64: "ZZ", bytes: 2 }],
   ["data.csv", { kind: "table", mediaType: "text/csv", bytes: 2, table: { columns: [], rows: [], totalRows: 0 } }],
-] as const)("%s 不出现代码阅读操作", (path, content) => {
+] as const)("%s 保留自身格式，文本和表格共用展开阅读", (path, content) => {
   render(<FilePreview path={path} content={content as import("../../src/ui/files.js").FileContent} onOpenExternally={vi.fn()} onToggleReading={vi.fn()} />)
   expect(screen.queryByRole("button", { name: "自动换行" })).toBeNull()
-  expect(screen.queryByRole("button", { name: "展开阅读" })).toBeNull()
+  expect(Boolean(screen.queryByRole("button", { name: "展开阅读" }))).toBe(content.kind === "text" || content.kind === "table")
 })
 
 
@@ -149,6 +149,6 @@ it("脚本只展示文件名，完整路径可访问，头与文件名可键盘�
   expect(head.tabIndex).toBe(0)
   expect(screen.getByRole("button", { name: "展开阅读" })).toBeTruthy()
   rerender(<FilePreview path="README.md" content={{ kind: "text", mediaType: "text/markdown", text: "# docs", bytes: 6 }} onOpenExternally={vi.fn()} />)
-  expect(container.querySelector<HTMLElement>(".preview-head")!.tabIndex).toBe(-1)
-  expect(container.querySelector<HTMLElement>(".preview-head .name")!.tabIndex).toBe(-1)
+  expect(container.querySelector<HTMLElement>(".preview-head")!.tabIndex).toBe(0)
+  expect(container.querySelector<HTMLElement>(".preview-head .name")!.tabIndex).toBe(0)
 })

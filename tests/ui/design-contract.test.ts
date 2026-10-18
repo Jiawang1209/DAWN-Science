@@ -297,6 +297,15 @@ describe("设计契约 · 一个动作一个家", () => {
   })
 })
 
+describe("设计契约 · 文件根目录路径可读", () => {
+  it("完整路径可换行和选择，不依赖省略号或悬停提示", () => {
+    const block = read("styles.css").match(/\.files-root-path\s*\{([^}]+)\}/)?.[1]
+    expect(block).toMatch(/white-space:\s*normal/)
+    expect(block).toMatch(/overflow-wrap:\s*anywhere/)
+    expect(block).toMatch(/user-select:\s*text/)
+  })
+})
+
 describe("设计契约 · 子 agent 的过程只在坞里画（2026-09-27）", () => {
   it("子 agent 列表固定单列，每个子 agent 独占一行", () => {
     const block = read("styles.css").match(/\.chip-group\s*\{([^}]+)\}/)?.[1]

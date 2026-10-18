@@ -1013,6 +1013,9 @@ export function FilesView({
    * 的错误显示出来。多写一处校验就是多一份会说不同话的实现。
    */
   const [根, 设根] = useState(初始根 ?? "")
+  // 仅作位置说明：本地操作仍传相对路径，远端仍传原绝对路径。
+  const 根目录路径 = 路径?.(初始根 ?? "").绝对 || 初始根 || ""
+  const 根目录名称 = 根目录路径.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || 根目录路径
   /**
    * **手动刷新**（2026-08-19，作者要的）。
    *
@@ -1241,6 +1244,13 @@ export function FilesView({
             {t("收窄")}
           </Button>
         ) : null}
+        {根目录路径 ? (
+          <div className="files-root-context" role="group" aria-label={t("文件根目录")}>
+            <span className="files-root-label">{t("根目录")}</span>
+            <strong>{根目录名称}</strong>
+            <code className="files-root-path">{根目录路径}</code>
+          </div>
+        ) : null}
       </div>
       {/**
         * 树外面套一层盒子，缝贴在盒子的尾边（宽坞在右、窄坞在下）。
@@ -1274,7 +1284,7 @@ export function FilesView({
       <nav className="file-tree" aria-label={t("工作区文件")}>
         {onInitLayout ? (
           <div className="tree-actions">
-            <Button variant="ghost" size="sm" onClick={onInitLayout}>
+            <Button variant="primary" size="sm" onClick={onInitLayout}>
               {t("按科研目录结构初始化")}
             </Button>
             {/* **做完要出声**：建了几个目录、约定写没写进去，各说各的话 */}
@@ -1292,7 +1302,7 @@ export function FilesView({
           <DirNode
             key={根}
             path={根}
-            name={根}
+            name={根 || 根目录名称}
             depth={0}
             selected={selected}
             onSelect={onSelect}

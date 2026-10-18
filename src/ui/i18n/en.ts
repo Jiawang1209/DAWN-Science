@@ -265,6 +265,8 @@ export const EN: Readonly<Record<string, string>> = {
   // `origin: system`，同一个中文串两种含义、一份译文，必有一处是错的
   "机器": "Machine",
   "本机": "This computer",
+  "文件根目录": "File browser root",
+  "根目录": "Root folder",
   "远端：{0}": "Remote: {0}",
   "操作系统": "OS",
   "硬件": "Hardware",

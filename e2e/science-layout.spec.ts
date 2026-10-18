@@ -19,6 +19,8 @@ test("文件那一屏能按下去，目录真的建出来，且它说了自己�
   await 进坞(page, "文件")
   const 按钮 = page.getByRole("button", { name: "按科研目录结构初始化" })
   await expect(按钮, "文件这一屏上够不着这个动作").toBeVisible()
+  await expect(按钮).toHaveClass(/btn-primary/)
+  await expect(page.getByRole("group", { name: "文件根目录" })).toContainText(workspace)
   await 按钮.click()
 
   /**

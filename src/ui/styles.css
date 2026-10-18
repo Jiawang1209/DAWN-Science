@@ -2278,6 +2278,7 @@ pre {
   overflow-wrap: anywhere;
 }
 .files-root-label { color: var(--dawn-text-3); }
+.files-root-context .tree-actions { grid-column: 1 / -1; min-width: 0; }
 .files-root-path {
   grid-column: 1 / -1;
   min-width: 0;

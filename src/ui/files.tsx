@@ -1244,11 +1244,21 @@ export function FilesView({
             {t("收窄")}
           </Button>
         ) : null}
-        {根目录路径 ? (
+        {根目录路径 || onInitLayout ? (
           <div className="files-root-context" role="group" aria-label={t("文件根目录")}>
-            <span className="files-root-label">{t("根目录")}</span>
-            <strong>{根目录名称}</strong>
-            <code className="files-root-path">{根目录路径}</code>
+            {根目录路径 ? <>
+              <span className="files-root-label">{t("根目录")}</span>
+              <strong>{根目录名称}</strong>
+              <code className="files-root-path">{根目录路径}</code>
+            </> : null}
+            {onInitLayout ? (
+              <div className="tree-actions">
+                <Button variant="primary" size="sm" onClick={onInitLayout}>
+                  {t("按科研目录结构初始化")}
+                </Button>
+                {layoutNote ? <p className="caveat">{layoutNote}</p> : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -1282,15 +1292,6 @@ export function FilesView({
         />
       ) : (
       <nav className="file-tree" aria-label={t("工作区文件")}>
-        {onInitLayout ? (
-          <div className="tree-actions">
-            <Button variant="primary" size="sm" onClick={onInitLayout}>
-              {t("按科研目录结构初始化")}
-            </Button>
-            {/* **做完要出声**：建了几个目录、约定写没写进去，各说各的话 */}
-            {layoutNote ? <p className="caveat">{layoutNote}</p> : null}
-          </div>
-        ) : null}
         <ul className="tree-list">
           {/**
             * `key` **只跟着根走**：换根要重新挂载，否则上一处的列表还留在那儿。

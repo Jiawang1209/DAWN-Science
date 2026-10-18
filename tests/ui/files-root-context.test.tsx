@@ -17,7 +17,7 @@ it("本地根节点显示项目名与完整路径；跳转仍使用相对路径"
   expect(within(context).getByText("草地项目")).toBeTruthy()
   expect(within(context).getByText("/Users/test/草地项目/")).toBeTruthy()
   expect(screen.getByRole("button", { name: "草地项目" })).toBeTruthy()
-  const button = screen.getByRole("button", { name: "按科研目录结构初始化" })
+  const button = within(context).getByRole("button", { name: "按科研目录结构初始化" })
   expect(button.classList.contains("btn-primary")).toBe(true)
   fireEvent.click(button)
   expect(init).toHaveBeenCalledOnce()
@@ -43,4 +43,12 @@ it("没有真实根路径时不编造项目位置", () => {
   render(<FilesView {...props()} />)
   expect(screen.queryByRole("group", { name: "文件根目录" })).toBeNull()
   expect(screen.getByRole("button", { name: "／" })).toBeTruthy()
+})
+
+it("目录位置尚不可用时仍可使用已有初始化入口", () => {
+  const init = vi.fn()
+  const { container } = render(<FilesView {...props()} onInitLayout={init} />)
+  fireEvent.click(screen.getByRole("button", { name: "按科研目录结构初始化" }))
+  expect(init).toHaveBeenCalledOnce()
+  expect(container.querySelector(".files-root-path")).toBeNull()
 })

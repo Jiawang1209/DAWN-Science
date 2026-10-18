@@ -31,8 +31,8 @@ function retainRecord<T extends { state: string; note: string; toolCallIds?: str
   return { ...accepted, ...(toolCallIds.length || previous.toolCallIds || next.toolCallIds ? { toolCallIds } : {}) }
 }
 const changed = (before: RouteStep, after: RouteStep) =>
-  JSON.stringify([before.inputs, before.purpose, [...before.dependencies].sort(), before.selectedCase]) !==
-  JSON.stringify([after.inputs, after.purpose, [...after.dependencies].sort(), after.selectedCase])
+  JSON.stringify([before.inputs, before.outputs, before.purpose, [...before.dependencies].sort(), before.selectedCase]) !==
+  JSON.stringify([after.inputs, after.outputs, after.purpose, [...after.dependencies].sort(), after.selectedCase])
 
 export class AnalysisRouteBook {
   private stored: Stored = { history: [], reasons: [] }
@@ -59,7 +59,7 @@ export class AnalysisRouteBook {
       const nextIds = new Set(next.steps.map(step => step.id))
       for (const step of current.steps) if (!nextIds.has(step.id)) throw new Error(`不能删除既有步骤 ${step.id}；请跳过此步骤以保留证据`)
       const old = new Map(current.steps.map(step => [step.id, step]))
-      const contextChanged = JSON.stringify(current.dataContext) !== JSON.stringify(next.dataContext)
+      const contextChanged = current.goal !== next.goal || JSON.stringify(current.dataContext) !== JSON.stringify(next.dataContext)
       const affected = new Set<string>()
       for (const step of next.steps) {
         const previous = old.get(step.id)
@@ -84,7 +84,7 @@ export class AnalysisRouteBook {
       }
       for (const step of next.steps) if (affected.has(step.id) && (started(step) || (old.has(step.id) && started(old.get(step.id)!)))) {
         step.needsReview = true
-        const note = reason?.trim() || "路线数据背景、步骤输入、目的、依赖或参考案例已变更，请复核此步骤及交付。"
+        const note = reason?.trim() || "路线目标、数据背景、步骤输入、预期输出、目的、依赖或参考案例已变更，请复核此步骤及交付。"
         if (!step.notes.includes(note)) step.notes.push(note)
       }
     }

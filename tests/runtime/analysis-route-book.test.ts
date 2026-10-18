@@ -154,6 +154,28 @@ describe("AnalysisRouteBook", () => {
     initial.dataContext = ["new data"]
     expect(book.replace(1, initial).steps.map(s => s.needsReview)).toEqual([true, false, false, true])
   })
+  it("marks started steps for review when the global analysis goal changes", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.status = "delivered"; initial.steps[3]!.status = "in_progress"
+    book.replace(0, initial)
+    initial.goal = "分析时间趋势"
+    expect(book.replace(1, initial).steps.map(s => s.needsReview)).toEqual([true, false, false, true])
+  })
+  it("marks started self and downstream steps when expected output contracts change", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.status = "delivered"; initial.steps[1]!.status = "delivered"
+    initial.steps[2]!.status = "in_progress"; initial.steps[3]!.status = "delivered"
+    book.replace(0, initial)
+    initial.steps[0]!.outputs = ["时间趋势报告"]
+    expect(book.replace(1, initial).steps.map(s => s.needsReview)).toEqual([true, true, true, false])
+  })
+  it("keeps review flags unchanged when only route or step titles change", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.status = "delivered"; initial.steps[1]!.status = "delivered"
+    book.replace(0, initial)
+    initial.title = "路线新名称"; initial.steps[0]!.title = "步骤新名称"
+    expect(book.replace(1, initial).steps.every(s => !s.needsReview)).toBe(true)
+  })
   it("can add and reorder steps without changing existing IDs or causing spurious review", () => {
     const book = new AnalysisRouteBook(undefined), initial = draft()
     initial.steps[1]!.status = "delivered"; book.replace(0, initial)

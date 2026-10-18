@@ -22,6 +22,7 @@ it.each([['out/a.R', script], ['out/review.md', markdown], ['out/data.csv', tabl
   expect(container.querySelector('.artifacts-head .name')).toBeNull()
   const list = container.querySelector<HTMLElement>('.artifacts-compact')!
   const navigation = container.querySelector<HTMLElement>('.artifacts-head')!
+  expect(list.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '展开阅读' }))
   expect(list.hidden).toBe(true)
   expect(navigation.hidden).toBe(true)
@@ -131,7 +132,7 @@ it('产物读取中及失败后也能收起，迟到结果不会重开预览', a
   const a = { path: 'out/review.md', kind: 'markdown' as const, bornRunId: 'r', bornToolCallId: 'c', bornAt: '2026-10-18T10:00:00Z', exists: true }
   const { container } = render(<ArtifactsPanel data={{ artifacts: [a], unknown: [] }} readFile={readFile} onOpenInFiles={vi.fn()} onOpenExternally={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', { name: a.path }))
-  expect(container.querySelector('.artifacts-preview')?.firstElementChild?.className).toBe('artifacts-head')
+  expect(container.querySelector('.artifacts-head')!.compareDocumentPosition(container.querySelector('.loader, .state-block')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
   await act(async () => { complete(markdown); await Promise.resolve() })
   expect(container.querySelector('.artifacts-preview')).toBeNull()
@@ -139,7 +140,7 @@ it('产物读取中及失败后也能收起，迟到结果不会重开预览', a
   expect(document.activeElement).toBe(row)
   fireEvent.click(row)
   await screen.findByText('read failed')
-  expect(container.querySelector('.artifacts-preview')?.firstElementChild?.className).toBe('artifacts-head')
+  expect(container.querySelector('.artifacts-head')!.compareDocumentPosition(container.querySelector('.loader, .state-block')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.getAllByRole('button', { name: '收起预览' })).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
   expect(container.querySelector('.artifacts-preview')).toBeNull()

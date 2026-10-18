@@ -187,17 +187,27 @@ export function ArtifactsPanel({
       <Button variant="ghost" size="sm" onClick={closePreview}>
         {t("回到清单")}
       </Button>
-      {!内容 || 读错 ? <span className="name">{看的.split("/").pop()}</span> : null}
+      {pending ? <span className="name">{看的.split("/").pop()}</span> : null}
       <Button variant="ghost" size="sm" onClick={() => onOpenInFiles(看的)}>
         {t("在文件里定位")}
       </Button>
-      {!内容 || 读错 ? <PreviewCloseButton onClose={closePreview} /> : null}
+      {pending ? <PreviewCloseButton onClose={closePreview} /> : null}
     </header> : null
     return (
       <div ref={previewRoot} className="artifacts-pane artifacts-preview"
         onFocusCapture={e => { focusedClose.current = e.target.closest<HTMLElement>('.preview-close-button') }}
         onBlurCapture={e => { if (e.target.isConnected) focusedClose.current = null }}>
-        {pending ? navigation : null}
+        <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
+          {data.artifacts.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
+            <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>
+              <span className="artifact-row-icon"><类型图标 类={文件类按名字(a.path, "file")} /></span>
+              <span className="name">{a.path.split("/").pop()}</span>
+              <span className="kind-tag">{a.kind.toUpperCase()}</span>
+              {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
+            </Button>
+          </li>)}
+        </ul>
+        {navigation}
         {读错 ? (
           <EmptyState
             title={t("读不到这个文件")}
@@ -220,17 +230,6 @@ export function ArtifactsPanel({
             {...(onDownload ? { onDownload } : {})}
           />
         )}
-        {!pending ? navigation : null}
-        <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
-          {data.artifacts.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
-            <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>
-              <span className="artifact-row-icon"><类型图标 类={文件类按名字(a.path, "file")} /></span>
-              <span className="name">{a.path.split("/").pop()}</span>
-              <span className="kind-tag">{a.kind.toUpperCase()}</span>
-              {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
-            </Button>
-          </li>)}
-        </ul>
         {data.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", data.unknown.length)}</p> : null}
       </div>
     )

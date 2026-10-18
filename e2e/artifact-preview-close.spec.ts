@@ -31,6 +31,8 @@ test("长Markdown产物只滚动正文，收起入口固定且返回原清单", 
   expect(frame.border).toBe("1px")
   expect(frame.radius).toBeGreaterThan(0)
   expect(frame.color).toBe(await card.evaluate(e => { const probe = document.createElement("span"); probe.style.color = "var(--dawn-accent)"; e.append(probe); const color = getComputedStyle(probe).color; probe.remove(); return color }))
+  const fileList = await pane.locator(".artifacts-compact").boundingBox()
+  expect(fileList!.y + fileList!.height).toBeLessThanOrEqual((await card.boundingBox())!.y)
   const normalHeight = (await card.boundingBox())!.height
   await pane.getByRole("button", { name: "展开阅读", exact: true }).click()
   await expect(pane.locator(".artifacts-compact")).toBeHidden()

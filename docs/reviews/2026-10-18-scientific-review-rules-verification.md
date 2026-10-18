@@ -41,6 +41,6 @@
 
 日志位于本工作树忽略目录 `tmp/scientific-review/`：baseline-build/tests、red、electron-red、scenario-red/green、build-contract-red、green、review-red/green、typecheck、build、full-tests、electron 等 `.log`，以及两个场景摘录 `.md`。build-contract-red 特意在源码修正但未重建时失败，重建后同版内容及真实资源读取通过，避免只验仓库文本。
 
-本轮没有对用户科研数据做 R/Python 分析、独立重跑、PDF渲染比较或真实 DAWN 模型工具端到端科研质量验收；示例中的数值不是本次实验数据。确定性 Electron 证明加载与既有链路，文字演练证明规范可应用并暴露冲突，不能据此保证模型每次都会正确判断科研问题。未跑完整 Electron 全套；前轮已记录的无关旧页签/侧会话断言未修改或标为 skip。
+上述规则验收阶段没有对用户科研数据做 R/Python 分析、独立重跑、PDF渲染比较或真实 DAWN 模型工具端到端科研质量验收；示例中的数值不是本次实验数据。确定性 Electron 证明加载与既有链路，文字演练证明规范可应用并暴露冲突，不能据此保证模型每次都会正确判断科研问题。未跑完整 Electron 全套；前轮已记录的无关旧页签/侧会话断言未修改或标为 skip。后续按用户要求完成的真实DeepSeek合成案例预览及其观察到的偏差另见 [实际案例记录](2026-10-18-scientific-review-live-case.md)，不能把该次实跑标为全部通过。
 
 保留分支与工作树供查看；本地 main 及上一项的实际预览/案例不动。

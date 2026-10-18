@@ -45,18 +45,20 @@ function checkedCaseIds(result: string): Set<string> {
   const checked = new Set<string>()
   let root: unknown
   try { root = JSON.parse(result.replace(/^\s*\[[^\]\n]+\]\s*/, '')) } catch { return checked }
-  const hasContent = (value: unknown): boolean => {
+  const hasContent = (value: unknown, caseId: string): boolean => {
     if (!value || typeof value !== 'object') return false
-    if (Array.isArray(value)) return value.some(hasContent)
+    if (Array.isArray(value)) return value.some(child => hasContent(child, caseId))
+    const identity = (value as Record<string, unknown>).case_id
+    if (typeof identity === 'string' && identity !== caseId) return false
     return Object.entries(value).some(([field, child]) =>
       ['code', 'content', 'source'].includes(field) && typeof child === 'string' && Boolean(child.trim())
-      || Boolean(child && typeof child === 'object' && hasContent(child)))
+      || Boolean(child && typeof child === 'object' && hasContent(child, caseId)))
   }
   const walk = (value: unknown): void => {
     if (!value || typeof value !== 'object') return
     if (Array.isArray(value)) return value.forEach(walk)
     const object = value as Record<string, unknown>
-    if (typeof object.case_id === 'string' && hasContent(object)) checked.add(object.case_id)
+    if (typeof object.case_id === 'string' && hasContent(object, object.case_id)) checked.add(object.case_id)
     Object.values(object).forEach(walk)
   }
   walk(root)

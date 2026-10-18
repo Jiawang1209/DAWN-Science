@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 路线动作拒绝忙碌排队并隔离案例正文归属
+
+- **Type**: fix
+- **Motivation**: 规格复审复现 act 返回后普通回合抢先启动，旧路线动作可能进入 pi followUp 并在路线改版后被消费；另发现 A 案例可借 related_cases 中 B 的正文误标 content_checked。
+- **What**: 原生实际发送入口在任何 followUp 分支前，对忙碌的 canonical view/search/continue 返回 SESSION_BUSY；普通消息排队规则保持原样。正文检查递归遇不同 case_id 停止借用，外层仍分别核验各案例。
+- **Impact**: 路线动作不会在队列等待期间跨版本失效；案例正文核对按完整案例身份归位。失败显式返回，不写伪 in_progress，不扩大执行权限。
+- **Verification**: 三种动作在真实 pi 另轮 bash 工具已开始后不得排队，以及 A.related_cases[B.code] 四条回归先 RED；修复后 6 文件 58 项定向测试、typecheck/build/git diff --check 通过。未运行科研分析、全量测试或 Electron。
+
 ### 2026-10-18 — 原生主会话分析路线运行时与受控逐步操作
 
 - **Type**: feat

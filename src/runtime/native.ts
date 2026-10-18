@@ -2663,6 +2663,11 @@ ${描述}`
     this.validateRouteMessage(sessionId, data)
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
+    // Route actions are idle-only at both API and actual send time. They never
+    // enter pi's followUp queue, whose consumption can follow a newer revision.
+    if (parseRouteActionMessage(data) && (s.inFlight || s.session.isStreaming || s.转述中 || s.回退中 || s.中止中)) {
+      throw Object.assign(new Error('会话正在运行、停止或回退，请稍后重新操作路线'), { routeCode: 'SESSION_BUSY' })
+    }
     this.不许在回退(s)
     const 图 =
       images && images.length > 0

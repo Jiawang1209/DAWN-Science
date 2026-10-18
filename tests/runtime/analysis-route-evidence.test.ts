@@ -63,3 +63,14 @@ describe('duplicate result identity recovery',()=>{
   expect(recovered[0]!.filesWritten).toBeUndefined()
  })
 })
+
+
+describe('case content identity boundary',()=>{
+ it('does not borrow a related case body to mark the parent case checked',()=>{
+  const d=draft();d.steps[0]!.cases[0]!.evidence='content_checked'
+  const result='{"case_id":"full/id","title":"Real","related_cases":[{"case_id":"other/id","title":"Other","code":"only other code"}]}'
+  expect(()=>validateRouteEvidence(d,undefined,[tool('A__get_case',result)],'')).toThrow(/正文/)
+  d.steps[0]!.cases=[{server:'A',caseId:'other/id',title:'Other',coverage:'c',evidence:'content_checked'}]
+  expect(()=>validateRouteEvidence(d,undefined,[tool('A__get_case',result)],'')).not.toThrow()
+ })
+})

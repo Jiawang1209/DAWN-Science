@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -43,4 +43,21 @@ describe('analysis route shared mock over real pi/tools',()=>{
    }finally{await recovered.stop('r')}
   }finally{await rt.stop('r');await pool.全关()}
  })
+ it.each(['view','search','continue'] as const)('rejects %s at real pi followUp admission when another turn started first', {timeout:30000},async action=>{
+  const id='queued-'+action;const workspace=join(dir,id);mkdirSync(workspace);const sessionDir=join(dir,id+'-session')
+  const rt=new NativeRuntime({modelsPath,checkpoints:false});const events:AgentEvent[]=[];rt.attach(id,event=>events.push(event))
+  await rt.start({sessionId:id,workspace,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}})
+  try{
+   rt.write(id,'演示分析路线');await rt.waitForIdle(id)
+   const route=rt.getAnalysisRoute(id,sessionDir).route!
+   const pending=rt.actOnAnalysisRoute(id,{routeId:route.routeId,expectedRevision:route.revision,stepId:'S1',action}).message!
+   rt.write(id,'慢慢跑')
+   await vi.waitFor(()=>expect(events.some(e=>e.kind==='tool_start'&&e.toolName==='bash')).toBe(true),{timeout:5000})
+   expect(()=>rt.write(id,pending,'followUp','stale-route-action')).toThrow(/会话正在运行/)
+   expect(events.some(e=>e.kind==='queue_delivered'&&e.id==='stale-route-action')).toBe(false)
+   const state=(rt as unknown as {sessions:Map<string,{待发:{文:string}[]}>}).sessions.get(id)!
+   expect(state.待发.some(item=>item.文===pending)).toBe(false)
+  }finally{await rt.abort(id);await rt.waitForIdle(id);await rt.stop(id)}
+ })
+
 })

@@ -36,6 +36,8 @@ export interface SubagentChildSpec {
   modelsPath?: string
   /** provider → apiKey。**只走这里，不进环境变量** */
   credentials?: Record<string, string>
+  /** 父侧提供只读资源 RPC；全文和存储路径不随规格注入子进程。 */
+  resources?: true
   /**
    * **子 agent 的会话落在哪**（2026-09-27，子 agent 看得见）。给了就把 pi 会话写进 `dir`，`resume` 时续最近那份——
    * 与成员模式的 `member.sessionDir` 同一段代码。此前非成员模式不给 sessionManager，pi 写进 `<agentDir>/sessions/--<cwd>--/`，
@@ -105,7 +107,7 @@ export type 子转录事件 =
 
 export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage | SubagentEventMessage
 
-/** 父 → 子（只在成员模式）：工具调用的回应，一行一条 */
+/** 父 → 子（成员通信或只读资源）：工具调用的回应，一行一条 */
 export interface SubagentParentReply {
   type: "reply"
   id: string

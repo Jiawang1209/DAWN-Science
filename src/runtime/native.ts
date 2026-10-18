@@ -73,6 +73,7 @@ export function 原文对得上(界面: string, pi那句: string, 名单: { 模�
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool, createSubagentFollowUp } from "../subagent/tool.js"
 import { 子运行目录 } from "../subagent/run-dir.js"
+import { childResourceFactory } from "./child-resources.js"
 import { 子目录段 } from "../protocol/subagent-id.js"
 import { 挑工具后端 } from "../remote/tools.js"
 import { 本轮内核语言, 内核请求标记 } from "../kernel/shortcuts.js"
@@ -1342,6 +1343,7 @@ export class NativeRuntime implements AgentRuntime {
       return [...(base ?? []), ...观察过的外部, ...memberTools]
     }
 
+    const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       sessionId: spec.sessionId,
       projectRoot: spec.workspace,
@@ -1362,6 +1364,7 @@ export class NativeRuntime implements AgentRuntime {
         ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
         // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）。2026-09-27 起实际用的是下面按调用分的 `运行目录`
         agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
+        ...(子任务资源 ? {resources: 子任务资源} : {}),
         ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
       },
       // 按调用分（2026-09-27，spec §1.1）：`<会话目录>/subagents/<toolCallId>/<序号>/`——meta.json、会话文件都在里面，
@@ -1400,6 +1403,7 @@ export class NativeRuntime implements AgentRuntime {
           provider: native.provider,
           model: native.model,
           cwd: spec.workspace,
+          ...(子任务资源 ? {resources: 子任务资源} : {}),
           ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
           ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
         },

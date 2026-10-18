@@ -35,6 +35,7 @@ import type { SubagentDefinition } from "./definitions.js"
 import { join } from "node:path"
 import type { SubagentChildSpec, 子事件 } from "./protocol.js"
 import { 按字节截 } from "./clip.js"
+import type { ResourceHost } from "./resources.js"
 
 /**
  * 杀掉一个子 agent 进程**连同它派生的后代**（审查 debug H6）。
@@ -161,6 +162,8 @@ export interface SubagentContext {
    * 写成 agentDir 级的默认值，共用就会互相串。
    */
   agentDirOf: (index: number) => string
+  /** 每个任务/续问一个访问器，目录及作用域不会与并行任务共用。 */
+  resources?: (() => ResourceHost) | undefined
 }
 
 export interface SubagentExecutorOptions {
@@ -313,7 +316,9 @@ export class SubagentExecutor {
 
       // 显式类型：`onAbort` 在赋值之前就闭包捕获了它，推断不出来
       let child: ChildProcessWithoutNullStreams | undefined
+      let resources: ResourceHost | undefined
       try {
+        resources = this.context.resources?.()
         child = spawn(cmd.command, cmd.args, {
           stdio: ["pipe", "pipe", "pipe"],
           // 自成进程组(H6):中止/超时时好整组杀,孙进程不成孤儿。Windows 无此语义,不传
@@ -341,13 +346,22 @@ export class SubagentExecutor {
       const 收一行 = (line: string) => {
         const s = line.trim()
         if (!s.startsWith("{")) return
-        let v: { type?: string; event?: 子事件 }
+        let v: { type?: string; event?: 子事件; id?: string; name?: string; params?: unknown }
         try {
-          v = JSON.parse(s) as { type?: string; event?: 子事件 }
+          v = JSON.parse(s) as typeof v
         } catch {
           return
         }
         if (v.type === "done") 最后done = v as DoneLine
+        else if (v.type === "call" && resources && typeof v.id === "string" && !settled) {
+          const id = v.id
+          const reply = (ok: boolean, result: string) => {
+            if (settled) return
+            try { child?.stdin.write(`${JSON.stringify({type: "reply", id, ok, result})}\n`) } catch { /* 子进程已退出，主失败由 close 报告 */ }
+          }
+          if (v.name !== "resource_search" && v.name !== "resource_read") reply(false, "子任务只允许只读资源方法")
+          else void resources.call(v.name, v.params).then(result => reply(true, result), error => reply(false, message(error)))
+        }
         // 已收尾（中止 / 超时）之后到的过程不再转：chip 已经 settled，再来一行只会让界面以为它还活着
         else if (v.type === "event" && v.event && !settled) this.onProgress({ type: "event", index, event: v.event })
       }
@@ -480,8 +494,10 @@ export class SubagentExecutor {
         ...(definition.tools ? { tools: definition.tools } : {}),
         ...(ctx.modelsPath ? { modelsPath: ctx.modelsPath } : {}),
         ...(ctx.credentials ? { credentials: ctx.credentials } : {}),
+        ...(resources ? {resources: true as const} : {}),
       }
-      child.stdin.end(JSON.stringify(spec))
+      if (resources) child.stdin.write(`${JSON.stringify(spec)}\n`)
+      else child.stdin.end(JSON.stringify(spec))
     })
   }
 }

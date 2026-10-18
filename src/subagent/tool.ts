@@ -246,6 +246,7 @@ export function createSubagentFollowUp(opts: SubagentToolOptions) {
 function describe(load: ReturnType<typeof loadSubagentDefinitions>): string {
   const lines = [
     "把一件事交给子 agent 去做。每个子 agent 在**独立进程**里跑，有自己的上下文窗口。",
+    "派单时必须在任务正文写清用户的执行范围、数据保护和交付要求。配有只读资源时子 agent 可按需查技能/相关记忆，但检索不能代替硬约束传递。",
     `三种模式：single（agent + task）、parallel（tasks，最多 ${SUBAGENT_LIMITS.maxTasks} 个，` +
       `${SUBAGENT_LIMITS.maxConcurrent} 并发）、chain（chain，可用 {previous} 引上一步结果）。` +
       "**恰好给一组，不要同时给两组。**",

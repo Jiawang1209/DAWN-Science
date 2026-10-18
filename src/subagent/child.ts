@@ -30,8 +30,8 @@
  *   可能存在的「再起一个子 agent」——**嵌套委派**。
  *   计划 §6 把它明确留给阶段 ④，而这里是它唯一能被真正堵住的地方：
  *   不是靠约定，是靠子进程根本没加载那套东西。
- * - skills / prompts 关掉是为了**上下文干净**。子 agent 存在的理由就是
- *   一个小而专注的上下文窗口，把父会话的那一堆再灌一遍就没意义了。
+ * - skills / prompts 的默认扫描关闭，保持上下文精简。2026-10-18 起，
+ *   配有父侧资源访问器时只通过只读 RPC 按需查目录和正文，不自动加载扩展。
  */
 import { mkdirSync } from "node:fs"
 import { 关掉pi自己下载 } from "../runtime/no-tool-download.js"
@@ -47,6 +47,7 @@ import { randomUUID } from "node:crypto"
 import type { Credential, CredentialStore } from "@earendil-works/pi-ai"
 import { runChildTask, type ChildPiSession } from "./child-task.js"
 import type { SubagentChildMessage, SubagentChildSpec, SubagentParentReply } from "./protocol.js"
+import { createResourceTools, RESOURCE_GUIDANCE } from "./resource-tools.js"
 
 /**
  * 只读的内存凭证库。
@@ -104,7 +105,7 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   const resourceLoader = new DefaultResourceLoader({
     cwd: spec.cwd,
     agentDir: spec.agentDir,
-    systemPrompt: spec.systemPrompt,
+    systemPrompt: spec.resources ? `${spec.systemPrompt}\n\n${RESOURCE_GUIDANCE}` : spec.systemPrompt,
     noExtensions: true,
     noSkills: true,
     noPromptTemplates: true,
@@ -124,6 +125,10 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
       : SessionManager.create(spec.cwd, 记录.dir)
     : undefined
 
+  const customTools = [
+    ...(spec.member ? 成员工具(spec.member.name) : []),
+    ...(spec.resources ? createResourceTools(调父进程) : []),
+  ]
   const { session } = await createAgentSession({
     cwd: spec.cwd,
     agentDir: spec.agentDir,
@@ -132,8 +137,9 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
     resourceLoader,
     ...(sessionManager ? { sessionManager } : {}),
     // 定义里没写 tools 就用 pi 的默认工具集——**缺省不等于「不给工具」**
-    ...(spec.tools ? { tools: spec.tools } : {}),
-    ...(spec.member ? { customTools: 成员工具(spec.member.name) as never } : {}),
+    // pi 的 tools 同时是自定义工具白名单；只补本轮确实注册的只读资源/成员通信工具，不增加 bash 等执行工具。
+    ...(spec.tools ? {tools: [...new Set([...spec.tools, ...customTools.map(t => t.name)])]} : {}),
+    ...(customTools.length ? {customTools: customTools as never} : {}),
   })
 
   return {
@@ -190,7 +196,7 @@ function readStdin(): Promise<string> {
   })
 }
 
-/** 成员模式的工具：调用 = 往 stdout 写一行 `call`，等 stdin 上同 id 的 `reply` */
+/** 成员通信和只读资源共用：stdout 一行 call，等待 stdin 上同 id 的 reply。 */
 function 调父进程(name: string, params: unknown): Promise<string> {
   return new Promise((resolve, reject) => {
     const id = randomUUID()
@@ -200,6 +206,7 @@ function 调父进程(name: string, params: unknown): Promise<string> {
     }, 60_000)
     等回应.set(id, (r) => {
       clearTimeout(timer)
+      等回应.delete(id)
       等回应.delete(id)
       if (r.ok) resolve(r.result)
       else reject(new Error(r.result))

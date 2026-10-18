@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 子 Agent 按需读取技能与相关记忆
+
+- **Type**: feat / fix / test / docs
+- **Motivation**: 主会话已有技能与记忆能力，普通子 Agent 和旧 Team 仍缺少按需发现与受控查询；用户要求先完成此项，独立分支、不合并、不推送。
+- **What**: 父侧按项目/全局/自带筛选技能及已确认活动记忆，按项目/分支隔离；通过既有 NDJSON RPC 提供只读 resource_search/read、正文分页与技能目录内参考读取。保留 manual/off 遮蔽、插件开关、权限拒绝、独立进程和扩展关闭；同轮损坏技能单独报告，长描述全文可查。普通/并行/链式/续问与旧 Team 接线，新 Bot 沿用原装配。
+- **Impact**: 保留在 codex/child-agent-resources 独立工作树；不合并、不推送、不替换安装版。无依赖、数据库、应用版本及公开 UI 协议变化。远端首版只提供全局资源，ACP 未扩展；不新增执行、记忆写入或递归委派工具。
+- **Verification**: 先红后绿覆盖目录、RPC、NativeRuntime 和真实构建；最终 Vitest409文件4562项通过、10项按原设置跳过，typecheck/build/diff检查通过。29项既有Electron与1项新增真实派单/续问/退出重启恢复通过；1条旧九页签断言单列核对主线。独立复审2项P2已修复并复审关闭。详见 docs/reviews/2026-10-18-child-agent-resources-verification.md；mock不代表真实模型科学质量验收。
+
 ### 2026-10-17 — 案例卡片展示优化验收与本地集成
 
 - **Type**: style / docs

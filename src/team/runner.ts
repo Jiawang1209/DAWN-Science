@@ -13,6 +13,7 @@ import type { SubagentDefinition } from "../subagent/definitions.js"
 import type { SubagentChildMessage, SubagentChildSpec, SubagentParentReply } from "../subagent/protocol.js"
 import type { ChildCommand, SubagentContext } from "../subagent/executor.js"
 import { 团队上限, type 成员轮结果 } from "./types.js"
+import type { ResourceHost } from "../subagent/resources.js"
 
 export interface 成员轮规格 {
   definition: SubagentDefinition
@@ -34,7 +35,7 @@ export interface 成员轮规格 {
 
 export interface 跑一轮选项 {
   childOf: (spec: { definition: SubagentDefinition; agent: string; task: string }) => ChildCommand
-  context: Pick<SubagentContext, "provider" | "model" | "cwd" | "modelsPath" | "credentials">
+  context: Pick<SubagentContext, "provider" | "model" | "cwd" | "modelsPath" | "credentials" | "resources">
   /** 子进程的工具调用：答一句（字符串）或抛错（错误文本回给子进程） */
   onCall: (name: string, params: unknown) => Promise<string>
   signal?: AbortSignal | undefined
@@ -47,7 +48,9 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
   return new Promise<成员轮结果>((resolve) => {
     if (opts.signal?.aborted) return resolve({ ok: false, output: "", error: "开始前已被中止" })
     let child: ChildProcessWithoutNullStreams
+    let resources: ResourceHost | undefined
     try {
+      resources = opts.context.resources?.()
       child = spawn(cmd.command, cmd.args, { stdio: ["pipe", "pipe", "pipe"], ...(process.platform !== "win32" ? { detached: true } : {}), ...(cmd.env ? { env: { ...process.env, ...cmd.env } } : {}) })
     } catch (err) {
       return resolve({ ok: false, output: "", error: `子进程起不来：${err instanceof Error ? err.message : String(err)}` })
@@ -76,6 +79,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       : undefined
 
     const 回 = (r: SubagentParentReply) => {
+      if (settled) return
       try {
         child.stdin.write(`${JSON.stringify(r)}\n`)
       } catch {
@@ -92,7 +96,11 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
         return
       }
       if (m.type === "call") {
-        void opts.onCall(m.name, m.params).then(
+        const resource = m.name === "resource_search" || m.name === "resource_read"
+        const response = resource
+          ? resources ? resources.call(m.name, m.params) : Promise.reject(new Error("当前成员未启用资源查询"))
+          : m.name.startsWith("resource_") ? Promise.reject(new Error("团队资源只支持只读方法")) : opts.onCall(m.name, m.params)
+        void response.then(
           (result) => 回({ type: "reply", id: m.id, ok: true, result }),
           (e: unknown) => 回({ type: "reply", id: m.id, ok: false, result: e instanceof Error ? e.message : String(e) }),
         )
@@ -138,6 +146,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       ...(规格.definition.tools ? { tools: 规格.definition.tools } : {}),
       ...(ctx.modelsPath ? { modelsPath: ctx.modelsPath } : {}),
       ...(ctx.credentials ? { credentials: ctx.credentials } : {}),
+      ...(resources ? {resources: true as const} : {}),
       member: { team: 规格.teamId, name: 规格.memberName, sessionDir: 规格.sessionDir, resume: 规格.resume },
     }
     // 第一行是规格；**不关 stdin**——后面还要回工具调用

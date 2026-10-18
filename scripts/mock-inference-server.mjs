@@ -297,6 +297,29 @@ export const 派子agent慢 = {
 }
 export const 子任务读 = { toolName: "read", args: { path: "README.md" }, say: "我先读一下 README。" }
 export const 子任务慢 = { toolName: "bash", args: { command: "sleep 15" }, say: "我先等十五秒。" }
+/** 资源验收只匹配当前用户轮，ID 必须取自上一步真实工具结果。 */
+function childResourceTool(body) {
+  const messages = body.messages ?? []
+  const index = messages.findLastIndex(m => m.role === "user")
+  const raw = index >= 0 ? messages[index].content : undefined
+  const user = typeof raw === "string" ? raw : Array.isArray(raw) ? raw.filter(c => c.type === "text").map(c => c.text).join("\n") : undefined
+  if (typeof user === "string" && user.includes("派子agent查资源") && messages.at(-1)?.role === "user" && (body.tools ?? []).some(t => t.function?.name === "subagent")) {
+    return {toolName: "subagent", args: {agent: "data-auditor", task: "子资源验收：按需检查项目技能与固定参数"}, say: "派子 Agent 按需读取相关技能和记忆。"}
+  }
+  if (typeof user !== "string" || !user.startsWith("子资源验收：")) return undefined
+  if (!(body.tools ?? []).some(t => t.function?.name === "resource_search")) return undefined
+  const results = messages.slice(index + 1).filter(m => m.role === "tool")
+  if (results.length === 0) return {toolName: "resource_search", args: {kind: "skill", query: "resource-fixture"}, say: "先查相关技能目录。"}
+  if (results.length === 2) return {toolName: "resource_search", args: {kind: "memory", query: "固定参数"}, say: "再查相关记忆。"}
+  if (results.length === 1 || results.length === 3) {
+    try {
+      const data = JSON.parse(results.at(-1).content)
+      const id = data.items?.[0]?.id
+      if (typeof id === "string") return {toolName: "resource_read", args: {id}, say: "按返回的 ID 读取正文。"}
+    } catch { /* 失败/空目录结束，不能编造 ID 或假装读到 */ }
+  }
+  return undefined
+}
 function 子agent工具(body) {
   const 文 = 最后一句用户话(body)
   if (文 === undefined) return undefined
@@ -583,7 +606,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复)
 
-      const tool = 摘要 || 是标题 ? undefined : (opts.toolCall?.(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const tool = 摘要 || 是标题 ? undefined : (opts.toolCall?.(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && !是标题 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
       const finishReason = !摘要 && !是标题 && 最后一句.includes("演一次截断") ? "length" : "stop"

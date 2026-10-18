@@ -89,9 +89,70 @@ describe("AnalysisRouteBook", () => {
     initial.steps[0]!.status = "delivered"; initial.steps[0]!.needsReview = true
     book.replace(0, initial)
     initial.steps[0]!.needsReview = false
+    initial.steps[0]!.verification = { state: "reviewed", note: "已重新核对输入和方法" }
     expect(book.replace(1, initial).steps[0]!.needsReview).toBe(false)
     initial.steps[0]!.purpose = "新输入处理"
     expect(book.replace(2, initial).steps[0]!.needsReview).toBe(true)
+  })
+  it("preserves execution, verification, tool IDs and notes when a draft resets evidence", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    const first = initial.steps[0]!
+    first.execution = { state: "completed", note: "实际运行成功", toolCallIds: ["run-1"] }
+    first.verification = { state: "reviewed", note: "已经检查产物", toolCallIds: ["read-1"] }
+    first.notes = ["人工备注"]
+    book.replace(0, initial)
+    const reset = draft()
+    reset.steps[0]!.execution.toolCallIds = []
+    reset.steps[0]!.verification.toolCallIds = []
+    const saved = book.replace(1, reset).steps[0]!
+    expect(saved.execution).toEqual(first.execution); expect(saved.verification).toEqual(first.verification)
+    expect(saved.notes).toContain("人工备注")
+    const correction = asDraft(book.read()!)
+    correction.steps[0]!.execution = { state: "failed", note: "重核日志发现运行失败", toolCallIds: ["run-2"] }
+    const corrected = book.replace(2, correction).steps[0]!
+    expect(corrected.execution.toolCallIds).toEqual(["run-1", "run-2"])
+    expect(corrected.notes.join(" ")).toContain("实际运行成功")
+  })
+  it.each(["unreviewed", "reviewed", "issues"] as const)("does not clear review without a new review explanation (%s)", state => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.needsReview = true
+    initial.steps[0]!.verification = { state: "reviewed", note: "旧核对说明" }
+    initial.steps[0]!.notes = ["保留旧提示"]
+    book.replace(0, initial)
+    initial.steps[0]!.needsReview = false; initial.steps[0]!.notes = []
+    initial.steps[0]!.verification = { state, note: "旧核对说明" }
+    const result = book.replace(1, initial).steps[0]!
+    expect(result.needsReview).toBe(true); expect(result.notes).toContain("保留旧提示")
+  })
+  it("requires reviewed/issues rather than a changed unreviewed note to resolve review", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.needsReview = true
+    book.replace(0, initial)
+    initial.steps[0]!.needsReview = false
+    initial.steps[0]!.verification = { state: "unreviewed", note: "还没核对，只换一句话" }
+    expect(book.replace(1, initial).steps[0]!.needsReview).toBe(true)
+    initial.steps[0]!.verification = { state: "issues", note: "已复核，确认存在数据缺失" }
+    expect(book.replace(2, initial).steps[0]!.needsReview).toBe(false)
+    initial.steps[0]!.needsReview = false; initial.steps[0]!.purpose = "方法又改了"
+    initial.steps[0]!.status = "delivered"
+    initial.steps[0]!.verification = { state: "reviewed", note: "新的复核说明" }
+    expect(book.replace(3, initial).steps[0]!.needsReview).toBe(true)
+  })
+  it("retains old tool evidence when updated review records provide new IDs", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.verification = { state: "reviewed", note: "最初核对", toolCallIds: ["read-1"] }
+    book.replace(0, initial)
+    initial.steps[0]!.verification = { state: "issues", note: "核对后发现新问题", toolCallIds: ["read-2"] }
+    const result = book.replace(1, initial).steps[0]!
+    expect(result.verification).toEqual({ state: "issues", note: "核对后发现新问题", toolCallIds: ["read-1", "read-2"] })
+    expect(result.notes.join(" ")).toContain("最初核对")
+  })
+  it("marks all started steps for review when the route data context changes", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.status = "delivered"; initial.steps[3]!.status = "in_progress"
+    book.replace(0, initial)
+    initial.dataContext = ["new data"]
+    expect(book.replace(1, initial).steps.map(s => s.needsReview)).toEqual([true, false, false, true])
   })
   it("can add and reorder steps without changing existing IDs or causing spurious review", () => {
     const book = new AnalysisRouteBook(undefined), initial = draft()

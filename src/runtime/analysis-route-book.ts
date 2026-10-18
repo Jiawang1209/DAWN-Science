@@ -16,6 +16,20 @@ type Stored = z.infer<typeof storedSchema>
 const copy = <T>(value: T): T => structuredClone(value)
 const started = (step: RouteStep) => step.status !== "pending" && step.status !== "skipped" ||
   step.execution.state !== "not_run" || step.verification.state !== "unreviewed" || step.deliverables.length > 0
+/** Evidence IDs and prior explanations survive snapshot replacement. A reset to the
+ * default state never retracts an observed non-default record. Explicit corrections
+ * between non-default states require a fresh explanation, with the old one retained. */
+function retainRecord<T extends { state: string; note: string; toolCallIds?: string[] | undefined }>(previous: T, next: T, defaultState: string, label: string, notes: string[]): T {
+  const reset = previous.state !== defaultState && next.state === defaultState
+  const unexplainedCorrection = previous.state !== defaultState && previous.state !== next.state && previous.note === next.note
+  const accepted = reset || unexplainedCorrection ? previous : next
+  if (previous.state !== defaultState && (accepted.state !== previous.state || accepted.note !== previous.note)) {
+    const explanation = `${label}历史（${previous.state}）：${previous.note}`
+    if (!notes.includes(explanation)) notes.push(explanation)
+  }
+  const toolCallIds = [...new Set([...(previous.toolCallIds ?? []), ...(next.toolCallIds ?? [])])]
+  return { ...accepted, ...(toolCallIds.length || previous.toolCallIds || next.toolCallIds ? { toolCallIds } : {}) }
+}
 const changed = (before: RouteStep, after: RouteStep) =>
   JSON.stringify([before.inputs, before.purpose, [...before.dependencies].sort(), before.selectedCase]) !==
   JSON.stringify([after.inputs, after.purpose, [...after.dependencies].sort(), after.selectedCase])
@@ -45,14 +59,22 @@ export class AnalysisRouteBook {
       const nextIds = new Set(next.steps.map(step => step.id))
       for (const step of current.steps) if (!nextIds.has(step.id)) throw new Error(`不能删除既有步骤 ${step.id}；请跳过此步骤以保留证据`)
       const old = new Map(current.steps.map(step => [step.id, step]))
+      const contextChanged = JSON.stringify(current.dataContext) !== JSON.stringify(next.dataContext)
       const affected = new Set<string>()
       for (const step of next.steps) {
         const previous = old.get(step.id)
         if (!previous) continue
+        // Explicit review can clear a flag only with a new review explanation.
+        const freshReview = (step.verification.state === "reviewed" || step.verification.state === "issues") &&
+          step.verification.note !== previous.verification.note && Boolean(step.verification.note.trim())
+        if (previous.needsReview && !step.needsReview && !freshReview) step.needsReview = true
+        step.notes = [...new Set([...previous.notes, ...step.notes])]
+        step.execution = retainRecord(previous.execution, step.execution, "not_run", "执行", step.notes)
+        step.verification = retainRecord(previous.verification, step.verification, "unreviewed", "审查", step.notes)
         // A metadata replacement cannot erase previously recorded deliverables.
         const paths = new Set(step.deliverables.map(item => item.path))
         step.deliverables.push(...previous.deliverables.filter(item => !paths.has(item.path)))
-        if (changed(previous, step)) affected.add(step.id)
+        if (contextChanged || changed(previous, step)) affected.add(step.id)
       }
       // Use both graphs: removing a dependency must not hide the old downstream impact.
       const all = [...current.steps, ...next.steps]
@@ -62,7 +84,7 @@ export class AnalysisRouteBook {
       }
       for (const step of next.steps) if (affected.has(step.id) && (started(step) || (old.has(step.id) && started(old.get(step.id)!)))) {
         step.needsReview = true
-        const note = reason?.trim() || "路线输入、目的、依赖或参考案例已变更，请复核此步骤及交付。"
+        const note = reason?.trim() || "路线数据背景、步骤输入、目的、依赖或参考案例已变更，请复核此步骤及交付。"
         if (!step.notes.includes(note)) step.notes.push(note)
       }
     }

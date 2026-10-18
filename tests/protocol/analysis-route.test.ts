@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { AnalysisRouteDraftSchema, AnalysisRouteSchema, routeActionMessage } from "../../src/protocol/analysis-route.js"
+import { AnalysisRouteDraftSchema, AnalysisRouteSchema, routeActionMessage, parseRouteActionMessage, routeContinueBlockers } from "../../src/protocol/analysis-route.js"
 
 const draft = () => ({
   title: "表达分析", goal: "比较处理组", dataContext: ["data/raw/counts.csv"],
@@ -43,12 +43,46 @@ describe("analysis route contract", () => {
     expect(AnalysisRouteDraftSchema.safeParse({ ...draft(), steps: [first] }).success).toBe(true)
     expect(AnalysisRouteDraftSchema.safeParse({ ...draft(), steps: [{ ...first, verification: { state: "reviewed", note: "" } }] }).success).toBe(false)
   })
+  it("uses a strict JSON first-line action marker even for bracketed or whitespace identifiers", () => {
+    const id = 'S1 ] with space \n [action]'
+    const route = AnalysisRouteSchema.parse({ ...draft(), steps: [step(id)], routeId: "route-a", revision: 3, updatedAt: 1 })
+    const message = routeActionMessage(route, id, "view")
+    expect(message.split("\n")[0]).toBe(`[analysis_route_action] ${JSON.stringify({ routeId: "route-a", revision: 3, stepId: id, action: "view" })}`)
+    expect(parseRouteActionMessage(message)).toEqual({ routeId: "route-a", revision: 3, stepId: id, action: "view" })
+    for (const invalid of ["prefix " + message, "\n" + message,
+      '[analysis_route_action] {"routeId":"r","revision":1,"stepId":"S1","action":"select"}',
+      '[analysis_route_action] {"routeId":"r","revision":1,"stepId":"S1","action":"view","extra":1}',
+      '[analysis_route_action] {"routeId":"r","revision":0,"stepId":"S1","action":"view"}',
+      '[analysis_route_action] {"routeId":"r","revision":1,"stepId":"S1","action":"view"} trailing',
+      '[analysis_route_action] broken']) expect(parseRouteActionMessage(invalid)).toBeUndefined()
+  })
+  it("shares continue blockers for status, review, explicit blockers and all required dependencies", () => {
+    const route = AnalysisRouteSchema.parse({ ...draft(), routeId: "r", revision: 1, updatedAt: 1 })
+    expect(routeContinueBlockers(route, "missing").length).toBeGreaterThan(0)
+    expect(routeContinueBlockers(route, "S1")).toEqual([])
+    expect(routeContinueBlockers(route, "S2").join(" ")).toContain("S1")
+    route.steps[0]!.status = "delivered"
+    expect(routeContinueBlockers(route, "S2")).toEqual([]) // Delivery is not a claim of execution.
+    route.steps[0]!.needsReview = true; route.steps[0]!.blockers = ["缺少实际输出"]
+    expect(routeContinueBlockers(route, "S2").join(" ")).toContain("缺少实际输出")
+    route.steps[0]!.needsReview = false; route.steps[0]!.blockers = []
+    for (const status of ["skipped", "in_progress", "delivered"] as const) {
+      route.steps[1]!.status = status
+      expect(routeContinueBlockers(route, "S2").length).toBeGreaterThan(0)
+    }
+    route.steps[1]!.status = "pending"; route.steps[1]!.needsReview = true
+    expect(routeContinueBlockers(route, "S2").length).toBeGreaterThan(0)
+    route.steps[1]!.needsReview = false; route.steps[1]!.blockers = ["等待数据"]
+    expect(routeContinueBlockers(route, "S2").join(" ")).toContain("等待数据")
+    route.steps[0]!.status = "skipped"; route.steps[1]!.blockers = []
+    expect(routeContinueBlockers(route, "S2").join(" ")).toContain("S1")
+  })
   it("produces scoped read-only requests and a continue request that preserves the authorization gate", () => {
     const route = AnalysisRouteSchema.parse({ ...draft(), routeId: "route-a", revision: 3, updatedAt: 1 })
     for (const action of ["view", "search", "continue"] as const) {
       const message = routeActionMessage(route, "S2", action)
-      for (const part of ["route-a", "revision=3", "stepId=S2"]) expect(message).toContain(part)
-      if (action !== "continue") expect(message).toContain("不执行")
+      expect(parseRouteActionMessage(message)).toEqual({ routeId: "route-a", revision: 3, stepId: "S2", action })
+      if (action !== "continue") { expect(message).toContain("此入口不批准"); expect(message).not.toMatch(/(?:^|[。；;\n])\s*(?:不执行|不运行|只讨论)/) }
       else { expect(message).toContain("原有授权"); expect(message).toContain("方案"); expect(message).toContain("其他步骤") }
     }
     expect(() => routeActionMessage(route, "unknown", "view")).toThrow()

@@ -71,12 +71,56 @@ export const AnalysisRouteSchema = z.object({
 export type AnalysisRouteDraft = z.infer<typeof AnalysisRouteDraftSchema>
 export type AnalysisRoute = z.infer<typeof AnalysisRouteSchema>
 
-/** 只生成用户可见请求，调用方仍走原有发送、授权和方案门。 */
+const actionMarker = "[analysis_route_action] "
+const actionReferenceSchema = z.object({
+  routeId: z.string().min(1).refine(value => Boolean(value.trim())),
+  revision: z.number().int().positive(),
+  stepId: z.string().min(1).refine(value => Boolean(value.trim())),
+  action: z.enum(["view", "search", "continue"]),
+}).strict()
+export type RouteActionReference = z.infer<typeof actionReferenceSchema>
+
+/** Only the first line can carry a marker; strict keys reject unrelated metadata. */
+export function parseRouteActionMessage(content: string): RouteActionReference | undefined {
+  const first = content.split("\n", 1)[0]!
+  if (!first.startsWith(actionMarker)) return undefined
+  try {
+    const parsed = actionReferenceSchema.safeParse(JSON.parse(first.slice(actionMarker.length)))
+    return parsed.success ? parsed.data : undefined
+  } catch { return undefined }
+}
+
+/** 只生成用户可见请求，调用方仍走原有发送、授权和方案门。
+ * Read-only intent belongs to this turn; it must not rewrite persistent authorization.
+ */
 export function routeActionMessage(route: AnalysisRoute, stepId: string, action: "view" | "search" | "continue"): string {
   const step = route.steps.find(item => item.id === stepId)
   if (!step) throw new Error(`没有此路线步骤：${stepId}`)
-  const reference = `[analysis_route routeId=${route.routeId} revision=${route.revision} stepId=${stepId}]`
-  if (action === "view") return `${reference} 请只解释此步骤「${step.title}」的目的、输入、预期输出和已记录证据；不执行代码，不修改文件或路线状态。`
-  if (action === "search") return `${reference} 请只为此步骤「${step.title}」检索和说明真实候选案例；不执行分析，不修改科研文件，不替我选择案例。`
-  return `${reference} 请仅继续选定步骤「${step.title}」。保留会话原有授权和方案门；需要批准时先停下，检查前置依赖与阻塞原因。不要自动执行其他步骤，不把此请求视为批准整条路线。`
+  const reference = `${actionMarker}${JSON.stringify({ routeId: route.routeId, revision: route.revision, stepId, action })}\n`
+  if (action === "view") return `${reference}请解释此步骤「${step.title}」的目的、输入、预期输出和已记录证据。本轮范围是解释与读取；此入口不批准代码执行或科研文件写入，原有授权范围保持不变。`
+  if (action === "search") return `${reference}请为此步骤「${step.title}」检索和说明真实候选案例。本轮范围是读取与检索；此入口不批准代码执行或科研文件写入，案例仍由我选择，原有授权范围保持不变。`
+  return `${reference}请仅继续选定步骤「${step.title}」。保留会话原有授权和方案门；需要批准时先停下，检查前置依赖与阻塞原因。不要自动执行其他步骤，此请求仅指向本步，不批准整条路线，也不解除此前用户的讨论限制。执行前须核对下游输入及前置实际产物；脚本已交付并不表示运行产物已准备好。`
+}
+
+/** Pure metadata preconditions shared by UI/runtime. A delivered dependency is only
+ * a recorded handoff: downstream inputs/blockers and actual output readiness must
+ * still be checked before execution; script delivery is never execution evidence.
+ */
+export function routeContinueBlockers(route: AnalysisRoute, stepId: string): string[] {
+  const step = route.steps.find(item => item.id === stepId)
+  if (!step) return [`没有此路线步骤：${stepId}`]
+  const blockers: string[] = []
+  if (step.status === "skipped") blockers.push(`步骤 ${step.id} 已跳过，请先恢复。`)
+  if (step.status === "in_progress") blockers.push(`步骤 ${step.id} 已在进行中。`)
+  if (step.status === "delivered") blockers.push(`步骤 ${step.id} 已交付；需要继续时请先恢复。`)
+  if (step.needsReview) blockers.push(`步骤 ${step.id} 需要复核。`)
+  blockers.push(...step.blockers)
+  for (const id of step.dependencies) {
+    const dependency = route.steps.find(item => item.id === id)
+    if (!dependency) { blockers.push(`缺失前置步骤 ${id}。`); continue }
+    if (dependency.status !== "delivered") blockers.push(`前置步骤 ${id} 尚未交付（${dependency.status}）。`)
+    if (dependency.needsReview) blockers.push(`前置步骤 ${id} 需要复核。`)
+    blockers.push(...dependency.blockers.map(reason => `前置步骤 ${id}：${reason}`))
+  }
+  return [...new Set(blockers)]
 }

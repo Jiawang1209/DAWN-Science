@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 分析交付、结果解读与独立验证合并至本地 main
+
+- **Type**: chore
+- **Motivation**: 用户验看第五项升级的实际预览及科研交付案例后，授权检查无误即合并到本地 main；继续不推送、不替换已安装软件。
+- **What**: 本地主目录从 `5fea3a02` 无冲突快进至 `2714afb9`，纳入产物内整理交付、结果解读、脚本与说明、独立验证记录及路线/Bot共用入口；随后单独记录本次合并验收。
+- **Impact**: 保留 `codex/analysis-delivery-workflow` 分支、独立工作树、隔离预览和科研案例/截图。未推送远端，未打包安装或替换 `/Applications/DAWN Science.app`。确定性模型回复仅用于工程验收，科学计算和文件比较为实际执行。
+- **Verification**: 合并前类型检查及38项定向测试通过；合并后在主目录类型检查、主进程/UI构建通过，全量439文件4,824项通过、10项原跳过，11项实际Electron交付/路线/产物/Bot用例通过。日志 `/tmp/dawn-delivery-merge-preflight-typecheck.log`、`/tmp/dawn-delivery-merge-preflight-tests.log`、`/tmp/dawn-delivery-main-typecheck.log`、`/tmp/dawn-delivery-main-build.log`、`/tmp/dawn-delivery-main-tests.log`、`/tmp/dawn-delivery-main-e2e.log`；`git diff --check`通过。
+
 ### 2026-10-18 — 分析交付、结果解读与独立验证（独立分支）
 
 - **Type**: feat

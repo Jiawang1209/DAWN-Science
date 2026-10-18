@@ -56,4 +56,13 @@
 
 最终检查：439个测试文件、4,824项通过，10项原跳过；11项实际Electron用例通过（含两个科研交付完整/缺项案例、路线/Bot交付入口、原产物预览）；typecheck与主进程/UI构建通过。最后一轮全量耗时94.29秒，Electron用例52.3秒。构建沿用既有chunk体积提示，Vitest沿用JSDOM canvas未实现提示；未将这些提示计作功能错误。
 
-本地 `main` 仍为 `5fea3a0260071ef9c45644dfe109a5b487f99cc4`。仅保留 `codex/analysis-delivery-workflow` 独立分支和附属工作区；未合并、未推送、未替换安装版。
+上述独立分支验收完成时，本地 `main` 为 `5fea3a0260071ef9c45644dfe109a5b487f99cc4`；当时未合并、未推送、未替换安装版。
+
+### 用户授权后的本地合并验收
+
+2026-10-18，用户授权检查无误后合并到 main。本地主目录由 `5fea3a02` 无冲突快进至功能提交 `2714afb9`，并另行提交本次验收记录。
+
+- 合并前：类型检查、38项定向测试通过。
+- 合并后主目录：类型检查与主进程/UI构建通过；439个Vitest文件、4,824项通过，10项原跳过（97.33秒）；11项实际Electron交付/路线/产物/Bot用例通过（1.4分钟）。
+- 日志：`/tmp/dawn-delivery-merge-preflight-typecheck.log`、`/tmp/dawn-delivery-merge-preflight-tests.log`、`/tmp/dawn-delivery-main-typecheck.log`、`/tmp/dawn-delivery-main-build.log`、`/tmp/dawn-delivery-main-tests.log`、`/tmp/dawn-delivery-main-e2e.log`。
+- 保留功能分支、独立工作树、隔离预览及忽略目录内的案例和截图；未推送、未替换安装版。工程验收与科研判断质量的边界不变。

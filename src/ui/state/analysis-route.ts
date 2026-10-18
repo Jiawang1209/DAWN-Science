@@ -36,6 +36,12 @@ export class RouteController {
       ticket.request !== this.request
     )
       return false
+    // A failed latest read is feedback, not an older route snapshot. Keep the
+    // last readable route/history while making this request's error visible.
+    if (current.result?.route && result.error && !result.route) {
+      this.$state.set({ sessionId: current.sessionId, result: { ...current.result, error: result.error } })
+      return true
+    }
     if (current.result?.route && (!result.route || result.route.revision < current.result.route.revision)) return false
     this.$state.set({ sessionId: current.sessionId, result })
     return true

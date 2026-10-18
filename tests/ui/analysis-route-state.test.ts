@@ -46,6 +46,30 @@ describe("route ownership and action boundary", () => {
     c.receive("a", route(3))
     expect(c.$state.get().result?.history?.[0]?.revision).toBe(1)
   })
+  it("surfaces the latest read error while retaining the route and history, then clears it on success", () => {
+    const c = new RouteController()
+    c.activate("a")
+    const cached = { supported: true, route: route(2), history: [route(1)] }
+    c.accept(c.begin(), cached)
+    const error = { code: "ROUTE_ERROR", message: "history unreadable" }
+    expect(c.accept(c.begin(), { supported: true, error })).toBe(true)
+    expect(c.$state.get().result).toEqual({ ...cached, error })
+    expect(c.accept(c.begin(), cached)).toBe(true)
+    expect(c.$state.get().result?.error).toBeUndefined()
+  })
+  it("does not surface late read errors from an old request or another session", () => {
+    const c = new RouteController()
+    c.activate("a")
+    c.accept(c.begin(), { supported: true, route: route(2) })
+    const old = c.begin()
+    const latest = c.begin()
+    const failure = { supported: true, error: { code: "ROUTE_ERROR", message: "late error" } }
+    expect(c.accept(old, failure)).toBe(false)
+    expect(c.$state.get().result?.error).toBeUndefined()
+    c.activate("b")
+    expect(c.accept(latest, failure)).toBe(false)
+    expect(c.$state.get().result).toBeUndefined()
+  })
   it("hides valid marker-only messages without a newline", () => {
     expect(displayRouteMessage(routeActionMessage(route(), "S1", "view").split("\n")[0]!)).not.toContain(
       "analysis_route_action",

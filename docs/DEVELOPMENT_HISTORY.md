@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 最新路线读取失败保留缓存并显示错误
+
+- **Type**: fix
+- **Motivation**: 质量审查复现已有路线时，最新 get 返回不含 route 的结构化错误被 revision 守卫吞掉，刷新失败没有反馈。
+- **What**: 在会话/请求代次校验后，将最新无路线错误合并进已缓存结果，保留可读路线、历史与证据；成功读取后清除错误。旧会话、旧请求和旧 revision 的快照守卫保持。
+- **Impact**: 最新读取失败可由既有路线面板显示和重试，不清空路线，不自动重放操作。
+- **Verification**: 最新错误回归先 RED 后 GREEN，补旧请求/跨会话错误拒绝及成功后清错断言；4 文件 136 项、typecheck/build/git diff --check 通过。日志 /tmp/analysis-route-read-error-red.log、/tmp/analysis-route-read-error-green.log、/tmp/analysis-route-read-error-build.log。未扩展后端或重复 Electron。
+
 ### 2026-10-18 — 历史路线文件引用不借用后续文件事实
 
 - **Type**: fix

@@ -293,9 +293,10 @@ test.describe("chain：上一步的真实输出流进了下一步", () => {
      * 假模型的暗号「假模型已应答」。**这是整条 chain 唯一无法伪造的证据**：
      * 那段文字只可能来自第一个子进程里真的跑过一次模型。
      */
-    // 2026-09-27 起任务原文在坞里「子 agent」那一格：它是子转录里的第一句用户话（交回的结果里也有暗号，所以圈在用户那一句上）
+    // 任务原文在子面板可展开任务区，仍是后端替换后的真实正文。
     await chips.nth(1).click()
-    const 任务 = page.locator(".subagent-pane .turn.user").first()
+    const 任务 = page.locator(".subagent-pane .subagent-task")
+    await 任务.locator("summary").click()
     await expect(任务).toContainText("根据这段结论继续", { timeout: 30_000 })
     await expect(任务).toContainText("假模型已应答")
     // **占位符本身不该留在任务里**——留着它就是把 `{previous}` 四个字发给了模型

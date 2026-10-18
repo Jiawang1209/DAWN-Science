@@ -4068,7 +4068,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   )
 
   /** 子 agent 名册（命令面板里「派」与「按规矩聊」两组用）。启动取一次，项目切换时再取；停用的不列 */
-  const [子agent名册, 设子agent名册] = useState<{ name: string; title?: string | undefined; description: string; group?: string | undefined }[]>([])
+  const [子agent名册快照, 设子agent名册] = useState<{projectId: string | undefined; agents: { name: string; title?: string | undefined; description: string; group?: string | undefined }[]} | undefined>(undefined)
+  // 项目切换的首帧即隔离旧名册；新请求失败时也不能套用另一项目的同名角色。
+  const 子agent名册 = useMemo(() => 子agent名册快照?.projectId === projectId ? 子agent名册快照?.agents ?? [] : [], [子agent名册快照, projectId])
   /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
   const [技能数, 设技能数] = useState<number | undefined>(undefined)
   /**
@@ -4114,7 +4116,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     let 还在 = true
     client
       .get<SkillLoad>("listSubagents", projectId ? { projectId } : {})
-      .then((r) => 还在 && 设子agent名册(r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))))
+      .then((r) => 还在 && 设子agent名册({projectId, agents: r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))}))
       .catch(() => {})
     client
       .get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
@@ -5943,6 +5945,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               <SubagentDock
                 key={sessionId}
                 mainSessionId={sessionId}
+                agentNames={Object.fromEntries(子agent名册.filter(a => a.title).map(a => [a.name, a.title!]))}
                 onPick={(toolCallId, index) => {
                   const 父 = 拆子转录id($子转录id.get() ?? "")?.会话 ?? sessionId
                   if (父) 看子agent(子转录id(父, toolCallId, index))

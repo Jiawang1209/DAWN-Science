@@ -1,8 +1,8 @@
 /**
  * 坞里「子 agent」那一格（2026-09-27，spec `2026-09-27-子agent看得见-design.md` §2.2 草图 A）。
  *
- * 没选中：这段对话派过的子 agent，按调用分组、最新在上；选中：格顶同一批切换条 → 转录（与主区同一套行、折叠组、贴底跟随）
- * → 交回主 agent 的结果 → 接着问（D3）。**叶子组件只发回调**：看谁、接着问都由 `App.tsx` 做。
+ * 没选中：按调用分组、最新在上；选中：紧凑标题与同批切换条 → 左对齐过程与折叠交回原文（统一滚动）
+ * → 固定续问区（D3）。工具/Markdown/思考/复制复用现有组件。**叶子组件只发回调**：看谁、接着问都由 `App.tsx` 做。
  */
 import { memo, useEffect, useMemo, useRef, useState, type Ref } from "react"
 import { useStore } from "@nanostores/react"
@@ -12,8 +12,9 @@ import { 拆子转录id } from "../protocol/index.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import { AgentMarkdown } from "./markdown.js"
-import { TranscriptRow, ToolGroupRow } from "./views.js"
-import { 分组转录 } from "./tool-group.js"
+import { TranscriptRow, ToolRow, CopyButton, ThinkingBlock } from "./views.js"
+import { resourceLabels, subagentAnswerIds, subagentToolSummary } from "./subagent-presentation.js"
+import { 返回图标, 上箭头图标, 三角图标 } from "./icons.js"
 import { 子槽, $子agent信息, $子转录id } from "./state/subagent-view.js"
 import { 主槽 } from "./state/transcript.js"
 import { $侧边会话id, 侧槽 } from "./state/side-chat.js"
@@ -56,6 +57,7 @@ export function SubagentPane(p: {
    * 同一批（同一次调用）的切换条也从这里找
    */
   groups: readonly 组[]
+  agentNames?: Readonly<Record<string, string>> | undefined
   onPick: (toolCallId: string, index: number) => void
   onBack: () => void
   onAsk: (text: string) => Promise<void>
@@ -86,7 +88,10 @@ export function SubagentPane(p: {
 
   const 拆 = 拆子转录id(id)
   const 同批 = 拆 ? p.groups.find((g) => g.id === `sub:${拆.toolCallId}`) : undefined
-  const 块们 = 分组转录(items)
+  const 名称 = 信息 ? p.agentNames?.[信息.agent] ?? 信息.agent : ""
+  const 答复们 = subagentAnswerIds(items)
+  const 资源名称 = resourceLabels(items)
+  const 首句 = items.find(x => x.type === "turn" && x.who === "user")
   const 发 = async () => {
     const 句 = 草稿.trim()
     if (!句) return
@@ -103,13 +108,15 @@ export function SubagentPane(p: {
 
   return (
     <div className="subagent-pane" data-status={信息?.status} data-asking={信息?.asking ? "1" : undefined}>
-      <header className="subagent-batch">
+      <header className="subagent-header">
         <Button ref={回ref} variant="ghost" size="sm" className="subagent-back" onClick={p.onBack}>
           {/* 借「产物」详情页回名单那颗的原话（2026-09-27）：「全部子 agent」会让坞格名「子 agent」成了它的子串，按名字找就找不准 */}
-          {t("回到清单")}
+          <返回图标 />{t("回到清单")}
         </Button>
+        {信息 ? <><h2 className="subagent-title" title={信息.agent}>{名称}</h2><span className="subagent-status" data-status={信息.status}>{记号[信息.status]} {信息.asking ? t("在答你的问题") : 状态词(信息.status)}</span></> : null}
+      </header>
         {同批 && 同批.agents.length > 1
-          ? 同批.agents.map((a) => (
+          ? <nav className="subagent-batch">{同批.agents.map((a) => (
               <Button
                 key={a.index}
                 variant="ghost"
@@ -120,38 +127,41 @@ export function SubagentPane(p: {
                 aria-label={看它(a.agent, a.status)}
                 onClick={() => p.onPick(拆!.toolCallId, a.index)}
               >
-                {记号[a.status]} {a.agent}
+                {记号[a.status]} {p.agentNames?.[a.agent] ?? a.agent}
               </Button>
-            ))
+            ))}</nav>
           : null}
-      </header>
-      {信息 ? (
-        <h2 className="subagent-title">
-          {记号[信息.status]} {信息.agent}
-          <span className="hint">{信息.asking ? t("在答你的问题") : 状态词(信息.status)}</span>
-        </h2>
-      ) : null}
+      {信息?.task ? <details className="subagent-task"><summary><span>{t("任务")}</span><span className="subagent-task-preview">{信息.task}</span><三角图标 className="subagent-task-caret"/></summary><CopyButton text={信息.task} label={t("复制我说的这段")}/><AgentMarkdown text={信息.task} streaming={false}/></details> : null}
       <StickToBottom className="subagent-turns" resize="smooth" initial="smooth">
         <StickToBottom.Content className="subagent-turns-inner">
-          {块们.map((块) =>
-            块.kind === "group" ? (
-              <ToolGroupRow key={块.key} tools={块.tools} />
-            ) : (
-              <TranscriptRow key={块.key} item={块.item} agentId={信息?.agent ?? ""} />
-            ),
-          )}
-        </StickToBottom.Content>
-      </StickToBottom>
+          {items.map(item => {
+            if (item.type === "tool") return <ToolRow key={item.id} item={item} summary={subagentToolSummary(item, 资源名称)}/>
+            if (item.type !== "turn") return <TranscriptRow key={item.id} item={item} agentId={信息?.agent ?? ""}/>
+            if (item === 首句 && item.text === 信息?.task && !item.images?.length && !item.thinking) return null
+            if (!item.text && !item.thinking && !item.images?.length) return null
+            const answer = 答复们.has(item.id)
+            return <article key={item.id} className={`subagent-message ${item.who}${answer ? " answer" : ""}`} data-turn-id={item.id}>
+              {item.who === "user" ? <div className="subagent-user-head"><span className="subagent-message-label">{t("你")}</span><CopyButton text={item.text} label={t("复制我说的这段")}/></div> : <span className="sr-only">{名称}</span>}
+              {answer ? <div className="subagent-answer-head"><span>{t("答复")}</span><CopyButton text={item.text} label={t("复制这段回答")}/></div> : null}
+              {item.who === "agent" && item.final && item.text && !answer ? <CopyButton text={item.text} label={t("复制这段回答")}/> : null}
+              {item.thinking ? <ThinkingBlock text={item.thinking} ms={item.thinkingMs}/> : null}
+              {item.images?.length ? <div className="turn-images">{item.images.map((src, index) => <img key={index} className="turn-image" src={src} alt={tf("这一轮附的第 {0} 张图", index + 1)}/>)}</div> : null}
+              <AgentMarkdown text={item.text} streaming={!item.final}/>
+            </article>
+          })}
       {信息?.status === "error" && 信息.error ? <p className="caveat">{信息.error}</p> : null}
       {信息?.result ? (
-        <section className="subagent-result" aria-label={t("交回主 agent 的结果")}>
-          <h3 className="subagent-result-head">{t("交回主 agent 的结果")}</h3>
+        <details className="subagent-result" aria-label={t("交回主 agent 的结果")}>
+          <summary className="subagent-result-head">{t("交回主 agent 的结果")}</summary>
+          <CopyButton text={信息.result.text} label={t("复制交回内容")}/>
           <AgentMarkdown text={信息.result.text} streaming={false} />
           {信息.result.truncated ? (
             <p className="hint">{tf("原始 {0} 字节，主 agent 只拿到前 {1} 字节", 信息.result.truncated.originalBytes, 信息.result.truncated.keptBytes)}</p>
           ) : null}
-        </section>
+        </details>
       ) : null}
+        </StickToBottom.Content>
+      </StickToBottom>
       {信息 ? (
         信息.canAsk ? (
           <form
@@ -161,11 +171,11 @@ export function SubagentPane(p: {
               void 发()
             }}
           >
-            <textarea className="control subagent-ask-text" aria-label={t("接着问它")} value={草稿} onChange={(e) => 设草稿(e.target.value)} rows={2} disabled={在发} />
-            <Button type="submit" variant="outline" size="sm" className="subagent-ask-send" disabled={在发 || !草稿.trim()}>
-              {t("接着问")}
-            </Button>
-            <p className="hint">{t("它的回答不会回到主对话")}</p>
+            <div className="subagent-composer">
+              <textarea className="control subagent-ask-text" aria-label={t("接着问它")} placeholder={t("继续向这位子 Agent 提问…")} value={草稿} onChange={(e) => 设草稿(e.target.value)} rows={2} disabled={在发} />
+            <div className="subagent-composer-footer"><p className="hint">{t("它的回答不会回到主对话")}</p><Button type="submit" variant="primary" size="sm" className="subagent-ask-send" disabled={在发 || !草稿.trim()}>
+              <上箭头图标 />{t("接着问")}
+            </Button></div></div>
           </form>
         ) : (
           <p className="hint subagent-ask-why">{为什么不能问(信息.askWhy)}</p>
@@ -232,5 +242,5 @@ export function SubagentDock(p: Omit<Parameters<typeof SubagentPane>[0], "groups
     上次.current = 新
     return 新
   }, [条目])
-  return <SubagentPane groups={groups} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} />
+  return <SubagentPane groups={groups} agentNames={!id || 父 === p.mainSessionId ? p.agentNames : undefined} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} />
 }

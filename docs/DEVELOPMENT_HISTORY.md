@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 子 Agent 面板紧凑呈现与续问区整理
+
+- **Type**: style / fix / test / docs
+- **Motivation**: 用户指出子 Agent 面板的重复头像、居中窄消息和大块交回结果不美观，确认按紧凑标题、执行过程、答复和固定续问区改进。
+- **What**: 使用独立左对齐消息和真实资源摘要，保留展开后的原始工具参数/输出；按用户轮与工具边界突出答复，原交回文本默认折叠并与过程共用滚动区。任务、进展、答复及用户消息保留复制、图片和思考；当前项目角色名册增加归属保护，侧会话不套主项目名称。公共 ToolRow 默认路径保持。
+- **Impact**: 继续 codex/child-agent-resources 独立工作树，本地提交供查看，不合并、不推送、不替换安装版；无协议、依赖、数据库或版本变化。
+- **Verification**: 全量410文件4566项通过、10项按原设置跳过，typecheck/build通过；真实Electron覆盖资源派单/续问/退出重启、亮暗宽窄及失败详情，具体结果和主线旧断言对照见 docs/reviews/2026-10-18-subagent-pane-polish-verification.md。独立只读复审2项P2已修复并复核关闭。
+
 ### 2026-10-18 — 子 Agent 按需读取技能与相关记忆
 
 - **Type**: feat / fix / test / docs

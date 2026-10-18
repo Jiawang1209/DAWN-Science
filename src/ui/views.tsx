@@ -6843,12 +6843,15 @@ function useTick(active: boolean): number {
  * 折叠状态是**每一条自己的**，不做全局「全部展开」——那会让人一按之后
  * 对话瞬间变成几千行，而他想看的只是其中一条。
  */
-function ToolRow({
+export function ToolRow({
   item,
   在组里 = false,
   展开 = false,
+  summary,
 }: {
   item: Extract<TranscriptItem, { type: "tool" }>
+  /** 窄子面板的可读摘要。真实名称、入参和结果在展开区保留；主区默认不变。 */
+  summary?: {label: string; detail: string} | undefined
   /** 全文搜索跳到这一行（2026-09-27）：参数与输出都要看得见，输出也不折 */
   展开?: boolean
   /**
@@ -6903,6 +6906,7 @@ function ToolRow({
     <div
       className={`tool ${item.interrupted ? "interrupted" : item.status}${open ? " open" : ""}`}
       data-item-id={item.id}
+      data-tool-name={item.name}
       data-status={item.status}
       data-interrupted={item.interrupted ? "true" : undefined}
     >
@@ -6919,11 +6923,11 @@ function ToolRow({
       >
         <三角图标 className={`caret${open ? " open" : ""}`} />
         <span className="tool-name">
-          {mark} {item.name}
+          {mark} {summary?.label ?? item.name}
         </span>
         {/* **折叠时也要看得见做了什么**：命令本身就是最有信息量的那一行。
             展开之后它在下面完整出现，这里就不重复了 */}
-        {!open && input.text ? <span className="tool-peek">{input.text}</span> : null}
+        {!open && (summary ? summary.detail : input.text) ? <span className="tool-peek">{summary ? summary.detail : input.text}</span> : null}
         {用时 ? (
           /**
            * **「已经跑了多久」**（②-B · R2）。
@@ -6952,6 +6956,7 @@ function ToolRow({
 
       {open ? (
         <div className="tool-body">
+          {summary ? <p className="hint">{item.name}</p> : null}
           {input.text ? <pre className="tool-input">{input.text}</pre> : null}
           {input.truncated ? <span className="hint">{t("入参已截断")}</span> : null}
 

@@ -23,9 +23,41 @@ const 看 = (p: Partial<Parameters<typeof SubagentPane>[0]> = {}) =>
   render(<SubagentPane groups={[组]} onPick={() => {}} onBack={() => {}} onAsk={async () => {}} {...p} />)
 
 describe("子 agent 那一格", () => {
+  it("紧凑过程不重复头像，资源ID仅在展开参数中出现，原始交回文本保留", () => {
+    $子转录id.set("s#sub:c1:0")
+    子槽.setItems([
+      {type: "turn", id: "u", who: "user", text: "查看项目", final: true},
+      {type: "turn", id: "p", who: "agent", text: "先看相关技能。", final: true},
+      {type: "tool", id: "r", name: "resource_read", input: {id: "skill:hidden-id"}, status: "ok", result: JSON.stringify({kind: "skill", name: "delivery", content: "# 分析交付整理\n正文"})},
+      {type: "turn", id: "a", who: "agent", text: "检查完成。", final: true},
+    ])
+    $子agent信息.set({agent: "data-auditor", task: "查看项目", status: "ok", canAsk: true, result: {text: "先看相关技能。检查完成。"}})
+    const view = 看({agentNames: {"data-auditor": "数据质量审计员"}})
+    expect(view.container.querySelectorAll(".who-avatar")).toHaveLength(0)
+    expect(view.container.querySelector(".subagent-title")?.textContent).toContain("数据质量审计员")
+    const resource = screen.getByRole("button", {name: /读取技能/})
+    expect(resource.textContent).toContain("分析交付整理")
+    expect(resource.textContent).not.toContain("hidden-id")
+    fireEvent.click(resource)
+    expect(view.container.querySelector(".tool-input")?.textContent).toContain("hidden-id")
+    expect(view.container.querySelector("details.subagent-result")?.getAttribute("open")).toBeNull()
+    expect(view.container.querySelector(".subagent-result")?.textContent).toContain("先看相关技能。检查完成。")
+    expect(screen.getByRole("textbox", {name: "接着问它"}).getAttribute("placeholder")).toBeTruthy()
+    expect(view.container.querySelector(".subagent-turns .subagent-result")).toBeTruthy()
+    expect(view.container.querySelector('[data-turn-id="p"] .copy-btn')).toBeTruthy()
+    expect(view.container.querySelector(".subagent-task .copy-btn")).toBeTruthy()
+  })
   it("什么都没派过：直说", () => {
     看({ groups: [] })
     expect(screen.getByText("这段对话还没派过子 agent")).toBeDefined()
+  })
+  it("首条任务即使文字相同，附图与思考仍可查看", () => {
+    $子转录id.set("s#sub:c1:0")
+    $子agent信息.set({agent: "data-auditor", task: "看图", status: "ok", canAsk: true})
+    子槽.setItems([{type: "turn", id: "image-task", who: "user", text: "看图", images: ["data:image/png;base64,AA=="], thinking: "附加思考", final: true}])
+    const view = 看()
+    expect(view.container.querySelector('[data-turn-id="image-task"] img')?.getAttribute("src")).toBe("data:image/png;base64,AA==")
+    expect(view.container.querySelector('[data-turn-id="image-task"] .copy-btn')).toBeTruthy()
   })
   it("没选中：列出派过的，点一个交出 toolCallId 与序号", () => {
     const 选: string[] = []

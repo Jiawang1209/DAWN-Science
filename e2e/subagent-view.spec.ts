@@ -82,7 +82,7 @@ test.describe("子 agent 看得见", () => {
     await expect(格).toContainText("它的回答不会回到主对话")
     await 格.getByRole("textbox", { name: "接着问它" }).fill("再说一句")
     await 格.getByRole("button", { name: "接着问", exact: true }).click()
-    await expect(格.locator(".turn.user").filter({ hasText: "再说一句" })).toHaveCount(1, { timeout: 30_000 })
+    await expect(格.locator(".subagent-message.user").filter({ hasText: "再说一句" })).toHaveCount(1, { timeout: 30_000 })
     // 续上的那一轮答完：格里多一句罐头回复、「在答」态退掉、输入框回来
     await expect(格.locator(".subagent-turns").getByText(CANNED_REPLY)).toHaveCount(格里罐头 + 1, { timeout: 60_000 })
     await expect(格).not.toHaveAttribute("data-asking", "1", { timeout: 60_000 })

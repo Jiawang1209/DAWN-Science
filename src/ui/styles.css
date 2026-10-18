@@ -7716,7 +7716,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 /* ── 坞里「子 agent」那一格（2026-09-27，spec `2026-09-27-子agent看得见`）──
    不用 `.turns`：那是主区转录的判据（e2e 与会话续接的用例都认它），一页两个就指向两处 */
-/* 选中一个时整格让给它：坞体的内边距与滚动归还给格子自己（转录自己贴底滚，结果与输入框钉在底下）——与 `.side-chat` 同一招 */
+/* 选中一个时整格让给它：过程和交回原文统一滚动，标题与续问区固定。 */
 .right-dock .dock-body:has(> .subagent-pane:not(.subagent-list)) {
   padding: 0;
   overflow: hidden;
@@ -7729,16 +7729,48 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .subagent-list-group { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: var(--dawn-space-2); border-bottom: 1px solid var(--dawn-stroke-3); }
 .subagent-pick[data-status="error"], .subagent-sibling[data-status="error"] { color: var(--dawn-danger); }
 .subagent-back { flex: 0 0 auto; }
-.subagent-batch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: var(--dawn-space-2) var(--dawn-space-2) 0; }
-.subagent-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--dawn-space-2); margin: 0; padding: 0 var(--dawn-space-2); font-size: var(--dawn-fs-sub); min-width: 0; overflow-wrap: anywhere; }
-.subagent-turns { flex: 1; min-height: 0; overflow-y: auto; }
-.subagent-turns-inner { display: flex; flex-direction: column; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-2); }
-.subagent-result { max-height: 40%; overflow-y: auto; min-width: 0; overflow-wrap: anywhere; margin: 0 var(--dawn-space-2); padding: var(--dawn-space-2); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); }
-.subagent-result-head { margin: 0 0 var(--dawn-space-1); font-size: var(--dawn-fs-label); color: var(--dawn-text-2); }
-.subagent-ask { display: flex; flex-direction: column; gap: var(--dawn-space-1); padding: var(--dawn-space-2); min-width: 0; }
-.subagent-ask-text { resize: vertical; width: 100%; box-sizing: border-box; }
-.subagent-ask-send { align-self: flex-end; }
-.subagent-ask-why { padding: 0 var(--dawn-space-2) var(--dawn-space-2); }
+.subagent-header { display: flex; align-items: center; gap: var(--dawn-space-2); padding: var(--dawn-space-3) var(--dawn-space-4) 0; min-width: 0; }
+.subagent-batch { display: flex; flex-wrap: wrap; gap: var(--dawn-space-1); padding: 0 var(--dawn-space-4); }
+.subagent-title { flex: 1; margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subagent-status { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--dawn-space-1); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.subagent-status[data-status="ok"] { color: var(--dawn-success); }
+.subagent-status[data-status="error"] { color: var(--dawn-danger); }
+.subagent-task { margin: 0 var(--dawn-space-4); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); min-width: 0; max-height: 25%; overflow: auto; }
+.subagent-task > summary { display: flex; gap: var(--dawn-space-2); cursor: pointer; align-items: baseline; padding-block: var(--dawn-space-2); }
+.subagent-task > summary > :first-child { flex-shrink: 0; color: var(--dawn-text-3); }
+.subagent-task-preview { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.subagent-task-caret { flex-shrink: 0; color: var(--dawn-text-3); }
+.subagent-task[open] .subagent-task-caret { transform: rotate(90deg); }
+.subagent-task[open] .subagent-task-preview { white-space: normal; overflow-wrap: anywhere; }
+.subagent-task[open] > summary .subagent-task-preview { display: none; }
+.subagent-turns { flex: 1; min-height: 0; overflow-y: auto; border-top: 1px solid var(--dawn-stroke-3); }
+.subagent-turns-inner { display: flex; flex-direction: column; align-items: stretch; gap: var(--dawn-space-3); padding: var(--dawn-space-4); }
+.subagent-message { min-width: 0; width: 100%; text-align: left; font-size: var(--dawn-fs-sub); line-height: 1.6; color: var(--dawn-text-2); overflow-wrap: anywhere; }
+.subagent-message .md { min-width: 0; max-width: none; color: inherit; }
+.subagent-message .md > :first-child { margin-top: 0; }
+.subagent-message .md > :last-child { margin-bottom: 0; }
+.subagent-message > .copy-btn, .subagent-task > .copy-btn { float: right; }
+.subagent-message.user { padding-block: var(--dawn-space-2); color: var(--dawn-text-1); }
+.subagent-message-label { display: block; margin-bottom: var(--dawn-space-1); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.subagent-message.answer { font-size: var(--dawn-chat-size); color: var(--dawn-text-1); padding-block: var(--dawn-space-2); }
+.subagent-user-head { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); }
+.subagent-answer-head { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); margin-bottom: var(--dawn-space-2); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-semibold); color: var(--dawn-accent); }
+.subagent-turns .tool { align-self: stretch; min-width: 0; margin: 0; }
+.subagent-turns .tool-head { width: 100%; min-width: 0; justify-content: flex-start; }
+.subagent-turns .tool-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subagent-turns .tool-peek { flex: 1; min-width: 0; text-align: left; }
+.subagent-result { flex: 0 0 auto; min-width: 0; overflow-wrap: anywhere; margin-top: var(--dawn-space-2); padding-top: var(--dawn-space-3); border-top: 1px solid var(--dawn-stroke-3); color: var(--dawn-text-2); font-size: var(--dawn-fs-sub); }
+.subagent-result-head { cursor: pointer; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+.subagent-result[open] > .md { margin-top: var(--dawn-space-2); }
+.subagent-ask { flex: 0 0 auto; padding: var(--dawn-space-3) var(--dawn-space-4) var(--dawn-space-4); min-width: 0; }
+.subagent-composer { border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-input); overflow: hidden; }
+.subagent-ask-text.control { resize: none; width: 100%; box-sizing: border-box; min-height: 64px; max-height: 160px; border: 0; border-radius: 0; background: transparent; box-shadow: none; padding: var(--dawn-space-3); font-size: var(--dawn-fs-sub); }
+.subagent-ask-text.control:focus { box-shadow: none; outline: none; }
+.subagent-composer:focus-within { border-color: var(--dawn-accent); }
+.subagent-composer-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-3) var(--dawn-space-3); }
+.subagent-composer-footer > .hint { flex: 1 1 120px; margin: 0; font-size: var(--dawn-fs-meta); line-height: 1.5; }
+.subagent-ask-send { margin-left: auto; }
+.subagent-ask-why { padding: 0 var(--dawn-space-4) var(--dawn-space-3); }
 
 /* ── 上下文仪表（2026-09-27）：附栏右侧，常驻。三档颜色只从令牌来 ───────────── */
 .ctx-meter { position: relative; }

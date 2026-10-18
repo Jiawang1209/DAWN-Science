@@ -16,6 +16,18 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "任务": "Task",
+  "答复": "Response",
+  "复制交回内容": "Copy returned content",
+  "继续向这位子 Agent 提问…": "Ask this agent a follow-up\u2026",
+  "查询相关技能": "Search relevant skills",
+  "查询相关记忆": "Search relevant memory",
+  "查询可用资源": "Search available resources",
+  "读取技能": "Read skill",
+  "读取相关记忆": "Read relevant memory",
+  "读取资源正文": "Read resource content",
+  "读取文件": "Read file",
+  "运行命令": "Run command",
   "团队成员": "Team members",
   "成员已离队": "Member left",
   "所选成员已离队，请重新选择发言对象": "The selected member left. Choose another recipient.",

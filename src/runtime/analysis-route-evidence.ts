@@ -146,13 +146,13 @@ export function collectRouteToolEvidence(branch: readonly BranchEntry[], live: r
       }
     }
     if (message.role !== 'toolResult' || !message.toolCallId || !message.toolName) continue
-    const old = tools.get(message.toolCallId)
     const detail = message.details?.analysisRouteEvidence
     const call = calls.get(message.toolCallId)
     const scope = detail?.stepId ?? call?.stepId
     tools.set(message.toolCallId, {
-      ...old, toolCallId: message.toolCallId, name: message.toolName, status: message.isError ? 'error' : 'done', result: contentText(message.content),
-      ...(call ? { input: call.input } : {}), ...(scope ? { stepId: scope } : {}), ...(detail?.execution ? { execution: detail.execution } : {}),
+      toolCallId: message.toolCallId, name: message.toolName, status: message.isError ? 'error' : 'done', result: contentText(message.content),
+      execution: detail?.execution ?? 'not_observed',
+      ...(call ? { input: call.input } : {}), ...(scope ? { stepId: scope } : {}),
       ...(detail?.filesWritten ? { filesWritten: detail.filesWritten } : {}),
     })
   }

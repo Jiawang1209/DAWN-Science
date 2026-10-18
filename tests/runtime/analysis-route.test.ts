@@ -116,4 +116,13 @@ describe('native analysis route',()=>{
   }finally{await x.rt.stop('route');rmSync(x.dir,{recursive:true,force:true})}
  })
 
+ it('does not reuse prior execution evidence when a repeated toolCallId is later denied',async()=>{
+  const x=await setup();try{
+   x.say('开始执行。');expect((await x.call('bash',{command:'true'},'reused-id')).isError).toBeFalsy()
+   x.say('先不要运行。');expect((await x.call('bash',{command:'true'},'reused-id')).isError).toBe(true)
+   const d=draft();d.steps[0]!.execution={state:'failed',note:'被拒绝不是运行',toolCallIds:['reused-id']}
+   expect((await x.call('update_analysis_route',{expectedRevision:0,route:d},'metadata')).isError).toBe(true)
+  }finally{await x.rt.stop('route');rmSync(x.dir,{recursive:true,force:true})}
+ })
+
 })

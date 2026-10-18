@@ -3949,6 +3949,9 @@ ${描述}`
     return {
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
+        // A model may reuse an ID. Never let an earlier successful call's
+        // execution/files observation survive into a newly denied invocation.
+        this.routeBooks.get(spec.sessionId)?.tools.delete(toolCallId)
         const branch = this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? []
         const routeDenial = routeTurnDenial(name, branch, mcp只读)
         if (routeDenial) return { content: [{ type: 'text', text: routeDenial }], isError: true, details: undefined }

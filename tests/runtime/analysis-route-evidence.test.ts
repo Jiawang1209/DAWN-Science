@@ -1,5 +1,5 @@
 import { describe,expect,it } from 'vitest'
-import { validateRouteEvidence, type RouteToolEvidence } from '../../src/runtime/analysis-route-evidence.js'
+import { validateRouteEvidence, collectRouteToolEvidence, type RouteToolEvidence } from '../../src/runtime/analysis-route-evidence.js'
 import type { AnalysisRouteDraft, AnalysisRoute } from '../../src/protocol/analysis-route.js'
 const draft=():AnalysisRouteDraft=>({title:'r',goal:'g',dataContext:[],steps:[{id:'S',title:'S',purpose:'p',inputs:[],outputs:[],dependencies:[],status:'pending',blockers:[],cases:[{server:'A',caseId:'full/id',title:'Real',coverage:'c',evidence:'metadata'}],deliverables:[],execution:{state:'not_run',note:'n'},verification:{state:'unreviewed',note:'n'},needsReview:false,notes:[]}]})
 const tool=(name='A__search_cases',result='[{"case_id":"full/id","title":"Real"}]'):RouteToolEvidence=>({toolCallId:'t1',name,status:'done',result})
@@ -48,5 +48,18 @@ describe('evidence attribution and explicit selection',()=>{
  it('does not treat a question, negative request or title mention as choosing a case',()=>{
   const d=draft();const previous={...structuredClone(d),routeId:'r',revision:1,updatedAt:1} as AnalysisRoute;d.steps[0]!.selectedCase={server:'A',caseId:'full/id'}
   for(const user of ['不要选择 full/id','full/id 是否值得参考？','请说明 full/id 的参考价值','> 请选择 full/id'])expect(()=>validateRouteEvidence(d,previous,[],user)).toThrow(/选择/)
+ })
+})
+
+
+describe('duplicate result identity recovery',()=>{
+ it('clears execution facts from an earlier result when the same id later has only a denied result',()=>{
+  const branch=[
+   {type:'message',message:{role:'toolResult',toolCallId:'same',toolName:'bash',content:[{type:'text',text:'ok'}],details:{analysisRouteEvidence:{execution:'ran',stepId:'S',filesWritten:['out.txt']}}}},
+   {type:'message',message:{role:'toolResult',toolCallId:'same',toolName:'bash',isError:true,content:[{type:'text',text:'denied'}]}},
+  ]
+  const recovered=collectRouteToolEvidence(branch)
+  expect(recovered[0]!.execution).toBe('not_observed')
+  expect(recovered[0]!.filesWritten).toBeUndefined()
  })
 })

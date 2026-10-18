@@ -12,7 +12,7 @@
  * agent 写了哪些文件，那是最短的路径。这里的目录树是**补充**：
  * agent 没碰过的数据文件、上一次会话留下的东西，那些只能靠翻。
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { 在组词 } from "./ime.js"
 import type { ResponseOf } from "../protocol/index.js"
@@ -27,6 +27,9 @@ import {
   刷新图标,
   搜索图标,
   文件夹图标,
+  文件夹描边图标,
+  加号图标,
+  下拉图标,
   文件图标,
   文本文件图标,
   Markdown图标,
@@ -1016,6 +1019,12 @@ export function FilesView({
   // 仅作位置说明：本地操作仍传相对路径，远端仍传原绝对路径。
   const 根目录路径 = 路径?.(初始根 ?? "").绝对 || 初始根 || ""
   const 根目录名称 = 根目录路径.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || 根目录路径
+  const 上级目录名 = 根目录路径.replace(/[\\/]+$/, "").split(/[\\/]/).slice(0, -1).filter(Boolean).at(-1)
+  const 路径分隔符 = 根目录路径.includes("\\") ? "\\" : "/"
+  const 上级目录提示 = 上级目录名 ? `… ${路径分隔符} ${上级目录名} ${路径分隔符}` : 路径分隔符
+  const 路径区域Id = useId()
+  const [路径展开, 设路径展开] = useState(false)
+  useEffect(() => 设路径展开(false), [根目录路径])
   /**
    * **手动刷新**（2026-08-19，作者要的）。
    *
@@ -1246,19 +1255,34 @@ export function FilesView({
         ) : null}
         {根目录路径 || onInitLayout ? (
           <div className="files-root-context" role="group" aria-label={t("文件根目录")}>
+            <div className="files-root-header">
+              {根目录路径 ? (
+                <div className="files-root-identity">
+                  <span className="files-root-icon"><文件夹描边图标 /></span>
+                  <div className="files-root-name">
+                    <span className="files-root-label">{t("项目文件夹")}</span>
+                    <strong>{根目录名称}</strong>
+                  </div>
+                </div>
+              ) : null}
+              {onInitLayout ? (
+                <div className="tree-actions">
+                  <Button variant="primary" size="sm" onClick={onInitLayout}>
+                    <加号图标 />{t("初始化科研目录")}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
             {根目录路径 ? <>
-              <span className="files-root-label">{t("根目录")}</span>
-              <strong>{根目录名称}</strong>
-              <code className="files-root-path">{根目录路径}</code>
-            </> : null}
-            {onInitLayout ? (
-              <div className="tree-actions">
-                <Button variant="primary" size="sm" onClick={onInitLayout}>
-                  {t("按科研目录结构初始化")}
+              <div className="files-root-location">
+                <span className="files-root-parent">{上级目录提示}</span>
+                <Button variant="text" size="inline" aria-expanded={路径展开} aria-controls={路径区域Id} onClick={() => 设路径展开(v => !v)}>
+                  {路径展开 ? t("收起路径") : t("完整路径")}<下拉图标 />
                 </Button>
-                {layoutNote ? <p className="caveat">{layoutNote}</p> : null}
               </div>
-            ) : null}
+              <code id={路径区域Id} className="files-root-path" hidden={!路径展开}>{根目录路径}</code>
+            </> : null}
+            {onInitLayout && layoutNote ? <div className="tree-actions files-root-note"><p className="caveat" role="status">{layoutNote}</p></div> : null}
           </div>
         ) : null}
       </div>

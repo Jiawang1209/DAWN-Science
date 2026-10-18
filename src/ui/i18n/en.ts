@@ -231,7 +231,6 @@ export const EN: Readonly<Record<string, string>> = {
   // 科研目录初始化（2026-08-14）
   // **不能叫 "Set up …"**：已经有一个按钮就叫 "Set up"，而 `getByRole(name)`
   // 是子串匹配——两个按钮会同时命中（i18n 扫描当场拦下）
-  "按科研目录结构初始化": "Create the standard research layout",
   "建了 {0} 个目录，约定已写入 {1}": "Created {0} folders; the convention was written to {1}",
   "建了 {0} 个目录。{1}": "Created {0} folders. {1}",
   // 表格预览（2026-08-14）
@@ -266,7 +265,10 @@ export const EN: Readonly<Record<string, string>> = {
   "机器": "Machine",
   "本机": "This computer",
   "文件根目录": "File browser root",
-  "根目录": "Root folder",
+  "项目文件夹": "Project folder",
+  "初始化科研目录": "Initialize research folders",
+  "完整路径": "Full path",
+  "收起路径": "Hide path",
   "远端：{0}": "Remote: {0}",
   "操作系统": "OS",
   "硬件": "Hardware",

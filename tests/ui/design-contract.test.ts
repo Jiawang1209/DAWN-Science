@@ -298,7 +298,7 @@ describe("设计契约 · 一个动作一个家", () => {
 })
 
 describe("设计契约 · 文件根目录路径可读", () => {
-  it("完整路径可换行和选择，不依赖省略号或悬停提示", () => {
+  it("展开后的完整路径可换行和选择，不依赖省略号或悬停提示", () => {
     const block = read("styles.css").match(/\.files-root-path\s*\{([^}]+)\}/)?.[1]
     expect(block).toMatch(/white-space:\s*normal/)
     expect(block).toMatch(/overflow-wrap:\s*anywhere/)

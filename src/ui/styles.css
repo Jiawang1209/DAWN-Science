@@ -2270,18 +2270,36 @@ pre {
   flex: 1 0 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--dawn-space-1) var(--dawn-space-2);
-  padding-top: var(--dawn-space-1);
-  border-top: var(--dawn-hairline) solid var(--dawn-stroke-4);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dawn-space-3);
+  padding: var(--dawn-space-3) 0 var(--dawn-space-2);
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.files-root-label { color: var(--dawn-text-3); }
-.files-root-context .tree-actions { grid-column: 1 / -1; min-width: 0; }
+.files-root-header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-3); min-width: 0; }
+.files-root-identity { display: flex; align-items: center; gap: var(--dawn-space-2); flex: 1 1 180px; min-width: 0; }
+.files-root-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--dawn-space-8);
+  height: var(--dawn-space-8);
+  border-radius: var(--dawn-radius-md);
+  background: color-mix(in srgb, var(--dawn-accent) 10%, transparent);
+  color: var(--dawn-accent);
+}
+.files-root-name { display: grid; gap: var(--dawn-space-1); min-width: 0; }
+.files-root-name strong { color: var(--dawn-text-1); font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-medium); overflow-wrap: anywhere; }
+.files-root-label { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.files-root-header .tree-actions { flex: 0 0 auto; min-width: 0; }
+.files-root-location { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); min-width: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.files-root-parent { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.files-root-location > .btn { flex: 0 0 auto; }
+.files-root-location [aria-expanded="true"] svg { transform: rotate(180deg); }
 .files-root-path {
-  grid-column: 1 / -1;
   min-width: 0;
+  padding: var(--dawn-space-2) var(--dawn-space-3);
+  background: var(--dawn-fill-2);
+  border-radius: var(--dawn-radius-sm);
   color: var(--dawn-text-2);
   font-family: var(--dawn-font-mono);
   font-size: var(--dawn-fs-badge);
@@ -2289,6 +2307,7 @@ pre {
   overflow-wrap: anywhere;
   user-select: text;
 }
+.files-root-note .caveat { margin: 0; }
 /** 路径框。**输一个目录就跳过去**——不做搜索（见设计文档第三节） */
 .files-jump {
   flex: 1 1 120px;

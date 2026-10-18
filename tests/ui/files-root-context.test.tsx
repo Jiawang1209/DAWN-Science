@@ -10,14 +10,22 @@ const props = () => ({
   onOpenExternally: vi.fn(),
 })
 
-it("本地根节点显示项目名与完整路径；跳转仍使用相对路径", async () => {
+it("项目栏默认收起长路径，可展开与收起；跳转仍使用相对路径", async () => {
   const p = props(), init = vi.fn()
   render(<FilesView {...p} onInitLayout={init} 路径={path => ({ 相对: path, 绝对: `/Users/test/草地项目/${path}` })} />)
   const context = screen.getByRole("group", { name: "文件根目录" })
   expect(within(context).getByText("草地项目")).toBeTruthy()
-  expect(within(context).getByText("/Users/test/草地项目/")).toBeTruthy()
+  expect(within(context).getByText("项目文件夹")).toBeTruthy()
+  const path = within(context).getByText("/Users/test/草地项目/")
+  expect(path.hidden).toBe(true)
+  const toggle = within(context).getByRole("button", { name: "完整路径" })
+  expect(toggle.getAttribute("aria-expanded")).toBe("false")
+  expect(toggle.getAttribute("aria-controls")).toBe(path.id)
+  fireEvent.click(toggle)
+  expect(path.hidden).toBe(false)
+  expect(within(context).getByRole("button", { name: "收起路径" }).getAttribute("aria-expanded")).toBe("true")
   expect(screen.getByRole("button", { name: "草地项目" })).toBeTruthy()
-  const button = within(context).getByRole("button", { name: "按科研目录结构初始化" })
+  const button = within(context).getByRole("button", { name: "初始化科研目录" })
   expect(button.classList.contains("btn-primary")).toBe(true)
   fireEvent.click(button)
   expect(init).toHaveBeenCalledOnce()
@@ -26,17 +34,22 @@ it("本地根节点显示项目名与完整路径；跳转仍使用相对路径"
   fireEvent.keyDown(screen.getByRole("textbox", { name: "跳到路径" }), { key: "Enter" })
   await waitFor(() => expect(p.loadDir).toHaveBeenCalledWith("data"))
   expect(within(context).getByText("/Users/test/草地项目/")).toBeTruthy()
+  expect(path.hidden).toBe(false)
+  fireEvent.click(within(context).getByRole("button", { name: "收起路径" }))
+  expect(path.hidden).toBe(true)
 })
 
-it("远端根路径不拼接本机路径；切换项目后不残留旧位置", () => {
+it("远端根路径不拼接本机路径；项目栏切换路径后收起且不残留旧位置", () => {
   const p = props()
   const view = render(<FilesView {...p} 初始根="/srv/research" 机器="研究服务器" 路径={path => ({ 相对: path, 绝对: path })} />)
   expect(within(screen.getByRole("group", { name: "文件根目录" })).getByText("/srv/research")).toBeTruthy()
-  view.rerender(<FilesView key="other" {...p} 路径={path => ({ 相对: path, 绝对: `D:\\研究项目\\${path}` })} />)
+  fireEvent.click(screen.getByRole("button", { name: "完整路径" }))
+  view.rerender(<FilesView {...p} 路径={path => ({ 相对: path, 绝对: `D:\\研究项目\\${path}` })} />)
   const context = screen.getByRole("group", { name: "文件根目录" })
   expect(within(context).getByText("研究项目")).toBeTruthy()
-  expect(within(context).getByText("D:\\研究项目\\")).toBeTruthy()
-  expect(screen.queryByText("/srv/research")).toBeNull()
+  expect(within(context).getByText("D:\\研究项目\\").hidden).toBe(true)
+  expect(within(context).getByRole("button", { name: "完整路径" }).getAttribute("aria-expanded")).toBe("false")
+  expect(within(context).queryByText("/srv/research")).toBeNull()
 })
 
 it("没有真实根路径时不编造项目位置", () => {
@@ -48,7 +61,7 @@ it("没有真实根路径时不编造项目位置", () => {
 it("目录位置尚不可用时仍可使用已有初始化入口", () => {
   const init = vi.fn()
   const { container } = render(<FilesView {...props()} onInitLayout={init} />)
-  fireEvent.click(screen.getByRole("button", { name: "按科研目录结构初始化" }))
+  fireEvent.click(screen.getByRole("button", { name: "初始化科研目录" }))
   expect(init).toHaveBeenCalledOnce()
   expect(container.querySelector(".files-root-path")).toBeNull()
 })

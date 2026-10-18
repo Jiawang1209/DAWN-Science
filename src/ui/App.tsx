@@ -2410,6 +2410,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ? t("这段对话不属于任何项目，坞里没法另开")
         : t("还没选项目，坞里没处另开")
 
+  /** 顶部与侧栏共用入口：始终按目标会话归属挂，跨地方时主区切到目标的另一段。 */
+  const 放会话进坞 = (target: SessionSummary) => {
+    const 地方 = 侧边地方键(target, tasks)
+    const 同处 = 地方 ? 同处的会话(地方, { sessions, tempSessions, tasks }).filter(x => !x.archivedAt) : []
+    const 主区同处 = !!session && 侧边地方键(session, tasks) === 地方
+    const 做法 = 放进坞的做法({
+      id: target.sessionId, 地方,
+      主区: 主区同处 ? session.sessionId : target.sessionId,
+      在坞: 主区同处 ? $侧边会话id.get() : undefined,
+      同处,
+    })
+    if (做法.做 === "说") {
+      note(做法.因为 === "没地方" ? t("还没弄清这段在哪一处，稍后再放进坞里")
+        : 做法.因为 === "终端" ? t("终端不是对话，放不进坞里") : t("这里只有这一段，放进坞里主区就空了"))
+      return
+    }
+    // 同步挂与切主区，避免“主区赢”将刚挂上的目标立即拿下。
+    if (地方?.startsWith("p:")) setActiveProjectId(target.projectId)
+    挂进坞(做法.地方, 做法.id)
+    if (做法.然后主区切到) setActiveSessionId(做法.然后主区切到)
+    setView("conversation")
+    打开坞里的对话()
+  }
+
   /**
    * 坞里「另开一段」（侧边对话，2026-09-24）：与会话页签的 ＋ 同一条路（项目走 `新建任务`，远端走
    * `startRemoteSession`），只是**建好了不切过去**——主区不动，新那段直接挂进坞。
@@ -5024,22 +5048,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          * 同处没有别的可切：说一句，不做（放进去主区就空了，而且远端那边连「地方」都跟着没了）。
          */
         onPutInDock={(id) => {
-          const 做法 = 放进坞的做法({ id, 地方: $侧边地方.get(), 主区: session.sessionId, 在坞: $侧边会话id.get(), 同处 })
-          if (做法.做 === "说") {
-            // 每条不做的路都**说一句**（规格 7.5）——菜单一收什么都没发生，人只会以为没点上
-            note(
-              做法.因为 === "没地方"
-                ? 坞没处说 ?? t("还没弄清这段在哪一处，稍后再放进坞里")
-                : 做法.因为 === "终端"
-                  ? t("终端不是对话，放不进坞里")
-                  : t("这里只有这一段，放进坞里主区就空了"),
-            )
-            return
-          }
-          // 挂进坞与切主区**同步做完、中间不许有 await**——否则「主区赢」那一拍会把刚挂上的又拿下来
-          挂进坞(做法.地方, 做法.id)
-          if (做法.然后主区切到) setActiveSessionId(做法.然后主区切到)
-          打开坞里的对话()
+          const target = 同处.find(x => x.sessionId === id)
+          if (target) 放会话进坞(target)
         }}
         onNew={
           远端
@@ -5336,6 +5346,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           onRenameSession={renameSession}
           onPinSession={pinSession}
           onArchiveSession={archiveSession}
+          onPutSessionInDock={放会话进坞}
           onSessionExtra={sessionExtra}
           onMarkUnread={(s) => 标未读(s.sessionId, true)}
           onArchiveMany={archiveMany}

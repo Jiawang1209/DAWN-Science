@@ -9,6 +9,23 @@ const empty = () => {}
 const actions = () => ({ onPin: vi.fn(), onRename: vi.fn(), onArchive: vi.fn(), onMarkUnread: vi.fn(), onMove: vi.fn(), onExtra: vi.fn(), onDelete: vi.fn() })
 const summary = { sessionId: "b", projectId: "p", agentId: "a", kind: "native", state: "alive", createdAt: "2026-10-18T00:00:00Z", sortOrder: 0, title: "乙", pinned: true } as SessionSummary
 
+it("侧栏会话右键与更多菜单可放进坞，动作只触发目标回调", () => {
+  const dock = vi.fn(), pick = vi.fn()
+  const { container } = render(<SessionRow session={summary} active={false} current={false} onPick={pick} onPutInDock={dock} />)
+  fireEvent.contextMenu(container.querySelector('li')!)
+  fireEvent.click(screen.getByRole('menuitem', { name: '放进坞里' }))
+  expect(dock).toHaveBeenCalledOnce()
+  expect(pick).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '会话操作：乙' }))
+  expect(screen.getByRole('menuitem', { name: '放进坞里' })).toBeTruthy()
+})
+
+it("侧栏终端仍不提供放进坞入口", () => {
+  const { container } = render(<SessionRow session={{ ...summary, kind: 'pty' }} active={false} current={false} onPick={empty} onPutInDock={empty} onPin={empty} />)
+  fireEvent.contextMenu(container.querySelector('li')!)
+  expect(screen.queryByRole('menuitem', { name: '放进坞里' })).toBeNull()
+})
+
 it("顶部菜单与侧栏动作一致，非当前且不可入坞的页签仍有菜单", () => {
   const target = actions()
   const getActions = vi.fn(() => target)

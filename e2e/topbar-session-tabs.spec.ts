@@ -85,7 +85,7 @@ test("顶部右键复用侧栏菜单，重命名和归档指向非当前会话",
   await page.keyboard.press("Escape")
   await other.click({ button: "right" })
   await expect(page.getByRole("menu")).toBeVisible()
-  expect((await page.getByRole("menuitem").allTextContents()).filter(label => label !== "放进坞里")).toEqual(labels)
+  expect(await page.getByRole("menuitem").allTextContents()).toEqual(labels)
   await expect(current).toHaveAttribute("data-session", currentId)
   await page.getByRole("menuitem", { name: "置顶", exact: true }).click()
   await other.click({ button: "right" })

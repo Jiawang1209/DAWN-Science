@@ -65,6 +65,7 @@ import { ConversationSearch } from "./conversation-search.js"
 import { ConversationActions } from "./conversation-actions.js"
 
 import { SessionMenu, SessionMenuItems, SessionRenameInput, type 会话额外动作 } from "./session-menu-items.js"
+import { 能进坞 } from "./state/side-chat.js"
 export type { 会话额外动作 } from "./session-menu-items.js"
 import { $待批准的会话, $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
 import { 读收起的组, 记收起的组, 读项目展开, 记项目展开 } from "./state/sidebar.js"
@@ -303,6 +304,7 @@ export function SessionRow({
   onRename,
   onPin,
   onArchive,
+  onPutInDock,
   onExtra,
   未读,
   onMarkUnread,
@@ -341,6 +343,7 @@ export function SessionRow({
   onPin?: (() => void) | undefined
   /** 归档（2026-08-22）：从侧栏藏起来，不删。**没给就不画** */
   onArchive?: (() => void) | undefined
+  onPutInDock?: (() => void) | undefined
   /** 菜单补的五项（2026-08-22，学自 dsh-codex-ui）：fork、在访达里打开、复制三样 */
   onExtra?: ((action: 会话额外动作) => void) | undefined
   /** 未读点与「标为未读」（codex-polish ⑤） */
@@ -393,6 +396,7 @@ export function SessionRow({
   现在?: number | undefined
 }) {
   const [menu, setMenu] = useState(false)
+  const putInDock = 能进坞(session) ? onPutInDock : undefined
   const [editing, setEditing] = useState<string | undefined>(undefined)
   const 名字 = session.title ?? t("新会话")
   /**
@@ -477,7 +481,7 @@ export function SessionRow({
       data-running={跑着 ? "1" : undefined}
       data-waiting-approval={等你点头 ? "1" : undefined}
       data-waiting-answer={等你回答 ? "1" : undefined}
-      onContextMenu={onDelete || onRename || onPin || onMove || onArchive || onExtra || onMarkUnread
+      onContextMenu={onDelete || onRename || onPin || onMove || onArchive || onExtra || onMarkUnread || putInDock
         ? (e) => {
             e.preventDefault()
             打开菜单({ x: e.clientX, y: e.clientY })
@@ -619,7 +623,7 @@ export function SessionRow({
         </span>
       </Row>
 
-      {onDelete || onRename || onPin || onMove || onArchive || onExtra || onMarkUnread ? (
+      {onDelete || onRename || onPin || onMove || onArchive || onExtra || onMarkUnread || putInDock ? (
         <div className="row-actions">
           <Button
             variant="ghost"
@@ -634,7 +638,7 @@ export function SessionRow({
           </Button>
           {menu ? (
             <SessionMenu label={tf("会话操作：{0}", 名字)} position={位置} onClose={() => setMenu(false)} restoreFocus={() => 按钮.current?.focus()}>
-              <SessionMenuItems pinned={session.pinned} unread={未读} actions={{ onPin, onRename, onMove, onArchive, onMarkUnread, onExtra, onDelete }} onRename={() => setEditing(session.title ?? "")} onClose={() => setMenu(false)} />
+              <SessionMenuItems pinned={session.pinned} unread={未读} actions={{ onPin, onRename, onMove, onArchive, onMarkUnread, onExtra, onDelete }} onRename={() => setEditing(session.title ?? "")} onClose={() => setMenu(false)} onPutInDock={putInDock} />
             </SessionMenu>
           ) : null}
         </div>
@@ -1259,6 +1263,7 @@ export function SessionSidebar({
   onRenameSession,
   onPinSession,
   onArchiveSession,
+  onPutSessionInDock,
   onSessionExtra,
   onMarkUnread,
   onArchiveMany,
@@ -1347,6 +1352,7 @@ export function SessionSidebar({
   onPinSession?: ((session: SessionSummary, pinned: boolean) => void) | undefined
   /** 归档一段（2026-08-22，学自 dsh-archive-manager）：藏，不删 */
   onArchiveSession?: ((session: SessionSummary) => void) | undefined
+  onPutSessionInDock?: ((session: SessionSummary) => void) | undefined
   onSessionExtra?: ((session: SessionSummary, task: TaskSummary, action: 会话额外动作) => void) | undefined
   onMarkUnread?: ((session: SessionSummary) => void) | undefined
   /** 批量归档。与 `onDeleteMany` 同一套「做完再收摊」 */
@@ -1907,6 +1913,7 @@ export function SessionSidebar({
         {...(onRenameSession ? { onRename: (t: string) => onRenameSession(s, t) } : {})}
         {...(onPinSession ? { onPin: () => onPinSession(s, !s.pinned) } : {})}
         {...(onArchiveSession ? { onArchive: () => onArchiveSession(s) } : {})}
+        {...(onPutSessionInDock ? { onPutInDock: () => onPutSessionInDock(s) } : {})}
         {...(onSessionExtra ? { onExtra: (a: 会话额外动作) => onSessionExtra(s, task, a) } : {})}
         未读={未读的.has(s.sessionId)}
         {...(onMarkUnread ? { onMarkUnread: () => onMarkUnread(s) } : {})}

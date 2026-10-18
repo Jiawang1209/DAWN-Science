@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 侧栏会话也支持右键放入坞
+
+- **Type**: fix / ui / test
+- **Motivation**: 用户补充要求侧边栏会话右键也能放入坞。
+- **What**: SessionRow与SessionSidebar接入共享菜单的入坞回调，右键和⋯均可操作；App抽取顶部/侧栏共用处理函数，按目标项目、服务器或临时组归属挂载，跨组时切到目标组另一段主会话。保留唯一会话提示、非当前入坞、当前与坞对调及终端不可入坞约束。
+- **Impact**: 继续codex/session-menu-artifact-preview分支，复用既有协议和状态机制；本地main、远端和安装版不动。实际预览另建隔离数据库/profile，保留旧窗口和草稿。
+- **Verification**: 入口断言先1失败17通过，修改后相关4文件148项通过；类型检查和构建通过。新入坞及顶部菜单5项Electron回归通过（13.8秒），覆盖单段提示/非当前/当前对调/跨到临时组；首轮验收因两个同名会话按行序定位选错，改成具名目标并等待新主会话后通过。代码复核通过；实际预览从侧栏将空会话入坞，科研案例仍在主区，截图 tmp/session-menu-preview/sidebar/sidebar-context-menu.png 与 sidebar-docked.png。
+
 ### 2026-10-18 — 顶部会话复用侧栏菜单，产物预览统一收起
 
 - **Type**: fix / ui / test

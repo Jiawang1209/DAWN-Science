@@ -1,3 +1,6 @@
+import { AnalysisRouteSummary } from "./analysis-route.js"
+import { displayRouteMessage } from "./state/analysis-route.js"
+import type { AnalysisRoute } from "../protocol/analysis-route.js"
 import { $待回答的会话 } from "./state/catalog.js"
 import { QuestionCard, QuestionSummary, useQuestionTakeover } from "./question-card.js"
 import { clearQuestionDraft } from "./question-drafts.js"
@@ -1025,7 +1028,7 @@ export { SideSash }
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
-  return who === "bot" ? "Bot" : who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "subagent" ? t("子 agent") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
+  return who === "route" ? t("路线") : who === "bot" ? "Bot" : who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "subagent" ? t("子 agent") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
@@ -1033,7 +1036,7 @@ const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAge
 export function 房客快捷键(who: 坞房客): string {
   if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
   // **网页、概览、产物、笔记本、对话暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
-  if (who === "bot" || who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat" || who === "subagent") return ""
+  if (who === "route" || who === "bot" || who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat" || who === "subagent") return ""
   return 是Mac ? "⌘P" : "Ctrl+P"
 }
 
@@ -3736,6 +3739,8 @@ function SessionUsageImpl({ items }: { items: readonly TranscriptItem[] }) {
 /* ── 对话视图 ─────────────────────────────────────────────────────── */
 
 export function ConversationView({
+  analysisRoute,
+  onOpenRoute,
   onOpenWeb,
   artifacts,
   onOpenArtifact,
@@ -3944,6 +3949,8 @@ export function ConversationView({
    * @param behavior 上一轮**还在跑**时这一条怎么进去（协议 8.0，2026-09-25）：
    *   `followUp` 排队（回车）、`redirect` 调整方向（Cmd/Ctrl+回车，只有 native）。不忙时不给。
    */
+  analysisRoute?: AnalysisRoute | undefined
+  onOpenRoute?: (() => void) | undefined
   allowBotDispatch?: boolean | undefined
   onSend: (
     text: string,
@@ -4836,6 +4843,7 @@ export function ConversationView({
       {会话搜索开 ? <ConversationSearch key={session.sessionId} items={items} focusSignal={会话搜索聚焦} onJump={跳会话命中} onClose={关会话搜索} /> : null}
       {会话搜索开 && 会话搜索错误 ? <p className="hint" role="alert">{会话搜索错误}</p> : null}
       {坞头?.注}
+      {analysisRoute && onOpenRoute ? <AnalysisRouteSummary route={analysisRoute} onOpen={onOpenRoute} /> : null}
 
       {/**
        * 贴底滚动交给 `use-stick-to-bottom`。
@@ -6269,7 +6277,7 @@ function TranscriptRowImpl({
          * 包一层就会把里面段落的外边距一起算进去。
          */}
         <AgentMarkdown
-          text={item.text}
+          text={mine ? displayRouteMessage(item.text) : item.text}
           streaming={!mine && !item.final}
           {...(mine ? { className: "text" } : {})}
           {...(onOpenWeb ? { onOpenLocal: onOpenWeb } : {})}

@@ -39,7 +39,9 @@ async function 量开关位置(区: Locator): Promise<string[]> {
     const 卡 = root.querySelector<HTMLElement>(".composer-card")
     const 包 = root.querySelector<HTMLElement>(".plan-toggle-wrap")
     if (!附栏 || !卡 || !包) return [`缺东西：附栏 ${!!附栏} 卡 ${!!卡} 开关 ${!!包}`]
-    if (包.parentElement !== 附栏) 错.push("开关不在附栏里")
+    // 同卡下层已有 composer-tools 包装；验所属附栏，不把内部包装层当成布局契约。
+    // fecaaad4 基线与路线分支均复现 direct-parent 旧断言失败，邻接/边界/滚动/重叠检查照留。
+    if (包.closest(".composer-footer") !== 附栏) 错.push("开关不在附栏里")
     if (!包.previousElementSibling?.classList.contains("enhance-control")) 错.push(`开关前面不是「优化输入」：${包.previousElementSibling?.className}`)
     for (const el of [附栏, 卡]) if (el.scrollWidth > el.clientWidth + 1) 错.push(`${el.className} 横向滚 ${el.scrollWidth}>${el.clientWidth}`)
     const 卡框 = 卡.getBoundingClientRect()

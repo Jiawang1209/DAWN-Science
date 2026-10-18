@@ -2101,3 +2101,15 @@ describe("设计契约 · 会话菜单同一份定义", () => {
     }
   })
 })
+
+describe("设计契约 · 会话分析路线", () => {
+  it("路线 UI 复用文件预览与共享阻塞判定，不从运行时读取或解析自然语言生成路线", () => {
+    const src = read('analysis-route.tsx')
+    expect(src).toContain('FilePreview')
+    expect(src).toContain('routeContinueBlockers')
+    expect(src).not.toMatch(/from\s+["'][^"']*(?:runtime|session\/store)/)
+    expect(src).not.toMatch(/window\.(?:prompt|confirm)|fetch\(/)
+    expect(src.indexOf('className="route-deliverables"')).toBeLessThan(src.indexOf('className="route-file-preview"'))
+    expect(read('views.tsx')).toContain('displayRouteMessage(item.text)')
+  })
+})

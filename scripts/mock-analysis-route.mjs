@@ -12,10 +12,10 @@ const step = (id, title, dependencies = []) => ({
   execution: { state: 'not_run', note: '尚未运行科研代码' },
   verification: { state: 'unreviewed', note: '尚未独立审查' }, needsReview: false, notes: [],
 })
-const draft = () => ({
-  title: '演示分析路线', goal: '通过真实工具演示逐步路线与生成产物；不证明科学分析质量',
+const draft = (long = false) => ({
+  title: long ? '演示分析路线：从很长的数据背景与样本条件说明出发，逐步核对多样性分析所需的输入、方法与可复核交付文件' : '演示分析路线', goal: long ? '通过真实结构化工具建立可复核路线，逐步说明合成输入、依赖条件、方法边界及交付文件；较长说明仅用于检验窄坞换行和本地展开行为，不证明科学分析质量，也不自动执行任何后续步骤。' : '通过真实工具演示逐步路线与生成产物；不证明科学分析质量',
   dataContext: ['工程夹具，尚未提供科研输入'],
-  steps: [step('S1', '输入与 Alpha 多样性'), step('S2', 'Beta 多样性', ['S1']), step('S3', '汇总与审查', ['S2'])],
+  steps: [{ ...step('S1', long ? '输入与 Alpha 多样性：核对长文件名、样本编号和多个批次之间的对应关系，并保留所有待确认条件' : '输入与 Alpha 多样性'), ...(long ? { inputs: ['合成 ASV 表与样本信息仅用于工程验证，尚未执行科研计算；需要逐项核对每个样本编号及分组字段'], outputs: ['results/reports/包含很长说明且应在窄坞内完整换行的分析条件与证据索引报告.md'] } : {}) }, step('S2', 'Beta 多样性', ['S1']), step('S3', '汇总与审查', ['S2'])],
 })
 const routeOnly = route => {
   const { routeId, revision, updatedAt, ...value } = structuredClone(route)
@@ -35,7 +35,7 @@ function context(body) {
     try { action = JSON.parse(user.split('\n')[0].slice('[analysis_route_action] '.length)) }
     catch { /* Invalid markers never enter the route fixture. */ }
   }
-  if (!user.includes('演示分析路线') && !action) return
+  if (!user.includes('演示分析路线') && !user.includes('建立会话分析路线') && !action) return
   if (!(body.tools ?? []).some(tool => (tool.function?.name ?? tool.name) === 'get_analysis_route')) return
   const names = new Map(messages.flatMap(message => (message.tool_calls ?? []).map(call => [call.id, call.function?.name])))
   const results = messages.slice(index + 1).filter(message => message.role === 'tool').map(message => ({
@@ -60,7 +60,7 @@ export function analysisRouteMockTool(body) {
   const server = search?.slice(0, -'__search_cases'.length)
 
   if (!action) {
-    if (!route) return { toolName: 'update_analysis_route', args: { expectedRevision: 0, route: draft() }, say: '建立三个步骤的结构化路线。' }
+    if (!route) return { toolName: 'update_analysis_route', args: { expectedRevision: 0, route: draft(current.user.includes('长标题')) }, say: '建立三个步骤的结构化路线。' }
     if (!search) return
     if (!results.some(result => result.name === search)) {
       return { toolName: search, args: { query: 'guide-alpha' }, say: '从实际 MLAI 工具检索候选。' }

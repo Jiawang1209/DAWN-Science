@@ -8607,3 +8607,53 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .session-context-menu .btn { flex-shrink: 0; }
 .session-context-menu .btn:focus-visible { background: var(--dawn-row-hover); }
 .session-tab-wrap > .sess-rename { min-width: 100px; width: 180px; margin: 2px 4px; }
+
+/* 会话路线：单列，事实与记录分层；280px 窄坞按内容换行。 */
+.analysis-route-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 6px 20px; padding: 8px 10px; min-width: 0; text-align: left; border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-2); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.route-summary-title { flex: 1 1 180px; font-weight: var(--dawn-weight-semibold); overflow-wrap: anywhere; }
+.route-summary-blocked { color: var(--dawn-warning); }
+.analysis-route-pane { height: 100%; min-height: 0; overflow: auto; padding: 12px; color: var(--dawn-text-1); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.analysis-route-pane [hidden] { display: none; }
+.analysis-route-pane p { margin: 6px 0; }
+.analysis-route-pane h2 { margin: 0; font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-semibold); }
+.analysis-route-pane h3 { margin: 12px 0 6px; font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-semibold); }
+.route-head { display: flex; gap: 8px; align-items: start; justify-content: space-between; }
+.route-head h2 { min-width: 0; }
+.route-head .btn { flex-shrink: 0; }
+.route-version { display: flex; flex-direction: column; gap: 5px; margin: 12px 0 4px; color: var(--dawn-text-2); }
+.route-version select { max-width: 100%; min-width: 0; width: 100%; }
+.route-time, .route-case-id, .route-case-evidence, .route-file-fact { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.route-notice, .route-blockers { color: var(--dawn-text-2); border-left: 2px solid var(--dawn-accent); padding-left: 8px; }
+.route-error { color: var(--dawn-danger); }
+.route-steps, .route-cases, .route-deliverables ul { list-style: none; margin: 12px 0 0; padding: 0; }
+.route-step { border-top: var(--dawn-hairline) solid var(--dawn-stroke-2); }
+.route-step-toggle.btn { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; padding: 10px 2px; text-align: left; white-space: normal; justify-content: start; height: auto; }
+.route-step-id { color: var(--dawn-text-3); font-family: var(--dawn-font-mono); }
+.route-step-title { flex: 1 1 130px; min-width: 0; font-weight: var(--dawn-weight-semibold); }
+.route-step-status { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.route-step-body { padding: 0 2px 12px; }
+.route-actions { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.route-actions .btn { white-space: normal; }
+.route-conditions { margin: 12px 0; }
+.route-conditions dt { color: var(--dawn-text-3); margin-top: 6px; }
+.route-conditions dd { margin: 2px 0 0; }
+.route-cases > li { padding: 10px 0; border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-2); }
+.route-cases strong { font-weight: var(--dawn-weight-medium); }
+.route-selected { color: var(--dawn-text-2); }
+.route-evidence { margin-top: 10px; }
+.analysis-route-pane summary { cursor: pointer; color: var(--dawn-text-2); padding: 6px 0; }
+.analysis-route-pane summary:focus-visible { outline: 2px solid var(--dawn-accent); outline-offset: 2px; }
+.route-tool-id { display: block; color: var(--dawn-text-3); font-family: var(--dawn-font-mono); }
+.route-deliverables { margin-top: 12px; border-top: var(--dawn-hairline) solid var(--dawn-stroke-2); }
+.route-deliverables li { margin: 8px 0; }
+.route-deliverables .btn { display: flex; width: 100%; text-align: left; justify-content: start; white-space: normal; height: auto; }
+.route-file-fact { display: block; margin-left: 8px; }
+.route-file-preview { margin-top: 12px; min-height: 240px; border: 1px solid var(--dawn-stroke-2); border-radius: var(--dawn-radius-sm); overflow: hidden; display: flex; flex-direction: column; }
+.route-file-preview .preview { flex: 1; min-height: 240px; }
+.route-reading { display: flex; flex-direction: column; }
+.route-reading .route-file-preview { flex: 1; min-height: 0; margin-top: 0; }
+
+.route-navigation { min-width: 0; }
+.route-purpose { color: var(--dawn-text-2); }
+
+.route-history-file-note { padding: 6px 10px; color: var(--dawn-text-2); border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-2); }

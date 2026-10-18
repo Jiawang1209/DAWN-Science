@@ -1,3 +1,6 @@
+import { AnalysisRoutePanel, createRouteIntent } from "./analysis-route.js"
+import { RouteController, performRouteAction, resolveRouteFile } from "./state/analysis-route.js"
+import type { AnalysisRouteReadResult, AnalysisRouteActionResult, RouteAction } from "../protocol/analysis-route.js"
 import { readOnlyBotCallbacks } from "./bot-member-view.js"
 import { BotPane } from "./bot-pane.js"
 import { BotTeamCards } from "./bot-task-card.js"
@@ -22,7 +25,7 @@ import { StatusNotices } from "./status-notices.js"
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import rpIcon from "../../packaging/icon.svg"
 import { 图廊根 } from "./case-cards.js"
 import { useStore } from "@nanostores/react"
@@ -304,6 +307,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 设置在场 = useStore($设置在场)
   const sessionId = useStore($activeSessionId)
+  const routeController = useMemo(() => new RouteController(), [])
+  const routeState = useStore(routeController.$state)
+  const routeResult = routeState.sessionId === sessionId ? routeState.result : undefined
+  useLayoutEffect(() => { routeController.activate(sessionId) }, [routeController, sessionId])
   const view = useStore($view)
   /**
    * **这里不订阅 `$items`**（2026-09-22，`perf-render`）：它每 33ms 换一次，订阅了整个壳
@@ -735,6 +742,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
         if (receiveBotUpdate(u, id => void resyncBot(client, id).catch(fail))) return
         if (u.sessionId !== $activeSessionId.get()) return
+        if (u.type === "analysisRoute") routeController.receive(u.sessionId, u.route)
+        if (u.type === "snapshot") routeController.receive(u.sessionId, u.snapshot.analysisRoute)
         if (u.type === "item") upsertItem(u.item)
         if (u.type === "append" && !appendItem(u.id, u.field, u.delta)) void resyncSession(client, u.sessionId)
         if (u.type === "dropItem") dropItem(u.id) // 服务端摘掉一条(如「只想没说」并进新的)——实时流跟着删(审查 debug F3)
@@ -1247,6 +1256,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 再让你选一次是多余的。
    */
   const 文件所在 = session?.remote
+
+  const reloadRoute = useCallback(async () => {
+    if (!sessionId || !ready) return
+    const ticket = routeController.begin()
+    if (session?.kind !== 'native') {
+      routeController.accept(ticket, { supported: false, reason: t("仅原生 API 主会话支持路线操作") }); return
+    }
+    try {
+      const result = await client.get<AnalysisRouteReadResult>('getAnalysisRoute', { sessionId, includeHistory: true })
+      routeController.accept(ticket, result)
+    } catch (error) {
+      routeController.accept(ticket, { supported: true, ...routeController.$state.get().result, error: { code: 'ROUTE_ERROR', message: error instanceof Error ? error.message : String(error) } })
+      throw error
+    }
+  }, [client, ready, sessionId, session?.kind, routeController])
+  useEffect(() => { void reloadRoute().catch(() => {}) }, [reloadRoute, routeResult?.route?.revision, busy])
+
 
   const searchFiles = useCallback(
     async (query: string, 根: string): Promise<SearchResult> => {
@@ -5606,6 +5632,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                     ...(session.kind === "native" ? { contextFromSessionId: session.sessionId } : {}),
                   })
                 }}
+                analysisRoute={routeResult?.route}
+                onOpenRoute={() => { 坞上位(); setRightDockTenant('route'); setRightDockOpen(true) }}
                 artifacts={artifacts}
                 onOpenArtifact={openArtifact}
                 loadThumb={读产物缩略}
@@ -6010,6 +6038,49 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             ) : rightDockTenant === "team" ? (
               /** 按它画的那一段重挂（2026-09-29）：展开 / 收起的是那一段的成员与任务，换段不带过去 */
               <TeamPanel key={团队格会话 ?? sessionId} />
+            ) : rightDockTenant === "route" ? (
+              !session ? <EmptyState title={t("开始任务后查看路线")} description={t("每段会话保留自己的分析步骤和产物记录。")} /> : <AnalysisRoutePanel
+                key={JSON.stringify([session.sessionId, session.remote?.connectionId, session.remote?.cwd, 当前工作区路径])}
+                result={routeResult}
+                busy={busy}
+                readOnly={对话回调(session, 主槽).disabled}
+                onReload={reloadRoute}
+                onCreate={async () => {
+                  const owner = session.sessionId
+                  if ($activeSessionId.get() !== owner) throw new Error(t("会话已切换，请在当前会话重试"))
+                  const callbacks = 对话回调(session, 主槽)
+                  const undo = callbacks.onEcho?.(createRouteIntent)
+                  try { await callbacks.onSend(createRouteIntent) } catch (error) { undo?.(); throw error }
+                }}
+                onAction={async (stepId, action: RouteAction, selection) => {
+                  const owner = session.sessionId
+                  const route = routeResult?.route
+                  if (!route) throw new Error(t("请刷新路线后重试"))
+                  const callbacks = 对话回调(session, 主槽)
+                  const stillOwner = routeController.captureOwner()
+                  await performRouteAction({ action,
+                    active: () => $activeSessionId.get() === owner && stillOwner(),
+                    request: () => client.get<AnalysisRouteActionResult>('actOnAnalysisRoute', { sessionId: owner, routeId: route.routeId, expectedRevision: route.revision, stepId, action, ...(selection ? { selection } : {}) }),
+                    receive: updated => routeController.receive(owner, updated),
+                    echo: callbacks.onEcho,
+                    send: text => callbacks.onSend(text),
+                  })
+                }}
+                readFile={path => {
+                  const owner = session.sessionId
+                  if ($activeSessionId.get() !== owner) return Promise.reject(new Error(t("会话已切换，请在当前会话重试")))
+                  const resolved = resolveRouteFile(path, Boolean(session.remote), session.remote?.cwd)
+                  return client.get<FileContent>('readFile', session.remote ? { connectionId: session.remote.connectionId, path: resolved } : { sessionId: owner, path: resolved })
+                }}
+                loadGalleryRoots={载图廊根们}
+                onOpenWeb={url => { 坞上位(); setRightDockTenant('web'); setRightDockOpen(true); 请打开网址(url) }}
+                onOpenExternally={path => openExternally(resolveRouteFile(path, Boolean(session.remote), session.remote?.cwd))}
+                canLocateTool={id => 主槽.$items.get().some(item => item.type === 'tool' && item.id === id)}
+                onTool={id => {
+                  if (!主槽.$items.get().some(item => item.type === 'tool' && item.id === id)) return
+                  设跳到({ sessionId: session.sessionId, itemId: id, nth: 0, 词们: [], 起: 0 })
+                }}
+              />
             ) : rightDockTenant === "artifacts" ? (
               /** **产物那一格**（2026-08-26）：下载与文件格同一契约——只有远端会话才给（本地文件没有「下载」这一说） */
               !sessionId ? <EmptyState

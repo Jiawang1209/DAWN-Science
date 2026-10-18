@@ -15,6 +15,44 @@ const call = async (host: ResourceHost, name: string, args: object) => JSON.pars
 const host = () => createResourceHost({roots: [{path: skills, scope: "builtin"}]})
 
 describe("共用科研审查规范", () => {
+  it("规范包含临时产物边界及完整委派要求", () => {
+    const body = readFileSync(entry, "utf8"), checklist = text("skills/scientific-review/references/checklist.md")
+    expect(body).toContain("委派前逐项传递")
+    expect(body).toContain("回收结果时")
+    expect(checklist).toContain("TMPDIR")
+    expect(checklist).toContain("清单、标准输出/错误、转换表和渲染图")
+    expect(checklist).toContain("不清理固定目录")
+    expect(checklist).toContain("符号链接")
+    expect(checklist).toContain("包括版本/环境探测")
+    expect(body).toContain("转录/JSON日志审计")
+    expect(body).toContain("占位任务")
+    expect(text("agents/reproducibility-reviewer.md")).toContain("临时文件")
+    expect(text("skills/analysis-delivery/SKILL.md")).toContain("TMPDIR")
+  })
+
+  it("统计解释限定模型与检验，不能从设计单位数直接推出校正结论", () => {
+    const checklist = text("skills/scientific-review/references/checklist.md")
+    expect(checklist).toContain("独立性尚未验证")
+    expect(checklist).toContain("自由度")
+    expect(checklist).toContain("交换性")
+    expect(checklist).toContain("方向")
+    expect(checklist).toContain("CSV")
+    expect(checklist).toContain("CRLF")
+    expect(checklist).toContain("同键不同值不会被整行去重删除")
+    expect(text("agents/stat-consultant.md")).toContain("自由度")
+    expect(text("agents/stat-consultant.md")).toContain("交换性")
+  })
+
+  it("报告核对工具转录且不把重复复跑或证据缺口写成额外结论", () => {
+    const reporting = text("skills/scientific-review/references/reporting.md")
+    expect(reporting).toContain("工具转录")
+    expect(reporting).toContain("没有单独日志")
+    expect(reporting).toContain("曾经存在")
+    expect(reporting).toContain("只读计数")
+    expect(reporting).toContain("重复运行一致性")
+    expect(reporting).toContain("df")
+  })
+
   it("真实 loader 可发现，目录只有用途而不预先注入正文", () => {
     const loaded = loadSkills({cwd: root, agentDir: root, includeDefaults: false, skillPaths: [skills]})
     const found = loaded.skills.filter(s => s.name === "scientific-review")

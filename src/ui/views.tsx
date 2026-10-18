@@ -64,7 +64,8 @@ import { 滚到并高亮, 清高亮 } from "./search-jump.js"
 import { ConversationSearch } from "./conversation-search.js"
 import { ConversationActions } from "./conversation-actions.js"
 
-export type 会话额外动作 = "fork" | "openDir" | "copyPath" | "copyTitle" | "copyId"
+import { SessionMenu, SessionMenuItems, SessionRenameInput, type 会话额外动作 } from "./session-menu-items.js"
+export type { 会话额外动作 } from "./session-menu-items.js"
 import { $待批准的会话, $跑着的会话, $未读, $artifacts, $cellCount, $projects, 是散的任务 } from "./state/catalog.js"
 import { 读收起的组, 记收起的组, 读项目展开, 记项目展开 } from "./state/sidebar.js"
 import { AgentMarkdown } from "./markdown.js"
@@ -415,8 +416,8 @@ export function SessionRow({
     if (指针) {
       // 右键直接在指针旁打开；给菜单留出空间，避免贴着窗口边缘被裁掉。
       设位置({
-        top: Math.max(8, Math.min(指针.y, window.innerHeight - 248)),
-        left: Math.max(8, Math.min(指针.x, window.innerWidth - 224)),
+        top: 指针.y,
+        left: 指针.x,
       })
     } else {
       const r = 按钮.current?.getBoundingClientRect()
@@ -425,39 +426,10 @@ export function SessionRow({
          * **开在行的右侧**（作者的原话）。贴着按钮右边一点，垂直居中对齐它。
          * 下面放不下就往上翻——**宁可翻上去，也不要露半截**。
          */
-        const 高 = 200
-        const top = Math.min(Math.max(8, r.top - 4), window.innerHeight - 高 - 8)
-        设位置({ top, left: r.right + 6 })
+        设位置({ top: r.top - 4, left: r.right + 6 })
       }
     }
     setMenu(true)
-  }
-
-  if (editing !== undefined) {
-    const 提交 = () => {
-      onRename?.(editing)
-      setEditing(undefined)
-    }
-    return (
-      <li className="sess-item editing">
-        <input
-          className="control sess-rename"
-          autoFocus
-          value={editing}
-          aria-label={tf("重命名会话：{0}", 名字)}
-          onChange={(e) => setEditing(e.target.value)}
-          onKeyDown={(e) => {
-            // 输入法组词途中那一下回车属于输入法（2026-09-06）
-            if (在组词(e)) return
-            if (e.key === "Enter") 提交()
-            // **Esc 是取消，不是提交** —— 改到一半按 Esc 却被存下来最气人
-            else if (e.key === "Escape") setEditing(undefined)
-          }}
-          // 点到别处即提交：与 Finder / Claude 一致
-          onBlur={提交}
-        />
-      </li>
-    )
   }
 
   const 跑 = 用跑马灯()
@@ -473,6 +445,12 @@ export function SessionRow({
       浮.onMouseLeave?.()
     },
   }
+
+  if (editing !== undefined) return (
+    <li className="sess-item editing">
+      <SessionRenameInput title={名字} initialValue={editing} onSubmit={title => { onRename?.(title); setEditing(undefined) }} onCancel={() => setEditing(undefined)} />
+    </li>
+  )
 
   return (
     <li
@@ -499,7 +477,7 @@ export function SessionRow({
       data-running={跑着 ? "1" : undefined}
       data-waiting-approval={等你点头 ? "1" : undefined}
       data-waiting-answer={等你回答 ? "1" : undefined}
-      onContextMenu={onDelete || onRename || onPin || onMove || onArchive || onExtra
+      onContextMenu={onDelete || onRename || onPin || onMove || onArchive || onExtra || onMarkUnread
         ? (e) => {
             e.preventDefault()
             打开菜单({ x: e.clientX, y: e.clientY })
@@ -641,7 +619,7 @@ export function SessionRow({
         </span>
       </Row>
 
-      {onDelete || onRename || onPin || onMove || onArchive || onExtra ? (
+      {onDelete || onRename || onPin || onMove || onArchive || onExtra || onMarkUnread ? (
         <div className="row-actions">
           <Button
             variant="ghost"
@@ -655,71 +633,9 @@ export function SessionRow({
             ⋯
           </Button>
           {menu ? (
-            <>
-              {/* 点别处关掉。**一层透明背板**，比在 document 上挂监听可控 */}
-              <div className="menu-scrim" onClick={() => setMenu(false)} />
-              <div
-                className="row-menu"
-                role="menu"
-                aria-label={tf("会话操作：{0}", 名字)}
-                style={{ top: 位置.top, left: 位置.left }}
-              >
-                {onPin ? (
-                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onPin(); setMenu(false) }}>
-                    {session.pinned ? t("取消置顶") : t("置顶")}
-                  </Button>
-                ) : null}
-                {onRename ? (
-                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { setEditing(session.title ?? ""); setMenu(false) }}>
-                    {t("重命名")}
-                  </Button>
-                ) : null}
-                {onMove ? (
-                  <>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMove("up"); setMenu(false) }}>
-                      {t("上移")}
-                    </Button>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMove("down"); setMenu(false) }}>
-                      {t("下移")}
-                    </Button>
-                  </>
-                ) : null}
-                {onArchive ? (
-                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onArchive(); setMenu(false) }}>
-                    {t("收进归档")}
-                  </Button>
-                ) : null}
-                {onMarkUnread && !未读 ? (
-                  <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onMarkUnread(); setMenu(false) }}>
-                    {t("标为未读")}
-                  </Button>
-                ) : null}
-                {onExtra ? (
-                  <>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("fork"); setMenu(false) }}>
-                      {t("在新会话中继续")}
-                    </Button>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("openDir"); setMenu(false) }}>
-                      {t("在访达中打开工作目录")}
-                    </Button>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyPath"); setMenu(false) }}>
-                      {t("复制工作目录")}
-                    </Button>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyTitle"); setMenu(false) }}>
-                      {t("复制标题")}
-                    </Button>
-                    <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onExtra("copyId"); setMenu(false) }}>
-                      {t("复制会话 ID")}
-                    </Button>
-                  </>
-                ) : null}
-                {onDelete ? (
-                  <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onDelete(); setMenu(false) }}>
-                    {t("删除")}
-                  </Button>
-                ) : null}
-              </div>
-            </>
+            <SessionMenu label={tf("会话操作：{0}", 名字)} position={位置} onClose={() => setMenu(false)} restoreFocus={() => 按钮.current?.focus()}>
+              <SessionMenuItems pinned={session.pinned} unread={未读} actions={{ onPin, onRename, onMove, onArchive, onMarkUnread, onExtra, onDelete }} onRename={() => setEditing(session.title ?? "")} onClose={() => setMenu(false)} />
+            </SessionMenu>
           ) : null}
         </div>
       ) : null}

@@ -36,7 +36,8 @@ test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () 
 
     await expect(page.getByRole("tab", { name: "产物", exact: true })).toHaveAttribute("aria-selected", "true")
     await expect(page.locator(".preview")).toBeVisible()
-    await page.getByRole("button", { name: "回到清单" }).click()
+    await expect(page.locator(".artifacts-preview").getByRole("button", { name: "收起预览", exact: true })).toHaveCount(1)
+    await page.locator(".artifacts-preview").getByRole("button", { name: "收起预览", exact: true }).click()
     // `exact`：对话里的工具行「✓ write outputs/volcano_data.csv」也含这个子串（按名字找东西是子串匹配）
     await expect(page.getByText("outputs/", { exact: true })).toBeVisible()
     // 限在坞里、精确整条相对路径（清单行按钮的 aria-label 就是 a.path）：对话里的 chip 同名，不能靠 first() 蒙混

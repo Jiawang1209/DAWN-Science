@@ -4988,7 +4988,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return (
       <SessionTabs
         topbar
-        tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), inDock: x.sessionId === 侧边id, canDock: 能进坞(x) }))}
+        tabs={同处.map((x) => ({ sessionId: x.sessionId, title: x.title ?? t("新会话"), running: 跑着的会话.has(x.sessionId), unread: 未读的.has(x.sessionId), pinned: x.pinned, inDock: x.sessionId === 侧边id, canDock: 能进坞(x) }))}
         current={session.sessionId}
         onPick={(id) => {
           标未读(id, false)
@@ -5003,6 +5003,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           void 归档几段([id]).catch(fail)
         }}
         onReorder={reorderSessions}
+        onSessionActions={(id) => {
+          const target = 同处.find(x => x.sessionId === id)
+          if (!target) return undefined
+          const task = tasks.find(x => x.sessionId === id)
+          return {
+            onRename: title => renameSession(target, title),
+            onPin: () => pinSession(target, !target.pinned),
+            onArchive: () => archiveSession(target),
+            onMarkUnread: () => 标未读(id, true),
+            onMove: direction => moveSession(target, direction),
+            onExtra: task ? action => sessionExtra(target, task, action) : undefined,
+            onDelete: () => askDeleteSession(target),
+          }
+        }}
         /**
          * 右键「放进坞里」（侧边对话，2026-09-24）。**同一段只在一处、主区赢**（Task 5 那个 effect）：
          * 放的是主区这段，就得先把主区切到同处另一段——与上面 `onClose` 同一条——

@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { FilePreview, FilesView, type FileContent, type Listing } from '../../src/ui/files.js'
 import { ArtifactsPanel } from '../../src/ui/artifacts.js'
 
 const script: FileContent = { kind: 'text', mediaType: 'text/x-python', text: 'print(1)', bytes: 8 }
 const image: FileContent = { kind: 'image', mediaType: 'image/png', base64: 'ZZ', bytes: 2 }
 const pdf: FileContent = { kind: 'pdf', mediaType: 'application/pdf', base64: 'ZZ', bytes: 2 }
+const markdown: FileContent = { kind: 'text', mediaType: 'text/markdown', text: '# Review\n\nResult', bytes: 16 }
+const table: FileContent = { kind: 'table', mediaType: 'text/csv', bytes: 2, table: { columns: [], rows: [], rowsRead: 0, delimiter: ',', totalRows: 0 } }
 
-it.each([['analysis.py', script], ['figure.png', image], ['report.pdf', pdf]] as const)('%s 预览有常驻图标收起入口，仍保留既有操作', (path, content) => {
+it.each([['analysis.py', script], ['figure.png', image], ['report.pdf', pdf], ['review.md', markdown], ['data.csv', table]] as const)('%s 预览有常驻图标收起入口，仍保留既有操作', (path, content) => {
   const close = vi.fn(), download = vi.fn()
   render(<FilePreview path={path} content={content} onOpenExternally={vi.fn()} onDownload={download} onClosePreview={close} />)
   const button = screen.getByRole('button', { name: '收起预览' })
@@ -68,11 +70,13 @@ it.each([false, true])('收起保留目录 DOM、展开和选中，重新点同�
   expect(tree.scrollTop).toBe(200)
 })
 
-it.each([['out/a.py', script, 'code'], ['out/a.png', image, 'image']] as const)('产物 %s 收起回到清单，焦点回原文件，可再次打开', async (path, content, kind) => {
+it.each([['out/a.py', script, 'code'], ['out/a.png', image, 'image'], ['out/review.md', markdown, 'document'], ['out/data.csv', table, 'table']] as const)('产物 %s 收起回到清单，焦点回原文件，可再次打开', async (path, content, kind) => {
   const artifact = { path, kind, bornRunId: 'r', bornToolCallId: 'c', bornAt: '2026-10-12T10:00:00Z', exists: true } as import('../../src/protocol/index.js').Artifact
   const { container } = render(<ArtifactsPanel data={{ artifacts: [artifact], unknown: [] }} readFile={vi.fn().mockResolvedValue(content)} onOpenInFiles={vi.fn()} onOpenExternally={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', { name: path }))
-  const close = await screen.findByRole('button', { name: '收起预览' })
+  await waitFor(() => expect(container.querySelector('.preview, .visual-preview')).toBeTruthy())
+  const close = screen.getByRole('button', { name: '收起预览' })
+  expect(screen.getAllByRole('button', { name: '收起预览' })).toHaveLength(1)
   if (kind === 'code') fireEvent.click(screen.getByRole('button', { name: '展开阅读' }))
   close.focus()
   fireEvent.click(close)
@@ -83,6 +87,39 @@ it.each([['out/a.py', script, 'code'], ['out/a.png', image, 'image']] as const)(
   await screen.findByRole('button', { name: '收起预览' })
   if (kind === 'code') expect(screen.getByRole('button', { name: '展开阅读' })).toBeTruthy()
   await waitFor(() => expect(container.querySelector('.preview')).toBeTruthy())
+})
+
+it('产物读取中及失败后也能收起，迟到结果不会重开预览', async () => {
+  let complete!: (content: FileContent) => void
+  const readFile = vi.fn().mockImplementationOnce(() => new Promise<FileContent>(resolve => { complete = resolve }))
+    .mockRejectedValueOnce(new Error('read failed'))
+  const a = { path: 'out/review.md', kind: 'markdown' as const, bornRunId: 'r', bornToolCallId: 'c', bornAt: '2026-10-18T10:00:00Z', exists: true }
+  const { container } = render(<ArtifactsPanel data={{ artifacts: [a], unknown: [] }} readFile={readFile} onOpenInFiles={vi.fn()} onOpenExternally={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: a.path }))
+  fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
+  await act(async () => { complete(markdown); await Promise.resolve() })
+  expect(container.querySelector('.artifacts-preview')).toBeNull()
+  const row = screen.getByRole('button', { name: a.path })
+  expect(document.activeElement).toBe(row)
+  fireEvent.click(row)
+  await screen.findByText('read failed')
+  expect(screen.getAllByRole('button', { name: '收起预览' })).toHaveLength(1)
+  fireEvent.click(screen.getByRole('button', { name: '收起预览' }))
+  expect(container.querySelector('.artifacts-preview')).toBeNull()
+})
+
+it.each([markdown, image])('产物读取完成后关闭入口保留键盘焦点', async content => {
+  let complete!: (content: FileContent) => void
+  const readFile = vi.fn(() => new Promise<FileContent>(resolve => { complete = resolve }))
+  const a = { path: 'out/result', kind: 'other' as const, bornRunId: 'r', bornToolCallId: 'c', bornAt: '2026-10-18T10:00:00Z', exists: true }
+  render(<ArtifactsPanel data={{ artifacts: [a], unknown: [] }} readFile={readFile} onOpenInFiles={vi.fn()} onOpenExternally={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: a.path }))
+  screen.getByRole('button', { name: '收起预览' }).focus()
+  await act(async () => { complete(content); await Promise.resolve() })
+  const close = screen.getByRole('button', { name: '收起预览' })
+  expect(document.activeElement).toBe(close)
+  fireEvent.click(close)
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: a.path }))
 })
 
 it.each([false, true])('关闭时目录高度增大导致滚动被夹限，立即重开恢复原位置；新滚动优先（展开=%s）', async expanded => {

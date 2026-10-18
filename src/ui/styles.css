@@ -2562,6 +2562,28 @@ pre {
 .file-preview:has(> .preview-script) {
   overflow: hidden;
 }
+/* Markdown、表格与其他文件也保留固定的标题/收起入口，只滚动内容。 */
+.preview-collapsible:not(.preview-script) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.preview-collapsible:not(.preview-script) > .preview-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  flex: 0 0 auto;
+}
+.preview-collapsible:not(.preview-script) > .preview-head .name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.preview-collapsible > .preview-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.file-preview:has(> .preview-collapsible) { overflow: hidden; }
 .files-where[hidden],
 .file-tree-box[hidden],
 .artifacts-head[hidden],
@@ -8110,6 +8132,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .artifacts-compact .current { background: var(--dawn-accent-soft); border-radius: var(--dawn-radius-md); }
 .artifacts-pane > .preview { min-height: 0; flex: 0 1 auto; overflow: auto; }
 .artifacts-pane > .preview-script { flex: 1 1 0; overflow: hidden; }
+.artifacts-pane > .preview-collapsible { flex: 1 1 0; overflow: hidden; }
 .generated-actions { display: flex; gap: var(--dawn-space-4); flex-wrap: wrap; }
 .generated-strip { margin-block: var(--dawn-space-4); }
 .generated-strip > .label { font-size: var(--dawn-fs-sub); letter-spacing: normal; }
@@ -8591,3 +8614,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .turn.user .rewind-label { display: none; }
   .turn.user .rewind-btn { width: var(--dawn-space-8); justify-content: center; }
 }
+
+/* 会话菜单可含完整动作，按实际尺寸定位；短窗口仍能滚到末项。 */
+.session-context-menu { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow-y: auto; }
+.session-context-menu .btn { flex-shrink: 0; }
+.session-context-menu .btn:focus-visible { background: var(--dawn-row-hover); }
+.session-tab-wrap > .sess-rename { min-width: 100px; width: 180px; margin: 2px 4px; }

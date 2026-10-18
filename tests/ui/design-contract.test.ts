@@ -2077,3 +2077,14 @@ it("紧凑导航的CSS初值与宽度状态一致，分组和归档共用名称�
   expect(styles).toContain("grid-template-columns: 16px 16px var(--dawn-sidebar-label-w) max-content")
   expect(styles).toContain("flex: 0 0 calc(var(--dawn-sidebar-label-w) + var(--dawn-space-4))")
 })
+
+describe("设计契约 · 会话菜单同一份定义", () => {
+  it("侧栏和顶部分栏都复用共享动作组件，不各自维护菜单文案", () => {
+    for (const file of ["views.tsx", "session-tabs.tsx"]) {
+      const source = read(file)
+      expect(source, file).toContain("<SessionMenuItems")
+      expect(source, file).not.toContain('t("复制会话 ID")')
+      expect(source, file).not.toContain('t("在访达中打开工作目录")')
+    }
+  })
+})

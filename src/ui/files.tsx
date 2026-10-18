@@ -558,12 +558,16 @@ export function FilePreview({
   </>
 
   return (
-    <div className={`preview${script ? " preview-script" : ""}`}>
+    <div className={`preview${script ? " preview-script" : ""}${onClosePreview ? " preview-collapsible" : ""}`}>
       <header className="preview-head" tabIndex={script ? 0 : undefined}>
         {script ? <>
           <span className="name" tabIndex={0} aria-label={path}>{path.split("/").pop() || path}</span>
           <div className="script-preview-actions">{actions}</div>
           {onClosePreview ? <PreviewCloseButton onClose={onClosePreview} /> : null}
+        </> : onClosePreview ? <>
+          <span className="name" aria-label={path}>{path.split("/").pop() || path}</span>
+          <PreviewCloseButton onClose={onClosePreview} />
+          <div className="preview-meta">{details}{actions}</div>
         </> : <>
           <span className="name">{path}</span>
           {details}
@@ -571,7 +575,9 @@ export function FilePreview({
         </>}
       </header>
 
-      <FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} />
+      {script ? <FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} /> : (
+        <div className="preview-body"><FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} /></div>
+      )}
     </div>
   )
 }

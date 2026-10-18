@@ -6,7 +6,7 @@
  * 散的（临时）会话没有「同一处」，不画这一条。
  */
 import { useEffect, useRef, useState, type DragEvent, type MouseEvent } from "react"
-import { createPortal } from "react-dom"
+import { SessionMenu, SessionMenuItems, SessionRenameInput, hasSessionMenuActions, type SessionMenuActions } from "./session-menu-items.js"
 import { Button } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
 import { 加号描边图标, 关闭图标 } from "./icons.js"
@@ -18,7 +18,8 @@ export interface 分栏项 {
   unread?: boolean | undefined
   /** 挂在坞里（侧边对话，2026-09-24）：标题后画一个「坞」——同一段只在一处，人得看得出它此刻在哪 */
   inDock?: boolean | undefined
-  /** 能不能放进坞里（终端不能，见 `能进坞`）。缺省 = 能；不能的那格不开右键菜单——菜单里只有那一项，开出来是个点了没用的菜单 */
+  pinned?: boolean | undefined
+  /** 终端不能放进坞，其余会话动作仍可用。 */
   canDock?: boolean | undefined
 }
 
@@ -29,6 +30,7 @@ export function SessionTabs({
   onNew,
   onClose,
   onPutInDock,
+  onSessionActions,
   onReorder,
   topbar = false,
 }: {
@@ -42,10 +44,12 @@ export function SessionTabs({
   /** 关掉一段 = 收进归档（藏，不是删；侧栏「已归档」能找回）。不给就不画那颗 × */
   onClose?: ((sessionId: string) => void) | undefined
   /**
-   * 右键「放进坞里」（侧边对话，2026-09-24）。不给就没有右键菜单。
+   * 右键「放进坞里」（侧边对话，2026-09-24）。只给此回调时保留原来的单项菜单。
    * **右键是看不见的入口**——坞的「对话」页签与命令面板是另两条，不靠它被发现。
    */
   onPutInDock?: ((sessionId: string) => void) | undefined
+  /** 与侧栏共用动作；按被右键的 id 提供闭包，缺少任务上下文时不提供额外动作。 */
+  onSessionActions?: ((sessionId: string) => SessionMenuActions | undefined) | undefined
   /** 同一处的会话按新顺序保存；不给时页签不可拖动 */
   onReorder?: ((orderedIds: string[]) => void) | undefined
 }) {
@@ -55,28 +59,13 @@ export function SessionTabs({
   const [落点, 设落点] = useState<string | undefined>(undefined)
   /** 右键开着的那格菜单：哪一段、开在哪 */
   const [菜单, 设菜单] = useState<{ sessionId: string; title: string; top: number; left: number } | undefined>(undefined)
-  const 菜单项 = useRef<HTMLButtonElement>(null)
-  /**
-   * 菜单的键盘这一半（Task 6 审查 M3）：开了就把焦点放进第一项（键盘开的菜单才按得到），Esc 收起并把焦点还给那格页签。
-   * 不这样的话，用键盘（Shift+F10 / 菜单键）开出来的菜单离了鼠标就关不掉。
-   */
-  useEffect(() => {
-    if (!菜单) return
-    菜单项.current?.focus()
-    const 那格 = 菜单.sessionId
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key !== "Escape") return
-      e.preventDefault()
-      设菜单(undefined)
-      // 不拼选择器：会话 id 里有什么字符不归这里管（jsdom 也没有 CSS.escape）
-      ;[...document.querySelectorAll<HTMLElement>(".session-tab")].find((el) => el.dataset.session === 那格)?.focus()
-    }
-    document.addEventListener("keydown", onKey)
-    return () => document.removeEventListener("keydown", onKey)
-  }, [菜单])
-  /** 在 (x, y) 给那一格开菜单：下面、右边放不下就往里收（与文件树那份菜单同一个算法，高度只有一项） */
+  const [editing, setEditing] = useState<{ tab: 分栏项; actions: SessionMenuActions } | undefined>(undefined)
+  const restoreTabFocus = (id: string) => [...root.current?.querySelectorAll<HTMLElement>(".session-tab") ?? []].find(el => el.dataset.session === id)?.focus()
+  const canOpenMenu = (tab: 分栏项) => Boolean((onPutInDock && tab.canDock !== false) || hasSessionMenuActions(onSessionActions?.(tab.sessionId)))
   const 开菜单 = (x: 分栏项, clientX: number, clientY: number) =>
-    设菜单({ sessionId: x.sessionId, title: x.title, top: Math.min(clientY, window.innerHeight - 48), left: Math.min(clientX, window.innerWidth - 160) })
+    设菜单({ sessionId: x.sessionId, title: x.title, top: clientY, left: clientX })
+  const menuTab = 菜单 ? tabs.find(x => x.sessionId === 菜单.sessionId) : undefined
+  const menuActions = menuTab ? onSessionActions?.(menuTab.sessionId) ?? {} : {}
   const 放下 = (目标: string) => {
     设落点(undefined)
     const from = tabs.findIndex((x) => x.sessionId === 拖动中)
@@ -115,7 +104,7 @@ export function SessionTabs({
             data-running={x.running ? "1" : undefined}
             data-unread={x.unread ? "1" : undefined}
             data-in-dock={x.inDock ? "1" : undefined}
-            draggable={onReorder !== undefined}
+            draggable={onReorder !== undefined && editing?.tab.sessionId !== x.sessionId}
             onDragStart={onReorder ? (e: DragEvent<HTMLDivElement>) => {
               e.dataTransfer.effectAllowed = "move"
               e.dataTransfer.setData("text/plain", x.sessionId)
@@ -133,7 +122,7 @@ export function SessionTabs({
               设拖动中(undefined)
               设落点(undefined)
             } : undefined}
-            {...(onPutInDock && x.canDock !== false
+            {...(canOpenMenu(x)
               ? {
                   onContextMenu: (e: MouseEvent) => {
                     e.preventDefault()
@@ -142,21 +131,30 @@ export function SessionTabs({
                 }
               : {})}
           >
-            <Button
+            {editing?.tab.sessionId === x.sessionId ? (
+              <SessionRenameInput title={x.title} initialValue={x.title} onSubmit={title => { editing.actions.onRename?.(title); setEditing(undefined); requestAnimationFrame(() => restoreTabFocus(x.sessionId)) }} onCancel={() => { setEditing(undefined); requestAnimationFrame(() => restoreTabFocus(x.sessionId)) }} />
+            ) : <Button
               variant="ghost"
               size="inline"
               role="tab"
               aria-selected={选中}
-              {...(onPutInDock && x.canDock !== false ? { "aria-haspopup": "menu" as const } : {})}
+              {...(canOpenMenu(x) ? { "aria-haspopup": "menu" as const } : {})}
               className="session-tab"
               data-session={x.sessionId}
+              onKeyDown={e => {
+                if (canOpenMenu(x) && (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10"))) {
+                  e.preventDefault()
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  开菜单(x, rect.left, rect.bottom)
+                }
+              }}
               onClick={() => onPick(x.sessionId)}
             >
               <span className="session-tab-dot" aria-hidden="true" />
               {/* 全名给悬浮看——顶格里只留截断后的那截。title 摆在这个 span（不是按钮）上，设计契约禁按钮用原生 title */}
               <span className={`session-tab-title${topbar && 选中 ? " conv-title" : ""}`} data-authored="1" title={x.title}>{x.title}</span>
               {x.inDock ? <span className="session-tab-dock">{t("坞")}</span> : null}
-            </Button>
+            </Button>}
             {/* 走 primitive，几何仍归 `.session-tab-close`（2026-09-08：那条扫描修好后露出来的） */}
             {onClose ? (
               <Button
@@ -177,42 +175,16 @@ export function SessionTabs({
           <加号描边图标 />
         </Button>
       ) : null}
-      {/* 与文件树那份右键菜单同一个写法（`files.tsx` 的 `menu-scrim`）：点空处、再右键都收起。
-          挂到 body 上：分栏那一条会横向滚，`fixed` 的菜单留在里面会被它的裁切与叠放层级管住 */}
-      {菜单 && onPutInDock ? createPortal(
-        <>
-          {/* 菜单开着时在**另一格**上右键：落在遮罩上。只收起的话要再右键一次（审查 M3）——
-              看遮罩底下是哪一格，是能进坞的那格就直接给它开；jsdom 没有 elementsFromPoint，没有就只收起 */}
-          <div
-            className="menu-scrim"
-            onClick={() => 设菜单(undefined)}
-            onContextMenu={(e) => {
-              e.preventDefault()
-              const 底下 = typeof document.elementsFromPoint === "function"
-                ? document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.classList.contains("session-tab"))
-                : undefined
-              const 那格 = 底下 ? tabs.find((x) => x.sessionId === (底下 as HTMLElement).dataset.session) : undefined
-              if (那格 && 那格.canDock !== false) 开菜单(那格, e.clientX, e.clientY)
-              else 设菜单(undefined)
-            }}
-          />
-          <div className="row-menu" role="menu" aria-label={tf("分栏操作：{0}", 菜单.title)} style={{ top: 菜单.top, left: 菜单.left }}>
-            <Button
-              ref={菜单项}
-              variant="ghost"
-              size="inline"
-              role="menuitem"
-              onClick={() => {
-                const id = 菜单.sessionId
-                设菜单(undefined)
-                onPutInDock(id)
-              }}
-            >
-              {t("放进坞里")}
-            </Button>
-          </div>
-        </>,
-        document.body,
+      {菜单 && menuTab ? (
+        <SessionMenu key={菜单.sessionId} label={tf("分栏操作：{0}", 菜单.title)} position={菜单} onClose={() => 设菜单(undefined)} restoreFocus={() => restoreTabFocus(菜单.sessionId)} onContextMenu={e => {
+          const underneath = typeof document.elementsFromPoint === "function" ? document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains("session-tab") || el.closest(".session-tab")) : undefined
+          const button = underneath?.closest<HTMLElement>(".session-tab")
+          const tab = button ? tabs.find(x => x.sessionId === button.dataset.session) : undefined
+          if (tab && canOpenMenu(tab)) 开菜单(tab, e.clientX, e.clientY)
+          else 设菜单(undefined)
+        }}>
+          <SessionMenuItems pinned={menuTab.pinned} unread={menuTab.unread} actions={menuActions} onRename={() => setEditing({ tab: menuTab, actions: menuActions })} onClose={() => 设菜单(undefined)} onPutInDock={onPutInDock && menuTab.canDock !== false ? () => onPutInDock(menuTab.sessionId) : undefined} />
+        </SessionMenu>
       ) : null}
     </div>
   )

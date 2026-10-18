@@ -3,10 +3,10 @@
  *
  * 形态来自计划 §6 记下的 Codex 桌面版组件 `subagent-activity-chip-group`：
  *
- * > **chip 组，不是树、也不是日志。** 一行紧凑的状态芯片，点开才展开细节。
+ * > **chip 组，不是树、也不是日志。** 每个子 agent 一行紧凑状态，点开才展开细节。
  *
  * 它回答的是「N 个并发子 agent 怎么显示才不淹掉对话」。
- * 所以这份测试盯的主要是**克制**：默认一行、任务文本不铺开、
+ * 所以这份测试盯的主要是**克制**：每个子 agent 一行、任务文本不铺开、
  * 失败原因不省略。
  */
 import { readFileSync } from "node:fs"
@@ -30,7 +30,7 @@ const ERR = {
   error: "子进程以退出码 3 结束",
 }
 
-describe("默认是一行紧凑的芯片", () => {
+describe("每个子 agent 一行紧凑状态", () => {
   it("每个子 agent 一个芯片，显示名字与状态", () => {
     render(<SubagentChips item={item([RUNNING, OK, ERR])} />)
     expect(screen.getAllByRole("button", { name: /scout|planner|worker/ })).toHaveLength(3)

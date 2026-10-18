@@ -298,6 +298,11 @@ describe("设计契约 · 一个动作一个家", () => {
 })
 
 describe("设计契约 · 子 agent 的过程只在坞里画（2026-09-27）", () => {
+  it("子 agent 列表固定单列，每个子 agent 独占一行", () => {
+    const block = read("styles.css").match(/\.chip-group\s*\{([^}]+)\}/)?.[1]
+    expect(block).toMatch(/display:\s*grid/)
+    expect(block).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/)
+  })
   /**
    * Codex 的 chip 组要回答的是「N 个并发子 agent 怎么显示才不淹掉对话」——**chip 组，不是树、也不是日志**。
    * 过程住在坞里「子 agent」那一格（`subagent-pane.tsx`）；主转录里的 `SubagentChips` 一旦画起逐条过程，

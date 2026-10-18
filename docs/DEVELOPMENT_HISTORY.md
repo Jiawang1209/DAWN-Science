@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 子 Agent 状态列表一行一个
+
+- **Type**: fix / ui / test
+- **Motivation**: 用户要求调用中的子 Agent 排列固定一行一个，避免长短条目混排。
+- **What**: chip组改为单列网格，按钮靠左、按内容取宽；保留长活动摘要省略及点击详情。将该要求记入 docs/DESIGN.md，同步组件/测试注释。
+- **Verification**: 设计契约先1失败/96通过，修改后相关2文件113项通过；build通过，1项真实Electron并发回归通过（3.7秒），验证两个短名也不并排。实际隔离预览的3子Agent记录逐条独占一行、左边一致，截图保存在 tmp/scientific-review/subagent-single-rows.png。继续当前独立分支，不合并/推送/替换安装版。
+
 ### 2026-10-18 — 科研审查临时路径、委派与统计措辞修订
 
 - **Type**: fix / test / docs

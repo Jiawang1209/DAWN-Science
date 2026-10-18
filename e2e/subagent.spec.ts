@@ -240,6 +240,12 @@ test.describe("parallel：两个独立进程，都挂在同一次工具调用下
       await expect(chips.nth(i)).toHaveAttribute("data-status", "ok")
     }
 
+    // 名字很短、足以并排时也必须各占一行，并保持左对齐。
+    const first = (await chips.nth(0).boundingBox())!
+    const second = (await chips.nth(1).boundingBox())!
+    expect(second.y).toBeGreaterThanOrEqual(first.y + first.height)
+    expect(Math.abs(second.x - first.x)).toBeLessThan(1)
+
     /**
      * **账本：两条 `subagent:scout`，父亲是同一条 `tool_call:subagent`。**
      *

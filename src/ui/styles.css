@@ -1809,7 +1809,7 @@ pre {
 
 /* ── 子 agent 的 chip 组（①-B″ · S1）───────────────────────────────
    形态学自 Codex 桌面版的 subagent-activity-chip-group：
-   **chip 组，不是树、也不是日志**。默认一行，点开才展开细节——
+   **chip 组，不是树、也不是日志**。每个子 agent 一行，点开才展开细节——
    8 个并发时铺开任务全文那一屏就没法看了。 */
 .subagents {
   margin: 6px 0;
@@ -1818,10 +1818,10 @@ pre {
   font-size: var(--dawn-fs-meta);
 }
 .subagents-summary { color: var(--dawn-text-3); }
-/* 横向排布并允许换行：并发上界是 8，一行放不下时换行而不是横向滚动 */
+/* 固定单列：短名字也独占一行，避免条目长度改变子 agent 的排列。 */
 .chip-group {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   margin-top: 4px;
 }
@@ -1829,6 +1829,7 @@ pre {
    槽与 chip 都不超过那一行，那一句是 chip 里唯一可缩的一截 */
 .chip-slot { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 100%; }
 .chip {
+  align-self: flex-start;
   max-width: 100%;
   min-width: 0;
   padding: 2px 8px;

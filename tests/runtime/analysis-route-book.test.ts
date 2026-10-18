@@ -1,0 +1,124 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
+import { afterEach, describe, expect, it } from "vitest"
+import { AnalysisRouteBook } from "../../src/runtime/analysis-route-book.js"
+import type { AnalysisRouteDraft, RouteStep } from "../../src/protocol/analysis-route.js"
+const dirs: string[] = []
+const location = () => { const dir = mkdtempSync(join(tmpdir(), "dawn-route-")); dirs.push(dir); return { dir, file: join(dir, "session", "analysis-route.json") } }
+afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
+const step = (id: string, dependencies: string[] = []): RouteStep => ({
+  id, title: id, purpose: "核对输入", inputs: ["counts"], outputs: ["report"], dependencies, status: "pending", blockers: [],
+  cases: [{ server: "mlai", caseId: "r/example", title: "Example", coverage: "表达分析", evidence: "metadata" }],
+  deliverables: [], execution: { state: "not_run", note: "尚未运行" }, verification: { state: "unreviewed", note: "尚未审查" }, needsReview: false, notes: [],
+})
+const draft = (): AnalysisRouteDraft => ({ title: "表达分析", goal: "比较处理组", dataContext: ["data/raw/counts.csv"], steps: [step("S1"), step("S2", ["S1"]), step("S3", ["S2"]), step("independent")] })
+const asDraft = ({ routeId: _id, revision: _revision, updatedAt: _time, ...rest }: NonNullable<ReturnType<AnalysisRouteBook["read"]>>) => rest
+
+describe("AnalysisRouteBook", () => {
+  it("starts empty, CAS writes complete revisions, restores history, and protects returned values", () => {
+    const { file } = location(), book = new AnalysisRouteBook(file)
+    expect(book.read()).toBeUndefined(); expect(book.history()).toEqual([])
+    const first = book.replace(0, draft())
+    expect(first.revision).toBe(1); expect(first.routeId).toBeTruthy()
+    first.steps[0]!.notes.push("mutated")
+    expect(book.read()!.steps[0]!.notes).toEqual([])
+    const second = book.replace(1, { ...draft(), title: "修订标题" }, "补充标题")
+    expect(second.routeId).toBe(first.routeId); expect(second.revision).toBe(2)
+    expect(() => book.replace(1, draft())).toThrow(/revision|版本/i)
+    expect(new AnalysisRouteBook(file).read()).toEqual(second)
+    expect(new AnalysisRouteBook(file).history()).toHaveLength(2)
+    const history = book.history(); history[0]!.title = "mutated"
+    expect(book.history()[0]!.title).toBe("表达分析")
+    expect(JSON.parse(readFileSync(file, "utf8"))).toMatchObject({ history: expect.any(Array) })
+  })
+  it("rejects corrupt persisted JSON and structural history rather than overwriting", () => {
+    const { dir, file } = location(); mkdirSync(join(dir, "session")); writeFileSync(file, "{bad")
+    expect(() => new AnalysisRouteBook(file)).toThrow()
+    writeFileSync(file, JSON.stringify({ history: [] , current: draft() }))
+    expect(() => new AnalysisRouteBook(file)).toThrow()
+  })
+  it("publishes neither memory nor history if atomic persistence fails and cleans temporary files", () => {
+    const { dir, file } = location(), book = new AnalysisRouteBook(file)
+    const first = book.replace(0, draft())
+    rmSync(file); mkdirSync(file)
+    expect(() => book.replace(1, { ...draft(), title: "cannot save" })).toThrow()
+    expect(book.read()).toEqual(first); expect(book.history()).toEqual([first])
+    expect(readdirSync(join(dir, "session"))).toEqual(["analysis-route.json"])
+  })
+  it("selects only candidates and skip/restore retain facts and review flags", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.deliverables = [{ path: "analysis/script.R" }]; initial.steps[0]!.needsReview = true
+    book.replace(0, initial)
+    expect(() => book.act(1, "S1", "select", { server: "mlai", caseId: "missing" })).toThrow()
+    expect(() => book.act(1, "S1", "select")).toThrow()
+    const selected = book.act(1, "S1", "select", { server: "mlai", caseId: "r/example" })
+    expect(selected.steps[0]!.selectedCase).toEqual({ server: "mlai", caseId: "r/example" }); expect(selected.steps[0]!.status).toBe("pending")
+    expect(book.act(2, "S1", "skip").steps[0]!.status).toBe("skipped")
+    const restored = book.act(3, "S1", "restore").steps[0]!
+    expect(restored.status).toBe("pending"); expect(restored.deliverables).toEqual(initial.steps[0]!.deliverables)
+    expect(restored.needsReview).toBe(true); expect(restored.execution.state).toBe("not_run")
+    expect(() => book.act(3, "S1", "skip")).toThrow(/revision|版本/i)
+    expect(() => book.act(4, "unknown", "skip")).toThrow()
+  })
+  it.each(["inputs", "purpose", "dependencies", "selectedCase"] as const)("marks started downstream steps on %s change, preserving delivery and independent work", (field) => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[1]!.status = "delivered"; initial.steps[1]!.deliverables = [{ path: "analysis/report.csv" }]
+    initial.steps[2]!.status = "in_progress"; initial.steps[3]!.status = "delivered"
+    const first = book.replace(0, initial), next = asDraft(structuredClone(first))
+    if (field === "inputs") next.steps[0]!.inputs = ["changed"]
+    if (field === "purpose") next.steps[0]!.purpose = "新方法"
+    if (field === "dependencies") next.steps[0]!.dependencies = ["independent"]
+    if (field === "selectedCase") next.steps[0]!.selectedCase = { server: "mlai", caseId: "r/example" }
+    next.steps[1]!.deliverables = []
+    const result = book.replace(1, next, "上游变更")
+    expect(result.steps.map(s => s.needsReview)).toEqual([false, true, true, false])
+    expect(result.steps[1]!.deliverables).toEqual([{ path: "analysis/report.csv" }]); expect(book.history()[0]).toEqual(first)
+  })
+  it("marks the changed delivered step itself and old downstream edges for review", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.status = "delivered"; initial.steps[1]!.status = "delivered"
+    const first = book.replace(0, initial), next = asDraft(structuredClone(first))
+    next.steps[0]!.purpose = "改变方法"; next.steps[1]!.dependencies = []
+    const result = book.replace(1, next)
+    expect(result.steps[0]!.needsReview).toBe(true); expect(result.steps[1]!.needsReview).toBe(true)
+    expect(result.steps[2]!.needsReview).toBe(false)
+  })
+  it("can explicitly resolve review flags without changing input, while new changes re-flag started work", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[0]!.status = "delivered"; initial.steps[0]!.needsReview = true
+    book.replace(0, initial)
+    initial.steps[0]!.needsReview = false
+    expect(book.replace(1, initial).steps[0]!.needsReview).toBe(false)
+    initial.steps[0]!.purpose = "新输入处理"
+    expect(book.replace(2, initial).steps[0]!.needsReview).toBe(true)
+  })
+  it("can add and reorder steps without changing existing IDs or causing spurious review", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft()
+    initial.steps[1]!.status = "delivered"; book.replace(0, initial)
+    initial.steps.reverse(); initial.steps.push(step("S4", ["S3"]))
+    const result = book.replace(1, initial)
+    expect(result.steps.map(s => s.id)).toEqual(["independent", "S3", "S2", "S1", "S4"])
+    expect(result.steps.every(s => !s.needsReview)).toBe(true)
+  })
+  it("does not equate delivered with executed/reviewed and preserves stable step ids", () => {
+    const book = new AnalysisRouteBook(undefined), initial = draft(); initial.steps[0]!.status = "delivered"
+    const first = book.replace(0, initial)
+    expect(first.steps[0]!.execution.state).toBe("not_run"); expect(first.steps[0]!.verification.state).toBe("unreviewed")
+    expect(() => book.replace(1, { ...draft(), steps: [step("replacement")] })).toThrow(/步骤|step/i)
+  })
+  it("interrupts only active work and marks explicit rewind review without deleting evidence", () => {
+    const { file } = location(), book = new AnalysisRouteBook(file), initial = draft()
+    initial.steps[0]!.status = "in_progress"; initial.steps[1]!.status = "delivered"
+    book.replace(0, initial)
+    const result = book.interrupt("应用退出")!
+    expect(result.steps.map(s => s.status)).toEqual(["blocked", "delivered", "pending", "pending"])
+    expect(result.steps[0]!.blockers.join(" ")).toContain("应用退出")
+    expect(book.interrupt("再次退出")).toBeUndefined()
+    const reviewed = book.markNeedsReview("对话已回退")!
+    expect(reviewed.steps.every(s => s.needsReview)).toBe(true)
+    expect(reviewed.steps[0]!.notes.join(" ")).toContain("对话已回退")
+    expect(new AnalysisRouteBook(file).read()).toEqual(reviewed)
+    expect(existsSync(file)).toBe(true)
+  })
+})

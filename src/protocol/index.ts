@@ -120,3 +120,6 @@ export type {
   BotModel, BotCreate, BotUpdate, BotProfile, BotScope, BotSessionBinding,
   BotDispatchInput, BotDispatchPatch, BotDispatch, BotResultInput, BotResult,
 } from "../bot/types.js"
+
+export { AnalysisRouteSchema, AnalysisRouteDraftSchema, RouteStepSchema, routeActionMessage } from "./analysis-route.js"
+export type { AnalysisRoute, AnalysisRouteDraft, RouteStep, RouteAction } from "./analysis-route.js"

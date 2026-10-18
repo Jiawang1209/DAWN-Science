@@ -101,6 +101,8 @@ export interface RemoteToolsOptions {
   executor: RemoteLike
   /** 会话此刻在哪个目录。**相对路径以它为准**；它会随 `cd` 变 */
   cwd: 远端工作目录
+  /** Only actual output/exit facts confirm shell execution, never dispatch alone. */
+  onExecutionObserved?: ((toolCallId: string) => void) | undefined
 }
 
 /**
@@ -122,8 +124,8 @@ export function 改造成远端工具(原定义: ToolDef[], opts: RemoteToolsOpt
       case "edit":
         return 换execute(d, async (_id, params) => 改(executor, cwd, params as never))
       case "bash":
-        return 换execute(d, async (_id, params, signal) =>
-          跑(executor, cwd, params as never, signal as AbortSignal | undefined),
+        return 换execute(d, async (id, params, signal) =>
+          跑(executor, cwd, params as never, signal as AbortSignal | undefined, () => opts.onExecutionObserved?.(String(id))),
         )
       default:
         /**
@@ -267,6 +269,7 @@ async function 跑(
   ws: 远端工作目录,
   p: { command: string; timeout?: number },
   signal: AbortSignal | undefined,
+  onExecutionObserved?: () => void,
 ): Promise<ToolResult> {
   const 带标记 = `{ ${p.command}\n}; rc=$?; printf '\\n${CWD标记}%s\\n' "$(pwd)"; exit $rc`
   try {
@@ -277,6 +280,7 @@ async function 跑(
       // 而它和「卡死了」在协议上长得一模一样。模型显式要求时才设上限
       ...(p.timeout === undefined ? {} : { timeoutSec: p.timeout }),
     })
+    if (typeof r.code === "number" || r.signal || r.stdout || r.stderr) onExecutionObserved?.()
     const { 正文, 目录 } = 摘出目录(r.stdout)
     // **只在真读到时才改**：读不到就保持原样，不拿一个猜的目录去覆盖
     if (目录 && 目录 !== ws.get()) ws.set(目录)
@@ -316,6 +320,7 @@ export function 挑工具后端(
   原始: ToolDef[],
   cwd: 远端工作目录,
   remote: RemoteLike | undefined,
+  onExecutionObserved?: (toolCallId: string) => void,
 ): ToolDef[] {
-  return remote ? 改造成远端工具(原始, { executor: remote, cwd }) : 原始
+  return remote ? 改造成远端工具(原始, { executor: remote, cwd, onExecutionObserved }) : 原始
 }

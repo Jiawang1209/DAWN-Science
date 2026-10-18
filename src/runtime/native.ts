@@ -39,6 +39,7 @@ import { join, isAbsolute } from "node:path"
 import {
   createAgentSession,
   createBashToolDefinition,
+  createLocalBashOperations,
   createEditToolDefinition,
   createFindToolDefinition,
   createGrepToolDefinition,
@@ -1164,7 +1165,6 @@ export class NativeRuntime implements AgentRuntime {
           // 包装器天然是同步点，而普通事件订阅不阻塞
           const handle = await probe?.begin(name, params)
           try {
-            if (name === 'bash' || name === 'powershell') observed(toolCallId)
             const r = await original(toolCallId, params, signal, onUpdate, ctx)
             if (!(r as { isError?: boolean } | undefined)?.isError) {
               for (const [p, 有] of 之前) 产物.登记新建(p, 有)
@@ -1208,6 +1208,32 @@ export class NativeRuntime implements AgentRuntime {
         },
       }
     }
+    const localShell = createLocalBashOperations()
+    const bashDefinition = createBashToolDefinition(cwd, { exposeSessionEnvironment: false })
+    const observedBash = {
+      ...bashDefinition,
+      execute: async (toolCallId: string, ...args: unknown[]) => {
+        const scoped = createBashToolDefinition(cwd, {
+          exposeSessionEnvironment: false,
+          operations: {
+            exec: async (command, directory, options) => {
+              const result = await localShell.exec(command, directory, {
+                ...options,
+                onData: data => {
+                  if (data.length) observed(toolCallId)
+                  options.onData(data)
+                },
+              })
+              // An actual exit code proves execution even for silent commands.
+              // Preflight/abort/timeout with no output remain unobserved.
+              if (typeof result.exitCode === 'number') observed(toolCallId)
+              return result
+            },
+          },
+        })
+        return (scoped.execute as (...values: unknown[]) => Promise<unknown>)(toolCallId, ...args)
+      },
+    }
     const 原始 = [
       createReadToolDefinition(cwd),
       /**
@@ -1226,7 +1252,7 @@ export class NativeRuntime implements AgentRuntime {
        * 代价：脚本拿不到 `PI_SESSION_ID` / `PI_SESSION_FILE`。
        * **我们没有任何地方用它们**（全仓搜过），而这几个名字本来也是 pi 的。
        */
-      createBashToolDefinition(cwd, { exposeSessionEnvironment: false }),
+      observedBash,
       createEditToolDefinition(cwd),
       createWriteToolDefinition(cwd),
       /**
@@ -1261,6 +1287,7 @@ export class NativeRuntime implements AgentRuntime {
       原始,
       remote?.cwd ?? { get: () => cwd, set: () => {} },
       remote?.executor,
+      observed,
     )
     return 定义.map((d) => wrap(d))
   }

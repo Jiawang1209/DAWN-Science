@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 案例拒选与 shell 启动证据保持保守
+
+- **Type**: fix
+- **Motivation**: 质量审查复现“我不采用 / I will not use”可误记为选定案例，且 bash 在真正执行前的 abort/timeout/cwd 预检失败被误报为实际运行失败。
+- **What**: 案例选择排除否定、疑问、解释与不明确意图，仅接受当前完整 ID 的明确正向请求。本地 shell 沿用 pi createLocalBashOperations，在真实非空输出或数字退出码返回后才记录执行观察；远端仅在实际返回 code/signal/output 后记录，预检拒绝或无可靠证据时保持 not_observed，不重写 spawn/SSH 底层。
+- **Impact**: 未明确选择不会落 selectedCase；派发/预检失败不能充当执行事实。无输出而中断或超时的命令可能实际启动，但应用保守标未知；真实 exit 7 仍能标实际失败。
+- **Verification**: 选择参数化用例先 10 项 RED；shell 已 abort 预检及远端观察回归先 RED。修复后 10 文件 129 项定向测试、typecheck/build/git diff --check 通过；质量审查者另独立 7 文件 86 项通过。未运行全量或 Electron。
+
 ### 2026-10-18 — 路线动作拒绝忙碌排队并隔离案例正文归属
 
 - **Type**: fix

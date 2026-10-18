@@ -357,3 +357,15 @@ describe("当前目录跟着 cd 走", () => {
     expect(r.正文).toContain("我打印了")
   })
 })
+
+describe('远端 shell 的实际执行观察',()=>{
+  it('仅实际退出码/输出可确认运行，执行器预检抛错保持未观察',async()=>{
+    const observed=vi.fn()
+    const {ex}=假执行器({exec:vi.fn().mockRejectedValueOnce(new Error('aborted before exec')).mockResolvedValueOnce({code:7,stdout:'',stderr:''})})
+    const tools=改造成远端工具(原定义(),{executor:ex,cwd:目录(),onExecutionObserved:observed})
+    expect((await 取(tools,'bash').execute('before-exec',{command:'true'})).isError).toBe(true)
+    expect(observed).not.toHaveBeenCalled()
+    expect((await 取(tools,'bash').execute('actual-exit',{command:'exit 7'})).isError).toBe(true)
+    expect(observed).toHaveBeenCalledExactlyOnceWith('actual-exit')
+  })
+})

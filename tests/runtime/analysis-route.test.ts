@@ -11,7 +11,7 @@ const draft = (): AnalysisRouteDraft => ({ title:'路线', goal:'核对数据', 
 type Result = { isError?:boolean; content:{text:string}[] }
 type Pi = { getAllTools():{name:string}[]; getToolDefinition(name:string):{execute(...args:unknown[]):Promise<Result>} }
 async function setup(bot = false, dir = mkdtempSync(join(tmpdir(),'dawn-route-')), resume=false) {
- const rt = new NativeRuntime({checkpoints:false,credentials:{read:async()=>({type:'api_key',key:'offline'}),list:async()=>[],modify:async()=>undefined,delete:async()=>{}}})
+ const rt = new NativeRuntime({checkpoints:false,provenance:false,credentials:{read:async()=>({type:'api_key',key:'offline'}),list:async()=>[],modify:async()=>undefined,delete:async()=>{}}})
  const events:AgentEvent[]=[]; rt.attach('route', e=>events.push(e))
  const spec:SessionSpec={sessionId:'route',workspace:dir,sessionDir:join(dir,'.session'),native:{provider:'deepseek',model:'deepseek-flash'},resume,...(bot?{bot:{instructions:'bot',member:false}}:{})}
  await rt.start(spec)
@@ -122,6 +122,19 @@ describe('native analysis route',()=>{
    x.say('先不要运行。');expect((await x.call('bash',{command:'true'},'reused-id')).isError).toBe(true)
    const d=draft();d.steps[0]!.execution={state:'failed',note:'被拒绝不是运行',toolCallIds:['reused-id']}
    expect((await x.call('update_analysis_route',{expectedRevision:0,route:d},'metadata')).isError).toBe(true)
+  }finally{await x.rt.stop('route');rmSync(x.dir,{recursive:true,force:true})}
+ })
+
+ it('keeps aborted, invalid-timeout and missing-cwd shell preflight failures unobserved',async()=>{
+  const x=await setup();try{
+   const controller=new AbortController();controller.abort()
+   const bash=x.state.session.getToolDefinition('bash')
+   const aborted=await bash.execute('before-abort',{command:'true'},controller.signal,undefined,undefined)
+   expect(aborted).toMatchObject({isError:true,details:{analysisRouteEvidence:{execution:'not_observed'}}})
+   const invalid=await bash.execute('invalid-timeout',{command:'true',timeout:-1},undefined,undefined,undefined)
+   expect(invalid).toMatchObject({isError:true,details:{analysisRouteEvidence:{execution:'not_observed'}}})
+   const missing=await bash.execute('missing-cwd',{command:'true'},undefined,undefined,{cwd:join(x.dir,'missing')})
+   expect(missing).toMatchObject({isError:true,details:{analysisRouteEvidence:{execution:'not_observed'}}})
   }finally{await x.rt.stop('route');rmSync(x.dir,{recursive:true,force:true})}
  })
 

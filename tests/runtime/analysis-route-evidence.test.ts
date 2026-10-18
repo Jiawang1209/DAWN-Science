@@ -74,3 +74,22 @@ describe('case content identity boundary',()=>{
   expect(()=>validateRouteEvidence(d,undefined,[tool('A__get_case',result)],'')).not.toThrow()
  })
 })
+
+
+describe('conservative explicit case selection',()=>{
+ it.each([
+  '我不采用 full/id','我不使用 full/id','不用 full/id','我不想用 full/id','我不会采用 full/id',
+  'I will not use full/id','I will not select full/id','I will not choose full/id',
+  'not use full/id','not select full/id','not choose full/id',
+  '我可能采用 full/id','请解释为什么使用 full/id','I might use full/id','Should I choose full/id',
+ ])('does not select from a negative or unclear request: %s', user=>{
+  const d=draft();const previous={...structuredClone(d),routeId:'r',revision:1,updatedAt:1} as AnalysisRoute
+  d.steps[0]!.selectedCase={server:'A',caseId:'full/id'}
+  expect(()=>validateRouteEvidence(d,previous,[],user)).toThrow(/选择/)
+ })
+ it.each(['请选择 full/id','我选择 full/id','我决定采用 full/id','使用 full/id 作为参考案例','I choose full/id','Please use full/id'])('keeps explicit positive choices: %s', user=>{
+  const d=draft();const previous={...structuredClone(d),routeId:'r',revision:1,updatedAt:1} as AnalysisRoute
+  d.steps[0]!.selectedCase={server:'A',caseId:'full/id'}
+  expect(()=>validateRouteEvidence(d,previous,[],user)).not.toThrow()
+ })
+})

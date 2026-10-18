@@ -34,11 +34,15 @@ function containsId(text: string, id: string): boolean {
 }
 function explicitSelection(text: string, caseId: string): boolean {
   const prose = text.replace(/^\[analysis_route_action\].*\n?/, '').replace(/```[^]*?(?:```|$)|~~~[^]*?(?:~~~|$)/g, '').replace(/^\s*>.*$/gm, '')
-  return prose.split(/[。；;\n]/).some(clause => containsId(clause, caseId)
-    && !/[?？]|是否|能否|要不要|不要|不选|不使用|别选|do not|don.t|not select/i.test(clause)
-    && /(?:请|我|就|决定|确定|为|给|按|照|选择|选用|采用|使用|choose|select|use)/i.test(clause)
-    && /(?:选择|选用|采用|使用|照(?:着)?(?:这篇|这个|案例)|choose|select|use)/i.test(clause))
+  const clauses = prose.split(/[。；;\n]/).filter(clause => containsId(clause, caseId))
+  // A full ID and a selection verb alone are insufficient: negative, hypothetical
+  // and explanatory statements must leave the user's choice unset.
+  const uncertain = /[?？]|不|别|勿|未|没|拒绝|是否|能否|要不要|可能|也许|考虑|解释|说明|讨论|为什么|为何|如何|如果|假设|\b(?:not|never|might|maybe|perhaps|should|could|would|can|if)\b|\b(?:don['’]?t|won['’]?t|can['’]?t)\b/i
+  if (!clauses.length || clauses.some(clause => uncertain.test(clause.replaceAll(caseId, '')))) return false
+  const direct = /(?:请选择|请选用|请采用|请使用|我(?:决定|确定|就)?(?:选择|选用|采用|使用)|(?:^|[：:\s])(?:选择|选用|采用|使用)|照(?:着)?(?:这篇|这个|案例)|^(?:please\s+)?(?:choose|select|use)\b|\bI\s+(?:choose|select|will use|use)\b)/i
+  return clauses.some(clause => direct.test(clause))
 }
+
 /** Inspect substantive content attached to this case, not filenames, unrelated
  * cases in the same result or a get_case shell containing metadata only. */
 function checkedCaseIds(result: string): Set<string> {

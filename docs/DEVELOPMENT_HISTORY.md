@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 产物文件列表沿用目录外框
+
+- **Type**: fix / ui
+- **Motivation**: 用户要求产物上方文件列表也参照文件目录外框。
+- **What**: 紧凑文件列表统一使用1px主题色边框、radius-sm圆角及space-2内距；图片/PDF清单移除单独的中性边框覆盖，保留原高度及滚动行为。列表和内容预览分别成框。
+- **Verification**: 现有样式契约补充断言先1红，修改后100项通过；UI构建通过，1项Electron回归通过（5.6秒），实测列表边框颜色/圆角与预览相同。实际隔离预览已更新，截图 tmp/session-menu-preview/sidebar/artifact-list-framed-detail.png。当前独立分支，本地main、远端及安装版不动。
+
 ### 2026-10-18 — 产物文件列表在上、内容预览在下
 
 - **Type**: fix / ui / test

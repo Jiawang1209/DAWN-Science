@@ -8111,7 +8111,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .dock-more-menu { position: absolute; top: 100%; right: 0; z-index: var(--z-tooltip); display: flex; flex-direction: column; min-width: 148px; padding: var(--dawn-space-1); background: var(--dawn-surface-elevated); border-radius: var(--dawn-radius-md); border: var(--dawn-hairline) solid var(--dawn-stroke-float); box-shadow: var(--dawn-shadow-float); }
 .dock-head { position: relative; }
 .dock-tabs-row { flex: 1; min-width: 0; }
-.artifacts-compact { flex: 0 1 auto; max-height: 32%; min-height: 40px; overflow-y: auto; list-style: none; padding: var(--dawn-space-2); margin: 0; border-top: 1px solid var(--dawn-stroke-3); }
+.artifacts-compact { flex: 0 1 auto; max-height: 32%; min-height: 40px; overflow-y: auto; list-style: none; padding: var(--dawn-space-2); margin: 0; border: 1px solid var(--dawn-accent); border-radius: var(--dawn-radius-sm); }
 .artifacts-compact li { display: flex; }
 .artifacts-compact .btn { display: flex; width: 100%; min-height: 44px; justify-content: space-between; gap: var(--dawn-space-3); font-size: var(--dawn-fs-sub); }
 .artifacts-compact .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8325,7 +8325,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .visual-preview-stage .caveat, .visual-preview-stage .loader { margin: var(--dawn-space-6); }
 .pdf-page-controls { display: flex; justify-content: center; align-items: center; gap: var(--dawn-space-3); margin-top: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .artifacts-pane > .visual-preview { flex: 0 0 auto; overflow: visible; }
-.artifacts-preview:has(.visual-preview) .artifacts-compact { flex: 1 1 auto; max-height: none; border: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-lg); padding: 0; }
+.artifacts-preview:has(.visual-preview) .artifacts-compact { flex: 1 1 auto; max-height: none; }
 .visual-preview-dialog { width: min(1120px, calc(100vw - var(--dawn-space-8))); max-height: calc(100vh - var(--dawn-space-8)); padding: var(--dawn-space-4); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-sidebar); color: var(--dawn-text-1); box-shadow: var(--dawn-shadow-float); }
 .visual-preview-dialog::backdrop { background: var(--dawn-fill-3); }
 .visual-preview-dialog > header { display: flex; justify-content: space-between; align-items: center; gap: var(--dawn-space-3); margin-bottom: var(--dawn-space-3); }

@@ -25,6 +25,59 @@ function setup() {
 }
 
 describe("子任务只读资源", () => {
+  it("真实案例的长词组与无空格中文查询召回相关记忆，泛词不单独扩散", async () => {
+    const s = setup()
+    const target = "本演示的地上生物量单位固定为 g/m²，盖度单位为%；原始数据只读；IQR极端值保留并标记。复现脚本使用 set.seed(42)，R解释器为 Rscript；产物写 outputs/，脚本写 analysis/。"
+    writeFileSync(join(s.memories, "MEMORY.md"), serializeEntries(["固定服务器连接，不涉及样方。", target, "火星表面温度资料。", "种子保存的园艺注意事项。"]));
+    const h = createResourceHost(s.opts)
+    for (const query of ["生物量单位 清洗口径 固定参数 种子 解释器 产物目录", "固定参数种子解释器产物目录", "请查询相关项目的生物量和单位", "种子 Rscript outputs"]) {
+      const found = await s.search(h, {kind: "memory", query})
+      expect(found.items.map((i: {description: string}) => i.description)).toEqual([target.slice(0, 160)])
+      expect((await s.call(h, "resource_read", {id: found.items[0].id})).content).toBe(target)
+    }
+    expect((await s.search(h, {kind: "memory", query: "维修 飞船 固定"})).total).toBe(0)
+    expect((await s.search(h, {kind: "memory", query: "seedling outputs"})).total).toBe(0)
+    expect((await s.search(h, {kind: "memory", query: "the and or 相关 查询"})).total).toBe(0)
+  })
+
+  it("精确短语优先，关键词覆盖排序后稳定分页，重复词不放大权重", async () => {
+    const s = setup(), rows = ["生物量与单位。", "单位：生物量；固定参数42。", "这里精确记载生物量 单位 固定参数。", "生物量单位的另一条说明。"]
+    writeFileSync(join(s.memories, "MEMORY.md"), serializeEntries(rows))
+    const h = createResourceHost(s.opts), query = "生物量 单位 固定参数"
+    const first = await s.search(h, {kind: "memory", query, limit: 2})
+    const second = await s.search(h, {kind: "memory", query, offset: first.nextOffset, limit: 2})
+    expect(first).toMatchObject({total: 4, nextOffset: 2})
+    expect([...first.items, ...second.items].map((i: {description: string}) => i.description)).toEqual([rows[2], rows[1], rows[0], rows[3]])
+    const repeated = await s.search(h, {kind: "memory", query: query + " 单位 单位 单位"})
+    expect(repeated.items.map((i: {description: string}) => i.description)).toEqual([rows[1], rows[2], rows[0], rows[3]])
+  })
+
+  it("归一化查询但不改正文；空查询保留目录序，技能不扩大到分词匹配", async () => {
+    const s = setup(), body = "生物量单位为 g/m²；脚本用 Rscript，设置 seed 42，产物 outputs。"
+    writeFileSync(join(s.memories, "MEMORY.md"), serializeEntries([body, "另一个样例"]))
+    s.skill(0, "sample", "生物量单位 Rscript")
+    const h = createResourceHost(s.opts)
+    for (const query of ["  生物量单位  ", "生物量，单位；ＲＳＣＲＩＰＴ", "RSCRIPT\n\tseed outputs"]) {
+      const found = await s.search(h, {kind: "memory", query})
+      expect(found.total).toBe(1)
+      expect((await s.call(h, "resource_read", {id: found.items[0].id})).content).toBe(body)
+    }
+    expect((await s.search(h, {kind: "memory", query: "\t \n"})).items.map((i: {description: string}) => i.description)).toEqual([body, "另一个样例"])
+    expect((await s.search(h, {kind: "skill", query: "sample 用途"})).total).toBe(0)
+  })
+
+  it("长查询仍先过滤项目/分支/开关和权限；匹配正文160字以后的内容", async () => {
+    const s = setup()
+    mkdirSync(join(s.workspace, ".dawn/memory"), {recursive: true})
+    writeFileSync(join(s.workspace, ".dawn/memory/KEY.md"), serializeEntries(["[branch:other] 生物量 单位 固定参数秘密", "[branch:main] " + "前文".repeat(100) + "生物量的单位为 g/m²，固定参数42。"]))
+    const query = "固定参数 生物量 单位"
+    expect((await s.search(createResourceHost(s.opts), {kind: "all", query})).total).toBe(1)
+    expect((await s.search(createResourceHost({...s.opts, workspace: undefined}), {kind: "memory", query})).total).toBe(0)
+    expect((await s.search(createResourceHost({...s.opts, memory: {...s.opts.memory!, enabled: false}}), {kind: "memory", query})).available).toBe(false)
+    const denied = createResourceHost({...s.opts, authorize: () => "禁止记忆读取"})
+    await expect(denied.call("resource_search", {kind: "memory", query})).rejects.toThrow("禁止记忆读取")
+  })
+
   it("先按项目/全局/自带去重，再按开关过滤；上层停用不会回落", async () => {
     const s = setup()
     s.skill(2, "shared", "builtin"); s.skill(1, "shared", "global"); s.skill(0, "shared", "project")

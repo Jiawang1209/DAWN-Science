@@ -61,3 +61,19 @@ it("旧 Team 的真实子入口也能查询资源，成员工具保持可用", a
   const names = requests[0].body.tools.map((t: {function: {name: string}}) => t.function.name)
   expect(names).toEqual(expect.arrayContaining(["resource_search", "resource_read", "team_send", "team_status"]))
 }, 120_000)
+
+it("真实子进程用原失败长词组查询后读取匹配的记忆，而非只用短词兜底", async () => {
+  const s = setup("long-query"), start = server.requests.length
+  const content = "地上生物量单位为 g/m²，固定为只读原始数据；IQR极端值保留；R解释器 Rscript；产物 outputs/。LONG_QUERY_MEMORY"
+  writeFileSync(join(s.memories, "MEMORY.md"), serializeEntries(["固定服务器连接。", content]))
+  const ex = new SubagentExecutor({context: s.context, childOf: s.childOf})
+  const result = await ex.run({mode: "single", agent: "reader", task: "子资源验收：长词组"}, [s.definition])
+  expect(result.results[0]?.ok, result.results[0]?.error).toBe(true)
+  const requests = server.requests.slice(start)
+  const searches = requests.flatMap((r: {body: {messages: {tool_calls?: {function: {name: string; arguments: string}}[]}[]}}) => r.body.messages.flatMap(m => m.tool_calls ?? []))
+    .filter((c: {function: {name: string}}) => c.function.name === "resource_search")
+    .map((c: {function: {arguments: string}}) => JSON.parse(c.function.arguments))
+  expect(searches).toContainEqual({kind: "memory", query: "生物量单位 清洗口径 固定参数 种子 解释器 产物目录"})
+  const last = requests.at(-1).body.messages.filter((m: {role: string}) => m.role === "tool").at(-1)
+  expect(JSON.parse(last.content).content).toBe(content)
+}, 120_000)

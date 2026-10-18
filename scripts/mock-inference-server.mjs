@@ -304,13 +304,13 @@ function childResourceTool(body) {
   const raw = index >= 0 ? messages[index].content : undefined
   const user = typeof raw === "string" ? raw : Array.isArray(raw) ? raw.filter(c => c.type === "text").map(c => c.text).join("\n") : undefined
   if (typeof user === "string" && user.includes("派子agent查资源") && messages.at(-1)?.role === "user" && (body.tools ?? []).some(t => t.function?.name === "subagent")) {
-    return {toolName: "subagent", args: {agent: "data-auditor", task: "子资源验收：按需检查项目技能与固定参数"}, say: "派子 Agent 按需读取相关技能和记忆。"}
+    return {toolName: "subagent", args: {agent: "data-auditor", task: user.includes("长词组") ? "子资源验收：长词组" : "子资源验收：按需检查项目技能与固定参数"}, say: "派子 Agent 按需读取相关技能和记忆。"}
   }
   if (typeof user !== "string" || !user.startsWith("子资源验收：")) return undefined
   if (!(body.tools ?? []).some(t => t.function?.name === "resource_search")) return undefined
   const results = messages.slice(index + 1).filter(m => m.role === "tool")
   if (results.length === 0) return {toolName: "resource_search", args: {kind: "skill", query: "resource-fixture"}, say: "先查相关技能目录。"}
-  if (results.length === 2) return {toolName: "resource_search", args: {kind: "memory", query: "固定参数"}, say: "再查相关记忆。"}
+  if (results.length === 2) return {toolName: "resource_search", args: {kind: "memory", query: user.includes("长词组") ? "生物量单位 清洗口径 固定参数 种子 解释器 产物目录" : "固定参数"}, say: "再查相关记忆。"}
   if (results.length === 1 || results.length === 3) {
     try {
       const data = JSON.parse(results.at(-1).content)

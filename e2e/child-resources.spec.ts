@@ -4,6 +4,29 @@ import { test, expect, 在项目里开会话 } from "./fixtures.js"
 type RecordedRequest = {body: {messages?: {role: string; content: unknown}[]}}
 
 test.use({dawnOptions: {gitInit: true}})
+test("原失败长词组从真实主会话传入子进程，命中后读取记忆正文", async ({dawn}) => {
+  const {page, workspace} = dawn
+  const skill = join(workspace, ".dawn/skills/resource-fixture"); mkdirSync(skill, {recursive: true})
+  writeFileSync(join(skill, "SKILL.md"), "---\nname: resource-fixture\ndescription: 资源验收技能\n---\n先核对草地记忆")
+  const memory = join(workspace, ".dawn/memory"); mkdirSync(memory, {recursive: true})
+  const content = "地上生物量单位为 g/m²；固定为只读原数据；R解释器 Rscript；产物 outputs/。LONG_QUERY_ELECTRON"
+  writeFileSync(join(memory, "KEY.md"), content + "\n")
+  await 在项目里开会话(page)
+  await page.getByPlaceholder(/今天帮你做些什么/).fill("派子agent查资源：长词组")
+  await page.getByRole("button", {name: "发送", exact: true}).click()
+  const chip = page.locator("main.main .chip-group .chip").first()
+  await expect(chip).toHaveAttribute("data-status", "ok", {timeout: 60_000})
+  await chip.click()
+  const pane = page.locator(".subagent-pane")
+  await expect(pane.locator('.tool[data-tool-name^="resource_"]')).toHaveCount(4)
+  const search = pane.locator('.tool[data-tool-name="resource_search"]').last()
+  await search.locator(".tool-head").click()
+  await expect(search.locator(".tool-input")).toContainText("生物量单位 清洗口径 固定参数 种子 解释器 产物目录")
+  const read = pane.locator('.tool[data-tool-name="resource_read"]').last()
+  await read.locator(".tool-head").click()
+  expect(JSON.parse(await read.locator(".tool-result").innerText()).content).toBe(content)
+})
+
 test("真实主会话派单 → 子资源查询可见 → 续问刷新 → 重启恢复", async ({dawn}) => {
   const {page, workspace} = dawn
   const skill = join(workspace, ".dawn/skills/resource-fixture"); mkdirSync(skill, {recursive: true})

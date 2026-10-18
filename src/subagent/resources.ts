@@ -5,6 +5,7 @@ import { basename, isAbsolute, join, relative, sep } from "node:path"
 import { loadSkillsFromDir } from "@earendil-works/pi-coding-agent"
 import { parseEntryBranches, stripEntryId, type MemoryStore } from "../memory/store.js"
 import { 读调用策略, type 调用档 } from "../skills/invocation.js"
+import { searchResources } from "./resource-search.js"
 
 export const RESOURCE_TOOLS = ["resource_search", "resource_read"] as const
 export type ResourceMethod = typeof RESOURCE_TOOLS[number]
@@ -114,8 +115,8 @@ export function createResourceHost(opts: ResourceHostOptions): ResourceHost {
       const offset = numberArg(args, "offset", 0, Number.MAX_SAFE_INTEGER), limit = numberArg(args, "limit", 5, 20)
       if (kind !== "memory") load("skill")
       if (kind !== "skill") load("memory")
-      const query = String(args.query ?? "").toLowerCase()
-      const found = [...entries.values()].filter(e => (kind === "all" || e.kind === kind) && `${e.name}\n${e.searchText ?? e.description}\n${e.content ?? ""}`.toLowerCase().includes(query))
+      const visible = [...entries.values()].filter(e => kind === "all" || e.kind === kind)
+      const found = searchResources(visible, String(args.query ?? ""))
       const page = found.slice(offset, offset + limit)
       const nextOffset = offset + page.length < found.length ? offset + page.length : undefined
       return JSON.stringify({available: kind !== "memory" || !!opts.memory?.enabled, ...(kind === "memory" && !opts.memory?.enabled ? {reason: "记忆读取未启用"} : {}),

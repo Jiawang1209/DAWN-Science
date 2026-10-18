@@ -1,35 +1,21 @@
-import { localizedRouteBlockers } from "./state/analysis-route.js"
-import { useEffect, useRef, useState } from "react"
+import { useStore } from "@nanostores/react"
+import { $routeViews, emptyRouteView, routeViewKey, setRouteView } from "./state/route-navigation.js"
+import { AnalysisRouteStep } from "./analysis-route-step.js"
+import { 返回图标 } from "./icons.js"
+import { AnalysisRouteMap } from "./analysis-route-map.js"
+import { routeFocus } from "./route-map-model.js"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
-  routeContinueBlockers,
   type AnalysisRoute,
   type AnalysisRouteReadResult,
-  type AnalysisRouteEvidence,
   type RouteAction,
-  type RouteStep,
 } from "../protocol/analysis-route.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
 import { FilePreview, type FileContent } from "./files.js"
-import { 详情地址 } from "./case-cards.js"
 import { t, tf } from "./i18n/index.js"
 
 export const createRouteIntent =
   "请根据当前需求和数据条件建立会话分析路线。只规划，说明稳定步骤、输入、依赖、预期输出和候选案例，并等待我选步；本请求不批准执行、安装或科研文件写入，保留此前授权和方案门。"
-const progress = (status: RouteStep["status"]) =>
-  ({
-    pending: t("待开始"),
-    in_progress: t("进行中"),
-    blocked: t("已阻塞"),
-    delivered: t("已交付"),
-    skipped: t("已跳过"),
-  })[status]
-const execution = (state: RouteStep["execution"]["state"]) =>
-  ({ not_run: t("未运行"), partial: t("部分运行"), completed: t("记录为运行完成"), failed: t("运行失败") })[state]
-const review = (state: RouteStep["verification"]["state"]) =>
-  ({ unreviewed: t("未审查"), reviewed: t("记录为已审查"), issues: t("审查发现问题") })[state]
-const fileFact = (state: AnalysisRouteEvidence["deliverables"][number]["state"]) =>
-  ({ observed: t("观察到工具生成"), exists: t("文件存在"), missing: t("文件缺失"), unknown: t("存在性未知") })[state] ??
-  t("存在性未知")
 export function AnalysisRouteSummary({ route, onOpen }: { route: AnalysisRoute; onOpen: () => void }) {
   const blocked = route.steps.find((step) => step.needsReview || step.blockers.length || step.status === "blocked")
   return (
@@ -48,8 +34,12 @@ export function AnalysisRouteSummary({ route, onOpen }: { route: AnalysisRoute; 
 }
 type Selection = { server: string; caseId: string }
 export interface AnalysisRoutePanelProps {
+  /** Explicit session/connection/workspace identity; never share browsing position across it. */
+  scopeKey: string
   result: AnalysisRouteReadResult | undefined
   busy?: boolean | undefined
+  workingStepId?: string | undefined
+  awaitingInput?: boolean | undefined
   readOnly?: boolean | undefined
   onReload: () => Promise<void>
   onAction: (stepId: string, action: RouteAction, selection?: Selection) => Promise<void>
@@ -75,21 +65,68 @@ export function AnalysisRoutePanel(props: AnalysisRoutePanelProps) {
     onOpenExternally,
     onTool,
   } = props
-  const [expanded, setExpanded] = useState<string | undefined>(undefined)
-  const [version, setVersion] = useState("current")
+  const views = useStore($routeViews)
+  const viewKey = routeViewKey(props.scopeKey, result?.route?.routeId)
+  const view = views.get(viewKey) ?? emptyRouteView
+  const { version, reading } = view
+  const updateView = (next: Partial<typeof view>) => setRouteView(viewKey, { ...view, ...next })
+  const selectedRoute = version === "current" ? result?.route : result?.history?.find(item => String(item.revision) === version)
+  const workingId = busy ? props.workingStepId : undefined
+  const focusStep = selectedRoute ? routeFocus(selectedRoute, version === "current" ? workingId : undefined) : undefined
+  const selectedStep = selectedRoute?.steps.find(step => step.id === view.stepId) ?? focusStep
+  const preview = selectedStep?.deliverables.some(file => file.path === view.path) ? view.path : undefined
+  const pane = useRef<HTMLElement>(null)
+  const previousLevel = useRef({ viewKey, stepId: selectedStep?.id, path: preview })
+  useLayoutEffect(() => {
+    const previous = previousLevel.current
+    previousLevel.current = { viewKey, stepId: selectedStep?.id, path: preview }
+    if (previous.viewKey !== viewKey) return
+    const buttons = [...(pane.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])]
+    if (previous.path && !preview && selectedStep) {
+      const target=buttons.find(button => button.getAttribute('aria-label') === previous.path)
+      // PDF variants are folded on remount; reveal the parent before restoring focus.
+      for(let parent=target?.parentElement;parent&&parent!==pane.current;parent=parent.parentElement){
+        if(parent instanceof HTMLDetailsElement)parent.open=true
+      }
+      target?.focus()
+    } else if (previous.stepId && !selectedStep) {
+      buttons.find(button => button.dataset.routeStep === previous.stepId)?.focus()
+    } else if (preview) {
+      pane.current?.querySelector<HTMLButtonElement>('.route-back')?.focus({preventScroll:true})
+    } else if (selectedStep) {
+      pane.current?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')?.focus({preventScroll:true})
+      const lower=pane.current?.querySelector<HTMLElement>('.route-lower')
+      if(lower)lower.scrollTop=0
+    }
+  }, [viewKey, selectedStep?.id, preview])
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const optionsRoot = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!optionsOpen) return
+    const outside = (event: PointerEvent) => { if (!optionsRoot.current?.contains(event.target as Node)) setOptionsOpen(false) }
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOptionsOpen(false); optionsRoot.current?.querySelector<HTMLButtonElement>("button")?.focus() } }
+    document.addEventListener("pointerdown", outside); document.addEventListener("keydown", escape)
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape) }
+  }, [optionsOpen])
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string>()
   const [roots, setRoots] = useState<Record<string, string>>({})
   const [rootsError, setRootsError] = useState<string>()
   const [rootsRetry, setRootsRetry] = useState(0)
-  const [preview, setPreview] = useState<string>()
   const [content, setContent] = useState<FileContent>()
   const [fileError, setFileError] = useState<string>()
   const [retry, setRetry] = useState(0)
-  const [reading, setReading] = useState(false)
   const mounted = useRef(true)
   const readRef = useRef(readFile)
   readRef.current = readFile
+  useEffect(() => {
+    if (!selectedRoute) return
+    if (view.stepId && !selectedRoute.steps.some(step => step.id === view.stepId)) {
+      setRouteView(viewKey, { ...view, stepId: undefined, path: undefined, reading: false })
+    } else if (view.path && !preview) {
+      setRouteView(viewKey, { ...view, path: undefined, reading: false })
+    }
+  }, [selectedRoute, selectedStep, preview, view, viewKey])
   useEffect(() => {
     mounted.current = true
     return () => {
@@ -115,7 +152,6 @@ export function AnalysisRoutePanel(props: AnalysisRoutePanelProps) {
     let alive = true
     setContent(undefined)
     setFileError(undefined)
-    setReading(false)
     if (preview)
       void readRef.current(preview).then(
         (value) => {
@@ -128,7 +164,7 @@ export function AnalysisRoutePanel(props: AnalysisRoutePanelProps) {
     return () => {
       alive = false
     }
-  }, [preview, retry, version])
+  }, [preview, retry, version, viewKey])
   async function run(action: () => Promise<void>): Promise<void> {
     setPending(true)
     setError(undefined)
@@ -185,347 +221,57 @@ export function AnalysisRoutePanel(props: AnalysisRoutePanelProps) {
     )
   const current = result.route
   const historical = version !== "current"
-  const route = historical ? result.history?.find((item) => String(item.revision) === version) : current
-  if (!route)
-    return (
-      <div className="analysis-route-pane">
-        <p role="alert">{t("历史版本暂不可用，请刷新或查看当前路线")}</p>
-        <Button size="sm" variant="ghost" onClick={() => void run(onReload)}>
-          {t("刷新路线")}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => setVersion("current")}>
-          {t("查看当前路线")}
-        </Button>
-      </div>
-    )
-  const locked = Boolean(busy || readOnly || pending || historical)
-  const openId =
-    expanded ??
-    route.steps.find((step) => step.status !== "delivered" && step.status !== "skipped")?.id ??
-    route.steps[0]?.id
+  const route = selectedRoute
   const closePreview = () => {
-    setPreview(undefined)
+    updateView({ path: undefined, reading: false })
     setContent(undefined)
-    setReading(false)
   }
-  return (
-    <section className={`analysis-route-pane${reading ? " route-reading" : ""}`} aria-label={t("分析路线详情")}>
-      <div className="route-navigation" hidden={reading}>
-        <header className="route-head">
-          <h2>{route.title}</h2>
-          <Button size="sm" variant="ghost" disabled={pending} onClick={() => void run(onReload)}>
-            {t("刷新路线")}
-          </Button>
-        </header>
-        <label className="route-version">
-          {t("路线版本")}
-          <select
-            className="control"
-            aria-label={t("路线版本")}
-            value={version}
-            onChange={(e) => {
-              setVersion(e.target.value)
-              closePreview()
-            }}
-          >
-            <option value="current">{tf("当前 · 第 {0} 版", current.revision)}</option>
-            {result.history?.map((item) => (
-              <option key={item.revision} value={String(item.revision)}>
-                {tf("历史 · 第 {0} 版", item.revision)} · {new Date(item.updatedAt).toLocaleString()}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="route-time">
-          {tf("第 {0} 版", route.revision)} · {new Date(route.updatedAt).toLocaleString()}
-        </p>
-        <p>{route.goal}</p>
-        {historical ? (
-          <p className="route-notice">{t("历史版本只读。历史文件预览读取当前路径，不保存旧文件字节。")}</p>
-        ) : null}
-        {busy ? (
-          <p className="route-notice">{t("会话忙碌，请等当前回合结束")}</p>
-        ) : readOnly ? (
-          <p className="route-notice">{t("会话只读，仍可查看路线和文件")}</p>
-        ) : null}
-        {feedback}
-        {route.dataContext.length ? (
-          <details>
-            <summary>{t("数据条件")}</summary>
-            <ul>
-              {route.dataContext.map((text, i) => (
-                <li key={i}>{text}</li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
-        <ol className="route-steps">
-          {route.steps.map((step) => {
-            const open = openId === step.id
-            const blockers = routeContinueBlockers(route, step.id)
-            const act = (action: RouteAction, selection?: Selection) => {
-              setExpanded(step.id)
-              void run(() => onAction(step.id, action, selection))
-            }
-            const observed = (historical ? [] : (result.evidence?.tools ?? [])).filter(
-              (tool) => tool.stepId === step.id,
-            )
-            const selected = step.cases.find(
-              (candidate) =>
-                candidate.server === step.selectedCase?.server && candidate.caseId === step.selectedCase?.caseId,
-            )
-            return (
-              <li key={step.id} className="route-step">
-                <Button
-                  variant="ghost"
-                  className="route-step-toggle"
-                  aria-expanded={open}
-                  aria-controls={`route-step-${step.id}`}
-                  onClick={() => setExpanded(open ? "" : step.id)}
-                >
-                  <span className="route-step-id">{step.id}</span>
-                  <span className="route-step-title">{step.title}</span>
-                  <span className="route-step-status">
-                    {progress(step.status)}
-                    {step.needsReview ? ` · ${t("需要复核")}` : ""}
-                  </span>
-                </Button>
-                {open ? (
-                  <div id={`route-step-${step.id}`} className="route-step-body">
-                    <p className="route-purpose">{step.purpose}</p>
-                    {!historical ? (
-                      <div className="route-actions">
-                        <Button size="sm" variant="ghost" disabled={locked} onClick={() => act("view")}>
-                          {t("查看步骤")}
-                        </Button>
-                        <Button size="sm" variant="ghost" disabled={locked} onClick={() => act("search")}>
-                          {t("补找案例")}
-                        </Button>
-                        <Button size="sm" disabled={locked || blockers.length > 0} onClick={() => act("continue")}>
-                          {t("继续这一步")}
-                        </Button>
-                      </div>
-                    ) : null}
-                    {blockers.length > 0 ? (
-                      <div className="route-blockers">
-                        <span>{t("继续前需处理")}</span>
-                        <ul>
-                          {localizedRouteBlockers(route, step.id).map((text) => (
-                            <li key={text}>{text}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                    <dl className="route-conditions">
-                      <dt>{t("输入")}</dt>
-                      <dd>{step.inputs.join("；") || t("尚未记录")}</dd>
-                      <dt>{t("预期输出")}</dt>
-                      <dd>{step.outputs.join("；") || t("尚未记录")}</dd>
-                      <dt>{t("依赖步骤")}</dt>
-                      <dd>{step.dependencies.join("、") || t("无前置步骤")}</dd>
-                    </dl>
-                    <p className="route-selected">
-                      {t("你选的参考")}：
-                      {selected ? `${selected.title} · ${selected.server} / ${selected.caseId}` : t("尚未选择")}
-                    </p>
-                    {step.cases.length ? (
-                      <ul className="route-cases">
-                        {step.cases.map((candidate) => {
-                          const root = roots[candidate.server]
-                          return (
-                            <li key={JSON.stringify([candidate.server, candidate.caseId])}>
-                              <strong>{candidate.title}</strong>
-                              <p className="route-case-id">
-                                {candidate.server} / {candidate.caseId}
-                                {candidate.language ? ` · ${candidate.language}` : ""}
-                              </p>
-                              <p>{candidate.coverage}</p>
-                              <span className="route-case-evidence">
-                                {candidate.evidence === "content_checked" ? t("正文已读取") : t("仅元数据")}
-                              </span>
-                              <div className="route-actions">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  disabled={!root}
-                                  onClick={() => root && onOpenWeb(详情地址(root, { case_id: candidate.caseId }))}
-                                >
-                                  {t("看案例详情")}
-                                </Button>
-                                {!historical ? (
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    disabled={locked || selected === candidate}
-                                    onClick={() =>
-                                      act("select", { server: candidate.server, caseId: candidate.caseId })
-                                    }
-                                  >
-                                    {selected === candidate ? t("已选参考") : t("选为参考")}
-                                  </Button>
-                                ) : null}
-                              </div>
-                              {!root ? <span className="caveat">{t("案例图廊暂不可用")}</span> : null}
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    ) : (
-                      <p className="caveat">{t("尚无候选案例，可补找案例")}</p>
-                    )}
-                    {rootsError ? (
-                      <p className="caveat">
-                        {rootsError}
-                        <Button size="sm" variant="ghost" onClick={() => setRootsRetry((value) => value + 1)}>
-                          {t("重新连接图廊")}
-                        </Button>
-                      </p>
-                    ) : null}
-                    <details className="route-evidence">
-                      <summary>{t("证据详情")}</summary>
-                      <h3>{t("Agent 执行记录")}</h3>
-                      <p>
-                        {execution(step.execution.state)} · {step.execution.note}
-                      </p>
-                      <h3>{t("审查记录")}</h3>
-                      <p>
-                        {review(step.verification.state)} · {step.verification.note}
-                      </p>
-                      {!historical ? (
-                        <>
-                          <h3>{t("应用观察到的工具事实")}</h3>
-                          <p>
-                            {observed.some((tool) => tool.execution === "ran" || tool.execution === "failed")
-                              ? t("已观察到本步运行")
-                              : t("未观察到本步运行")}
-                          </p>
-                          <ul>
-                            {observed.map((tool) => (
-                              <li key={tool.toolCallId}>
-                                {tool.name} · {tool.status === "error" ? t("工具失败") : t("工具返回")} ·{" "}
-                                {tool.execution === "ran"
-                                  ? t("实际运行")
-                                  : tool.execution === "failed"
-                                    ? t("运行失败")
-                                    : t("未观察到运行")}
-                                <span className="route-tool-id">{tool.toolCallId}</span>
-                                {onTool && props.canLocateTool?.(tool.toolCallId) ? (
-                                  <Button size="sm" variant="ghost" onClick={() => onTool(tool.toolCallId)}>
-                                    {t("定位工具记录")}
-                                  </Button>
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        </>
-                      ) : null}
-                      {step.execution.toolCallIds?.length || step.verification.toolCallIds?.length ? (
-                        <p className="caveat">
-                          {t("Agent 引用的工具索引")}：
-                          {[
-                            ...new Set([
-                              ...(step.execution.toolCallIds ?? []),
-                              ...(step.verification.toolCallIds ?? []),
-                            ]),
-                          ].join("、")}
-                        </p>
-                      ) : null}
-                      <p className="caveat">{t("交付不代表已运行；工具运行不代表科学结论正确。")}</p>
-                      {step.notes.map((note, i) => (
-                        <p key={i}>{note}</p>
-                      ))}
-                    </details>
-                    {!historical ? (
-                      <div className="route-actions">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={locked || step.status === "in_progress"}
-                          onClick={() =>
-                            act(step.status === "skipped" || step.status === "delivered" ? "restore" : "skip")
-                          }
-                        >
-                          {step.status === "skipped" || step.status === "delivered" ? t("恢复此步") : t("跳过此步")}
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </li>
-            )
-          })}
-        </ol>
-      </div>
-      <div className="route-deliverables" hidden={reading}>
-        <h3>{t("交付文件")}</h3>
-        {route.steps.every((step) => !step.deliverables.length) ? (
-          <p className="caveat">{t("尚无交付文件")}</p>
-        ) : (
-          <ul>
-            {route.steps.flatMap((step) =>
-              step.deliverables.map((file) => (
-                <li key={`${step.id}/${file.path}`}>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={file.path}
-                    aria-pressed={preview === file.path}
-                    onClick={() => {
-                      setPreview(file.path)
-                      setRetry((value) => value + 1)
-                    }}
-                  >
-                    <span>
-                      {step.id} · {file.path}
-                    </span>
-                  </Button>
-                  <span className="route-file-fact">
-                    {historical
-                      ? t("历史文件引用（未保存当时文件事实）")
-                      : fileFact(
-                          result.evidence?.deliverables.find((fact) => fact.stepId === step.id && fact.path === file.path)
-                            ?.state ?? "unknown",
-                        )}
-                  </span>
-                  {file.note ? <p>{file.note}</p> : null}
-                </li>
-              )),
-            )}
-          </ul>
-        )}
-      </div>
-      {preview ? (
-        <div className="route-file-preview">
-          {historical ? <p className="route-history-file-note">{t("历史预览：此处读取当前文件")}</p> : null}
-          {fileError ? (
-            <div role="alert">
-              <p>{fileError}</p>
-              <Button size="sm" variant="ghost" onClick={() => setRetry((value) => value + 1)}>
-                {t("重试")}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={closePreview}>
-                {t("关闭预览")}
-              </Button>
-            </div>
-          ) : (
-            <>
-              <FilePreview
-                path={preview}
-                content={content}
-                onOpenExternally={onOpenExternally}
-                onClosePreview={closePreview}
-                readingExpanded={reading}
-                onToggleReading={() => setReading((value) => !value)}
-              />
-              {!content ? (
-                <Button size="sm" variant="ghost" onClick={closePreview}>
-                  {t("关闭预览")}
-                </Button>
-              ) : null}
-            </>
-          )}
+  if (!route) return <div className="analysis-route-pane">
+    <p role="alert">{t("历史版本暂不可用，请刷新或查看当前路线")}</p>
+    <Button size="sm" variant="ghost" onClick={() => void run(onReload)}>{t("刷新路线")}</Button>
+    <Button size="sm" variant="ghost" onClick={() => updateView({ version: "current", stepId: undefined, path: undefined, reading: false })}>{t("查看当前路线")}</Button>
+  </div>
+  const locked = Boolean(busy || readOnly || pending || historical)
+  return <section ref={pane} className={`analysis-route-pane route-map-pane${preview ? " route-file-level" : ""}${preview && reading ? " route-reading" : ""}`} aria-label={t("分析路线详情")}>
+    <div className="route-overview">
+    <header className="route-map-head"><h2>{route.title}</h2>
+      <div className="route-options" ref={optionsRoot}>
+        <Button variant="ghost" size="icon" aria-label={t("路线选项")} aria-expanded={optionsOpen} onClick={()=>setOptionsOpen(!optionsOpen)}>⋯</Button>
+        <div className="route-options-body" hidden={!optionsOpen}>
+          <h3>{t("路线调整记录")}</h3>
+          <label className="route-version"><span>{t("路线版本")}</span>
+          <select className="control" aria-label={t("路线版本")} value={version} onChange={e=>{updateView({version:e.target.value,stepId:undefined,path:undefined,reading:false,tab:"log"});setOptionsOpen(false)}}>
+            <option value="current">{tf("当前 · 第 {0} 版",current.revision)}</option>
+            {result.history?.map(item=><option key={item.revision} value={String(item.revision)}>{tf("历史 · 第 {0} 版",item.revision)} · {new Date(item.updatedAt).toLocaleString()}</option>)}
+          </select></label>
+          <p>{route.goal}</p>
+          {route.dataContext.length?<details><summary>{t("数据条件")}</summary><ul>{route.dataContext.map((text,i)=><li key={i}>{text}</li>)}</ul></details>:null}
+          <Button size="sm" variant="ghost" disabled={pending} onClick={()=>void run(onReload)}>{t("刷新路线")}</Button>
         </div>
-      ) : null}
-    </section>
-  )
+      </div>
+    </header>
+    <AnalysisRouteMap route={route} selectedId={selectedStep?.id} workingStepId={historical?undefined:workingId} awaitingInput={Boolean(props.awaitingInput)} onSelect={stepId=>updateView({stepId,tab:"log",path:undefined,reading:false})}/>
+    </div>
+    <div className={`route-lower${preview?" route-preview-lower":""}`}>
+      {historical?<p className="route-notice">{preview?t("历史预览：此处读取当前文件"):t("历史版本只读。历史文件预览读取当前路径，不保存旧文件字节。")}</p>:null}
+      {busy&&!workingId?<p className="route-notice">{t("会话忙碌，请等当前回合结束")}</p>:readOnly?<p className="route-notice">{t("会话只读，仍可查看路线和文件")}</p>:null}
+      {props.awaitingInput&&workingId?<p className="route-notice">{t("请在主对话完成提问或权限确认。")}</p>:null}
+      {feedback}
+      {selectedStep?<div className="route-detail-context"><span>{selectedStep.id===focusStep?.id?t("当前步骤"):t("正在查看")} · {tf("第 {0} 步",route.steps.indexOf(selectedStep)+1)}</span>
+        {selectedStep.id!==focusStep?.id?<Button size="sm" variant="text" onClick={()=>updateView({stepId:undefined,path:undefined,reading:false,tab:"log"})}>{t("回到当前步骤")}</Button>:null}
+      </div>:null}
+      {preview?<>
+        <Button className="route-back" size="sm" variant="ghost" onClick={closePreview}><返回图标/>{tf("返回{0}",selectedStep!.title)}</Button>
+        <p className="route-preview-path" hidden={reading}>{preview}</p>
+        <div className="route-file-preview">
+          {fileError?<div className="route-file-error" role="alert"><h3>{preview.split("/").pop()}</h3><p>{fileError}</p>
+            <Button size="sm" variant="ghost" onClick={()=>setRetry(value=>value+1)}>{t("重试")}</Button><Button size="sm" variant="ghost" onClick={closePreview}>{t("关闭预览")}</Button>
+          </div>:<><FilePreview path={preview} content={content} fitContainer onOpenExternally={onOpenExternally} onClosePreview={closePreview} readingExpanded={reading} onToggleReading={()=>updateView({reading:!reading})}/>
+            {!content?<Button size="sm" variant="ghost" onClick={closePreview}>{t("关闭预览")}</Button>:null}</>}
+        </div>
+      </>:selectedStep?<AnalysisRouteStep route={route} step={selectedStep} tab={view.tab} onTab={tab=>updateView({tab})} historical={historical} workingStepId={historical?undefined:workingId} awaitingInput={Boolean(props.awaitingInput)} locked={locked} evidence={result.evidence} roots={roots} rootsError={rootsError} onRetryRoots={()=>setRootsRetry(value=>value+1)}
+        onAction={(action,selection)=>{updateView({stepId:selectedStep.id});void run(()=>onAction(selectedStep.id,action,selection))}}
+        onFile={path=>{updateView({path,reading:false});setRetry(value=>value+1)}} onOpenWeb={onOpenWeb} onTool={onTool} canLocateTool={props.canLocateTool}/>:null}
+    </div>
+  </section>
 }

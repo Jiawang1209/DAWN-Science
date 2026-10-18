@@ -437,6 +437,13 @@ export const ArtifactSchema = z
   .strict()
 export type Artifact = z.infer<typeof ArtifactSchema>
 
+/** 路线交付引用，不伪造工具新建记录或生成时间。 */
+export const RouteArtifactSchema = ArtifactSchema.pick({ path: true, kind: true, exists: true }).extend({
+  routeId: z.string().min(1),
+  stepIds: z.array(z.string().min(1)).min(1),
+}).strict()
+export type RouteArtifact = z.infer<typeof RouteArtifactSchema>
+
 /* ── 应用内更新（2026-09-06，规格 `2026-09-06-应用内更新-design.md`）───────── */
 
 /** 换包的三种方式。每一种对应一条实际验过（或明说没验过）的路 */

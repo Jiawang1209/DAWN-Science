@@ -3,7 +3,7 @@
  * 只有清单与预览两个视图；版本 / 来源 / 批注在下一轮。
  */
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import type { Artifact } from "../protocol/index.js"
+import { artifactEntries, type DisplayedArtifact } from "./artifact-list.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
 import { canExpandFilePreview, FilePreview, 类型图标, type FileContent } from "./files.js"
@@ -16,7 +16,7 @@ import { PreviewCloseButton } from "./preview-close-button.js"
  * `loadThumb` 缺省 / 返回 undefined / 图片已不在时，格子里是一个占位方块（**不画断图**），
  * 已不存在的还要划掉文件名。缩略图按 path 缓在本组件 state，卸载时用 `活` 挡迟到的 setState。
  */
-function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: Artifact; dir: string; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
+function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: DisplayedArtifact; dir: string; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
   const 可缩略 = a.exists !== false && !!loadThumb
   const [缩略, 设缩略] = useState<string | undefined>(undefined)
   /** 解码失败（读得到但不是一张能画的图，比如生成到一半的文件）→ 留占位方块，绝不画断图 */
@@ -67,6 +67,7 @@ function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: Artifact; dir: string
       <Button variant="ghost" size="inline" className="artifact-thumb-open" aria-label={a.path} disabled={a.exists === false} onClick={() => onOpen(a.path)}>
         <span className="artifact-thumb-img">{显缩略 ? <img src={缩略} alt="" onError={() => 设失败(true)} /> : null}</span>
         <span className="name">{a.path.slice(dir.length)}</span>
+        {'routeId' in a ? <span className="artifact-source">{t("路线登记")}</span> : null}
         {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
       </Button>
     </li>
@@ -169,6 +170,7 @@ export function ArtifactsPanel({
   }, [看的, 重试次数])
 
   if (!data) return <Loader label={t("正在取产物清单")} />
+  const entries = artifactEntries(data)
   // **取失败要出声**（规格 7.5）：与「还在取」分开，否则转圈转到天荒地老
   if (data.error) {
     return (
@@ -198,11 +200,12 @@ export function ArtifactsPanel({
         onFocusCapture={e => { focusedClose.current = e.target.closest<HTMLElement>('.preview-close-button') }}
         onBlurCapture={e => { if (e.target.isConnected) focusedClose.current = null }}>
         <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
-          {data.artifacts.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
+          {entries.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
             <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>
               <span className="artifact-row-icon"><类型图标 类={文件类按名字(a.path, "file")} /></span>
               <span className="name">{a.path.split("/").pop()}</span>
               <span className="kind-tag">{a.kind.toUpperCase()}</span>
+              {'routeId' in a ? <span className="artifact-source">{t("路线登记")}</span> : null}
               {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
             </Button>
           </li>)}
@@ -235,12 +238,12 @@ export function ArtifactsPanel({
     )
   }
 
-  if (data.artifacts.length === 0 && data.unknown.length === 0) {
+  if (entries.length === 0 && data.unknown.length === 0) {
     return <EmptyState title={t("这段会话还没有生成文件")} description={t("agent 新建的文件会实时出现在这里。")} />
   }
 
-  const 组 = new Map<string, Artifact[]>()
-  for (const a of data.artifacts) {
+  const 组 = new Map<string, DisplayedArtifact[]>()
+  for (const a of entries) {
     const i = a.path.lastIndexOf("/")
     const dir = i < 0 ? "" : a.path.slice(0, i + 1)
     组.set(dir, [...(组.get(dir) ?? []), a])
@@ -285,6 +288,7 @@ export function ArtifactsPanel({
                   >
                     <span className="name">{a.path.slice(dir.length)}</span>
                     <span className="kind-tag">{a.kind.toUpperCase()}</span>
+                    {'routeId' in a ? <span className="artifact-source">{t("路线登记")}</span> : null}
                     {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
                   </Button>
                   <span className="artifact-actions">

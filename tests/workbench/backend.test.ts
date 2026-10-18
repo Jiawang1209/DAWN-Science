@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import Database from "better-sqlite3"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, existsSync, readFileSync } from "node:fs"
+import { mkdtempSync, writeFileSync, existsSync, readFileSync, symlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionTranscripts } from "../../src/workbench/events.js"
@@ -219,6 +219,30 @@ describe("真实后端 · 经服务端端到端", () => {
       expect.objectContaining({ path: "gone.png", kind: "image", exists: false }),
     ])
     expect(r.unknown).toEqual([{ runId: "t2", toolCallId: "c2" }])
+  })
+
+  it('listArtifacts 补充当前路线登记的图表报告，不伪造新建事实或混入原始数据', async () => {
+    const ws = newRepo(), sid = await 开一段(ws)
+    const pid = ctx.sessionStore.get(sid)!.projectId!
+    for (const path of ['figure.png', 'summary.csv', 'report.md', 'input.csv']) writeFileSync(join(ws, path), path)
+    const outside = join(mkdtempSync(join(tmpdir(), 'dawn-outside-artifact-')), 'secret.csv')
+    writeFileSync(outside, 'outside')
+    symlinkSync(outside, join(ws, 'outside-link.csv'))
+    const step = { id: 'S1', title: '结果', purpose: '检查', inputs: ['input.csv'], outputs: ['future.csv'], dependencies: [], status: 'delivered' as const, blockers: [], cases: [], deliverables: ['figure.png', 'summary.csv', 'report.md', 'missing.pdf', 'outside-link.csv'].map(path => ({ path })), execution: { state: 'not_run' as const, note: '仅登记' }, verification: { state: 'unreviewed' as const, note: '未审查' }, needsReview: false, notes: [] }
+    vi.spyOn(ctx.sessions, 'getAnalysisRoute').mockReturnValue({ supported: true, route: { routeId: 'r', revision: 1, updatedAt: 1, title: '路线', goal: '查看', dataContext: [], steps: [step, { ...step, id: 'S2' }] } })
+    ctx.runStore.insert({ runId: 't1', projectId: pid, sessionId: sid, origin: 'agent', requestType: 'tool_call:write', status: 'completed', startedAt: '2026-08-26T10:00:00.000Z', finishedAt: '2026-08-26T10:00:01.000Z', hasError: false, filesCreated: ['summary.csv'] })
+    const result = await ctx.backend.listArtifacts({ sessionId: sid }) as { artifacts: { path: string }[]; routeArtifacts: { path: string; exists?: boolean; routeId: string; stepIds: string[]; bornRunId?: string }[] }
+    expect(result.artifacts.map(a => a.path)).toEqual(['summary.csv'])
+    expect(result.routeArtifacts).toEqual([
+      { path: 'figure.png', kind: 'image', exists: true, routeId: 'r', stepIds: ['S1', 'S2'] },
+      { path: 'report.md', kind: 'markdown', exists: true, routeId: 'r', stepIds: ['S1', 'S2'] },
+      { path: 'missing.pdf', kind: 'pdf', exists: false, routeId: 'r', stepIds: ['S1', 'S2'] },
+      { path: 'outside-link.csv', kind: 'table', routeId: 'r', stepIds: ['S1', 'S2'] },
+    ])
+    expect(ctx.runStore.artifactsOf(sid).artifacts.map(a => a.path)).toEqual(['summary.csv'])
+    ctx.db.prepare('UPDATE sessions SET connection_id = ? WHERE id = ?').run('remote', sid)
+    const remote = await ctx.backend.listArtifacts({ sessionId: sid }) as typeof result
+    expect(remote.routeArtifacts.every(a => a.exists === undefined)).toBe(true)
   })
 
   it("readFile 按 sessionId 读：从会话自己的工作区读，不经项目根（2026-08-26 首用回归）", async () => {

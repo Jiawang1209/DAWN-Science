@@ -14,6 +14,7 @@ export type { FaultI18n } from "./fault-i18n.js"
 
 export {
   ArtifactSchema,
+  RouteArtifactSchema,
   CostSchema,
   FileChangeFactsSchema,
   ProjectSummarySchema,
@@ -34,6 +35,7 @@ export {
 
 export type {
   Artifact,
+  RouteArtifact,
   Cost,
   FileChangeFacts,
   ProjectSummary,

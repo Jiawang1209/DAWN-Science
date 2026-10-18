@@ -7,6 +7,9 @@ const tool = (id: string): TranscriptItem => ({ type: "tool", id, name: "write",
 const art = (path: string, c: string) => ({ path, kind: "table" as const, bornRunId: "r-" + c, bornToolCallId: c, bornAt: "2026-08-26T10:00:00.000Z", exists: true })
 
 describe("本轮产物", () => {
+  it('路线登记引用不算作本轮新生成的文件', () => {
+    expect(本轮产物(items, 'a1', { artifacts: [], unknown: [], routeArtifacts: [{ path: 'existing.png', kind: 'image', routeId: 'r', stepIds: ['S1'], exists: true }] }, 'native')).toEqual({ kind: 'none' })
+  })
   const items = [turn("u1", "user"), tool("c1"), tool("c2"), turn("a1", "agent"), turn("u2", "user"), tool("c3"), turn("a2", "agent")]
 
   it("按提问分段：只挑这一段（上一句 user 到下一句 user 之间）里的工具调用", () => {

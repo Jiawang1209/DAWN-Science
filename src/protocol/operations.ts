@@ -19,6 +19,7 @@ import { BotCreateSchema, BotUpdateSchema, BotProfileSchema } from "../bot/types
 import { FaultI18nSchema } from "./fault-i18n.js"
 import {
   ArtifactSchema,
+  RouteArtifactSchema,
   CostSchema,
   FileChangeFactsSchema,
   ProjectSummarySchema,
@@ -391,6 +392,7 @@ export const OPERATIONS = {
     response: z
       .object({
         artifacts: z.array(ArtifactSchema),
+        routeArtifacts: z.array(RouteArtifactSchema).optional(),
         unknown: z.array(z.object({ runId: z.string().min(1), toolCallId: z.string().min(1).optional() }).strict()),
       })
       .strict(),

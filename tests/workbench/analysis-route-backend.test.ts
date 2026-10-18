@@ -93,6 +93,7 @@ describe('analysis route backend contract',()=>{
   hub.ingest('s',{kind:'analysis_route',sessionId:'s',route})
   expect(hub.subscribe('s').analysisRoute).toEqual(route)
   expect(SessionSnapshotSchema.safeParse(hub.subscribe('s')).success).toBe(true)
-  expect(seen).toHaveLength(1);expect(SessionUpdateSchema.safeParse(seen[0]).success).toBe(true)
+  expect(seen).toHaveLength(2);expect(SessionUpdateSchema.safeParse(seen[0]).success).toBe(true)
+  expect(seen[1]).toMatchObject({type:'artifactsChanged',sessionId:'s'})
  })
 })

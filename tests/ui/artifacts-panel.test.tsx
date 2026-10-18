@@ -20,6 +20,25 @@ const 图片内容 = (): FileContent => ({ kind: "image", mediaType: "image/png"
 
 const noop = { readFile: vi.fn(), onOpenInFiles: vi.fn(), onDownload: vi.fn(), onOpenExternally: vi.fn() }
 
+it('路线登记图表报告与工具产物合并去重，并保留来源与缺失状态', async () => {
+  const readFile = vi.fn().mockResolvedValue({ kind: 'text', text: 'report', bytes: 6 })
+  render(<ArtifactsPanel {...noop} readFile={readFile} data={{
+    artifacts: [art('summary.csv')], unknown: [],
+    routeArtifacts: [
+      { path: 'summary.csv', kind: 'table', routeId: 'route', stepIds: ['S1'], exists: true },
+      { path: 'figure.png', kind: 'image', routeId: 'route', stepIds: ['S2'], exists: true },
+      { path: 'report.md', kind: 'markdown', routeId: 'route', stepIds: ['S2'], exists: true },
+      { path: 'missing.pdf', kind: 'pdf', routeId: 'route', stepIds: ['S2'], exists: false },
+    ],
+  }} />)
+  expect(screen.getAllByRole('button', { name: 'summary.csv' })).toHaveLength(1)
+  expect((screen.getByRole('button', { name: 'figure.png' }) as HTMLButtonElement).disabled).toBe(false)
+  expect((screen.getByRole('button', { name: 'missing.pdf' }) as HTMLButtonElement).disabled).toBe(true)
+  expect(screen.getAllByText('路线登记')).toHaveLength(3)
+  fireEvent.click(screen.getByRole('button', { name: 'report.md' }))
+  await waitFor(() => expect(readFile).toHaveBeenCalledWith('report.md'))
+})
+
 /** 一个能手动 resolve/reject 的 promise——模拟「点开了但还没读完」那一刻 */
 function 挂起<T>() {
   let resolve!: (v: T) => void

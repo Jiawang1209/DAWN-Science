@@ -17,20 +17,22 @@
  * 包装器的 `execute` 是 before/after 的**精确**位置，而且对并行执行同样成立
  * ——每次调用各有一个包装器实例，互不干扰。
  *
- * ## 两条路：git 有就走 git，没有就走文件系统（2026-08-26）
+ * ## 文件事实：仓库根用 Git＋有界文件快照，其他工作区用文件系统
  *
- * git 工作区走 `git-facts.ts`（能剔除基线时就脏的文件）；**不是 git 仓库**——临时会话
+ * 仓库根用 `git-facts.ts`（能剔除基线时就脏的文件）并以文件快照补齐被忽略的产物。
+ * 子目录不借用父仓库的路径与差集；其他目录——临时会话
  * `~/DAWN/scratch/<ts>/`、用户自己的非 git 目录——走 `fs-facts.ts`：前后各扫一遍文件系统，
  * 按 inode / mtime / size 对比。作者第一次真用「产物」就撞上临时会话满屏「本轮产出未知」，
  * 根因就是此前非 git 一律不观察。**两条路口径一致：缺省 = 不知道、空 = 确认没有。**
  *
  * ## 拿不到事实时留空，不编
  *
- * git 调用失败、文件系统扫描超上限——一律返回 `undefined`，让那条 Run 上**没有**这个字段。
+ * Git 与文件系统均拿不到事实时返回 `undefined`；文件系统补充超限时仅保留已知的 Git/声明事实，
+ * 此时不保证捕获全部被忽略文件。
  * 返回空数组会被读成「确认没改任何文件」，那是编造（不变式 5 明令禁止）。
  */
-import { statSync } from "node:fs"
-import { resolve } from "node:path"
+import { existsSync, statSync } from "node:fs"
+import { join, resolve } from "node:path"
 import { 工作区内相对路径 } from "../files/paths.js"
 import { createdSince, diffSince, snapshot, type GitBaseline } from "../project/git-facts.js"
 import { fsDiff, fsSnapshot, FS_SNAPSHOT_CAP, type FsSnapshot } from "../project/fs-facts.js"
@@ -169,9 +171,8 @@ export class ProvenanceProbe {
    *
    * 没有 `声明的路径`：那一条靠的是「我们认得 `write` 的入参里哪个键是路径」，
    * 而第三方 schema 认不出来。**认不出不等于可以猜。**
-   * 后果要说清楚：**MCP 写进 `.gitignore` 里的文件，这一层看不见**
-   * （`git status` 不列被忽略的）。审阅那一屏靠 `ignoredArtifacts()`
-   * 在约定目录里兜一次底，但它只答得出「有这么个文件」，答不出「谁写的」。
+   * 没有显式声明的文件由有界文件快照补充；超过快照上限时，Git 忽略文件
+   * 仍可能未被观察到，不能把完整性当作已经保证。
    */
   async beginExternal(): Promise<ProvenanceHandle | undefined> {
     return this.观察([])
@@ -220,6 +221,10 @@ export class ProvenanceProbe {
     // **执行前**记下声明路径里哪些还不存在——执行后再看就分不清「新建」与「覆盖」
     const 声明前不在 = 声明.filter((rel) => !在不在(rel))
 
+    // Git porcelain 的路径相对仓库根；子目录会话不能借用父仓库的差集。
+    // .git 也可能是 worktree 的指针文件，existsSync 同时覆盖两种情况。
+    if (!existsSync(join(workspace, '.git'))) return this.走文件系统(声明, 声明前不在, 在不在)
+
     let before: GitBaseline
     try {
       before = await snapshot(this.workspace)
@@ -228,6 +233,9 @@ export class ProvenanceProbe {
       // 只有超限才是真的不知道。此前只认 NotAGitRepoError，没装 git 的机器上就白白记成「不知道」。
       return this.走文件系统(声明, 声明前不在, 在不在)
     }
+    // Git 忽略的 results/figures 也可能由 R/Python 内部写出；有界文件快照补齐它们。
+    // 大工作区快照超限时保留原有 Git/显式路径事实，不猜未观察到的文件。
+    const supplement = this.走文件系统(声明, 声明前不在, 在不在, false)
     return {
       async finish(): Promise<ToolFileFacts | undefined> {
         try {
@@ -240,11 +248,12 @@ export class ProvenanceProbe {
            */
           const 真在 = 声明.filter(在不在)
           const created = await createdSince(workspace, before)
+          const extra = await supplement?.finish()
           return {
-            filesWritten: [...new Set([...facts.files, ...真在])].sort(),
+            filesWritten: [...new Set([...facts.files, ...真在, ...(extra?.filesWritten ?? [])])].sort(),
             filesRead: [],
             mayIncludeUserEdits: facts.mayIncludeUserEdits,
-            filesCreated: [...new Set([...created, ...声明前不在.filter(在不在)])].sort(),
+            filesCreated: [...new Set([...created, ...声明前不在.filter(在不在), ...(extra?.filesCreated ?? [])])].sort(),
           }
         } catch {
           /**
@@ -274,12 +283,13 @@ export class ProvenanceProbe {
     声明: string[],
     声明前不在: string[],
     在不在: (rel: string) => boolean,
+    warnOnCap = true,
   ): ProvenanceHandle | undefined {
     const workspace = this.workspace
     const cap = this.选项.fsCap ?? FS_SNAPSHOT_CAP
     const before: FsSnapshot | undefined = fsSnapshot(workspace, cap)
     if (!before) {
-      if (!已警告超限的工作区.has(workspace)) {
+      if (warnOnCap && !已警告超限的工作区.has(workspace)) {
         已警告超限的工作区.add(workspace)
         console.error(`[溯源] 工作区不是 git 仓库且文件超过 ${cap} 个，这次的文件事实记为不知道：${workspace}`)
       }

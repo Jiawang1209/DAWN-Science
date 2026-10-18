@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { AnalysisRoutePanel, AnalysisRouteSummary } from "../../src/ui/analysis-route.js"
 import { route } from "./analysis-route-fixture.js"
 afterEach(cleanup)
 const props = () => ({
+  scopeKey: crypto.randomUUID(),
   result: { supported: true, route: route() },
   onReload: vi.fn(async () => {}),
   onAction: vi.fn(async () => {}),
@@ -13,6 +14,9 @@ const props = () => ({
   onOpenWeb: vi.fn(),
   onOpenExternally: vi.fn(),
 })
+const openStep = () => { fireEvent.click(screen.getByRole("button", { name: /查看步骤 S1 / })); fireEvent.click(screen.getByRole("tab", {name:/本步产物 /})) }
+const tab = (name: string) => name==="任务说明" ? fireEvent.click(screen.getByText("输入与参考")) : fireEvent.click(screen.getByRole("tab", { name:name==="运行记录"?"执行动态":name }))
+const history = (value:string) => { if(!screen.queryByRole("combobox",{name:"路线版本"}))fireEvent.click(screen.getByLabelText("路线选项"));fireEvent.change(screen.getByRole("combobox",{name:"路线版本"}),{target:{value}}) }
 describe("session analysis route", () => {
   it("summary is compact and only opens the dock on click", () => {
     const open = vi.fn()
@@ -38,7 +42,9 @@ describe("session analysis route", () => {
       { server: "mlai", caseId: "full-case-id", title: "真实案例", coverage: "仅输入核对", evidence: "metadata" },
     ]
     render(<AnalysisRoutePanel {...p} result={{ supported: true, route: r }} />)
-    expect(screen.getByText("核对")).toBeTruthy()
+    openStep()
+    tab("任务说明")
+    expect(within(document.querySelector(".route-conditions-info")!).getByText("核对")).toBeTruthy()
     expect(screen.getByText("仅元数据")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "选为参考" }))
     await waitFor(() =>
@@ -58,11 +64,12 @@ describe("session analysis route", () => {
     const r = route()
     r.steps[0]!.blockers = ["缺少样本表"]
     const { rerender } = render(<AnalysisRoutePanel {...p} result={{ supported: true, route: r }} />)
+    openStep()
     expect(screen.getByText("缺少样本表")).toBeTruthy()
     expect((screen.getByRole("button", { name: "继续这一步" }) as HTMLButtonElement).disabled).toBe(true)
     rerender(<AnalysisRoutePanel {...p} busy />)
     expect(screen.getByText("会话忙碌，请等当前回合结束")).toBeTruthy()
-    expect((screen.getByRole("button", { name: /S1/ }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole("button", { name: /查看步骤 S1 / }) as HTMLButtonElement).disabled).toBe(false)
   })
   it("stale mutation reports error, refreshes but never automatically replays", async () => {
     const p = props()
@@ -70,6 +77,7 @@ describe("session analysis route", () => {
       throw Object.assign(Error("版本过期"), { details: { code: "STALE_ROUTE" } })
     })
     render(<AnalysisRoutePanel {...p} />)
+    openStep()
     fireEvent.click(screen.getByRole("button", { name: "跳过此步" }))
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("版本过期"))
     expect(p.onAction).toHaveBeenCalledOnce()
@@ -96,9 +104,11 @@ describe("session analysis route", () => {
         }}
       />,
     )
-    fireEvent.click(screen.getByText("证据详情"))
+    openStep()
+    tab("运行记录")
     expect(screen.getByText(/Agent 自报完成/)).toBeTruthy()
     expect(screen.getByText("未观察到本步运行")).toBeTruthy()
+    tab("本步产物 1")
     expect(screen.getByText("文件缺失")).toBeTruthy()
     expect(screen.queryByText("已观察到本步运行")).toBeNull()
   })
@@ -119,9 +129,10 @@ describe("session analysis route", () => {
         }}
       />,
     )
-    fireEvent.click(screen.getByText("证据详情"))
+    openStep()
+    tab("运行记录")
     expect(screen.getByText("已观察到本步运行")).toBeTruthy()
-    fireEvent.change(screen.getByRole("combobox", { name: "路线版本" }), { target: { value: "1" } })
+    history("1")
     expect(screen.queryByText("已观察到本步运行")).toBeNull()
   })
   it.each([
@@ -150,9 +161,11 @@ describe("session analysis route", () => {
         }}
       />,
     )
+    openStep()
     expect(screen.getByText(currentFact)).toBeTruthy()
-    fireEvent.change(screen.getByRole("combobox", { name: "路线版本" }), { target: { value: "1" } })
+    history("1")
     expect(screen.queryByText(currentFact)).toBeNull()
+    openStep()
     expect(screen.getByText("历史文件引用（未保存当时文件事实）")).toBeTruthy()
     expect(screen.getByRole("button", { name: "results/report.md" })).toBeTruthy()
   })
@@ -161,7 +174,7 @@ describe("session analysis route", () => {
     const { rerender } = render(
       <AnalysisRoutePanel {...p} result={{ supported: true, route: route(2), history: [route(1)] }} />,
     )
-    fireEvent.change(screen.getByRole("combobox", { name: "路线版本" }), { target: { value: "1" } })
+    history("1")
     rerender(<AnalysisRoutePanel {...p} result={{ supported: true, route: route(3), history: [] }} />)
     expect(screen.queryByText("历史版本暂不可用，请刷新或查看当前路线")).toBeTruthy()
   })
@@ -170,6 +183,7 @@ describe("session analysis route", () => {
     const r = route()
     r.steps.push({ ...r.steps[0]!, id: "S2", title: "下一步" })
     const { rerender } = render(<AnalysisRoutePanel {...p} result={{ supported: true, route: r }} />)
+    openStep()
     fireEvent.click(screen.getByRole("button", { name: "跳过此步" }))
     await waitFor(() => expect(p.onAction).toHaveBeenCalledOnce())
     const next = structuredClone(r)
@@ -177,7 +191,7 @@ describe("session analysis route", () => {
     next.steps[0]!.status = "skipped"
     rerender(<AnalysisRoutePanel {...p} result={{ supported: true, route: next }} />)
     expect(screen.getByRole("button", { name: "恢复此步" })).toBeTruthy()
-    expect(screen.getByRole("button", { name: /S2/ }).getAttribute("aria-expanded")).toBe("false")
+    expect(screen.getByRole("button", { name: /查看步骤 S2 / }).getAttribute("aria-pressed")).toBe("false")
   })
   it("ignores late file content after a different path was chosen", async () => {
     const p = props()
@@ -192,8 +206,11 @@ describe("session analysis route", () => {
       .mockReturnValueOnce(old)
       .mockResolvedValueOnce({ kind: "text", text: "New content", mediaType: "text/markdown", bytes: 11 })
     render(<AnalysisRoutePanel {...p} readFile={readFile} result={{ supported: true, route: r }} />)
+    openStep()
     fireEvent.click(screen.getByRole("button", { name: "results/old.md" }))
     await waitFor(() => expect(readFile).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole("button", { name: "返回输入" }))
+    tab("本步产物 2")
     fireEvent.click(screen.getByRole("button", { name: "results/new.md" }))
     await waitFor(() => expect(screen.getByText("New content")).toBeTruthy())
     resolveOld({ kind: "text", text: "Old content", mediaType: "text/markdown", bytes: 11 })
@@ -209,25 +226,29 @@ describe("session analysis route", () => {
       .mockRejectedValueOnce(Error("File not found"))
       .mockResolvedValueOnce({ kind: "text", text: "Recovered", mediaType: "text/markdown", bytes: 9 })
     render(<AnalysisRoutePanel {...p} readOnly readFile={readFile} result={{ supported: true, route: r }} />)
+    openStep()
     fireEvent.click(screen.getByRole("button", { name: "results/report.md" }))
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("File not found"))
     fireEvent.click(screen.getByRole("button", { name: /^重试$/ }))
     await waitFor(() => expect(screen.getByText("Recovered")).toBeTruthy())
     expect(p.onAction).not.toHaveBeenCalled()
   })
-  it("file preview keeps the list above it and closes locally even in read-only history", async () => {
+  it("file preview replaces the step and closes locally even in read-only history", async () => {
     const p = props()
     const r = route()
     r.steps[0]!.deliverables = [{ path: "results/report.md" }]
     render(<AnalysisRoutePanel {...p} result={{ supported: true, route: r, history: [r] }} />)
+    openStep()
     fireEvent.click(screen.getByRole("button", { name: "results/report.md" }))
     await waitFor(() => expect(p.readFile).toHaveBeenCalledWith("results/report.md"))
     await waitFor(() => expect(screen.getByRole("button", { name: "展开阅读" })).toBeTruthy())
     fireEvent.click(screen.getByRole("button", { name: "收起预览" }))
     expect(screen.queryByRole("button", { name: "展开阅读" })).toBeNull()
-    fireEvent.change(screen.getByRole("combobox", { name: "路线版本" }), { target: { value: "1" } })
+    expect(screen.getByRole("tab", { name: "本步产物 1" })).toBeTruthy()
+    history("1")
     expect(screen.getByText(/历史文件预览读取当前路径/)).toBeTruthy()
     expect(screen.queryByRole("button", { name: "继续这一步" })).toBeNull()
+    openStep()
     fireEvent.click(screen.getByRole("button", { name: "results/report.md" }))
     await waitFor(() => expect(screen.getByRole("button", { name: "展开阅读" })).toBeTruthy())
     fireEvent.click(screen.getByRole("button", { name: "展开阅读" }))

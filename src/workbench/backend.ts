@@ -119,6 +119,7 @@ import { 探测远端解释器, 读远端事实 } from "../remote/interpreters.j
 import { discoverKernelSpecs } from "../kernel/specs.js"
 import { AGENTS_DIR, loadSubagentsFrom, loadSubagentDefinitions } from "../subagent/definitions.js"
 import { 会话全文搜索 } from "./session-search.js"
+import { routeDeliverableEvidence } from "../runtime/analysis-route-files.js"
 import { 补子agent组, 子运行目录, 读元, 读子转录, 会话文件, 没跑完, 子转录过大 } from "../subagent/run-dir.js"
 import { 拆子转录id } from "../protocol/subagent-id.js"
 import { join } from "node:path"
@@ -2433,6 +2434,18 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 会话 = sessions.get(sessionId)
       const { artifacts, unknown } = runs.artifactsOf(sessionId)
       const 远端 = Boolean(会话?.connectionId)
+      const route = 会话 ? sessions.getAnalysisRoute(sessionId).route : undefined
+      const known = new Set(artifacts.map(a => a.path))
+      const routeArtifacts: import('../protocol/index.js').RouteArtifact[] = []
+      if (route) {
+        for (const file of routeDeliverableEvidence(route, [], 会话?.workspace, 远端)) {
+          if (known.has(file.path)) continue
+          const prior = routeArtifacts.find(a => a.path === file.path)
+          if (prior) { if (!prior.stepIds.includes(file.stepId)) prior.stepIds.push(file.stepId); continue }
+          routeArtifacts.push({ path: file.path, kind: 产物类型(file.path), routeId: route.routeId, stepIds: [file.stepId],
+            ...(file.state === 'exists' ? { exists: true } : file.state === 'missing' ? { exists: false } : {}) })
+        }
+      }
       return {
         artifacts: artifacts.map((a) => ({
           ...a,
@@ -2443,6 +2456,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             : { exists: 文件仍在(拼路径(会话.workspace, a.path)) }),
         })),
         unknown,
+        ...(routeArtifacts.length ? { routeArtifacts } : {}),
       }
     },
 

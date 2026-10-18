@@ -370,6 +370,7 @@ export const 塞满用量 = { prompt_tokens: 120000, completion_tokens: 8, total
  * @param {string} [opts.failMessage] 失败时的 message
  * @param {string} [opts.reply] 固定回复正文
  * @param {(body: any) => {toolName: string, args: object, say?: string} | undefined} [opts.toolCall]
+ * @param {{toolCall: (body: any) => any, reply: (body: any) => string | undefined}} [opts.scenario] Explicit isolated demo; owns tools and prose without falling into another canned scenario.
  * @param {number} [opts.thinkingHoldMs] 想完之后停多久再开口。**演的是 kimi 那段真空**
  * @param {string} [opts.thinking] 假模型「想」的内容。**给了才发**——
  *   大多数用例不需要它，平白多一段思考会把别的断言的上下文搅乱
@@ -574,7 +575,7 @@ export function startMockInferenceServer(opts = {}) {
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
       const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
       const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
-      const reply = 会话标题 ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const reply = 会话标题 ?? opts.scenario?.reply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"
@@ -607,7 +608,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复)
 
-      const tool = 摘要 || 是标题 ? undefined : (opts.toolCall?.(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && !是标题 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
       const finishReason = !摘要 && !是标题 && 最后一句.includes("演一次截断") ? "length" : "stop"

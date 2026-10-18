@@ -10,6 +10,7 @@ import { z } from "zod"
 import { OPERATIONS } from "../../protocol/index.js"
 import type {
   Artifact,
+  RouteArtifact,
   Cost,
   FileChangeFacts,
   ProjectSummary,
@@ -70,6 +71,7 @@ export const $provenance = atom<ProvenanceLink | undefined>(undefined)
 /** `listArtifacts` 的返回：本会话的产物清单，外加认不出的那几次工具调用 */
 export interface ArtifactList {
   artifacts: readonly Artifact[]
+  routeArtifacts?: readonly RouteArtifact[]
   unknown: readonly { runId: string; toolCallId?: string }[]
   /** 取清单失败时带上原因（审查 2026-08-26）：不带的话面板永远转圈，「没取到」与「取不到」分不开 */
   error?: string

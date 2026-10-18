@@ -581,7 +581,8 @@
 /** 8.16 (2026-10-14): 会话标题摘要完成后按 sessionId 推送 title 元信息。 */
 /** 8.17 (2026-10-17): tool 条目可选 caseResults，案例卡片不再依赖截断正文。 */
 /** 8.18 (2026-10-18): session analysis route snapshot, actions and application-observed evidence. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.18"
+/** 8.19 (2026-10-18): listArtifacts 可选路线交付引用，与工具观察的新建事实分开。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.19"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

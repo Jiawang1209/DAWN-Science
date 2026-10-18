@@ -555,6 +555,7 @@ export class SessionTranscripts {
       case "analysis_route": {
         e.analysisRoute = structuredClone(event.route)
         this.bump(sessionId, e, { type: 'analysisRoute', route: e.analysisRoute })
+        this.bump(sessionId, e, { type: 'artifactsChanged' })
         return
       }
       case "team_changed": {

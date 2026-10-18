@@ -284,17 +284,7 @@ describe("filesCreated（产物条，2026-08-26）", () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  /**
-   * **`bash` 的重定向目标，探针单独看不见**（2026-08-26 code review）。
-   *
-   * `声明的路径` 只认 `write`/`edit`/`multiedit`/`apply_patch`——`bash` 不在
-   * `会报路径的` 里（本文件开头第 55 行注释：「它的参数是一条命令，写到哪儿
-   * 只有它自己知道」）。而 `out/` 又被 `.gitignore` 挡在 `git status` 外，
-   * 于是 `diffSince`/`createdSince` 也看不见。两条路都不通，
-   * **这不是缺陷，是探针这一层已知的能力边界**——`重定向目标` 解析 `>` 之后，
-   * 真正让这类文件进账的是产物登记那条路（`并进登记新建`），不是探针本身。
-   */
-  it("bash 的 `>` 重定向目标：探针单独看不见（不在 会报路径的 里，又被 .gitignore 挡住）", async () => {
+  it("bash 在忽略目录中生成的文件也由前后快照捕获", async () => {
     const dir = repo()
     writeFileSync(join(dir, ".gitignore"), "out/\n")
     const probe = new ProvenanceProbe(dir)
@@ -302,7 +292,7 @@ describe("filesCreated（产物条，2026-08-26）", () => {
     mkdirSync(join(dir, "out"), { recursive: true })
     writeFileSync(join(dir, "out", "x.txt"), "hi\n")
     const facts = await factsOf(h)
-    expect(facts.filesCreated).not.toContain("out/x.txt")
+    expect(facts.filesCreated).toContain("out/x.txt")
     rmSync(dir, { recursive: true, force: true })
   })
 
@@ -314,11 +304,29 @@ describe("filesCreated（产物条，2026-08-26）", () => {
     mkdirSync(join(dir, "out"), { recursive: true })
     writeFileSync(join(dir, "out", "x.txt"), "hi\n")
     const facts = await factsOf(h)
-    // 上一条已确认探针自己看不见它；这里模拟 native.ts 里那一步：
-    // 产物登记记的是绝对路径，`并进登记新建` 换算成相对工作区的再并进去
+    // 产物登记与探针同时发现同一文件时仍然只记一次。
     const merged = 并进登记新建(facts, [join(dir, "out", "x.txt")], dir)
     expect(merged.filesCreated).toEqual(["out/x.txt"])
     rmSync(dir, { recursive: true, force: true })
+  })
+})
+
+describe('Git 忽略的科研子目录', () => {
+  it.each(['bash', 'external'])('%s 捕获脚本内部生成的图表报告，不纳入旧输入或工作区外文件', async mode => {
+    const root = repo()
+    try {
+      writeFileSync(join(root, '.gitignore'), 'tmp/\n')
+      const workspace = join(root, 'tmp', 'science')
+      mkdirSync(join(workspace, 'results'), { recursive: true })
+      writeFileSync(join(workspace, 'input.csv'), 'old input')
+      const probe = new ProvenanceProbe(workspace)
+      const handle = mode === 'bash' ? await probe.begin('bash', { command: 'Rscript analysis.R' }) : await probe.beginExternal()
+      for (const path of ['figure.png', 'summary.csv', 'report.md']) writeFileSync(join(workspace, 'results', path), path)
+      writeFileSync(join(root, 'outside.txt'), 'outside')
+      const facts = await factsOf(handle)
+      expect(facts.filesCreated).toEqual(['results/figure.png', 'results/report.md', 'results/summary.csv'])
+      expect(facts.filesWritten).toEqual(facts.filesCreated)
+    } finally { rmSync(root, { recursive: true, force: true }) }
   })
 })
 

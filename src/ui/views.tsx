@@ -1,4 +1,5 @@
 import { AnalysisRouteSummary } from "./analysis-route.js"
+import { artifactEntries } from "./artifact-list.js"
 import { displayRouteMessage } from "./state/analysis-route.js"
 import type { AnalysisRoute } from "../protocol/analysis-route.js"
 import { $待回答的会话 } from "./state/catalog.js"
@@ -1131,7 +1132,7 @@ export function RightDock({
   onPick: (who: 坞房客) => void
   children: React.ReactNode
 }) {
-  const 产物数 = useStore($artifacts)?.artifacts.length ?? 0
+  const 产物数 = artifactEntries(useStore($artifacts)).length
   const cell数 = useStore($cellCount)
   const [more, setMore] = useState(false)
   const moreBox = useRef<HTMLDivElement>(null)

@@ -25,7 +25,7 @@ export function 任务的态(x: 任务, 全部: readonly 任务[]): 任务态 {
 }
 
 /** 依赖深度：没依赖的 0，有依赖的 = 最深依赖 + 1。环（坏数据）当 0，不死循环 */
-export function 任务深度(全部: readonly 任务[]): Map<string, number> {
+export function 任务深度(全部: readonly Pick<任务, "id" | "dependencies">[]): Map<string, number> {
   const 表 = new Map(全部.map((x) => [x.id, x]))
   const 深 = new Map<string, number>()
   const 在算 = new Set<string>()

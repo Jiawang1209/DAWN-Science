@@ -6,7 +6,9 @@ import { BotPane } from "./bot-pane.js"
 import { BotTeamCards } from "./bot-task-card.js"
 import { $bots, $botSession, $botOwner, $botOwnerScope, $botTask, $botMemberView, Bot槽, clearBotSession, selectBotSession, resyncBot, receiveBotUpdate, loadBots, BotDispatchQueue, parseBotCommand, sendBotTaskSupplement, botArtifactPreviewPath } from "./state/bots.js"
 import {visibleBotTeam} from "./bot-team-scope.js"
-import { 标记待回答 } from "./state/catalog.js"
+import { $routeTurnMarker } from "./state/route-activity.js"
+import { activeRouteStep } from "./route-map-model.js"
+import { 标记待回答, $待回答的会话 } from "./state/catalog.js"
 import { StatusNotices } from "./status-notices.js"
 /**
  * 外壳。
@@ -331,6 +333,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 由它把当下的值交给 `对话回调`。
    */
   useStore($待答权限)
+  const 路线待答会话 = useStore($待回答的会话)
+  const routeTurnMarker = useStore($routeTurnMarker)
   const 主区开关们 = useStore($会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
@@ -6044,8 +6048,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             ) : rightDockTenant === "route" ? (
               !session ? <EmptyState title={t("开始任务后查看路线")} description={t("每段会话保留自己的分析步骤和产物记录。")} /> : <AnalysisRoutePanel
                 key={JSON.stringify([session.sessionId, session.remote?.connectionId, session.remote?.cwd, 当前工作区路径])}
+                scopeKey={JSON.stringify([session.sessionId, session.remote?.connectionId, session.remote?.cwd, 当前工作区路径])}
                 result={routeResult}
-                busy={busy}
+                busy={busy || Boolean(routeTurnMarker)}
+                workingStepId={activeRouteStep(routeResult?.route,routeTurnMarker,Boolean(routeTurnMarker))}
+                awaitingInput={Boolean($待答权限.get() || (sessionId && 路线待答会话.has(sessionId)))}
                 readOnly={对话回调(session, 主槽).disabled}
                 onReload={reloadRoute}
                 onCreate={async () => {

@@ -412,6 +412,10 @@ describe("readFile 按 sessionId（7.25）", () => {
 })
 
 describe("listArtifacts（产物，7.24）", () => {
+  it('路线引用独立于生成记录，不需要伪造 bornRunId', () => {
+    expect(OPERATIONS.listArtifacts.response.safeParse({ artifacts: [], unknown: [], routeArtifacts: [{ path: 'figure.png', kind: 'image', routeId: 'r', stepIds: ['S1'], exists: true }] }).success).toBe(true)
+    expect(OPERATIONS.listArtifacts.response.safeParse({ artifacts: [], unknown: [], routeArtifacts: [{ path: 'figure.png', kind: 'image', routeId: 'r', stepIds: [] }] }).success).toBe(false)
+  })
   it("请求只要 sessionId；响应带 artifacts 与 unknown", () => {
     const op = OPERATIONS.listArtifacts
     expect(op.mutating).toBe(false)

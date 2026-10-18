@@ -90,6 +90,7 @@ function 起一套(opts: { 续接失败?: string; 旧快照?: boolean } = {}) {
     attach: () => {},
     history: async () => [],
     configOptions: () => undefined,
+    getAnalysisRoute: () => ({ supported: false, reason: "fake runtime" }),
   }
 
   const 订阅了: string[] = []

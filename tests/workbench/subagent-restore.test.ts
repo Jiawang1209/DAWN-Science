@@ -39,6 +39,7 @@ function 起一套(sessionDir: string) {
     attach: () => {},
     history: async () => 历史,
     configOptions: () => undefined,
+    getAnalysisRoute: () => ({ supported: false, reason: "fake runtime" }),
   }
   const backend = createWorkbenchBackend({
     projects: {} as never,

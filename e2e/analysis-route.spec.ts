@@ -79,6 +79,8 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
   await pane().getByRole("button", { name: "继续这一步", exact: true }).click()
   await expect(page.locator(".analysis-route-summary")).toContainText("1 / 3")
   await expect.poll(() => existsSync(report)).toBe(true)
+  await expect(page.locator("main.main").getByText(/已生成 1 个文件/).last()).toBeVisible()
+  await expect(page.locator("main.main")).not.toContainText("产出未知")
   expect(readFileSync(report, "utf8")).toContain("未运行科研代码")
   expect(existsSync(join(dawn.workspace, "results/reports/analysis-route-S2.md"))).toBe(false)
   await pane().getByRole("button", { name: "results/reports/analysis-route-S1.md", exact: true }).click()

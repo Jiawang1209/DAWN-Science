@@ -1816,6 +1816,21 @@ export class NativeRuntime implements AgentRuntime {
     const routeTools = spec.bot ? [] : createAnalysisRouteTools({
       read: () => this.getAnalysisRoute(spec.sessionId, spec.sessionDir),
       update: (revision, route, reason) => this.updateAnalysisRoute(spec.sessionId, revision, route, reason),
+    }).map(definition => {
+      const original = definition.execute as (...args: unknown[]) => Promise<unknown>
+      return {
+        ...definition,
+        execute: async (toolCallId: string, ...args: unknown[]) => {
+          const result = await original.call(definition, toolCallId, ...args)
+          // These controlled tools touch private session metadata only. As with
+          // built-in reads, successful calls confirm no workspace file output;
+          // they must not become unknown scientific artifacts in the Run ledger.
+          if (this.opts.provenance !== false && !(result as { isError?: boolean } | undefined)?.isError) {
+            this.emit({ kind: "tool_files", sessionId: spec.sessionId, toolCallId, ...只读工具的空事实() })
+          }
+          return result
+        },
+      }
     })
     const 方案期包过的 = [...(customTools ?? []), questionTool, ...方案工具, ...routeTools].map((d) => this.套方案期门(d as Record<string, unknown>, spec))
     this.方案工具名们.set(

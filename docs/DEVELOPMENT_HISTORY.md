@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 路线元数据工具明确无工作区产出
+
+- **Type**: fix
+- **Motivation**: 实际 Electron 验收发现报告交付后同时显示“另有运行产出未知”；路线工具独立追加，未经过内置只读工具的空文件事实出口。
+- **What**: 仅为成功的 get_analysis_route/update_analysis_route 发送既有只读空 tool_files 事实，确认私有会话元数据操作不产生工作区文件；遵守 provenance=false，普通工具的未知/失败逻辑保持不变。
+- **Impact**: 新路线调用在 Run/产物汇总中不再冒充未知科研产出，不修改既有账本或执行状态。
+- **Verification**: 真实 pi/MCP/RunRecorder/RunStore 回归先 RED 复现 3 个元数据 unknown，修复后校验全部元数据调用的空事实及仅报告路径的产物汇总。6 文件 122 项、typecheck/build/git diff --check 通过；真实路线 Electron 2 项通过，新增主对话“已生成 1 个文件”且无“产出未知”断言。日志 /tmp/analysis-route-metadata-files-red.log、/tmp/analysis-route-metadata-files-green.log、/tmp/analysis-route-metadata-files-build.log、/tmp/analysis-route-metadata-files-e2e.log。
+
 ### 2026-10-18 — 最新路线读取失败保留缓存并显示错误
 
 - **Type**: fix

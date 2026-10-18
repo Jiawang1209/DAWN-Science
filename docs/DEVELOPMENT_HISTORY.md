@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 路线元数据请求计数等待上一轮异步建议完成
+
+- **Type**: test
+- **Motivation**: 最终 Electron 验收偶发 metadataCount 15→16，需区分路线元数据动作与上一轮尚未发出的异步模型请求。
+- **What**: 原始请求诊断确认唯一新增请求为 suggestNextPrompt：system 是“为用户建议下一句”、max_tokens=180、无 tools，输入截止于 S1 最终回复。测试先等待界面真实 data-ghost 建议完成，再冻结未经筛选的全部 requests 数；保留 select/skip/restore 严格不增长断言，并给失败附新增请求正文。生产代码不变，不用 sleep 或过滤请求掩盖问题。
+- **Impact**: “不发模型”验收排除了前一回合 400ms 尾部请求的计数竞态；没有放宽路线动作边界或关闭建议功能。
+- **Verification**: 用待发草稿→清空明确让建议跨越计数窗口，先 RED 精确复现 15→16 并捕获原始请求；修正完成前置后，route/resume/next-prompt 共 5 项通过，完整真实路线连续 repeat 3 项通过，typecheck/git diff --check 通过。日志 /tmp/analysis-route-metadata-count-red.log、/tmp/analysis-route-metadata-count-green.log、/tmp/analysis-route-metadata-count-repeat.log。只改测试，沿用 363899ad 生产构建，未重复全量或操作 visible 预览。
+
 ### 2026-10-18 — 原生会话恢复后重读路线文件证据
 
 - **Type**: fix

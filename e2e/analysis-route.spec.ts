@@ -65,6 +65,10 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
   const pane = () => page.locator(".analysis-route-pane")
   await expect(pane()).toContainText("Alpha多样性分析测试案例")
   await expect(pane().getByRole("button", { name: "选为参考", exact: true })).toBeEnabled()
+  const composer = page.locator("main.main .composer-field")
+  // Suggestions are real, tool-free model requests scheduled after the turn.
+  // Finish that visible UI state before freezing the unfiltered request count.
+  await expect(composer).toHaveAttribute("data-ghost", "true")
   const count = dawn.requests.length
   await pane().getByRole("button", { name: "选为参考", exact: true }).click()
   await expect(pane().getByRole("button", { name: "已选参考", exact: true })).toBeDisabled()
@@ -76,6 +80,7 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
   }
   await expect(page.locator(".turn.user").last()).toContainText("S1")
   await expect(page.locator(".turn.user").last()).not.toContainText("analysis_route_action")
+  await composer.fill("保留的待发草稿")
   await pane().getByRole("button", { name: "继续这一步", exact: true }).click()
   await expect(page.locator(".analysis-route-summary")).toContainText("1 / 3")
   await expect.poll(() => existsSync(report)).toBe(true)
@@ -96,12 +101,15 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
     .filter({ has: page.locator(".route-step-id", { hasText: "S2" }) })
   if ((await second.getByRole("button", { name: /S2/ }).getAttribute("aria-expanded")) !== "true")
     await second.getByRole("button", { name: /S2/ }).click()
+  await composer.fill("")
+  await expect(composer).toHaveAttribute("data-ghost", "true")
   const metadataCount = dawn.requests.length
   await second.getByRole("button", { name: "跳过此步", exact: true }).click()
   await expect(second.getByRole("button", { name: "恢复此步", exact: true })).toBeEnabled()
   await second.getByRole("button", { name: "恢复此步", exact: true }).click()
   await expect(second.getByRole("button", { name: "跳过此步", exact: true })).toBeEnabled()
-  expect(dawn.requests.length).toBe(metadataCount)
+  await expect(composer).toHaveAttribute("data-ghost", "true")
+  expect(dawn.requests.length, JSON.stringify(dawn.requests.slice(metadataCount))).toBe(metadataCount)
   const versions = pane().getByRole("combobox", { name: "路线版本" })
   await expect.poll(() => versions.locator("option").count()).toBeGreaterThan(2)
   const historical = await versions.locator("option").nth(1).getAttribute("value")

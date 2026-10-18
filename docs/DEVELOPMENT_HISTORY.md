@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-18 — 路线功能、界面与产物收集合并至本地 main
+
+- **Type**: chore
+- **Motivation**: 用户验看路线图、逐步操作、上下分区边框及产物补齐后，授权一起合并本地main，明确不推送、不替换已安装软件。
+- **What**: 将 `codex/analysis-route` 的待提交修改保存为 `0011bb7c`，本地主目录从 `fecaaad4` 快进至该提交，包含此前会话级路线、执行/审查证据及边界、路线图与当前步骤、共享文件预览、状态与交付留存，以及Git忽略输出捕获和路线产物引用。随后单独记录本次合并验收。
+- **Impact**: 未推送远端、未打包安装或替换 `/Applications/DAWN Science.app`。保留独立分支、工作树、现有预览和忽略目录中的科研案例/截图；历史6项产物补齐到13项的来源边界不变。
+- **Verification**: 合并前typecheck及226项定向回归通过；合并后在主目录实际构建、全量429文件4,775项测试通过（10项原跳过），6项真实Electron路线/状态/问答/共享预览/产物收集回归通过。日志 `/tmp/dawn-route-merge-typecheck.log`、`/tmp/dawn-route-merge-focused.log`、`/tmp/dawn-route-main-build.log`、`/tmp/dawn-route-main-tests.log`、`/tmp/dawn-route-main-e2e.log`。快进无冲突，git diff --check通过。
+
 ### 2026-10-18 — 修复路线图片、表格与报告在产物标签漏收
 
 - **Type**: fix

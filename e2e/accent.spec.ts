@@ -14,10 +14,10 @@ test("**选一颗预置色，强调色与「活着」跟着变，「成功」仍
   const 原 = await 读令牌(page, "--dawn-accent")
   const 成功 = await 读令牌(page, "--dawn-success")
   // 默认那颗标着选中
-  await expect(page.getByRole("radio", { name: "绿" })).toHaveAttribute("aria-checked", "true")
+  await expect(page.getByRole("radio", { name: "绿", exact: true })).toHaveAttribute("aria-checked", "true")
 
-  await page.getByRole("radio", { name: "蓝" }).click()
-  await expect(page.getByRole("radio", { name: "蓝" })).toHaveAttribute("aria-checked", "true")
+  await page.getByRole("radio", { name: "蓝", exact: true }).click()
+  await expect(page.getByRole("radio", { name: "蓝", exact: true })).toHaveAttribute("aria-checked", "true")
   expect(await 读令牌(page, "--dawn-accent")).not.toBe(原)
   expect(await 读令牌(page, "--theme-user-accent")).toBe("#2f6feb")
   // 活着跟主题色；对错不跟
@@ -26,9 +26,9 @@ test("**选一颗预置色，强调色与「活着」跟着变，「成功」仍
   // 主按钮真的跟着变（不只是变量变了）：选中的「中文」那颗是蓝底
   const 键色 = (el: import("@playwright/test").Locator) => el.evaluate((e) => getComputedStyle(e).backgroundColor)
   const 蓝底 = await 键色(page.getByRole("radio", { name: "中文" }))
-  await page.getByRole("radio", { name: "绿" }).click()
+  await page.getByRole("radio", { name: "绿", exact: true }).click()
   expect(await 键色(page.getByRole("radio", { name: "中文" }))).not.toBe(蓝底)
-  await page.getByRole("radio", { name: "蓝" }).click()
+  await page.getByRole("radio", { name: "蓝", exact: true }).click()
 
   await page.reload()
   await expect(page.getByRole("button", { name: "设置", exact: true })).toBeVisible()
@@ -39,7 +39,7 @@ test("**浅色主题色**：按钮上的字自动换成深色", async ({ dawn })
   const { page } = dawn
   await 在项目里开会话(page)
   await 进设置(page, "外观")
-  const 框 = page.getByLabel("颜色值，可输入 HEX 或 RGB")
+  const 框 = page.getByLabel("颜色值，可输入 HEX 或 RGB", { exact: true })
   await 框.fill("#ffd240")
   await 框.press("Enter")
   expect(await 读令牌(page, "--theme-user-accent")).toBe("#ffd240")
@@ -50,8 +50,8 @@ test("**颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标�
   const { page } = dawn
   await 在项目里开会话(page)
   await 进设置(page, "外观")
-  await page.getByRole("radio", { name: "蓝" }).click()
-  const 框 = page.getByLabel("颜色值，可输入 HEX 或 RGB")
+  await page.getByRole("radio", { name: "蓝", exact: true }).click()
+  const 框 = page.getByLabel("颜色值，可输入 HEX 或 RGB", { exact: true })
   await expect(框).toHaveValue("#2f6feb")
   // 悬上去立刻有提示，说清三件事
   await 框.hover()
@@ -62,7 +62,7 @@ test("**颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标�
   await 框.fill("214, 51, 108")
   await 框.press("Enter")
   expect(await 读令牌(page, "--theme-user-accent")).toBe("#d6336c")
-  await expect(page.getByRole("radio", { name: "粉" })).toHaveAttribute("aria-checked", "true")
+  await expect(page.getByRole("radio", { name: "粉", exact: true })).toHaveAttribute("aria-checked", "true")
   // 输 HEX 也收
   await 框.fill("#e0701a")
   await 框.press("Enter")
@@ -91,7 +91,7 @@ test("**取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift �
   // 等截图就绪（起手提示换成「移动鼠标取色」）再动鼠标
   await expect(罩.locator(".dropper-start")).toContainText("移动鼠标取色")
   // 挪到「粉」色块正中：读出来的就该是那个粉
-  const 粉 = (await page.getByRole("radio", { name: "粉" }).boundingBox())!
+  const 粉 = (await page.getByRole("radio", { name: "粉", exact: true }).boundingBox())!
   const x = Math.round(粉.x + 粉.width / 2)
   const y = Math.round(粉.y + 粉.height / 2)
   await page.mouse.move(x, y)

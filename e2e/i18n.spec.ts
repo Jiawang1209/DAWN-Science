@@ -123,7 +123,7 @@ test("**英文界面上每一屏都没有汉字**", async ({ dawn }) => {
   })
 
   await expect(page.getByRole("button", { name: "New task" })).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByText("Start a chat")).toBeVisible()
+  await expect(page.getByPlaceholder("Enter a question, @ to reference files, / for commands", { exact: true })).toBeVisible()
 
   /**
    * **走一遍每一屏，不是只看首页。**
@@ -153,7 +153,6 @@ test("**英文界面上每一屏都没有汉字**", async ({ dawn }) => {
   await 屏("MCP", () => page.getByRole("button", { name: "MCP servers" }).click())
 
   // 设置的四块各看一遍——它们是同一屏的四种内容
-  await page.getByRole("button", { name: "Settings", exact: true }).click()
   for (const 块 of ["Appearance", "Working folder", "Model providers", "Kernel"]) {
     const 入口 = page.getByRole("button", { name: 块, exact: true })
     if ((await 入口.count()) === 0) continue // 那一块没上就跳过，不假装它在

@@ -124,6 +124,19 @@
   --theme-surface-overlay: color-mix(in srgb, var(--theme-surface-elevated) 84%, transparent);
   --theme-surface-input: var(--theme-gray-0);
 
+  /* 三类背景各自覆盖；输入卡与浮层保留原工作面。 */
+  --theme-user-background-light: var(--theme-surface-app);
+  --theme-user-background-dark: var(--theme-gray-850);
+  --theme-surface-frame: var(--theme-surface-app);
+  --theme-surface-shell: var(--theme-surface-sidebar);
+  --theme-user-chat-background-light: var(--theme-gray-0);
+  --theme-user-chat-background-dark: var(--theme-gray-800);
+  --theme-user-settings-background-light: var(--theme-gray-0);
+  --theme-user-settings-background-dark: var(--theme-gray-800);
+  --theme-surface-chat-content: var(--theme-surface-panel);
+  --theme-surface-settings: var(--theme-surface-panel);
+  --theme-surface-settings-card: var(--theme-surface-elevated);
+
   /* ── 混合比例。**这一组是整套配色的调节旋钮，两个主题共用** ──── */
   /**
    * **70 / 50 / 30**（2026-08-12 对齐 CDP 实测的 WorkBuddy）。
@@ -194,6 +207,11 @@
   --dawn-surface-elevated: var(--theme-surface-elevated);
   --dawn-surface-overlay: var(--theme-surface-overlay);
   --dawn-surface-input: var(--theme-surface-input);
+  --dawn-surface-frame: var(--theme-surface-frame);
+  --dawn-surface-shell: var(--theme-surface-shell);
+  --dawn-surface-chat-content: var(--theme-surface-chat-content);
+  --dawn-surface-settings: var(--theme-surface-settings);
+  --dawn-surface-settings-card: var(--theme-surface-settings-card);
 
   /* ── 描边：前景兑透明，四档。**3 是面板内的默认发丝线** ──────── */
   --dawn-stroke-1: color-mix(in srgb, var(--theme-base) var(--mix-stroke-1), transparent);
@@ -784,6 +802,29 @@
     0 6px 14px -4px color-mix(in srgb, #000000 55%, transparent);
   /* 输入卡的影子（2026-08-23 审查抓的）：亮色那份兑的是 `--theme-base`，暗色下 base 近白——卡底下是一圈白晕，不是影子 */
   --dawn-shadow-composer: 0 12px 24px -8px color-mix(in srgb, #000000 45%, transparent);
+}
+
+:root[data-background] {
+  --theme-surface-frame: var(--theme-user-background-light);
+  --theme-surface-shell: var(--theme-user-background-light);
+}
+:root.dawn-dark[data-background] {
+  --theme-surface-frame: var(--theme-user-background-dark);
+  --theme-surface-shell: var(--theme-user-background-dark);
+}
+:root[data-chat-background] {
+  --theme-surface-chat-content: var(--theme-user-chat-background-light);
+}
+:root.dawn-dark[data-chat-background] {
+  --theme-surface-chat-content: var(--theme-user-chat-background-dark);
+}
+:root[data-settings-background] {
+  --theme-surface-settings: var(--theme-user-settings-background-light);
+  --theme-surface-settings-card: color-mix(in srgb, var(--theme-user-settings-background-light) 96%, var(--theme-gray-0));
+}
+:root.dawn-dark[data-settings-background] {
+  --theme-surface-settings: var(--theme-user-settings-background-dark);
+  --theme-surface-settings-card: color-mix(in srgb, var(--theme-user-settings-background-dark) 90%, var(--theme-gray-0));
 }
 
 /**

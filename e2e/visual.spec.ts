@@ -65,6 +65,8 @@ async function setTheme(page: Page, label: "亮色" | "暗色") {
   await page.getByRole("radio", { name: label }).click()
   await expect(page.locator(label === "暗色" ? "html.dawn-dark" : "html.dawn-light")).toHaveCount(1)
   await page.getByRole("button", { name: "返回" }).click()
+  // 颜色偏好已保存；从新页面采集各屏，避免外观面板卸载后的合成缓存影响发丝阴影。
+  await page.reload()
 }
 
 async function startSession(page: Page, 首句 = "开始") {

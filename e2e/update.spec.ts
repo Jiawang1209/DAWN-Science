@@ -46,7 +46,7 @@ test("侧栏长出「有新版本」，点开能下、下完能装", async ({ da
   })
   await page.getByRole("radio", { name: "蓝", exact: true }).click()
   await expect.poll(读按钮色).toEqual({ 跟随主题: true, foreground: "rgb(255, 255, 255)", icon: "rgb(255, 255, 255)" })
-  const 色值 = page.getByLabel("颜色值，可输入 HEX 或 RGB")
+  const 色值 = page.getByLabel("颜色值，可输入 HEX 或 RGB", { exact: true })
   await 色值.fill("#ffd240")
   await 色值.press("Enter")
   await expect.poll(读按钮色).toEqual({ 跟随主题: true, foreground: "rgb(13, 13, 13)", icon: "rgb(13, 13, 13)" })

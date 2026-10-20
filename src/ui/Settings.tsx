@@ -35,11 +35,11 @@ import { InterpreterPicker } from "./interpreter-picker.js"
 import type { FaultI18n, InterpreterCandidate } from "../protocol/index.js"
 import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
-import { $accent, ACCENT_PRESETS, isHex, setAccent, hex转三元组, 三元组转hex } from "./state/accent.js"
+import { $accent, setAccent } from "./state/accent.js"
+import { $background, DEFAULT_BACKGROUND, DEFAULT_CONTENT_BACKGROUND, setBackground, chatBackground, settingsBackground } from "./state/background.js"
+import { AppearanceColorControl } from "./appearance-color-control.js"
 import { $workStepMode, setWorkStepMode } from "./state/work-steps.js"
 import { $chatSize, setChatSize } from "./state/chat-size.js"
-import { Eyedropper } from "./eyedropper.js"
-import { ColorPanel } from "./color-panel.js"
 
 import { t, tf, msgid, setLang, $lang } from "./i18n/index.js"
 /**
@@ -305,65 +305,15 @@ function InterpreterField({
   )
 }
 
-/** 预置色的名字走静态 `t`，让 i18n 的孤儿扫描看得见它们 */
-const 预置色名 = (n: string): string =>
-  ({ 绿: t("绿"), 蓝: t("蓝"), 紫: t("紫"), 橙: t("橙"), 粉: t("粉"), 灰: t("灰") })[n] ?? n
-
 export function AppearancePanel() {
   const theme = useStore($theme)
   const workStepMode = useStore($workStepMode)
   const chatSize = useStore($chatSize)
   const lang = useStore($lang)
   const accent = useStore($accent)
-  /**
-   * 颜色值只有**一格**（2026-08-24 作者定的）：它既显示也能改——收 HEX 或 RGB，回车生效、Esc 放弃；
-   * 悬停或聚焦时按 Shift 切换 HEX / RGB；右边一颗图标复制。悬上去立刻冒提示说清这三件事。
-   */
-  const [色格式, 设色格式] = useState<"hex" | "rgb">("hex")
-  const [已复制, 设已复制] = useState(false)
-  // 复制失败要出声（审查 debug J4：files.tsx 同动作会说，这里此前只 console.error——剪贴板被拒时人以为复制成了）
-  const [复制出错, 设复制出错] = useState<string | undefined>(undefined)
-  const 色值 = 色格式 === "hex" ? accent : hex转三元组(accent)
-  const [色草稿, 设色草稿] = useState<string | undefined>(undefined)
-  const 解色 = (v: string): string | undefined => (isHex(v.trim()) ? v.trim().toLowerCase() : 三元组转hex(v))
-  const 色坏了 = 色草稿 !== undefined && 色草稿.trim() !== "" && 解色(色草稿) === undefined
-  const 提交色 = () => {
-    const v = 色草稿 ?? ""
-    const hex = 解色(v)
-    if (hex) setAccent(hex)
-    // 格式不对就留着红框，**不悄悄吞掉**；清空等于放弃
-    if (hex || v.trim() === "") 设色草稿(undefined)
-  }
-  const [取色中, 设取色中] = useState(false)
-  /** 自绘色盘开没开（2026-08-24）；键盘与关闭都在 ColorPanel 里自理 */
-  const [色盘中, 设色盘中] = useState(false)
-  const [悬着, 设悬着] = useState(false)
-  const [聚焦着, 设聚焦着] = useState(false)
-  useEffect(() => {
-    if (!悬着 && !聚焦着) return
-    const 听 = (e: KeyboardEvent) => {
-      // **焦点在输入框里时,Shift 是打字不是切格式**(审查 debug J1):`#`(Shift+3)与
-      // 每个大写 A–F 都会先发一次 Shift keydown,旧实现据此翻转格式并清空草稿 →
-      // 「颜色值」框根本打不进 HEX。只在悬停色卡(未聚焦输入框)时才用 Shift 切 hex/rgb。
-      if (e.key === "Shift" && !(document.activeElement instanceof HTMLInputElement)) {
-        设色格式((f) => (f === "hex" ? "rgb" : "hex"))
-        设色草稿(undefined)
-      }
-    }
-    window.addEventListener("keydown", 听)
-    return () => window.removeEventListener("keydown", 听)
-  })
-  const 复制色值 = () =>
-    void navigator.clipboard.writeText(色值).then(() => {
-      设复制出错(undefined)
-      设已复制(true)
-      setTimeout(() => 设已复制(false), 1200)
-    }).catch((e: unknown) => {
-      // 出声，不只 console：剪贴板被拒（焦点不在窗口）时，人以为粘出来的是这个色值
-      设复制出错(tf("复制不了：{0}", e instanceof Error ? e.message : String(e)))
-      setTimeout(() => 设复制出错(undefined), 2400)
-    })
-
+  const background = useStore($background)
+  const chatColor = useStore(chatBackground.store)
+  const settingsColor = useStore(settingsBackground.store)
   return (
     <Section>
       {/**
@@ -435,87 +385,17 @@ export function AppearancePanel() {
           ))}
         </div>
       </Row>
-      {/**
-        * **主题色**（2026-08-23 作者要的：「一键改为其他颜色」）。
-        * 六个预置 + 系统取色器；选的瞬间整屏就变（种子只有一个）。
-        * 「活着」跟着它，「对错」仍是红绿——见 state/accent.ts 头注。
-        */}
       <Row name={t("主题色")} desc={t("主动作、选中态与正在运行的标记都用它。")}>
-        <div className="accent-choices">
-          {/* 上一行：预置色（2026-08-24 作者定的两行布局） */}
-          <div className="accent-row" role="radiogroup" aria-label={t("强调色选择")}>
-          {ACCENT_PRESETS.map((o) => (
-            <button
-              key={o.hex}
-              type="button"
-              className={`accent-swatch${accent === o.hex ? " current" : ""}`}
-              style={{ background: o.hex }}
-              role="radio"
-              aria-checked={accent === o.hex}
-              aria-label={预置色名(o.name)}
-              title={预置色名(o.name)}
-              onClick={() => setAccent(o.hex)}
-            />
-          ))}
-          </div>
-          {/* 下一行：系统色盘 + 屏幕取色器 + 颜色值 */}
-          <div className="accent-row">
-          {/* 色盘（2026-08-24 作者拍板自绘）：C 复制 / Shift 切格式 / 点一下定色 / Esc，都长在面板里——系统面板是另一个窗口，这些键够不着它 */}
-          <span className="accent-custom-wrap">
-            <button
-              type="button"
-              className={`accent-swatch accent-custom${ACCENT_PRESETS.some((o) => o.hex === accent) ? "" : " current"}`}
-              aria-label={t("色盘")}
-              onClick={() => 设色盘中((v) => !v)}
-            />
-            {色盘中 ? (
-              <ColorPanel
-                accent={accent}
-                onPick={setAccent}
-                onClose={() => 设色盘中(false)}
-                onEyedropper={() => {
-                  设色盘中(false)
-                  设取色中(true)
-                }}
-              />
-            ) : null}
-          </span>
-          <span
-            className="accent-value-wrap"
-            onMouseEnter={() => 设悬着(true)}
-            onMouseLeave={() => 设悬着(false)}
-          >
-            <input
-              className="control accent-value"
-              data-format={色格式}
-              data-invalid={色坏了 ? "1" : undefined}
-              value={色草稿 ?? 色值}
-              spellCheck={false}
-              aria-label={t("颜色值，可输入 HEX 或 RGB")}
-              aria-invalid={色坏了 || undefined}
-              onChange={(e) => 设色草稿(e.target.value)}
-              onFocus={() => 设聚焦着(true)}
-              onBlur={() => {
-                设聚焦着(false)
-                提交色()
-              }}
-              onKeyDown={(e) => {
-                // 输入法组词途中那一下按键属于输入法（2026-09-06，`src/ui/ime.ts`）
-                if (在组词(e)) return
-                if (e.key === "Enter") 提交色()
-                if (e.key === "Escape") 设色草稿(undefined)
-              }}
-            />
-            <Button variant="ghost" size="icon" className="accent-copy" aria-label={t("复制颜色值")} onClick={复制色值}>
-              <复制图标 />
-            </Button>
-            {/* 悬上去就说清三件事；复制完换成「已复制」。role=status 让读屏也听到 */}
-            <span className={`accent-tip${复制出错 ? " caveat" : ""}`} role="status" aria-live="polite">
-              {复制出错 ?? (已复制 ? t("已复制") : 悬着 || 聚焦着 ? t("可输入 HEX 或 RGB，回车生效 · 点图标复制 · Shift 切换格式") : "")}
-            </span>
-          </span>
-          </div>
-        </div>
+        <AppearanceColorControl kind="accent" value={accent} onChange={setAccent} />
+      </Row>
+      <Row name={t("背景色")} desc={t("侧边栏与顶部栏的底色，随明暗主题调整深浅。")}>
+        <AppearanceColorControl kind="background" value={background ?? DEFAULT_BACKGROUND} onChange={setBackground} selected={background !== null} onReset={() => setBackground(null)} />
+      </Row>
+      <Row name={t("对话内容背景色")} desc={t("对话区域的底色。")}>
+        <AppearanceColorControl kind="chat" value={chatColor ?? DEFAULT_CONTENT_BACKGROUND} onChange={chatBackground.set} selected={chatColor !== null} onReset={() => chatBackground.set(null)} />
+      </Row>
+      <Row name={t("设置页背景色")} desc={t("设置内容区域的底色。")}>
+        <AppearanceColorControl kind="settings" value={settingsColor ?? DEFAULT_CONTENT_BACKGROUND} onChange={settingsBackground.set} selected={settingsColor !== null} onReset={() => settingsBackground.set(null)} />
       </Row>
       <Row name={t("工作步骤展示")} desc={workStepMode === "simple" ? t("简洁：已完成过程收起") : t("标准：已完成过程展开")}>
         <div className="theme-choices" role="radiogroup" aria-label={t("工作步骤展示")}>
@@ -528,7 +408,7 @@ export function AppearancePanel() {
               aria-checked={workStepMode === mode}
               onClick={() => setWorkStepMode(mode)}
             >
-              {t(mode === "simple" ? "简洁" : "标准")}
+              {mode === "simple" ? t("简洁") : t("标准")}
             </Button>
           ))}
         </div>
@@ -549,7 +429,6 @@ export function AppearancePanel() {
           <output htmlFor="chat-font-size">{chatSize}px</output>
         </div>
       </Row>
-      {取色中 ? <Eyedropper onPick={setAccent} onClose={() => 设取色中(false)} /> : null}
     </Section>
   )
 }

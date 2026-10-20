@@ -4,6 +4,7 @@ import { App } from "./App.js"
 import { ErrorBoundary } from "./ErrorBoundary.js"
 import { loadTheme } from "./state/theme.js"
 import { loadAccent } from "./state/accent.js"
+import { loadBackground, chatBackground, settingsBackground } from "./state/background.js"
 import { loadSidebar } from "./state/sidebar.js"
 import { loadFileTree, loadRightDock } from "./state/right-dock.js"
 import { loadSettingsSection } from "./state/view.js"
@@ -23,6 +24,9 @@ import "./styles.css"
  */
 loadTheme()
 loadAccent()
+loadBackground()
+chatBackground.load()
+settingsBackground.load()
 
 /**
  * 侧栏的宽度与折叠**也在第一帧之前读回**（2026-08-13）。

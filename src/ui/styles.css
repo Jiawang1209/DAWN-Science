@@ -23,7 +23,7 @@
 body {
   margin: 0;
   font: var(--dawn-ui-size) / var(--dawn-ui-leading) var(--dawn-font-sans);
-  background: var(--dawn-surface-app);
+  background: var(--dawn-surface-frame);
   color: var(--dawn-text-1);
 }
 
@@ -473,7 +473,7 @@ pre {
    * 这条由 design-contract 扫描强制：带 `backdrop-filter` 的规则必须同时有
    * `--dawn-shadow-float`。
    */
-  background: var(--dawn-surface-sidebar);
+  background: var(--dawn-surface-shell);
   /**
    * 竖向照旧可滚；**横向一律裁掉**——收合与展开的两段动画里，
    * 内容都比容器宽（那正是「不被压扁」的做法），
@@ -7071,7 +7071,7 @@ pre {
 }
 .session-tabs::-webkit-scrollbar { display: none; }
 /* 项目/服务器的一段或多段会话直接进入顶栏，替代重复的独立标题。 */
-.session-tabs-topbar { flex: 1 1 auto; min-width: 0; padding: 0; border-bottom: 0; }
+.session-tabs-topbar { flex: 1 1 auto; min-width: 0; padding: 0; border-bottom: 0; background: var(--dawn-surface-shell); }
 .session-tabs-topbar .session-tab-wrap { width: 14rem; max-width: 100%; }
 .session-tabs-topbar .session-tab-title { font-size: var(--dawn-fs-display-conversation); line-height: 24px; font-weight: var(--dawn-weight-medium); color: inherit; }
 .session-tab-wrap[draggable="true"] { cursor: grab; }
@@ -7153,9 +7153,24 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .settings-body input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }
 
 /* ── 主题色选择（2026-08-23） ───────────────────────────────── */
-/* 两行（2026-08-24 作者定的）：上行预置色，下行系统色盘 + 吸管 + 颜色值。右对齐与设置行的控件列一致 */
-.accent-choices { display: flex; flex-direction: column; align-items: flex-end; gap: var(--dawn-space-2); }
+/* 颜色控件同排；两行设置保留相同的操作列，输入框与复制按钮上下对齐。 */
+.accent-choices { display: grid; grid-template-columns: max-content max-content 26px; align-items: center; gap: var(--dawn-space-2); }
 .accent-row { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.color-reset-wrap { position: relative; display: inline-flex; }
+@media (max-width: 1200px) {
+  .set-row:has(.accent-choices) { grid-template-columns: minmax(0, 1fr); gap: var(--dawn-space-2); }
+  .set-row:has(.accent-choices) > .set-control { justify-content: flex-end; min-width: 0; }
+}
+@media (max-width: 1050px) {
+  .accent-choices { grid-template-columns: max-content 26px; }
+  .accent-choices > [role="radiogroup"] { grid-column: 1 / -1; }
+  .accent-choices > .color-reset-wrap { grid-column: 2; }
+}
+.settings-column .accent-choices { display: flex; flex-direction: column; align-items: stretch; width: max-content; max-width: 100%; min-width: 0; }
+.settings-column .accent-choices > .accent-row { flex-wrap: wrap; justify-content: space-between; }
+.settings-column .accent-choices .accent-value-wrap { flex: 0 1 auto; max-width: 100%; min-width: 0; }
+.settings-column .accent-choices .accent-value { width: 9em; min-width: 0; flex: 0 1 auto; }
+.settings-column .color-reset-wrap { align-self: flex-end; }
 /* 色块：与 `sm` 片状键同高（26px）；当前那颗外面套一圈主题色环 */
 .accent-swatch {
   position: relative;
@@ -7178,7 +7193,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .accent-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 /* 颜色值那一格（2026-08-24）：一个输入框 + 复制图标；提示浮在下方，悬停 / 聚焦时出现 */
 .accent-value-wrap { position: relative; display: inline-flex; align-items: center; gap: 2px; }
-.accent-choices .accent-value { width: 11.5em; height: 26px; padding: 0 var(--dawn-space-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.accent-choices .accent-value { width: 9em; height: 26px; padding: 0 var(--dawn-space-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
 .accent-choices .accent-value[data-invalid] { border-color: var(--dawn-danger); }
 .accent-choices .accent-value[data-invalid]:focus-visible { outline-color: var(--dawn-danger); }
 .accent-copy { width: 26px; height: 26px; }
@@ -7228,7 +7243,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   background: transparent;
 }
 .cpanel .dropper-val { font-size: var(--dawn-fs-meta); }
-.accent-tip {
+.accent-tip, .background-tip, .color-reset-tip {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
@@ -7244,7 +7259,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   box-shadow: var(--dawn-shadow-float);
   pointer-events: none;
 }
-.accent-tip:empty { display: none; }
+.accent-tip:empty, .background-tip:empty { display: none; }
+.color-reset-tip { display: none; }
+.color-reset-wrap:hover > .color-reset-tip,
+.color-reset-wrap:focus-within > .color-reset-tip { display: block; }
 
 /* ── 取色器（2026-08-24） ─────────────────────────────────────── */
 .dropper { position: fixed; inset: 0; z-index: var(--z-modal-popover); cursor: crosshair; }
@@ -7688,6 +7706,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .side-chat { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
 /* 侧边与主区共用 panel 面；输入卡通过已有描边、阴影和聚焦环保持边界。 */
 .side-chat:not(.side-chat-empty) { background: var(--dawn-surface-panel); }
+:root[data-chat-background] .side-chat:not(.side-chat-empty) { background: var(--dawn-surface-chat-content); }
 /* 坞内标题（点 + 名字），用量在下一行，与主区共用 16px 标题字号。 */
 .side-chat-head {
   display: flex;
@@ -8101,7 +8120,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .conn-dialog { width: min(480px, calc(100vw - 48px)); }
 .app-shell .body { column-gap: var(--dawn-space-2); padding: 0 var(--dawn-space-2) var(--dawn-space-2) 0; }
 .app-shell .body > .main { background: var(--dawn-surface-panel); border-radius: var(--dawn-radius-lg); }
-.right-dock { background: var(--dawn-surface-sidebar); border-radius: var(--dawn-radius-lg); }
+:root[data-chat-background] .app-shell .body > .main:has(> .conversation) { background: var(--dawn-surface-chat-content); }
+:root[data-settings-background] .app-shell .body > .main:has(> .settings-page) { background: var(--dawn-surface-settings); }
+:root[data-settings-background] .settings-page, :root[data-settings-background] .settings-column {
+  --dawn-surface-panel: var(--dawn-surface-settings);
+  --dawn-surface-elevated: var(--dawn-surface-settings-card);
+}
+.right-dock { background: var(--dawn-surface-shell); border-radius: var(--dawn-radius-lg); }
 .side-actions > .side-action:first-child { min-height: 48px; justify-content: center; margin-block: var(--dawn-space-3) var(--dawn-space-2); color: var(--dawn-on-accent); background: var(--dawn-accent-solid); font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-medium); }
 .side-actions > .side-action:first-child svg { color: inherit; }
 .side-scroll { padding-top: var(--dawn-space-2); }
@@ -8277,7 +8302,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 
 /* 最后确认稿：输入与浅灰辅助栏共用外框；两侧面板同色，正文保持独立白面。 */
-.topbar { gap: var(--dawn-space-2); background: var(--dawn-surface-sidebar); }
+.topbar { gap: var(--dawn-space-2); background: var(--dawn-surface-shell); }
 .topbar .brand-stack { flex: 0 1 auto; max-width: calc(var(--dawn-sidebar-content-w) - var(--dawn-space-8) - var(--dawn-space-2)); min-width: 0; }
 .topbar .brand { max-width: 100%; min-width: 0; overflow: hidden; }
 .topbar .brand-mark { flex: 0 0 auto; }

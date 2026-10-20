@@ -479,6 +479,32 @@ describe("设计契约 · 已经踩过的坑", () => {
  * 回退值就是这样把「令牌不存在」这件事藏住的。
  */
 describe("设计契约 · 几何只从令牌来", () => {
+  it("自选背景只覆盖frame/shell，不覆盖输入、设置和消息工作面", () => {
+    for (const selector of [":root[data-background]", ":root.dawn-dark[data-background]"]) {
+      const start = read("tokens.css").indexOf(`${selector} {`)
+      expect(start).toBeGreaterThan(-1)
+      const block = read("tokens.css").slice(start, read("tokens.css").indexOf("}", start))
+      expect([...block.matchAll(/(--theme-[a-z-]+):/g)].map(match => match[1]).sort()).toEqual(["--theme-surface-frame", "--theme-surface-shell"])
+    }
+  })
+
+  it("对话与设置自选底色不覆盖输入工作面", () => {
+    expect(read("styles.css")).toContain(":root[data-chat-background] .app-shell .body > .main:has(> .conversation)")
+    expect(read("styles.css")).toContain(":root[data-settings-background] .settings-page, :root[data-settings-background] .settings-column")
+    for (const mode of ["", ".dawn-dark"]) {
+      for (const [kind, expected] of [
+        ["chat", ["--theme-surface-chat-content"]],
+        ["settings", ["--theme-surface-settings", "--theme-surface-settings-card"]],
+      ] as const) {
+        const selector = `:root${mode}[data-${kind}-background] {`
+        const start = read("tokens.css").indexOf(selector)
+        expect(start).toBeGreaterThan(-1)
+        const block = read("tokens.css").slice(start, read("tokens.css").indexOf("}", start))
+        expect([...block.matchAll(/(--theme-[a-z-]+):/g)].map(match => match[1]).sort()).toEqual([...expected].sort())
+      }
+    }
+  })
+
   it("**`var()` 不许带回退值** —— 回退值是同一个数的第二个家，而且是悄悄生效的那个", () => {
     const offenders = ["styles.css", "tokens.css"].flatMap((f) =>
       findLines(read(f), (l) => /var\(\s*--[a-z0-9-]+\s*,/.test(l)).map((x) => `${f} ${x}`),

@@ -3,41 +3,39 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { expect, it, vi } from "vitest"
 import { ConversationActions } from "../../src/ui/conversation-actions.js"
 
-it("菜单键盘导航可到导出，选择后关闭、导出并回到触发按钮", () => {
+it("直接显示查找和导出，点一次执行，不经过更多菜单", () => {
   const triggerRef = createRef<HTMLButtonElement>()
   const onFind = vi.fn(), onExport = vi.fn()
   render(<ConversationActions title="监测分析" triggerRef={triggerRef} onFind={onFind} onExport={onExport} />)
-  fireEvent.click(triggerRef.current!)
-  const find = screen.getByRole("menuitem", { name: /查找当前对话/ })
-  const download = screen.getByRole("menuitem", { name: "导出对话" })
-  expect(document.activeElement).toBe(find)
-  fireEvent.keyDown(find, { key: "ArrowDown" })
-  expect(document.activeElement).toBe(download)
-  fireEvent.keyDown(download, { key: "ArrowUp" })
-  expect(document.activeElement).toBe(find)
-  fireEvent.keyDown(find, { key: "End" })
-  expect(document.activeElement).toBe(download)
-  fireEvent.click(download)
-  expect(onExport).toHaveBeenCalledOnce()
-  expect(onFind).not.toHaveBeenCalled()
   expect(screen.queryByRole("menu")).toBeNull()
-  expect(document.activeElement).toBe(triggerRef.current)
+  fireEvent.click(screen.getByRole("button", { name: "查找当前对话" }))
+  expect(onFind).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole("button", { name: "导出对话" }))
+  expect(onExport).toHaveBeenCalledOnce()
+  expect(triggerRef.current).toBe(screen.getByRole("button", { name: "查找当前对话" }))
 })
 
-it("导出中禁止再次导出，键盘跳过禁用项；没有导出回调时不提供该项", () => {
+it("导出中禁止重复执行；没有导出回调时不提供该项", () => {
   const triggerRef = createRef<HTMLButtonElement>()
   const onExport = vi.fn()
   const r = render(<ConversationActions title="监测分析" triggerRef={triggerRef} onFind={vi.fn()} onExport={onExport} exporting />)
-  fireEvent.click(triggerRef.current!)
-  const find = screen.getByRole("menuitem", { name: /查找当前对话/ })
-  const download = screen.getByRole("menuitem", { name: "导出对话" }) as HTMLButtonElement
+  const download = screen.getByRole("button", { name: "导出对话" }) as HTMLButtonElement
   expect(download.disabled).toBe(true)
-  fireEvent.keyDown(find, { key: "ArrowDown" })
-  expect(document.activeElement).toBe(find)
   fireEvent.click(download)
   expect(onExport).not.toHaveBeenCalled()
-  fireEvent.keyDown(find, { key: "Escape" })
   r.rerender(<ConversationActions title="监测分析" triggerRef={triggerRef} onFind={vi.fn()} />)
-  fireEvent.click(triggerRef.current!)
-  expect(screen.queryByRole("menuitem", { name: "导出对话" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "导出对话" })).toBeNull()
+})
+
+it("两个动作使用图标按钮，并关联各自的文字提示", () => {
+  render(<ConversationActions title="监测分析" triggerRef={createRef<HTMLButtonElement>()} onFind={vi.fn()} onExport={vi.fn()} />)
+  for (const name of ["查找当前对话", "导出对话"]) {
+    const button = screen.getByRole("button", { name })
+    expect(button.querySelector("svg")).not.toBeNull()
+    expect(button.textContent).toBe("")
+    expect(button.hasAttribute("title")).toBe(false)
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!)
+    expect(tip?.getAttribute("role")).toBe("tooltip")
+    expect(tip?.textContent).toBe(name)
+  }
 })

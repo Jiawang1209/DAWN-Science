@@ -384,6 +384,7 @@ export const EN: Readonly<Record<string, string>> = {
   "家目录": "Home folder",
   "重命名会话：{0}": "Rename chat: {0}",
   "选择会话：{0}": "Select chat: {0}",
+  "会话工具栏": "Chat toolbar",
   "会话操作：{0}": "Chat actions: {0}",
   "项目操作：{0}": "Project actions: {0}",
   "选择项目：{0}": "Select project: {0}",

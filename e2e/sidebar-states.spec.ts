@@ -148,7 +148,10 @@ test("坞开得起来也收得回去，**对话全程都在**；那颗按钮两�
   }
   await page.getByRole("button", { name: "更多面板", exact: true }).click()
   for (const 名 of ["审阅", "概览", "网页"]) {
-    await expect(page.getByRole("menuitem", { name: 名, exact: true })).toBeVisible()
+    // 自适应标签可能将当前面板升为常驻；所有入口仍须在标签或更多中可见。
+    const tab = page.getByRole("tab", { name: 名, exact: true })
+    if (await tab.count()) await expect(tab).toBeVisible()
+    else await expect(page.getByRole("menuitem", { name: 名, exact: true })).toBeVisible()
   }
   await page.keyboard.press("Escape")
   await page.getByRole("tab", { name: "文件", exact: true }).click()

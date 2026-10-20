@@ -7,10 +7,33 @@ import { 年月日时分 } from "../../src/ui/format.js"
 import { SessionTranscripts } from "../../src/workbench/events.js"
 
 describe("当前会话内容搜索", () => {
-  it.each(["ctrlKey", "metaKey"])("%s+F 打开并重选当前关键词；Escape 返回输入框且保留草稿", (modifier) => {
+  it("使用简短计数和图标导航，完整状态仍可读，按钮能循环查找", () => {
+    const jump = vi.fn()
+    render(<ConversationSearch items={[
+      { type: "turn", id: "u1", who: "user", text: "鲸落一", final: true },
+      { type: "turn", id: "u2", who: "user", text: "鲸落二", final: true },
+    ]} onJump={jump} onClose={vi.fn()} />)
+    expect(document.querySelector(".conversation-search-count")?.textContent).toBe("")
+    const prev = screen.getByRole("button", { name: "上一条匹配" })
+    const next = screen.getByRole("button", { name: "下一条匹配" })
+    for (const button of [prev, next, screen.getByRole("button", { name: "收起查找" })]) {
+      expect(button.textContent).toBe("")
+      expect(button.querySelector("svg")).not.toBeNull()
+      expect(document.getElementById(button.getAttribute("aria-describedby")!)).not.toBeNull()
+    }
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "鲸落" } })
+    expect(document.querySelector(".conversation-search-count")?.textContent).toBe("1/2")
+    expect(screen.getByRole("status").textContent).toBe("1 / 2 条匹配")
+    fireEvent.click(prev)
+    expect(jump).toHaveBeenLastCalledWith("u2", ["鲸落"])
+    fireEvent.click(next)
+    expect(jump).toHaveBeenLastCalledWith("u1", ["鲸落"])
+  })
+  it.each(["ctrlKey", "metaKey"])("%s+F 切换查找开关；Escape 返回输入框且保留草稿", (modifier) => {
     const session = { sessionId: "find", projectId: "p1", agentId: "ds-chat", kind: "native" as const, pinned: false, sortOrder: 0, state: "alive" as const, createdAt: "2026-10-14T00:00:00Z" }
     const r = render(<ConversationView session={session} items={[]} onSend={vi.fn()} />)
     const composer = r.container.querySelector(".composer-card textarea") as HTMLTextAreaElement
+    fireEvent.change(composer, { target: { value: "保留草稿" } })
     composer.focus()
     fireEvent.keyDown(composer, { key: "f", [modifier]: true, isComposing: true })
     expect(screen.queryByRole("searchbox")).toBeNull()
@@ -18,10 +41,15 @@ describe("当前会话内容搜索", () => {
     const search = screen.getByRole("searchbox") as HTMLInputElement
     expect(document.activeElement).toBe(search)
     fireEvent.change(search, { target: { value: "鲸落" } })
+    fireEvent.keyDown(search, { key: "f", [modifier]: true, repeat: true })
+    expect(screen.getByRole("searchbox")).toBe(search)
     fireEvent.keyDown(search, { key: "f", [modifier]: true })
-    expect(search.selectionStart).toBe(0)
-    expect(search.selectionEnd).toBe(2)
-    fireEvent.keyDown(search, { key: "Escape" })
+    expect(screen.queryByRole("searchbox")).toBeNull()
+    expect(document.activeElement).toBe(composer)
+    expect(composer.value).toBe("保留草稿")
+    fireEvent.keyDown(composer, { key: "f", [modifier]: true })
+    expect(document.activeElement).toBe(screen.getByRole("searchbox"))
+    fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Escape" })
     expect(screen.queryByRole("searchbox")).toBeNull()
     expect(document.activeElement).toBe(composer)
   })

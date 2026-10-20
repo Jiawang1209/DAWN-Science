@@ -3817,7 +3817,7 @@ export function ConversationView({
   headerTarget,
   headerHasTabs,
 }: {
-  /** 主对话的会话头进入应用顶栏；坞内会话留在原位。 */
+  /** 主对话标题进入应用顶栏，动作留在内容区；坞内会话头留在原位。 */
   headerTarget?: HTMLElement | null | undefined
   /** App顶栏已有同处页签时不再重复画单标题；页签DOM不随会话卸载。 */
   headerHasTabs?: boolean
@@ -4585,19 +4585,6 @@ export function ConversationView({
     设会话搜索开(true)
     设会话搜索聚焦(n => n + 1)
   }, [])
-  useEffect(() => {
-    const find = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || e.isComposing || e.keyCode === 229 || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "f") return
-      const target = e.target instanceof HTMLElement ? e.target : document.activeElement as HTMLElement | null
-      if (target?.closest('[role="dialog"], [role="menu"], .xterm, .term-host')) return
-      const focusedConversation = target?.closest(".conversation")
-      if (focusedConversation ? focusedConversation !== 对话根.current : 紧凑 || target?.closest(".right-dock, .settings-column, .dock")) return
-      e.preventDefault()
-      开会话搜索()
-    }
-    document.addEventListener("keydown", find)
-    return () => document.removeEventListener("keydown", find)
-  }, [开会话搜索, 紧凑, session.sessionId])
   const 会话搜索序 = useRef(0)
   const 跳会话命中 = useCallback((id: string, words: string[]) => {
     设会话搜索错误(undefined)
@@ -4605,7 +4592,7 @@ export function ConversationView({
     会话搜索序.current = Math.max(Date.now(), 会话搜索序.current + 1)
     设会话搜索目标({ sessionId: session.sessionId, itemId: id, nth: 0, 词们: words, 起: 会话搜索序.current })
   }, [session.sessionId])
-  const 关会话搜索 = () => {
+  const 关会话搜索 = useCallback(() => {
     设会话搜索开(false)
     设会话搜索目标(undefined)
     设搜索命中id(undefined)
@@ -4614,7 +4601,22 @@ export function ConversationView({
     const origin = 会话搜索来源.current
     if (origin?.isConnected) origin.focus()
     else 会话搜索按钮.current?.focus()
-  }
+  }, [])
+  useEffect(() => {
+    const find = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing || e.keyCode === 229 || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "f") return
+      const target = e.target instanceof HTMLElement ? e.target : document.activeElement as HTMLElement | null
+      if (target?.closest('[role="dialog"], [role="menu"], .xterm, .term-host')) return
+      const focusedConversation = target?.closest(".conversation")
+      if (focusedConversation ? focusedConversation !== 对话根.current : 紧凑 || target?.closest(".right-dock, .settings-column, .dock")) return
+      e.preventDefault()
+      if (e.repeat) return
+      if (会话搜索开) 关会话搜索()
+      else 开会话搜索()
+    }
+    document.addEventListener("keydown", find)
+    return () => document.removeEventListener("keydown", find)
+  }, [会话搜索开, 关会话搜索, 开会话搜索, 紧凑, session.sessionId])
   useEffect(() => {
     设会话搜索开(false)
     设会话搜索目标(undefined)
@@ -4738,11 +4740,8 @@ export function ConversationView({
             <h1 className="conv-title" title={session.title ?? t("新对话")}>{session.title ?? t("新对话")}</h1>
           </>}
         </div> : null}
-        {主顶栏 ? <span className="export-anchor"><ConversationActions key={session.sessionId} title={session.title ?? t("新对话")} triggerRef={会话搜索按钮} onFind={开会话搜索}
-          onExport={onExport && items.some(x => x.type === "turn") ? 导出对话 : undefined} exporting={导出中} />
-          {导出说 ? <导出提示 {...导出说} onDone={() => 设导出说(undefined)} /> : null}</span> :
-          <Button ref={会话搜索按钮} variant="ghost" size="sm" className="conv-search-toggle" aria-label={t("查找内容")}
-            aria-expanded={会话搜索开} onClick={() => 会话搜索开 ? 关会话搜索() : 开会话搜索()}>{t("查找内容")}</Button>}
+        {!主顶栏 ? <Button ref={会话搜索按钮} variant="ghost" size="sm" className="conv-search-toggle" aria-label={t("查找内容")}
+            aria-expanded={会话搜索开} onClick={() => 会话搜索开 ? 关会话搜索() : 开会话搜索()}>{t("查找内容")}</Button> : null}
         {/**
           * **不是内置那条时说一声**（2026-08-12）。
           *
@@ -4845,6 +4844,11 @@ export function ConversationView({
       {/* agent 名与 kind 已经搬到 composer 的 pill 里——**一个事实只显示一次**。
           这里留下的是会话生死与中止入口，它们属于顶部 */}
       {主顶栏 ? createPortal(会话头, 主顶栏) : 会话头}
+      {主顶栏 ? <div className="conversation-toolbar" role="toolbar" aria-label={t("会话工具栏")}>
+        <span className="export-anchor"><ConversationActions key={session.sessionId} title={session.title ?? t("新对话")} triggerRef={会话搜索按钮} onFind={开会话搜索}
+          onExport={onExport && items.some(x => x.type === "turn") ? 导出对话 : undefined} exporting={导出中} />
+          {导出说 ? <导出提示 {...导出说} onDone={() => 设导出说(undefined)} /> : null}</span>
+      </div> : null}
       {会话搜索开 ? <ConversationSearch key={session.sessionId} items={items} focusSignal={会话搜索聚焦} onJump={跳会话命中} onClose={关会话搜索} /> : null}
       {会话搜索开 && 会话搜索错误 ? <p className="hint" role="alert">{会话搜索错误}</p> : null}
       {坞头?.注}

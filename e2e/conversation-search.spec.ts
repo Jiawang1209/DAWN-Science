@@ -4,20 +4,39 @@ import { 默认转录预算 } from "../src/ui/transcript-budget.js"
 
 const shots = "tmp/ui-refresh-verification/conversation-search"
 
-test("会话内搜索：折叠工具参数与输出也能定位", async ({ dawn }) => {
+test("会话内搜索：折叠工具参数与输出也能定位", async ({ dawn }, info) => {
   const { page } = dawn
   await 开一段临时会话(page, "跑个 Cox 看看")
   await expect(page.locator(".completed-process-head")).toBeVisible()
   const process = page.locator(".completed-process-head")
   if (await process.getAttribute("aria-expanded") === "true") await process.click()
   await expect(page.locator(".tool")).toHaveCount(0)
-  await page.locator(".topbar .conv-actions-trigger").click()
-  await page.getByRole("menuitem", { name: /查找当前对话/ }).click()
+  await page.locator("main.main").getByRole("button", { name: "查找当前对话", exact: true }).click()
+  const findCard = page.locator(".conversation-search")
+  expect((await findCard.boundingBox())!.width).toBeLessThanOrEqual(448)
+  expect((await findCard.boundingBox())!.height).toBeLessThanOrEqual(48)
+  const centered = async () => {
+    const card = (await findCard.boundingBox())!
+    const conversation = (await page.locator("main.main .conversation").boundingBox())!
+    return Math.abs(card.x + card.width / 2 - conversation.x - conversation.width / 2)
+  }
+  expect(await centered()).toBeLessThanOrEqual(1)
   await page.getByRole("searchbox").fill("coxph")
   await expect(page.locator(".conversation-search [role=status]")).toHaveText("1 / 1 条匹配")
   await expect(page.locator('.tool[data-search-hit="true"]')).toHaveClass(/\bopen\b/)
   await expect(process).toHaveAttribute("aria-expanded", "true")
   await expect(page.locator('.tool[data-search-hit="true"]')).toContainText("coxph")
+  await expect(findCard.locator(".conversation-search-count")).toHaveText("1/1")
+  await expect(findCard.getByRole("searchbox")).toHaveCSS("outline-style", "none")
+  for (const label of ["上一条匹配", "下一条匹配", "收起查找"]) {
+    const button = findCard.getByRole("button", { name: label, exact: true })
+    await expect(button.locator("svg")).toHaveCount(1)
+    await expect(button).toHaveText("")
+    await button.hover()
+    await expect(findCard.getByRole("tooltip")).toHaveText(label)
+    await page.mouse.move(0, 0)
+  }
+  await page.screenshot({ path: info.outputPath("compact-find-card.png"), animations: "disabled" })
 })
 
 test("会话内搜索：独立范围、导航与输入法，搜索不影响草稿", async ({ dawn }) => {
@@ -29,8 +48,7 @@ test("会话内搜索：独立范围、导航与输入法，搜索不影响草�
   await composer.press("Enter")
   await expect(page.locator(".turn.agent").last()).toContainText("假模型已应答")
   await composer.fill("保留这份草稿")
-  await page.locator(".topbar .conv-actions-trigger").click()
-  await page.getByRole("menuitem", { name: /查找当前对话/ }).click()
+  await page.locator("main.main").getByRole("button", { name: "查找当前对话", exact: true }).click()
   const search = page.getByRole("searchbox", { name: "搜索当前会话内容" })
   await expect(search).toBeFocused()
   await search.fill("鲸落")
@@ -48,7 +66,7 @@ test("会话内搜索：独立范围、导航与输入法，搜索不影响草�
   await expect(composer).toHaveValue("保留这份草稿")
   await search.press("Escape")
   await expect(search).toHaveCount(0)
-  await expect(page.locator(".topbar .conv-actions-trigger")).toBeFocused()
+  await expect(page.locator("main.main").getByRole("button", { name: "查找当前对话", exact: true })).toBeFocused()
   await expect(composer).toHaveValue("保留这份草稿")
 })
 
@@ -64,8 +82,7 @@ test("会话内搜索：预算之外仍能跳到，亮暗和窄窗口不溢出",
     await expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
   }
   await expect(page.locator(".turn.user").filter({ hasText: "旧历史鲸落" })).toHaveCount(0)
-  await page.locator(".topbar .conv-actions-trigger").click()
-  await page.getByRole("menuitem", { name: /查找当前对话/ }).click()
+  await page.locator("main.main").getByRole("button", { name: "查找当前对话", exact: true }).click()
   await page.getByRole("searchbox").fill("鲸落")
   const hit = page.locator('.turn.user[data-search-hit="true"]')
   await expect(hit).toContainText("旧历史鲸落")
@@ -78,12 +95,14 @@ test("会话内搜索：预算之外仍能跳到，亮暗和窄窗口不溢出",
   await page.screenshot({ path: `${shots}/light.png`, animations: "disabled" })
   await page.setViewportSize({ width: 900, height: 700 })
   expect(await page.locator(".conversation-search").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  const card = (await page.locator(".conversation-search").boundingBox())!
+  const conversation = (await page.locator("main.main .conversation").boundingBox())!
+  expect(Math.abs(card.x + card.width / 2 - conversation.x - conversation.width / 2)).toBeLessThanOrEqual(1)
   await page.screenshot({ path: `${shots}/narrow.png`, animations: "disabled" })
   await 进设置(page, "外观")
   await page.getByRole("radio", { name: "暗色", exact: true }).click()
   await page.getByRole("button", { name: "返回", exact: true }).click()
-  await page.locator(".topbar .conv-actions-trigger").click()
-  await page.getByRole("menuitem", { name: /查找当前对话/ }).click()
+  await page.locator("main.main").getByRole("button", { name: "查找当前对话", exact: true }).click()
   await page.getByRole("searchbox").fill("鲸落")
   await expect(page.locator(".conversation-search [role=status]")).toHaveText("1 / 1 条匹配")
   await page.screenshot({ path: `${shots}/dark.png`, animations: "disabled" })

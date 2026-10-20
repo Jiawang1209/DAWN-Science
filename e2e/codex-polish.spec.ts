@@ -22,12 +22,11 @@ test("**③ 统计条**：输入框下方写轮数；**④ 导出**：下载目�
   await 开一段临时会话(page)
   await 说(page, "第一句话")
   await 说(page, "第二句话")
-  const 头 = page.locator(".conv-head")
+  const 头 = page.locator(".conversation-toolbar")
   await expect(page.locator(".composer .session-usage")).toContainText("2 轮")
 
   const 下载 = join(dir, "downloads")
-  await 头.locator(".conv-actions-trigger").click()
-  await 头.getByRole("menuitem", { name: "导出对话", exact: true }).click()
+  await 头.getByRole("button", { name: "导出对话", exact: true }).click()
   // 提示是浮出来的（2026-08-27 作者改的：别钉在按钮后面），显示一会儿再淡去、然后从 DOM 里消失
   const 提示 = 头.locator(".export-toast")
   await expect(提示).toContainText("已导出 2 轮")

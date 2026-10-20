@@ -154,7 +154,6 @@ export function KernelsPanel({
   onRefresh,
   onSetInterpreter,
   onProbe,
-  saveProblems,
 }: {
   kernels: readonly KernelRow[]
   problems: readonly { dir: string; reason: string }[]
@@ -165,8 +164,6 @@ export function KernelsPanel({
   onSetInterpreter: (language: "python" | "R", path: string) => void
   /** 探测本机解释器（首启向导同款列表，2026-08-27）。不给就没有那两块 */
   onProbe?: (() => Promise<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] }>) | undefined
-  /** Save-time feedback belongs to the existing field, not a permanent diagnostics panel. */
-  saveProblems?: { python?: string | undefined; r?: string | undefined } | undefined
 }) {
   const [探到, 设探到] = useState<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] } | undefined>(undefined)
   const [探测中, 设探测中] = useState(false)
@@ -210,7 +207,6 @@ export function KernelsPanel({
         label={t("Python 解释器")}
         hint={t("需已安装 ipykernel。")}
         value={interpreters.python}
-        problem={saveProblems?.python}
         onSave={(v) => onSetInterpreter("python", v)}
       />
       <InterpreterField
@@ -218,7 +214,6 @@ export function KernelsPanel({
         label={t("R 解释器")}
         hint={t("需已安装 IRkernel。")}
         value={interpreters.r}
-        problem={saveProblems?.r}
         onSave={(v) => onSetInterpreter("R", v)}
       />
 
@@ -276,20 +271,16 @@ function InterpreterField({
   hint,
   value,
   onSave,
-  problem,
 }: {
   id: string
   label: string
   hint: string
   value: string | undefined
   onSave: (path: string) => void
-  problem?: string | undefined
 }) {
   const [draft, setDraft] = useState<string | undefined>(undefined)
   const shown = draft ?? value ?? ""
-  const visibleProblem = draft === undefined || draft === value ? problem : undefined
   return (
-    <>
     <Row name={label} desc={hint} htmlFor={id}>
       <input
         id={id}
@@ -298,8 +289,6 @@ function InterpreterField({
         placeholder={t("还没配置")}
         onChange={(e) => setDraft(e.target.value)}
         aria-label={label}
-        aria-invalid={visibleProblem ? true : undefined}
-        aria-describedby={visibleProblem ? `${id}-error` : undefined}
       />
       <Button
         variant="primary"
@@ -313,11 +302,6 @@ function InterpreterField({
         {t("保存")}
       </Button>
     </Row>
-    {visibleProblem ? <div id={`${id}-error`}>
-      <p className="field-error" role="alert">{t("解释器路径有问题，请修改后保存。")}</p>
-      <details><summary>{t("错误详情")}</summary><pre className="ip-problem">{visibleProblem}</pre></details>
-    </div> : null}
-    </>
   )
 }
 

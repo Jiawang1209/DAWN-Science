@@ -1050,8 +1050,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **没配的那个是 undefined**，界面据此显示「还没配置」而不是一个空串。
    */
   const [interpreters, setInterpreters] = useState<{ python?: string; r?: string }>({})
-  const [interpreterSaveProblems, setInterpreterSaveProblems] = useState<Partial<Record<"python" | "R", { path: string; message: string }>>>({})
-  const interpreterSaveGeneration = useRef({ python: 0, R: 0 })
   const refreshInterpreters = useCallback(() => {
     client.get<{ python?: string; r?: string }>("getInterpreters", {}).then(setInterpreters).catch(fail)
   }, [client])
@@ -1072,25 +1070,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [没有钥匙, 跳过向导])
   const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
   const saveInterpreter = useCallback(
-    (language: "python" | "R", path: string, inline = false) => {
-      const generation = ++interpreterSaveGeneration.current[language]
-      setInterpreterSaveProblems(prev => ({ ...prev, [language]: undefined }))
+    (language: "python" | "R", path: string) => {
       client
         .get<{ python?: string; r?: string; problem?: string }>("setInterpreter", { language, path })
         .then((r) => {
-          if (generation !== interpreterSaveGeneration.current[language]) return
-          const key = language === "python" ? "python" : "r"
-          setInterpreters(prev => {
-            const next = { ...prev }
-            if (r[key]) next[key] = r[key]
-            else delete next[key]
-            return next
-          })
+          setInterpreters({ ...(r.python ? { python: r.python } : {}), ...(r.r ? { r: r.r } : {}) })
           // **当场把问题说出来**：保存成功却用不了，比直接说不行更糟
-          if (r.problem && inline) setInterpreterSaveProblems(prev => ({ ...prev, [language]: { path: r[key] ?? path, message: r.problem! } }))
-          else if (r.problem) fail(new Error(r.problem))
+          if (r.problem) fail(new Error(r.problem))
         })
-        .catch(e => { if (generation === interpreterSaveGeneration.current[language]) fail(e) })
+        .catch(fail)
     },
     [client],
   )
@@ -4883,8 +4871,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     shadowed={kernels.shadowed}
     interpreters={interpreters}
     onRefresh={refreshKernels}
-    onSetInterpreter={(language, path) => saveInterpreter(language, path, true)}
-    saveProblems={{ python: interpreterSaveProblems.python?.path === interpreters.python ? interpreterSaveProblems.python?.message : undefined, r: interpreterSaveProblems.R?.path === interpreters.r ? interpreterSaveProblems.R?.message : undefined }}
+    onSetInterpreter={saveInterpreter}
     onProbe={探测解释器}
   />
 

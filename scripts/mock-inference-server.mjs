@@ -576,7 +576,8 @@ export function startMockInferenceServer(opts = {}) {
       // key 验证只要一个能解析的回答（`max_tokens: 1`，后端只看它抛不抛）；`failStatus` 在上面已经先拒了——那正是「key 不对」在 e2e 里的样子
       const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
       const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
-      const reply = 会话标题 ?? opts.scenario?.reply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const directoryTransferReply = 最后一句 === "目录传输验收" ? "目录传输由文件面板执行：使用上传文件夹或下载文件夹，展开批次查看逐文件进度、冲突和失败项。文件字节不进入模型上下文。" : undefined
+      const reply = 会话标题 ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"

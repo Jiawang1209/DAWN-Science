@@ -1,3 +1,5 @@
+import { TransferBatches } from "../remote/transfer-batches.js"
+import { missingFile } from "../remote/transfer-io.js"
 import {DeliveryService, type DeliveryOptions} from '../delivery/service.js'
 import { withSessionContext } from './session-input-context.js'
 import { BotOutputLocks, canonicalOutputPaths } from "../bot/output-locks.js"
@@ -174,6 +176,7 @@ export interface CredentialsPort {
 }
 
 export interface WorkbenchBackendOptions {
+  transferDirectory?: string
   bots?: BotStore
   configureBots?: (bridge: import("../bot/runtime.js").BotRuntimeBridge) => void
   sessionDiagnostic?: ((line: string) => void) | undefined
@@ -252,6 +255,8 @@ export interface WorkbenchBackendOptions {
   subagents?: { 全局目录?: string; 自带目录?: string; 自带停用?: ((name: string) => boolean) | undefined }
   /** 退出时要收的东西在这儿登记（2026-08-23 审查抓的：此前定时调度器的 timer、微信轮询没人停，每次退出都留孤儿） */
   注册收摊?: (f: () => Promise<void> | void) => void
+  /** 有活跃文件流时退出须先等待取消及临时文件清理。 */
+  注册退出等待?: (check: () => boolean) => void
   /**
    * 侧边对话（2026-09-24）：后端把「读主对话」交出去。运行时在后端之前就建好了，
    * 只能由 wiring 晚绑定——与 `注册收摊` 同一种「后端往外登记」的形状。不给 = 没人读得到
@@ -877,6 +882,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const t = setTimeout(() => 传输们.delete(id), 传输保留MS)
     t.unref?.()
   }
+
+  const directoryTransfers = new TransferBatches({
+    connection: id => {
+      const ex = 连着的(id)
+      const record = remote?.store.get(id)
+      if (!record) throw new UserFacingError("没有这台服务器")
+      return { remote: ex, label: record.label, key: JSON.stringify([record.host, record.port, record.username]) }
+    },
+    ...(opts.transferDirectory ? { persistDir: opts.transferDirectory } : {}),
+    ...(记一次上传 ? { uploaded: 记一次上传 } : {}),
+  })
+  opts.注册收摊?.(() => directoryTransfers.dispose())
+  opts.注册退出等待?.(() => directoryTransfers.hasActive())
 
   /**
    * 系统的下载目录。**由主进程注入**（`app.getPath("downloads")`）。
@@ -4567,7 +4585,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 已经有了 = await e
         .stat(目标)
         .then(() => true)
-        .catch(() => false)
+        .catch(error => { if (missingFile(error)) return false; throw error })
       const 正在上传 = (path: string) => 上传目标们.has(上传键(connectionId, path))
       if (已经有了 || 正在上传(目标)) {
         if (onConflict === "ask") return { kind: "conflict" as const, name }
@@ -4578,7 +4596,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           let 找到 = false
           for (let i = 1; i < 1000 && !找到; i++) {
             const 试 = `${根}/${主} (${i})${尾}`
-            const 有 = await e.stat(试).then(() => true).catch(() => false)
+            const 有 = await e.stat(试).then(() => true).catch(error => { if (missingFile(error)) return false; throw error })
             if (!有 && !正在上传(试)) {
               目标 = 试
               找到 = true
@@ -4624,6 +4642,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         .finally(() => { 上传目标们.delete(占位); 终结传输(id) })
       return { kind: "started" as const, transferId: id, target: 目标 }
     },
+
+    startDirectoryTransfer: async ({ connectionId, direction, source, targetParent }) => directoryTransfers.start({
+      connectionId, direction, source,
+      targetParent: direction === "download" ? targetParent ?? (settings?.get("download.dir") || 默认下载目录()) : targetParent ?? (() => { throw new UserFacingError("上传需要目标目录") })(),
+    }),
+    listTransferBatches: async () => directoryTransfers.list(),
+    getTransferBatch: async ({ batchId, offset, limit }) => directoryTransfers.get(batchId, offset, limit),
+    cancelTransferBatch: async ({ batchId }) => { directoryTransfers.cancel(batchId); return {} },
+    retryTransferBatch: async ({ batchId }) => { directoryTransfers.retry(batchId); return {} },
+    resolveTransferConflict: async ({ batchId, entryId, action }) => { directoryTransfers.resolveConflict(batchId, entryId, action); return {} },
 
     transferStatus: async ({ transferId }) => {
       const 一条 = 传输们.get(transferId)

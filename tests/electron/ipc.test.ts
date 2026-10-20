@@ -11,6 +11,12 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    startDirectoryTransfer: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    listTransferBatches: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    getTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    cancelTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    retryTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    resolveTransferConflict: async () => { throw new Error("Directory operation unavailable in this fixture") },
     listProjects: async () => [project],
     listBots: async () => {throw new Error("Bot operation not configured in this fixture")},
     createBot: async () => {throw new Error("Bot operation not configured in this fixture")},

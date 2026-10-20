@@ -93,6 +93,27 @@ describe("createWorkbench", () => {
     expect(existsSync(dbPath)).toBe(true)
   })
 
+  it("目录传输运行时即使没有内核也等待退出收尾，并保存中断记录", async () => {
+    const dbPath = newDbPath()
+    const wb = createWorkbench({ configPath: configFile(), dbPath, credentials: memoryCredentials(), fakeSsh: true })
+    const source = newRepo()
+    try {
+      expect(wb.needsGracefulShutdown()).toBe(false)
+      const saved = await wb.server.handle("saveConnection", { label: "传输退出测试", host: "fake.example", username: "dawn", secret: 假口令 })
+      expect(saved.ok).toBe(true)
+      const connectionId = (saved as { data: { id: string } }).data.id
+      expect((await wb.server.handle("connectRemote", { id: connectionId })).ok).toBe(true)
+      const started = await wb.server.handle("startDirectoryTransfer", { connectionId, direction: "upload", source, targetParent: "/home/dawn" })
+      expect(started.ok).toBe(true)
+      const batchId = (started as { data: { id: string } }).data.id
+      expect(wb.needsGracefulShutdown()).toBe(true)
+      await wb.closeAsync(3000)
+      const record = JSON.parse(readFileSync(join(dbPath, "..", "transfers", `${batchId}.json`), "utf8"))
+      expect(record.batch.state).toBe("interrupted")
+      expect(readFileSync(join(source, "seed.txt"), "utf8")).toBe("seed\n")
+    } finally { await wb.closeAsync(3000) }
+  })
+
   /** **T4：入口只剩「建任务」**——项目是从任务的工作目录长出来的，不再先开项目 */
   it("端到端：建一个带路径的任务 → 项目出现 → 列会话", async () => {
     const wb = createWorkbench({

@@ -1104,12 +1104,12 @@ let 正在收摊 = false
 app.on("will-quit", (e) => {
   if (正在收摊 || !workbench) return
   /**
-   * **只有内核会话才值得等。**
+   * **内核会话和活跃目录传输需要等待收尾。**
    *
    * 第一版无条件走异步收摊，结果每一次退出都多花上一秒——
    * e2e 那边 155 条用例一下子从 5 分钟变成 22 分钟，
    * 还有几条直接报 `Tearing down "dawn" exceeded the test timeout`。
-   * **为一个只在内核会话上出现的问题，让所有退出都变慢，是不划算的。**
+   * 仅有活跃资源时等待，空闲退出仍走同步路径。
    */
   if (!workbench.needsGracefulShutdown()) {
     workbench.close()

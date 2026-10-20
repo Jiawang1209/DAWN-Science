@@ -51,6 +51,12 @@ const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动
 
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
+    startDirectoryTransfer: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    listTransferBatches: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    getTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    cancelTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    retryTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },
+    resolveTransferConflict: async () => { throw new Error("Directory operation unavailable in this fixture") },
     listProjects: async () => [project],
     listBots: async () => {throw new Error("Bot operation not configured in this fixture")},
     createBot: async () => {throw new Error("Bot operation not configured in this fixture")},

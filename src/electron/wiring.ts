@@ -267,7 +267,7 @@ export interface Workbench {
   close(): void
   /** 退出前的收摊：**先停会话再关库**（否则 zeromq 的析构会让进程 SIGABRT） */
   closeAsync(timeoutMs?: number): Promise<void>
-  /** 退出时要不要等收摊。**只有内核会话需要**——其余的等一秒是白等 */
+  /** 活跃内核或目录传输需要有界等待收尾。 */
   needsGracefulShutdown(): boolean
 }
 
@@ -1144,6 +1144,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   /** 退出时要收的：定时调度器、微信轮询（backend 登记进来） */
   const 收摊们: Array<() => Promise<void> | void> = []
+  const 退出等待们: Array<() => boolean> = []
   /**
    * 更新那一套（2026-09-06）。**假 feed 与真 GitHub 只差一个端点**：
    * `DAWN_UPDATE_FEED` 一给，`dev:mock` 与 e2e 走的就是同一份解析器（准入规则 1）。
@@ -1224,6 +1225,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })()
 
   const backend = createWorkbenchBackend({
+    transferDirectory: join(dirname(opts.dbPath), "transfers"),
     bots: new BotStore(db),
     configureBots: bridge => nativeRuntime.configureBots(bridge),
     sessionDiagnostic: opts.sessionDiagnostic,
@@ -1231,6 +1233,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     // 笔记本的 runInKernel / interruptKernel、普通对话的 listVariables 都走这一台（与 run_code 同一台）
     kernels: 对话的内核,
     注册收摊: (f) => 收摊们.push(f),
+    注册退出等待: (check) => 退出等待们.push(check),
     挂上读主对话: (读) => {
       读主对话 = 读
     },
@@ -1670,9 +1673,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      *
      * **有上限**：一个停不下来的内核不该让「关掉应用」变成「关不掉」。
      */
-    /** 退出时**要不要等**：内核会话需要——含 run_code 用过的对话内核（审查 debug H1） */
+    /** 内核或目录传输仍活跃时，有界等待收尾；空闲退出不增加等待。 */
     needsGracefulShutdown() {
-      return sessions.hasLiveKernelSessions() || 对话的内核.有活内核()
+      return sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
     },
 
     async closeAsync(timeoutMs = 1500) {

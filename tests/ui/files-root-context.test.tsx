@@ -65,3 +65,10 @@ it("目录位置尚不可用时仍可使用已有初始化入口", () => {
   expect(init).toHaveBeenCalledOnce()
   expect(container.querySelector(".files-root-path")).toBeNull()
 })
+
+it("树根提供文件夹下载但不引入删除根目录入口", async () => {
+  render(<FilesView {...props()} 初始根="/srv/research" 路径={path => ({ 相对: path, 绝对: path })} onDownloadDirectory={vi.fn()} onDeleteDir={vi.fn()} />)
+  fireEvent.click(screen.getByRole("button", { name: "目录操作：/srv/research" }))
+  expect(screen.getByRole("menuitem", { name: "下载文件夹" })).toBeTruthy()
+  expect(screen.queryByRole("menuitem", { name: "删除" })).toBeNull()
+})

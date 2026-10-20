@@ -1,3 +1,4 @@
+import { TransferBatchesPanel } from "./transfer-batches.js"
 import {AnalysisDeliveryPanel} from './analysis-delivery.js'
 import {beginDelivery,deliverySelectionPaths} from './state/delivery.js'
 import {botRoomKey,updateBotRoom} from "./state/bot-room.js"
@@ -3515,7 +3516,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               }
               设传输((前) => ({ ...前, transferred: 0, state: "running", id: r.transferId, target: r.target }))
               起点.current = { 时刻: Date.now(), 已传: 0 }
-              完事()
+              const wait = async () => {
+                try {
+                  for (;;) {
+                    const status = await client.get<{ state: string }>("transferStatus", { transferId: r.transferId })
+                    if (status.state !== "running") break
+                    await new Promise(resolve => setTimeout(resolve, 200))
+                  }
+                } catch (error) { fail(error) }
+                完事()
+              }
+              void wait()
             })
             .catch((e: unknown) => {
               // **起不来也要出声**：不出声的表现是「点了上传没反应」
@@ -3554,6 +3565,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * ——那正是「看起来一切正常」的反面（2026-08-17 e2e 撞出来的）。
    */
   const [刷新令牌, 设刷新令牌] = useState(0)
+  const 目录批次完成 = useCallback(() => 设刷新令牌(n => n + 1), [])
+  const 目录传输 = useCallback(async (direction: "upload" | "download", path: string) => {
+    if (!文件所在) return
+    const owner = { ...文件所在 }
+    try {
+      const source = direction === "upload" ? await client.pickDirectory() : path
+      if (!source) return
+      const destination = direction === "upload" ? path || owner.cwd : (await client.get<{ path: string }>("getDownloadDir", {})).path
+      setConfirming({
+        title: direction === "upload" ? t("上传文件夹") : t("下载文件夹"),
+        detail: `${owner.label}\n${source} → ${destination}\n${t("保留目录层级，同名文件等待处理；不会同步删除文件。")}`,
+        confirmLabel: t("开始传输"),
+        onConfirm: () => { void client.get("startDirectoryTransfer", { connectionId: owner.connectionId, direction, source, targetParent: destination }).then(目录批次完成).catch(fail) },
+      })
+    } catch (error) { fail(error) }
+  }, [client, 文件所在, 目录批次完成])
   useEffect(() => {
     if (传输?.state === "done") 设刷新令牌((n) => n + 1)
   }, [传输?.state, 传输?.target])
@@ -3843,6 +3870,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ? {
               onDownload: 下载,
               onUpload: 上传,
+              onUploadDirectory: (path: string) => void 目录传输("upload", path),
+              onDownloadDirectory: (path: string) => void 目录传输("download", path),
               /**
                * 拖进来（2026-08-18）。**拖到哪一行就传到哪个目录。**
                *
@@ -3860,6 +3889,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               },
             }
           : {})}
+        directoryTransfers={<TransferBatchesPanel client={client} onCompleted={目录批次完成} />}
         刷新令牌={刷新令牌}
         onDelete={删一个}
         onDeleteDir={删一个目录}

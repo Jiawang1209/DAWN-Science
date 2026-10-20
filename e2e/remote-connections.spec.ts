@@ -710,6 +710,7 @@ test.describe("上传", () => {
 
     const 面板 = page.locator(".right-dock .files-view")
     await 面板.getByRole("button", { name: "传到这里", exact: true }).click()
+    await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
     await expect(page.locator(".xfer-text")).toContainText("传好了", { timeout: 30_000 })
 
     // ① 树上真的多了那个文件
@@ -719,6 +720,7 @@ test.describe("上传", () => {
 
     // ② **再传一次要问，不默默覆盖**
     await 面板.getByRole("button", { name: "传到这里", exact: true }).click()
+    await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
     await expect(page.getByText(/已经在那台机器上了/)).toBeVisible({ timeout: 30_000 })
     // 三条路都在，且**没有一个是另一个的子串**
     await expect(page.getByRole("button", { name: "覆盖", exact: true })).toBeVisible()

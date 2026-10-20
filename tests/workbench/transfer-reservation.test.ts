@@ -20,7 +20,7 @@ function setup() {
     remote: {
       store: {} as never,
       manager: { executorOf: () => ({
-        stat: async () => { throw new Error("not found") },
+        stat: async () => { throw Object.assign(new Error("not found"), { code: 2 }) },
         upload: (_local: string, path: string, opts: { signal: AbortSignal }) => new Promise<void>((finish, fail) => {
           pending.push({ path, finish, fail })
           opts.signal.addEventListener("abort", () => fail(new Error("cancelled")), { once: true })

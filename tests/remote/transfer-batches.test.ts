@@ -1,0 +1,48 @@
+import { afterEach, beforeEach, expect, it } from "vitest"
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, symlinkSync } from "node:fs"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
+import { TransferBatches } from "../../src/remote/transfer-batches.js"
+import { RemoteExecutor } from "../../src/remote/ssh.js"
+import { 造一台假服务器, 重置假机器, 假口令 } from "../../src/remote/fake-ssh.js"
+let dir: string; let r: RemoteExecutor; let service: TransferBatches
+beforeEach(async () => { 重置假机器(); dir = mkdtempSync(join(tmpdir(), "dawn-batches-")); r = new RemoteExecutor({ config: { host: "h", username: "u", password: 假口令 }, createClient: 造一台假服务器 }); await r.connect(); service = make() })
+afterEach(async () => { await service.dispose(); r.close(); rmSync(dir, { recursive: true, force: true }) })
+function make() { return new TransferBatches({ connection: () => ({ label: "测试服务器", key: "h:22:u", remote: r }), persistDir: join(dir, "jobs") }) }
+function source() { const p = join(dir, "样本集"); mkdirSync(join(p, "空目录"), { recursive: true }); mkdirSync(join(p, "nested")); writeFileSync(join(p, "nested", "中文.txt"), "数据\n"); writeFileSync(join(p, "zero"), ""); return p }
+async function done(id: string) { await expect.poll(() => service.get(id).batch.state).not.toMatch(/^(scanning|running)$/); return service.get(id) }
+it("目录往返保留层级、空目录和字节", async () => {
+ const up = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" });
+ expect((await done(up.id)).batch.state).toBe("completed")
+ expect((await r.lstat("/home/dawn/样本集/空目录")).kind).toBe("directory")
+ const down = service.start({ direction: "download", connectionId: "c", source: "/home/dawn/样本集", targetParent: join(dir, "downloads") });
+ const result = await done(down.id); expect(result.batch.state).toBe("completed")
+ expect(readFileSync(join(result.batch.target, "nested", "中文.txt"), "utf8")).toBe("数据\n"); expect(existsSync(join(result.batch.target, "空目录"))).toBe(true)
+})
+it("跳过符号链接并明确报告", async () => { const p = source(); symlinkSync("/etc/passwd", join(p, "link")); const b = service.start({ direction: "upload", connectionId: "c", source: p, targetParent: "/home/dawn" }); const d = await done(b.id); expect(d.entries.find(e => e.path === "link")?.state).toBe("skipped"); expect(d.batch.counts.skipped).toBe(1) })
+it("根目录撞名另存且不覆盖旧树", async () => { const p = source(); const a = service.start({ direction: "upload", connectionId: "c", source: p, targetParent: "/home/dawn" }); await done(a.id); const b = service.start({ direction: "upload", connectionId: "c", source: p, targetParent: "/home/dawn" }); expect((await done(b.id)).batch.target).toBe("/home/dawn/样本集 (1)") })
+it("权限失败保留失败清单", async () => { const b = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn/只读" }); const d = await done(b.id); expect(["failed", "partial"]).toContain(d.batch.state); expect(d.batch.error ?? d.entries.find(e => e.state === "failed")?.error).toMatch(/Permission/) })
+it("扫描时取消不开始写入", async () => { const b = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" }); service.cancel(b.id); expect((await done(b.id)).batch.state).toBe("cancelled"); await expect(r.stat("/home/dawn/样本集")).rejects.toThrow() })
+it("重启后运行任务标为 interrupted，结果不丢", async () => { const b = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" }); const restored = make(); expect(restored.get(b.id).batch.state).toBe("interrupted"); restored.dispose(); service.cancel(b.id); await done(b.id) })
+it("失败项手动重试且不重复传成功项", async () => { const original = r.upload.bind(r); let fail = true; const sent: string[] = []; r.upload = async (a,b,o) => { if (b.endsWith("zero") && fail) throw new Error("injected"); sent.push(b); return original(a,b,o) }; const b = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" }); expect((await done(b.id)).batch.state).toBe("partial"); fail = false; service.retry(b.id); expect((await done(b.id)).batch.state).toBe("completed"); expect(sent.filter(p => p.endsWith("中文.txt"))).toHaveLength(1) })
+it("分页明细不丢状态", async () => { const b = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" }); await done(b.id); expect(service.get(b.id, 0, 1).entries).toHaveLength(1); expect(service.get(b.id, 1, 1).entries[0]?.id).not.toBe(service.get(b.id, 0, 1).entries[0]?.id) })
+it("跨批次文件并发最多三条", async () => {
+ const p = source(); for (let i=0;i<8;i++) writeFileSync(join(p,`small-${i}`),"data")
+ const original = r.upload.bind(r); let active = 0; let maximum = 0
+ r.upload = async (a,b,o) => { active++; maximum = Math.max(maximum,active); try { await new Promise(resolve=>setTimeout(resolve,15)); await original(a,b,o) } finally {active--} }
+ const a=service.start({direction:"upload",connectionId:"c",source:p,targetParent:"/home/dawn"}); const b=service.start({direction:"upload",connectionId:"c",source:p,targetParent:"/home/dawn"})
+ await done(a.id); await done(b.id); expect(maximum).toBeGreaterThan(1); expect(maximum).toBeLessThanOrEqual(3)
+})
+it("源文件改变时失败重试不上传新的未知版本", async()=>{
+ const p=source(); const original=r.upload.bind(r); let fail=true
+ r.upload=async(a,b,o)=>{if(fail && b.endsWith("zero"))throw new Error("network"); await original(a,b,o)}
+ const b=service.start({direction:"upload",connectionId:"c",source:p,targetParent:"/home/dawn"}); await done(b.id)
+ writeFileSync(join(p,"zero"),"changed"); fail=false; service.retry(b.id); const d=await done(b.id); expect(d.entries.find(e=>e.path==="zero")?.error).toContain("源文件已改变")
+})
+it("重试遇到同名文件须逐项处理，不静默覆盖", async()=>{
+ const p=source(); const original=r.upload.bind(r); let fail=true
+ r.upload=async(a,b,o)=>{if(fail && b.endsWith("zero"))throw new Error("network");await original(a,b,o)}
+ const b=service.start({direction:"upload",connectionId:"c",source:p,targetParent:"/home/dawn"}); const first=await done(b.id); await r.writeFile(`${first.batch.target}/zero`,"existing")
+ fail=false;service.retry(b.id); const d=await done(b.id);const conflict=d.entries.find(e=>e.path==="zero")!;expect(conflict.state).toBe("conflict")
+ service.resolveConflict(b.id,conflict.id,"keepBoth");expect((await done(b.id)).entries.find(e=>e.id===conflict.id)?.target).toContain("zero (1)");expect((await r.readFile(`${first.batch.target}/zero`)).toString()).toBe("existing")
+})

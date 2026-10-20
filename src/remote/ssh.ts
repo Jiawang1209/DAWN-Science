@@ -37,8 +37,8 @@
  * 命令，比不跑危险得多），由上层决定怎么办。
  */
 import { createReadStream, createWriteStream } from "node:fs"
-import { rename as 改名, rm as 删掉, stat as 本地stat } from "node:fs/promises"
-import { pipeline } from "node:stream/promises"
+import { rename as 改名, rm as 删掉, stat as 本地stat, link } from "node:fs/promises"
+import { deadline, transferStream, missingFile } from "./transfer-io.js"
 import { createHash, randomUUID } from "node:crypto"
 import type { Client, ClientChannel, ConnectConfig, SFTPWrapper } from "ssh2"
 
@@ -147,6 +147,8 @@ export interface KnownHosts {
 }
 
 export interface RemoteExecutorOptions {
+  metadataTimeoutMs?: number
+  idleTimeoutMs?: number
   config: RemoteHostConfig
   /** 造一个客户端。**测试注入假的**——真机那条走 `ssh2` 的 `Client` */
   createClient: () => SshClientLike
@@ -259,6 +261,8 @@ export class RemoteExecutor {
         // 很多服务器的「密码」实际走 keyboard-interactive
         tryKeyboard: Boolean(config.password),
         readyTimeout: 20_000,
+        keepaliveInterval: 20_000,
+        keepaliveCountMax: 3,
       })
     })
 
@@ -402,17 +406,21 @@ export class RemoteExecutor {
     })
   }
 
+  private sftpPending: Promise<SFTPWrapper> | undefined
   private sftp(): Promise<SFTPWrapper> {
     if (this.sftpHandle) return Promise.resolve(this.sftpHandle)
+    if (this.sftpPending) return this.sftpPending
     const c = this.client
     if (!c) return Promise.reject(new Error("还没连上"))
-    return new Promise((resolve, reject) => {
-      c.sftp((err, s) => {
-        if (err) return reject(err)
-        this.sftpHandle = s
-        resolve(s)
-      })
-    })
+    this.sftpPending = this.io<SFTPWrapper>(cb => c.sftp(cb)).then(s => {
+      if (this.client !== c) throw new Error("SSH 连接已更换")
+      this.sftpHandle = s
+      return s
+    }).finally(() => { this.sftpPending = undefined })
+    return this.sftpPending
+  }
+  private io<T>(run: (cb: (error: Error | null | undefined, value?: T) => void) => unknown): Promise<T> {
+    return deadline(new Promise<T>((resolve, reject) => run((error, value) => error ? reject(error) : resolve(value as T))), this.opts.metadataTimeoutMs ?? 15_000, "SFTP 请求")
   }
 
   /**
@@ -427,7 +435,7 @@ export class RemoteExecutor {
    *
    * ## 「半截文件必须消失」这条保证在这儿，不在调用方
    *
-   * 先落到每次传输独立的 `<目标>.dawn-part-<id>`，传完才改名过去（同目录内改名是原子的）；
+   * 先落到每次传输独立的 `<目标>.dawn-part-<id>`，传完才改名过去（同目录内提交；批次不覆盖使用排他硬链接）；
    * 出错或取消就把 part 删掉。
    *
    * **放在调用方的话，每多一个调用方就多一次忘记的机会**——
@@ -440,57 +448,62 @@ export class RemoteExecutor {
   async download(
     远端: string,
     本地: string,
-    opts: { 进度?: (已传: number, 总共?: number) => void; signal?: AbortSignal } = {},
+    opts: { 进度?: (已传: number, 总共?: number) => void; signal?: AbortSignal; noReplace?: boolean; beforeCommit?: () => Promise<void> } = {},
   ): Promise<void> {
     const s = await this.sftp()
-    const 总共 = (await this.stat(远端)).size
+    const before = await this.stat(远端)
+    if (before.directory) throw new Error("请使用文件夹下载")
+    opts.signal?.throwIfAborted()
     const part = `${本地}.dawn-part-${randomUUID()}`
-    let 已传 = 0
-    const rs = s.createReadStream(远端)
-    rs.on("data", (块: string | Buffer) => {
-      已传 += 块.length
-      opts.进度?.(已传, 总共)
-    })
     try {
-      await pipeline(rs, createWriteStream(part, { flags: "wx" }), ...(opts.signal ? [{ signal: opts.signal }] : []))
-      await 改名(part, 本地)
-    } catch (e) {
-      // **清干净**。清不掉也别把清理的错盖住原来那个——原因才是要说的那句
-      await 删掉(part, { force: true }).catch(() => {})
-      throw e
+      const bytes = await transferStream(s.createReadStream(远端), createWriteStream(part, { flags: "wx" }), {
+        idleMs: this.opts.idleTimeoutMs ?? 60_000, ...(opts.signal ? { signal: opts.signal } : {}),
+        progress: n => opts.进度?.(n, before.size),
+      })
+      const after = await this.stat(远端)
+      if (bytes !== before.size || after.size !== before.size || after.modifiedAt?.getTime() !== before.modifiedAt?.getTime()) throw new Error("文件大小或修改时间发生变化，未提交下载字节")
+      opts.signal?.throwIfAborted()
+      await opts.beforeCommit?.()
+      opts.signal?.throwIfAborted()
+      if (opts.noReplace) { await link(part, 本地); await 删掉(part) }
+      else await 改名(part, 本地)
+    } catch (error) {
+      try { await 删掉(part, { force: true }) } catch (cleanup) { throw new Error(`${String(error)}；半成品清理失败：${part}：${String(cleanup)}`) }
+      throw error
     }
   }
 
-  /**
-   * 上传一个文件。与 `download` **两头对称**：
-   * 流式、可取消、先落 part 再改名。
-   *
-   * **取消同样不该在服务器上留半个文件**——别人的机器上留垃圾比自己机器上更糟。
-   *
-   * @param 覆盖 SFTP v3 的 `rename` **在目标已存在时会失败**（不是 POSIX 那种覆盖）。
-   *   要覆盖就得先 `unlink` 再改名——**那一瞬间不是原子的**，如实说明，不假装是。
-   */
+  /** Stream to a sibling temporary file; never unlink the previous dataset to commit. */
   async upload(
     本地: string,
     远端: string,
-    opts: { 进度?: (已传: number, 总共?: number) => void; signal?: AbortSignal; 覆盖?: boolean } = {},
+    opts: { 进度?: (已传: number, 总共?: number) => void; signal?: AbortSignal; 覆盖?: boolean; beforeCommit?: () => Promise<void> } = {},
   ): Promise<void> {
     const s = await this.sftp()
-    const 总共 = (await 本地stat(本地)).size
+    const before = await 本地stat(本地)
+    if (!before.isFile()) throw new Error("请使用文件夹上传")
+    opts.signal?.throwIfAborted()
     const part = `${远端}.dawn-part-${randomUUID()}`
-    let 已传 = 0
-    const rs = createReadStream(本地)
-    rs.on("data", (块: string | Buffer) => {
-      已传 += 块.length
-      opts.进度?.(已传, 总共)
-    })
     try {
-      await pipeline(rs, s.createWriteStream(part, { flags: "wx" }), ...(opts.signal ? [{ signal: opts.signal }] : []))
-      if (opts.覆盖) await this.unlink(远端).catch(() => {})
-      await this.rename(part, 远端)
-    } catch (e) {
-      await this.unlink(part).catch(() => {})
-      throw e
+      const bytes = await transferStream(createReadStream(本地), s.createWriteStream(part, { flags: "wx" }), {
+        idleMs: this.opts.idleTimeoutMs ?? 60_000, ...(opts.signal ? { signal: opts.signal } : {}),
+        progress: n => opts.进度?.(n, before.size),
+      })
+      const after = await 本地stat(本地)
+      const uploaded = await this.stat(part)
+      if (bytes !== before.size || uploaded.size !== before.size || after.size !== before.size || after.mtimeMs !== before.mtimeMs) throw new Error("文件大小或修改时间发生变化，未提交上传字节")
+      opts.signal?.throwIfAborted()
+      await opts.beforeCommit?.()
+      opts.signal?.throwIfAborted()
+      if (opts.覆盖) {
+        try { await this.io<void>(cb => s.ext_openssh_rename(part, 远端, cb)) }
+        catch (error) { throw new Error(`无法安全覆盖，未删除目标文件，请另存一份：${String(error)}`) }
+      } else await this.rename(part, 远端)
+    } catch (error) {
+      try { await this.unlink(part) } catch (cleanup) {
+        if (!missingFile(cleanup)) throw new Error(`${String(error)}；半成品清理失败：${part}：${String(cleanup)}`)
+      }
+      throw error
     }
   }
 
@@ -514,39 +527,28 @@ export class RemoteExecutor {
    */
   async stat(path: string): Promise<{ directory: boolean; size: number; modifiedAt?: Date }> {
     const s = await this.sftp()
-    return new Promise((resolve, reject) => {
-      s.stat(path, (err, st) => {
-        if (err) return reject(err)
-        resolve({
-          directory: st.isDirectory(),
-          size: st.size,
-          // `mtime` 是秒；**取不到就不给这一格**，不拿 0 冒充 1970 年
-          ...(st.mtime ? { modifiedAt: new Date(st.mtime * 1000) } : {}),
-        })
-      })
-    })
+    const st = await this.io<import("ssh2").Stats>(cb => s.stat(path, cb))
+    return { directory: st.isDirectory(), size: st.size, ...(st.mtime ? { modifiedAt: new Date(st.mtime * 1000) } : {}) }
   }
-
+  async lstat(path: string): Promise<{ kind: "directory" | "file" | "other"; size: number; mtime: number }> {
+    const s = await this.sftp()
+    const st = await this.io<import("ssh2").Stats>(cb => s.lstat(path, cb))
+    return { kind: st.isDirectory() ? "directory" : st.isFile() ? "file" : "other", size: st.size, mtime: st.mtime }
+  }
+  async realpath(path: string): Promise<string> {
+    const s = await this.sftp(); return this.io<string>(cb => s.realpath(path, cb))
+  }
+  async mkdir(path: string): Promise<void> {
+    const s = await this.sftp(); await this.io<void>(cb => s.mkdir(path, {}, cb))
+  }
   async unlink(path: string): Promise<void> {
-    const s = await this.sftp()
-    return new Promise((resolve, reject) => {
-      s.unlink(path, (err) => (err ? reject(err) : resolve()))
-    })
+    const s = await this.sftp(); await this.io<void>(cb => s.unlink(path, cb))
   }
-
-  /** **SFTP 的 `rmdir` 只删空目录**——递归是调用方的事，这一层不替它决定 */
   async rmdir(path: string): Promise<void> {
-    const s = await this.sftp()
-    return new Promise((resolve, reject) => {
-      s.rmdir(path, (err) => (err ? reject(err) : resolve()))
-    })
+    const s = await this.sftp(); await this.io<void>(cb => s.rmdir(path, cb))
   }
-
-  async rename(从: string, 到: string): Promise<void> {
-    const s = await this.sftp()
-    return new Promise((resolve, reject) => {
-      s.rename(从, 到, (err) => (err ? reject(err) : resolve()))
-    })
+  async rename(from: string, to: string): Promise<void> {
+    const s = await this.sftp(); await this.io<void>(cb => s.rename(from, to, cb))
   }
 
   /**
@@ -565,20 +567,8 @@ export class RemoteExecutor {
    */
   async readdir(path: string): Promise<{ name: string; directory: boolean; size: number; mtimeMs: number }[]> {
     const s = await this.sftp()
-    return new Promise((resolve, reject) => {
-      s.readdir(path, (err, list) => {
-        if (err) return reject(err)
-        resolve(
-          list.map((e) => ({
-            name: e.filename,
-            // `longname` 的第一位是类型；`attrs.isDirectory()` 更直接
-            directory: e.attrs.isDirectory(),
-            size: e.attrs.size,
-            mtimeMs: e.attrs.mtime * 1000,
-          })),
-        )
-      })
-    })
+    const list = await this.io<import("ssh2").FileEntryWithStats[]>(cb => s.readdir(path, cb))
+    return list.map(e => ({ name: e.filename, directory: e.attrs.isDirectory(), size: e.attrs.size, mtimeMs: e.attrs.mtime * 1000 }))
   }
 
   close(): void {

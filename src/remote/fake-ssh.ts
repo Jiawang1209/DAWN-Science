@@ -56,7 +56,9 @@ const 初始文件: Record<string, string> = {
   [`${家}/数据/大文件.bin`]: "x".repeat(4096),
 }
 
-const 文件: Record<string, string> = { ...初始文件 }
+const 文件: Record<string, string | Buffer> = { ...初始文件 }
+const 空目录 = new Set<string>()
+const 不存在 = (p: string) => Object.assign(new Error(`No such file: ${p}`), { code: 2 })
 
 /**
  * 写不进去的目录。**验「权限不够要说是权限不够」那条**——
@@ -83,6 +85,7 @@ export function 重置假机器(): void {
   for (const k of Object.keys(文件)) delete 文件[k]
   Object.assign(文件, 初始文件)
   掐们.clear()
+  空目录.clear()
 }
 
 /** 这台假机器的家目录。测试与 mock 都要能指得出来 */
@@ -93,7 +96,7 @@ const 块大小 = 256
 
 function 是目录(路径: string): boolean {
   const p = `${路径.replace(/\/+$/, "")}/`
-  return Object.keys(文件).some((k) => k.startsWith(p))
+  return 空目录.has(路径.replace(/\/+$/, "") || "/") || Object.keys(文件).some((k) => k.startsWith(p))
 }
 
 /**
@@ -111,6 +114,7 @@ function 属性(路径: string) {
     size: 目录 ? 0 : Buffer.byteLength(文件[路径] ?? ""),
     mtime: 1_755_000_000,
     isDirectory: () => 目录,
+    isFile: () => !目录,
   }
 }
 
@@ -256,7 +260,7 @@ export function 造一台假服务器(): SshClientLike {
     cb(undefined, {
       readFile: (p: string, f: (e: Error | undefined, b?: Buffer) => void) => {
         const v = 文件[p]
-        if (v === undefined) f(new Error(`No such file: ${p}`))
+        if (v === undefined) f(不存在(p))
         else f(undefined, Buffer.from(v))
       },
       writeFile: (p: string, d: string | Buffer, f: (e?: Error) => void) => {
@@ -266,10 +270,10 @@ export function 造一台假服务器(): SshClientLike {
       },
       readdir: (p: string, f: (e: Error | undefined, list?: unknown[]) => void) => {
         const 根 = p.replace(/\/+$/, "")
-        if (!是目录(根)) return f(new Error(`No such directory: ${p}`))
+        if (!是目录(根)) return f(不存在(p))
         const 前缀 = `${根}/`
         const 名字 = new Set<string>()
-        for (const k of Object.keys(文件)) {
+        for (const k of [...Object.keys(文件), ...空目录]) {
           if (!k.startsWith(前缀)) continue
           名字.add(k.slice(前缀.length).split("/")[0]!)
         }
@@ -279,19 +283,39 @@ export function 造一台假服务器(): SshClientLike {
           [...名字].map((filename) => ({ filename, attrs: 属性(`${前缀}${filename}`) })),
         )
       },
+      mkdir: (p: string, _attrs: unknown, f: (e?: Error) => void) => {
+        if (落在只读里(p)) return f(new Error("Permission denied"))
+        if (是目录(p) || 文件[p] !== undefined) return f(new Error("Already exists"))
+        const parent = p.slice(0, p.lastIndexOf("/")) || "/"
+        if (!是目录(parent)) return f(不存在(parent))
+        空目录.add(p); f()
+      },
+      lstat: (p: string, f: (e?: Error, st?: unknown) => void) => {
+        if (文件[p] === undefined && !是目录(p)) return f(不存在(p))
+        f(undefined, 属性(p))
+      },
+      realpath: (p: string, f: (e?: Error, path?: string) => void) => {
+        if (文件[p] === undefined && !是目录(p)) return f(不存在(p))
+        f(undefined, p)
+      },
+      ext_openssh_rename: (from: string, to: string, f: (e?: Error) => void) => {
+        if (文件[from] === undefined) return f(不存在(from))
+        if (落在只读里(to)) return f(new Error("Permission denied"))
+        文件[to] = 文件[from]!; delete 文件[from]; f()
+      },
       stat: (p: string, f: (e: Error | undefined, st?: unknown) => void) => {
-        if (文件[p] === undefined && !是目录(p)) return f(new Error(`No such file: ${p}`))
+        if (文件[p] === undefined && !是目录(p)) return f(不存在(p))
         f(undefined, 属性(p))
       },
       unlink: (p: string, f: (e?: Error) => void) => {
-        if (文件[p] === undefined) return f(new Error(`No such file: ${p}`))
+        if (文件[p] === undefined) return f(不存在(p))
         if (落在只读里(p)) return f(new Error("Permission denied"))
         delete 文件[p]
         f()
       },
       /** **只删空目录**——真 SFTP 就是这样，递归是调用方的事 */
       rmdir: (p: string, f: (e?: Error) => void) => {
-        if (!是目录(p)) return f(new Error(`No such directory: ${p}`))
+        if (!是目录(p)) return f(不存在(p))
         f(new Error("Directory not empty"))
       },
       /**
@@ -318,7 +342,7 @@ export function 造一台假服务器(): SshClientLike {
         if (文件[p] === undefined) {
           return new Readable({
             read() {
-              this.destroy(new Error(`No such file: ${p}`))
+              this.destroy(不存在(p))
             },
           })
         }
@@ -352,10 +376,12 @@ export function 造一台假服务器(): SshClientLike {
         return new Writable({
           write(块: Buffer, _enc: unknown, done: (e?: Error) => void) {
             块们.push(Buffer.from(块))
-            done()
+            const delay = Number(process.env.DAWN_FAKE_SSH_TRANSFER_DELAY_MS ?? 0)
+            if (delay > 0) setTimeout(done, Math.min(delay, 100))
+            else done()
           },
           final(done: (e?: Error) => void) {
-            文件[p] = Buffer.concat(块们).toString()
+            文件[p] = Buffer.concat(块们)
             done()
           },
         })
@@ -504,7 +530,7 @@ function 一条(命令: string, 当前: string): { out: string; err: string; cod
     const 全 = 路径.startsWith("/") ? 路径 : `${当前}/${路径}`
     const v = 文件[全]
     if (v === undefined) return { out: "", err: `cat: ${路径}: No such file or directory\n`, code: 1 }
-    return { out: v, err: "", code: 0 }
+    return { out: v.toString(), err: "", code: 0 }
   }
   if (/^(hostname|uname)\b/.test(命令)) return { out: "dawn-fake\n", err: "", code: 0 }
   if (/^mkdir\b/.test(命令)) return { out: "", err: "", code: 0 }

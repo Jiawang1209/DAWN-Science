@@ -1,3 +1,4 @@
+import { FileUploadMenu } from "./file-upload-menu.js"
 /**
  * 文件浏览与预览（②-A′ · F3/F4）。
  *
@@ -121,6 +122,7 @@ export function 拖进来的本机路径(files: readonly File[]): { 有: string[
  * 路径怎么算由 `FilesView` 给（本地 = 工作区 + 相对；远端 = 本来就是绝对的）。
  */
 export interface 行操作 {
+  onDownloadDir?: ((path: string) => void) | undefined
   /** 回 `{ 相对, 绝对 }`。本地相对工作区、绝对拼上工作区；远端绝对就是路径本身、相对是去掉树根 */
   路径: (path: string) => { 相对: string; 绝对: string }
   /** 给了才有「插进输入框」 */
@@ -178,6 +180,7 @@ function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: stri
             {t("插进输入框")}
           </Button>
         ) : null}
+        {kind === "dir" && 操作.onDownloadDir ? <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onClose(); 操作.onDownloadDir!(path) }}>{t("下载文件夹")}</Button> : null}
         {操作.onDelete ? (
           <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onClose(); 操作.onDelete!(path, kind) }}>
             {t("删除")}
@@ -415,9 +418,9 @@ function DirNode({
         * 内层的 `aria-label`——`getByRole` 于是一次匹配到两个元素。
         * （2026-08-18 e2e 当场抓到。）
         *
-        * 树根那一行不给：**删掉你正站着的那个目录之后，树指向哪儿？**
+        * 树根仅在支持文件夹下载时提供菜单，且不提供删除。删掉正在查看的根目录会使树失去位置。
         */}
-      {操作 && depth > 0 ? <行操作钮 path={path} name={name} kind="dir" 操作={操作} 菜单={菜单} 设菜单={设菜单} /> : null}
+      {操作 && (depth > 0 || 操作.onDownloadDir) ? <行操作钮 path={path} name={name} kind="dir" 操作={depth === 0 ? { ...操作, onDelete: undefined } : 操作} 菜单={菜单} 设菜单={设菜单} /> : null}
       {open ? (
         error ? (
           // **读不了要说出来**，不是显示成一个空目录
@@ -842,6 +845,9 @@ export function FilesView({
   机器,
   初始根,
   onDownload,
+  onUploadDirectory,
+  onDownloadDirectory,
+  directoryTransfers,
   传输,
   onCancel,
   onUpload,
@@ -896,6 +902,9 @@ export function FilesView({
   初始根?: string
   /** 给了才画「下载」。**本地文件不给**——它已经在这台机器上了 */
   onDownload?: (path: string) => void
+  onUploadDirectory?: (path: string) => void
+  onDownloadDirectory?: (path: string) => void
+  directoryTransfers?: import("react").ReactNode
   传输?: 传输态 | undefined
   onCancel?: () => void
   /**
@@ -1054,9 +1063,10 @@ export function FilesView({
             onInsert,
             onDelete: onDelete || onDeleteDir ? (p, kind) => (kind === "dir" ? onDeleteDir?.(p) : onDelete?.(p)) : undefined,
             onNote: 设行注,
+            onDownloadDir: onDownloadDirectory,
           }
         : undefined,
-    [路径, onInsert, onDelete, onDeleteDir],
+    [路径, onInsert, onDelete, onDeleteDir, onDownloadDirectory],
   )
   // 打字停 250ms 再搜；结果回来时查询已经变了就丢掉——晚到的旧结果不许盖新的
   useEffect(() => {
@@ -1212,11 +1222,7 @@ export function FilesView({
         >
           <刷新图标 />
         </Button>
-        {onUpload ? (
-          <Button variant="ghost" size="sm" onClick={() => onUpload(根)}>
-            {t("传到这里")}
-          </Button>
-        ) : null}
+        {onUpload ? <FileUploadMenu onFile={() => onUpload(根)} {...(onUploadDirectory ? { onFolder: () => onUploadDirectory(根) } : {})} /> : null}
         {根 !== (初始根 ?? "") ? (
           <Button
             variant="ghost"
@@ -1367,7 +1373,7 @@ export function FilesView({
         * 总大小取不到时不画那根条，只报已传了多少——
         * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
         */}
-      {传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}
+      {传输 || directoryTransfers ? <div className="files-transfers">{传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}{directoryTransfers}</div> : null}
       {previewOpen ? <section className="file-preview">
         <FilePreview
           path={selected}

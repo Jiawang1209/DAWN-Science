@@ -1,3 +1,4 @@
+import { DirectoryTransferRequest, TransferBatchSchema, TransferDetailSchema } from "../remote/transfer-types.js"
 import {DeliveryCreateSchema, DeliveryRecordSchema, DeliveryVerifySchema} from './delivery.js'
 import { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema } from './analysis-route.js'
 import { QuestionAnswerSchema } from "./questions.js"
@@ -2732,6 +2733,13 @@ export const OPERATIONS = {
     ]),
     mutating: true,
   },
+
+  startDirectoryTransfer: { request: DirectoryTransferRequest, response: TransferBatchSchema, mutating: true },
+  listTransferBatches: { request: z.object({}).strict(), response: z.array(TransferBatchSchema), mutating: false },
+  getTransferBatch: { request: z.object({ batchId: z.string().min(1), offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(), response: TransferDetailSchema, mutating: false },
+  cancelTransferBatch: { request: z.object({ batchId: z.string().min(1) }).strict(), response: z.object({}).strict(), mutating: true },
+  retryTransferBatch: { request: z.object({ batchId: z.string().min(1) }).strict(), response: z.object({}).strict(), mutating: true },
+  resolveTransferConflict: { request: z.object({ batchId: z.string().min(1), entryId: z.string().min(1), action: z.enum(["overwrite", "keepBoth", "skip"]) }).strict(), response: z.object({}).strict(), mutating: true },
 
   transferStatus: {
     request: z.object({ transferId: z.string().min(1) }).strict(),

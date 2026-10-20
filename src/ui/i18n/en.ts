@@ -16,6 +16,8 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "解释器路径有问题，请修改后保存。": "There is a problem with the interpreter path. Update it and save again.",
+  "错误详情": "Error details",
   "未找到本次交付记录，请查看已有记录或重新整理。":"This delivery request has no saved record. Browse existing deliveries or prepare a new one.",
   "将核对 {0} 项输出":"{0} outputs will be compared",
   "调整运行参数":"Edit run parameters",

@@ -8225,7 +8225,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-controls .model-trigger,
 .composer-controls .config-pill .sess-config-trigger { min-height: 36px; padding: var(--dawn-space-1) var(--dawn-space-2); border: var(--dawn-hairline) solid transparent; border-radius: var(--dawn-radius-md); font-size: var(--dawn-fs-sub); background: transparent; }
 .composer-controls .send-btn { width: 36px; height: 36px; border-radius: var(--dawn-radius-md); margin-left: var(--dawn-space-1); }
-.composer-controls .send-btn svg { width: 20px; height: 20px; }
+.composer-controls .send-btn svg { width: 16px; height: 16px; }
 .composer-footer .attach-trigger,
 .composer-footer .ws-chip,
 .composer-footer .dock-toggle,
@@ -8297,7 +8297,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .composer-environment > .ws-chip-group { flex: 0 1 auto; max-width: 60%; }
 .composer-environment .ws-chip { color: var(--dawn-text-2); font-size: var(--dawn-fs-sub); }
-.composer-environment .ws-chip > .icon:first-child, .composer-location > .icon { width: 20px; height: 20px; }
+.composer-environment .ws-chip > .icon:first-child, .composer-location > .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--dawn-accent);
+}
 .composer-environment .ws-chip > .icon:last-child { width: 12px; height: 12px; }
 .composer-location { display: inline-flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .composer-location > .icon { flex: 0 0 auto; }
@@ -8322,6 +8326,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-footer .composer-status:empty { display: none; }
 .composer-footer .composer-controls { flex: 1 1 auto; justify-content: flex-end; margin-left: auto; }
 .composer-tools .attach-trigger { width: 36px; height: 36px; }
+.composer-tools .attach-trigger > .icon { color: var(--dawn-accent); }
 .composer-tools .attach-trigger > .icon, .composer-tools .perm-pill-trigger > .icon:first-child { width: 20px; height: 20px; }
 .composer-tools .perm-pill-trigger > .icon:last-child { width: 12px; height: 12px; }
 .composer-tools .enhance-main { font-size: var(--dawn-fs-meta); }

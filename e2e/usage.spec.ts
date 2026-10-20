@@ -43,7 +43,7 @@ test("**跑一轮之后，用量那一屏上有真数**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByPlaceholder(/输入问题/).fill("在吗")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -78,7 +78,7 @@ test("**日历铺满、带月份；饼图与日历都有悬停浮层**", async (
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByPlaceholder(/输入问题/).fill("在吗")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await 进用量(page)
@@ -129,7 +129,7 @@ test("**活动洞察数的是真事**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByPlaceholder(/输入问题/).fill("在吗")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await 进用量(page)
@@ -154,7 +154,7 @@ test("**饼图与图例左右并排、按项目在按模型下面、图例列对
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByPlaceholder(/输入问题/).fill("在吗")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await 进用量(page)
@@ -208,7 +208,7 @@ test("**日历三视角：每日 / 每周 / 累计**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByPlaceholder(/输入问题/).fill("在吗")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await 进用量(page)

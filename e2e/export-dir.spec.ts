@@ -9,7 +9,7 @@ import { join } from "node:path"
 test.use({ dawnOptions: { gitInit: true } })
 
 async function 说(page: import("@playwright/test").Page, 话: string): Promise<void> {
-  await page.getByPlaceholder(/今天帮你做些什么/).fill(话)
+  await page.getByPlaceholder(/输入问题/).fill(话)
   await page.keyboard.press("Enter")
   await expect(page.locator(".turns").getByText(话, { exact: true })).toBeVisible()
   await expect(page.locator(".turns .turn.agent").last()).toContainText(CANNED_REPLY, { timeout: 30_000 })

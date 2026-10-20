@@ -52,18 +52,18 @@ test.describe("挑文件", () => {
    * 我在这件事上来回改了两次——**每次都是照着自己的推断改的**，
    * 而不是照着他的话。留个记号在这儿。
    */
-  test("**一颗按钮，点开是三个选项**", async ({ dawn }) => {
+  test("**添加菜单保留三个上传选项**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("看看这两个")
     await page.locator(".composer-card .attach-trigger").click()
 
     const 菜单 = page.getByRole("menu", { name: "添加内容" })
     await expect(菜单).toBeVisible()
-    await expect(菜单.getByRole("menuitem")).toHaveCount(3)
+    await expect(菜单.getByRole("menuitem", { name: /^上传(文件|图片|数据)$/ })).toHaveCount(3)
 
     /**
      * **三项是竖着排的一列，不是挤成一行**（作者：*「＋ 的这个样式，
@@ -74,7 +74,7 @@ test.describe("挑文件", () => {
      * 判据挑「后一项的顶边在前一项的底边之下」：那是「一列」的定义本身，
      * 而不是某个具体的像素数（那种数改一次样式就要跟着改一次）。
      */
-    const 项 = await 菜单.getByRole("menuitem").all()
+    const 项 = await 菜单.getByRole("menuitem", { name: /^上传(文件|图片|数据)$/ }).all()
     const 盒们 = await Promise.all(项.map((x) => x.boundingBox()))
     for (let i = 1; i < 盒们.length; i++) {
       expect(盒们[i]!.y, "三项没有竖着排").toBeGreaterThanOrEqual(
@@ -101,7 +101,7 @@ test.describe("挑文件", () => {
   /** **空态那一屏也有它**：一个动作可以有两个入口，但走的是同一份实现 */
   test("**空态那一屏也给这颗按钮**", async ({ dawn }) => {
     const { page } = dawn
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("先挑个文件")
     await page.locator(".composer-card .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
@@ -129,7 +129,7 @@ test.describe("三项都通", () => {
   for (const 名 of ["上传文件", "上传数据"]) {
     test(`**「${名}」点下去，路径进了输入框**`, async ({ dawn }) => {
       const { page } = dawn
-      const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+      const 框 = page.getByPlaceholder(/输入问题/)
       await page.locator(".composer-card .attach-trigger").click()
       await page.getByRole("menuitem", { name: 名, exact: true }).click()
       await expect(框).toHaveValue(/甲\.csv/)
@@ -184,7 +184,7 @@ test.describe("图片真的送进模型", () => {
     await expect(图).toBeVisible({ timeout: 10_000 })
     await expect(图).toHaveAttribute("src", /^data:image\//)
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这张")
+    await page.getByPlaceholder(/输入问题/).fill("看看这张")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // ② **字节真的到了对面。** 这句话只有请求里带了 image_url 才会出现
@@ -234,7 +234,7 @@ test.describe("提示不说谎", () => {
       const { page } = dawn
       await 进去(page)
 
-      const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+      const 框 = page.getByPlaceholder(/输入问题/)
       await expect(框).toBeVisible()
 
       // `/` 弹技能与子 agent 的菜单（2026-08-22 起不再是整个命令面板——那个归 ⌘K）
@@ -305,7 +305,7 @@ for (const [屏, 进去] of [
     const { page } = dawn
     await 进去(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.click()
     await 粘一张图(page)
 
@@ -365,7 +365,7 @@ test("**粘一段文字，照常进输入框**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await 等进了对话(page)
 
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.click()
 
   /**
@@ -433,7 +433,7 @@ for (const [屏, 进去] of [
     // ① 松手之后看得见，而且是在输入卡里面
     await expect(page.locator(".composer-box .attached-one")).toHaveCount(1, { timeout: 10_000 })
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这张拖的")
+    await page.getByPlaceholder(/输入问题/).fill("看看这张拖的")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // ② **字节真的到了对面**
@@ -494,7 +494,7 @@ for (const [屏, 进去] of [
     await 进去(page)
     await page.locator(".composer").waitFor({ timeout: 30_000 })
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.click()
     await 粘一张图(page)
     await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
@@ -571,15 +571,22 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
   await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toHaveCount(0)
 })
 
-/** 宽屏共用底栏：工具按顺序在左，模型与发送靠右，所有控件留在卡内。 */
-test("输入卡双层：工具与权限齐行，模型发送留在上层，图标文字完整且不溢出", async ({ dawn }) => {
+/** 环境在输入区上方；底栏左侧添加与权限，右侧模型、推理和发送。 */
+test("输入卡：环境在顶部，添加与权限在左，模型发送在右，同排且不溢出", async ({ dawn }) => {
   const { page } = dawn
   await page.setViewportSize({ width: 1920, height: 900 })
   await 开一段临时会话(page)
   await 等进了对话(page)
   const footer = page.locator(".composer-footer")
   const card = (await page.locator(".composer-card").boundingBox())!
-  const selectors = [".attach-trigger", ".ws-chip", ".dock-toggle", ".enhance-main", ".perm-pill-trigger"]
+  const environment = page.locator(".composer-environment")
+  await expect(environment.locator(".ws-chip")).toBeVisible()
+  await expect(environment.locator(".composer-location")).toHaveText("本机")
+  const environmentBox = (await environment.boundingBox())!
+  const inputBox = (await page.locator(".composer-box").boundingBox())!
+  expect(environmentBox.y + environmentBox.height).toBeLessThanOrEqual(inputBox.y + 1)
+
+  const selectors = [".composer-tools .attach-trigger", ".composer-tools .perm-pill-trigger", ".composer-controls .model-trigger", ".composer-controls .send-btn"]
   const bounds = []
   for (const selector of selectors) {
     const control = footer.locator(selector).first()
@@ -593,16 +600,13 @@ test("输入卡双层：工具与权限齐行，模型发送留在上层，图�
   expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(2)
   for (let i = 1; i < bounds.length; i++) expect(bounds[i]!.x).toBeGreaterThanOrEqual(bounds[i - 1]!.x + bounds[i - 1]!.width)
   expect(card.x + card.width - bounds.at(-1)!.x - bounds.at(-1)!.width).toBeLessThan(24)
-  const upper = page.locator(".composer-box .composer-controls")
-  await expect(upper.locator(".model-trigger")).toBeVisible()
-  const send = (await upper.locator(".send-btn").boundingBox())!
-  expect(send.y + send.height).toBeLessThanOrEqual(bounds[0]!.y)
-  for (const selector of [".attach-trigger", ".ws-chip", ".dock-toggle"]) {
-    expect(await footer.locator(selector).first().locator("svg").count()).toBeGreaterThanOrEqual(1)
-  }
-  await expect(footer.locator(".attach-trigger")).toContainText("上传文件")
-  await expect(footer.locator(".ws-chip")).toContainText("工作目录")
-  await expect(footer.locator(".dock-toggle")).toContainText("终端")
-  await expect(footer.locator(".enhance-main")).toContainText("优化输入")
+  const add = footer.getByRole("button", { name: "添加内容", exact: true })
+  await expect(add).toHaveAttribute("aria-haspopup", "menu")
+  expect(await add.locator("svg").count()).toBeGreaterThanOrEqual(1)
   expect(await footer.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await add.click()
+  const menu = page.getByRole("menu", { name: "添加内容" })
+  await expect(menu.getByRole("menuitem", { name: "优化输入", exact: true })).toBeVisible()
+  await expect(menu.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })).toBeVisible()
+  await expect(menu.getByRole("menuitem", { name: "终端面板", exact: true })).toBeVisible()
 })

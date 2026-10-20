@@ -8,7 +8,7 @@ test.describe("思考按段落显示摘要", () => {
   test("完成后显示末段首行、保留秒数与可展开的原文", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("请开始思考")
+    await page.getByPlaceholder(/输入问题/).fill("请开始思考")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

@@ -23,7 +23,7 @@ const 长标题 =
 
 async function 开一段长标题的(page: import("@playwright/test").Page) {
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill(长标题)
+  await page.getByPlaceholder(/输入问题/).fill(长标题)
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   return page.locator(".session-list li .sess-title").first()
@@ -135,7 +135,7 @@ test("**跑马灯只在自己的框里跑，不压住图标**", async ({ dawn })
 test("**短标题：不跑马灯，也不弹卡**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
+  await page.getByPlaceholder(/输入问题/).fill("你好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -185,7 +185,7 @@ test.describe("项目里的那条", () => {
   test("**项目里的会话：卡上给完整路径，不只是文件夹名**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill(长标题)
+    await page.getByPlaceholder(/输入问题/).fill(长标题)
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

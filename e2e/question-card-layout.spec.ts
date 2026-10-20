@@ -14,7 +14,7 @@ test.use({ dawnOptions: { toolCall: { toolName: "ask_user_question", args: { que
 
 async function openQuestions(dawn: DawnFixture) {
   await 在项目里开会话(dawn.page); await 等进了对话(dawn.page)
-  const input = dawn.page.locator("main.main").getByPlaceholder(/今天帮你做些什么/)
+  const input = dawn.page.locator("main.main").getByPlaceholder(/输入问题/)
   await input.fill("询问框布局预览"); await input.press("Enter")
   const card = dawn.page.locator("main.main .question-card")
   await expect(card).toContainText(questions[0]!.question)
@@ -84,7 +84,7 @@ test("窄侧边对话长内容：回答区不被正文挤出", async ({ dawn }, 
   await 进坞(dawn.page, "对话")
   const side = dawn.page.locator("aside.right-dock")
   await side.getByRole("button", { name: "另开一段", exact: true }).click()
-  const input = side.getByPlaceholder(/今天帮你做些什么/)
+  const input = side.getByPlaceholder(/输入问题/)
   await input.fill("询问框布局预览"); await input.press("Enter")
   const card = side.locator(".question-card")
   await expect(card).toContainText(questions[0]!.question)

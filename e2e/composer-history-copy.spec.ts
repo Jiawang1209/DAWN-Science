@@ -15,7 +15,7 @@ import { test, expect, CANNED_REPLY, 开一段临时会话, 在项目里开会�
 test("**↑ 翻回上一句，↓ 翻回没发出去的那半句**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  const 输入 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 输入 = page.getByPlaceholder(/输入问题/)
 
   for (const 话 of ["第一句", "第二句"]) {
     await 输入.fill(话)
@@ -40,7 +40,7 @@ test("**↑ 翻回上一句，↓ 翻回没发出去的那半句**", async ({ da
 test("**多行草稿里按 ↑ 是上移一行，不是换掉整段**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  const 输入 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 输入 = page.getByPlaceholder(/输入问题/)
   await 输入.fill("说过的一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("说过的一句", { timeout: 30_000 })
@@ -59,7 +59,7 @@ test("**一键复制**：复制的是原文，且看得见它复制成功了", a
   await context.grantPermissions(["clipboard-read", "clipboard-write"])
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("要被复制走的这句")
+  await page.getByPlaceholder(/输入问题/).fill("要被复制走的这句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("要被复制走的这句", { timeout: 30_000 })
 
@@ -85,7 +85,7 @@ test("**一键复制**：复制的是原文，且看得见它复制成功了", a
 test("**修改 → 发送**：新说一句，原来那句留在原处", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("原来那句")
+  await page.getByPlaceholder(/输入问题/).fill("原来那句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("原来那句", { timeout: 30_000 })
 
@@ -105,7 +105,7 @@ test("**修改 → 发送**：新说一句，原来那句留在原处", async ({
 test("**取消就是取消**：一个字都不发出去", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("只说这一句")
+  await page.getByPlaceholder(/输入问题/).fill("只说这一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("只说这一句", { timeout: 30_000 })
 
@@ -121,7 +121,7 @@ test("**取消就是取消**：一个字都不发出去", async ({ dawn }) => {
 test("**操作在这一段下面**，不是浮在右上角", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下位置")
+  await page.getByPlaceholder(/输入问题/).fill("量一下位置")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("量一下位置", { timeout: 30_000 })
 
@@ -140,7 +140,7 @@ test("**操作在这一段下面**，不是浮在右上角", async ({ dawn }) =>
 test("**动作行靠右、不撑宽气泡**：一个字的气泡比它下面那行窄", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("好")
+  await page.getByPlaceholder(/输入问题/).fill("好")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turn.user .turn-actions").first()).toBeVisible({ timeout: 30_000 })
 
@@ -176,7 +176,7 @@ test("**动作行靠右、不撑宽气泡**：一个字的气泡比它下面那�
 test("**七个字的问题占一行**，不被从中间折断", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
+  await page.getByPlaceholder(/输入问题/).fill("你是什么模型？")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText("你是什么模型？", { timeout: 30_000 })
 
@@ -202,7 +202,7 @@ test("**坞里那段的「回到这句之前」**：整颗看得见，不把对�
   await 进坞(page, "对话")
   await 坞.getByRole("button", { name: "另开一段", exact: true }).click()
   await 坞.locator(".side-chat-head").waitFor({ timeout: 30_000 })
-  const 框 = 坞.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = 坞.getByPlaceholder(/输入问题/)
   await 框.fill("短")
   await 框.press("Enter")
   await expect(坞.getByText(CANNED_REPLY)).toHaveCount(1, { timeout: 30_000 })

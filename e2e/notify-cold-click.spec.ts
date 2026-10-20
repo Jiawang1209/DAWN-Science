@@ -13,7 +13,7 @@
 import type { Locator, Page } from "@playwright/test"
 import { test, expect, 开一段临时会话, 等进了对话, 读桌面通知, 点桌面通知 } from "./fixtures.js"
 
-const 框 = (区: Locator) => 区.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (区: Locator) => 区.getByPlaceholder(/输入问题/)
 async function 另开一段(page: Page, 首句: string) {
   await page.getByRole("button", { name: "新建任务" }).click()
   await expect(page.locator(".conv-title")).toHaveCount(0)

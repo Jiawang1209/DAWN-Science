@@ -76,6 +76,8 @@ pre {
 /* 嵌在句子或标题里的按钮：零盒子，不要再写 padding:0 */
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
+/* 工具栏文字入口与图标入口共用默认圆角，不采用行内文字的直角背景。 */
+.btn-toolbar { min-height: 36px; padding: 0; font-size: var(--dawn-fs-sub); }
 /**
  * 浮在转录上的那颗药丸（「回到底部」浮标，2026-09-08；2026-09-09 换成方案一的形状）。
  *
@@ -8281,31 +8283,114 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .topbar .brand-mark { flex: 0 0 auto; }
 .topbar .brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar .side-toggle { flex: 0 0 var(--dawn-space-8); }
-.composer-box .composer-controls { align-self: flex-end; }
-.composer-footer { background: var(--dawn-surface-sidebar); padding: var(--dawn-space-2) var(--dawn-space-3); column-gap: var(--dawn-space-3); }
-.composer-tools { display: flex; align-items: center; flex: 1 1 auto; flex-wrap: wrap; gap: var(--dawn-space-1); min-width: 0; max-width: 100%; }
-.composer-tools > .attach, .composer-tools > .dock-toggle, .composer-tools > .enhance-control, .composer-tools > .plan-toggle { flex: 0 0 auto; }
-.composer-tools > .ws-chip, .composer-tools > .ws-chip-group { flex: 0 1 auto; min-width: 0; max-width: min(100%, 16rem); }
-.composer-footer .composer-status { flex: 0 0 auto; flex-wrap: nowrap; min-height: var(--composer-footer-row); margin-left: auto; padding: 0; gap: var(--dawn-space-1); }
-.composer-status .perm-pill-trigger, .composer-status .ctx-meter-trigger { font-size: var(--dawn-fs-meta); }
-.composer-footer .attach-trigger, .composer-footer .ws-chip, .composer-footer .dock-toggle, .composer-footer .enhance-main, .composer-footer .plan-toggle { font-size: var(--dawn-fs-meta); }
+/* 输入区分层：环境在上、内容居中、动作在下；菜单使用现有浮层材质。 */
+.composer-environment {
+  display: flex;
+  align-items: center;
+  gap: var(--dawn-space-4);
+  min-width: 0;
+  padding: var(--dawn-space-1) var(--dawn-space-3);
+  background: var(--dawn-surface-input);
+  border-radius: var(--dawn-radius-composer) var(--dawn-radius-composer) 0 0;
+  color: var(--dawn-text-3);
+  font-size: var(--dawn-fs-sub);
+}
+.composer-environment > .ws-chip-group { flex: 0 1 auto; max-width: 60%; }
+.composer-environment .ws-chip { color: var(--dawn-text-2); font-size: var(--dawn-fs-sub); }
+.composer-environment .ws-chip > .icon:first-child, .composer-location > .icon { width: 20px; height: 20px; }
+.composer-environment .ws-chip > .icon:last-child { width: 12px; height: 12px; }
+.composer-location { display: inline-flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.composer-location > .icon { flex: 0 0 auto; }
+.composer-location > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.composer-card > .composer-box { border-radius: 0; padding-top: 0; padding-bottom: calc(var(--dawn-space-6) + var(--dawn-space-4)); }
+.composer-footer {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  background: var(--dawn-surface-sidebar);
+  padding: var(--dawn-space-1) var(--dawn-space-3);
+  column-gap: var(--dawn-space-2);
+  row-gap: var(--dawn-space-2);
+}
+.composer-tools { display: flex; align-items: center; flex: 0 0 auto; gap: var(--dawn-space-3); min-width: 0; }
+.composer-tools > .attach, .composer-tools > .enhance-control { flex: 0 0 auto; }
+.composer-tools > .attach, .composer-tools > .perm-pill { display: flex; align-items: center; }
+.composer-tools > .perm-pill { position: static; }
+.composer-tools .perm-pill-menu { left: var(--dawn-space-3); right: auto; width: min(22rem, calc(100% - 2 * var(--dawn-space-3))); max-height: min(30rem, 70vh); overflow-y: auto; transform-origin: bottom left; }
+.composer-tools .enhance-word { display: inline; }
+.composer-footer .composer-status { display: flex; flex-wrap: nowrap; min-height: var(--composer-footer-row); margin-left: 0; padding: 0; gap: var(--dawn-space-1); }
+.composer-footer .composer-status:empty { display: none; }
+.composer-footer .composer-controls { flex: 1 1 auto; justify-content: flex-end; margin-left: auto; }
+.composer-tools .attach-trigger { width: 36px; height: 36px; }
+.composer-tools .attach-trigger > .icon, .composer-tools .perm-pill-trigger > .icon:first-child { width: 20px; height: 20px; }
+.composer-tools .perm-pill-trigger > .icon:last-child { width: 12px; height: 12px; }
+.composer-tools .enhance-main { font-size: var(--dawn-fs-meta); }
+.composer-environment + .plan-band { border-radius: 0; }
+.composer-add-menu {
+  position: fixed;
+  bottom: auto;
+  right: auto;
+  z-index: var(--z-modal);
+  width: 12.5rem;
+  max-width: calc(100vw - var(--dawn-space-8));
+  max-height: min(25rem, 55vh);
+  overflow-y: auto;
+  gap: var(--dawn-space-1);
+  box-sizing: border-box;
+}
+.composer-menu-divider { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); margin: var(--dawn-space-1) var(--dawn-space-2); }
+.composer-menu-label { flex: 1; min-width: 0; text-align: left; }
+.composer-menu-reason { display: block; white-space: normal; overflow-wrap: anywhere; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+.composer-add-menu .btn { gap: var(--dawn-space-3); font-size: var(--dawn-fs-sub); }
+.composer-add-menu .btn > .icon { flex: 0 0 auto; color: var(--dawn-text-3); }
+.composer-add-menu .btn[aria-checked="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
 .right-dock .dock-body { background: transparent; }
 .right-dock .preview { background: var(--dawn-surface-panel); }
 .right-dock .preview-document,
 .right-dock .preview-script { background: var(--dawn-surface-sidebar); }
-@container (max-width: 760px) {
-  .composer-tools .enhance-word, .composer-tools .plan-toggle-word { display: none; }
-}
 @container (max-width: 600px) {
-  .composer-tools .attach-word { display: none; }
-  .composer-tools .enhance-tip { left: auto; right: 0; }
-  .composer-tools > .ws-chip, .composer-tools > .ws-chip-group { max-width: 10rem; }
+  .composer-environment { gap: var(--dawn-space-2); }
 }
 @container (max-width: 440px) {
-  .composer-tools { flex-basis: 100%; }
+  .composer-footer { column-gap: var(--dawn-space-1); }
+  .composer-tools { gap: var(--dawn-space-2); }
+  .composer-tools .attach-trigger { width: 32px; }
+  .composer-footer .composer-controls { gap: var(--dawn-space-1); }
+  .composer-footer .model-trigger { padding-inline: var(--dawn-space-1); }
+  .composer-footer .model-trigger .svc-mark { display: none; }
+  .composer-footer .send-btn { margin-left: 0; }
+}
+/* 极窄侧栏带推理/适配器开关时，为模型保留完整可点击空间。 */
+@container (max-width: 360px) {
+  .composer-footer:has(.config-pill, .composer-status:not(:empty)) { flex-wrap: wrap; }
+  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .composer-controls { flex-basis: 100%; margin-left: 0; }
+  .composer-footer .composer-status { flex: 1 1 0; min-width: 0; }
+  .composer-footer .composer-status > .sess-config { min-width: 0; max-width: 100%; }
+  .composer-footer .composer-status .sess-config-trigger { max-width: 100%; overflow: hidden; white-space: nowrap; }
 }
 
-.composer-footer[data-follow-main="two-rows"] .composer-tools { flex-basis: 100%; }
+.composer-add-menu[hidden] { display: none; }
+.composer-add-menu > .enhance-cascade { display: block; width: 100%; }
+.composer-add-menu .enhance-submenu-trigger { width: 100%; justify-content: flex-start; }
+.composer-add-menu .enhance-submenu-trigger[aria-expanded="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
+.enhance-cascade-caret { transform: rotate(-90deg); width: 12px; height: 12px; }
+.enhance-cascade-hint { padding: var(--dawn-space-2) var(--dawn-space-3); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.enhance-mode[data-submenu="right"] svg { transform: rotate(-90deg); }
+.enhance-menu.enhance-flyout { position: fixed; bottom: auto; right: auto; z-index: var(--z-tooltip); width: min(13rem, calc((100vw - var(--dawn-space-8)) / 2)); min-width: 0; max-height: calc(100vh - var(--dawn-space-8)); overflow-y: auto; padding: var(--dawn-space-1); font-size: var(--dawn-fs-sub); animation: none; }
+.enhance-flyout .sess { text-align: left; }
+.enhance-flyout .sub { white-space: normal; overflow-wrap: anywhere; }
+.enhance-flyout .row[aria-checked="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
+.composer-add-menu .btn:hover:not(:disabled),
+.composer-add-menu .btn:focus-visible:not(:disabled),
+.enhance-flyout .row:hover:not(:disabled),
+.enhance-flyout .row:focus-visible:not(:disabled) { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
+.composer-add-menu .btn:hover:not(:disabled) > .icon,
+.composer-add-menu .btn:focus-visible:not(:disabled) > .icon,
+.composer-add-menu .btn[aria-expanded="true"] > .icon { color: inherit; }
+.composer-add-menu .enhance-tip { display: none; }
+.composer-add-menu .enhance-word { display: inline; }
+.composer-add-menu .enhance-menu .btn { white-space: normal; }
+
 
 /* 图表预览：单一文件头、纸张画布，PDF 与图片共用工作面。 */
 .visual-preview { min-width: 0; }
@@ -8574,14 +8659,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   color: var(--dawn-text-3);
 }
 .composer-session-usage[data-reserved="false"]:has(> .composer-session-usage-content:empty) { display: none; }
-.composer-session-usage-content { width: 100%; min-width: 0; font-size: var(--dawn-fs-meta); line-height: 20px; text-align: center; }
+.composer-session-usage-content { position: relative; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0 var(--dawn-space-2); width: 100%; min-width: 0; font-size: var(--dawn-fs-meta); line-height: 20px; text-align: center; }
 .composer-session-usage .session-usage {
+  min-width: 0;
   max-width: 100%;
   font-size: var(--dawn-fs-meta);
   line-height: 20px;
   text-align: center;
   overflow-wrap: anywhere;
 }
+.composer-session-usage .ctx-meter { position: static; display: flex; align-items: center; line-height: 20px; }
+.composer-session-usage .ctx-meter-trigger { height: 20px; line-height: 18px; }
+.composer-session-usage .ctx-meter-pop { left: 0; right: 0; margin-inline: auto; width: min(20rem, 100%); transform-origin: bottom center; }
 /* 时间和消息动作共用一行；与气泡分别定宽，短句不被动作撑宽。 */
 .turn.user .turn-actions { flex-wrap: nowrap; max-width: 100%; gap: var(--dawn-space-1); }
 .turn.user .turn-time { align-self: center; flex: 0 0 auto; margin-top: 0; white-space: nowrap; }

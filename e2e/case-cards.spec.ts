@@ -124,7 +124,7 @@ agents:
   test("两步查询产生对应卡片，选择回传完整 ID，技能引用随构建发布", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:analyze-like-case 科研分析路线验收：已有ASV表，请先给路线和案例，暂不运行")
+    await page.getByPlaceholder(/输入问题/).fill("/skill:analyze-like-case 科研分析路线验收：已有ASV表，请先给路线和案例，暂不运行")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     const cards = page.locator(".case-card")
     await expect(cards).toHaveCount(2, { timeout: 30_000 })

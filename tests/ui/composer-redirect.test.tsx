@@ -42,7 +42,7 @@ function 摆(over: { items?: TranscriptItem[]; canRedirect?: boolean; onAbort?: 
       canRedirect={over.canRedirect ?? true}
     />,
   )
-  const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+  const box = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
   const 打 = (v: string) => fireEvent.change(box, { target: { value: v } })
   return { onSend, box, 打 }
 }

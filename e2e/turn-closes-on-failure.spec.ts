@@ -42,7 +42,7 @@ test.describe("一轮失败之后", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("你好")
+    await page.getByPlaceholder(/输入问题/).fill("你好")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 失败要出声（这条 2026-08-10 就立了）
@@ -82,8 +82,8 @@ test.describe("失败提示与截断提示", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("演一次失败")
-    await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+    await page.getByPlaceholder(/输入问题/).fill("演一次失败")
+    await page.getByPlaceholder(/输入问题/).press("Enter")
 
     const 失败 = page.locator(".failed-notice").last()
     await expect(失败.getByText("这一轮没做成")).toBeVisible({ timeout: 30_000 })
@@ -99,8 +99,8 @@ test.describe("失败提示与截断提示", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("演一次截断")
-    await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+    await page.getByPlaceholder(/输入问题/).fill("演一次截断")
+    await page.getByPlaceholder(/输入问题/).press("Enter")
 
     const 失败 = page.locator(".failed-notice").last()
     await expect(失败).toContainText("回复到了输出上限，被截断了")

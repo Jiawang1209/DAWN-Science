@@ -12,7 +12,7 @@ import { test } from "./fixtures.js"
 
 test("组词没结束时按回车，不许发出去", async ({ dawn }) => {
   const { app, page } = dawn
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.waitFor({ timeout: 20_000 })
   await 框.click()
 
@@ -42,7 +42,7 @@ test("组词没结束时按回车，不许发出去", async ({ dawn }) => {
 
 test("候选词上屏之后，回车照旧发得出去", async ({ dawn }) => {
   const { app, page } = dawn
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.waitFor({ timeout: 20_000 })
   await 框.click()
 
@@ -70,7 +70,7 @@ test("候选词上屏之后，回车照旧发得出去", async ({ dawn }) => {
  */
 test("输入法把每一下都报成 229 时，回车照样发得出去", async ({ dawn }) => {
   const { app, page } = dawn
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.waitFor({ timeout: 20_000 })
   await 框.click()
 

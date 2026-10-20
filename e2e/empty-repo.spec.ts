@@ -27,7 +27,8 @@ test("**git init 未 commit：终端开得出，审阅列得出「新加」**", 
   await 开一段临时会话(page)
 
   // ① 终端开得出来（此前 createTerminalSession 在 rev-parse HEAD 上炸）
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await page.locator(".composer-card .attach-trigger").click()
+  await page.getByRole("menu", { name: "添加内容" }).getByRole("menuitem", { name: "终端面板", exact: true }).click()
   await expect(page.locator(".dock-tab"), "空仓库里连终端都开不出").toHaveCount(1, {
     timeout: 15_000,
   })

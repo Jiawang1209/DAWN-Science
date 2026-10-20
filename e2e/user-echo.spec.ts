@@ -37,7 +37,7 @@ test.describe("用户气泡即时上屏", () => {
     await 等进了对话(page)
 
     const 话 = "回显这一句先上屏"
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill(话)
     await 挂观察(page, 话)
     await 框.press("Enter")
@@ -69,7 +69,7 @@ test.describe("回显 · 空态第一句", () => {
     await page.locator(".composer").waitFor({ timeout: 30_000 })
 
     const 话 = "空态第一句先上屏"
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill(话)
     await 挂观察(page, 话)
     // 另记一笔：对话挂上之后有没有出现过「还没有对话」
@@ -112,7 +112,7 @@ test.describe("回显 · 发送失败", () => {
     await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
 
     const 话 = "这一句会失败"
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill(话)
     await 挂观察(page, 话)
     await 框.press("Enter")

@@ -14,7 +14,7 @@ import type { Locator, Page } from "@playwright/test"
 import { test, expect, CANNED_REPLY, 在项目里开会话, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 const 发 = async (page: Page, 话: string) => {
-  await page.getByPlaceholder(/今天帮你做些什么/).fill(话)
+  await page.getByPlaceholder(/输入问题/).fill(话)
   await page.getByRole("button", { name: "发送", exact: true }).click()
 }
 const 主区 = (page: Page) => page.locator("main.main")
@@ -181,7 +181,7 @@ test.describe("坞里那段对话派的子 agent：长长的一句不撑破坞",
     await 进坞(page, "对话")
     await 坞(page).getByRole("button", { name: "另开一段", exact: true }).click()
     await 坞(page).locator(".side-chat-head").waitFor({ timeout: 30_000 })
-    const 框 = 坞(page).getByPlaceholder(/今天帮你做些什么/)
+    const 框 = 坞(page).getByPlaceholder(/输入问题/)
     await 框.fill("派子agent慢慢看")
     await 框.press("Enter")
 

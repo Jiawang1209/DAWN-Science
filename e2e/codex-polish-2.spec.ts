@@ -35,13 +35,13 @@ test.describe("⑦ 输入卡上的权限档", () => {
     const { page } = dawn
     await 开一段临时会话(page)
     // 2026-08-23 起权限有自己那颗（`.perm-pill`），不再挤在「会话设置」菜单里
-    const 扳机 = page.locator(".composer-status .perm-pill-trigger")
+    const 扳机 = page.locator(".composer-tools .perm-pill-trigger")
     await expect(扳机).toHaveText(/^完全访问/)
     await 扳机.click()
     await page.getByRole("menuitemradio", { name: /^自动拦截/ }).click()
     await expect(扳机).toContainText("自动拦截")
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("去拉一下")
+    await page.getByPlaceholder(/输入问题/).fill("去拉一下")
     await page.keyboard.press("Enter")
     await expect(page.getByText("我去拉一下。").last()).toBeVisible({ timeout: 30_000 })
     // 工具行是失败的，理由里说的是「联网」
@@ -62,7 +62,7 @@ test.describe("⑦ 输入卡上的权限档", () => {
 test("**⑧ 模型不支持推理强度时，「会话设置」那颗整个不画**（权限自 2026-08-23 起有自己那颗，剩下的菜单空了就不摆）", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await expect(page.locator(".composer-status .perm-pill-trigger")).toBeVisible()
+  await expect(page.locator(".composer-tools .perm-pill-trigger")).toBeVisible()
   await expect(page.locator(".sess-config-trigger")).toHaveCount(0)
 })
 
@@ -77,5 +77,5 @@ test("**切到另一段会话时，会话设置那颗第一次就在**——快�
   await 在项目里开会话(page)
   await page.locator(".proj-session-list .sess-item .row").first().click()
   // 同一份会话开关快照喂的是权限那颗（2026-08-23 起）
-  await expect(page.locator(".composer-status .perm-pill-trigger")).toHaveCount(1)
+  await expect(page.locator(".composer-tools .perm-pill-trigger")).toHaveCount(1)
 })

@@ -16,7 +16,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
 async function 富回复(page: import("@playwright/test").Page, prompt = "给我一段 markdown") {
   await 开一段临时会话(page)
-  const b = page.getByPlaceholder(/今天帮你做些什么/)
+  const b = page.getByPlaceholder(/输入问题/)
   await expect(b).toBeVisible()
   await b.fill(prompt)
   await b.press("Enter")

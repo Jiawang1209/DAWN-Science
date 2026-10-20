@@ -84,10 +84,10 @@ export async function 开一段临时会话(page: Page, 首句?: string): Promis
   // 界面还不知道有这条——重载走的是真实的启动装配
   await page.reload()
   await page.locator(".session-list .sess-item .row").first().click()
-  await page.getByPlaceholder(/今天帮你做些什么/).waitFor({ timeout: 30_000 })
+  await page.getByPlaceholder(/输入问题/).waitFor({ timeout: 30_000 })
 
   if (首句 === undefined) return
-  const box = page.getByPlaceholder(/今天帮你做些什么/)
+  const box = page.getByPlaceholder(/输入问题/)
   await box.fill(首句)
   await box.press("Enter")
   await page.locator(".turns").getByText(首句, { exact: true }).waitFor({ timeout: 30_000 })
@@ -158,7 +158,7 @@ export async function 在项目里开会话(page: Page): Promise<void> {
  */
 export async function 等进了对话(page: Page): Promise<void> {
   await page.locator(".conv-title").waitFor({ timeout: 60_000 })
-  await page.getByPlaceholder(/今天帮你做些什么/).waitFor({ timeout: 60_000 })
+  await page.getByPlaceholder(/输入问题/).waitFor({ timeout: 60_000 })
 }
 
 /**

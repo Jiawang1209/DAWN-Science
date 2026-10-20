@@ -55,7 +55,7 @@ import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } f
 import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 领退回的图 } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
-import { 方案卡, 先出方案开关 } from "./plan-card.js"
+import { 方案卡 } from "./plan-card.js"
 import { AtMenu, AtRail, use艾特候选, 接管粘贴, type 引用文件源 } from "./at-menu.js"
 import { 剥掉粘贴标记 } from "../files/mentions.js"
 import { ComposerHighlight } from "./composer-highlight.js"
@@ -79,7 +79,7 @@ import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名, 目录显示名 } from "./format.js"
-import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标, 搜索图标 } from "./icons.js"
+import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标, 搜索图标, 电脑图标, 概览图标, 图片文件图标, 表格文件图标 } from "./icons.js"
 import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
 
@@ -140,6 +140,21 @@ export function use现在(): number {
  * **常驻，不做悬停才出现**：本项目已经为「悬停才出现的入口」被报过两次
  * 「没有这个功能」，而两次代码都是好的。
  */
+function ComposerEnvironment({ children, remote }: {
+  children: React.ReactNode
+  remote?: SessionSummary["remote"] | undefined
+}) {
+  return (
+    <div className="composer-environment">
+      {children}
+      <span className="composer-location">
+        {remote ? <服务器图标 /> : <电脑图标 />}
+        <span>{remote?.label ?? t("本机")}</span>
+      </span>
+    </div>
+  )
+}
+
 function WorkspaceEntry({
   workspace,
   onPick,
@@ -688,44 +703,49 @@ const 上传项 = [
   { kind: "data", 名: msgid("上传数据") },
 ] as const
 
-function AttachButton({
-  workspace,
-  onInsert,
-  onAttachImages,
-  ready,
-}: {
-  /** 已经带上东西了（图片 chips 在了）——按钮转黑色实心（2026-08-25 作者定的） */
+function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, onToggleDock, dockOpen, enhanceControl }: {
+  enhanceControl?: ((close: () => void, open: boolean) => React.ReactNode) | undefined
   ready?: boolean | undefined
-  /** 这段对话的工作目录。**用来把路径缩成相对的**，也用作浏览器的起点 */
   workspace?: string | undefined
-  /** 文件与数据：**把路径写进输入框**——agent 用 bash 去读它 */
-  onInsert: (文本: string) => void
-  /**
-   * 图片：**真的随这一轮送进模型**（协议 4.12，2026-08-13）。
-   *
-   * 与上面那条是两回事，而这个区别是实打实的：一个 CSV 的路径正是 agent 要的
-   * （它会去 `read` 那个文件）；而一张图的路径对带视觉的模型毫无用处——
-   * 它要的是字节。**同一个菜单里的两项，走两条不同的路，因为它们本来就是两件事。**
-   *
-   * **不给就不画「上传图片」那一项**：不摆一个按下去没有下文的入口。
-   */
+  onInsert: (text: string) => void
   onAttachImages?: ((paths: readonly string[]) => void) | undefined
+  plan?: { on: boolean; reason?: string | undefined; onToggle?: ((on: boolean) => void) | undefined } | undefined
+  onToggleDock?: (() => void) | undefined
+  dockOpen?: boolean | undefined
 }) {
   const [开着, 设开着] = useState(false)
   const 盒 = useRef<HTMLDivElement>(null)
-
-  // 点别处收起来。**菜单赖着不走**是本项目已经修过一次的毛病
+  const 扳机 = useRef<HTMLButtonElement>(null)
+  const 菜单盒 = useRef<HTMLDivElement>(null)
+  const 收起 = () => {
+    设开着(false)
+    扳机.current?.focus()
+  }
+  useLayoutEffect(() => {
+    if (!开着 || !菜单盒.current || !扳机.current) return
+    const menu = 菜单盒.current
+    const trigger = 扳机.current
+    const place = () => {
+      const rect = trigger.getBoundingClientRect()
+      menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8))}px`
+      menu.style.top = `${Math.max(8, rect.top - menu.offsetHeight - 8)}px`
+    }
+    place()
+    window.addEventListener("resize", place)
+    return () => window.removeEventListener("resize", place)
+  }, [开着])
   useEffect(() => {
     if (!开着) return
+    菜单盒.current?.querySelector<HTMLButtonElement>('[role^="menuitem"]:not(:disabled)')?.focus()
     const 关 = (e: MouseEvent) => {
-      if (!盒.current?.contains(e.target as Node)) 设开着(false)
+      if (!盒.current?.contains(e.target as Node) && !菜单盒.current?.contains(e.target as Node)) 设开着(false)
     }
     document.addEventListener("mousedown", 关)
     return () => document.removeEventListener("mousedown", 关)
   }, [开着])
 
   const 挑 = async (kind: "any" | "image" | "data") => {
-    设开着(false)
+    收起()
     const 选中 = await 挑文件(kind, workspace)
     if (选中.length === 0) return // 取消了：什么都不做，也不吭声
     /**
@@ -752,68 +772,52 @@ function AttachButton({
   }
 
   return (
-    <div
-      className="attach" data-ready={ready ? "1" : undefined}
-      ref={盒}
-      /**
-       * **Esc 也能收**（2026-08-13 补）。
-       *
-       * 别处每一个浮层都有这条退路（模型菜单、agent 菜单、侧栏搜索、
-       * 改一句话的输入框），**只有这个菜单漏了**——
-       * 一个只能用鼠标关掉的菜单，对键盘用户等于挡住了整张输入卡。
-       */
+    <div className="attach" data-ready={ready ? "1" : undefined} ref={盒}
       onKeyDown={(e) => {
         if (e.key === "Escape" && 开着) {
+          e.preventDefault()
           e.stopPropagation()
-          设开着(false)
+          收起()
+          return
         }
-      }}
-    >
-      <Button
-        variant="ghost"
-        size="sm"
-        className="attach-trigger"
-        /**
-         * **带上文字**（2026-08-16，作者：*「＋ 其实可以做一个 ＋ 带有一个圈的
-         * 图标，然后后面可以跟着文字，上传文件」*）。
-         *
-         * 它此前是一颗裸 `＋`，意思全靠 `aria-label` 说——而本项目为
-         * 「看不见的能力等于不存在」栽过两次（没标签的 `＋`、`opacity: 0` 的 `×`），
-         * 两次作者的反馈都是「没有这个功能」。**这是第三次，只是这回他先说了。**
-         *
-         * **`aria-label` 一并摘掉**：有了可见文字，名字就该是那几个字
-         * （WCAG 2.5.3：读屏念到的要包含眼睛看到的）。写一个不同的
-         * `aria-label` 只会让两者对不上。
-         *
-         * 与菜单里那一项同名**不构成歧义**：这颗是 `button`，那三项是
-         * `menuitem`——按角色找根本不会互相指到。
-         */
-        aria-label={t("上传文件")}
-        aria-haspopup="menu"
-        aria-expanded={开着}
-        onClick={() => 设开着((v) => !v)}
-      >
-        <实心圆加号图标 />
-        {/* 字包一层（2026-09-29）：坞里跟主区排成一行时只留图标（`footer-rows.ts`）——名字另有 `aria-label`，同一句话 */}
-        <span className="attach-word">{t("上传文件")}</span>
+        if (e.key === "Tab") { 收起(); return }
+        if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return
+        e.preventDefault()
+        if (!开着) { 设开着(true); return }
+        const items = Array.from(菜单盒.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]:not(:disabled)') ?? [])
+        const current = items.indexOf(document.activeElement as HTMLButtonElement)
+        const next = e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : (current + (e.key === "ArrowUp" ? -1 : 1) + items.length) % items.length
+        items[next]?.focus()
+      }}>
+      <Button ref={扳机} variant="ghost" size="icon" className="attach-trigger"
+        aria-label={t("添加内容")} aria-haspopup="menu" aria-expanded={开着}
+        onClick={() => 设开着((v) => !v)}>
+        <加号图标 />
       </Button>
-      {开着 ? (
-        <div className="menu attach-menu" role="menu" aria-label={t("添加内容")}>
-          {上传项
-            .filter((项) => 项.kind !== "image" || onAttachImages)
-            .map((项) => (
-            <Button
-              key={项.kind}
-              variant="ghost"
-              size="inline"
-              role="menuitem"
-              onClick={() => void 挑(项.kind)}
-            >
-              {t(项.名)}
+      {createPortal(<div ref={菜单盒} className="menu attach-menu composer-add-menu" data-composer-side={Boolean(盒.current?.closest(".side-chat"))} role="menu" aria-label={t("添加内容")} hidden={!开着}>
+          {上传项.filter((item) => item.kind !== "image" || onAttachImages).map((item) => (
+            <Button key={item.kind} variant="ghost" size="inline" role="menuitem" tabIndex={-1} onClick={() => void 挑(item.kind)}>
+              {item.kind === "image" ? <图片文件图标 /> : item.kind === "data" ? <表格文件图标 /> : <文件图标 />}
+              <span>{t(item.名)}</span>
             </Button>
           ))}
-        </div>
-      ) : null}
+          {enhanceControl || plan || onToggleDock ? <div className="composer-menu-divider" role="separator" /> : null}
+          {enhanceControl?.(收起, 开着)}
+          {plan ? (
+            <Button variant="ghost" size="inline" role="menuitemcheckbox" tabIndex={-1} aria-label={t("生成方案")}
+              aria-checked={plan.on && !plan.reason} disabled={!plan.onToggle || Boolean(plan.reason)}
+              onClick={() => { 收起(); plan.onToggle?.(!plan.on) }}>
+              <概览图标 />
+              <span className="composer-menu-label">{t("生成方案")}{plan.reason ? <span className="composer-menu-reason">{plan.reason}</span> : null}</span>
+              {plan.on && !plan.reason ? <勾图标 /> : null}
+            </Button>
+          ) : null}
+          {onToggleDock ? (
+            <Button variant="ghost" size="inline" role="menuitem" tabIndex={-1} onClick={() => { 收起(); onToggleDock() }}>
+              <终端图标 /><span className="composer-menu-label">{t("终端面板")}</span>{dockOpen ? <勾图标 /> : null}
+            </Button>
+          ) : null}
+        </div>, document.body)}
     </div>
   )
 }
@@ -3686,10 +3690,10 @@ function 同账(a: readonly TranscriptItem[], b: readonly TranscriptItem[]): boo
   })
 }
 
-function ComposerSessionUsage({ items }: { items: readonly TranscriptItem[] }) {
+function ComposerSessionUsage({ items, context }: { items: readonly TranscriptItem[]; context?: React.ReactNode }) {
   const { ref, height } = useComposerUsageSpace()
   return <div className="composer-session-usage" style={{ minHeight: height }} data-reserved={height > 0}>
-    <div className="composer-session-usage-content" ref={ref}><SessionUsage items={items} /></div>
+    <div className="composer-session-usage-content" ref={ref}><SessionUsage items={items} />{context}</div>
   </div>
 }
 
@@ -5239,6 +5243,14 @@ export function ConversationView({
         ) : null}
         {onAnswerQuestion ? pendingQuestions.map((record) => <QuestionCard key={record.requestId} sessionId={session.sessionId} record={record} onAnswer={(answer) => onAnswerQuestion(record.requestId, answer)} />) : null}
         <div className="composer-card" hidden={questionTakeover}>
+        <ComposerEnvironment remote={session.remote}>
+            {session.remote || onPickWorkspace || workspace ? (
+              <WorkspaceEntry
+                {...(session.remote ? { workspace: session.remote.cwd } : workspace ? { workspace } : {})}
+                {...(!session.remote && onPickWorkspace ? { onPick: onPickWorkspace } : {})}
+              />
+            ) : null}
+        </ComposerEnvironment>
         {onResume && (disabled || recovery?.pending || recovery?.error) ? (
           <div className="session-recovery" role="status">
             <span>{recovery?.error ?? (recovery?.pending ? t("正在恢复原会话…") : t("会话已暂停，可以接着聊"))}</span>
@@ -5382,7 +5394,7 @@ export function ConversationView({
               // 粘贴进来的 `@` 护住（第二档）：不开菜单、不进栏、不发给模型
               else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
             }}
-            placeholder={disabled ? readOnlyReason ?? t("会话已结束") : t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
+            placeholder={disabled ? readOnlyReason ?? t("会话已结束") : t("输入问题，@ 引用文件，/ 使用指令")}
             disabled={disabled ?? false}
             onKeyDown={(e) => {
               /**
@@ -5582,19 +5594,137 @@ export function ConversationView({
               {canRedirect ? t("回车排到这一轮后面 · Cmd/Ctrl+回车调整方向") : t("回车排到这一轮后面")}
             </p>
           ) : null}
-          {/**
-            * **输入卡自己的那一行**（2026-08-12，作者截图指的就是这里）。
-            *
-            * 实测 WorkBuddy 的 `wb-input-footer`：与输入卡同宽、高 32、
-            * `padding: 0 12px`、`gap: 4`，里面是一颗颗 chip
-            * （`选择工作空间 ⌄`、`默认权限 ⌄`）。
-            *
-            * **我上一版把它放在了对话标题栏的右上角**——那是我自己想的位置，
-            * 从没量过它在哪。作者：*「这不是我想要的效果。」*
-            * 摆在输入卡下面才对：它说的是**这一句话会在哪儿执行**，
-            * 属于「要发出去的这件事」，不属于「这段对话叫什么」。
-            */}
-          <div className="composer-controls">
+
+
+
+        </div>
+
+          {/* 输入卡底栏：左侧添加与权限，右侧模型、推理与发送。 */}
+          {/* 主区那张报自己几行、坞里那张跟着排（2026-09-29，与主区同高，见 `footer-rows.ts`） */}
+          <div className="composer-footer" ref={附栏ref} data-follow-main={紧凑 && 主区附栏行数 ? (主区附栏行数 === 1 ? "one-row" : "two-rows") : undefined}>
+            <div className="composer-tools">
+            {/**
+              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
+              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
+              * 所以分居两端——中间那段空白就是它们的分界。
+              */}
+            <AttachButton
+              enhanceControl={(close, open) => (<EnhanceControl
+                inMenu onMenuAction={close} menuVisible={open}
+              draft={draft}
+              setDraft={(text) => setDraft(session.sessionId, text)}
+              enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
+              cancel={onCancelEnhance ?? (async () => undefined)}
+              reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+              重置记号={发过几次}
+              onProblem={设发送出错}
+              onNote={设增强说明}
+              坞里={紧凑}
+            />)}
+
+              {...(onToggleDock ? { onToggleDock, dockOpen } : {})}
+              {...(画方案开关 ? { plan: { on: 方案开着, reason: 方案不能, onToggle: 方案开关 && onSetPlan ? (on: boolean) => {
+                设发送出错(undefined)
+                void onSetPlan(on).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
+              } : undefined } } : {})}
+              {...(workspace ? { workspace } : {})}
+              ready={待发图.length > 0 || 附过文件 || 待发文件.some((f) => draft.includes(`@${f.令牌}`))}
+              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
+              onInsert={(文本) => {
+                setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)
+                设附过文件(true)
+              }}
+              /**
+               * **去重**：同一张图挑两次只算一张。
+               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
+               * 分不出「我挑重了」还是「界面画重了」。
+               */
+              /**
+               * **只有内置对话收得下图片**（2026-08-13）。
+               *
+               * cli（claude / codex 的 headless）与 kernel 会话的运行时
+               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
+               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
+               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
+               * 比没有更坏。
+               *
+               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
+               */
+              {...(session.kind !== "native"
+                ? {}
+                : {
+              onAttachImages: (paths: readonly string[]) => {
+                设待发图((前) => [
+                  ...前,
+                  ...paths
+                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                ])
+                /**
+                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
+                 * 人按完「上传图片」会有一段什么都不发生的空窗，
+                 * 而那正是「点了没反应」的样子。
+                 */
+                for (const p of paths) {
+                  void 要缩略图(p).then((预览) => {
+                    if (!预览) return
+                    设待发图((前) =>
+                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                    )
+                  })
+                }
+              },
+                  })}
+            />
+            {/**
+              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
+              *
+              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
+              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
+              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
+              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
+              *
+              * 「用别的 agent 开一段新对话」（claude / codex 这类）
+              * **留在命令面板**（`⌘K` →「新建会话：…」）：
+              * 它与「换模型」不是同一件事，混进同一个菜单正是
+              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
+              */}
+
+
+            {/**
+              * **终端的入口在对话这一侧**（2026-08-11）。
+              *
+               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
+              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
+              *
+              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
+              */}
+
+            {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
+
+
+
+            {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}
+            </div>
+        <div className="composer-status">
+            {/**
+              * 模型与推理强度紧邻发送，权限在添加入口旁。
+              * 这颗菜单只收剩下的 ACP 开关，
+              * 一条都不剩时不画（不摆一个点开是空的菜单）。
+              */}
+            {会话开关们 &&
+            会话开关们.some((o) => !["mode", "model", "thought_level", "plan"].includes(o.category ?? "")) &&
+            onSetConfigOption ? (
+              <SessionConfigMenu
+                options={会话开关们.filter((o) => !["mode", "model", "thought_level", "plan"].includes(o.category ?? ""))}
+                onSet={onSetConfigOption}
+              />
+            ) : null}
+
+
+        </div>
+
+        <div className="composer-controls">
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
               * 不摆一个点开是空的菜单。
@@ -5625,7 +5755,7 @@ export function ConversationView({
               * 内置 / cli 会话走上面那颗 `ModelPill`。ACP 会话在现有模型菜单里切换 API 或适配器，
               * 它自己的模型仍由会话开关里 `category: "model"`
               * 的一条——此前它掉进底部那颗 `SessionConfigMenu`，摆在了权限旁边。
-              * 现在把它捞回顶行同一个槽位：**不论哪类会话，模型都在这儿。**
+              * 现在把它放在模型同一个槽位：**不论哪类会话，模型都在这儿。**
               */}
 
             {/**
@@ -5723,185 +5853,20 @@ export function ConversationView({
               </Button>
             )}
           </div>
-        </div>
-
-          {/* 同卡下层：准备工具在左，上下文与权限在右；模型和发送留在上层。 */}
-          {/* 主区那张报自己几行、坞里那张跟着排（2026-09-29，与主区同高，见 `footer-rows.ts`） */}
-          <div className="composer-footer" ref={附栏ref} data-follow-main={紧凑 && 主区附栏行数 ? (主区附栏行数 === 1 ? "one-row" : "two-rows") : undefined}>
-            <div className="composer-tools">
-            {/**
-              * **`＋` 在最左**（2026-08-13，作者截图里的位置）。
-              * 它属于「要发出去的这件事」，与右边那些「用谁发」是两类，
-              * 所以分居两端——中间那段空白就是它们的分界。
-              */}
-            <AttachButton
-              {...(workspace ? { workspace } : {})}
-              ready={待发图.length > 0 || 附过文件 || 待发文件.some((f) => draft.includes(`@${f.令牌}`))}
-              /* 草稿住在 `$drafts` 里、按会话分家——不是组件里的一个 useState */
-              onInsert={(文本) => {
-                setDraft(session.sessionId, draft ? `${draft} ${文本}` : 文本)
-                设附过文件(true)
-              }}
-              /**
-               * **去重**：同一张图挑两次只算一张。
-               * 不去重的话它会被送两遍，而人在 chip 上看见两个一样的名字，
-               * 分不出「我挑重了」还是「界面画重了」。
-               */
-              /**
-               * **只有内置对话收得下图片**（2026-08-13）。
-               *
-               * cli（claude / codex 的 headless）与 kernel 会话的运行时
-               * 没有把图片喂进去的入口——`SessionManager.write` 会当场报错。
-               * 报错是对的（**不静默丢掉**），但**更该做的是不摆这个入口**：
-               * 一个点下去只会得到「这类会话不能附图片」的菜单项，
-               * 比没有更坏。
-               *
-               * 不给 `onAttachImages` 时，`AttachButton` 自己就不画「上传图片」那一项。
-               */
-              {...(session.kind !== "native"
-                ? {}
-                : {
-              onAttachImages: (paths: readonly string[]) => {
-                设待发图((前) => [
-                  ...前,
-                  ...paths
-                    .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
-                    .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
-                ])
-                /**
-                 * **预览后到，chip 先出现。** 反过来的话（等缩略图回来再画）
-                 * 人按完「上传图片」会有一段什么都不发生的空窗，
-                 * 而那正是「点了没反应」的样子。
-                 */
-                for (const p of paths) {
-                  void 要缩略图(p).then((预览) => {
-                    if (!预览) return
-                    设待发图((前) =>
-                      前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
-                    )
-                  })
-                }
-              },
-                  })}
-            />
-            {/**
-              * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
-              *
-              * 实测 WorkBuddy 的输入卡右下角只有 `◐ Hy3 ⌃` 一颗。
-              * 我们此前是「厂家」+「模型」两颗——2026-08-11 定的「先厂家、
-              * 后模型」在那时是对的（那会儿换厂家真的要新建对话），
-              * 但**换服务已经能就地换了**，两颗就成了同一个问题的两种问法。
-              *
-              * 「用别的 agent 开一段新对话」（claude / codex 这类）
-              * **留在命令面板**（`⌘K` →「新建会话：…」）：
-              * 它与「换模型」不是同一件事，混进同一个菜单正是
-              * 2026-08-11 那个「点了以为换模型、结果新开了对话」的来源。
-              */}
-            {/**
-              * **「选择工作目录」从下面那一行搬上来**（2026-08-16 作者要的：
-              * *「把这个新加的上传文件和选择工作目录，都放到对话框下面。保持一行。」*）。
-              *
-              * 它此前独占一行（`.composer-footer`）。那一行是 2026-08-12
-              * 照 WorkBuddy 的 `wb-input-footer` 抄的——**但我们这一行上
-              * 只有它一颗 chip**，于是输入卡下面白白高出 32px。
-              * 三颗左手边的东西（上传、目录、终端）说的是同一类事：
-              * **这句话带着什么、在哪儿执行**。它们归一行。
-              */}
-            {session.remote || onPickWorkspace || workspace ? (
-              <WorkspaceEntry
-                {...(session.remote ? { workspace: session.remote.cwd } : workspace ? { workspace } : {})}
-                {...(!session.remote && onPickWorkspace ? { onPick: onPickWorkspace } : {})}
-              />
-            ) : null}
-            {/**
-              * **终端的入口在对话这一侧**（2026-08-11）。
-              *
-               * 作者：*「应该在对话框的这边，侧边栏这边不能有终端。」*
-              * 侧栏是导航（我在哪、有什么），而开一个终端是**在这段对话里干活**。
-              *
-              * pill **不跟着 `disabled` 走**：会话结束了照样可能想敲两条命令。
-              */}
-{onToggleDock ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="dock-toggle"
-                aria-pressed={dockOpen ?? false}
-                onClick={onToggleDock}
-              >
-                {/* 工具栏统一四字名称，终端入口仍为打开/收起面板。 */}
-                <终端图标 />
-                {t("终端面板")}
-              </Button>
-            ) : null}
-            {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
-            <EnhanceControl
-              draft={draft}
-              setDraft={(text) => setDraft(session.sessionId, text)}
-              enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
-              cancel={onCancelEnhance ?? (async () => undefined)}
-              reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
-              重置记号={发过几次}
-              onProblem={设发送出错}
-              onNote={设增强说明}
-              坞里={紧凑}
-            />
-            {/**
-              * 生成方案（2026-09-27，D4 / D7；2026-09-28 作者要的：从模型那一行最左边搬到附栏、**紧跟「优化输入」**，并改名「生成方案」）。
-              * 常驻。坞那么窄时只留图标；对话格 ≤720 时附栏折成两行（右边仪表 + 权限一组换到第二行靠右）——不挤压：挤进一行它会被压成 2px 宽（2026-09-27 实测）。
-              * `dawn.plan` 开关（`plan` 类）不进附栏那颗通用菜单，走这一颗。外部 agent 灰着、旁边一行字说原因。
-              */}
-            {画方案开关 ? (
-              <先出方案开关
-                on={方案开着}
-                不能的原因={方案不能}
-                onToggle={
-                  方案开关 && onSetPlan
-                    ? (on) => {
-                        设发送出错(undefined)
-                        void onSetPlan(on).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
-                      }
-                    : undefined
-                }
-              />
-            ) : null}
-            </div>
-        <div className="composer-status">
-            {/**
-              * 前三样说「带什么、在哪跑」，右边说「怎么改」：权限那颗是唯一入口（2026-08-23）。
-              * **模型（含 ACP 的）与推理强度已钉到顶行**（2026-08-27，作者 #3/#4），
-              * 权限那颗走 `PermissionPill`——这颗底部菜单只收剩下的 ACP 开关，
-              * 一条都不剩时不画（不摆一个点开是空的菜单）。
-              */}
-            {会话开关们 &&
-            会话开关们.some((o) => !["mode", "model", "thought_level", "plan"].includes(o.category ?? "")) &&
-            onSetConfigOption ? (
-              <SessionConfigMenu
-                options={会话开关们.filter((o) => !["mode", "model", "thought_level", "plan"].includes(o.category ?? ""))}
-                onSet={onSetConfigOption}
-              />
-            ) : null}
-            {/**
-              * 上下文仪表（2026-09-27，spec §2.1 / D4）：权限左边，**常驻**。内核 / 终端不画（`读仪表` 给 undefined）；
-              * 外部 agent 灰着写「读不到」。这一轮在跑、或正在压缩时「现在压缩」灰着并写原因（D8）。
-              */}
-            {仪表 ? (
-              <ContextMeter
-                读数={仪表}
-                onOpen={上下文.重取}
-                {...(onCompact ? { onCompact: () => onCompact() } : {})}
-                {...(压缩中
-                  ? { 不能压的原因: t("正在压缩上下文，压完再说") }
-                  : busy
-                    ? { 不能压的原因: t("这一轮还在跑，做完再压缩") }
-                    : {})}
-              />
-            ) : null}
-            {权限 ? <PermissionPill 当前={权限.当前} 跟随默认={权限.跟随默认} onPick={权限.onPick} /> : null}
-        </div>
           </div>
         </div>
-        <ComposerSessionUsage items={items} />
+        <ComposerSessionUsage items={items} context={仪表 ? (
+          <ContextMeter
+            读数={仪表}
+            onOpen={上下文.重取}
+            {...(onCompact ? { onCompact: () => onCompact() } : {})}
+            {...(压缩中
+              ? { 不能压的原因: t("正在压缩上下文，压完再说") }
+              : busy
+                ? { 不能压的原因: t("这一轮还在跑，做完再压缩") }
+                : {})}
+          />
+        ) : null} />
       </form>
     </div>
   )
@@ -7451,6 +7416,20 @@ export function EmptyConversation({
             }}
           >
             <div className="composer-card">
+            <ComposerEnvironment>
+                {onPickDirectory ? (
+                  <WorkspaceEntry
+                    {...(工作目录 ? { workspace: 工作目录 } : {})}
+                    onPick={() => {
+                      void onPickDirectory().then((d) => {
+                        // **取消就什么都不做**：改主意不是错误
+                        if (d) 设工作目录(d)
+                      })
+                    }}
+                  />
+                ) : null}
+            </ComposerEnvironment>
+            {先出方案?.on && !先出方案.不能的原因 ? <p className="plan-band" role="status">{t("生成方案 · 这一段只看不改，方案批了才动手（再按一下「生成方案」退出）")}</p> : null}
             <div className="composer-box">
               {/**
                 * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
@@ -7529,7 +7508,7 @@ export function EmptyConversation({
                   if (粘的是图(e)) e.preventDefault()
                   else 接管粘贴(e, 引用文件, (草, c) => 写回({ draft: 草, caret: c }), 护粘贴)
                 }}
-                placeholder={t("今天帮你做些什么？@引用工作区文件，/调用技能与指令")}
+                placeholder={t("输入问题，@ 引用文件，/ 使用指令")}
                 onKeyDown={(e) => {
                   /**
                    * **输入法组词途中那一下回车属于输入法，不属于我们**（2026-09-06 作者报的）。
@@ -7604,18 +7583,79 @@ export function EmptyConversation({
                 */}
               {开场出错 ? <p className="caveat composer-problem">⚠ {开场出错}</p> : null}
               {增强说明 ? <p className="hint composer-problem">{增强说明}</p> : null}
-              {/**
-                * **与对话里那张同一颗 chip、同一处位置**（2026-08-12）。
-                *
-                * 作者：*「默认的 App 的面板，也应该和新建任务一样，带有一个
-                * 选择工作目录，因为只有选择了，才归类为项目，如果不选择目录，
-                * 那么就是会话。」*
-                *
-                * 放在这儿而不是建完之后再设：**归类的那个决定应该在开口之前
-                * 就能做**——建完再改要搬运行时（`SessionManager.rehome`），
-                * 而一开始就选对，什么都不用搬。
-                */}
-              <div className="composer-controls">
+
+
+
+            </div>
+
+              {/* 输入卡底栏与会话内保持相同顺序。 */}
+              <div className="composer-footer" ref={空态附栏ref}>
+                <div className="composer-tools">
+                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
+                <AttachButton
+              enhanceControl={(close, open) => (<EnhanceControl
+                inMenu onMenuAction={close} menuVisible={open}
+                  draft={草稿}
+                  setDraft={设草稿}
+                  enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
+                  cancel={onCancelEnhance ?? (async () => undefined)}
+                  reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
+                  重置记号={发过几次}
+                  onProblem={设开场出错}
+                  onNote={设增强说明}
+                />)}
+
+                  {...(onToggleDock ? { onToggleDock } : {})}
+                  {...(先出方案 ? { plan: { on: 先出方案.on, reason: 先出方案.不能的原因, onToggle: 先出方案.onToggle } } : {})}
+                  {...(工作目录 ? { workspace: 工作目录 } : {})}
+                  ready={空态图.length > 0 || 空态附过 || 空态文件.some((f) => 草稿.includes(`@${f.令牌}`))}
+                  onInsert={(文本) => {
+                    设草稿((前) => (前 ? `${前} ${文本}` : 文本))
+                    设空态附过(true)
+                  }}
+                  onAttachImages={(paths) => {
+                    设空态图((前) => [
+                      ...前,
+                      ...paths
+                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
+                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
+                    ])
+                    // 预览后到，chip 先出现——与对话里那一份同一条
+                    for (const p of paths) {
+                      void 要缩略图(p).then((预览) => {
+                        if (!预览) return
+                        设空态图((前) =>
+                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
+                        )
+                      })
+                    }
+                  }}
+                />
+                {/**
+                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
+                  *
+                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
+                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
+                  *
+                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
+                  * 选错了文件夹，再点一次换成对的就行；
+                  * **一个入口存在的理由不能是「它不会造成伤害」。**
+                  */}
+
+                {/**
+                  * **空态也要够得着终端**（2026-08-11）。
+                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
+                  */}
+                {/* 与对话里那颗同一副样子（2026-08-23 审查抓的：这里是 text、没有 aria-pressed） */}
+
+                {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
+
+                {/* 生成方案（2026-09-27；09-28 搬到附栏「优化输入」后面）：与对话里同一处。还没有会话，按下只记住「第一句按生成方案发」 */}
+
+                {/* 尚未开会话时修改默认权限。 */}
+                {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}
+                </div>
+            <div className="composer-controls">
                 {/**
                   * **不叫「agent」，叫「LLM」**（2026-08-11）。
                   *
@@ -7671,87 +7711,7 @@ export function EmptyConversation({
                   <上箭头图标 />
                 </Button>
               </div>
-            </div>
 
-              {/* 同卡下层：准备工具在左，上下文与权限在右；模型和发送留在上层。 */}
-              <div className="composer-footer" ref={空态附栏ref}>
-                <div className="composer-tools">
-                {/* 空态这一屏同样给 `＋`：**一个动作只有一个家，但可以有两个入口** */}
-                <AttachButton
-                  {...(工作目录 ? { workspace: 工作目录 } : {})}
-                  ready={空态图.length > 0 || 空态附过 || 空态文件.some((f) => 草稿.includes(`@${f.令牌}`))}
-                  onInsert={(文本) => {
-                    设草稿((前) => (前 ? `${前} ${文本}` : 文本))
-                    设空态附过(true)
-                  }}
-                  onAttachImages={(paths) => {
-                    设空态图((前) => [
-                      ...前,
-                      ...paths
-                        .filter((p) => !前.some((x) => x.from === "path" && x.path === p))
-                        .map((p) => ({ from: "path" as const, path: p, 名: 基名(p) })),
-                    ])
-                    // 预览后到，chip 先出现——与对话里那一份同一条
-                    for (const p of paths) {
-                      void 要缩略图(p).then((预览) => {
-                        if (!预览) return
-                        设空态图((前) =>
-                          前.map((x) => (x.from === "path" && x.path === p ? { ...x, 预览 } : x)),
-                        )
-                      })
-                    }
-                  }}
-                />
-                {/**
-                  * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
-                  *
-                  * 作者 2026-08-12 定的是「它属于要发出去的这件事，
-                  * 所以在输入卡下面」——那条没变，变的只是**它不再独占一行**。
-                  *
-                  * 「改回普通对话」这里没有（2026-08-13 作者圈过两次）：
-                  * 选错了文件夹，再点一次换成对的就行；
-                  * **一个入口存在的理由不能是「它不会造成伤害」。**
-                  */}
-                {onPickDirectory ? (
-                  <WorkspaceEntry
-                    {...(工作目录 ? { workspace: 工作目录 } : {})}
-                    onPick={() => {
-                      void onPickDirectory().then((d) => {
-                        // **取消就什么都不做**：改主意不是错误
-                        if (d) 设工作目录(d)
-                      })
-                    }}
-                  />
-                ) : null}
-                {/**
-                  * **空态也要够得着终端**（2026-08-11）。
-                  * 入口从侧栏挪到了对话这一侧（作者：*「侧边栏这边不能有终端」*）。
-                  */}
-                {/* 与对话里那颗同一副样子（2026-08-23 审查抓的：这里是 text、没有 aria-pressed） */}
-                {onToggleDock ? (
-                  <Button variant="ghost" size="sm" className="dock-toggle" aria-pressed={dockOpen ?? false} onClick={onToggleDock}>
-                    <终端图标 />
-                    {t("终端面板")}
-                  </Button>
-                ) : null}
-                {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
-                <EnhanceControl
-                  draft={草稿}
-                  setDraft={设草稿}
-                  enhance={onEnhance ?? (async () => { throw new Error(enhanceReason ?? "") })}
-                  cancel={onCancelEnhance ?? (async () => undefined)}
-                  reason={onEnhance ? enhanceReason : (enhanceReason ?? t("还没有 API key——填一个就能用"))}
-                  重置记号={发过几次}
-                  onProblem={设开场出错}
-                  onNote={设增强说明}
-                />
-                {/* 生成方案（2026-09-27；09-28 搬到附栏「优化输入」后面）：与对话里同一处。还没有会话，按下只记住「第一句按生成方案发」 */}
-                {先出方案 ? <先出方案开关 on={先出方案.on} 不能的原因={先出方案.不能的原因} onToggle={先出方案.onToggle} /> : null}
-                </div>
-            <div className="composer-status">
-                {/* 空态屏上那颗改的是**默认**（还没有会话） */}
-                {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}
-            </div>
               </div>
             </div>
             <ComposerSessionUsage items={[]} />

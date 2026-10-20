@@ -44,7 +44,7 @@ test.describe("模型真的拿到了工具", () => {
   test("**假模型点名调 xlsx_write，工作区长出真 xlsx**", async ({ dawn }) => {
     const { page, workspace } = dawn
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("写个表")
+    await page.getByPlaceholder(/输入问题/).fill("写个表")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     expect(existsSync(join(workspace, "物证.xlsx"))).toBe(true)

@@ -12,7 +12,7 @@ function mount(kind: 'welcome' | 'conversation') {
   const view = render(kind === 'welcome'
     ? <EmptyConversation agents={['ds-chat']} onStart={onSend} onOpenSettings={() => {}} />
     : <ConversationView session={session} items={[]} onSend={onSend} />)
-  const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+  const box = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
   fireEvent.change(box, { target: { value: '前段后段尾部' } })
   return { ...view, box, onSend }
 }

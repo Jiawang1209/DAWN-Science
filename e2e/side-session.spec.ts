@@ -19,7 +19,7 @@ import { test, expect, CANNED_REPLY, 在项目里开会话, 开一段临时会�
 
 const 主区 = (page: Page) => page.locator("main.main")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
-const 框 = (区: ReturnType<typeof 主区>) => 区.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (区: ReturnType<typeof 主区>) => 区.getByPlaceholder(/输入问题/)
 
 async function 说(区: ReturnType<typeof 主区>, 话: string) {
   await 框(区).fill(话)

@@ -64,7 +64,7 @@ export function PermissionPill({
 
   return (
     <div className="perm-pill" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
-      <Button variant="ghost" size="inline" className="perm-pill-trigger" data-tier={当前} aria-haspopup="menu" aria-expanded={开着} onClick={() => 设开着((v) => !v)}>
+      <Button variant="ghost" size="toolbar" className="perm-pill-trigger" data-tier={当前} aria-haspopup="menu" aria-expanded={开着} onClick={() => 设开着((v) => !v)}>
         {档图标(当前)}
         {短名(当前)}
         <下拉图标 />

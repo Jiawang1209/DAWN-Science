@@ -75,7 +75,7 @@ test("会话顶栏预览：正常标题、亮暗主题及侧边会话互不串�
 test("同项目多个会话各有概括标题，页签、侧栏和顶栏同步，重载后仍能正确切换", async ({ dawn }, testInfo) => {
   const { page } = dawn
   const send = async (text: string) => {
-    const box = page.locator("main.main").getByPlaceholder(/今天帮你做些什么/)
+    const box = page.locator("main.main").getByPlaceholder(/输入问题/)
     await box.fill(text)
     await box.press("Enter")
   }

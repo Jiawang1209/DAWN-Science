@@ -20,7 +20,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 test("**收起的过程中，里面的内容不被压窄**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下折叠的动画")
+  await page.getByPlaceholder(/输入问题/).fill("量一下折叠的动画")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -55,7 +55,7 @@ test("**收起的过程中，里面的内容不被压窄**", async ({ dawn }) =>
 test.skip("**展开的过程中同样不被压**（已按取舍放弃：见上）", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下展开的动画")
+  await page.getByPlaceholder(/输入问题/).fill("量一下展开的动画")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -105,7 +105,7 @@ test("**侧栏有滚动条时，内容不许被横向裁掉**", async ({ dawn })
   // 2026-08-23 侧栏少了五个固定入口，多堆两段才够出滚动条
   for (let i = 0; i < 5; i++) {
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill(`第 ${i} 段对话，标题要够长才看得出被裁没有`)
+    await page.getByPlaceholder(/输入问题/).fill(`第 ${i} 段对话，标题要够长才看得出被裁没有`)
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   }

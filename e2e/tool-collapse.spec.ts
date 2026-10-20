@@ -23,7 +23,7 @@ test.describe("成功的工具调用", () => {
   test("**默认折叠，且折叠时看得见它做了什么**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("写一个文件")
+    await page.getByPlaceholder(/输入问题/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -42,7 +42,7 @@ test.describe("成功的工具调用", () => {
   test("点一下就展开，再点收起 —— **整行都可点**，不是那个小三角", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("写一个文件")
+    await page.getByPlaceholder(/输入问题/).fill("写一个文件")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -87,7 +87,7 @@ test.describe("本机命令退出码非零", () => {
   test("**那一行是失败，默认展开，看得见退出码**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一条会失败的")
+    await page.getByPlaceholder(/输入问题/).fill("跑一条会失败的")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const tool = page.locator(".tool").first()

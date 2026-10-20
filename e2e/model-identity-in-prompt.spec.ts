@@ -16,7 +16,7 @@ import { test, expect, 开一段临时会话 } from "./fixtures.js"
 test("**提示词里写着当前模型**", async ({ dawn }) => {
   const { page, requests } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("你的模型是什么？")
+  await page.getByPlaceholder(/输入问题/).fill("你的模型是什么？")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -44,7 +44,7 @@ test("**提示词里写着当前模型**", async ({ dawn }) => {
 test("**换模型之后，下一次请求里写的是新模型，并带着「换人了」那一句**", async ({ dawn }) => {
   const { page, requests } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("你是什么模型？")
+  await page.getByPlaceholder(/输入问题/).fill("你是什么模型？")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -53,7 +53,7 @@ test("**换模型之后，下一次请求里写的是新模型，并带着「换
   await expect(page.locator(".composer .model-pill")).toContainText("deepseek-v4-deep")
 
   const 之前 = requests.length
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("现在是什么模型？")
+  await page.getByPlaceholder(/输入问题/).fill("现在是什么模型？")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).nth(1)).toBeVisible({ timeout: 30_000 })
   expect(requests.length).toBeGreaterThan(之前)

@@ -56,7 +56,7 @@ test("**点完回到初始画面，不建任何东西**", async ({ dawn }) => {
    * （一次全局替换把它也换了，于是它稳定超时。**判据要跟着断言的意图走**。）
    */
   await expect(page.locator(".welcome")).toBeVisible()
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0)
 })
 

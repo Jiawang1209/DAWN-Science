@@ -19,7 +19,8 @@ import { useEffect, useRef, useState } from "react"
 import { atom } from "nanostores"
 import { Button, Row } from "./primitives.js"
 import { t, tf } from "./i18n/index.js"
-import { 下拉图标, 星图标 } from "./icons.js"
+import { 下拉图标, 星图标, 回退图标 } from "./icons.js"
+import { RightSubmenu } from "./right-submenu.js"
 
 export type EnhanceMode = "basic" | "standard" | "expert"
 export const ENHANCE_MODE_KEY = "dawn.global.enhance-mode"
@@ -45,9 +46,9 @@ const 档名: Record<EnhanceMode, () => string> = {
   expert: () => t("专家"),
 }
 const 档说明: Record<EnhanceMode, () => string> = {
-  basic: () => t("只改写，不带参考"),
-  standard: () => t("带上本会话里相关的几轮对话"),
-  expert: () => t("再加工作区里相关的文档与代码（只在像开发任务时）"),
+  basic: () => t("仅改写文字"),
+  standard: () => t("结合对话"),
+  expert: () => t("按需参考文件"),
 }
 
 /**
@@ -101,7 +102,13 @@ export function EnhanceControl({
   onProblem,
   onNote,
   坞里,
+  inMenu,
+  onMenuAction,
+  menuVisible,
 }: {
+  menuVisible?: boolean | undefined
+  inMenu?: boolean | undefined
+  onMenuAction?: (() => void) | undefined
   draft: string
   setDraft: (text: string) => void
   /** 真去改写。`requestId` 给取消用 */
@@ -137,11 +144,35 @@ export function EnhanceControl({
   const [栈, 设栈] = useState<string[]>([])
   const 当前请求 = useRef<string | undefined>(undefined)
   const box = useRef<HTMLDivElement>(null)
+  const modeTrigger = useRef<HTMLButtonElement>(null)
+  const submenu = useRef<HTMLDivElement>(null)
+  const [focusSubmenu, setFocusSubmenu] = useState(true)
+  const suppressHover = useRef(false)
+  const hoverClose = useRef<number | undefined>(undefined)
+  const clearHoverClose = () => { window.clearTimeout(hoverClose.current); hoverClose.current = undefined }
+  const openSubmenu = (focus: boolean) => {
+    if ((inMenu && menuVisible === false) || (!focus && suppressHover.current)) return
+    if (focus) suppressHover.current = false
+    clearHoverClose(); setFocusSubmenu(focus); 设菜单(true)
+  }
+  const leaveSubmenu = () => { clearHoverClose(); hoverClose.current = window.setTimeout(() => 设菜单(false), 180) }
+  useEffect(() => () => clearHoverClose(), [])
+  const closeSubmenu = () => {
+    // 收起二级时主菜单会复位；鼠标仍在入口上时不要立刻因悬停重开。
+    suppressHover.current = true
+    clearHoverClose(); 设菜单(false); modeTrigger.current?.focus()
+  }
+  useEffect(() => {
+    if (inMenu && menuVisible === false) {
+      suppressHover.current = false
+      设菜单(false)
+    }
+  }, [inMenu, menuVisible])
 
   useEffect(() => {
     if (!菜单) return
     const away = (e: PointerEvent) => {
-      if (!box.current?.contains(e.target as Node)) 设菜单(false)
+      if (!box.current?.contains(e.target as Node) && !submenu.current?.contains(e.target as Node)) 设菜单(false)
     }
     document.addEventListener("pointerdown", away)
     return () => document.removeEventListener("pointerdown", away)
@@ -176,6 +207,7 @@ export function EnhanceControl({
   const 换档 = (m: EnhanceMode) => {
     设mode(m)
     设菜单(false)
+    if (inMenu) modeTrigger.current?.focus()
     try {
       localStorage.setItem(ENHANCE_MODE_KEY, m)
     } catch {
@@ -183,7 +215,7 @@ export function EnhanceControl({
     }
   }
 
-  const 去增强 = async () => {
+  const 去增强 = async (selectedMode: EnhanceMode = mode) => {
     const text = draft.trim()
     if (!text || 忙) return
     const requestId = `enh-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
@@ -193,7 +225,7 @@ export function EnhanceControl({
     onNote(undefined)
     const 之前 = draft
     try {
-      const r = await enhance({ text, mode, requestId })
+      const r = await enhance({ text, mode: selectedMode, requestId })
       if (当前请求.current !== requestId) return // 已取消
       设栈((前) => [...前, 之前].slice(-5))
       setDraft(r.text)
@@ -229,7 +261,7 @@ export function EnhanceControl({
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "e") {
-        const 在坞里 = e.target instanceof Element && !!e.target.closest(".side-chat")
+        const 在坞里 = e.target instanceof Element && !!e.target.closest('.side-chat, [data-composer-side="true"]')
         if (在坞里 !== !!坞里) return
         e.preventDefault()
         if (忙) 去取消()
@@ -263,10 +295,49 @@ export function EnhanceControl({
     }
   }, [坞里])
 
+  if (inMenu) {
+    const unavailable = Boolean(reason || !draft.trim())
+    return (
+      <div className="enhance-control enhance-cascade" ref={box} onMouseEnter={() => openSubmenu(false)} onMouseLeave={() => { suppressHover.current = false; leaveSubmenu() }}>
+        <Button ref={modeTrigger} variant="ghost" size="inline" className="enhance-submenu-trigger" role="menuitem" tabIndex={-1}
+          data-submenu="right" aria-label={t("优化输入")} aria-haspopup="menu" aria-expanded={菜单}
+          onClick={() => openSubmenu(true)} onKeyDown={e => {
+            if (e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); openSubmenu(true) }
+            else if (菜单 && (e.key === "ArrowLeft" || e.key === "Escape")) { e.preventDefault(); e.stopPropagation(); closeSubmenu() }
+          }}>
+          {忙 ? <span className="enhance-spin" aria-hidden="true" /> : <星图标 />}
+          <span className="composer-menu-label">{t("优化输入")}</span>
+          <下拉图标 className="enhance-cascade-caret" />
+        </Button>
+        {菜单 ? (
+          <RightSubmenu anchor={box.current} panelRef={submenu} onClose={closeSubmenu} focusOnOpen={focusSubmenu} onMouseEnter={clearHoverClose} onMouseLeave={leaveSubmenu}>
+            <ul>
+              {(["basic", "standard", "expert"] as const).map(m => (
+                <li key={m}>
+                  <Row role="menuitemradio" tabIndex={-1} aria-checked={m === mode} active={m === mode} disabled={Boolean(unavailable || 忙)} onClick={() => {
+                    换档(m)
+                    void 去增强(m)
+                    onMenuAction?.()
+                  }}>
+                    <span className="sess"><span className="name">{档名[m]()}</span><span className="sub">{档说明[m]()}</span></span>
+                  </Row>
+                </li>
+              ))}
+              {reason ? <li className="enhance-cascade-hint">{reason}</li> : null}
+              {忙 || 栈.length > 0 ? <li className="composer-menu-divider" role="separator" /> : null}
+              {忙 ? <li><Row role="menuitem" tabIndex={-1} onClick={() => { 去取消(); onMenuAction?.() }}>{t("放弃本次优化")}</Row></li> : null}
+              {栈.length > 0 ? <li><Row role="menuitem" tabIndex={-1} disabled={Boolean(忙)} onClick={() => { 撤回(); onMenuAction?.() }}><回退图标 /><span className="composer-menu-label">{t("撤回上次优化")}</span></Row></li> : null}
+            </ul>
+          </RightSubmenu>
+        ) : null}
+      </div>
+    )
+  }
+
   if (reason) {
     return (
       <div className="enhance-control">
-        <Button variant="ghost" size="sm" className="enhance-main" disabled aria-label={reason}>
+        <Button variant="ghost" size="sm" className="enhance-main" disabled aria-label={reason} role={inMenu ? "menuitem" : undefined}>
           <星图标 className="row-icon" /> <span className="enhance-word">{t("优化输入")}</span>
         </Button>
         <span className="enhance-tip" aria-hidden="true">
@@ -285,7 +356,7 @@ export function EnhanceControl({
         * 点文字 = 增强（忙时 = 放弃）；点右边那个小箭头 = 换档。档位只在菜单里看得见。
         */}
       {忙 ? (
-        <Button variant="ghost" size="sm" className="enhance-main busy" onClick={去取消}>
+        <Button variant="ghost" size="sm" className="enhance-main busy" role={inMenu ? "menuitem" : undefined} onClick={() => { 去取消(); onMenuAction?.() }}>
           <span className="enhance-spin" aria-hidden="true" />
           <span>{tf("{0}…放弃", 忙)}</span>
         </Button>
@@ -294,11 +365,13 @@ export function EnhanceControl({
           variant="ghost"
           size="sm"
           className="enhance-main"
+          role={inMenu ? "menuitem" : undefined}
+          tabIndex={inMenu ? -1 : undefined}
           disabled={空}
           /* 灰的理由进标签，不再常驻一句话在旁边（2026-08-22 作者：「后面的先写点什么，有点儿不好看」） */
           aria-label={空 ? t("先写点什么再优化") : t("优化输入")}
           aria-keyshortcuts="Meta+Shift+E Control+Shift+E"
-          onClick={() => void 去增强()}
+          onClick={() => { void 去增强(); onMenuAction?.() }}
         >
           <星图标 className="row-icon" /> <span className="enhance-word">{t("优化输入")}</span>
         </Button>
@@ -315,18 +388,29 @@ export function EnhanceControl({
         </span>
       )}
       <Button
+        ref={modeTrigger}
         variant="ghost"
         size="icon"
         className="enhance-mode"
+        data-submenu={inMenu ? "right" : undefined}
+        role={inMenu ? "menuitem" : undefined}
+        tabIndex={inMenu ? -1 : undefined}
         aria-haspopup="menu"
         aria-expanded={菜单}
         aria-label={tf("档位：{0}", 档名[mode]())}
         onClick={() => 设菜单((v) => !v)}
+        onKeyDown={e => {
+          if (inMenu && e.key === "ArrowRight") {
+            e.preventDefault()
+            e.stopPropagation()
+            设菜单(true)
+          }
+        }}
       >
         <下拉图标 />
       </Button>
       {栈.length > 0 ? (
-        <Button variant="ghost" size="sm" className="enhance-undo" onClick={撤回}>
+        <Button variant="ghost" size="sm" className="enhance-undo" role={inMenu ? "menuitem" : undefined} onClick={() => { 撤回(); onMenuAction?.() }}>
           {栈.length > 1 ? tf("撤回（{0}）", 栈.length) : t("撤回")}
         </Button>
       ) : null}

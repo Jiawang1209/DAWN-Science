@@ -13,7 +13,7 @@ test("RP 资产可用；提问选中文字在浅色强调色和亮暗主题下�
   expect(await welcomeLogo.evaluate(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height }))).toEqual({ width: 56, height: 56 })
   await testInfo.attach("welcome-rp", { body: await page.screenshot(), contentType: "image/png" })
   await 在项目里开会话(page); await 等进了对话(page)
-  const input = page.getByPlaceholder(/今天帮你做些什么/)
+  const input = page.getByPlaceholder(/输入问题/)
   await input.fill("请做结构化澄清"); await input.press("Enter")
   const card = page.locator("main.main .question-card")
   await expect(card).toContainText("这次需要分析哪些样本？")

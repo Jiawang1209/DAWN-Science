@@ -7,7 +7,7 @@ import { test, expect, 在项目里开会话, 开一段临时会话 } from "./fi
 test("**同一个项目下的会话横着排；点了切过去；＋ 在同一处再开一段；散的会话没有这一条**", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("第一段的话")
+  await page.getByPlaceholder(/输入问题/).fill("第一段的话")
   await page.keyboard.press("Enter")
   await expect(page.getByText("假模型已应答").last()).toBeVisible({ timeout: 30_000 })
   await 在项目里开会话(page)
@@ -42,7 +42,7 @@ test("**同一个项目下的会话横着排；点了切过去；＋ 在同一�
 test("主区页签可拖动排序，顺序重启后仍由会话列表保存", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("页签排序第一段")
+  await page.getByPlaceholder(/输入问题/).fill("页签排序第一段")
   await page.keyboard.press("Enter")
   await expect(page.getByText("假模型已应答").last()).toBeVisible({ timeout: 30_000 })
   await 在项目里开会话(page)
@@ -68,8 +68,8 @@ test("项目文件夹内拖动会话，与顶部页签同步且重开后保留�
   let page = dawn.page
   await 在项目里开会话(page)
   const tabs = () => page.getByRole("tablist", { name: "同一处的会话" })
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("项目排序甲")
-  await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+  await page.getByPlaceholder(/输入问题/).fill("项目排序甲")
+  await page.getByPlaceholder(/输入问题/).press("Enter")
   await expect(page.getByText("假模型已应答").last()).toBeVisible()
   for (const count of [2, 3]) {
     await tabs().getByRole("button", { name: "在这里再开一段", exact: true }).click()
@@ -97,7 +97,7 @@ test("项目文件夹内拖动会话，与顶部页签同步且重开后保留�
 test("**`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的）", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("看 @")
+  await page.getByPlaceholder(/输入问题/).fill("看 @")
   const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
   await expect(菜单).toBeVisible()
   // 浮层有 120ms 的弹出缩放——动画没播完量到的是缩小的那一帧（2026-08-23 偶发红过一次：x 差 2px）
@@ -132,8 +132,8 @@ test.describe("页签圆点状态", () => {
 
     await expect(dot).toHaveCSS("background-color", await tokenColor("--dawn-accent"))
     await expect(tabs.locator(".session-tab-wrap:not(.current) .session-tab-dot")).toHaveCSS("background-color", await tokenColor("--dawn-text-4"))
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("圆点状态检查")
-    await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+    await page.getByPlaceholder(/输入问题/).fill("圆点状态检查")
+    await page.getByPlaceholder(/输入问题/).press("Enter")
     await expect(target).toHaveAttribute("data-running", "1")
     await expect(dot).toBeVisible()
     await expect(dot).toHaveCSS("background-color", await tokenColor("--dawn-live"))

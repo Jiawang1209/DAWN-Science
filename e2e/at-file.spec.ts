@@ -18,7 +18,7 @@ test.describe("对话里", () => {
     writeFileSync(join(workspace, "notes.md"), "# 笔记\n")
     await 在项目里开会话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("看看 @")
     const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
     await expect(菜单).toBeVisible()
@@ -53,7 +53,7 @@ test.describe("对话里", () => {
     mkdirSync(join(workspace, "results/figs"), { recursive: true })
     writeFileSync(join(workspace, "results/figs/a.png"), "")
     await 在项目里开会话(page)
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
 
     await 框.fill("@res")
@@ -85,7 +85,7 @@ test.describe("对话里", () => {
 test("启动空态及普通会话：不泄漏项目文件", async ({ dawn }) => {
   const { page, workspace } = dawn
   writeFileSync(join(workspace, "project-only.md"), "project")
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
   await 框.fill("@")
   await expect(菜单.getByRole("option")).toHaveCount(3)
@@ -113,7 +113,7 @@ test.describe("第二档", () => {
     mkdirSync(join(workspace, "data/raw"), { recursive: true })
     writeFileSync(join(workspace, "data/raw/a.csv"), "x")
     await 在项目里开会话(page)
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     /** 造一次真的 paste 事件；回「我们这一侧拦没拦」——拦了 = 接管（护住 `@`），没拦 = 交给浏览器照常粘 */
     const 粘 = async (文: string) => {
       await 框.focus()
@@ -174,7 +174,7 @@ test.describe("第二档", () => {
     await expect(表).toContainText("thumbs.db")
 
     await page.getByRole("button", { name: "返回", exact: true }).click()
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("@")
     const 菜单 = page.getByRole("listbox", { name: "引用工作区文件" })
     await expect(菜单.getByRole("option", { name: /keep\.csv/ })).toBeVisible()

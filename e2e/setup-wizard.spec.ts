@@ -49,7 +49,7 @@ test.describe("首启向导", () => {
     await expect(开始).toBeEnabled()
     await 开始.click()
     await expect(page.locator(".setup-wizard")).toHaveCount(0)
-    await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+    await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
   })
 
   test("先跳过 → 回到普通首页，底部红字还在；点红字回到向导", async ({ dawn }) => {
@@ -93,7 +93,7 @@ test.describe("首启向导 · 产品原样的默认配置", () => {
     // 空态屏就该有「优化输入」——它只给 native（草稿为空时它的无障碍名是「先写点什么再优化」）
     await expect(page.getByRole("button", { name: /优化/ })).toBeVisible()
 
-    const 输入 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 输入 = page.getByPlaceholder(/输入问题/)
     await 输入.fill("请说一句话")
     await 输入.press("Enter")
     // 等的是只有对话态才有的东西（不是输入框）

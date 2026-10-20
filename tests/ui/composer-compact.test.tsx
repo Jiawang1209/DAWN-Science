@@ -3,7 +3,7 @@
  *
  * - native（给了 `onCompact`）：整句 `/compact …` 不当一句话发，走压缩；框清空；失败时话放回框里、原因写在框下。
  * - ACP（不给 `onCompact`）：原样当一句话发——外部 agent 自己认这个命令，我们不吞掉它。
- * - 仪表在附栏里**紧挨着权限那颗的左边**（native 与 ACP 都是）；正在压缩时「现在压缩」灰着说的是「正在压缩」。
+ * - 仪表在卡外统计区（native 与 ACP 都是）；正在压缩时「现在压缩」灰着说的是「正在压缩」。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
@@ -41,7 +41,7 @@ function 摆(over: { session?: SessionSummary; items?: TranscriptItem[]; onCompa
       权限={权限}
     />,
   )
-  const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+  const box = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
   const 打 = (v: string) => fireEvent.change(box, { target: { value: v } })
   return { onSend, box, 打, ...r }
 }
@@ -56,7 +56,7 @@ describe("输入框里的 /compact", () => {
     })
     expect(onCompact).toHaveBeenCalledWith("keep X")
     expect(onSend).not.toHaveBeenCalled()
-    expect((screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement).value).toBe("")
+    expect((screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement).value).toBe("")
   })
 
   it("native：压缩失败 → 话放回框里、原因写在框下", async () => {
@@ -69,7 +69,7 @@ describe("输入框里的 /compact", () => {
       fireEvent.keyDown(box, { key: "Enter" })
     })
     expect(await screen.findByText(/写权不在这里/)).toBeTruthy()
-    expect((screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement).value).toBe("/compact keep X")
+    expect((screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement).value).toBe("/compact keep X")
   })
 
   it("ACP（没有 onCompact）：/compact 原样当一句话发", async () => {
@@ -82,15 +82,14 @@ describe("输入框里的 /compact", () => {
   })
 })
 
-describe("附栏上的上下文仪表", () => {
+describe("统计区的上下文仪表", () => {
   for (const [名, s] of [["native", native], ["ACP", acp]] as const) {
-    it(`${名}：仪表紧挨在权限那颗左边（DOM 上是它的前一个兄弟）`, () => {
+    it(`${名}：仪表在输入卡外的统计区，权限保留在添加入口旁`, () => {
       const { container } = 摆({ session: s, ...(s.kind === "native" ? { onCompact: async () => {} } : {}) })
-      const 仪表 = container.querySelector(".composer-status > .ctx-meter")
+      const 仪表 = container.querySelector(".composer-session-usage-content > .ctx-meter")
       expect(仪表).toBeTruthy()
-      expect(仪表!.closest(".composer-footer")).toBeTruthy()
-      expect(仪表!.closest(".composer-card")).toBeTruthy()
-      expect(仪表!.nextElementSibling?.classList.contains("perm-pill")).toBe(true)
+      expect(仪表!.closest(".composer-card")).toBeNull()
+      expect(container.querySelector(".composer-tools > .perm-pill")).toBeTruthy()
     })
   }
 

@@ -186,22 +186,27 @@ const 方案开关 = (current: string) => [
   { id: "dawn.plan", name: "生成方案", category: "plan", kind: "boolean" as const, current, options: [] },
 ]
 
+function 菜单方案() {
+  if (!screen.queryByRole("menuitemcheckbox", { name: "生成方案" })) fireEvent.click(screen.getByRole("button", { name: "添加内容" }))
+  return screen.getByRole("menuitemcheckbox", { name: "生成方案" })
+}
+
 describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
   it("native：开关在附栏；开着时输入卡顶上有带子", () => {
     const { rerender } = render(<ConversationView session={会话} items={[]} onSend={async () => {}} 会话开关们={方案开关("")} onSetPlan={async () => {}} />)
-    expect(screen.getByRole("button", { name: "生成方案" }).getAttribute("aria-pressed")).toBe("false")
+    expect(菜单方案().getAttribute("aria-checked")).toBe("false")
     expect(document.querySelector(".plan-band")).toBeNull()
     rerender(<ConversationView session={会话} items={[]} onSend={async () => {}} 会话开关们={方案开关("1")} onSetPlan={async () => {}} />)
-    expect(screen.getByRole("button", { name: "生成方案" }).getAttribute("aria-pressed")).toBe("true")
+    expect(菜单方案().getAttribute("aria-checked")).toBe("true")
     expect(document.querySelector(".plan-band")?.textContent).toMatch(/只看不改/)
   })
 
   it("ACP：开关灰着，旁边写原因；/plan 不发出去、字留在框里、说原因", async () => {
     const onSend = vi.fn(async () => {})
     render(<ConversationView session={{ ...会话, kind: "acp" }} items={[]} onSend={onSend} />)
-    expect((screen.getByRole("button", { name: "生成方案" }) as HTMLButtonElement).disabled).toBe(true)
+    expect((菜单方案() as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getAllByText("这个 agent 不归 DAWN 管工具，生成方案用不了")).toHaveLength(1)
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(框, { target: { value: "/plan 分析一下" } })
     await act(async () => {
       fireEvent.keyDown(框, { key: "Enter" })
@@ -213,7 +218,7 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
 
   it("native 还没报上 dawn.plan：灰着，旁边写「还没准备好」（D7：灰着要看得见为什么）", () => {
     render(<ConversationView session={会话} items={[]} onSend={async () => {}} />)
-    expect((screen.getByRole("button", { name: "生成方案" }) as HTMLButtonElement).disabled).toBe(true)
+    expect((菜单方案() as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText("这段会话还没准备好生成方案，稍等再试")).toBeTruthy()
   })
 
@@ -223,7 +228,7 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
     const onSend = vi.fn(async (text: string) => { 次序.push(`send:${text}`) })
     const onCompact = vi.fn(async () => {})
     render(<ConversationView session={会话} items={[]} onSend={onSend} onCompact={onCompact} 会话开关们={方案开关("")} onSetPlan={onSetPlan} />)
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(框, { target: { value: "/plan /compact x" } })
     await act(async () => {
       fireEvent.keyDown(框, { key: "Enter" })
@@ -237,7 +242,7 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
     const onAnswerPlan = vi.fn(async () => ({ savedPath: "analysis/plans/x.md" }))
     render(<ConversationView session={会话} items={[卡]} onSend={onSend} 会话开关们={方案开关("1")} onSetPlan={async () => {}} onAnswerPlan={onAnswerPlan} />)
     fireEvent.click(screen.getByRole("button", { name: "照这个做" }))
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     await waitFor(() => expect(框.value).toContain("analysis/plans/x.md"))
     expect(screen.getByText(/写权不在这里/)).toBeTruthy()
   })
@@ -258,7 +263,7 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
     const onSetPlan = vi.fn(async () => {})
     const onSend = vi.fn(async () => {})
     render(<ConversationView session={会话} items={[]} onSend={onSend} 会话开关们={方案开关("")} onSetPlan={onSetPlan} />)
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(框, { target: { value: "/plan" } })
     await act(async () => {
       fireEvent.keyDown(框, { key: "Enter" })
@@ -272,7 +277,7 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
     const onSetPlan = vi.fn(async (on: boolean) => { 次序.push(`plan:${on}`) })
     const onSend = vi.fn(async (text: string) => { 次序.push(`send:${text}`) })
     render(<ConversationView session={会话} items={[]} onSend={onSend} 会话开关们={方案开关("")} onSetPlan={onSetPlan} />)
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(框, { target: { value: "/plan 分析一下" } })
     await act(async () => {
       fireEvent.keyDown(框, { key: "Enter" })
@@ -296,8 +301,8 @@ describe("空态", () => {
     const onToggle = vi.fn((on: boolean) => { 次序.push(`plan:${on}`) })
     const onStart = vi.fn((_a: string, first?: string) => { 次序.push(`start:${first}`) })
     render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={() => {}} 先出方案={{ on: false, onToggle }} />)
-    expect(screen.getByRole("button", { name: "生成方案" }).getAttribute("aria-pressed")).toBe("false")
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    expect(菜单方案().getAttribute("aria-checked")).toBe("false")
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(框, { target: { value: "/plan 分析一下" } })
     await act(async () => {
       fireEvent.keyDown(框, { key: "Enter" })
@@ -307,21 +312,21 @@ describe("空态", () => {
   it("方案期的 Bot 开场被拒时保留完整命令与草稿", async () => {
     const onStart = vi.fn(async () => { throw Error("请先退出生成方案，再调遣 Bot") })
     render(<EmptyConversation agents={["ds-chat"]} onStart={onStart} onOpenSettings={() => {}} 先出方案={{ on: false, onToggle: () => {} }} />)
-    const box = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const box = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: "/plan /bot:stable-id 检查数据" } })
     await act(async () => { fireEvent.keyDown(box, { key: "Enter" }) })
     await waitFor(() => expect(box.value).toBe("/plan /bot:stable-id 检查数据"))
   })
   it("按下之后原因来了（换成不支持的 agent）：不显示按下", () => {
     render(<EmptyConversation agents={["claude-acp"]} onStart={() => {}} onOpenSettings={() => {}} 先出方案={{ on: true, 不能的原因: "这个 agent 不归 DAWN 管工具，生成方案用不了", onToggle: () => {} }} />)
-    expect(screen.getByRole("button", { name: "生成方案" }).getAttribute("aria-pressed")).toBe("false")
+    expect(菜单方案().getAttribute("aria-checked")).toBe("false")
   })
   it("选的 agent 不支持：`/plan` 不开会话、说原因", async () => {
     const onStart = vi.fn()
     render(
       <EmptyConversation agents={["claude-acp"]} onStart={onStart} onOpenSettings={() => {}} 先出方案={{ on: false, 不能的原因: "这个 agent 不归 DAWN 管工具，生成方案用不了", onToggle: () => {} }} />,
     )
-    const 框 = screen.getByPlaceholderText(/今天帮你做些什么/) as HTMLTextAreaElement
+    const 框 = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
     fireEvent.change(框, { target: { value: "/plan 分析一下" } })
     await act(async () => {
       fireEvent.keyDown(框, { key: "Enter" })

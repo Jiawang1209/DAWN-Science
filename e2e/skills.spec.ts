@@ -21,7 +21,7 @@ test.describe("自带技能", () => {
   test("共用科研审查规范可显式展开，保留静态审查和独立验证边界", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:scientific-review 只审不运行：核对样本量和可复现性")
+    await page.getByPlaceholder(/输入问题/).fill("/skill:scientific-review 只审不运行：核对样本量和可复现性")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     const requests = JSON.stringify(dawn.requests)
@@ -35,7 +35,7 @@ test.describe("自带技能", () => {
   test("科研分析技能沿用原调用名，完整展开综合路线与执行边界", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:analyze-like-case 我要做土壤微生物扩增子分析，先讨论路线和案例，不运行")
+    await page.getByPlaceholder(/输入问题/).fill("/skill:analyze-like-case 我要做土壤微生物扩增子分析，先讨论路线和案例，不运行")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     const requests = JSON.stringify(dawn.requests)
@@ -48,7 +48,7 @@ test.describe("自带技能", () => {
   test("分析交付技能可以通过 /skill:analysis-delivery 展开正文", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("/skill:analysis-delivery 把这次分析整理成交付")
+    await page.getByPlaceholder(/输入问题/).fill("/skill:analysis-delivery 把这次分析整理成交付")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     const 请求 = JSON.stringify(dawn.requests)
@@ -65,7 +65,7 @@ test.describe("自带技能", () => {
   test("**自带技能出现在发给模型的请求里**", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("随便说一句")
+    await page.getByPlaceholder(/输入问题/).fill("随便说一句")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

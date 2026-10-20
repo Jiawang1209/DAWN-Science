@@ -69,7 +69,7 @@ async function setTheme(page: Page, label: "亮色" | "暗色") {
 
 async function startSession(page: Page, 首句 = "开始") {
   await 开一段临时会话(page, 首句)
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
   /**
    * **等到状态落定**。starting → alive 是一次真实的状态迁移，
    * 在它中间截图会得到一张随时机变化的图。
@@ -89,7 +89,8 @@ async function startSession(page: Page, 首句 = "开始") {
  * 「两处长得一样的东西等于没有判据」的另一面）。
  */
 const 分类计数: ReadonlyArray<[string, string]> = [
-  ["Skills", "7"],
+  // main已有analysis-delivery在内的8个内置技能，旧视觉计数尚未同步。
+  ["Skills", "8"],
   ["子 Agent", "22"],
   ["插件", "3"],
   ["MCP 服务器", "0"],
@@ -122,7 +123,7 @@ const SCREENS: {
      * 它的位置换成了一个能直接打字的输入卡。
      */
     go: async (page) => {
-      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+      await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
     },
   },
   {
@@ -197,7 +198,7 @@ const SCREENS: {
     name: "命令面板",
     // 浮层 + 遮罩 + 分组列表 + **不可用那一条的样子**
     go: async (page) => {
-      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+      await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
       await page.keyboard.press("ControlOrMeta+k")
       await expect(page.getByRole("dialog", { name: "命令面板" })).toBeVisible()
       // 等到列表画完再截，否则会截到只有输入框的那一帧
@@ -217,7 +218,7 @@ const SCREENS: {
      * 看到的样子，值得钉住。
      */
     go: async (page) => {
-      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+      await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
       await 进坞(page, "概览")
       await expect(page.getByText(/还没有选中会话/)).toBeVisible()
     },
@@ -230,7 +231,7 @@ const SCREENS: {
      */
     name: "设置栏",
     go: async (page) => {
-      await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+      await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
       await page.getByRole("button", { name: "设置", exact: true }).click()
       await expect(page.locator(".settings-column-list")).toBeVisible()
       /**
@@ -255,14 +256,14 @@ const SCREENS: {
       await 在项目里开会话(page)
       const 主区 = page.locator("main.main")
       const 坞 = page.locator("aside.right-dock")
-      await 主区.getByPlaceholder(/今天帮你做些什么/).fill("请说一句话")
-      await 主区.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+      await 主区.getByPlaceholder(/输入问题/).fill("请说一句话")
+      await 主区.getByPlaceholder(/输入问题/).press("Enter")
       await expect(主区.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
       await 进坞(page, "对话")
       await 坞.getByRole("button", { name: "另开一段", exact: true }).click()
       await 坞.locator(".side-chat-head").waitFor({ timeout: 30_000 })
-      await 坞.getByPlaceholder(/今天帮你做些什么/).fill("你好")
-      await 坞.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+      await 坞.getByPlaceholder(/输入问题/).fill("你好")
+      await 坞.getByPlaceholder(/输入问题/).press("Enter")
       await expect(坞.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 30_000 })
       /** 标题要等「你好」落上去——先是「新对话」，首句回来之后才改名；截在中间那一帧就是一场竞态 */
       await expect(坞.locator(".side-chat-title")).toHaveText("你好")

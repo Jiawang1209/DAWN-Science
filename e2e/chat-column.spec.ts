@@ -25,7 +25,7 @@ test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn })
   const { page } = dawn
   await 开一段临时会话(page)
 
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下这一栏")
+  await page.getByPlaceholder(/输入问题/).fill("量一下这一栏")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -68,7 +68,7 @@ test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn })
 test("**窗口放大时这一栏跟着放大，封顶，三条边仍对齐**", async ({ dawn }) => {
   const { app, page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("量一下宽窗口")
+  await page.getByPlaceholder(/输入问题/).fill("量一下宽窗口")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -108,7 +108,7 @@ test("**窗口放大时这一栏跟着放大，封顶，三条边仍对齐**", a
 test("**用户气泡四角一样圆、底色不是侧栏灰**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("看看形状")
+  await page.getByPlaceholder(/输入问题/).fill("看看形状")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 
   const 量 = await page.locator(".turn.user .bubble").first().evaluate((el) => {

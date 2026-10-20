@@ -47,7 +47,7 @@ test.describe("组一支团队", () => {
 
     await expect(page.locator(".app-shell")).toBeVisible()
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("/team 审一遍这个仓库")
+    await page.getByPlaceholder(/输入问题/).fill("/team 审一遍这个仓库")
     await page.keyboard.press("Enter")
 
     // 工具行：team_create 成功
@@ -98,7 +98,7 @@ test("**没有团队时那一格说清楚**；`/` 菜单里第一项是「组一
   await 在项目里开会话(page)
   await 进坞(page, "团队")
   await expect(page.locator(".team-empty")).toContainText("这段会话没有团队")
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill("/")
   await expect(page.locator(".slash-menu .slash-item").first()).toContainText("组一支团队")
   await page.keyboard.press("Enter")
@@ -121,7 +121,7 @@ test.describe("成员指了一个目录里没有的模型", () => {
     mkdirSync(join(workspace, ".dawn", "agents"), { recursive: true })
     writeFileSync(join(workspace, ".dawn", "agents", "scout.md"), 人设("scout"))
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("/team 随便")
+    await page.getByPlaceholder(/输入问题/).fill("/team 随便")
     await page.keyboard.press("Enter")
     const 工具 = page.locator(".tool").filter({ hasText: "team_create" }).first()
     await expect(工具).toHaveAttribute("data-status", "error", { timeout: 60_000 })

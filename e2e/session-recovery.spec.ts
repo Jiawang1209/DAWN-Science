@@ -26,7 +26,7 @@ async function remoteChat(dawn: DawnFixture) {
   await page.getByRole("button",{name:"保存",exact:true}).click()
   await page.locator(".remote-row").first().getByRole("button",{name:/新对话/}).click()
   await expect(page.locator(".conv-remote")).toBeVisible()
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("保留在原对话里的话")
+  await page.getByPlaceholder(/输入问题/).fill("保留在原对话里的话")
   await page.getByRole("button",{name:"发送",exact:true}).click()
   await expect(page.locator(".turns")).toContainText("假模型已应答")
   const sessions=await invoke(page,"listTemporarySessions")
@@ -47,7 +47,7 @@ test("同库第二实例被拒绝，正在聊的远端会话仍 alive 且可发�
     expect(code).toBe(0)
     const sessions=await invoke(dawn.page,"listTemporarySessions")
     expect(sessions.find((x:any)=>x.sessionId===s.sessionId).state).toBe("alive")
-    const box=dawn.page.getByPlaceholder(/今天帮你做些什么/)
+    const box=dawn.page.getByPlaceholder(/输入问题/)
     await expect(box).toBeEnabled()
     await box.fill("第二实例退出后继续")
     await dawn.page.getByRole("button",{name:"发送",exact:true}).click()
@@ -58,7 +58,7 @@ test("同库第二实例被拒绝，正在聊的远端会话仍 alive 且可发�
 test("远端恢复失败显示真原因，服务器 ready 后原对话自动恢复并保留草稿",async({dawn})=>{
   const {page}=dawn
   const s=await remoteChat(dawn)
-  const box=page.getByPlaceholder(/今天帮你做些什么/)
+  const box=page.getByPlaceholder(/输入问题/)
   await box.fill("还没有发送的草稿")
   await invoke(page,"stopSession",{sessionId:s.sessionId})
   await invoke(page,"disconnectRemote",{id:s.remote.connectionId})

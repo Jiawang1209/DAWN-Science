@@ -4,7 +4,7 @@ test.use({ dawnOptions: { env: { DAWN_TEST_TRAY: "1" } } })
 test("关闭主窗口保留会话和窗口，应用退出仍可正常收摊", async ({ dawn }) => {
   const { app, page } = dawn
   await 在项目里开会话(page)
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill("托盘草稿")
   const state = await app.evaluate(({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows()[0]!

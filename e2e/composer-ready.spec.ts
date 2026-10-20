@@ -1,8 +1,4 @@
-/**
- * 附栏三颗的「备好」态（2026-08-25 作者定的）：
- * 上传文件（带上图）、选择工作目录（选定了）、终端（开着）——备好前淡灰、备好后黑色实心；
- * 优化输入本来就是这个行为，这三颗对齐它。作者明确不跟主题色。
- */
+/** 输入卡的备好态：附件与目录保留标记；终端与方案在添加菜单内显示当前状态。 */
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -11,36 +7,66 @@ import { test, expect, 在项目里开会话, 开一段临时会话 } from "./fi
 const 颜色 = (page: import("@playwright/test").Page, sel: string) =>
   page.locator(sel).first().evaluate((el) => getComputedStyle(el).color)
 
-test("**终端**：没开时与上传文件同色，开了转黑色实心", async ({ dawn }) => {
+async function 添加菜单(page: import("@playwright/test").Page) {
+  await page.locator(".composer-footer .attach-trigger").click()
+  const menu = page.getByRole("menu", { name: "添加内容" })
+  await expect(menu).toBeVisible()
+  return menu
+}
+
+test("**终端**：菜单标记反映开闭，点同一入口能打开和收起", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
-  const 淡 = await 颜色(page, ".composer-footer .attach-trigger")
-  expect(await 颜色(page, ".composer-footer .dock-toggle"), "终端静默时该与上传文件同色").toBe(淡)
-  await page.locator(".composer-footer .dock-toggle").click()
-  const 开了 = await 颜色(page, ".composer-footer .dock-toggle")
-  expect(开了).not.toBe(淡)
+  const menu = await 添加菜单(page)
+  const terminal = menu.getByRole("menuitem", { name: "终端面板", exact: true })
+  // 关闭时只有终端图标；打开后加上勾选图标。
+  await expect(terminal.locator("svg")).toHaveCount(1)
+  await terminal.click()
+  await expect(page.locator(".dock")).toBeVisible()
+  await 添加菜单(page)
+  await expect(terminal.locator("svg")).toHaveCount(2)
+  await terminal.click()
+  await expect(page.locator(".dock")).toHaveCount(0)
+  await 添加菜单(page)
+  await expect(terminal.locator("svg")).toHaveCount(1)
 })
 
-/** 2026-09-28 作者报的：别的都是淡的，只有「生成方案」关着也是黑的 */
-test("**生成方案**：关着时与上传文件同色，打开之后不再是淡的", async ({ dawn }) => {
+test("**生成方案**：菜单选中态与方案说明一起开关，选中背景遵循主题", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
-  const 淡 = await 颜色(page, ".composer-footer .attach-trigger")
-  const 开关 = page.locator(".composer-footer .plan-toggle").first()
-  await expect(开关).toBeEnabled()
-  expect(await 颜色(page, ".composer-footer .plan-toggle"), "生成方案关着时该与上传文件同色").toBe(淡)
-  await 开关.click()
-  await expect(开关).toHaveAttribute("aria-pressed", "true")
-  expect(await 颜色(page, ".composer-footer .plan-toggle")).not.toBe(淡)
+  const menu = await 添加菜单(page)
+  const toggle = menu.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+  await expect(toggle).toBeEnabled()
+  await expect(toggle).toHaveAttribute("aria-checked", "false")
+  await page.mouse.move(0, 0)
+  const idleBackground = await toggle.evaluate(el => getComputedStyle(el).backgroundColor)
+  await toggle.click()
+  await expect(page.locator(".plan-band")).toBeVisible()
+  await 添加菜单(page)
+  await expect(toggle).toHaveAttribute("aria-checked", "true")
+  await page.mouse.move(0, 0)
+  const selectedBackground = await toggle.evaluate(el => {
+    const probe = document.createElement("span")
+    probe.style.backgroundColor = "var(--dawn-accent-soft)"
+    el.append(probe)
+    const expected = getComputedStyle(probe).backgroundColor
+    probe.remove()
+    return expected
+  })
+  await expect(toggle).toHaveCSS("background-color", selectedBackground)
+  expect(selectedBackground).not.toBe(idleBackground)
+  await toggle.click()
+  await expect(page.locator(".plan-band")).toHaveCount(0)
+  await 添加菜单(page)
+  await expect(toggle).toHaveAttribute("aria-checked", "false")
 })
 
-test("**选择工作目录**：项目会话选定了目录，chip 是黑色实心；临时会话没选，是淡的", async ({ dawn }) => {
+test("**选择工作目录**：项目会话在顶部环境行标明已选目录", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
-  const 深 = await 颜色(page, ".composer-footer .ws-chip")
-  const 淡 = await 颜色(page, ".composer-footer .attach-trigger")
-  expect(深).not.toBe(淡)
-  expect(await page.locator(".composer-footer .ws-chip[data-ready]").count()).toBe(1)
+  await expect(page.locator(".composer-environment .ws-chip")).toBeVisible()
+  await expect(page.locator(".composer-environment .composer-location")).toHaveText("本机")
+  expect(await page.locator(".composer-environment .ws-chip[data-ready]").count()).toBe(1)
 })
 
 test("**上传文件**：带上一张图之后转黑色实心", async ({ dawn }) => {
@@ -60,6 +86,8 @@ test("**上传文件**：带上一张图之后转黑色实心", async ({ dawn })
     )
   })
   await expect(page.locator(".attached-one")).toHaveCount(1)
+  await page.mouse.move(0, 0)
+  await expect(page.locator(".composer-footer .attach[data-ready]")).toHaveCount(1)
   const 带上了 = await 颜色(page, ".composer-footer .attach-trigger")
   expect(带上了).not.toBe(淡)
 })
@@ -77,9 +105,13 @@ test.describe("走「上传文件」插路径也算带上了", () => {
     await page.locator(".composer-footer .attach-trigger").click()
     await page.getByRole("menuitem", { name: "上传文件", exact: true }).click()
     await expect(page.locator(".composer-box textarea")).toHaveValue(/数据\.csv/)
-    expect(await 色(), "插了文件路径按钮没变黑").not.toBe(淡)
+    await page.mouse.move(0, 0)
+    await expect(page.locator(".composer-footer .attach[data-ready]")).toHaveCount(1)
+    expect(await 色(), "插了文件路径按钮没有显示备好态").not.toBe(淡)
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
-    expect(await 色(), "发送后没回到淡的").toBe(淡)
+    await page.mouse.move(0, 0)
+    await expect(page.locator(".composer-footer .attach[data-ready]")).toHaveCount(0)
+    expect(await 色(), "发送后没有恢复未附加状态").toBe(淡)
   })
 })

@@ -32,7 +32,7 @@ import { evaluateStreamingBudget, STREAMING_BUDGET } from "./performance-budget.
  */
 const 标记 = "最后一段。"
 
-const 输入框 = (page: Page) => page.getByPlaceholder(/今天帮你做些什么/)
+const 输入框 = (page: Page) => page.getByPlaceholder(/输入问题/)
 
 async function 说一句并等完(page: Page, 话: string): Promise<void> {
   await 输入框(page).fill(话)

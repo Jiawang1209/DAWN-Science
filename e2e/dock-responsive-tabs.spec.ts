@@ -59,7 +59,7 @@ test("标签随实际坞宽度展开收回，当前面板始终可见且菜单�
   // 菜单打开时部分展开，会移走原来聚焦的菜单项；键盘仍应停留在剩余菜单中。
   await page.getByRole("button", { name: "更多面板", exact: true }).click()
   await expect(page.getByRole("menuitem").first()).toBeFocused()
-  const input = page.locator("main.main").getByPlaceholder(/今天帮你做些什么/)
+  const input = page.locator("main.main").getByPlaceholder(/输入问题/)
   await input.focus()
   await size(480)
   await expect(input).toBeFocused({ timeout: 1500 })

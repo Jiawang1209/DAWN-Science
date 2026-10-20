@@ -48,7 +48,7 @@ test("空态屏上换一档，进会话再回来还是那一档 —— 存下去
 
   // 新开的会话跟着默认走
   await 在项目里开会话(page)
-  await expect(page.locator(".composer-status .perm-pill-trigger"), "新会话没有跟上改过的默认").toHaveText(/^自动拦截/)
+  await expect(page.locator(".composer-tools .perm-pill-trigger"), "新会话没有跟上改过的默认").toHaveText(/^自动拦截/)
   // 真存下去了：后端读出来也是这一档
   const 默认档 = await page.evaluate(async () => {
     const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { mode?: string } }> } }
@@ -88,12 +88,12 @@ test.describe("问一句", () => {
     writeFileSync(join(workspace, "old.txt"), "之前就有")
     await 在项目里开会话(page)
     // 会话里那颗：只改这一段
-    const 扳机 = page.locator(".composer-status .perm-pill-trigger")
+    const 扳机 = page.locator(".composer-tools .perm-pill-trigger")
     await expect(扳机).toHaveText(/^完全访问/)
     await 扳机.click()
     await page.getByRole("menuitemradio", { name: /^请求批准/ }).click()
     await expect(扳机).toHaveText(/^请求批准/)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("删掉 old.txt")
+    await page.getByPlaceholder(/输入问题/).fill("删掉 old.txt")
     await page.keyboard.press("Enter")
     // 卡：标题里有命令，两个按钮
     const 卡 = page.locator(".perm-card")
@@ -121,7 +121,7 @@ test.describe("问一句", () => {
     // 第二轮：再建一个，这次拒绝
     writeFileSync(join(workspace, "old.txt"), "又有了")
     await expect(page.getByText("我去删掉它。").first()).toBeVisible()
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("再删一次")
+    await page.getByPlaceholder(/输入问题/).fill("再删一次")
     await page.keyboard.press("Enter")
     await expect(卡).toBeVisible({ timeout: 30_000 })
     await 卡.locator(".perm-card-title").click()
@@ -142,7 +142,7 @@ test.describe("硬拒", () => {
   test("**全放行档也拒 sudo**，不弹卡", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("清日志")
+    await page.getByPlaceholder(/输入问题/).fill("清日志")
     await page.keyboard.press("Enter")
     const 工具 = page.locator(".tool").filter({ hasText: "bash" }).first()
     await expect(工具).toHaveAttribute("data-status", "error", { timeout: 30_000 })

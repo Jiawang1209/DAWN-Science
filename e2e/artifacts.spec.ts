@@ -25,7 +25,7 @@ test.describe("产物：对话里的 GENERATED 条与坞的「产物」格", () 
   test("write 新建一个 csv → 产物条 → 点 chip 进坞预览 → 回到清单", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("生成一份火山图数据")
     await 框.press("Enter")
 
@@ -68,7 +68,7 @@ test.describe("临时会话（非 git）：同样出 GENERATED 条", () => {
   test("临时会话里 write 新建一个 csv → 产物条 → 点 chip 进坞预览", async ({ dawn }) => {
     const { page } = dawn
     await 开一段临时会话(page)
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("生成一份火山图数据")
     await 框.press("Enter")
 
@@ -102,7 +102,7 @@ test.describe("只读的一轮：不画产物条，也不说「产出未知」",
   test("read 一个文件 → 回复下面既没有 GENERATED 条，也没有「本轮产出未知」", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("看看 README 写了什么")
     await 框.press("Enter")
 
@@ -140,7 +140,7 @@ test.describe("外部 CLI 会话：本轮产出未知，不列 agent 声称的�
     const { page } = dawn
     await 用某个agent开一段(page, /claude/)
     await 等进了对话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("把结果写到 outputs/fake.csv")
+    await page.getByPlaceholder(/输入问题/).fill("把结果写到 outputs/fake.csv")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 CLI 已应答/)).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText("本轮产出未知")).toBeVisible()

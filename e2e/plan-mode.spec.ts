@@ -6,9 +6,9 @@
  *
  * ## 两处长得一样
  *
- * 「生成方案」这四个字同时是：附栏上那颗开关的名字、带子文案的一部分、斜杠菜单那一项、⌘K 两条标题的一部分。
- * 开关一律 `getByRole("button", { name: "生成方案", exact: true })`，并先圈定在主区（`main.main`）或坞（`aside.right-dock`）里——
- * 主区与坞里是同一个 `ConversationView`，不圈就是两个。
+ * 「生成方案」同时是添加内容菜单中的开关、带子文案、斜杠菜单项与 ⌘K 标题。
+ * 先在主区或坞里打开「添加内容」，再找 body portal 中当前可见的 menuitemcheckbox。
+ * 主区与坞共享 ConversationView；开关状态用 aria-checked，关闭菜单后由 plan-band 显示方案期。
  *
  * ## D3（2026-09-28 定案）两条的分工
  *
@@ -23,40 +23,76 @@ import { test, expect, 在项目里开会话, 等进了对话, 用某个agent开
 
 const 主区 = (page: Page) => page.locator("main.main")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
-const 框 = (区: Locator) => 区.getByPlaceholder(/今天帮你做些什么/)
-const 开关 = (区: Locator) => 区.getByRole("button", { name: "生成方案", exact: true })
+const 框 = (区: Locator) => 区.getByPlaceholder(/输入问题/)
 const 卡 = (区: Locator) => 区.locator(".plan-card")
 const 停止 = (区: Locator) => 区.getByRole("button", { name: "停止", exact: true })
 
-/**
- * **开关的位置**（2026-09-28 作者要的）：在附栏里、紧跟「优化输入」；权限那颗整颗在卡里；附栏与卡都不横向滚。
- * 坞里附栏折两行（仪表 + 权限整组在第二行、靠右）——这里只量「不出卡、不滚、不重叠」，不钉行数。
- */
-async function 量开关位置(区: Locator): Promise<string[]> {
-  return 区.evaluate((root) => {
-    const 错: string[] = []
-    const 附栏 = root.querySelector<HTMLElement>(".composer-footer")
-    const 卡 = root.querySelector<HTMLElement>(".composer-card")
-    const 包 = root.querySelector<HTMLElement>(".plan-toggle-wrap")
-    if (!附栏 || !卡 || !包) return [`缺东西：附栏 ${!!附栏} 卡 ${!!卡} 开关 ${!!包}`]
-    // 同卡下层已有 composer-tools 包装；验所属附栏，不把内部包装层当成布局契约。
-    // fecaaad4 基线与路线分支均复现 direct-parent 旧断言失败，邻接/边界/滚动/重叠检查照留。
-    if (包.closest(".composer-footer") !== 附栏) 错.push("开关不在附栏里")
-    if (!包.previousElementSibling?.classList.contains("enhance-control")) 错.push(`开关前面不是「优化输入」：${包.previousElementSibling?.className}`)
-    for (const el of [附栏, 卡]) if (el.scrollWidth > el.clientWidth + 1) 错.push(`${el.className} 横向滚 ${el.scrollWidth}>${el.clientWidth}`)
-    const 卡框 = 卡.getBoundingClientRect()
-    for (const sel of [".plan-toggle", ".perm-pill", ".ctx-meter"]) {
-      const el = 附栏.querySelector(sel)
-      if (!el) continue
-      const r = el.getBoundingClientRect()
-      if (r.left < 卡框.left - 1 || r.right > 卡框.right + 1) 错.push(`${sel} 出了卡 ${r.left}-${r.right} / ${卡框.left}-${卡框.right}`)
-      if (r.width < 20) 错.push(`${sel} 被压扁 ${r.width}`)
+/** 菜单挂在 body portal；打开入口仍必须属于指定会话。 */
+async function 开方案菜单(page: Page, 区: Locator) {
+  const 入口 = 区.getByRole("button", { name: "添加内容", exact: true })
+  if (await 入口.getAttribute("aria-expanded") !== "true") await 入口.click()
+  await expect(入口).toHaveAttribute("aria-expanded", "true")
+  const 菜单 = page.getByRole("menu", { name: "添加内容", exact: true })
+  await expect(菜单).toHaveCount(1)
+  await expect(菜单).toBeVisible()
+  return 菜单
+}
+
+async function 关方案菜单(page: Page, 区: Locator) {
+  await 区.getByRole("button", { name: "添加内容", exact: true }).click()
+  await expect(page.getByRole("menu", { name: "添加内容", exact: true })).toHaveCount(0)
+}
+
+async function 核对方案状态(page: Page, 区: Locator, 开启: boolean) {
+  const 菜单 = await 开方案菜单(page, 区)
+  await expect(菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })).toHaveAttribute("aria-checked", String(开启))
+  await 关方案菜单(page, 区)
+  if (开启) await expect(区.locator(".plan-band")).toContainText("只看不改")
+  else await expect(区.locator(".plan-band")).toHaveCount(0)
+}
+
+async function 切换方案(page: Page, 区: Locator, 开启: boolean) {
+  const 菜单 = await 开方案菜单(page, 区)
+  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+  await expect(开关).toBeEnabled()
+  await expect(开关).toHaveAttribute("aria-checked", String(!开启))
+  await 开关.click()
+  await expect(菜单).toHaveCount(0)
+  await 核对方案状态(page, 区, 开启)
+}
+
+/** 主区、窄坞都能打开同一菜单；优化与方案相邻，菜单在窗口内，输入卡不横向滚。 */
+async function 量开关位置(page: Page, 区: Locator): Promise<string[]> {
+  const 菜单 = await 开方案菜单(page, 区)
+  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+  await expect(开关).toBeVisible()
+  await expect(菜单.getByRole("menuitem", { name: "优化输入", exact: true })).toBeVisible()
+  const 错 = await 菜单.evaluate((menu) => {
+    const errors: string[] = []
+    const r = menu.getBoundingClientRect()
+    if (r.left < 0 || r.top < 0 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) errors.push("添加内容菜单出了窗口")
+    if (menu.scrollWidth > menu.clientWidth + 1) errors.push("添加内容菜单横向滚动")
+    const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemcheckbox"]'))
+    const plan = items.findIndex(el => el.getAttribute("aria-label") === "生成方案")
+    if (plan < 1 || items[plan - 1]?.getAttribute("aria-label") !== "优化输入") errors.push("方案前面不是优化输入")
+    for (const el of items) {
+      const item = el.getBoundingClientRect()
+      if (item.left < r.left - 1 || item.right > r.right + 1 || item.width < 20) errors.push("菜单项出界或被压扁")
     }
-    const 钮 = 附栏.querySelector(".plan-toggle")!.getBoundingClientRect()
-    const 仪 = 附栏.querySelector(".ctx-meter")?.getBoundingClientRect()
-    if (仪 && 钮.right > 仪.left + 1 && 钮.left < 仪.right - 1 && 钮.bottom > 仪.top + 1 && 钮.top < 仪.bottom - 1) 错.push("开关盖在仪表上")
-    return 错
+    return errors
   })
+  错.push(...await 区.locator(".composer-card").evaluate((card) => {
+    const errors: string[] = []
+    if (card.scrollWidth > card.clientWidth + 1) errors.push("输入卡横向滚动")
+    const bounds = card.getBoundingClientRect()
+    for (const el of card.querySelectorAll<HTMLElement>('.attach-trigger, .perm-pill, .ctx-meter')) {
+      const r = el.getBoundingClientRect()
+      if (r.left < bounds.left - 1 || r.right > bounds.right + 1 || r.width < 20) errors.push(`${el.className} 出卡或被压扁`)
+    }
+    return errors
+  }))
+  await 关方案菜单(page, 区)
+  return 错
 }
 
 async function 说(区: Locator, 话: string) {
@@ -67,9 +103,7 @@ async function 说(区: Locator, 话: string) {
 async function 进方案期并交方案(page: Page) {
   await 在项目里开会话(page)
   await 等进了对话(page)
-  await 开关(主区(page)).click()
-  await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "true")
-  await expect(主区(page).locator(".plan-band")).toContainText("只看不改")
+  await 切换方案(page, 主区(page), true)
   await 说(主区(page), "分析一下吸烟和肺功能")
   await expect(卡(主区(page)).first()).toContainText("等你看", { timeout: 30_000 })
 }
@@ -102,7 +136,7 @@ test.describe("先出方案 · 假模型", () => {
     expect(存).toHaveLength(1)
     expect(readFileSync(join(workspace, "analysis", "plans", 存[0]!), "utf8")).toContain("status: approved")
     /** D5：批了就是开始干活，开关自动关、带子没了 */
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "false")
+    await 核对方案状态(page, 主区(page), false)
     await expect(主区(page).locator(".plan-band")).toHaveCount(0)
     await expect(主区(page).locator(".turn.user").last()).toContainText("照批准的方案做")
     /** 假模型照方案写了第一项产物 → 对照 1 / 2 */
@@ -115,8 +149,7 @@ test.describe("先出方案 · 假模型", () => {
     const { page, workspace } = dawn
     await 在项目里开会话(page)
     await 等进了对话(page)
-    await 开关(主区(page)).click()
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "true")
+    await 切换方案(page, 主区(page), true)
     await 说(主区(page), "偷跑一下")
     const 行 = 主区(page).locator(".tool").filter({ hasText: "write" }).first()
     await expect(行).toHaveAttribute("data-status", "error", { timeout: 30_000 })
@@ -125,7 +158,7 @@ test.describe("先出方案 · 假模型", () => {
     await expect(行.locator(".tool-result")).toContainText("生成方案")
     expect(existsSync(join(workspace, "results", "tables", "偷跑.csv"))).toBe(false)
     /** 拦下之后仍在方案期——开关不因为一次拒绝而掉 */
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "true")
+    await 核对方案状态(page, 主区(page), true)
   })
 
   test("**改一改**：批的是改过的正文，文件里是改过的，执行那句说以文件为准", async ({ dawn }) => {
@@ -150,7 +183,7 @@ test.describe("先出方案 · 假模型", () => {
     await 卡(主区(page)).getByRole("button", { name: "不做了", exact: true }).click()
     await expect(卡(主区(page))).toContainText("没采用", { timeout: 10_000 })
     expect(existsSync(join(workspace, "analysis", "plans"))).toBe(false)
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "false")
+    await 核对方案状态(page, 主区(page), false)
   })
 
   test("**`/plan 问题`**：不把 /plan 送给模型、开关打开、问题照发、方案卡出来", async ({ dawn }) => {
@@ -158,30 +191,31 @@ test.describe("先出方案 · 假模型", () => {
     await 在项目里开会话(page)
     await 等进了对话(page)
     await 说(主区(page), "/plan 分析一下吸烟和肺功能")
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "true")
+    await 核对方案状态(page, 主区(page), true)
     await expect(卡(主区(page)).first()).toContainText("等你看", { timeout: 30_000 })
     await expect(主区(page).locator(".turn.user").first()).toHaveText(/分析一下吸烟和肺功能/)
     await expect(主区(page).locator(".turn.user").first()).not.toContainText("/plan")
     expect(JSON.stringify(requests)).not.toContain("/plan 分析")
   })
 
-  test("三颗按钮与开关常驻看得见（opacity 1）", async ({ dawn }) => {
+  test("方案菜单可操作，三颗方案按钮常驻看得见（opacity 1）", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
     await 等进了对话(page)
-    /** 位置（2026-09-28）：主区附栏里、紧跟「优化输入」，字写全 */
-    expect(await 量开关位置(主区(page))).toEqual([])
-    await expect(主区(page).locator(".composer-footer .plan-toggle-word")).toBeVisible()
-    await expect(主区(page).locator(".composer-controls .plan-toggle")).toHaveCount(0)
-    await 开关(主区(page)).click()
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "true")
+    /** 添加内容菜单中紧跟优化输入，展开后可操作、不出窗口。 */
+    expect(await 量开关位置(page, 主区(page))).toEqual([])
+    await 切换方案(page, 主区(page), true)
     await 说(主区(page), "分析一下吸烟和肺功能")
     await expect(卡(主区(page)).first()).toContainText("等你看", { timeout: 30_000 })
     for (const 名 of ["照这个做", "改一改", "不做了"]) {
       const 钮 = 卡(主区(page)).getByRole("button", { name: 名, exact: true })
       expect(await 钮.evaluate((el) => getComputedStyle(el).opacity), 名).toBe("1")
     }
-    expect(await 开关(主区(page)).evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+    const 菜单 = await 开方案菜单(page, 主区(page))
+    const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+    await expect(开关).toBeEnabled()
+    expect(await 开关.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
+    await 关方案菜单(page, 主区(page))
   })
 
   test("**人在两轮之间改了方案文件**：留着、卡片写「你改过」", async ({ dawn }) => {
@@ -236,10 +270,10 @@ test.describe("先出方案 · 坞里的对话", () => {
   test.use({ dawnOptions: { gitInit: true } })
 
   /**
-   * 坞窄：开关只留图标（`.plan-toggle-word` 由容器查询藏掉），名字在 `aria-label` 上。
-   * 要证的是**不撑破**——开关在输入卡里、方案卡与带子不出横向滚动。
+   * 坞窄：添加内容菜单中的方案开关仍有完整名称、可以操作。
+   * 菜单不能出窗口；方案卡、带子与操作不能横向撑破坞。
    */
-  test("**开关只留图标、方案卡与带子不撑破坞**", async ({ dawn }) => {
+  test("**坞里方案菜单可操作、主侧隔离、方案卡与带子不撑破坞**", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
     await 等进了对话(page)
@@ -248,17 +282,15 @@ test.describe("先出方案 · 坞里的对话", () => {
     await 坞(page).locator(".side-chat-head").waitFor({ timeout: 30_000 })
     await 框(坞(page)).waitFor({ timeout: 30_000 })
 
-    /** 位置（2026-09-28）：坞里同样在附栏、紧跟「优化输入」；只留图标；权限整颗在卡里、不横向滚 */
-    expect(await 量开关位置(坞(page))).toEqual([])
-    await 开关(坞(page)).click()
-    await expect(开关(坞(page))).toHaveAttribute("aria-pressed", "true")
-    expect(await 量开关位置(坞(page))).toEqual([])
-    await expect(坞(page).locator(".plan-toggle-word")).toBeHidden()
+    /** 坞里的入口打开独立菜单，方案紧跟优化输入，菜单留在窗口内。 */
+    expect(await 量开关位置(page, 坞(page))).toEqual([])
+    await 切换方案(page, 坞(page), true)
+    expect(await 量开关位置(page, 坞(page))).toEqual([])
     await expect(坞(page).locator(".plan-band")).toBeVisible()
     await 说(坞(page), "分析一下吸烟和肺功能")
     await expect(卡(坞(page)).first()).toContainText("等你看", { timeout: 30_000 })
     /** 主区那段没动：方案期是这一段会话的事 */
-    await expect(开关(主区(page))).toHaveAttribute("aria-pressed", "false")
+    await 核对方案状态(page, 主区(page), false)
 
     const 量 = await 坞(page).evaluate((dock) => {
       const 撑破: string[] = []
@@ -268,13 +300,10 @@ test.describe("先出方案 · 坞里的对话", () => {
         }
       }
       const 坞框 = dock.getBoundingClientRect()
-      const 卡框 = dock.querySelector(".composer-card")!.getBoundingClientRect()
-      const 钮框 = dock.querySelector(".composer-footer .plan-toggle")!.getBoundingClientRect()
       for (const el of dock.querySelectorAll<HTMLElement>(".plan-card, .plan-card-actions button")) {
         const r = el.getBoundingClientRect()
         if (r.left < 坞框.left - 1 || r.right > 坞框.right + 1) 撑破.push(`${el.className} 出了坞 ${r.left}-${r.right} / ${坞框.left}-${坞框.right}`)
       }
-      if (钮框.left < 卡框.left - 1 || 钮框.right > 卡框.right + 1) 撑破.push(`开关出了输入卡 ${钮框.left}-${钮框.right} / ${卡框.left}-${卡框.right}`)
       return 撑破
     })
     expect(量).toEqual([])
@@ -303,20 +332,19 @@ test.describe("先出方案 · 不支持的会话", () => {
     },
   })
 
-  test("**ACP 会话**：开关灰着，仅悬停时显示原因", async ({ dawn }) => {
+  test("**ACP 会话**：菜单开关禁用，同一项直接显示原因", async ({ dawn }) => {
     const { page } = dawn
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
     await expect(page.locator(".conv-head .kind")).toHaveText("ACP")
-    await expect(开关(主区(page))).toBeDisabled()
-    const 原因 = 主区(page).locator(".plan-toggle-why")
-    await expect(原因).toHaveText("这个 agent 不归 DAWN 管工具，生成方案用不了")
-    await expect(原因).toBeHidden()
-    await 主区(page).locator(".plan-toggle-wrap").hover()
-    await expect(原因).toBeVisible()
-    await page.locator(".conv-head").hover()
-    await expect(原因).toBeHidden()
-    /** 灰着也在附栏里、紧跟「优化输入」，原因字不把附栏撑出卡 */
-    expect(await 量开关位置(主区(page))).toEqual([])
+    const 菜单 = await 开方案菜单(page, 主区(page))
+    const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+    await expect(开关).toBeDisabled()
+    await expect(开关).toHaveAttribute("aria-checked", "false")
+    await expect(开关).toContainText("这个 agent 不归 DAWN 管工具，生成方案用不了")
+    await expect(开关.locator(".composer-menu-reason")).toBeVisible()
+    await 关方案菜单(page, 主区(page))
+    /** 原因与禁用项同在菜单里，不把菜单或输入卡撑出窗口。 */
+    expect(await 量开关位置(page, 主区(page))).toEqual([])
   })
 })

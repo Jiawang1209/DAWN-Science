@@ -15,7 +15,7 @@ import { resolve } from "node:path"
 import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话, 用某个agent开一段, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 const 主区 = (page: Page) => page.locator("main.main")
-const 框 = (区: Locator) => 区.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (区: Locator) => 区.getByPlaceholder(/输入问题/)
 const 仪表 = (区: Locator) => 区.locator(".ctx-meter-trigger")
 const 标记 = (区: Locator, status: string) => 区.locator(`.compaction-mark[data-status="${status}"]`)
 
@@ -153,7 +153,7 @@ test.describe("窄附栏", () => {
    * 2026-09-27 视觉基线抓的：坞里那张卡（对话格 380 宽）附栏五样都不缩，整句「上下文 <1%」把权限那颗顶出卡外，只剩「●完」。
    * 判据量盒子，不看像素：权限那颗整颗在卡里；仪表只写数、读屏名字仍是全句（2026-09-28 起主区也只写数）。
    */
-  test("**坞里的输入卡**：仪表只留环 + 数（名字仍是「上下文 …」），权限那颗整颗在卡里", async ({ dawn }) => {
+  test("**坞里的输入卡**：仪表在卡外统计行可用，权限在卡内，弹层留在窗口内", async ({ dawn }) => {
     const { page } = dawn
     const 坞 = page.locator("aside.right-dock")
     await 在项目里开会话(page)
@@ -167,12 +167,30 @@ test.describe("窄附栏", () => {
     // 2026-09-28 起处处只写环 + 数：「上下文」三个字不画——量画出来的字，不信 toBeVisible（opacity 那类坑）
     expect(await 钮.evaluate((el) => (el as HTMLElement).innerText.trim())).toBe("<1%")
     const 卡 = await 坞.locator(".composer-card").boundingBox()
-    const 权限 = await 坞.locator(".composer-status .perm-pill").boundingBox()
+    const 权限 = await 坞.locator(".composer-tools .perm-pill").boundingBox()
     expect(卡 && 权限).toBeTruthy()
     expect(权限!.x).toBeGreaterThanOrEqual(卡!.x)
     expect(权限!.x + 权限!.width).toBeLessThanOrEqual(卡!.x + 卡!.width)
-    // 附栏自己也不溢出（任何一样被顶出去都会让 scrollWidth 大过 clientWidth）
+    // 统计与上下文在卡外同一行，窄栏内仍可用，不挤占权限与发送。
+    const 统计 = 坞.locator(".composer-session-usage")
+    await expect(统计.locator(".ctx-meter-trigger")).toBeVisible()
+    await expect(坞.locator(".composer-card .ctx-meter-trigger")).toHaveCount(0)
+    const 统计盒 = (await 统计.boundingBox())!
+    const 仪表盒 = (await 钮.boundingBox())!
+    expect(统计盒.y).toBeGreaterThanOrEqual(卡!.y + 卡!.height - 1)
+    expect(仪表盒.x).toBeGreaterThanOrEqual(统计盒.x)
+    expect(仪表盒.x + 仪表盒.width).toBeLessThanOrEqual(统计盒.x + 统计盒.width + 1)
+    expect(await 统计.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
     expect(await 坞.locator(".composer-footer").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+    await 钮.click()
+    const 弹层 = 坞.getByRole("dialog", { name: "上下文", exact: true })
+    await expect(弹层).toBeVisible()
+    const 弹层盒 = (await 弹层.boundingBox())!
+    const 窗口 = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }))
+    expect(弹层盒.x).toBeGreaterThanOrEqual(0)
+    expect(弹层盒.y).toBeGreaterThanOrEqual(0)
+    expect(弹层盒.x + 弹层盒.width).toBeLessThanOrEqual(窗口.width)
+    expect(弹层盒.y + 弹层盒.height).toBeLessThanOrEqual(窗口.height)
   })
 
   test("**主区（坞关着）也只写数**（2026-09-28 作者要的）：看得见「<1%」，名字仍是「上下文 <1%」", async ({ dawn }) => {

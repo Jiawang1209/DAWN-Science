@@ -3,27 +3,35 @@ import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 async function checkComposer(area: import('@playwright/test').Locator) {
   const card = area.locator('.composer-card')
-  await expect(card.locator('.composer-box .composer-controls .send-btn')).toBeVisible()
-  await expect(card.locator('.composer-footer .composer-status .perm-pill')).toBeVisible()
+  await expect(card.locator('.composer-footer .composer-controls .send-btn')).toBeVisible()
+  await expect(card.locator('.composer-footer .composer-tools .perm-pill')).toBeVisible()
+  await expect(card.locator('.composer-environment .ws-chip')).toBeVisible()
+  await expect(card.locator('.composer-environment .composer-location')).toBeVisible()
   const bounds = (await card.boundingBox())!
+  const environment = (await card.locator('.composer-environment').boundingBox())!
+  const input = (await card.locator('.composer-box').boundingBox())!
   const footer = (await card.locator('.composer-footer').boundingBox())!
   const send = (await card.locator('.send-btn').boundingBox())!
-  expect(send.y + send.height).toBeLessThanOrEqual(footer.y + 1)
+  const add = (await card.locator('.attach-trigger').boundingBox())!
+  expect(environment.y + environment.height).toBeLessThanOrEqual(input.y + 1)
+  expect(input.y + input.height).toBeLessThanOrEqual(footer.y + 1)
+  expect(Math.abs((send.y + send.height / 2) - (add.y + add.height / 2))).toBeLessThanOrEqual(2)
+  expect(send.y).toBeGreaterThanOrEqual(footer.y)
+  expect(send.y + send.height).toBeLessThanOrEqual(footer.y + footer.height)
   expect(footer.y + footer.height).toBeLessThanOrEqual(bounds.y + bounds.height)
   const geometry = await card.locator('.composer-footer').evaluate(el => ({
     scroll: el.scrollWidth, width: el.clientWidth,
     overflow: Array.from(el.querySelectorAll('*')).filter(c => c.getBoundingClientRect().right > el.getBoundingClientRect().right).map(c => ({ cls: c.className, right: c.getBoundingClientRect().right, width: c.getBoundingClientRect().width, visible: getComputedStyle(c).visibility })),
   }))
   expect(geometry.scroll <= geometry.width, JSON.stringify(geometry)).toBe(true)
-  for (const item of await card.locator('.attach-trigger, .ws-chip, .dock-toggle, .enhance-main, .plan-toggle, .perm-pill-trigger, .ctx-meter > button').all()) {
-    const b = await item.boundingBox()
-    if (!b) continue
+  for (const item of await card.locator('.attach-trigger, .ws-chip, .perm-pill-trigger, .composer-controls').all()) {
+    const b = (await item.boundingBox())!
     expect(b.x).toBeGreaterThanOrEqual(bounds.x)
     expect(b.x + b.width).toBeLessThanOrEqual(bounds.x + bounds.width + 1)
   }
 }
 
-test('确认稿：双层输入框在首页、主会话和窄侧边会话内完整可用', async ({ dawn }) => {
+test('确认稿：顶部环境与底部操作行在首页、主会话和窄侧边会话内完整可用', async ({ dawn }) => {
   const { page } = dawn
   await checkComposer(page.locator('.welcome'))
   await 在项目里开会话(page)
@@ -46,7 +54,8 @@ test('确认稿：品牌与三个按钮紧凑排列，收起后仍可展开，�
       const brand = (await page.locator('.topbar .brand').boundingBox())!
       const buttons = await Promise.all(['.side-toggle', '.side-search-toggle', '.shortcut-toggle'].map(selector => page.locator(selector).boundingBox()))
       const gaps = [buttons[0]!.x - brand.x - brand.width, ...buttons.slice(1).map((b, j) => b!.x - buttons[j]!.x - buttons[j]!.width)]
-      return Math.max(...gaps.map(gap => Math.abs(gap - 8)))
+      // 顶栏已有的紧凑规则：按钮间4px，品牌组另留4px（本轮未修改顶栏）。
+      return Math.max(...gaps.map((gap, index) => Math.abs(gap - (index === 0 ? 8 : 4))))
     }, { timeout: 2_000 }).toBeLessThanOrEqual(1)
     await sash.focus()
     await sash.press('ArrowLeft')

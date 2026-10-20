@@ -46,36 +46,47 @@ test("换行在输入、发送请求和用户气泡里都保留", async ({ dawn 
   expect(rendered).toContain("换行测试第三段")
 })
 
-test("主区与窄侧边输入工具不溢出，状态与工具同处卡内下层", async ({ dawn }) => {
+test("主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内", async ({ dawn }) => {
   const { page } = dawn
   const { 进坞 } = await import("./fixtures.js")
   const { mkdirSync } = await import("node:fs")
   await 在项目里开会话(page)
   await page.setViewportSize({ width: 1920, height: 900 })
-  // 宽屏时发送留在白色上层，准备工具和权限在灰色下层。
-  const upload = (await page.locator("main.main .attach-trigger").boundingBox())!
-  const send = (await page.locator("main.main .send-btn").boundingBox())!
-  expect(send.y + send.height).toBeLessThanOrEqual(upload.y)
   await 进坞(page, "对话")
   const side = page.locator(".right-dock")
   await side.getByRole("button", { name: "另开一段", exact: true }).click()
   await expect(side.locator(".side-chat-head")).toBeVisible()
-  for (const width of [1920,1280]) {
+  for (const width of [1920, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     for (const area of [page.locator("main.main"), side]) {
-      const card = await area.locator(".composer-card").boundingBox()
-      await expect(area.locator(".composer-status .perm-pill")).toBeVisible()
-      const status = await area.locator(".composer-status").boundingBox()
-      expect(status!.y).toBeGreaterThan(card!.y)
-      expect(status!.y + status!.height).toBeLessThanOrEqual(card!.y + card!.height)
+      const card = (await area.locator(".composer-card").boundingBox())!
+      await expect(area.locator(".composer-tools .perm-pill")).toBeVisible()
+      await expect(area.locator(".composer-environment .ws-chip")).toBeVisible()
+      await expect(area.locator(".composer-environment .composer-location")).toHaveText("本机")
       expect(await area.locator(".composer-footer").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-      const controls = area.locator(".composer-footer .attach-trigger, .composer-footer .dock-toggle, .composer-footer .enhance-main, .composer-footer .plan-toggle")
+      const controls = area.locator(".composer-environment .ws-chip, .composer-footer .attach-trigger, .composer-footer .perm-pill-trigger, .composer-footer .composer-controls")
       for (const control of await controls.all()) {
         await expect(control).toBeVisible()
-        const box = await control.boundingBox()
-        expect(box!.x).toBeGreaterThanOrEqual(card!.x)
-        expect(box!.x + box!.width).toBeLessThanOrEqual(card!.x + card!.width)
+        const box = (await control.boundingBox())!
+        expect(box.x).toBeGreaterThanOrEqual(card.x)
+        expect(box.x + box.width).toBeLessThanOrEqual(card.x + card.width + 1)
+        expect(box.y).toBeGreaterThanOrEqual(card.y)
+        expect(box.y + box.height).toBeLessThanOrEqual(card.y + card.height + 1)
       }
+      const upload = (await area.locator(".attach-trigger").boundingBox())!
+      const send = (await area.locator(".send-btn").boundingBox())!
+      expect(Math.abs((send.y + send.height / 2) - (upload.y + upload.height / 2))).toBeLessThanOrEqual(2)
+      expect(send.x).toBeGreaterThanOrEqual(upload.x + upload.width)
+      await area.getByRole("button", { name: "添加内容", exact: true }).click()
+      const menu = page.getByRole("menu", { name: "添加内容" })
+      await expect(menu).toBeVisible()
+      const bounds = (await menu.boundingBox())!
+      expect(bounds.x).toBeGreaterThanOrEqual(0)
+      expect(bounds.y).toBeGreaterThanOrEqual(0)
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(900)
+      await page.keyboard.press("Escape")
+      await expect(menu).toHaveCount(0)
     }
   }
   mkdirSync("tmp/ui-refresh-verification/after", { recursive: true })

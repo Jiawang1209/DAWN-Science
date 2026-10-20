@@ -24,7 +24,7 @@ test("native captain selects configured Bots and delivers executed dependency re
   await 进坞(page, "Bot")
   await expect(page.locator("aside.right-dock .bot-list li")).toHaveCount(3)
   const main = page.locator("main.main")
-  const composer = main.getByPlaceholder(/今天帮你做些什么/)
+  const composer = main.getByPlaceholder(/输入问题/)
   await composer.fill("Bot协作验收：请根据已有 Bot 的职责组队，检查 input.csv，执行回归并交付脚本、说明和图表。")
   await composer.press("Enter")
   await expect(main.getByRole("button", { name: /调用了.*bot_list.*team_create/ })).toBeVisible()

@@ -31,7 +31,7 @@ test.use({
 test("**点消息里的外链，不会多出一个 Electron 窗口**", async ({ dawn }) => {
   const { app, page } = dawn
   await 开一段临时会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("给我个链接")
+  await page.getByPlaceholder(/输入问题/).fill("给我个链接")
   await page.getByRole("button", { name: "发送", exact: true }).click()
 
   const 链 = page.locator("a[href^='http']").first()

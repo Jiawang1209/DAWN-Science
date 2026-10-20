@@ -33,7 +33,7 @@ test("**对话很长时，整份文档仍然不高于窗口**", async ({ dawn })
    * 就够了——不需要模型配合，也不需要连远端。
    */
   const 一大段 = Array.from({ length: 400 }, (_, i) => `第 ${i} 行：这是一段用来把对话撑长的文字。`).join("\n")
-  await page.getByPlaceholder(/今天帮你做些什么/).fill(一大段)
+  await page.getByPlaceholder(/输入问题/).fill(一大段)
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 

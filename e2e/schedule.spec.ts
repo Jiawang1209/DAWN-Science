@@ -101,7 +101,7 @@ test.describe("对话里建", () => {
     await expect(page.locator(".perm-pill-trigger").first()).toHaveText(/^自动拦截/)
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("每天早上九点帮我看看数据")
+    await page.getByPlaceholder(/输入问题/).fill("每天早上九点帮我看看数据")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     const 结果 = page.getByText(/【MCP 结果】/).last()
     await expect(结果).toBeVisible({ timeout: 30_000 })

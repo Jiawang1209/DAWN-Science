@@ -36,7 +36,7 @@ test("一条都没有时不画空列表，且新建入口可点", async ({ dawn 
  */
 test("空对话区给的是**能直接打字的输入卡**，不是一句提示", async ({ dawn }) => {
   const { page } = dawn
-  const box = page.getByPlaceholder(/今天帮你做些什么/)
+  const box = page.getByPlaceholder(/输入问题/)
   await expect(box).toBeVisible()
   await box.fill("直接说")
   await box.press("Enter")
@@ -56,7 +56,7 @@ test("概览在坞里打开，侧栏底部没有那一行", async ({ dawn }) => 
   // 没选会话时概览是一句指路的话（2026-08-20 收窄成会话作用域）
   await expect(page.getByText(/还没有选中会话/)).toBeVisible()
   // 对话还在——坞是旁边的一栏，不是替换主区（这正是搬家的理由）
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
 })
 
 test("设置可达且可返回", async ({ dawn }) => {

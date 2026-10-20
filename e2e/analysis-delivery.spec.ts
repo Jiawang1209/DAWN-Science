@@ -27,7 +27,7 @@ test("科研交付：真实输出→选择→结果解读→独立重跑→保�
   await 在项目里开会话(page);
   const composer = page
     .locator("main.main")
-    .getByPlaceholder(/今天帮你做些什么/);
+    .getByPlaceholder(/输入问题/);
   await composer.fill(
     "演示科研分析交付：允许在当前工作区用合成数据创建输入和脚本，并真实运行分析；不安装、不联网、不清理已有目录。",
   );
@@ -147,7 +147,7 @@ test("整理并验证先等核对；缺少预期输出保持部分验证并保�
   await 在项目里开会话(page);
   const composer = page
     .locator("main.main")
-    .getByPlaceholder(/今天帮你做些什么/);
+    .getByPlaceholder(/输入问题/);
   await composer.fill(
     "演示科研分析交付：允许本地合成数据分析，不联网、不安装。",
   );

@@ -11,8 +11,8 @@ for (const [file, language, code] of [
       const errors: string[] = []
       page.on("console", message => { if (/\[script-preview\]|violates.*Content Security Policy/i.test(message.text())) errors.push(message.text()) })
       await 在项目里开会话(page)
-      await page.getByPlaceholder(/今天帮你做些什么/).fill("生成分析脚本")
-      await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+      await page.getByPlaceholder(/输入问题/).fill("生成分析脚本")
+      await page.getByPlaceholder(/输入问题/).press("Enter")
       const group = page.getByRole("group", { name: "本轮生成的文件" }).last()
       await expect(group).toContainText("已生成 1 个文件")
       await group.getByRole("button", { name: "查看产物", exact: true }).click()

@@ -16,7 +16,7 @@ test("280px 子面板保留失败详情、完整长参数与复制入口", async
   const agents = join(workspace, ".dawn/agents"); mkdirSync(agents, {recursive: true})
   writeFileSync(join(agents, "data-auditor.md"), `---\nname: data-auditor\ntitle: ${title}\ndescription: 面板验收角色\ntools: read\n---\n只读核对。\n`)
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("派子agent看看这个仓库")
+  await page.getByPlaceholder(/输入问题/).fill("派子agent看看这个仓库")
   await page.getByRole("button", {name: "发送", exact: true}).click()
   const chip = page.locator("main.main .chip-group .chip").first()
   await expect(chip).toHaveAttribute("data-status", "ok", {timeout: 60_000})

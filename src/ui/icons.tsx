@@ -453,6 +453,14 @@ export function 网页图标({ className }: 图标属性 = {}) {
 }
 
 /** 服务器。远端连接那一区 */
+export function 电脑图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d="M3 2h10a1 1 0 0 1 1 1v7H2V3a1 1 0 0 1 1-1Zm.5 1.5v5h9v-5h-9ZM1 11h14v1.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V11Z" />
+    </壳>
+  )
+}
+
 export function 服务器图标({ className }: 图标属性 = {}) {
   return (
     <壳 {...(className ? { className } : {})}>

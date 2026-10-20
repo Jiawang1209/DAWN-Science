@@ -72,6 +72,14 @@ describe("优化输入 · 命令面板入口", () => {
 })
 
 describe("优化输入 · ⌘⇧E 只归一颗", () => {
+  it("焦点在独立浮层中的侧边菜单：仍只改侧边草稿", async () => {
+    const 主 = 一颗("主区的草稿")
+    const 坞 = 一颗("坞里的草稿", true)
+    const r = render(<>{主.el}<div data-composer-side="true"><textarea aria-label="侧边菜单焦点" />{坞.el}</div></>)
+    await act(async () => { fireEvent.keyDown(r.getByLabelText("侧边菜单焦点"), { key: "E", metaKey: true, shiftKey: true }) })
+    expect(坞.enhance).toHaveBeenCalledTimes(1)
+    expect(主.enhance).not.toHaveBeenCalled()
+  })
   it("焦点不在坞里：只有主区那颗改写", async () => {
     const 主 = 一颗("主区的草稿")
     const 坞 = 一颗("坞里的草稿", true)

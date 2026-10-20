@@ -12,7 +12,7 @@ test("原失败长词组从真实主会话传入子进程，命中后读取记�
   const content = "地上生物量单位为 g/m²；固定为只读原数据；R解释器 Rscript；产物 outputs/。LONG_QUERY_ELECTRON"
   writeFileSync(join(memory, "KEY.md"), content + "\n")
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("派子agent查资源：长词组")
+  await page.getByPlaceholder(/输入问题/).fill("派子agent查资源：长词组")
   await page.getByRole("button", {name: "发送", exact: true}).click()
   const chip = page.locator("main.main .chip-group .chip").first()
   await expect(chip).toHaveAttribute("data-status", "ok", {timeout: 60_000})
@@ -34,7 +34,7 @@ test("真实主会话派单 → 子资源查询可见 → 续问刷新 → 重�
   const memory = join(workspace, ".dawn/memory"); mkdirSync(memory, {recursive: true})
   writeFileSync(join(memory, "KEY.md"), "[branch:main,master] 固定参数 CHILD_MEMORY_EVIDENCE：种子 42\n")
   await 在项目里开会话(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("派子agent查资源")
+  await page.getByPlaceholder(/输入问题/).fill("派子agent查资源")
   await page.getByRole("button", {name: "发送", exact: true}).click()
   const chip = page.locator("main.main .chip-group .chip").first()
   await expect(chip).toHaveAttribute("data-status", "ok", {timeout: 60_000})

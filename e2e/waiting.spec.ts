@@ -35,7 +35,7 @@ test.describe("慢一点的模型", () => {
     const 记号 = page.locator(".waiting")
     await expect(记号).toHaveCount(0)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("在吗")
     await 框.press("Enter")
 
@@ -79,7 +79,7 @@ test.describe("跑起来的时候", () => {
     await expect(发送).toBeVisible()
     await expect(停止).toHaveCount(0)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("在吗")
     await 框.press("Enter")
 
@@ -114,7 +114,7 @@ test.describe("发失败", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("这一句会失败")
     await 框.press("Enter")
 
@@ -142,7 +142,7 @@ test.describe("中止", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("说点什么")
     await 框.press("Enter")
 
@@ -192,7 +192,7 @@ test.describe("会思考的模型", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("在吗")
     await 框.press("Enter")
 
@@ -219,7 +219,7 @@ test.describe("会思考的模型", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("在吗")
     await 框.press("Enter")
 
@@ -256,7 +256,7 @@ test.describe("第一句话", () => {
     await expect(page.locator(".app-shell")).toBeVisible()
 
     // **走空态那条路**：不是先进对话再发，而是在起始屏直接开口
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("帮我查一下参考基因组怎么下载")
     await 框.press("Enter")
 
@@ -300,7 +300,7 @@ test("**复制之后旁边弹出提示，而按钮宽度不变**", async ({ dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
 
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill("在吗")
   await 框.press("Enter")
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
@@ -368,7 +368,7 @@ test.describe("Esc 中断", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("在吗")
     await 框.press("Enter")
     await expect(page.getByRole("button", { name: "停止", exact: true })).toBeVisible({

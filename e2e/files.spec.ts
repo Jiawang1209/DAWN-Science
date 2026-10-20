@@ -241,7 +241,7 @@ test("**大图：坞拉宽之后，预览挪到树旁边并且真的变大**", a
    * ④ **对话还在。** 这是当初把文件从整屏搬进坞的全部理由，
    * 也是这一轮不做主区那一屏的理由——加宽只是挤窄对话，不是顶掉它。
    */
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
 
   // 加宽之后那颗按钮就该消失：按下去什么都不变的按钮比没有更让人怀疑自己点错了
   await expect(page.getByRole("button", { name: "加宽" })).toHaveCount(0)
@@ -434,10 +434,10 @@ test("**树行的菜单：复制路径、插进输入框**", async ({ dawn }) =>
   // ③ 目录也有；插进输入框 → 草稿末尾多了 `@data `
   await 面板.getByRole("button", { name: "目录操作：data" }).click()
   await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data ")
+  await expect(page.getByPlaceholder(/输入问题/)).toHaveValue("@data ")
   await 面板.getByRole("button", { name: "文件操作：样本.csv" }).click()
   await page.getByRole("menu").getByRole("menuitem", { name: "插进输入框" }).click()
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("@data @data/样本.csv ")
+  await expect(page.getByPlaceholder(/输入问题/)).toHaveValue("@data @data/样本.csv ")
 })
 
 /**

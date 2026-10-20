@@ -55,7 +55,7 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   await expect(自带).toContainText("已停用")
   await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("22")
   await page.getByRole("button", { name: "返回", exact: true }).click()
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill("/统计顾问")
   await expect(page.getByRole("listbox", { name: "技能与子 agent" })).not.toContainText("统计顾问")
   await 框.fill("")
@@ -68,7 +68,7 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
 test("**输入框按 `/`：只有技能与子 agent 的菜单，边打边筛；/skill:名 真把人设送进了模型**", async ({ dawn }) => {
   const { page, requests } = dawn
   await 开一段临时会话(page, "先说一句")
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill("/")
   const 菜 = page.getByRole("listbox", { name: "技能与子 agent" })
   await expect(菜).toBeVisible()

@@ -103,7 +103,7 @@ test("**加一个 ACP 适配器，然后真的用它聊一段**", async ({ dawn 
    * 这一步才是「白开发了」与「能用了」的分界：前面四条全绿而这一条红，
    * 意味着我们只是把一行字写进了 yaml。
    */
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+  await page.getByPlaceholder(/输入问题/).fill("在吗")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible({ timeout: 60_000 })
 })

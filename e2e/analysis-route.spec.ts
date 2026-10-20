@@ -54,8 +54,8 @@ test("真实路线：摘要不自动开坞、选择不发模型、只读查看�
   await 在项目里开会话(page)
   const report = join(dawn.workspace, "results/reports/analysis-route-S1.md")
   const send = async (message: string) => {
-    await page.getByPlaceholder(/今天帮你做些什么/).fill(message)
-    await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+    await page.getByPlaceholder(/输入问题/).fill(message)
+    await page.getByPlaceholder(/输入问题/).press("Enter")
   }
   await send("演示分析路线：请先规划，不开始分析")
   await expect(page.locator(".analysis-route-summary")).toContainText("0 / 3")

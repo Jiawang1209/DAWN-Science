@@ -33,7 +33,7 @@ test.describe("视觉服务", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.click()
     await page.evaluate(() => {
       const b64 =

@@ -33,7 +33,7 @@ test.describe("提议 → 角标 → 采纳 → 新会话注入", () => {
   test("整链路(判据走假服务器收到的 system,不走屏幕)", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("记一下口径")
+    await page.getByPlaceholder(/输入问题/).fill("记一下口径")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -58,7 +58,7 @@ test.describe("提议 → 角标 → 采纳 → 新会话注入", () => {
     //  这同时验证了「下一段会话生效」的契约。)
     const 之前的请求数 = dawn.requests.length
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("现在口径是什么")
+    await page.getByPlaceholder(/输入问题/).fill("现在口径是什么")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
     const 新请求 = dawn.requests.slice(之前的请求数)

@@ -130,7 +130,7 @@ test.describe("设完之后", () => {
      * 假模型会照着提示调 bash（夹具里配的那条路），
      * 而 bash 的 cwd 就是我们要验的东西。
      */
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("跑一条命令")
+    await page.getByPlaceholder(/输入问题/).fill("跑一条命令")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -172,7 +172,7 @@ test.describe("空态就选好目录", () => {
       /工作目录/,
     )
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("从空态直接开始")
+    await page.getByPlaceholder(/输入问题/).fill("从空态直接开始")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 那句话真的发了出去
@@ -271,7 +271,7 @@ test.describe("选好目录之后", () => {
     ).toHaveCount(0)
 
     // 开口 —— 从这一刻起它就是一个项目了
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("开始干活")
+    await page.getByPlaceholder(/输入问题/).fill("开始干活")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await 等进了对话(page)
 
@@ -352,7 +352,7 @@ test.describe("普通对话聊了几句再选目录", () => {
     // 之前那句还在屏幕上（同一段对话，不是新开的）
     await expect(page.locator(".turns").getByText("先记住：暗号是蓝鲸", { exact: true })).toBeVisible()
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("还记得暗号吗")
+    await page.getByPlaceholder(/输入问题/).fill("还记得暗号吗")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".turns")).toContainText("记得，暗号是蓝鲸", { timeout: 30_000 })
     await expect(page.locator(".turns")).not.toContainText("不记得任何暗号")
@@ -372,7 +372,7 @@ test.describe("已在项目里再选另一个目录", () => {
   test("**两个项目彼此独立：在新目录另起一段、不带上下文；原来那段留在原项目**", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    const box = page.getByPlaceholder(/今天帮你做些什么/)
+    const box = page.getByPlaceholder(/输入问题/)
     await box.fill("先记住：暗号是蓝鲸")
     await box.press("Enter")
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })

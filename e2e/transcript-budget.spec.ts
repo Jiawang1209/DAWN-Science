@@ -18,7 +18,7 @@ test("**超过预算的更早消息不进 DOM**，屏幕上说清并给得出来
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
 
   for (let i = 1; i <= 句数; i++) {
     await 框.fill(`第${i}句`)
@@ -50,7 +50,7 @@ test("**刻度尺点更早的那一轮不会点了没反应**：先放出来再�
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   for (let i = 1; i <= 句数; i++) {
     await 框.fill(`第${i}句`)
     await 框.press("Enter")

@@ -13,7 +13,7 @@ for (const extension of ["R", "py"]) {
       await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setContentSize(1600, 900))
       for (let i = 0; i < 30; i++) writeFileSync(join(workspace, `navigation-${i}.txt`), "navigation fixture")
       await 在项目里开会话(page)
-      const input = page.getByPlaceholder(/今天帮你做些什么/)
+      const input = page.getByPlaceholder(/输入问题/)
       await input.fill("生成长脚本"); await input.press("Enter")
       const group = page.getByRole("group", { name: "本轮生成的文件" }).last()
       await expect(group).toContainText("已生成 1 个文件")
@@ -162,7 +162,7 @@ test.describe("长路径与受限预览高度", () => {
   test("操作和代码均保持可达，文件名与完整可访问路径保留", async ({ dawn }, testInfo) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    const input = page.getByPlaceholder(/今天帮你做些什么/)
+    const input = page.getByPlaceholder(/输入问题/)
     await input.fill("生成深层目录脚本")
     await input.press("Enter")
     const group = page.getByRole("group", { name: "本轮生成的文件" }).last()

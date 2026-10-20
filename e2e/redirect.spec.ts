@@ -24,7 +24,7 @@ import { test, expect, CANNED_REPLY, 开一段临时会话, 在项目里开会�
 
 const 主区 = (page: Page) => page.locator("main.main")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
-const 框 = (区: Locator) => 区.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (区: Locator) => 区.getByPlaceholder(/输入问题/)
 const 待发条 = (区: Locator) => 区.locator(".queued-strip")
 const 一条 = (区: Locator, 话: string) => 待发条(区).locator(".queued-one").filter({ hasText: 话 })
 

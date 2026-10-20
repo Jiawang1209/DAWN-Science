@@ -210,7 +210,7 @@ test("**命令跑在远端，`cd` 之后粘住**", async ({ dawn }) => {
   await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这儿有什么")
+  await page.getByPlaceholder(/输入问题/).fill("看看这儿有什么")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -251,7 +251,7 @@ test("**断开 → 连接 → 同一段会话里的命令仍然打到远端**", 
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
 
   // 先说一句，证明这段会话活着、工具已经绑好
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("看看这儿有什么")
+  await page.getByPlaceholder(/输入问题/).fill("看看这儿有什么")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
   await expect(page.locator(".tool").first().locator(".tool-head")).toBeVisible()
@@ -263,7 +263,7 @@ test("**断开 → 连接 → 同一段会话里的命令仍然打到远端**", 
   await expect(row).toHaveAttribute("data-state", "ready", { timeout: 30_000 })
 
   // 同一段会话里再说一句：命令必须还是打到那台机器
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("再看一眼")
+  await page.getByPlaceholder(/输入问题/).fill("再看一眼")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.getByText(/假模型已应答/).nth(1)).toBeVisible({ timeout: 30_000 })
   const tool = page.locator(".tool").nth(1)

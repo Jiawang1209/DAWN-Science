@@ -175,7 +175,7 @@ test.describe("产物收起", () => {
   test("图片与展开脚本的 × 回清单，保留原返回与定位入口", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
-    const input = page.getByPlaceholder(/今天帮你做些什么/)
+    const input = page.getByPlaceholder(/输入问题/)
     await input.fill("生成图片与脚本")
     await input.press("Enter")
     const group = page.getByRole("group", { name: "本轮生成的文件" }).last()

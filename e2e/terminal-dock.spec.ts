@@ -17,6 +17,11 @@ import { existsSync, rmSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 
+async function 切换终端面板(page: import("@playwright/test").Page) {
+  await page.locator(".composer-card .attach-trigger").click()
+  await page.getByRole("menu", { name: "添加内容" }).getByRole("menuitem", { name: "终端面板", exact: true }).click()
+}
+
 test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   const { page } = dawn
 
@@ -24,19 +29,19 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   await 开一段临时会话(page)
   await 等进了对话(page)
 
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
 
   const dock = page.locator(".dock")
   await expect(dock).toBeVisible()
   // **对话没被顶掉**：这正是它与旧终端会话最根本的区别
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toBeVisible()
+  await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
   // 掀开就该有一个能用的终端，不该是个还要再点一次的空盒子
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 })
 
 test("**路径是项目文件夹** —— 摆在上面，也真的在那里", async ({ dawn }) => {
   const { page, workspace } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
@@ -60,7 +65,7 @@ test("**路径是项目文件夹** —— 摆在上面，也真的在那里", as
 
 test("再开一个，两个都在标签里", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   const dock = page.locator(".dock")
   await expect(dock.locator(".dock-tab")).toHaveCount(1, { timeout: 60_000 })
 
@@ -70,7 +75,7 @@ test("再开一个，两个都在标签里", async ({ dawn }) => {
 
 test("**终端不混进会话列表** —— 它有自己的地方了", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 60_000 })
   // 会话列表里一条都不该多出来。**数 `.sess` 不数 `li`**——
   // 空列表里那一条 `li` 装的是「还没有会话」那句话
@@ -88,9 +93,9 @@ test("**终端不在侧栏，在对话这一侧**", async ({ dawn }) => {
    * 所以这条量两件事：侧栏里没有终端入口、也没有终端本身；
    * 而 dock 挂在主区里（`.main` 之内），不再横跨整个窗口压着侧栏。
    */
-  await expect(page.locator(".sidebar").getByRole("button", { name: "终端面板", exact: true })).toHaveCount(0)
+  await expect(page.locator(".sidebar .attach-trigger")).toHaveCount(0)
 
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   await expect(page.locator(".main .dock")).toBeVisible({ timeout: 60_000 })
   await expect(page.locator(".sidebar .dock")).toHaveCount(0)
 
@@ -130,7 +135,7 @@ test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
   await page.locator(".confirm").getByRole("button", { name: /移除项目|删除项目/ }).click()
   await expect(page.locator(".proj-item")).toHaveCount(0)
 
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
@@ -151,7 +156,7 @@ test("**没有项目时，终端开在家目录**", async ({ dawn }) => {
 
 test("收起之后 dock 就没了", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   await expect(page.locator(".dock")).toBeVisible()
   await page.locator(".dock").getByRole("button", { name: "收起面板" }).click()
   await expect(page.locator(".dock")).toHaveCount(0)
@@ -181,7 +186,7 @@ test("**按 × 关掉终端：标签走、面板走、空态出来**", async ({ 
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
 
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
@@ -215,7 +220,7 @@ test("**敲 exit：标签留着，标成已结束**", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
 
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
@@ -235,7 +240,7 @@ test("**敲 exit：标签留着，标成已结束**", async ({ dawn }) => {
  */
 test("**家目录的终端有标签；按 × 连记录一起删掉**", async ({ dawn }) => {
   const { page } = dawn
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
   await expect(dock.locator(".dock-tab"), "家目录开的终端在 dock 里没有标签").toHaveCount(1)
@@ -259,7 +264,7 @@ test("**每段对话各自的终端**：切换对话，dock 跟着换", async ({
   const { page } = dawn
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  await 切换终端面板(page)
   const dock = page.locator(".dock")
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
   await expect(dock.locator(".dock-tab")).toHaveCount(1)
@@ -270,7 +275,7 @@ test("**每段对话各自的终端**：切换对话，dock 跟着换", async ({
   // 再开一段对话、再掀开终端：里面应该是**新的一个**，而不是上一段那个
   await 开一段临时会话(page)
   await 等进了对话(page)
-  if (!(await dock.isVisible())) await page.getByRole("button", { name: "终端面板", exact: true }).click()
+  if (!(await dock.isVisible())) await 切换终端面板(page)
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
   await expect(dock.locator(".dock-tab"), "第二段对话里看到的不止它自己的终端").toHaveCount(1)
   // 两段各一个：后端一共两条终端会话（项目里的 + 临时的都数）

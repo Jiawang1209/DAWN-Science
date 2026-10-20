@@ -61,7 +61,7 @@ test("**分片取不到时，这一屏照常显示，内容一个字不少**", a
   const 放回去 = 藏起高亮分片()
   try {
     // 让假模型回一段**带围栏代码块**的 markdown（那是唯一会去要那个分片的东西）
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("给我一段 markdown")
+    await page.getByPlaceholder(/输入问题/).fill("给我一段 markdown")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     /**

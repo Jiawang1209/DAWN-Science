@@ -24,7 +24,7 @@ test.describe("模型没声明收图", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.click()
     await page.evaluate(() => {
       const b64 =
@@ -102,7 +102,7 @@ test.describe("第一句就失败", () => {
     await page.getByRole("menuitem", { name: "上传图片", exact: true }).click()
     await expect(page.locator(".attached-one")).toHaveCount(1, { timeout: 10_000 })
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("这一句会失败")
     await 框.press("Enter")
 

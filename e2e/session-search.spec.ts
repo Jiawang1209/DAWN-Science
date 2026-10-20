@@ -17,7 +17,7 @@ import { mkdirSync, rmSync } from "node:fs"
 import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures.js"
 import { 默认转录预算 } from "../src/ui/transcript-budget.js"
 
-const 框 = (page: Page) => page.getByPlaceholder(/今天帮你做些什么/)
+const 框 = (page: Page) => page.getByPlaceholder(/输入问题/)
 
 async function 说(page: Page, 话: string) {
   await 框(page).fill(话)

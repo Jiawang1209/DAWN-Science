@@ -218,7 +218,7 @@ test.describe("正在跑", () => {
     // 一条账都没有，退回创建时刻——刚建出来就是「刚刚」
     await expect(格).toHaveText("刚刚")
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("看一下这个目录")
     await 框.press("Enter")
 
@@ -266,7 +266,7 @@ test.describe("正在跑", () => {
     await 开一段临时会话(page) // 乙：待会儿切过去
     await 开一段临时会话(page) // 甲：正在停留的这一段
 
-    const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+    const 框 = page.getByPlaceholder(/输入问题/)
     await 框.fill("跑一个长的")
     await 框.press("Enter")
 

@@ -124,7 +124,7 @@ test("**说了第一句话，那一段就挂在这个项目底下**", async ({ d
   await page.getByRole("button", { name: "工作目录" }).click()
   await expect(page.locator(".ws-chip-label")).toContainText("选文件夹就进项目")
 
-  const box = page.getByPlaceholder(/今天帮你做些什么/)
+  const box = page.getByPlaceholder(/输入问题/)
   await box.fill("在这个目录里干活")
   await box.press("Enter")
 

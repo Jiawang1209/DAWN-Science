@@ -229,7 +229,7 @@ test("**等你点头**：「请求批准」档下「演一次权限」→ 卡弹
   await 开一段临时会话(page, "通知五")
   await 等进了对话(page)
   await expect.poll(() => 几条(app, "done"), { timeout: 30_000 }).toBe(1)
-  const 扳机 = page.locator(".composer-status .perm-pill-trigger")
+  const 扳机 = page.locator(".composer-tools .perm-pill-trigger")
   await 扳机.click()
   await page.getByRole("menuitemradio", { name: /^请求批准/ }).click()
   await expect(扳机).toHaveText(/^请求批准/)

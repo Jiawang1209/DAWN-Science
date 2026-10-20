@@ -73,7 +73,7 @@ test.describe("ACP", () => {
     ).toContainText("Sonnet")
 
     // ② 一句话进去，回话出来——**整条链通了**
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+    await page.getByPlaceholder(/输入问题/).fill("在吗")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -92,7 +92,7 @@ test.describe("ACP", () => {
       const { page } = dawn
       await 用某个agent开一段(page, new RegExp(agent))
       await 等进了对话(page)
-      await page.getByPlaceholder(/今天帮你做些什么/).fill("保留这段 ACP 对话")
+      await page.getByPlaceholder(/输入问题/).fill("保留这段 ACP 对话")
       await page.getByRole("button", { name: "发送", exact: true }).click()
       await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible()
       await expect(page.locator(".waiting")).toHaveCount(0)
@@ -102,7 +102,7 @@ test.describe("ACP", () => {
       await expect(page.locator(".conv-head .kind")).toHaveCount(0)
       await expect(page.locator(".model-name")).toContainText("deepseek-flash")
       await expect(page.getByText("保留这段 ACP 对话", { exact: true }).first()).toBeVisible()
-      await page.getByPlaceholder(/今天帮你做些什么/).fill("API 切回成功")
+      await page.getByPlaceholder(/输入问题/).fill("API 切回成功")
       await page.getByRole("button", { name: "发送", exact: true }).click()
       await expect(page.getByText(/假 ACP agent 已应答/)).toHaveCount(0)
       await expect(page.getByText(CANNED_REPLY).last()).toBeVisible()
@@ -136,13 +136,13 @@ test.describe("ACP", () => {
     await 开一段临时会话(page)
     await 等进了对话(page)
     const main = page.locator("main.main")
-    await main.getByPlaceholder(/今天帮你做些什么/).fill("主区原对话")
+    await main.getByPlaceholder(/输入问题/).fill("主区原对话")
     await main.getByRole("button", { name: "发送", exact: true }).click()
     await expect(main.getByText(CANNED_REPLY).last()).toBeVisible()
     await 进坞(page, "对话")
     const side = page.locator("aside.right-dock")
     await side.getByRole("button", { name: "另开一段", exact: true }).click()
-    await side.getByPlaceholder(/今天帮你做些什么/).waitFor()
+    await side.getByPlaceholder(/输入问题/).waitFor()
     await side.locator(".model-trigger").click()
     const group = side.locator(".model-group").filter({ has: page.locator(".model-group-head", { hasText: /^codex-acp$/ }) })
     await group.getByRole("menuitem", { name: "Opus", exact: true }).click()
@@ -152,7 +152,7 @@ test.describe("ACP", () => {
     await side.getByRole("menuitem", { name: "deepseek-flash", exact: true }).click()
     await expect(side.locator(".model-name")).toHaveText("deepseek-flash")
     await expect(main.locator(".turns")).toContainText("主区原对话")
-    await side.getByPlaceholder(/今天帮你做些什么/).fill("侧边回到 API")
+    await side.getByPlaceholder(/输入问题/).fill("侧边回到 API")
     await side.getByRole("button", { name: "发送", exact: true }).click()
     await expect(side.getByText(CANNED_REPLY).last()).toBeVisible()
   })
@@ -162,18 +162,29 @@ test.describe("ACP", () => {
     await 用某个agent开一段(page, /codex-acp/)
     await 等进了对话(page)
     const count = await page.locator(".session-list > li").count()
-    const wrap = page.locator(".composer-footer .plan-toggle-wrap")
-    await expect(wrap.getByRole("button", { name: "生成方案" })).toBeDisabled()
-    await expect(wrap.getByRole("tooltip")).toBeHidden()
-    await wrap.focus()
-    await expect(wrap.getByRole("tooltip")).toBeVisible()
+    const main = page.locator("main.main")
+    const add = main.getByRole("button", { name: "添加内容", exact: true })
+    await add.click()
+    const menu = page.getByRole("menu", { name: "添加内容", exact: true })
+    const plan = menu.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+    await expect(plan).toBeDisabled()
+    await expect(plan).toHaveAttribute("aria-checked", "false")
+    await expect(plan).toContainText("这个 agent 不归 DAWN 管工具，生成方案用不了")
+    await expect(plan.locator(".composer-menu-reason")).toBeVisible()
+    await add.click()
+    await expect(menu).toHaveCount(0)
     await expect(page.getByRole("button", { name: "切换服务", exact: true })).toHaveCount(0)
-    await page.locator('.config-pill[data-config="model"] .sess-config-trigger').click()
-    await page.locator('.config-pill[data-config="model"] .sess-config-menu').getByRole("menuitem", { name: "deepseek-flash" }).click()
+    await main.locator(".model-trigger").click()
+    await main.locator(".model-menu").getByRole("menuitem", { name: "deepseek-flash", exact: true }).click()
     await expect(page.locator(".conv-head .kind")).toHaveCount(0)
     await expect(page.locator(".model-name")).toContainText("deepseek-flash")
     await expect(page.locator(".session-list > li")).toHaveCount(count)
-    await expect(page.getByRole("button", { name: "生成方案", exact: true })).toBeEnabled()
+    await add.click()
+    await expect(plan).toBeEnabled()
+    await expect(plan).toHaveAttribute("aria-checked", "false")
+    await expect(plan.locator(".composer-menu-reason")).toHaveCount(0)
+    await add.click()
+    await expect(menu).toHaveCount(0)
   })
 
   /**
@@ -220,7 +231,7 @@ test.describe("ACP 权限卡", () => {
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("读一下那个 csv")
+    await page.getByPlaceholder(/输入问题/).fill("读一下那个 csv")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // ① 卡出现，**标题是它给的**
@@ -252,7 +263,7 @@ test.describe("ACP 权限卡", () => {
     const { page } = dawn
     await 用某个agent开一段(page, /问权限的-acp/)
     await 等进了对话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("读一下")
+    await page.getByPlaceholder(/输入问题/).fill("读一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const 卡 = page.locator(".perm-card")
@@ -291,7 +302,7 @@ test.describe("ACP 取消", () => {
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("说点什么")
+    await page.getByPlaceholder(/输入问题/).fill("说点什么")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // ① 跑起来之后，**同一个位置上是「停止」**
@@ -447,7 +458,7 @@ test.describe("ACP 用量", () => {
     const { page } = dawn
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("在吗")
+    await page.getByPlaceholder(/输入问题/).fill("在吗")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假 ACP agent 已应答/).last()).toBeVisible({ timeout: 30_000 })
 
@@ -500,7 +511,7 @@ test.describe("ACP 用我们的工具", () => {
     const { page } = dawn
     await 用某个agent开一段(page, /claude-acp/)
     await 等进了对话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("用一下 DAWN 的工具")
+    await page.getByPlaceholder(/输入问题/).fill("用一下 DAWN 的工具")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const 结果 = page.getByText(/【MCP 结果】/).last()
@@ -547,7 +558,7 @@ test.describe("ACP 切换等待期间", () => {
     await page.locator(".model-trigger").click()
     const group = page.locator(".model-group").filter({ has: page.locator(".model-group-head", { hasText: /^codex-acp$/ }) })
     await group.getByRole("menuitem", { name: "Opus", exact: true }).click()
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("切换期间新发的首句")
+    await page.getByPlaceholder(/输入问题/).fill("切换期间新发的首句")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".conv-agent")).toHaveText("codex-acp")
     await expect(page.locator(".session-list > li")).toHaveCount(count + 1)

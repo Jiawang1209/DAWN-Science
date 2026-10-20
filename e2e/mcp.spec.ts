@@ -250,7 +250,7 @@ agents:
     await expect(page.getByText(/还差 DAWN_MCP_TEST_LOG/)).toHaveCount(0)
 
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("帮我记一笔")
+    await page.getByPlaceholder(/输入问题/).fill("帮我记一笔")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     await expect(page.getByText("我用那台服务器记一笔。")).toBeVisible({ timeout: 30_000 })
@@ -326,7 +326,7 @@ agents:
     await expect(page.getByText(/还差 DAWN_MCP_TEST_LOG/)).toHaveCount(0)
 
     await 在项目里开会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("帮我记一笔")
+    await page.getByPlaceholder(/输入问题/).fill("帮我记一笔")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText("记好了。")).toBeVisible({ timeout: 30_000 })
 

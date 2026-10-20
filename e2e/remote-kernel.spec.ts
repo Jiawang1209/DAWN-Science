@@ -142,7 +142,7 @@ async function 起到42(page: import("@playwright/test").Page) {
   await 加一台并开对话(page)
   await 进坞(page, "笔记本")
   await 选中唯一的python(page)
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("算一下")
+  await page.getByPlaceholder(/输入问题/).fill("算一下")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器", { timeout: 90_000 })
   await expect(page.locator(".nb-cell").first().locator(".kout-text")).toContainText("42", { timeout: 60_000 })
@@ -163,7 +163,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     // 选完这一格就是正常的笔记本面板了——**输入框回来了**（选择器那一屏是不画输入框的）
     await expect(page.getByRole("textbox", { name: "要跑的代码" })).toBeVisible()
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("算一下")
+    await page.getByPlaceholder(/输入问题/).fill("算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 内核**在那台服务器上**真起了一台，算出 42
@@ -190,7 +190,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await 加一台并开对话(page)
     await 进坞(page, "笔记本")
     await 选中唯一的python(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("算一下")
+    await page.getByPlaceholder(/输入问题/).fill("算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器", { timeout: 90_000 })
 
@@ -215,7 +215,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await row.getByRole("button", { name: "连接", exact: true }).click()
     await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("再算")
+    await page.getByPlaceholder(/输入问题/).fill("再算")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 起了**新的一台**：还是那台服务器上的 Python，而且不再是退出态
     await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器 · ", { timeout: 90_000 })
@@ -279,7 +279,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await expect(page.locator(".nb-pill-label")).toContainText("退出")
 
     // 再跑一句：起新的一台（`perTurn` 让第二轮也调 run_code）
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("再算")
+    await page.getByPlaceholder(/输入问题/).fill("再算")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 90_000 })
     await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
@@ -304,7 +304,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
     await expect(page.getByText(/Python 内核没撑过这次断线/)).toBeVisible({ timeout: 60_000 })
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("再算")
+    await page.getByPlaceholder(/输入问题/).fill("再算")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 90_000 })
     await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
@@ -372,7 +372,7 @@ test.describe("远程内核 · 图从服务器回来", () => {
     await 加一台并开对话(page)
     await 进坞(page, "笔记本")
     await 选中唯一的python(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("画一张图")
+    await page.getByPlaceholder(/输入问题/).fill("画一张图")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     /**
@@ -442,7 +442,7 @@ test.describe("远程内核 · R（IRkernel）", () => {
     await expect(page.locator(".ip-R .ip-pkg-present")).toBeVisible()
     await page.locator(".ip-R").getByRole("radio").first().click()
 
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("用 R 算一下")
+    await page.getByPlaceholder(/输入问题/).fill("用 R 算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 42 从**服务器上那台 IRkernel** 回来（连接文件是 DAWN 写过去的，端口是那台机器自己挑的）

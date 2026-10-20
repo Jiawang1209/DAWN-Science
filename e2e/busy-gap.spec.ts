@@ -35,7 +35,7 @@ test.use({
 
 /** 把话打进去、按键，返回按下的那一刻 */
 async function 打一句(page: import("@playwright/test").Page, 话: string, 键: string) {
-  const 框 = page.getByPlaceholder(/今天帮你做些什么/)
+  const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill(话)
   await 框.press(键)
 }
@@ -81,7 +81,7 @@ test("**取回**：从待发条拿下来、字回到输入框，这句话不会�
 
   await 待发条(page).getByRole("button", { name: "取回" }).click()
   await expect(待发条(page)).toHaveCount(0)
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("我想改一下这句")
+  await expect(page.getByPlaceholder(/输入问题/)).toHaveValue("我想改一下这句")
 
   /** 这一轮收尾之后，转录里始终只有第一句 */
   await 收尾了(page)
@@ -98,7 +98,7 @@ test("**有待发时按停止**：排着的话回到输入框，停下之后不�
   /** 框里已经空了（发出去了），这颗就是「停止」 */
   await page.getByRole("button", { name: "停止" }).click()
   await expect(待发条(page)).toHaveCount(0)
-  await expect(page.getByPlaceholder(/今天帮你做些什么/)).toHaveValue("停了之后我再决定")
+  await expect(page.getByPlaceholder(/输入问题/)).toHaveValue("停了之后我再决定")
   await 收尾了(page)
   await expect(page.locator(".turn.user")).toHaveCount(1)
 })
@@ -139,11 +139,11 @@ test("忙着且框里有字时，屏幕上明写着这两条怎么用；待发�
   await expect(page.getByText(/回车排到这一轮后面/)).toHaveCount(0)
   await expect(page.getByRole("button", { name: "停止" })).toBeVisible()
 
-  await page.getByPlaceholder(/今天帮你做些什么/).fill("打了字")
+  await page.getByPlaceholder(/输入问题/).fill("打了字")
   await expect(page.getByText(/回车排到这一轮后面/)).toBeVisible()
   await expect(page.getByRole("button", { name: "排到后面" })).toBeVisible()
 
-  await page.getByPlaceholder(/今天帮你做些什么/).press("Enter")
+  await page.getByPlaceholder(/输入问题/).press("Enter")
   /** `toBeVisible()` 对 opacity: 0 仍算可见——要量 */
   for (const 名 of ["调整方向", "到坞里问", "新增会话", "取回"]) {
     const 键 = 待发条(page).getByRole("button", { name: 名, exact: true })

@@ -56,7 +56,7 @@ test.describe("本机链接", () => {
   test("**点消息里的本机链接，右边就渲染出来**", async ({ dawn }) => {
     const { app, page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("起个服务")
+    await page.getByPlaceholder(/输入问题/).fill("起个服务")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const 链 = page.locator("a[href^='http://127.0.0.1']").first()
@@ -71,7 +71,7 @@ test.describe("本机链接", () => {
   test("**那张卡在，「打开方式」两个去处都在**", async ({ dawn, 本机服务 }) => {
     const { app, page } = dawn
     await 开一段临时会话(page)
-    await page.getByPlaceholder(/今天帮你做些什么/).fill("起个服务")
+    await page.getByPlaceholder(/输入问题/).fill("起个服务")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     const 卡 = page.locator(".weblink-card")

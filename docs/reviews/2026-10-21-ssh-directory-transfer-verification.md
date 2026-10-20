@@ -75,3 +75,11 @@
 - 新装配回归先红（任务运行时退出等待被判 false）后绿；验证无内核目录任务也等待取消、保存 interrupted，并确认本地源文件保留。相关三文件54项通过、1项条件跳过：`/tmp/dawn-transfer-shutdown-green.log`。
 - 修复前全量单测448文件4880项通过、10跳过；修复前目录/远端功能及默认亮暗视觉基线共44项通过（仅排除上文已在原始基线证实失败的四项）：`/tmp/dawn-transfer-premerge-unit.log`、`/tmp/dawn-transfer-premerge-electron.log`。未更新视觉基线或放宽阈值。
 - 包含退出修复的最终全量：448文件，**4881 passed / 10 skipped**（4891项），`/tmp/dawn-transfer-final-unit.log`；类型检查和完整构建通过，`/tmp/dawn-transfer-final-typecheck.log`、`/tmp/dawn-transfer-final-build.log`；重建后目录Electron **2/2通过**，`/tmp/dawn-transfer-final-directory.log`。没有新增阻断问题，真实网络边界与上述四项既有失败继续保留。
+
+## 本地 main 集成与复验
+
+- 功能提交：`05e5c8bb`，`feat(remote): add safe directory transfers with compact task panel`。
+- 用户授权后，主工作树 main 从 `b537c8e5` 通过 `git merge --ff-only codex/ssh-data-transfer` 快进到功能提交，无合并冲突。
+- 在 `/Users/liuyue/Desktop/Github_repos/dawn-science` 重新完整构建，通过；核心目录服务、提交安全、后端与Electron装配共4文件 **59 passed / 1 skipped**，`/tmp/dawn-transfer-main-build.log`、`/tmp/dawn-transfer-main-unit.log`。
+- 使用 main 的真实 dist 构建产物再次执行目录往返与失败/重试/取消Electron主路径，**2/2通过**，`/tmp/dawn-transfer-main-electron.log`。此处SSH对端仍为确定性fake，不冒充真服务器验收。
+- 未推送、未打发布标签、未替换安装应用。分支工作树因仍承载已打开的隔离预览而保留。

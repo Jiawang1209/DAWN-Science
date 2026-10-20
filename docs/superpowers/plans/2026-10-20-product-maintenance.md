@@ -80,12 +80,12 @@ npx playwright test e2e/first-run-default.spec.ts e2e/provider-test.spec.ts e2e/
 - 现有检查：`tests/first-run.test.ts`、`tests/ui/first-run-ui.test.tsx`、`tests/ui/interpreter-picker.test.tsx`、`tests/ui/settings.test.tsx`、`tests/ui/environment-panel.test.tsx`、`tests/kernel/environment.test.ts`。
 - 实际 UI：`e2e/first-run-default.spec.ts`、`e2e/provider-test.spec.ts`、`e2e/environment.spec.ts`。
 
-- [ ] 记录实际 HEAD、版本、工作区状态；逐个确认以上文件和测试仍存在。
-- [ ] 形成 `docs/reviews/2026-10-20-maintenance-baseline.md`；若实施日期变化则使用实际日期。列出现有配置/检测/失败提示和能够复用的入口。
-- [ ] 只用隔离配置和可控夹具核对未配置、路径失效、缺少内核依赖、连接失败及恢复正常，不读取/打印真实密钥，不更改安装版配置。
-- [ ] 记录实际执行的命令、退出码、失败与跳过原因；尚未运行的项目标“未验证”，不沿用10月18日的测试数量。
-- [ ] 若未发现缺口，登记无需改动；若有缺口，给出 M1 首批清单和原行为保护表。只选一个可独立验收的问题进入实施。
-- [ ] 将 M0 文档及记录按第3节完成本地合并，确认 main 后再进入 M1。
+- [x] 记录实际 HEAD、版本、工作区状态；逐个确认以上文件和测试仍存在。
+- [x] 形成 `docs/reviews/2026-10-20-maintenance-baseline.md`；若实施日期变化则使用实际日期。列出现有配置/检测/失败提示和能够复用的入口。
+- [x] 只用隔离配置和可控夹具核对未配置、路径失效、缺少内核依赖、连接失败及恢复正常，不读取/打印真实密钥，不更改安装版配置。
+- [x] 记录实际执行的命令、退出码、失败与跳过原因；尚未运行的项目标“未验证”，不沿用10月18日的测试数量。
+- [x] 若未发现缺口，登记无需改动；若有缺口，给出 M1 首批清单和原行为保护表。只选一个可独立验收的问题进入实施。
+- [x] 将 M0 文档及记录按第3节完成本地合并，确认 main 后再进入 M1。
 
 ### M1：先收敛一批诊断与处理入口
 
@@ -114,7 +114,7 @@ M2–M6 的具体改动文件和代码步骤由各项启动时的现状核实确
 | 项目 | 状态 | 证据/下一步 |
 |---|---|---|
 | 维护计划 | 已形成 | 本文及长期路线图的2026-10-20补充；仅文档交付 |
-| M0 | 未开始 | 下一步核实 M1 相关能力与当前基线 |
+| M0 | 已验收 | 见 `docs/reviews/2026-10-20-maintenance-baseline.md`；保留原功能，下一项为当前配置诊断 |
 | M1 | 未开始 | 依赖 M0，不宣称已有诊断功能需要重做 |
 | M2 | 未开始 | 依赖 M1 的验收与本地合并 |
 | M3 | 未开始 | 依赖 M2 的验收与本地合并 |

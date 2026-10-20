@@ -33,3 +33,9 @@
 M0中恢复的锁定PDF依赖现已放回主目录node_modules实体目录，避免指向临时目录；旧失效链接保存在node_modules/.dawn-pdfjs-original-link。归档sha512与lockfile匹配，未改依赖声明或版本。
 
 本地合并前基线为 `7d0da11a`；按用户授权提交、快进合并并复验，最终提交见开发历史及Git记录。保留独立分支、工作树与预览，不推送、不替换安装版，不开始M2。
+
+## 本地合并后
+
+功能提交 `e40138ba` 无冲突快进至主目录main。主目录类型检查与构建通过，9项解释器原位报错/恢复、窄设置和原模型服务实际Electron复验通过（15.5秒）。日志 `/tmp/dawn-interpreter-inline-main-typecheck.log`、`/tmp/dawn-interpreter-inline-main-build.log`、`/tmp/dawn-interpreter-inline-main-e2e.log`。
+
+最终预览保持亮色、原位红字与收起的错误详情；未增加诊断区。额外截图 `evidence/06-final-pane.png`。维护台账只标记M1本批验收，M2及后续未开始。

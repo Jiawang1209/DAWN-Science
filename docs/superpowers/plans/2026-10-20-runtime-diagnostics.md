@@ -13,8 +13,8 @@
 - [x] 修改src/ui/App.tsx：配置保存失败交给对应字段；首启与请求异常沿用已有机制；按语言隔离回执，保留另一语言设置。
 - [x] 修改src/ui/i18n/en.ts：补两条文案；不修改样式和后端。
 - [x] 新增e2e/interpreter-save-errors.spec.ts，走实际保存入口验证失败与恢复、原检测入口和窄设置。
-- [ ] 类型、全量单测、构建及相关Electron回归通过，实际预览无新增诊断区域；保存错误/恢复截图及检查记录。
-- [ ] 更新docs/reviews/2026-10-20-runtime-diagnostics-verification.md、维护台账和开发历史；本地提交、快进合并、复验，保留预览，不推送或替换安装版。
+- [x] 类型、全量单测、构建及相关Electron回归通过，实际预览无新增诊断区域；保存错误/恢复截图及检查记录。
+- [x] 更新docs/reviews/2026-10-20-runtime-diagnostics-verification.md、维护台账和开发历史；本地提交、快进合并、复验，保留预览，不推送或替换安装版。
 
 ```bash
 npx vitest run tests/ui/interpreter-save-errors.test.tsx tests/ui/interpreter-picker.test.tsx tests/ui/settings.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts

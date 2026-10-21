@@ -99,6 +99,6 @@ describe("第二档 · 文件名过滤规则", () => {
 
 describe("内核快捷入口不是文件引用", () => {
   it("保留三个入口，显式相对路径与同名前缀仍是文件", () => {
-    expect(扫引用("@R @Py @RPython @./R @R.csv @Py/" ).map(r => r.path)).toEqual(["./R", "R.csv", "Py"])
+    expect(扫引用("@R @Py @Python @RPython @./R @R.csv @Py/" ).map(r => r.path)).toEqual(["./R", "R.csv", "Py"])
   })
 })

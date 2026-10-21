@@ -18,7 +18,7 @@ import { 类型图标, type Listing, type SearchResult } from "./files.js"
 import { 成候选行, 排路径, type 候选行, type 路径条目 } from "./at-file.js"
 import { 扫引用, 扫内核指令, 护住粘贴的艾特 } from "../files/mentions.js"
 import { 用选中项跟滚 } from "./slash-menu.js"
-import { 内核快捷们 } from "../kernel/shortcuts.js"
+import { 内核快捷候选 } from "../kernel/shortcuts.js"
 import { 关闭图标, 终端图标 } from "./icons.js"
 
 /** 菜单最多摆多少条（dsh-at-file 也是 50：可滚的视口） */
@@ -123,9 +123,10 @@ export function use艾特候选(query: string | undefined, 源: 引用文件源 
   if (query === undefined) return { 行: [], 忙: false }
   const 描述 = {
     R: t("使用 R 内核运行代码"), Py: t("使用 Python 内核运行代码"),
+    Python: t("使用 Python 内核运行代码"),
     RPython: t("使用 R 或 Python 内核运行代码"),
   }
-  const 快捷 = 内核快捷们.filter(x => x.token.toLowerCase().startsWith(query.toLowerCase()))
+  const 快捷 = 内核快捷候选(query)
     .map(x => ({ path: x.token, name: `@${x.token}`, kind: "kernel" as const, description: 描述[x.token] }))
   const 当前态 = 源 && 态.source === 源 && 态.query === query ? 态 : { 行: [], 忙: Boolean(源) }
   return { ...当前态, 行: [...快捷, ...当前态.行].slice(0, 最多候选) }

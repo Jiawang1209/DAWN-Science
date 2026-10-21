@@ -3,6 +3,7 @@
  * 当前 pi 分支是唯一权威：不扫描工具输出、助手回复或未送达的排队消息。
  */
 import { 本轮内核语言 } from '../kernel/shortcuts.js'
+import { 扫内核指令 } from '../files/mentions.js'
 
 export const 讨论执行指引 =
   '先判断用户当前是在讨论还是要求执行。普通聊天、解释概念、比较方法、讨论方案、询问看法时，直接用文字回答；' +
@@ -20,13 +21,20 @@ const 讨论只读 = new Set(['read', 'ls', 'grep', 'find', 'look_at_image', 're
 type Entry = { type?: string; message?: { role?: string; content?: unknown } }
 
 /** 排除引用 / 代码与附图转述；这些文字不是用户向当前助手发出的指令。 */
-function 指令文本(content: unknown): string {
+export function 指令文本(content: unknown): string {
   const text = typeof content === 'string' ? content : Array.isArray(content)
     ? content.flatMap((b: { type?: string; text?: string }) => b?.type === 'text' && typeof b.text === 'string' ? [b.text] : []).join('\n') : ''
-  return text.split('[以下是随消息附上的')[0]!
+  let plain = text.split('[以下是随消息附上的')[0]!
     .replace(/```[^]*?(?:```|$)|~~~[^]*?(?:~~~|$)/g, '')
     .replace(/^\s*>.*$/gm, '')
+    // 格式化的工具名仍是指令的宾语；整句代码示例及引文继续排除。
+    .replace(/(?<!`)(`+)(run_code|inspect_data)\1(?!`)/g, '$2')
     .replace(/“[^”]*”|「[^」]*」|『[^』]*』|"[^"\n]*"|`[^`\n]*`/g, '')
+  // 快捷标记是执行方式；不要让前置的 @Python 遮住同句“先不要运行”。
+  for (const shortcut of 扫内核指令(plain).reverse()) {
+    plain = plain.slice(0, shortcut.start) + ' '.repeat(shortcut.end - shortcut.start) + plain.slice(shortcut.end)
+  }
+  return plain
 }
 
 /** undefined = 本句不改变既有边界；true = 明确限制；false = 明确解除。 */

@@ -6,11 +6,15 @@ describe("内核快捷入口", () => {
   it("三种入口与组合；标点是边界，路径、邮箱、代码、受保护粘贴不触发", () => {
     expect(请求内核语言("@R 统计")).toEqual(["R"])
     expect(请求内核语言("请用 @Py，算一下")).toEqual(["python"])
+    expect(请求内核语言("@Python 统计")).toEqual(["python"])
+    expect(请求内核语言("@python 统计")).toEqual(["python"])
     expect(请求内核语言("@RPython 分析")).toEqual(["R", "python"])
+    expect(请求内核语言("@rpython 分析")).toEqual(["R", "python"])
+    expect(请求内核语言("@pYtHoN 统计")).toEqual(["python"])
     expect(请求内核语言("```code```\n@R 实际运行")).toEqual(["R"])
     expect(请求内核语言("````code````\n@Py 实际运行")).toEqual(["python"])
     expect(请求内核语言("@py 和 @r")).toEqual(["R", "python"])
-    for (const s of ["x@R", "@R.csv", "@Py/", "@./R", "`@R` 是入口", "`` @R ``", "```` @Py ````", "示例：\n\n    @R\n", "> @Py", "```R\n@Py\n```", 护住粘贴的艾特("@R 统计")]) {
+    for (const s of ["x@R", "@R.csv", "@Py/", "@Python.csv", "@Python/", "x@Python", "@./R", "`@R` 是入口", "`` @R ``", "```` @Py ````", "示例：\n\n    @R\n", "> @Py", "```R\n@Py\n```", 护住粘贴的艾特("@R 统计"), 护住粘贴的艾特("@Python 统计")]) {
       expect(请求内核语言(s), s).toEqual([])
     }
     expect(扫内核指令("看看 @Py。然后")[0]).toMatchObject({ token: "Py", start: 3, end: 6 })

@@ -23,6 +23,7 @@ describe('明确限制与解除，不猜普通对话的意图', () => {
   it('同句限制优先于 @Py；附图转述不能授权运行', () => {
     expect(执行指令('只讨论\n' + 内核请求标记(['python']))).toBe(true)
     expect(执行指令('看看这个图\n[以下是随消息附上的 1 张图片，由视觉模型转述]\n开始运行')).toBeUndefined()
+    for (const token of ['@R', '@Python', '@RPython']) expect(执行指令(token + ' 先不要运行\n' + 内核请求标记(['python'])), token).toBe(true)
   })
   it('未知工具、代码探查、委派、写入一律拒；明确只读工具可用', () => {
     const branch = [user('先只讨论')]

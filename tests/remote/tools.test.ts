@@ -304,6 +304,7 @@ describe("当前目录跟着 cd 走", () => {
     const cwd = 目录()
     const 出 = 改造成远端工具(原定义(), { executor: ex, cwd })
     const r = await 取(出, "bash").execute("t", { command: "cd data && ls" })
+    expect(r.content[0]!.text).toContain(`[当前目录 ${WS}/data]`)
 
     expect(cwd.get()).toBe("/home/u/proj/data")
     // 内部标记不该出现在模型看到的文本里

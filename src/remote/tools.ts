@@ -282,8 +282,9 @@ async function 跑(
     })
     if (typeof r.code === "number" || r.signal || r.stdout || r.stderr) onExecutionObserved?.()
     const { 正文, 目录 } = 摘出目录(r.stdout)
+    const 目录变了 = 目录 !== undefined && 目录 !== ws.get()
     // **只在真读到时才改**：读不到就保持原样，不拿一个猜的目录去覆盖
-    if (目录 && 目录 !== ws.get()) ws.set(目录)
+    if (目录变了) ws.set(目录)
 
     const 段: string[] = []
     if (正文) 段.push(正文.replace(/\n$/, ""))
@@ -298,7 +299,7 @@ async function 跑(
     const 结尾 = r.signal ? `[被信号 ${r.signal} 结束]` : `[退出码 ${r.code ?? "未知"}]`
     段.push(结尾)
     // **目录变了要告诉模型**：它下一条命令的相对路径以此为准
-    if (目录 && 目录 !== ws.get()) 段.push(`[当前目录 ${目录}]`)
+    if (目录变了) 段.push(`[当前目录 ${目录}]`)
     return 文本(段.join("\n"), r.code !== 0)
   } catch (e) {
     return 文本(`命令没跑成：${e instanceof Error ? e.message : String(e)}`, true)

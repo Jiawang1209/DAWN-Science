@@ -74,6 +74,8 @@ describe("成候选行", () => {
 
 it("内核入口选择、删除和同名文件的显式路径", () => {
   expect(艾特选完("@P", { start: 0, end: 2, query: "P" }, "Py", "kernel")).toEqual({ draft: "@Py ", caret: 4 })
+  expect(艾特选完("@Pyth", { start: 0, end: 5, query: "Pyth" }, "Python", "kernel")).toEqual({ draft: "@Python ", caret: 8 })
+  expect(抠掉引用("@Python @Python/ 文件", "Python", "kernel")).toBe("@Python/ 文件")
   expect(抠掉引用("@R 统计 @a.csv", "R")).toBe("统计 @a.csv")
   expect(抠掉引用("@R @R/ 文件", "R", "kernel")).toBe("@R/ 文件")
   expect(抠掉引用("@R @R/ 文件", "R", "file")).toBe("@R 文件")

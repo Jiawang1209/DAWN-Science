@@ -1,0 +1,78 @@
+{
+  "branch": "codex/tool-selection-boundaries",
+  "base": "2ee18997",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "tests": {
+    "unitFiles": 453,
+    "unitPassed": 4914,
+    "unitSkipped": 10,
+    "unitDurationSeconds": 125.39,
+    "coreElectronPassed": 14,
+    "caseVariantElectronPassed": 8,
+    "newCaseVariantElectronPassed": 4,
+    "realKernelElectronPassed": 1,
+    "distinctElectronPassed": 19,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true
+  },
+  "scope": {
+    "readExistingStatusFirst": "model guidance",
+    "explicitKernelProhibition": "NativeRuntime gate for run_code and inspect_data",
+    "caseInsensitive": true,
+    "shortcuts": [
+      "R",
+      "r",
+      "Py",
+      "py",
+      "Python",
+      "python",
+      "RPython",
+      "rpython"
+    ],
+    "sameMessageProhibitionWins": true,
+    "languageRestrictionPerTurn": true,
+    "remoteContext": true,
+    "cdNotice": true
+  },
+  "boundaries": {
+    "realSSHUsed": false,
+    "realModelUsed": false,
+    "realLocalPythonKernelVerified": true,
+    "productionConfigurationChanged": false,
+    "installedAppChanged": false
+  },
+  "preview": {
+    "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-tool-selection-preview-DSfRkp",
+    "source": "file:///Users/liuyue/.codex/worktrees/tool-selection-boundaries/dawn-science/dist/ui/index.html",
+    "visible": true,
+    "mockModel": true,
+    "mockSSH": true
+  },
+  "evidence": [
+    "lightweight-status.png",
+    "kernel-explicit-denial.png",
+    "electron-lightweight-query.png"
+  ],
+  "preMergeReview": {
+    "userApproved": true,
+    "unitFiles": 453,
+    "unitPassed": 4916,
+    "unitSkipped": 10,
+    "unitDurationSeconds": 102.88,
+    "relatedUnitFiles": 10,
+    "relatedUnitPassed": 154,
+    "electronPassed": 20,
+    "coreElectronPassed": 19,
+    "coreElectronDurationSeconds": 49.5,
+    "realKernelElectronPassed": 1,
+    "realKernelElectronDurationSeconds": 3.3,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true,
+    "formattedToolNameProhibition": true,
+    "blockingReviewFindings": 0
+  }
+}

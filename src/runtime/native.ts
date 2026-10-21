@@ -86,6 +86,7 @@ import { 挑工具后端 } from "../remote/tools.js"
 import { 本轮内核语言, 内核请求标记 } from "../kernel/shortcuts.js"
 import { createRunCodeTool, 内核指引 } from "../tools/run-code.js"
 import { 讨论执行指引, 讨论拒绝理由 } from "../policy/execution-boundary.js"
+import { 工具选择指引, 远端执行上下文, 内核调用拒绝理由 } from "../policy/tool-selection.js"
 import { officeTools, type Office开关 } from "../tools/office/index.js"
 import { browserTools, type Browser开关 } from "../tools/browser/index.js"
 import { memoryTools, 技能沉淀指引, type Memory开关, type Memory依赖 } from "../tools/memory/index.js"
@@ -1955,6 +1956,8 @@ export class NativeRuntime implements AgentRuntime {
       appendSystemPromptOverride: (base) => [
         ...base,
         讨论执行指引,
+        工具选择指引,
+        ...(spec.remote ? [远端执行上下文(spec.workspace, spec.remote.cwd.get())] : []),
         ...(spec.bot ? [spec.bot.instructions] : []),
         ...(spec.bot?.member ? ["Bot 团队对话：每轮输入附有团队公开讨论。用 bot_say 发表简洁进展/意见；用 bot_colleagues 确认成员，再用 bot_message 提问、反问或交接。处理队友请求时也可向发起者追问或请第三位队友核查。请求后结束本轮等待，不轮询、假装收到回答或提前完成任务。[bot-request:…] 的最后回复自动交回请求者；收到 [bot-reply:…] 后接回本轮正在处理的请求或原任务，不能把子请求当成原任务完成。[team-user:…] 是用户的团队发言，结合公开讨论与最新要求处理，回应将公开发表。重要进展与最终回复进入同一团队对话；私聊全文与内部推理不共享。只基于实际工具结果和队友回应交付，失败/未核验必须说明。"] : []),
         // 记忆快照（2026-08-25）：建会话时渲染一次——确认的记忆下一段会话生效
@@ -4004,6 +4007,8 @@ ${描述}`
         if (routeDenial) return { content: [{ type: 'text', text: routeDenial }], isError: true, details: undefined }
         const 讨论理由 = 讨论拒绝理由(name, this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? [], mcp只读)
         if (讨论理由) return { content: [{ type: "text", text: 讨论理由 }], isError: true, details: undefined }
+        const 内核理由 = 内核调用拒绝理由(name, branch)
+        if (内核理由) return { content: [{ type: "text", text: 内核理由 }], isError: true, details: undefined }
         const 簿 = this.方案簿(spec.sessionId)
         const 决定 = 方案期判(name, params ?? {}, {
           方案期: 簿.阶段 === "planning",

@@ -228,7 +228,7 @@ describe("提示词：笔记本就是 run_code", () => {
     expect(tool.description).toContain(".ipynb")
   })
 
-  it("系统提示那句：探索用 run_code，只有要可复用文件才写 analysis/scripts/", () => {
+  it("需要内核的分析可连续执行，只有要可复用文件才写 analysis/scripts/", () => {
     expect(内核指引).toContain("run_code")
     expect(内核指引).toContain("analysis/scripts/")
     expect(内核指引).toContain("笔记本")

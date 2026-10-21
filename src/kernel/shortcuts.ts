@@ -5,9 +5,17 @@ export const 内核快捷们 = [
   { token: "R", languages: ["R"], description: "使用 R 内核运行代码" },
   { token: "Py", languages: ["python"], description: "使用 Python 内核运行代码" },
 ] as const
+const Python别名 = { token: 'Python', languages: ['python'], description: '使用 Python 内核运行代码' } as const
+const 可识别快捷 = [...内核快捷们, Python别名]
 
 export function 认内核快捷(token: string) {
-  return 内核快捷们.find(x => x.token.toLowerCase() === token.toLowerCase())
+  return 可识别快捷.find(x => x.token.toLowerCase() === token.toLowerCase())
+}
+
+/** 保留 @Py 兼容；输入到 @Pyt... 时显示完整别名，菜单不重复同一语言。 */
+export function 内核快捷候选(query: string) {
+  const matched = 可识别快捷.filter(x => x.token.toLowerCase().startsWith(query.toLowerCase()))
+  return matched.filter(x => x.token !== 'Python' || !matched.some(y => y.token === 'Py'))
 }
 
 /** 附在模型收到的消息末尾；界面转录仍只保留原话。 */

@@ -2,17 +2,20 @@ import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { test, expect, 在项目里开会话 } from "./fixtures.js"
 
-for (const [token, languages] of [["R", "R"], ["Py", "python"], ["RPython", "R,python"]]) {
+for (const [token, canonical, languages] of [
+  ['R', 'R', 'R'], ['Py', 'Py', 'python'], ['Python', 'Python', 'python'], ['RPython', 'RPython', 'R,python'],
+  ['r', 'R', 'R'], ['py', 'Py', 'python'], ['python', 'Python', 'python'], ['rpython', 'RPython', 'R,python'],
+]) {
   test(`@${token} 可从菜单选择，发送指令但不当文件`, async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)
     const input = page.getByPlaceholder(/输入问题/)
     await input.fill(`@${token}`)
-    const option = page.getByRole("listbox", { name: "引用工作区文件" }).getByRole("option", { name: new RegExp(`^@${token} `) })
+    const option = page.getByRole("listbox", { name: "引用工作区文件" }).getByRole("option", { name: new RegExp(`^@${canonical} `) })
     await expect(option).toBeVisible()
     await option.click()
-    await expect(input).toHaveValue(`@${token} `)
-    await expect(page.locator(".at-rail-row")).toContainText(`@${token}`)
+    await expect(input).toHaveValue(`@${canonical} `)
+    await expect(page.locator(".at-rail-row")).toContainText(`@${canonical}`)
     await input.fill(`@${token} 算一下 1+1`)
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText("假模型已应答").last()).toBeVisible()
@@ -36,6 +39,16 @@ test("空态也能选择内核入口，键盘选择和删除有效", async ({ da
 
 test.describe("指定语言真正在工具入口检查", () => {
   test.use({ dawnOptions: { toolCall: { toolName: "run_code", args: { language: "python", code: "print(2)" }, say: "试着运行" } } })
+  for (const token of ['R', 'Python', 'RPython']) {
+    test(`@${token} 同句先不要运行时，模型强行请求仍被拒绝`, async ({ dawn }) => {
+      await 在项目里开会话(dawn.page)
+      await dawn.page.getByPlaceholder(/输入问题/).fill(`@${token} 先不要运行，只给代码。`)
+      await dawn.page.getByRole('button', { name: '发送', exact: true }).click()
+      await expect(dawn.page.getByText('假模型已应答').last()).toBeVisible()
+      expect(JSON.stringify(dawn.requests)).toContain('当前按用户要求只讨论')
+      await expect(dawn.page.locator('.nb-pill')).toHaveCount(0)
+    })
+  }
   test("@R 拒绝模型误调用 Python", async ({ dawn }) => {
     const { page } = dawn
     await 在项目里开会话(page)

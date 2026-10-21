@@ -1,0 +1,44 @@
+{
+  "verifiedAt": "2026-10-21T17:41:47.841638+08:00",
+  "branch": "main",
+  "featureCommit": "2f1410faa70f2abaf5e3e8550944d7992418a879",
+  "previousMain": "4d6f6d76aecff319f4c60712945ee1508ef8c7d8",
+  "merge": "fast-forward",
+  "committed": true,
+  "merged": true,
+  "pushed": false,
+  "originMainUnchanged": "b537c8e554f2962863e479932799572c4c79676b",
+  "premerge": {
+    "testFiles": 457,
+    "testsPassed": 4930,
+    "testsSkipped": 10,
+    "seconds": 92.64,
+    "typecheck": true,
+    "build": true,
+    "electronPassed": 19,
+    "electronSeconds": 39.3
+  },
+  "mainIntegration": {
+    "testFiles": 11,
+    "testsPassed": 257,
+    "seconds": 2.49,
+    "typecheck": true,
+    "build": true,
+    "electronPassed": 1,
+    "electronSeconds": 5.6,
+    "realLocalKernelRestarts": 3,
+    "electronExitCode": 0,
+    "sourceTestsE2eMatchFeature": true
+  },
+  "liveGenek": "Earlier accepted real-model/SSH verification retained; no remote reconnection in final merge checks",
+  "historicalSnapshots": "Earlier committed/merged=false fields describe evidence capture time",
+  "preview": "Isolated preview and feature worktree preserved",
+  "logs": {
+    "premergeFull": "/tmp/dawn-kernel-final-premerge-full.log",
+    "premergeElectron": "/tmp/dawn-kernel-final-premerge-electron.log",
+    "mainFocused": "/tmp/dawn-kernel-main-focused.log",
+    "mainTypes": "/tmp/dawn-kernel-main-types.log",
+    "mainBuild": "/tmp/dawn-kernel-main-build.log",
+    "mainElectron": "/tmp/dawn-kernel-main-electron.log"
+  }
+}

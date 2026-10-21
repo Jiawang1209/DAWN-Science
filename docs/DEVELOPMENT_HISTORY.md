@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 内核显示与重启修复已本地合并main
+
+- **Type**: docs
+- **Motivation**: 用户授权复核通过后将几处修复一起提交、合并main，先不要推送。
+- **What**: 功能提交2f1410fa由4d6f6d76快进合并本地main，补录最终集成核验；原始核验快照按发生时状态保留。
+- **Verification**: 合并前全量457文件4930项通过、10项跳过，19项实际Electron通过；main类型与完整构建、11文件257项（2.49秒）通过，实际主工作区Electron真实双内核连续三次R重启与退出码0检查1项通过（5.6秒）。src/tests/e2e与功能分支一致。
+- **Impact**: 已本地提交和合并，未推送；保留独立预览与分支，不替换安装版或修改生产配置。详见docs/reviews/2026-10-21-r-restart-output-verification.md及artifacts/kernel-output-isolation/main-integration.json。
+
 ### 2026-10-21 — 内核显示与重启修复验收后复核
 
 - **Type**: fix

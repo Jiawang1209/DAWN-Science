@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-21",
+  "codeRevision": "d683424bee26c62c7b2081b50afd9bd72de6c761",
+  "host": "ug2478@gs191.genek.cn:22",
+  "realSsh": true,
+  "fakeSsh": false,
+  "modelCalls": 0,
+  "scope": "/home/ug2478/.dawn-single-download-qa-20261021-da5cbe0c",
+  "cancel": {
+    "fileBytes": 67108864,
+    "batchId": "batch-3e99a4fd-e220-4df5-961f-eab9fd3abe0c",
+    "intermediateBytes": 983040,
+    "uiIntermediatePercent": 1,
+    "cancelledAtBytes": 1048576,
+    "state": "cancelled",
+    "targetAbsent": true,
+    "partFilesAbsent": true,
+    "counterStable": true
+  },
+  "retry": {
+    "fileBytes": 4194304,
+    "batchId": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "cause": "remote source chmod 0000; actual Permission denied",
+    "failedStatePreservedAcrossAppRestart": true,
+    "restoredPermission": "0600",
+    "action": "UI 重传未完成项 on original batch after restart",
+    "state": "completed",
+    "transferred": 4194304,
+    "uiFinalPercent": 100,
+    "sha256": "fac4ee5487b3b738ea6c2352794e7a303a84429bd26cace59db4d25394797280",
+    "matchesRemoteSource": true,
+    "noPartFiles": true
+  },
+  "progress": [
+    {
+      "at": "2026-10-21T06:35:12.720Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 1769472,
+      "percent": 42,
+      "uiPercent": 42
+    },
+    {
+      "at": "2026-10-21T06:35:13.735Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 1966080,
+      "percent": 46,
+      "uiPercent": 46
+    },
+    {
+      "at": "2026-10-21T06:35:14.745Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 2162688,
+      "percent": 51,
+      "uiPercent": 51
+    },
+    {
+      "at": "2026-10-21T06:35:15.755Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 2359296,
+      "percent": 56,
+      "uiPercent": 56
+    },
+    {
+      "at": "2026-10-21T06:35:16.763Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 2555904,
+      "percent": 60,
+      "uiPercent": 60
+    },
+    {
+      "at": "2026-10-21T06:35:17.772Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 2752512,
+      "percent": 65,
+      "uiPercent": 65
+    },
+    {
+      "at": "2026-10-21T06:35:18.780Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 2883584,
+      "percent": 68,
+      "uiPercent": 68
+    },
+    {
+      "at": "2026-10-21T06:35:19.790Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 3080192,
+      "percent": 73,
+      "uiPercent": 73
+    },
+    {
+      "at": "2026-10-21T06:35:20.803Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 3276800,
+      "percent": 78,
+      "uiPercent": 78
+    },
+    {
+      "at": "2026-10-21T06:35:21.813Z",
+      "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+      "state": "running",
+      "total": 4194304,
+      "transferred": 3473408,
+      "percent": 82,
+      "uiPercent": 82
+    }
+  ],
+  "barGeometry": {
+    "height": 5,
+    "visible": 5
+  },
+  "cleanup": {
+    "markerVerified": true,
+    "remoteSourceHashesReverified": true,
+    "removed": true,
+    "connectionsDisconnected": true
+  },
+  "git": {
+    "codeChanged": false,
+    "committed": false,
+    "pushed": false
+  },
+  "evidence": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-genek-single-download-LrZNuh/evidence",
+  "archiveDirectory": "/Users/liuyue/.codex/qa-reports/2026-10-21-genek-single-download-LrZNuh",
+  "archivedDownloadSha256": "fac4ee5487b3b738ea6c2352794e7a303a84429bd26cace59db4d25394797280"
+}

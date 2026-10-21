@@ -65,3 +65,7 @@ npx playwright test e2e/remote-connections.spec.ts --grep '远端文件下得下
 - 实际预览切换到 `/Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html`，复用独立演示配置及数据库；连接假SSH，展开目录后点击下载读我.md，统一任务完成，磁盘62字节内容正确。
 - 主工作区预览确认统一任务外框1px主题色、背景透明、旧卡片数量0、无横向溢出。证据：[main截图](../../artifacts/unified-file-download/main-preview.png)、[main验收参数](../../artifacts/unified-file-download/main-integration.json)。
 - 保留功能分支和工作树；不推送、不替换安装版，未重新操作Genek。合并后的这条记录作为单独docs提交保留。
+
+## 后续Genek真实服务器补验
+
+用户随后授权在Genek真实服务器复核单文件下载，main `d683424b`上已完成真实进度、取消清理、权限失败、应用重启后同批次重试及SHA-256核对，结果均通过。64 MiB只验证进度和取消，完整性与失败重试使用4 MiB文件；远端专属临时目录已清理，无代码改动或推送。独立报告及证据见[Genek真实单文件下载核验](2026-10-21-genek-single-download-verification.md)；本报告前文“未新增真实服务器核验”仅指当时的合并前及main集成检查。

@@ -1,0 +1,7 @@
+{
+  "remoteRoot": "/home/ug2478/.dawn-single-download-qa-20261021-da5cbe0c",
+  "markerMatched": true,
+  "sourceHashesVerified": true,
+  "removed": true,
+  "method": "explicit test files unlink then rmdir; no recursive delete"
+}

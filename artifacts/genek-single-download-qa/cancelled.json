@@ -1,0 +1,47 @@
+{
+  "detail": {
+    "batch": {
+      "id": "batch-3e99a4fd-e220-4df5-961f-eab9fd3abe0c",
+      "connectionId": "conn-6f2b74f2-447f-48d5-8b37-59fe642b4d44",
+      "server": "ug2478@gs191.genek.cn",
+      "direction": "download",
+      "source": "/home/ug2478/.dawn-single-download-qa-20261021-da5cbe0c/single-download-64MiB.bin",
+      "sources": [
+        "/home/ug2478/.dawn-single-download-qa-20261021-da5cbe0c/single-download-64MiB.bin"
+      ],
+      "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-genek-single-download-LrZNuh/downloads",
+      "targetParent": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-genek-single-download-LrZNuh/downloads",
+      "createdAt": "2026-10-21T06:32:45.895Z",
+      "state": "cancelled",
+      "total": 67108864,
+      "transferred": 1048576,
+      "counts": {
+        "files": 1,
+        "completedFiles": 0,
+        "directories": 0,
+        "completed": 0,
+        "failed": 0,
+        "conflict": 0,
+        "skipped": 0,
+        "cancelled": 1
+      },
+      "error": "已取消目录传输"
+    },
+    "entries": [
+      {
+        "id": "30f942d1-b737-40ac-8152-4927332cd422",
+        "path": "single-download-64MiB.bin",
+        "kind": "file",
+        "state": "cancelled",
+        "size": 67108864,
+        "transferred": 1048576,
+        "sourceMtime": 1792564333,
+        "source": "/home/ug2478/.dawn-single-download-qa-20261021-da5cbe0c/single-download-64MiB.bin",
+        "error": "已取消目录传输",
+        "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-genek-single-download-LrZNuh/downloads/single-download-64MiB.bin"
+      }
+    ],
+    "entryCount": 1
+  },
+  "localFiles": []
+}

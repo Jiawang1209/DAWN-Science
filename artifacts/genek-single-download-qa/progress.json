@@ -1,0 +1,188 @@
+[
+  {
+    "at": "2026-10-21T06:32:56.604Z",
+    "id": "batch-3e99a4fd-e220-4df5-961f-eab9fd3abe0c",
+    "state": "running",
+    "total": 67108864,
+    "transferred": 983040,
+    "percent": 1
+  },
+  {
+    "at": "2026-10-21T06:32:57.600Z",
+    "id": "batch-3e99a4fd-e220-4df5-961f-eab9fd3abe0c",
+    "state": "cancelled",
+    "total": 67108864,
+    "transferred": 1048576,
+    "percent": 1
+  },
+  {
+    "at": "2026-10-21T06:34:21.516Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "failed",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:34:59.150Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:34:59.253Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:34:59.507Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:35:00.013Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:35:01.022Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:35:02.030Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 0,
+    "percent": 0
+  },
+  {
+    "at": "2026-10-21T06:35:03.040Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 131072,
+    "percent": 3
+  },
+  {
+    "at": "2026-10-21T06:35:03.044Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 131072,
+    "percent": 3
+  },
+  {
+    "at": "2026-10-21T06:35:12.720Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 1769472,
+    "percent": 42,
+    "uiPercent": 42
+  },
+  {
+    "at": "2026-10-21T06:35:13.735Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 1966080,
+    "percent": 46,
+    "uiPercent": 46
+  },
+  {
+    "at": "2026-10-21T06:35:14.745Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 2162688,
+    "percent": 51,
+    "uiPercent": 51
+  },
+  {
+    "at": "2026-10-21T06:35:15.755Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 2359296,
+    "percent": 56,
+    "uiPercent": 56
+  },
+  {
+    "at": "2026-10-21T06:35:16.763Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 2555904,
+    "percent": 60,
+    "uiPercent": 60
+  },
+  {
+    "at": "2026-10-21T06:35:17.772Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 2752512,
+    "percent": 65,
+    "uiPercent": 65
+  },
+  {
+    "at": "2026-10-21T06:35:18.780Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 2883584,
+    "percent": 68,
+    "uiPercent": 68
+  },
+  {
+    "at": "2026-10-21T06:35:19.790Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 3080192,
+    "percent": 73,
+    "uiPercent": 73
+  },
+  {
+    "at": "2026-10-21T06:35:20.803Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 3276800,
+    "percent": 78,
+    "uiPercent": 78
+  },
+  {
+    "at": "2026-10-21T06:35:21.813Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "running",
+    "total": 4194304,
+    "transferred": 3473408,
+    "percent": 82,
+    "uiPercent": 82
+  },
+  {
+    "at": "2026-10-21T06:35:38.658Z",
+    "id": "batch-e3950392-57ba-4997-b30d-53f68597bdaf",
+    "state": "completed",
+    "total": 4194304,
+    "transferred": 4194304,
+    "percent": 100
+  }
+]

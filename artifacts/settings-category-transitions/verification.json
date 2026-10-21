@@ -1,8 +1,8 @@
 {
   "branch": "codex/settings-category-transitions",
   "base": "9d867610",
-  "committed": false,
-  "merged": false,
+  "committed": true,
+  "merged": true,
   "pushed": false,
   "source": "file:///Users/liuyue/.codex/worktrees/settings-category-transitions/dawn-science/dist/ui/index.html",
   "previewProfile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-settings-slide-2abBrX",
@@ -98,5 +98,7 @@
     "build": true,
     "diffCheck": true,
     "blockingReviewFindings": 0
-  }
+  },
+  "featureCommit": "86993b76ac4971f907824ee8b6a39bbcdb090555",
+  "mainIntegration": "main-integration.json"
 }

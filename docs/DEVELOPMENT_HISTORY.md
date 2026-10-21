@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 设置展示改动已本地合并main并通过集成核验
+
+- **Type**: docs
+- **Motivation**: 用户验收设置分类侧滑、外壳圆角及面板默认底色，明确授权合并main。
+- **What**: 功能提交86993b76从9d867610快进合并本地main，补录主工作区集成检查。
+- **Verification**: main类型检查和完整构建通过，相关8文件193项通过（2.73秒），侧滑及内核真实Electron3项通过（7.7秒）；合并前全量451文件4901项、10项跳过及16项Electron通过。详见docs/reviews/2026-10-21-settings-category-transitions-verification.md与artifacts/settings-category-transitions/main-integration.json。
+- **Impact**: 仅本地提交和合并，未推送、未替换安装版；保留已验收分支与实际隔离预览。
+
 ### 2026-10-21 — 设置侧滑、圆角与默认底色合并前复核
 
 - **Type**: docs

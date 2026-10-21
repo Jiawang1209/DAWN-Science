@@ -1,0 +1,20 @@
+{
+  "branch": "main",
+  "featureBranch": "codex/settings-category-transitions",
+  "base": "9d867610c8ddd4e1acc94f1d75cf768dfd5bf51f",
+  "featureCommit": "86993b76ac4971f907824ee8b6a39bbcdb090555",
+  "fastForward": true,
+  "tests": {
+    "typecheck": true,
+    "build": true,
+    "relatedUnitFiles": 8,
+    "relatedUnitPassed": 193,
+    "unitDurationSeconds": 2.73,
+    "electronPassed": 3,
+    "electronDurationSeconds": 7.7,
+    "diffCheck": true
+  },
+  "pushed": false,
+  "installedAppReplaced": false,
+  "previewWorktreePreserved": true
+}

@@ -28,3 +28,7 @@ npx playwright test e2e/update.spec.ts
 实际预览使用独立配置、数据库和Electron userData，本机假模型及假发布源，未连接真实SSH或替换安装版。截图和参数在[artifacts/settings-about](../../artifacts/settings-about/)。合并前main保持干净、基线c8f4b50e；本轮按用户已确认的实际预览执行本地提交及快进合并。安装版不替换，不推送。main集成结果另补于本文末尾。
 
 合并前最终命令：`npm test`、`npm run typecheck`、`npm run build`、`npx playwright test e2e/settings-about.spec.ts e2e/update.spec.ts`、`git diff --check`，全部通过。本次全量日志中的jsdom Canvas提示未造成测试失败；未调整测试阈值或排除用例。
+
+## main集成核验
+
+用户确认后，功能提交`6af4efa1`已从`c8f4b50e`快进合并本地main。主工作区重新完整构建通过；相关4文件165项通过（2.00秒）；基于main构建的关于页真实Electron回归1项通过（8.0秒），再次覆盖手动检查、自动检查往返、503失败恢复、最窄栏、主题色及发布说明。未推送，不替换安装版，保留原预览工作树。集成参数见`artifacts/settings-about/main-integration.json`。

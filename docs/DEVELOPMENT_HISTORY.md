@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 关于页已本地合并main并通过集成核验
+
+- **Type**: docs
+- **Motivation**: 用户确认关于页修改并授权合并本地main，继续不推送。
+- **What**: 功能提交6af4efa1已从c8f4b50e快进合并main；补录主工作区构建和集成核验。
+- **Verification**: main重新完整构建通过；相关4文件165项通过（2.00秒）；基于main构建的关于页真实Electron1项通过（8.0秒），覆盖检查、自动检查、503失败恢复、最窄栏、主题色和发布说明。合并前全量449文件4894项及Electron3项通过。详见docs/reviews/2026-10-21-settings-about-verification.md与artifacts/settings-about/main-integration.json。
+- **Impact**: 仅本地提交和合并，不推送、不替换安装版，保留已验收预览。内核设置页另开评审分支，尚无运行代码修改。
+
 ### 2026-10-21 — 关于页验收与合并前最终复核
 
 - **Type**: docs

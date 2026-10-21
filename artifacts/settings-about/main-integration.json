@@ -1,0 +1,18 @@
+{
+  "branch": "main",
+  "base": "c8f4b50e",
+  "functionalCommit": "6af4efa1",
+  "userAccepted": true,
+  "merged": true,
+  "pushed": false,
+  "source": "file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html",
+  "tests": {
+    "fullBuild": true,
+    "relatedUnitFiles": 4,
+    "relatedUnitPassed": 165,
+    "electronAboutPassed": 1,
+    "electronSeconds": 8
+  },
+  "isolation": "temporary profile, loopback fake inference and release feed, fake installer only",
+  "kernelSettingsCodeChanged": false
+}

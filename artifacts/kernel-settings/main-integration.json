@@ -1,0 +1,18 @@
+{
+  "branch": "main",
+  "base": "ee1b7690",
+  "functionalCommit": "d14ff13b",
+  "userAccepted": true,
+  "merged": true,
+  "pushed": false,
+  "source": "file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html",
+  "tests": {
+    "build": true,
+    "relatedUnitFiles": 5,
+    "relatedUnitPassed": 155,
+    "electronPassed": 2,
+    "electronSeconds": 4.2
+  },
+  "isolation": "temporary profile and loopback mock inference; path marker never executed",
+  "productionConfigurationChanged": false
+}

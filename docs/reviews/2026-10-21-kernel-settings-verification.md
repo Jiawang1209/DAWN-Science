@@ -22,3 +22,7 @@ Electron用例通过真实点击验证每门语言唯一输入、保存回写、
 截图与参数见[artifacts/kernel-settings](../../artifacts/kernel-settings/)，局部图为preview-content.png。主工作区main仍保持ee1b7690，本次工作不含main变更。
 
 最终核验命令：`npm test`、`npm run typecheck`、`npm run build`、`npx playwright test e2e/kernel-settings.spec.ts e2e/kernels.spec.ts e2e/settings-column.spec.ts`及`git diff --check`全部通过。设置栏回归覆盖分类进退、整页展开/收回、原坞恢复、关闭及各分类默认宽度无溢出。按用户授权执行本地提交和快进合并，main集成核验另补于文末。
+
+## main集成核验
+
+用户确认后，功能提交`d14ff13b`已从`ee1b7690`快进合并本地main。主工作区重新完整构建通过；相关5文件155项通过（1.99秒）；基于main构建的内核设置及Jupyter路径清单真实Electron2项通过（4.2秒）。不推送、不替换安装版，保留已验收工作树及隔离预览。参数见`artifacts/kernel-settings/main-integration.json`。新一轮设置展示研究独立开分支，保留分类内部内容和排版，仅讨论进入与切换方式。

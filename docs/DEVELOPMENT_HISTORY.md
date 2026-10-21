@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 内核设置已本地合并main并通过集成核验
+
+- **Type**: docs
+- **Motivation**: 用户认可内核设置实际预览并授权合并main，继续不推送。
+- **What**: 功能提交d14ff13b已从ee1b7690快进合并main；补录主工作区构建与回归结果。
+- **Verification**: main完整构建通过，相关5文件155项通过（1.99秒），内核设置及Jupyter路径清单真实Electron2项通过（4.2秒）。合并前全量450文件4897项、10项跳过及Electron11项通过。详见docs/reviews/2026-10-21-kernel-settings-verification.md与artifacts/kernel-settings/main-integration.json。
+- **Impact**: 仅本地提交和合并，不推送、不替换安装版；保留已验收分支与预览。后续设置研究只涉及分类内容的呈现与切换，用户明确要求分类内的内容和排版保持现状。
+
 ### 2026-10-21 — 内核设置实际预览验收与合并前复核
 
 - **Type**: docs

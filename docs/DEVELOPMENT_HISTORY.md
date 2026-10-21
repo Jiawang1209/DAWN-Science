@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 页签与传输样式本地合并main
+
+- **Type**: docs
+- **Motivation**: 用户确认最终预览并授权检查后提交、合并main，明确暂不推送。
+- **What**: 功能提交306ba342已从5de81f51快进合并本地main，包含页签小圆角、传输区透明底、进度条裁切修正及核验记录。补录main构建/回归和实际预览证据。
+- **Verification**: 合并前全量449文件4887项通过、10项跳过，类型检查与完整构建通过，相关Electron16项通过；main重新完整构建后相关5文件124项及Electron4项通过。main隔离演示进程已打开，实际文件下载成功、透明传输区与统一圆角生效、窗口无横向溢出，证据见artifacts/transfer-flat-background/main-preview.png及main-integration.json。
+- **Impact**: 已本地提交和合并，不推送、不替换安装版；保留功能分支及工作树。此前Genek真实核验作为同轮独立证据保留，本次main预览使用假SSH演示服务器。
+
 ### 2026-10-21 — 页签与传输样式合并前功能复核
 
 - **Type**: docs

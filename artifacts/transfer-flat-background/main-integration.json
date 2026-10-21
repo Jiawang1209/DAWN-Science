@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-21",
+  "featureCommit": "306ba3421d9858316560bf8b9e1a1af3738baa35",
+  "baseCommit": "5de81f51756857027807b2c035554b347067fdc3",
+  "target": "main",
+  "merge": "fast-forward",
+  "premerge": { "testFilesPassed": 449, "testsPassed": 4887, "testsSkipped": 10, "typecheck": "passed", "build": "passed", "electronPassed": 16 },
+  "main": { "build": "passed", "testsPassed": 124, "electronPassed": 4 },
+  "preview": "Fresh isolated Electron using main build and fake SSH demonstration data; production profile untouched",
+  "screenshot": "main-preview.png",
+  "committed": true,
+  "merged": true,
+  "pushed": false
+}

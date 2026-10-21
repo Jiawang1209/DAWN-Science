@@ -1,0 +1,20 @@
+{
+  "branch": "main",
+  "featureBranch": "codex/tool-selection-boundaries",
+  "base": "2ee18997",
+  "featureCommit": "6601622d52fcbbd052ff10311b898479c4a96ea5",
+  "fastForward": true,
+  "tests": {
+    "typecheck": true,
+    "build": true,
+    "relatedUnitFiles": 10,
+    "relatedUnitPassed": 154,
+    "relatedUnitDurationSeconds": 2.64,
+    "electronPassed": 18,
+    "electronDurationSeconds": 33.9,
+    "diffCheck": true
+  },
+  "pushed": false,
+  "installedAppChanged": false,
+  "previewWorktreePreserved": true
+}

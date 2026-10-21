@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 工具调用边界已本地合并main并通过集成核验
+
+- **Type**: docs
+- **Motivation**: 用户验收并要求重点核对@入口及run_code边界，通过后提交和合并main，不推送。
+- **What**: 功能提交6601622d由2ee18997快进合并本地main；补录主工作区集成核验及最终状态。
+- **Verification**: main类型与完整构建通过，相关10文件154项通过（2.64秒）；大小写入口、语言限制、同句禁令、格式化工具名、轻量状态查询及远端上下文18项真实Electron通过（33.9秒）。合并前全量453文件4916项、10项跳过及20项不同Electron用例通过，含真实本地Python内核共享变量。
+- **Impact**: 仅本地提交与合并，不推送、不替换安装版；保留分支和独立预览。详见docs/reviews/2026-10-21-tool-selection-boundaries-verification.md及artifacts/tool-selection-boundaries/main-integration.json。
+
 ### 2026-10-21 — 内核入口与执行边界合并前复核
 
 - **Type**: fix

@@ -1,19 +1,19 @@
 {
   "branch": "codex/tool-selection-boundaries",
   "base": "2ee18997",
-  "committed": false,
-  "merged": false,
+  "committed": true,
+  "merged": true,
   "pushed": false,
   "tests": {
     "unitFiles": 453,
-    "unitPassed": 4914,
+    "unitPassed": 4916,
     "unitSkipped": 10,
-    "unitDurationSeconds": 125.39,
-    "coreElectronPassed": 14,
-    "caseVariantElectronPassed": 8,
-    "newCaseVariantElectronPassed": 4,
+    "unitDurationSeconds": 102.88,
+    "relatedUnitFiles": 10,
+    "relatedUnitPassed": 154,
+    "distinctElectronPassed": 20,
+    "coreElectronPassed": 19,
     "realKernelElectronPassed": 1,
-    "distinctElectronPassed": 19,
     "typecheck": true,
     "build": true,
     "diffCheck": true
@@ -74,5 +74,21 @@
     "diffCheck": true,
     "formattedToolNameProhibition": true,
     "blockingReviewFindings": 0
-  }
+  },
+  "previewTests": {
+    "unitFiles": 453,
+    "unitPassed": 4914,
+    "unitSkipped": 10,
+    "unitDurationSeconds": 125.39,
+    "coreElectronPassed": 14,
+    "caseVariantElectronPassed": 8,
+    "newCaseVariantElectronPassed": 4,
+    "realKernelElectronPassed": 1,
+    "distinctElectronPassed": 19,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true
+  },
+  "featureCommit": "6601622d52fcbbd052ff10311b898479c4a96ea5",
+  "mainIntegration": "main-integration.json"
 }

@@ -56,13 +56,14 @@
  * **项目里没有一条全局的标题重置**——`<h2>` 天生带着 UA 的 `margin: 0.83em 0`，
  * 不清掉它，头部高度就会被这段外距撑大。
  */
-import { Fragment } from "react"
+import { Fragment, useLayoutEffect, useRef } from "react"
 import { Button } from "./primitives.js"
 import type { SettingsSection } from "./Settings.js"
 import { 关闭图标, 返回图标 } from "./icons.js"
 import { t } from "./i18n/index.js"
 import { SideSash } from "./sash.js"
 import { RIGHT_DOCK_MAX, RIGHT_DOCK_MIN } from "./state/right-dock.js"
+import { useSettingsTransition } from "./use-settings-transition.js"
 
 export function SettingsColumn({
   sections,
@@ -94,6 +95,31 @@ export function SettingsColumn({
   onWidth: (px: number, 记住: boolean) => void
 }) {
   const 当前 = selected === undefined ? undefined : sections.find((s) => s.id === selected)
+  const contentRef = useSettingsTransition(当前?.id ?? "list", "column")
+  const backRef = useRef<HTMLButtonElement>(null)
+  const listPosition = useRef(0)
+  const lastSection = useRef<string | undefined>(undefined)
+  const navigation = useRef<"open" | "back" | undefined>(undefined)
+  const select = (id: string) => {
+    listPosition.current = contentRef.current?.scrollTop ?? 0
+    lastSection.current = id
+    navigation.current = "open"
+    onSelect(id)
+  }
+  useLayoutEffect(() => {
+    const body = contentRef.current
+    const action = navigation.current
+    navigation.current = undefined
+    if (!body || !action) return
+    if (action === "open" && 当前) {
+      body.scrollTop = 0
+      backRef.current?.focus({ preventScroll: true })
+    } else if (action === "back" && !当前) {
+      body.scrollTop = listPosition.current
+      const row = [...body.querySelectorAll<HTMLButtonElement>("[data-settings-section]")].find(el => el.dataset.settingsSection === lastSection.current)
+      row?.focus({ preventScroll: true })
+    }
+  }, [当前?.id, contentRef])
   return (
     <aside className="settings-column" aria-label={t("设置")}>
       <SideSash
@@ -108,7 +134,7 @@ export function SettingsColumn({
       />
       <header className="dock-head">
         {当前 ? (
-          <Button variant="ghost" size="icon" className="settings-column-back" onClick={onBack} aria-label={t("回到清单")}>
+          <Button ref={backRef} variant="ghost" size="icon" className="settings-column-back" onClick={() => { navigation.current = "back"; onBack() }} aria-label={t("回到清单")}>
             <返回图标 />
           </Button>
         ) : null}
@@ -124,7 +150,8 @@ export function SettingsColumn({
           </Button>
         </div>
       </header>
-      <div className="dock-body">
+      <div className="settings-column-viewport">
+      <div className="dock-body" ref={contentRef}>
         {当前 ? (
           当前.body
         ) : (
@@ -159,7 +186,8 @@ export function SettingsColumn({
                   variant="ghost"
                   size="sm"
                   className="row settings-nav-item"
-                  onClick={() => onSelect(s.id)}
+                  data-settings-section={s.id}
+                  onClick={() => select(s.id)}
                 >
                   {s.icon}
                   <span className="name">{s.title}</span>
@@ -176,6 +204,7 @@ export function SettingsColumn({
             ))}
           </nav>
         )}
+      </div>
       </div>
     </aside>
   )

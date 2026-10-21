@@ -32,6 +32,7 @@ import { 在组词 } from "./ime.js"
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
 import { InterpreterPicker } from "./interpreter-picker.js"
+import { useSettingsTransition } from "./use-settings-transition.js"
 import type { FaultI18n, InterpreterCandidate } from "../protocol/index.js"
 import { 关闭图标, 复制图标 } from "./icons.js"
 import { $theme, resolveTheme, setTheme, type ThemeChoice } from "./state/theme.js"
@@ -524,6 +525,7 @@ export function SettingsShell({
   const [自己的, 设自己的] = useState(sections[0]?.id)
   const 选中 = selected ?? 自己的
   const 当前 = sections.find((s) => s.id === 选中) ?? sections[0]
+  const transitionRef = useSettingsTransition(当前?.id ?? "empty", "page")
   if (!当前) return null
   const 选 = (id: string) => {
     设自己的(id)
@@ -553,7 +555,7 @@ export function SettingsShell({
         * **右边只画选中那一块**，不是全都画出来再滚动到位——
         * 后者会让「我在哪一块」这件事重新变得说不清。
         */}
-      <div className="settings-body">
+      <div className="settings-body" ref={transitionRef}>
         <div className="settings-body-head">
           <h1 className="settings-body-title">{当前.title}</h1>
           {/**

@@ -1,0 +1,24 @@
+{
+  "corners": {
+    "topLeft": "15px",
+    "topRight": "15px",
+    "bottomLeft": "15px",
+    "bottomRight": "15px",
+    "borderTop": "0.5px",
+    "borderRight": "0.5px",
+    "borderBottom": "0.5px",
+    "borderLeft": "0.5px",
+    "overflow": "visible"
+  },
+  "drag": {
+    "before": 480,
+    "after": 528,
+    "passed": true
+  },
+  "light": true,
+  "dark": true,
+  "noOverflow": true,
+  "expandCollapse": true,
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-rounded-shell-a2tOPS",
+  "productionConfigurationChanged": false
+}

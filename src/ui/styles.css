@@ -5674,7 +5674,8 @@ pre {
   width: 100%;
   min-width: 0;
   min-height: 0;
-  border-left: var(--dawn-hairline) solid var(--dawn-stroke-2);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-2);
+  border-radius: var(--dawn-radius-lg);
   background: var(--dawn-surface-panel);
   position: relative;
 }
@@ -5692,6 +5693,7 @@ pre {
   padding: var(--dawn-space-2) var(--dawn-space-3);
   border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
   white-space: nowrap;
+  border-radius: var(--dawn-radius-lg) var(--dawn-radius-lg) 0 0;
 }
 /**
  * 补 `margin: 0` 与 `color`（Round 2 code review 抓的 I1；Round 3 更正了
@@ -5718,6 +5720,8 @@ pre {
   overflow-y: auto;
   padding: var(--dawn-space-3);
 }
+/* 位移只发生在内容视口内，标题、拖动缝与原滚动容器维持位置。 */
+.settings-column-viewport { display: flex; flex: 1; min-width: 0; min-height: 0; overflow: clip; border-radius: 0 0 var(--dawn-radius-lg) var(--dawn-radius-lg); }
 .settings-column-list { display: flex; flex-direction: column; gap: 2px; }
 /* 行尾那个 `›`：**它是「点进去还有东西」的记号**，不是装饰——
    没有它，带计数的行和不带的行看起来像两种控件。
@@ -8115,7 +8119,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   --dawn-surface-panel: var(--dawn-surface-settings);
   --dawn-surface-elevated: var(--dawn-surface-settings-card);
 }
-.right-dock { background: var(--dawn-surface-shell); border-radius: var(--dawn-radius-lg); }
+.right-dock { background: var(--dawn-surface-panel); border-radius: var(--dawn-radius-lg); }
 .side-actions > .side-action:first-child { min-height: 48px; justify-content: center; margin-block: var(--dawn-space-3) var(--dawn-space-2); color: var(--dawn-on-accent); background: var(--dawn-accent-solid); font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-medium); }
 .side-actions > .side-action:first-child svg { color: inherit; }
 .side-scroll { padding-top: var(--dawn-space-2); }

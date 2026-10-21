@@ -1,0 +1,15 @@
+{
+  "defaults": {
+    "light": {
+      "settings": "rgb(255, 255, 255)",
+      "panel": "rgb(255, 255, 255)"
+    },
+    "dark": {
+      "settings": "rgb(33, 33, 33)",
+      "panel": "rgb(33, 33, 33)"
+    }
+  },
+  "customSettingsIndependent": true,
+  "panelAfterCustomSettings": "rgb(255, 255, 255)",
+  "productionConfigurationChanged": false
+}

@@ -8,6 +8,38 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 设置侧滑、圆角与默认底色合并前复核
+
+- **Type**: docs
+- **Motivation**: 用户验收实际预览并明确授权合并本地main，继续不推送。
+- **What**: 复核侧滑进入/返回、焦点与滚动恢复、快速切换取消、减少动态效果、同分类草稿，以及设置外壳圆角和面板默认底色；分类内部内容保持原样。
+- **Verification**: 全量451文件4901项通过、10项跳过（99.90秒），类型检查、完整构建及diff通过。真实Electron设置栏/侧滑/内核12项通过（40.5秒），背景4项通过（10.9秒）。未调整阈值或排除用例；保留已有Canvas、direct-eval及构建体积提示。
+- **Impact**: 本地提交并准备快进合并，后续在main做集成核验。不推送、不替换安装版；保留当前隔离预览与分支工作区供继续查看。
+
+### 2026-10-21 — 面板默认背景与设置默认背景统一
+
+- **Type**: fix
+- **Motivation**: 用户要求面板默认底色与设置默认底色一致，只调整默认值。
+- **What**: right-dock由surface-shell改用surface-panel；默认亮色白色、暗色深灰。仅调整CSS默认表面，不改写已有配色配置，不新增颜色控件。
+- **Verification**: UI构建、相关4文件125项、背景相关真实Electron4项及diff通过；独立Electron实测面板与设置默认底色亮色均rgb(255,255,255)、暗色均rgb(33,33,33)。另在隔离配置中自定义设置背景，确认普通面板仍保持默认表面。亮暗截图及参数见artifacts/settings-category-transitions/panel-background-*。
+- **Impact**: 可见预览原位加载新CSS，未重载页面或重置输入；留在codex/settings-category-transitions，未提交、合并或推送，main保持9d867610。
+
+### 2026-10-21 — 设置最外层外壳统一圆角
+
+- **Type**: fix
+- **Motivation**: 用户指出包住整个设置的最大外框仍是直角，明确分类清单与进入分类后的内容都应由同一个圆角外壳包住。
+- **What**: settings-column补齐四边中性描边并复用主内容区radius-lg；标题区跟随上方圆角，内容视口跟随底部圆角裁切。外壳保持overflow visible以保留外侧拖宽命中区域，不改各分类内部内容。
+- **Verification**: UI构建、相关3文件126项及diff通过；设置栏、侧滑和关于页真实Electron12项通过（36.9秒）。独立实际预览确认四角均15px（来自令牌）、四边0.5px描边，鼠标拖宽480到528、展开/收回、亮暗及无横向溢出通过；截图与参数见artifacts/settings-category-transitions/rounded-*。
+- **Impact**: 当前可见预览已原位加载新CSS，保留用户正在看的页面和输入状态。留在codex/settings-category-transitions，未提交、合并或推送；main保持9d867610。
+
+### 2026-10-21 — 设置分类侧滑详情与整页轻量切换分支预览
+
+- **Type**: feat
+- **Motivation**: 用户明确保持各分类内容及排版，仅优化点击分类后的展示方式，并选择侧滑进入详情。
+- **What**: 共享Web Animations hook处理右栏进入/返回相反方向220ms/24px过渡及整页右内容140ms淡入；头部和导航固定，内容视口裁切，返回恢复分类焦点/滚动。快速切换取消前次动画，相同分类重绘保留草稿，减少动态效果直接呈现且支持中途取消。
+- **Verification**: 相关5文件171项、类型、完整构建及diff通过；新2项和既有10项真实Electron均通过，覆盖真实动画采样、最窄中间帧、暗色、焦点、滚动、草稿和动态偏好。实际独立预览及真实录屏动图已提供，证据见artifacts/settings-category-transitions/及docs/reviews/2026-10-21-settings-category-transitions-verification.md。
+- **Impact**: 留在codex/settings-category-transitions，未提交、合并、推送，main保持9d867610。AppearancePanel和其他分类内部内容未改，不使用真实推理/SSH/解释器，不改生产配置。
+
 ### 2026-10-21 — 内核设置已本地合并main并通过集成核验
 
 - **Type**: docs

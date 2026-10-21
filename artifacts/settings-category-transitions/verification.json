@@ -1,0 +1,102 @@
+{
+  "branch": "codex/settings-category-transitions",
+  "base": "9d867610",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "source": "file:///Users/liuyue/.codex/worktrees/settings-category-transitions/dawn-science/dist/ui/index.html",
+  "previewProfile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-settings-slide-2abBrX",
+  "tests": {
+    "relatedUnitFiles": 5,
+    "relatedUnitPassed": 171,
+    "newElectronPassed": 2,
+    "existingElectronPassed": 10,
+    "totalDistinctElectronPassed": 12,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true
+  },
+  "motion": {
+    "columnDurationMs": 220,
+    "columnOffsetPx": 24,
+    "pageDurationMs": 140,
+    "reducedMotion": true,
+    "rapidCancellation": true,
+    "sameSectionDraftPreserved": true,
+    "appearanceContentCodeChanged": false
+  },
+  "recording": {
+    "file": "navigation.gif",
+    "source": "actual Electron CDP screencast",
+    "sourceFrames": 61,
+    "durationSeconds": 4.72,
+    "fps": 25,
+    "staticHoldLimitSeconds": 1,
+    "sourceCrop": {
+      "x": 912,
+      "y": 60,
+      "width": 480,
+      "height": 736
+    }
+  },
+  "boundaries": {
+    "productionConfigurationChanged": false,
+    "sshUsed": false,
+    "realInferenceUsed": false,
+    "kernelStarted": false
+  },
+  "roundedShellRevision": {
+    "scope": "entire settings column, category list and all detail pages",
+    "radiusToken": "--dawn-radius-lg",
+    "tests": {
+      "relatedUnitFiles": 3,
+      "relatedUnitPassed": 126,
+      "electronPassed": 12,
+      "uiBuild": true,
+      "diffCheck": true
+    },
+    "liveStylesheetUpdatedWithoutReload": true,
+    "visualEvidence": [
+      "rounded-settings-list-light.png",
+      "rounded-about-light.png",
+      "rounded-about-dark.png",
+      "rounded-shell-verification.json"
+    ],
+    "olderMotionGifPredatesRoundedShell": true
+  },
+  "panelDefaultBackgroundRevision": {
+    "scope": "ordinary right dock default surface matches default settings surface",
+    "surfaceToken": "--dawn-surface-panel",
+    "tests": {
+      "relatedUnitFiles": 4,
+      "relatedUnitPassed": 125,
+      "electronPassed": 4,
+      "uiBuild": true,
+      "diffCheck": true
+    },
+    "defaultLight": "rgb(255, 255, 255)",
+    "defaultDark": "rgb(33, 33, 33)",
+    "customSettingsIndependent": true,
+    "productionConfigurationChanged": false,
+    "liveStylesheetUpdatedWithoutReload": true,
+    "visualEvidence": [
+      "panel-background-light.png",
+      "panel-background-dark.png",
+      "panel-background-verification.json"
+    ]
+  },
+  "preMergeReview": {
+    "userApproved": true,
+    "unitFiles": 451,
+    "unitPassed": 4901,
+    "unitSkipped": 10,
+    "unitDurationSeconds": 99.9,
+    "electronPassed": 16,
+    "settingsElectronDurationSeconds": 40.5,
+    "backgroundElectronDurationSeconds": 10.9,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true,
+    "blockingReviewFindings": 0
+  }
+}

@@ -1,0 +1,25 @@
+npm notice run dawn-science@0.0.34 npx
+npm notice run 'playwright' test e2e/upload-experience.spec.ts e2e/remote-connections.spec.ts --grep 多文件确认可取消|远端文件下得下来|下载同一个文件两次|本地文件没有
+
+Running 4 tests using 1 worker
+
+(node:45384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50702/06f7ccc6-6d08-4284-815a-e1ad55926071
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/remote-connections.spec.ts:580:1 › **远端文件下得下来**，而且说得出落在哪儿 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50729/d1c3a76a-33ec-4ce3-9104-fad575b6a58b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/remote-connections.spec.ts:605:1 › 下载同一个文件两次，第二份另存，不覆盖第一份 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50767/e77e31cb-0017-46e9-976f-abca5321d1ac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/remote-connections.spec.ts:680:1 › 本地文件没有「下载」那颗按钮 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50782/7f47f0c5-e679-429d-ad4b-1d0398f57612
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/upload-experience.spec.ts:55:1 › 多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读 (10.0s)
+
+  4 passed (18.2s)

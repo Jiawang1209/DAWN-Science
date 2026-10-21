@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-21",
+  "branch": "codex/unified-file-download",
+  "base": "351972f5b6ae57bce157d8b3e451bcd51aa32a0c",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "preview": {
+    "kind": "isolated Electron with fake SSH and loopback model server",
+    "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-unified-download-preview-CexCbF",
+    "builtFrom": "/Users/liuyue/.codex/worktrees/unified-file-download/dawn-science",
+    "metrics": {
+      "viewport": [
+        1500,
+        836
+      ],
+      "overflow": false,
+      "background": "rgba(0, 0, 0, 0)",
+      "border": "0.5px",
+      "radius": "10px",
+      "visible": true,
+      "legacyCards": 0
+    },
+    "retriedBatchId": "batch-c49bc30e-a719-4fee-a667-4e1c0456a98d",
+    "sameBatch": true,
+    "verifiedBytes": 4096,
+    "verifiedContent": "4096 x characters",
+    "partFilesRemaining": [],
+    "readyToRetryBatchId": "batch-9a2bde0d-92c2-40bc-8126-96939681e33a",
+    "readyDirectoryPermissionRestored": true
+  },
+  "checks": {
+    "unit": {
+      "files": 449,
+      "passed": 4893,
+      "skipped": 10
+    },
+    "relatedElectronPassed": 12,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true
+  },
+  "realServerCheckedThisTurn": false
+}

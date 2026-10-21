@@ -352,7 +352,8 @@ export function 造一台假服务器(): SshClientLike {
             if (i >= 内容.length) return void this.push(null)
             const 块 = 内容.subarray(i, i + 块大小)
             i += 块大小
-            setTimeout(() => this.push(块), 1)
+            const delay = Number(process.env.DAWN_FAKE_SSH_TRANSFER_DELAY_MS ?? 1) || 1
+            setTimeout(() => this.push(块), Math.max(1, Math.min(delay, 300)))
           },
         })
       },

@@ -1,6 +1,6 @@
 import type { TransferBatch } from "../../src/remote/transfer-types.js"
 import { afterEach, expect, it } from "vitest"
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { createWorkbenchBackend } from "../../src/workbench/backend.js"
@@ -26,4 +26,11 @@ it("目录操作贯穿真实服务并保留上传记账", async () => {
  const files=await backend.startFileUploadBatch({connectionId:"c",sources:[join(source,"one.txt")],targetParent:"/home/dawn"}) as TransferBatch
  await expect.poll(async()=>(await backend.getTransferBatch({batchId:files.id}) as {batch:TransferBatch}).batch.state).toBe("completed")
  expect((await r.readFile("/home/dawn/one.txt")).toString()).toBe("one")
+ const single=await backend.startFileDownloadBatch({connectionId:"c",path:"/home/dawn/读我.md"}) as TransferBatch
+ await expect.poll(async()=>(await backend.getTransferBatch({batchId:single.id}) as {batch:TransferBatch}).batch.state).toBe("completed")
+ const detail=await backend.getTransferBatch({batchId:single.id}) as {batch:TransferBatch;entries:{target:string}[]}
+ expect(detail.batch.target).toContain(join(dir,"downloads"));expect(readFileSync(detail.entries[0]!.target,"utf8")).toContain("这是一台假服务器")
+ const custom=await backend.startFileDownloadBatch({connectionId:"c",path:"/home/dawn/数据/样本.csv",targetParent:join(dir,"chosen")}) as TransferBatch
+ await expect.poll(async()=>(await backend.getTransferBatch({batchId:custom.id}) as {batch:TransferBatch}).batch.state).toBe("completed")
+ expect((await backend.getTransferBatch({batchId:custom.id}) as {batch:TransferBatch}).batch.target).toContain(join(dir,"chosen"))
 })

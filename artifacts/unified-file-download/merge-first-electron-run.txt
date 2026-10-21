@@ -1,0 +1,50 @@
+npm notice run dawn-science@0.0.34 npx
+npm notice run 'playwright' test e2e/single-file-download.spec.ts e2e/upload-experience.spec.ts e2e/directory-transfer.spec.ts e2e/rounded-tabs.spec.ts e2e/preview-collapse.spec.ts e2e/panel-preview-layout.spec.ts
+
+Running 11 tests using 1 worker
+
+(node:41471) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64797/06d4358e-7c33-4476-9434-41351d81530d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/directory-transfer.spec.ts:17:1 › 文件夹通过真实界面往返，保留空目录和二进制，批次跨面板可见 (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64886/f75c01c1-9ecb-4ff2-965c-a5f16cea3fe5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/directory-transfer.spec.ts:50:1 › 权限失败清单与手动重试可见，取消保留已完成文件 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65309/080a8b4f-9b82-4ce8-8e0e-6ded36abdba2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/panel-preview-layout.spec.ts:6:1 › 新建任务的产物是空态，切离已有会话不保留加载状态 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65379/4d003a3f-c93a-4d99-a853-93106c4907e0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/panel-preview-layout.spec.ts:20:1 › 保存过高文件树后，PDF和图片仍优先完整预览，拖动及缩窗可用 (4.1s)
+[主进程] Debugger ending on ws://127.0.0.1:65415/d2c9d7d3-10e7-47c4-9e15-18d3db830efe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/preview-collapse.spec.ts:32:1 › 文件里的图片和脚本可收起，目录与分栏保留，同文件可重开 (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65433/e4755339-405a-4f9c-8cca-ba239734b2b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/preview-collapse.spec.ts:147:1 › 目录靠底收起后立即重开，普通和展开阅读都恢复原位置 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「生成图片与脚本」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65456/20bfcf60-0c2f-4b6a-82a6-571c8f09d980
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/preview-collapse.spec.ts:175:3 › 产物收起 › 图片与展开脚本的 × 回清单，保留原返回与定位入口 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65481/1781a86b-402f-4a5f-8816-c05633cb6073
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/rounded-tabs.spec.ts:3:1 › 会话和坞页签的背景统一小圆角，亮暗与悬停保留同一外框 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65503/b82167b8-4dc4-4049-8dfd-9580032467c9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/single-file-download.spec.ts:21:1 › 单文件下载统一任务，权限失败直接重试，同名明确另存 (31.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/unified-file-download/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49854/1478aabd-2870-41f7-9412-8a190d53e6a9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/single-file-download.spec.ts:47:1 › 单文件进度可见，切换面板继续传，取消清理后可重传 (6.3s)
+  ✘  11 e2e/upload-experience.spec.ts:55:1 › 多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读 (30.9s)
+[主进程] Debugger ending on ws://127.0.0.1:49977/26dc6d05-f8e3-40bd-a1c9-5fb132c14fa3
+For help, see: https://nodejs.org/learn/getting-started/debugging

@@ -8,6 +8,54 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-21 — 统一下载任务与主题色界面合并前复核
+
+- **Type**: docs
+- **Motivation**: 用户确认最终主题色按钮，授权检查通过后提交并合并本地main，明确不推送。
+- **What**: 复核单文件下载批次服务、协议8.23及共享后端、全部桌面下载入口、失败重试/取消/同名处理，以及透明主题色外框和主题色工具栏按钮；更新验收记录。
+- **Verification**: 最终全量449文件4893项通过、10项跳过，类型检查和完整构建通过；相关Electron14项全部有通过证据。首次上传测试在firstWindow阶段启动超时，未执行功能步骤，保留现场并单独复测上传和既有下载4项全通过，未放宽超时或排除用例。详见docs/reviews/2026-10-21-unified-file-download-verification.md。
+- **Impact**: 执行已授权的本地提交和快进合并，不推送、不替换安装版；合并后main验证另记。
+
+### 2026-10-21 — 文件工具栏按钮改为外观主题色实底
+
+- **Type**: fix
+- **Motivation**: 用户澄清按钮背景应与设置中外观主题色一致，而非浅灰。
+- **What**: 上传、加宽、收窄改用现有primary按钮，与初始化科研目录一致，跟随外观主题色及其可读字色；移除上一版临时filled-outline变体。
+- **Verification**: UI构建及相关UI3文件111项通过，实际Electron刷新后上传、加宽、初始化科研目录背景及字色计算值完全相同，证据见artifacts/unified-file-download/toolbar-accent-*及toolbar-accent.json。
+- **Impact**: 仅调整按钮表现，保留原行为，未提交、未合并、未推送。
+
+### 2026-10-21 — 文件工具栏按钮增加柔和背景
+
+- **Type**: fix
+- **Motivation**: 用户要求上传、加宽及收窄按钮带背景颜色。
+- **What**: Button新增filled-outline变体，复用现有control-rest/hover/active及stroke-2令牌；仅上传入口和宽度操作使用，保留边框、圆角及原动作。
+- **Verification**: UI构建及相关UI3文件111项通过，实际Electron预览已刷新，按钮具有常驻浅色填充，证据见artifacts/unified-file-download/toolbar-filled-*。
+- **Impact**: 保留现有新分支，未提交、未合并、未推送。
+
+### 2026-10-21 — 文件工具栏上传与宽度操作改为描边按钮
+
+- **Type**: fix
+- **Motivation**: 用户反馈上传和加宽入口像普通文字，可点击状态不易区分。
+- **What**: 上传菜单入口、加宽及其反向收窄统一使用现有outline小按钮，常驻边框明确点击范围；复用Button的悬停、按下及键盘焦点反馈。
+- **Verification**: UI构建、相关UI3文件111项和diff检查通过；实际Electron点击上传可展开文件/文件夹菜单，Escape收起，加宽后收窄可恢复，亮暗截图见artifacts/unified-file-download/toolbar-buttons-*。
+- **Impact**: 仅变更现有按钮外观，保留菜单和布局动作；未提交、未合并、未推送。
+
+### 2026-10-21 — 传输任务外框与文件预览统一
+
+- **Type**: fix
+- **Motivation**: 用户反馈传输任务边框过细过浅，要求与上方文件预览保持一致。
+- **What**: 统一传输区由0.5px中性边框改为与文件列表、文件预览相同的1px主题色边框和radius-sm圆角，保留透明背景。
+- **Verification**: UI构建及相关UI104项通过，diff检查通过；刷新实际Electron后，亮暗主题上下边框宽度、颜色、圆角计算值一致，截图和参数见artifacts/unified-file-download/border-matched-*。
+- **Impact**: 仅样式调整，仍在codex/unified-file-download，未提交、未合并、未推送。
+
+### 2026-10-21 — 单文件下载并入统一传输任务并加轻外框
+
+- **Type**: feat
+- **Motivation**: 用户要求单文件下载进入统一任务、失败直接重试，去掉单独下载卡，并确认统一传输区增加外框；新分支实际预览，暂不合并推送。
+- **What**: 新增startFileDownloadBatch和协议minor8.23，复用持久化批次的远端选中文件下载、进度、取消、失败恢复及显式同名选择。桌面下载入口改走统一任务，移除旧卡片与独立轮询，文件明细展示实际本机目标；统一底部传输区改为透明底、中性细描边和已有小圆角。
+- **Verification**: 全量449文件4893项通过、10项跳过，类型检查、完整构建及diff检查通过；相关Electron12项通过。实际隔离Electron完成文件下载、真实本机EACCES后同任务点击重试、内容4096字节与无临时残留核验，亮暗宽窄预览已打开。详见docs/reviews/2026-10-21-unified-file-download-verification.md及artifacts/unified-file-download/。
+- **Impact**: 保留codex/unified-file-download分支及工作树，未提交、未合并、未推送，main仍为351972f5。实际预览使用假SSH，未再次写入Genek，未替换安装版。
+
 ### 2026-10-21 — 页签与传输样式本地合并main
 
 - **Type**: docs

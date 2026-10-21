@@ -36,6 +36,41 @@ it("选中文件可上传到服务器根目录，仍保留本机来源", async()
  expect(readFileSync(file,"utf8")).toBe("root payload")
 })
 async function done(id: string) { await expect.poll(() => service.get(id).batch.state).not.toMatch(/^(scanning|running)$/); return service.get(id) }
+it("选中远端文件直接下载到本机目录，内容与字节进度完整", async()=>{
+ const b=service.startFiles({connectionId:"c",direction:"download",sources:["/home/dawn/数据/大文件.bin"],targetParent:join(dir,"downloads")})
+ const d=await done(b.id);expect(d.batch.direction).toBe("download");expect(d.batch.state).toBe("completed")
+ expect(d.batch.counts.files).toBe(1);expect(d.batch.counts.completedFiles).toBe(1)
+ expect(d.entries[0]?.path).toBe("大文件.bin");expect(d.entries[0]?.transferred).toBe(4096)
+ expect(readFileSync(d.entries[0]!.target!,"utf8")).toBe("x".repeat(4096))
+ expect(d.entries[0]!.target).toBe(join(d.batch.target,"大文件.bin"))
+})
+it("选中远端空文件完成后计为一个成功文件",async()=>{
+ await r.writeFile("/home/dawn/空 文件.txt","")
+ const b=service.startFiles({connectionId:"c",direction:"download",sources:["/home/dawn/空 文件.txt"],targetParent:join(dir,"downloads")})
+ const d=await done(b.id);expect(d.batch.state).toBe("completed");expect(d.batch.total).toBe(0)
+ expect(d.batch.counts.completedFiles).toBe(1);expect(readFileSync(d.entries[0]!.target!)).toHaveLength(0)
+})
+it("单文件下载失败在原批次重试，且重启后仍能恢复",async()=>{
+ const download=r.download.bind(r);let failing=true;let calls=0
+ r.download=async(a,b,o)=>{calls++;if(failing)throw new Error("Permission denied");return download(a,b,o)}
+ const b=service.startFiles({connectionId:"c",direction:"download",sources:["/home/dawn/读我.md"],targetParent:join(dir,"downloads")})
+ const failed=await done(b.id);expect(failed.batch.state).toBe("failed");expect(failed.entries[0]?.error).toBe("Permission denied")
+ await service.dispose();service=make();failing=false;service.retry(b.id)
+ const d=await done(b.id);expect(d.batch.id).toBe(b.id);expect(d.batch.state).toBe("completed");expect(calls).toBe(2)
+ expect(readFileSync(d.entries[0]!.target!,"utf8")).toContain("这是一台假服务器")
+})
+it("单文件下载同名先等待选择，另存保留旧文件",async()=>{
+ const target=join(dir,"downloads");mkdirSync(target);writeFileSync(join(target,"读我.md"),"existing")
+ const b=service.startFiles({connectionId:"c",direction:"download",sources:["/home/dawn/读我.md"],targetParent:target})
+ const first=await done(b.id);expect(first.entries[0]?.state).toBe("conflict");expect(readFileSync(join(target,"读我.md"),"utf8")).toBe("existing")
+ service.resolveConflict(b.id,first.entries[0]!.id,"keepBoth")
+ const d=await done(b.id);expect(d.batch.state).toBe("completed");expect(d.entries[0]!.target).not.toBe(join(target,"读我.md"))
+ expect(readFileSync(d.entries[0]!.target!,"utf8")).toContain("这是一台假服务器");expect(readFileSync(join(target,"读我.md"),"utf8")).toBe("existing")
+})
+it("单文件下载拒绝目录来源，不开始创建目标",async()=>{
+ const b=service.startFiles({connectionId:"c",direction:"download",sources:["/home/dawn/数据"],targetParent:join(dir,"downloads")})
+ const d=await done(b.id);expect(d.batch.state).toBe("failed");expect(d.batch.error).toContain("普通文件");expect(existsSync(join(dir,"downloads"))).toBe(false)
+})
 it("目录往返保留层级、空目录和字节", async () => {
  const up = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" });
  expect((await done(up.id)).batch.state).toBe("completed")

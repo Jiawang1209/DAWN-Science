@@ -1,5 +1,5 @@
 import { UserFacingError } from "../errors.js"
-/** Host-owned directory jobs. UI lifetime never owns file streams. */
+/** Host-owned file/directory jobs. UI lifetime never owns file streams. */
 import { randomUUID } from "node:crypto"
 import { mkdir, lstat, readdir, realpath } from "node:fs/promises"
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, renameSync } from "node:fs"
@@ -80,10 +80,11 @@ export class TransferBatches {
     if (connection.key !== job.serverKey) throw new UserFacingError("服务器配置已改变，请重新创建传输")
     return connection.remote
   }
-  startFiles(input: { connectionId: string; sources: string[]; targetParent: string }): TransferBatch {
+  startFiles(input: { connectionId: string; sources: string[]; targetParent: string; direction?: "upload" | "download" }): TransferBatch {
     if (!input.sources.length || input.sources.length > 10000) throw new UserFacingError("请选择 1 至 10000 个文件")
-    const sources = [...new Set(input.sources.map(path => { valid(path); if (!isAbsolute(path)) throw new UserFacingError("传输路径必须是绝对路径"); return resolve(path) }))]
-    return this.start({ connectionId: input.connectionId, direction: "upload", source: sources[0]!, sources, targetParent: input.targetParent })
+    const direction = input.direction ?? "upload"
+    const sources = [...new Set(input.sources.map(path => { valid(path); if (!(direction === "upload" ? isAbsolute(path) : posix.isAbsolute(path))) throw new UserFacingError("传输路径必须是绝对路径"); return direction === "upload" ? resolve(path) : posix.resolve(path) }))]
+    return this.start({ connectionId: input.connectionId, direction, source: sources[0]!, sources, targetParent: input.targetParent })
   }
   start(input: TransferStart): TransferBatch {
     if (this.disposed) throw new UserFacingError("传输服务已关闭")
@@ -140,9 +141,9 @@ export class TransferBatches {
     if (job.batch.sources) {
       for (const source of job.batch.sources) {
         signal.throwIfAborted()
-        const info = await lstat(source)
-        if (!info.isFile()) throw new UserFacingError("请选择普通文件；文件夹请使用上传文件夹，符号链接不上传")
-        job.entries.push({ id: randomUUID(), source: await realpath(source), path: childName(basename(source)), kind: "file", size: info.size, sourceMtime: info.mtimeMs, transferred: 0, state: "queued" })
+        const info = upload ? await lstat(source).then(s => ({ kind: s.isFile() ? "file" : "other", size: s.size, mtime: s.mtimeMs })) : await remote.lstat(source)
+        if (info.kind !== "file") throw new UserFacingError(upload ? "请选择普通文件；文件夹请使用上传文件夹，符号链接不上传" : "请选择普通文件；文件夹请使用下载文件夹，符号链接不下载")
+        job.entries.push({ id: randomUUID(), source: upload ? await realpath(source) : await remote.realpath(source), path: childName(upload ? basename(source) : posix.basename(source)), kind: "file", size: info.size, sourceMtime: info.mtime, transferred: 0, state: "queued" })
       }
       job.scanned = true; return
     }
@@ -179,7 +180,7 @@ export class TransferBatches {
     if (!upload) { await mkdir(parent, { recursive: true }); parent = await realpath(parent) }
     else parent = await remote.realpath(parent)
     if (job.batch.sources) {
-      if ((await remote.lstat(parent)).kind !== "directory") throw new UserFacingError("上传目标必须是目录")
+      if (upload && (await remote.lstat(parent)).kind !== "directory") throw new UserFacingError("上传目标必须是目录")
       job.batch.target = parent; this.save(job); return
     }
     const name = childName(upload ? basename(job.batch.source) : posix.basename(job.batch.source))

@@ -4644,6 +4644,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     startFileUploadBatch: async input => directoryTransfers.startFiles(input),
+    startFileDownloadBatch: async ({ connectionId, path, targetParent }) => directoryTransfers.startFiles({
+      connectionId, direction: "download", sources: [path], targetParent: targetParent ?? (settings?.get("download.dir") || 默认下载目录()),
+    }),
     startDirectoryTransfer: async ({ connectionId, direction, source, targetParent }) => directoryTransfers.start({
       connectionId, direction, source,
       targetParent: direction === "download" ? targetParent ?? (settings?.get("download.dir") || 默认下载目录()) : targetParent ?? (() => { throw new UserFacingError("上传需要目标目录") })(),

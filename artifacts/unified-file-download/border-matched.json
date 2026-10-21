@@ -1,0 +1,35 @@
+{
+  "light": {
+    ".preview-document": {
+      "border": "1px",
+      "color": "rgb(32, 138, 123)",
+      "radius": "7.5px",
+      "background": "rgb(246, 246, 243)"
+    },
+    ".transfer-batches": {
+      "border": "1px",
+      "color": "rgb(32, 138, 123)",
+      "radius": "7.5px",
+      "background": "rgba(0, 0, 0, 0)"
+    }
+  },
+  "dark": {
+    ".preview-document": {
+      "border": "1px",
+      "color": "rgb(71, 185, 169)",
+      "radius": "7.5px",
+      "background": "rgb(27, 27, 27)"
+    },
+    ".transfer-batches": {
+      "border": "1px",
+      "color": "rgb(71, 185, 169)",
+      "radius": "7.5px",
+      "background": "rgba(0, 0, 0, 0)"
+    }
+  },
+  "uiBuild": true,
+  "relatedUiTestsPassed": 104,
+  "committed": false,
+  "merged": false,
+  "pushed": false
+}

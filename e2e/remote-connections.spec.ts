@@ -28,6 +28,30 @@ test.use({
   },
 })
 
+/** 从统一任务中取得实际落点，界面和磁盘一起验。 */
+async function 下载落点(page: import("@playwright/test").Page, keepBoth = false) {
+  const previous=await page.evaluate(async()=>{const r=await(window as any).dawn.invoke("listTransferBatches",{});return r.data.find((b:any)=>b.direction==="download")?.id??null})
+  await page.getByRole("button", { name: "下载", exact: true }).click()
+  const summary=page.getByRole("button",{name:"传输任务",exact:true})
+  if(await summary.getAttribute("aria-expanded")!=="true")await summary.click()
+  const job=page.locator('.transfer-job[data-direction="download"]').first()
+  await expect.poll(async()=>await job.count()?job.getAttribute("data-batch-id"):null).not.toBe(previous)
+  if(keepBoth){
+    await job.getByRole("button").first().click()
+    await job.getByRole("button",{name:"另存一份",exact:true}).click()
+  }
+  await expect(job.locator(".transfer-state").first()).toHaveText("已完成")
+  const id=await job.getAttribute("data-batch-id")
+  const detail=await page.evaluate(async batchId=>{const r=await(window as any).dawn.invoke("getTransferBatch",{batchId});if(!r.ok)throw new Error(JSON.stringify(r));return r.data},id)
+  const target=detail.entries[0].target as string
+  const toggle=job.getByRole("button").first()
+  if(await toggle.getAttribute("aria-expanded")!=="true")await toggle.click()
+  await job.locator(".transfer-entry-name summary").click()
+  await expect(job).toContainText(target)
+  await expect(page.locator('.files-transfers > .xfer:not(.transfer-batches)')).toHaveCount(0)
+  return target
+}
+
 /** 打开那一区。**默认收起**——没有远端的人不该为此多占一行 */
 async function 展开远端(page: import("@playwright/test").Page) {
   // **2026-08-14 改名**：「远端连接」→「远端服务器」（作者定的）
@@ -565,14 +589,7 @@ test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn
   await 面板.getByRole("button", { name: /^读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
-  await page.getByRole("button", { name: "下载", exact: true }).click()
-
-  // **传完之后要说得出落在哪儿**，否则人得自己去猜
-  const 条 = page.locator(".xfer-text")
-  await expect(条).toContainText("传好了", { timeout: 30_000 })
-
-  // 文件真的在本机上，且内容一字不差
-  const 落点 = (await 条.textContent())!.replace(/^.*传好了：/, "").trim()
+  const 落点 = await 下载落点(page)
   expect(落点, "说的落点不在这次的隔离目录里").toContain(dir)
   const { readFileSync } = await import("node:fs")
   expect(readFileSync(落点, "utf8")).toContain("这是一台假服务器")
@@ -583,7 +600,7 @@ test("**远端文件下得下来**，而且说得出落在哪儿", async ({ dawn
  *
  * 默默覆盖是这里唯一不能选的：**你可能正在覆盖昨天那一版结果**。
  * 「覆盖 / 另存一份 / 取消」那个三选一要问人，连同上传在 4b 做；
- * 这一版先一律「另存一份」。
+ * 统一任务中显式选择「另存一份」。
  */
 test("下载同一个文件两次，第二份另存，不覆盖第一份", async ({ dawn }) => {
   const { page } = dawn
@@ -595,14 +612,8 @@ test("下载同一个文件两次，第二份另存，不覆盖第一份", async
   await page.locator(".right-dock .files-view").getByRole("button", { name: /^读我\.md/ }).click()
   await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
-  const 落点 = async () => {
-    await page.getByRole("button", { name: "下载", exact: true }).click()
-    const 条 = page.locator(".xfer-text")
-    await expect(条).toContainText("传好了", { timeout: 30_000 })
-    return (await 条.textContent())!.replace(/^.*传好了：/, "").trim()
-  }
-  const 第一份 = await 落点()
-  const 第二份 = await 落点()
+  const 第一份 = await 下载落点(page)
+  const 第二份 = await 下载落点(page, true)
 
   expect(第二份, "第二次下载把第一份覆盖了").not.toBe(第一份)
   expect(第二份).toContain("(1)")
@@ -658,16 +669,7 @@ test.describe("下载落点", () => {
     await page.locator(".right-dock .files-view").getByRole("button", { name: /^读我\.md/ }).click()
     await expect(page.locator(".file-preview")).toContainText("这是一台假服务器", { timeout: 30_000 })
 
-    await page.getByRole("button", { name: "下载", exact: true }).click()
-    const 条 = page.locator(".xfer-text")
-    await expect(条).toContainText("传好了", { timeout: 30_000 })
-
-    /**
-     * **落在我设的那个目录里**，不是系统下载目录。
-     * 只断言屏幕上那句话不够——**屏幕说的与磁盘上的可以不一致**，
-     * 这条要的是后者。
-     */
-    const 说的落点 = (await 条.textContent())!.replace(/^.*传好了：/, "").trim()
+    const 说的落点 = await 下载落点(page)
     expect(说的落点).toContain(落点)
     expect(readdirSync(落点)).toContain("读我.md")
     expect(readFileSync(说的落点, "utf8")).toContain("这是一台假服务器")

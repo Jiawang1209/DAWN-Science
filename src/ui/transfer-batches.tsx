@@ -116,7 +116,7 @@ export function TransferBatchesPanel({ client, onCompleted }: Props) {
         </div>
         <details className="transfer-location"><summary>{t("传输位置")}</summary><div className="transfer-path">{batch.source}</div><div className="transfer-path">→ {batch.target || batch.targetParent}</div></details>
         {detail.entries.map(entry => <div className="transfer-entry" key={entry.id}>
-          <div className="transfer-entry-line"><details className="transfer-entry-name"><summary><code>{entry.path}</code></summary>{entry.source ? <div className="transfer-path">{entry.source}</div> : null}</details>
+          <div className="transfer-entry-line"><details className="transfer-entry-name"><summary><code>{entry.path}</code></summary>{entry.source ? <div className="transfer-path">{entry.source}</div> : null}{batch.direction === "download" && entry.target ? <div className="transfer-path">→ {entry.target}</div> : null}</details>
             {entry.kind === "file" ? <span className="transfer-file-meter"><progress max={100} value={entry.size > 0 ? Math.min(100, Math.floor(entry.transferred / entry.size * 100)) : entry.state === "completed" ? 100 : 0} aria-label={tf("文件进度：{0}", entry.path)} /><span>{entry.size > 0 ? Math.min(100, Math.floor(entry.transferred / entry.size * 100)) : entry.state === "completed" ? 100 : 0}%</span></span> : null}
             {entry.kind === "file" ? <span className="transfer-entry-bytes">{bytes(entry.transferred)} / {bytes(entry.size)}</span> : null}
             <span className={`transfer-state transfer-state-${entry.state}`}>{stateName(entry.state)}</span>

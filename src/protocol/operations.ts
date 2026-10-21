@@ -2509,7 +2509,7 @@ export const OPERATIONS = {
   },
 
   /**
-   * 从一台服务器下载一个文件（批 4a）。
+   * 从一台服务器下载一个文件（批 4a）。兼容旧客户端；桌面入口使用startFileDownloadBatch。
    *
    * **它不等传完就返回**：返回一个 id，进度由 `transferStatus` 轮询。
    *
@@ -2735,6 +2735,7 @@ export const OPERATIONS = {
   },
 
   startFileUploadBatch: { request: z.object({ connectionId: z.string().min(1), sources: z.array(z.string().min(1)).min(1).max(10000), targetParent: z.string().min(1) }).strict(), response: TransferBatchSchema, mutating: true },
+  startFileDownloadBatch: { request: z.object({ connectionId: z.string().min(1), path: z.string().min(1), targetParent: z.string().min(1).optional() }).strict(), response: TransferBatchSchema, mutating: true },
   startDirectoryTransfer: { request: DirectoryTransferRequest, response: TransferBatchSchema, mutating: true },
   listTransferBatches: { request: z.object({}).strict(), response: z.array(TransferBatchSchema), mutating: false },
   getTransferBatch: { request: z.object({ batchId: z.string().min(1), offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(100).optional(), filter: z.enum(["all", "attention"]).optional() }).strict(), response: TransferDetailSchema, mutating: false },

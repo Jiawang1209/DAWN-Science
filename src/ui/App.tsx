@@ -84,7 +84,7 @@ import { 编文件规则, 剥掉粘贴标记 } from "../files/mentions.js"
 import { 概览图标, 外观图标, 文件夹图标, 文件夹描边图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 键盘图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
-import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type 传输态, type SearchResult } from "./files.js"
+import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type SearchResult } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type FeishuStatus, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
 import { 读记忆, 记记忆, type FilesMemory } from "./state/files-memory.js"
 import { $优化输入, 请求优化输入, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
@@ -3393,74 +3393,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * `key` 变了组件重新挂载，上一台机器的路径与预览一起清空。
    * 留着比空着更坏：屏幕上是 gs191 的路径，内容却是本机的。
    */
-  /**
-   * 下载（批 4a，2026-08-17）。**只对远端给**——本地文件已经在这台机器上了，
-   * 给一颗「下载到本机」的按钮是荒唐的。
-   *
-   * 进度**轮询**，不走推送：推送那条通道是会话专属的（信封里带 `sessionId`），
-   * 而传输不是会话事件；另开一条推送通道相对 200ms 轮询的收益，
-   * 在一根进度条上人眼看不出来。
-   */
-  /**
-   * **传输 id 进 state，不进 ref**（2026-08-17 e2e 抓到的）。
-   *
-   * 第一版把它放在 `useRef` 里，而轮询那个 effect 的依赖是
-   * `[client, 传输?.state]`——**ref 变了不会重跑 effect**，
-   * 于是守卫 `!传输id.current` 永远拦在那儿，轮询一次都没起来。
-   * 屏幕上的表现是进度条停在「0 字节 / ？」，看起来像传输卡住了。
-   */
-  const [传输, 设传输] = useState<(传输态 & { id?: string }) | undefined>(undefined)
-  const 起点 = useRef<{ 时刻: number; 已传: number }>({ 时刻: 0, 已传: 0 })
-
-  const 下载 = useCallback(
-    (path: string) => {
-      if (!文件所在) return
-      设传输({ transferred: 0, state: "running" })
-      起点.current = { 时刻: Date.now(), 已传: 0 }
-      client
-        .get<{ transferId: string; name: string; target: string }>("startDownload", {
-          connectionId: 文件所在.connectionId,
-          path,
-        })
-        .then((r) => {
-          设传输((前) => ({
-            ...(前 ?? { transferred: 0, state: "running" as const }),
-            id: r.transferId,
-            target: r.target,
-          }))
-        })
-        .catch((e: unknown) => {
-          // **起不来也要出声**：不出声的表现是「点了下载没反应」
-          设传输({ transferred: 0, state: "failed", error: e instanceof Error ? e.message : String(e) })
-        })
-    },
-    [client, 文件所在],
-  )
-
-  useEffect(() => {
-    if (传输?.state !== "running" || !传输.id) return
-    const id = 传输.id
-    const t = setInterval(() => {
-      client
-        .get<{ transferred: number; total?: number; state: 传输态["state"]; error?: string }>(
-          "transferStatus",
-          { transferId: id },
-        )
-        .then((r) => {
-          // **速度在这一层算**：后端不认识时钟，那样它才能在测试里不依赖真实时间
-          const 现在 = Date.now()
-          const 秒 = (现在 - 起点.current.时刻) / 1000
-          const 速度 = 秒 > 0.3 ? (r.transferred - 起点.current.已传) / 秒 : undefined
-          if (秒 > 1) 起点.current = { 时刻: 现在, 已传: r.transferred }
-          设传输((前) => ({ ...前, ...r, ...(速度 ? { 速度 } : {}) }))
-        })
-        .catch(() => {
-          // 查不到多半是这次传输已经被清了；**停下来，不要一直转**
-          设传输((前) => (前 ? { ...前, state: "failed" } : 前))
-        })
-    }, 200)
-    return () => clearInterval(t)
-  }, [client, 传输?.state, 传输?.id])
+  /** 单文件下载也归统一任务，生命周期、进度和重试由宿主队列负责。 */
+  const 下载 = useCallback((path: string) => {
+    if (!文件所在) return
+    void client.get("startFileDownloadBatch", { connectionId: 文件所在.connectionId, path }).catch(fail)
+  }, [client, 文件所在, fail])
 
   /**
    * 传完一次就让树重读一遍。**不这么做的话，屏幕上说「传好了」而树里没有它**
@@ -3503,9 +3440,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       })
     } catch (error) { fail(error) }
   }, [client, 文件所在, 目录批次完成, 确认上传])
-  useEffect(() => {
-    if (传输?.state === "done") 设刷新令牌((n) => n + 1)
-  }, [传输?.state, 传输?.target])
+
 
   /**
    * **切回这个窗口就重读一遍文件树**（2026-08-19，作者报的）。
@@ -3816,10 +3751,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onDelete={删一个}
         onDeleteDir={删一个目录}
         进废纸篓={!文件所在}
-        {...(传输 ? { 传输 } : {})}
-        onCancel={() => {
-          if (传输?.id) client.get("cancelTransfer", { transferId: 传输.id }).catch(fail)
-        }}
         selected={filePath}
         展开={展开集合}
         onToggle={切展开}

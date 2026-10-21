@@ -10,7 +10,7 @@ export function FileUploadMenu({ onFile, onFolder }: { onFile: () => void; onFol
   const close = () => { setPosition(undefined); anchor.current?.focus() }
   useEffect(() => { if (position) menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus() }, [position])
   return <>
-    <Button ref={anchor} variant="ghost" size="sm" aria-expanded={Boolean(position)} aria-haspopup="menu" onClick={() => {
+    <Button ref={anchor} variant="primary" size="sm" aria-expanded={Boolean(position)} aria-haspopup="menu" onClick={() => {
       if (!onFolder) return onFile()
       if (position) return close()
       const rect = anchor.current!.getBoundingClientRect()

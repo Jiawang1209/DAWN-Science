@@ -585,7 +585,8 @@
 /** 8.20 (2026-10-18): explicit analysis delivery selection, interpretation and independent verification records. */
 /** 8.21: directory transfer jobs, paged entries, cancellation, retry and explicit conflict decisions. */
 /** 8.22: selected-file upload batches and paged attention filters. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.22"
+/** 8.23: single-file downloads join persistent transfer batches and existing retry/conflict actions. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.23"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

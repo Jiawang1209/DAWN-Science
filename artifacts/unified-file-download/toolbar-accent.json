@@ -1,0 +1,20 @@
+[
+  {
+    "text": "上传",
+    "className": "btn btn-primary btn-sm",
+    "background": "color(srgb 0.104627 0.403922 0.361569)",
+    "color": "rgb(255, 255, 255)"
+  },
+  {
+    "text": "加宽",
+    "className": "btn btn-primary btn-sm",
+    "background": "color(srgb 0.104627 0.403922 0.361569)",
+    "color": "rgb(255, 255, 255)"
+  },
+  {
+    "text": "初始化科研目录",
+    "className": "btn btn-primary btn-sm",
+    "background": "color(srgb 0.104627 0.403922 0.361569)",
+    "color": "rgb(255, 255, 255)"
+  }
+]

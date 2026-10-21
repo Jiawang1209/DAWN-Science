@@ -57,3 +57,11 @@ npx playwright test e2e/remote-connections.spec.ts --grep '远端文件下得下
 首轮Electron中10项通过，上传用例在夹具firstWindow等待窗口时30秒超时，功能步骤尚未运行。已保存首轮日志merge-first-electron-run.txt，结束该次失败留下的测试进程后，在全量单测结束的环境下单独执行上传与既有下载4项，18.2秒全部通过；未改产品代码、未放宽超时、未排除上传用例。不能将首轮描述为11项一次通过。
 
 最终按钮使用既有primary变体，随外观主题色变化；上传菜单及加宽/收窄已在实际Electron操作验证。相关截图为toolbar-accent-light.png，参数为toolbar-accent.json。旧预览JSON中的committed/merged=false表示当时快照，最终状态以本报告后续集成记录为准。本轮复核仍使用隔离假SSH，未新增真实服务器核验。
+
+## 本地 main 集成结果
+
+- 功能提交 `f6bceb02a3716b6b5da28a62998f889286ea634f` 已从 `351972f5` 快进合并本地main；没有合并冲突。
+- main再次完整构建通过；相关5文件174项通过，单文件下载/目录往返与失败恢复/上传体验共5项Electron全部通过（25.6秒）。
+- 实际预览切换到 `/Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html`，复用独立演示配置及数据库；连接假SSH，展开目录后点击下载读我.md，统一任务完成，磁盘62字节内容正确。
+- 主工作区预览确认统一任务外框1px主题色、背景透明、旧卡片数量0、无横向溢出。证据：[main截图](../../artifacts/unified-file-download/main-preview.png)、[main验收参数](../../artifacts/unified-file-download/main-integration.json)。
+- 保留功能分支和工作树；不推送、不替换安装版，未重新操作Genek。合并后的这条记录作为单独docs提交保留。

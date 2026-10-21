@@ -1,0 +1,26 @@
+{
+  "codeCommit": "f6bceb02a3716b6b5da28a62998f889286ea634f",
+  "source": "file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html",
+  "merged": true,
+  "pushed": false,
+  "preview": "isolated fake SSH and loopback model",
+  "unitPassed": 4893,
+  "unitSkipped": 10,
+  "branchElectronPassed": 14,
+  "mainRelatedUnitPassed": 174,
+  "mainElectronPassed": 5,
+  "mainBuildPassed": true,
+  "download": {
+    "state": "completed",
+    "bytes": 62,
+    "contentVerified": true,
+    "batchId": "batch-86991a60-df6b-4fde-b091-50cd193f7a98"
+  },
+  "ui": {
+    "border": "1px",
+    "borderColor": "rgb(32, 138, 123)",
+    "background": "rgba(0, 0, 0, 0)",
+    "legacyCards": 0,
+    "overflow": false
+  }
+}

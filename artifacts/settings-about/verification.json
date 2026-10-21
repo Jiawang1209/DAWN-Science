@@ -1,0 +1,33 @@
+{
+  "branch": "codex/settings-about-design",
+  "base": "c8f4b50e",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "source": "file:///Users/liuyue/.codex/worktrees/settings-about-design/dawn-science/dist/ui/index.html",
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-about-preview-yDjX7n",
+  "feeds": "loopback mock only",
+  "tests": {
+    "unitFiles": 4,
+    "unitPassed": 165,
+    "electronAboutPassed": 1,
+    "electronUpdatePassed": 2,
+    "typecheck": true,
+    "build": true,
+    "fullUnitFiles": 449,
+    "fullUnitPassed": 4894,
+    "fullUnitSkipped": 10,
+    "electronCombinedPassed": 3,
+    "electronCombinedSeconds": 34.5
+  },
+  "actual": {
+    "width": 804,
+    "overflow": false,
+    "buttonBackground": "color(srgb 0.104627 0.403922 0.361569)",
+    "buttonForeground": "rgb(255, 255, 255)",
+    "status": "已是最新",
+    "version": "0.0.34"
+  },
+  "phase": "accepted-pre-merge",
+  "userAccepted": true
+}

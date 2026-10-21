@@ -7609,13 +7609,36 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 /* ── 设置 → 关于 ─────────────────────────────────────────────────── */
 
-.about-pane { display: flex; flex-direction: column; gap: var(--dawn-space-3); }
-.about-row { display: flex; align-items: center; gap: var(--dawn-space-3); }
-.about-name { color: var(--dawn-text-2); }
+.about-pane { container: about / inline-size; display: flex; flex-direction: column; gap: var(--dawn-space-4); min-width: 0; }
+.about-app { display: flex; align-items: center; gap: var(--dawn-space-3); }
+.about-logo { flex: 0 0 auto; width: var(--dawn-space-10); height: var(--dawn-space-10); border-radius: var(--dawn-radius-md); object-fit: contain; }
+.about-identity { min-width: 0; }
+.about-app-name { margin: 0; color: var(--dawn-text-1); font-size: var(--dawn-fs-title); font-weight: var(--dawn-weight-semibold); }
+.about-description { margin: var(--dawn-space-1) 0 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.about-version { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-3); }
+.about-name { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
 /** 版本号用等宽：它是一串要被人念给别人听的字符 */
-.about-ver { font-family: var(--dawn-font-mono); color: var(--dawn-text-1); }
-.about-say { margin: 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
-.about-auto { display: flex; align-items: center; gap: var(--dawn-space-2); color: var(--dawn-text-2); }
+.about-ver { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); color: var(--dawn-text-1); background: var(--dawn-fill-2); padding: var(--dawn-space-1) var(--dawn-space-2); border-radius: var(--dawn-radius-sm); }
+.about-update { min-width: 0; padding: var(--dawn-space-4); border: 1px solid var(--dawn-stroke-accent); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-elevated); }
+.about-update-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--dawn-space-4); }
+.about-update-copy { min-width: 0; }
+.about-update-title { margin: 0 0 var(--dawn-space-2); color: var(--dawn-text-1); font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); }
+.about-status { display: flex; align-items: flex-start; gap: var(--dawn-space-2); }
+.about-status-icon { display: inline-flex; flex: 0 0 auto; color: var(--dawn-text-3); line-height: 1.5; }
+.about-status-icon svg { width: 16px; height: 16px; margin-top: 2px; }
+.about-update[data-state="latest"] .about-status-icon,
+.about-update[data-state="ready"] .about-status-icon { color: var(--dawn-success); }
+.about-update[data-state="failed"] .about-status-icon,
+.about-update[data-state="failed"] .about-say { color: var(--dawn-danger); }
+.about-say { margin: 0; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); line-height: 1.5; overflow-wrap: anywhere; }
+.about-preferences { display: flex; flex-direction: column; align-items: flex-start; gap: var(--dawn-space-3); border-top: 1px solid var(--dawn-stroke-4); margin-top: var(--dawn-space-4); padding-top: var(--dawn-space-4); }
+.about-preferences .update-link { margin-top: 0; }
+.about-auto { display: flex; align-items: flex-start; gap: var(--dawn-space-2); color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); line-height: 1.5; }
+.about-auto input { flex: 0 0 auto; margin-top: 3px; }
+@container about (max-width: 26rem) {
+  .about-update-head { grid-template-columns: minmax(0, 1fr); }
+  .about-update-head > .btn { justify-self: start; }
+}
 
 /**
  * 「回到底部」浮标（2026-09-08，规格 `2026-09-08-回到底部浮标-design.md`）。

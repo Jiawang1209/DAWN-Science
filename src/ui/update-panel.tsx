@@ -16,9 +16,10 @@
  */
 import { useState } from "react"
 import { Button } from "./primitives.js"
-import { 上箭头图标, 下载图标, 勾图标 } from "./icons.js"
+import { 上箭头图标, 下载图标, 勾图标, 刷新图标, 出错图标 } from "./icons.js"
 import { t, tf } from "./i18n/index.js"
 import type { 更新状态 } from "../protocol/index.js"
+import appIcon from "../../packaging/icon.svg"
 
 export interface 更新回执 {
   状态: 更新状态
@@ -209,29 +210,50 @@ export function 关于一格({
   查着?: boolean
 }) {
   const s = 回执?.状态
+  const 检查中 = 查着 === true || s?.阶段 === "checking"
+  const 状态图标 = 检查中 ? 刷新图标 : s?.阶段 === "latest" || s?.阶段 === "ready" ? 勾图标 : s?.阶段 === "failed" ? 出错图标 : 下载图标
   return (
     <div className="about-pane">
-      <div className="about-row">
+      <div className="about-app">
+        <img className="about-logo" src={appIcon} alt="" aria-hidden="true" />
+        <div className="about-identity">
+          <h3 className="about-app-name">DAWN Science</h3>
+          <p className="about-description">{t("科研分析工作台")}</p>
+        </div>
+      </div>
+      <div className="about-version">
         <span className="about-name">{t("当前版本")}</span>
         <span className="about-ver">{s ? 号(s.当前) : "—"}</span>
-        <Button onClick={动作.检查} disabled={查着 === true}>
-          {查着 ? t("正在检查…") : t("检查更新")}
-        </Button>
       </div>
-      <p className="about-say">{一句话(s)}</p>
-      <label className="about-auto">
-        <input
-          type="checkbox"
-          checked={回执?.自动检查 ?? true}
-          onChange={(e) => 动作.设自动(e.target.checked)}
-        />
-        {t("启动时自动检查更新")}
-      </label>
-      {s && (s.阶段 === "available" || s.阶段 === "ignored" || s.阶段 === "ready") ? (
-        <Button variant="ghost" size="inline" className="update-link" onClick={() => 动作.开链接(s.页面)}>
-          {t("查看发布说明")}
-        </Button>
-      ) : null}
+      <section className="about-update" data-state={检查中 ? "checking" : s?.阶段 ?? "idle"} aria-label={t("软件更新")}>
+        <div className="about-update-head">
+          <div className="about-update-copy">
+            <h3 className="about-update-title">{t("软件更新")}</h3>
+            <div className="about-status">
+              <span className="about-status-icon" aria-hidden="true"><状态图标 /></span>
+              <p className="about-say" role="status" aria-live="polite">{检查中 ? t("正在检查…") : 一句话(s)}</p>
+            </div>
+          </div>
+          <Button variant="primary" onClick={动作.检查} disabled={检查中}>
+            <刷新图标 />{检查中 ? t("正在检查…") : t("检查更新")}
+          </Button>
+        </div>
+        <div className="about-preferences">
+          <label className="about-auto">
+            <input
+              type="checkbox"
+              checked={回执?.自动检查 ?? true}
+              onChange={(e) => 动作.设自动(e.target.checked)}
+            />
+            {t("启动时自动检查更新")}
+          </label>
+          {s && (s.阶段 === "available" || s.阶段 === "ignored" || s.阶段 === "ready") ? (
+            <Button variant="ghost" size="inline" className="update-link" onClick={() => 动作.开链接(s.页面)}>
+              {t("查看发布说明")}
+            </Button>
+          ) : null}
+        </div>
+      </section>
     </div>
   )
 }

@@ -1911,6 +1911,8 @@ export const EN: Readonly<Record<string, string>> = {
   "这一版不再提醒": "Don't remind me about this one",
   "关于": "About",
   "当前版本": "Current version",
+  "科研分析工作台": "A workbench for scientific analysis",
+  "软件更新": "Software updates",
   "正在检查…": "Checking…",
   "检查更新": "Check for updates",
   "启动时自动检查更新": "Check for updates at startup",

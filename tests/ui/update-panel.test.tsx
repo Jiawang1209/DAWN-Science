@@ -142,6 +142,19 @@ describe("侧栏那一行", () => {
 })
 
 describe("设置 → 关于", () => {
+  it("检查中只播报检查状态并阻止重复检查，回执完成后可再检查", () => {
+    const actions = 空动作()
+    const { rerender } = render(<关于一格 回执={{ 自动检查: true, 状态: { 阶段: "checking", 当前: "0.0.2" } }} 动作={actions} />)
+    const button = screen.getByRole("button", { name: "正在检查…" }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    expect(screen.getByRole("status").textContent).toBe("正在检查…")
+    fireEvent.click(button)
+    expect(actions.检查).not.toHaveBeenCalled()
+    rerender(<关于一格 回执={{ 自动检查: true, 状态: { 阶段: "latest", 当前: "0.0.2", 查于: 1 } }} 动作={actions} />)
+    fireEvent.click(screen.getByRole("button", { name: "检查更新" }))
+    expect(actions.检查).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("status").textContent).toBe("已是最新")
+  })
   it("没有新版时也在，说得出当前版本", () => {
     render(
       <关于一格 回执={{ 自动检查: true, 状态: { 阶段: "latest", 当前: "0.0.2", 查于: 1 } }} 动作={空动作()} />,

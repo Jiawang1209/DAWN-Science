@@ -69,3 +69,17 @@
 - 类型检查及完整构建通过，`/tmp/dawn-upload-premerge-typecheck-final.log`、`/tmp/dawn-upload-premerge-build-final.log`；已有大分块提示保留。
 - 固定构建、暂时隐藏旁观预览后，相关Electron与默认亮暗视觉53/53通过，`/tmp/dawn-upload-premerge-electron-verified.log`；包括根目录上传与本机源保留、单文件同名处理/记账、拖入反馈、下载/另存、目录往返、失败/取消/重试及底部布局。未更新PNG或放宽阈值，仅排除已在原始基线证实失败的四项旧界面用例（最窄侧栏菜单、固定入口、下载设置旧可见性、旧预览删除入口）；不宣称全仓库Electron全绿。
 - 修正前全量检查因实现更新而中止，两个界面组合因排除表达式核对而主动中止，均不计为通过：`/tmp/dawn-upload-premerge-all.log`、`/tmp/dawn-upload-premerge-electron.log`、`/tmp/dawn-upload-premerge-electron-final.log`。最终结果以完整结束的日志为准。
+
+## 本地main集成结果
+
+2026-10-21按用户授权完成。功能提交`f669d1f84676892606597b718a24c7a7ee789731`（`feat(remote): unify upload confirmation and bottom transfer progress`），主工作区干净时从`ac3a4160`执行`git merge --ff-only codex/ssh-upload-experience`，成功快进，无冲突。
+
+- main完整重建通过：`/tmp/dawn-upload-main-build.log`。
+- main关键服务、后端、协议及UI测试5文件68项通过：`/tmp/dawn-upload-main-tests.log`。
+- main的实际dist再次执行目录往返、失败/取消/重试及统一上传/进度/根目录/布局验收，3/3通过：`/tmp/dawn-upload-main-electron.log`。
+- 预览已重启为主工作区main构建，启动入口`/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-upload-progress-preview-9243x9/main-entry.mjs`；页面URL确认来自`/Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html`。保留原隔离数据库与用户已在演示预览中产生的会话，未改写会话内容；重连演示服务器，选中其自带的读我文件，实测底部传输边缘与面板底边一致。
+- mock服务器内存中的演示文件不跨进程持久化，已完成任务历史保留；main预览使用自带读我文件展示布局，明确不把fake对端当真实服务器。主路径用例独立核对了实际上传内容与本机源保留。
+- 截图`artifacts/upload-experience/main-footer-preview.png`已查看；重启后的首次隐藏窗口截图未稳定，显示窗口后采集成功，未更新视觉基线。
+- 未执行push、远程合并、tag或安装版替换；`origin/main`本地引用仍为`b537c8e554f2962863e479932799572c4c79676b`。功能分支和工作树保留。
+
+![main实际预览](../../artifacts/upload-experience/main-footer-preview.png)

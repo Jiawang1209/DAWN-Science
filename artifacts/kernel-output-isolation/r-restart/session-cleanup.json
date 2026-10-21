@@ -1,0 +1,20 @@
+[
+  {
+    "sessionId": "87c94447-9b7e-4321-8ba7-5005161cd92d",
+    "response": {
+      "ok": true,
+      "workbenchProtocolVersion": "8.24",
+      "data": {},
+      "warnings": []
+    }
+  },
+  {
+    "sessionId": "5852eeea-b54a-491a-befa-58621f5005d3",
+    "response": {
+      "ok": true,
+      "workbenchProtocolVersion": "8.24",
+      "data": {},
+      "warnings": []
+    }
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "where": "local",
+    "count": 1,
+    "text": [
+      "R_RESTART_1 = 42\n"
+    ],
+    "R": "k-R-mvhwxgoo-5",
+    "Python": "k-python-mvhww1im-2",
+    "pythonUnchanged": true
+  },
+  {
+    "where": "Genek",
+    "count": 1,
+    "text": [
+      "R_RESTART_1 = 42\n"
+    ],
+    "R": "k-R-mvhwxkiz-6",
+    "Python": "k-python-mvhww3mv-3",
+    "pythonUnchanged": true
+  }
+]

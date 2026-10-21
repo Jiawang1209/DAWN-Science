@@ -582,7 +582,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * 不另加 setter、也不挪构造顺序，改动最小。
      */
     状态变了: (对话, 变化) => {
-      events.setKernels(对话, 对话的内核.状态列表(对话))
+      events.setKernels(对话, 对话的内核.状态列表(对话).map(k => {
+        const id = 内核运行时.kernelInstanceId(`${对话}::${k.language}` as SessionId)
+        return { ...k, ...(id ? { kernelInstanceId: id } : {}) }
+      }))
       内核变化记账(runRecorder, 对话, 变化)
       内核变化出声(events, 对话, 变化)
     },

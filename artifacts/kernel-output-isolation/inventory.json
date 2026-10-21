@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "local and Genek both real R/Python outputs visible without stale warning",
+    "no internal environment fingerprint output after delayed replies",
+    "snapshots retain interpreter and package evidence",
+    "switch away and back preserves per-language identities",
+    "normal user hex string remains visible",
+    "real same-language restart preserves old-result warning"
+  ],
+  "noMerge": true,
+  "noPush": true
+}

@@ -29,6 +29,11 @@ const turn = (over: Record<string, unknown> = {}) => ({
   ...over,
 })
 
+it('每门语言的当前实例随 kernels 状态往返；旧载荷可省略身份', () => {
+  expect(KernelStateSchema.parse({ language: 'R', state: 'idle', kernelInstanceId: 'r1' }).kernelInstanceId).toBe('r1')
+  expect(KernelStateSchema.parse({ language: 'python', state: 'idle' }).kernelInstanceId).toBeUndefined()
+})
+
 const tool = (over: Record<string, unknown> = {}) => ({
   type: "tool",
   id: "t1",
@@ -460,7 +465,7 @@ describe("协议版本 · 5.5", () => {
    * 8.9（2026-10-01）：会话更新新增 `append`，增量追加 agent turn 的 `text` / `thinking`。
    */
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.23")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.24")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

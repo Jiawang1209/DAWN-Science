@@ -586,7 +586,8 @@
 /** 8.21: directory transfer jobs, paged entries, cancellation, retry and explicit conflict decisions. */
 /** 8.22: selected-file upload batches and paged attention filters. */
 /** 8.23: single-file downloads join persistent transfer batches and existing retry/conflict actions. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.23"
+/** 8.24: per-language kernel state includes its optional current instance identity. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.24"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

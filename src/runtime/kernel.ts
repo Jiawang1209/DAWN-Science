@@ -346,7 +346,7 @@ export class KernelRuntime implements AgentRuntime {
      */
     channel.on("*", (tagged) => {
       const live = this.sessions.get(sessionId)
-      if (!live) return
+      if (!live || live.channel !== channel) return
       // **只认这一轮的输出**：内核可能还在吐上一轮的尾巴
       const parent = tagged.message.parent_header?.msg_id
       if (live.current && parent && parent !== live.current) return
@@ -376,8 +376,10 @@ export class KernelRuntime implements AgentRuntime {
      */
     channel.onExit?.(() => {
       const live = this.sessions.get(sessionId)
-      if (!live) return // 已经 close 掉了(主动关停走的是 stop 那条路)
+      if (!live || live.channel !== channel) return // 只认本实例；同名会话可能已经重建
       this.sessions.delete(sessionId)
+      // 意外退出也要收掉旧 ZMQ 通道；会话已摘除，后续 stop 找不到这份资源。
+      void channel.close().catch(err => console.error(`[内核退出清理] ${sessionId}：${err instanceof Error ? err.message : String(err)}`))
       this.emit({ kind: "notice", sessionId, text: "内核进程意外退出了(可能是内存耗尽或崩溃)——这一段代码没有跑完。" })
       this.emit({ kind: "exited", sessionId, exitCode: 1 })
     })

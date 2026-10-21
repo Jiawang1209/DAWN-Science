@@ -1,0 +1,18 @@
+{
+  "kernels": [
+    {
+      "language": "python",
+      "kernelInstanceId": "k-python-mvhv027v-3",
+      "state": "idle"
+    },
+    {
+      "language": "R",
+      "kernelInstanceId": "k-R-mvhv03g1-4",
+      "state": "idle"
+    }
+  ],
+  "outputCount": 3,
+  "staleWarnings": 0,
+  "noInternalHex": true,
+  "currentIdentitiesMatch": true
+}

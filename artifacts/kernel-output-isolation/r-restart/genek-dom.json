@@ -1,0 +1,22 @@
+[
+  {
+    "text": "PyPython 初始核验 = 42\n",
+    "stale": false
+  },
+  {
+    "text": "R⚠ 这条结果来自上一个内核实例，它描述的状态已经不存在了R 初始核验 = 42\n",
+    "stale": true
+  },
+  {
+    "text": "R⚠ 这条结果来自上一个内核实例，它描述的状态已经不存在了R_RESTART_1 = 42\n",
+    "stale": true
+  },
+  {
+    "text": "PyPython 保持 = 42\n",
+    "stale": false
+  },
+  {
+    "text": "RR_RESTART_2 = 42\n",
+    "stale": false
+  }
+]

@@ -5560,6 +5560,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 dockOpen={dockOpen}
                 terminalTrimmed={termTrimmed}
                 kernelInstanceId={kernelInstanceId}
+                currentKernels={对话内核}
               />
             </>
           ) : 向导中 && !跳过向导 ? (

@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "actual local R forced exit twice, each new stdout once",
+    "actual Genek R forced exit twice, each new stdout once",
+    "Python instance and sentinel survive R restarts",
+    "two equal user prints preserved as two prints",
+    "old R warnings retained, current R and Python have no false warnings",
+    "no internal R environment fingerprint",
+    "owned kernels cleaned, independent preview shown"
+  ],
+  "noMerge": true,
+  "noPush": true
+}

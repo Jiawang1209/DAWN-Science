@@ -86,9 +86,13 @@ describe.skipIf(!有内核("dawn-spike"))("Python 环境快照", () => {
 describe.skipIf(!有内核("ir"))("R 环境快照", () => {
   let rch: Awaited<ReturnType<typeof launchKernelChannel>>
   let snap: EnvironmentSnapshot | undefined
+  const leaked: string[] = []
 
   beforeAll(async () => {
     rch = await launchKernelChannel({ kernelName: "ir", handshakeTimeoutMs: 30_000 })
+    rch.on('*', m => {
+      if (m.message.parent_header?.msg_id?.startsWith('dawn-probe-')) leaked.push(m.message.header.msg_type)
+    })
     snap = await 探(rch, "R")
   }, 60_000)
   afterAll(async () => {
@@ -112,6 +116,17 @@ describe.skipIf(!有内核("ir"))("R 环境快照", () => {
   it("`.libPaths()` 拿得到", () => {
     expect(snap!.libraryPaths.length).toBeGreaterThan(0)
   })
+
+  it('R 环境和变量探测仍可解析，公开输出流看不到内部消息', async () => {
+    const seen: string[] = []
+    const off = rch.on('*', m => seen.push(m.message.header.msg_type))
+    const again = await 探(rch, 'R')
+    off()
+    expect(again?.packages.some(p => p.name === 'IRkernel')).toBe(true)
+    expect(fingerprintOf(again!)).toBe(fingerprintOf(snap!))
+    expect(seen).toEqual([])
+    expect(leaked).toEqual([])
+  }, 30_000)
 
   it("**两种语言的指纹不会撞** —— 它们是两个环境", async () => {
     const py = 有内核("dawn-spike")

@@ -1,0 +1,55 @@
+{
+  "branch": "codex/kernel-output-isolation",
+  "base": "4d6f6d76",
+  "fixed": [
+    "R output forward subscription released when instance is replaced or collected",
+    "old local kernel channel closed on unexpected exit",
+    "old channel output and exit callbacks cannot affect replacement instance"
+  ],
+  "redRegression": {
+    "mountFailures": 2,
+    "channelFailures": 2
+  },
+  "tests": {
+    "fullFiles": 457,
+    "fullPassed": 4930,
+    "skipped": 10,
+    "fullSeconds": 98.75,
+    "focusedFiles": 7,
+    "focusedPassed": 98,
+    "electronUnique": 5,
+    "electronBatchSeconds": 13.1,
+    "strongerExitAssertionRerun": {
+      "passed": 1,
+      "seconds": 9.0,
+      "actualChildExitCode": 0
+    },
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true
+  },
+  "live": {
+    "realModel": "deepseek/deepseek-flash",
+    "realSSH": "ug2478@gs191.genek.cn:22",
+    "localForcedRRestarts": 2,
+    "GenekForcedRRestarts": 2,
+    "eachNewROutputCount": 1,
+    "pythonSameInstance": true,
+    "pythonOriginalValue": 42,
+    "intentionalEqualPrintsPreserved": 2,
+    "internalHexOutputCount": 0,
+    "oldROutputsWarned": 2,
+    "currentRAndPythonFalseWarnings": 0
+  },
+  "cleanup": {
+    "ownedSessionsStopped": true,
+    "remoteKernelsAndConnectionFilesRemoved": true,
+    "testSSHDisconnected": true,
+    "localKernelChildrenGone": true,
+    "previewOpen": true
+  },
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "productionConfigurationChanged": false
+}

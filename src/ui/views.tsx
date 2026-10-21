@@ -1,4 +1,5 @@
 import { AnalysisRouteSummary } from "./analysis-route.js"
+import type { KernelState } from '../protocol/index.js'
 import { artifactEntries } from "./artifact-list.js"
 import { displayRouteMessage } from "./state/analysis-route.js"
 import type { AnalysisRoute } from "../protocol/analysis-route.js"
@@ -3807,6 +3808,7 @@ export function ConversationView({
   readOnlyReason,
   terminalTrimmed,
   kernelInstanceId,
+  currentKernels,
   workspace,
   onPickWorkspace,
   serviceLabel,
@@ -4036,6 +4038,7 @@ export function ConversationView({
    * **缺省 = 还没有内核，不做陈旧判断**——不猜。
    */
   kernelInstanceId?: string | undefined
+  currentKernels?: readonly KernelState[] | undefined
   /** 消息里点到本机地址时交给它（批 2）。**动作的家在 `App.tsx`** */
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
@@ -4934,6 +4937,7 @@ export function ConversationView({
                 {...(item.id === 搜索命中id ? { 搜索命中: true } : {})}
                 agentId={agentLabel ? agentLabel(session.agentId) : session.agentId}
                 currentKernel={kernelInstanceId}
+                currentKernels={currentKernels}
                 nameOf={行回调.nameOf}
                 {...(onOpenSubagent ? { onOpenSubagent: 行回调.onOpenSubagent } : {})}
                 {...(onOpenWeb ? { onOpenWeb } : {})}
@@ -5933,6 +5937,7 @@ function TranscriptRowImpl({
   agentId,
   nameOf,
   currentKernel,
+  currentKernels,
   onResend,
   hideThinking,
   onRewind,
@@ -5988,6 +5993,7 @@ function TranscriptRowImpl({
    */
   nameOf?: ((providerId: string) => string | undefined) | undefined
   currentKernel?: string | undefined
+  currentKernels?: readonly KernelState[] | undefined
   /**
    * 改一句自己说过的话，再发出去（2026-08-11，作者提，仿 Codex）。
    *
@@ -6029,7 +6035,7 @@ function TranscriptRowImpl({
     return <SubagentChips item={item} onOpen={onOpenSubagent ? (i) => onOpenSubagent(toolCallId, i) : undefined} />
   }
   if (item.type === "kernelOutput") {
-    return <KernelOutputRow item={item} currentKernel={currentKernel} />
+    return <KernelOutputRow item={item} currentKernel={currentKernel} currentKernels={currentKernels} />
   }
   // 笔记本（2026-08-26）：笔记本里有完整 cell，对话里只留一行痕迹（没有不可见的行动）
   if (item.type === "cell") {
@@ -6459,10 +6465,12 @@ function CellNoteRow({ item }: { item: Extract<TranscriptItem, { type: "cell" }>
 export function KernelOutputRow({
   item,
   currentKernel,
+  currentKernels,
   interrupted,
 }: {
   item: Extract<TranscriptItem, { type: "kernelOutput" }>
   currentKernel?: string | undefined
+  currentKernels?: readonly KernelState[] | undefined
   /**
    * 这条输出所在的那一格是被停下的（笔记本知道：`cell.interrupted`）。
    * 对话里拿不到 cell，靠 `ename === "KeyboardInterrupt"` 认——那正是中断在 Python 里的样子。
@@ -6476,10 +6484,13 @@ export function KernelOutputRow({
    * 内核重启之后，它描述的状态已经不存在了——而 notebook 最经典的谎言
    * 正是让那样一条结果继续躺在那里，看起来像当前状态。
    *
-   * **`currentKernel` 缺省时不做判断**：那意味着还没有内核（会话刚建或已退出），
-   * 不是「不陈旧」。拿不到就不说话，不猜。
+   * 对话输出按 language 查对应实例；独立内核会话沿用单实例身份。
+   * 对应身份未知时不做判断，不用另一门语言的身份代替。
    */
-  const stale = currentKernel !== undefined && item.kernelInstanceId !== currentKernel
+  const instance = item.language
+    ? currentKernels?.find(k => k.language === item.language)?.kernelInstanceId
+    : currentKernel
+  const stale = instance !== undefined && item.kernelInstanceId !== instance
   /**
    * **这条输出是哪台内核吐的**（②，作者要的徽标）。
    *

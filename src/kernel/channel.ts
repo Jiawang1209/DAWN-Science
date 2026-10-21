@@ -176,7 +176,14 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
    * **每加一个订阅者都要记得过滤一次**，而漏一次的表现是
    * 用户在 Console 里看见一堆自己没写过的代码在刷屏。
    */
-  const internal = new Set<string>()
+  // 请求身份随消息保留，idle/超时之后的迟到输出也仍然属于内部请求。
+  // 不保留无限增长的已完成 id 集合，也不按输出文本猜测是否为指纹。
+  const internalPrefix = `dawn-probe-${opts.kernelInstanceId}-`
+  const isInternal = (id: string | undefined): boolean => id?.startsWith(internalPrefix) ?? false
+  const privateListeners = new Map<string, Set<(m: TaggedMessage) => void>>()
+  const internalRequest = (message: JupyterMessage): JupyterMessage => ({
+    ...message, header: { ...message.header, msg_id: `${internalPrefix}${message.header.msg_id}` },
+  })
   /**
    * 这个内核支不支持 `user_expressions`。**试过一次就记住。**
    *
@@ -199,12 +206,12 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
   const emit = (raw: unknown): void => {
     const message = raw as JupyterMessage
     if (!message?.header?.msg_type) return // 不是协议消息，忽略
-    // **内省的产物一律不外发**——见 `internal` 的说明
+    // 内省消息只交给私有应答监听；公开订阅者永远看不到它们。
     const parentId = message.parent_header?.msg_id
-    if (parentId && internal.has(parentId)) return
+    const targets = isInternal(parentId) ? privateListeners : listeners
     const tagged: TaggedMessage = { message, provenance: provenance() }
     for (const key of [message.header.msg_type, "*"]) {
-      const set = listeners.get(key)
+      const set = targets.get(key)
       if (!set) continue
       // 复制一份再遍历：回调里退订是常见写法，直接遍历会漏掉后面的
       for (const cb of [...set]) cb(tagged)
@@ -218,10 +225,11 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     opts.channel.next(message)
   }
 
-  const on = (msgType: string, cb: (m: TaggedMessage) => void): Unsubscribe => {
-    const set = listeners.get(msgType) ?? new Set()
+  const on = (msgType: string, cb: (m: TaggedMessage) => void, privateReply = false): Unsubscribe => {
+    const target = privateReply ? privateListeners : listeners
+    const set = target.get(msgType) ?? new Set()
     set.add(cb)
-    listeners.set(msgType, set)
+    target.set(msgType, set)
     return () => set.delete(cb)
   }
 
@@ -249,7 +257,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
         clearTimeout(timer)
         off()
         resolve(m)
-      })
+      }, isInternal(parentId))
     })
 
   const request = (
@@ -375,17 +383,17 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
        *
        * 所以退到第二条：发一条正常的 `execute_request`（`store_history: false`，
        * 不进历史、不推高执行计数），**再由适配器保证它的输出不外发**
-       * （见 `internal`）。**这不是静默回退**——两条路都是「问一个值」，
+       * （按内部请求身份隔离）。**这不是静默回退**——两条路都是「问一个值」，
        * 换的只是取回结果的通道，而「不弄脏 Console」这条保证一样成立。
        */
       // 已知不支持就直接走退路，不再白跑一次
       if (userExprWorks === false) return await probeViaExecute(expression, timeoutMs)
 
-      const viaUserExpr = opts.makeExecute("", {
+      const viaUserExpr = internalRequest(opts.makeExecute("", {
         silent: true,
         store_history: false,
         user_expressions: { v: expression },
-      })
+      }))
       const reply = await request(viaUserExpr, { replyType: "execute_reply", timeoutMs })
       const ue = (reply.message.content as { user_expressions?: Record<string, unknown> }).user_expressions
       const v = ue?.v as { status?: string; data?: Record<string, unknown> } | undefined
@@ -403,12 +411,11 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
     }
   }
 
-  /** 退路：普通执行 + 收 iopub，输出由 `internal` 挡住不外发 */
+  /** 退路：普通执行 + 私下收 iopub，内部身份保证输出不外发。 */
   const probeViaExecute = (expression: string, timeoutMs: number): Promise<string | undefined> =>
     new Promise((resolve) => {
-      const msg = opts.makeExecute(expression, { store_history: false })
+      const msg = internalRequest(opts.makeExecute(expression, { store_history: false }))
       const id = msg.header.msg_id
-      internal.add(id)
       let text = ""
       const collect = (raw: unknown): void => {
         const m = raw as JupyterMessage
@@ -424,7 +431,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
           done(text.trim() || undefined)
         }
       }
-      /** **只收一次**：收完要退订并把 id 从 internal 里移走，否则集合会无限长 */
+      /** 只收一次；消息身份屏蔽独立于收集器的生命周期。 */
       const sub2 = opts.channel.subscribe(collect)
       const timer = setTimeout(() => done(undefined), timeoutMs)
       let settled = false
@@ -433,7 +440,6 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
         settled = true
         clearTimeout(timer)
         sub2.unsubscribe()
-        internal.delete(id)
         resolve(v)
       }
       send(msg)
@@ -538,6 +544,7 @@ export function createKernelChannel(opts: KernelChannelOptions): KernelChannel &
       // 同上：通道可能已经被对端关了
     }
     listeners.clear()
+    privateListeners.clear()
     await sleep(drainMs)
   }
 

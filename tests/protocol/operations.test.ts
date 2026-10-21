@@ -82,6 +82,7 @@ describe("操作注册表", () => {
         "pathInfo",
         "reviewChanges",
         "fileDiff",
+        "startFileUploadBatch",
         "startDirectoryTransfer",
         "listTransferBatches",
         "getTransferBatch",

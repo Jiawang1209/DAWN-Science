@@ -16,7 +16,7 @@ const running = (s: string) => s === "scanning" || s === "running"
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 const valid = (s: string) => { if (!s || /[\x00-\x1f\x7f]/.test(s)) throw new UserFacingError("路径包含空值或控制字符"); return s }
 const childName = (s: string) => { valid(s); if (s === "." || s === ".." || /[/\\]/.test(s)) throw new UserFacingError("目录包含异常文件名"); return s }
-const counts = () => ({ files: 0, directories: 0, completed: 0, failed: 0, conflict: 0, skipped: 0, cancelled: 0 })
+const counts = () => ({ files: 0, completedFiles: 0, directories: 0, completed: 0, failed: 0, conflict: 0, skipped: 0, cancelled: 0 })
 const BIG = 8 * 1024 * 1024
 export class TransferBatches {
   private jobs = new Map<string, Job>()
@@ -60,7 +60,7 @@ export class TransferBatches {
   private summarize(job: Job): TransferBatch {
     const result = counts(); let total = 0; let transferred = 0
     for (const entry of job.entries) {
-      if (entry.kind === "file") { result.files++; total += entry.size; transferred += entry.transferred }
+      if (entry.kind === "file") { result.files++; total += entry.size; transferred += entry.transferred; if (entry.state === "completed") result.completedFiles++ }
       if (entry.kind === "directory") result.directories++
       if (["completed", "failed", "conflict", "skipped", "cancelled"].includes(entry.state)) result[entry.state as keyof typeof result]++
     }
@@ -69,15 +69,21 @@ export class TransferBatches {
   }
   list(): TransferBatch[] { return [...this.jobs.values()].reverse().map(job => this.summarize(job)) }
   hasActive(): boolean { return this.controllers.size > 0 }
-  get(id: string, offset = 0, limit = 100) {
+  get(id: string, offset = 0, limit = 100, filter: "all" | "attention" = "all") {
     const job = this.job(id)
-    return { batch: this.summarize(job), entries: structuredClone(job.entries.slice(offset, offset + limit)), entryCount: job.entries.length }
+    const entries = filter === "attention" ? job.entries.filter(e => ["failed", "conflict", "cancelled", "interrupted"].includes(e.state)) : job.entries
+    return { batch: this.summarize(job), entries: structuredClone(entries.slice(offset, offset + limit)), entryCount: entries.length }
   }
   private job(id: string) { const job = this.jobs.get(id); if (!job) throw new UserFacingError("没有这次目录传输"); return job }
   private connection(job: Job) {
     const connection = this.opts.connection(job.batch.connectionId)
     if (connection.key !== job.serverKey) throw new UserFacingError("服务器配置已改变，请重新创建传输")
     return connection.remote
+  }
+  startFiles(input: { connectionId: string; sources: string[]; targetParent: string }): TransferBatch {
+    if (!input.sources.length || input.sources.length > 10000) throw new UserFacingError("请选择 1 至 10000 个文件")
+    const sources = [...new Set(input.sources.map(path => { valid(path); if (!isAbsolute(path)) throw new UserFacingError("传输路径必须是绝对路径"); return resolve(path) }))]
+    return this.start({ connectionId: input.connectionId, direction: "upload", source: sources[0]!, sources, targetParent: input.targetParent })
   }
   start(input: TransferStart): TransferBatch {
     if (this.disposed) throw new UserFacingError("传输服务已关闭")
@@ -131,6 +137,15 @@ export class TransferBatches {
   async dispose() { this.disposed = true; for (const ac of this.controllers.values()) ac.abort(new Error("应用退出，传输已中断")); await Promise.allSettled([...this.pending.values()]) }
   private async scan(job: Job, remote: RemoteExecutor, signal: AbortSignal) {
     const upload = job.batch.direction === "upload"
+    if (job.batch.sources) {
+      for (const source of job.batch.sources) {
+        signal.throwIfAborted()
+        const info = await lstat(source)
+        if (!info.isFile()) throw new UserFacingError("请选择普通文件；文件夹请使用上传文件夹，符号链接不上传")
+        job.entries.push({ id: randomUUID(), source: await realpath(source), path: childName(basename(source)), kind: "file", size: info.size, sourceMtime: info.mtimeMs, transferred: 0, state: "queued" })
+      }
+      job.scanned = true; return
+    }
     const root = upload ? resolve(job.batch.source) : posix.resolve(job.batch.source)
     const info = upload ? await lstat(root).then(s => ({ kind: s.isDirectory() ? "directory" : "other" })) : await remote.lstat(root)
     if (info.kind !== "directory") throw new UserFacingError("传输源必须是普通目录，不能是符号链接")
@@ -163,6 +178,10 @@ export class TransferBatches {
     let parent = job.batch.targetParent
     if (!upload) { await mkdir(parent, { recursive: true }); parent = await realpath(parent) }
     else parent = await remote.realpath(parent)
+    if (job.batch.sources) {
+      if ((await remote.lstat(parent)).kind !== "directory") throw new UserFacingError("上传目标必须是目录")
+      job.batch.target = parent; this.save(job); return
+    }
     const name = childName(upload ? basename(job.batch.source) : posix.basename(job.batch.source))
     for (let i = 0; i < 1000; i++) {
       signal.throwIfAborted()
@@ -182,7 +201,7 @@ export class TransferBatches {
   private async safeTarget(job: Job, path: string, remote: RemoteExecutor) {
     const upload = job.batch.direction === "upload"; const root = job.batch.target
     const rel = upload ? posix.relative(root, path) : path.slice(root.length + 1).split(sep).join("/")
-    if (path !== root && (rel === ".." || rel.startsWith("../") || (upload ? !path.startsWith(`${root}/`) : !path.startsWith(`${root}${sep}`)))) throw new UserFacingError("目标越出传输根目录")
+    if (path !== root && (rel === ".." || rel.startsWith("../") || (upload ? !path.startsWith(root === "/" ? "/" : `${root}/`) : !path.startsWith(`${root}${sep}`)))) throw new UserFacingError("目标越出传输根目录")
     const segments = path === root ? [] : rel.split("/")
     let current = root
     for (let i = 0; i <= segments.length; i++) {
@@ -224,10 +243,17 @@ export class TransferBatches {
     const connectionId = job.batch.connectionId
     const slots = this.active.get(connectionId) ?? { small: 0, big: 0 }; this.active.set(connectionId, slots)
     const transfer = async (entry: TransferEntry) => {
-      const source = upload ? join(job.batch.source, entry.path) : posix.join(job.batch.source, entry.path)
+      const source = entry.source ?? (upload ? join(job.batch.source, entry.path) : posix.join(job.batch.source, entry.path))
       let target = entry.target ?? (upload ? posix.join(job.batch.target, entry.path) : join(job.batch.target, entry.path))
+      const locks: string[] = []
+      const reserve = async (path: string) => {
+        const key = `${upload ? connectionId : "local"}:${path}`
+        while (this.reserved.has(key)) { await new Promise<void>(resolve => setTimeout(resolve, 20)); signal.throwIfAborted() }
+        signal.throwIfAborted(); this.reserved.add(key); locks.push(key)
+      }
       entry.state = "running"
       try {
+        await reserve(target)
         signal.throwIfAborted(); this.connection(job)
         const sourceInfo = upload ? await lstat(source).then(s => ({ kind: s.isFile() ? "file" : "other", size: s.size, mtime: s.mtimeMs })) : await remote.lstat(source)
         if (sourceInfo.kind !== "file" || sourceInfo.size !== entry.size || sourceInfo.mtime !== entry.sourceMtime) throw new UserFacingError("源文件已改变，请新建传输")
@@ -244,7 +270,11 @@ export class TransferBatches {
             let found = false
             for (let i = 1; i < 1000; i++) {
               const candidate = `${target} (${i})`
+              const key = `${upload ? connectionId : "local"}:${candidate}`
+              if (this.reserved.has(key)) continue
+              this.reserved.add(key); locks.push(key)
               if (!(await this.exists(candidate, upload, remote))) { target = candidate; found = true; break }
+              this.reserved.delete(key); locks.pop()
             }
             if (!found) throw new UserFacingError("同名文件过多")
           } else overwrite = true
@@ -270,7 +300,7 @@ export class TransferBatches {
       } catch (error) {
         entry.state = signal.aborted ? this.disposed ? "interrupted" : "cancelled" : "failed"; entry.error = message(error)
         if (upload) this.opts.uploaded?.(connectionId, target, entry.size, entry.error)
-      } finally { this.summarize(job); this.save(job) }
+      } finally { for (const key of locks) this.reserved.delete(key); this.summarize(job); this.save(job) }
     }
     let index = 0
     const worker = async () => {

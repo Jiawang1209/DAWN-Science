@@ -23,4 +23,7 @@ it("目录操作贯穿真实服务并保留上传记账", async () => {
  const down = await backend.startDirectoryTransfer({connectionId:"c",direction:"download",source:"/home/dawn/inputs"}) as TransferBatch
  await expect.poll(async () => (await backend.getTransferBatch({batchId:down.id}) as { batch: TransferBatch }).batch.state).toBe("completed")
  expect((await backend.getTransferBatch({batchId:down.id}) as { batch: TransferBatch }).batch.target).toContain(join(dir,"downloads"))
+ const files=await backend.startFileUploadBatch({connectionId:"c",sources:[join(source,"one.txt")],targetParent:"/home/dawn"}) as TransferBatch
+ await expect.poll(async()=>(await backend.getTransferBatch({batchId:files.id}) as {batch:TransferBatch}).batch.state).toBe("completed")
+ expect((await r.readFile("/home/dawn/one.txt")).toString()).toBe("one")
 })

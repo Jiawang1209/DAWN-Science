@@ -1,3 +1,4 @@
+import { TransferConfirmationDetails } from "./transfer-confirmation.js"
 import { TransferBatchesPanel } from "./transfer-batches.js"
 import {AnalysisDeliveryPanel} from './analysis-delivery.js'
 import {beginDelivery,deliverySelectionPaths} from './state/delivery.js'
@@ -3462,110 +3463,30 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [client, 传输?.state, 传输?.id])
 
   /**
-   * 上传（批 4b，2026-08-17）。**另一头交给系统对话框**，不长第二棵树。
-   *
-   * 撞名时后端**什么都不做**、只回一句「撞名了」，由这里去问
-   * 「覆盖 / 另存一份 / 取消」——默默覆盖是唯一不能选的：
-   * **你可能正在覆盖昨天那一版数据**。
-   */
-  /**
-   * 传一个文件，**传完（或人做完选择）才 resolve**。
-   *
-   * 拖进来一批时要一个一个来——「全部覆盖」那种按钮是专门用来批量毁数据的。
-   */
-  const 传一个 = useCallback(
-    (dir: string, 本机路径: string) =>
-      new Promise<void>((完事) => {
-        if (!文件所在) return 完事()
-        /**
-         * **先把条子清空**（2026-08-18，真机上撞出来的）。
-         *
-         * 不清的话，从按下到服务器答复这一段，条子上挂着的是**上一次的结果**
-         * ——假 SFTP 上那只有几毫秒，真机上是一到三秒，屏幕上就是
-         * 「我明明在传新的，它却说上一个传好了」。
-         */
-        设传输({ transferred: 0, state: "running", 方向: "上传", name: 本机路径.split("/").pop() ?? 本机路径 })
-        起点.current = { 时刻: Date.now(), 已传: 0 }
-
-        const 发一次 = (onConflict: "ask" | "overwrite" | "keepBoth") =>
-          client
-            .get<
-              | { kind: "conflict"; name: string }
-              | { kind: "started"; transferId: string; target: string }
-            >("startUpload", {
-              connectionId: 文件所在.connectionId,
-              dir: dir || 文件所在.cwd,
-              localPath: 本机路径,
-              onConflict,
-            })
-            .then((r) => {
-              if (r.kind === "conflict") {
-                // **问之前把条子撤掉**：还没开始传，留着一根转着的条是假象
-                设传输(undefined)
-                setConfirming({
-                  title: tf("「{0}」已经在那台机器上了", r.name),
-                  detail: t("覆盖会写掉那边那一份。另存一份会自动改名，两个都留着。"),
-                  confirmLabel: t("覆盖"),
-                  onConfirm: () => void 发一次("overwrite"),
-                  altLabel: t("另存一份"),
-                  onAlt: () => void 发一次("keepBoth"),
-                  // **人点了取消也要往下走**，否则一批里有一个撞名就整批卡住
-                  onDismiss: () => 完事(),
-                })
-                return
-              }
-              设传输((前) => ({ ...前, transferred: 0, state: "running", id: r.transferId, target: r.target }))
-              起点.current = { 时刻: Date.now(), 已传: 0 }
-              const wait = async () => {
-                try {
-                  for (;;) {
-                    const status = await client.get<{ state: string }>("transferStatus", { transferId: r.transferId })
-                    if (status.state !== "running") break
-                    await new Promise(resolve => setTimeout(resolve, 200))
-                  }
-                } catch (error) { fail(error) }
-                完事()
-              }
-              void wait()
-            })
-            .catch((e: unknown) => {
-              // **起不来也要出声**：不出声的表现是「点了上传没反应」
-              设传输({ transferred: 0, state: "failed", error: e instanceof Error ? e.message : String(e) })
-              完事()
-            })
-
-        void 发一次("ask")
-      }),
-    [client, 文件所在],
-  )
-
-  /**
-   * 传一批。**一个一个来，冲突一个一个问**（2026-08-18）。
-   * 「全部覆盖」那种按钮是专门用来批量毁数据的——一次点错，
-   * 昨天那一版结果整批没了。慢一点是这件事该有的代价。
-   */
-  const 传这些 = useCallback(
-    async (dir: string, 本机路径们: readonly string[]) => {
-      for (const p of 本机路径们) await 传一个(dir, p)
-    },
-    [传一个],
-  )
-
-  const 上传 = useCallback(
-    async (dir: string) => {
-      const 挑中 = await 挑文件("any")
-      // 取消了：什么都不做，也不出声
-      if (挑中.length > 0) await 传这些(dir, 挑中)
-    },
-    [传这些],
-  )
-
-  /**
    * 传完一次就让树重读一遍。**不这么做的话，屏幕上说「传好了」而树里没有它**
    * ——那正是「看起来一切正常」的反面（2026-08-17 e2e 撞出来的）。
    */
   const [刷新令牌, 设刷新令牌] = useState(0)
   const 目录批次完成 = useCallback(() => 设刷新令牌(n => n + 1), [])
+  const 确认上传 = useCallback((owner: NonNullable<typeof 文件所在>, target: string, sources: string[], folder = false) => {
+    setConfirming({
+      title: t("上传到服务器"),
+      detail: <TransferConfirmationDetails sources={sources} server={owner.label} target={target} folder={folder} />,
+      confirmLabel: t("开始上传"), confirmVariant: "primary",
+      onConfirm: () => { void client.get(folder ? "startDirectoryTransfer" : "startFileUploadBatch", folder
+        ? { connectionId: owner.connectionId, direction: "upload", source: sources[0], targetParent: target }
+        : { connectionId: owner.connectionId, sources, targetParent: target }).then(目录批次完成).catch(fail) },
+    })
+  }, [client, 目录批次完成])
+  const 传这些 = useCallback((dir: string, paths: readonly string[]) => {
+    if (文件所在 && paths.length) 确认上传({ ...文件所在 }, dir || 文件所在.cwd, [...paths])
+  }, [文件所在, 确认上传])
+  const 上传 = useCallback(async (dir: string) => {
+    if (!文件所在) return
+    const owner = { ...文件所在 }
+    try { const sources = await 挑文件("any"); if (sources.length) 确认上传(owner, dir || owner.cwd, sources) }
+    catch (error) { fail(error) }
+  }, [文件所在, 确认上传])
   const 目录传输 = useCallback(async (direction: "upload" | "download", path: string) => {
     if (!文件所在) return
     const owner = { ...文件所在 }
@@ -3573,14 +3494,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const source = direction === "upload" ? await client.pickDirectory() : path
       if (!source) return
       const destination = direction === "upload" ? path || owner.cwd : (await client.get<{ path: string }>("getDownloadDir", {})).path
+      if (direction === "upload") { 确认上传(owner, destination, [source], true); return }
       setConfirming({
-        title: direction === "upload" ? t("上传文件夹") : t("下载文件夹"),
+        title: t("下载文件夹"),
         detail: `${owner.label}\n${source} → ${destination}\n${t("保留目录层级，同名文件等待处理；不会同步删除文件。")}`,
         confirmLabel: t("开始传输"),
         onConfirm: () => { void client.get("startDirectoryTransfer", { connectionId: owner.connectionId, direction, source, targetParent: destination }).then(目录批次完成).catch(fail) },
       })
     } catch (error) { fail(error) }
-  }, [client, 文件所在, 目录批次完成])
+  }, [client, 文件所在, 目录批次完成, 确认上传])
   useEffect(() => {
     if (传输?.state === "done") 设刷新令牌((n) => n + 1)
   }, [传输?.state, 传输?.target])

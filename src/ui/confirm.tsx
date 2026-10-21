@@ -26,6 +26,7 @@ export interface ConfirmRequest {
   /** 不会发生什么。**移除项目时这一句是要害** */
   safety?: React.ReactNode
   confirmLabel: string
+  confirmVariant?: "primary" | "danger"
   onConfirm: () => void
   /**
    * 第三个选项（批 4b，2026-08-17）。
@@ -99,7 +100,7 @@ export function ConfirmDialog({
             </Button>
           ) : null}
           <Button
-            variant="danger"
+            variant={request.confirmVariant ?? "danger"}
             size="sm"
             onClick={收场(request.onConfirm)}
           >

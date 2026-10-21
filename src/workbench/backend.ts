@@ -4643,12 +4643,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return { kind: "started" as const, transferId: id, target: 目标 }
     },
 
+    startFileUploadBatch: async input => directoryTransfers.startFiles(input),
     startDirectoryTransfer: async ({ connectionId, direction, source, targetParent }) => directoryTransfers.start({
       connectionId, direction, source,
       targetParent: direction === "download" ? targetParent ?? (settings?.get("download.dir") || 默认下载目录()) : targetParent ?? (() => { throw new UserFacingError("上传需要目标目录") })(),
     }),
     listTransferBatches: async () => directoryTransfers.list(),
-    getTransferBatch: async ({ batchId, offset, limit }) => directoryTransfers.get(batchId, offset, limit),
+    getTransferBatch: async ({ batchId, offset, limit, filter }) => directoryTransfers.get(batchId, offset, limit, filter),
     cancelTransferBatch: async ({ batchId }) => { directoryTransfers.cancel(batchId); return {} },
     retryTransferBatch: async ({ batchId }) => { directoryTransfers.retry(batchId); return {} },
     resolveTransferConflict: async ({ batchId, entryId, action }) => { directoryTransfers.resolveConflict(batchId, entryId, action); return {} },

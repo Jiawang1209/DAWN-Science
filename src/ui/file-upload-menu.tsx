@@ -15,7 +15,7 @@ export function FileUploadMenu({ onFile, onFolder }: { onFile: () => void; onFol
       if (position) return close()
       const rect = anchor.current!.getBoundingClientRect()
       setPosition({ top: Math.min(rect.bottom + 4, window.innerHeight - 100), left: Math.min(rect.left, window.innerWidth - 190) })
-    }}>{t("传到这里")}{onFolder ? <下拉图标 /> : null}</Button>
+    }}><上传图标 />{t("上传")}{onFolder ? <下拉图标 /> : null}</Button>
     {position ? createPortal(<>
       <div className="menu-scrim" onClick={close} />
       <div ref={menu} className="menu file-upload-menu" role="menu" aria-label={t("上传选项")} style={position} onKeyDown={event => {

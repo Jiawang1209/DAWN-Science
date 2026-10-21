@@ -584,7 +584,8 @@
 /** 8.19 (2026-10-18): listArtifacts 可选路线交付引用，与工具观察的新建事实分开。 */
 /** 8.20 (2026-10-18): explicit analysis delivery selection, interpretation and independent verification records. */
 /** 8.21: directory transfer jobs, paged entries, cancellation, retry and explicit conflict decisions. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.21"
+/** 8.22: selected-file upload batches and paged attention filters. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.22"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

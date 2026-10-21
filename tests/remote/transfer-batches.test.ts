@@ -10,6 +10,31 @@ beforeEach(async () => { 重置假机器(); dir = mkdtempSync(join(tmpdir(), "da
 afterEach(async () => { await service.dispose(); r.close(); rmSync(dir, { recursive: true, force: true }) })
 function make() { return new TransferBatches({ connection: () => ({ label: "测试服务器", key: "h:22:u", remote: r }), persistDir: join(dir, "jobs") }) }
 function source() { const p = join(dir, "样本集"); mkdirSync(join(p, "空目录"), { recursive: true }); mkdirSync(join(p, "nested")); writeFileSync(join(p, "nested", "中文.txt"), "数据\n"); writeFileSync(join(p, "zero"), ""); return p }
+it("选中文件直接上传到目标目录且保留源，同名选项不静默覆盖", async () => {
+ const a=join(dir,"a");const b=join(dir,"b");mkdirSync(a);mkdirSync(b)
+ writeFileSync(join(a,"same.txt"),"first");writeFileSync(join(b,"same.txt"),"second")
+ const batch=service.startFiles({connectionId:"c",sources:[join(a,"same.txt"),join(b,"same.txt")],targetParent:"/home/dawn"})
+ const d=await done(batch.id);expect(d.batch.target).toBe("/home/dawn");expect(d.batch.counts.completedFiles).toBe(1)
+ expect(d.entries.filter(e=>e.state==="conflict")).toHaveLength(1)
+ expect((await r.readFile("/home/dawn/same.txt")).toString()).toBe("first")
+ expect(readFileSync(join(a,"same.txt"),"utf8")).toBe("first")
+ const entry=d.entries.find(e=>e.state==="conflict")!;service.resolveConflict(batch.id,entry.id,"keepBoth")
+ expect((await done(batch.id)).batch.counts.completedFiles).toBe(2)
+})
+it("异常筛选先过滤再分页，失败项可重试且不重复成功文件", async()=>{
+ const p=source();const original=r.upload.bind(r);let fail=true
+ r.upload=async(a,b,o)=>{if(fail&&b.endsWith("zero"))throw new Error("injected");return original(a,b,o)}
+ const batch=service.startFiles({connectionId:"c",sources:[join(p,"nested","中文.txt"),join(p,"zero")],targetParent:"/home/dawn"})
+ await done(batch.id);const errors=service.get(batch.id,0,1,"attention");expect(errors.entryCount).toBe(1);expect(errors.entries[0]?.path).toBe("zero")
+ fail=false;service.retry(batch.id);await done(batch.id);expect(service.get(batch.id,0,1,"attention").entryCount).toBe(0)
+})
+it("选中文件可上传到服务器根目录，仍保留本机来源", async()=>{
+ const file=join(dir,"root-upload.txt");writeFileSync(file,"root payload")
+ const batch=service.startFiles({connectionId:"c",sources:[file],targetParent:"/"})
+ const detail=await done(batch.id);expect(detail.batch.state).toBe("completed")
+ expect((await r.readFile("/root-upload.txt")).toString()).toBe("root payload")
+ expect(readFileSync(file,"utf8")).toBe("root payload")
+})
 async function done(id: string) { await expect.poll(() => service.get(id).batch.state).not.toMatch(/^(scanning|running)$/); return service.get(id) }
 it("目录往返保留层级、空目录和字节", async () => {
  const up = service.start({ direction: "upload", connectionId: "c", source: source(), targetParent: "/home/dawn" });

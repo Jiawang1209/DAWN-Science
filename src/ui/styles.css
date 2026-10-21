@@ -2166,14 +2166,14 @@ pre {
  * 「看着这张图，再点下一张」是这一屏的主要动作。
  */
 .files-view {
+  --file-transfer-max-height: 33vh;
   display: grid;
   /**
-   * **三行，不是两行**：机器那一条 / 树 / 预览。
-   * 只写两行的话第三个孩子落进隐式行，而那一条会被撑成一大片空白
-   * ——2026-08-17 截图时当场看见的。
+   * 显式安排工具栏、提示、目录、预览、底部传输。
+   * 传输展开只向上占空间，预览与目录保持相邻。
    */
-  grid-template-rows: auto auto minmax(0, 2fr) auto minmax(0, 3fr);
-  grid-template-areas: "where" "note" "tree" "xfer" "preview";
+  grid-template-rows: auto auto minmax(0, 2fr) minmax(0, 3fr) auto;
+  grid-template-areas: "where" "note" "tree" "preview" "xfer";
   height: 100%;
   min-height: 0;
 }
@@ -8952,12 +8952,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .delivery-validation-controls .delivery-radio {display:flex;align-items:flex-start;gap:var(--dawn-space-2);width:100%;font-size:var(--dawn-fs-meta);line-height:1.6;cursor:pointer;}
 
 /* Directory transfer: reuse the existing xfer surface, details stay collapsed. */
-.files-transfers { grid-area: xfer; min-width: 0; max-height: 45vh; overflow: auto; }
+.files-transfers { grid-area: xfer; display: flex; flex-direction: column; min-width: 0; min-height: 0; max-height: var(--file-transfer-max-height); overflow: hidden; }
+.files-transfers > .xfer { flex-shrink: 1; min-height: 0; }
+.files-transfers > .xfer:not(.transfer-batches) { overflow: auto; }
 .transfer-batches { min-width: 0; }
-.transfer-summary { display: flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; }
+.transfer-summary { display: flex; flex-shrink: 0; align-items: center; gap: var(--dawn-space-1); min-width: 0; }
+.transfer-batches > .transfer-progress { flex-shrink: 0; }
 .transfer-summary-state { margin-left: auto; white-space: nowrap; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 .transfer-summary-state.has-errors { color: var(--dawn-danger); }
-.transfer-scroll { overflow: auto; max-height: 32vh; }
+.transfer-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .transfer-job { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); padding: var(--dawn-space-2) 0; }
 .transfer-job-line { display: flex; min-width: 0; }
 .transfer-job-line > .btn { flex: 1; min-width: 0; justify-content: flex-start; }
@@ -8975,10 +8978,75 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .transfer-error { margin: var(--dawn-space-1) 0; font-size: var(--dawn-fs-badge); white-space: pre-wrap; overflow-wrap: anywhere; }
 .transfer-actions { display: flex; flex-wrap: wrap; gap: var(--dawn-space-2); align-items: center; }
 .transfer-actions p { flex-basis: 100%; margin: var(--dawn-space-1) 0; }
-.transfer-entries { margin-top: var(--dawn-space-2); }
+.transfer-entries { display: grid; grid-template-columns: minmax(0, 1fr) 92px max-content max-content; column-gap: var(--dawn-space-2); margin-top: var(--dawn-space-2); }
+.transfer-entries > * { grid-column: 1 / -1; min-width: 0; }
 .transfer-entry { padding: var(--dawn-space-2) 0; }
 .transfer-location { color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); margin: var(--dawn-space-2) 0; }
 .transfer-location summary { cursor: pointer; }
 .transfer-batches progress { width: 100%; height: 5px; accent-color: var(--dawn-accent); }
 .file-upload-menu { position: fixed; z-index: var(--z-modal); display: flex; flex-direction: column; min-width: 11rem; padding: var(--dawn-space-1); }
 .file-upload-menu > .btn { justify-content: flex-start; }
+
+/* Upload intent stays within the existing confirmation surface. */
+.upload-intent { min-width: 0; }
+.upload-selection { display: flex; align-items: flex-start; gap: var(--dawn-space-2); margin: var(--dawn-space-3) 0; }
+.upload-selection > div { min-width: 0; }
+.upload-selection strong { color: var(--dawn-text-1); overflow-wrap: anywhere; }
+.upload-selection-icon { display: inline-flex; color: var(--dawn-accent); padding-top: var(--dawn-space-1); }
+.upload-selection-names { display: block; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.upload-destination { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dawn-space-2) var(--dawn-space-3); margin: var(--dawn-space-3) 0; }
+.upload-destination dt { color: var(--dawn-text-3); }
+.upload-destination dd { margin: 0; color: var(--dawn-text-1); overflow-wrap: anywhere; }
+.upload-destination code { font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.upload-sources { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); max-height: 24vh; overflow: auto; }
+.upload-sources summary { cursor: pointer; }
+.upload-sources code { display: block; overflow-wrap: anywhere; margin-top: var(--dawn-space-1); }
+.upload-copy-note { margin: var(--dawn-space-3) 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.transfer-summary-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.transfer-filters { display: flex; gap: var(--dawn-space-1); margin-top: var(--dawn-space-1); }
+.transfer-filters .btn[aria-pressed="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
+.transfer-entry { display: grid; grid-template-columns: subgrid; padding: var(--dawn-space-1) 0; }
+.transfer-entry > * { grid-column: 1 / -1; min-width: 0; }
+.transfer-entry-line { display: grid; grid-template-columns: subgrid; align-items: center; column-gap: var(--dawn-space-2); min-height: 28px; }
+.transfer-entry-line code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--dawn-font-sans); font-size: var(--dawn-fs-meta); }
+.transfer-entry-line .transfer-state { grid-column: -2; margin-left: 0; text-align: right; }
+.transfer-entry-bytes { grid-column: 3; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
+.transfer-entry-error { font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
+.transfer-entry-error summary { cursor: pointer; }
+.transfer-empty { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.tree-upload-hint { display: block; padding: var(--dawn-space-1) var(--dawn-space-2); color: var(--dawn-accent); font-size: var(--dawn-fs-badge); }
+.transfer-entry-name { grid-column: 1; min-width: 0; }
+.transfer-entry-name summary { cursor: pointer; list-style: none; }
+.transfer-entry-name summary::-webkit-details-marker { display: none; }
+.transfer-entry-name code { display: block; }
+.transfer-entry-name[open] summary code { white-space: normal; overflow-wrap: anywhere; }
+.transfer-batches { container-type: inline-size; }
+.transfer-summary > .btn { flex-shrink: 0; white-space: nowrap; }
+.transfer-summary-short { display: none; }
+.transfer-filters { flex-wrap: wrap; }
+@container (max-width: 270px) {
+  .transfer-summary-name { display: none; }
+}
+@container (max-width: 200px) {
+  .transfer-summary { flex-wrap: wrap; }
+  .transfer-summary > .xfer-icon, .transfer-summary-full { display: none; }
+  .transfer-summary-short { display: inline; }
+  .transfer-summary-state { font-size: var(--dawn-fs-badge); }
+  .transfer-entry-bytes { display: none; }
+}
+.upload-intent { max-height: calc(100dvh - 200px); overflow: auto; }
+.transfer-progress { height: 5px; }
+.transfer-progress-complete .xfer-fill { background: var(--dawn-success); }
+.transfer-file-meter { grid-column: 2; display: inline-flex; align-items: center; gap: var(--dawn-space-1); width: 100%; min-width: 0; font-variant-numeric: tabular-nums; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
+.transfer-file-meter progress { flex: 1; min-width: 0; appearance: none; border: 0; border-radius: var(--dawn-radius-sm); overflow: hidden; background: var(--dawn-fill-2); }
+.transfer-file-meter progress::-webkit-progress-bar { background: var(--dawn-fill-2); }
+.transfer-file-meter progress::-webkit-progress-value { background: var(--dawn-accent); }
+.transfer-file-meter span { min-width: 3em; text-align: right; }
+@container (max-width: 300px) {
+  .transfer-entries { grid-template-columns: minmax(0, 1fr) 76px max-content; }
+  .transfer-entry-bytes { display: none; }
+}
+@container (max-width: 200px) {
+  .transfer-entries { grid-template-columns: minmax(0, 1fr) 38px max-content; }
+  .transfer-file-meter span { display: none; }
+}

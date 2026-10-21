@@ -13,7 +13,7 @@ import { FileUploadMenu } from "./file-upload-menu.js"
  * agent 写了哪些文件，那是最短的路径。这里的目录树是**补充**：
  * agent 没碰过的数据文件、上一次会话留下的东西，那些只能靠翻。
  */
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { createPortal } from "react-dom"
 import { 在组词 } from "./ime.js"
 import type { ResponseOf } from "../protocol/index.js"
@@ -405,6 +405,7 @@ function DirNode({
           {name || "／"}
         </span>
       </Row>
+      {悬着 ? <span className="tree-upload-hint" role="status">{t("松开后确认上传到此目录，本机文件保留")}</span> : null}
       {/**
         * **目录的删除入口：一颗常驻的「⋯」**（2026-08-18）。
         *
@@ -1102,7 +1103,7 @@ export function FilesView({
   const 树宽 = useStore($fileTreeWidth)
   const 树高 = useStore($fileTreeHeight)
   const 容器 = useRef<HTMLDivElement>(null)
-  const [可用, 设可用] = useState({ width: 0, height: 0 })
+  const [可用, 设可用] = useState({ width: 0, height: 0, transferMaxHeight: 0 })
   // 文件读取期间仍按后缀识别，切换两张图时不闪回旧树高。
   const 文件类 = selected ? 文件类按名字(selected, "file") : undefined
   const 视觉文件 = content ? content.kind === "pdf" || content.kind === "image" : 文件类 === "pdf" || 文件类 === "image"
@@ -1111,22 +1112,37 @@ export function FilesView({
   useEffect(() => {
     const el = 容器.current
     if (!el) return
+    const fixedSelector = ":scope > .files-where, :scope > .files-transfers, :scope > .files-row-note"
     const measure = () => {
-      const fixed = [...el.querySelectorAll<HTMLElement>(":scope > .files-where, :scope > .xfer, :scope > .files-row-note")]
+      const fixed = [...el.querySelectorAll<HTMLElement>(fixedSelector)]
         .reduce((sum, child) => sum + child.getBoundingClientRect().height, 0)
-      const next = { width: el.clientWidth, height: Math.max(0, el.clientHeight - fixed) }
-      设可用(prev => prev.width === next.width && prev.height === next.height ? prev : next)
+      const footer = el.querySelector<HTMLElement>(":scope > .files-transfers")
+      const footerHeight = footer?.getBoundingClientRect().height ?? 0
+      const details = footer?.querySelector<HTMLElement>(".transfer-scroll")
+      const detailsHeight = details?.getBoundingClientRect().height ?? 0
+      // 即使当前收起，也为下一次展开预留一行明细（32px），避免零高滚动区无法点击。
+      // 换行的工具栏也占高度，其余空间优先留给文件。
+      const transferMaxHeight = Math.min(el.clientHeight / 3, Math.max(
+        footerHeight - detailsHeight + 32,
+        (el.clientHeight - fixed + footerHeight) / 3,
+      ))
+      const next = { width: el.clientWidth, height: Math.max(0, el.clientHeight - fixed), transferMaxHeight }
+      设可用(prev => prev.width === next.width && prev.height === next.height && prev.transferMaxHeight === next.transferMaxHeight ? prev : next)
     }
     const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure)
     observer?.observe(el)
-    for (const child of el.querySelectorAll<HTMLElement>(":scope > .files-where, :scope > .xfer, :scope > .files-row-note")) observer?.observe(child)
+    for (const child of el.querySelectorAll<HTMLElement>(fixedSelector)) observer?.observe(child)
     window.addEventListener("resize", measure)
     measure()
     return () => { observer?.disconnect(); window.removeEventListener("resize", measure) }
-  }, [铺开, 传输 !== undefined, 行注 !== undefined])
-  const 显示树高 = 可用.height > 0
+  }, [铺开, 传输 !== undefined, directoryTransfers !== undefined, 行注 !== undefined])
+  const 期望树高 = 可用.height > 0
     ? clampFileTree(视觉文件 && !手调视觉树 ? Math.min(树高, 可用.height * .3) : 树高, 可用.height)
     : 树高
+  // 矮窗临时缩小目录，避免最小树高把预览挤出网格；不改写用户拖动偏好。
+  const 显示树高 = 可用.height > 0 && 可用.height < FILE_TREE_MIN + 160
+    ? Math.min(期望树高, 可用.height * .4)
+    : 期望树高
   const 显示树宽 = 可用.width > 0 ? clampFileTree(树宽, 可用.width) : 树宽
   return (
     <div
@@ -1136,15 +1152,16 @@ export function FilesView({
        * **树那一栏的尺寸由人拖**（2026-08-21，作者：*「面板中的文件和预览之间，应该可以挪动」*）。
        * 宽坞是列宽、窄坞是行高——两个数两个键，上下界按容器此刻的尺寸夹。
        */
-      style={
-        !previewOpen
+      style={{
+        ...(可用.transferMaxHeight > 0 ? { "--file-transfer-max-height": `${可用.transferMaxHeight}px` } : {}),
+        ...(!previewOpen
           ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "auto auto minmax(0, 1fr) auto", gridTemplateAreas: '"where" "note" "tree" "xfer"' }
           : readingExpanded
           ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "auto minmax(0, 1fr) auto", gridTemplateAreas: '"note" "preview" "xfer"' }
           : 铺开
           ? { gridTemplateColumns: `${显示树宽}px minmax(0, 1fr)` }
-          : { gridTemplateRows: `auto auto ${显示树高}px auto minmax(0, 1fr)` }
-      }
+          : { gridTemplateRows: `auto auto ${显示树高}px minmax(0, 1fr) auto` })
+      } as CSSProperties}
     >
       <HoverCard 浮着的={浮着的} />
       <div className="files-where" hidden={readingExpanded}>
@@ -1361,19 +1378,6 @@ export function FilesView({
           label={铺开 ? t("调整文件树宽度") : t("调整文件树高度")}
         /> : null}
       </div>
-      {/**
-        * **传输条属于这个面板，不属于预览**（2026-08-17，e2e 撞出来的）。
-        *
-        * 作者要的是*「当前文件下面有一个传输条」*，第一版我照字面把它放进了
-        * `FilePreview`——**而上传时根本没有选中文件**，预览是空态，
-        * 条子压根不存在。屏幕上的表现是「点了传到这里，什么都没发生」。
-        *
-        * 文案也不能写死方向：同一根条子两头都用。
-        *
-        * 总大小取不到时不画那根条，只报已传了多少——
-        * **拿 0 当分母会让进度条一直是满的**，那比没有条更骗人。
-        */}
-      {传输 || directoryTransfers ? <div className="files-transfers">{传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}{directoryTransfers}</div> : null}
       {previewOpen ? <section className="file-preview">
         <FilePreview
           path={selected}
@@ -1391,6 +1395,8 @@ export function FilesView({
           {...(进废纸篓 === undefined ? {} : { 进废纸篓 })}
         />
       </section> : null}
+      {/** 传输固定在面板底部并独立于预览；没有选中文件、收起预览时也能查看任务。 */}
+      {传输 || directoryTransfers ? <div className="files-transfers">{传输 ? <传输卡 传输={传输} {...(onCancel ? { onCancel } : {})} /> : null}{directoryTransfers}</div> : null}
     </div>
   )
 }

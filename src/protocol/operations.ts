@@ -2734,9 +2734,10 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  startFileUploadBatch: { request: z.object({ connectionId: z.string().min(1), sources: z.array(z.string().min(1)).min(1).max(10000), targetParent: z.string().min(1) }).strict(), response: TransferBatchSchema, mutating: true },
   startDirectoryTransfer: { request: DirectoryTransferRequest, response: TransferBatchSchema, mutating: true },
   listTransferBatches: { request: z.object({}).strict(), response: z.array(TransferBatchSchema), mutating: false },
-  getTransferBatch: { request: z.object({ batchId: z.string().min(1), offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(), response: TransferDetailSchema, mutating: false },
+  getTransferBatch: { request: z.object({ batchId: z.string().min(1), offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(100).optional(), filter: z.enum(["all", "attention"]).optional() }).strict(), response: TransferDetailSchema, mutating: false },
   cancelTransferBatch: { request: z.object({ batchId: z.string().min(1) }).strict(), response: z.object({}).strict(), mutating: true },
   retryTransferBatch: { request: z.object({ batchId: z.string().min(1) }).strict(), response: z.object({}).strict(), mutating: true },
   resolveTransferConflict: { request: z.object({ batchId: z.string().min(1), entryId: z.string().min(1), action: z.enum(["overwrite", "keepBoth", "skip"]) }).strict(), response: z.object({}).strict(), mutating: true },

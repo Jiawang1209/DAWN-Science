@@ -11,6 +11,7 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    startFileUploadBatch: async () => { throw new Error("Upload batch unavailable in this fixture") },
     startDirectoryTransfer: async () => { throw new Error("Directory operation unavailable in this fixture") },
     listTransferBatches: async () => { throw new Error("Directory operation unavailable in this fixture") },
     getTransferBatch: async () => { throw new Error("Directory operation unavailable in this fixture") },

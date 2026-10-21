@@ -16,6 +16,10 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "尚未保存": "Unsaved",
+  "已配置": "Configured",
+  "检测 {0} 解释器": "Detect {0} interpreter",
+  "输入解释器的完整路径": "Enter the full interpreter path",
   "总体传输进度": "Overall transfer progress",
   "任务进度：{0}": "Task progress: {0}",
   "正在计算": "Calculating",

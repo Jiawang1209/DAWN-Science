@@ -1,0 +1,41 @@
+{
+  "branch": "codex/kernel-settings-review",
+  "base": "ee1b7690",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "source": "file:///Users/liuyue/.codex/worktrees/kernel-settings-review/dawn-science/dist/ui/index.html",
+  "tests": {
+    "relatedUnitFiles": 5,
+    "relatedUnitPassed": 155,
+    "newRedCases": 3,
+    "electronPassed": 2,
+    "typecheck": true,
+    "build": true,
+    "diffCheck": true,
+    "fullUnitFiles": 450,
+    "fullUnitPassed": 4897,
+    "fullUnitSkipped": 10,
+    "mergeElectronPassed": 11,
+    "mergeElectronSeconds": 33.3
+  },
+  "actual": {
+    "finalSection": "内核",
+    "textboxes": 2,
+    "configuredPython": false,
+    "configuredR": false,
+    "overflow": false,
+    "wideLight": true,
+    "wideDark": true,
+    "narrowLight": true,
+    "narrowDark": true
+  },
+  "boundaries": {
+    "productionConfigurationChanged": false,
+    "realProbeExecuted": false,
+    "kernelStarted": false,
+    "sshConnected": false
+  },
+  "phase": "accepted-pre-merge",
+  "userAccepted": true
+}

@@ -162,7 +162,7 @@ export function KernelsPanel({
   interpreters: { python?: string; r?: string }
   onRefresh: () => void
   onSetInterpreter: (language: "python" | "R", path: string) => void
-  /** 探测本机解释器（首启向导同款列表，2026-08-27）。不给就没有那两块 */
+  /** 探测本机解释器；不给仍保留手动路径配置。 */
   onProbe?: (() => Promise<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] }>) | undefined
 }) {
   const [探到, 设探到] = useState<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] } | undefined>(undefined)
@@ -195,27 +195,9 @@ export function KernelsPanel({
         </>
       }
     >
-      {onProbe ? (
-        /* 不确定填什么？先看这台电脑上有哪些（2026-08-27）。选中即填进下面的框 */
-        <div className="kernel-probe">
-          <InterpreterPicker language="python" candidates={探到?.python} probing={探测中} error={探测错} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={探} />
-          <InterpreterPicker language="R" candidates={探到?.r} probing={探测中} current={interpreters.r} onPick={(p) => onSetInterpreter("R", p)} onProbe={探} />
-        </div>
-      ) : null}
-      <InterpreterField
-        id="interp-python"
-        label={t("Python 解释器")}
-        hint={t("需已安装 ipykernel。")}
-        value={interpreters.python}
-        onSave={(v) => onSetInterpreter("python", v)}
-      />
-      <InterpreterField
-        id="interp-r"
-        label={t("R 解释器")}
-        hint={t("需已安装 IRkernel。")}
-        value={interpreters.r}
-        onSave={(v) => onSetInterpreter("R", v)}
-      />
+      {探测错 ? <p className="field-error" role="alert">{tf("检测失败：{0}", 探测错)}</p> : null}
+      <InterpreterPicker layout="setting" language="python" candidates={探到?.python} probing={探测中} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={onProbe ? 探 : undefined} />
+      <InterpreterPicker layout="setting" language="R" candidates={探到?.r} probing={探测中} current={interpreters.r} onPick={(p) => onSetInterpreter("R", p)} onProbe={onProbe ? 探 : undefined} />
 
       {/* 参考：本机注册过的 kernelspec。**它只是帮你填上面那两个框**，不是机制 */}
       {kernels.length > 0 ? (
@@ -256,52 +238,6 @@ export function KernelsPanel({
         </details>
       ) : null}
     </Section>
-  )
-}
-
-/**
- * 一个解释器路径输入框。
- *
- * **路径必须回显**——与凭证那条恰恰相反：看不见自己配了什么，等于没配。
- * 保存后由后端当场做静态校验（路径存不存在），**不等到建会话才炸**。
- */
-function InterpreterField({
-  id,
-  label,
-  hint,
-  value,
-  onSave,
-}: {
-  id: string
-  label: string
-  hint: string
-  value: string | undefined
-  onSave: (path: string) => void
-}) {
-  const [draft, setDraft] = useState<string | undefined>(undefined)
-  const shown = draft ?? value ?? ""
-  return (
-    <Row name={label} desc={hint} htmlFor={id}>
-      <input
-        id={id}
-        className="control path"
-        value={shown}
-        placeholder={t("还没配置")}
-        onChange={(e) => setDraft(e.target.value)}
-        aria-label={label}
-      />
-      <Button
-        variant="primary"
-        size="sm"
-        disabled={draft === undefined}
-        onClick={() => {
-          onSave(shown)
-          setDraft(undefined)
-        }}
-      >
-        {t("保存")}
-      </Button>
-    </Row>
   )
 }
 

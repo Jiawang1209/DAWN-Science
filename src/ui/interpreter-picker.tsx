@@ -35,6 +35,7 @@ export function InterpreterPicker({
   current,
   onPick,
   onProbe,
+  layout = "picker",
 }: {
   language: 语言
   /**
@@ -50,10 +51,17 @@ export function InterpreterPicker({
   /** 设置里现在填的那条 */
   current: string | undefined
   onPick: (path: string) => void
-  onProbe: () => void
+  onProbe?: (() => void) | undefined
+  /** 设置页：一个路径草稿，检测和手填都在保存后生效；其他入口保持选中即用。 */
+  layout?: "picker" | "setting"
 }) {
   const [手动, 设手动] = useState(false)
   const [草稿, 设草稿] = useState("")
+  const [路径草稿, 设路径草稿] = useState<string | undefined>(undefined)
+  useEffect(() => 设路径草稿(undefined), [current])
+  const 设置布局 = layout === "setting"
+  const 路径 = 路径草稿 ?? current ?? ""
+  const 待保存 = 路径.trim() !== (current ?? "")
   /**
    * 选中项本地先亮（2026-08-27 e2e 抓的）：`current` 是设置里回写的值，`onPick` 走一趟后端才回来——
    * 纯受控的话点完那一瞬又弹回未选，人（和 Playwright）都会以为「点了没反应」。设置回写后以它为准。
@@ -61,26 +69,44 @@ export function InterpreterPicker({
   const [选了, 设选了] = useState(current)
   useEffect(() => 设选了(current), [current])
   const 名 = 语言名[language]
-  const 选中 = candidates?.find((c) => c.path === 选了)
+  const 选择路径 = 设置布局 ? 路径.trim() : 选了
+  const 选中 = candidates?.find((c) => c.path === 选择路径)
   const 挑 = (path: string) => {
+    if (设置布局) {
+      设路径草稿(path)
+      return
+    }
     设选了(path)
     onPick(path)
   }
 
   return (
-    <div className={`ip-picker ip-${language}`}>
+    <div className={`ip-picker ip-${language}${设置布局 ? " ip-setting" : ""}`} role={设置布局 ? "group" : undefined} aria-label={设置布局 ? (language === "python" ? t("Python 解释器") : t("R 解释器")) : undefined}>
       <div className="ip-head">
         <span className="ip-lang">{名}</span>
-        <Button size="sm" variant="ghost" disabled={probing} onClick={onProbe}>
+        {设置布局 ? <span className={`ip-config-state${待保存 ? " is-draft" : ""}`}>{待保存 ? t("尚未保存") : current ? t("已配置") : t("还没配置")}</span> : null}
+        {onProbe ? <Button size="sm" variant={设置布局 ? "outline" : "ghost"} disabled={probing} onClick={onProbe} aria-label={设置布局 ? tf("检测 {0} 解释器", 名) : undefined}>
           {probing
             ? t("正在检测…")
             : candidates === undefined
-              ? where
+              ? 设置布局 ? t("检测本机解释器") : where
                 ? tf("检测 {0} 上的解释器", where)
                 : t("检测本机解释器")
               : t("重新检测")}
-        </Button>
+        </Button> : null}
       </div>
+      {设置布局 ? (
+        <>
+          <form className="ip-path-editor" onSubmit={(e) => {
+            e.preventDefault()
+            if (待保存) onPick(路径.trim())
+          }}>
+            <input className="control" aria-label={language === "python" ? t("Python 解释器") : t("R 解释器")} value={路径} onChange={(e) => 设路径草稿(e.target.value)} placeholder={t("输入解释器的完整路径")} spellCheck={false} />
+            <Button variant="primary" size="sm" type="submit" disabled={!待保存}>{t("保存")}</Button>
+          </form>
+          <p className="ip-setting-hint">{language === "python" ? t("需已安装 ipykernel。") : t("需已安装 IRkernel。")}</p>
+        </>
+      ) : null}
       {error ? <p className="field-error">{tf("检测失败：{0}", error)}</p> : null}
       {candidates !== undefined && candidates.length === 0 ? (
         <p className="hint">
@@ -92,9 +118,9 @@ export function InterpreterPicker({
       {candidates && candidates.length > 0 ? (
         <ul className="ip-list" role="radiogroup" aria-label={tf("{0} 解释器候选", 名)}>
           {candidates.map((c) => (
-            <li key={c.path} className={`ip-item${c.path === 选了 ? " active" : ""}`}>
+            <li key={c.path} className={`ip-item${c.path === 选择路径 ? " active" : ""}`}>
               <label>
-                <input type="radio" name={`ip-${language}`} value={c.path} checked={c.path === 选了} onChange={() => 挑(c.path)} />
+                <input type="radio" name={`ip-${language}`} value={c.path} checked={c.path === 选择路径} onChange={() => 挑(c.path)} />
                 <code className="ip-path">{c.path}</code>
                 <span className="ip-ver">{c.version ?? "?"}</span>
                 <span className={`ip-pkg ip-pkg-${c.kernelPackage}`}>
@@ -111,7 +137,7 @@ export function InterpreterPicker({
            `replace` 第二参用函数：路径里的 `$&`/`$1` 会被字符串形式当成替换模式 */
         <p className="hint ip-how">{tf("这个 {0} 没装 {1}：{2}。装完回来点重新检测。", 名, 包名[language], KERNEL_PACKAGE[language].how.replace(/^\S+/, () => 引起路径(选中.path)))}</p>
       ) : null}
-      <div className="ip-manual">
+      {!设置布局 ? <div className="ip-manual">
         {手动 ? (
           <form
             onSubmit={(e) => {
@@ -128,7 +154,7 @@ export function InterpreterPicker({
             {t("手动填写路径")}
           </Button>
         )}
-      </div>
+      </div> : null}
     </div>
   )
 }

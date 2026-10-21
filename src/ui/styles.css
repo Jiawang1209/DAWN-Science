@@ -7569,7 +7569,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .ip-problem { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); margin: 0 0 0 1.8rem; white-space: pre-wrap; }
 .ip-manual form { display: flex; gap: var(--dawn-space-2); }
 .ip-manual .control { flex: 1; }
-.kernel-probe { margin-bottom: var(--dawn-space-3); }
+.ip-setting { padding: var(--dawn-space-4) 0; gap: var(--dawn-space-2); min-width: 0; }
+.ip-setting + .ip-setting { border-top: 1px solid var(--dawn-stroke-4); }
+.ip-setting .ip-head { flex-wrap: wrap; }
+.ip-setting .ip-lang { min-width: 0; font-size: var(--dawn-fs-sub); }
+.ip-config-state { font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); }
+.ip-config-state.is-draft { color: var(--dawn-text-2); }
+.ip-setting .ip-head > .btn { margin-left: auto; }
+.ip-path-editor { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.ip-path-editor > .control { flex: 1; min-width: 0; width: 100%; font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.ip-path-editor > .btn { flex: 0 0 auto; }
+.ip-setting-hint { margin: 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.ip-setting .ip-list { max-height: 12rem; overflow-y: auto; }
+.ip-setting .ip-item label { flex-wrap: wrap; }
+.ip-setting .ip-path { min-width: 0; flex: 1 1 12rem; }
+.ip-setting .ip-problem, .ip-setting .ip-how { overflow-wrap: anywhere; }
 .ip-how { color: var(--dawn-text-2); }
 .statusbar-setup { color: var(--dawn-danger); }
 

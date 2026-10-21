@@ -1,0 +1,43 @@
+{
+  "batch": {
+    "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+    "connectionId": "conn-6f2b74f2-447f-48d5-8b37-59fe642b4d44",
+    "server": "ug2478@gs191.genek.cn",
+    "direction": "upload",
+    "source": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/重试.txt",
+    "sources": [
+      "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/重试.txt"
+    ],
+    "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/upload-failure",
+    "targetParent": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/upload-failure",
+    "createdAt": "2026-10-21T02:58:56.017Z",
+    "state": "failed",
+    "total": 58,
+    "transferred": 58,
+    "counts": {
+      "files": 1,
+      "completedFiles": 0,
+      "directories": 0,
+      "completed": 0,
+      "failed": 1,
+      "conflict": 0,
+      "skipped": 0,
+      "cancelled": 0
+    }
+  },
+  "entries": [
+    {
+      "id": "91f40bea-803c-46f8-8c4a-282a7f581bd5",
+      "path": "重试.txt",
+      "kind": "file",
+      "state": "failed",
+      "size": 58,
+      "transferred": 58,
+      "sourceMtime": 1792551051621.662,
+      "source": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/重试.txt",
+      "error": "Permission denied",
+      "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/upload-failure/重试.txt"
+    }
+  ],
+  "entryCount": 1
+}

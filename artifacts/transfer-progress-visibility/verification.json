@@ -1,0 +1,25 @@
+{
+  "rootCause": "Both bars are 5px; detail viewport clipped first job progress",
+  "before": {
+    "test": "/tmp/dawn-progress-visible-red.log",
+    "height": 5,
+    "visibleHeight": 0
+  },
+  "after": {
+    "summaryHeight": 5,
+    "taskHeight": 5,
+    "visibleHeight": 5
+  },
+  "checks": {
+    "unit": 104,
+    "electron": 4,
+    "finalUploadRegression": 1,
+    "typecheck": "passed",
+    "uiBuild": "passed",
+    "diffCheck": "passed"
+  },
+  "branch": "codex/rounded-tab-backgrounds",
+  "committed": false,
+  "merged": false,
+  "pushed": false
+}

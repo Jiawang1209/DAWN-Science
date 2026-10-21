@@ -1,0 +1,6 @@
+{
+  "sha256": "abc43ec005e96b7f7f69f557f3c7edf1c46c5bca43cb18930665a3b959a5e3a8",
+  "exact": true,
+  "failedError": "Permission denied",
+  "retryEntry": "same Download button; legacy card has no requeue button"
+}

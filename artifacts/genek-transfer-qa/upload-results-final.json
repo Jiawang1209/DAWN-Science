@@ -1,0 +1,172 @@
+{
+  "single": {
+    "batch": {
+      "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+      "connectionId": "conn-6f2b74f2-447f-48d5-8b37-59fe642b4d44",
+      "server": "ug2478@gs191.genek.cn",
+      "direction": "upload",
+      "source": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/单文件进度.bin",
+      "sources": [
+        "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/单文件进度.bin"
+      ],
+      "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/single",
+      "targetParent": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/single",
+      "createdAt": "2026-10-21T02:51:34.396Z",
+      "state": "completed",
+      "total": 33554432,
+      "transferred": 33554432,
+      "counts": {
+        "files": 1,
+        "completedFiles": 1,
+        "directories": 0,
+        "completed": 1,
+        "failed": 0,
+        "conflict": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    "entries": [
+      {
+        "id": "7d3bbe47-538b-4c8d-8f65-40ac69e0a36f",
+        "path": "单文件进度.bin",
+        "kind": "file",
+        "state": "completed",
+        "size": 33554432,
+        "transferred": 33554432,
+        "sourceMtime": 1792551051619.7678,
+        "source": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/单文件进度.bin",
+        "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/single/单文件进度.bin"
+      }
+    ],
+    "entryCount": 1
+  },
+  "folder": {
+    "batch": {
+      "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+      "connectionId": "conn-6f2b74f2-447f-48d5-8b37-59fe642b4d44",
+      "server": "ug2478@gs191.genek.cn",
+      "direction": "upload",
+      "source": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/整批资料",
+      "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/整批资料",
+      "targetParent": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg",
+      "createdAt": "2026-10-21T02:58:23.969Z",
+      "state": "completed",
+      "total": 4194411,
+      "transferred": 4194411,
+      "counts": {
+        "files": 4,
+        "completedFiles": 4,
+        "directories": 2,
+        "completed": 6,
+        "failed": 0,
+        "conflict": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    "entries": [
+      {
+        "id": "0eb992f1-ec12-46de-8d8c-8a7f959335fe",
+        "path": "a b.csv",
+        "kind": "file",
+        "state": "completed",
+        "size": 37,
+        "transferred": 37,
+        "sourceMtime": 1792551051621.4138,
+        "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/整批资料/a b.csv"
+      },
+      {
+        "id": "db452316-b76b-4241-b0e4-fa953e9ac8a9",
+        "path": "子目录",
+        "kind": "directory",
+        "state": "completed",
+        "size": 0,
+        "transferred": 0,
+        "sourceMtime": 1792551279837.3257
+      },
+      {
+        "id": "1d9ab1da-f598-4156-9b25-c743f66dabe8",
+        "path": "子目录/大文件.bin",
+        "kind": "file",
+        "state": "completed",
+        "size": 4194304,
+        "transferred": 4194304,
+        "sourceMtime": 1792551279838.0247,
+        "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/整批资料/子目录/大文件.bin"
+      },
+      {
+        "id": "f0f283b6-ad85-4e38-b65b-5837a192f349",
+        "path": "子目录/空目录",
+        "kind": "directory",
+        "state": "completed",
+        "size": 0,
+        "transferred": 0,
+        "sourceMtime": 1792551051593.268
+      },
+      {
+        "id": "58396180-f563-4dbd-8b92-fc1ff5195c4f",
+        "path": "空文件.txt",
+        "kind": "file",
+        "state": "completed",
+        "size": 0,
+        "transferred": 0,
+        "sourceMtime": 1792551051621.5122,
+        "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/整批资料/空文件.txt"
+      },
+      {
+        "id": "0a335bf2-6dc2-482f-88c3-083b0ce596d4",
+        "path": "说明.txt",
+        "kind": "file",
+        "state": "completed",
+        "size": 70,
+        "transferred": 70,
+        "sourceMtime": 1792551051621.261,
+        "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/整批资料/说明.txt"
+      }
+    ],
+    "entryCount": 6
+  },
+  "retry": {
+    "batch": {
+      "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+      "connectionId": "conn-6f2b74f2-447f-48d5-8b37-59fe642b4d44",
+      "server": "ug2478@gs191.genek.cn",
+      "direction": "upload",
+      "source": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/重试.txt",
+      "sources": [
+        "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/重试.txt"
+      ],
+      "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/upload-failure",
+      "targetParent": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/upload-failure",
+      "createdAt": "2026-10-21T02:58:56.017Z",
+      "state": "completed",
+      "total": 58,
+      "transferred": 58,
+      "counts": {
+        "files": 1,
+        "completedFiles": 1,
+        "directories": 0,
+        "completed": 1,
+        "failed": 0,
+        "conflict": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    "entries": [
+      {
+        "id": "91f40bea-803c-46f8-8c4a-282a7f581bd5",
+        "path": "重试.txt",
+        "kind": "file",
+        "state": "completed",
+        "size": 58,
+        "transferred": 58,
+        "sourceMtime": 1792551051621.662,
+        "source": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/fixtures/重试.txt",
+        "target": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/upload-failure/重试.txt"
+      }
+    ],
+    "entryCount": 1
+  }
+}

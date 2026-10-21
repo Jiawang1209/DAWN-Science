@@ -1120,10 +1120,14 @@ export function FilesView({
       const footerHeight = footer?.getBoundingClientRect().height ?? 0
       const details = footer?.querySelector<HTMLElement>(".transfer-scroll")
       const detailsHeight = details?.getBoundingClientRect().height ?? 0
-      // 即使当前收起，也为下一次展开预留一行明细（32px），避免零高滚动区无法点击。
-      // 换行的工具栏也占高度，其余空间优先留给文件。
-      const transferMaxHeight = Math.min(el.clientHeight / 3, Math.max(
-        footerHeight - detailsHeight + 32,
+      // 展开后至少留到首条任务进度线底部，避免5px的线只露出一部分。
+      // 通常占三分之一，必要时增长到一半；仍给目录32px、预览64px留空间。
+      const firstProgress = details?.querySelector<HTMLElement>(".transfer-job > .transfer-progress")
+      const detailMinimum = details && firstProgress
+        ? Math.ceil(firstProgress.getBoundingClientRect().bottom - details.getBoundingClientRect().top + details.scrollTop) + 1
+        : 32
+      const transferMaxHeight = Math.min(el.clientHeight / 2, Math.max(0, el.clientHeight - fixed + footerHeight - 96), Math.max(
+        footerHeight - detailsHeight + detailMinimum,
         (el.clientHeight - fixed + footerHeight) / 3,
       ))
       const next = { width: el.clientWidth, height: Math.max(0, el.clientHeight - fixed), transferMaxHeight }
@@ -1132,9 +1136,12 @@ export function FilesView({
     const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure)
     observer?.observe(el)
     for (const child of el.querySelectorAll<HTMLElement>(fixedSelector)) observer?.observe(child)
+    const footerContent = el.querySelector(":scope > .files-transfers")
+    const contentObserver = typeof MutationObserver === "undefined" ? undefined : new MutationObserver(measure)
+    if (footerContent) contentObserver?.observe(footerContent, { childList: true, subtree: true, characterData: true })
     window.addEventListener("resize", measure)
     measure()
-    return () => { observer?.disconnect(); window.removeEventListener("resize", measure) }
+    return () => { observer?.disconnect(); contentObserver?.disconnect(); window.removeEventListener("resize", measure) }
   }, [铺开, 传输 !== undefined, directoryTransfers !== undefined, 行注 !== undefined])
   const 期望树高 = 可用.height > 0
     ? clampFileTree(视觉文件 && !手调视觉树 ? Math.min(树高, 可用.height * .3) : 树高, 可用.height)

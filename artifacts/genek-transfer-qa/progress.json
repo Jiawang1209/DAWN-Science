@@ -1,0 +1,3481 @@
+[
+  {
+    "at": "2026-10-21T02:51:35.238Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:35.444Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:35.651Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:35.857Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:36.062Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:36.267Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:36.471Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:36.676Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:36.880Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:37.085Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:37.290Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 0,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 0,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:37.494Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 65536,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 65536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:37.719Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 65536,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 65536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:37.924Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 65536,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 65536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:38.129Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 65536,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 65536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:38.333Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 65536,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 65536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:38.541Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 65536,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 65536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:38.745Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 131072,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 131072,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:38.950Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 131072,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 131072,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:39.157Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 131072,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 131072,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:39.361Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 196608,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 196608,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:39.566Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 196608,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 196608,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:39.770Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 262144,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 262144,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:39.975Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 262144,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 262144,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:40.180Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 327680,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 327680,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:40.385Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 327680,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 327680,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:40.590Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 393216,
+    "total": 33554432,
+    "uiPercent": 0,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 393216,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:40.795Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 393216,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 393216,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:41.114Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 458752,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 458752,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:41.319Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 458752,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 458752,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:41.523Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 458752,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 458752,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:41.727Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 524288,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 524288,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:41.931Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 524288,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 524288,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:51:42.135Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 589824,
+    "total": 33554432,
+    "uiPercent": 1,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 589824,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:09.606Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 4980736,
+    "total": 33554432,
+    "uiPercent": 14,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 4980736,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:09.809Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5046272,
+    "total": 33554432,
+    "uiPercent": 14,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5046272,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:10.014Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5046272,
+    "total": 33554432,
+    "uiPercent": 15,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5046272,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:10.219Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5111808,
+    "total": 33554432,
+    "uiPercent": 15,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5111808,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:10.424Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5111808,
+    "total": 33554432,
+    "uiPercent": 15,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5111808,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:10.629Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5177344,
+    "total": 33554432,
+    "uiPercent": 15,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5177344,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:10.833Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5177344,
+    "total": 33554432,
+    "uiPercent": 15,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5177344,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:52:11.037Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 5242880,
+    "total": 33554432,
+    "uiPercent": 15,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 5242880,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:00.604Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 13369344,
+    "total": 33554432,
+    "uiPercent": 39,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 13369344,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:00.809Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 13369344,
+    "total": 33554432,
+    "uiPercent": 39,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 13369344,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:01.012Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 13434880,
+    "total": 33554432,
+    "uiPercent": 39,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 13434880,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:01.216Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 13434880,
+    "total": 33554432,
+    "uiPercent": 40,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 13434880,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:01.420Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 13500416,
+    "total": 33554432,
+    "uiPercent": 40,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 13500416,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:01.625Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 13500416,
+    "total": 33554432,
+    "uiPercent": 40,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 13500416,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:39.476Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 18874368,
+    "total": 33554432,
+    "uiPercent": 56,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 18874368,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:39.680Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 18874368,
+    "total": 33554432,
+    "uiPercent": 56,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 18874368,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:39.887Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 18939904,
+    "total": 33554432,
+    "uiPercent": 56,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 18939904,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:40.092Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 18939904,
+    "total": 33554432,
+    "uiPercent": 56,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 18939904,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:53:40.296Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 18939904,
+    "total": 33554432,
+    "uiPercent": 56,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 18939904,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:54:22.058Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 24576000,
+    "total": 33554432,
+    "uiPercent": 73,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 24576000,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:54:22.263Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 24641536,
+    "total": 33554432,
+    "uiPercent": 73,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 24641536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:54:22.467Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 24641536,
+    "total": 33554432,
+    "uiPercent": 73,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 24641536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:54:22.670Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 24641536,
+    "total": 33554432,
+    "uiPercent": 73,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 24641536,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:54:22.875Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "running",
+    "transferred": 24707072,
+    "total": 33554432,
+    "uiPercent": 73,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "running",
+        "transferred": 24707072,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:56:03.812Z",
+    "label": "single-upload",
+    "id": "batch-990cabb0-cd51-45f3-a2e8-9fae92739157",
+    "state": "completed",
+    "transferred": 33554432,
+    "total": 33554432,
+    "uiPercent": 100,
+    "entries": [
+      {
+        "path": "单文件进度.bin",
+        "state": "completed",
+        "transferred": 33554432,
+        "size": 33554432
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:58:08.773Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "…",
+    "text": "0 字节 / ？"
+  },
+  {
+    "at": "2026-10-21T02:58:09.078Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "…",
+    "text": "0 字节 / ？"
+  },
+  {
+    "at": "2026-10-21T02:58:09.385Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "…",
+    "text": "0 字节 / ？"
+  },
+  {
+    "at": "2026-10-21T02:58:09.690Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "…",
+    "text": "0 字节 / ？"
+  },
+  {
+    "at": "2026-10-21T02:58:17.246Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "1%",
+    "text": "640.0 KB / 32.0 MB · 53.3 KB/秒 · 约 11 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:17.551Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "2%",
+    "text": "704.0 KB / 32.0 MB · 160.4 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:17.857Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "2%",
+    "text": "704.0 KB / 32.0 MB · 80.1 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:18.163Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "2%",
+    "text": "704.0 KB / 32.0 MB · 64.1 KB/秒 · 约 9 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:43.679Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "8%",
+    "text": "2.7 MB / 32.0 MB · 53.4 KB/秒 · 约 10 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:43.985Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "8%",
+    "text": "2.7 MB / 32.0 MB · 106.7 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:44.291Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "8%",
+    "text": "2.7 MB / 32.0 MB · 79.9 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:44.597Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "8%",
+    "text": "2.8 MB / 32.0 MB · 63.9 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:59.278Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "12%",
+    "text": "3.9 MB / 32.0 MB · 106.5 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:59.595Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "12%",
+    "text": "3.9 MB / 32.0 MB · 63.9 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T02:58:59.900Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "12%",
+    "text": "4.0 MB / 32.0 MB · 63.9 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:16.032Z",
+    "label": "upload-retry",
+    "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+    "state": "running",
+    "transferred": 58,
+    "total": 58,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "重试.txt",
+        "state": "running",
+        "transferred": 58,
+        "size": 58
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:16.341Z",
+    "label": "upload-retry",
+    "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+    "state": "running",
+    "transferred": 58,
+    "total": 58,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "重试.txt",
+        "state": "running",
+        "transferred": 58,
+        "size": 58
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:16.648Z",
+    "label": "upload-retry",
+    "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+    "state": "running",
+    "transferred": 58,
+    "total": 58,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "重试.txt",
+        "state": "running",
+        "transferred": 58,
+        "size": 58
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:16.953Z",
+    "label": "upload-retry",
+    "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+    "state": "running",
+    "transferred": 58,
+    "total": 58,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "重试.txt",
+        "state": "running",
+        "transferred": 58,
+        "size": 58
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:17.260Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 2883691,
+    "total": 4194411,
+    "uiPercent": "68",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2883584,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:17.564Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 2883691,
+    "total": 4194411,
+    "uiPercent": "68",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2883584,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:17.870Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 2949227,
+    "total": 4194411,
+    "uiPercent": "68",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2949120,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:18.175Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 2949227,
+    "total": 4194411,
+    "uiPercent": "68",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2949120,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:18.484Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "17%",
+    "text": "5.5 MB / 32.0 MB · 79.9 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:18.788Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "17%",
+    "text": "5.5 MB / 32.0 MB · 53.3 KB/秒 · 约 9 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:19.101Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "17%",
+    "text": "5.5 MB / 32.0 MB · 53.3 KB/秒 · 约 9 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:19.407Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "17%",
+    "text": "5.6 MB / 32.0 MB · 106.7 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:34.412Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 4128875,
+    "total": 4194411,
+    "uiPercent": "98",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 4128768,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:34.718Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 4128875,
+    "total": 4194411,
+    "uiPercent": "98",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 4128768,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:35.022Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 4194411,
+    "total": 4194411,
+    "uiPercent": "98",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 4194304,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:35.326Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "running",
+    "transferred": 4194411,
+    "total": 4194411,
+    "uiPercent": "100",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 4194304,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:35.631Z",
+    "label": "upload-retry",
+    "id": "batch-73b059df-d2f1-45e0-90a0-6059d1cd89b7",
+    "state": "completed",
+    "transferred": 58,
+    "total": 58,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "重试.txt",
+        "state": "completed",
+        "transferred": 58,
+        "size": 58
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:41.347Z",
+    "label": "folder-upload",
+    "id": "batch-96583496-9a8f-4f44-bb5c-414677524f7c",
+    "state": "completed",
+    "transferred": 4194411,
+    "total": 4194411,
+    "uiPercent": "100",
+    "entries": [
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      },
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "completed",
+        "transferred": 4194304,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T02:59:54.804Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "25%",
+    "text": "8.2 MB / 32.0 MB · 106.8 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:55.110Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "25%",
+    "text": "8.2 MB / 32.0 MB · 106.8 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:55.415Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "25%",
+    "text": "8.2 MB / 32.0 MB · 106.8 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T02:59:55.724Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "25%",
+    "text": "8.2 MB / 32.0 MB · 106.8 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:02.092Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "scanning",
+    "transferred": 0,
+    "total": 0,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "queued",
+        "transferred": 0,
+        "size": 0
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:02.396Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "scanning",
+    "transferred": 0,
+    "total": 0,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "queued",
+        "transferred": 0,
+        "size": 0
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:02.700Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "scanning",
+    "transferred": 0,
+    "total": 0,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "queued",
+        "transferred": 0,
+        "size": 0
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:03.004Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "scanning",
+    "transferred": 0,
+    "total": 0,
+    "uiPercent": null,
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "queued",
+        "transferred": 0,
+        "size": 0
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:14.807Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 262144,
+    "total": 4194411,
+    "uiPercent": "6",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 262144,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "running",
+        "transferred": 0,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:15.111Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 262144,
+    "total": 4194411,
+    "uiPercent": "6",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 262144,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "running",
+        "transferred": 0,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:15.416Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 262144,
+    "total": 4194411,
+    "uiPercent": "6",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 262144,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "running",
+        "transferred": 0,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:15.720Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 327717,
+    "total": 4194411,
+    "uiPercent": "6",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 327680,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "running",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:16.028Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "29%",
+    "text": "9.6 MB / 32.0 MB · 53.3 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:16.334Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "29%",
+    "text": "9.6 MB / 32.0 MB · 53.3 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:16.638Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "29%",
+    "text": "9.6 MB / 32.0 MB · 53.3 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:16.943Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "30%",
+    "text": "9.6 MB / 32.0 MB · 53.3 KB/秒 · 约 8 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:35.802Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 1245181,
+    "total": 4194411,
+    "uiPercent": "29",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 1245144,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:36.106Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 1310717,
+    "total": 4194411,
+    "uiPercent": "29",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 1310680,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:36.411Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 1310717,
+    "total": 4194411,
+    "uiPercent": "29",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 1310680,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:36.716Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 1310717,
+    "total": 4194411,
+    "uiPercent": "31",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 1310680,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:37.023Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "33%",
+    "text": "10.6 MB / 32.0 MB · 80.0 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:37.329Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "33%",
+    "text": "10.6 MB / 32.0 MB · 64.0 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:37.633Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "33%",
+    "text": "10.6 MB / 32.0 MB · 53.4 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:37.937Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "33%",
+    "text": "10.6 MB / 32.0 MB · 53.4 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:55.557Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 2293757,
+    "total": 4194411,
+    "uiPercent": "54",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2293720,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:55.862Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 2293757,
+    "total": 4194411,
+    "uiPercent": "54",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2293720,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:56.168Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 2293757,
+    "total": 4194411,
+    "uiPercent": "54",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2293720,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:56.473Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 2359293,
+    "total": 4194411,
+    "uiPercent": "54",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2359256,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:00:56.780Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "35%",
+    "text": "11.5 MB / 32.0 MB · 53.3 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:57.088Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "36%",
+    "text": "11.6 MB / 32.0 MB · 53.3 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:57.393Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "36%",
+    "text": "11.6 MB / 32.0 MB · 106.7 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T03:00:57.698Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "36%",
+    "text": "11.6 MB / 32.0 MB · 80.1 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:07.697Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 2883581,
+    "total": 4194411,
+    "uiPercent": "68",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 2883544,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:08.004Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "37%",
+    "text": "12.0 MB / 32.0 MB · 53.3 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:10.309Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3014653,
+    "total": 4194411,
+    "uiPercent": "71",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3014616,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:10.615Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "38%",
+    "text": "12.2 MB / 32.0 MB · 106.7 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:12.920Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3145725,
+    "total": 4194411,
+    "uiPercent": "74",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3145688,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:13.227Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "38%",
+    "text": "12.3 MB / 32.0 MB · 80.0 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:15.532Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3276797,
+    "total": 4194411,
+    "uiPercent": "76",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3276760,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:15.839Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "38%",
+    "text": "12.4 MB / 32.0 MB · 53.3 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:18.144Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3407869,
+    "total": 4194411,
+    "uiPercent": "81",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3407832,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:18.453Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "39%",
+    "text": "12.6 MB / 32.0 MB · 106.7 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:20.757Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3604477,
+    "total": 4194411,
+    "uiPercent": "84",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3604440,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:21.066Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "39%",
+    "text": "12.7 MB / 32.0 MB · 53.3 KB/秒 · 约 7 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:23.370Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3735549,
+    "total": 4194411,
+    "uiPercent": "89",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3735512,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:23.679Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "40%",
+    "text": "12.9 MB / 32.0 MB · 106.7 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:25.986Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3866621,
+    "total": 4194411,
+    "uiPercent": "92",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3866584,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:26.292Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "40%",
+    "text": "13.0 MB / 32.0 MB · 80.0 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:28.597Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 3997693,
+    "total": 4194411,
+    "uiPercent": "95",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 3997656,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:28.904Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "41%",
+    "text": "13.1 MB / 32.0 MB · 63.9 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:31.209Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "running",
+    "transferred": 4128765,
+    "total": 4194411,
+    "uiPercent": "98",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "running",
+        "transferred": 4128728,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:31.516Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "41%",
+    "text": "13.3 MB / 32.0 MB · 53.3 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:47.579Z",
+    "label": "folder-download",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "partial",
+    "transferred": 4194341,
+    "total": 4194411,
+    "uiPercent": "99",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "completed",
+        "transferred": 4194304,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "failed",
+        "transferred": 0,
+        "size": 70,
+        "error": "Permission denied"
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:56.454Z",
+    "label": "folder-download-retry",
+    "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+    "state": "completed",
+    "transferred": 4194411,
+    "total": 4194411,
+    "uiPercent": "100",
+    "entries": [
+      {
+        "path": "子目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "子目录/大文件.bin",
+        "state": "completed",
+        "transferred": 4194304,
+        "size": 4194304
+      },
+      {
+        "path": "子目录/空目录",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "空文件.txt",
+        "state": "completed",
+        "transferred": 0,
+        "size": 0
+      },
+      {
+        "path": "说明.txt",
+        "state": "completed",
+        "transferred": 70,
+        "size": 70
+      },
+      {
+        "path": "a b.csv",
+        "state": "completed",
+        "transferred": 37,
+        "size": 37
+      }
+    ]
+  },
+  {
+    "at": "2026-10-21T03:01:56.471Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "46%",
+    "text": "14.8 MB / 32.0 MB · 106.8 KB/秒 · 约 3 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:56.776Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "46%",
+    "text": "14.8 MB / 32.0 MB · 64.1 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:57.081Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "46%",
+    "text": "14.8 MB / 32.0 MB · 53.4 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T03:01:57.387Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "46%",
+    "text": "14.9 MB / 32.0 MB · 160.0 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:20.257Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "49%",
+    "text": "16.0 MB / 32.0 MB · 53.4 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:20.563Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "50%",
+    "text": "16.1 MB / 32.0 MB · 106.7 KB/秒 · 约 3 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:20.868Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "50%",
+    "text": "16.1 MB / 32.0 MB · 64.0 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:21.174Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "50%",
+    "text": "16.1 MB / 32.0 MB · 53.3 KB/秒 · 约 6 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:44.635Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "54%",
+    "text": "17.4 MB / 32.0 MB · 63.9 KB/秒 · 约 4 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:46.943Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "54%",
+    "text": "17.6 MB / 32.0 MB · 53.3 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:49.251Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "55%",
+    "text": "17.7 MB / 32.0 MB · 160.4 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:51.558Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "55%",
+    "text": "17.8 MB / 32.0 MB · 53.3 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:53.866Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "56%",
+    "text": "18.0 MB / 32.0 MB · 53.4 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:56.171Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "56%",
+    "text": "18.2 MB / 32.0 MB · 160.4 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:02:58.479Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "57%",
+    "text": "18.2 MB / 32.0 MB · 106.8 KB/秒 · 约 3 分钟"
+  },
+  {
+    "at": "2026-10-21T03:03:00.786Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "57%",
+    "text": "18.4 MB / 32.0 MB · 53.3 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:03:03.094Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "57%",
+    "text": "18.5 MB / 32.0 MB · 53.3 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:03:05.402Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "58%",
+    "text": "18.6 MB / 32.0 MB · 53.4 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:03:07.709Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "58%",
+    "text": "18.7 MB / 32.0 MB · 53.3 KB/秒 · 约 5 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:42.228Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "74%",
+    "text": "24.0 MB / 32.0 MB · 53.3 KB/秒 · 约 3 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:44.235Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "75%",
+    "text": "24.1 MB / 32.0 MB · 106.7 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:46.241Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "75%",
+    "text": "24.2 MB / 32.0 MB · 106.7 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:48.248Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "75%",
+    "text": "24.3 MB / 32.0 MB · 106.7 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:50.255Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "76%",
+    "text": "24.4 MB / 32.0 MB · 53.4 KB/秒 · 约 3 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:52.261Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "76%",
+    "text": "24.6 MB / 32.0 MB · 80.0 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:54.267Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "76%",
+    "text": "24.6 MB / 32.0 MB · 53.3 KB/秒 · 约 3 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:56.274Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "77%",
+    "text": "24.8 MB / 32.0 MB · 63.9 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:04:58.282Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "78%",
+    "text": "25.0 MB / 32.0 MB · 128.0 KB/秒 · 约 56 秒"
+  },
+  {
+    "at": "2026-10-21T03:05:00.290Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "78%",
+    "text": "25.2 MB / 32.0 MB · 106.7 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:05:02.299Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "79%",
+    "text": "25.3 MB / 32.0 MB · 106.8 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:05:04.306Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "79%",
+    "text": "25.4 MB / 32.0 MB · 63.9 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:05:06.312Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "79%",
+    "text": "25.6 MB / 32.0 MB · 64.0 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:05:31.398Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "84%",
+    "text": "27.0 MB / 32.0 MB · 53.3 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:05:56.457Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "87%",
+    "text": "28.1 MB / 32.0 MB · 160.0 KB/秒 · 约 25 秒"
+  },
+  {
+    "at": "2026-10-21T03:05:58.481Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "88%",
+    "text": "28.2 MB / 32.0 MB · 53.3 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:06:00.487Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "88%",
+    "text": "28.4 MB / 32.0 MB · 80.0 KB/秒 · 约 46 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:02.493Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "89%",
+    "text": "28.5 MB / 32.0 MB · 53.4 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:06:04.499Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "89%",
+    "text": "28.6 MB / 32.0 MB · 53.4 KB/秒 · 约 2 分钟"
+  },
+  {
+    "at": "2026-10-21T03:06:06.506Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "89%",
+    "text": "28.7 MB / 32.0 MB · 80.1 KB/秒 · 约 42 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:08.512Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "90%",
+    "text": "28.9 MB / 32.0 MB · 106.7 KB/秒 · 约 30 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:10.518Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "90%",
+    "text": "28.9 MB / 32.0 MB · 53.3 KB/秒 · 约 59 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:12.525Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "90%",
+    "text": "29.1 MB / 32.0 MB · 80.0 KB/秒 · 约 38 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:14.532Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "91%",
+    "text": "29.2 MB / 32.0 MB · 106.7 KB/秒 · 约 27 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:16.539Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "91%",
+    "text": "29.4 MB / 32.0 MB · 63.9 KB/秒 · 约 42 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:18.545Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "92%",
+    "text": "29.5 MB / 32.0 MB · 63.9 KB/秒 · 约 40 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:20.552Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "92%",
+    "text": "29.6 MB / 32.0 MB · 80.1 KB/秒 · 约 30 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:26.409Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "93%",
+    "text": "29.9 MB / 32.0 MB · 53.4 KB/秒 · 约 40 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:28.415Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "93%",
+    "text": "30.0 MB / 32.0 MB · 63.9 KB/秒 · 约 32 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:30.422Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "93%",
+    "text": "30.1 MB / 32.0 MB · 53.3 KB/秒 · 约 37 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:32.458Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "94%",
+    "text": "30.1 MB / 32.0 MB · 53.3 KB/秒 · 约 36 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:34.468Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "94%",
+    "text": "30.2 MB / 32.0 MB · 53.3 KB/秒 · 约 34 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:36.475Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "94%",
+    "text": "30.3 MB / 32.0 MB · 80.0 KB/秒 · 约 22 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:38.481Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "94%",
+    "text": "30.3 MB / 32.0 MB · 53.3 KB/秒 · 约 32 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:40.488Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "94%",
+    "text": "30.4 MB / 32.0 MB · 53.3 KB/秒 · 约 31 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:42.494Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "95%",
+    "text": "30.4 MB / 32.0 MB · 79.9 KB/秒 · 约 20 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:44.500Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "95%",
+    "text": "30.5 MB / 32.0 MB · 53.4 KB/秒 · 约 29 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:46.507Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "95%",
+    "text": "30.6 MB / 32.0 MB · 53.3 KB/秒 · 约 26 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:48.514Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "96%",
+    "text": "30.7 MB / 32.0 MB · 64.0 KB/秒 · 约 20 秒"
+  },
+  {
+    "at": "2026-10-21T03:06:50.519Z",
+    "label": "single-download",
+    "state": "xfer xfer-running",
+    "pct": "96%",
+    "text": "30.8 MB / 32.0 MB · 53.3 KB/秒 · 约 23 秒"
+  },
+  {
+    "at": "2026-10-21T03:07:23.971Z",
+    "label": "single-download",
+    "state": "xfer xfer-done",
+    "pct": "100%",
+    "text": "传好了：/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/单文件进度.bin"
+  },
+  {
+    "at": "2026-10-21T03:08:00.927Z",
+    "label": "single-download-permission-failure",
+    "state": "xfer xfer-failed",
+    "pct": "失败",
+    "text": "传输失败：Permission denied"
+  },
+  {
+    "at": "2026-10-21T03:08:22.537Z",
+    "label": "single-download-reissued",
+    "state": "xfer xfer-done",
+    "pct": "100%",
+    "text": "传好了：/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/重试.txt"
+  }
+]

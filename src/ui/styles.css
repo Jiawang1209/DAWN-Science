@@ -5633,7 +5633,7 @@ pre {
 .right-dock .dock-close:hover { color: var(--dawn-text-1); }
 /* 标签按实测宽度分配；不压缩字号、内距或操作按钮。 */
 .right-dock .dock-tabs-row { display: flex; align-items: center; gap: 0; min-width: 0; flex: 1 1 auto; overflow: hidden; }
-.right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; padding-left: 3px; padding-right: 3px; }
+.right-dock .dock-tab-btn { color: var(--dawn-text-3); white-space: nowrap; flex: 0 0 auto; padding-left: 3px; padding-right: 3px; border-radius: var(--dawn-radius-md); }
 /* 不占布局，但保留固有宽度供 ResizeObserver 测量；同时从焦点与可访问树移除。 */
 .right-dock [data-overflow="true"] { position: absolute; visibility: hidden; pointer-events: none; width: max-content; }
 .right-dock .dock-tab-btn:hover { color: var(--dawn-text-1); }
@@ -5648,7 +5648,6 @@ pre {
   color: var(--dawn-text-1);
   font-weight: var(--dawn-weight-semibold);
   box-shadow: inset 0 -2px 0 0 var(--dawn-accent);
-  border-radius: 0;
 }
 .right-dock .dock-title {
   margin: 0;
@@ -5844,11 +5843,12 @@ pre {
   display: flex;
   flex-direction: column;
   gap: var(--dawn-space-2);
-  margin: var(--dawn-space-2) var(--dawn-space-3);
-  padding: var(--dawn-space-3);
-  border: var(--dawn-hairline) solid var(--dawn-stroke-4);
-  border-radius: var(--dawn-radius-md);
-  background: var(--dawn-fill-1);
+  margin: 0 var(--dawn-space-3);
+  padding: var(--dawn-space-3) 0;
+  border: 0;
+  border-top: var(--dawn-hairline) solid var(--dawn-stroke-3);
+  border-radius: 0;
+  background: transparent;
   font-size: var(--dawn-fs-meta);
   color: var(--dawn-text-2);
 }
@@ -7090,7 +7090,7 @@ pre {
   width: 10.5rem;
   height: 36px;
   border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: var(--dawn-radius-md);
   transition: background var(--dawn-dur-fast) var(--dawn-ease), border-color var(--dawn-dur-fast) var(--dawn-ease);
 }
 .session-tab-wrap:hover { background: var(--dawn-row-hover); }

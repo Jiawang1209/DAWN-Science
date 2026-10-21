@@ -1,0 +1,24 @@
+{
+  "branch": "codex/rounded-tab-backgrounds",
+  "base": "5de81f51",
+  "changes": [
+    "session-tab-wrap uses dawn-radius-md",
+    "dock-tab-btn uses same token",
+    "remove selected dock radius=0"
+  ],
+  "verification": {
+    "unitPassed": 109,
+    "electronPassed": 8,
+    "typecheck": "passed",
+    "build": "passed",
+    "actualPreview": "isolated Electron, branch renderer with main SSH backend",
+    "computedRadius": "10px at current UI scale",
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "noHorizontalOverflow": true
+  },
+  "merged": false,
+  "pushed": false
+}

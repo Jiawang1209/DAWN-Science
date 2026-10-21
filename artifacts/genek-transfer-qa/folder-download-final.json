@@ -1,0 +1,136 @@
+{
+  "result": {
+    "batch": {
+      "id": "batch-de26ef64-6f87-4922-9498-68f1709962b9",
+      "connectionId": "conn-6f2b74f2-447f-48d5-8b37-59fe642b4d44",
+      "server": "ug2478@gs191.genek.cn",
+      "direction": "download",
+      "source": "/home/ug2478/.dawn-transfer-qa-20261021-3pfRwg/整批资料",
+      "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/整批资料",
+      "targetParent": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads",
+      "createdAt": "2026-10-21T02:59:54.796Z",
+      "state": "completed",
+      "total": 4194411,
+      "transferred": 4194411,
+      "counts": {
+        "files": 4,
+        "completedFiles": 4,
+        "directories": 2,
+        "completed": 6,
+        "failed": 0,
+        "conflict": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    "entries": [
+      {
+        "id": "7f1e7710-defd-487c-84a3-a2561dfe826d",
+        "path": "子目录",
+        "kind": "directory",
+        "state": "completed",
+        "size": 0,
+        "transferred": 0,
+        "sourceMtime": 1792551580
+      },
+      {
+        "id": "c308e8c8-da6e-48e3-bcb1-52b27effc7e5",
+        "path": "子目录/大文件.bin",
+        "kind": "file",
+        "state": "completed",
+        "size": 4194304,
+        "transferred": 4194304,
+        "sourceMtime": 1792551575,
+        "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/整批资料/子目录/大文件.bin"
+      },
+      {
+        "id": "73a71c70-cffc-458a-9b68-e522d075deae",
+        "path": "子目录/空目录",
+        "kind": "directory",
+        "state": "completed",
+        "size": 0,
+        "transferred": 0,
+        "sourceMtime": 1792551514
+      },
+      {
+        "id": "5d5703db-35cc-44f7-99d7-2b0a9ccc4b6c",
+        "path": "空文件.txt",
+        "kind": "file",
+        "state": "completed",
+        "size": 0,
+        "transferred": 0,
+        "sourceMtime": 1792551520,
+        "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/整批资料/空文件.txt"
+      },
+      {
+        "id": "efcf945d-95de-40c7-ac25-931b8debabc7",
+        "path": "说明.txt",
+        "kind": "file",
+        "state": "completed",
+        "size": 70,
+        "transferred": 70,
+        "sourceMtime": 1792551532,
+        "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/整批资料/说明.txt"
+      },
+      {
+        "id": "7e821e34-2e66-4182-8581-efe569020d6b",
+        "path": "a b.csv",
+        "kind": "file",
+        "state": "completed",
+        "size": 37,
+        "transferred": 37,
+        "sourceMtime": 1792551521,
+        "target": "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-real-ssh-iDSf4c/downloads/整批资料/a b.csv"
+      }
+    ],
+    "entryCount": 6
+  },
+  "manifest": [
+    {
+      "path": "a b.csv",
+      "kind": "file",
+      "size": 37,
+      "sha256": "fd0b982f49e7e5ff1d3e324e121b359b20870e313bebad15077bce06495b8cbf"
+    },
+    {
+      "path": "子目录",
+      "kind": "directory"
+    },
+    {
+      "path": "子目录/大文件.bin",
+      "kind": "file",
+      "size": 4194304,
+      "sha256": "c573e1f0492856d1b9680657b91d97c64cb120ca1fe680b239686bf991187982"
+    },
+    {
+      "path": "子目录/空目录",
+      "kind": "directory"
+    },
+    {
+      "path": "空文件.txt",
+      "kind": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "说明.txt",
+      "kind": "file",
+      "size": 70,
+      "sha256": "70b7f41ed8c020d040c4d9bbd4431061da2f2c105089a6131e5f2fd9343cd288"
+    }
+  ],
+  "completedUnchanged": [
+    {
+      "path": "子目录/大文件.bin",
+      "unchanged": true
+    },
+    {
+      "path": "空文件.txt",
+      "unchanged": true
+    },
+    {
+      "path": "a b.csv",
+      "unchanged": true
+    }
+  ]
+}

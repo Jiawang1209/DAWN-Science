@@ -1,0 +1,14 @@
+{
+  "change": "Transparent transfer sections with top separator; no filled card or enclosing border",
+  "preview": "Actual isolated Electron; fake SSH demonstration fixture, not a new live-server test",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "unitPassed": 103,
+  "electronPassed": 3,
+  "uiBuild": "passed",
+  "committed": false,
+  "merged": false,
+  "pushed": false
+}

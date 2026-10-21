@@ -28,7 +28,16 @@ async function expectTransferFooter(page:import("@playwright/test").Page,mode:"n
   expect(layout.preview!.height).toBeGreaterThan(60)
  }
  expect(Math.abs(layout.footer!.bottom-layout.panel.bottom)).toBeLessThanOrEqual(1)
- expect(layout.footer!.height).toBeLessThanOrEqual(layout.panel.height/3+1)
+ expect(layout.footer!.height).toBeLessThanOrEqual(layout.panel.height/2+1)
+ const bars=await page.locator('.transfer-batches[aria-label] .transfer-scroll').evaluateAll(nodes=>nodes.map(el=>{
+  const bar=el.querySelector('.transfer-job > .transfer-progress')?.getBoundingClientRect(),viewport=el.getBoundingClientRect()
+  return bar ? {height:bar.height,visible:Math.max(0,Math.min(bar.bottom,viewport.bottom)-Math.max(bar.top,viewport.top)),scrollTop:el.scrollTop} : undefined
+ }))
+ const summaryHeight=await page.getByRole('progressbar',{name:'总体传输进度',exact:true}).evaluate(el=>el.getBoundingClientRect().height)
+ for(const bar of bars)if(bar&&bar.scrollTop===0){
+  expect(bar.height,'总进度与任务进度同粗细').toBeCloseTo(summaryHeight,1)
+  expect(bar.visible,'展开后首条任务进度线完整可见').toBeCloseTo(bar.height,1)
+ }
 }
 async function expectAlignedColumns(job:import("@playwright/test").Locator) {
  const columns=await job.locator(".transfer-entry-line").evaluateAll(rows=>rows.map(row=>
@@ -103,7 +112,7 @@ test("多文件确认可取消，统一任务保留每个文件与源文件，�
  await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setSize(1000,620))
  await expect.poll(async()=>page.locator(".files-view").evaluate(el=>{
   const footer=el.querySelector(".files-transfers")!.getBoundingClientRect(),preview=el.querySelector(".file-preview")!.getBoundingClientRect()
-  return Math.abs(footer.bottom-el.getBoundingClientRect().bottom)<=1&&footer.height<=el.clientHeight/3+1&&preview.height>60
+  return Math.abs(footer.bottom-el.getBoundingClientRect().bottom)<=1&&footer.height<=el.clientHeight/2+1&&preview.height>60
  })).toBe(true)
  await page.screenshot({path:info.outputPath("upload-tasks-dark-narrow.png")});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  const rootUpload=await call(page,"startFileUploadBatch",{connectionId:batch.connectionId,sources:[paths[0]],targetParent:"/"})

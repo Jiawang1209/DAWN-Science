@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-24",
+  "branch": "main",
+  "codeCommit": "7460751b",
+  "runtime": {
+    "pid": 99274,
+    "appPath": "/Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron",
+    "title": "DAWN Science · main · 开发预览",
+    "visible": true
+  },
+  "terminalId": "22c3d401-830e-47f7-9409-f056c3b6d879",
+  "nativeAgentSessionId": "239a2bc0-31eb-461e-8315-fabb0962715c",
+  "checks": {
+    "conversationTabsExcludePty": true,
+    "closeCurrentConversationKeepsUsablePage": true,
+    "legacyActionsVisible": true,
+    "openLegacyShowsSameTerminal": true,
+    "legacyDirectReturnSameAgent": true,
+    "reopenAndNewStatusOutput": true,
+    "originalConversationRecordsRetained": true,
+    "clipboardRestored": true,
+    "finalMainConversationVisible": true
+  },
+  "noNewModelRequests": true,
+  "originalConversationRecovery": {
+    "originalConversationRecovered": true,
+    "activeSessionId": "b032f45b-99c1-4d02-aba8-016768a9bdd1",
+    "ptyTabs": 0
+  }
+}

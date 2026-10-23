@@ -1,0 +1,222 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/terminal-navigation-recovery.spec.ts e2e/session-tabs.spec.ts e2e/desktop-cli.spec.ts e2e/terminal-empty-return.spec.ts
+
+Running 18 tests using 1 worker
+
+(node:95028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [桌面通知·假] #0 「这是桌面 CLI 连接验收，请简短回答。」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63224/29c4b78e-b4d4-4618-8000-bd3384f77bb2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/desktop-cli.spec.ts:6:1 › DAWN and Normal use the desktop model, preserve Shell state, and refuse pending input (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63261/76d2736a-f627-46ea-9002-35c576b3cf58
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/desktop-cli.spec.ts:49:1 › return opens the same Agent conversation and continues it without creating or copying a task (5.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63282/460eca86-a096-4ca9-b0ab-440f3a122e94
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/session-tabs.spec.ts:7:1 › **同一个项目下的会话横着排；点了切过去；＋ 在同一处再开一段；散的会话没有这一条** (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63299/a5b0ccea-6b82-441f-bb02-eb19b5a71796
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/session-tabs.spec.ts:42:1 › 主区页签可拖动排序，顺序重启后仍由会话列表保存 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63319/4c638100-6dec-44b7-968e-538fa49681aa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63340/85b1f483-c64a-471d-9e42-925293468b0d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/session-tabs.spec.ts:67:1 › 项目文件夹内拖动会话，与顶部页签同步且重开后保留顺序 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63351/f91f0d9f-54d9-4487-ad09-ca96e8983d5b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/session-tabs.spec.ts:97:1 › **`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的） (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63359/8701cc3f-76cd-465b-883e-35fe93f2c181
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/session-tabs.spec.ts:114:3 › 页签圆点状态 › 普通圆点常驻，后台运行与未读状态继续由真实会话驱动 (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63394/0c6882f1-36f2-4476-ba06-24d9db2465df
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/terminal-empty-return.spec.ts:10:1 › closing the last terminal still allows returning to the original page and draft (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63406/f7505acb-55ff-40a6-8725-08c31393f1d9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/terminal-empty-return.spec.ts:35:3 › without a configured terminal › returns to the page even when no terminal has ever been created (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63417/ce50858d-87b1-4261-a2d7-91c8f7e6ef5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/terminal-navigation-recovery.spec.ts:43:1 › PTYs never appear in conversation tabs, including after returning from DAWN (8.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63456/7c3ecca2-05bd-4469-9b0e-308cfae96820
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/terminal-navigation-recovery.spec.ts:56:1 › closing the final conversation with a live PTY returns to a usable welcome page (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63482/fd9fcbe4-7051-4163-afe3-352e194d2d71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/terminal-navigation-recovery.spec.ts:67:1 › closing a conversation picks a real sibling and preserves its draft, never a PTY (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63507/992ba258-b4fa-4af5-8927-91cf50cdf97b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/terminal-navigation-recovery.spec.ts:77:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63533/4c2e32d3-41f9-4ccd-95be-8d06634b34ca
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/terminal-navigation-recovery.spec.ts:94:1 › the legacy page can return directly to its conversation without opening a terminal (4.8s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63553/f862add4-972a-4fd3-86f3-4f0212284e6c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/terminal-navigation-recovery.spec.ts:101:1 › closing the selected legacy terminal leaves a real page instead of a deleted-session loader (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63584/fe0d09d7-5296-41e9-9a43-ec6337646739
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/terminal-navigation-recovery.spec.ts:111:1 › the legacy DAWN page returns directly to its own Agent conversation (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63622/719d3230-ff62-464a-b2c7-83894e27be23
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/terminal-navigation-recovery.spec.ts:119:1 › a legacy PTY whose original conversation was archived can still return to the welcome page (8.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:63659/5f7475a7-de00-405a-8976-ea5dcc64013f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/terminal-navigation-recovery.spec.ts:126:1 › reopening an exited legacy PTY shows that same ended record without creating a replacement (15.3s)
+
+  18 passed (1.6m)

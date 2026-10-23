@@ -872,15 +872,14 @@ export const EN: Readonly<Record<string, string>> = {
   /* ── 终端 ───────────────────────────────────────────────────── */
   "终端": "Terminal",
   "终端面板": "Terminal panel",
+  "终端会话": "Terminal session",
+  "可以重新打开这个终端，或返回会话继续交流。": "Reopen this terminal or return to the conversation to continue.",
   "＋ 新开一个": "+ New one",
   "收起面板": "Hide panel",
-  "打开面板": "Open panel",
   "还没有终端。点「＋ 新开一个」，它会开在上面那个目录里。":
     "No terminal yet. Click “+ New terminal” to open one — it starts in the folder above.",
   "终端只保留最近的输出，更早的已滚出缓冲":
     "Only the most recent output is kept; earlier lines have scrolled out of the buffer",
-  "这是一段终端会话。终端现在在对话区下面那一条里——":
-    "This is a terminal session. The terminal now lives in the strip below the chat — ",
   "内核": "Kernel",
   /* 笔记本（2026-08-26）：对话里那一行 cell 痕迹 */
   "笔记本": "Notebook",

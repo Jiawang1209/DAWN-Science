@@ -683,11 +683,12 @@ describe("PTY 会话：终端就是这个会话本身", () => {
    * 所以这一条从「铺满主区」改成验**它不铺主区**——
    * 真链路那一条（终端真的能敲命令）在 `e2e/pty-session.spec.ts`。
    */
-  it("**终端不铺主区**，它在下面那条 dock 里", async () => {
+  it("旧PTY入口提供重新打开终端和返回会话两条可用路径", async () => {
     const h = harness({ projects: [proj("/w/proj")], pty: true })
     const { container } = render(<App client={h.client} />)
     await 从首页开始()
-    await waitFor(() => expect(screen.queryByText(/这是一段终端会话/)).not.toBeNull())
+    expect((await screen.findByRole("button", { name: "打开终端" }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole("button", { name: "返回会话" }) as HTMLButtonElement).disabled).toBe(false)
     expect(container.querySelector(".main .term-view")).toBeNull()
   })
 

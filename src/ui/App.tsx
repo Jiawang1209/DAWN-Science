@@ -953,6 +953,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .catch(fail)
     return () => {
       live = false
+      if (dockSessionId === $activeSessionId.get()) return
       client.forgetRevision(dockSessionId)
       client.get("unsubscribeSession", { sessionId: dockSessionId }).catch(fail)
     }
@@ -1007,6 +1008,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       if ($跑着的会话.get().has(sessionId)) return
       // 切走的那段正挂在坞里（侧边对话，2026-09-24）：订阅归坞那边管，这里退订就把坞里那段掐断了
       if (sessionId === $侧边会话id.get()) return
+      // The dock keeps its current PTY subscribed even while hidden.
+      if (sessionId === $dockSessionId.get()) return
       client.forgetRevision(sessionId)
       client.get("unsubscribeSession", { sessionId }).catch(fail)
     }
@@ -3104,7 +3107,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         (x) =>
           x.kind === "pty" &&
           !关掉的终端.has(x.sessionId) &&
-          (终端归属.get(x.sessionId) === 终端主人 || terminalAgentSessions.get(x.sessionId) === 终端主人
+          (x.sessionId === sessionId || 终端归属.get(x.sessionId) === 终端主人 || terminalAgentSessions.get(x.sessionId) === 终端主人
             || !终端归属.has(x.sessionId) && !sessionId && (!projectId || x.projectId === projectId)
             // Preserve project terminals created by older builds under the shared welcome-page key.
             || !sessionId && 终端归属.get(x.sessionId) === 无会话 && x.projectId === projectId),
@@ -3200,6 +3203,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (掀开过的主人.current === 终端主人) return
     if (!ptyAgentId) return
     掀开过的主人.current = 终端主人
+    // A legacy PTY selection must show that exact record, including its exited state.
+    const legacyTerminal = session?.kind === 'pty' && 终端们.find(t => t.sessionId === sessionId)
+    if (legacyTerminal) { setDockSessionId(legacyTerminal.sessionId); return }
     const 活着的 = 终端们.find((t) => t.state !== "exited")
     if (活着的) {
       setDockSessionId(活着的.sessionId)
@@ -3934,22 +3940,39 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     说没了: () => note(t("那段对话已经不在了（可能已归档或删除）")),
   })
 
-  const returnToTerminalConversation = async () => {
+  /** Recover an old direct PTY selection without leaving a deleted/hidden terminal as the page. */
+  const leaveLegacyTerminal = () => {
+    const id = $activeSessionId.get()
+    const all = [...$sessions.get(), ...$tempSessions.get()]
+    if (!all.some(s => s.sessionId === id && s.kind === 'pty')) { setDockOpen(false); return }
+    const candidates = [$终端归属.get().get(id!), $terminalAgentSessions.get().get(id!)]
+    const target = candidates.map(sid => all.find(s => s.sessionId === sid && s.kind !== 'pty' && !s.archivedAt)).find(Boolean)
+    setDockOpen(false)
+    if (target) setActiveProjectId(target.projectId)
+    setActiveSessionId(target?.sessionId)
+    setView('conversation')
+  }
+  const returnToTerminalConversation = async (legacyId?: string) => {
     const request = ++terminalIntent.current
-    const terminalId = $dockSessionId.get(), owner = $activeSessionId.get(), project = $activeProjectId.get()
-    if ($view.get() !== 'conversation' || !terminalId || terminalId !== currentTerminalId) { setDockOpen(false); return }
-    const current = () => request === terminalIntent.current && $dockOpen.get() && $dockSessionId.get() === terminalId
+    const terminalId = legacyId ?? $dockSessionId.get(), owner = $activeSessionId.get(), project = $activeProjectId.get()
+    const legacy = session?.kind === 'pty' && owner === terminalId
+    if ($view.get() !== 'conversation' || !terminalId || !legacyId && terminalId !== currentTerminalId) {
+      if (legacy) leaveLegacyTerminal(); else setDockOpen(false)
+      return
+    }
+    const current = () => request === terminalIntent.current && (Boolean(legacyId) || $dockOpen.get() && $dockSessionId.get() === terminalId)
       && $activeSessionId.get() === owner && $activeProjectId.get() === project && $view.get() === 'conversation'
     setReturningTerminalId(terminalId)
     try {
       const state = await client.get<TerminalAgentState>('getTerminalAgentMode', { terminalId })
       if (!current()) return
       if (state.mode === 'starting' || state.mode === 'stopping') { note(t("终端模式正在切换，请稍后重试")); return }
-      if (!state.sessionId) { setDockOpen(false); return }
+      if (!state.sessionId) { if (legacy) leaveLegacyTerminal(); else setDockOpen(false); return }
       const targetSessions = state.projectId
         ? await client.get<SessionSummary[]>('listSessions', { projectId: state.projectId }) : undefined
       if (!current()) return
       if (targetSessions && !targetSessions.some(s => s.sessionId === state.sessionId && !s.archivedAt)) {
+        if (legacy) leaveLegacyTerminal()
         note(t("那段对话已经不在了（可能已归档或删除）")); return
       }
       if (state.projectId && !$projects.get().some(p => p.projectId === state.projectId)) await loadProjects(client)
@@ -3967,9 +3990,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           setDockOpen(false)
           route.切到(id, state.projectId ?? projectId)
         },
-        说没了: () => { if (current()) route.说没了() },
+        说没了: () => { if (current()) { if (legacy) leaveLegacyTerminal(); route.说没了() } },
       })
-    } catch (error) { if (current()) fail(error) }
+    } catch (error) { if (current()) { if (legacy) leaveLegacyTerminal(); fail(error) } }
     finally { if (request === terminalIntent.current) setReturningTerminalId(id => id === terminalId ? undefined : id) }
   }
 
@@ -5023,7 +5046,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 侧栏「会话」那一组的也不画（与坞的 `t:` 同一个判据；宿主可能是占着临时根的普通项目，只看 `temporary` 会漏）
     if (!远端 && (!项目 || 项目.temporary || 在会话那一组(session, tasks))) return null
     // 远端会话住在 `tempSessions`（2026-08-23 审查抓的：只筛 `sessions` 时远端那一条分栏永远是空的）
-    const 同处 = (远端 ? tempSessions : sessions).filter((x) => !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
+    const 同处 = (远端 ? tempSessions : sessions).filter((x) => 能进坞(x) && !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
     if (!同处.some(x => x.sessionId === session.sessionId)) 同处.push(session)
     return (
       <SessionTabs
@@ -5552,15 +5575,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 这一支曾经是「PTY 会话铺满主区」（2026-08-09 作者试用后定的），
              * 现在终端有了自己的家：对话区底下那条 dock。
              * 留着这一支的唯一理由是**旧会话**——数据库里还躺着当初那种
-             * 占满主区的 pty 会话，选中它时得给一句话，而不是一片空白。
+             * 占满主区的 pty 会话。已落入旧入口时，必须能打开同一终端或返回真实会话/首页。
              */
             <div className="conversation empty-conv">
-              <p className="empty">
-                {t("这是一段终端会话。终端现在在对话区下面那一条里——")}
-                <Button variant="text" size="inline" onClick={toggleDock}>
-                  {t("打开面板")}
-                </Button>
-              </p>
+              <EmptyState title={t("终端会话")}
+                description={t("可以重新打开这个终端，或返回会话继续交流。")}
+                action={<div className="state-actions">
+                  <Button variant="primary" size="sm" onClick={() => { setDockSessionId(session.sessionId); setDockOpen(true) }}>{t("打开终端")}</Button>
+                  <Button variant="secondary" size="sm" disabled={returningTerminalId === session.sessionId}
+                    onClick={() => { void returnToTerminalConversation(session.sessionId) }}>{t("返回会话")}</Button>
+                </div>} />
             </div>
           ) : sessionId && !session ? (
             /**
@@ -5822,6 +5846,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  * 停失败会走 `fail` 出声——**但那时它已经不在 dock 里了**，
                  * 这是有意的：人要的是「这个终端别再占着我的面板」。
                  */
+                if ($activeSessionId.get() === id && session?.kind === 'pty') leaveLegacyTerminal()
                 设关掉的终端((前) => new Set(前).add(id))
                 const 下一个 = 终端们.find((x) => x.sessionId !== id && x.state !== "exited")
                 if ($dockSessionId.get() === id) { terminalIntent.current++; setDockSessionId(下一个?.sessionId) }

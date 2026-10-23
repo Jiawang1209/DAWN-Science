@@ -1,0 +1,404 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/terminal-navigation-recovery.spec.ts
+
+Running 7 tests using 1 worker
+
+(node:20470) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58008/01a9680e-17e4-40eb-9982-e634ef1d2206
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/terminal-navigation-recovery.spec.ts:37:1 › PTYs never appear in conversation tabs, including after returning from DAWN (29.0s)
+(node:21132) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58127/7a566069-dea1-4ac5-bf53-fbd1e4778f75
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  2 e2e/terminal-navigation-recovery.spec.ts:43:1 › closing the final conversation with a live PTY returns to a usable welcome page (7.9s)
+(node:21912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58228/3e9924a8-6f69-4891-aceb-f11bba22bd1e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  3 e2e/terminal-navigation-recovery.spec.ts:54:1 › closing a conversation picks a real sibling and preserves its draft, never a PTY (8.2s)
+(node:22566) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58326/ccff2d43-4d11-4235-a336-991b3575caa3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  4 e2e/terminal-navigation-recovery.spec.ts:64:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner (29.4s)
+(node:23298) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58503/38a59050-0c62-4076-bcea-6cb4a6902c7d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  5 e2e/terminal-navigation-recovery.spec.ts:75:1 › the legacy page can return directly to its conversation without opening a terminal (30.0s)
+(node:24302) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58729/3a66426f-4244-45ab-a513-4f53789c8723
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  6 e2e/terminal-navigation-recovery.spec.ts:82:1 › closing the selected legacy terminal leaves a real page instead of a deleted-session loader (30.3s)
+(node:25172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58896/fb22965a-3965-46c8-a090-a6832232b3d8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  7 e2e/terminal-navigation-recovery.spec.ts:92:1 › the legacy DAWN page returns directly to its own Agent conversation (33.0s)
+
+
+  1) e2e/terminal-navigation-recovery.spec.ts:37:1 › PTYs never appear in conversation tabs, including after returning from DAWN
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.session-tab[data-session="e976071c-34f0-4e65-ae1d-a7281bb88c9b"]')
+    Expected: 0
+    Received: 1
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 25000ms
+      - waiting for locator('.session-tab[data-session="e976071c-34f0-4e65-ae1d-a7281bb88c9b"]')
+        54 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      37 | test('PTYs never appear in conversation tabs, including after returning from DAWN', async ({ dawn }) => {
+      38 |   const { page } = dawn, target = await setup(page)
+    > 39 |   await expect(page.locator(`.session-tab[data-session="${target.terminalId}"]`)).toHaveCount(0)
+         |                                                                                   ^
+      40 |   await expect(page.getByRole('tablist', { name: '同一处的会话' }).getByRole('tab')).toHaveCount(1)
+      41 | })
+      42 |
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:39:83
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-3709e-g-after-returning-from-DAWN/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-3709e-g-after-returning-from-DAWN/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-3709e-g-after-returning-from-DAWN/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-3709e-g-after-returning-from-DAWN/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/terminal-navigation-recovery.spec.ts:43:1 › closing the final conversation with a live PTY returns to a usable welcome page
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.welcome')
+    Expected: visible
+    Timeout: 4000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 4000ms
+      - waiting for locator('.welcome')
+
+
+      44 |   const { page } = dawn; await setup(page)
+      45 |   await page.locator('.session-tab-wrap.current .session-tab-close').click()
+    > 46 |   await expect(page.locator('.welcome')).toBeVisible({ timeout: 4000 })
+         |                                          ^
+      47 |   await page.locator('.welcome .attach-trigger').click()
+      48 |   await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+      49 |   await expect(page.locator('.dock .term-host')).toBeVisible()
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:46:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-a61a5-ns-to-a-usable-welcome-page/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-a61a5-ns-to-a-usable-welcome-page/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-a61a5-ns-to-a-usable-welcome-page/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-a61a5-ns-to-a-usable-welcome-page/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) e2e/terminal-navigation-recovery.spec.ts:54:1 › closing a conversation picks a real sibling and preserves its draft, never a PTY
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator: locator('.composer-card textarea.composer-field')
+    Expected: "SIBLING_DRAFT_KEEP"
+    Timeout: 4000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveValue" with timeout 4000ms
+      - waiting for locator('.composer-card textarea.composer-field')
+
+
+      58 |   await expect(page.locator('.composer-card textarea.composer-field')).toHaveValue('')
+      59 |   await page.locator('.session-tab-wrap.current .session-tab-close').click()
+    > 60 |   await expect(page.locator('.composer-card textarea.composer-field')).toHaveValue('SIBLING_DRAFT_KEEP', { timeout: 4000 })
+         |                                                                        ^
+      61 |   await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', original.owner)
+      62 | })
+      63 |
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:60:72
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-56921-erves-its-draft-never-a-PTY/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-56921-erves-its-draft-never-a-PTY/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-56921-erves-its-draft-never-a-PTY/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-56921-erves-its-draft-never-a-PTY/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) e2e/terminal-navigation-recovery.spec.ts:64:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.main').getByRole('button', { name: '打开终端', exact: true })
+    Expected: 1
+    Received: 0
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 25000ms
+      - waiting for locator('.main').getByRole('button', { name: '打开终端', exact: true })
+        53 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      64 | test('an already selected legacy PTY reopens the same terminal and returns to its Normal owner', async ({ dawn }) => {
+      65 |   const { page } = dawn, target = await legacy(page)
+    > 66 |   await expect(page.locator('.main').getByRole('button', { name: '打开终端', exact: true })).toHaveCount(1)
+         |                                                                                          ^
+      67 |   await page.locator('.main').getByRole('button', { name: '打开终端', exact: true }).click()
+      68 |   await expect(page.locator('.dock .term-host')).toBeVisible()
+      69 |   const selected = await page.evaluate(() => Object.keys(JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}')))
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:66:90
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) e2e/terminal-navigation-recovery.spec.ts:75:1 › the legacy page can return directly to its conversation without opening a terminal
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.main').getByRole('button', { name: '返回会话', exact: true })
+    Expected: 1
+    Received: 0
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 25000ms
+      - waiting for locator('.main').getByRole('button', { name: '返回会话', exact: true })
+        53 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      75 | test('the legacy page can return directly to its conversation without opening a terminal', async ({ dawn }) => {
+      76 |   const { page } = dawn, target = await legacy(page)
+    > 77 |   await expect(page.locator('.main').getByRole('button', { name: '返回会话', exact: true })).toHaveCount(1)
+         |                                                                                          ^
+      78 |   await page.locator('.main').getByRole('button', { name: '返回会话', exact: true }).click()
+      79 |   await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', target.owner)
+      80 | })
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:77:90
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-a2090--without-opening-a-terminal/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-a2090--without-opening-a-terminal/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-a2090--without-opening-a-terminal/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-a2090--without-opening-a-terminal/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) e2e/terminal-navigation-recovery.spec.ts:82:1 › closing the selected legacy terminal leaves a real page instead of a deleted-session loader
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.main').getByRole('button', { name: '打开终端', exact: true })
+    Expected: 1
+    Received: 0
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 25000ms
+      - waiting for locator('.main').getByRole('button', { name: '打开终端', exact: true })
+        53 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      82 |   const selected = await page.evaluate(() => Object.keys(JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}')))
+      83 |   expect(selected).toEqual([target.terminalId])
+    > 84 |   await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+         |                                                                                         ^
+      85 |   await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', target.owner)
+      86 | })
+      87 |
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:84:90
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-0aad6-of-a-deleted-session-loader/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-0aad6-of-a-deleted-session-loader/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-0aad6-of-a-deleted-session-loader/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-0aad6-of-a-deleted-session-loader/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) e2e/terminal-navigation-recovery.spec.ts:92:1 › the legacy DAWN page returns directly to its own Agent conversation
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.main').getByRole('button', { name: '返回会话', exact: true })
+    Expected: 1
+    Received: 0
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 25000ms
+      - waiting for locator('.main').getByRole('button', { name: '返回会话', exact: true })
+        54 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      92 | })
+      93 |
+    > 94 | test('the legacy page can return directly to its conversation without opening a terminal', async ({ dawn }) => {
+         |                                                                                          ^
+      95 |   const { page } = dawn, target = await legacy(page)
+      96 |   await expect(page.locator('.main').getByRole('button', { name: '返回会话', exact: true })).toHaveCount(1)
+      97 |   await page.locator('.main').getByRole('button', { name: '返回会话', exact: true }).click()
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:94:90
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-3de40--its-own-Agent-conversation/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-3de40--its-own-Agent-conversation/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-3de40--its-own-Agent-conversation/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-3de40--its-own-Agent-conversation/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7 failed
+    e2e/terminal-navigation-recovery.spec.ts:37:1 › PTYs never appear in conversation tabs, including after returning from DAWN
+    e2e/terminal-navigation-recovery.spec.ts:43:1 › closing the final conversation with a live PTY returns to a usable welcome page
+    e2e/terminal-navigation-recovery.spec.ts:54:1 › closing a conversation picks a real sibling and preserves its draft, never a PTY
+    e2e/terminal-navigation-recovery.spec.ts:64:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner
+    e2e/terminal-navigation-recovery.spec.ts:75:1 › the legacy page can return directly to its conversation without opening a terminal
+    e2e/terminal-navigation-recovery.spec.ts:82:1 › closing the selected legacy terminal leaves a real page instead of a deleted-session loader
+    e2e/terminal-navigation-recovery.spec.ts:92:1 › the legacy DAWN page returns directly to its own Agent conversation

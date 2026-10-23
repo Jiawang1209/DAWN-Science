@@ -1,0 +1,72 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/terminal-navigation-recovery.spec.ts --grep an already selected legacy PTY
+
+Running 1 test using 1 worker
+
+(node:26363) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209407:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209478:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203354:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203344:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209961:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209407:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209478:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203354:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203344:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209961:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209407:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209478:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203354:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203344:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209961:109
+[主进程] Debugger ending on ws://127.0.0.1:59147/08cdc159-ce2f-4296-b35f-0ff30374cdcd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/terminal-navigation-recovery.spec.ts:77:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner (29.5s)
+
+
+  1) e2e/terminal-navigation-recovery.spec.ts:77:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.dock .xterm-screen')
+    Expected substring: "LIVE_RECOVERY_OUTPUT_OK"
+    Received string:    "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$nvm is not compatible with the \"npm_config_prefix\" environment variable: currently set to \"/Users/liuyue/.local\"Run `unset npm_config_prefix` to unset it.liuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-f7c6Dy/workspace$                              "
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for locator('.dock .xterm-screen')
+        54 × locator resolved to <div class="xterm-screen">…</div>
+           - unexpected value "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$nvm is not compatible with the "npm_config_prefix" environment variable: currently set to "/Users/liuyue/.local"Run `unset npm_config_prefix` to unset it.liuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-f7c6Dy/workspace$                              "
+
+
+      89 |   await page.locator('.dock .xterm-helper-textarea').focus()
+      90 |   await page.keyboard.type("printf 'LIVE_RECOVERY_'; printf 'OUTPUT_OK\\n'"); await page.keyboard.press('Enter')
+    > 91 |   await expect(page.locator('.dock .xterm-screen')).toContainText('LIVE_RECOVERY_OUTPUT_OK')
+         |                                                     ^
+      92 | })
+      93 |
+      94 | test('the legacy page can return directly to its conversation without opening a terminal', async ({ dawn }) => {
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-navigation-recovery.spec.ts:91:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-navigation-recove-266bf-returns-to-its-Normal-owner/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/terminal-navigation-recovery.spec.ts:77:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner

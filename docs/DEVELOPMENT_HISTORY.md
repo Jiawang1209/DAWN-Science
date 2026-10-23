@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-23 — 终端分支合入本地 main
+
+- **Type**: chore
+- **Motivation**: 用户授权整体复核后仅合并本地 main，不推送、不替换安装版。
+- **What**: 本地 main 从38959c57快进至功能与修正提交0ec19060，保留功能分支及证据；从主目录重建并打开隔离Electron开发预览。
+- **Verification**: 合并前完整构建/类型、5003单测与42项Electron通过；合并后主目录类型/完整构建、5003单测（473文件，10跳过）及9项Electron复验通过。主目录真实deepseek-flash响应，返回/重开仍为同一会话与终端，任务数不变；源配置和凭证哈希不变。详见docs/reviews/2026-10-23-terminal-main-review.md及artifacts/terminal-main-review。
+- **Impact**: 仅本地 main 集成与独立开发预览；未推送、未替换安装版，跨平台和安装包不在本轮验收范围。
+
 ### 2026-10-23 — 终端分支整体复核与图片原图缓存修正
 
 - **Type**: fix

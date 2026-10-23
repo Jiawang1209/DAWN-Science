@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-23T15:10:00.321Z",
+  "codeCommit": "0ec19060",
+  "entry": "/Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js",
+  "pid": 94676,
+  "mode": "dawn",
+  "terminalId": "ad5f24dd-6b57-43d5-9448-42a8afe53aa8",
+  "sessionId": "46d1ad2c-8309-4d16-ae7e-591c845d98be",
+  "selection": {
+    "provider": "deepseek",
+    "model": "deepseek-flash"
+  },
+  "realReply": "本地合并预览就绪",
+  "sameContext": true,
+  "taskCountBefore": 20,
+  "taskCountAfter": 20,
+  "sourceProvidersUnchanged": true,
+  "sourceCredentialsUnchanged": true
+}

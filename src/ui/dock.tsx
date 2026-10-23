@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { WorkbenchClient } from './client.js'
 /**
  * 原生终端工作区。对话视图中占满主区，只显示一份 xterm；
@@ -44,6 +44,7 @@ export function TerminalDock({
   fullPage?: boolean | undefined
 }) {
   const chunks = useStore($dockChunks)
+  const returnTip = useId()
 
   return (
     <section className={`dock${fullPage ? " terminal-workspace" : ""}`} aria-label={t("终端")}>
@@ -77,19 +78,14 @@ export function TerminalDock({
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
-        {/**
-          * **可见文案与可及名字一致**（2026-08-13）。
-          *
-          * 此前是「可见『收起』+ `aria-label` 说『收起终端』」——
-          * `aria-label` 会压过可见文案，于是**眼睛读到的与读屏念到的不是一句话**，
-          * 而按名字找元素时两个名字还互为子串。
-          * 一颗按钮只该有一个名字。
-          */}
         {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} /> : null}
-        <Button variant="ghost" size={fullPage ? "icon" : "sm"} onClick={onCloseDock}
-          {...(fullPage ? { 'aria-label': t("返回对话") } : {})}>
-          {fullPage ? <返回图标 /> : t("收起面板")}
-        </Button>
+        {fullPage ? <span className="conv-action-tip-wrap terminal-return">
+          <Button variant="outline" size="icon" className="terminal-return-button" onClick={onCloseDock}
+            aria-label={t("返回会话")} aria-describedby={returnTip}>
+            <返回图标 />
+          </Button>
+          <span id={returnTip} role="tooltip" className="conv-action-tip">{t("返回会话")}</span>
+        </span> : <Button variant="ghost" size="sm" onClick={onCloseDock}>{t("收起面板")}</Button>}
       </div>
 
       <div className="dock-content">

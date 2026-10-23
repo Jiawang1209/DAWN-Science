@@ -159,7 +159,7 @@ test("收起之后 dock 就没了", async ({ dawn }) => {
   const { page } = dawn
   await 切换终端面板(page)
   await expect(page.locator(".dock")).toBeVisible()
-  await page.locator(".dock").getByRole("button", { name: "返回对话" }).click()
+  await page.locator(".dock").getByRole("button", { name: "返回会话", exact: true }).click()
   await expect(page.locator(".dock")).toHaveCount(0)
 })
 

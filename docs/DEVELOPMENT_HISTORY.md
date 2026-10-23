@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-23 — DeepSeek Flash 终端图片真实验收
+
+- **Type**: docs
+- **Motivation**: 用已配置的 deepseek-flash 补验终端发图、返回图片显示，以及切回会话后继续问原图。
+- **What**: 仅补实际验收与证据，不改功能代码；复用原加密凭证、保持视觉转述关闭。新随机图经真实剪贴板发送，Flash 原生识图；实际调用工具生成 PNG 并回读；图形会话同 ID 续问原图。
+- **Verification**: 随机代号、颜色与形状回答正确；工具生成图表缩略/放大与实际 PNG 哈希一致；GUI 不重传原图续问正确、任务数不变。补验拖入移除、原主人草稿、重开终端与源配置/凭证哈希。详见docs/reviews/2026-10-23-deepseek-terminal-images-verification.md。
+- **Impact**: 实际预览停在 deepseek-flash DAWN 模式供试用，未合并、推送或替换安装版；本轮只做真实 API 专项验证，未重跑上轮全量测试。
+
 ### 2026-10-23 — DAWN 终端粘贴拖图与缩略图放大
 
 - **Type**: feat

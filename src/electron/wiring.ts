@@ -1248,6 +1248,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })()
 
   const backend = createWorkbenchBackend({
+    terminalImages: {
+      read: (id, revision) => cliHost?.attachments(id, revision) ?? { revision: 0, pending: [] },
+      update: async request => { if (!cliHost) throw new Error('本次运行没有装配 DAWN CLI'); return cliHost.updateAttachments(request) },
+      image: (id, imageId) => { if (!cliHost) throw new Error('本次运行没有装配 DAWN CLI'); return cliHost.image(id, imageId) },
+    },
     terminalAgentMode: {
       state: id => {
         terminalControl.state(id)
@@ -1648,7 +1653,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           if (inherited && !agentId) await backend.setSessionModel({ sessionId, ...inherited })
           await backend.acquireLease({ sessionId, holder: 'user' })
           const model = nativeRuntime.currentModel(sessionId)
-          return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : `${selected.provider}/${selected.model}`, directory: workspace,
+          return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : `${selected.provider}/${selected.model}`, directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
             call: async (operation, input) => {
               const response = await server.handle(operation, input)
               if (!response.ok) throw new Error(response.error.message)

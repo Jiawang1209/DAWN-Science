@@ -8,6 +8,7 @@
  * 组件只做三件事：建实例、把字节写进去、把键盘敲的送出来。
  * **不解析、不过滤字节**——那是 xterm 的职责，中间再加一层只会引入第二套解释。
  */
+import { terminalImageDecorations, type TerminalPicture } from './terminal-image-decorations.js'
 import { useEffect, useRef } from "react"
 import { useStore } from "@nanostores/react"
 import { $theme, resolveTheme } from "./state/theme.js"
@@ -41,12 +42,17 @@ export function TerminalPane({
   chunks,
   onInput,
   onResize,
+  readImage,
+  onOpenImage,
 }: {
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
   chunks: readonly string[]
   onInput?: ((data: string) => void) | undefined
+  readImage?: ((id: string) => Promise<TerminalPicture>) | undefined
+  onOpenImage?: ((image: TerminalPicture) => void) | undefined
   onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
+  const imageRef = useRef({ readImage, onOpenImage }); imageRef.current = { readImage, onOpenImage }
   const host = useRef<HTMLDivElement>(null)
   const term = useRef<import("@xterm/xterm").Terminal | undefined>(undefined)
   const fit = useRef<import("@xterm/addon-fit").FitAddon | undefined>(undefined)
@@ -75,6 +81,7 @@ export function TerminalPane({
   useEffect(() => {
     const el = host.current
     if (!el) return
+    let disposeImages: (() => void) | undefined
     let disposed = false
     let instance: import("@xterm/xterm").Terminal | undefined
 
@@ -131,6 +138,8 @@ export function TerminalPane({
       // 输出里的 URL 可点。agent 经常吐出文档链接与报错页地址
       instance.loadAddon(new WebLinksAddon())
       instance.open(el)
+      if (imageRef.current.readImage) disposeImages = terminalImageDecorations(instance,
+        id => imageRef.current.readImage!(id), image => imageRef.current.onOpenImage?.(image))
       instance.onResize(size => resizeRef.current?.(size.cols, size.rows))
       addon.fit()
       instance.onData((d) => inputRef.current?.(d))
@@ -163,6 +172,7 @@ export function TerminalPane({
     return () => {
       disposed = true
       window.removeEventListener("resize", onResize)
+      disposeImages?.()
       instance?.dispose()
       term.current = undefined
       fit.current = undefined

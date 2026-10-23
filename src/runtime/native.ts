@@ -602,6 +602,10 @@ export class NativeRuntime implements AgentRuntime {
     const model = this.sessions.get(sessionId)?.session.model
     return model ? {provider: model.provider, model: model.id} : undefined
   }
+  canReadImages(sessionId: string): boolean {
+    const model = this.sessions.get(sessionId)?.session.model
+    return Boolean(model && (model.input?.includes('image') || this.opts.vision?.()))
+  }
   botTask(sessionId: string, teamId: string, taskId: string) {
     const control = this.botTeams.get(sessionId)
     if (!control || !/^[a-zA-Z0-9_-]+$/.test(teamId)) throw new UserFacingError("所属团队不可用")

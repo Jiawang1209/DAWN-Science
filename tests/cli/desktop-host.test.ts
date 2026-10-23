@@ -4,6 +4,43 @@ import { connectDesktopCli } from '../../src/cli/desktop-client.js'
 import { mkdtempSync, rmSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import type { AgentEvent } from '../../src/runtime/types.js'
+
+it('keeps large kernel images out of the bounded CLI socket and sends only a scoped image ID', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-image-wire-'))
+  let publish!: (event: AgentEvent) => void
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: root, call: async () => ({}), attach: sink => { publish = sink; return () => {} }, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t'), client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    const images: string[] = []
+    client.attach(event => { if (event.kind === 'desktop_image') images.push(event.id) })
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg==', 'base64')
+    const data = Buffer.concat([png, Buffer.alloc(4 * 1024 * 1024)]).toString('base64')
+    publish({ kind: 'kernel_output', sessionId: 'owned', entry: { kind: 'display', mediaType: 'image/png', data, bytes: data.length, alsoAvailable: [], provenance: {} as never } })
+    await vi.waitFor(() => expect(images).toHaveLength(1))
+    await expect(client.call('acquireLease', { sessionId: 'owned', holder: 'user' })).resolves.toEqual({})
+    expect(host.image('t', images[0]!).thumbnail).toMatch(/^data:image\/png;base64,/)
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
+it('binds staged pictures to the authenticated CLI and sends them only with its next successful message', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-image-host-'))
+  const call = vi.fn(async () => ({})), host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: root, call, attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t'), client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    const data = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
+    await expect(host.updateAttachments({ terminalId: 't', sessionId: 'another', action: 'add', images: [{ name: 'a.png', data, mimeType: 'image/png' }] })).rejects.toThrow()
+    await host.updateAttachments({ terminalId: 't', sessionId: 'owned', action: 'add', images: [{ name: 'a.png', data, mimeType: 'image/png' }] })
+    expect(host.attachments('t').pending).toHaveLength(1)
+    await client.call('writeToSession', { sessionId: 'owned', data: '分析原图', as: 'user' })
+    expect(call.mock.calls.at(-1)).toEqual(['writeToSession', { sessionId: 'owned', data: '分析原图', as: 'user', images: [{ from: 'bytes', data, mimeType: 'image/png' }] }])
+    expect(host.attachments('t').pending).toHaveLength(0)
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
 
 it('authenticates local clients, exposes only a scoped session, never sends credentials, and cleans up on disconnect', async () => {
   const root = mkdtempSync(join(tmpdir(), 'dawn-host-test-'))

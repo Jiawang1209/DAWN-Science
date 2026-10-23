@@ -22,3 +22,15 @@ export const TerminalAgentStateSchema = z.object({
   selection: z.object({ provider: z.string().min(1), model: z.string().min(1) }).optional(),
 })
 export type TerminalAgentState = z.infer<typeof TerminalAgentStateSchema>
+
+export const TerminalAttachmentsSchema = z.object({
+  sessionId: z.string().min(1).optional(), revision: z.number().int().nonnegative(),
+  pending: z.array(z.object({ id: z.uuid(), name: z.string(), thumbnail: z.string().startsWith('data:image/') })).optional(),
+})
+export const TerminalAttachmentUpdateSchema = z.discriminatedUnion('action', [
+  z.object({ terminalId: z.string().min(1), sessionId: z.string().min(1), action: z.literal('add'),
+    images: z.array(z.object({ name: z.string().max(120), mimeType: z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/gif']), data: z.string().min(1).max(14_000_000) }).strict()).min(1).max(4) }).strict(),
+  z.object({ terminalId: z.string().min(1), sessionId: z.string().min(1), action: z.literal('remove'), imageId: z.uuid() }).strict(),
+])
+
+export type TerminalAttachmentUpdate = z.infer<typeof TerminalAttachmentUpdateSchema>

@@ -1,0 +1,61 @@
+{
+  "target": {
+    "terminalId": "d6640dbc-f840-4952-b625-b577dfa3d4ee",
+    "mode": "dawn",
+    "sessionId": "982dd202-e17b-46a2-8dc6-1d58501f6ded",
+    "projectId": "1b377769-ebad-411b-b553-54f67f1d965b",
+    "selection": {
+      "provider": "moonshotai-cn",
+      "model": "kimi-k2.6"
+    }
+  },
+  "owner": "695324e8-21bb-49b2-a9be-3ce5a0cfaf13",
+  "expected": {
+    "code": "PIC-F8FD5E",
+    "left": "blue square",
+    "right": "red triangle"
+  },
+  "terminalText": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project$ dawn                   \nDAWN Science\nAgent · moonshotai-cn/kimi-k2.6\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请观察附图，告诉我左右两侧的形状、颜色，以及图片底部的完整英文代号。只回答看到的内容，不读文件、不调用工具。\n形状观察.png\n左侧：蓝色正方形  \n右侧：红色三角形  \n底部英文代号：**PIC-F8FD5E**\nDAWN ›  ",
+  "turns": [
+    {
+      "who": "user",
+      "text": "请观察附图，告诉我左右两侧的形状、颜色，以及图片底部的完整英文代号。只回答看到的内容，不读文件、不调用工具。",
+      "final": true,
+      "imageCount": 1
+    },
+    {
+      "who": "agent",
+      "text": "左侧：蓝色正方形  \n右侧：红色三角形  \n底部英文代号：**PIC-F8FD5E**",
+      "final": true,
+      "imageCount": 0
+    },
+    {
+      "who": "user",
+      "text": "继续刚才的原图：底部的代号是什么？右边图形是什么颜色、什么形状？不用重新上传，也不调用工具。",
+      "final": true,
+      "imageCount": 0
+    },
+    {
+      "who": "agent",
+      "text": "底部的代号是 **PIC-F8FD5E**。  \n右侧图形是 **红色**，形状是 **三角形**。",
+      "final": true,
+      "imageCount": 0
+    }
+  ],
+  "sameSession": true,
+  "originalDraftPreserved": true,
+  "finalTerminalText": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nDAWN Science\nAgent · moonshotai-cn/kimi-k2.6\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请观察附图，告诉我左右两侧的形状、颜色，以及图片底部的完整英文代号。只回答看到的内容，不读文件、不调用工具。\n形状观察.png\n左侧：蓝色正方形  \n右侧：红色三角形  \n底部英文代号：**PIC-F8FD5E**\n底部的代号是 **PIC-F8FD5E**。  \n右侧图形是 **红色**，形状是 **三角形**。\nDAWN › 请直接用 Markdown 图片展示已经存在的 terminal-agent-bars.png，一句话说明，不调用工具。\n![terminal-agent-bars.png](terminal-agent-bars.png)  \n该图为终端代理栏（terminal-agent-bars）的示意。\nterminal-agent-bars.png\nDAWN ›  ",
+  "finalState": {
+    "mode": "dawn",
+    "sessionId": "982dd202-e17b-46a2-8dc6-1d58501f6ded",
+    "projectId": "1b377769-ebad-411b-b553-54f67f1d965b",
+    "selection": {
+      "provider": "moonshotai-cn",
+      "model": "kimi-k2.6"
+    }
+  },
+  "sourceUnchanged": {
+    "providers.yaml": true,
+    "credentials.json": true
+  }
+}

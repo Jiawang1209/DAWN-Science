@@ -11,6 +11,9 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    getTerminalAgentAttachments: async () => ({ revision: 0, pending: [] }),
+    updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },
+    getTerminalAgentImage: async () => { throw new Error('Terminal unavailable in this fixture') },
     getTerminalAgentMode: async () => ({ mode: 'normal' }),
     setTerminalAgentMode: async () => ({ mode: 'normal' }),
     getTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },

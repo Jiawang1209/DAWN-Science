@@ -1,0 +1,349 @@
+{
+  "target": {
+    "terminalId": "1778514d-4439-49eb-93cf-fb5132278d13",
+    "mode": "dawn",
+    "sessionId": "900de3ad-55ff-4e44-942e-cbf9dbb5d2ca",
+    "projectId": "1b377769-ebad-411b-b553-54f67f1d965b",
+    "selection": {
+      "provider": "moonshotai-cn",
+      "model": "kimi-k2.6"
+    }
+  },
+  "ownerSessionId": "734d420c-31da-4814-9147-cdc60d955763",
+  "expected": {
+    "code": "PIC-F8FD5E",
+    "left": "blue square",
+    "right": "red triangle"
+  },
+  "guiSnapshot": {
+    "sessionId": "900de3ad-55ff-4e44-942e-cbf9dbb5d2ca",
+    "kind": "native",
+    "revision": 32,
+    "items": [
+      {
+        "type": "notice",
+        "id": "model-1",
+        "text": "已换到 moonshotai-cn · kimi-k2.6——上下文不变，接下来由它来答"
+      },
+      {
+        "type": "turn",
+        "id": "u2",
+        "who": "user",
+        "text": "请观察附图。告诉我左边和右边分别是什么颜色、什么形状，以及图片底部的英文代号。只回答你确实看见的内容，不读文件、不调用工具。",
+        "final": true,
+        "at": 1792765459502,
+        "images": [
+          "data:image/png;base64,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"
+        ]
+      },
+      {
+        "type": "turn",
+        "id": "a3",
+        "who": "agent",
+        "text": "左边是**蓝色**的**正方形**，右边是**红色**的**三角形**。  \n图片底部的英文代号是：**PIC-F8FD5E**",
+        "final": true,
+        "by": "moonshotai-cn",
+        "thinking": "用户要求我观察附图，描述左边和右边分别是什么颜色、什么形状，以及图片底部的英文代号。用户明确说\"只回答你确实看见的内容，不读文件、不调用工具\"。\n\n看图片：\n- 左边是一个蓝色的正方形\n- 右边是一个红色的三角形\n- 底部有文字 \"PIC-F8FD5E\"\n\n我应该直接回答，不需要调用任何工具。",
+        "thinkingMs": 908,
+        "usage": {
+          "input": 15643,
+          "output": 117,
+          "cacheRead": 0
+        }
+      },
+      {
+        "type": "turn",
+        "id": "u4",
+        "who": "user",
+        "text": "继续刚才那张图：底部的完整代号是什么？右侧图形的颜色和形状是什么？不用重新上传图片，也不要调用工具。",
+        "final": true,
+        "at": 1792765491676
+      },
+      {
+        "type": "turn",
+        "id": "a5",
+        "who": "agent",
+        "text": "底部的完整代号是：**PIC-F8FD5E**  \n右侧图形是：**红色三角形**",
+        "final": true,
+        "by": "moonshotai-cn",
+        "thinking": "用户再次询问同一张图的信息：\n1. 底部的完整代号是什么？\n2. 右侧图形的颜色和形状是什么？\n\n根据上一轮的图片观察，我已经看到了图片内容：\n- 底部代号：PIC-F8FD5E\n- 右侧图形：红色三角形\n\n用户要求不用重新上传图片，也不要调用工具。我可以直接基于之前看到的内容回答。\n\n回答应简洁明了。",
+        "thinkingMs": 1064,
+        "usage": {
+          "input": 1375,
+          "output": 104,
+          "cacheRead": 14336
+        }
+      }
+    ],
+    "terminal": "",
+    "terminalTrimmed": false,
+    "state": "alive",
+    "configOptions": [
+      {
+        "id": "dawn.permission",
+        "name": "权限",
+        "description": "只管这一段对话；设置里那个是全局默认",
+        "category": "mode",
+        "kind": "select",
+        "current": "inherit",
+        "options": [
+          {
+            "value": "inherit",
+            "name": "请求批准 · 跟随设置",
+            "description": "设置里改了，这段跟着变"
+          },
+          {
+            "value": "deny-risky",
+            "name": "自动拦截",
+            "description": "改 data/raw/、写到工作区外、删除、装包、联网、git push 直接拒绝"
+          },
+          {
+            "value": "ask-risky",
+            "name": "请求批准",
+            "description": "危险操作弹一张卡让你点「允许这一次」；拒绝 / 5 分钟没答都按拒，理由回给模型"
+          },
+          {
+            "value": "allow-all",
+            "name": "完全访问权限",
+            "description": "只拦硬拒清单（sudo、删到主目录 / 系统目录、凭据外传、强推）"
+          }
+        ]
+      },
+      {
+        "id": "dawn.plan",
+        "name": "生成方案",
+        "description": "开着时只看不改：先交分析方案，你批了再动手",
+        "category": "plan",
+        "kind": "boolean",
+        "current": "",
+        "options": []
+      },
+      {
+        "id": "dawn.thinking",
+        "name": "推理强度",
+        "description": "模型先想多久再答。越高越慢、越贵",
+        "category": "thought_level",
+        "kind": "select",
+        "current": "medium",
+        "options": [
+          {
+            "value": "minimal",
+            "name": "最少"
+          },
+          {
+            "value": "low",
+            "name": "低"
+          },
+          {
+            "value": "medium",
+            "name": "中"
+          },
+          {
+            "value": "high",
+            "name": "高"
+          },
+          {
+            "value": "xhigh",
+            "name": "更高"
+          },
+          {
+            "value": "max",
+            "name": "最高"
+          }
+        ]
+      }
+    ]
+  },
+  "generatedSnapshot": {
+    "sessionId": "900de3ad-55ff-4e44-942e-cbf9dbb5d2ca",
+    "kind": "native",
+    "revision": 69,
+    "items": [
+      {
+        "type": "notice",
+        "id": "model-1",
+        "text": "已换到 moonshotai-cn · kimi-k2.6——上下文不变，接下来由它来答"
+      },
+      {
+        "type": "turn",
+        "id": "u2",
+        "who": "user",
+        "text": "请观察附图。告诉我左边和右边分别是什么颜色、什么形状，以及图片底部的英文代号。只回答你确实看见的内容，不读文件、不调用工具。",
+        "final": true,
+        "at": 1792765459502,
+        "images": [
+          "data:image/png;base64,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"
+        ]
+      },
+      {
+        "type": "turn",
+        "id": "a3",
+        "who": "agent",
+        "text": "左边是**蓝色**的**正方形**，右边是**红色**的**三角形**。  \n图片底部的英文代号是：**PIC-F8FD5E**",
+        "final": true,
+        "by": "moonshotai-cn",
+        "thinking": "用户要求我观察附图，描述左边和右边分别是什么颜色、什么形状，以及图片底部的英文代号。用户明确说\"只回答你确实看见的内容，不读文件、不调用工具\"。\n\n看图片：\n- 左边是一个蓝色的正方形\n- 右边是一个红色的三角形\n- 底部有文字 \"PIC-F8FD5E\"\n\n我应该直接回答，不需要调用任何工具。",
+        "thinkingMs": 908,
+        "usage": {
+          "input": 15643,
+          "output": 117,
+          "cacheRead": 0
+        }
+      },
+      {
+        "type": "turn",
+        "id": "u4",
+        "who": "user",
+        "text": "继续刚才那张图：底部的完整代号是什么？右侧图形的颜色和形状是什么？不用重新上传图片，也不要调用工具。",
+        "final": true,
+        "at": 1792765491676
+      },
+      {
+        "type": "turn",
+        "id": "a5",
+        "who": "agent",
+        "text": "底部的完整代号是：**PIC-F8FD5E**  \n右侧图形是：**红色三角形**",
+        "final": true,
+        "by": "moonshotai-cn",
+        "thinking": "用户再次询问同一张图的信息：\n1. 底部的完整代号是什么？\n2. 右侧图形的颜色和形状是什么？\n\n根据上一轮的图片观察，我已经看到了图片内容：\n- 底部代号：PIC-F8FD5E\n- 右侧图形：红色三角形\n\n用户要求不用重新上传图片，也不要调用工具。我可以直接基于之前看到的内容回答。\n\n回答应简洁明了。",
+        "thinkingMs": 1064,
+        "usage": {
+          "input": 1375,
+          "output": 104,
+          "cacheRead": 14336
+        }
+      },
+      {
+        "type": "turn",
+        "id": "u6",
+        "who": "user",
+        "text": "请使用现有的 Python 创建一张有三个蓝色柱子的简单示例图，不安装任何依赖，保存成 terminal-agent-bars.png。请实际调用工具生成文件，并在最终回答中用 Markdown 图片引用这张图，让我在终端预览。",
+        "final": true,
+        "at": 1792765528610
+      },
+      {
+        "type": "tool",
+        "id": "run_code_0_3bb4ea28",
+        "name": "run_code",
+        "input": {
+          "language": "python",
+          "code": "import matplotlib.pyplot as plt\n\nfig, ax = plt.subplots(figsize=(5, 3))\nax.bar([1, 2, 3], [4, 7, 5], color='blue')\nax.set_title('Three Blue Bars')\nax.set_xlabel('X')\nax.set_ylabel('Y')\nplt.tight_layout()\nplt.savefig('terminal-agent-bars.png', dpi=150)\nplt.show()\n"
+        },
+        "status": "error",
+        "result": "还没配 python 的解释器路径，起不了内核。去「设置 → 内核」里填一个 Python 可执行文件的路径。",
+        "resultTruncated": false,
+        "resultBytes": 129,
+        "startedAt": 1792765533054,
+        "endedAt": 1792765533074
+      },
+      {
+        "type": "tool",
+        "id": "bash_1_ff1c48e7",
+        "name": "bash",
+        "input": {
+          "command": "python3 -c \"\nimport matplotlib.pyplot as plt\nfig, ax = plt.subplots(figsize=(5, 3))\nax.bar([1, 2, 3], [4, 7, 5], color='blue')\nax.set_title('Three Blue Bars')\nax.set_xlabel('X')\nax.set_ylabel('Y')\nplt.tight_layout()\nplt.savefig('terminal-agent-bars.png', dpi=150)\nprint('Saved terminal-agent-bars.png')\n\""
+        },
+        "status": "ok",
+        "result": "Saved terminal-agent-bars.png\n",
+        "resultTruncated": false,
+        "resultBytes": 30,
+        "startedAt": 1792765535648,
+        "endedAt": 1792765537127
+      },
+      {
+        "type": "turn",
+        "id": "a9",
+        "who": "agent",
+        "text": "已生成 `terminal-agent-bars.png`，效果如下：\n\n![Three Blue Bars](terminal-agent-bars.png)",
+        "final": true,
+        "by": "moonshotai-cn",
+        "thinking": "用户要求我用现有的Python创建一张有三个蓝色柱子的简单示例图，保存为 `terminal-agent-bars.png`，不安装任何依赖。我需要用 `run_code` 运行Python代码来生成这张图。\n\n让我检查当前工作目录，然后用matplotlib（通常已安装）来生成。Python内核没配置，无法启动。用户说\"使用现有的 Python\"，但内核没有配好。我应该尝试通过bash直接调用python命令来生成图片，而不是依赖run_code的内核。用户要求我在最终回答中用 Markdown 图片引用这张图，让他在终端预览。图片已经生成在工作目录下，路径是 terminal-agent-bars.png。我应该用 Markdown 图片语法引用它。",
+        "thinkingMs": 374,
+        "usage": {
+          "input": 328,
+          "output": 66,
+          "cacheRead": 15872
+        }
+      }
+    ],
+    "terminal": "",
+    "terminalTrimmed": false,
+    "state": "alive",
+    "configOptions": [
+      {
+        "id": "dawn.permission",
+        "name": "权限",
+        "description": "只管这一段对话；设置里那个是全局默认",
+        "category": "mode",
+        "kind": "select",
+        "current": "inherit",
+        "options": [
+          {
+            "value": "inherit",
+            "name": "请求批准 · 跟随设置",
+            "description": "设置里改了，这段跟着变"
+          },
+          {
+            "value": "deny-risky",
+            "name": "自动拦截",
+            "description": "改 data/raw/、写到工作区外、删除、装包、联网、git push 直接拒绝"
+          },
+          {
+            "value": "ask-risky",
+            "name": "请求批准",
+            "description": "危险操作弹一张卡让你点「允许这一次」；拒绝 / 5 分钟没答都按拒，理由回给模型"
+          },
+          {
+            "value": "allow-all",
+            "name": "完全访问权限",
+            "description": "只拦硬拒清单（sudo、删到主目录 / 系统目录、凭据外传、强推）"
+          }
+        ]
+      },
+      {
+        "id": "dawn.plan",
+        "name": "生成方案",
+        "description": "开着时只看不改：先交分析方案，你批了再动手",
+        "category": "plan",
+        "kind": "boolean",
+        "current": "",
+        "options": []
+      },
+      {
+        "id": "dawn.thinking",
+        "name": "推理强度",
+        "description": "模型先想多久再答。越高越慢、越贵",
+        "category": "thought_level",
+        "kind": "select",
+        "current": "medium",
+        "options": [
+          {
+            "value": "minimal",
+            "name": "最少"
+          },
+          {
+            "value": "low",
+            "name": "低"
+          },
+          {
+            "value": "medium",
+            "name": "中"
+          },
+          {
+            "value": "high",
+            "name": "高"
+          },
+          {
+            "value": "xhigh",
+            "name": "更高"
+          },
+          {
+            "value": "max",
+            "name": "最高"
+          }
+        ]
+      }
+    ]
+  },
+  "beforeFinalBuildTerminal": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\n左边是**蓝色**的**正方形**，右边是**红色**的**三角形**。  \n图片底部的英文代号是：**PIC-F8FD5E**\n底部的完整代号是：**PIC-F8FD5E**  \n右侧图形是：**红色三角形**\nDAWN › 请使用现有的 Python 创建一张有三个蓝色柱子的简单示例图，不安装任何依赖，保存成 terminal-agent-bars.png。请实际调用工\n具生成文件，并在最终回答中用 Markdown 图片引用这张图，让我在终端预览。\n  › run_code\n    import matplotlib.pyplot as plt\n    \n    fig, ax = plt.subplots(figsize=(5, 3))\n  × 未完成 · run_code\n    还没配 python 的解释器路径，起不了内核。去「设置 → 内核」里填一个 Python 可执行文件的路径。\n  › bash\n    python3 -c \"\n    import matplotlib.pyplot as plt\n    fig, ax = plt.subplots(figsize=(5, 3))\nterminal-agent-bars.png\n  ✓ 完成 · bash\n    Saved terminal-agent-bars.png\n    \n已生成 `terminal-agent-bars.png`，效果如下：\n![Three Blue Bars](terminal-agent-bars.png)\nDAWN ›  "
+}

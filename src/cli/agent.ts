@@ -1,5 +1,6 @@
 import { createInterface, clearLine, cursorTo } from 'node:readline'
 import type { AgentEvent } from '../runtime/types.js'
+import type { DesktopCliEvent } from './desktop-wire.js'
 import type { QuestionRecord, QuestionAnswer } from '../protocol/questions.js'
 import { openCliContext } from './context.js'
 import { CLI_HELP, plain, toolDetail } from './presentation.js'
@@ -47,9 +48,11 @@ export async function runCliAgent(agentId?: string): Promise<number> {
       say('\n已退出 Agent，返回 Shell。'); finished()
     }
   }
-  const onEvent = (event: AgentEvent) => {
+  const onEvent = (event: DesktopCliEvent) => {
     if (closing) return
     switch (event.kind) {
+      case 'desktop_image':
+        flush(); output.write('\r\n' + plain(event.name) + '\r\n' + `\x1b]777;dawn-image;${event.id}\x07` + '\n'.repeat(8)); break
       case 'output': answer += plain(event.data); break
       case 'turn_end': flush(); break
       case 'tool_start':

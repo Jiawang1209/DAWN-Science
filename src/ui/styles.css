@@ -9085,3 +9085,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .terminal-return-button { width: var(--dawn-space-8); height: var(--dawn-space-8); background: var(--dawn-accent-soft); color: var(--dawn-accent); border-color: var(--dawn-stroke-accent); }
 .terminal-return-button:hover:not(:disabled) { background: var(--dawn-accent-solid); color: var(--dawn-on-accent); }
 .terminal-return-button svg { width: var(--dawn-space-6); height: var(--dawn-space-6); }
+
+/* Terminal pictures remain part of the existing terminal, with one input surface. */
+.terminal-image-shell { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.terminal-image-screen { flex: 1; min-height: 0; }
+.terminal-attachment-tray { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 2px 0; border-top: 1px solid var(--dawn-stroke-1); font-size: var(--dawn-fs-meta); }
+.terminal-attachment { display: flex; align-items: center; gap: 6px; max-width: 220px; border: 1px solid var(--dawn-stroke-1); border-radius: var(--dawn-radius-sm); padding: 4px; }
+.terminal-attachment > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.terminal-attachment img { display: block; width: 52px; height: 40px; object-fit: contain; }
+.terminal-image-error { color: var(--dawn-danger); overflow-wrap: anywhere; }
+.terminal-inline-image { width: 100%; height: 100%; padding: 4px; display: flex; align-items: center; justify-content: flex-start; background: var(--dawn-surface-sidebar); color: var(--dawn-text-2); border: 1px solid var(--dawn-stroke-1); border-radius: var(--dawn-radius-sm); cursor: zoom-in; overflow: hidden; font-size: var(--dawn-fs-meta); pointer-events: auto; }
+.terminal-inline-image img { display: block; max-width: 100%; max-height: 96px; object-fit: contain; }
+.terminal-inline-image:hover, .terminal-inline-image:focus-visible { border-color: var(--dawn-accent); outline: 2px solid var(--dawn-accent); outline-offset: -2px; }
+.terminal-image-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--dawn-scrim); }
+.terminal-image-preview { max-width: 95vw; max-height: 94vh; overflow: auto; padding: 12px; border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-sidebar); color: var(--dawn-text-1); box-shadow: var(--dawn-shadow-lg); }
+.terminal-image-preview header { display: flex; align-items: center; gap: 24px; justify-content: space-between; margin-bottom: 10px; }
+.terminal-image-preview > img { display: block; max-width: calc(95vw - 48px); max-height: calc(94vh - 92px); object-fit: contain; }

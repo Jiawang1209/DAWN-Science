@@ -591,7 +591,8 @@
 /** 8.26：终端面板默认AI对话，sendTerminalPrompt按确切终端提交自然语言。 */
 /** 8.27：桌面模型连接的 CLI 及真实终端模式切换。 */
 /** 8.28：终端 Agent 状态附带权威会话与模型，返回会话沿用同一上下文。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.28"
+/** 8.29：终端 Agent 待发图片与按图片 ID 的缩略/原图读取。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.29"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

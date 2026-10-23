@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { WorkbenchClient } from './client.js'
 /**
  * 原生终端工作区。对话视图中占满主区，只显示一份 xterm；
@@ -7,6 +7,8 @@ import type { WorkbenchClient } from './client.js'
  */
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
+import { TerminalImageShell } from './terminal-images.js'
+import type { TerminalAgentState } from '../protocol/terminal.js'
 import { TerminalPane } from "./terminal.js"
 import { $dockChunks } from "./state/index.js"
 import type { SessionSummary } from "../protocol/index.js"
@@ -47,6 +49,8 @@ export function TerminalDock({
 }) {
   const chunks = useStore($dockChunks)
   const returnTip = useId()
+  const [agentState, setAgentState] = useState<{ terminalId: string; state: TerminalAgentState }>()
+  const reportState = useCallback((state: TerminalAgentState) => { if (currentId) setAgentState({ terminalId: currentId, state }) }, [currentId])
 
   return (
     <section className={`dock${fullPage ? " terminal-workspace" : ""}`} aria-label={t("终端")}>
@@ -80,7 +84,7 @@ export function TerminalDock({
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
-        {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} /> : null}
+        {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} onState={reportState} /> : null}
         {fullPage ? <span className="conv-action-tip-wrap terminal-return">
           <Button variant="outline" size="icon" className="terminal-return-button" disabled={returning} aria-busy={returning} onClick={onCloseDock}
             aria-label={t("返回会话")} aria-describedby={returnTip}>
@@ -113,7 +117,9 @@ export function TerminalDock({
         ) : currentId ? (
           <>
             <div className="dock-shell">
-              <TerminalPane key={currentId} chunks={chunks} onInput={onInput} onResize={onResize} />
+              {client ? <TerminalImageShell key={currentId} client={client} terminalId={currentId}
+                state={agentState?.terminalId === currentId ? agentState.state : { mode: 'normal' }} chunks={chunks} onInput={onInput} onResize={onResize} />
+                : <TerminalPane key={currentId} chunks={chunks} onInput={onInput} onResize={onResize} />}
             </div>
           </>
         ) : (
@@ -124,9 +130,10 @@ export function TerminalDock({
   )
 }
 
-function TerminalModeSwitch({ client, terminalId }: { client: Pick<WorkbenchClient, 'get'>; terminalId: string }) {
+function TerminalModeSwitch({ client, terminalId, onState }: { client: Pick<WorkbenchClient, 'get'>; terminalId: string; onState: (state: TerminalAgentState) => void }) {
   const [mode, setMode] = useState<'normal' | 'dawn' | 'starting' | 'stopping'>()
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
+  const report = useRef(onState); report.current = onState
   const active = useRef(true), mutation = useRef(0)
   useEffect(() => {
     active.current = true
@@ -136,8 +143,8 @@ function TerminalModeSwitch({ client, terminalId }: { client: Pick<WorkbenchClie
       reading = true
       const revision = mutation.current
       try {
-        const state = await client.get<{ mode: typeof mode }>('getTerminalAgentMode', { terminalId })
-        if (active.current && revision === mutation.current) setMode(state.mode)
+        const state = await client.get<TerminalAgentState>('getTerminalAgentMode', { terminalId })
+        if (active.current && revision === mutation.current) { setMode(state.mode); report.current(state) }
       } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
       finally { reading = false }
     }
@@ -146,10 +153,10 @@ function TerminalModeSwitch({ client, terminalId }: { client: Pick<WorkbenchClie
     return () => { active.current = false; clearInterval(timer) }
   }, [client, terminalId])
   const switchMode = async (next: 'dawn' | 'normal') => {
-    mutation.current++; setBusy(true); setError('')
+    mutation.current++; setBusy(true); setError(''); report.current({ mode: next === 'dawn' ? 'starting' : 'stopping' })
     try {
-      const state = await client.get<{ mode: typeof mode }>('setTerminalAgentMode', { terminalId, mode: next })
-      if (active.current) { setMode(state.mode); document.querySelector<HTMLTextAreaElement>('.dock .xterm-helper-textarea')?.focus() }
+      const state = await client.get<TerminalAgentState>('setTerminalAgentMode', { terminalId, mode: next })
+      if (active.current) { setMode(state.mode); report.current(state); document.querySelector<HTMLTextAreaElement>('.dock .xterm-helper-textarea')?.focus() }
     } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
     finally { mutation.current++; if (active.current) setBusy(false) }
   }

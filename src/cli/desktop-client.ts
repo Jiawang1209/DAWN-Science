@@ -1,11 +1,11 @@
 import { createConnection } from 'node:net'
-import type { AgentEvent } from '../runtime/types.js'
+import type { DesktopCliEvent } from './desktop-wire.js'
 import { frames, send, type DesktopDescriptor } from './desktop-wire.js'
 
 export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace: string, terminalId?: string, agentId?: string) {
   if (!descriptor || descriptor.version !== 1 || typeof descriptor.socket !== 'string' || typeof descriptor.token !== 'string') throw new Error('无效的 DAWN 连接文件')
   const socket = createConnection(descriptor.socket)
-  const sinks = new Set<(event: AgentEvent) => void>(), exits = new Set<() => void>()
+  const sinks = new Set<(event: DesktopCliEvent) => void>(), exits = new Set<() => void>()
   const pending = new Map<number, { resolve: (v: any) => void; reject: (error: Error) => void }>()
   let sequence = 0, expectedClose = false
   let ready!: (v: { sessionId: string; model: string; directory: string }) => void, rejectReady!: (e: Error) => void
@@ -34,7 +34,7 @@ export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace
   let metadata
   try { metadata = await connected } catch (error) { socket.destroy(); throw error }
   return { ...metadata, call,
-    attach: (sink: (event: AgentEvent) => void) => { sinks.add(sink); return () => { sinks.delete(sink) } },
+    attach: (sink: (event: DesktopCliEvent) => void) => { sinks.add(sink); return () => { sinks.delete(sink) } },
     waitForIdle: async () => { await call('$wait') },
     onExit: (callback: () => void) => { exits.add(callback); return () => { exits.delete(callback) } },
     close: async () => { expectedClose = true; try { await call('$close') } finally { socket.end(); socket.destroy() } },

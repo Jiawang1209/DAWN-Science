@@ -1,3 +1,4 @@
+import type { ResponseOf } from '../protocol/index.js'
 import { TransferBatches } from "../remote/transfer-batches.js"
 import { missingFile } from "../remote/transfer-io.js"
 import {DeliveryService, type DeliveryOptions} from '../delivery/service.js'
@@ -181,6 +182,11 @@ export interface WorkbenchBackendOptions {
   terminalAgentMode?: {
     state: (id: string) => import('../protocol/terminal.js').TerminalAgentState
     setMode: (id: string, mode: 'normal' | 'dawn') => Promise<import('../protocol/terminal.js').TerminalAgentState>
+  }
+  terminalImages?: {
+    read: (id: string, revision?: number) => ResponseOf<'getTerminalAgentAttachments'>
+    update: (request: import('../protocol/terminal.js').TerminalAttachmentUpdate) => Promise<ResponseOf<'updateTerminalAgentAttachments'>>
+    image: (id: string, imageId: string) => ResponseOf<'getTerminalAgentImage'>
   }
   terminalPrompt?: (owner: string, terminal: string, text: string, mode: import('../protocol/terminal.js').TerminalMode, queueId?: string) => void
   transferDirectory?: string
@@ -2821,6 +2827,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 起一个会话(归属.projectId, agentId, homedir())
     },
 
+    getTerminalAgentAttachments: async ({ terminalId, afterRevision }) => terminalRequest(() => {
+      terminalService().state(terminalId)
+      return opts.terminalImages?.read(terminalId, afterRevision) ?? { revision: 0, pending: [] }
+    }),
+    updateTerminalAgentAttachments: async request => terminalRequest(async () => {
+      terminalService().state(request.terminalId)
+      if (!opts.terminalImages) throw new Error('本次运行没有装配终端图片')
+      return opts.terminalImages.update(request)
+    }),
+    getTerminalAgentImage: async ({ terminalId, imageId }) => terminalRequest(() => {
+      terminalService().state(terminalId)
+      if (!opts.terminalImages) throw new Error('本次运行没有装配终端图片')
+      return opts.terminalImages.image(terminalId, imageId)
+    }),
     getTerminalAgentMode: async ({ terminalId }) => terminalRequest(() => opts.terminalAgentMode?.state(terminalId) ?? { mode: 'normal' as const }),
     setTerminalAgentMode: async ({ terminalId, mode }) => terminalRequest(async () => {
       if (!opts.terminalAgentMode) throw new Error('本次运行没有装配 DAWN CLI')

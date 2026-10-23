@@ -28,7 +28,9 @@ async function mode(page: Page, terminalId: string) {
 async function snapshot(page: Page, sessionId: string) {
   return page.evaluate(async id => (await window.dawn!.invoke('subscribeSession', { sessionId: id }) as any).data, sessionId)
 }
-async function enter(page: Page) {
+async function enter(page: Page, terminalId: string) {
+  // Rendering xterm is earlier than the login Shell becoming ready under CPU load.
+  await expect.poll(async () => stripVTControlCharacters((await snapshot(page, terminalId)).terminal).trimEnd().endsWith('$')).toBe(true)
   await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()
   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
 }
@@ -36,14 +38,14 @@ async function enter(page: Page) {
 test('the selected terminal returns to its own Agent rather than another live terminal', async ({ dawn }) => {
   const { page } = dawn
   const [first] = await open(page)
-  await enter(page)
+  await enter(page, first!.sessionId)
   const a = await mode(page, first!.sessionId)
   await type(page, 'FIRST_TERMINAL_CONTEXT_A')
   await expect.poll(async () => (await snapshot(page, a.sessionId)).items.some((x: any) => x.type === 'turn' && x.who === 'agent' && x.final)).toBe(true)
   await page.locator('.dock').getByRole('button', { name: '＋ 新开一个', exact: true }).click()
   await expect(page.locator('.dock .dock-tab')).toHaveCount(2)
   const second = (await terminals(page)).find(t => t.sessionId !== first!.sessionId)!
-  await enter(page)
+  await enter(page, second.sessionId)
   const b = await mode(page, second.sessionId)
   expect(b.sessionId).not.toBe(a.sessionId)
   await type(page, 'SECOND_TERMINAL_CONTEXT_B')
@@ -56,7 +58,7 @@ test('the selected terminal returns to its own Agent rather than another live te
 
 test('a removed Agent target leaves the terminal open and reports the missing conversation', async ({ dawn }) => {
   const { page } = dawn, [terminal] = await open(page)
-  await enter(page)
+  await enter(page, terminal!.sessionId)
   const target = await mode(page, terminal!.sessionId)
   await page.evaluate(async id => {
     const t = await window.dawn!.invoke('listTasks', {}) as any

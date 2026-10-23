@@ -3,12 +3,14 @@ import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { mkdtemp, mkdir, writeFile, chmod, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
+import { DesktopImages } from './desktop-images.js'
+import type { TerminalAttachmentUpdate } from '../protocol/terminal.js'
 import { frames, send, type DesktopDescriptor, type DesktopScope } from './desktop-wire.js'
 
 interface Target { sessionId: string; projectId?: string; selection?: { provider: string; model: string } }
 const targetOf = (scope: DesktopScope): Target => ({ sessionId: scope.sessionId, ...(scope.projectId ? { projectId: scope.projectId } : {}), ...(scope.selection ? { selection: scope.selection } : {}) })
 type Mode = 'normal' | 'dawn' | 'starting' | 'stopping'
-interface Connection { socket: Socket; scope: DesktopScope; done: Promise<void>; finish: () => void }
+interface Connection { socket: Socket; scope: DesktopScope; media: DesktopImages; done: Promise<void>; finish: () => void }
 export interface DesktopCliOptions {
   entry: string; executable: string; descriptor: string
   launch: (terminalId: string) => Promise<void>
@@ -21,6 +23,7 @@ export class DesktopCliHost {
   private sockets = new Set<Socket>()
   private connections = new Map<string, Connection>()
   private transitions = new Map<string, Mode>()
+  private imageScopes = new Map<string, DesktopImages[]>()
   private latestSessions = new Map<string, Target>()
   private root?: string
   private descriptor?: DesktopDescriptor
@@ -52,7 +55,29 @@ export class DesktopCliHost {
     const target = scope ? targetOf(scope) : this.latestSessions.get(terminalId)
     return { mode: this.transitions.get(terminalId) ?? (scope ? 'dawn' : 'normal'), ...target }
   }
-  forgetTerminal(terminalId: string): void { this.latestSessions.delete(terminalId) }
+  attachments(terminalId: string, afterRevision?: number) {
+    return this.connections.get(terminalId)?.media.read(afterRevision) ?? { revision: 0, pending: [] }
+  }
+  async updateAttachments(input: TerminalAttachmentUpdate) {
+    const connection = this.connections.get(input.terminalId)
+    if (!connection || connection.scope.sessionId !== input.sessionId || this.transitions.has(input.terminalId)) throw new Error('终端 Agent 已切换，请重新附图')
+    if (input.action === 'add') {
+      if (connection.scope.canReadImages && !connection.scope.canReadImages()) throw new Error('当前模型不支持图片，请切换到看图模型或启用已配置的视觉服务')
+      return connection.media.add(input.images)
+    }
+    return connection.media.remove(input.imageId)
+  }
+  image(terminalId: string, imageId: string) {
+    for (const media of this.imageScopes.get(terminalId) ?? []) {
+      try { return media.image(imageId) } catch { /* Try the previous CLI retained in this terminal's scrollback. */ }
+    }
+    throw new Error('这张终端图片已不在缓存中，请返回会话或打开原文件')
+  }
+  forgetTerminal(terminalId: string): void {
+    this.latestSessions.delete(terminalId)
+    for (const media of this.imageScopes.get(terminalId) ?? []) media.close()
+    this.imageScopes.delete(terminalId)
+  }
   async setMode(terminalId: string, mode: 'dawn' | 'normal') {
     if (this.transitions.has(terminalId)) throw new Error('正在切换模式，请稍候')
     const connection = this.connections.get(terminalId)
@@ -86,6 +111,7 @@ export class DesktopCliHost {
       if (terminal && connection.scope.selection && this.latestSessions.get(terminal)?.sessionId === connection.scope.sessionId) {
         this.latestSessions.set(terminal, targetOf(connection.scope))
       }
+      connection.media.close()
       try { await connection.scope.close() } catch { /* Workbench may already be closing. */ }
       if (terminal && this.connections.get(terminal) === connection) this.connections.delete(terminal)
       connection.finish()
@@ -104,13 +130,23 @@ export class DesktopCliHost {
         const scope = await this.opts.open(terminal, frame.workspace, frame.agentId)
         if (socket.destroyed || this.disposed || terminal && this.connections.has(terminal)) { await scope.close(); socket.destroy(); return }
         let finish!: () => void
-        connection = { socket, scope, done: new Promise<void>(r => { finish = r }), finish: () => finish() }
+        connection = { socket, scope, media: new DesktopImages(scope.sessionId, scope.directory), done: new Promise<void>(r => { finish = r }), finish: () => finish() }
         if (terminal) {
           this.connections.set(terminal, connection)
           this.latestSessions.set(terminal, targetOf(scope))
+          const history = this.imageScopes.get(terminal) ?? []
+          this.imageScopes.set(terminal, [...history.slice(-1), connection.media])
         }
         authenticated = true; clearTimeout(authTimer)
-        detach = scope.attach(event => send(socket, { event }))
+        const media = connection.media
+        let events = Promise.resolve()
+        detach = scope.attach(event => {
+          events = events.then(async () => {
+            const richImage = event.kind === 'kernel_output' && (event.entry.kind === 'display' || event.entry.kind === 'result') && event.entry.mediaType.startsWith('image/')
+            if (!richImage) send(socket, { event })
+            await media.observe(event, image => send(socket, { event: image }), message => send(socket, { event: { kind: 'notice', sessionId: scope.sessionId, text: message } }))
+          }).catch(() => { send(socket, { event: { kind: 'notice', sessionId: scope.sessionId, text: '终端图片预览未完成，请返回会话查看' } }) })
+        })
         send(socket, { ready: { sessionId: scope.sessionId, model: scope.model, directory: scope.directory } })
         return
       }
@@ -124,7 +160,10 @@ export class DesktopCliHost {
           if (!allowed.has(frame.operation)) throw new Error('CLI 不允许调用此操作')
           if (!frame.input || frame.input.sessionId !== scope.sessionId) throw new Error('CLI 只能操作自己的会话')
           if (frame.operation === 'acquireLease' && frame.input.holder !== 'user') throw new Error('CLI 仅支持用户控制权')
-          result = await scope.call(frame.operation, frame.input)
+          if (frame.operation === 'writeToSession') {
+            if (connection!.media.read().pending?.length && scope.canReadImages && !scope.canReadImages()) throw new Error('当前模型不支持图片，请切换到看图模型或启用已配置的视觉服务')
+            result = await connection!.media.send(frame.input, input => scope.call(frame.operation, input), image => send(socket, { event: image }))
+          } else result = await scope.call(frame.operation, frame.input)
         }
         send(socket, { id: frame.id, result })
       } catch (error) { send(socket, { id: frame.id, error: error instanceof Error ? error.message : 'CLI 操作失败' }) }
@@ -143,6 +182,7 @@ export class DesktopCliHost {
       if (current.token === this.descriptor?.token) await rm(this.opts.descriptor, { force: true })
     } catch { /* Another host may own the discovery file now. */ }
     this.latestSessions.clear()
+    this.imageScopes.clear()
     if (this.root) await rm(this.root, { recursive: true, force: true })
   }
 }

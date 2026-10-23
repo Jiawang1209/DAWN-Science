@@ -40,10 +40,12 @@ function 读主题配色(el: HTMLElement): Record<string, string> {
 export function TerminalPane({
   chunks,
   onInput,
+  onResize,
 }: {
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
   chunks: readonly string[]
   onInput?: (data: string) => void
+  onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
   const host = useRef<HTMLDivElement>(null)
   const term = useRef<import("@xterm/xterm").Terminal | undefined>(undefined)
@@ -59,6 +61,8 @@ export function TerminalPane({
   const chunksRef = useRef(chunks)
   chunksRef.current = chunks
   const inputRef = useRef(onInput)
+  const resizeRef = useRef(onResize)
+  resizeRef.current = onResize
   /**
    * **换主题时终端要跟着换**（2026-08-11）。
    *
@@ -127,6 +131,7 @@ export function TerminalPane({
       // 输出里的 URL 可点。agent 经常吐出文档链接与报错页地址
       instance.loadAddon(new WebLinksAddon())
       instance.open(el)
+      instance.onResize(size => resizeRef.current?.(size.cols, size.rows))
       addon.fit()
       instance.onData((d) => inputRef.current?.(d))
       term.current = instance

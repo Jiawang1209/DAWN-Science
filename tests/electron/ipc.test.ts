@@ -11,6 +11,10 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    getTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
+    setTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
+    resizeTerminal: async () => ({}),
+    interruptTerminal: async () => { throw new Error('Terminal unavailable in this fixture') },
     startFileUploadBatch: async () => { throw new Error("Upload batch unavailable in this fixture") },
     startFileDownloadBatch: async () => { throw new Error("Download batch unavailable in this fixture") },
     startDirectoryTransfer: async () => { throw new Error("Directory operation unavailable in this fixture") },

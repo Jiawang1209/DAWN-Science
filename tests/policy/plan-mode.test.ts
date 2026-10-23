@@ -35,7 +35,7 @@ describe("方案期：名单", () => {
       expect(方案期判(n, {}, 语境()), n).toEqual(放)
     }
     expect([...方案期放行].sort()).toEqual(
-      ["ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
+      ["terminal_list", "terminal_snapshot", "terminal_wait", "ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
     )
   })
 

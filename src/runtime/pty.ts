@@ -15,6 +15,7 @@ import type {
   SessionSpec,
 } from "./types.js"
 import { materializeSessionDir } from "./session-dir.js"
+import type { TerminalControl } from "../terminal/control.js"
 
 interface ProcRow {
   pid: number
@@ -69,6 +70,7 @@ function collectTree(rootPid: number): { pids: number[]; pgids: number[] } {
 }
 
 export interface PtyRuntimeOptions {
+  terminalControl?: TerminalControl
   command: string
   args?: string[]
   /** CLI 家族名，用于生成隔离配置。留空则不写配置（如测试用 bash） */
@@ -114,8 +116,17 @@ export class PtyRuntime implements AgentRuntime {
     })
 
     this.procs.set(spec.sessionId, proc)
-    proc.onData((data) => this.emit({ kind: "output", sessionId: spec.sessionId, data }))
+    this.opts.terminalControl?.register({
+      id: spec.sessionId, pid: proc.pid, cwd: spec.workspace, command: this.opts.command,
+      cols: this.opts.cols ?? 100, rows: this.opts.rows ?? 30,
+      write: data => proc.write(data), resize: (cols, rows) => proc.resize(cols, rows),
+    })
+    proc.onData((data) => {
+      this.opts.terminalControl?.output(spec.sessionId, data)
+      this.emit({ kind: "output", sessionId: spec.sessionId, data })
+    })
     proc.onExit(({ exitCode }) => {
+      this.opts.terminalControl?.exited(spec.sessionId)
       this.procs.delete(spec.sessionId)
       this.emit({ kind: "exited", sessionId: spec.sessionId, exitCode })
       // 清掉这段会话的订阅表(审查 debug H11):否则每开一段终端就多一个永不回收的 Set,

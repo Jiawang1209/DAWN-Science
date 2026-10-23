@@ -1,0 +1,55 @@
+{
+  "state": {
+    "id": "749b4819-5a4e-40c5-ac1d-f54f2399ff78",
+    "instanceId": "96ca6150-8189-4c73-94da-1b70b7b002d8",
+    "pid": 8440,
+    "cwd": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-review-2xksbP/workspace",
+    "command": "/bin/bash",
+    "alive": true,
+    "controlled": false,
+    "ownerSessionId": "82ae19c3-b506-4125-96a2-9f325e6496b6",
+    "mode": "python",
+    "cols": 126,
+    "rows": 13,
+    "revision": 327,
+    "task": {
+      "id": "38e5da18-2174-47ef-90e9-1a0290f83e22",
+      "state": "completed",
+      "startedAt": "2026-10-23T07:22:32.575Z",
+      "exitCode": 0
+    }
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 808,
+    "scrollWidth": 1280
+  },
+  "human": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-review-2xksbP/workspace|8440",
+  "ai": "41|/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-review-2xksbP/workspace|8440",
+  "pythonAI": "42",
+  "pythonManual": "42",
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-review-2xksbP",
+  "branch": "codex/terminal-assistance",
+  "baseline": "38959c57",
+  "model": "shared deterministic mock; real local terminal",
+  "finalControl": {
+    "id": "749b4819-5a4e-40c5-ac1d-f54f2399ff78",
+    "instanceId": "96ca6150-8189-4c73-94da-1b70b7b002d8",
+    "pid": 8440,
+    "cwd": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-review-2xksbP/workspace",
+    "command": "/bin/bash",
+    "alive": true,
+    "controlled": true,
+    "ownerSessionId": "82ae19c3-b506-4125-96a2-9f325e6496b6",
+    "mode": "python",
+    "cols": 126,
+    "rows": 13,
+    "revision": 434,
+    "task": {
+      "id": "38e5da18-2174-47ef-90e9-1a0290f83e22",
+      "state": "completed",
+      "startedAt": "2026-10-23T07:22:32.575Z",
+      "exitCode": 0
+    }
+  }
+}

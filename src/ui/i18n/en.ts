@@ -16,6 +16,18 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "终端协助操作失败：{0}": 'Terminal assistance failed: {0}',
+  "终端协助": 'Terminal assistance',
+  "当前程序": 'Program',
+  "当前终端程序": 'Current terminal program',
+  "AI 协助中": 'AI has control',
+  "手动控制": 'Manual control',
+  "接回控制": "Reclaim terminal",
+  "Ctrl-C": "Ctrl-C",
+  "交给当前对话": 'Share with this chat',
+  "打开本地内置模型对话后可交给 AI": 'Open a local built-in model chat to share this terminal',
+  "直接输入即可接回；收起面板不会停止程序": 'Type to take back control. Hiding this panel keeps the program running.',
+  "先选择终端里实际运行的程序，再交给 AI": 'Choose the program already running here, then share with AI',
   "尚未保存": "Unsaved",
   "已配置": "Configured",
   "检测 {0} 解释器": "Detect {0} interpreter",

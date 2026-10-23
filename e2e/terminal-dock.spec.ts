@@ -281,11 +281,16 @@ test("**每段对话各自的终端**：切换对话，dock 跟着换", async ({
   // 两段各一个：后端一共两条终端会话（项目里的 + 临时的都数）
   const 总数 = await page.evaluate(async () => {
     const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown[] }> } }
-    const 数 = (xs: unknown[] | undefined) => (xs ?? []).filter((s) => (s as { kind: string }).kind === "pty").length
-    let n = 数((await w.dawn.invoke("listTemporarySessions", {})).data)
+    // A bound terminal now shares its native chat's project. Temporary and
+    // project listings may project the SAME session; count actual identities.
+    const ids = new Set<string>()
+    const 数 = (xs: unknown[] | undefined) => {
+      for (const s of (xs ?? []) as { kind: string; sessionId: string }[]) if (s.kind === "pty") ids.add(s.sessionId)
+    }
+    数((await w.dawn.invoke("listTemporarySessions", {})).data)
     const ps = (await w.dawn.invoke("listProjects", { pageSize: 50 })).data as { projectId: string }[] | undefined
-    for (const p of ps ?? []) n += 数((await w.dawn.invoke("listSessions", { projectId: p.projectId })).data)
-    return n
+    for (const p of ps ?? []) 数((await w.dawn.invoke("listSessions", { projectId: p.projectId })).data)
+    return ids.size
   })
   expect(总数).toBe(2)
   expect(第一段的终端).toBeTruthy()

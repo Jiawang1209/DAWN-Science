@@ -2,6 +2,7 @@ import { DirectoryTransferRequest, TransferBatchSchema, TransferDetailSchema } f
 import {DeliveryCreateSchema, DeliveryRecordSchema, DeliveryVerifySchema} from './delivery.js'
 import { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema } from './analysis-route.js'
 import { QuestionAnswerSchema } from "./questions.js"
+import { TerminalControlSchema, TerminalModeSchema } from './terminal.js'
 /**
  * Workbench Protocol 的操作契约（Task 2.2）。
  *
@@ -596,9 +597,31 @@ export const OPERATIONS = {
         agentId: z.string().min(1),
         /** 在哪个项目里开。**不给 = 没有打开项目**，那时开在家目录 */
         projectId: z.string().min(1).optional(),
+        ownerSessionId: z.string().min(1).optional(),
       })
       .strict(),
     response: SessionSummarySchema,
+    mutating: true,
+  },
+
+  getTerminalControl: {
+    request: z.object({ terminalId: z.string().min(1) }).strict(),
+    response: TerminalControlSchema,
+    mutating: false,
+  },
+  setTerminalControl: {
+    request: z.object({ terminalId: z.string().min(1), ownerSessionId: z.string().min(1).optional(), enabled: z.boolean(), mode: TerminalModeSchema.optional() }).strict(),
+    response: TerminalControlSchema,
+    mutating: true,
+  },
+  resizeTerminal: {
+    request: z.object({ terminalId: z.string().min(1), cols: z.number().int().min(2).max(500), rows: z.number().int().min(2).max(200) }).strict(),
+    response: Empty,
+    mutating: true,
+  },
+  interruptTerminal: {
+    request: z.object({ terminalId: z.string().min(1), ownerSessionId: z.string().min(1) }).strict(),
+    response: TerminalControlSchema,
     mutating: true,
   },
 

@@ -99,6 +99,7 @@ import {
   type MCP装载,
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
+import { TerminalControlBar } from './terminal-control.js'
 import { AttachUsagePanel } from "./attach-panel.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import type { 会话额外动作 } from "./views.js"
@@ -3118,12 +3119,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     client
       .get<{ sessionId: string }>("createTerminalSession", {
         agentId: ptyAgentId,
+        ...(session?.kind === 'native' && !session.remote && sessionId ? { ownerSessionId: sessionId } : {}),
         /**
          * **没有项目就不给**——那时服务端把终端开在家目录
          * （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
          * 路径由服务端定：让界面拼路径等于把「shell 从哪儿开」交给渲染进程。
          */
-        ...(项目还在 ? { projectId: pid! } : {}),
+        ...(session?.kind === 'native' && !session.remote && sessionId ? {} : 项目还在 ? { projectId: pid! } : {}),
       })
       .then((r) => {
         // **记下它是从哪段对话开的**：dock 按对话分，不记就哪儿都不归
@@ -3144,7 +3146,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         return 取写权(r.sessionId)
       })
       .catch(fail)
-  }, [client, ptyAgentId, 终端主人])
+  }, [client, ptyAgentId, 终端主人, session?.kind, session?.remote, sessionId])
 
   /**
    * 掀开 dock 时**如果还没有终端，就开一个**。
@@ -5720,6 +5722,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 */}
           {dockOpen ? (
             <TerminalDock
+              control={dockSessionId ? <TerminalControlBar client={client} terminalId={dockSessionId} ownerSessionId={session?.kind === 'native' && !session.remote ? sessionId : undefined} /> : null}
+              onResize={(cols, rows) => {
+                const terminalId = dockSessionId
+                if (terminalId && cols >= 2 && rows >= 2) void client.get('resizeTerminal', { terminalId, cols: Math.min(cols, 500), rows: Math.min(rows, 200) }).catch(fail)
+              }}
               terminals={终端们}
               currentId={dockSessionId}
               workspace={currentWorkspace ?? t("家目录")}

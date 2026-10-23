@@ -2,6 +2,10 @@ import { existsSync } from 'node:fs'
 import { AnalysisRouteBook } from './analysis-route-book.js'
 import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
 import { createAnalysisRouteTools } from '../tools/analysis-route.js'
+import { createTerminalTools } from '../tools/terminal.js'
+import type { TerminalControl } from '../terminal/control.js'
+import type { TerminalMode } from '../protocol/terminal.js'
+import { 照这一档 } from '../policy/permissions.js'
 import { AnalysisRouteActionRequestSchema, parseRouteActionMessage, routeActionMessage, routeContinueBlockers, type AnalysisRoute, type AnalysisRouteDraft, type AnalysisRouteReadResult, type AnalysisRouteActionRequest, type AnalysisRouteActionResult } from '../protocol/analysis-route.js'
 import { routeDeliverableEvidence } from './analysis-route-files.js'
 import { recoverBotTeam } from "../bot/recovery.js"
@@ -165,6 +169,7 @@ export type ToolGate = (
 ) => import("../policy/permissions.js").门的决定
 
 export interface NativeRuntimeOptions {
+  terminals?: TerminalControl
   /**
    * 压缩参数的覆盖（2026-09-27）。**只在内存里改**（pi 的 `SettingsManager.applyOverrides`），不写 pi 的 `settings.json`
    * （`setCompactionEnabled` 那一类会 `save()`，设计契约扫描拦着）。缺省 = 照 pi 的默认（留 16384 给摘要、保留最近 2 万 token）。
@@ -1498,12 +1503,15 @@ export class NativeRuntime implements AgentRuntime {
     const 侧边工具 = this.opts.读主对话
       ? [createReadMainSessionTool({ 对话: spec.sessionId, 读: this.opts.读主对话 })]
       : []
-    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...mcp工具]
+    const 终端工具 = this.opts.terminals && !spec.remote && !spec.bot
+      ? createTerminalTools({ control: this.opts.terminals, owner: spec.sessionId,
+          authorize: (code, mode, signal) => this.authorizeTerminal(spec, code, mode, signal) }) : []
+    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...mcp工具, ...终端工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部
         : 外部.map((d) =>
-            套上溯源(d as Record<string, unknown>, new ProvenanceProbe(spec.workspace), (toolCallId, facts) =>
+            String((d as { name: string }).name).startsWith('terminal_') ? d : 套上溯源(d as Record<string, unknown>, new ProvenanceProbe(spec.workspace), (toolCallId, facts) =>
               this.emit({ kind: "tool_files", sessionId: spec.sessionId, toolCallId, ...facts }),
             ),
           )
@@ -3371,7 +3379,13 @@ ${描述}`
     this.发会话开关(sessionId)
   }
 
+  canControlTerminal(sessionId: string): boolean {
+    const spec = this.routeBooks.get(sessionId)?.spec
+    return this.sessions.has(sessionId) && Boolean(spec && !spec.remote && !spec.bot)
+  }
+
   async abort(sessionId: SessionId): Promise<void> {
+    this.opts.terminals?.revokeOwner(sessionId)
     this.stopBotTeam(sessionId)
     /**
      * **先撤待发单，再中止**（2026-09-23）。反过来的话，中止与撤单之间 pi 可能把一条送进去、
@@ -3992,6 +4006,28 @@ ${描述}`
    * 拒绝回 `isError` 结果，不抛异常（Spike A-2）。放行的那次先给已批准的方案拍这一轮的底（`记轮基线`），再往里走。
    * `mcp只读` 读的是 `MCP只读标记`：它一路经过 `套上溯源`、`套上存档` 的展开（`...def`）留到这里。
    */
+  private async authorizeTerminal(spec: SessionSpec, code: string, mode: TerminalMode, signal?: AbortSignal): Promise<void> {
+    const branch = this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? []
+    if (本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? [])) {
+      throw new Error('本条消息用 @R/@Python/@RPython 明确选择了 Notebook 内核，不能改走终端执行')
+    }
+    if (内核调用拒绝理由('run_code', branch) && /ipykernel|IRkernel|jupyter\s+.*kernel/i.test(code)) {
+      throw new Error('用户明确禁止启动内核，不能通过终端绕过')
+    }
+    const command = mode === 'shell' ? code : `${mode === 'python' ? 'python -c' : 'R -e'} '${code.replaceAll("'", "'\\''")}'`
+    let decision = this.opts.gate?.('bash', { command }, { workspace: spec.workspace, sessionId: spec.sessionId })
+    // REPL source is arbitrary code: never fall through the unknown-tool rule.
+    if ((!decision || decision.kind === 'allow') && mode !== 'shell' && this.opts.permissionTier) {
+      const tier = this.opts.permissionTier.取(spec.sessionId) ?? this.opts.permissionTier.全局()
+      decision = 照这一档(tier, { 类别: '外部工具', 说明: '在用户已经打开的终端解释器里执行代码，会保留变量并可能修改文件' })
+    }
+    if (decision?.kind === 'deny') throw new Error(decision.reason)
+    if (decision?.kind === 'ask' && await this.问权限(spec.sessionId, '终端协助', `${decision.reason}\n${code}`, signal) !== 'allow') {
+      throw new Error('本次终端操作未获批准，输入没有发送')
+    }
+    if (signal?.aborted) throw new Error('本轮已停止，输入没有发送')
+  }
+
   private 套方案期门(def: Record<string, unknown>, spec: SessionSpec): Record<string, unknown> {
     const name = String(def.name)
     const original = (def.execute as (...a: unknown[]) => Promise<unknown>).bind(def)
@@ -4169,6 +4205,7 @@ ${描述}`
   }
 
   async stop(sessionId: SessionId): Promise<void> {
+    this.opts.terminals?.revokeOwner(sessionId)
     this.stopBotTeam(sessionId)
     // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
     // 记一笔并等启动结束——start() 的收尾会据此把刚起来的立刻停掉。

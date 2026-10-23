@@ -32,6 +32,7 @@ import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
 import { AcpRuntime } from "../runtime/acp/runtime.js"
 import { PtyRuntime } from "../runtime/pty.js"
+import { TerminalControl } from '../terminal/control.js'
 import { KernelRuntime } from "../runtime/kernel.js"
 import { 对话内核, type 内核状态变化 } from "../kernel/挂载.js"
 import { familyOf } from "../runtime/family.js"
@@ -681,7 +682,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   /** 侧边对话（2026-09-24）：「读主对话」在后端里，后端在下面才建——先留个位子，建好后由它登记进来 */
   let 读主对话: ((sid: string) => string | undefined) | undefined
+  const terminalControl = new TerminalControl()
   const nativeRuntime = new NativeRuntime({
+    terminals: terminalControl,
     credentials: piCredentials,
     /** 压缩参数（2026-09-27）：只有测试旋钮会给；只在内存里覆盖，不写 pi 的 settings.json */
     ...(opts.compactKeepRecentTokens ? { compaction: { keepRecentTokens: opts.compactKeepRecentTokens } } : {}),
@@ -759,7 +762,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     registry,
     runtimes: {
       native: nativeRuntime,
-      pty: new PtyRuntime({ command: "sh" }),
+      pty: new PtyRuntime({ command: "sh", terminalControl }),
       /**
        * Jupyter 内核（②-A · K4）。
        *
@@ -860,6 +863,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ptyRuntimeFor: (_id: string, def: PtyAgentDef) => {
       const family = familyOf(def.command)
       return new PtyRuntime({
+        terminalControl,
         command: def.command,
         args: def.args,
         ...(family ? { family } : {}),
@@ -879,6 +883,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   // 上次进程留下的 starting/alive 不可能仍然存活，显式转 exited（规格 7.5）
+  terminalControl.setHost({
+    grant: id => { sessions.leases.release(id); sessions.leases.acquire(id, 'engine') },
+    reclaim: id => { sessions.leases.release(id); sessions.leases.acquire(id, 'user') },
+    valid: id => sessions.isLive(id) && sessions.leases.current(id)?.holder === 'engine',
+    renew: id => { sessions.leases.acquire(id, 'engine') },
+    write: (id, input) => sessions.write(id, input, 'engine'),
+  })
   const reconciled = sessions.reconcileOnStartup()
   const taskStore = new TaskStore(db)
   // 删掉的终端会话，任务行一起走（2026-08-23）
@@ -1228,6 +1239,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })()
 
   const backend = createWorkbenchBackend({
+    terminals: terminalControl,
+    terminalOwnerAllowed: id => nativeRuntime.canControlTerminal(id),
     transferDirectory: join(dirname(opts.dbPath), "transfers"),
     bots: new BotStore(db),
     configureBots: bridge => nativeRuntime.configureBots(bridge),
@@ -1639,6 +1652,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // stopAll 稍后发的 exited 撞上已关的库 → 「database not open」在一个没人接的异步回调里抛 → 主进程崩。
       // 把关库延到这些收尾都 settle 之后;远端连接/网关是同步的,照旧立刻断。
       const 会话done = sessions.stopAll().catch(() => undefined)
+      void 会话done.finally(() => terminalControl.dispose())
       // 对话内核也要收（审查 debug H1）：run_code 用过的内核不在 SessionManager 里,
       // 同步 close 分支此前完全漏掉它——zeromq socket 不关会 SIGABRT
       const 内核done = 对话的内核.收全部().catch(() => undefined)

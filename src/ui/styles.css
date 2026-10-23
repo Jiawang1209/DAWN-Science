@@ -1341,6 +1341,10 @@ pre {
  * 对话在上、终端在下，**同时看得见**。
  */
 .dock {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 40%;
   border-top: 1px solid var(--dawn-stroke-4);
   z-index: var(--z-dock);
   background: var(--dawn-surface-panel);
@@ -1356,12 +1360,20 @@ pre {
 .dock-toggle[aria-pressed="true"] { color: var(--dawn-text-1); }
 .dock-tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
   align-items: center;
   padding: 4px 12px;
   border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4);
 }
 .dock-title { font-size: var(--dawn-ui-size); font-weight: var(--dawn-weight-semibold); }
+.terminal-control { display: flex; flex-shrink: 0; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); padding: 6px 12px; border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-4); font-size: var(--dawn-fs-badge); }
+.terminal-mode { display: inline-flex; align-items: center; gap: var(--dawn-space-2); color: var(--dawn-text-2); }
+.terminal-mode .control { width: auto; min-width: 80px; }
+.terminal-control-status { color: var(--dawn-text-3); }
+.terminal-control-status.active { color: var(--dawn-accent); }
+.terminal-control-hint { color: var(--dawn-text-3); min-width: 0; overflow-wrap: anywhere; }
+.terminal-control-error { flex-basis: 100%; color: var(--dawn-danger); overflow-wrap: anywhere; }
 .dock-tab { display: inline-flex; align-items: center; }
 .dock-tab.current { border-bottom: 2px solid var(--dawn-accent); }
 /* **路径摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */
@@ -1375,6 +1387,9 @@ pre {
   white-space: nowrap;
 }
 .dock-content {
+  height: 276px;
+  min-height: 0;
+  flex: 0 1 auto;
   max-height: 280px;
   overflow: auto;
   padding: 8px 12px;
@@ -1382,6 +1397,7 @@ pre {
      xterm 自己涂的是 `--dawn-surface-sidebar`，这里必须同色，否则终端四周围出一圈色带 */
   background: var(--dawn-surface-sidebar);
 }
+.dock-content .term-host { height: 100%; }
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**
  * 项目那一列（2026-08-11 由下拉框改成列表）。

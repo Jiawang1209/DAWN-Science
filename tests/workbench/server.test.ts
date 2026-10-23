@@ -51,6 +51,10 @@ const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动
 
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
+    getTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
+    setTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
+    resizeTerminal: async () => ({}),
+    interruptTerminal: async () => { throw new Error('Terminal unavailable in this fixture') },
     startFileUploadBatch: async () => { throw new Error("Upload batch unavailable in this fixture") },
     startFileDownloadBatch: async () => { throw new Error("Download batch unavailable in this fixture") },
     startDirectoryTransfer: async () => { throw new Error("Directory operation unavailable in this fixture") },

@@ -60,6 +60,7 @@
     "@nanostores/react": "^1.1.0",
     "@nteract/messaging": "^7.0.20",
     "@types/pdfkit": "^0.17.6",
+    "@xterm/headless": "6.0.0",
     "better-sqlite3": "^13.0.3",
     "docx": "^9.7.1",
     "enchannel-zmq-backend": "^10.0.0",

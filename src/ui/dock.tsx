@@ -29,6 +29,7 @@ import { $dockChunks } from "./state/index.js"
 import type { SessionSummary } from "../protocol/index.js"
 
 import { t, tf } from "./i18n/index.js"
+import type { ReactNode } from 'react'
 export function TerminalDock({
   terminals,
   currentId,
@@ -39,6 +40,8 @@ export function TerminalDock({
   onClose,
   onCloseDock,
   onInput,
+  control,
+  onResize,
 }: {
   /** 这个项目里活着的终端会话 */
   terminals: readonly SessionSummary[]
@@ -52,6 +55,8 @@ export function TerminalDock({
   onClose: (sessionId: string) => void
   onCloseDock: () => void
   onInput: (data: string) => void
+  control?: ReactNode
+  onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
   const chunks = useStore($dockChunks)
 
@@ -100,6 +105,7 @@ export function TerminalDock({
         </Button>
       </div>
 
+      {control}
       <div className="dock-content">
         {!canOpen ? (
           /**
@@ -121,7 +127,7 @@ export function TerminalDock({
             */
           <p className="empty">{t("配置里没有 kind: pty 的 agent，开不了终端。")}</p>
         ) : currentId ? (
-          <TerminalPane chunks={chunks} onInput={onInput} />
+          <TerminalPane key={currentId} chunks={chunks} onInput={onInput} onResize={onResize} />
         ) : (
           <p className="empty">{t("还没有终端。点「＋ 新开一个」，它会开在上面那个目录里。")}</p>
         )}

@@ -176,6 +176,8 @@ export interface CredentialsPort {
 }
 
 export interface WorkbenchBackendOptions {
+  terminals?: import('../terminal/control.js').TerminalControl
+  terminalOwnerAllowed?: (sessionId: string) => boolean
   transferDirectory?: string
   bots?: BotStore
   configureBots?: (bridge: import("../bot/runtime.js").BotRuntimeBridge) => void
@@ -558,6 +560,29 @@ const 诊断图PNG =
   "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR42mO4Y6NBU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAKMMAExsYKfaAAAAAElFTkSuQmCC"
 
 export function createWorkbenchBackend(opts: WorkbenchBackendOptions): WorkbenchBackend {
+  const terminalRequest = <T>(f: () => T): T => {
+    const failed = (error: unknown): never => {
+      throw fault("invalid_request", "终端协助操作失败：{0}", error instanceof Error ? error.message : String(error))
+    }
+    try {
+      const result = f()
+      return result instanceof Promise ? result.catch(failed) as T : result
+    } catch (error) { return failed(error) }
+  }
+  const terminalService = () => {
+    if (!opts.terminals) throw new Error('本次运行没有装配终端协助')
+    return opts.terminals
+  }
+  const terminalOwner = (id: string) => {
+    const owner = opts.sessions.get(id)
+    if (!owner || !opts.terminalOwnerAllowed?.(id)) throw new Error('请先打开一段本地内置模型主对话')
+    return owner
+  }
+  const validateTerminalOwner = (ownerId: string, terminalId: string) => {
+    const owner = terminalOwner(ownerId), terminal = opts.sessions.get(terminalId)
+    if (!terminal || !opts.sessions.isLive(terminalId) || opts.registry.agents[terminal.agentId]?.kind !== 'pty') throw new Error('终端已经结束或不是可协助的 PTY')
+    if (owner.workspace !== terminal.workspace || owner.projectId !== terminal.projectId) throw new Error('终端与当前对话不在同一个工作区或项目')
+  }
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
 
@@ -2775,12 +2800,38 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
-    createTerminalSession: async ({ agentId, projectId }) => {
+    createTerminalSession: async ({ agentId, projectId, ownerSessionId }) => {
+      if (ownerSessionId) return terminalRequest(async () => {
+        const owner = terminalOwner(ownerSessionId)
+        if (registry.agents[agentId]?.kind !== 'pty') throw new Error('终端协助只支持 PTY')
+        if (projectId && projectId !== owner.projectId) throw new Error('终端与当前对话不在同一个项目')
+        if (!owner.projectId) throw new Error('当前对话没有可绑定的项目')
+        const terminal = await 起一个会话(owner.projectId, agentId, owner.workspace)
+        terminalService().bind(ownerSessionId, terminal.sessionId)
+        return terminal
+      })
       if (projectId) return 起一个会话(projectId, agentId)
       if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
       const 归属 = projects.ensureTemporary(scratchRoot)
       return 起一个会话(归属.projectId, agentId, homedir())
     },
+
+    getTerminalControl: async ({ terminalId }) => terminalRequest(() => terminalService().state(terminalId)),
+    setTerminalControl: async ({ terminalId, ownerSessionId, enabled, mode }) => terminalRequest(() => {
+      if (!enabled) return terminalService().reclaim(terminalId)
+      if (!ownerSessionId) throw new Error('请指定当前对话')
+      validateTerminalOwner(ownerSessionId, terminalId)
+      return terminalService().grant(ownerSessionId, terminalId, mode ?? 'shell')
+    }),
+    resizeTerminal: async ({ terminalId, cols, rows }) => terminalRequest(() => {
+      terminalService().resize(terminalId, cols, rows)
+      return {}
+    }),
+    interruptTerminal: async ({ terminalId, ownerSessionId }) => terminalRequest(async () => {
+      validateTerminalOwner(ownerSessionId, terminalId)
+      await terminalService().key(ownerSessionId, terminalId, 'ctrl-c', async () => {})
+      return terminalService().state(terminalId)
+    }),
 
     /**
      * 全部临时会话。**跨项目**——每个临时会话自带一个项目，
@@ -3688,6 +3739,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     writeToSession: async ({ sessionId, data, as, images, behavior }) => {
+      if (as === 'user' && opts.terminals?.has(sessionId)) opts.terminals.reclaim(sessionId)
       if (as === "user") {pausedBotOwners.delete(sessionId);botDelivery?.resume(sessionId)}
       /**
        * **图片在这一层读盘、缩放、转 base64**（协议 4.12，2026-08-13）。

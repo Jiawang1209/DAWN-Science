@@ -587,7 +587,8 @@
 /** 8.22: selected-file upload batches and paged attention filters. */
 /** 8.23: single-file downloads join persistent transfer batches and existing retry/conflict actions. */
 /** 8.24: per-language kernel state includes its optional current instance identity. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.24"
+/** 8.25: explicit terminal ownership/control and shared PTY dimensions. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.25"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

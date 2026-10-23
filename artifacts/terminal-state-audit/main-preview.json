@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-24",
+  "codeCommit": "600cddc1",
+  "localBranch": "main",
+  "entrypoint": "/Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js",
+  "runtime": {
+    "pid": 12802,
+    "appPath": "/Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron",
+    "title": "DAWN Science · main · 开发预览",
+    "visible": true
+  },
+  "checks": {
+    "rendererReloaded": true,
+    "terminalOpened": true,
+    "returnButtonEnabled": true,
+    "returnToConversation": true,
+    "draftPreserved": true
+  },
+  "remotePushed": false,
+  "installedAppReplaced": false
+}

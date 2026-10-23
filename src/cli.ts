@@ -1,5 +1,5 @@
 /**
- * CLI 入口（Task 1.11）。
+ * CLI 入口：无参数进入 DAWN Agent，/exit 回原 Shell。
  *
  *   dawn agents           列出配置里的所有 agent
  *   dawn run <agent>      起一个会话并接管当前终端
@@ -8,6 +8,8 @@
  *
  * 环境变量：DAWN_CONFIG（默认 providers.yaml）、DAWN_DB（默认 .dawn.db）
  */
+import { runCliAgent } from "./cli/agent.js"
+import { CLI_HELP } from "./cli/presentation.js"
 import Database from "better-sqlite3"
 import { basename } from "node:path"
 import { existsSync } from "node:fs"
@@ -235,15 +237,29 @@ async function cmdDemo(agentIdArg?: string): Promise<void> {
   console.table(mgr.leases.audit(s.id).map((e) => ({ action: e.action, holder: e.holder, at: e.at })))
 }
 
+async function agent(agentId?: string): Promise<never> {
+  const code = await runCliAgent(agentId)
+  // Workbench cleanup has completed; flush stdout before handing the terminal back.
+  await new Promise<void>(done => process.stdout.write('', () => done()))
+  process.exit(code)
+}
 async function main(): Promise<void> {
   const [, , cmd, ...rest] = process.argv
+  if (!cmd || cmd === '--agent') {
+    if (cmd === '--agent' && !rest[0]) throw new Error('用法：dawn --agent <名称>')
+    return agent(rest[0])
+  }
+  if (cmd === '--help' || cmd === '-h') { console.log(CLI_HELP); return }
   switch (cmd) {
     case "agents":
       return cmdAgents()
     case "sessions":
       return cmdSessions()
-    case "run":
-      return cmdRun(rest[0])
+    case "run": {
+      const id = rest[0]
+      if (id && requireConfig().agents[id]?.kind === 'native') return agent(id)
+      return cmdRun(id)
+    }
     case "demo":
       return cmdDemo(rest[0])
     default:

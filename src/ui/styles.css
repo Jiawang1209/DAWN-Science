@@ -1400,20 +1400,24 @@ pre {
 .dock-content .term-host { height: 100%; }
 .dock-shell { height: 100%; }
 .dock-shell[hidden] { display: none; }
-.terminal-input-modes { display: flex; flex-shrink: 0; gap: var(--dawn-space-2); padding: var(--dawn-space-1) var(--dawn-space-3); }
-.terminal-assistant { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: var(--dawn-space-2); }
-.dock:has(.terminal-assistant) { max-height: 45%; }
-.terminal-ai-feed { flex: 1; min-height: 0; overflow: auto; overflow-wrap: anywhere; }
-.terminal-ai-turn { display: flex; align-items: baseline; gap: var(--dawn-space-2); font-size: var(--dawn-fs-sub); }
-.terminal-ai-turn > p { margin: 0; white-space: pre-wrap; }
-.terminal-ai-who { flex: 0 0 auto; color: var(--dawn-text-3); }
-.terminal-ai-turn .markdown { min-width: 0; }
-.terminal-ai-step { font-size: var(--dawn-fs-badge); color: var(--dawn-text-2); }
-.terminal-ai-step pre { white-space: pre-wrap; overflow-wrap: anywhere; }
-.terminal-ai-compose { flex-shrink: 0; }
-.terminal-ai-input.control { width: 100%; min-height: 36px; height: 36px; max-height: 90px; resize: vertical; }
-.terminal-ai-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); }
-.terminal-ai-actions .hint { font-size: var(--dawn-fs-badge); }
+.dock-title { display: inline-flex; align-items: center; gap: 8px; }
+.dock-terminal-tabs { display: flex; align-items: center; min-width: 0; overflow-x: auto; }
+.dock-terminal-tabs .dock-tab { flex: 0 0 auto; }
+.dock-tabs > .spacer { flex: 1; min-width: 0; }
+.main.terminal-active > :not(.dock) { display: none; }
+.terminal-workspace { flex: 1; max-height: none; border-top: 0; overflow: hidden; border-radius: var(--dawn-radius-lg); }
+.terminal-workspace .dock-tabs { min-height: 52px; gap: 8px; padding: 8px 16px; }
+.terminal-workspace .dock-tab { border: 0; border-radius: var(--dawn-radius-sm); padding: 2px 4px 2px 8px; }
+.terminal-workspace .dock-tab.current { background: var(--dawn-surface-sidebar); }
+.terminal-workspace .dock-cwd { max-width: 20ch; }
+.terminal-workspace .dock-content { flex: 1; height: auto; max-height: none; padding: 18px 24px; overflow: hidden; }
+.terminal-cli-hint { font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); white-space: nowrap; }
+@media (max-width: 1100px) {
+  .terminal-workspace .dock-tabs { flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+  .terminal-workspace .dock-cwd { max-width: 12ch; }
+  .terminal-workspace .dock-terminal-tabs { max-width: 40%; }
+  .terminal-cli-hint { white-space: normal; }
+}
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**
  * 项目那一列（2026-08-11 由下拉框改成列表）。

@@ -3773,7 +3773,6 @@ export function ConversationView({
   待答权限,
   onAnswerPermission,
   onAnswerQuestion,
-  inputCardsElsewhere = false,
   会话开关们,
   onSetConfigOption,
   onToggleDock,
@@ -3907,7 +3906,6 @@ export function ConversationView({
   待答权限?: { requestId: string; title: string; options: readonly { optionId: string; name: string; kind: string }[] } | undefined
   /** 回答那次询问。`optionId` 缺省 = 取消（与「拒绝」不是一回事） */
   onAnswerQuestion?: ((requestId: string, answer?: QuestionAnswer) => Promise<void>) | undefined
-  inputCardsElsewhere?: boolean | undefined
   onAnswerPermission?: ((requestId: string, optionId?: string) => void) | undefined
   /**
    * 这一段会话可以调的开关（A3，只有 acp 有）。
@@ -5251,7 +5249,7 @@ export function ConversationView({
         {onEditQueue ? (
           <待发条 items={待发} onEdit={onEditQueue} onToDock={onQueueToDock} onNewSession={onNewSession} onError={设发送出错} disabled={queueLocked} />
         ) : null}
-        {!inputCardsElsewhere && onAnswerQuestion ? pendingQuestions.map((record) => <QuestionCard key={record.requestId} sessionId={session.sessionId} record={record} onAnswer={(answer) => onAnswerQuestion(record.requestId, answer)} />) : null}
+        {onAnswerQuestion ? pendingQuestions.map((record) => <QuestionCard key={record.requestId} sessionId={session.sessionId} record={record} onAnswer={(answer) => onAnswerQuestion(record.requestId, answer)} />) : null}
         <div className="composer-card" hidden={questionTakeover}>
         <ComposerEnvironment remote={session.remote}>
             {session.remote || onPickWorkspace || workspace ? (
@@ -5577,7 +5575,7 @@ export function ConversationView({
             * 屏幕上写着「允许一次」，而它那边根本没有这个概念——
             * 我们回过去的 id 它不认，表现是「点了没反应」。
             */}
-          {!inputCardsElsewhere && 待答权限 && onAnswerPermission ? (
+          {待答权限 && onAnswerPermission ? (
             <PermissionCard permission={待答权限} onAnswer={onAnswerPermission} />
           ) : null}
           {switchProblem ? <p className="caveat composer-problem">⚠ {switchProblem}</p> : null}

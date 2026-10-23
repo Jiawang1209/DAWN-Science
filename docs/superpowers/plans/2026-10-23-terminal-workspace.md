@@ -2,6 +2,8 @@
 
 > **For agentic workers:** Use superpowers:executing-plans to implement this plan task-by-task in the existing isolated worktree, without delegation.
 
+> 本计划已被用户后续确认的 `2026-10-23-dawn-cli.md` 取代；不实施桌面内复制对话的方案。
+
 **Goal:** 一个整页终端工作区，以 Agent / Normal 在完整 DAWN 对话与同一原生终端间切换，没有重复聊天界面。
 
 **Architecture:** 复用唯一 ConversationView，作为 TerminalDock 的工作区内容。模式切换保留挂载、草稿和 PTY；Agent 提交绑定当前终端，Normal 先停止 Agent 并接回。删除重复的 TerminalAssistant 组件。

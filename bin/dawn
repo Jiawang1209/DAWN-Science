@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+import { existsSync } from 'node:fs'
+const built = new URL('../dist/cli/main.js', import.meta.url)
+if (existsSync(built)) await import(built.href)
+else {
+  try { const { register } = await import('tsx/esm/api'); register(); await import('../src/cli.ts') }
+  catch (error) { console.error('DAWN CLI 尚未构建，请在仓库运行 npm run build:cli。'); process.exitCode = 1 }
+}

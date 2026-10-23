@@ -22,7 +22,7 @@
     "spike:d": "tsx --env-file-if-exists=.env spikes/d-jupyter-kernel.ts",
     "build:electron": "node scripts/build-electron.mjs",
     "build:ui": "vite build",
-    "build": "npm run build:electron && npm run build:ui",
+    "build": "npm run build:electron && npm run build:cli && npm run build:ui",
     "app": "npm run build && electron dist/electron/main.js",
     "dist": "npm run build && electron-builder --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
@@ -49,7 +49,8 @@
     "rehearse:fresh": "node scripts/rehearse-fresh-install.mjs",
     "rehearse:update": "node scripts/rehearse-update.mjs",
     "rehearse:handoff": "node scripts/rehearse-handoff.mjs",
-    "rehearse:real-update": "node scripts/rehearse-real-update.mjs"
+    "rehearse:real-update": "node scripts/rehearse-real-update.mjs",
+    "build:cli": "node scripts/build-cli.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.86.0",
@@ -113,5 +114,8 @@
     "typescript": "^7.0.2",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"
+  },
+  "bin": {
+    "dawn": "bin/dawn"
   }
 }

@@ -1,0 +1,39 @@
+{
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/Tdawn-cli-preview-YZ42IF",
+  "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/Tdawn-cli-preview-YZ42IF/project",
+  "model": "fixed mock, real tools",
+  "mockEndpoint": "http://127.0.0.1:49633/v1",
+  "terminalBefore": {
+    "id": "43690e50-fc5a-4f7f-8026-c9036476cdec",
+    "instanceId": "0027ac58-674f-410e-adc9-4b1943daa68d",
+    "pid": 30333,
+    "cwd": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/Tdawn-cli-preview-YZ42IF/project",
+    "command": "/bin/bash",
+    "alive": true,
+    "controlled": false,
+    "ownerSessionId": "d75d7679-8bd8-4f81-8d99-96f9b31621dc",
+    "mode": "shell",
+    "cols": 72,
+    "rows": 34,
+    "revision": 21
+  },
+  "normalProof": "30333|/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/Tdawn-cli-preview-YZ42IF/project",
+  "toolFile": "DAWN CLI preview\nCreated by the real DAWN write tool.\n",
+  "checks": {
+    "normalShellRetained": true,
+    "wide": [
+      1280,
+      840
+    ],
+    "narrow": [
+      900,
+      700
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "visibleDesktopChatInputs": 0,
+    "terminalPanes": 1
+  }
+}

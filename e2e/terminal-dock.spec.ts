@@ -20,13 +20,10 @@ import { join } from "node:path"
 async function 切换终端面板(page: import("@playwright/test").Page) {
   await page.locator(".composer-card .attach-trigger").click()
   await page.getByRole("menu", { name: "添加内容" }).getByRole("menuitem", { name: "终端面板", exact: true }).click()
-  // These cases verify raw PTY behavior. The panel now defaults to AI input.
-  const manual = page.locator('.main .dock').getByRole('tab', { name: '手动命令', exact: true })
-  await page.locator('.main .dock .term-host').waitFor({ state: 'attached' })
-  if (await manual.count()) await manual.click()
+  await page.locator('.main .dock .term-host').waitFor({ state: 'visible' })
 }
 
-test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
+test("掀开整页终端，对话隐藏并保留", async ({ dawn }) => {
   const { page } = dawn
 
   // 先开一段对话，待会儿要验它没被顶掉
@@ -38,7 +35,7 @@ test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {
   const dock = page.locator(".dock")
   await expect(dock).toBeVisible()
   // **对话没被顶掉**：这正是它与旧终端会话最根本的区别
-  await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
+  await expect(page.getByPlaceholder(/输入问题/)).toBeHidden()
   // 掀开就该有一个能用的终端，不该是个还要再点一次的空盒子
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 })
@@ -50,7 +47,7 @@ test("**路径是项目文件夹** —— 摆在上面，也真的在那里", as
   await expect(dock.locator(".term-host")).toBeVisible({ timeout: 60_000 })
 
   // ① 摆出来了：不摆的话「它到底在哪个目录」只能靠 pwd 猜
-  await expect(dock.locator(".dock-cwd")).toContainText(workspace)
+  await expect(dock.locator(".dock-cwd")).toHaveAttribute("title", workspace)
 
   /**
    * ② **真的在那里**——让它在自己的 cwd 里留下一个文件。
@@ -162,7 +159,7 @@ test("收起之后 dock 就没了", async ({ dawn }) => {
   const { page } = dawn
   await 切换终端面板(page)
   await expect(page.locator(".dock")).toBeVisible()
-  await page.locator(".dock").getByRole("button", { name: "收起面板" }).click()
+  await page.locator(".dock").getByRole("button", { name: "返回对话" }).click()
   await expect(page.locator(".dock")).toHaveCount(0)
 })
 

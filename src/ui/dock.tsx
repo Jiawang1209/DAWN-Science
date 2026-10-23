@@ -1,26 +1,7 @@
 /**
- * 底部终端 dock（2026-08-11）。
- *
- * 作者：*「终端，我们要学习 Claude app、Codex app，要点击之后，界面下方
- * 单独出现一个地方，可以专门用于开启一个新的终端，并且这个终端的路径，
- * 应该是项目文件夹的路径。」*
- *
- * ## 与此前那个终端的区别，是**它不再抢主区**
- *
- * 原来一个 `pty` 会话就是一整屏：选中它，对话就没了。那等于说
- * 「你要么跟模型说话，要么敲命令」——而数据科学里这两件事本来就是**同时**的：
- * 模型在跑分析，你在下面 `ls` 一眼它到底写出了什么。
- *
- * 所以 dock 是**第二条订阅**（见 `state/dock.ts`）：它和当前对话同时活着。
- *
- * ## 路径就是项目文件夹
- *
- * 终端会话与别的会话走同一条 `createSession`，而 pty 运行时的 cwd 取
- * `spec.workspace`——**项目的工作区**。所以「终端开在项目文件夹里」
- * 不是这里另做的一件事，是同一个事实的自然结果。
- *
- * **没有项目时不给一个开不出来的按钮**：会话属于项目，没有项目就没有工作区，
- * 那时如实说清，并给出「打开项目文件夹」这条出路（规格 7.5）。
+ * 原生终端工作区。对话视图中占满主区，只显示一份 xterm；
+ * 原对话隐藏并保留草稿，返回时恢复。输入 dawn 启动 CLI Agent，
+ * /exit 回到原 Shell。标签、项目归属和 PTY 生命周期仍由 App 管理。
  */
 import { useStore } from "@nanostores/react"
 import { Button } from "./primitives.js"
@@ -29,7 +10,7 @@ import { $dockChunks } from "./state/index.js"
 import type { SessionSummary } from "../protocol/index.js"
 
 import { t, tf } from "./i18n/index.js"
-import type { ReactNode } from 'react'
+import { 终端图标, 加号图标, 返回图标 } from './icons.js'
 export function TerminalDock({
   terminals,
   currentId,
@@ -40,11 +21,8 @@ export function TerminalDock({
   onClose,
   onCloseDock,
   onInput,
-  control,
   onResize,
-  assistant,
-  inputMode = 'manual',
-  onInputMode,
+  fullPage = false,
 }: {
   /** 这个项目里活着的终端会话 */
   terminals: readonly SessionSummary[]
@@ -58,18 +36,16 @@ export function TerminalDock({
   onClose: (sessionId: string) => void
   onCloseDock: () => void
   onInput: (data: string) => void
-  control?: ReactNode
   onResize?: ((cols: number, rows: number) => void) | undefined
-  assistant?: ReactNode
-  inputMode?: 'ai' | 'manual' | undefined
-  onInputMode?: ((mode: 'ai' | 'manual') => void) | undefined
+  fullPage?: boolean | undefined
 }) {
   const chunks = useStore($dockChunks)
 
   return (
-    <section className="dock" aria-label={t("终端")}>
+    <section className={`dock${fullPage ? " terminal-workspace" : ""}`} aria-label={t("终端")}>
       <div className="dock-tabs">
-        <span className="dock-title">{t("终端")}</span>
+        <span className="dock-title"><终端图标 />{t("终端")}</span>
+        <div className="dock-terminal-tabs">
         {terminals.map((台, i) => (
           <span key={台.sessionId} className={`dock-tab${台.sessionId === currentId ? " current" : ""}`}>
             <Button
@@ -92,12 +68,11 @@ export function TerminalDock({
             </Button>
           </span>
         ))}
-        <Button variant="outline" size="sm" disabled={!canOpen} onClick={onNew}>
-          {t("＋ 新开一个")}
-        </Button>
+        </div>
+        <Button variant="ghost" size="icon" disabled={!canOpen} onClick={onNew} aria-label={t("＋ 新开一个")}><加号图标 /></Button>
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
-        {workspace ? <span className="dock-cwd">{workspace}</span> : null}
+        {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
         {/**
           * **可见文案与可及名字一致**（2026-08-13）。
           *
@@ -106,17 +81,13 @@ export function TerminalDock({
           * 而按名字找元素时两个名字还互为子串。
           * 一颗按钮只该有一个名字。
           */}
-        <Button variant="ghost" size="sm" onClick={onCloseDock}>
-          {t("收起面板")}
+        {fullPage ? <span className="terminal-cli-hint">{t("输入 dawn 进入 Agent，/exit 返回 Shell")}</span> : null}
+        <Button variant="ghost" size={fullPage ? "icon" : "sm"} onClick={onCloseDock}
+          {...(fullPage ? { 'aria-label': t("返回对话") } : {})}>
+          {fullPage ? <返回图标 /> : t("收起面板")}
         </Button>
       </div>
 
-      {assistant ? <div className="terminal-input-modes" role="tablist" aria-label={t("终端输入方式")}>
-        <Button variant={inputMode === 'ai' ? 'secondary' : 'ghost'} size="sm" role="tab" aria-selected={inputMode === 'ai'} onClick={() => onInputMode?.('ai')}>{t("AI 对话")}</Button>
-        <Button variant={inputMode === 'manual' ? 'secondary' : 'ghost'} size="sm" role="tab" aria-selected={inputMode === 'manual'} onClick={() => onInputMode?.('manual')}>{t("手动命令")}</Button>
-      </div> : null}
-
-      {control}
       <div className="dock-content">
         {!canOpen ? (
           /**
@@ -139,9 +110,8 @@ export function TerminalDock({
           <p className="empty">{t("配置里没有 kind: pty 的 agent，开不了终端。")}</p>
         ) : currentId ? (
           <>
-            {assistant && inputMode === 'ai' ? assistant : null}
-            <div className="dock-shell" hidden={Boolean(assistant) && inputMode === 'ai'}>
-              <TerminalPane key={currentId} chunks={chunks} onInput={inputMode === 'manual' ? onInput : undefined} onResize={onResize} />
+            <div className="dock-shell">
+              <TerminalPane key={currentId} chunks={chunks} onInput={onInput} onResize={onResize} />
             </div>
           </>
         ) : (

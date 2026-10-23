@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-23 — 真正 CLI Agent 与单一原生终端工作区
+
+- **Type**: feat
+- **Motivation**: 用户否决上下重复聊天布局，进一步明确在终端命令行调用 DAWN；选择 Normal 为原 Shell，输入 dawn 进入 Agent，退出回 Shell。
+- **What**: 新增可构建的 bin/dawn 入口、独立 CLI 工作台装配及 readline 交互；复用既有 Agent / 工具 / 权限 / 问答，支持实际工具过程、Ctrl-C、/exit、EOF、失败状态与并发独立记录。CLI 使用环境凭证，不复制桌面密钥。删除重复的终端小聊天组件；主内容区原生 xterm 占满，原对话和草稿隐藏保留，工具栏收拢为标签/目录/命令提示/返回。原先的默认AI小面板方案不再作为当前呈现。
+- **Verification**: 类型与完整构建通过；最终全量467文件4974项通过、10项跳过（96.61秒）；CLI专项12项通过；实际Electron27项通过，工具栏最后调整后13项终端/生命周期再通过。实际宽/窄、明/暗预览验证普通Shell调用CLI、真实工具写文件、原PID/目录返回，日志、截图和回执见docs/reviews/2026-10-23-dawn-cli-verification.md。
+- **Impact**: 保留codex/terminal-assistance及独立预览。只在预览环境配置源码命令路径，未全局安装，不合并、不推送、不替换安装版或生产配置；CLI环境凭证和重新进入创建新会话的边界见docs/CLI.md。
+
 ### 2026-10-23 — 终端默认AI对话与手动命令切换
 
 - **Type**: feat

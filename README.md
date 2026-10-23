@@ -165,6 +165,17 @@ npm run test:e2e            # build, then Playwright against the real build
 npm run dist                # package for the current platform → release/
 ```
 
+Command-line Agent (source build):
+
+```bash
+npm run build:cli
+./bin/dawn --help
+# Set DAWN_CONFIG and your provider's API key environment variable, then:
+./bin/dawn
+```
+
+Normal is your existing Shell; `dawn` enters Agent, `/exit` returns. CLI uses its own data directory and environment credentials. See [CLI setup](docs/CLI.md).
+
 Cross-compiling and Linux build deps: [打包与发布](docs/打包与发布.md).
 
 ---
@@ -396,6 +407,17 @@ npm test                    # 单元 + 集成
 npm run test:e2e            # 先 build，再 Playwright 跑真实产物
 npm run dist                # 打当前平台的安装包，产物在 release/
 ```
+
+命令行 Agent（源码版）：
+
+```bash
+npm run build:cli
+./bin/dawn --help
+# 设置 DAWN_CONFIG 和所用服务的 API key 环境变量后：
+./bin/dawn
+```
+
+Normal 就是原来的 Shell；输入 `dawn` 进入 Agent，`/exit` 返回。CLI 使用独立数据目录和环境凭证，详见[配置与使用](docs/CLI.md)。
 
 打包细节（交叉打包能不能、Linux 要装什么）见 [打包与发布](docs/打包与发布.md)。
 

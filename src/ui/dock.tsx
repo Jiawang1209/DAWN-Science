@@ -42,6 +42,9 @@ export function TerminalDock({
   onInput,
   control,
   onResize,
+  assistant,
+  inputMode = 'manual',
+  onInputMode,
 }: {
   /** 这个项目里活着的终端会话 */
   terminals: readonly SessionSummary[]
@@ -57,6 +60,9 @@ export function TerminalDock({
   onInput: (data: string) => void
   control?: ReactNode
   onResize?: ((cols: number, rows: number) => void) | undefined
+  assistant?: ReactNode
+  inputMode?: 'ai' | 'manual' | undefined
+  onInputMode?: ((mode: 'ai' | 'manual') => void) | undefined
 }) {
   const chunks = useStore($dockChunks)
 
@@ -105,6 +111,11 @@ export function TerminalDock({
         </Button>
       </div>
 
+      {assistant ? <div className="terminal-input-modes" role="tablist" aria-label={t("终端输入方式")}>
+        <Button variant={inputMode === 'ai' ? 'secondary' : 'ghost'} size="sm" role="tab" aria-selected={inputMode === 'ai'} onClick={() => onInputMode?.('ai')}>{t("AI 对话")}</Button>
+        <Button variant={inputMode === 'manual' ? 'secondary' : 'ghost'} size="sm" role="tab" aria-selected={inputMode === 'manual'} onClick={() => onInputMode?.('manual')}>{t("手动命令")}</Button>
+      </div> : null}
+
       {control}
       <div className="dock-content">
         {!canOpen ? (
@@ -127,7 +138,12 @@ export function TerminalDock({
             */
           <p className="empty">{t("配置里没有 kind: pty 的 agent，开不了终端。")}</p>
         ) : currentId ? (
-          <TerminalPane key={currentId} chunks={chunks} onInput={onInput} onResize={onResize} />
+          <>
+            {assistant && inputMode === 'ai' ? assistant : null}
+            <div className="dock-shell" hidden={Boolean(assistant) && inputMode === 'ai'}>
+              <TerminalPane key={currentId} chunks={chunks} onInput={inputMode === 'manual' ? onInput : undefined} onResize={onResize} />
+            </div>
+          </>
         ) : (
           <p className="empty">{t("还没有终端。点「＋ 新开一个」，它会开在上面那个目录里。")}</p>
         )}

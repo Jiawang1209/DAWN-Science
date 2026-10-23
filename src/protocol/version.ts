@@ -588,7 +588,8 @@
 /** 8.23: single-file downloads join persistent transfer batches and existing retry/conflict actions. */
 /** 8.24: per-language kernel state includes its optional current instance identity. */
 /** 8.25: explicit terminal ownership/control and shared PTY dimensions. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.25"
+/** 8.26：终端面板默认AI对话，sendTerminalPrompt按确切终端提交自然语言。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.26"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

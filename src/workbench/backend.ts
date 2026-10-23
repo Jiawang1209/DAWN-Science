@@ -178,6 +178,7 @@ export interface CredentialsPort {
 export interface WorkbenchBackendOptions {
   terminals?: import('../terminal/control.js').TerminalControl
   terminalOwnerAllowed?: (sessionId: string) => boolean
+  terminalPrompt?: (owner: string, terminal: string, text: string, mode: import('../protocol/terminal.js').TerminalMode, queueId?: string) => void
   transferDirectory?: string
   bots?: BotStore
   configureBots?: (bridge: import("../bot/runtime.js").BotRuntimeBridge) => void
@@ -2817,6 +2818,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     getTerminalControl: async ({ terminalId }) => terminalRequest(() => terminalService().state(terminalId)),
+    sendTerminalPrompt: async ({ terminalId, ownerSessionId, text }) => terminalRequest(async () => {
+      validateTerminalOwner(ownerSessionId, terminalId)
+      if (!opts.terminalPrompt) throw new Error('本次运行没有装配终端 AI 输入')
+      await backend.writeToSession({ sessionId: ownerSessionId, data: text, as: 'user', terminalId })
+      return {}
+    }),
     setTerminalControl: async ({ terminalId, ownerSessionId, enabled, mode }) => terminalRequest(() => {
       if (!enabled) return terminalService().reclaim(terminalId)
       if (!ownerSessionId) throw new Error('请指定当前对话')
@@ -3738,7 +3745,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 装配(store.get(connectionId)!)
     },
 
-    writeToSession: async ({ sessionId, data, as, images, behavior }) => {
+    writeToSession: async ({ sessionId, data, as, images, behavior, terminalId }) => {
+      if (terminalId) {
+        validateTerminalOwner(sessionId, terminalId)
+        if (as !== 'user' || images?.length || behavior) throw new Error('终端 AI 输入只接受当前用户的文字请求')
+        sessions.leases.acquire(sessionId, 'user')
+      }
       if (as === 'user' && opts.terminals?.has(sessionId)) opts.terminals.reclaim(sessionId)
       if (as === "user") {pausedBotOwners.delete(sessionId);botDelivery?.resume(sessionId)}
       /**
@@ -3826,6 +3838,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             const result = await runBotTurn({sessionId, signal: controller.signal, attach: sink => sessions.attach(sessionId, sink), abort: async () => {await sessions.abort(sessionId);await botRuntime(sessionId).waitForIdle(sessionId)}, write: () => sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)})
             if (!result.ok) throw new Error(result.error ?? "Bot 未完成这一轮")
           } finally {release?.();turns.delete(controller);if (!turns.size)directBotTurns.delete(sessionId)}
+        } else if (terminalId && !语言请求.length) {
+          if (!opts.terminalPrompt) throw new Error('本次运行没有装配终端 AI 输入')
+          const mode = await terminalService().detectMode(terminalId)
+          validateTerminalOwner(sessionId, terminalId)
+          opts.terminalPrompt(sessionId, terminalId, 带前缀, mode, queueId)
         } else sessions.write(sessionId, 带前缀, as, 附图, behavior, queueId)
         // **写成功了才清**：写失败（没租约、会话不在）时那几段还得留着，下一次再带
         不在场缓冲.delete(sessionId)

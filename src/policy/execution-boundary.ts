@@ -4,6 +4,7 @@
  */
 import { 本轮内核语言 } from '../kernel/shortcuts.js'
 import { 扫内核指令 } from '../files/mentions.js'
+import { displayTerminalRequest } from '../terminal/request.js'
 
 export const 讨论执行指引 =
   '先判断用户当前是在讨论还是要求执行。普通聊天、解释概念、比较方法、讨论方案、询问看法时，直接用文字回答；' +
@@ -24,7 +25,7 @@ type Entry = { type?: string; message?: { role?: string; content?: unknown } }
 export function 指令文本(content: unknown): string {
   const text = typeof content === 'string' ? content : Array.isArray(content)
     ? content.flatMap((b: { type?: string; text?: string }) => b?.type === 'text' && typeof b.text === 'string' ? [b.text] : []).join('\n') : ''
-  let plain = text.split('[以下是随消息附上的')[0]!
+  let plain = displayTerminalRequest(text).split('[以下是随消息附上的')[0]!
     .replace(/```[^]*?(?:```|$)|~~~[^]*?(?:~~~|$)/g, '')
     .replace(/^\s*>.*$/gm, '')
     // 格式化的工具名仍是指令的宾语；整句代码示例及引文继续排除。

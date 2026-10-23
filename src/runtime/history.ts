@@ -1,4 +1,5 @@
 import { ASK_USER_QUESTION, QuestionsSchema, validateQuestionAnswer } from "../protocol/questions.js"
+import { displayTerminalRequest } from '../terminal/request.js'
 /**
  * pi 的会话记录 → 界面认识的历史条目（会话续接 2026-08-11；2026-09-27 从 `native.ts` 搬出来）。
  *
@@ -64,7 +65,7 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
       continue
     }
     if (m.role === "user") {
-      const text = 取文本(m.content)
+      const text = displayTerminalRequest(取文本(m.content))
       if (text.trim()) 出.push({ kind: "text", who: "user", text, ...时刻(m) })
       continue
     }

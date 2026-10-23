@@ -1398,6 +1398,22 @@ pre {
   background: var(--dawn-surface-sidebar);
 }
 .dock-content .term-host { height: 100%; }
+.dock-shell { height: 100%; }
+.dock-shell[hidden] { display: none; }
+.terminal-input-modes { display: flex; flex-shrink: 0; gap: var(--dawn-space-2); padding: var(--dawn-space-1) var(--dawn-space-3); }
+.terminal-assistant { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: var(--dawn-space-2); }
+.dock:has(.terminal-assistant) { max-height: 45%; }
+.terminal-ai-feed { flex: 1; min-height: 0; overflow: auto; overflow-wrap: anywhere; }
+.terminal-ai-turn { display: flex; align-items: baseline; gap: var(--dawn-space-2); font-size: var(--dawn-fs-sub); }
+.terminal-ai-turn > p { margin: 0; white-space: pre-wrap; }
+.terminal-ai-who { flex: 0 0 auto; color: var(--dawn-text-3); }
+.terminal-ai-turn .markdown { min-width: 0; }
+.terminal-ai-step { font-size: var(--dawn-fs-badge); color: var(--dawn-text-2); }
+.terminal-ai-step pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.terminal-ai-compose { flex-shrink: 0; }
+.terminal-ai-input.control { width: 100%; min-height: 36px; height: 36px; max-height: 90px; resize: vertical; }
+.terminal-ai-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); }
+.terminal-ai-actions .hint { font-size: var(--dawn-fs-badge); }
 .dock-content .empty { display: flex; align-items: center; gap: var(--dawn-space-2); }
 /**
  * 项目那一列（2026-08-11 由下拉框改成列表）。

@@ -1,10 +1,10 @@
 /** Shared deterministic model scenario; terminal processes and control operations remain real. */
-export const TERMINAL_CONTROL_OPERATIONS = ['getTerminalControl', 'setTerminalControl', 'resizeTerminal', 'interruptTerminal']
+export const TERMINAL_CONTROL_OPERATIONS = ['getTerminalControl', 'setTerminalControl', 'resizeTerminal', 'interruptTerminal', 'sendTerminalPrompt']
 const text = content => typeof content === 'string' ? content : (content ?? []).map(b => b.text ?? '').join('\n')
 function turn(body) {
   const messages = body.messages ?? [], index = messages.findLastIndex(m => m.role === 'user')
   const request = text(messages[index]?.content)
-  if (!request.includes('终端协助验收')) return undefined
+  if (!request.includes('终端协助验收') && !request.includes('终端自然语言验收')) return undefined
   const current = messages.slice(index + 1)
   const calls = current.flatMap(m => m.tool_calls ?? [])
   const results = current.filter(m => m.role === 'tool').map(m => {
@@ -27,7 +27,9 @@ export function terminalAssistanceTool(body) {
   if (!t.results.some(r => r.name === 'terminal_snapshot')) return { toolName: 'terminal_snapshot', args: { terminal_id } }
   if (t.request.includes('只读')) return undefined
   if (!t.results.some(r => r.name === 'terminal_execute')) {
-    const code = t.request.includes('Python')
+    const code = t.request.includes('终端自然语言验收')
+      ? 'pwd > terminal-natural-result.txt; printf "\\nNATURAL_INPUT_OK\\n"'
+      : t.request.includes('Python')
       ? 'dawn_number += 2\nopen("python-ai-result.txt", "w").write(str(dawn_number))\nprint("PYTHON_RESULT", dawn_number)'
       : t.request.includes('R变量')
       ? 'dawn_number <- dawn_number + 2; writeLines(as.character(dawn_number), "r-ai-result.txt"); print(dawn_number)'
@@ -49,7 +51,7 @@ export function terminalAssistanceReply(body) {
     : t.request.includes('只读') ? '已读取终端当前画面，本轮没有输入。'
     : '请先在终端协助行把终端交给当前对话。'
   const observed = t.request.includes('只读') ? data?.text
-    : data?.text?.split('\n').filter(line => /^(TERMINAL_VALUE=|PYTHON_RESULT |\[1\])/.test(line)).join('\n')
+    : data?.text?.split('\n').filter(line => /^(TERMINAL_VALUE=|PYTHON_RESULT |NATURAL_INPUT_OK|\[1\])/.test(line)).join('\n')
   const detail = data?.error ?? observed
   return `${note}${detail ? `\n\n实际终端输出：\n\n\`\`\`text\n${detail}\n\`\`\`` : ''}\n\n这是隔离预览的固定模型场景；终端进程、变量、文件及控制权交接为真实执行。`
 }

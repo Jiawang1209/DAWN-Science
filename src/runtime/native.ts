@@ -3,6 +3,7 @@ import { AnalysisRouteBook } from './analysis-route-book.js'
 import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
 import { createAnalysisRouteTools } from '../tools/analysis-route.js'
 import { createTerminalTools } from '../tools/terminal.js'
+import { terminalRequestMessage, terminalRequestTarget } from '../terminal/request.js'
 import type { TerminalControl } from '../terminal/control.js'
 import type { TerminalMode } from '../protocol/terminal.js'
 import { 照这一档 } from '../policy/permissions.js'
@@ -1505,6 +1506,7 @@ export class NativeRuntime implements AgentRuntime {
       : []
     const 终端工具 = this.opts.terminals && !spec.remote && !spec.bot
       ? createTerminalTools({ control: this.opts.terminals, owner: spec.sessionId,
+          target: () => terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []),
           authorize: (code, mode, signal) => this.authorizeTerminal(spec, code, mode, signal) }) : []
     const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...mcp工具, ...终端工具]
     const 观察过的外部 =
@@ -2549,7 +2551,19 @@ export class NativeRuntime implements AgentRuntime {
    */
   write(sessionId: SessionId, data: string, behavior?: 送法, queueId?: string): void {
     this.validateRouteMessage(sessionId, data)
+    const terminal = this.terminalInput.get(sessionId)
+    if (terminal?.text === data) data = terminalRequestMessage(data, terminal.id)
     this.送一轮(sessionId, data, undefined, behavior, queueId)
+  }
+
+  private readonly terminalInput = new Map<string, { id: string; text: string }>()
+  /** Synchronous delivery through SessionManager retains the original visible user text. */
+  promptTerminal(sessionId: string, terminalId: string, text: string, deliver: () => void): void {
+    const s = this.sessions.get(sessionId)
+    if (!this.canControlTerminal(sessionId) || !s) throw new Error('请先打开本地内置模型主对话')
+    if (s.inFlight || s.session.isStreaming || s.转述中 || s.回退中 || s.中止中) throw new Error('当前对话正在运行，请先等它结束或停止，再提交终端请求')
+    this.terminalInput.set(sessionId, { id: terminalId, text })
+    try { deliver() } finally { this.terminalInput.delete(sessionId) }
   }
 
   /**
@@ -4035,6 +4049,10 @@ ${描述}`
     return {
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
+        if (terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []) &&
+            ['bash', 'run_code'].includes(name) && !本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? [])) {
+          return { content: [{ type: 'text', text: '本轮从终端输入，请使用所选终端工具执行，不能改走其他执行入口。' }], isError: true, details: undefined }
+        }
         // A model may reuse an ID. Never let an earlier successful call's
         // execution/files observation survive into a newly denied invocation.
         this.routeBooks.get(spec.sessionId)?.tools.delete(toolCallId)

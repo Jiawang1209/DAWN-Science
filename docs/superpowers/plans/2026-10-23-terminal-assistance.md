@@ -55,4 +55,4 @@ Files: `src/ui/terminal-control.tsx`，`src/ui/{dock,terminal,App}.tsx`，`src/u
 
 ## 用户实际预览后的交互澄清
 
-- [ ] 终端面板内直接自然语言对话；默认AI输入或保留命令并列AI输入的形式待用户选择。已有原进程协助能力可复用，Python/R解释器不是自然语言聊天入口。
+- [x] 用户已选择默认AI输入、按需切手动；后续实现在同分支完成，见2026-10-23-terminal-ai-input.md及对应核验报告。Python/R解释器不是自然语言聊天入口。

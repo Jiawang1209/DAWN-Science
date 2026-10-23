@@ -1241,6 +1241,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const backend = createWorkbenchBackend({
     terminals: terminalControl,
     terminalOwnerAllowed: id => nativeRuntime.canControlTerminal(id),
+    terminalPrompt: (owner, terminal, text, mode, queueId) => nativeRuntime.promptTerminal(owner, terminal, text, () => {
+      sessions.leases.acquire(owner, 'user')
+      const previous = terminalControl.state(terminal)
+      terminalControl.grant(owner, terminal, mode)
+      try { sessions.write(owner, text, 'user', undefined, undefined, queueId) }
+      catch (error) { if (!previous.controlled) terminalControl.reclaim(terminal); throw error }
+    }),
     transferDirectory: join(dirname(opts.dbPath), "transfers"),
     bots: new BotStore(db),
     configureBots: bridge => nativeRuntime.configureBots(bridge),

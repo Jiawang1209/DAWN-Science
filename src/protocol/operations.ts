@@ -609,6 +609,11 @@ export const OPERATIONS = {
     response: TerminalControlSchema,
     mutating: false,
   },
+  sendTerminalPrompt: {
+    request: z.object({ terminalId: z.string().min(1), ownerSessionId: z.string().min(1), text: z.string().trim().min(1).max(32_000) }).strict(),
+    response: Empty,
+    mutating: true,
+  },
   setTerminalControl: {
     request: z.object({ terminalId: z.string().min(1), ownerSessionId: z.string().min(1).optional(), enabled: z.boolean(), mode: TerminalModeSchema.optional() }).strict(),
     response: TerminalControlSchema,
@@ -1720,6 +1725,7 @@ export const OPERATIONS = {
 
   writeToSession: {
     request: z.object({
+      terminalId: z.string().min(1).optional(),
       sessionId: z.string().min(1),
       data: z.string(),
       /** 必填：不能匿名写。写权可追责的唯一入口（规格 7.1） */

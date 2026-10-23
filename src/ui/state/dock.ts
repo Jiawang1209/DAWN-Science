@@ -24,6 +24,10 @@ import { sameList } from "./identity.js"
 export const $dockOpen = atom(false)
 export const setDockOpen = (v: boolean) => $dockOpen.set(v)
 export const toggleDock = () => $dockOpen.set(!$dockOpen.get())
+export const $terminalInputModes = atom<ReadonlyMap<string, 'ai' | 'manual'>>(new Map())
+export function setTerminalInputMode(id: string, mode: 'ai' | 'manual'): void {
+  const next = new Map($terminalInputModes.get()); next.set(id, mode); $terminalInputModes.set(next)
+}
 
 /**
  * dock 里**正在看**哪个终端。

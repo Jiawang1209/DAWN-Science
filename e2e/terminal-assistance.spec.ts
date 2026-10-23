@@ -8,10 +8,50 @@ async function openTerminal(page: import('@playwright/test').Page) {
   await page.locator('.composer-card .attach-trigger').click()
   await page.getByRole('menu', { name: '添加内容' }).getByRole('menuitem', { name: '终端面板', exact: true }).click()
   const dock = page.locator('.main .dock')
+  await dock.getByRole('tab', { name: '手动命令', exact: true }).click()
   await expect(dock.locator('.xterm-helper-textarea')).toBeAttached()
   await expect(dock.getByRole('button', { name: '交给当前对话' })).toBeEnabled()
   return dock
 }
+
+test('终端默认AI：直接自然语言提交，不先打开Python，并能切回原Shell', async ({ dawn }) => {
+  const { page, workspace } = dawn
+  await 在项目里开会话(page); await 等进了对话(page)
+  await page.locator('.composer-card .attach-trigger').click()
+  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  const dock = page.locator('.main .dock')
+  await expect(dock.getByRole('tab', { name: 'AI 对话', exact: true })).toHaveAttribute('aria-selected', 'true')
+  const input = dock.getByRole('textbox', { name: '终端 AI 输入', exact: true })
+  await input.fill('终端自然语言验收：看看当前目录，确认你能在这里执行。')
+  await input.press('Enter')
+  await expect.poll(() => existsSync(join(workspace, 'terminal-natural-result.txt'))).toBe(true)
+  expect(readFileSync(join(workspace, 'terminal-natural-result.txt'), 'utf8').trim()).toBe(workspace)
+  await expect(dock.getByRole('log', { name: '终端对话记录' })).toContainText('NATURAL_INPUT_OK')
+  await dock.getByRole('tab', { name: '手动命令', exact: true }).click()
+  await expect(dock.getByText('手动控制', { exact: true })).toBeVisible()
+  await type(page, dock, 'printf manual > terminal-natural-manual.txt')
+  await expect.poll(() => existsSync(join(workspace, 'terminal-natural-manual.txt'))).toBe(true)
+  await dock.getByRole('tab', { name: 'AI 对话', exact: true }).click()
+  await expect(input).toBeVisible()
+})
+
+test('终端AI：手动Python后自动识别原解释器，权限卡在终端内只显示一份', async ({ dawn }) => {
+  const { page, workspace } = dawn
+  const dock = await openTerminal(page)
+  await page.evaluate(() => window.dawn!.invoke('setPermissionMode', { mode: 'ask-risky' }))
+  await type(page, dock, 'python3 -q')
+  await type(page, dock, 'dawn_number = 40; open("python-human.txt", "w").write("ready")')
+  await expect.poll(() => existsSync(join(workspace, 'python-human.txt'))).toBe(true)
+  await dock.getByRole('tab', { name: 'AI 对话', exact: true }).click()
+  const input = dock.getByRole('textbox', { name: '终端 AI 输入' })
+  await input.fill('终端协助验收：Python 原变量，继续执行。'); await input.press('Enter')
+  await expect(dock.getByRole('button', { name: '允许这一次', exact: true })).toBeVisible()
+  await expect(dock.getByRole('button', { name: '打断 AI', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '允许这一次', exact: true })).toHaveCount(1)
+  await dock.getByRole('button', { name: '允许这一次', exact: true }).click()
+  await expect.poll(() => existsSync(join(workspace, 'python-ai-result.txt'))).toBe(true)
+  expect(readFileSync(join(workspace, 'python-ai-result.txt'), 'utf8')).toBe('42')
+})
 async function type(page: import('@playwright/test').Page, dock: import('@playwright/test').Locator, command: string) {
   await dock.locator('.xterm-helper-textarea').focus()
   await page.keyboard.type(command)

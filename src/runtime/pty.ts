@@ -120,6 +120,7 @@ export class PtyRuntime implements AgentRuntime {
       id: spec.sessionId, pid: proc.pid, cwd: spec.workspace, command: this.opts.command,
       cols: this.opts.cols ?? 100, rows: this.opts.rows ?? 30,
       write: data => proc.write(data), resize: (cols, rows) => proc.resize(cols, rows),
+      process: () => proc.process,
     })
     proc.onData((data) => {
       this.opts.terminalControl?.output(spec.sessionId, data)

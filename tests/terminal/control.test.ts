@@ -2,15 +2,51 @@ import { describe, expect, it, vi } from 'vitest'
 import { TerminalControl } from '../../src/terminal/control.js'
 import { LeaseManager } from '../../src/session/lease.js'
 
-function setup() {
+function setup(process?: () => string) {
   const write = vi.fn()
   const control = new TerminalControl()
-  control.register({ id: 't', pid: 42, cwd: '/work', command: '/bin/bash', cols: 80, rows: 24, write, resize: vi.fn() })
+  control.register({ id: 't', pid: 42, cwd: '/work', command: '/bin/bash', cols: 80, rows: 24, write, resize: vi.fn(), ...(process ? { process } : {}) })
   control.output('t', '$ ')
   return { control, write }
 }
 
 describe('terminal control ownership and execution', () => {
+  it('identifies a standard interpreter prompt for explicit natural-language submissions', async () => {
+    let program = 'bash'
+    const { control, write } = setup(() => program)
+    try {
+      expect(await control.detectMode('t')).toBe('shell')
+      control.output('t', '\r\x1b[K>>> ')
+      program = 'python3'
+      expect(await control.detectMode('t')).toBe('python')
+      control.output('t', '\r\x1b[K> ')
+      program = 'R'
+      expect(await control.detectMode('t')).toBe('R')
+      expect(write).not.toHaveBeenCalled()
+    } finally { control.dispose() }
+  })
+  it('does not mistake a shell continuation prompt for an R interpreter', async () => {
+    const { control, write } = setup(() => 'bash')
+    try {
+      control.output('t', '\r\x1b[K> ')
+      expect(await control.detectMode('t')).toBe('shell')
+      control.grant('chat', 't', 'shell')
+      await expect(control.execute('chat', 't', 'pwd', async () => {})).rejects.toThrow(/提示符/)
+      expect(write).not.toHaveBeenCalled()
+    } finally { control.dispose() }
+  })
+  it('waits for the first shell prompt instead of racing process startup', async () => {
+    const control = new TerminalControl()
+    control.register({ id: 'startup', pid: 42, cwd: '/work', command: '/bin/bash', cols: 80, rows: 24, write: vi.fn(), resize: vi.fn() })
+    try {
+      let finished = false
+      const detected = control.detectMode('startup').then(mode => { finished = true; return mode })
+      await new Promise(resolve => setTimeout(resolve, 30))
+      expect(finished).toBe(false)
+      control.output('startup', 'bash-3.2$ ')
+      expect(await detected).toBe('shell')
+    } finally { control.dispose() }
+  })
   it('keeps an explicitly shared live lease active while hidden, without reacquiring human control', async () => {
     const { control, write } = setup(), leases = new LeaseManager({ ttlSeconds: 300 })
     const renew = vi.fn(() => { leases.acquire('t', 'engine') })

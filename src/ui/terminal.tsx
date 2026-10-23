@@ -44,7 +44,7 @@ export function TerminalPane({
 }: {
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
   chunks: readonly string[]
-  onInput?: (data: string) => void
+  onInput?: ((data: string) => void) | undefined
   onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
   const host = useRef<HTMLDivElement>(null)

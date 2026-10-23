@@ -100,6 +100,8 @@ import {
 } from "./skills.js"
 import { TerminalDock } from "./dock.js"
 import { TerminalControlBar } from './terminal-control.js'
+import { TerminalAssistant } from './terminal-assistant.js'
+import { $terminalInputModes, setTerminalInputMode } from './state/dock.js'
 import { AttachUsagePanel } from "./attach-panel.js"
 import { ArchivedView, type 归档的会话 } from "./archived.js"
 import type { 会话额外动作 } from "./views.js"
@@ -343,6 +345,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 主区开关们 = useStore($会话开关)
   const dockOpen = useStore($dockOpen)
   const dockSessionId = useStore($dockSessionId)
+  const terminalInputModes = useStore($terminalInputModes)
+  const terminalInputMode = dockSessionId ? terminalInputModes.get(dockSessionId) ?? 'ai' : 'ai'
   const rightDockOpen = useStore($rightDockOpen)
   const rightDockTenant = useStore($rightDockTenant)
   const rightDockWidth = useStore($rightDockWidth)
@@ -5507,6 +5511,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 on跳完={跳完}
                 /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
                 {...对话回调(session, 主槽)}
+                inputCardsElsewhere={Boolean(dockOpen && dockSessionId && terminalInputMode === 'ai' && session.kind === 'native' && !session.remote)}
                 onNewSession={async () => {
                   const connectionId = session.remote?.connectionId
                   if (connectionId) {
@@ -5722,7 +5727,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 */}
           {dockOpen ? (
             <TerminalDock
-              control={dockSessionId ? <TerminalControlBar client={client} terminalId={dockSessionId} ownerSessionId={session?.kind === 'native' && !session.remote ? sessionId : undefined} /> : null}
+              inputMode={session?.kind === 'native' && !session.remote ? terminalInputMode : 'manual'}
+              onInputMode={mode => {
+                if (!dockSessionId) return
+                setTerminalInputMode(dockSessionId, mode)
+                if (mode === 'manual') void client.get('setTerminalControl', { terminalId: dockSessionId, enabled: false }).catch(fail)
+              }}
+              assistant={dockSessionId && sessionId && session?.kind === 'native' && !session.remote ? <TerminalAssistant key={`${sessionId}:${dockSessionId}`}
+                client={client} terminalId={dockSessionId} ownerSessionId={sessionId} busy={busy || 跑着的会话.has(sessionId) || Boolean(主槽.$待答权限.get())}
+                onAbort={actions.abort}
+                permission={主槽.$待答权限.get()}
+                onAnswerPermission={对话回调(session, 主槽).onAnswerPermission}
+                onAnswerQuestion={对话回调(session, 主槽).onAnswerQuestion}
+                onSent={() => { void 重取会话(); void loadTasks(client) }} /> : null}
+              control={dockSessionId ? <TerminalControlBar client={client} terminalId={dockSessionId} ownerSessionId={session?.kind === 'native' && !session.remote ? sessionId : undefined}
+                automatic={Boolean(session?.kind === 'native' && !session.remote && terminalInputMode === 'ai')}
+                onReclaim={() => setTerminalInputMode(dockSessionId, 'manual')} /> : null}
               onResize={(cols, rows) => {
                 const terminalId = dockSessionId
                 if (terminalId && cols >= 2 && rows >= 2) void client.get('resizeTerminal', { terminalId, cols: Math.min(cols, 500), rows: Math.min(rows, 200) }).catch(fail)

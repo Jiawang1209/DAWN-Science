@@ -4,8 +4,9 @@ import type { TerminalControlState, TerminalMode } from '../protocol/terminal.js
 import { Button } from './primitives.js'
 import { t } from './i18n/index.js'
 
-export function TerminalControlBar({ client, terminalId, ownerSessionId }: {
+export function TerminalControlBar({ client, terminalId, ownerSessionId, automatic = false, onReclaim }: {
   client: Pick<WorkbenchClient, 'get'>; terminalId: string; ownerSessionId?: string | undefined
+  automatic?: boolean | undefined; onReclaim?: (() => void) | undefined
 }) {
   const scope = `${ownerSessionId ?? ''}:${terminalId}`
   const current = useRef(scope)
@@ -18,6 +19,7 @@ export function TerminalControlBar({ client, terminalId, ownerSessionId }: {
   useEffect(() => {
     let cancelled = false, reading = false
     setError(''); setMode('shell'); setBusy(false)
+    let first = true
     const read = async () => {
       if (reading) return
       reading = true
@@ -25,7 +27,8 @@ export function TerminalControlBar({ client, terminalId, ownerSessionId }: {
         const state = await client.get<TerminalControlState>('getTerminalControl', { terminalId })
         if (!cancelled && current.current === scope) {
           setControlView({ scope, state })
-          if (state.controlled) setMode(state.mode)
+          if (first || state.controlled) setMode(state.mode)
+          first = false
         }
       } catch (e) { if (!cancelled && current.current === scope) setError(e instanceof Error ? e.message : String(e)) }
       finally { reading = false }
@@ -41,24 +44,24 @@ export function TerminalControlBar({ client, terminalId, ownerSessionId }: {
       const state = await client.get<TerminalControlState>(interrupt ? 'interruptTerminal' : 'setTerminalControl', interrupt
         ? { terminalId, ownerSessionId }
         : { terminalId, ...(ownerSessionId ? { ownerSessionId } : {}), enabled, mode })
-      if (current.current === scope) setControlView({ scope, state })
+      if (current.current === scope) { setControlView({ scope, state }); if (!enabled) onReclaim?.() }
     } catch (e) { if (current.current === scope) setError(e instanceof Error ? e.message : String(e)) }
     finally { if (current.current === scope) setBusy(false) }
   }
 
   const controlled = state?.controlled && state.ownerSessionId === ownerSessionId
   return <div className="terminal-control" aria-label={t("终端协助")}>
-    <label className="terminal-mode">{t("当前程序")}
+    {automatic ? <span className="terminal-mode">{t("当前程序")} {state?.mode === 'python' ? 'Python' : state?.mode === 'R' ? 'R' : 'Shell'}</span> : <label className="terminal-mode">{t("当前程序")}
       <select className="control" aria-label={t("当前终端程序")} value={mode} disabled={busy || controlled} onChange={e => setMode(e.target.value as TerminalMode)}>
         <option value="shell">Shell</option><option value="python">Python</option><option value="R">R</option>
       </select>
-    </label>
-    <span className={`terminal-control-status${controlled ? ' active' : ''}`} role="status">{controlled ? t("AI 协助中") : t("手动控制")}</span>
+    </label>}
+    <span className={`terminal-control-status${controlled ? ' active' : ''}`} role="status">{controlled ? t("AI 协助中") : automatic ? t("等你提问") : t("手动控制")}</span>
     {controlled ? <>
       <Button variant="outline" size="sm" disabled={busy} onClick={() => void action(false)}>{t("接回控制")}</Button>
       <Button variant="ghost" size="sm" disabled={busy} onClick={() => void action(true, true)}>{t("Ctrl-C")}</Button>
-    </> : <Button variant="outline" size="sm" disabled={busy || !ownerSessionId || !state?.alive} onClick={() => void action(true)}>{t("交给当前对话")}</Button>}
-    <span className="terminal-control-hint">{!ownerSessionId ? t("打开本地内置模型对话后可交给 AI") : controlled ? t("直接输入即可接回；收起面板不会停止程序") : t("先选择终端里实际运行的程序，再交给 AI")}</span>
+    </> : automatic ? null : <Button variant="outline" size="sm" disabled={busy || !ownerSessionId || !state?.alive} onClick={() => void action(true)}>{t("交给当前对话")}</Button>}
+    <span className="terminal-control-hint">{!ownerSessionId ? t("打开本地内置模型对话后可交给 AI") : automatic ? t("自然语言交给 AI；手动命令可直接接回") : controlled ? t("直接输入即可接回；收起面板不会停止程序") : t("先选择终端里实际运行的程序，再交给 AI")}</span>
     {error ? <span className="terminal-control-error" role="alert">{error}</span> : null}
   </div>
 }

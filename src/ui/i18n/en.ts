@@ -16,6 +16,23 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "等你提问": "Ready for your request",
+  "终端 AI 对话": "Terminal AI chat",
+  "终端对话记录": "Terminal conversation",
+  "直接描述要做的事，无需先打开 Python 或 R。": "Describe the task directly. You do not need to open Python or R first.",
+  "AI": "AI",
+  "正在操作终端": "Working in the terminal",
+  "终端操作未完成": "Terminal action did not complete",
+  "终端操作已返回": "Terminal action returned",
+  "终端 AI 输入": "Terminal AI input",
+  "直接描述你想在这个终端做什么…": "Describe what you want to do in this terminal…",
+  "沿用当前对话和权限；发送即授权此终端": "Uses this chat and permissions. Submitting shares this terminal.",
+  "打断 AI": "Halt AI",
+  "提交给 AI": "Ask terminal AI",
+  "终端输入方式": "Terminal input mode",
+  "AI 对话": "AI chat",
+  "手动命令": "Manual commands",
+  "自然语言交给 AI；手动命令可直接接回": "Ask AI in plain language; switch to manual commands to take over.",
   "终端协助操作失败：{0}": 'Terminal assistance failed: {0}',
   "终端协助": 'Terminal assistance',
   "当前程序": 'Program',

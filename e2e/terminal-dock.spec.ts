@@ -20,6 +20,10 @@ import { join } from "node:path"
 async function 切换终端面板(page: import("@playwright/test").Page) {
   await page.locator(".composer-card .attach-trigger").click()
   await page.getByRole("menu", { name: "添加内容" }).getByRole("menuitem", { name: "终端面板", exact: true }).click()
+  // These cases verify raw PTY behavior. The panel now defaults to AI input.
+  const manual = page.locator('.main .dock').getByRole('tab', { name: '手动命令', exact: true })
+  await page.locator('.main .dock .term-host').waitFor({ state: 'attached' })
+  if (await manual.count()) await manual.click()
 }
 
 test("**掀开就有终端，而且对话还在**", async ({ dawn }) => {

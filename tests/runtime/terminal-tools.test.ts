@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { NativeRuntime } from '../../src/runtime/native.js'
 import { TerminalControl } from '../../src/terminal/control.js'
 import { 内核请求标记 } from '../../src/kernel/shortcuts.js'
+import { terminalRequestMessage } from '../../src/terminal/request.js'
 
 async function setup(deny = false, remote = false) {
   const workspace = mkdtempSync(join(tmpdir(), 'dawn-terminal-tools-'))
@@ -25,6 +26,21 @@ async function setup(deny = false, remote = false) {
 }
 
 describe('native terminal tool boundaries', () => {
+  it('a terminal input targets only its selected terminal and cannot fall back to bash', async () => {
+    const x = await setup()
+    try {
+      x.terminals.register({ id: 'other', pid: 99, cwd: '/work', command: '/bin/bash', cols: 80, rows: 24, write: x.write, resize: vi.fn() })
+      x.terminals.output('other', '$ '); x.terminals.grant('chat', 'other', 'shell')
+      x.say(terminalRequestMessage('读取当前目录', 't'))
+      const listed = await x.session.getToolDefinition('terminal_list').execute('list', {})
+      expect(JSON.parse(listed.content[0].text).map((x: any) => x.id)).toEqual(['t'])
+      expect((await x.session.getToolDefinition('terminal_execute').execute('wrong', { terminal_id: 'other', code: 'pwd' })).isError).toBe(true)
+      expect((await x.session.getToolDefinition('bash').execute('fallback', { command: 'pwd' })).isError).toBe(true)
+      x.say('现在回到普通主对话')
+      expect(JSON.parse((await x.session.getToolDefinition('terminal_list').execute('again', {})).content[0].text)).toHaveLength(2)
+      expect(x.write).not.toHaveBeenCalled()
+    } finally { await x.close() }
+  })
   it('explicit Notebook selection and kernel prohibition cannot be bypassed through terminal input', async () => {
     const x = await setup()
     try {

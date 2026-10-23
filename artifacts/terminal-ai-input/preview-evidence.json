@@ -1,0 +1,34 @@
+{
+  "terminal": {
+    "id": "eda2e616-96c9-408c-ac86-c4a6582b0d02",
+    "instanceId": "6bbd0aae-2fe1-498d-9f06-894215e4f7e1",
+    "pid": 39073,
+    "cwd": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-ai-preview-xgInPA/workspace",
+    "command": "/bin/bash",
+    "alive": true,
+    "controlled": false,
+    "ownerSessionId": "deed579c-d274-4ac7-a64f-6a0bd3258a39",
+    "mode": "shell",
+    "cols": 128,
+    "rows": 10,
+    "revision": 57,
+    "task": {
+      "id": "8de78bfd-23e4-41e8-bcdd-2be8ed93a056",
+      "state": "completed",
+      "startedAt": "2026-10-23T08:20:01.524Z",
+      "exitCode": 0
+    }
+  },
+  "users": [
+    "终端自然语言验收：看看当前目录，确认你能在这里执行。"
+  ],
+  "viewport": {
+    "width": 1280,
+    "height": 808,
+    "scrollWidth": 1280
+  },
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-ai-preview-xgInPA",
+  "model": "shared deterministic mock; real PTY and command execution",
+  "result": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-ai-preview-xgInPA/workspace\n",
+  "manualProof": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-terminal-ai-preview-xgInPA/workspace|39073"
+}

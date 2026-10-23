@@ -34,6 +34,14 @@ describe('terminal assistance wiring', () => {
       expect(bad.ok).toBe(false)
       await call('resizeTerminal', { terminalId: terminal.sessionId, cols: 93, rows: 19 })
       expect(await call('getTerminalControl', { terminalId: terminal.sessionId })).toMatchObject({ cols: 93, rows: 19 })
+      const native = (wb.nativeRuntime as any).sessions.get(main.sessionId).session
+      const prompt = vi.spyOn(native, 'prompt').mockResolvedValue(undefined)
+      await call('sendTerminalPrompt', { terminalId: terminal.sessionId, ownerSessionId: main.sessionId, text: '请查看当前目录' })
+      expect(prompt.mock.calls[0]![0]).toContain('请查看当前目录')
+      expect(prompt.mock.calls[0]![0]).toContain(`<dawn-terminal-request target="${terminal.sessionId}">`)
+      expect(await call('getTerminalControl', { terminalId: terminal.sessionId })).toMatchObject({ controlled: true, pid: state.pid })
+      const snapshot = await call('subscribeSession', { sessionId: main.sessionId })
+      expect(snapshot.items.some((item: any) => item.type === 'turn' && item.who === 'user' && item.text === '请查看当前目录')).toBe(true)
     } finally { await wb.closeAsync(3000); rmSync(dir, { force: true, recursive: true }) }
   })
 })

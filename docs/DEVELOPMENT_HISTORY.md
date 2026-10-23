@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-24 — 输入提示回到行内 > DAWN
+
+- **Type**: fix
+- **Motivation**: 用户认可完整终端交互，希望在 `> DAWN` 后面直接输入问题。
+- **What**: 将品牌提示从编辑器顶边移到实际输入行左侧；续行与输入文字对齐，保持单一多行编辑器与现有分隔线。同步缩小编辑内容可用列宽并转换鼠标坐标，保留光标、换行和补全行为。
+- **Verification**: 定向CLI组件/控制器/实际PTY共32项通过，5项终端交互Electron通过；类型检查与CLI构建通过。实际分支窗口验证中文单行、多行对齐与清草稿，截图09、10见artifacts/terminal-cli-interaction/。
+- **Impact**: 仅当前codex/terminal-reply-format分支；不合并、不推送、不替换安装版。
+
 ### 2026-10-24 — 完整终端 Agent 输入与呈现改造
 
 - **Type**: feat

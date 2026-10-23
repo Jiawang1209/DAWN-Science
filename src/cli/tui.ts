@@ -1,4 +1,4 @@
-import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, type Terminal, type Component } from '@earendil-works/pi-tui'
+import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, type Terminal, type Component, type TuiMouseEvent } from '@earendil-works/pi-tui'
 import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
 import { plain } from './presentation.js'
 
@@ -6,8 +6,22 @@ type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
   onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
 class PromptEditor extends Editor {
-  protected override renderTopBorder(width: number, hidden: number) {
-    return this.borderColor(truncateToWidth(`─ DAWN › 输入问题${hidden ? ` · 上方 ${hidden} 行` : ''} ` + '─'.repeat(width), width, ''))
+  private gutter(width: number) { return Math.min(7, Math.max(0, width - 2)) }
+  private bottom = ''
+  protected override renderBottomBorder(width: number, hidden: number) {
+    return this.bottom = super.renderBottomBorder(width, hidden)
+  }
+  override render(width: number) {
+    const gutter = this.gutter(width), prefix = '> DAWN '.slice(0, gutter)
+    return super.render(width - gutter).map((line, index) => {
+      const lead = index === 1 ? this.borderColor(prefix)
+        : index === 0 || line === this.bottom ? this.borderColor('─'.repeat(gutter)) : ' '.repeat(gutter)
+      return lead + line
+    })
+  }
+  override handleMouse(event: TuiMouseEvent) {
+    const gutter = this.gutter(event.width)
+    return super.handleMouse({ ...event, x: Math.max(0, event.x - gutter), width: event.width - gutter })
   }
 }
 /** Interactive UI owns input only while DAWN is active; Shell and pipe mode remain separate. */
@@ -38,7 +52,7 @@ export class CliTui {
     })
     this.editor = new PromptEditor(this.tui, { borderColor: accent, selectList: {
       selectedPrefix: accent, selectedText: bold, description: dim, scrollInfo: dim, noMatch: dim,
-    } }, { paddingX: 1, autocompleteMaxVisible: 3 })
+    } }, { paddingX: 0, autocompleteMaxVisible: 3 })
     this.editor.setAutocompleteProvider(new CombinedAutocompleteProvider([
       { name: 'help', description: '帮助与快捷键' }, { name: 'status', description: '模型、目录和记录位置' }, { name: 'exit', description: '返回原 Shell' },
     ], options.workspace))

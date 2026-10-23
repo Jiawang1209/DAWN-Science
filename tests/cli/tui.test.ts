@@ -27,7 +27,7 @@ function fixture(cols = 80, rows = 28) {
 it('streams Markdown before idle while the input editor stays below the transcript', async () => {
   const f = fixture(); f.ui.setState({ busy: true }); f.ui.reply('## 检查结果\n\n已经读到 **1200 行**，正在继续。'); await f.flush()
   expect(f.text()).toContain('检查结果'); expect(f.text()).toContain('1200 行'); expect(f.text()).not.toContain('**1200')
-  expect(f.text()).toContain('生成中'); expect(f.text().lastIndexOf('输入问题')).toBeGreaterThan(f.text().indexOf('检查结果'))
+  expect(f.text()).toContain('生成中'); expect(f.text().lastIndexOf('> DAWN')).toBeGreaterThan(f.text().indexOf('检查结果'))
   expect(f.screen.buffer.active.type).toBe('alternate')
 })
 it('submits multiline input once, retains a busy draft, and handles idle Ctrl-C as clear then exit', async () => {
@@ -37,6 +37,16 @@ it('submits multiline input once, retains a busy draft, and handles idle Ctrl-C 
   expect(f.submit).toHaveBeenCalledTimes(1); expect(f.ui.draft()).toBe('下一问')
   f.ui.setState({ busy: false }); f.input('\x03'); expect(f.ui.draft()).toBe(''); expect(f.interrupt).not.toHaveBeenCalled()
   f.input('\x03'); expect(f.interrupt).toHaveBeenCalledOnce()
+})
+it('keeps the inline prompt outside the draft and aligns cursor, mouse editing and continuation text', async () => {
+  const f = fixture(40, 24); f.input('ABCDE'); await f.flush()
+  expect(f.text()).toContain('> DAWN ABCDE'); expect(f.screen.buffer.active.cursorX).toBe(12)
+  const row = f.screen.buffer.active.cursorY + 1
+  f.input(`\x1b[<0;10;${row}M`); f.input(`\x1b[<0;10;${row}m`); f.input('X'); await f.flush()
+  expect(f.ui.draft()).toBe('ABXCDE')
+  f.input('\x05'); f.input('\x1b[13;2u'); f.input('中文续行'); await f.flush()
+  expect(f.text()).toMatch(/> DAWN ABXCDE *\n       中文续行/)
+  f.input('\r'); expect(f.submit).toHaveBeenCalledWith('ABXCDE\n中文续行')
 })
 it('keeps a pasted multiline paragraph as one turn and can recall it from history', async () => {
   const f = fixture(); f.input('\x1b[200~line one\nline two\x1b[201~'); f.input('\r')
@@ -63,7 +73,7 @@ it('uses only current visible image positions and restores the Shell buffer on s
   const frames = [...f.bytes().matchAll(/\x1b\]777;dawn-viewport;([^\x07]+)\x07/g)]
   const frame = JSON.parse(frames.at(-1)![1]!); expect(frame.images).toHaveLength(1)
   expect(frame.images[0].row + frame.images[0].height).toBeLessThan(24)
-  f.resize(40, 18); await f.flush(); expect(f.text()).toContain('DAWN'); expect(f.text()).toContain('输入问题')
+  f.resize(40, 18); await f.flush(); expect(f.text()).toContain('DAWN'); expect(f.text()).toContain('> DAWN')
   f.ui.stop(); await Promise.all([]); await f.flush(); expect(f.screen.buffer.active.type).toBe('normal')
 })
 it('never lets model content execute screen, title, clipboard or image control sequences', async () => {

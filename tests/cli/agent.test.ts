@@ -80,7 +80,7 @@ it('noninteractive permission is denied instead of hanging or running the comman
 it('actual shell launches dawn and receives the same PID, cwd, env and terminal settings after /exit', async () => {
   const f = await fixture(), s = await shell(f)
   s.terminal.write('stty -g > tty-before.txt; printf "%s|%s|%s" "$$" "$PWD" "$DAWN_CLI_SAMPLE" > shell-before.txt; dawn\r')
-  await s.wait('DAWN ›')
+  await s.wait('> DAWN')
   s.terminal.write('CLI写文件\r'); await s.wait('CLI_REPLY_OK')
   s.terminal.write('/exit\r'); await s.wait('已退出 Agent，返回 Shell。')
   s.terminal.write('stty -g > tty-after.txt; printf "%s|%s|%s" "$$" "$PWD" "$DAWN_CLI_SAMPLE" > shell-after.txt\r')
@@ -91,7 +91,7 @@ it('actual shell launches dawn and receives the same PID, cwd, env and terminal 
 }, 30000)
 it('interactive permission and question replies use existing DAWN operations', async () => {
   const f = await fixture(), s = await shell(f)
-  s.terminal.write('dawn\r'); await s.wait('DAWN ›')
+  s.terminal.write('dawn\r'); await s.wait('> DAWN')
   s.terminal.write('CLI权限\r'); await s.wait('输入编号，或 y / n。')
   s.terminal.write('y\r'); await s.wait('CLI_REPLY_OK')
   expect(readFileSync(join(f.workspace, 'cli-permission.txt'), 'utf8')).toBe('allowed')
@@ -102,7 +102,7 @@ it('interactive permission and question replies use existing DAWN operations', a
 }, 30000)
 it('Ctrl-C stops a running task and leaves the Agent ready for another question', async () => {
   const f = await fixture(), s = await shell(f)
-  s.terminal.write('dawn\r'); await s.wait('DAWN ›')
+  s.terminal.write('dawn\r'); await s.wait('> DAWN')
   s.terminal.write('CLI慢任务\r'); await s.wait('sleep 15')
   const { vi } = await import('vitest')
   await vi.waitFor(() => expect(existsSync(join(f.workspace, 'cli-slow-start.txt'))).toBe(true))
@@ -116,7 +116,7 @@ it('missing CLI credentials fails clearly before entering Agent', async () => {
   const result = await piped('你好\n', f)
   expect(result.code).toBe(1)
   expect(result.output).toContain('尚未配置 cli-test 的 CLI 凭证')
-  expect(result.output).not.toContain('DAWN ›')
+  expect(result.output).not.toContain('> DAWN')
 })
 it('simultaneous CLI hosts have independent databases', async () => {
   const f = await fixture()
@@ -127,7 +127,7 @@ it('simultaneous CLI hosts have independent databases', async () => {
 }, 30000)
 it('/exit while waiting for permission returns to Shell without approving the action', async () => {
   const f = await fixture(), s = await shell(f)
-  s.terminal.write('dawn\r'); await s.wait('DAWN ›')
+  s.terminal.write('dawn\r'); await s.wait('> DAWN')
   s.terminal.write('CLI权限\r'); await s.wait('输入编号，或 y / n。')
   s.terminal.write('/exit\r'); await s.wait('已退出 Agent，返回 Shell。')
   s.terminal.write('printf returned > permission-shell.txt\r')

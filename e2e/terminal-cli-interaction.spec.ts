@@ -8,7 +8,7 @@ async function open(page: Page, enterAgent = true) {
   await expect.poll(async () => stripVTControlCharacters(await page.locator('.dock .xterm-screen').innerText()).trimEnd().endsWith('$')).toBe(true)
   if (enterAgent) {
     await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()
-    await expect(page.locator('.dock .xterm-screen')).toContainText('输入问题')
+    await expect(page.locator('.dock .xterm-screen')).toContainText('> DAWN')
   }
   return page.evaluate(async () => {
     const entries = Object.keys(JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}'))
@@ -38,7 +38,7 @@ test('Shift-Enter edits multiple lines in one terminal input and sends one nativ
   const user = turns.filter((x: any) => x.type === 'turn' && x.who === 'user')
   expect(user).toHaveLength(1); expect(JSON.stringify(user)).toContain('MULTILINE_A\\n第二行 MULTILINE_B')
   await page.getByRole('button', { name: 'Normal 模式', exact: true }).click()
-  await expect(page.locator('.dock .xterm-screen')).not.toContainText('输入问题')
+  await expect(page.locator('.dock .xterm-screen')).not.toContainText('> DAWN')
 })
 
 test.describe('formatted transcript', () => {
@@ -68,7 +68,7 @@ test.describe('streamed scrolling', () => {
     await page.keyboard.press('PageUp'); await expect(screen).toContainText('回到底部'); await final(page, target.sessionId)
     await expect(screen).not.toContainText('FINAL_STREAM_MARKER')
     await page.keyboard.press('Control+End'); await expect(screen).toContainText('FINAL_STREAM_MARKER')
-    await expect(screen).toContainText('输入问题')
+    await expect(screen).toContainText('> DAWN')
   })
 })
 
@@ -94,7 +94,7 @@ test('reopening a trimmed PTY snapshot restores the editor and bracketed multili
   await page.getByRole('button', { name: '返回会话', exact: true }).click()
   await expect(page.locator('.main .composer-card')).toBeVisible()
   await page.locator('.composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
-  await expect(page.locator('.dock .xterm-screen')).toContainText('输入问题')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('> DAWN')
   await app.evaluate(({ clipboard }) => clipboard.writeText('RECOVERY_A\nRECOVERY_B'))
   await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.press(process.platform === 'darwin' ? 'Meta+v' : 'Control+v')
   await expect(page.locator('.dock .xterm-screen')).toContainText('RECOVERY_B')

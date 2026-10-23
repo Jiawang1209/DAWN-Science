@@ -1,0 +1,23 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/terminal-empty-return.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:26945) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:52455/b36214cd-2a8d-47db-8dd2-0fb9523fdd50
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/terminal-empty-return.spec.ts:10:1 › closing the last terminal still allows returning to the original page and draft (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52472/c593c318-c3fc-4b3f-9924-2cf8a4ee9c30
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/terminal-empty-return.spec.ts:35:3 › without a configured terminal › returns to the page even when no terminal has ever been created (1.6s)
+
+  2 passed (4.3s)

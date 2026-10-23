@@ -1,0 +1,77 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/terminal-image-decorations.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/terminal-image-decorations.test.ts (3 tests | 3 failed) 3184ms
+   × reads the current full image only when opening a thumbnail, rather than retaining an old original 1068ms
+   × reports an evicted image instead of opening an original retained by its old thumbnail 1057ms
+   × does not open a late original after the terminal decoration has been disposed 1058ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/terminal-image-decorations.test.ts > reads the current full image only when opening a thumbnail, rather than retaining an old original
+AssertionError: expected "vi.fn()" to be called with arguments: [ { …(4) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+-     "dataUrl": "data:image/png;base64,current",
++     "dataUrl": "data:image/png;base64,original",
+      "id": "58b52380-f46a-4a64-8450-f66a696571c4",
+      "name": "plot.png",
+      "thumbnail": "data:image/png;base64,thumb",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/ui/terminal-image-decorations.test.ts:30:41
+     28|   expect(f.open).not.toHaveBeenCalled()
+     29|   f.element.querySelector('button')!.click()
+     30|   await vi.waitFor(() => expect(f.open).toHaveBeenCalledWith(current))
+       |                                         ^
+     31|   expect(read).toHaveBeenCalledTimes(2)
+     32|   f.dispose()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/terminal-image-decorations.test.ts > reports an evicted image instead of opening an original retained by its old thumbnail
+AssertionError: expected '' to contain '图片已不在缓存中'
+
+- Expected
++ Received
+
+- 图片已不在缓存中
+
+ ❯ tests/ui/terminal-image-decorations.test.ts:40:56
+     38|   await vi.waitFor(() => expect(f.element.querySelector('img')).not.to…
+     39|   f.element.querySelector('button')!.click()
+     40|   await vi.waitFor(() => expect(f.element.textContent).toContain('图片已不…
+       |                                                        ^
+     41|   expect(f.open).not.toHaveBeenCalled()
+     42|   f.dispose()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/terminal-image-decorations.test.ts > does not open a late original after the terminal decoration has been disposed
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/terminal-image-decorations.test.ts:51:39
+     49|   await vi.waitFor(() => expect(f.element.querySelector('img')).not.to…
+     50|   f.element.querySelector('button')!.click()
+     51|   await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2))
+       |                                       ^
+     52|   f.dispose(); finish(picture)
+     53|   await Promise.resolve()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  22:58:50
+   Duration  4.06s (transform 246ms, setup 416ms, import 9ms, tests 3.18s, environment 366ms)

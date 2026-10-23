@@ -49,18 +49,8 @@ async function startShell(page: import("@playwright/test").Page): Promise<void> 
   await page.getByRole("option", { name: /打开终端/ }).click()
 }
 
-/**
- * **2026-08-11：终端搬进了底部 dock。**
- *
- * 作者：*「终端，我们要学习 Claude app、Codex app，要点击之后，界面下方
- * 单独出现一个地方。」* 于是命令面板里那条「新建会话：shell」
- * 也走同一个家——**一个动作只有一个家**，否则它建出来的东西
- * 既不在会话列表里（终端已被过滤掉），也不在 dock 里。
- *
- * 这个文件验的**通路没变**（PtyRuntime → 事件中枢 → xterm），
- * 只是终端现在长在 `.dock` 里。
- */
-test.describe("PTY 会话：终端在底部 dock 里", () => {
+/** 命令面板与输入卡共用同一终端入口；终端占满主区，返回后恢复原画面。 */
+test.describe("PTY 会话：单一原生终端工作区", () => {
 
   test("**建完就能看见终端**，不用点任何东西", async ({ dawn }) => {
     const { page } = dawn
@@ -70,19 +60,14 @@ test.describe("PTY 会话：终端在底部 dock 里", () => {
 
     // 终端在 dock 里，**而且 dock 自己掀开了**——不用再点一次
     await expect(page.locator(".dock .term-host")).toBeVisible({ timeout: 30_000 })
-    /**
-     * **shell 没有把对话区占掉**（2026-08-12 换的判据）。
-     *
-     * 上一版断言「一个 `回车发送` 都没有」——那时空态没有输入框，
-     * 所以「有输入框」只可能意味着「这个 shell 会话被当成对话渲染了」，
-     * 而那个框此前把字送进黑洞。
-     *
-     * 现在**空态本身就是一张输入卡**（作者要的），那句断言于是恒假。
-     * 它守的意图没变，换成直接说：**主区仍然是初始画面**，
-     * 终端在下面那条 dock 里——两者各在各的地方。
-     */
-    await expect(page.locator(".welcome")).toBeVisible()
+    await expect(page.locator('.dock .term-host')).toHaveCount(1)
+    await expect(page.locator('.main textarea.composer-field:visible')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Normal 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    // 原空态保留挂载；Normal 从未启动 Agent 时，返回仍恢复它。
+    await expect(page.locator('.welcome')).toBeHidden()
     await expect(page.locator(".turns")).toHaveCount(0)
+    await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+    await expect(page.locator('.welcome')).toBeVisible()
   })
 
   test("**打字加回车，命令真的被执行了**", async ({ dawn }) => {

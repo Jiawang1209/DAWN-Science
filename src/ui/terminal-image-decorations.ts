@@ -19,16 +19,25 @@ export function terminalImageDecorations(term: Terminal, read: (id: string) => P
     button.type = 'button'; button.className = 'terminal-inline-image'; button.textContent = t("正在载入图片…")
     decoration.onRender(element => { if (button.parentNode !== element) element.replaceChildren(button) })
     decoration.onDispose(() => { decorations.delete(decoration); marker.dispose() })
-    void read(match[1]!).then(image => {
+    const unavailable = (error: unknown) => {
+      if (!disposed && !marker.isDisposed) { button.textContent = error instanceof Error ? error.message : String(error); button.disabled = true }
+    }
+    // Keep only the small preview with the scrollback decoration. The host owns
+    // the bounded original cache; re-read it when opening, including eviction.
+    void read(match[1]!).then(({ name, thumbnail }) => {
       if (disposed || marker.isDisposed) return
-      button.setAttribute('aria-label', tf("放大 {0}", image.name))
-      button.title = tf("放大 {0}", image.name)
-      const img = document.createElement('img'); img.src = image.thumbnail; img.alt = image.name
+      button.setAttribute('aria-label', tf("放大 {0}", name))
+      button.title = tf("放大 {0}", name)
+      const img = document.createElement('img'); img.src = thumbnail; img.alt = name
       img.draggable = false; button.replaceChildren(img)
-      button.onclick = event => { event.preventDefault(); event.stopPropagation(); open(image) }
-    }).catch(error => {
-      if (!disposed) { button.textContent = error instanceof Error ? error.message : String(error); button.disabled = true }
-    })
+      button.onclick = event => {
+        event.preventDefault(); event.stopPropagation(); button.disabled = true
+        void read(match[1]!).then(image => {
+          if (disposed || marker.isDisposed) return
+          button.disabled = false; open(image)
+        }).catch(unavailable)
+      }
+    }).catch(unavailable)
     return true
   })
   return () => { disposed = true; parser.dispose(); for (const decoration of decorations) decoration.dispose(); decorations.clear() }

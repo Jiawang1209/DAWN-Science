@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-10-23T15:03:43.807Z",
+  "control": {
+    "ok": true,
+    "workbenchProtocolVersion": "8.29",
+    "data": {
+      "id": "b3e442fe-ba99-4976-ac3d-8f9413590d8c",
+      "instanceId": "8139e7ba-da5a-47b8-acb9-e4df057adcc1",
+      "pid": 92952,
+      "cwd": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project",
+      "command": "/bin/zsh",
+      "alive": true,
+      "controlled": false,
+      "mode": "shell",
+      "cols": 72,
+      "rows": 34,
+      "revision": 241
+    },
+    "warnings": []
+  },
+  "agent": {
+    "ok": true,
+    "workbenchProtocolVersion": "8.29",
+    "data": {
+      "mode": "dawn",
+      "sessionId": "dafcb630-6a5d-4066-96ab-60ba8c5812a7",
+      "projectId": "1b377769-ebad-411b-b553-54f67f1d965b",
+      "selection": {
+        "provider": "deepseek",
+        "model": "deepseek-flash"
+      }
+    },
+    "warnings": []
+  }
+}

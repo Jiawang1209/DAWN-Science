@@ -1,3 +1,6 @@
+import { desktopWorkspace } from '../cli/workspace.js'
+import type { ResponseOf } from '../protocol/index.js'
+import { DesktopCliHost } from '../cli/desktop-host.js'
 import { BotStore } from "../store/bots.js"
 /**
  * 装配层（Task 2.7）。
@@ -191,6 +194,8 @@ export interface CreateWorkbenchOptions {
    * 本模块不该知道构建产物的布局。
    */
   dawnMcpEntry?: string
+  /** Desktop-owned CLI transport; omitted in standalone and service-only hosts. */
+  desktopCli?: { entry: string; executable: string; descriptor: string }
   /**
    * 去哪找外部 CLI 自己的配置（codex 的 `models_cache.json`）。
    * **不给时读真实家目录**；e2e 指向隔离目录，理由见 `backend.ts` 的同名字段。
@@ -682,6 +687,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   /** 侧边对话（2026-09-24）：「读主对话」在后端里，后端在下面才建——先留个位子，建好后由它登记进来 */
   let 读主对话: ((sid: string) => string | undefined) | undefined
+  let cliHost: DesktopCliHost | undefined
+  const cliEnvironment = async (spec: import("../runtime/types.js").SessionSpec) => cliHost ? cliHost.environment(spec.sessionId) : {}
   const terminalControl = new TerminalControl()
   const nativeRuntime = new NativeRuntime({
     terminals: terminalControl,
@@ -762,7 +769,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     registry,
     runtimes: {
       native: nativeRuntime,
-      pty: new PtyRuntime({ command: "sh", terminalControl }),
+      pty: new PtyRuntime({ command: "sh", terminalControl, environment: cliEnvironment }),
       /**
        * Jupyter 内核（②-A · K4）。
        *
@@ -864,6 +871,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       const family = familyOf(def.command)
       return new PtyRuntime({
         terminalControl,
+        environment: cliEnvironment,
         command: def.command,
         args: def.args,
         ...(family ? { family } : {}),
@@ -1239,6 +1247,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })()
 
   const backend = createWorkbenchBackend({
+    terminalAgentMode: {
+      state: id => { terminalControl.state(id); return cliHost?.state(id) ?? { mode: "normal" } },
+      setMode: async (id, mode) => { terminalControl.state(id); if (!cliHost) throw new Error("本次运行没有装配 DAWN CLI"); return cliHost.setMode(id, mode) },
+    },
     terminals: terminalControl,
     terminalOwnerAllowed: id => nativeRuntime.canControlTerminal(id),
     terminalPrompt: (owner, terminal, text, mode, queueId) => nativeRuntime.promptTerminal(owner, terminal, text, () => {
@@ -1610,6 +1622,40 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.readOnly === undefined ? {} : { readOnly: opts.readOnly }),
     ...(opts.onInternalError ? { onInternalError: opts.onInternalError } : {}),
   })
+
+  if (opts.desktopCli) {
+    cliHost = new DesktopCliHost({ ...opts.desktopCli,
+      launch: id => terminalControl.launchCli(id),
+      open: async (terminalId, workspace, agentId) => {
+        const owner = terminalId ? terminalControl.state(terminalId).ownerSessionId : undefined
+        const inherited = owner ? nativeRuntime.currentModel(owner) : undefined
+        const providers = await backend.getProviders({}) as ResponseOf<'getProviders'>
+        const selected = providers.agents.find(a => a.kind === 'native' && a.agentId === (agentId ?? (owner ? sessionStore.get(owner)?.agentId : undefined)))
+          ?? (!agentId ? providers.agents.find(a => a.kind === 'native') : undefined)
+        if (!selected || selected.kind !== 'native') throw new Error('请先在 DAWN 中选择已配置的 API 模型')
+        workspace = desktopWorkspace(workspace, projectStore.list())
+        const task = await backend.createTask({ agentId: selected.agentId, workspace }) as ResponseOf<'createTask'>
+        if (!task.sessionId) throw new Error('无法创建 CLI 会话')
+        const sessionId = task.sessionId
+        try {
+          if (inherited && !agentId) await backend.setSessionModel({ sessionId, ...inherited })
+          await backend.acquireLease({ sessionId, holder: 'user' })
+          const model = nativeRuntime.currentModel(sessionId)
+          return { sessionId, model: model ? `${model.provider}/${model.model}` : `${selected.provider}/${selected.model}`, directory: workspace,
+            call: async (operation, input) => {
+              const response = await server.handle(operation, input)
+              if (!response.ok) throw new Error(response.error.message)
+              return response.data
+            },
+            attach: sink => sessions.attach(sessionId, sink),
+            waitForIdle: () => nativeRuntime.waitForIdle(sessionId),
+            close: async () => { await backend.abortSession({ sessionId }); await backend.stopSession({ sessionId }) },
+          }
+        } catch (error) { await backend.stopSession({ sessionId }); throw error }
+      },
+    })
+    收摊们.push(() => cliHost!.dispose())
+  }
 
   let closed = false
   return {

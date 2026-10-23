@@ -14,3 +14,5 @@ export const TerminalControlSchema = z.object({
   revision: z.number().int(), task: TerminalTaskSchema.optional(),
 })
 export type TerminalControlState = z.infer<typeof TerminalControlSchema>
+
+export const TerminalAgentStateSchema = z.object({ mode: z.enum(['normal', 'dawn', 'starting', 'stopping']) })

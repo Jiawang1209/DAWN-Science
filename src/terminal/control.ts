@@ -14,6 +14,7 @@ interface Entry {
   port: TerminalPort; instanceId: string; screen: TerminalScreen; alive: boolean
   owner?: string; controlled: boolean; mode: TerminalMode; generation: number
   task?: TerminalTask; operation?: symbol | undefined
+  inputLength: number; inputUncertain: boolean; pasting: boolean
 }
 interface ControlHost {
   grant: (id: string) => void
@@ -54,7 +55,7 @@ export class TerminalControl {
     for (const old of closed.slice(0, Math.max(0, closed.length - 31))) this.entries.delete(old.port.id)
     this.entries.get(port.id)?.screen.dispose()
     const entry: Entry = {
-      port, instanceId: randomUUID(), alive: true, controlled: false, mode: 'shell', generation: 0,
+      port, instanceId: randomUUID(), alive: true, controlled: false, mode: 'shell', generation: 0, inputLength: 0, inputUncertain: false, pasting: false,
       screen: new TerminalScreen(port.cols, port.rows, (token, code) => {
         if (entry.alive && entry.task?.id === token && entry.task.state === 'running') {
           entry.task = { ...entry.task, state: 'completed', exitCode: code }
@@ -130,6 +131,37 @@ export class TerminalControl {
     if (/^R(?:term)?$/i.test(program) && readyPrompt('R', screen.cursorLine, screen.alternate)) return 'R'
     if (['sh', 'bash', 'zsh'].includes(program)) return 'shell'
     return e.mode
+  }
+
+  /** Track human editing separately: a trailing $ in input is not a Shell prompt. */
+  humanInput(id: string, data: string): void {
+    this.reclaim(id)
+    const e = this.entry(id)
+    // xterm also sends device/cursor/color replies through onData; those are not editing.
+    data = data.replace(/\x1b\[(?:[?>=]?\d+(?:;\d+)*)[Rcnu]|\x1b\[[IO]/g, '')
+      .replace(/\x1b\](?:10|11|12);[^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    for (let i = 0; i < data.length; i++) {
+      if (data.startsWith('\x1b[200~', i)) { e.pasting = true; i += 5; continue }
+      if (data.startsWith('\x1b[201~', i)) { e.pasting = false; i += 5; continue }
+      const c = data[i]!
+      if (e.pasting) { e.inputLength++; continue }
+      if ('\r\n\x03\x15'.includes(c)) { e.inputLength = 0; e.inputUncertain = false }
+      else if (c === '\x7f' || c === '\b') e.inputLength = Math.max(0, e.inputLength - 1)
+      else if (c === '\x1b' || c === '\t' || c < ' ' && !'\x01\x05\x0c'.includes(c)) e.inputUncertain = true
+      else if (c >= ' ') e.inputLength++
+    }
+  }
+
+  async launchCli(id: string): Promise<void> {
+    const e = this.entry(id)
+    await this.detectMode(id)
+    const screen = await e.screen.snapshot()
+    const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
+    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorLine, screen.alternate)) {
+      throw new Error('请先回到空闲 Shell 提示符，并按 Ctrl-U 清空尚未提交的输入，再进入 DAWN 模式')
+    }
+    this.reclaim(id)
+    e.port.write('dawn\r')
   }
 
   private entry(id: string): Entry {

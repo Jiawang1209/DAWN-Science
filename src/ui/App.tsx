@@ -5712,6 +5712,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           {/* 原生终端占据主区；原对话保持挂载，CLI 在同一 PTY 中运行。 */}
           {dockOpen ? (
             <TerminalDock
+              client={client}
               fullPage={view === "conversation"}
               onResize={(cols, rows) => {
                 const terminalId = dockSessionId

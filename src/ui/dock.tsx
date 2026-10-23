@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
+import type { WorkbenchClient } from './client.js'
 /**
  * 原生终端工作区。对话视图中占满主区，只显示一份 xterm；
  * 原对话隐藏并保留草稿，返回时恢复。输入 dawn 启动 CLI Agent，
@@ -12,6 +14,7 @@ import type { SessionSummary } from "../protocol/index.js"
 import { t, tf } from "./i18n/index.js"
 import { 终端图标, 加号图标, 返回图标 } from './icons.js'
 export function TerminalDock({
+  client,
   terminals,
   currentId,
   workspace,
@@ -24,6 +27,7 @@ export function TerminalDock({
   onResize,
   fullPage = false,
 }: {
+  client?: Pick<WorkbenchClient, 'get'> | undefined
   /** 这个项目里活着的终端会话 */
   terminals: readonly SessionSummary[]
   currentId: string | undefined
@@ -81,7 +85,7 @@ export function TerminalDock({
           * 而按名字找元素时两个名字还互为子串。
           * 一颗按钮只该有一个名字。
           */}
-        {fullPage ? <span className="terminal-cli-hint">{t("输入 dawn 进入 Agent，/exit 返回 Shell")}</span> : null}
+        {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} /> : null}
         <Button variant="ghost" size={fullPage ? "icon" : "sm"} onClick={onCloseDock}
           {...(fullPage ? { 'aria-label': t("返回对话") } : {})}>
           {fullPage ? <返回图标 /> : t("收起面板")}
@@ -120,4 +124,43 @@ export function TerminalDock({
       </div>
     </section>
   )
+}
+
+function TerminalModeSwitch({ client, terminalId }: { client: Pick<WorkbenchClient, 'get'>; terminalId: string }) {
+  const [mode, setMode] = useState<'normal' | 'dawn' | 'starting' | 'stopping'>()
+  const [busy, setBusy] = useState(false), [error, setError] = useState('')
+  const active = useRef(true), mutation = useRef(0)
+  useEffect(() => {
+    active.current = true
+    let reading = false
+    const read = async () => {
+      if (reading) return
+      reading = true
+      const revision = mutation.current
+      try {
+        const state = await client.get<{ mode: typeof mode }>('getTerminalAgentMode', { terminalId })
+        if (active.current && revision === mutation.current) setMode(state.mode)
+      } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
+      finally { reading = false }
+    }
+    void read()
+    const timer = setInterval(() => { void read() }, 500)
+    return () => { active.current = false; clearInterval(timer) }
+  }, [client, terminalId])
+  const switchMode = async (next: 'dawn' | 'normal') => {
+    mutation.current++; setBusy(true); setError('')
+    try {
+      const state = await client.get<{ mode: typeof mode }>('setTerminalAgentMode', { terminalId, mode: next })
+      if (active.current) { setMode(state.mode); document.querySelector<HTMLTextAreaElement>('.dock .xterm-helper-textarea')?.focus() }
+    } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
+    finally { mutation.current++; if (active.current) setBusy(false) }
+  }
+  const disabled = busy || mode === undefined || mode === 'starting' || mode === 'stopping'
+  return <div className="terminal-mode-switch">
+    <div className="terminal-mode-options" role="group" aria-label={t("终端模式")}>
+      <Button variant="ghost" size="sm" aria-pressed={mode === 'dawn'} disabled={disabled} onClick={() => void switchMode('dawn')}>{t("DAWN 模式")}</Button>
+      <Button variant="ghost" size="sm" aria-pressed={mode === 'normal'} disabled={disabled} onClick={() => void switchMode('normal')}>{t("Normal 模式")}</Button>
+    </div>
+    {error ? <span className="terminal-switch-error" role="alert">{error}</span> : null}
+  </div>
 }

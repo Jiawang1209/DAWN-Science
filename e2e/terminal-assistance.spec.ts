@@ -37,7 +37,7 @@ test('整页原生终端调用真正 dawn，只有一个输入，退出回原 Sh
   await expect(page.locator('.main .composer-card:visible')).toHaveCount(0)
   await expect(page.locator('.terminal-ai-input')).toHaveCount(0)
   const state = await terminal(page)
-  await type(page, dock, `export PATH=${quote(resolve('bin'))}:"$PATH" DAWN_API_KEY=isolated-preview-key DAWN_CLI_SAMPLE=41; printf "%s|%s" "$$" "$PWD" > shell-before.txt; dawn`)
+  await type(page, dock, `unset DAWN_CLI_DESCRIPTOR DAWN_TERMINAL_ID; export PATH=${quote(resolve('bin'))}:"$PATH" DAWN_API_KEY=isolated-preview-key DAWN_CLI_SAMPLE=41; printf "%s|%s" "$$" "$PWD" > shell-before.txt; dawn`)
   await expect.poll(() => text(page, state.id)).toContain('DAWN ›')
   await type(page, dock, 'CLI界面验收：在当前目录执行并核对环境。')
   await expect.poll(() => existsSync(join(workspace, 'cli-electron.txt'))).toBe(true)

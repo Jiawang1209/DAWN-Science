@@ -179,3 +179,42 @@ describe('terminal control ownership and execution', () => {
     } finally { control.dispose() }
   })
 })
+
+it('starts the CLI only at an empty, idle shell prompt', async () => {
+  let program = 'bash'
+  const { control, write } = setup(() => program)
+  try {
+    control.output('t', 'echo pending')
+    await expect(control.launchCli('t')).rejects.toThrow(/空闲 Shell/)
+    expect(write).not.toHaveBeenCalled()
+    control.output('t', '\r\x1b[K>>> '); program = 'python3'
+    await expect(control.launchCli('t')).rejects.toThrow(/空闲 Shell/)
+    expect(write).not.toHaveBeenCalled()
+    control.output('t', '\r\x1b[K$ '); program = 'bash'
+    await control.launchCli('t')
+    expect(write).toHaveBeenCalledExactlyOnceWith('dawn\r')
+  } finally { control.dispose() }
+})
+
+it('does not treat a prompt-like character in unsubmitted input as a ready shell', async () => {
+  const { control, write } = setup()
+  try {
+    control.humanInput('t', 'echo $')
+    control.output('t', 'echo $')
+    await expect(control.launchCli('t')).rejects.toThrow(/空闲 Shell/)
+    expect(write).not.toHaveBeenCalled()
+    control.humanInput('t', '\x15')
+    control.output('t', '\r\x1b[K$ ')
+    await control.launchCli('t')
+    expect(write).toHaveBeenCalledExactlyOnceWith('dawn\r')
+  } finally { control.dispose() }
+})
+
+it('ignores terminal device replies when checking for human pending input', async () => {
+  const { control, write } = setup()
+  try {
+    control.humanInput('t', '\x1b[1;1R\x1b[?1;2c\x1b[>0;276;0c\x1b]11;rgb:ffff/ffff/ffff\x1b\\')
+    await control.launchCli('t')
+    expect(write).toHaveBeenCalledExactlyOnceWith('dawn\r')
+  } finally { control.dispose() }
+})

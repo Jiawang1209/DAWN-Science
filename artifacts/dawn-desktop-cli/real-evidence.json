@@ -1,0 +1,41 @@
+{
+  "version": "8.27",
+  "apiKeyEnvironmentPresent": false,
+  "firstModel": "deepseek/deepseek-flash",
+  "firstProof": "REAL_DESKTOP_MODEL_OK\n",
+  "firstTerminalTranscript": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\n    sample.txt\n  › bash\n    ls -la\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n  ✓ 完成 · bash\n    total 8\n    drwxr-xr-x@ 4 liuyue  staff  128 10月 23 20:38 .\n    drwx------@ 9 liuyue  staff  288 10月 23 20:38 ..\n    drwxr-xr-x@ 6 liuyue  staff  192 10月 23 20:38 .dawn\n    -rw-r--r--@ 1 liuyue  staff   30 10月 23 20:38 sample.txt\n    \n  › write\n    connection-proof.txt\n  ✓ 完成 · write\n    Successfully wrote to connection-proof.txt\n  › bash\n    cat connection-proof.txt; echo \"---\"; cat sample.txt\n  ✓ 完成 · bash\n    REAL_DESKTOP_MODEL_OK\n    ---\n    DAWN desktop CLI verification\n    \n已完成三项操作：\n**1. 读取 `sample.txt`** — 实际内容为：\n```\nDAWN desktop CLI verification\n```\n（30 字节，单行）\n**2. 创建 `connection-proof.txt`** — 已写入 `REAL_DESKTOP_MODEL_OK`\n**3. 验证** — 回读两个文件确认无误，内容与预期一致。\n当前目录 `/private/var/folders/.../project` 下现有两个文件：`sample.txt` 和 `connection-proof.txt`。\n已退出 Agent，返回 Shell。\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZmGPrj/project$ export DAWN_PREVIEW_VALU\nE=41; printf \"%s|%s|%s\" \"$$\" \"$PWD\" \"$DAWN_PREVIEW_VALUE\" > shell-state-before.txt\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZmGPrj/project$                        ",
+  "currentModel": "deepseek/deepseek-v4-pro",
+  "modelProof": "REAL_DESKTOP_MODEL_OK",
+  "projectCount": 1,
+  "permissionPrompt": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZtXM7X/project$ dawn                   \nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZtXM7X/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请读取当前目录的 sample.txt，再用工具创建 connection-proof.txt，内容是 REAL_DESKTOP_MODEL_OK。完成后只用一句中文报告\n实际读到的文件内容。\n  › read\n    sample.txt\n  › write\n    connection-proof.txt\n  ✓ 完成 · write\n    Successfully wrote to connection-proof.txt\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n实际读到的 sample.txt 内容是「DAWN desktop CLI verification」，并已按要求创建 connection-proof.txt（内容 REAL_DESKTOP_MODEL_\nOK）。\nDAWN › 请通过 bash 执行这一条本机诊断命令：curl -s --max-time 1 http://127.0.0.1:9/ || true。只执行这条，不要换命令。\n  › bash\n    curl -s --max-time 1 http://127.0.0.1:9/ || true\n需要确认：bash：curl -s --max-time 1 http://127.0.0.1:9/ || true\n拒绝执行 `curl -s --max-time 1 http://127.0.0.1:9/ || true`：它要访问网络。需要的话请人来确认。\n  1. 允许这一次\n  2. 拒绝\n输入编号，或 y / n。\n允许 ›  ",
+  "busyBeforeNormal": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZtXM7X/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请读取当前目录的 sample.txt，再用工具创建 connection-proof.txt，内容是 REAL_DESKTOP_MODEL_OK。完成后只用一句中文报告\n实际读到的文件内容。\n  › read\n    sample.txt\n  › write\n    connection-proof.txt\n  ✓ 完成 · write\n    Successfully wrote to connection-proof.txt\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n实际读到的 sample.txt 内容是「DAWN desktop CLI verification」，并已按要求创建 connection-proof.txt（内容 REAL_DESKTOP_MODEL_\nOK）。\nDAWN › 请通过 bash 执行这一条本机诊断命令：curl -s --max-time 1 http://127.0.0.1:9/ || true。只执行这条，不要换命令。\n  › bash\n    curl -s --max-time 1 http://127.0.0.1:9/ || true\n需要确认：bash：curl -s --max-time 1 http://127.0.0.1:9/ || true\n拒绝执行 `curl -s --max-time 1 http://127.0.0.1:9/ || true`：它要访问网络。需要的话请人来确认。\n  1. 允许这一次\n  2. 拒绝\n输入编号，或 y / n。\n允许 › n\n  × 未完成 · bash\n    拒绝执行 `curl -s --max-time 1 http://127.0.0.1:9/ || true`：它要访问网络。需要的话请人来确认。（人拒绝了这一次。换一条\n不需要这个动作的路。）\n这条命令被拒绝了——它要访问网络（curl 请求本机地址），需要人来确认。我不换命令，就停在这里。如果你确实想跑这条诊断，请在界面\n里确认放行；否则告诉我你想达成的目的，我给你换一条不需要联网的路。\nDAWN › 请用 bash 只执行 sleep 30，正常等待结束后才创建 cancel-proof.txt，内容为 should-not-run。不要提前写文件。\n  › bash\n    sleep 30\n ",
+  "shellBefore": "40955|/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZtXM7X/project|41",
+  "shellAfter": "40955|/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-ZtXM7X/project|41",
+  "cancelledFileAbsent": true,
+  "permissionDenied": true,
+  "mainOwnerAlive": true,
+  "sourceUnchanged": {
+    "providers.yaml": true,
+    "credentials.json": true
+  },
+  "finalPreviewBeforeRestart": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-NIVc50",
+  "finalModelReply": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-NIVc50/project$ dawn                   \nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-NIVc50/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请用工具读取 sample.txt，再创建 proof.txt，内容为 DAWN_CONNECTED。最后只用一句中文说明结果。\n  › read\n    sample.txt\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n  › write\n    proof.txt\n  ✓ 完成 · write\n    Successfully wrote to proof.txt\n已读取 sample.txt 并成功创建内容为 DAWN_CONNECTED 的 proof.txt。\n已退出 Agent，返回 Shell。\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-NIVc50/project$ dawn                   \nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-NIVc50/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN ›  ",
+  "visual": {
+    "light": [
+      1280,
+      840
+    ],
+    "darkNarrow": [
+      1000,
+      720
+    ],
+    "normalNarrow": [
+      1000,
+      720
+    ]
+  },
+  "finalPreview": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L",
+  "finalProof": "DAWN_CONNECTED",
+  "finalTranscript": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project$ dawn                   \nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请用工具读取 sample.txt，再创建 proof.txt，内容为 DAWN_CONNECTED。最后只用一句中文说明结果。\n  › read\n    sample.txt\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n  › write\n    proof.txt\n  ✓ 完成 · write\n    Successfully wrote to proof.txt\n已读取 sample.txt 并创建内容为 DAWN_CONNECTED 的 proof.txt。\nDAWN ›  ",
+  "finalApiKeyEnvironmentPresent": false
+}

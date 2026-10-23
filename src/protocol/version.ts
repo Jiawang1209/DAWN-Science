@@ -589,7 +589,8 @@
 /** 8.24: per-language kernel state includes its optional current instance identity. */
 /** 8.25: explicit terminal ownership/control and shared PTY dimensions. */
 /** 8.26：终端面板默认AI对话，sendTerminalPrompt按确切终端提交自然语言。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.26"
+/** 8.27：桌面模型连接的 CLI 及真实终端模式切换。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.27"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

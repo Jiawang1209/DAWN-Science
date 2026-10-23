@@ -178,6 +178,10 @@ export interface CredentialsPort {
 export interface WorkbenchBackendOptions {
   terminals?: import('../terminal/control.js').TerminalControl
   terminalOwnerAllowed?: (sessionId: string) => boolean
+  terminalAgentMode?: {
+    state: (id: string) => { mode: 'normal' | 'dawn' | 'starting' | 'stopping' }
+    setMode: (id: string, mode: 'normal' | 'dawn') => Promise<{ mode: 'normal' | 'dawn' | 'starting' | 'stopping' }>
+  }
   terminalPrompt?: (owner: string, terminal: string, text: string, mode: import('../protocol/terminal.js').TerminalMode, queueId?: string) => void
   transferDirectory?: string
   bots?: BotStore
@@ -2817,6 +2821,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return 起一个会话(归属.projectId, agentId, homedir())
     },
 
+    getTerminalAgentMode: async ({ terminalId }) => terminalRequest(() => opts.terminalAgentMode?.state(terminalId) ?? { mode: 'normal' as const }),
+    setTerminalAgentMode: async ({ terminalId, mode }) => terminalRequest(async () => {
+      if (!opts.terminalAgentMode) throw new Error('本次运行没有装配 DAWN CLI')
+      return opts.terminalAgentMode.setMode(terminalId, mode)
+    }),
     getTerminalControl: async ({ terminalId }) => terminalRequest(() => terminalService().state(terminalId)),
     sendTerminalPrompt: async ({ terminalId, ownerSessionId, text }) => terminalRequest(async () => {
       validateTerminalOwner(ownerSessionId, terminalId)
@@ -3751,7 +3760,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         if (as !== 'user' || images?.length || behavior) throw new Error('终端 AI 输入只接受当前用户的文字请求')
         sessions.leases.acquire(sessionId, 'user')
       }
-      if (as === 'user' && opts.terminals?.has(sessionId)) opts.terminals.reclaim(sessionId)
+      if (as === 'user' && opts.terminals?.has(sessionId)) {
+        const cliMode = opts.terminalAgentMode?.state(sessionId).mode
+        if (cliMode && cliMode !== 'normal') opts.terminals.reclaim(sessionId)
+        else opts.terminals.humanInput(sessionId, data)
+      }
       if (as === "user") {pausedBotOwners.delete(sessionId);botDelivery?.resume(sessionId)}
       /**
        * **图片在这一层读盘、缩放、转 base64**（协议 4.12，2026-08-13）。

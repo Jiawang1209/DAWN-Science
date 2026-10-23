@@ -1,5 +1,7 @@
+import { fileURLToPath } from 'node:url'
+import { connectDesktopCli } from './desktop-client.js'
 import { randomUUID } from 'node:crypto'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readFileSync, existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { getEnvApiKey } from '@earendil-works/pi-ai/compat'
@@ -11,6 +13,10 @@ type Op = keyof typeof OPERATIONS
 
 /** Each CLI owns its database: startup reconciliation must not touch another live host. */
 export async function openCliContext(agentId?: string) {
+  const discovery = process.env.DAWN_CLI_DESCRIPTOR || (!process.env.DAWN_CLI_HOME ? fileURLToPath(new URL(import.meta.url.includes('/dist/cli/') ? './desktop.json' : '../../dist/cli/desktop.json', import.meta.url)) : undefined)
+  if (discovery && (process.env.DAWN_CLI_DESCRIPTOR || existsSync(discovery))) {
+    return connectDesktopCli(JSON.parse(readFileSync(discovery, 'utf8')), process.cwd(), process.env.DAWN_TERMINAL_ID, agentId)
+  }
   const home = resolve(process.env.DAWN_CLI_HOME || join(homedir(), '.dawn', 'cli'))
   const configPath = resolve(process.env.DAWN_CONFIG || join(home, 'providers.yaml'))
   const registry = loadRegistryOrDefault(configPath)
@@ -41,7 +47,12 @@ export async function openCliContext(agentId?: string) {
     await call('setPermissionMode', { mode: 'ask-risky' })
     const task = await call<{ sessionId: string }>('createTask', { agentId: selected, workspace: process.cwd() })
     await call('acquireLease', { sessionId: task.sessionId, holder: 'user' })
-    return { workbench, call, sessionId: task.sessionId, model: `${def.provider}/${def.model}`, directory }
+    return { call, sessionId: task.sessionId, model: `${def.provider}/${def.model}`, directory,
+      attach: (sink: import('../runtime/types.js').EventSink) => workbench.sessions.attach(task.sessionId, sink),
+      waitForIdle: () => workbench.nativeRuntime.waitForIdle(task.sessionId),
+      onExit: (_callback: () => void) => () => {},
+      close: () => workbench.closeAsync(),
+    }
   } catch (error) { await workbench.closeAsync(); throw error }
 }
 export type CliContext = Awaited<ReturnType<typeof openCliContext>>

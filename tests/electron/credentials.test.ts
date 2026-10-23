@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { CredentialStore, type SafeStorageLike } from "../../src/electron/credentials.js"
+import { CredentialStore, readOnlyCredentials, type SafeStorageLike } from "../../src/electron/credentials.js"
 
 const dirs: string[] = []
 afterEach(() => {
@@ -406,4 +406,14 @@ describe("终审 2026-09-01：删「解不开」的那一行 · 写盘失败不�
     expect(disk.undecrypted).toEqual({ deepseek: "Q0lQSEVS" })
     expect(Object.keys(disk.entries).sort()).toEqual(["kimi", "ok"])
   })
+})
+
+it('reads an existing encrypted credential store without permitting preview writes', () => {
+  const file = newFile(), source = new CredentialStore({ file, safeStorage: working })
+  source.set('deepseek', 'test-only-secret')
+  const before = readFileSync(file, 'utf8'), port = readOnlyCredentials(source)
+  expect(port.get('deepseek')).toBe('test-only-secret')
+  expect(() => port.set('deepseek', 'replacement')).toThrow(/只读/)
+  expect(() => port.delete('deepseek')).toThrow(/只读/)
+  expect(readFileSync(file, 'utf8')).toBe(before)
 })

@@ -20,7 +20,7 @@ import { 造网页预览, type 网页命令, type 网页预览 } from "./web-pre
 import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { 真通知出口, 假通知出口, 待回的段 } from "./desktop-notify.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
-import { CredentialStore, defaultCredentialFile } from "./credentials.js"
+import { CredentialStore, defaultCredentialFile, readOnlyCredentials } from "./credentials.js"
 import { 交接箱 } from "../update/交接.js"
 import { 本机机器id } from "../update/机器id.js"
 import { 托盘图标 } from "./tray-icon.js"
@@ -771,7 +771,14 @@ app.whenReady().then(() => {
       configPath: CONFIG,
       dbPath: DB,
       // 凭证由 app 管：加密交给 OS（macOS Keychain / DPAPI / libsecret）
-      credentials: 凭证库,
+      credentials: process.env.DAWN_CREDENTIAL_SOURCE
+        ? readOnlyCredentials(new CredentialStore({ file: process.env.DAWN_CREDENTIAL_SOURCE, safeStorage }))
+        : 凭证库,
+      desktopCli: {
+        entry: join(import.meta.dirname, '../cli/main.js'), executable: process.execPath,
+        descriptor: CLI_HOME ? join(CLI_HOME, 'desktop.json')
+          : app.isPackaged ? join(app.getPath('userData'), 'runtime', 'desktop.json') : join(import.meta.dirname, '../cli/desktop.json'),
+      },
       defaultWorkspace: DEFAULT_WORKSPACE,
       // **只有主进程碰得到 shell**。路径的合法性在后端已经校验过了
       openPath: (p: string) => shell.openPath(p),

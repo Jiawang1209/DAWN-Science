@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-23 — CLI 复用桌面模型与 DAWN / Normal 模式
+
+- **Type**: feat
+- **Motivation**: 内置终端直接复用 DAWN 已配置的模型和凭证，通过按钮进入自然语言 Agent 或回到原 Shell。
+- **What**: 私有本机连接复用桌面 Workbench、服务地址、凭证、工具和权限；API key 留在桌面进程中。CLI 独立会话继承所属对话当前模型；模式按钮与手动 dawn /exit 同步。进入前核对空闲 Shell 与未提交输入，区分提示符字符与人的编辑、排除终端设备回报，退出只停止 CLI 自己的任务。协议 8.27 同步 mock / 精确操作清单；修复同目录路径别名产生重复项目，以及多个实例覆盖终端连接信息。预览只读使用原加密凭证。
+- **Verification**: 类型与完整构建通过；全量 469 文件 4982 项通过、10 项跳过（101.08 秒）；真实 Electron 14 项通过（51.8 秒），最终输入保护后模式场景再次通过（8.3 秒），相关 68 项通过。真实 DeepSeek 两种已有模型、文件读写、权限拒绝、长任务中切回、原 Shell PID / cwd / 导出变量、主对话存活均验证；源配置和凭证校验一致。详见 docs/reviews/2026-10-23-desktop-cli-verification.md。
+- **Impact**: 留在 codex/terminal-assistance 与独立 Electron 预览；不合并、不推送、不替换安装版、不改生产配置或全局 Shell。桌面托管工具使用桌面运行环境，原 Shell 状态在返回时保留。
+
 ### 2026-10-23 — 真正 CLI Agent 与单一原生终端工作区
 
 - **Type**: feat

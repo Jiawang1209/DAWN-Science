@@ -597,7 +597,8 @@ export class NativeRuntime implements AgentRuntime {
     const team = control.scheduler.读(control.current.id)
     return team.tasks.some(t => !["completed", "failed", "cancelled"].includes(t.status) && team.members.some(m => m.botId && (m.name === t.assignee || !t.assignee)) && !t.dependencies.some(id => team.tasks.some(up => up.id === id && ["failed", "cancelled"].includes(up.status))))
   }
-  botModel(sessionId: string): {provider: string; model: string} | undefined {
+  botModel(sessionId: string) { return this.currentModel(sessionId) }
+  currentModel(sessionId: string): {provider: string; model: string} | undefined {
     const model = this.sessions.get(sessionId)?.session.model
     return model ? {provider: model.provider, model: model.id} : undefined
   }

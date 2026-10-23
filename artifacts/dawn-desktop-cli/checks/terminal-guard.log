@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/terminal tests/protocol/terminal.test.ts tests/workbench/server.test.ts tests/electron/credentials.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+
+ Test Files  7 passed (7)
+      Tests  68 passed (68)
+   Start at  20:55:02
+   Duration  1.64s (transform 741ms, setup 0ms, import 1.31s, tests 1.72s, environment 0ms)

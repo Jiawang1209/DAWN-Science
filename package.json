@@ -32,7 +32,7 @@
     "test:packaged": "node scripts/test-packaged.mjs",
     "release:tag": "node scripts/release-tag.mjs",
     "make-icon": "electron scripts/make-icon.mjs",
-    "app:dev": "npm run build:electron && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
+    "app:dev": "npm run build:electron && npm run build:cli && DAWN_DEV_SERVER=http://localhost:5273 electron dist/electron/main.js",
     "ui:dev": "vite",
     "spike:a2": "tsx --env-file-if-exists=.env spikes/a2-pi-third-layer.ts",
     "dev:mock": "node scripts/dev-mock.mjs",

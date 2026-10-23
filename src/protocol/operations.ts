@@ -2,7 +2,7 @@ import { DirectoryTransferRequest, TransferBatchSchema, TransferDetailSchema } f
 import {DeliveryCreateSchema, DeliveryRecordSchema, DeliveryVerifySchema} from './delivery.js'
 import { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema } from './analysis-route.js'
 import { QuestionAnswerSchema } from "./questions.js"
-import { TerminalControlSchema, TerminalModeSchema } from './terminal.js'
+import { TerminalAgentStateSchema, TerminalControlSchema, TerminalModeSchema } from './terminal.js'
 /**
  * Workbench Protocol 的操作契约（Task 2.2）。
  *
@@ -604,6 +604,16 @@ export const OPERATIONS = {
     mutating: true,
   },
 
+  getTerminalAgentMode: {
+    request: z.object({ terminalId: z.string().min(1) }).strict(),
+    response: TerminalAgentStateSchema,
+    mutating: false,
+  },
+  setTerminalAgentMode: {
+    request: z.object({ terminalId: z.string().min(1), mode: z.enum(['normal', 'dawn']) }).strict(),
+    response: TerminalAgentStateSchema,
+    mutating: true,
+  },
   getTerminalControl: {
     request: z.object({ terminalId: z.string().min(1) }).strict(),
     response: TerminalControlSchema,

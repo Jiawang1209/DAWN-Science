@@ -7,7 +7,7 @@ import { CLI_HELP, plain, toolDetail } from './presentation.js'
 type Permission = Extract<AgentEvent, { kind: 'permission_request' }>
 export async function runCliAgent(agentId?: string): Promise<number> {
   const context = await openCliContext(agentId)
-  const { workbench, call, sessionId } = context
+  const { call, sessionId } = context
   const input = process.stdin, output = process.stdout, interactive = Boolean(input.isTTY && output.isTTY)
   const color = (n: string, text: string) => interactive && !process.env.NO_COLOR ? `\x1b[${n}m${text}\x1b[0m` : text
   const rl = createInterface({ input, output, terminal: interactive, historySize: 200 })
@@ -38,10 +38,10 @@ export async function runCliAgent(agentId?: string): Promise<number> {
     if (closing) return
     closing = true
     try {
-      await call('abortSession', { sessionId })
-      await workbench.closeAsync()
+      try { await call('abortSession', { sessionId }) }
+      finally { await context.close() }
     } finally {
-      detach(); input.removeListener('end', onEnd); process.removeListener('SIGTERM', onTerminate); process.removeListener('SIGINT', onInterrupt)
+      detachExit(); detach(); input.removeListener('end', onEnd); process.removeListener('SIGTERM', onTerminate); process.removeListener('SIGINT', onInterrupt)
       clearInterval(renew)
       rl.close(); if (input.isTTY) input.setRawMode(false); input.pause()
       say('\n已退出 Agent，返回 Shell。'); finished()
@@ -83,7 +83,8 @@ export async function runCliAgent(agentId?: string): Promise<number> {
       case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); break
     }
   }
-  const detach = workbench.sessions.attach(sessionId, onEvent)
+  const detach = context.attach(onEvent)
+  const detachExit = context.onExit(() => { void shutdown().catch(() => { finished() }) })
   const renew = setInterval(() => { void call('acquireLease', { sessionId, holder: 'user' }).catch(e => say(String(e))) }, 120_000)
   renew.unref()
   const handle = async (text: string) => {
@@ -119,7 +120,7 @@ export async function runCliAgent(agentId?: string): Promise<number> {
   let pipe = Promise.resolve()
   rl.on('line', line => {
     if (interactive) void handle(line).catch(e => { failed = true; say(String(e)); prompt() })
-    else pipe = pipe.then(async () => { await handle(line); if (!closing) await workbench.nativeRuntime.waitForIdle(sessionId) })
+    else pipe = pipe.then(async () => { await handle(line); if (!closing) await context.waitForIdle() })
       .catch(e => { failed = true; say(String(e)) })
   })
   const onEnd = () => { void pipe.then(shutdown).catch(e => { say(String(e)); finished() }) }

@@ -15,6 +15,7 @@ asar: false
 npmRebuild: false
 files:
   - dist/**
+  - "!dist/cli/desktop.json"
   - skills/**
   - agents/**
   - package.json

@@ -70,6 +70,7 @@ function collectTree(rootPid: number): { pids: number[]; pgids: number[] } {
 }
 
 export interface PtyRuntimeOptions {
+  environment?: (spec: SessionSpec) => Promise<Record<string, string>>
   terminalControl?: TerminalControl
   command: string
   args?: string[]
@@ -107,12 +108,13 @@ export class PtyRuntime implements AgentRuntime {
       extraArgs = materialized.args
     }
 
+    const environment = await this.opts.environment?.(spec)
     const proc = pty.spawn(this.opts.command, [...(this.opts.args ?? []), ...extraArgs], {
       name: "xterm-256color",
       cols: this.opts.cols ?? 100,
       rows: this.opts.rows ?? 30,
       cwd: spec.workspace,
-      env: { ...process.env, ...extraEnv } as Record<string, string>,
+      env: { ...process.env, ...extraEnv, ...environment } as Record<string, string>,
     })
 
     this.procs.set(spec.sessionId, proc)

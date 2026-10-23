@@ -306,3 +306,14 @@ export class CredentialStore {
 export function defaultCredentialFile(userDataDir: string): string {
   return join(userDataDir, "credentials.json")
 }
+
+/** A development preview may read an existing encrypted store without writing it. */
+export function readOnlyCredentials(source: CredentialStore): import('../workbench/backend.js').CredentialsPort {
+  return {
+    get: id => source.get(id), configured: () => source.configured(),
+    isEncrypted: () => source.isEncrypted(), broken: () => source.broken(),
+    verified: () => source.verified(), warm: () => source.warm(),
+    set: () => { throw new Error('预览正在只读复用已有凭证，请在原 DAWN 中修改') },
+    delete: () => { throw new Error('预览正在只读复用已有凭证，请在原 DAWN 中修改') },
+  }
+}

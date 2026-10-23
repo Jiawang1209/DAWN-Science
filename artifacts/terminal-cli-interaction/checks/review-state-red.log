@@ -1,0 +1,128 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/cli/tui.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/tui.test.ts (12 tests | 3 failed) 122ms
+   × NO_COLOR also applies to the scrollbars shown while browsing history 8ms
+   × reveals a new permission request even when the reader is browsing old output 12ms
+   × reveals an urgent failure without losing the existing editor draft 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > NO_COLOR also applies to the scrollbars shown while browsing history
+AssertionError: expected '\u001b[?1049h\u001b[?7l\u001b[?1000h\…' not to match /\x1b\[(?:3[0-7]|9[0-7])m/
+
+- Expected:
+/\x1b\[(?:3[0-7]|9[0-7])m/
+
++ Received:
+"DAWN Science · deepseek-flash]8;;/work/中文 project]8;;  paragraph 59]8;;  ]8;;  paragraph 60]8;;  ]8;;  paragraph 61]8;;  ]8;;  paragraph 62]8;;  ]8;;  paragraph 63]8;;  ]8;;  paragraph 64]8;;  ]8;;  paragraph 65]8;;  ]8;;  paragraph 66]8;;  ]8;;  paragraph 67]8;;  ]8;;  paragraph 68]8;;  ]8;;  paragraph 69]8;;]8;;─ DAWN › 输入问题 ──────────────────────────────────────────────────────────────]8;;                                                                                ]8;;────────────────────────────────────────────────────────────────────────────────]8;;就绪 · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit]8;;]777;dawn-viewport;{\"images\":[]}  paragraph 50                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 51                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 52                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 53                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 54                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 55                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 56                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 57                                                                 ]8;;│]8;;                                                                               ]8;;│]8;;  paragraph 58                                                                 ]8;;┃]8;;                                                                               ]8;;┃]8;;  paragraph 59                                                                 ]8;;┃]8;;                                                                               ]8;;│]8;;  paragraph 60                                                                 ]8;;│]8;;                                  ]8;;↓ 回到底部]8;;                                   ]8;;│]8;;]777;dawn-viewport;{\"images\":[]}"
+
+ ❯ tests/cli/tui.test.ts:88:25
+     86|   const f = fixture(); f.ui.reply(Array.from({ length: 70 }, (_, i) =>…
+     87|   f.input('\x1b[5~'); await f.flush()
+     88|   expect(f.bytes()).not.toMatch(/\x1b\[(?:3[0-7]|9[0-7])m/)
+       |                         ^
+     89| })
+     90| it('reveals a new permission request even when the reader is browsing …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > reveals a new permission request even when the reader is browsing old output
+AssertionError: expected 'DAWN Science · deepseek-flash\n/work/…' to contain 'CHOICE_VISIBLE'
+
+- Expected
++ Received
+
+- CHOICE_VISIBLE
++ DAWN Science · deepseek-flash
++ /work/中文 project
++   paragraph 50                                                                 │
++                                                                                │
++   paragraph 51                                                                 │
++                                                                                │
++   paragraph 52                                                                 │
++                                                                                │
++   paragraph 53                                                                 │
++                                                                                │
++   paragraph 54                                                                 │
++                                                                                │
++   paragraph 55                                                                 │
++                                                                                │
++   paragraph 56                                                                 │
++                                                                                │
++   paragraph 57                                                                 │
++                                                                                │
++   paragraph 58                                                                 ┃
++                                                                                ┃
++   paragraph 59                                                                 ┃
++                                                                                │
++   paragraph 60                                                                 │
++                                   ↓ 回到底部                                   │
++ ─ DAWN › 输入问题 ──────────────────────────────────────────────────────────────
++
++ ────────────────────────────────────────────────────────────────────────────────
++ 需要确认 · 输入编号或 y/n · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit
+
+ ❯ tests/cli/tui.test.ts:94:20
+     92|   f.input('\x1b[5~'); await f.flush(); expect(f.ui.following()).toBe(f…
+     93|   f.ui.notice('CHOICE_VISIBLE 允许这次操作？\n1. 允许\n2. 拒绝'); f.ui.setState({…
+     94|   expect(f.text()).toContain('CHOICE_VISIBLE'); expect(f.text()).toCon…
+       |                    ^
+     95| })
+     96| it('reveals an urgent failure without losing the existing editor draft…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > reveals an urgent failure without losing the existing editor draft
+AssertionError: expected 'DAWN Science · deepseek-flash\n/work/…' to contain 'URGENT_MODEL_FAILURE'
+
+- Expected
++ Received
+
+- URGENT_MODEL_FAILURE
++ DAWN Science · deepseek-flash
++ /work/中文 project
++   paragraph 50                                                                 │
++                                                                                │
++   paragraph 51                                                                 │
++                                                                                │
++   paragraph 52                                                                 │
++                                                                                │
++   paragraph 53                                                                 │
++                                                                                │
++   paragraph 54                                                                 │
++                                                                                │
++   paragraph 55                                                                 │
++                                                                                │
++   paragraph 56                                                                 │
++                                                                                │
++   paragraph 57                                                                 │
++                                                                                │
++   paragraph 58                                                                 ┃
++                                                                                ┃
++   paragraph 59                                                                 ┃
++                                                                                │
++   paragraph 60                                                                 │
++                                   ↓ 回到底部                                   │
++ ─ DAWN › 输入问题 ──────────────────────────────────────────────────────────────
++  KEEP_DRAFT
++ ────────────────────────────────────────────────────────────────────────────────
++ 就绪 · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit
+
+ ❯ tests/cli/tui.test.ts:99:20
+     97|   const f = fixture(); f.ui.reply(Array.from({ length: 70 }, (_, i) =>…
+     98|   f.input('\x1b[5~'); f.input('KEEP_DRAFT'); f.ui.notice('URGENT_MODEL…
+     99|   expect(f.text()).toContain('URGENT_MODEL_FAILURE'); expect(f.ui.draf…
+       |                    ^
+    100| })
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  06:28:57
+   Duration  341ms (transform 40ms, setup 0ms, import 125ms, tests 122ms, environment 0ms)

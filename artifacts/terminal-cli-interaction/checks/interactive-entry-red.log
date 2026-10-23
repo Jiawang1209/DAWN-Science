@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/cli/agent.test.ts -t multiline editor
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/agent.test.ts (12 tests | 1 failed | 11 skipped) 15022ms
+   × interactive CLI uses the multiline editor and sends both lines in a single model request 15021ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/agent.test.ts > interactive CLI uses the multiline editor and sends both lines in a single model request
+AssertionError: expected 'dawn\r\nbash-3.2$ dawn\r\n\r\nDAWN Sc…' to contain '输入问题'
+
+- Expected
++ Received
+
+- 输入问题
++ dawn
++ bash-3.2$ dawn
++
++ DAWN Science
++
++ Agent · cli-test/deepseek-flash
++ /private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-cli-test-va8SXa/project with spaces
++
++ /exit 返回 Shell · /help 帮助 · Ctrl-C 停止
++
++ DAWN ›
+
+ ❯ vi.waitFor.timeout tests/cli/agent.test.ts:63:194
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  06:20:54
+   Duration  15.21s (transform 59ms, setup 0ms, import 91ms, tests 15.02s, environment 0ms)

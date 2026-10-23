@@ -1,0 +1,22 @@
+DAWN Science · 命令行 Agent
+
+  dawn                    在当前目录进入 Agent
+  dawn --agent <名称>      选择配置中的本地 API Agent
+  dawn --help              查看帮助
+  dawn agents              列出配置中的 Agent
+
+Agent 中：
+  /exit                   退出并回到原 Shell（Normal）
+  /help                   帮助
+  /status                 当前模型、目录和记录位置
+  Enter                   发送当前输入
+  Shift/Alt+Enter          换行（内置终端支持 Shift+Enter）
+  ↑ / ↓                   编辑或浏览输入历史
+  Tab                     展开 / 收起工具详情
+  PgUp / PgDn             浏览会话记录；End 回到底部
+  Ctrl-L                  刷新当前终端界面
+  Ctrl-C                  执行时停止；空闲先清草稿，再退出
+
+DAWN 内启动会复用已配置的模型与凭证。
+独立运行可使用标准 API key 环境变量，或 DAWN_API_KEY。
+DAWN_CONFIG 指定配置；DAWN_CLI_HOME 指定独立 CLI 数据目录。

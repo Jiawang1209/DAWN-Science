@@ -1,0 +1,90 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/cli/agent-state.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/agent-state.test.ts (5 tests | 5 failed) 267ms
+   × clears the waiting state after the final answer while the same turn is still busy 58ms
+   × clears a remotely answered question before idle 52ms
+   × clears a remotely cancelled question before idle 53ms
+   × clears a remotely interrupted question before idle 52ms
+   × protects the next draft while a permission answer is in flight, then restores retry on failure 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/agent-state.test.ts > clears the waiting state after the final answer while the same turn is still busy
+AssertionError: expected { busy: true, permission: false, …(1) } to match object { busy: true, question: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "busy": true,
+-   "question": false,
++   "question": true,
+  }
+
+ ❯ tests/cli/agent-state.test.ts:77:27
+     75|     // No idle event has arrived. The editor must already protect the …
+     76|     // from being submitted and cleared while the model resumes its re…
+     77|     expect(agent.state()).toMatchObject({ busy: true, question: false …
+       |                           ^
+     78|   } finally { await agent.close() }
+     79| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/cli/agent-state.test.ts > clears a remotely answered question before idle
+ FAIL  |node| tests/cli/agent-state.test.ts > clears a remotely cancelled question before idle
+ FAIL  |node| tests/cli/agent-state.test.ts > clears a remotely interrupted question before idle
+AssertionError: expected { busy: true, permission: false, …(1) } to match object { busy: true, question: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "busy": true,
+-   "question": false,
++   "question": true,
+  }
+
+ ❯ tests/cli/agent-state.test.ts:91:27
+     89|       ...(state === 'answered' ? { answer: { answers: [{ id: 'range', …
+     90|     } })
+     91|     expect(agent.state()).toMatchObject({ busy: true, question: false …
+       |                           ^
+     92|   } finally { await agent.close() }
+     93| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |node| tests/cli/agent-state.test.ts > protects the next draft while a permission answer is in flight, then restores retry on failure
+AssertionError: expected { busy: true, permission: true, …(1) } to match object { busy: true, permission: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "busy": true,
+-   "permission": false,
++   "permission": true,
+  }
+
+ ❯ tests/cli/agent-state.test.ts:104:27
+    102|     agent.call.mockImplementation(async operation => operation === 'an…
+    103|     await agent.submit('y')
+    104|     expect(agent.state()).toMatchObject({ busy: true, permission: fals…
+       |                           ^
+    105|     reject(Error('try permission again'))
+    106|     await new Promise<void>(resolve => setImmediate(resolve))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  06:29:49
+   Duration  407ms (transform 34ms, setup 0ms, import 46ms, tests 267ms, environment 0ms)

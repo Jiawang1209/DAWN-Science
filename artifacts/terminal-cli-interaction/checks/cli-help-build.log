@@ -1,0 +1,9 @@
+npm notice run dawn-science@0.0.35 build:cli
+npm notice run node scripts/build-cli.mjs
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:325:17:
+      325 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval

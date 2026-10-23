@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/cli/tui.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/tui.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/tui.test.ts [ tests/cli/tui.test.ts ]
+Error: Cannot find module '../../src/cli/tui.js' imported from /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/tests/cli/tui.test.ts
+ ❯ tests/cli/tui.test.ts:4:1
+      2| import { Terminal as Headless } from '@xterm/headless'
+      3| import type { Terminal } from '@earendil-works/pi-tui'
+      4| import { CliTui } from '../../src/cli/tui.js'
+       | ^
+      5|
+      6| const cleanup: (() => void)[] = []
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  06:19:36
+   Duration  146ms (transform 22ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)

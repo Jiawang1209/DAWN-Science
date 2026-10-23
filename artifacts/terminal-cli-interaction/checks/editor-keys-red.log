@@ -1,0 +1,33 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/terminal-keys.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/terminal-keys.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/terminal-keys.test.ts [ tests/ui/terminal-keys.test.ts ]
+Error: Failed to resolve import "../../src/ui/terminal-keys.js" from "tests/ui/terminal-keys.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/tests/ui/terminal-keys.test.ts:2:30
+  1  |  import { expect, it } from "vitest";
+  2  |  import { dawnEditorKey } from "../../src/ui/terminal-keys.js";
+     |                                 ^
+  3  |  it("distinguishes DAWN multiline Enter from send and leaves Normal and IME untouched", () => {
+  4  |  	const event = (extra = {}) => ({
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:31066:39
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:31063:14
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/node.js:28008:18
+ ❯ node_modules/vite/dist/node/chunks/node.js:28076:30
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:28044:4
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:30851:14
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/node.js:20619:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  06:22:10
+   Duration  864ms (transform 235ms, setup 399ms, import 0ms, tests 0ms, environment 346ms)

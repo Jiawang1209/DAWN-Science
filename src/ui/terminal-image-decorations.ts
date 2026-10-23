@@ -1,13 +1,16 @@
 import type { Terminal } from '@xterm/xterm'
 import { t, tf } from './i18n/index.js'
+import { terminalViewportImages } from './terminal-viewport-images.js'
 
 export interface TerminalPicture { id: string; name: string; thumbnail: string; dataUrl: string }
 
 /** Only a scoped opaque ID is interpreted; image data never enters the terminal byte buffer. */
 export function terminalImageDecorations(term: Terminal, read: (id: string) => Promise<TerminalPicture>, open: (image: TerminalPicture) => void) {
   let disposed = false
+  const viewport = terminalViewportImages(term, read, open)
   const decorations = new Set<{ dispose(): void }>()
   const parser = term.parser.registerOscHandler(777, value => {
+    if (viewport.handle(value)) return true
     const match = /^dawn-image;([0-9a-f-]{36})$/.exec(value)
     if (!match) return false
     const marker = term.registerMarker(0)
@@ -40,5 +43,5 @@ export function terminalImageDecorations(term: Terminal, read: (id: string) => P
     }).catch(unavailable)
     return true
   })
-  return () => { disposed = true; parser.dispose(); for (const decoration of decorations) decoration.dispose(); decorations.clear() }
+  return () => { disposed = true; viewport.dispose(); parser.dispose(); for (const decoration of decorations) decoration.dispose(); decorations.clear() }
 }

@@ -1,0 +1,7 @@
+Viewport quality review, 2026-10-24
+Read-only probes compiled current terminal-viewport-images.ts with bundled xterm and current CSS.
+Before fix: physical image click emitted SGR mouse press/release and opened image; zero-size screen left a visible 8 x 8 image button despite hidden=true.
+After fix: physical image click opened image once with zero PTY output; wheel over image emitted SGR scroll sequence ESC[<65;10;6M. Zero-size image computed display:none, width=0,height=0; restoring dimensions restored display:flex,width=108,height=119.
+Focused verification: 47/47 tests passed.
+Probe browser session viewport-review closed; temporary HTTP server stopped. No source edits or commits.
+Deleted generated workspace artifacts after identifying exact filenames from probe tool outputs: page-2026-10-23T22-24-05-214Z.yml, page-2026-10-23T22-24-16-898Z.yml, page-2026-10-23T22-25-49-509Z.yml, page-2026-10-23T22-25-56-315Z.yml, page-2026-10-23T22-25-59-990Z.yml, console-2026-10-23T22-24-05-124Z.log, console-2026-10-23T22-25-49-418Z.log

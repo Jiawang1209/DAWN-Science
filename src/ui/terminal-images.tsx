@@ -87,7 +87,7 @@ export function TerminalImageShell({ client, terminalId, state, chunks, onInput,
       if (state.mode === 'dawn') void add(files)
     }}
     onKeyDownCapture={event => { if (busy.current && event.key === 'Enter') { event.preventDefault(); event.stopPropagation() } }}>
-    <div className="terminal-image-screen"><TerminalPane chunks={chunks} onResize={onResize} readImage={readImage} onOpenImage={setPreview}
+    <div className="terminal-image-screen"><TerminalPane agentEditing={state.mode === 'dawn'} chunks={chunks} onResize={onResize} readImage={readImage} onOpenImage={setPreview}
       onInput={data => { if (!(busy.current && /[\r\n]/.test(data))) onInput(data) }} /></div>
     {pending.length || working || error ? <div className="terminal-attachment-tray" aria-label={t("终端待发图片")}>
       {pending.map(image => <div key={image.id} className="terminal-attachment">

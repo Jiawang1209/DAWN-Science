@@ -1,0 +1,119 @@
+import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, type Terminal, type Component } from '@earendil-works/pi-tui'
+import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
+import { plain } from './presentation.js'
+
+type State = { busy: boolean; permission?: boolean; question?: boolean }
+type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
+  onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
+class PromptEditor extends Editor {
+  protected override renderTopBorder(width: number, hidden: number) {
+    return this.borderColor(truncateToWidth(`─ DAWN › 输入问题${hidden ? ` · 上方 ${hidden} 行` : ''} ` + '─'.repeat(width), width, ''))
+  }
+}
+/** Interactive UI owns input only while DAWN is active; Shell and pipe mode remain separate. */
+export class CliTui {
+  private readonly tui: TuiAltScreen
+  private readonly editor: Editor
+  private readonly transcript: CliTranscript
+  private readonly scroll: ScrollView
+  private readonly terminal: Terminal
+  private state: State = { busy: false }
+  private stopped = true
+  constructor(private readonly options: Options) {
+    const native = options.terminal ?? new ProcessTerminal()
+    this.transcript = new CliTranscript(options.color)
+    // Image coordinates are emitted after the viewport render, never inserted into model text.
+    this.terminal = new Proxy(native, { get: (target, key) => {
+      if (key === 'write') return (data: string) => { target.write(data); if (!this.stopped && data.includes('\x1b[?2026l')) this.imageFrame(target) }
+      const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value
+    } })
+    const { accent, dim, bold } = this.transcript.style
+    this.tui = new TuiAltScreen(this.terminal, true, undefined, {
+      scrollToEndIndicator: () => accent('↓ 回到底部'), copyOnSelect: false,
+      copySelection: async text => {
+        const clipboard = getNativeClipboard()
+        if (!clipboard?.setText) return '当前终端无法自动复制，请使用系统选择复制。'
+        try { await clipboard.setText(text); return true } catch { return '复制失败，请重试。' }
+      },
+    })
+    this.editor = new PromptEditor(this.tui, { borderColor: accent, selectList: {
+      selectedPrefix: accent, selectedText: bold, description: dim, scrollInfo: dim, noMatch: dim,
+    } }, { paddingX: 1, autocompleteMaxVisible: 3 })
+    this.editor.setAutocompleteProvider(new CombinedAutocompleteProvider([
+      { name: 'help', description: '帮助与快捷键' }, { name: 'status', description: '模型、目录和记录位置' }, { name: 'exit', description: '返回原 Shell' },
+    ], options.workspace))
+    this.editor.onSubmit = text => {
+      if (!text.trim()) return
+      if (!text.startsWith('/') && !this.state.permission && !this.state.question) {
+        this.editor.addToHistory(text); this.transcript.user(text)
+      }
+      this.scroll.scrollToEnd(); options.onSubmit(text); this.tui.requestRender()
+    }
+    this.editor.onChange = () => this.tui.requestRender()
+    const header: Component = { invalidate() {}, render: width => [truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(options.model)), width, ''), truncateToWidth(dim(plain(options.workspace)), width, '')] }
+    const footer: Component = { invalidate() {}, render: width => [truncateToWidth(dim(
+      (this.state.permission ? '需要确认 · 输入编号或 y/n' : this.state.question ? '等待回答' : this.state.busy ? '生成中 · Ctrl-C 停止' : '就绪')
+      + ' · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit'), width, '')] }
+    this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'auto', scrollbarTrackStyle: dim, scrollbarThumbStyle: accent })
+    this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
+    this.tui.setFocus(this.editor)
+    this.tui.addInputListener(data => {
+      if (isKeyRelease(data)) return { consume: true }
+      if (matchesKey(data, 'ctrl+shift+c') || matchesKey(data, 'super+c') || matchesKey(data, 'ctrl+c') && this.tui.hasActiveSelection()) {
+        void this.tui.copyActiveSelectionToClipboard(); return { consume: true }
+      }
+      if (matchesKey(data, 'ctrl+c')) {
+        if (!this.state.busy && this.editor.getExpandedText()) { this.editor.setText(''); this.tui.requestRender() }
+        else options.onInterrupt()
+        return { consume: true }
+      }
+      if (matchesKey(data, 'ctrl+d') && !this.editor.getExpandedText() && !this.state.busy) { options.onExit(); return { consume: true } }
+      if (matchesKey(data, 'ctrl+l')) {
+        const buttonMotion = Boolean(process.env.TMUX || process.env.ZELLIJ || process.env.STY || /^(tmux|screen)/.test(process.env.TERM ?? ''))
+        this.terminal.write('\x1b[?1049h\x1b[?7l\x1b[?2004h\x1b[?1000h' + (buttonMotion ? '\x1b[?1002h' : '\x1b[?1003h') + '\x1b[?1006h\x1b[?1004h')
+        if (this.terminal.kittyProtocolActive) this.terminal.write('\x1b[=7u')
+        else if ((this.terminal as Terminal & { modifyOtherKeysActive?: boolean }).modifyOtherKeysActive) this.terminal.write('\x1b[>4;2m')
+        this.tui.renderNow(true); return { consume: true }
+      }
+      if (matchesKey(data, 'ctrl+end')) { this.scroll.scrollToEnd(); this.tui.requestRender(); return { consume: true } }
+      if (matchesKey(data, 'tab') && !this.editor.getText().startsWith('/')) { this.transcript.toggleTools(); this.tui.requestRender(); return { consume: true } }
+      if (matchesKey(data, 'enter') && this.state.busy && !this.state.permission && !this.state.question && !/^\/(exit|quit|help|status)$/.test(this.editor.getExpandedText().trim())) {
+        this.tui.flash('本轮仍在运行；草稿已保留，Ctrl-C 可停止。'); return { consume: true }
+      }
+      return undefined
+    })
+  }
+  private imageFrame(target: Terminal) {
+    if (!this.scroll) return
+    const top = 2, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
+    const images = this.transcript.placements.filter(x => x.row >= start && x.row + x.height <= start + height)
+      .slice(-24).map(x => ({ ...x, row: top + x.row - start }))
+    target.write(`\x1b]777;dawn-viewport;${JSON.stringify({ images })}\x07`)
+  }
+  start() {
+    if (!this.stopped) return
+    this.stopped = false
+    try { this.tui.start() } catch (error) { this.stop(); throw error }
+  }
+  stop() {
+    if (this.stopped) return
+    this.stopped = true
+    this.terminal.write('\x1b]777;dawn-viewport;{"images":[]}\x07')
+    this.tui.stop({ preserveScreen: true })
+  }
+  renderNow() { if (!this.stopped) this.tui.renderNow() }
+  setState(state: State) {
+    const waiting = state.permission && !this.state.permission || state.question && !this.state.question
+    this.state = state
+    if (waiting) this.scroll.scrollToEnd()
+    this.tui.requestRender()
+  }
+  draft() { return this.editor.getExpandedText() }
+  following() { return this.scroll.isFollowingEnd }
+  reply(data: string) { this.transcript.reply(data); this.tui.requestRender() }
+  finish() { this.transcript.finish(); this.tui.requestRender() }
+  notice(text: string, urgent = false) { this.transcript.notice(text); if (urgent) this.scroll.scrollToEnd(); this.tui.requestRender() }
+  toolStart(event: ToolStart) { this.transcript.toolStart(event); this.tui.requestRender() }
+  toolEnd(event: ToolEnd) { this.transcript.toolEnd(event); if (event.isError) this.scroll.scrollToEnd(); this.tui.requestRender() }
+  image(event: Picture) { this.transcript.image(event); this.tui.requestRender() }
+}

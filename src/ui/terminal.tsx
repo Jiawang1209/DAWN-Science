@@ -8,6 +8,7 @@
  * 组件只做三件事：建实例、把字节写进去、把键盘敲的送出来。
  * **不解析、不过滤字节**——那是 xterm 的职责，中间再加一层只会引入第二套解释。
  */
+import { dawnEditorKey } from './terminal-keys.js'
 import { terminalImageDecorations, type TerminalPicture } from './terminal-image-decorations.js'
 import { useEffect, useRef } from "react"
 import { useStore } from "@nanostores/react"
@@ -44,7 +45,9 @@ export function TerminalPane({
   onResize,
   readImage,
   onOpenImage,
+  agentEditing = false,
 }: {
+  agentEditing?: boolean | undefined
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
   chunks: readonly string[]
   onInput?: ((data: string) => void) | undefined
@@ -77,6 +80,7 @@ export function TerminalPane({
    */
   const theme = useStore($theme)
   inputRef.current = onInput
+  const editingRef = useRef(agentEditing); editingRef.current = agentEditing
 
   useEffect(() => {
     const el = host.current
@@ -142,11 +146,17 @@ export function TerminalPane({
         id => imageRef.current.readImage!(id), image => imageRef.current.onOpenImage?.(image))
       instance.onResize(size => resizeRef.current?.(size.cols, size.rows))
       addon.fit()
+      instance.attachCustomKeyEventHandler(event => {
+        if (event.metaKey && event.key.toLowerCase() === 'c' && instance?.getSelection()) return true
+        const data = dawnEditorKey(event, editingRef.current && instance?.buffer.active.type === 'alternate')
+        if (!data) return true
+        event.preventDefault(); inputRef.current?.(data); return false
+      })
       instance.onData((d) => inputRef.current?.(d))
       term.current = instance
       fit.current = addon
       // 挂载前已经堆着的历史要补写，否则打开 dock 只能看到之后的输出
-      flush()
+      flush(); refreshAgent()
     })().catch((err: unknown) => {
       /**
        * **失败必须出声**（规格 7.5）。
@@ -189,6 +199,17 @@ export function TerminalPane({
     for (let i = written.current; i < 现.length; i++) t.write(现[i]!)
     written.current = 现.length
   }
+
+  // A bounded PTY snapshot may no longer contain the original alternate-screen
+  // entry sequence. Ask the live DAWN UI for a keyframe after replay completes.
+  function refreshAgent() {
+    const terminal = term.current
+    if (!terminal || !editingRef.current) return
+    terminal.write('', () => {
+      if (term.current === terminal && editingRef.current) inputRef.current?.('\x0c')
+    })
+  }
+  useEffect(() => { if (agentEditing) refreshAgent() }, [agentEditing])
 
   // 只写新增的部分。整份重写会让光标位置与滚动全部错乱
   useEffect(flush, [chunks])

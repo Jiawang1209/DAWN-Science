@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-24",
+  "branch": "codex/terminal-reply-format",
+  "baseMain": "367d2f61",
+  "nativeAppPath": "/Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron",
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-cli-interaction-hyfs5m_y",
+  "terminalId": "22858abc-cde9-4145-981f-f5f09b52c7d5",
+  "nativeSessionId": "56c5115c-2f23-4b40-9097-2ba04e442da7",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "actualUserRequests": 3,
+  "checks": {
+    "shiftEnterMultiline": true,
+    "markdownTableCode": true,
+    "realReadOnlyTools": true,
+    "nativeTextCopy": true,
+    "pasteImageVision": true,
+    "returnedExistingImageInline": true,
+    "imageOpenOriginalWidth": 600,
+    "guiContinueOriginalWithoutReupload": true,
+    "reopenSameTerminalSession": true,
+    "lightWide": true,
+    "dark900x700": true,
+    "dark1250x850": true,
+    "noHorizontalOverflow": true,
+    "dragStageAndRemove": true
+  },
+  "automated": {
+    "unitPassed": 5084,
+    "unitSkipped": 10,
+    "electronDistinctPassed": 54,
+    "typecheck": true,
+    "build": true
+  },
+  "boundaries": [
+    "No new image generation tested; returned an existing PNG",
+    "No cross-platform installer or real system IME candidate-window acceptance",
+    "Feature branch only; no push or installed-app replacement"
+  ]
+}

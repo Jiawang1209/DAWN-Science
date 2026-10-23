@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-24 — 完整终端 Agent 输入与呈现改造
+
+- **Type**: feat
+- **Motivation**: 用户将范围扩展为输入区与整个终端交互，保持真正CLI与单一终端输入。
+- **What**: 备用屏幕内固定多行编辑器、流式Markdown、工具摘要与Tab详情、滚动跟随和问题/错误主动呈现；保留Normal原Shell、模型凭证复用、图片与返回原会话。补齐按可见单元格定位图片、终端历史裁剪后重开恢复输入模式，以及澄清/权限回答期间的草稿保护。
+- **Verification**: 全量479文件5084通过、10跳过；定向67通过；类型/完整构建通过，54项不同终端Electron用例通过。实际deepseek-flash完成多行分析、图片识别与返回既有图片、GUI续问原图；验证真实复制、图片拖入移除、亮暗宽窄和同PTY返回重开。帮助文案更新后CLI重建与快检通过。详见docs/reviews/2026-10-24-terminal-cli-interaction.md及artifacts/terminal-cli-interaction/。
+- **Impact**: 仅codex/terminal-reply-format分支；新改造未合入main、未推送、未替换安装版。保留独立实际预览，等待用户体验；未验收跨平台安装包与真实系统输入法候选窗口。
+
 ### 2026-10-24 — 终端回复格式方案与分支基线
 
 - **Type**: docs

@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/terminal-keys.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/terminal-keys.test.ts (1 test | 1 failed) 5ms
+   × distinguishes DAWN multiline Enter from send and leaves Normal and IME untouched 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/terminal-keys.test.ts > distinguishes DAWN multiline Enter from send and leaves Normal and IME untouched
+AssertionError: expected undefined to be '\u001b[99;6u' // Object.is equality
+
+- Expected:
+""
+
++ Received:
+undefined
+
+ ❯ tests/ui/terminal-keys.test.ts:8:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  06:23:38
+   Duration  844ms (transform 237ms, setup 405ms, import 4ms, tests 5ms, environment 342ms)

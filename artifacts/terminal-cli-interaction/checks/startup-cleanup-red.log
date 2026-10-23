@@ -1,0 +1,48 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/cli/tui.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/tui.test.ts (9 tests | 2 failed) 96ms
+   × reconstructs the alternate viewport on Ctrl-L after a trimmed terminal snapshot lost its screen mode 8ms
+   × restores terminal mode if starting input capture fails 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > reconstructs the alternate viewport on Ctrl-L after a trimmed terminal snapshot lost its screen mode
+AssertionError: expected 'normal' to be 'alternate' // Object.is equality
+
+Expected: "alternate"
+Received: "normal"
+
+ ❯ tests/cli/tui.test.ts:77:39
+     75|   f.terminal.write('\x1b[?1049l'); await f.flush(); expect(f.screen.bu…
+     76|   f.input('\x0c'); await f.flush()
+     77|   expect(f.screen.buffer.active.type).toBe('alternate'); expect(f.text…
+       |                                       ^
+     78| })
+     79| it('restores terminal mode if starting input capture fails', async () …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > restores terminal mode if starting input capture fails
+AssertionError: expected 'alternate' to be 'normal' // Object.is equality
+
+Expected: "normal"
+Received: "alternate"
+
+ ❯ tests/cli/tui.test.ts:83:56
+     81|   f.terminal.start = () => { throw Error('input capture failed') }
+     82|   expect(() => f.ui.start()).toThrow('input capture failed')
+     83|   await f.flush(); expect(f.screen.buffer.active.type).toBe('normal')
+       |                                                        ^
+     84| })
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  06:25:16
+   Duration  305ms (transform 37ms, setup 0ms, import 119ms, tests 96ms, environment 0ms)

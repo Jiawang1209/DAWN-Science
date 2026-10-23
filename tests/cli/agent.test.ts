@@ -38,7 +38,7 @@ async function fixture(serverOptions: Record<string, unknown> = {}) {
       if (user.includes('CLI提问')) return { toolName: 'ask_user_question', args: { questions: [{ id: 'range', question: '选择分析范围？', options: [{ label: '全部' }, { label: '部分' }] }] } }
       return undefined
     },
-    reply: () => 'CLI_REPLY_OK：这是隔离的固定模型回复。',
+    reply: (body: any) => { const content = body.messages.findLast((m: any) => m.role === 'user')?.content; const last = typeof content === 'string' ? content : (content ?? []).map((p: any) => p.text ?? '').join('\n'); return last.includes('MULTILINE_TOP') ? (last === 'MULTILINE_TOP\nMULTILINE_BOTTOM' ? 'MULTILINE_JOINED_OK' : 'MULTILINE_WRONG') : 'CLI_REPLY_OK：这是隔离的固定模型回复。' },
   } })
   expect(server.url).toMatch(/^http:\/\/127\.0\.0\.1:/)
   const config = join(root, 'providers.yaml')
@@ -153,4 +153,12 @@ it('SIGTERM during a real tool run closes the CLI and does not finish the interr
   child.kill('SIGTERM')
   expect(await exited).toBe(0)
   expect(existsSync(join(f.workspace, 'cli-slow.txt'))).toBe(false)
+}, 30000)
+
+it('interactive CLI uses the multiline editor and sends both lines in a single model request', async () => {
+  const f = await fixture(), s = await shell(f)
+  s.terminal.write('dawn\r'); await s.wait('输入问题')
+  s.terminal.write('MULTILINE_TOP\x1b[13;2uMULTILINE_BOTTOM\r')
+  await s.wait('MULTILINE_JOINED_OK')
+  s.terminal.write('/exit\r'); await s.wait('已退出 Agent，返回 Shell。')
 }, 30000)

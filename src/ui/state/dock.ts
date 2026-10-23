@@ -66,9 +66,9 @@ export const 无会话 = "（无会话）"
  * key 里写明作用域是 window（本项目的规矩：搞错作用域就是一个会话的东西渗进另一个）。
  */
 const 终端归属KEY = "dawn.window.terminal-owner"
-function 读归属(): ReadonlyMap<string, string> {
+function 读归属(key = 终端归属KEY): ReadonlyMap<string, string> {
   try {
-    const raw = sessionStorage.getItem(终端归属KEY)
+    const raw = sessionStorage.getItem(key)
     if (!raw) return new Map()
     const obj = JSON.parse(raw) as Record<string, string>
     return new Map(Object.entries(obj))
@@ -86,4 +86,15 @@ export function 记终端归属(终端: string, 归属: string): void {
   } catch (e) {
     console.error("[终端] 归属保存失败，本次仍然生效，但重载页面后不会被记住：", e)
   }
+}
+
+/** A CLI conversation may reopen its original PTY without replacing its original owner. */
+const agentSessionsKey = 'dawn.window.terminal-agent-sessions'
+export const $terminalAgentSessions = atom<ReadonlyMap<string, string>>(读归属(agentSessionsKey))
+export function rememberTerminalAgentSession(terminalId: string, sessionId: string): void {
+  const next = new Map($terminalAgentSessions.get())
+  next.set(terminalId, sessionId)
+  $terminalAgentSessions.set(next)
+  try { sessionStorage.setItem(agentSessionsKey, JSON.stringify(Object.fromEntries(next))) }
+  catch (error) { console.error('[终端] Agent 会话引用保存失败：', error) }
 }

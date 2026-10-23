@@ -1,3 +1,4 @@
+import type { TerminalAgentState } from '../protocol/terminal.js'
 import { TransferConfirmationDetails } from "./transfer-confirmation.js"
 import { TransferBatchesPanel } from "./transfer-batches.js"
 import {AnalysisDeliveryPanel} from './analysis-delivery.js'
@@ -204,6 +205,8 @@ import {
   toggleDock,
   setDockOpen,
   setDockSessionId,
+  $terminalAgentSessions,
+  rememberTerminalAgentSession,
   $终端归属,
   无会话,
   记终端归属,
@@ -3070,6 +3073,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const [关掉的终端, 设关掉的终端] = useState<ReadonlySet<string>>(() => new Set())
   const 终端归属 = useStore($终端归属)
+  const terminalAgentSessions = useStore($terminalAgentSessions)
+  const [returningTerminalId, setReturningTerminalId] = useState<string>()
   /** dock 此刻归谁：当前对话；没有对话时是「无会话」那一格 */
   const 终端主人 = sessionId ?? 无会话
   /**
@@ -3088,9 +3093,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         (x) =>
           x.kind === "pty" &&
           !关掉的终端.has(x.sessionId) &&
-          (终端归属.get(x.sessionId) ?? 终端主人) === 终端主人,
+          ((终端归属.get(x.sessionId) ?? 终端主人) === 终端主人 || terminalAgentSessions.get(x.sessionId) === 终端主人),
       ),
-    [sessions, tempSessions, 关掉的终端, 终端归属, 终端主人],
+    [sessions, tempSessions, 关掉的终端, 终端归属, 终端主人, terminalAgentSessions],
   )
   /** 起终端用哪个 agent。**配置里没有 pty agent 就开不了**，如实说 */
   const ptyAgentId = providers.agents.find((a) => a.kind === "pty")?.agentId
@@ -3883,6 +3888,44 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     },
     说没了: () => note(t("那段对话已经不在了（可能已归档或删除）")),
   })
+
+  const returnToTerminalConversation = async () => {
+    const terminalId = $dockSessionId.get(), owner = $activeSessionId.get(), project = $activeProjectId.get()
+    if (!terminalId) { setDockOpen(false); return }
+    const current = () => $dockOpen.get() && $dockSessionId.get() === terminalId
+      && $activeSessionId.get() === owner && $activeProjectId.get() === project && $view.get() === 'conversation'
+    setReturningTerminalId(terminalId)
+    try {
+      const state = await client.get<TerminalAgentState>('getTerminalAgentMode', { terminalId })
+      if (!current()) return
+      if (state.mode === 'starting' || state.mode === 'stopping') { note(t("终端模式正在切换，请稍后重试")); return }
+      if (!state.sessionId) { setDockOpen(false); return }
+      const targetSessions = state.projectId
+        ? await client.get<SessionSummary[]>('listSessions', { projectId: state.projectId }) : undefined
+      if (!current()) return
+      if (targetSessions && !targetSessions.some(s => s.sessionId === state.sessionId && !s.archivedAt)) {
+        note(t("那段对话已经不在了（可能已归档或删除）")); return
+      }
+      if (state.projectId && !$projects.get().some(p => p.projectId === state.projectId)) await loadProjects(client)
+      if (!current()) return
+      const route = 回段依赖()
+      await 回到那段(state.sessionId, { ...route,
+        // This action always opens the main conversation, even if it is also in the side chat.
+        侧边id: () => undefined,
+        sessions: () => targetSessions ?? route.sessions(),
+        切到: (id, projectId) => {
+          if (!current()) return
+          rememberTerminalAgentSession(terminalId, id)
+          if (state.selection) setSessionModel(id, state.selection.model, state.selection.provider)
+          if (targetSessions) setSessions(targetSessions)
+          setDockOpen(false)
+          route.切到(id, state.projectId ?? projectId)
+        },
+        说没了: () => { if (current()) route.说没了() },
+      })
+    } catch (error) { if (current()) fail(error) }
+    finally { setReturningTerminalId(id => id === terminalId ? undefined : id) }
+  }
 
   /** 取消归档并打开（原先写在「已归档」那屏的 `onOpen` 里；2026-09-27 抽出来——全文搜索点到归档了的走同一条） */
   const 取消归档并打开 = (s: { sessionId: string; projectId?: string | undefined }): Promise<"unarchived" | undefined> =>
@@ -5753,7 +5796,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   })
                   .catch(fail)
               }}
-              onCloseDock={() => setDockOpen(false)}
+              returning={returningTerminalId === dockSessionId}
+              onCloseDock={() => { void returnToTerminalConversation() }}
               onInput={(data) => {
                 const id = $dockSessionId.get()
                 if (!id) return

@@ -1,0 +1,37 @@
+{
+  "ownerSessionId": "bd6ed68a-d9f4-4093-8c1e-d1005318bc4b",
+  "terminalId": "485e8478-8ee1-438e-92d2-746559f1e440",
+  "cliSessionId": "fcaff1a1-0151-4a5f-8225-560642ef19c8",
+  "marker": "星桥-fd65266e",
+  "selection": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "terminalTranscript": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project$ dawn                   \nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请先用工具读取 sample.txt。记住验收代号「星桥-fd65266e」，只在本次对话记住，不写记忆文件。完成后简短确认，不重复代号\n。\n  › bash\n    find . -name \"sample.txt\" -not -path \"*/node_modules/*\" 2>/dev/null\n  ✓ 完成 · bash\n    ./sample.txt\n    \n  › read\n    ./sample.txt\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n已读取 sample.txt，内容是「DAWN desktop CLI verification」。验收代号已记住。\nDAWN ›  ",
+  "taskCountBefore": 9,
+  "guiHistoryVisible": true,
+  "correctModelVisible": true,
+  "guiSessionId": "fcaff1a1-0151-4a5f-8225-560642ef19c8",
+  "sameSession": true,
+  "recalled": true,
+  "taskCountAfter": 9,
+  "guiTranscript": "已换到 deepseek · deepseek-v4-pro——上下文不变，接下来由它来答\n\n你\n\n请先用工具读取 sample.txt。记住验收代号「星桥-fd65266e」，只在本次对话记住，不写记忆文件。完成后简短确认，不重复代号。\n\n2026-10-23 21:33\n复制我说的这段\n回到这句之前\n已完成\n用时 0.7 秒\n1 步\n已完成\n用时 0 秒\n2 步\n✓\n跑了 1 条命令、读了 1 个文件\nD\nDeepSeek\n\n已读取 sample.txt，内容是「DAWN desktop CLI verification」。验收代号已记住。\n\n复制这段回答\n\n输入 34 · 输出 19 · 缓存 17.9k token\n\n你\n\n刚才我给你的验收代号是什么？请只输出代号，不读文件，不调用工具。\n\n2026-10-23 21:34\n复制我说的这段\n回到这句之前\nD\nDeepSeek\n\n星桥-fd65266e\n\n复制这段回答\n\n输入 77 · 输出 8 · 缓存 17.9k token\n\nproject\n本机\n请求批准\nD\ndeepseek-v4-pro\n高\n2 轮 · 工具 2 次 21 ms · 输入 178 · 输出 104 · 缓存 53.6k · 命中 100%\n2%",
+  "lastTerminalState": {
+    "ok": true,
+    "workbenchProtocolVersion": "8.28",
+    "data": {
+      "mode": "dawn",
+      "sessionId": "fcaff1a1-0151-4a5f-8225-560642ef19c8",
+      "projectId": "1b377769-ebad-411b-b553-54f67f1d965b",
+      "selection": {
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      }
+    },
+    "warnings": []
+  },
+  "sourceUnchanged": {
+    "providers.yaml": true,
+    "credentials.json": true
+  }
+}

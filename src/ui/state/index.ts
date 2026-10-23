@@ -55,6 +55,8 @@ export {
   setDockChunks,
   appendDockBytes,
   resetDockTerminal,
+  $terminalAgentSessions,
+  rememberTerminalAgentSession,
   $终端归属,
   无会话,
   记终端归属,

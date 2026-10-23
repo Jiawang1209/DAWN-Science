@@ -586,6 +586,7 @@ export const EN: Readonly<Record<string, string>> = {
   "删除当前会话": "Delete the current chat",
   "还没有选中会话": "No chat is selected",
   "返回对话": "Leave terminal",
+  "终端模式正在切换，请稍后重试": "Terminal mode is changing. Please try again shortly.",
   "返回会话": "Return to conversation",
   "跟随系统": "Follow system",
   "亮色": "Light",

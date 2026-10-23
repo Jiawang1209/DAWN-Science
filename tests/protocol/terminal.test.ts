@@ -18,3 +18,11 @@ describe('terminal control protocol', () => {
     for (const operation of TERMINAL_CONTROL_OPERATIONS as (keyof typeof OPERATIONS)[]) expect(OPERATIONS[operation]).toBeDefined()
   })
 })
+
+it('keeps the CLI target and current selection in the read-only terminal state', () => {
+  const schema = OPERATIONS.getTerminalAgentMode.response
+  expect(schema.parse({ mode: 'dawn', sessionId: 'cli-id', projectId: 'project-id', selection: { provider: 'existing', model: 'selected' } }).sessionId).toBe('cli-id')
+  expect(schema.safeParse({ mode: 'normal' }).success).toBe(true)
+  expect(schema.safeParse({ mode: 'dawn', sessionId: '' }).success).toBe(false)
+  expect(schema.safeParse({ mode: 'dawn', sessionId: 123 }).success).toBe(false)
+})

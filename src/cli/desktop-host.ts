@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { frames, send, type DesktopDescriptor, type DesktopScope } from './desktop-wire.js'
 
+interface Target { sessionId: string; projectId?: string; selection?: { provider: string; model: string } }
+const targetOf = (scope: DesktopScope): Target => ({ sessionId: scope.sessionId, ...(scope.projectId ? { projectId: scope.projectId } : {}), ...(scope.selection ? { selection: scope.selection } : {}) })
 type Mode = 'normal' | 'dawn' | 'starting' | 'stopping'
 interface Connection { socket: Socket; scope: DesktopScope; done: Promise<void>; finish: () => void }
 export interface DesktopCliOptions {
@@ -19,6 +21,7 @@ export class DesktopCliHost {
   private sockets = new Set<Socket>()
   private connections = new Map<string, Connection>()
   private transitions = new Map<string, Mode>()
+  private latestSessions = new Map<string, Target>()
   private root?: string
   private descriptor?: DesktopDescriptor
   private ready?: Promise<void>
@@ -44,7 +47,12 @@ export class DesktopCliHost {
     await this.initialize()
     return { DAWN_CLI_DESCRIPTOR: join(this.root!, 'desktop.json'), DAWN_TERMINAL_ID: terminalId, PATH: this.root + ':' + (process.env.PATH || '/usr/bin:/bin') }
   }
-  state(terminalId: string) { return { mode: this.transitions.get(terminalId) ?? (this.connections.has(terminalId) ? 'dawn' : 'normal') } }
+  state(terminalId: string) {
+    const scope = this.connections.get(terminalId)?.scope
+    const target = scope ? targetOf(scope) : this.latestSessions.get(terminalId)
+    return { mode: this.transitions.get(terminalId) ?? (scope ? 'dawn' : 'normal'), ...target }
+  }
+  forgetTerminal(terminalId: string): void { this.latestSessions.delete(terminalId) }
   async setMode(terminalId: string, mode: 'dawn' | 'normal') {
     if (this.transitions.has(terminalId)) throw new Error('正在切换模式，请稍候')
     const connection = this.connections.get(terminalId)
@@ -75,6 +83,9 @@ export class DesktopCliHost {
     const cleanup = async () => {
       clearTimeout(authTimer); this.sockets.delete(socket); detach?.()
       if (!connection) return
+      if (terminal && connection.scope.selection && this.latestSessions.get(terminal)?.sessionId === connection.scope.sessionId) {
+        this.latestSessions.set(terminal, targetOf(connection.scope))
+      }
       try { await connection.scope.close() } catch { /* Workbench may already be closing. */ }
       if (terminal && this.connections.get(terminal) === connection) this.connections.delete(terminal)
       connection.finish()
@@ -94,7 +105,10 @@ export class DesktopCliHost {
         if (socket.destroyed || this.disposed || terminal && this.connections.has(terminal)) { await scope.close(); socket.destroy(); return }
         let finish!: () => void
         connection = { socket, scope, done: new Promise<void>(r => { finish = r }), finish: () => finish() }
-        if (terminal) this.connections.set(terminal, connection)
+        if (terminal) {
+          this.connections.set(terminal, connection)
+          this.latestSessions.set(terminal, targetOf(scope))
+        }
         authenticated = true; clearTimeout(authTimer)
         detach = scope.attach(event => send(socket, { event }))
         send(socket, { ready: { sessionId: scope.sessionId, model: scope.model, directory: scope.directory } })
@@ -128,6 +142,7 @@ export class DesktopCliHost {
       const current = JSON.parse(await readFile(this.opts.descriptor, 'utf8'))
       if (current.token === this.descriptor?.token) await rm(this.opts.descriptor, { force: true })
     } catch { /* Another host may own the discovery file now. */ }
+    this.latestSessions.clear()
     if (this.root) await rm(this.root, { recursive: true, force: true })
   }
 }

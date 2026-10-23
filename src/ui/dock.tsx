@@ -26,6 +26,7 @@ export function TerminalDock({
   onInput,
   onResize,
   fullPage = false,
+  returning = false,
 }: {
   client?: Pick<WorkbenchClient, 'get'> | undefined
   /** 这个项目里活着的终端会话 */
@@ -41,6 +42,7 @@ export function TerminalDock({
   onCloseDock: () => void
   onInput: (data: string) => void
   onResize?: ((cols: number, rows: number) => void) | undefined
+  returning?: boolean | undefined
   fullPage?: boolean | undefined
 }) {
   const chunks = useStore($dockChunks)
@@ -80,7 +82,7 @@ export function TerminalDock({
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
         {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} /> : null}
         {fullPage ? <span className="conv-action-tip-wrap terminal-return">
-          <Button variant="outline" size="icon" className="terminal-return-button" onClick={onCloseDock}
+          <Button variant="outline" size="icon" className="terminal-return-button" disabled={returning} aria-busy={returning} onClick={onCloseDock}
             aria-label={t("返回会话")} aria-describedby={returnTip}>
             <返回图标 />
           </Button>

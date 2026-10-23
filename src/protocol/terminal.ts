@@ -15,4 +15,10 @@ export const TerminalControlSchema = z.object({
 })
 export type TerminalControlState = z.infer<typeof TerminalControlSchema>
 
-export const TerminalAgentStateSchema = z.object({ mode: z.enum(['normal', 'dawn', 'starting', 'stopping']) })
+export const TerminalAgentStateSchema = z.object({
+  mode: z.enum(['normal', 'dawn', 'starting', 'stopping']),
+  sessionId: z.string().min(1).optional(),
+  projectId: z.string().min(1).optional(),
+  selection: z.object({ provider: z.string().min(1), model: z.string().min(1) }).optional(),
+})
+export type TerminalAgentState = z.infer<typeof TerminalAgentStateSchema>

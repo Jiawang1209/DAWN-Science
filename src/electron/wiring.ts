@@ -769,7 +769,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     registry,
     runtimes: {
       native: nativeRuntime,
-      pty: new PtyRuntime({ command: "sh", terminalControl, environment: cliEnvironment }),
+      pty: new PtyRuntime({ command: "sh", terminalControl, environment: cliEnvironment, onExit: id => cliHost?.forgetTerminal(id) }),
       /**
        * Jupyter 内核（②-A · K4）。
        *
@@ -872,6 +872,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       return new PtyRuntime({
         terminalControl,
         environment: cliEnvironment,
+        onExit: id => cliHost?.forgetTerminal(id),
         command: def.command,
         args: def.args,
         ...(family ? { family } : {}),
@@ -1248,7 +1249,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
 
   const backend = createWorkbenchBackend({
     terminalAgentMode: {
-      state: id => { terminalControl.state(id); return cliHost?.state(id) ?? { mode: "normal" } },
+      state: id => {
+        terminalControl.state(id)
+        const state = cliHost?.state(id) ?? { mode: 'normal' as const }
+        const session = state.sessionId ? sessionStore.get(state.sessionId) : undefined
+        const selection = state.sessionId ? nativeRuntime.currentModel(state.sessionId) : undefined
+        return { ...state, ...(session ? { projectId: session.projectId } : {}), ...(selection ? { selection } : {}) }
+      },
       setMode: async (id, mode) => { terminalControl.state(id); if (!cliHost) throw new Error("本次运行没有装配 DAWN CLI"); return cliHost.setMode(id, mode) },
     },
     terminals: terminalControl,
@@ -1641,7 +1648,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           if (inherited && !agentId) await backend.setSessionModel({ sessionId, ...inherited })
           await backend.acquireLease({ sessionId, holder: 'user' })
           const model = nativeRuntime.currentModel(sessionId)
-          return { sessionId, model: model ? `${model.provider}/${model.model}` : `${selected.provider}/${selected.model}`, directory: workspace,
+          return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : `${selected.provider}/${selected.model}`, directory: workspace,
             call: async (operation, input) => {
               const response = await server.handle(operation, input)
               if (!response.ok) throw new Error(response.error.message)

@@ -1,0 +1,228 @@
+{
+  "ownerSessionId": "279f81d2-8134-4872-9865-eda3864cb17b",
+  "terminalId": "1913818d-1085-4ecb-9cc5-bf5992717ee9",
+  "cliSessionId": "06763264-09ed-4803-8769-25c0fe2f733b",
+  "marker": "星桥-2ffa7933",
+  "selection": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "terminalTranscript": "终端\n终端 1\n×\nproject\nDAWN 模式\nNormal 模式\nliuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project$ dawn                   \nDAWN Science\nAgent · deepseek/deepseek-v4-pro\n/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project\n/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\nDAWN › 请先用工具读取 sample.txt。记住验收代号「星桥-2ffa7933」，只在本次对话记住，不写记忆文件。完成后简短确认，不重复代号\n。\n  › read\n    sample.txt\n  ✓ 完成 · read\n    DAWN desktop CLI verification\n    \n已读取 `sample.txt`，内容为「DAWN desktop CLI verification」。验收代号已记住。\nDAWN ›  ",
+  "taskCountBefore": 7,
+  "guiHistoryVisible": true,
+  "correctModelVisible": true,
+  "guiTranscript": [
+    {
+      "type": "notice",
+      "id": "model-1",
+      "text": "已换到 deepseek · deepseek-v4-pro——上下文不变，接下来由它来答"
+    },
+    {
+      "type": "turn",
+      "id": "u2",
+      "who": "user",
+      "text": "请先用工具读取 sample.txt。记住验收代号「星桥-2ffa7933」，只在本次对话记住，不写记忆文件。完成后简短确认，不重复代号。",
+      "final": true,
+      "at": 1792761998829
+    },
+    {
+      "type": "turn",
+      "id": "a3",
+      "who": "agent",
+      "text": "",
+      "final": true,
+      "by": "deepseek",
+      "thinking": "The user wants me to read sample.txt using a tool. Let me do that.",
+      "thinkingMs": 620,
+      "usage": {
+        "input": 82,
+        "output": 93,
+        "cacheRead": 17664
+      }
+    },
+    {
+      "type": "tool",
+      "id": "call_00_XoxbMcqojLy57BbUzumx2590",
+      "name": "read",
+      "input": {
+        "path": "sample.txt",
+        "offset": null,
+        "limit": null
+      },
+      "status": "ok",
+      "result": "DAWN desktop CLI verification\n",
+      "resultTruncated": false,
+      "resultBytes": 30,
+      "startedAt": 1792762000404,
+      "endedAt": 1792762000422
+    },
+    {
+      "type": "turn",
+      "id": "a4",
+      "who": "agent",
+      "text": "已读取 `sample.txt`，内容为「DAWN desktop CLI verification」。验收代号已记住。",
+      "final": true,
+      "by": "deepseek",
+      "usage": {
+        "input": 65,
+        "output": 22,
+        "cacheRead": 17792
+      }
+    },
+    {
+      "type": "turn",
+      "id": "u5",
+      "who": "user",
+      "text": "刚才我给你的验收代号是什么？请只输出代号，不读文件，不调用工具。",
+      "final": true,
+      "at": 1792762066450
+    },
+    {
+      "type": "turn",
+      "id": "a6",
+      "who": "agent",
+      "text": "星桥-2ffa7933",
+      "final": true,
+      "by": "deepseek",
+      "usage": {
+        "input": 111,
+        "output": 9,
+        "cacheRead": 17792
+      }
+    }
+  ],
+  "recalledMarker": "星桥-2ffa7933",
+  "sameSession": true,
+  "taskCountAfter": 7,
+  "originalDraftPreserved": true,
+  "terminalModeAfterGui": {
+    "mode": "dawn",
+    "sessionId": "06763264-09ed-4803-8769-25c0fe2f733b",
+    "projectId": "1b377769-ebad-411b-b553-54f67f1d965b",
+    "selection": {
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro"
+    }
+  },
+  "normalReturnAnswer": "星桥-2ffa7933",
+  "normalReturnSameSession": true,
+  "normalReturnTranscript": [
+    {
+      "type": "notice",
+      "id": "model-1",
+      "text": "已换到 deepseek · deepseek-v4-pro——上下文不变，接下来由它来答"
+    },
+    {
+      "type": "turn",
+      "id": "u2",
+      "who": "user",
+      "text": "请先用工具读取 sample.txt。记住验收代号「星桥-2ffa7933」，只在本次对话记住，不写记忆文件。完成后简短确认，不重复代号。",
+      "final": true,
+      "at": 1792761998829
+    },
+    {
+      "type": "turn",
+      "id": "a3",
+      "who": "agent",
+      "text": "",
+      "final": true,
+      "by": "deepseek",
+      "thinking": "The user wants me to read sample.txt using a tool. Let me do that.",
+      "thinkingMs": 620,
+      "usage": {
+        "input": 82,
+        "output": 93,
+        "cacheRead": 17664
+      }
+    },
+    {
+      "type": "tool",
+      "id": "call_00_XoxbMcqojLy57BbUzumx2590",
+      "name": "read",
+      "input": {
+        "path": "sample.txt",
+        "offset": null,
+        "limit": null
+      },
+      "status": "ok",
+      "result": "DAWN desktop CLI verification\n",
+      "resultTruncated": false,
+      "resultBytes": 30,
+      "startedAt": 1792762000404,
+      "endedAt": 1792762000422
+    },
+    {
+      "type": "turn",
+      "id": "a4",
+      "who": "agent",
+      "text": "已读取 `sample.txt`，内容为「DAWN desktop CLI verification」。验收代号已记住。",
+      "final": true,
+      "by": "deepseek",
+      "usage": {
+        "input": 65,
+        "output": 22,
+        "cacheRead": 17792
+      }
+    },
+    {
+      "type": "turn",
+      "id": "u5",
+      "who": "user",
+      "text": "刚才我给你的验收代号是什么？请只输出代号，不读文件，不调用工具。",
+      "final": true,
+      "at": 1792762066450
+    },
+    {
+      "type": "turn",
+      "id": "a6",
+      "who": "agent",
+      "text": "星桥-2ffa7933",
+      "final": true,
+      "by": "deepseek",
+      "usage": {
+        "input": 111,
+        "output": 9,
+        "cacheRead": 17792
+      }
+    },
+    {
+      "type": "turn",
+      "id": "u7",
+      "who": "user",
+      "text": "我再确认一次，刚才的验收代号是什么？只输出代号，不读文件或调用工具。",
+      "final": true,
+      "at": 1792762194449
+    },
+    {
+      "type": "turn",
+      "id": "a8",
+      "who": "agent",
+      "text": "星桥-2ffa7933",
+      "final": true,
+      "by": "deepseek",
+      "usage": {
+        "input": 405,
+        "output": 9,
+        "cacheRead": 17408
+      }
+    }
+  ],
+  "shellAfterNormal": {
+    "id": "1913818d-1085-4ecb-9cc5-bf5992717ee9",
+    "instanceId": "4c6abd4a-228b-4302-a228-9e50ca4b6c99",
+    "pid": 45514,
+    "cwd": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-desktop-cli-gmGa0L/project",
+    "command": "/bin/zsh",
+    "alive": true,
+    "controlled": false,
+    "ownerSessionId": "279f81d2-8134-4872-9865-eda3864cb17b",
+    "mode": "shell",
+    "cols": 124,
+    "rows": 44,
+    "revision": 3
+  },
+  "sourceUnchanged": {
+    "providers.yaml": true,
+    "credentials.json": true
+  }
+}

@@ -70,6 +70,7 @@ function collectTree(rootPid: number): { pids: number[]; pgids: number[] } {
 }
 
 export interface PtyRuntimeOptions {
+  onExit?: (sessionId: string) => void
   environment?: (spec: SessionSpec) => Promise<Record<string, string>>
   terminalControl?: TerminalControl
   command: string
@@ -130,6 +131,7 @@ export class PtyRuntime implements AgentRuntime {
     })
     proc.onExit(({ exitCode }) => {
       this.opts.terminalControl?.exited(spec.sessionId)
+      this.opts.onExit?.(spec.sessionId)
       this.procs.delete(spec.sessionId)
       this.emit({ kind: "exited", sessionId: spec.sessionId, exitCode })
       // 清掉这段会话的订阅表(审查 debug H11):否则每开一段终端就多一个永不回收的 Set,

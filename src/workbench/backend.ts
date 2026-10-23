@@ -179,8 +179,8 @@ export interface WorkbenchBackendOptions {
   terminals?: import('../terminal/control.js').TerminalControl
   terminalOwnerAllowed?: (sessionId: string) => boolean
   terminalAgentMode?: {
-    state: (id: string) => { mode: 'normal' | 'dawn' | 'starting' | 'stopping' }
-    setMode: (id: string, mode: 'normal' | 'dawn') => Promise<{ mode: 'normal' | 'dawn' | 'starting' | 'stopping' }>
+    state: (id: string) => import('../protocol/terminal.js').TerminalAgentState
+    setMode: (id: string, mode: 'normal' | 'dawn') => Promise<import('../protocol/terminal.js').TerminalAgentState>
   }
   terminalPrompt?: (owner: string, terminal: string, text: string, mode: import('../protocol/terminal.js').TerminalMode, queueId?: string) => void
   transferDirectory?: string

@@ -17,14 +17,16 @@ it('authenticates local clients, exposes only a scoped session, never sends cred
     await expect(connectDesktopCli({ ...descriptor, token: 'wrong' }, root, 'terminal')).rejects.toThrow()
     const client = await connectDesktopCli(descriptor, root, 'terminal')
     expect(client.model).toBe('existing/model')
-    expect(host.state('terminal').mode).toBe('dawn')
+    expect(host.state('terminal')).toEqual({ mode: 'dawn', sessionId: 'owned' })
     await expect(client.call('setCredential', { secret: 'must-not-arrive' })).rejects.toThrow()
     await expect(client.call('writeToSession', { sessionId: 'another', data: 'bad', as: 'user' })).rejects.toThrow()
     await client.call('writeToSession', { sessionId: 'owned', data: 'hello', as: 'user' })
     expect(call).toHaveBeenCalledWith('writeToSession', { sessionId: 'owned', data: 'hello', as: 'user' })
     await client.close()
     await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
-    expect(host.state('terminal').mode).toBe('normal')
+    expect(host.state('terminal')).toEqual({ mode: 'normal', sessionId: 'owned' })
+    host.forgetTerminal('terminal')
+    expect(host.state('terminal')).toEqual({ mode: 'normal' })
   } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
 })
 
@@ -40,9 +42,9 @@ it('switches through authenticated exit without sending keys to the shell, and r
     const descriptor = JSON.parse(readFileSync(descriptorFile, 'utf8'))
     const client = await connectDesktopCli(descriptor, root, 't')
     client.onExit(() => { void client.close() })
-    expect(await host.setMode('t', 'dawn')).toEqual({ mode: 'dawn' })
+    expect(await host.setMode('t', 'dawn')).toEqual({ mode: 'dawn', sessionId: 'cli' })
     expect(launch).not.toHaveBeenCalled()
-    expect(await host.setMode('t', 'normal')).toEqual({ mode: 'normal' })
+    expect(await host.setMode('t', 'normal')).toEqual({ mode: 'normal', sessionId: 'cli' })
     await host.dispose()
     expect(() => readFileSync(descriptorFile)).toThrow()
   } finally { rmSync(root, { recursive: true, force: true }) }
@@ -61,4 +63,37 @@ it('keeps each terminal bound to its own desktop even when another host updates 
     expect(ca.model).toBe('first'); expect(cb.model).toBe('second')
     await ca.close(); await cb.close()
   } finally { await first.dispose(); await second.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
+it('returns only the current terminal context and replaces it only after a new authenticated CLI connects', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-context-return-'))
+  let next = 0
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: `cli-${++next}`, model: 'desktop/model', directory: root, call: async () => ({}), attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('a'), descriptor = JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8'))
+    expect(host.state('a')).toEqual({ mode: 'normal' })
+    const a = await connectDesktopCli(descriptor, root, 'a'), b = await connectDesktopCli(descriptor, root, 'b')
+    expect(host.state('a').sessionId).toBe('cli-1'); expect(host.state('b').sessionId).toBe('cli-2')
+    await a.close(); await vi.waitFor(() => expect(host.state('a').mode).toBe('normal'))
+    const replacement = await connectDesktopCli(descriptor, root, 'a')
+    expect(host.state('a').sessionId).toBe('cli-3'); expect(host.state('b').sessionId).toBe('cli-2')
+    await replacement.close(); await b.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
+it('preserves the authoritative project and last model after the CLI disconnects', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-target-selection-'))
+  let selection = { provider: 'existing', model: 'first' }
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'cli', projectId: 'project', model: 'existing/first', get selection() { return selection }, directory: root,
+      call: async () => ({}), attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t')
+    const client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    expect(host.state('t')).toEqual({ mode: 'dawn', sessionId: 'cli', projectId: 'project', selection })
+    selection = { provider: 'another-configured', model: 'current' }
+    await client.close(); await vi.waitFor(() => expect(host.state('t').mode).toBe('normal'))
+    expect(host.state('t')).toEqual({ mode: 'normal', sessionId: 'cli', projectId: 'project', selection })
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
 })

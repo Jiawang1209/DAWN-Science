@@ -3,6 +3,8 @@ import type { AgentEvent } from '../runtime/types.js'
 export interface DesktopDescriptor { socket: string; token: string; version: 1 }
 export interface DesktopScope {
   sessionId: string; model: string; directory: string
+  projectId?: string | undefined
+  selection?: { provider: string; model: string } | undefined
   call: (operation: string, input: unknown) => Promise<unknown>
   attach: (sink: (event: AgentEvent) => void) => () => void
   waitForIdle: () => Promise<void>

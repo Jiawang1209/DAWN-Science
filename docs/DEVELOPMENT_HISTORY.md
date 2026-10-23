@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-24 — 终端回复格式方案与分支基线
+
+- **Type**: docs
+- **Motivation**: 用户希望改善 DAWN 模式正文与工具输出的可读性。
+- **What**: 核对上一轮修正已在本地 main，创建codex/terminal-reply-format；提出保留单一输入、重做Markdown正文与生成进度、紧凑工具摘要的方案，待用户确认；尚未修改产品代码。
+- **Verification**: main重新运行类型检查通过；全量475文件5019通过、10跳过；独立分支CLI基线12项通过。方案见docs/superpowers/specs/2026-10-24-terminal-reply-format-design.md。
+- **Impact**: 仅新分支的方案文档与基线记录；main不加入新的格式功能，不推送、不替换安装版。
+
 ### 2026-10-24 — 终端空态、切换与返回整体复核
 
 - **Type**: fix

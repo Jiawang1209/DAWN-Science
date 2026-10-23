@@ -5796,7 +5796,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   })
                   .catch(fail)
               }}
-              returning={returningTerminalId === dockSessionId}
+              returning={returningTerminalId !== undefined && returningTerminalId === dockSessionId}
               onCloseDock={() => { void returnToTerminalConversation() }}
               onInput={(data) => {
                 const id = $dockSessionId.get()

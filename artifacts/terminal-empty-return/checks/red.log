@@ -1,0 +1,106 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/terminal-empty-return.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:14688) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51526/b79c113e-30b6-4325-96ec-de7d149c1139
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/terminal-empty-return.spec.ts:10:1 › closing the last terminal still allows returning to the original page and draft (3.9s)
+(node:14824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51543/5988a3c3-1660-4e4b-b027-db3d80e31fe4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  2 e2e/terminal-empty-return.spec.ts:35:3 › without a configured terminal › returns to the page even when no terminal has ever been created (3.1s)
+
+
+  1) e2e/terminal-empty-return.spec.ts:10:1 › closing the last terminal still allows returning to the original page and draft
+
+    Error: expect(locator).toBeEnabled() failed
+
+    Locator:  getByRole('button', { name: '返回会话', exact: true })
+    Expected: enabled
+    Received: disabled
+    Timeout:  1500ms
+
+    Call log:
+      - Expect "toBeEnabled" with timeout 1500ms
+      - waiting for getByRole('button', { name: '返回会话', exact: true })
+        16 × locator resolved to <button disabled type="button" aria-busy="true" aria-label="返回会话" aria-describedby="_r_0_" class="btn btn-outline btn-icon terminal-return-button">…</button>
+           - unexpected value "disabled"
+
+
+      17 |   await expect(page.locator('.dock .empty')).toContainText('还没有终端')
+      18 |   const back = page.getByRole('button', { name: '返回会话', exact: true })
+    > 19 |   await expect(back).toBeEnabled({ timeout: 1500 })
+         |                      ^
+      20 |   await expect(back).toHaveAttribute('aria-busy', 'false')
+      21 |   await back.click()
+      22 |   await expect(page.locator('.dock')).toHaveCount(0)
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-empty-return.spec.ts:19:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-empty-return-clos-7586b-the-original-page-and-draft/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-empty-return-clos-7586b-the-original-page-and-draft/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-empty-return-clos-7586b-the-original-page-and-draft/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-empty-return-clos-7586b-the-original-page-and-draft/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/terminal-empty-return.spec.ts:35:3 › without a configured terminal › returns to the page even when no terminal has ever been created
+
+    Error: expect(locator).toBeEnabled() failed
+
+    Locator:  getByRole('button', { name: '返回会话', exact: true })
+    Expected: enabled
+    Received: disabled
+    Timeout:  1500ms
+
+    Call log:
+      - Expect "toBeEnabled" with timeout 1500ms
+      - waiting for getByRole('button', { name: '返回会话', exact: true })
+        16 × locator resolved to <button disabled type="button" aria-busy="true" aria-label="返回会话" aria-describedby="_r_0_" class="btn btn-outline btn-icon terminal-return-button">…</button>
+           - unexpected value "disabled"
+
+
+      40 |     await expect(page.getByRole('button', { name: '＋ 新开一个', exact: true })).toBeDisabled()
+      41 |     const back = page.getByRole('button', { name: '返回会话', exact: true })
+    > 42 |     await expect(back).toBeEnabled({ timeout: 1500 })
+         |                        ^
+      43 |     await back.click()
+      44 |     await expect(page.locator('.dock')).toHaveCount(0)
+      45 |     await expect(page.locator('.welcome')).toBeVisible()
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-empty-return.spec.ts:42:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-empty-return-with-2f2f4-minal-has-ever-been-created/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-empty-return-with-2f2f4-minal-has-ever-been-created/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-empty-return-with-2f2f4-minal-has-ever-been-created/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-empty-return-with-2f2f4-minal-has-ever-been-created/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e/terminal-empty-return.spec.ts:10:1 › closing the last terminal still allows returning to the original page and draft
+    e2e/terminal-empty-return.spec.ts:35:3 › without a configured terminal › returns to the page even when no terminal has ever been created

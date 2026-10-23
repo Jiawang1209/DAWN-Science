@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.35 test
+npm notice run vitest run tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  109 passed (109)
+   Start at  20:03:40
+   Duration  1.62s (transform 559ms, setup 836ms, import 100ms, tests 718ms, environment 788ms)

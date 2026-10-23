@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.35 test
+npm notice run vitest run tests/cli/agent-state.test.ts tests/cli/tui.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  06:58:54
+   Duration  894ms (transform 470ms, setup 0ms, import 718ms, tests 667ms, environment 0ms)

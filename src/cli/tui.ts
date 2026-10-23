@@ -5,6 +5,7 @@ import { plain } from './presentation.js'
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
   onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
+const localCommand = (text: string) => /^\/(exit|quit|help|status)$/.test(text.trim())
 class PromptEditor extends Editor {
   private gutter(width: number) { return Math.min(7, Math.max(0, width - 2)) }
   private bottom = ''
@@ -58,7 +59,7 @@ export class CliTui {
     ], options.workspace))
     this.editor.onSubmit = text => {
       if (!text.trim()) return
-      if (!text.startsWith('/') && !this.state.permission && !this.state.question) {
+      if (!localCommand(text) && !this.state.permission && !this.state.question) {
         this.editor.addToHistory(text); this.transcript.user(text)
       }
       this.scroll.scrollToEnd(); options.onSubmit(text); this.tui.requestRender()
@@ -91,7 +92,7 @@ export class CliTui {
       }
       if (matchesKey(data, 'ctrl+end')) { this.scroll.scrollToEnd(); this.tui.requestRender(); return { consume: true } }
       if (matchesKey(data, 'tab') && !this.editor.getText().startsWith('/')) { this.transcript.toggleTools(); this.tui.requestRender(); return { consume: true } }
-      if (matchesKey(data, 'enter') && this.state.busy && !this.state.permission && !this.state.question && !/^\/(exit|quit|help|status)$/.test(this.editor.getExpandedText().trim())) {
+      if (matchesKey(data, 'enter') && this.state.busy && !this.state.permission && !this.state.question && !localCommand(this.editor.getExpandedText())) {
         this.tui.flash('本轮仍在运行；草稿已保留，Ctrl-C 可停止。'); return { consume: true }
       }
       return undefined

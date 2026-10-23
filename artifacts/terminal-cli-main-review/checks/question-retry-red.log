@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.35 test
+npm notice run vitest run tests/cli/agent-state.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/agent-state.test.ts (7 tests | 1 failed) 402ms
+   × protects the draft during a final question answer and retries only that answer after a failed request 61ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/agent-state.test.ts > protects the draft during a final question answer and retries only that answer after a failed request
+AssertionError: expected { busy: true, permission: false, …(1) } to match object { busy: true, question: true }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "busy": true,
+-   "question": true,
++   "question": false,
+  }
+
+ ❯ tests/cli/agent-state.test.ts:121:27
+    119|     await agent.submit('1'); expect(agent.state()).toMatchObject({ bus…
+    120|     reject(Error('question answer failed')); await new Promise<void>(r…
+    121|     expect(agent.state()).toMatchObject({ busy: true, question: true })
+       |                           ^
+    122|     agent.call.mockImplementation(async () => ({})); await agent.submi…
+    123|     expect(agent.call).toHaveBeenLastCalledWith('answerQuestion', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  06:58:41
+   Duration  744ms (transform 75ms, setup 0ms, import 111ms, tests 402ms, environment 0ms)

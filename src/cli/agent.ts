@@ -118,7 +118,16 @@ export async function runCliAgent(agentId?: string): Promise<number> {
       }
       request.answers.push({ id: q.id, selected: numeric ? indexes.map(i => q.options![i]!.label) : [], ...(!numeric ? { custom: line } : {}) })
       if (++request.index < request.record.questions.length) showQuestion()
-      else { question = undefined; prompt(); await call('answerQuestion', { sessionId, requestId: request.record.requestId, answer: { answers: request.answers } }) }
+      else {
+        answering = true; prompt()
+        try {
+          await call('answerQuestion', { sessionId, requestId: request.record.requestId, answer: { answers: request.answers } })
+          if (question === request) question = undefined
+        } catch (error) {
+          if (question === request) { request.index--; request.answers.pop(); showQuestion() }
+          throw error
+        } finally { answering = false; prompt() }
+      }
       return
     }
     if (busy) { say('当前回合仍在运行；Ctrl-C 停止，或 /exit 返回 Shell。'); return }

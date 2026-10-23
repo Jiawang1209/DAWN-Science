@@ -46,4 +46,4 @@ Files: e2e/terminal-cli-interaction.spec.ts; docs/reviews/2026-10-24-terminal-cl
 - [x] Run typecheck, full build, all unit tests and relevant terminal Electron suites; fix failures with reproduced causes.
 - [x] Review spec compliance then code quality, including lifecycle cleanup and missing image/cache cases.
 - [x] Open isolated real Electron from this branch with existing configured model; verify 900x700 and larger bright/dark views, paste/drop and context return; keep main preview/profile separate.
-- [x] Record evidence, normalize logs, scan only added source/docs/logs for credentials and prohibited reference naming. Commit branch only. Do not merge the new CLI redesign, push, package or replace installed app.
+- [x] Record evidence, normalize logs, scan only added source/docs/logs for credentials and prohibited reference naming. Initial preview stage: commit branch only, without merge/push/package/install. After user acceptance, the user explicitly authorized a verified local-main integration; track that follow-up in docs/reviews/2026-10-24-terminal-cli-main-review.md.

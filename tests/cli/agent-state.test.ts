@@ -107,3 +107,34 @@ it('protects the next draft while a permission answer is in flight, then restore
     expect(agent.state()).toMatchObject({ busy: true, permission: true })
   } finally { await agent.close() }
 })
+
+it('protects the draft during a final question answer and retries only that answer after a failed request', async () => {
+  const agent = await interactiveAgent()
+  let reject!: (error: Error) => void
+  const two = { ...pending, questions: [...pending.questions, { id: 'format', question: '输出格式？', options: [{ label: '表格' }] }] }
+  try {
+    await agent.submit('开始分析'); agent.emit({ kind: 'question', sessionId: 'state-test-session', question: two })
+    await agent.submit('1')
+    agent.call.mockImplementation(async operation => operation === 'answerQuestion' ? new Promise((_resolve, fail) => { reject = fail }) : {})
+    await agent.submit('1'); expect(agent.state()).toMatchObject({ busy: true, question: false })
+    reject(Error('question answer failed')); await new Promise<void>(resolve => setImmediate(resolve))
+    expect(agent.state()).toMatchObject({ busy: true, question: true })
+    agent.call.mockImplementation(async () => ({})); await agent.submit('1')
+    expect(agent.call).toHaveBeenLastCalledWith('answerQuestion', {
+      sessionId: 'state-test-session', requestId: pending.requestId,
+      answer: { answers: [{ id: 'range', selected: ['全部'] }, { id: 'format', selected: ['表格'] }] },
+    })
+    expect(agent.state()).toMatchObject({ busy: true, question: false })
+  } finally { await agent.close() }
+})
+it('does not revive a remotely settled question when its in-flight answer fails later', async () => {
+  const agent = await interactiveAgent(); let reject!: (error: Error) => void
+  try {
+    await agent.submit('开始分析'); agent.emit({ kind: 'question', sessionId: 'state-test-session', question: pending })
+    agent.call.mockImplementation(async operation => operation === 'answerQuestion' ? new Promise((_resolve, fail) => { reject = fail }) : {})
+    await agent.submit('1')
+    agent.emit({ kind: 'question', sessionId: 'state-test-session', question: { ...pending, state: 'cancelled' } })
+    reject(Error('late question failure')); await new Promise<void>(resolve => setImmediate(resolve))
+    expect(agent.state()).toMatchObject({ busy: true, question: false })
+  } finally { await agent.close() }
+})

@@ -48,6 +48,18 @@ it('keeps the inline prompt outside the draft and aligns cursor, mouse editing a
   expect(f.text()).toMatch(/> DAWN ABXCDE *\n       中文续行/)
   f.input('\r'); expect(f.submit).toHaveBeenCalledWith('ABXCDE\n中文续行')
 })
+it.each(['/tmp/example.csv 请分析这个文件', '/Users/example/data.csv', '/help-me 分析数据'])('records and recalls slash-leading user prompts: %s', async text => {
+  const f = fixture(); f.input(`\x1b[200~${text}\x1b[201~`); f.input('\r'); await f.flush()
+  expect(f.submit).toHaveBeenCalledWith(text)
+  expect(f.text()).toContain(text)
+  f.input('\x1b[A'); expect(f.ui.draft()).toBe(text)
+})
+it('keeps only recognized local commands out of the user transcript and history', async () => {
+  const f = fixture(); f.input('  /help  '); f.input('\r'); await f.flush()
+  expect(f.submit).toHaveBeenCalledWith('/help')
+  expect(f.text()).not.toContain('› 你')
+  f.input('\x1b[A'); expect(f.ui.draft()).toBe('')
+})
 it('keeps a pasted multiline paragraph as one turn and can recall it from history', async () => {
   const f = fixture(); f.input('\x1b[200~line one\nline two\x1b[201~'); f.input('\r')
   expect(f.submit).toHaveBeenCalledWith('line one\nline two')

@@ -1,0 +1,890 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/cli-agent-kind.spec.ts e2e/cli-agent.spec.ts e2e/desktop-cli.spec.ts e2e/permission.spec.ts e2e/pty-session.spec.ts e2e/session-resume.spec.ts e2e/session-switch.spec.ts e2e/terminal-assistance.spec.ts e2e/terminal-cli-interaction.spec.ts e2e/terminal-context-return.spec.ts e2e/terminal-dock.spec.ts e2e/terminal-empty-return.spec.ts e2e/terminal-images.spec.ts e2e/terminal-state-audit.spec.ts
+
+Running 54 tests using 1 worker
+
+(node:98042) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64640/72895739-fee0-4928-8719-c13327e74f93
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/cli-agent-kind.spec.ts:32:3 › 配了一个认不出的 cli agent › **响亮失败并说清怎么办** —— 不是悄悄起一个终端 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64660/c9171ade-66e8-4866-ac95-e8c14160df4e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/cli-agent-kind.spec.ts:45:3 › 配了一个认不出的 cli agent › 它仍然出现在可选列表里 —— 缺失不等于不支持 (1.7s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 结果送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:208499:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[主进程] Debugger ending on ws://127.0.0.1:64677/58516ff4-6435-4ae9-9ce9-c74358faae73
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/cli-agent.spec.ts:57:3 › CLI agent 在对话框里 › **打一句，它答一句** —— 判据 ① (2.6s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:64703/12148901-4ad5-4c42-b05d-3ab20908b666
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/cli-agent.spec.ts:70:3 › CLI agent 在对话框里 › **模型选择器真的出现** —— 上一轮就是漏了这一条，发了个哑的出去 (2.6s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 结果送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:208499:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[主进程] Debugger ending on ws://127.0.0.1:64753/13b67207-487c-47e1-999c-d37529a39e6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/cli-agent.spec.ts:86:3 › CLI agent 在对话框里 › **你自己说的话也要在对话里** —— 作者试用时报的那个 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 结果送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:208499:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[主进程] Debugger ending on ws://127.0.0.1:64800/441b45ec-4cf6-4127-a869-475f6b8c5a97
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/cli-agent.spec.ts:101:3 › CLI agent 在对话框里 › **agent 的气泡要收尾** —— 不收尾它永远显示成还在说 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 结果送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:208499:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[主进程] Debugger ending on ws://127.0.0.1:64822/7c2a4846-e0c8-45ae-8d33-b27039f88d2f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/cli-agent.spec.ts:112:3 › CLI agent 在对话框里 › **工具调用落在账本上** —— 判据 ②，走 PTY 时这里只有一团字节 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 结果送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:208499:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[主进程] Debugger ending on ws://127.0.0.1:64843/e2cf6b58-2f28-45eb-943f-064b6c6dcb3a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/cli-agent.spec.ts:135:3 › CLI agent 在对话框里 › **工具调用在对话里看得见** (2.6s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [桌面通知·假] #0 「这是桌面 CLI 连接验收，请简短回答。」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:64856/c338799a-22cf-489f-bb84-b1b3eb362ee3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/desktop-cli.spec.ts:6:1 › DAWN and Normal use the desktop model, preserve Shell state, and refuse pending input (11.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:64920/61b38906-bad3-475b-9524-2a1ed423fb3e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/desktop-cli.spec.ts:49:1 › return opens the same Agent conversation and continues it without creating or copying a task (9.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64970/002a4618-7398-4471-b8cc-29aa15e1d56b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/permission.spec.ts:21:1 › 输入卡上有「权限」那颗，三档都在，且说清了各自意味着什么 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64985/aea62140-d6a0-4dfb-954d-584144e9c604
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/permission.spec.ts:34:1 › **默认是全放行** —— 不在毫无预兆的情况下让人开始撞墙 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64999/4ec363ca-629a-4144-b5c9-5cb8eff8aace
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/permission.spec.ts:42:1 › 空态屏上换一档，进会话再回来还是那一档 —— 存下去了，不是只在界面上动了动 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65025/249a5c82-abbb-44d3-a317-1b689ced77a2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/permission.spec.ts:69:1 › **菜单不自称沙箱**，并写明了硬拒清单任何档都拒 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「删掉 old.txt」在等你点头 — bash：rm old.txt
+[主进程] [桌面通知·假] #1 「删掉 old.txt」在等你点头 — bash：rm old.txt
+[主进程] Debugger ending on ws://127.0.0.1:65035/bf4ad01c-7209-4def-9c86-f9754d7859ab
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/permission.spec.ts:85:3 › 问一句 › **卡弹出来；允许 → 真删了；拒绝 → 没删、模型拿到理由** (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65066/c947956b-7afb-4341-9fec-3fc765fa8efa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/permission.spec.ts:142:3 › 硬拒 › **全放行档也拒 sudo**，不弹卡 (2.6s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:65085/2f564f41-f899-4749-8d6e-ae1d887ffbdb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/pty-session.spec.ts:55:3 › PTY 会话：单一原生终端工作区 › **建完就能看见终端**，不用点任何东西 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:65107/c84f1202-5083-4725-84e0-7affa7325efd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/pty-session.spec.ts:73:3 › PTY 会话：单一原生终端工作区 › **打字加回车，命令真的被执行了** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65127/907de45b-07df-45ac-afe1-2db4073e0778
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65159/1a88d080-a9ff-4cd0-be82-869a0506d721
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/session-resume.spec.ts:18:1 › **关掉再打开，那段对话还在，而且还能说** (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65219/4756cd76-8160-4125-bb72-a6d118b6d9df
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/session-switch.spec.ts:37:1 › 切会话不丢历史 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65289/209590bd-6438-4d36-8d56-8dc7d8ffcc5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/session-switch.spec.ts:58:1 › **草稿不跟着切过去**，切回来又还在 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65359/f9240aeb-b855-47d7-9be3-86f1d92a6bbe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/session-switch.spec.ts:82:1 › 切会话不重启 shell —— 侧栏与顶栏一直在 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:65421/c26f6fad-a3b0-4819-876b-882473555be2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  23 e2e/terminal-assistance.spec.ts:35:1 › 整页原生终端调用真正 dawn，只有一个输入，退出回原 Shell 并保留桌面草稿 (27.6s)
+(node:5559) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:49611/1edb20bc-d536-4b67-afb7-8b94ad648484
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/terminal-assistance.spec.ts:59:1 › 900×700 原生终端占满主区，真实行列尺寸同步，退出工作区不杀进程 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:49636/4e2fc379-0495-46aa-843b-f63cad11bf0c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/terminal-cli-interaction.spec.ts:29:1 › Shift-Enter edits multiple lines in one terminal input and sends one native user turn (6.6s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:49669/6d3f6201-d210-4e08-a478-ae89fd9c1f97
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/terminal-cli-interaction.spec.ts:46:3 › formatted transcript › renders Markdown code and tables in a narrow window while keeping one editor (8.8s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:49767/acaf0257-6115-4576-9036-13c026ca6e7e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/terminal-cli-interaction.spec.ts:62:3 › streamed scrolling › shows a partial answer before completion and does not steal scrolling until returning to the end (13.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:49964/d6db2c5e-8e69-4579-8ed4-50dbaf45a2df
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/terminal-cli-interaction.spec.ts:77:3 › tool details › Tab reveals tool output details without introducing a second input (9.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50026/da6b26a4-879b-4008-aa56-107ddb02376d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/terminal-cli-interaction.spec.ts:88:1 › reopening a trimmed PTY snapshot restores the editor and bracketed multiline paste (8.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [桌面通知·假] #0 「FIRST_TERMINAL_CONTE」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50151/bcd97cb0-019b-46bd-a6d6-fa6e8940f643
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/terminal-context-return.spec.ts:38:1 › the selected terminal returns to its own Agent rather than another live terminal (14.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50244/66d7ab77-df76-434b-8687-e5578b0357bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/terminal-context-return.spec.ts:59:1 › a removed Agent target leaves the terminal open and reports the missing conversation (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50289/08f81fec-0add-4143-8ab4-01ebcd914e5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  32 e2e/terminal-context-return.spec.ts:76:3 › running task across directories › return follows the CLI workspace and lets the current tool finish (12.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50386/342ee5ff-574c-4eee-9b1e-b91130f792ba
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  33 e2e/terminal-dock.spec.ts:26:1 › 掀开整页终端，对话隐藏并保留 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50438/2c957c11-43dd-4df2-8ca4-8a50a374d9bd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/terminal-dock.spec.ts:43:1 › **路径是项目文件夹** —— 摆在上面，也真的在那里 (5.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50480/b98f232e-e730-4963-896a-3a3919286217
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  35 e2e/terminal-dock.spec.ts:67:1 › 再开一个，两个都在标签里 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50502/abf506a0-7cd3-4147-8403-d5048cc39c2a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  36 e2e/terminal-dock.spec.ts:77:1 › **终端不混进会话列表** —— 它有自己的地方了 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50575/f006692a-d3d6-4ed3-b3c4-8761b48f3cdc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  37 e2e/terminal-dock.spec.ts:88:1 › **终端不在侧栏，在对话这一侧** (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50622/1cc63df8-f433-4295-8389-95e53f8dade4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  38 e2e/terminal-dock.spec.ts:119:1 › **没有项目时，终端开在家目录** (6.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50751/75348b00-5eca-412d-9274-17bd04039b80
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  39 e2e/terminal-dock.spec.ts:158:1 › 收起之后 dock 就没了 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50818/7e5cbbe2-6594-43da-b645-788f0b81cd9c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  40 e2e/terminal-dock.spec.ts:186:1 › **按 × 关掉终端：标签走、面板走、空态出来** (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:50981/16598a2a-44cb-4254-b5da-b594d3fdbf24
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  41 e2e/terminal-dock.spec.ts:220:1 › **敲 exit：标签留着，标成已结束** (3.4s)
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51109/7318e7f7-f48a-46f8-96ef-dd7b55748aae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  42 e2e/terminal-dock.spec.ts:242:1 › **家目录的终端有标签；按 × 连记录一起删掉** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51192/6476aad6-3279-4ec1-b95a-d12eb82fd69f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  43 e2e/terminal-dock.spec.ts:264:1 › **每段对话各自的终端**：切换对话，dock 跟着换 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51323/fcba65c4-d135-4939-8632-e73482b321ee
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  44 e2e/terminal-empty-return.spec.ts:10:1 › closing the last terminal still allows returning to the original page and draft (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51349/c8eb335f-a9b7-4c10-bb72-351e33ad30dd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  45 e2e/terminal-empty-return.spec.ts:35:3 › without a configured terminal › returns to the page even when no terminal has ever been created (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51374/c70d8163-b240-4dd1-88fa-d45a60e07c38
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  46 e2e/terminal-images.spec.ts:39:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (7.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51504/73c19c14-3336-4b95-97a2-0fa707e04d81
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  47 e2e/terminal-images.spec.ts:66:1 › dragged images can be removed, are not added to the hidden composer, and Normal does not attach (6.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51601/a3420609-d993-4765-b604-94befd089847
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  48 e2e/terminal-images.spec.ts:83:3 › output pictures › renders verified image files returned by the Agent and opens their full preview (6.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51692/285575af-acb7-4dc1-b913-b470d9509401
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  49 e2e/terminal-images.spec.ts:100:3 › picture capability › rejects attachment explicitly when neither the selected model nor a visual service can read it (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51734/6b86ef66-ec5b-4219-9632-d9ee6d0403d8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  50 e2e/terminal-state-audit.spec.ts:29:1 › an Agent terminal can be collapsed from the schedule page without changing that page (5.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51763/98ccbdce-b9dc-422b-8113-4ab1ae2eeca5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  51 e2e/terminal-state-audit.spec.ts:37:1 › returning across a changed CLI directory reopens the original PTY even after reloading the GUI (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51832/7d46dc9c-cfac-46bc-90fa-529ec266ab3f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  52 e2e/terminal-state-audit.spec.ts:61:1 › an exited terminal cannot restart Agent or accept input, and still returns to the conversation (4.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:51906/a6e8c4e7-886b-4b70-b75b-1ddf311333d0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  53 e2e/terminal-state-audit.spec.ts:70:1 › an archived Agent target reports its absence without navigating to a different conversation (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:52014/b8d417b4-af20-4f4d-9b24-58b806c68b65
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  54 e2e/terminal-state-audit.spec.ts:83:1 › closing another tab preserves the selected terminal, and closing the final tab leaves a usable return (3.2s)
+
+
+  1) e2e/terminal-assistance.spec.ts:35:1 › 整页原生终端调用真正 dawn，只有一个输入，退出回原 Shell 并保留桌面草稿 ──────────────
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "DAWN ›"
+    Received string:    "unset DAWN_CLI_DESCRIPTOR DAWN_TERMINAL_ID; export PATH='/Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/bin':\"$PATH\" DAWN_API_KEY=isolated-preview-key DAWN_CLI_SAMPLE=41; printf \"%s|%s\" \"$$\" \"$PWD\" > shell-before.txt; dawn·
+    nvm is not compatible with the \"npm_config_prefix\" environment variable: currently set to \"/Users/liuyue/.local\"·
+    Run `unset npm_config_prefix` to unset it.·
+    %······························································································································
+    liuyue@MacBookPro /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-CiMxWN/workspace$   uunset DAWN_CLI_DESCRIPTOR DAWN·
+    _
+    _TERMINAL_ID; export PATH='/Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/bin':\"$PATH\" DAWN_API_KEY=isolate·
+    d
+    d-preview-key DAWN_CLI_SAMPLE=41; printf \"%s|%s\" \"$$\" \"$PWD\" > shell-before.txt; dawn··
+    nset DAWN_CLI_DESCRIPTOR DAWN_TERMINAL_ID; export PATH= DAWN_API_KEY= =41 ; (node:4972) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.·
+    (Use `node --trace-warnings ...` to show where the warning was created)·
+    7uDAWN Science · deepseek/deepseek-flash/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-CiMxWN/workspace  在下方输入问题，或粘贴文字与图片。────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────> DAWN                                                                                                                      ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────就绪 · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit;dawn-viewport;{\"images\":[]}4;2m"
+
+    Call Log:
+    - Timeout 25000ms exceeded while waiting on the predicate
+
+      39 |   const state = await terminal(page)
+      40 |   await type(page, dock, `unset DAWN_CLI_DESCRIPTOR DAWN_TERMINAL_ID; export PATH=${quote(resolve('bin'))}:"$PATH" DAWN_API_KEY=isolated-preview-key DAWN_CLI_SAMPLE=41; printf "%s|%s" "$$" "$PWD" > shell-before.txt; dawn`)
+    > 41 |   await expect.poll(() => text(page, state.id)).toContain('DAWN ›')
+         |                                                 ^
+      42 |   await type(page, dock, 'CLI界面验收：在当前目录执行并核对环境。')
+      43 |   await expect.poll(() => existsSync(join(workspace, 'cli-electron.txt'))).toBe(true)
+      44 |   expect(readFileSync(join(workspace, 'cli-electron.txt'), 'utf8')).toBe(`${workspace}|41`)
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-assistance.spec.ts:41:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-assistance-整页原生终端-b5944-n，只有一个输入，退出回原-Shell-并保留桌面草稿/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-assistance-整页原生终端-b5944-n，只有一个输入，退出回原-Shell-并保留桌面草稿/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-assistance-整页原生终端-b5944-n，只有一个输入，退出回原-Shell-并保留桌面草稿/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-assistance-整页原生终端-b5944-n，只有一个输入，退出回原-Shell-并保留桌面草稿/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/terminal-assistance.spec.ts:35:1 › 整页原生终端调用真正 dawn，只有一个输入，退出回原 Shell 并保留桌面草稿 ───────────────
+  53 passed (4.7m)

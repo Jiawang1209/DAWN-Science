@@ -1,0 +1,181 @@
+npm notice run dawn-science@0.0.35 test
+npm notice run vitest run tests/cli/tui.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |node| tests/cli/tui.test.ts (19 tests | 4 failed) 153ms
+   × records and recalls slash-leading user prompts: /tmp/example.csv 请分析这个文件 9ms
+   × records and recalls slash-leading user prompts: /Users/example/data.csv 3ms
+   × records and recalls slash-leading user prompts: /help-me 分析数据 3ms
+   × keeps only recognized local commands out of the user transcript and history 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > records and recalls slash-leading user prompts: /tmp/example.csv 请分析这个文件
+AssertionError: expected 'DAWN Science · deepseek-flash\n/work/…' to contain '/tmp/example.csv 请分析这个文件'
+
+- Expected
++ Received
+
+- /tmp/example.csv 请分析这个文件
++ DAWN Science · deepseek-flash
++ /work/中文 project
++   在下方输入问题，或粘贴文字与图片。
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++ ────────────────────────────────────────────────────────────────────────────────
++ > DAWN
++ ────────────────────────────────────────────────────────────────────────────────
++ 就绪 · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit
+
+ ❯ tests/cli/tui.test.ts:54:20
+     52|   const f = fixture(); f.input(`\x1b[200~${text}\x1b[201~`); f.input('…
+     53|   expect(f.submit).toHaveBeenCalledWith(text)
+     54|   expect(f.text()).toContain(text)
+       |                    ^
+     55|   f.input('\x1b[A'); expect(f.ui.draft()).toBe(text)
+     56| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > records and recalls slash-leading user prompts: /Users/example/data.csv
+AssertionError: expected 'DAWN Science · deepseek-flash\n/work/…' to contain '/Users/example/data.csv'
+
+- Expected
++ Received
+
+- /Users/example/data.csv
++ DAWN Science · deepseek-flash
++ /work/中文 project
++   在下方输入问题，或粘贴文字与图片。
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++ ────────────────────────────────────────────────────────────────────────────────
++ > DAWN
++ ────────────────────────────────────────────────────────────────────────────────
++ 就绪 · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit
+
+ ❯ tests/cli/tui.test.ts:54:20
+     52|   const f = fixture(); f.input(`\x1b[200~${text}\x1b[201~`); f.input('…
+     53|   expect(f.submit).toHaveBeenCalledWith(text)
+     54|   expect(f.text()).toContain(text)
+       |                    ^
+     55|   f.input('\x1b[A'); expect(f.ui.draft()).toBe(text)
+     56| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > records and recalls slash-leading user prompts: /help-me 分析数据
+AssertionError: expected 'DAWN Science · deepseek-flash\n/work/…' to contain '/help-me 分析数据'
+
+- Expected
++ Received
+
+- /help-me 分析数据
++ DAWN Science · deepseek-flash
++ /work/中文 project
++   在下方输入问题，或粘贴文字与图片。
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++ ────────────────────────────────────────────────────────────────────────────────
++ > DAWN
++ ────────────────────────────────────────────────────────────────────────────────
++ 就绪 · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit
+
+ ❯ tests/cli/tui.test.ts:54:20
+     52|   const f = fixture(); f.input(`\x1b[200~${text}\x1b[201~`); f.input('…
+     53|   expect(f.submit).toHaveBeenCalledWith(text)
+     54|   expect(f.text()).toContain(text)
+       |                    ^
+     55|   f.input('\x1b[A'); expect(f.ui.draft()).toBe(text)
+     56| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/cli/tui.test.ts > keeps only recognized local commands out of the user transcript and history
+AssertionError: expected "vi.fn()" to be called with arguments: [ '  /help  ' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "  /help  ",
++   "/help",
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/cli/tui.test.ts:59:20
+     57| it('keeps only recognized local commands out of the user transcript an…
+     58|   const f = fixture(); f.input('  /help  '); f.input('\r'); await f.fl…
+     59|   expect(f.submit).toHaveBeenCalledWith('  /help  ')
+       |                    ^
+     60|   expect(f.text()).not.toContain('› 你')
+     61|   f.input('\x1b[A'); expect(f.ui.draft()).toBe('')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 15 passed (19)
+   Start at  06:57:17
+   Duration  369ms (transform 45ms, setup 0ms, import 124ms, tests 153ms, environment 0ms)

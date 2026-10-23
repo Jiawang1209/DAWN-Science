@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-24",
+  "branch": "main",
+  "integratedCodeCommit": "47ab1876",
+  "runtime": {
+    "pid": 99274,
+    "appPath": "/Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron",
+    "title": "DAWN Science · main · 开发预览",
+    "visible": true
+  },
+  "profile": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-main-cli-xf9vxn07",
+  "terminalId": "22c3d401-830e-47f7-9409-f056c3b6d879",
+  "nativeSessionId": "239a2bc0-31eb-461e-8315-fabb0962715c",
+  "model": {
+    "provider": "deepseek",
+    "model": "deepseek-flash"
+  },
+  "actualUserRequests": 3,
+  "checks": {
+    "inlinePrompt": true,
+    "absolutePathPromptRecorded": true,
+    "multilineOneRequest": true,
+    "imageRecognized": true,
+    "returnedExistingImage": true,
+    "originalImageWidth": 600,
+    "guiOriginalImageContinuedWithoutReupload": true,
+    "reopenedSameNativeSession": true,
+    "readOnlySampleRows": 4,
+    "readOnlySampleTemperatureMean": 18.7,
+    "lightWide": true,
+    "dark900x700": true,
+    "dark1250x850": true,
+    "noHorizontalOverflow": true,
+    "clipboardRestored": true
+  },
+  "note": "The first prompt included a no-write instruction and the existing discussion boundary denied bash. A subsequent explicit start within the same read-only sample scope succeeded. No image generation tested."
+}

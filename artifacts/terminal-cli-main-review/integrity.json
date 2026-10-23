@@ -1,0 +1,10 @@
+{
+  "originalUserConfigUnchanged": {
+    "providers.yaml": true,
+    "credentials.json": true
+  },
+  "sampleInputsUnchanged": {
+    "sample.csv": true,
+    "cli-preview.png": true
+  }
+}

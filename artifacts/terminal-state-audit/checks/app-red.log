@@ -1,0 +1,413 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/app-terminal-state.test.tsx
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/app-terminal-state.test.tsx (7 tests | 6 failed) 2980ms
+   × a slow creation cannot overwrite the terminal of the conversation switched to afterwards 267ms
+   × returning and reopening invalidates an earlier creation even with the same owner and project 145ms
+   × a welcome page switches terminals by project even though neither page has an active conversation 1042ms
+   × collapse from a non-conversation page closes the panel even if its Agent has a conversation 1146ms
+   × a manual tab selection is not overridden when an earlier new-terminal request finishes 105ms
+   × A-to-B-to-A tab switches do not apply an obsolete A snapshot over the new A screen 170ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > a slow creation cannot overwrite the terminal of the conversation switched to afterwards
+AssertionError: expected 't1' to be 't2' // Object.is equality
+
+Expected: "t2"
+Received: "t1"
+
+ ❯ tests/ui/app-terminal-state.test.tsx:73:32
+     71|   await h.finish(1); await waitFor(() => expect($dockSessionId.get()).…
+     72|   await h.finish(0)
+     73|   expect($dockSessionId.get()).toBe('t2')
+       |                                ^
+     74| })
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > returning and reopening invalidates an earlier creation even with the same owner and project
+AssertionError: expected 't1' to be 't2' // Object.is equality
+
+Expected: "t2"
+Received: "t1"
+
+ ❯ tests/ui/app-terminal-state.test.tsx:85:32
+     83|   await h.finish(1); await waitFor(() => expect($dockSessionId.get()).…
+     84|   await h.finish(0)
+     85|   expect($dockSessionId.get()).toBe('t2')
+       |                                ^
+     86| })
+     87|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > a welcome page switches terminals by project even though neither page has an active conversation
+AssertionError: expected [ { …(2) } ] to have a length of 2 but got 1
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="app-shell"
+        data-sidebar-collapsed="false"
+        style="--dawn-sidebar-content-w: 292px;"
+      >
+        <div
+          class="topbar"
+        >
+          <div
+            class="topbar-navigation"
+          >
+            <div
+              class="brand-stack"
+            >
+              <button
+                aria-label="DAWN Science"
+                class="btn btn-text btn-inline brand"
+                type="button"
+              >
+                <img
+                  alt=""
+                  aria-hidden="true"
+                  class="brand-mark"
+                  src="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"
+                />
+                <span
+                  class="brand-name"
+                >
+                  DAWN Science
+                </span>
+              </button>
+            </div>
+            <button
+              aria-expanded="true"
+              aria-label="收起侧边栏"
+              class="btn btn-ghost btn-icon side-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="currentColor"
+                focusable="false"
+                height="16"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <path
+                  d="M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"
+                  fill-rule="evenodd"
+                />
+              </svg>
+            </button>
+            <button
+              aria-expanded="false"
+              aria-haspopup="dialog"
+              aria-label="搜索"
+              class="btn btn-ghost btn-icon side-search-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="currentColor"
+                focusable="false"
+                height="16"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <path
+                  d="M7.1 1.4a5.7 5.7 0 0 1 4.5 9.2l3 3a.95.95 0 0 1-1.34 1.34l-3-3A5.7 5.7 0 1 1 7.1 1.4Zm0 1.9a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"
+                />
+              </svg>
+            </button>
+            <button
+              aria-expanded="false"
+              aria-haspopup="dialog"
+              aria-label="快捷键速查"
+              class="btn btn-ghost btn-icon shortcut-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="none"
+                height="16"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <rect
+                  height="9"
+                  rx="1.6"
+                  width="13"
+                  x="1.5"
+                  y="3.5"
+                />
+                <path
+                  d="M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="topbar-conversation"
+            data-tabs="false"
+          >
+            <div
+              class="topbar-conversation-slot"
+            />
+          </div>
+          <div
+            class="dock-switch"
+          >
+            <button
+              aria-expanded="false"
+              class="btn btn-ghost btn-sm dock-switch-trigger"
+              type="button"
+            >
+              面板
+            </button>
+          </div>
+        </div>
+        <div
+          class="body"
+          style="--dawn-sidebar-w: 292px; --dawn-dock-w: 0px; --dawn-sidebar-content-w: 292px;"
+        >
+          <aside
+            class="sidebar"
+            lang="zh"...
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/ui/app-terminal-state.test.tsx:92:85
+     90|   await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+     91|   await act(async () => { setActiveProjectId('p2') })
+     92|   await waitFor(() => expect(h.calls.filter(x => x.op === 'createTermi…
+       |                                                                                     ^
+     93|   expect(h.calls.filter(x => x.op === 'createTerminalSession')[1]!.req…
+     94|   await waitFor(() => expect($dockSessionId.get()).toBe('t2'))
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > collapse from a non-conversation page closes the panel even if its Agent has a conversation
+AssertionError: expected true to be false // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="app-shell"
+        data-sidebar-collapsed="false"
+        style="--dawn-sidebar-content-w: 292px;"
+      >
+        <div
+          class="topbar"
+        >
+          <div
+            class="topbar-navigation"
+          >
+            <div
+              class="brand-stack"
+            >
+              <button
+                aria-label="DAWN Science"
+                class="btn btn-text btn-inline brand"
+                type="button"
+              >
+                <img
+                  alt=""
+                  aria-hidden="true"
+                  class="brand-mark"
+                  src="data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"
+                />
+                <span
+                  class="brand-name"
+                >
+                  DAWN Science
+                </span>
+              </button>
+            </div>
+            <button
+              aria-expanded="true"
+              aria-label="收起侧边栏"
+              class="btn btn-ghost btn-icon side-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="currentColor"
+                focusable="false"
+                height="16"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <path
+                  d="M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"
+                  fill-rule="evenodd"
+                />
+              </svg>
+            </button>
+            <button
+              aria-expanded="false"
+              aria-haspopup="dialog"
+              aria-label="搜索"
+              class="btn btn-ghost btn-icon side-search-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="currentColor"
+                focusable="false"
+                height="16"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <path
+                  d="M7.1 1.4a5.7 5.7 0 0 1 4.5 9.2l3 3a.95.95 0 0 1-1.34 1.34l-3-3A5.7 5.7 0 1 1 7.1 1.4Zm0 1.9a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"
+                />
+              </svg>
+            </button>
+            <button
+              aria-expanded="false"
+              aria-haspopup="dialog"
+              aria-label="快捷键速查"
+              class="btn btn-ghost btn-icon shortcut-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="none"
+                height="16"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <rect
+                  height="9"
+                  rx="1.6"
+                  width="13"
+                  x="1.5"
+                  y="3.5"
+                />
+                <path
+                  d="M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="topbar-conversation"
+            data-tabs="false"
+          >
+            <div
+              class="topbar-conversation-slot"
+            />
+          </div>
+          <button
+            class="btn btn-ghost btn-sm"
+            type="button"
+          >
+            返回
+          </button>
+          <div
+            class="dock-switch"
+          >
+            <button
+              aria-expanded="false"
+              class="btn btn-ghost btn-sm dock-switch-trigger"
+              type="button"
+            >
+              面板
+            </button>
+          </div>
+        </div>
+        <div
+          class="body"
+          style="--dawn-sid...
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/app-terminal-state.test.tsx:105:47
+    103|   await act(async () => { setView('schedule') })
+    104|   fireEvent.click(screen.getByRole('button', { name: '收起面板', exact: tr…
+    105|   await waitFor(() => expect($dockOpen.get()).toBe(false))
+       |                                               ^
+    106| })
+    107|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > a manual tab selection is not overridden when an earlier new-terminal request finishes
+AssertionError: expected 't2' to be 't1' // Object.is equality
+
+Expected: "t1"
+Received: "t2"
+
+ ❯ tests/ui/app-terminal-state.test.tsx:125:32
+    123|   fireEvent.click(screen.getByRole('button', { name: '终端 1', exact: tr…
+    124|   await h.finish(0)
+    125|   expect($dockSessionId.get()).toBe('t1')
+       |                                ^
+    126| })
+    127|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > A-to-B-to-A tab switches do not apply an obsolete A snapshot over the new A screen
+AssertionError: expected [ 'STALE_A' ] to deeply equal [ 'CURRENT_A' ]
+
+- Expected
++ Received
+
+  [
+-   "CURRENT_A",
++   "STALE_A",
+  ]
+
+ ❯ tests/ui/app-terminal-state.test.tsx:143:29
+    141|   expect($dockChunks.get()).toEqual(['CURRENT_A'])
+    142|   await act(async () => { h.snapshots[0]!('STALE_A'); h.snapshots[1]!(…
+    143|   expect($dockChunks.get()).toEqual(['CURRENT_A'])
+       |                             ^
+    144| })
+    145|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  23:46:06
+   Duration  4.85s (transform 999ms, setup 444ms, import 963ms, tests 2.98s, environment 368ms)

@@ -1,0 +1,12 @@
+npm notice run dawn-science@0.0.35 test
+npm notice run vitest run
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  475 passed (475)
+      Tests  5019 passed | 10 skipped (5029)
+   Start at  00:11:54
+   Duration  103.89s (transform 18.58s, setup 68.05s, import 154.48s, tests 266.35s, environment 123.11s)

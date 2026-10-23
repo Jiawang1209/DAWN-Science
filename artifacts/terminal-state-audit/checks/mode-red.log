@@ -1,0 +1,249 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/terminal-mode-state.test.tsx
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/terminal-mode-state.test.tsx (3 tests | 3 failed) 2561ms
+   × clears a transient mode-read error once the connection recovers 2034ms
+   × clears an old start error after dawn is successfully entered by typing the command 512ms
+   × an exited terminal retains its return path but cannot accept input or start an Agent 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/terminal-mode-state.test.tsx > clears a transient mode-read error once the connection recovers
+AssertionError: expected <span …(2)></span> to be null
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-label="终端"
+        class="dock terminal-workspace"
+      >
+        <div
+          class="dock-tabs"
+        >
+          <span
+            class="dock-title"
+          >
+            <svg
+              aria-hidden="true"
+              class="icon"
+              fill="currentColor"
+              focusable="false"
+              height="16"
+              viewBox="0 0 16 16"
+              width="16"
+            >
+              <path
+                d="M2.6 2.2h10.8c.9 0 1.6.7 1.6 1.6v8.4c0 .9-.7 1.6-1.6 1.6H2.6c-.9 0-1.6-.7-1.6-1.6V3.8c0-.9.7-1.6 1.6-1.6Zm1.6 3.2a.8.8 0 0 0-.5 1.4L5 8l-1.3 1.2a.8.8 0 1 0 1.1 1.2l1.9-1.8a.8.8 0 0 0 0-1.2L4.8 5.6a.8.8 0 0 0-.6-.2Zm4.3 4.4a.8.8 0 0 0 0 1.6h3a.8.8 0 0 0 0-1.6h-3Z"
+              />
+            </svg>
+            终端
+          </span>
+          <div
+            class="dock-terminal-tabs"
+          >
+            <span
+              class="dock-tab current"
+            >
+              <button
+                aria-current="true"
+                class="btn btn-ghost btn-inline"
+                type="button"
+              >
+                终端 1
+              </button>
+              <button
+                aria-label="关闭终端 1"
+                class="btn btn-ghost btn-icon"
+                type="button"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+          <button
+            aria-label="＋ 新开一个"
+            class="btn btn-ghost btn-icon"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="icon"
+              fill="currentColor"
+              focusable="false"
+              height="16"
+              viewBox="0 0 16 16"
+              width="16"
+            >
+              <path
+                d="M7.2 3.2a.8.8 0 0 1 1.6 0v4h4a.8.8 0 0 1 0 1.6h-4v4a.8.8 0 0 1-1.6 0v-4h-4a.8.8 0 0 1 0-1.6h4v-4Z"
+              />
+            </svg>
+          </button>
+          <span
+            class="spacer"
+          />
+          <div
+            class="terminal-mode-switch"
+          >
+            <div
+              aria-label="终端模式"
+              class="terminal-mode-options"
+              role="group"
+            >
+              <button
+                aria-pressed="false"
+                class="btn btn-ghost btn-sm"
+                type="button"
+              >
+                DAWN 模式
+              </button>
+              <button
+                aria-pressed="true"
+                class="btn btn-ghost btn-sm"
+                type="button"
+              >
+                Normal 模式
+              </button>
+            </div>
+            <span
+              class="terminal-switch-error"
+              role="alert"
+            >
+              temporary mode read error
+            </span>
+          </div>
+          <span
+            class="conv-action-tip-wrap terminal-return"
+          >
+            <button
+              aria-busy="false"
+              aria-describedby="_r_0_"
+              aria-label="返回会话"
+              class="btn btn-outline btn-icon terminal-return-button"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="icon"
+                fill="currentColor"
+                focusable="false"
+                height="16"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <path
+                  d="M3.6 6.1a.7.7 0 0 1 1.2-.5L8 8.8l3.2-3.2a.7.7 0 0 1 1 1l-3.7 3.7a.7.7 0 0 1-1 0L3.8 6.6a.7.7 0 0 1-.2-.5Z"
+                  transform="rotate(90 8 8)"
+                />
+              </svg>
+            </button>
+            <span
+              class="conv-action-tip"
+              id="_r_0_"
+              role="tooltip"
+            >
+              返回会话
+            </span>
+          </span>
+        </div>
+        <div
+          class="dock-content"
+        >
+          <div
+            class="dock-shell"
+          >
+            <div
+              class="terminal-image-shell"
+            >
+              <div
+                class="terminal-image-screen"
+              >
+                <textarea
+                  aria-label="terminal input"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
+
+- Expected:
+null
+
++ Received:
+<span
+  class="terminal-switch-error"
+  role="alert"
+>
+  temporary mode read error
+</span>
+
+ ❯ waitFor.timeout tests/ui/terminal-mode-state.test.tsx:15:79
+     13|   await screen.findByText('temporary mode read error')
+     14|   await waitFor(() => expect((screen.getByRole('button', { name: 'DAWN…
+     15|   await waitFor(() => expect(screen.queryByText('temporary mode read e…
+       |                                                                               ^
+     16| })
+     17| it('clears an old start error after dawn is successfully entered by ty…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/terminal-mode-state.test.tsx > clears an old start error after dawn is successfully entered by typing the command
+AssertionError: expected <span …(2)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="terminal-switch-error"
+  role="alert"
+>
+  not at a ready prompt
+</span>
+
+ ❯ tests/ui/terminal-mode-state.test.tsx:25:55
+     23|   mode = 'dawn'
+     24|   await waitFor(() => expect(screen.getByRole('button', { name: 'DAWN …
+     25|   expect(screen.queryByText('not at a ready prompt')).toBeNull()
+       |                                                       ^
+     26| })
+     27| it('an exited terminal retains its return path but cannot accept input…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/terminal-mode-state.test.tsx > an exited terminal retains its return path but cannot accept input or start an Agent
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/terminal-mode-state.test.tsx:30:91
+     28|   const f = mount(vi.fn(async () => ({ mode: 'normal' })), true)
+     29|   await waitFor(() => expect(screen.getByRole('button', { name: 'Norma…
+     30|   expect((screen.getByRole('button', { name: 'DAWN 模式' }) as HTMLButto…
+       |                                                                                           ^
+     31|   fireEvent.keyDown(screen.getByRole('textbox', { name: 'terminal inpu…
+     32|   expect(f.onInput).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  23:45:09
+   Duration  3.46s (transform 270ms, setup 425ms, import 25ms, tests 2.56s, environment 367ms)

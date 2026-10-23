@@ -33,7 +33,7 @@ export function TerminalImageShell({ client, terminalId, state, chunks, onInput,
   const root = useRef<HTMLDivElement>(null)
   const update = (result: Attachments) => { revision.current = result.revision; if (result.pending) setPending(result.pending) }
   useEffect(() => {
-    active.current = true; revision.current = undefined; generation.current++; setPending([]); setError('')
+    active.current = true; revision.current = undefined; generation.current++; setPending([]); setError(''); setPreview(undefined)
     let live = true, reading = false
     const read = async () => {
       if (reading || busy.current || state.mode !== 'dawn' || !state.sessionId) return
@@ -68,8 +68,9 @@ export function TerminalImageShell({ client, terminalId, state, chunks, onInput,
     } catch (e) { if (active.current && gen === generation.current) setError(e instanceof Error ? e.message : String(e)) }
   }
   const openPending = async (imageId: string) => {
-    try { const image = await readImage(imageId); if (active.current) setPreview(image) }
-    catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
+    const gen = generation.current
+    try { const image = await readImage(imageId); if (active.current && gen === generation.current) setPreview(image) }
+    catch (e) { if (active.current && gen === generation.current) setError(e instanceof Error ? e.message : String(e)) }
   }
   return <div className="terminal-image-shell" ref={root}
     onPasteCapture={event => {

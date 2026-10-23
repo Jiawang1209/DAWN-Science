@@ -56,3 +56,18 @@ it('does not attach pictures in Normal mode or forward them to a hidden composer
     expect(hiddenComposer).not.toHaveBeenCalled()
   } finally { document.removeEventListener('paste', hiddenComposer) }
 })
+
+it('does not open a late pending-image preview after exiting Agent mode', async () => {
+  let finish!: (value: unknown) => void
+  const get = vi.fn(async (op: string) => op === 'getTerminalAgentImage'
+    ? new Promise(resolve => { finish = resolve })
+    : { sessionId: 'agent', revision: 1, pending: [{ id, name: '截图.png', thumbnail: thumb }] })
+  const props = { client: { get: get as never }, terminalId: 't', chunks: [], onInput: vi.fn() }
+  const view = render(<TerminalImageShell {...props} state={state} />)
+  fireEvent.click(await screen.findByRole('button', { name: '放大 截图.png' }))
+  await waitFor(() => expect(finish).toBeTypeOf('function'))
+  view.rerender(<TerminalImageShell {...props} state={{ mode: 'normal' }} />)
+  finish({ id, name: '截图.png', thumbnail: thumb, dataUrl: thumb })
+  await new Promise(resolve => setTimeout(resolve, 0))
+  expect(screen.queryByRole('dialog', { name: '图片预览' })).toBeNull()
+})

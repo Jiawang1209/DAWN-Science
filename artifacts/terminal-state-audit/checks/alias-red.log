@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/state/terminal-agent-sessions.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/state/terminal-agent-sessions.test.ts (2 tests | 1 failed) 7ms
+   × remembers the PTY source project so a CLI moved to another directory can reopen it after a reload 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/state/terminal-agent-sessions.test.ts > remembers the PTY source project so a CLI moved to another directory can reopen it after a reload
+AssertionError: expected {} to deeply equal { a: 'original-project' }
+
+- Expected
++ Received
+
+- {
+-   "a": "original-project",
+- }
++ {}
+
+ ❯ tests/ui/state/terminal-agent-sessions.test.ts:15:93
+     13| it('remembers the PTY source project so a CLI moved to another directo…
+     14|   rememberTerminalAgentSession('a', 'nested-cli', 'original-project')
+     15|   expect(JSON.parse(sessionStorage.getItem('dawn.window.terminal-agent…
+       |                                                                                             ^
+     16|   rememberTerminalAgentSession('a', 'new-cli')
+     17|   expect(JSON.parse(sessionStorage.getItem('dawn.window.terminal-agent…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:57:06
+   Duration  1.38s (transform 290ms, setup 538ms, import 4ms, tests 7ms, environment 726ms)

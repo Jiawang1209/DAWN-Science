@@ -1,0 +1,54 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/app-terminal-state.test.tsx
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/app-terminal-state.test.tsx (9 tests | 2 failed) 2289ms
+   × a return started before A-to-B-to-A navigation cannot close or redirect the new view 285ms
+   × a return from a previous panel opening cannot close a newly reopened panel 326ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > a return started before A-to-B-to-A navigation cannot close or redirect the new view
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/app-terminal-state.test.tsx:160:88
+    158|   fireEvent.click(screen.getByRole('button', { name: '终端 2' }))
+    159|   fireEvent.click(screen.getByRole('button', { name: '终端 1' }))
+    160|   expect((screen.getByRole('button', { name: '返回会话' }) as HTMLButtonEl…
+       |                                                                                        ^
+    161|   await act(async () => { h.modeReplies[0]!({ mode: 'dawn', sessionId:…
+    162|   expect($dockOpen.get()).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > a return from a previous panel opening cannot close a newly reopened panel
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/app-terminal-state.test.tsx:174:27
+    172|   await act(async () => { setDockOpen(true) })
+    173|   await act(async () => { h.modeReplies[0]!({ mode: 'dawn', sessionId:…
+    174|   expect($dockOpen.get()).toBe(true)
+       |                           ^
+    175|   expect($activeSessionId.get()).toBeUndefined()
+    176| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  23:59:04
+   Duration  6.89s (transform 3.00s, setup 999ms, import 2.73s, tests 2.29s, environment 726ms)

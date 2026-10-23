@@ -51,6 +51,7 @@ export function TerminalDock({
   const returnTip = useId()
   const [agentState, setAgentState] = useState<{ terminalId: string; state: TerminalAgentState }>()
   const reportState = useCallback((state: TerminalAgentState) => { if (currentId) setAgentState({ terminalId: currentId, state }) }, [currentId])
+  const exited = terminals.find(x => x.sessionId === currentId)?.state === 'exited'
 
   return (
     <section className={`dock${fullPage ? " terminal-workspace" : ""}`} aria-label={t("终端")}>
@@ -84,7 +85,7 @@ export function TerminalDock({
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
-        {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} onState={reportState} /> : null}
+        {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} exited={exited} onState={reportState} /> : null}
         {fullPage ? <span className="conv-action-tip-wrap terminal-return">
           <Button variant="outline" size="icon" className="terminal-return-button" disabled={returning} aria-busy={returning} onClick={onCloseDock}
             aria-label={t("返回会话")} aria-describedby={returnTip}>
@@ -118,8 +119,8 @@ export function TerminalDock({
           <>
             <div className="dock-shell">
               {client ? <TerminalImageShell key={currentId} client={client} terminalId={currentId}
-                state={agentState?.terminalId === currentId ? agentState.state : { mode: 'normal' }} chunks={chunks} onInput={onInput} onResize={onResize} />
-                : <TerminalPane key={currentId} chunks={chunks} onInput={onInput} onResize={onResize} />}
+                state={!exited && agentState?.terminalId === currentId ? agentState.state : { mode: 'normal' }} chunks={chunks} onInput={data => { if (!exited) onInput(data) }} onResize={onResize} />
+                : <TerminalPane key={currentId} chunks={chunks} onInput={exited ? undefined : onInput} onResize={onResize} />}
             </div>
           </>
         ) : (
@@ -130,9 +131,11 @@ export function TerminalDock({
   )
 }
 
-function TerminalModeSwitch({ client, terminalId, onState }: { client: Pick<WorkbenchClient, 'get'>; terminalId: string; onState: (state: TerminalAgentState) => void }) {
+function TerminalModeSwitch({ client, terminalId, exited, onState }: { client: Pick<WorkbenchClient, 'get'>; terminalId: string; exited: boolean; onState: (state: TerminalAgentState) => void }) {
   const [mode, setMode] = useState<'normal' | 'dawn' | 'starting' | 'stopping'>()
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
+  const [readError, setReadError] = useState('')
+  const observed = useRef<TerminalAgentState['mode'] | undefined>(undefined)
   const report = useRef(onState); report.current = onState
   const active = useRef(true), mutation = useRef(0)
   useEffect(() => {
@@ -144,8 +147,12 @@ function TerminalModeSwitch({ client, terminalId, onState }: { client: Pick<Work
       const revision = mutation.current
       try {
         const state = await client.get<TerminalAgentState>('getTerminalAgentMode', { terminalId })
-        if (active.current && revision === mutation.current) { setMode(state.mode); report.current(state) }
-      } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
+        if (active.current && revision === mutation.current) {
+          setReadError('')
+          if (observed.current !== state.mode) setError('')
+          observed.current = state.mode; setMode(state.mode); report.current(state)
+        }
+      } catch (e) { if (active.current && revision === mutation.current) setReadError(e instanceof Error ? e.message : String(e)) }
       finally { reading = false }
     }
     void read()
@@ -153,19 +160,19 @@ function TerminalModeSwitch({ client, terminalId, onState }: { client: Pick<Work
     return () => { active.current = false; clearInterval(timer) }
   }, [client, terminalId])
   const switchMode = async (next: 'dawn' | 'normal') => {
-    mutation.current++; setBusy(true); setError(''); report.current({ mode: next === 'dawn' ? 'starting' : 'stopping' })
+    mutation.current++; setBusy(true); setError(''); setReadError(''); report.current({ mode: next === 'dawn' ? 'starting' : 'stopping' })
     try {
       const state = await client.get<TerminalAgentState>('setTerminalAgentMode', { terminalId, mode: next })
-      if (active.current) { setMode(state.mode); report.current(state); document.querySelector<HTMLTextAreaElement>('.dock .xterm-helper-textarea')?.focus() }
+      if (active.current) { observed.current = state.mode; setMode(state.mode); report.current(state); document.querySelector<HTMLTextAreaElement>('.dock .xterm-helper-textarea')?.focus() }
     } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
     finally { mutation.current++; if (active.current) setBusy(false) }
   }
-  const disabled = busy || mode === undefined || mode === 'starting' || mode === 'stopping'
+  const disabled = exited || busy || mode === undefined || mode === 'starting' || mode === 'stopping'
   return <div className="terminal-mode-switch">
     <div className="terminal-mode-options" role="group" aria-label={t("终端模式")}>
       <Button variant="ghost" size="sm" aria-pressed={mode === 'dawn'} disabled={disabled} onClick={() => void switchMode('dawn')}>{t("DAWN 模式")}</Button>
       <Button variant="ghost" size="sm" aria-pressed={mode === 'normal'} disabled={disabled} onClick={() => void switchMode('normal')}>{t("Normal 模式")}</Button>
     </div>
-    {error ? <span className="terminal-switch-error" role="alert">{error}</span> : null}
+    {error || readError ? <span className="terminal-switch-error" role="alert">{error || readError}</span> : null}
   </div>
 }

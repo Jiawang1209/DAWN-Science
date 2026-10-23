@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/app-terminal-state.test.tsx
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/app-terminal-state.test.tsx (11 tests | 1 failed) 2685ms
+   × an older return completion cannot clear the busy state of a newer return to the same terminal 298ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/app-terminal-state.test.tsx > an older return completion cannot clear the busy state of a newer return to the same terminal
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/app-terminal-state.test.tsx:203:88
+    201|   await waitFor(() => expect(h.modeReplies).toHaveLength(2))
+    202|   await act(async () => { h.modeReplies[0]!({ mode: 'normal' }) })
+    203|   expect((screen.getByRole('button', { name: '返回会话' }) as HTMLButtonEl…
+       |                                                                                        ^
+    204|   await act(async () => { h.modeReplies[1]!({ mode: 'normal' }) })
+    205|   await waitFor(() => expect($dockOpen.get()).toBe(false))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  00:09:58
+   Duration  9.07s (transform 3.79s, setup 1.52s, import 3.45s, tests 2.69s, environment 1.22s)

@@ -206,6 +206,7 @@ import {
   setDockOpen,
   setDockSessionId,
   $terminalAgentSessions,
+  $terminalAgentProjects,
   rememberTerminalAgentSession,
   $终端归属,
   无会话,
@@ -938,18 +939,20 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   useEffect(() => {
     resetDockTerminal()
     if (!dockSessionId) return
+    let live = true
     client
       .get<{ terminal?: string; revision: number; sessionId: string }>("subscribeSession", {
         sessionId: dockSessionId,
       })
       .then((snap) => {
         // 取回来时人可能已经切走了——**过去的结果不许覆盖现在的**
-        if (snap.sessionId !== $dockSessionId.get()) return
+        if (!live || snap.sessionId !== $dockSessionId.get()) return
         setDockChunks(snap.terminal ? [snap.terminal] : [])
         client.expectRevision(dockSessionId, snap.revision)
       })
       .catch(fail)
     return () => {
+      live = false
       client.forgetRevision(dockSessionId)
       client.get("unsubscribeSession", { sessionId: dockSessionId }).catch(fail)
     }
@@ -3074,9 +3077,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [关掉的终端, 设关掉的终端] = useState<ReadonlySet<string>>(() => new Set())
   const 终端归属 = useStore($终端归属)
   const terminalAgentSessions = useStore($terminalAgentSessions)
+  const [linkedTerminals, setLinkedTerminals] = useState<readonly SessionSummary[]>([])
   const [returningTerminalId, setReturningTerminalId] = useState<string>()
-  /** dock 此刻归谁：当前对话；没有对话时是「无会话」那一格 */
-  const 终端主人 = sessionId ?? 无会话
+  /** dock 此刻归谁：当前对话；欢迎页按项目区分，未选项目时用「无会话」 */
+  const 终端主人 = sessionId ?? (projectId ? `project:${projectId}` : 无会话)
+  const terminalIntent = useRef(0)
+  useEffect(() => {
+    terminalIntent.current++
+    setLinkedTerminals([])
+    setReturningTerminalId(undefined)
+    return () => { terminalIntent.current++ }
+  }, [dockOpen, 终端主人, projectId])
   /**
    * **当前这段对话的终端**（2026-08-21 起按对话分）。
    *
@@ -3084,19 +3095,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 上一版只看前者，于是在家目录开的终端**在 dock 里没有标签**：
    * 关不掉、也看不见，掀一次面板就多一个进程，这正是作者报的「一大堆死掉的终端」。
    *
-   * 别的对话的终端不列（它们还活着，切回去就在）；没记归属的一律列出来——
+   * 别的对话的终端不列（它们还活着，切回去就在）；欢迎页兼容同项目未记归属的终端——
    * 藏起来等于把一个活着的进程从所有入口上摘掉。
    */
   const 终端们 = useMemo(
     () =>
-      [...sessions, ...tempSessions].filter(
+      [...new Map([...linkedTerminals, ...sessions, ...tempSessions].map(x => [x.sessionId, x])).values()].filter(
         (x) =>
           x.kind === "pty" &&
           !关掉的终端.has(x.sessionId) &&
-          ((终端归属.get(x.sessionId) ?? 终端主人) === 终端主人 || terminalAgentSessions.get(x.sessionId) === 终端主人),
+          (终端归属.get(x.sessionId) === 终端主人 || terminalAgentSessions.get(x.sessionId) === 终端主人
+            || !终端归属.has(x.sessionId) && !sessionId && (!projectId || x.projectId === projectId)
+            // Preserve project terminals created by older builds under the shared welcome-page key.
+            || !sessionId && 终端归属.get(x.sessionId) === 无会话 && x.projectId === projectId),
       ),
-    [sessions, tempSessions, 关掉的终端, 终端归属, 终端主人, terminalAgentSessions],
+    [sessions, tempSessions, linkedTerminals, 关掉的终端, 终端归属, 终端主人, terminalAgentSessions, sessionId, projectId],
   )
+  const currentTerminalId = 终端们.some(x => x.sessionId === dockSessionId) ? dockSessionId : undefined
   /** 起终端用哪个 agent。**配置里没有 pty agent 就开不了**，如实说 */
   const ptyAgentId = providers.agents.find((a) => a.kind === "pty")?.agentId
   const currentWorkspace = projects.find((p) => p.projectId === projectId)?.workspace
@@ -3118,10 +3133,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * 拿一个不存在的 id 去建，后端如实回「项目不存在」，
      * 而屏幕上的表现是**dock 开着、里面永远空着**：一个失败被读成了「没反应」。
      */
-    const pid = $activeProjectId.get()
+    const pid = projectId, request = ++terminalIntent.current
+    setReturningTerminalId(undefined)
+    const current = () => request === terminalIntent.current && $dockOpen.get()
+      && $activeSessionId.get() === sessionId && $activeProjectId.get() === pid
     const 项目还在 = Boolean(pid && $projects.get().some((x) => x.projectId === pid))
     client
-      .get<{ sessionId: string }>("createTerminalSession", {
+      .get<SessionSummary>("createTerminalSession", {
         agentId: ptyAgentId,
         ...(session?.kind === 'native' && !session.remote && sessionId ? { ownerSessionId: sessionId } : {}),
         /**
@@ -3134,8 +3152,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       .then((r) => {
         // **记下它是从哪段对话开的**：dock 按对话分，不记就哪儿都不归
         记终端归属(r.sessionId, 终端主人)
-        setDockSessionId(r.sessionId)
-        if (项目还在) void loadSessions(client, pid!)
+        if (current()) { setLinkedTerminals(previous => [...previous.filter(x => x.sessionId !== r.sessionId), r]); setDockSessionId(r.sessionId) }
+        if (项目还在 && $activeProjectId.get() === pid) void loadSessions(client, pid!)
         void loadTempSessions(client)
         void loadProjects(client)
         /**
@@ -3149,8 +3167,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         // 终端要立刻能打字，**不等那个 effect 的下一拍**——见 `取写权` 的注释
         return 取写权(r.sessionId)
       })
-      .catch(fail)
-  }, [client, ptyAgentId, 终端主人, session?.kind, session?.remote, sessionId])
+      .catch(error => { if (current()) fail(error) })
+  }, [client, ptyAgentId, 终端主人, session?.kind, session?.remote, sessionId, projectId])
 
   /**
    * 掀开 dock 时**如果还没有终端，就开一个**。
@@ -3180,6 +3198,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       return
     }
     if (掀开过的主人.current === 终端主人) return
+    if (!ptyAgentId) return
     掀开过的主人.current = 终端主人
     const 活着的 = 终端们.find((t) => t.state !== "exited")
     if (活着的) {
@@ -3187,8 +3206,34 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       return
     }
     setDockSessionId(undefined)
-    // **没有项目也能开**——那时终端开在家目录（2026-08-11）
-    if (ptyAgentId) 开一个终端()
+    // A project's list may still belong to the previous view. Read the intended
+    // scope before deciding there is no PTY, rather than creating a duplicate.
+    const request = terminalIntent.current
+    const current = () => request === terminalIntent.current && $dockOpen.get()
+      && $activeSessionId.get() === sessionId && $activeProjectId.get() === projectId
+    // Deleting a project can leave a stale selection until the catalog refresh.
+    // Match creation's fallback to the home directory instead of querying a deleted scope.
+    const sourceProjects = new Set(projectId && $projects.get().some(p => p.projectId === projectId) ? [projectId] : [])
+    for (const [terminalId, target] of $terminalAgentSessions.get()) {
+      const source = $terminalAgentProjects.get().get(terminalId)
+      if (target === 终端主人 && source && $projects.get().some(p => p.projectId === source)) sourceProjects.add(source)
+    }
+    void Promise.all([
+      ...[...sourceProjects].map(projectId => client.get<SessionSummary[]>('listSessions', { projectId })),
+      client.get<SessionSummary[]>('listTemporarySessions', {}),
+    ]).then(lists => {
+      if (!current()) return
+      const owned = lists.flat().filter(x => {
+        const owner = $终端归属.get().get(x.sessionId)
+        return x.kind === 'pty' && !关掉的终端.has(x.sessionId) && (owner === 终端主人
+          || $terminalAgentSessions.get().get(x.sessionId) === 终端主人
+          || !sessionId && (owner === 无会话 || !owner) && (!projectId || x.projectId === projectId))
+      })
+      setLinkedTerminals(owned)
+      const live = owned.find(x => x.state !== 'exited')
+      if (live) setDockSessionId(live.sessionId)
+      else 开一个终端()
+    }).catch(error => { if (current()) fail(error) })
   }, [dockOpen, 终端主人, 终端们, ptyAgentId, 开一个终端])
 
 
@@ -3890,9 +3935,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   })
 
   const returnToTerminalConversation = async () => {
+    const request = ++terminalIntent.current
     const terminalId = $dockSessionId.get(), owner = $activeSessionId.get(), project = $activeProjectId.get()
-    if (!terminalId) { setDockOpen(false); return }
-    const current = () => $dockOpen.get() && $dockSessionId.get() === terminalId
+    if ($view.get() !== 'conversation' || !terminalId || terminalId !== currentTerminalId) { setDockOpen(false); return }
+    const current = () => request === terminalIntent.current && $dockOpen.get() && $dockSessionId.get() === terminalId
       && $activeSessionId.get() === owner && $activeProjectId.get() === project && $view.get() === 'conversation'
     setReturningTerminalId(terminalId)
     try {
@@ -3915,7 +3961,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         sessions: () => targetSessions ?? route.sessions(),
         切到: (id, projectId) => {
           if (!current()) return
-          rememberTerminalAgentSession(terminalId, id)
+          rememberTerminalAgentSession(terminalId, id, 终端们.find(x => x.sessionId === terminalId)?.projectId)
           if (state.selection) setSessionModel(id, state.selection.model, state.selection.provider)
           if (targetSessions) setSessions(targetSessions)
           setDockOpen(false)
@@ -3924,7 +3970,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         说没了: () => { if (current()) route.说没了() },
       })
     } catch (error) { if (current()) fail(error) }
-    finally { setReturningTerminalId(id => id === terminalId ? undefined : id) }
+    finally { if (request === terminalIntent.current) setReturningTerminalId(id => id === terminalId ? undefined : id) }
   }
 
   /** 取消归档并打开（原先写在「已归档」那屏的 `onOpen` 里；2026-09-27 抽出来——全文搜索点到归档了的走同一条） */
@@ -5758,14 +5804,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               client={client}
               fullPage={view === "conversation"}
               onResize={(cols, rows) => {
-                const terminalId = dockSessionId
+                const terminalId = currentTerminalId
                 if (terminalId && cols >= 2 && rows >= 2) void client.get('resizeTerminal', { terminalId, cols: Math.min(cols, 500), rows: Math.min(rows, 200) }).catch(fail)
               }}
               terminals={终端们}
-              currentId={dockSessionId}
+              currentId={currentTerminalId}
               workspace={currentWorkspace ?? t("家目录")}
               canOpen={Boolean(ptyAgentId)}
-              onPick={setDockSessionId}
+              onPick={id => { terminalIntent.current++; setReturningTerminalId(undefined); setDockSessionId(id) }}
               onNew={开一个终端}
               onClose={(id) => {
                 /**
@@ -5778,7 +5824,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                  */
                 设关掉的终端((前) => new Set(前).add(id))
                 const 下一个 = 终端们.find((x) => x.sessionId !== id && x.state !== "exited")
-                if ($dockSessionId.get() === id) setDockSessionId(下一个?.sessionId)
+                if ($dockSessionId.get() === id) { terminalIntent.current++; setDockSessionId(下一个?.sessionId) }
                 /**
                  * **停掉之后连记录一起删**（2026-08-21，作者：*「我关掉的，应该彻底关掉」*）。
                  * 终端没有可恢复的东西；留一条 exited 记录只会在下次变成一排「已结束」。
@@ -5796,11 +5842,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   })
                   .catch(fail)
               }}
-              returning={returningTerminalId !== undefined && returningTerminalId === dockSessionId}
+              returning={returningTerminalId !== undefined && returningTerminalId === currentTerminalId}
               onCloseDock={() => { void returnToTerminalConversation() }}
               onInput={(data) => {
                 const id = $dockSessionId.get()
-                if (!id) return
+                if (!id || id !== currentTerminalId) return
                 写进去(id, data).catch(fail)
               }}
             />

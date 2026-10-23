@@ -1,0 +1,60 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'vitest' run tests/ui/terminal-images.test.tsx
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science
+
+ ❯ |ui| tests/ui/terminal-images.test.tsx (4 tests | 1 failed) 140ms
+   × does not open a late pending-image preview after exiting Agent mode 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/terminal-images.test.tsx > does not open a late pending-image preview after exiting Agent mode
+AssertionError: expected <div …(4)><div …(1)>…(2)</div></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  aria-label="图片预览"
+  aria-modal="true"
+  class="terminal-image-backdrop"
+  role="dialog"
+>
+  <div
+    class="terminal-image-preview"
+  >
+    <header>
+      <strong>
+        截图.png
+      </strong>
+      <button
+        aria-label="关闭图片预览"
+        class="btn btn-ghost btn-icon"
+        type="button"
+      >
+        ×
+      </button>
+    </header>
+    <img
+      alt="截图.png"
+      src="data:image/png;base64,iVBORw0KGgo="
+    />
+  </div>
+</div>
+
+ ❯ tests/ui/terminal-images.test.tsx:72:58
+     70|   finish({ id, name: '截图.png', thumbnail: thumb, dataUrl: thumb })
+     71|   await new Promise(resolve => setTimeout(resolve, 0))
+     72|   expect(screen.queryByRole('dialog', { name: '图片预览' })).toBeNull()
+       |                                                          ^
+     73| })
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  23:46:22
+   Duration  1.01s (transform 263ms, setup 417ms, import 21ms, tests 140ms, environment 350ms)

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-24",
+  "runtime": "real Electron source preview, isolated profile",
+  "checks": [
+    "project A/B retains separate PTYs",
+    "cross-directory CLI Agent returns and reopens original PTY",
+    "schedule collapses without changing page",
+    "exited terminal disables mode/input and returns",
+    "empty terminal return enabled and restores conversation",
+    "light/dark 900x700 no horizontal overflow"
+  ],
+  "ptyA": "4b24c7bb-5ea1-45fb-9500-c263c4a4de49",
+  "ptyB": "8f1921ea-bbe0-4076-ad66-67726740aa93",
+  "nestedSession": "a8e1eabb-e150-45f0-b3b6-bbaeefff6222",
+  "modelRequestsInThisManualAudit": 0,
+  "push": false,
+  "installedAppReplaced": false
+}

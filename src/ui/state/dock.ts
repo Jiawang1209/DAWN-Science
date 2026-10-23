@@ -71,7 +71,7 @@ function 读归属(key = 终端归属KEY): ReadonlyMap<string, string> {
     const raw = sessionStorage.getItem(key)
     if (!raw) return new Map()
     const obj = JSON.parse(raw) as Record<string, string>
-    return new Map(Object.entries(obj))
+    return new Map(Object.entries(obj).filter(([, value]) => typeof value === 'string' && value.length > 0))
   } catch {
     return new Map()
   }
@@ -91,10 +91,18 @@ export function 记终端归属(终端: string, 归属: string): void {
 /** A CLI conversation may reopen its original PTY without replacing its original owner. */
 const agentSessionsKey = 'dawn.window.terminal-agent-sessions'
 export const $terminalAgentSessions = atom<ReadonlyMap<string, string>>(读归属(agentSessionsKey))
-export function rememberTerminalAgentSession(terminalId: string, sessionId: string): void {
+const agentProjectsKey = 'dawn.window.terminal-agent-projects'
+export const $terminalAgentProjects = atom<ReadonlyMap<string, string>>(读归属(agentProjectsKey))
+export function rememberTerminalAgentSession(terminalId: string, sessionId: string, sourceProjectId?: string): void {
   const next = new Map($terminalAgentSessions.get())
   next.set(terminalId, sessionId)
   $terminalAgentSessions.set(next)
   try { sessionStorage.setItem(agentSessionsKey, JSON.stringify(Object.fromEntries(next))) }
   catch (error) { console.error('[终端] Agent 会话引用保存失败：', error) }
+  if (sourceProjectId) {
+    const projects = new Map($terminalAgentProjects.get())
+    projects.set(terminalId, sourceProjectId); $terminalAgentProjects.set(projects)
+    try { sessionStorage.setItem(agentProjectsKey, JSON.stringify(Object.fromEntries(projects))) }
+    catch (error) { console.error('[终端] 原终端项目引用保存失败：', error) }
+  }
 }

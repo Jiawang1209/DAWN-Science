@@ -1,0 +1,66 @@
+npm notice run dawn-science@0.0.35 npx
+npm notice run 'playwright' test e2e/terminal-state-audit.spec.ts -g returning across
+
+Running 1 test using 1 worker
+
+(node:41572) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209405:64)
+    at Object.busy (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209476:70)
+    at BotDelivery.once (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203352:19)
+    at BotDelivery.flush (file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:203342:23)
+    at file:///Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/dist/electron/main.js:209959:109
+[主进程] Debugger ending on ws://127.0.0.1:58911/c7cfe4d4-216e-43b6-b58c-07b801f5f87b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/terminal-state-audit.spec.ts:37:1 › returning across a changed CLI directory reopens the original PTY even after reloading the GUI (32.8s)
+
+
+  1) e2e/terminal-state-audit.spec.ts:37:1 › returning across a changed CLI directory reopens the original PTY even after reloading the GUI
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  getByRole('button', { name: 'DAWN 模式', exact: true })
+    Expected: "true"
+    Received: "false"
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 25000ms
+      - waiting for getByRole('button', { name: 'DAWN 模式', exact: true })
+        54 × locator resolved to <button type="button" aria-pressed="false" class="btn btn-ghost btn-sm">DAWN 模式</button>
+           - unexpected value "false"
+
+
+      50 |   await page.getByRole('button', { name: /^AUDIT_NESTED_AGENT/ }).click()
+      51 |   await panel(page)
+    > 52 |   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+         |                                                                            ^
+      53 |   const count = await page.evaluate(async () => {
+      54 |     const projects = (await window.dawn!.invoke('listProjects', {}) as any).data
+      55 |     const sessions = await Promise.all(projects.map(async (p: any) => (await window.dawn!.invoke('listSessions', { projectId: p.projectId }) as any).data))
+        at /Users/liuyue/.codex/worktrees/terminal-assistance/dawn-science/e2e/terminal-state-audit.spec.ts:52:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/terminal-state-audit-retur-53e91-ven-after-reloading-the-GUI/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/terminal-state-audit-retur-53e91-ven-after-reloading-the-GUI/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-state-audit-retur-53e91-ven-after-reloading-the-GUI/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-state-audit-retur-53e91-ven-after-reloading-the-GUI/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/terminal-state-audit.spec.ts:37:1 › returning across a changed CLI directory reopens the original PTY even after reloading the GUI

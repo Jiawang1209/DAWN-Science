@@ -56,6 +56,7 @@ export {
   appendDockBytes,
   resetDockTerminal,
   $terminalAgentSessions,
+  $terminalAgentProjects,
   rememberTerminalAgentSession,
   $终端归属,
   无会话,

@@ -2814,7 +2814,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     createTerminalSession: async ({ agentId, projectId, ownerSessionId }) => {
       if (ownerSessionId) return terminalRequest(async () => {
-        const owner = terminalOwner(ownerSessionId)
+        // A Normal Shell belongs to the saved conversation, even when its Agent is paused.
+        // Live model control still goes through terminalOwner / validateTerminalOwner.
+        const owner = sessions.get(ownerSessionId)
+        const savedMain = tasks?.list().some(task => task.sessionId === ownerSessionId)
+        if (!owner || owner.archivedAt || owner.connectionId || registry.agents[owner.agentId]?.kind !== 'native'
+          || !savedMain && !opts.terminalOwnerAllowed?.(ownerSessionId)) throw new Error('请先打开一段本地内置模型主对话')
         if (registry.agents[agentId]?.kind !== 'pty') throw new Error('终端协助只支持 PTY')
         if (projectId && projectId !== owner.projectId) throw new Error('终端与当前对话不在同一个项目')
         if (!owner.projectId) throw new Error('当前对话没有可绑定的项目')

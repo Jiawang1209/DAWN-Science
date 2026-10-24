@@ -2,12 +2,14 @@ import { EventEmitter } from 'node:events'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { DesktopCliEvent } from '../../src/cli/desktop-wire.js'
 import type { QuestionRecord } from '../../src/protocol/questions.js'
+import type { SessionUsage } from '../../src/runtime/session-usage.js'
 
 const harness = vi.hoisted(() => ({
   context: undefined as unknown,
   options: undefined as { onSubmit: (text: string) => void; onExit: () => void } | undefined,
   states: [] as { busy: boolean; permission?: boolean; question?: boolean }[],
   started: false,
+  usages: [] as SessionUsage[],
 }))
 vi.mock('../../src/cli/context.js', () => ({ openCliContext: async () => harness.context }))
 vi.mock('../../src/cli/tui.js', () => ({
@@ -16,6 +18,7 @@ vi.mock('../../src/cli/tui.js', () => ({
     start() { harness.started = true }
     stop() {}
     setState(state: (typeof harness.states)[number]) { harness.states.push({ ...state }) }
+    setUsage(usage: SessionUsage) { harness.usages.push(usage) }
     notice() {}
     finish() {}
     reply() {}
@@ -29,7 +32,7 @@ import { runCliAgent } from '../../src/cli/agent.js'
 afterEach(() => { vi.restoreAllMocks() })
 
 async function interactiveAgent() {
-  harness.options = undefined; harness.states = []; harness.started = false
+  harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []
   // Replace only the stream getters; the worker's actual terminal and signal
   // handlers are never driven by these controller tests.
   const input = Object.assign(new EventEmitter(), { isTTY: true, setRawMode: vi.fn(), pause: vi.fn() })
@@ -38,8 +41,9 @@ async function interactiveAgent() {
   vi.spyOn(process, 'stdout', 'get').mockReturnValue(output as unknown as typeof process.stdout)
   let emit!: (event: DesktopCliEvent) => void
   const call = vi.fn(async (_operation: string, _input: unknown) => ({}))
+  const usage = vi.fn(async (): Promise<SessionUsage> => ({}))
   harness.context = {
-    call, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
+    call, usage, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
     attach: (sink: typeof emit) => { emit = sink; return vi.fn() },
     onExit: () => vi.fn(), close: vi.fn(async () => {}), waitForIdle: vi.fn(async () => {}),
   }
@@ -50,7 +54,7 @@ async function interactiveAgent() {
     await new Promise<void>(resolve => setImmediate(resolve))
   }
   return {
-    call, emit, submit,
+    call, usage, emit, submit,
     state: () => harness.states.at(-1),
     close: async () => { harness.options!.onExit(); await running },
   }
@@ -60,6 +64,42 @@ const pending: QuestionRecord = {
   requestId: 'question-state-test', state: 'pending',
   questions: [{ id: 'range', question: '选择分析范围？', options: [{ label: '全部' }, { label: '部分' }] }],
 }
+
+it('updates cumulative snapshots when usage arrives after turn_end without adding history twice', async () => {
+  const agent = await interactiveAgent()
+  try {
+    expect(harness.usages).toEqual([{}])
+    agent.usage.mockResolvedValue({ input: 30, output: 6, cacheRead: 70 })
+    agent.emit({ kind: 'turn_end', sessionId: 'state-test-session' })
+    agent.emit({ kind: 'turn_usage', sessionId: 'state-test-session', usage: { input: 30, output: 6, cacheRead: 70 } })
+    await vi.waitFor(() => expect(harness.usages.at(-1)).toEqual({ input: 30, output: 6, cacheRead: 70 }))
+    agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(agent.usage).toHaveBeenCalledTimes(3))
+    expect(harness.usages.at(-1)).toEqual({ input: 30, output: 6, cacheRead: 70 })
+  } finally { await agent.close() }
+})
+it('ignores a stale usage snapshot arriving after a newer idle refresh', async () => {
+  const agent = await interactiveAgent(); let resolve!: (usage: SessionUsage) => void
+  try {
+    agent.usage.mockReturnValueOnce(new Promise(done => { resolve = done })).mockResolvedValue({ input: 40, output: 8 })
+    agent.emit({ kind: 'turn_usage', sessionId: 'state-test-session', usage: { input: 20 } })
+    agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(harness.usages.at(-1)).toEqual({ input: 40, output: 8 }))
+    resolve({ input: 20 }); await new Promise<void>(done => setImmediate(done))
+    expect(harness.usages.at(-1)).toEqual({ input: 40, output: 8 })
+  } finally { await agent.close() }
+})
+it('keeps input working if usage cannot be read', async () => {
+  const agent = await interactiveAgent()
+  try {
+    agent.usage.mockRejectedValue(Error('usage unavailable'))
+    agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await new Promise<void>(done => setImmediate(done))
+    expect(harness.usages.at(-1)).toEqual({})
+    await agent.submit('CONTINUE_AFTER_USAGE_FAILURE')
+    expect(agent.call).toHaveBeenCalledWith('writeToSession', expect.objectContaining({ data: 'CONTINUE_AFTER_USAGE_FAILURE' }))
+  } finally { await agent.close() }
+})
 
 it('clears the waiting state after the final answer while the same turn is still busy', async () => {
   const agent = await interactiveAgent()

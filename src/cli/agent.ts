@@ -28,6 +28,14 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
     else output.write(plain(text) + '\n')
   }
   const prompt = () => { if (!closing) view?.setState({ busy, permission: Boolean(permission) && !answering, question: Boolean(question) && !answering }) }
+  let usageRequest = 0
+  const refreshUsage = async () => {
+    if (!view || closing) return
+    const request = ++usageRequest
+    const usage = await context.usage().catch(() => ({}))
+    // Absolute snapshots, including history: late responses must not overwrite a newer refresh.
+    if (!closing && request === usageRequest) view.setUsage(usage)
+  }
   const flush = () => { if (view) view.finish(); else if (answer.trim()) { say('\n' + answer.trim() + '\n'); answer = '' } }
   const status = () => say(`\nAgent · ${context.model}\n目录  ${process.cwd()}\n记录  ${context.directory}\n`)
   const showQuestion = () => {
@@ -58,6 +66,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
         flush(); if (view) view.image(event); else say(event.name); break
       case 'output': if (view) view.reply(event.data); else answer += plain(event.data); break
       case 'turn_end': flush(); break
+      case 'turn_usage': void refreshUsage(); break
       case 'tool_start':
         flush(); if (view) { view.toolStart(event); break }; say(`  › ${event.toolName}${toolDetail(event.input) ? '\n    ' + toolDetail(event.input).replaceAll('\n', '\n    ') : ''}`); break
       case 'tool_end':
@@ -87,7 +96,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
           void call('answerQuestion', { sessionId, requestId: event.question.requestId }).catch(e => say(String(e)))
         } else { question = { record: event.question, index: 0, answers: [] }; showQuestion() }
         break
-      case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); break
+      case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); void refreshUsage(); break
     }
   }
   const detach = context.attach(onEvent)
@@ -155,6 +164,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   rl?.on('close', () => { if (!closing) onEnd() })
   input.on('end', onEnd); process.on('SIGTERM', onTerminate); process.on('SIGINT', onInterrupt)
   try {
+    await refreshUsage()
     if (view) { view.start(); if (restored) view.restore(restored) }
     else {
       say('\nDAWN Science\n')

@@ -4,6 +4,20 @@ import type { Terminal } from '@earendil-works/pi-tui'
 import { CliTui } from '../../src/cli/tui.js'
 
 const cleanup: (() => void)[] = []
+it('keeps cumulative usage below the draft, replaces snapshots, and wraps all fields in narrow terminals', async () => {
+  const f = fixture(); await f.flush()
+  expect(f.text()).toContain('输入 未提供')
+  f.ui.setUsage({ input: 30, output: 6, cacheRead: 70 }); f.input('KEEP_DRAFT'); await f.flush()
+  expect(f.text()).toContain('输入 30'); expect(f.text()).toContain('输出 6'); expect(f.text()).toContain('缓存读取 70'); expect(f.text()).toContain('命中 70%')
+  f.ui.setUsage({ input: 30, output: 6, cacheRead: 70 }); await f.flush()
+  expect(f.text()).not.toContain('输入 60'); expect(f.ui.draft()).toBe('KEEP_DRAFT')
+  f.resize(38, 22); await f.flush()
+  expect(f.text()).toContain('缓存读取 70'); expect(f.text()).toContain('命中 70%'); expect(f.text()).toContain('> DAWN KEEP_DRAFT')
+  f.ui.setUsage({ input: 40, output: 8, partial: ['input'] }); await f.flush()
+  expect(f.text()).toContain('输入 ≥40'); expect(f.text()).toContain('缓存读取 未提供'); expect(f.text()).toContain('命中 未提供')
+  f.ui.setUsage({ input: 100, output: 8, cacheRead: 0, partial: ['cacheRead'] }); await f.flush()
+  expect(f.text()).toContain('缓存读取 未确认'); expect(f.text()).toContain('命中 未提供'); expect(f.text()).not.toContain('命中 0%')
+})
 afterEach(() => { for (const close of cleanup.splice(0)) close() })
 function fixture(cols = 80, rows = 28) {
   const screen = new Headless({ cols, rows, allowProposedApi: true }), pending: Promise<void>[] = []

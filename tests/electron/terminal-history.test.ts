@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -48,6 +48,67 @@ it('reopens the original stopped native conversation without adding a task or ch
     expect((await f.call('subscribeSession', { sessionId: f.task.sessionId })).state).toBe('alive')
   } finally { await cli?.close(); await f.close() }
 })
+
+it('reads cumulative model usage from the original branch across stop and resume, scoped to this CLI', async () => {
+  const f = await fixture()
+  let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined
+  try {
+    const state = (f.native as any).sessions.get(f.task.sessionId)
+    state.sessionManager.appendMessage({ role: 'user', content: 'Original question', timestamp: 1 })
+    state.sessionManager.appendMessage({ role: 'assistant', content: [{ type: 'text', text: 'Original reply' }], stopReason: 'stop',
+      api: 'openai-completions', provider: 'deepseek', model: 'deepseek-flash', timestamp: 2,
+      usage: { input: 30, output: 6, cacheRead: 70, cacheWrite: 0, totalTokens: 106, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } })
+    await f.call('stopSession', { sessionId: f.task.sessionId })
+    cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
+    expect(await cli.usage()).toEqual({ input: 30, output: 6, cacheRead: 70 })
+    expect(await cli.call('$usage', { sessionId: 'another-session' })).toEqual({ input: 30, output: 6, cacheRead: 70 })
+    await cli.close(); cli = undefined
+    await vi.waitFor(() => expect(f.native.canControlTerminal(f.task.sessionId)).toBe(false))
+    cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
+    expect(await cli.usage()).toEqual({ input: 30, output: 6, cacheRead: 70 })
+  } finally { await cli?.close(); await f.close() }
+})
+
+it('opens a new Shell for the stopped owner and resumes its same Agent without a GUI reconnect', async () => {
+  const f = await fixture()
+  let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined
+  try {
+    const count = (await f.call('listTasks', {})).length
+    const first = await f.call('createTerminalSession', { agentId: 'shell', projectId: f.task.projectId, ownerSessionId: f.task.sessionId })
+    cli = await connectDesktopCli(f.descriptor, f.dir, first.sessionId, undefined, f.task.sessionId)
+    await cli.close(); cli = undefined
+    await vi.waitFor(() => expect(f.native.canControlTerminal(f.task.sessionId)).toBe(false))
+    await f.call('deleteSession', { sessionId: first.sessionId })
+    const shell = await f.call('createTerminalSession', { agentId: 'shell', projectId: f.task.projectId, ownerSessionId: f.task.sessionId })
+    expect(shell.sessionId).not.toBe(first.sessionId)
+    expect((await f.call('getTerminalControl', { terminalId: shell.sessionId })).ownerSessionId).toBe(f.task.sessionId)
+    // Opening Normal must not restart the model or grant it terminal control.
+    expect(f.native.canControlTerminal(f.task.sessionId)).toBe(false)
+    await expect(f.call('setTerminalControl', { terminalId: shell.sessionId, ownerSessionId: f.task.sessionId, enabled: true, mode: 'shell' })).rejects.toThrow()
+    cli = await connectDesktopCli(f.descriptor, f.dir, shell.sessionId, undefined, f.task.sessionId)
+    expect(cli.sessionId).toBe(f.task.sessionId)
+    expect(f.native.canControlTerminal(f.task.sessionId)).toBe(true)
+    expect((await f.call('listTasks', {})).length).toBe(count)
+  } finally { await cli?.close(); await f.close() }
+})
+
+for (const reason of ['archived', 'missing', 'terminal', 'wrong-project'] as const) {
+  it(`does not create a Shell for a ${reason} owner while allowing a paused local main`, async () => {
+    const f = await fixture()
+    try {
+      await f.call('stopSession', { sessionId: f.task.sessionId })
+      let ownerSessionId = f.task.sessionId, projectId = f.task.projectId
+      if (reason === 'archived') await f.call('setSessionArchived', { sessionId: ownerSessionId, archived: true })
+      if (reason === 'missing') ownerSessionId = 'missing-owner'
+      if (reason === 'terminal') ownerSessionId = (await f.call('listSessions', { projectId })).find((s: any) => s.kind === 'pty').sessionId
+      if (reason === 'wrong-project') projectId = 'another-project'
+      const count = (await f.call('listSessions', { projectId: f.task.projectId })).length
+      await expect(f.call('createTerminalSession', { agentId: 'shell', projectId, ownerSessionId })).rejects.toThrow()
+      expect((await f.call('listSessions', { projectId: f.task.projectId })).length).toBe(count)
+      expect(f.native.canControlTerminal(f.task.sessionId)).toBe(false)
+    } finally { await f.close() }
+  })
+}
 
 for (const reason of ['archived', 'wrong-directory', 'terminal', 'missing'] as const) {
   it(`refuses ${reason} history without creating a substitute conversation`, async () => {

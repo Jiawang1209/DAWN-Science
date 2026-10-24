@@ -153,3 +153,65 @@ test('an unsupported old image preview warns while the same conversation and ori
   await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
   await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', target.sessionId)
 })
+
+test('the current owner can close its last resumed terminal, reopen directly and continue the original image without reconnecting the GUI', async ({ dawn }) => {
+  const { page, requests } = dawn
+  await 在项目里开会话(page); await 等进了对话(page)
+  const ownerId = await page.locator('.session-tab[aria-selected="true"]').getAttribute('data-session')
+  expect(ownerId).toBeTruthy()
+  await page.evaluate(async sessionId => { await window.dawn!.invoke('renameSession', { sessionId: sessionId!, title: 'CURRENT_OWNER_HISTORY' }) }, ownerId)
+  const count = await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)
+  await open(page)
+  const resumeOwner = async () => {
+    await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
+    await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'CURRENT_OWNER_HISTORY', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    expect((await mode(page, await terminal(page))).sessionId).toBe(ownerId)
+  }
+  const ready = async () => expect.poll(async () => /[$#%]$/.test(stripVTControlCharacters(await page.locator('.dock .xterm-screen').innerText()).trimEnd())).toBe(true)
+  await resumeOwner()
+  await expect(page.locator('.dock .xterm-screen')).toContainText('输入 未提供')
+  await page.locator('.dock .term-host').evaluate((el, data) => {
+    const dt = new DataTransfer(); dt.items.add(new File([Uint8Array.from(atob(data), c => c.charCodeAt(0))], 'owner-original.png', { type: 'image/png' }))
+    el.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }))
+  }, png)
+  await expect(page.locator('.terminal-attachment')).toHaveCount(1)
+  await type(page, 'CURRENT_OWNER_IMAGE'); await final(page, ownerId!)
+  const usage = async (turns: number) => {
+    await expect(page.locator('.dock .xterm-screen')).toContainText(`输入 ${12 * turns}`)
+    await expect(page.locator('.dock .xterm-screen')).toContainText(`输出 ${8 * turns}`)
+    await expect(page.locator('.dock .xterm-screen')).toContainText('缓存读取 未确认')
+    await expect(page.locator('.dock .xterm-screen')).toContainText('命中 未提供')
+  }
+  await usage(1)
+  for (const viaGui of [false, true]) {
+    const n = viaGui ? 3 : 2
+    const close = page.locator('.dock').getByRole('button', { name: /^关闭终端 / })
+    await expect(close).toHaveCount(1); await close.click()
+    await expect(page.locator('.dock .empty')).toContainText('还没有终端')
+    if (viaGui) {
+      await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+      await expect(page.locator('.main .turn-images img').first()).toBeVisible()
+      await page.locator('.composer-card .attach-trigger').click()
+      await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+    }
+    // Deliberately never subscribe to the owner or click the GUI reconnect button here.
+    await page.getByRole('button', { name: '＋ 新开一个', exact: true }).click(); await ready()
+    await resumeOwner()
+    await usage(n - 1)
+    await expect(page.locator('.terminal-inline-image img').first()).toBeVisible()
+    await type(page, `OWNER_REOPEN_${n}`); await final(page, ownerId!, n)
+    await usage(n)
+    const payload = requests.findLast((r: any) => JSON.stringify(r.body).includes(`OWNER_REOPEN_${n}`)) as any
+    expect(JSON.stringify(payload?.body)).toContain('image_url')
+    expect(JSON.stringify(payload?.body)).toContain('CURRENT_OWNER_IMAGE')
+  }
+  await page.getByRole('button', { name: 'Normal 模式', exact: true }).click(); await ready()
+  await resumeOwner()
+  await usage(3)
+  expect(await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)).toBe(count)
+  await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+  await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', ownerId!)
+  await expect(page.locator('.main .turn-images img').first()).toBeVisible()
+  await expect(page.locator('.composer-card textarea')).toBeEnabled()
+})

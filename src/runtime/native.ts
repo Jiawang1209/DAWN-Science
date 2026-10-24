@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs'
+import { sessionUsage } from './session-usage.js'
 import { AnalysisRouteBook } from './analysis-route-book.js'
 import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
 import { createAnalysisRouteTools } from '../tools/analysis-route.js'
@@ -988,6 +989,11 @@ export class NativeRuntime implements AgentRuntime {
     // 2026-08-09 由 R5 的真链路测试抓到：`waitForIdle` 在 0 个请求、1 个事件时就返回了。
     await s.pending
     await s.session.waitForIdle()
+  }
+
+  /** Cumulative model receipts on the original branch; SDK zeroes remain unverified. */
+  sessionUsage(sessionId: SessionId) {
+    return sessionUsage(this.sessions.get(sessionId)?.sessionManager.getBranch() ?? [], true)
   }
 
   /**

@@ -2,6 +2,8 @@ import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAuto
 import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
 import { plain } from './presentation.js'
 import type { CliHistory } from './desktop-wire.js'
+import type { SessionUsage } from '../runtime/session-usage.js'
+import { usageLines } from './usage.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
@@ -34,6 +36,7 @@ export class CliTui {
   private readonly scroll: ScrollView
   private readonly terminal: Terminal
   private state: State = { busy: false }
+  private usage: SessionUsage = {}
   private stopped = true
   constructor(private readonly options: Options) {
     const native = options.terminal ?? new ProcessTerminal()
@@ -67,7 +70,7 @@ export class CliTui {
     }
     this.editor.onChange = () => this.tui.requestRender()
     const header: Component = { invalidate() {}, render: width => [truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(options.model)), width, ''), truncateToWidth(dim(plain(options.workspace)), width, '')] }
-    const footer: Component = { invalidate() {}, render: width => [truncateToWidth(dim(
+    const footer: Component = { invalidate() {}, render: width => [...usageLines(this.usage, width).map(dim), truncateToWidth(dim(
       (this.state.permission ? '需要确认 · 输入编号或 y/n' : this.state.question ? '等待回答' : this.state.busy ? '生成中 · Ctrl-C 停止' : '就绪')
       + ' · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit'), width, '')] }
     this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'auto', scrollbarTrackStyle: dim, scrollbarThumbStyle: accent })
@@ -118,6 +121,7 @@ export class CliTui {
     this.tui.stop({ preserveScreen: true })
   }
   renderNow() { if (!this.stopped) this.tui.renderNow() }
+  setUsage(usage: SessionUsage) { this.usage = usage; this.tui.requestRender() }
   setState(state: State) {
     const waiting = state.permission && !this.state.permission || state.question && !this.state.question
     this.state = state

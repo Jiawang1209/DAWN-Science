@@ -1678,6 +1678,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           const model = nativeRuntime.currentModel(sessionId)
           return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : 'API', directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
             history: () => sessions.history(sessionId),
+            usage: () => nativeRuntime.sessionUsage(sessionId),
             pictures: () => nativeRuntime.historyPictures(sessionId),
             call: async (operation, input) => {
               const response = await server.handle(operation, input)

@@ -151,7 +151,9 @@ export class TerminalControl {
       if (data.startsWith('\x1b[201~', i)) { e.pasting = false; i += 5; continue }
       const c = data[i]!
       if (e.pasting) { e.inputLength++; continue }
-      if ('\r\n\x03\x15'.includes(c)) { e.inputLength = 0; e.inputUncertain = false }
+      if ('\r\n\x03'.includes(c)) { e.inputLength = 0; e.inputUncertain = false }
+      else if (c === '\x15') { if (!e.inputUncertain) e.inputLength = 0 }
+      else if (c === '\x01') e.inputUncertain = true
       else if (c === '\x7f' || c === '\b') e.inputLength = Math.max(0, e.inputLength - 1)
       else if (c === '\x1b' || c === '\t' || c < ' ' && !'\x01\x05\x0c'.includes(c)) e.inputUncertain = true
       else if (c >= ' ') e.inputLength++
@@ -163,8 +165,8 @@ export class TerminalControl {
     await this.detectMode(id)
     const screen = await e.screen.snapshot()
     const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
-    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorLine, screen.alternate)) {
-      throw new Error('请先回到空闲 Shell 提示符，并按 Ctrl-U 清空尚未提交的输入，再进入 DAWN 模式')
+    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorPrefix, screen.alternate)) {
+      throw new Error('请先回到空闲 Shell 提示符，并按 Ctrl-C 取消未提交的输入，再进入 DAWN 模式')
     }
     this.reclaim(id)
     if (resumeSessionId && !/^[a-zA-Z0-9-]{1,100}$/.test(resumeSessionId)) throw new Error('无效的历史会话身份')
@@ -176,7 +178,7 @@ export class TerminalControl {
     const e = this.entry(id)
     const screen = await e.screen.snapshot()
     const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
-    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.directoryQuery || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorLine, screen.alternate)) throw new Error('请先回到空闲 Shell 并清空未提交的输入，再选择历史会话')
+    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.directoryQuery || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorPrefix, screen.alternate)) throw new Error('请先回到空闲 Shell，按 Ctrl-C 取消未提交的输入，再选择历史会话')
     this.reclaim(id)
     const token = randomUUID(), operation = Symbol(), generation = e.generation
     e.operation = operation

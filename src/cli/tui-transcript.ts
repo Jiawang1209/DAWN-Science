@@ -1,5 +1,6 @@
 import { Markdown, wrapTextWithAnsi, visibleWidth, truncateToWidth, type MarkdownTheme, type Component } from '@earendil-works/pi-tui'
 import { plain, toolDetail } from './presentation.js'
+import { highlightCliCode } from './code-highlighting.js'
 
 export type ToolStart = { toolCallId: string; toolName: string; input: unknown }
 export type ToolEnd = { toolCallId: string; toolName: string; isError: boolean; text: string; truncated: boolean; fullOutputPath?: string | undefined }
@@ -15,7 +16,7 @@ export function cliTheme(color: boolean) {
   const accent = (text: string) => paint('38;2;30;145;130', text)
   const dim = (text: string) => paint('2', text), bold = (text: string) => paint('1', text)
   const theme: MarkdownTheme = { heading: text => accent(bold(text)), link: accent, linkUrl: dim,
-    code: accent, codeBlock: text => text, codeBlockBorder: text => dim(text.startsWith('```') ? '─ ' + text.slice(3) : text),
+    code: accent, codeBlock: text => text, codeBlockBorder: dim, highlightCode: (text, lang) => highlightCliCode(text, lang, color),
     quote: dim, quoteBorder: dim, hr: dim, listBullet: accent, bold, italic: text => paint('3', text),
     strikethrough: text => paint('9', text), underline: text => paint('4', text) }
   return { paint, accent, dim, bold, theme }

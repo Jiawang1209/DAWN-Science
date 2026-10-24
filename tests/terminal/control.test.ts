@@ -195,6 +195,36 @@ it('starts the CLI only at an empty, idle shell prompt', async () => {
     expect(write).toHaveBeenCalledExactlyOnceWith('dawn\r')
   } finally { control.dispose() }
 })
+it('can launch and query a zsh prompt with right-side status text without accepting a draft', async () => {
+  const { control, write } = setup(() => 'zsh')
+  try {
+    control.output('t', '\r\x1b[K中文目录 % \x1b[s\x1b[65G1 ↵\x1b[u')
+    await control.launchCli('t', 'saved-session')
+    expect(write).toHaveBeenCalledExactlyOnceWith("dawn --resume 'saved-session'\r")
+    write.mockClear()
+    const query = control.currentDirectory('t')
+    await vi.waitFor(() => expect(write).toHaveBeenCalledOnce())
+    const token = /dawn-cwd;([^;]+);/.exec(write.mock.calls[0]![0])![1]
+    control.output('t', `\x1b]7777;dawn-cwd;${token};/work/current\x07`)
+    expect(await query).toBe('/work/current')
+    write.mockClear(); control.humanInput('t', 'echo pending'); control.output('t', 'echo pending')
+    await expect(control.launchCli('t')).rejects.toThrow(/空闲 Shell/)
+    await expect(control.currentDirectory('t')).rejects.toThrow(/空闲 Shell/)
+    expect(write).not.toHaveBeenCalled()
+  } finally { control.dispose() }
+})
+it('does not mistake Ctrl-A then Ctrl-U for clearing an unsubmitted right-side draft', async () => {
+  const { control, write } = setup(() => 'bash')
+  try {
+    control.humanInput('t', 'echo pending'); control.output('t', 'echo pending')
+    control.humanInput('t', '\x01\x15'); control.output('t', '\x1b[3G')
+    await expect(control.launchCli('t')).rejects.toThrow(/空闲 Shell/)
+    await expect(control.currentDirectory('t')).rejects.toThrow(/空闲 Shell/)
+    expect(write).not.toHaveBeenCalled()
+    control.humanInput('t', '\x03'); control.output('t', '\r\x1b[K$ ')
+    await control.launchCli('t'); expect(write).toHaveBeenCalledExactlyOnceWith('dawn\r')
+  } finally { control.dispose() }
+})
 
 it('does not treat a prompt-like character in unsubmitted input as a ready shell', async () => {
   const { control, write } = setup()

@@ -97,7 +97,7 @@ test('Shift-Enter edits multiple lines in one terminal input and sends one nativ
 })
 
 test.describe('formatted transcript', () => {
-  test.use({ dawnOptions: { reply: '## 结果 FORMAT_HEADING\n\n读取 **1200 行**，使用 `count()` 检查。\n\n```python\nprint("FORMAT_CODE")\n```\n\n| 字段 | 数量 |\n| --- | --- |\n| 温度 | 12 |' } })
+  test.use({ dawnOptions: { env: { NO_COLOR: '' }, reply: '## 结果 FORMAT_HEADING\n\n读取 **1200 行**，使用 `count()` 检查。\n\n```python\nprint("FORMAT_CODE")\n```\n\n| 字段 | 数量 |\n| --- | --- |\n| 温度 | 12 |' } })
   test('renders Markdown code and tables in a narrow window while keeping one editor', async ({ dawn }) => {
     const { page } = dawn, target = await open(page)
     await dawn.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setSize(900, 700))
@@ -107,7 +107,8 @@ test.describe('formatted transcript', () => {
     await expect(screen).toContainText('❯ 请格式化回复')
     await expect(screen).not.toContainText('› 你')
     await expect(screen).not.toContainText('● DAWN')
-    await expect(screen).not.toContainText('**1200 行**'); await expect(screen).not.toContainText('```python')
+    await expect(screen).not.toContainText('**1200 行**'); await expect(screen).toContainText('```python')
+    await expect(screen.locator('.xterm-fg-2').filter({ hasText: 'FORMAT_CODE' })).toBeVisible()
     await expect(page.locator('.dock .xterm-helper-textarea')).toHaveCount(1)
     await expect(page.locator('.main .composer-card')).toBeHidden()
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)

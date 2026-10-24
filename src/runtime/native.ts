@@ -2141,6 +2141,15 @@ export class NativeRuntime implements AgentRuntime {
     // messages have been delivered. SDK run prompts are snapshots; rebuilding
     // the base prompt here would not update an active follow-up run.
     const originalTransform = session.agent.transformContext
+    // App tools return structured failures, while the SDK only flags thrown
+    // errors by default. Carry that status into hooks and the persisted receipt.
+    const originalAfterToolCall = session.agent.afterToolCall
+    session.agent.afterToolCall = async (context, signal) => {
+      const isError = context.isError || Boolean((context.result as { isError?: boolean }).isError)
+      const result = await originalAfterToolCall?.({ ...context, isError }, signal)
+      if (!result && isError === context.isError) return undefined
+      return { ...result, isError: result?.isError ?? isError }
+    }
     session.agent.transformContext = async (messages, signal) => {
       const transformed = originalTransform ? await originalTransform(messages, signal) : messages
       if (!terminalReply) return transformed

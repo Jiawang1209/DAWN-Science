@@ -45,6 +45,7 @@ export class TerminalScreen {
     return {
       text: full.slice(-24_000), truncated: start > 0 || full.length > 24_000,
       cursorLine: buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true) ?? '',
+      cursorPrefix: buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true, 0, buffer.cursorX) ?? '',
       cols: this.terminal.cols, rows: this.terminal.rows, revision: this.revision,
       cursorX: buffer.cursorX,
       alternate: buffer.type === 'alternate',

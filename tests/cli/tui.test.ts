@@ -55,6 +55,21 @@ it('shows onboarding at the top and a non-editable first prompt hint that disapp
   expect(f.text().split('\n').find(row => row.includes('> DAWN'))).toContain('> DAWN 新的问题')
   expect(f.text().split('\n').find(row => row.includes('> DAWN'))).not.toContain('Enter 发送')
 })
+it('frames the introduction with hashes and scrolls it away with conversation content', async () => {
+  const f = fixture(100, 28); await f.flush()
+  const rows = f.text().split('\n')
+  expect(rows[0]).toMatch(/^#{7,}\s*$/); expect(rows[5]).toMatch(/^#{7,}\s*$/)
+  expect(rows[1]).toContain('DAWN Science · deepseek-flash')
+  f.input('KEEP_SCROLL_DRAFT')
+  f.ui.reply(Array.from({ length: 70 }, (_, i) => `FLOWING_REPLY_${i}`).join('\n\n')); await f.flush()
+  expect(f.text()).toContain('FLOWING_REPLY_69'); expect(f.text()).not.toContain('DAWN Science')
+  expect(f.text()).not.toContain('Enter 发送'); expect(f.text()).not.toMatch(/^#{7,}/m)
+  for (let i = 0; i < 30; i++) f.input('\x1b[5~')
+  await f.flush(); expect(f.text()).toContain('DAWN Science · deepseek-flash')
+  expect(f.text().split('\n').filter(row => /^#{7,}\s*$/.test(row))).toHaveLength(2)
+  expect(f.ui.draft()).toBe('KEEP_SCROLL_DRAFT'); expect(f.submit).not.toHaveBeenCalled()
+  f.input('\x1b[1;5F'); await f.flush(); expect(f.text()).not.toContain('DAWN Science')
+})
 it.each(['\t', '\x1b[C'])('adopts contextual ghost text with %j without submitting it', async key => {
   const f = fixture(100, 24); f.ui.setSuggestion('检查缺失值'); await f.flush()
   expect(f.text()).toContain('> DAWN  检查缺失值'); expect(f.ui.draft()).toBe('')
@@ -105,7 +120,7 @@ it('reserves a centered context button slot and sends only geometry to the embed
   const narrow = JSON.parse([...f.bytes().matchAll(/\x1b\]777;dawn-context;([^\x07]+)\x07/g)].at(-1)![1]!)
   expect(narrow.row).toBe(11); expect(narrow.col + narrow.width).toBeLessThanOrEqual(38)
 })
-it('keeps short-viewport image frames above the editor when the repeated header is hidden', async () => {
+it('keeps short-viewport image frames above the editor after the introduction scrolls out', async () => {
   const f = fixture(180, 12); f.ui.image({ id: 'short-picture', name: 'short.png' }); await f.flush()
   const frames = [...f.bytes().matchAll(/\x1b\]777;dawn-viewport;([^\x07]+)\x07/g)]
   const frame = JSON.parse(frames.at(-1)![1]!), prompt = f.text().split('\n').findIndex(row => row.includes('> DAWN'))

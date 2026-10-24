@@ -89,11 +89,14 @@ export class CliTui {
     this.editor.ghostStyle = dim
     this.editor.onChange = () => { options.onDraftChange?.(); this.tui.requestRender() }
     const header: Component = { invalidate() {}, render: width => {
-      const lines = this.terminal.rows <= 12 ? [] : [
+      const border = dim('#'.repeat(width))
+      const lines = [
+        border,
         truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''),
         truncateToWidth(dim(plain(options.workspace)), width, ''),
         truncateToWidth(dim(INPUT_HELP), width, ''),
         truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · Tab/→ 采纳建议 · /help 帮助'), width, ''),
+        border, '',
       ]
       this.headerRows = lines.length
       return lines
@@ -112,8 +115,9 @@ export class CliTui {
       this.contextPlacement = slot ? { row: this.terminal.rows - 1, col: visibleWidth(lines.at(-1)!) - slot.length, width: slot.length } : undefined
       return [...(this.terminal.rows <= 12 ? [] : ['']), ...lines.map(dim)]
     } }
-    this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'hidden' })
-    this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: hint, shrink: 0 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
+    const content: Component = { invalidate: () => this.transcript.invalidate(), render: width => [...header.render(width), ...this.transcript.render(width)] }
+    this.scroll = new ScrollView(content, { follow: 'end', primary: true, scrollbar: 'hidden' })
+    this.tui.setLayoutRoot(new VStack([{ component: this.scroll, grow: 1, minSize: 1 }, { component: hint, shrink: 0 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
     this.tui.setFocus(this.editor)
     this.tui.addInputListener(data => {
       if (isKeyRelease(data)) return { consume: true }
@@ -161,9 +165,9 @@ export class CliTui {
   }
   private imageFrame(target: Terminal) {
     if (!this.scroll) return
-    const top = this.headerRows, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
-    const images = (this.tui.overlayFocused ? [] : this.transcript.placements).filter(x => x.row >= start && x.row + x.height <= start + height)
-      .slice(-24).map(x => ({ ...x, row: top + x.row - start }))
+    const start = this.scroll.scrollTop, height = this.scroll.viewportHeight
+    const images = (this.tui.overlayFocused ? [] : this.transcript.placements).map(x => ({ ...x, row: this.headerRows + x.row }))
+      .filter(x => x.row >= start && x.row + x.height <= start + height).slice(-24).map(x => ({ ...x, row: x.row - start }))
     target.write(`\x1b]777;dawn-viewport;${JSON.stringify({ images })}\x07`)
     if (this.options.contextButton) target.write(`\x1b]777;dawn-context;${JSON.stringify(this.contextPlacement ? { ...this.contextPlacement, revision: this.usageRevision } : null)}\x07`)
   }

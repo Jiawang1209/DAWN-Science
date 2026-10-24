@@ -180,7 +180,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       if (planCommand.kind === 'status') {
         if (planWriting) { say('方案操作正在处理，请稍候再查看状态。'); return }
         await refreshPlan()
-        say((planSnapshot ? planSnapshot.planning ? '生成方案（只看不改）' : '方案期已关闭' : '方案状态未读取，请重试。') + '\n' + PLAN_HELP)
+        say((planSnapshot ? planSnapshot.planning ? '先出方案（只看不改）' : '方案期已关闭' : '方案状态未读取，请重试。') + '\n' + PLAN_HELP)
         return
       }
       if (busy || permission || question || planWriting) { say('当前回合仍在运行，请结束后再操作方案。', true); preserve(text); return }
@@ -195,7 +195,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
             unsent = '/plan ' + planCommand.prompt
             view?.user(planCommand.prompt); beginActivity(); sending = true
             await call('writeToSession', { sessionId, as: 'user', data: planCommand.prompt })
-          } else say((state.planning ? '生成方案已开启：这一段只看不改，批准方案后执行。' : '方案期已退出；已有方案保留，没有批准或启动执行。') + '\n' + PLAN_HELP)
+          } else say((state.planning ? '先出方案已开启：这一段只看不改，批准方案后执行。' : '方案期已退出；已有方案保留，没有批准或启动执行。') + '\n' + PLAN_HELP)
         } else {
           const state = SessionPlanSchema.parse(await context.planning())
           if (closing) return

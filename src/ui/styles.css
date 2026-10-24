@@ -1066,7 +1066,7 @@ pre {
  */
 .composer-footer .ws-chip { min-height: 0; padding-block: 0; height: var(--composer-footer-row); }
 /**
- * **附栏的每一行一样高**（2026-09-29，同上）：行高 = 普通小按钮的高（29）。只留图标的那几颗（坞里的优化输入 / 生成方案）
+ * **附栏的每一行一样高**（2026-09-29，同上）：行高 = 普通小按钮的高（29）。只留图标的那几颗（坞里的优化输入 / 先出方案）
  * 自己只有 26，放进行里也按 29 占位、居中——否则坞里那行比主区矮 3px，排成一行时两张卡差 4px。
  */
 .composer-footer { --composer-footer-row: 29px; }
@@ -7304,7 +7304,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-footer .attach[data-ready] .attach-trigger,
 .composer-footer .ws-chip[data-ready] { color: var(--dawn-text-1); }
 .composer-footer .dock-toggle[aria-pressed="true"] { color: var(--dawn-text-1); }
-/* 「生成方案」关着时同一档淡（2026-09-28 作者报的：别的都灰、它是黑的）；开着走它自己的主题色，见 `.plan-toggle[aria-pressed="true"]` */
+/* 「先出方案」关着时同一档淡（2026-09-28 作者报的：别的都灰、它是黑的）；开着走它自己的主题色，见 `.plan-toggle[aria-pressed="true"]` */
 .composer-footer .plan-toggle:not([aria-pressed="true"]) { color: var(--dawn-text-3); }
 
 /* 外部文件的 chip（2026-08-25，学自 dsh-paste-input 的 dock chip）：图标 + 名 + 大小 + ×，一行一颗——
@@ -7901,7 +7901,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
  */
 @container (max-width: 440px) {
   .composer-footer .enhance-word { display: none; }
-  /* 「生成方案」同理只留图标（2026-09-27；09-28 随开关搬进附栏）：名字在 `aria-label` 上，藏掉可见字不改名字；开着时卡顶那条带子用字说清 */
+  /* 「先出方案」同理只留图标（2026-09-27；09-28 随开关搬进附栏）：名字在 `aria-label` 上，藏掉可见字不改名字；开着时卡顶那条带子用字说清 */
   .composer-footer .plan-toggle-word { display: none; }
 }
 /* 窄栏工具与状态按可用宽度排布，保持同卡。 */
@@ -8403,9 +8403,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 .composer-menu-divider { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); margin: var(--dawn-space-1) var(--dawn-space-2); }
 .composer-menu-label { flex: 1; min-width: 0; text-align: left; }
+.composer-menu-shortcut { flex: 0 0 auto; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 .composer-menu-reason { display: block; white-space: normal; overflow-wrap: anywhere; font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 .composer-add-menu .btn { gap: var(--dawn-space-3); font-size: var(--dawn-fs-sub); }
 .composer-add-menu .btn > .icon { flex: 0 0 auto; color: var(--dawn-text-3); }
+.composer-add-menu .btn > .composer-plan-check { color: var(--dawn-accent); }
 .composer-add-menu .btn[aria-checked="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
 .right-dock .dock-body { background: transparent; }
 .right-dock .preview { background: var(--dawn-surface-panel); }

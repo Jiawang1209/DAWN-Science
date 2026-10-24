@@ -2163,7 +2163,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       try {
         await openBotSession(owner)
         await validateBotModel(opts.bots!.get(bot)!)
-        if (botRuntime(owner).configOptions?.(owner)?.find(o => o.id === "dawn.plan")?.current) throw new Error("生成方案期间不能启动 Bot 任务。")
+        if (botRuntime(owner).configOptions?.(owner)?.find(o => o.id === "dawn.plan")?.current) throw new Error("先出方案期间不能启动 Bot 任务。")
       } catch (error) {throw new BotDispatchRejected(error)}
       const result = await botRuntime(owner).dispatchBotTask(owner, bot, instruction)
       pausedBotOwners.delete(owner)
@@ -4079,14 +4079,14 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
     getSessionPlan: async ({ sessionId }) => {
       const option = sessions.configOptions(sessionId)?.find(o => o.id === 'dawn.plan')
-      if (!option || (option.current !== '' && option.current !== '1')) throw fault("invalid_request", "这类会话没有生成方案——只有 native 会话有")
+      if (!option || (option.current !== '' && option.current !== '1')) throw fault("invalid_request", "这类会话没有先出方案——只有 native 会话有")
       const plan = events.peek(sessionId)?.items.findLast(i => i.type === 'plan')
       return { planning: option.current === '1', ...(plan ? { plan } : {}) }
     },
 
     answerPlan: async ({ sessionId, planId, action, text }) => {
       if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
-      if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有生成方案——只有 native 会话有")
+      if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有先出方案——只有 native 会话有")
       try {
         const r = await sessions.answerPlan(sessionId, planId, action, "user", text)
         return r.savedPath ? { savedPath: r.savedPath } : {}

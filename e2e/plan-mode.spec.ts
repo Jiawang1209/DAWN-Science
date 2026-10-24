@@ -1,12 +1,12 @@
 /**
- * 生成方案（原名「先出方案」，2026-09-28 改名；2026-09-27，spec `2026-09-27-先出方案-design.md` §5）。**跑真实构建产物。**
+ * 先出方案（2026-09-27，spec `2026-09-27-先出方案-design.md` §5）。**跑真实构建产物。**
  *
  * 假模型走 mock 的「先出方案」分支（`dev:mock` 里人按的也是它）：请求的工具表里有 `propose_plan`（= 在方案期）→ 交一份五节齐全的方案；
  * 方案期说「偷跑」→ 调 `write`（门要拦下）；不在方案期、说「照批准的方案做」→ 写方案里的第一项产物。
  *
  * ## 两处长得一样
  *
- * 「生成方案」同时是添加内容菜单中的开关、带子文案、斜杠菜单项与 ⌘K 标题。
+ * 「先出方案」同时是添加内容菜单中的开关、带子文案、斜杠菜单项与 ⌘K 标题。
  * 先在主区或坞里打开「添加内容」，再找 body portal 中当前可见的 menuitemcheckbox。
  * 主区与坞共享 ConversationView；开关状态用 aria-checked，关闭菜单后由 plan-band 显示方案期。
  *
@@ -45,7 +45,21 @@ async function 关方案菜单(page: Page, 区: Locator) {
 
 async function 核对方案状态(page: Page, 区: Locator, 开启: boolean) {
   const 菜单 = await 开方案菜单(page, 区)
-  await expect(菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })).toHaveAttribute("aria-checked", String(开启))
+  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
+  await expect(开关).toHaveAttribute("aria-checked", String(开启))
+  await expect(开关.locator(".composer-menu-shortcut")).toHaveText("/plan")
+  await expect(开关.locator(".composer-plan-check")).toHaveCount(开启 ? 1 : 0)
+  const 灰字 = await 开关.locator(".composer-menu-shortcut").evaluate(el => {
+    const style = getComputedStyle(el)
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--dawn-text-3)'
+    el.append(probe)
+    const expected = getComputedStyle(probe).color
+    probe.remove()
+    return { color: style.color, expected, flexShrink: style.flexShrink }
+  })
+  expect(灰字.color).toBe(灰字.expected)
+  expect(灰字.flexShrink).toBe("0")
   await 关方案菜单(page, 区)
   if (开启) await expect(区.locator(".plan-band")).toContainText("只看不改")
   else await expect(区.locator(".plan-band")).toHaveCount(0)
@@ -53,7 +67,7 @@ async function 核对方案状态(page: Page, 区: Locator, 开启: boolean) {
 
 async function 切换方案(page: Page, 区: Locator, 开启: boolean) {
   const 菜单 = await 开方案菜单(page, 区)
-  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
   await expect(开关).toBeEnabled()
   await expect(开关).toHaveAttribute("aria-checked", String(!开启))
   await 开关.click()
@@ -64,7 +78,7 @@ async function 切换方案(page: Page, 区: Locator, 开启: boolean) {
 /** 主区、窄坞都能打开同一菜单；优化与方案相邻，菜单在窗口内，输入卡不横向滚。 */
 async function 量开关位置(page: Page, 区: Locator): Promise<string[]> {
   const 菜单 = await 开方案菜单(page, 区)
-  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+  const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
   await expect(开关).toBeVisible()
   await expect(菜单.getByRole("menuitem", { name: "优化输入", exact: true })).toBeVisible()
   const 错 = await 菜单.evaluate((menu) => {
@@ -73,7 +87,7 @@ async function 量开关位置(page: Page, 区: Locator): Promise<string[]> {
     if (r.left < 0 || r.top < 0 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) errors.push("添加内容菜单出了窗口")
     if (menu.scrollWidth > menu.clientWidth + 1) errors.push("添加内容菜单横向滚动")
     const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemcheckbox"]'))
-    const plan = items.findIndex(el => el.getAttribute("aria-label") === "生成方案")
+    const plan = items.findIndex(el => el.getAttribute("aria-label") === "先出方案")
     if (plan < 1 || items[plan - 1]?.getAttribute("aria-label") !== "优化输入") errors.push("方案前面不是优化输入")
     for (const el of items) {
       const item = el.getBoundingClientRect()
@@ -145,7 +159,7 @@ test.describe("先出方案 · 假模型", () => {
     await expect(卡(主区(page)).getByRole("button", { name: "打开方案文件", exact: true })).toBeVisible()
   })
 
-  test("**方案期「偷跑」**：那次 write 被门拦下，磁盘上没有那个文件，理由说「生成方案」", async ({ dawn }) => {
+  test("**方案期「偷跑」**：那次 write 被门拦下，磁盘上没有那个文件，理由说「先出方案」", async ({ dawn }) => {
     const { page, workspace } = dawn
     await 在项目里开会话(page)
     await 等进了对话(page)
@@ -155,7 +169,7 @@ test.describe("先出方案 · 假模型", () => {
     await expect(行).toHaveAttribute("data-status", "error", { timeout: 30_000 })
     // 失败的那条自己会展开（2026-09-15 起）——不再去点，点了反而收起
     await expect(行.locator(".tool-head")).toHaveAttribute("aria-expanded", "true")
-    await expect(行.locator(".tool-result")).toContainText("生成方案")
+    await expect(行.locator(".tool-result")).toContainText("先出方案")
     expect(existsSync(join(workspace, "results", "tables", "偷跑.csv"))).toBe(false)
     /** 拦下之后仍在方案期——开关不因为一次拒绝而掉 */
     await 核对方案状态(page, 主区(page), true)
@@ -212,7 +226,7 @@ test.describe("先出方案 · 假模型", () => {
       expect(await 钮.evaluate((el) => getComputedStyle(el).opacity), 名).toBe("1")
     }
     const 菜单 = await 开方案菜单(page, 主区(page))
-    const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+    const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
     await expect(开关).toBeEnabled()
     expect(await 开关.evaluate((el) => getComputedStyle(el).opacity)).toBe("1")
     await 关方案菜单(page, 主区(page))
@@ -338,10 +352,10 @@ test.describe("先出方案 · 不支持的会话", () => {
     await 等进了对话(page)
     await expect(page.locator(".conv-head .kind")).toHaveText("ACP")
     const 菜单 = await 开方案菜单(page, 主区(page))
-    const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+    const 开关 = 菜单.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
     await expect(开关).toBeDisabled()
     await expect(开关).toHaveAttribute("aria-checked", "false")
-    await expect(开关).toContainText("这个 agent 不归 DAWN 管工具，生成方案用不了")
+    await expect(开关).toContainText("这个 agent 不归 DAWN 管工具，先出方案用不了")
     await expect(开关.locator(".composer-menu-reason")).toBeVisible()
     await 关方案菜单(page, 主区(page))
     /** 原因与禁用项同在菜单里，不把菜单或输入卡撑出窗口。 */

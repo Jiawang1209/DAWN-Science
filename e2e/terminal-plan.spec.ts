@@ -43,7 +43,7 @@ test('terminal /plan uses the GUI plan book, requires approval, archives and exe
   const { page, workspace, requests } = dawn, { sessionId } = await start(page)
   await submit(page, '/plan')
   await expect.poll(() => invoke(page, 'getSessionPlan', { sessionId })).toMatchObject({ planning: true })
-  await expect(page.locator('.dock .xterm-rows')).toContainText('生成方案（只看不改）')
+  await expect(page.locator('.dock .xterm-rows')).toContainText('先出方案（只看不改）')
   await page.locator('.dock .term-host').evaluate(el => {
     const data = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
     const transfer = new DataTransfer()
@@ -63,7 +63,7 @@ test('terminal /plan uses the GUI plan book, requires approval, archives and exe
   const approved = await invoke(page, 'getSessionPlan', { sessionId })
   expect(readFileSync(join(workspace, approved.plan.savedPath), 'utf8')).toContain('status: approved')
   expect(approved.planning).toBe(false)
-  const executionRequest = requests.findLast((r: any) => JSON.stringify(r.body).includes('照批准的方案做'))
+  const executionRequest = requests.findLast((r: any) => JSON.stringify(r.body).includes('照批准的方案做')) as { body: unknown } | undefined
   expect(JSON.stringify(executionRequest?.body)).toContain('image_url')
   await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
   await expect(page.locator('.plan-card')).toHaveAttribute('data-status', 'approved')
@@ -75,9 +75,9 @@ test('GUI toggle syncs to the same terminal; revised plans reject old IDs, disca
   const { page, workspace } = dawn, { sessionId } = await start(page)
   await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
   await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitemcheckbox', { name: '生成方案', exact: true }).click()
+  await page.getByRole('menuitemcheckbox', { name: '先出方案', exact: true }).click()
   await openTerminal(page)
-  await expect(page.locator('.dock .xterm-rows')).toContainText('生成方案（只看不改）')
+  await expect(page.locator('.dock .xterm-rows')).toContainText('先出方案（只看不改）')
   await submit(page, '终端方案验收：版本一')
   const first = await proposal(page, sessionId)
   await submit(page, '终端方案验收：修改为版本二')
@@ -121,5 +121,5 @@ test('fully accessible terminal stays read-only during planning; GUI edited appr
   await expect.poll(() => existsSync(join(workspace, 'results/tables/mock_summary.csv'))).toBe(true)
   await openTerminal(page)
   await expect(page.locator('.dock .xterm-rows')).toContainText('批的是改过的方案')
-  await expect(page.locator('.dock .xterm-rows')).not.toContainText('生成方案（只看不改）')
+  await expect(page.locator('.dock .xterm-rows')).not.toContainText('先出方案（只看不改）')
 })

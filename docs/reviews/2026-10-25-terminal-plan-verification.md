@@ -39,3 +39,14 @@ Real Electron tests use the shared deterministic inference server with the real 
 - Original conversation records and their pre-existing archive state remain intact. Original provider/credential file hashes are unchanged.
 
 Local evidence root: `/Volumes/RPython/DAWN-previews/terminal-plan-20261025-8xyFk9`, containing launch metadata, logs, backups and screenshots. No merge or push; local main remains `c9ee508f`.
+
+## Follow-up: one name for the planning feature
+
+User approved keeping both mouse and `/plan` entry points on this branch, with the shared name **先出方案**, a muted `/plan` hint in the add menu, and a check when enabled.
+
+- Renamed the current feature labels, slash/command menu text, status bands, terminal state, runtime config display name, translated keys and associated explanations. The `dawn.plan` identifier, values, approval flow and persisted plans are unchanged; historical documents are retained.
+- The add-menu item keeps its `menuitemcheckbox` semantics and plain accessible name. `/plan` is muted, does not shrink, and the selected check uses the accent color. Unsupported sessions stay disabled and do not display a selected check.
+- Updated shared unit and Electron coverage before implementation; the initial run failed on the old names. Added assertions for the shortcut and selected/unselected check, plus real-browser color and width checks.
+- Final checks: typecheck passed; full build passed, then UI build passed after the final check-color CSS change; 303 related tests passed across 8 files; 17 real Electron cases passed across `plan-mode`, `terminal-plan` and `composer-layout`; diff check passed.
+- Actual branch preview restarted using the same isolated profile. Opened the existing demo conversation, verified selected → unselected → selected through normal menu clicks, and left its original proposal pending. No new model turn or plan execution was sent. Screenshots inspected at normal size and 900×700; the menu remains within the window with no horizontal overflow.
+- Preview evidence: `plan-label-on.png`, `plan-label-off.png`, `plan-label-narrow.png` and `plan-label-final.png` in the existing evidence root. Original provider/credential hashes remain unchanged. Main is untouched; no merge, push or installed application replacement.

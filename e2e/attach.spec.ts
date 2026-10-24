@@ -607,6 +607,6 @@ test("输入卡：环境在顶部，添加与权限在左，模型发送在右�
   await add.click()
   const menu = page.getByRole("menu", { name: "添加内容" })
   await expect(menu.getByRole("menuitem", { name: "优化输入", exact: true })).toBeVisible()
-  await expect(menu.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })).toBeVisible()
+  await expect(menu.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })).toBeVisible()
   await expect(menu.getByRole("menuitem", { name: "终端面板", exact: true })).toBeVisible()
 })

@@ -15,7 +15,7 @@ it('renders the full plan Markdown, updates that version in place, and preserves
   const f = fixture(110, 38)
   const plan = { type: 'plan' as const, id: 'plan:p1', planId: 'p1', version: 1, title: '分组分析方案', markdown: '## 问题与假设\n比较两组。\n## 图\n绘制散点图。', status: 'proposed' as const }
   f.ui.setPlanState({ planning: true, plan }); await f.flush()
-  expect(f.text()).toContain('生成方案（只看不改）')
+  expect(f.text()).toContain('先出方案（只看不改）')
   expect(f.text()).toContain('分组分析方案'); expect(f.text()).toContain('比较两组。')
   expect(f.text()).toContain('/plan approve p1'); expect(f.text()).toContain('/plan discard p1')
   f.input('KEEP_LATER_DRAFT')

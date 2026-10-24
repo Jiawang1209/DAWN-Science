@@ -1563,7 +1563,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /** 空态发出去用的是 `agentIds[0]`（与空态那颗 agent pill 同一个判据）：它不是 native 就用不了先出方案 */
   const 空态方案不能 =
     providers.agents.find((x) => x.agentId === agentIds[0])?.kind !== "native"
-      ? t("这个 agent 不归 DAWN 管工具，生成方案用不了")
+      ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
       : undefined
   // 按下之后换成了不支持的 agent：那一下作废，别留一个「按下 + 灰着」、也别带着它去建会话
   useEffect(() => {
@@ -4176,7 +4176,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       { kind: "team" as const, name: "team", title: t("组一支团队"), description: t("让模型当队长：拉几个子 agent 当成员、拆成带依赖的任务、自动派活；进度在坞里「团队」那一格") },
       // DAWN 自己认的指令（2026-09-27）：`/compact`。只在能压的那段列出（`ConversationView` 按 `onCompact` 滤）
       // 先出方案（2026-09-27，D4）：选了写 `/plan `，发的时候界面拦下来切开关、不送给模型。外部 agent 那段也列着——发了说原因
-      { kind: "command" as const, name: "plan", title: t("生成方案"), description: t("先写分析方案，你批了再动手；方案期只看不改") },
+      { kind: "command" as const, name: "plan", title: t("先出方案"), description: t("先写分析方案，你批了再动手；方案期只看不改") },
       { kind: "command" as const, name: "compact", title: t("压缩上下文"), description: t("把早先的对话换成一段摘要交给模型，腾出上下文；后面可以跟一句要保留什么") },
       ...botProfiles.filter(b => b.enabled && !b.archivedAt).map(b => ({ kind: "bot" as const, name: b.id, title: b.name, description: b.role, group: "Bot" })),
       ...技能单,
@@ -4243,7 +4243,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ...(session
           ? (() => {
               const 开 = 主区开关们?.find((o) => o.id === "dawn.plan")
-              return { plan: 开 ? { on: 开.current === "1" } : { on: false, unavailable: t("这段会话还没准备好生成方案，稍等再试") } }
+              return { plan: 开 ? { on: 开.current === "1" } : { on: false, unavailable: t("这段会话还没准备好先出方案，稍等再试") } }
             })()
           : {}),
       }),
@@ -5758,7 +5758,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onStart={async (agentId, firstMessage, workspace, images, files) => {
                 const command = firstMessage && parseBotCommand(firstMessage)
                 if (command) {
-                  if (空态方案.current) throw new Error(t("请先退出生成方案，再调遣 Bot"))
+                  if (空态方案.current) throw new Error(t("请先退出先出方案，再调遣 Bot"))
                   if (providers.agents.find(a => a.agentId === agentId)?.kind !== "native") throw new Error(t("仅主对话支持 Bot 调遣"))
                   if (images?.length || files?.length) throw new Error(t("Bot 调遣请在任务文字中引用文件路径"))
                   if (!command.instruction) throw new Error(t("请填写 Bot 的任务"))

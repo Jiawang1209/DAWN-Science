@@ -119,7 +119,7 @@ export class CliTui {
       : this.suggestion || (this.firstPrompt ? INPUT_HELP : '继续提问…')
     const footer: Component = { invalidate() {}, render: width => {
       const slot = options.contextButton && width >= 10 ? ' '.repeat(10) : undefined
-      const lines = usageLines(this.usage, width, options.model, slot, this.permissions ? permissionLabel(this.permissions) : '权限未读取', !this.planning ? '方案状态未读取' : this.planning.planning ? '生成方案（只看不改）' : this.planning.plan?.status === 'proposed' ? '方案待审' : undefined)
+      const lines = usageLines(this.usage, width, options.model, slot, this.permissions ? permissionLabel(this.permissions) : '权限未读取', !this.planning ? '方案状态未读取' : this.planning.planning ? '先出方案（只看不改）' : this.planning.plan?.status === 'proposed' ? '方案待审' : undefined)
       this.contextPlacement = slot ? { row: this.terminal.rows - 1, col: visibleWidth(lines.at(-1)!) - slot.length, width: slot.length } : undefined
       return [...(this.terminal.rows <= 12 ? [] : ['']), ...lines.map(dim)]
     } }

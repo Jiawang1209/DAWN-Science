@@ -31,11 +31,11 @@ test("**终端**：菜单标记反映开闭，点同一入口能打开和收起"
   await expect(terminal.locator("svg")).toHaveCount(1)
 })
 
-test("**生成方案**：菜单选中态与方案说明一起开关，选中背景遵循主题", async ({ dawn }) => {
+test("**先出方案**：菜单选中态与方案说明一起开关，选中背景遵循主题", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   const menu = await 添加菜单(page)
-  const toggle = menu.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+  const toggle = menu.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
   await expect(toggle).toBeEnabled()
   await expect(toggle).toHaveAttribute("aria-checked", "false")
   await page.mouse.move(0, 0)

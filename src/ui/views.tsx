@@ -806,12 +806,13 @@ function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, onTogg
           {enhanceControl || plan || onToggleDock ? <div className="composer-menu-divider" role="separator" /> : null}
           {enhanceControl?.(收起, 开着)}
           {plan ? (
-            <Button variant="ghost" size="inline" role="menuitemcheckbox" tabIndex={-1} aria-label={t("生成方案")}
+            <Button variant="ghost" size="inline" role="menuitemcheckbox" tabIndex={-1} aria-label={t("先出方案")}
               aria-checked={plan.on && !plan.reason} disabled={!plan.onToggle || Boolean(plan.reason)}
               onClick={() => { 收起(); plan.onToggle?.(!plan.on) }}>
               <概览图标 />
-              <span className="composer-menu-label">{t("生成方案")}{plan.reason ? <span className="composer-menu-reason">{plan.reason}</span> : null}</span>
-              {plan.on && !plan.reason ? <勾图标 /> : null}
+              <span className="composer-menu-label">{t("先出方案")}{plan.reason ? <span className="composer-menu-reason">{plan.reason}</span> : null}</span>
+              <span className="composer-menu-shortcut" aria-hidden="true">/plan</span>
+              {plan.on && !plan.reason ? <勾图标 className="composer-plan-check" /> : null}
             </Button>
           ) : null}
           {onToggleDock ? (
@@ -4710,9 +4711,9 @@ export function ConversationView({
    */
   const 方案不能 =
     session.kind !== "native"
-      ? t("这个 agent 不归 DAWN 管工具，生成方案用不了")
+      ? t("这个 agent 不归 DAWN 管工具，先出方案用不了")
       : !方案开关
-        ? t("这段会话还没准备好生成方案，稍等再试")
+        ? t("这段会话还没准备好先出方案，稍等再试")
         : undefined
 
   const 导出对话 = () => {
@@ -5077,13 +5078,13 @@ export function ConversationView({
           /**
            * **`/plan`（先出方案，2026-09-27，D4）**：界面拦下来切开关，**不把 `/plan` 送给模型**。
            * `/plan 问题` = 打开开关 + 发「问题」；只打 `/plan` = 只打开开关。
-           * 这类会话没有生成方案（D7）→ 说原因、字留在框里，不悄悄按普通方式发出去。
+           * 这类会话没有先出方案（D7）→ 说原因、字留在框里，不悄悄按普通方式发出去。
            */
           const 原话 = text
           const 先开方案 = 是方案前缀(text)
           if (先开方案) {
             if (!onSetPlan || 方案不能) {
-              设发送出错(方案不能 ?? t("这段会话还没准备好生成方案，稍等再试"))
+              设发送出错(方案不能 ?? t("这段会话还没准备好先出方案，稍等再试"))
               return
             }
             text = 去掉方案前缀(text)
@@ -5264,7 +5265,7 @@ export function ConversationView({
         {/* 先出方案开着（2026-09-27，spec §2.1）：按下态的形状不够——扫一眼与读屏都读不出含义，用字说清 */}
         {方案开着 ? (
           <p className="plan-band" role="status">
-            {t("生成方案 · 这一段只看不改，方案批了才动手（再按一下「生成方案」退出）")}
+            {t("先出方案 · 这一段只看不改，方案批了才动手（再按一下「先出方案」退出）")}
           </p>
         ) : null}
         <div className="composer-box">
@@ -7438,7 +7439,7 @@ export function EmptyConversation({
                   />
                 ) : null}
             </ComposerEnvironment>
-            {先出方案?.on && !先出方案.不能的原因 ? <p className="plan-band" role="status">{t("生成方案 · 这一段只看不改，方案批了才动手（再按一下「生成方案」退出）")}</p> : null}
+            {先出方案?.on && !先出方案.不能的原因 ? <p className="plan-band" role="status">{t("先出方案 · 这一段只看不改，方案批了才动手（再按一下「先出方案」退出）")}</p> : null}
             <div className="composer-box">
               {/**
                 * 待发的图（2026-08-13）。**与对话里那一份共用同一套类名**——
@@ -7659,7 +7660,7 @@ export function EmptyConversation({
 
                 {/* 常驻：做不了时灰着说理由（2026-08-28 作者定的） */}
 
-                {/* 生成方案（2026-09-27；09-28 搬到附栏「优化输入」后面）：与对话里同一处。还没有会话，按下只记住「第一句按生成方案发」 */}
+                {/* 先出方案（2026-09-27；09-28 搬到附栏「优化输入」后面）：与对话里同一处。还没有会话，按下只记住「第一句按先出方案发」 */}
 
                 {/* 尚未开会话时修改默认权限。 */}
                 {权限 ? <PermissionPill 当前={权限.当前} onPick={(档) => 权限.onPick(档, true)} /> : null}

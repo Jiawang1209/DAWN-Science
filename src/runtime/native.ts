@@ -673,7 +673,7 @@ export class NativeRuntime implements AgentRuntime {
     }
   }
   async messageBotTeam(owner: string, teamId: string, input: {requestId: string; message: string; toBotId?: string}): Promise<void> {
-    if (this.configOptions(owner)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("生成方案期间不能启动 Bot 任务。")
+    if (this.configOptions(owner)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("先出方案期间不能启动 Bot 任务。")
     this.botCurrentTeam(owner, teamId)
     const control = this.botTeams.get(owner)!
     control.scheduler.messageTeam(teamId, {id: input.requestId, message: input.message, ...(input.toBotId ? {toBotId: input.toBotId} : {})})
@@ -686,7 +686,7 @@ export class NativeRuntime implements AgentRuntime {
     return 状态文本(control.scheduler.读(teamId), memberName)
   }
   async dispatchBotTask(sessionId: string, botId: string, instruction: string): Promise<{ teamId: string; taskId: string; memberSessionId?: string }> {
-    if (this.configOptions(sessionId)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("生成方案期间不能启动 Bot 任务。")
+    if (this.configOptions(sessionId)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("先出方案期间不能启动 Bot 任务。")
     const control = this.botTeams.get(sessionId)
     const bot = this.botBridge?.list().find(b => b.id === botId && b.enabled && !b.archivedAt)
     if (!control || !bot) throw new UserFacingError("Bot 或主对话当前不可用。")
@@ -2282,7 +2282,7 @@ export class NativeRuntime implements AgentRuntime {
     if (s.session.getToolDefinition(出方案工具名)) {
       开关.push({
         id: "dawn.plan",
-        name: "生成方案",
+        name: "先出方案",
         description: "开着时只看不改：先交分析方案，你批了再动手",
         category: "plan",
         kind: "boolean",
@@ -2321,7 +2321,7 @@ export class NativeRuntime implements AgentRuntime {
       if (value !== "inherit" && value !== "allow-all" && value !== "ask-risky" && value !== "deny-risky") throw new Error(`不认识的权限档：${value}`)
       档.设(sessionId, value === "inherit" ? undefined : value)
     } else if (configId === "dawn.plan") {
-      if (value !== "1" && value !== "") throw new Error(`生成方案只收 "1" 或 ""，收到的是：${value}`)
+      if (value !== "1" && value !== "") throw new Error(`先出方案只收 "1" 或 ""，收到的是：${value}`)
       this.设方案期(sessionId, value === "1")
     } else if (configId === "dawn.thinking") {
       const 级 = ["minimal", "low", "medium", "high", "xhigh", "max"]

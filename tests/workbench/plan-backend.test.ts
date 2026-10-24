@@ -66,7 +66,7 @@ function make(runtime: FakeRuntime = new 会答方案的()) {
 it('reads the same planning flag and latest plan card as the GUI without starting another session', async () => {
   const ctx = make(), sessionId = await ctx.开一段()
   let current = '1'
-  vi.spyOn(ctx.sessions, 'configOptions').mockImplementation(id => id === sessionId ? [{ id: 'dawn.plan', name: '生成方案', kind: 'boolean', category: 'plan', current, options: [] }] : undefined)
+  vi.spyOn(ctx.sessions, 'configOptions').mockImplementation(id => id === sessionId ? [{ id: 'dawn.plan', name: '先出方案', kind: 'boolean', category: 'plan', current, options: [] }] : undefined)
   const plan = { planId: 'proposal-1', version: 1, title: '分析方案', markdown: '## 问题与假设\n分析问题', status: 'proposed' as const }
   ctx.events.ingest(sessionId, { kind: 'plan', sessionId, plan })
   expect(await ctx.backend.getSessionPlan({ sessionId })).toMatchObject({ planning: true, plan })

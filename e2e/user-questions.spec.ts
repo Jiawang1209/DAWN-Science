@@ -114,14 +114,14 @@ test("切换会话保留草稿；侧边问答与主区隔离；调整方向撤�
  await expect(main.locator(".turn.agent").last()).toContainText("假模型已应答", { timeout: 30000 })
 })
 
-test("生成方案阶段可澄清，回答后仍处于只读方案期", async ({ dawn }) => {
+test("先出方案阶段可澄清，回答后仍处于只读方案期", async ({ dawn }) => {
  const { page } = dawn
  await 在项目里开会话(page); await 等进了对话(page)
  const main = page.locator("main.main")
  const add = main.getByRole("button", { name: "添加内容", exact: true })
  await add.click()
  const menu = page.getByRole("menu", { name: "添加内容", exact: true })
- const plan = menu.getByRole("menuitemcheckbox", { name: "生成方案", exact: true })
+ const plan = menu.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })
  await expect(plan).toHaveAttribute("aria-checked", "false")
  await plan.click()
  await expect(menu).toHaveCount(0)

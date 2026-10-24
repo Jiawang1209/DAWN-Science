@@ -72,7 +72,7 @@ describe("会话文件读回", () => {
     expect(读子转录(d)).toEqual([
       { kind: "text", who: "user", text: "子任务：读 README", at: 1 },
       { kind: "text", who: "agent", text: "我先读一下。", at: 2 },
-      { kind: "tool", id: "t1", name: "read", input: { path: "README.md" }, result: "# readme", at: 2 },
+      { kind: "tool", id: "t1", name: "read", input: { path: "README.md" }, result: "# readme", isError: false, at: 2 },
     ])
   })
 })

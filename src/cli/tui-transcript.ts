@@ -1,4 +1,4 @@
-import { Markdown, wrapTextWithAnsi, type MarkdownTheme, type Component } from '@earendil-works/pi-tui'
+import { Markdown, wrapTextWithAnsi, visibleWidth, truncateToWidth, type MarkdownTheme, type Component } from '@earendil-works/pi-tui'
 import { plain, toolDetail } from './presentation.js'
 
 export type ToolStart = { toolCallId: string; toolName: string; input: unknown }
@@ -58,7 +58,7 @@ export class CliTranscript implements Component {
   image(image: Picture) { this.finish(); this.add({ kind: 'image', image }) }
   toggleTools() { this.expanded = !this.expanded }
   render(width: number): string[] {
-    const { accent, dim, bold, paint } = this.style, lines: string[] = []
+    const { accent, dim, paint } = this.style, lines: string[] = []
     this.placements = []
     const contentWidth = Math.max(1, width - 4)
     const wrap = (text: string, indent = '  ') => wrapTextWithAnsi(text, Math.max(1, width - indent.length)).map(line => indent + styled(line).trimEnd())
@@ -66,20 +66,27 @@ export class CliTranscript implements Component {
     if (!this.nodes.length) lines.push(...wrap(dim('在下方输入问题，或粘贴文字与图片。')), '')
     for (const node of this.nodes) {
       switch (node.kind) {
-        case 'user': lines.push(bold('› 你'), ...wrap(node.text), ''); break
-        case 'assistant': lines.push(accent(bold('● DAWN')), ...node.markdown.render(contentWidth).map(line => '  ' + styled(line).trimEnd()), ''); break
+        case 'user': {
+          const prefix = '❯ ', indent = ' '.repeat(visibleWidth(prefix))
+          lines.push(...wrapTextWithAnsi(node.text, Math.max(1, width - visibleWidth(prefix))).map((line, i) => (i ? indent : dim(prefix)) + styled(line).trimEnd()), '')
+          break
+        }
+        case 'assistant': lines.push(...node.markdown.render(contentWidth).map((line, i) => (i ? '  ' : accent('● ')) + styled(line).trimEnd()), ''); break
         case 'notice': lines.push(...wrap(paint('33', node.text)), ''); break
         case 'tool': {
-          const end = node.end, status = !end ? '› 执行中' : end.isError ? '× 失败' : '✓ 完成'
-          lines.push(...wrap((end?.isError ? paint('31', status) : accent(status)) + ' · ' + plain(node.start.toolName)))
+          const end = node.end, status = !end ? '◌' : end.isError ? '× 失败' : '✓'
+          const name = ({ bash: '运行命令', read: '读取文件', write: '写入文件', edit: '编辑文件', grep: '搜索内容', find: '查找文件', ls: '查看目录', run_code: '运行代码' } as Record<string, string>)[node.start.toolName] ?? plain(node.start.toolName)
           const detail = toolDetail(node.start.input)
-          if (detail) lines.push(...wrap(dim(detail), '    '))
-          if (end) {
+          const summary = (end?.isError ? paint('31', status) : dim(status)) + ' ' + name + (detail ? dim(' · ' + detail.split('\n')[0]!.slice(0, 140)) : '')
+          if (!this.expanded && !end?.isError) lines.push('  ' + truncateToWidth(summary, Math.max(1, width - 2), '…'))
+          else lines.push(...wrap(summary))
+          if (detail && (this.expanded || end?.isError)) lines.push(...wrap(dim(detail), '    '))
+          if (end && (this.expanded || end.isError)) {
             const output = plain(end.text).trim().split('\n'), take = this.expanded ? 120 : end.isError ? 6 : 2
             if (end.text.trim()) lines.push(...wrap(output.slice(0, take).join('\n'), '    '))
             if (output.length > take) lines.push(...wrap(dim(`其余 ${output.length - take} 行已省略 · Tab ${this.expanded ? '收起' : '展开'}工具详情`), '    '))
-            if (end.truncated) lines.push(...wrap(dim('工具输出已截断' + (end.fullOutputPath ? ' · 完整输出：' + plain(end.fullOutputPath) : ' · 返回会话查看过程')), '    '))
           }
+          if (end?.truncated) lines.push(...wrap(dim('工具输出已截断' + (end.fullOutputPath ? ' · 完整输出：' + plain(end.fullOutputPath) : ' · 返回会话查看过程')), '    '))
           lines.push(''); break
         }
         case 'image': {

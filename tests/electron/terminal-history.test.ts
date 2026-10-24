@@ -92,6 +92,27 @@ it('restores original turn and tool counts with ledger timing after the live tra
   } finally { await cli?.close(); await f.close() }
 })
 
+it('scopes reply instructions to real desktop CLI requests and restores GUI replies in the same conversation', async () => {
+  const f = await fixture()
+  let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined
+  try {
+    cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
+    const state = (f.native as any).sessions.get(f.task.sessionId), prompts: string[] = []
+    state.session.prompt = vi.fn(async () => {
+      const projected = await state.session.agent.transformContext([{ role: 'system', content: state.session.systemPrompt, timestamp: Date.now() }])
+      prompts.push(projected[0].content)
+    })
+    await cli.call('writeToSession', { sessionId: f.task.sessionId, as: 'user', data: 'CLI natural reply' })
+    await cli.waitForIdle()
+    expect(prompts[0]).toContain('终端回复风格')
+    expect(prompts[0]).not.toContain('answer with exactly this')
+    await f.call('writeToSession', { sessionId: f.task.sessionId, as: 'user', data: 'GUI continued reply' })
+    await f.native.waitForIdle(f.task.sessionId)
+    expect(prompts[1]).not.toContain('终端回复风格')
+    expect(prompts[1]).toContain('answer with exactly this')
+  } finally { await cli?.close(); await f.close() }
+})
+
 it('opens a new Shell for the stopped owner and resumes its same Agent without a GUI reconnect', async () => {
   const f = await fixture()
   let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined

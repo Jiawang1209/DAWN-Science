@@ -17,6 +17,7 @@ function 摆一段(pi: Record<string, unknown>, stuck: { check?: () => string | 
   }
   内部.sessions.set("s1", {
     session: { model: { id: "m", input: ["text"] }, state: { messages: [] }, isStreaming: false, clearQueue: () => ({ steering: [], followUp: [] }), async abort() {}, async waitForIdle() {}, ...pi },
+    setTerminalReply() {},
     inFlight: 0,
     pending: undefined,
     stuck: { reset() {}, check: stuck.check ?? (() => undefined) },

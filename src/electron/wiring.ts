@@ -1685,7 +1685,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
             usage: () => cliUsage(sessionId),
             pictures: () => nativeRuntime.historyPictures(sessionId),
             call: async (operation, input) => {
-              const response = await server.handle(operation, input)
+              const response = await nativeRuntime.withTerminalReply(sessionId, () => server.handle(operation, input))
               if (!response.ok) throw new Error(response.error.message)
               return response.data
             },

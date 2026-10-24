@@ -1,4 +1,7 @@
 import { existsSync } from 'node:fs'
+import { AsyncLocalStorage } from 'node:async_hooks'
+import { TERMINAL_REPLY_STYLE } from './terminal-reply-style.js'
+import { getCurrentSystemMessage, getSystemMessageText } from '@earendil-works/pi-ai'
 import { sessionUsage } from './session-usage.js'
 import { AnalysisRouteBook } from './analysis-route-book.js'
 import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
@@ -315,6 +318,7 @@ interface NativeSession {
   sessionManager: SessionManager
   /** 改「你现在跑在哪个模型上」那句话。**换模型时必须调**，否则它照旧答上一个 */
   设当前模型: (v: string) => void
+  setTerminalReply: (enabled: boolean) => void
   unsubscribe: () => void
   /** 关会话时收尾：中止团队调度器里还在跑的成员（2026-08-23 审查抓的：此前关会话后成员子进程照跑、向已删会话 emit） */
   收尾?: () => void
@@ -424,6 +428,7 @@ interface NativeSession {
  *   缝里的那条文字是定的，调整方向可以把它摘下来（它挂着的回调摘不到就不送了）当这句、或算进其余。
  */
 interface 待发条目 {
+  replyTerminal?: boolean
   id: string | undefined
   文: string
   图: readonly ImageAttachment[] | undefined
@@ -446,6 +451,7 @@ interface PiEvent {
    */
   result?: {
     isError?: boolean
+    details?: { truncation?: { truncated?: boolean }; fullOutputPath?: string }
     content?: { type?: string; text?: string }[]
     summary?: string
     tokensBefore?: number
@@ -1937,6 +1943,7 @@ export class NativeRuntime implements AgentRuntime {
      * pi 那些踩出来的操作指导原样留着，扔掉它们 agent 会当场变笨。
      */
     let 当前模型 = `${native.model}（provider：${native.provider}）`
+    let terminalReply = false
     /**
      * 记忆快照(2026-08-25):渲染失败不许拦会话——记忆是增益不是准入条件,
      * 坏一个记忆文件不该让人开不了对话;失败出声(notice),不静默。
@@ -2130,6 +2137,23 @@ export class NativeRuntime implements AgentRuntime {
       customTools: 方案期包过的 as never,
     })
 
+    // Project presentation guidance at the request boundary, after queued user
+    // messages have been delivered. SDK run prompts are snapshots; rebuilding
+    // the base prompt here would not update an active follow-up run.
+    const originalTransform = session.agent.transformContext
+    session.agent.transformContext = async (messages, signal) => {
+      const transformed = originalTransform ? await originalTransform(messages, signal) : messages
+      if (!terminalReply) return transformed
+      const current = getCurrentSystemMessage(transformed)
+      if (!current) return transformed
+      const content = getSystemMessageText(current).replace(
+        `You are currently running on the model "${当前模型}". If the user asks which model you are, answer with exactly this.`,
+        `You are currently running on the model "${当前模型.replace(/（provider：.*）$/, '')}". If asked, answer with this model name naturally. Do not include provider names or configuration labels unless the user asks for them.`,
+      ) + '\n\n' + TERMINAL_REPLY_STYLE
+      return [{ role: 'system', content, ...(current.toolsAdded ? { toolsAdded: current.toolsAdded } : {}), timestamp: current.timestamp },
+        ...transformed.filter(message => message.role !== 'system')]
+    }
+
     /**
      * 默认停用：只有挂进坞的那段才启用（`setSideTool`）。启动前就配好对的（`侧边工具开` 里有）直接开着。
      * **按标记明着设一次**，开与关都不靠 pi 的缺省（它建会话时把 `customTools` 全部启用，那是它的事，不是我们的约定）。
@@ -2152,6 +2176,7 @@ export class NativeRuntime implements AgentRuntime {
         当前模型 = v
         session.setActiveToolsByName(session.getActiveToolNames())
       },
+      setTerminalReply: (enabled: boolean) => { terminalReply = enabled },
       /**
        * **起会话时就记下当前是谁**（2026-08-12 修）。
        *
@@ -2531,6 +2556,8 @@ export class NativeRuntime implements AgentRuntime {
         const out = sessionDir
           ? budgetToolResult(full, { sessionDir, toolName })
           : { text: full, truncated: false, bytes: Buffer.byteLength(full, "utf8") }
+        const upstream = e.result?.details
+        const fullOutputPath = typeof upstream?.fullOutputPath === 'string' && upstream.fullOutputPath ? upstream.fullOutputPath : out.fullOutputPath
         this.emit({
           kind: "tool_end",
           sessionId,
@@ -2544,9 +2571,9 @@ export class NativeRuntime implements AgentRuntime {
           isError: Boolean(e.isError || e.result?.isError),
           text: out.text,
           ...(caseResults ? { caseResults } : {}),
-          truncated: out.truncated,
+          truncated: out.truncated || Boolean(upstream?.truncation?.truncated || fullOutputPath),
           bytes: out.bytes,
-          ...(out.fullOutputPath ? { fullOutputPath: out.fullOutputPath } : {}),
+          ...(fullOutputPath ? { fullOutputPath } : {}),
           // 停止 / 调整方向期间结束的：它是被停下的，不是自己做完或自己出错（2026-09-25）
           ...((this.sessions.get(sessionId)?.中止中 ?? 0) > 0 ? { interrupted: true as const } : {}),
         })
@@ -2590,6 +2617,9 @@ export class NativeRuntime implements AgentRuntime {
    * 是同步的——调用方是租约守卫，它只负责「准不准写」，不该被一轮对话阻塞。
    * 失败经事件流出声，不静默吞。
    */
+  private readonly replySource = new AsyncLocalStorage<string>()
+  withTerminalReply<T>(sessionId: string, run: () => T): T { return this.replySource.run(sessionId, run) }
+
   write(sessionId: SessionId, data: string, behavior?: 送法, queueId?: string): void {
     this.validateRouteMessage(sessionId, data)
     const terminal = this.terminalInput.get(sessionId)
@@ -2664,7 +2694,7 @@ export class NativeRuntime implements AgentRuntime {
      */
     const s忙 = (s?.inFlight ?? 0) > 0
     const 条: 待发条目 | undefined = s && s忙
-      ? { id: queueId, 文: data, 图: images, 在: "转述" }
+      ? { id: queueId, 文: data, 图: images, 在: "转述", replyTerminal: this.replySource.getStore() === sessionId }
       : undefined
     if (条) {
       s!.待发.push(条)
@@ -2676,7 +2706,7 @@ export class NativeRuntime implements AgentRuntime {
       if (!条) return void this.送一轮(sessionId, 文, images, behavior)
       if (!this.摘条(s!, 条)) return
       if (条.id) this.发待发单(sessionId)
-      this.送一轮(sessionId, 文, images, "followUp", 条.id)
+      this.送一轮(sessionId, 文, images, "followUp", 条.id, 条.replyTerminal)
     }
     void this.转述(sessionId, 端点, data, images).then((文) => {
       /**
@@ -2767,6 +2797,7 @@ ${描述}`
     behavior?: 送法,
     /** 有它才进待发单（2026-09-23）：后端据此把这句话的转录推迟到真送到的那一刻 */
     queueId?: string,
+    replyTerminal = this.replySource.getStore() === sessionId,
   ): Promise<void> | undefined {
     this.validateRouteMessage(sessionId, data)
     const s = this.sessions.get(sessionId)
@@ -2802,7 +2833,7 @@ ${描述}`
        * 那就先挂在镜像上（未进 pi），等这一轮收尾再按新一轮送。
        */
       if (!s.session.isStreaming) {
-        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 在: "缝" }
+        const 条: 待发条目 = { id: queueId, 文: data, 图: images, 在: "缝", replyTerminal }
         s.待发.push(条)
         if (queueId) this.发待发单(sessionId)
         void (s.pending ?? Promise.resolve()).then(() => {
@@ -2813,7 +2844,7 @@ ${描述}`
            * 不接住就是一个未处理的 rejection、这句也无声无息没了。调整方向之后重排的几条都走这条缝（2026-09-25）。
            */
           try {
-            this.送一轮(sessionId, 条.文, 条.图, "followUp", 条.id)
+            this.送一轮(sessionId, 条.文, 条.图, "followUp", 条.id, 条.replyTerminal)
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e)
             if (条.id) this.emit({ kind: "queue_failed", sessionId, id: 条.id, message: msg })
@@ -2827,7 +2858,7 @@ ${描述}`
        * 文字为空它就不摘——那条永远挂在它的单子上，此后每一次数数都差一。
        */
       const 文 = data.trim() || !图 ? data : "（见附图）"
-      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 在: "pi" }
+      const 条: 待发条目 = { id: queueId, 文: data, 图: images, 在: "pi", replyTerminal }
       // **不带 id 的也进镜像**（飞书 / 微信 / 定时的写）：pi 的单子里有它，镜像里就得有它
       s.待发.push(条)
       if (queueId) this.发待发单(sessionId)
@@ -2848,6 +2879,7 @@ ${描述}`
      * **以为在忙、其实刚跑完**（人按下时还在跑，到这儿那一轮收了尾；或撤回重送时已经空闲）：
      * 它就是新一轮的开头。先报「送到了」再开跑——转录里人那句话要排在回复前面。
      */
+    s.setTerminalReply(replyTerminal)
     if (queueId) this.emit({ kind: "queue_delivered", sessionId, id: queueId, newTurn: true })
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
     s.stuck.reset()
@@ -3486,6 +3518,7 @@ ${描述}`
       const i = s.待发.findIndex((x) => x.在 === "pi")
       if (i < 0) break
       const [送走的] = s.待发.splice(i, 1)
+      s.setTerminalReply(送走的?.replyTerminal ?? false)
       if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
       this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })
       变了 = true
@@ -3548,7 +3581,7 @@ ${描述}`
     }
     const 留下 = this.清空待发(s).filter((x) => x.id !== id)
     this.发待发单(sessionId)
-    for (const x of 留下) this.送一轮(sessionId, x.文, x.图, "followUp", x.id)
+    for (const x of 留下) this.送一轮(sessionId, x.文, x.图, "followUp", x.id, x.replyTerminal)
   }
 
   /**
@@ -3603,6 +3636,7 @@ ${描述}`
       id: 那句.queueId as string | undefined,
       文: 单上的 ? 单上的.文 : (那句.data ?? ""),
       图: 单上的 ? 单上的.图 : 那句.images,
+      replyTerminal: 单上的 ? (单上的.replyTerminal ?? false) : this.replySource.getStore() === sessionId,
     }
     // ① 不忙：就是新的一句（没有其余要排，带图的照普通一句走 `writeWithImages`）
     if (s.inFlight === 0) {
@@ -3612,7 +3646,7 @@ ${描述}`
       }
       try {
         if (!单上的 && 这句.图?.length) this.writeWithImages(sessionId, 这句.文, 这句.图, "followUp", 这句.id)
-        else this.送一轮(sessionId, 这句.文, 这句.图, "followUp", 这句.id)
+        else this.送一轮(sessionId, 这句.文, 这句.图, "followUp", 这句.id, 这句.replyTerminal)
       } catch (e) {
         if (这句.id) return [这句.id]
         this.emit({ kind: "notice", sessionId, text: `这句没能发出去（${e instanceof Error ? e.message : String(e)}）：${这句.文}` })
@@ -3653,7 +3687,7 @@ ${描述}`
     // ④ 这句起新的一轮（没停住就排在最前）
     let 起跑: Promise<void> | undefined
     try {
-      起跑 = this.送一轮(sessionId, 这句.文, 这句.图, "followUp", 这句.id)
+      起跑 = this.送一轮(sessionId, 这句.文, 这句.图, "followUp", 这句.id, 这句.replyTerminal)
     } catch {
       // 会话在这期间没了：这句与其余全部交回，不许丢
       return this.交回(sessionId, [这句, ...其余])
@@ -3687,7 +3721,7 @@ ${描述}`
     try {
       for (const x of 其余) {
         try {
-          this.送一轮(sessionId, x.文, x.图, "followUp", x.id)
+          this.送一轮(sessionId, x.文, x.图, "followUp", x.id, x.replyTerminal)
         } catch (e) {
           if (x.id) 没排回.push(x.id)
           else this.emit({ kind: "notice", sessionId, text: `这句没能重新排上（${e instanceof Error ? e.message : String(e)}）：${x.文}` })

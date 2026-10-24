@@ -106,11 +106,28 @@ it('keeps a pasted multiline paragraph as one turn and can recall it from histor
 it('summarizes tools, expands them with Tab and keeps failures visible', async () => {
   const f = fixture(); f.ui.toolStart({ toolCallId: 't1', toolName: 'bash', input: { command: 'printf demo' } })
   f.ui.toolEnd({ toolCallId: 't1', toolName: 'bash', isError: false, text: Array.from({ length: 12 }, (_, i) => `RESULT_${i}`).join('\n'), truncated: false })
-  await f.flush(); expect(f.text()).toContain('RESULT_0'); expect(f.text()).not.toContain('RESULT_11'); expect(f.text()).toContain('省略')
+  await f.flush(); expect(f.text()).not.toContain('RESULT_0'); expect(f.text()).not.toContain('RESULT_11'); expect(f.text()).toContain('运行命令')
   f.input('\t'); await f.flush(); expect(f.text()).toContain('RESULT_11')
   f.ui.toolStart({ toolCallId: 't2', toolName: 'read', input: { path: '/missing' } })
   f.ui.toolEnd({ toolCallId: 't2', toolName: 'read', isError: true, text: 'ENOENT missing', truncated: false })
   await f.flush(); expect(f.text()).toContain('失败'); expect(f.text()).toContain('ENOENT')
+})
+it('uses only a prompt marker for historical questions and a light bullet for streamed answers', async () => {
+  const f = fixture(); f.input('你是什么模型？'); f.input('\r'); f.ui.reply('我是 DeepSeek Flash。'); await f.flush()
+  expect(f.text()).toContain('❯ 你是什么模型？'); expect(f.text()).toContain('● 我是 DeepSeek Flash。')
+  expect(f.text()).not.toContain('› 你'); expect(f.text()).not.toContain('● DAWN'); expect(f.text()).not.toContain('你：')
+  f.resize(38, 20); f.ui.reply('\n\n```python\nprint("STILL_CODE")\n```'); await f.flush()
+  expect(f.text()).toContain('STILL_CODE'); expect(f.text()).toContain('> DAWN')
+})
+it('keeps recovered errors and original-output links visible with collapsed tools', async () => {
+  const f = fixture(100, 32)
+  f.ui.restore({ items: [
+    { kind: 'tool', id: 'failed', name: 'read', input: { path: '/missing' }, result: 'RESTORED_ENOENT', isError: true },
+    { kind: 'tool', id: 'trimmed', name: 'bash', input: { command: 'cat huge' }, result: 'part', truncated: true, fullOutputPath: '/tmp/full-output' },
+  ] as never, pictures: [], truncated: false })
+  await f.flush()
+  expect(f.text()).toContain('失败'); expect(f.text()).toContain('RESTORED_ENOENT')
+  expect(f.text()).toContain('工具输出已截断'); expect(f.text()).toContain('/tmp/full-output')
 })
 it('scrolls without stealing the reader back on streamed output and resumes on Ctrl-End', async () => {
   const f = fixture(); f.ui.reply(Array.from({ length: 70 }, (_, i) => `line ${i}`).join('\n\n')); await f.flush()

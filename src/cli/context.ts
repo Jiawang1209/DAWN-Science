@@ -43,7 +43,8 @@ export async function openCliContext(agentId?: string, resume?: string | true) {
     cliHome: home, ...(process.env.DAWN_MODELS_JSON ? { modelsPath: process.env.DAWN_MODELS_JSON } : {}),
   })
   const call = async <T = unknown>(operation: Op, input: unknown): Promise<T> => {
-    const response = await workbench.server.handle(operation, input)
+    const sessionId = (input as { sessionId?: string } | undefined)?.sessionId
+    const response = await workbench.nativeRuntime.withTerminalReply(sessionId ?? '', () => workbench.server.handle(operation, input))
     if (!response.ok) throw new Error(response.error.message)
     return response.data as T
   }

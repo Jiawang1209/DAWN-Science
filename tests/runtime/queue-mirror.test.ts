@@ -47,6 +47,7 @@ function 摆一段(opts: { inFlight?: number; 慢收?: Promise<void>; pi在跑?:
   }
   内部.sessions.set("s1", {
     session: pi,
+    setTerminalReply() {},
     inFlight: opts.inFlight ?? 1,
     pending: undefined,
     stuck: { reset() {} },

@@ -147,7 +147,7 @@ export class CliTui {
         else { this.transcript.reply(item.text); this.transcript.finish() }
       } else if (item.kind === 'tool') {
         this.transcript.toolStart({ toolCallId: item.id, toolName: item.name, input: item.input })
-        this.transcript.toolEnd({ toolCallId: item.id, toolName: item.name, text: item.result ?? '', isError: item.isError ?? false, truncated: false })
+        this.transcript.toolEnd({ toolCallId: item.id, toolName: item.name, text: item.result ?? '', isError: item.isError ?? false, truncated: item.truncated ?? Boolean(item.fullOutputPath), ...(item.fullOutputPath ? { fullOutputPath: item.fullOutputPath } : {}) })
       } else if (item.kind === 'compaction') this.transcript.notice('历史上下文已压缩：' + item.summary)
     }
     for (const picture of history.pictures) this.transcript.image(picture)

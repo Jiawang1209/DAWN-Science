@@ -24,7 +24,7 @@ export type 历史消息 =
       content: ({ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; arguments: unknown } | { type: "thinking" })[]
       timestamp?: number
     }
-  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[]; timestamp?: number }
+  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[]; isError?: boolean; details?: { truncation?: { truncated?: boolean }; fullOutputPath?: string }; timestamp?: number }
   /** 不是 pi 的消息：`getBranch()` 里的 `compaction` 条目，`history()` 自己造的记号（2026-09-27） */
   | { role: "compaction"; summary: string; tokensBefore: number }
 
@@ -91,6 +91,11 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
     }
     if (m.role === "toolResult") {
       const 条 = 待补结果.get(m.toolCallId)
+      const metadata = {
+        ...(typeof m.isError === 'boolean' ? { isError: m.isError } : {}),
+        ...(m.details?.truncation?.truncated ? { truncated: true } : {}),
+        ...(typeof m.details?.fullOutputPath === 'string' && m.details.fullOutputPath ? { fullOutputPath: m.details.fullOutputPath } : {}),
+      }
       // **没见过对应调用的结果也照记**——宁可多一条，不可丢一条
       if (!条) {
         出.push({
@@ -99,11 +104,13 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
           name: m.toolName,
           input: undefined,
           result: 取文本(m.content),
+          ...metadata,
           ...时刻(m),
         })
         continue
       }
       条.result = 取文本(m.content)
+      Object.assign(条, metadata)
     }
   }
   return 出.map((item): RestoredItem => {

@@ -16,6 +16,17 @@ const dirs: string[] = []
 afterEach(() => dirs.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })))
 
 describe("案例字段跨运行时和转录", () => {
+  it.each([false, true])('retains upstream truncation and the original output path (event budget exceeded=%s)', overBudget => {
+    const rt = new NativeRuntime({}), events: AgentEvent[] = []
+    const dir = mkdtempSync(join(tmpdir(), 'dawn-upstream-output-')); dirs.push(dir)
+    ;(rt as any).sessions.set('s', { sessionDir: dir })
+    rt.attach('s', event => events.push(event))
+    ;(rt as any).translate('s', { type: 'tool_execution_end', toolName: 'bash', toolCallId: 'short-lines', result: {
+      content: [{ type: 'text', text: (overBudget ? 'x'.repeat(20000) : '') + '[Showing lines 1-2000. Full output: /tmp/original-sdk-output]' }],
+      details: { truncation: { truncated: true }, fullOutputPath: '/tmp/original-sdk-output' },
+    } })
+    expect(events.find(e => e.kind === 'tool_end')).toMatchObject({ truncated: true, fullOutputPath: '/tmp/original-sdk-output' })
+  })
   it("实时工具正文照常截断，独立案例字段完整进入协议、增量和快照", () => {
     const rt = new NativeRuntime({})
     const internal = rt as unknown as { sessions: Map<string, unknown>; translate: (id: string, event: unknown) => void }

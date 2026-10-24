@@ -6,6 +6,15 @@ import { describe, expect, it } from "vitest"
 import { 还原历史, 消息转历史 } from "../../src/runtime/history.js"
 
 describe("还原历史", () => {
+  it('preserves failures and truncation metadata for matched and orphaned historical tool results', () => {
+    const r = 消息转历史([
+      { role: 'assistant', content: [{ type: 'toolCall', id: 'failed', name: 'read', arguments: { path: '/missing' } }] },
+      { role: 'toolResult', toolCallId: 'failed', toolName: 'read', isError: true, content: [{ type: 'text', text: 'ENOENT' }] },
+      { role: 'toolResult', toolCallId: 'orphan', toolName: 'bash', isError: false, content: [{ type: 'text', text: 'part' }], details: { truncation: { truncated: true }, fullOutputPath: '/tmp/full-output' } },
+    ] as never)
+    expect(r[0]).toMatchObject({ isError: true, result: 'ENOENT' })
+    expect(r[1]).toMatchObject({ isError: false, truncated: true, fullOutputPath: '/tmp/full-output' })
+  })
   it("用户话、agent 回复、工具调用按先后排；结果补回那次调用；带时刻（毫秒）", () => {
     const r = 消息转历史([
       { role: "user", content: "做个 Cox 回归", timestamp: 1_000 },

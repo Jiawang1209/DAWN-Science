@@ -1,3 +1,4 @@
+import type { TerminalSearchRequest } from './terminal-keys.js'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { WorkbenchClient } from './client.js'
 /**
@@ -50,6 +51,10 @@ export function TerminalDock({
 }) {
   const chunks = useStore($dockChunks)
   const returnTip = useId()
+  const [search, setSearch] = useState<{ terminalId: string; request: TerminalSearchRequest }>()
+  const requestSearch = (kind: TerminalSearchRequest['kind']) => { if (currentId) setSearch(old => ({ terminalId: currentId, request: { sequence: (old?.request.sequence ?? 0) + 1, kind } })) }
+  useEffect(() => { setSearch(undefined) }, [currentId])
+  const searchRequest = search && search.terminalId === currentId ? search.request : undefined
   const [agentState, setAgentState] = useState<{ terminalId: string; state: TerminalAgentState }>()
   const reportState = useCallback((state: TerminalAgentState) => { if (currentId) setAgentState({ terminalId: currentId, state }) }, [currentId])
   const exited = terminals.find(x => x.sessionId === currentId)?.state === 'exited'
@@ -86,6 +91,10 @@ export function TerminalDock({
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
+        {currentId ? <div className="terminal-search-actions">
+          <Button variant="ghost" size="sm" aria-keyshortcuts="Meta+f Control+f" onClick={() => requestSearch('content')}>{t('搜索历史')}</Button>
+          <Button variant="ghost" size="sm" disabled={exited} aria-keyshortcuts="Control+r" onClick={() => requestSearch('input')}>{t('找回输入')}</Button>
+        </div> : null}
         {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} exited={exited} onState={reportState} /> : null}
         {fullPage ? <span className="conv-action-tip-wrap terminal-return">
           <Button variant="outline" size="icon" className="terminal-return-button" disabled={returning} aria-busy={returning} onClick={onCloseDock}
@@ -119,9 +128,9 @@ export function TerminalDock({
         ) : currentId ? (
           <>
             <div className="dock-shell">
-              {client ? <TerminalImageShell key={currentId} client={client} terminalId={currentId}
+              {client ? <TerminalImageShell searchRequest={searchRequest} key={currentId} client={client} terminalId={currentId}
                 state={!exited && agentState?.terminalId === currentId ? agentState.state : { mode: 'normal' }} chunks={chunks} onInput={data => { if (!exited) onInput(data) }} onResize={onResize} />
-                : <TerminalPane key={currentId} chunks={chunks} onInput={exited ? undefined : onInput} onResize={onResize} />}
+                : <TerminalPane searchRequest={searchRequest} key={currentId} chunks={chunks} onInput={exited ? undefined : onInput} onResize={onResize} />}
             </div>
           </>
         ) : (

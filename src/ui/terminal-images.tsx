@@ -1,3 +1,4 @@
+import type { TerminalSearchRequest } from './terminal-keys.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { WorkbenchClient } from './client.js'
@@ -24,7 +25,8 @@ async function encode(file: File) {
   return { name: (file.name || t("粘贴的图片")).slice(0, 120), mimeType: file.type, data: url.slice(url.indexOf(',') + 1) }
 }
 
-export function TerminalImageShell({ client, terminalId, state, chunks, onInput, onResize }: {
+export function TerminalImageShell({ client, terminalId, state, chunks, onInput, onResize, searchRequest }: {
+  searchRequest?: TerminalSearchRequest | undefined
   client: Pick<WorkbenchClient, 'get'>; terminalId: string; state: TerminalAgentState; chunks: readonly string[]
   onInput: (data: string) => void; onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
@@ -90,7 +92,7 @@ export function TerminalImageShell({ client, terminalId, state, chunks, onInput,
       if (state.mode === 'dawn') void add(files)
     }}
     onKeyDownCapture={event => { if (busy.current && event.key === 'Enter') { event.preventDefault(); event.stopPropagation() } }}>
-    <div className="terminal-image-screen"><TerminalPane agentEditing={state.mode === 'dawn'} chunks={chunks} onResize={onResize} readImage={readImage} onOpenImage={setPreview} onContextAnchor={setContextAnchor}
+    <div className="terminal-image-screen"><TerminalPane searchRequest={searchRequest} agentEditing={state.mode === 'dawn'} chunks={chunks} onResize={onResize} readImage={readImage} onOpenImage={setPreview} onContextAnchor={setContextAnchor}
       onInput={data => { if (!(busy.current && /[\r\n]/.test(data))) onInput(data) }} /></div>
     {state.mode === 'dawn' && state.sessionId && contextAnchor ? <TerminalContextMeter key={state.sessionId} client={client} sessionId={state.sessionId} {...contextAnchor} /> : null}
     {pending.length || working || error ? <div className="terminal-attachment-tray" aria-label={t("终端待发图片")}>

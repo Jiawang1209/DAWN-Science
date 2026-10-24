@@ -5,3 +5,13 @@ export function dawnEditorKey(event: Pick<KeyboardEvent, 'type' | 'key' | 'shift
     && !event.ctrlKey && !event.metaKey && !event.isComposing && event.keyCode !== 229) return '\x1b[13;2u'
   return undefined
 }
+
+export type TerminalSearchRequest = { sequence: number; kind: 'content' | 'input' }
+/** Only terminal-local shortcuts; composition and modified Shell editing remain intact. */
+export function terminalSearchKey(event: Pick<KeyboardEvent, 'type' | 'key' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey' | 'isComposing' | 'keyCode'>): TerminalSearchRequest['kind'] | undefined {
+  if (event.type !== 'keydown' || event.isComposing || event.keyCode === 229 || event.altKey) return
+  const key = event.key.toLowerCase()
+  if (key === 'f' && (event.metaKey || event.ctrlKey)) return 'content'
+  if (key === 'r' && event.ctrlKey && !event.metaKey && !event.shiftKey) return 'input'
+  return
+}

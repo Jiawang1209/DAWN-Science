@@ -25,6 +25,8 @@ Agent 中：
   Enter                   发送当前输入
   Shift/Alt+Enter          换行（内置终端支持 Shift+Enter）
   ↑ / ↓                   编辑或浏览输入历史
+  Ctrl-Shift-F            搜索当前记录；Enter 下一个，Shift-Enter 上一个，Esc 关闭
+  Ctrl-R                  搜索输入历史；Enter 填入草稿，Esc 取消
   Tab                     展开 / 收起工具详情
   PgUp / PgDn             浏览会话记录；End 回到底部
   Ctrl-L                  刷新当前终端界面

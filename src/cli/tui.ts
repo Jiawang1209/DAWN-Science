@@ -1,3 +1,4 @@
+import { InputHistorySearch } from './input-history.js'
 import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, visibleWidth, type Terminal, type Component, type TuiMouseEvent } from '@earendil-works/pi-tui'
 import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
 import { plain } from './presentation.js'
@@ -9,6 +10,9 @@ type Options = { model: string; workspace: string; color: boolean; terminal?: Te
   onDraftChange?: () => void; onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
 const localCommand = (text: string) => /^\/(exit|quit|help|status)$/.test(text.trim())
 const INPUT_HELP = 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'
+class SearchAwareTui extends TuiAltScreen {
+  get overlayFocused() { return this.isOverlayFocused() }
+}
 class PromptEditor extends Editor {
   ghost = ''
   placeholder?: () => string
@@ -37,7 +41,7 @@ class PromptEditor extends Editor {
 }
 /** Interactive UI owns input only while DAWN is active; Shell and pipe mode remain separate. */
 export class CliTui {
-  private readonly tui: TuiAltScreen
+  private readonly tui: SearchAwareTui
   private readonly editor: PromptEditor
   private readonly transcript: CliTranscript
   private readonly scroll: ScrollView
@@ -50,6 +54,7 @@ export class CliTui {
   private firstPrompt = true
   private suggestion = ''
   private headerRows = 0
+  private readonly inputs: string[] = []
   constructor(private readonly options: Options) {
     const native = options.terminal ?? new ProcessTerminal()
     this.transcript = new CliTranscript(options.color)
@@ -59,7 +64,7 @@ export class CliTui {
       const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value
     } })
     const { accent, dim, bold } = this.transcript.style
-    this.tui = new TuiAltScreen(this.terminal, true, undefined, {
+    this.tui = new SearchAwareTui(this.terminal, true, undefined, {
       scrollToEndIndicator: () => accent('↓ 回到底部'), copyOnSelect: false,
       copySelection: async text => {
         const clipboard = getNativeClipboard()
@@ -77,7 +82,7 @@ export class CliTui {
       if (!text.trim()) return
       this.firstPrompt = false; this.suggestion = ''
       if (!localCommand(text) && !this.state.permission && !this.state.question) {
-        this.editor.addToHistory(text); this.transcript.user(text)
+        this.rememberInput(text); this.transcript.user(text)
       }
       this.scroll.scrollToEnd(); options.onSubmit(text); this.tui.requestRender()
     }
@@ -88,7 +93,7 @@ export class CliTui {
         truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''),
         truncateToWidth(dim(plain(options.workspace)), width, ''),
         truncateToWidth(dim(INPUT_HELP), width, ''),
-        truncateToWidth(dim((options.contextButton ? '可粘贴或拖入图片 · ' : '') + '→ 采纳浅灰建议，再按 Enter 发送 · /help 查看帮助'), width, ''),
+        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · Ctrl+R 找回输入 · → 采纳建议 · /help 帮助'), width, ''),
       ]
       this.headerRows = lines.length
       return lines
@@ -115,12 +120,6 @@ export class CliTui {
       if (matchesKey(data, 'ctrl+shift+c') || matchesKey(data, 'super+c') || matchesKey(data, 'ctrl+c') && this.tui.hasActiveSelection()) {
         void this.tui.copyActiveSelectionToClipboard(); return { consume: true }
       }
-      if (matchesKey(data, 'ctrl+c')) {
-        if (!this.state.busy && this.editor.getExpandedText()) { this.editor.setText(''); this.tui.requestRender() }
-        else options.onInterrupt()
-        return { consume: true }
-      }
-      if (matchesKey(data, 'ctrl+d') && !this.editor.getExpandedText() && !this.state.busy) { options.onExit(); return { consume: true } }
       if (matchesKey(data, 'ctrl+l')) {
         const buttonMotion = Boolean(process.env.TMUX || process.env.ZELLIJ || process.env.STY || /^(tmux|screen)/.test(process.env.TERM ?? ''))
         this.terminal.write('\x1b[?1049h\x1b[?7l\x1b[?2004h\x1b[?1000h' + (buttonMotion ? '\x1b[?1002h' : '\x1b[?1003h') + '\x1b[?1006h\x1b[?1004h')
@@ -128,6 +127,14 @@ export class CliTui {
         else if ((this.terminal as Terminal & { modifyOtherKeysActive?: boolean }).modifyOtherKeysActive) this.terminal.write('\x1b[>4;2m')
         this.tui.renderNow(true); return { consume: true }
       }
+      if (this.tui.overlayFocused) return undefined
+      if (matchesKey(data, 'ctrl+r')) { this.searchInputs(); return { consume: true } }
+      if (matchesKey(data, 'ctrl+c')) {
+        if (!this.state.busy && this.editor.getExpandedText()) { this.editor.setText(''); this.tui.requestRender() }
+        else options.onInterrupt()
+        return { consume: true }
+      }
+      if (matchesKey(data, 'ctrl+d') && !this.editor.getExpandedText() && !this.state.busy) { options.onExit(); return { consume: true } }
       if (matchesKey(data, 'ctrl+end')) { this.scroll.scrollToEnd(); this.tui.requestRender(); return { consume: true } }
       if (matchesKey(data, 'right') && this.suggestion && !this.editor.getText() && !this.state.busy && !this.state.permission && !this.state.question) {
         const text = this.suggestion; this.suggestion = ''; this.editor.setText(text); this.tui.requestRender(); return { consume: true }
@@ -139,10 +146,23 @@ export class CliTui {
       return undefined
     })
   }
+  private rememberInput(text: string) {
+    this.editor.addToHistory(text)
+    const prior = this.inputs.indexOf(text)
+    if (prior >= 0) this.inputs.splice(prior, 1)
+    this.inputs.unshift(text)
+    this.inputs.splice(100)
+  }
+  private searchInputs() {
+    let overlay: import('@earendil-works/pi-tui').OverlayHandle | undefined
+    const close = () => { overlay?.hide(); this.tui.requestRender() }
+    const search = new InputHistorySearch([...this.inputs], text => { close(); this.editor.setText(text); this.tui.requestRender() }, close, () => this.tui.requestRender())
+    overlay = this.tui.showOverlay(search, { anchor: 'center', width: '75%', minWidth: 24, maxHeight: '80%' })
+  }
   private imageFrame(target: Terminal) {
     if (!this.scroll) return
     const top = this.headerRows, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
-    const images = this.transcript.placements.filter(x => x.row >= start && x.row + x.height <= start + height)
+    const images = (this.tui.overlayFocused ? [] : this.transcript.placements).filter(x => x.row >= start && x.row + x.height <= start + height)
       .slice(-24).map(x => ({ ...x, row: top + x.row - start }))
     target.write(`\x1b]777;dawn-viewport;${JSON.stringify({ images })}\x07`)
     if (this.options.contextButton) target.write(`\x1b]777;dawn-context;${JSON.stringify(this.contextPlacement ? { ...this.contextPlacement, revision: this.usageRevision } : null)}\x07`)
@@ -182,7 +202,7 @@ export class CliTui {
     if (history.truncated) this.transcript.notice('较早记录已收起，返回会话可查看完整过程；模型仍使用原会话上下文。')
     for (const item of history.items) {
       if (item.kind === 'text') {
-        if (item.who === 'user') { this.transcript.user(item.text); this.editor.addToHistory(item.text) }
+        if (item.who === 'user') { this.transcript.user(item.text); this.rememberInput(item.text) }
         else { this.transcript.reply(item.text); this.transcript.finish() }
       } else if (item.kind === 'tool') {
         this.transcript.toolStart({ toolCallId: item.id, toolName: item.name, input: item.input })

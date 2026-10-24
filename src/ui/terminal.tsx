@@ -1,3 +1,4 @@
+import { TerminalFindBar } from './terminal-find.js'
 /**
  * 终端窗格（Task 2.20）。
  *
@@ -8,10 +9,10 @@
  * 组件只做三件事：建实例、把字节写进去、把键盘敲的送出来。
  * **不解析、不过滤字节**——那是 xterm 的职责，中间再加一层只会引入第二套解释。
  */
-import { dawnEditorKey } from './terminal-keys.js'
+import { terminalSearchKey, type TerminalSearchRequest, dawnEditorKey } from './terminal-keys.js'
 import { terminalImageDecorations, type TerminalPicture } from './terminal-image-decorations.js'
 import { terminalContextDecoration, type ContextAnchor } from './terminal-context-decoration.js'
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useStore } from "@nanostores/react"
 import { $theme, resolveTheme } from "./state/theme.js"
 import { t } from "./i18n/index.js"
@@ -48,7 +49,9 @@ export function TerminalPane({
   onOpenImage,
   agentEditing = false,
   onContextAnchor,
+  searchRequest,
 }: {
+  searchRequest?: TerminalSearchRequest | undefined
   onContextAnchor?: ((anchor: ContextAnchor | undefined) => void) | undefined
   agentEditing?: boolean | undefined
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
@@ -58,6 +61,12 @@ export function TerminalPane({
   onOpenImage?: ((image: TerminalPicture) => void) | undefined
   onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
+  const [findOpen, setFindOpen] = useState(false), [findText, setFindText] = useState('')
+  const [findResult, setFindResult] = useState({ resultIndex: -1, resultCount: 0 })
+  const search = useRef<import('@xterm/addon-search').SearchAddon | undefined>(undefined)
+  const searchRef = useRef(searchRequest); searchRef.current = searchRequest
+  const handledSearch = useRef(0)
+  const findState = useRef({ open: findOpen, text: findText }); findState.current = { open: findOpen, text: findText }
   const imageRef = useRef({ readImage, onOpenImage }); imageRef.current = { readImage, onOpenImage }
   const contextRef = useRef(onContextAnchor); contextRef.current = onContextAnchor
   const host = useRef<HTMLDivElement>(null)
@@ -97,11 +106,12 @@ export function TerminalPane({
     // 动态 import：xterm 只在真的要显示终端时才加载。
     // 它带样式与字体度量，放进首屏包会拖慢启动，而多数会话根本没有终端。
     void (async () => {
-      const [{ Terminal }, { FitAddon }, { Unicode11Addon }, { WebLinksAddon }] = await Promise.all([
+      const [{ Terminal }, { FitAddon }, { Unicode11Addon }, { WebLinksAddon }, { SearchAddon }] = await Promise.all([
         import("@xterm/xterm"),
         import("@xterm/addon-fit"),
         import("@xterm/addon-unicode11"),
         import("@xterm/addon-web-links"),
+        import("@xterm/addon-search"),
       ])
       if (disposed) return
       instance = new Terminal({
@@ -146,6 +156,9 @@ export function TerminalPane({
       instance.unicode.activeVersion = "11"
       // 输出里的 URL 可点。agent 经常吐出文档链接与报错页地址
       instance.loadAddon(new WebLinksAddon())
+      const finder = new SearchAddon({ highlightLimit: 1000 })
+      instance.loadAddon(finder); search.current = finder
+      finder.onDidChangeResults(result => { if (!disposed) setFindResult(result) })
       instance.open(el)
       disposeContext = terminalContextDecoration(instance, anchor => contextRef.current?.(anchor))
       if (imageRef.current.readImage) disposeImages = terminalImageDecorations(instance,
@@ -153,6 +166,8 @@ export function TerminalPane({
       instance.onResize(size => resizeRef.current?.(size.cols, size.rows))
       addon.fit()
       instance.attachCustomKeyEventHandler(event => {
+        const kind = terminalSearchKey(event)
+        if (kind) { event.preventDefault(); openSearch(kind); return false }
         if (event.metaKey && event.key.toLowerCase() === 'c' && instance?.getSelection()) return true
         const data = dawnEditorKey(event, editingRef.current && instance?.buffer.active.type === 'alternate')
         if (!data) return true
@@ -162,7 +177,7 @@ export function TerminalPane({
       term.current = instance
       fit.current = addon
       // 挂载前已经堆着的历史要补写，否则打开 dock 只能看到之后的输出
-      flush(); refreshAgent()
+      flush(); refreshAgent(); applySearchRequest()
     })().catch((err: unknown) => {
       /**
        * **失败必须出声**（规格 7.5）。
@@ -193,17 +208,41 @@ export function TerminalPane({
       instance?.dispose()
       term.current = undefined
       fit.current = undefined
+      search.current = undefined
       written.current = 0
     }
     // 只在挂载时建一次实例。chunks 的增量由下面那个 effect 负责写入
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  function closeFind() { setFindOpen(false); search.current?.clearDecorations(); term.current?.focus() }
+  function openSearch(kind: TerminalSearchRequest['kind']) {
+    const terminal = term.current
+    if (!terminal) return
+    if (kind === 'input' || editingRef.current && terminal.buffer.active.type === 'alternate') {
+      closeFind(); inputRef.current?.(kind === 'input' ? '\x12' : '\x1b[102;6u'); terminal.focus()
+    } else { setFindOpen(true) }
+  }
+  function applySearchRequest() {
+    const request = searchRef.current
+    if (!term.current || !request || request.sequence === handledSearch.current) return
+    handledSearch.current = request.sequence; openSearch(request.kind)
+  }
+  function find(text: string, direction: 1 | -1 = 1, incremental = false) {
+    if (!text) { search.current?.clearDecorations(); setFindResult({ resultIndex: -1, resultCount: 0 }); return }
+    const el = host.current
+    const accent = el ? getComputedStyle(el).getPropertyValue('--dawn-accent').trim() : ''
+    const options = { incremental, decorations: { matchBorder: accent, matchOverviewRuler: accent, activeMatchBorder: accent, activeMatchColorOverviewRuler: accent } }
+    const found = direction > 0 ? search.current?.findNext(text, options) : search.current?.findPrevious(text, options)
+    if (!found) setFindResult({ resultIndex: -1, resultCount: 0 })
+  }
+  useEffect(applySearchRequest, [searchRequest])
+  useEffect(() => { setFindOpen(false); setFindText(''); search.current?.clearDecorations() }, [agentEditing])
   function flush() {
     const t = term.current
     if (!t) return
     const 现 = chunksRef.current // 读最新,不读闭包里可能过时的 chunks（J17）
-    for (let i = written.current; i < 现.length; i++) t.write(现[i]!)
+    for (let i = written.current; i < 现.length; i++) t.write(现[i]!, () => { if (term.current === t && findState.current.open) find(findState.current.text, 1, true) })
     written.current = 现.length
   }
 
@@ -246,5 +285,8 @@ export function TerminalPane({
     return () => ro.disconnect()
   }, [])
 
-  return <div className="term-host" ref={host} />
+  return <div className="terminal-pane">
+    <div className="term-host" ref={host} />
+    {findOpen ? <TerminalFindBar text={findText} result={findResult} onQuery={text => { setFindText(text); find(text, 1, true) }} onNavigate={direction => find(findText, direction)} onClose={closeFind} /> : null}
+  </div>
 }

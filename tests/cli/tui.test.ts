@@ -5,6 +5,45 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('searches sent input and restores the exact multiline draft without sending it', async () => {
+  const f = fixture(100, 28)
+  f.input('旧问题 数据规模'); f.input('\r')
+  f.input('第二条'); f.input('\x1b[13;2u'); f.input('中文换行'); f.input('\r')
+  f.input('KEEP_DRAFT'); f.input('\x12'); await f.flush()
+  expect(f.text()).toContain('搜索输入历史'); expect(f.text()).toContain('旧问题 数据规模')
+  f.input('中文'); await f.flush(); expect(f.text()).toContain('第二条')
+  f.input('\r'); await f.flush()
+  expect(f.ui.draft()).toBe('第二条\n中文换行'); expect(f.submit).toHaveBeenCalledTimes(2)
+})
+it('cancels history search without losing a busy draft, and does not leak search keys into the Agent', async () => {
+  const f = fixture(80, 24); f.input('ORIGINAL_QUESTION'); f.input('\r')
+  f.ui.setState({ busy: true }); f.input('KEEP_BUSY_DRAFT'); f.input('\x12'); f.input('MISSING_HISTORY'); await f.flush()
+  expect(f.text()).toContain('没有匹配的输入'); f.input('\r'); expect(f.submit).toHaveBeenCalledTimes(1)
+  f.input('\x1b'); await f.flush(); expect(f.ui.draft()).toBe('KEEP_BUSY_DRAFT')
+  f.input('\x1b[102;6u'); f.input('ORIGINAL_QUESTION'); await f.flush()
+  expect(f.text()).toContain('1/1'); f.input('\x03'); expect(f.ui.draft()).toBe('KEEP_BUSY_DRAFT'); expect(f.interrupt).not.toHaveBeenCalled()
+  f.input('\x1b'); await f.flush(); expect(f.submit).toHaveBeenCalledTimes(1)
+})
+it('searches restored user input but never adopts assistant or tool output as input history', async () => {
+  const f = fixture(100, 28)
+  f.ui.restore({ items: [{ kind: 'text', who: 'user', text: '原图里有什么？' }, { kind: 'text', who: 'agent', text: 'ASSISTANT_ONLY' }] as never, pictures: [], truncated: false })
+  f.input('\x12'); f.input('原图'); await f.flush(); expect(f.text()).toContain('1/1')
+  f.input('\r'); expect(f.ui.draft()).toBe('原图里有什么？'); expect(f.submit).not.toHaveBeenCalled()
+})
+it.each(['\x12', '\x1b[102;6u'])('keeps image decorations out of the search overlay and restores them after %s closes', async key => {
+  const f = fixture(100, 28); f.ui.image({ id: 'original-picture', name: 'original.png' }); await f.flush()
+  const frame = () => JSON.parse([...f.bytes().matchAll(/\x1b\]777;dawn-viewport;([^\x07]+)\x07/g)].at(-1)![1]!)
+  expect(frame().images).toHaveLength(1)
+  f.input(key); await f.flush(); expect(frame().images).toHaveLength(0)
+  f.input('\x1b'); await f.flush(); expect(frame().images).toHaveLength(1)
+})
+it('refreshes the alternate-screen keyframe while search is open without consuming the draft', async () => {
+  const f = fixture(100, 28); f.input('KEEP_KEYFRAME_DRAFT'); f.input('\x12'); await f.flush()
+  const entries = () => [...f.bytes().matchAll(/\x1b\[\?1049h/g)].length
+  const before = entries(); f.input('\x0c'); await f.flush()
+  expect(entries()).toBeGreaterThan(before); expect(f.text()).toContain('搜索输入历史')
+  f.input('\x1b'); expect(f.ui.draft()).toBe('KEEP_KEYFRAME_DRAFT'); expect(f.submit).not.toHaveBeenCalled()
+})
 it('shows onboarding at the top and a non-editable first prompt hint that disappears on typing', async () => {
   const f = fixture(140, 28); await f.flush()
   const rows = f.text().split('\n'), prompt = rows.findIndex(row => row.includes('> DAWN'))

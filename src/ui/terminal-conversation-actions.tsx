@@ -37,11 +37,11 @@ export function TerminalConversationActions({ client, terminalId, sessionId, onF
   return <span className="export-anchor terminal-conversation-actions">
     <span className="conv-actions" role="group" aria-label={t('终端会话操作')}>
       <span className="conv-action-tip-wrap">
-        <Button variant="secondary" size="sm" aria-label={t('搜索历史')} aria-describedby={findTip} aria-keyshortcuts="Meta+f Control+f" onClick={onFind}><搜索图标 />{t('搜索历史')}</Button>
+        <Button variant="secondary" size="icon" aria-label={t('搜索历史')} aria-describedby={findTip} aria-keyshortcuts="Meta+f Control+f" onClick={onFind}><搜索图标 /></Button>
         <span id={findTip} role="tooltip" className="conv-action-tip">{t('搜索当前终端历史内容')}</span>
       </span>
       <span className="conv-action-tip-wrap">
-        <Button variant="secondary" size="sm" className="conv-export" aria-label={t('导出会话')} aria-describedby={exportTip} disabled={!client || !sessionId || exporting} aria-busy={exporting} onClick={() => void exportConversation()}><下载图标 />{t('导出会话')}</Button>
+        <Button variant="secondary" size="icon" className="conv-export" aria-label={t('导出会话')} aria-describedby={exportTip} disabled={!client || !sessionId || exporting} aria-busy={exporting} onClick={() => void exportConversation()}><下载图标 /></Button>
         <span id={exportTip} role="tooltip" className="conv-action-tip">{sessionId ? t('导出当前 DAWN 会话') : t('进入 DAWN 模式后可导出会话')}</span>
       </span>
     </span>

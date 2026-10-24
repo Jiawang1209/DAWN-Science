@@ -9118,5 +9118,3 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .terminal-find input { min-width: 60px; width: 220px; flex: 1; }
 .terminal-find [role="status"] { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); white-space: nowrap; }
 .terminal-conversation-actions { flex: 0 0 auto; }
-.terminal-conversation-actions .btn { white-space: nowrap; gap: var(--dawn-space-2); }
-.terminal-conversation-actions svg { width: 15px; height: 15px; }

@@ -6,19 +6,27 @@ import { usageLines, type CliUsage } from './usage.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal; contextButton?: boolean;
-  onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
+  onDraftChange?: () => void; onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
 const localCommand = (text: string) => /^\/(exit|quit|help|status)$/.test(text.trim())
+const INPUT_HELP = 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'
 class PromptEditor extends Editor {
+  ghost = ''
+  placeholder?: () => string
+  ghostStyle = (text: string) => text
   private gutter(width: number) { return Math.min(7, Math.max(0, width - 2)) }
   private bottom = ''
   protected override renderBottomBorder(width: number, hidden: number) {
     return this.bottom = super.renderBottomBorder(width, hidden)
   }
   override render(width: number) {
+    this.ghost = this.placeholder?.() ?? this.ghost
     const gutter = this.gutter(width), prefix = '> DAWN '.slice(0, gutter)
     return super.render(width - gutter).map((line, index) => {
       const lead = index === 1 ? this.borderColor(prefix)
         : index === 0 || line === this.bottom ? this.borderColor('─'.repeat(gutter)) : ' '.repeat(gutter)
+      if (index === 1 && !this.getText() && this.ghost) {
+        line = line.trimEnd() + this.ghostStyle(truncateToWidth(this.ghost, Math.max(0, width - gutter - 1), ''))
+      }
       return lead + line
     })
   }
@@ -30,7 +38,7 @@ class PromptEditor extends Editor {
 /** Interactive UI owns input only while DAWN is active; Shell and pipe mode remain separate. */
 export class CliTui {
   private readonly tui: TuiAltScreen
-  private readonly editor: Editor
+  private readonly editor: PromptEditor
   private readonly transcript: CliTranscript
   private readonly scroll: ScrollView
   private readonly terminal: Terminal
@@ -39,6 +47,9 @@ export class CliTui {
   private usageRevision = 0
   private contextPlacement: { row: number; col: number; width: number } | undefined
   private stopped = true
+  private firstPrompt = true
+  private suggestion = ''
+  private headerRows = 0
   constructor(private readonly options: Options) {
     const native = options.terminal ?? new ProcessTerminal()
     this.transcript = new CliTranscript(options.color)
@@ -64,17 +75,32 @@ export class CliTui {
     ], options.workspace))
     this.editor.onSubmit = text => {
       if (!text.trim()) return
+      this.firstPrompt = false; this.suggestion = ''
       if (!localCommand(text) && !this.state.permission && !this.state.question) {
         this.editor.addToHistory(text); this.transcript.user(text)
       }
       this.scroll.scrollToEnd(); options.onSubmit(text); this.tui.requestRender()
     }
-    this.editor.onChange = () => this.tui.requestRender()
-    const header: Component = { invalidate() {}, render: width => this.terminal.rows <= 12 ? [] : [truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''), truncateToWidth(dim(plain(options.workspace)), width, '')] }
-    const hint: Component = { invalidate() {}, render: width => this.terminal.rows <= 12 && !this.state.busy && !this.state.permission && !this.state.question ? [] : [truncateToWidth(dim(
-      this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认' : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
-        : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿'
-        : 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'), width, '')] }
+    this.editor.ghostStyle = dim
+    this.editor.onChange = () => { options.onDraftChange?.(); this.tui.requestRender() }
+    const header: Component = { invalidate() {}, render: width => {
+      const lines = this.terminal.rows <= 12 ? [] : [
+        truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''),
+        truncateToWidth(dim(plain(options.workspace)), width, ''),
+        truncateToWidth(dim(INPUT_HELP), width, ''),
+        truncateToWidth(dim((options.contextButton ? '可粘贴或拖入图片 · ' : '') + '→ 采纳浅灰建议，再按 Enter 发送 · /help 查看帮助'), width, ''),
+      ]
+      this.headerRows = lines.length
+      return lines
+    } }
+    const hint: Component = { invalidate() {}, render: width => {
+      const text = this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认'
+        : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
+        : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿' : ''
+      return text ? [truncateToWidth(dim(text), width, '')] : []
+    } }
+    this.editor.placeholder = () => this.state.busy || this.state.permission || this.state.question ? ''
+      : this.suggestion || (this.firstPrompt ? INPUT_HELP : '继续提问…')
     const footer: Component = { invalidate() {}, render: width => {
       const slot = options.contextButton && width >= 10 ? ' '.repeat(10) : undefined
       const lines = usageLines(this.usage, width, options.model, slot)
@@ -103,6 +129,9 @@ export class CliTui {
         this.tui.renderNow(true); return { consume: true }
       }
       if (matchesKey(data, 'ctrl+end')) { this.scroll.scrollToEnd(); this.tui.requestRender(); return { consume: true } }
+      if (matchesKey(data, 'right') && this.suggestion && !this.editor.getText() && !this.state.busy && !this.state.permission && !this.state.question) {
+        const text = this.suggestion; this.suggestion = ''; this.editor.setText(text); this.tui.requestRender(); return { consume: true }
+      }
       if (matchesKey(data, 'tab') && !this.editor.getText().startsWith('/')) { this.transcript.toggleTools(); this.tui.requestRender(); return { consume: true } }
       if (matchesKey(data, 'enter') && this.state.busy && !this.state.permission && !this.state.question && !localCommand(this.editor.getExpandedText())) {
         this.tui.flash('本轮仍在运行；草稿已保留，Ctrl-C 可停止。'); return { consume: true }
@@ -112,7 +141,7 @@ export class CliTui {
   }
   private imageFrame(target: Terminal) {
     if (!this.scroll) return
-    const top = this.terminal.rows <= 12 ? 0 : 2, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
+    const top = this.headerRows, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
     const images = this.transcript.placements.filter(x => x.row >= start && x.row + x.height <= start + height)
       .slice(-24).map(x => ({ ...x, row: top + x.row - start }))
     target.write(`\x1b]777;dawn-viewport;${JSON.stringify({ images })}\x07`)
@@ -131,6 +160,7 @@ export class CliTui {
     this.tui.stop({ preserveScreen: true })
   }
   renderNow() { if (!this.stopped) this.tui.renderNow() }
+  setSuggestion(text: string) { this.suggestion = plain(text).replace(/[\r\n]/g, ' ').slice(0, 120); this.tui.requestRender() }
   setUsage(usage: CliUsage) { this.usage = usage; this.usageRevision++; this.tui.requestRender() }
   setState(state: State) {
     const waiting = state.permission && !this.state.permission || state.question && !this.state.question
@@ -147,6 +177,7 @@ export class CliTui {
   toolEnd(event: ToolEnd) { this.transcript.toolEnd(event); if (event.isError) this.scroll.scrollToEnd(); this.tui.requestRender() }
   image(event: Picture) { this.transcript.image(event); this.tui.requestRender() }
   restore(history: CliHistory) {
+    this.firstPrompt = false
     this.transcript.notice('已恢复原会话，继续之前的对话。')
     if (history.truncated) this.transcript.notice('较早记录已收起，返回会话可查看完整过程；模型仍使用原会话上下文。')
     for (const item of history.items) {

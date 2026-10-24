@@ -26,6 +26,27 @@ async function final(page: Page, sessionId: string) {
   }).toBe(true)
 }
 
+test('top onboarding and ghost suggestions keep one input and require explicit adoption before sending', async ({ dawn }) => {
+  const { page } = dawn, target = await open(page)
+  const screen = page.locator('.dock .xterm-screen'), rows = () => screen.locator('.xterm-rows > div').allTextContents()
+  const initial = await rows(), prompt = initial.find(row => row.includes('> DAWN'))!
+  expect(prompt).toContain('Enter 发送'); expect(initial.slice(0, 5).join('')).toContain('/exit 返回 Shell')
+  await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.press('Enter')
+  const userCount = () => page.evaluate(async sessionId => (await window.dawn!.invoke('subscribeSession', { sessionId }) as any).data.items.filter((x: any) => x.type === 'turn' && x.who === 'user').length, target.sessionId)
+  expect(await userCount()).toBe(0)
+  await submit(page, '帮我检查这份数据'); await final(page, target.sessionId)
+  await expect.poll(async () => (await rows()).find(row => row.includes('> DAWN'))).toContain('检查缺失值并说明处理方法')
+  await page.keyboard.press('Enter'); expect(await userCount()).toBe(1)
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(async () => (await rows()).find(row => row.includes('> DAWN'))).toContain('> DAWN 检查缺失值并说明处理方法')
+  expect(await userCount()).toBe(1)
+  await page.keyboard.press('Control+c'); await page.keyboard.type('自选后续问题')
+  await expect(screen).toContainText('> DAWN 自选后续问题')
+  expect((await rows()).find(row => row.includes('> DAWN'))).not.toContain('检查缺失值')
+  expect(await userCount()).toBe(1)
+  await expect(page.locator('.dock .xterm-helper-textarea')).toHaveCount(1)
+})
+
 test('keeps shortcuts above the editor and cumulative statistics centered at the bottom', async ({ dawn }) => {
   const { page } = dawn, target = await open(page)
   await submit(page, 'FOOTER_LAYOUT'); await final(page, target.sessionId)

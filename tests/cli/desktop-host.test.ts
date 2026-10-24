@@ -6,6 +6,21 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { AgentEvent } from '../../src/runtime/types.js'
 
+it('loads suggestions only for the authenticated bound session without exposing generic desktop operations', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-suggest-wire-'))
+  const suggest = vi.fn(async () => ({ text: '检查缺失值' })), call = vi.fn(async () => ({}))
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: root, suggest, call, attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t'), client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    expect(await client.suggest()).toEqual({ text: '检查缺失值' })
+    expect(await client.call('$suggest', { sessionId: 'another' })).toEqual({ text: '检查缺失值' })
+    expect(suggest).toHaveBeenCalledTimes(2); expect(call).not.toHaveBeenCalled()
+    await expect(client.call('suggestNextPrompt', { sessionId: 'another', turnId: 'a' })).rejects.toThrow()
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
 it('keeps large kernel images out of the bounded CLI socket and sends only a scoped image ID', async () => {
   const root = mkdtempSync(join(tmpdir(), 'dawn-image-wire-'))
   let publish!: (event: AgentEvent) => void

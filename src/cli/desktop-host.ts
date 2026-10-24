@@ -204,6 +204,7 @@ export class DesktopCliHost {
           const readable = pictures.filter(picture => { try { connection!.media.image(picture.id); return true } catch { return false } })
           result = { items: bounded, pictures: readable, truncated: bounded.length < all.length || originals.length > 12 || readable.length < pictures.length, warnings } satisfies CliHistory
         }
+        else if (frame.operation === '$suggest') result = await scope.suggest?.() ?? { text: '' }
         else if (frame.operation === '$usage') result = scope.usage?.() ?? {}
         else if (frame.operation === '$wait') { await scope.waitForIdle(); result = {} }
         else {

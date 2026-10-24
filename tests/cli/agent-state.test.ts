@@ -6,10 +6,11 @@ import type { SessionUsage } from '../../src/runtime/session-usage.js'
 
 const harness = vi.hoisted(() => ({
   context: undefined as unknown,
-  options: undefined as { onSubmit: (text: string) => void; onExit: () => void } | undefined,
+  options: undefined as { onSubmit: (text: string) => void; onExit: () => void; onDraftChange: () => void } | undefined,
   states: [] as { busy: boolean; permission?: boolean; question?: boolean }[],
   started: false,
   usages: [] as SessionUsage[],
+  suggestions: [] as string[], draft: '',
 }))
 vi.mock('../../src/cli/context.js', () => ({ openCliContext: async () => harness.context }))
 vi.mock('../../src/cli/tui.js', () => ({
@@ -18,6 +19,8 @@ vi.mock('../../src/cli/tui.js', () => ({
     start() { harness.started = true }
     stop() {}
     setState(state: (typeof harness.states)[number]) { harness.states.push({ ...state }) }
+    draft() { return harness.draft }
+    setSuggestion(text: string) { harness.suggestions.push(text) }
     setUsage(usage: SessionUsage) { harness.usages.push(usage) }
     notice() {}
     finish() {}
@@ -32,7 +35,7 @@ import { runCliAgent } from '../../src/cli/agent.js'
 afterEach(() => { vi.restoreAllMocks() })
 
 async function interactiveAgent() {
-  harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []
+  harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []; harness.suggestions = []; harness.draft = ''
   // Replace only the stream getters; the worker's actual terminal and signal
   // handlers are never driven by these controller tests.
   const input = Object.assign(new EventEmitter(), { isTTY: true, setRawMode: vi.fn(), pause: vi.fn() })
@@ -41,9 +44,10 @@ async function interactiveAgent() {
   vi.spyOn(process, 'stdout', 'get').mockReturnValue(output as unknown as typeof process.stdout)
   let emit!: (event: DesktopCliEvent) => void
   const call = vi.fn(async (_operation: string, _input: unknown) => ({}))
+  const suggest = vi.fn(async () => ({ text: '检查缺失值' }))
   const usage = vi.fn(async (): Promise<SessionUsage> => ({}))
   harness.context = {
-    call, usage, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
+    call, usage, suggest, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
     attach: (sink: typeof emit) => { emit = sink; return vi.fn() },
     onExit: () => vi.fn(), close: vi.fn(async () => {}), waitForIdle: vi.fn(async () => {}),
   }
@@ -54,7 +58,7 @@ async function interactiveAgent() {
     await new Promise<void>(resolve => setImmediate(resolve))
   }
   return {
-    call, usage, emit, submit,
+    call, usage, suggest, emit, submit,
     state: () => harness.states.at(-1),
     close: async () => { harness.options!.onExit(); await running },
   }
@@ -64,6 +68,53 @@ const pending: QuestionRecord = {
   requestId: 'question-state-test', state: 'pending',
   questions: [{ id: 'range', question: '选择分析范围？', options: [{ label: '全部' }, { label: '部分' }] }],
 }
+
+it('loads follow-ups only after idle, hides them for a draft, and does not send suggestions automatically', async () => {
+  const agent = await interactiveAgent()
+  try {
+    expect(agent.suggest).not.toHaveBeenCalled()
+    await agent.submit('检查数据'); agent.emit({ kind: 'turn_end', sessionId: 'state-test-session' })
+    expect(agent.suggest).not.toHaveBeenCalled()
+    agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(harness.suggestions.at(-1)).toBe('检查缺失值'))
+    harness.draft = 'MY_DRAFT'; harness.options!.onDraftChange()
+    expect(harness.suggestions.at(-1)).toBe('')
+    expect(agent.call.mock.calls.filter(([op]) => op === 'writeToSession')).toHaveLength(1)
+    harness.draft = ''; harness.options!.onDraftChange()
+    await vi.waitFor(() => expect(harness.suggestions.at(-1)).toBe('检查缺失值'))
+    expect(agent.suggest).toHaveBeenCalledOnce()
+  } finally { await agent.close() }
+})
+
+it('refreshes suggestions for a new round received from the same conversation without a local submit', async () => {
+  const agent = await interactiveAgent()
+  try {
+    await agent.submit('首轮'); agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(harness.suggestions.at(-1)).toBe('检查缺失值'))
+    agent.suggest.mockResolvedValue({ text: '绘制分布图' })
+    agent.emit({ kind: 'output', sessionId: 'state-test-session', data: 'GUI 发起的新一轮结果' })
+    expect(agent.state()).toMatchObject({ busy: true }); expect(harness.suggestions.at(-1)).toBe('')
+    agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(harness.suggestions.at(-1)).toBe('绘制分布图'))
+    expect(agent.suggest).toHaveBeenCalledTimes(2)
+  } finally { await agent.close() }
+})
+
+it.each([
+  { kind: 'thinking', sessionId: 'state-test-session', delta: 'thinking' },
+  { kind: 'notice', sessionId: 'state-test-session', text: '请求未完成', failed: true },
+] as const)('clears an old suggestion for an external $kind before any output', async event => {
+  const agent = await interactiveAgent()
+  try {
+    await agent.submit('首轮'); agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(harness.suggestions.at(-1)).toBe('检查缺失值'))
+    agent.suggest.mockResolvedValue({ text: '' }); agent.emit(event)
+    expect(agent.state()).toMatchObject({ busy: event.kind === 'thinking' }); expect(harness.suggestions.at(-1)).toBe('')
+    agent.emit({ kind: 'turn_end', sessionId: 'state-test-session' }); agent.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await vi.waitFor(() => expect(agent.suggest).toHaveBeenCalledTimes(2))
+    expect(harness.suggestions.at(-1)).toBe('')
+  } finally { await agent.close() }
+})
 
 it('refreshes the current model and context after model switches and compaction', async () => {
   const agent = await interactiveAgent()

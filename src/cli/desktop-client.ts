@@ -36,6 +36,7 @@ export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace
   try { metadata = await connected } catch (error) { socket.destroy(); throw error }
   return { ...metadata, call,
     history: () => call<CliHistory>('$history'),
+    suggest: () => call<{ text: string }>('$suggest'),
     usage: () => call<CliUsage>('$usage'),
     attach: (sink: (event: DesktopCliEvent) => void) => { sinks.add(sink); return () => { sinks.delete(sink) } },
     waitForIdle: async () => { await call('$wait') },

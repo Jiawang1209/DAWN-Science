@@ -5,6 +5,28 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('shows onboarding at the top and a non-editable first prompt hint that disappears on typing', async () => {
+  const f = fixture(140, 28); await f.flush()
+  const rows = f.text().split('\n'), prompt = rows.findIndex(row => row.includes('> DAWN'))
+  expect(rows[prompt]).toContain('Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell')
+  expect(rows.slice(0, 6).join('')).toContain('/exit 返回 Shell')
+  expect(rows[prompt - 2]).not.toContain('Enter 发送')
+  expect(f.ui.draft()).toBe(''); f.input('\r'); expect(f.submit).not.toHaveBeenCalled()
+  f.input('新的问题'); await f.flush()
+  expect(f.text().split('\n').find(row => row.includes('> DAWN'))).toContain('> DAWN 新的问题')
+  expect(f.text().split('\n').find(row => row.includes('> DAWN'))).not.toContain('Enter 发送')
+})
+it('shows contextual ghost text without submitting it and accepts it only with right arrow', async () => {
+  const f = fixture(100, 24); f.ui.setSuggestion('检查缺失值'); await f.flush()
+  expect(f.text()).toContain('> DAWN  检查缺失值'); expect(f.ui.draft()).toBe('')
+  f.input('\r'); expect(f.submit).not.toHaveBeenCalled()
+  f.input('\x1b[C'); expect(f.ui.draft()).toBe('检查缺失值'); expect(f.submit).not.toHaveBeenCalled()
+  f.input('\r'); expect(f.submit).toHaveBeenCalledWith('检查缺失值')
+  f.ui.setState({ busy: true }); f.ui.setSuggestion('旧建议'); await f.flush()
+  expect(f.text()).not.toContain('旧建议')
+  f.ui.setState({ busy: true, permission: true }); await f.flush()
+  expect(f.text()).toContain('需要确认'); f.input('\x1b[C'); expect(f.ui.draft()).toBe('')
+})
 it('scrolls long replies without painting character scrollbar fragments over the right edge', async () => {
   const f = fixture(40, 20)
   f.ui.reply(Array.from({ length: 80 }, (_, i) => `SCROLL_ROW_${i} 中文内容`).join('\n\n')); await f.flush()

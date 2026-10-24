@@ -14,6 +14,7 @@ export interface DesktopScope {
   canReadImages?: () => boolean
   history?: () => Promise<RestoredItem[]>
   pictures?: () => ImageAttachment[]
+  suggest?: () => Promise<{ text: string }>
   usage?: () => CliUsage
   call: (operation: string, input: unknown) => Promise<unknown>
   attach: (sink: (event: AgentEvent) => void) => () => void

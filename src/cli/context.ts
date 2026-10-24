@@ -1,3 +1,4 @@
+import { suggestLatestPrompt } from './next-prompt.js'
 import { fileURLToPath } from 'node:url'
 import { connectDesktopCli, listDesktopHistory } from './desktop-client.js'
 import { chooseCliHistory } from './history-picker.js'
@@ -54,6 +55,7 @@ export async function openCliContext(agentId?: string, resume?: string | true) {
     await call('acquireLease', { sessionId: task.sessionId, holder: 'user' })
     return { call, sessionId: task.sessionId, model: `${def.provider}/${def.model}`, directory, resumed: false,
       history: async () => ({ items: [], pictures: [], truncated: false }),
+      suggest: () => suggestLatestPrompt(workbench.events.peek(task.sessionId)?.items ?? [], turnId => call<{ text: string }>('suggestNextPrompt', { sessionId: task.sessionId, turnId })),
       usage: async () => workbench.sessionUsage(task.sessionId),
       attach: (sink: import('../runtime/types.js').EventSink) => workbench.sessions.attach(task.sessionId, sink),
       waitForIdle: () => workbench.nativeRuntime.waitForIdle(task.sessionId),

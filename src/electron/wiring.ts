@@ -1,3 +1,4 @@
+import { suggestLatestPrompt } from '../cli/next-prompt.js'
 import { desktopWorkspace } from '../cli/workspace.js'
 import { sessionActivity } from '../shared/session-activity.js'
 import type { ResponseOf } from '../protocol/index.js'
@@ -1686,6 +1687,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : 'API', directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
             history: () => sessions.history(sessionId),
             usage: () => cliUsage(sessionId),
+            suggest: () => suggestLatestPrompt(events.peek(sessionId)?.items ?? [], turnId => backend.suggestNextPrompt({ sessionId, turnId }) as Promise<{ text: string }>),
             pictures: () => nativeRuntime.historyPictures(sessionId),
             call: async (operation, input) => {
               const response = await nativeRuntime.withTerminalReply(sessionId, () => server.handle(operation, input))

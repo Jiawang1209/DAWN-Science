@@ -1,3 +1,4 @@
+import { CliNextPrompt } from './next-prompt.js'
 import { createInterface } from 'node:readline'
 import { CliTui } from './tui.js'
 import type { AgentEvent } from '../runtime/types.js'
@@ -17,6 +18,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   const rl = interactive ? undefined : createInterface({ input, terminal: false, historySize: 200 })
   const view = interactive ? new CliTui({ model: context.model, workspace: process.cwd(), color: !process.env.NO_COLOR,
     contextButton: Boolean(process.env.DAWN_TERMINAL_ID),
+    onDraftChange: () => updateSuggestion(),
     onSubmit: text => { void handle(text).catch(e => { failed = true; say(String(e), true); prompt() }) },
     onInterrupt: () => onInterrupt(), onExit: () => { void shutdown() },
   }) : undefined
@@ -29,6 +31,8 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
     else output.write(plain(text) + '\n')
   }
   const prompt = () => { if (!closing) view?.setState({ busy, permission: Boolean(permission) && !answering, question: Boolean(question) && !answering }) }
+  const suggestions = view ? new CliNextPrompt(() => context.suggest(), text => view.setSuggestion(text)) : undefined
+  const updateSuggestion = () => suggestions?.update(!closing && !busy && !permission && !question && !view?.draft())
   let usageRequest = 0
   const refreshUsage = async () => {
     if (!view || closing) return
@@ -50,6 +54,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   const shutdown = async () => {
     if (closing) return
     closing = true
+    suggestions?.close()
     try {
       try { await call('abortSession', { sessionId }) }
       finally { await context.close() }
@@ -60,15 +65,22 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       say('\n已退出 Agent，返回 Shell。'); finished()
     }
   }
+  const beginActivity = () => {
+    if (!busy) { suggestions?.reset(); busy = true; prompt() }
+  }
   const onEvent = (event: DesktopCliEvent) => {
     if (closing) return
     switch (event.kind) {
       case 'desktop_image':
+        beginActivity()
         flush(); if (view) view.image(event); else say(event.name); break
-      case 'output': if (view) view.reply(event.data); else answer += plain(event.data); break
+      case 'thinking': beginActivity(); break
+      case 'output': beginActivity(); if (view) view.reply(event.data); else answer += plain(event.data); break
       case 'turn_end': flush(); break
-      case 'turn_usage': case 'model': case 'compaction_end': void refreshUsage(); break
+      case 'model': suggestions?.reset(); updateSuggestion(); void refreshUsage(); break
+      case 'turn_usage': case 'compaction_end': void refreshUsage(); break
       case 'tool_start':
+        beginActivity()
         void refreshUsage()
         flush(); if (view) { view.toolStart(event); break }; say(`  › ${event.toolName}${toolDetail(event.input) ? '\n    ' + toolDetail(event.input).replaceAll('\n', '\n    ') : ''}`); break
       case 'tool_end':
@@ -79,8 +91,10 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
         if (event.text.trim()) say(plain(event.text).split('\n').slice(0, 8).map(line => '    ' + line.slice(0, 1200)).join('\n'))
         if (event.truncated && event.fullOutputPath) say('    完整输出：' + event.fullOutputPath)
         break
-      case 'notice': say(event.text + (event.rawError ? '\n' + event.rawError : ''), Boolean(event.failed || event.rawError)); if (event.failed) failed = true; break
+      case 'notice': if (event.failed || event.rawError) suggestions?.reset(); say(event.text + (event.rawError ? '\n' + event.rawError : ''), Boolean(event.failed || event.rawError)); if (event.failed) failed = true; break
       case 'permission_request':
+        beginActivity()
+        suggestions?.update(false)
         flush()
         if (!interactive) {
           failed = true; say('非交互输入无法确认权限，本次操作已拒绝。')
@@ -93,13 +107,15 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
         break
       case 'permission_settled': if (permission?.requestId === event.requestId) { permission = undefined; prompt() }; break
       case 'question':
+        if (event.question.state === 'pending') beginActivity()
+        suggestions?.update(false)
         if (event.question.state !== 'pending') { if (question?.record.requestId === event.question.requestId) { question = undefined; prompt() }; break }
         if (!interactive) {
           failed = true; say('非交互输入无法回答问题，本次提问已取消。')
           void call('answerQuestion', { sessionId, requestId: event.question.requestId }).catch(e => say(String(e)))
         } else { question = { record: event.question, index: 0, answers: [] }; showQuestion() }
         break
-      case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); void refreshUsage(); break
+      case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); void refreshUsage(); updateSuggestion(); break
     }
   }
   const detach = context.attach(onEvent)
@@ -146,6 +162,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       return
     }
     if (busy) { say('当前回合仍在运行；Ctrl-C 停止，或 /exit 返回 Shell。'); return }
+    suggestions?.reset()
     busy = true; prompt()
     try { await call('writeToSession', { sessionId, data: line, as: 'user' }) }
     catch (e) { busy = false; failed = true; say(e instanceof Error ? e.message : String(e), true); prompt() }
@@ -175,6 +192,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       if (restored) for (const item of restored.items) if (item.kind === 'text') say(`${item.who === 'user' ? '你' : 'DAWN'}：${item.text}`)
     }
     prompt()
+    if (restored) updateSuggestion()
     await done
   } catch (error) {
     try { await shutdown() } catch { /* Preserve the original startup error. */ }

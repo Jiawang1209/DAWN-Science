@@ -22,6 +22,10 @@ export const TerminalAgentStateSchema = z.object({
   selection: z.object({ provider: z.string().min(1), model: z.string().min(1) }).optional(),
 })
 export type TerminalAgentState = z.infer<typeof TerminalAgentStateSchema>
+export const TerminalHistoryEntrySchema = z.object({
+  sessionId: z.string().min(1), title: z.string().optional(), createdAt: z.string(), lastActiveAt: z.string().optional(),
+}).strict()
+export type TerminalHistoryEntry = z.infer<typeof TerminalHistoryEntrySchema>
 
 export const TerminalAttachmentsSchema = z.object({
   sessionId: z.string().min(1).optional(), revision: z.number().int().nonnegative(),

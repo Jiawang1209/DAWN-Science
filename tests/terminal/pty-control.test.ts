@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, realpathSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { TerminalControl } from '../../src/terminal/control.js'
@@ -25,6 +25,13 @@ async function setup() {
 }
 
 describe('same real PTY process', () => {
+  it('reads the live Shell directory after cd instead of reporting its startup directory', async () => {
+    const x = await setup()
+    x.control.reclaim('t')
+    x.runtime.write('t', 'mkdir nested; cd nested\r')
+    await x.prompt(/[$#] ?$/)
+    expect(await x.control.currentDirectory('t')).toBe(realpathSync(join(x.workspace, 'nested')))
+  })
   it('keeps the human cwd, environment and shell PID across an AI handoff', async () => {
     const x = await setup()
     const initialPid = x.control.state('t').pid

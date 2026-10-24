@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { DesktopImages } from './desktop-images.js'
 import type { TerminalAttachmentUpdate } from '../protocol/terminal.js'
-import { frames, send, type DesktopDescriptor, type DesktopScope } from './desktop-wire.js'
+import { frames, send, type DesktopDescriptor, type DesktopScope, type CliHistoryEntry, type CliHistory } from './desktop-wire.js'
 
 interface Target { sessionId: string; projectId?: string; selection?: { provider: string; model: string } }
 const targetOf = (scope: DesktopScope): Target => ({ sessionId: scope.sessionId, ...(scope.projectId ? { projectId: scope.projectId } : {}), ...(scope.selection ? { selection: scope.selection } : {}) })
@@ -13,8 +13,9 @@ type Mode = 'normal' | 'dawn' | 'starting' | 'stopping'
 interface Connection { socket: Socket; scope: DesktopScope; media: DesktopImages; done: Promise<void>; finish: () => void }
 export interface DesktopCliOptions {
   entry: string; executable: string; descriptor: string
-  launch: (terminalId: string) => Promise<void>
-  open: (terminalId: string | undefined, workspace: string, agentId?: string) => Promise<DesktopScope>
+  launch: (terminalId: string, resumeSessionId?: string) => Promise<void>
+  open: (terminalId: string | undefined, workspace: string, agentId?: string, resumeSessionId?: string) => Promise<DesktopScope>
+  history?: (workspace: string) => Promise<CliHistoryEntry[]>
 }
 const allowed = new Set(['writeToSession', 'answerPermission', 'answerQuestion', 'abortSession', 'acquireLease'])
 const quote = (s: string) => "'" + s.replaceAll("'", "'\\''") + "'"
@@ -22,9 +23,11 @@ export class DesktopCliHost {
   private server = createServer(socket => this.accept(socket))
   private sockets = new Set<Socket>()
   private connections = new Map<string, Connection>()
+  private opened = new Set<Connection>()
   private transitions = new Map<string, Mode>()
   private imageScopes = new Map<string, DesktopImages[]>()
   private latestSessions = new Map<string, Target>()
+  private claimedSessions = new Set<string>()
   private root?: string
   private descriptor?: DesktopDescriptor
   private ready?: Promise<void>
@@ -55,6 +58,9 @@ export class DesktopCliHost {
     const target = scope ? targetOf(scope) : this.latestSessions.get(terminalId)
     return { mode: this.transitions.get(terminalId) ?? (scope ? 'dawn' : 'normal'), ...target }
   }
+  async history(workspace: string): Promise<CliHistoryEntry[]> {
+    return (await this.opts.history?.(workspace) ?? []).map(({ sessionId, title, createdAt, lastActiveAt }) => ({ sessionId, ...(title ? { title } : {}), createdAt, ...(lastActiveAt ? { lastActiveAt } : {}) }))
+  }
   attachments(terminalId: string, afterRevision?: number) {
     return this.connections.get(terminalId)?.media.read(afterRevision) ?? { revision: 0, pending: [] }
   }
@@ -78,14 +84,15 @@ export class DesktopCliHost {
     for (const media of this.imageScopes.get(terminalId) ?? []) media.close()
     this.imageScopes.delete(terminalId)
   }
-  async setMode(terminalId: string, mode: 'dawn' | 'normal') {
+  async setMode(terminalId: string, mode: 'dawn' | 'normal', resumeSessionId?: string) {
     if (this.transitions.has(terminalId)) throw new Error('正在切换模式，请稍候')
     const connection = this.connections.get(terminalId)
+    if (resumeSessionId && (mode !== 'dawn' || connection)) throw new Error('请先返回 Normal 模式，再选择历史会话')
     if (mode === 'dawn' && !connection) {
       this.transitions.set(terminalId, 'starting')
       try {
         await this.environment(terminalId)
-        await this.opts.launch(terminalId)
+        await this.opts.launch(terminalId, resumeSessionId)
         const end = Date.now() + 10_000
         while (!this.connections.has(terminalId) && Date.now() < end && !this.disposed) await new Promise(r => setTimeout(r, 40))
         if (!this.connections.has(terminalId)) throw new Error('DAWN 命令尚未连接，请查看终端提示')
@@ -103,7 +110,7 @@ export class DesktopCliHost {
   private accept(socket: Socket) {
     this.sockets.add(socket)
     let connection: Connection | undefined, terminal: string | undefined, opening = false, authenticated = false
-    let detach: (() => void) | undefined
+    let detach: (() => void) | undefined, claimed: string | undefined
     const authTimer = setTimeout(() => socket.destroy(), 5000); authTimer.unref()
     const cleanup = async () => {
       clearTimeout(authTimer); this.sockets.delete(socket); detach?.()
@@ -113,7 +120,9 @@ export class DesktopCliHost {
       }
       connection.media.close()
       try { await connection.scope.close() } catch { /* Workbench may already be closing. */ }
+      this.opened.delete(connection)
       if (terminal && this.connections.get(terminal) === connection) this.connections.delete(terminal)
+      if (claimed) this.claimedSessions.delete(claimed)
       connection.finish()
     }
     socket.once('close', () => { void cleanup() }); socket.on('error', () => {})
@@ -125,12 +134,30 @@ export class DesktopCliHost {
         const expected = Buffer.from(this.descriptor!.token)
         if (frame.version !== 1 || token.length !== expected.length || !timingSafeEqual(token, expected)) throw new Error('DAWN 本机连接认证失败')
         if (typeof frame.workspace !== 'string' || !frame.workspace || frame.terminalId !== undefined && typeof frame.terminalId !== 'string' || frame.agentId !== undefined && typeof frame.agentId !== 'string') throw new Error('无效的 CLI 连接请求')
+        if (frame.history === true) {
+          clearTimeout(authTimer)
+          const entries = await this.history(frame.workspace)
+          send(socket, { history: entries }); socket.end(); return
+        }
+        if (frame.resumeSessionId !== undefined && (typeof frame.resumeSessionId !== 'string' || !frame.resumeSessionId || frame.agentId)) throw new Error('无效的历史会话恢复请求')
         terminal = frame.terminalId
         if (terminal && this.connections.has(terminal)) throw new Error('这个终端已经连接 DAWN')
-        const scope = await this.opts.open(terminal, frame.workspace, frame.agentId)
-        if (socket.destroyed || this.disposed || terminal && this.connections.has(terminal)) { await scope.close(); socket.destroy(); return }
+        if (frame.resumeSessionId) {
+          if (this.claimedSessions.has(frame.resumeSessionId) || [...this.connections.values()].some(c => c.scope.sessionId === frame.resumeSessionId)) throw new Error('这段会话已在另一个终端使用，请先退出那个 Agent')
+          claimed = frame.resumeSessionId
+          this.claimedSessions.add(claimed!)
+        }
+        let scope: DesktopScope
+        try { scope = await this.opts.open(terminal, frame.workspace, frame.agentId, frame.resumeSessionId) }
+        catch (error) { if (claimed) this.claimedSessions.delete(claimed); throw error }
+        if (!claimed) {
+          if (this.claimedSessions.has(scope.sessionId)) throw new Error('这段会话已在另一个终端使用，请先退出那个 Agent')
+          claimed = scope.sessionId; this.claimedSessions.add(claimed)
+        }
+        if (socket.destroyed || this.disposed || terminal && this.connections.has(terminal)) { await scope.close(); if (claimed) this.claimedSessions.delete(claimed); socket.destroy(); return }
         let finish!: () => void
         connection = { socket, scope, media: new DesktopImages(scope.sessionId, scope.directory), done: new Promise<void>(r => { finish = r }), finish: () => finish() }
+        this.opened.add(connection)
         if (terminal) {
           this.connections.set(terminal, connection)
           this.latestSessions.set(terminal, targetOf(scope))
@@ -147,7 +174,7 @@ export class DesktopCliHost {
             await media.observe(event, image => send(socket, { event: image }), message => send(socket, { event: { kind: 'notice', sessionId: scope.sessionId, text: message } }))
           }).catch(() => { send(socket, { event: { kind: 'notice', sessionId: scope.sessionId, text: '终端图片预览未完成，请返回会话查看' } }) })
         })
-        send(socket, { ready: { sessionId: scope.sessionId, model: scope.model, directory: scope.directory } })
+        send(socket, { ready: { sessionId: scope.sessionId, model: scope.model, directory: scope.directory, resumed: Boolean(frame.resumeSessionId) } })
         return
       }
       if (!Number.isSafeInteger(frame.id)) throw new Error('无效的请求编号')
@@ -155,7 +182,29 @@ export class DesktopCliHost {
       try {
         let result: unknown
         if (frame.operation === '$close') { send(socket, { id: frame.id, result: {} }); socket.end(); return }
-        if (frame.operation === '$wait') { await scope.waitForIdle(); result = {} }
+        if (frame.operation === '$history') {
+          const all = await scope.history?.() ?? []
+          const items = all.slice(-100).map(item => {
+            if (item.kind !== 'text') return item
+            const { images: _images, ...text } = item
+            return text
+          })
+          // Bound presentation independently of the unchanged native model history.
+          const bounded: typeof items = []
+          let bytes = 0
+          for (const item of items.reverse()) { const size = Buffer.byteLength(JSON.stringify(item)); if (bytes + size > 1024 * 1024) break; bytes += size; bounded.unshift(item) }
+          const originals = scope.pictures?.() ?? []
+          const pictures = await connection!.media.restore(originals)
+          const warnings: string[] = []
+          for (const item of bounded) {
+            if (item.kind !== 'text' || item.who !== 'agent') continue
+            await connection!.media.observe({ kind: 'output', sessionId: scope.sessionId, data: item.text }, () => {})
+            await connection!.media.observe({ kind: 'turn_end', sessionId: scope.sessionId }, image => pictures.push({ id: image.id, name: image.name }), message => warnings.push(message))
+          }
+          const readable = pictures.filter(picture => { try { connection!.media.image(picture.id); return true } catch { return false } })
+          result = { items: bounded, pictures: readable, truncated: bounded.length < all.length || originals.length > 12 || readable.length < pictures.length, warnings } satisfies CliHistory
+        }
+        else if (frame.operation === '$wait') { await scope.waitForIdle(); result = {} }
         else {
           if (!allowed.has(frame.operation)) throw new Error('CLI 不允许调用此操作')
           if (!frame.input || frame.input.sessionId !== scope.sessionId) throw new Error('CLI 只能操作自己的会话')
@@ -173,7 +222,7 @@ export class DesktopCliHost {
     this.disposed = true
     if (!this.ready) return
     await this.ready.catch(() => {})
-    const connections = [...this.connections.values()]
+    const connections = [...this.opened]
     for (const socket of this.sockets) socket.destroy()
     await Promise.all(connections.map(c => c.done))
     await new Promise<void>(resolve => this.server.close(() => resolve()))

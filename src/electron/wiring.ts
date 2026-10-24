@@ -1254,6 +1254,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       image: (id, imageId) => { if (!cliHost) throw new Error('本次运行没有装配 DAWN CLI'); return cliHost.image(id, imageId) },
     },
     terminalAgentMode: {
+      history: async id => cliHost?.history(await terminalControl.currentDirectory(id)) ?? [],
       state: id => {
         terminalControl.state(id)
         const state = cliHost?.state(id) ?? { mode: 'normal' as const }
@@ -1261,7 +1262,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         const selection = state.sessionId ? nativeRuntime.currentModel(state.sessionId) : undefined
         return { ...state, ...(session ? { projectId: session.projectId } : {}), ...(selection ? { selection } : {}) }
       },
-      setMode: async (id, mode) => { terminalControl.state(id); if (!cliHost) throw new Error("本次运行没有装配 DAWN CLI"); return cliHost.setMode(id, mode) },
+      setMode: async (id, mode, resumeSessionId) => { terminalControl.state(id); if (!cliHost) throw new Error("本次运行没有装配 DAWN CLI"); return cliHost.setMode(id, mode, resumeSessionId) },
     },
     terminals: terminalControl,
     terminalOwnerAllowed: id => nativeRuntime.canControlTerminal(id),
@@ -1636,24 +1637,48 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   if (opts.desktopCli) {
+    const cliHistory = async (workspace: string) => {
+      const canonical = desktopWorkspace(workspace, projectStore.list())
+      const project = projectStore.list().find(p => p.workspace === canonical)
+      if (!project) return []
+      const summaries = await backend.listSessions({ projectId: project.projectId, pageSize: 200 }) as ResponseOf<'listSessions'>
+      const tasks = await backend.listTasks({}) as ResponseOf<'listTasks'>
+      const roots = new Set(tasks.map(t => t.sessionId))
+      return summaries.filter(s => s.kind === 'native' && !s.remote && !s.archivedAt && roots.has(s.sessionId))
+        .sort((a, b) => (b.lastActiveAt ?? b.createdAt).localeCompare(a.lastActiveAt ?? a.createdAt)).slice(0, 100)
+    }
     cliHost = new DesktopCliHost({ ...opts.desktopCli,
-      launch: id => terminalControl.launchCli(id),
-      open: async (terminalId, workspace, agentId) => {
-        const owner = terminalId ? terminalControl.state(terminalId).ownerSessionId : undefined
-        const inherited = owner ? nativeRuntime.currentModel(owner) : undefined
-        const providers = await backend.getProviders({}) as ResponseOf<'getProviders'>
-        const selected = providers.agents.find(a => a.kind === 'native' && a.agentId === (agentId ?? (owner ? sessionStore.get(owner)?.agentId : undefined)))
-          ?? (!agentId ? providers.agents.find(a => a.kind === 'native') : undefined)
-        if (!selected || selected.kind !== 'native') throw new Error('请先在 DAWN 中选择已配置的 API 模型')
+      history: cliHistory,
+      launch: (id, resumeSessionId) => terminalControl.launchCli(id, resumeSessionId),
+      open: async (terminalId, workspace, agentId, resumeSessionId) => {
         workspace = desktopWorkspace(workspace, projectStore.list())
-        const task = await backend.createTask({ agentId: selected.agentId, workspace }) as ResponseOf<'createTask'>
-        if (!task.sessionId) throw new Error('无法创建 CLI 会话')
-        const sessionId = task.sessionId
-        try {
+        let sessionId: string
+        if (resumeSessionId) {
+          const record = sessionStore.get(resumeSessionId)
+          if (!record || record.archivedAt || record.connectionId || record.workspace !== workspace || registry.agents[record.agentId]?.kind !== 'native' || !taskStore.list().some(t => t.sessionId === resumeSessionId)) throw new Error('这段历史会话不可恢复，请选择当前目录中未归档的本地 API 会话')
+          if (nativeRuntime.terminalBusy(resumeSessionId)) throw new Error('这段会话仍在执行，请等待完成后再恢复')
+          await backend.subscribeSession({ sessionId: resumeSessionId })
+          if (!nativeRuntime.canControlTerminal(resumeSessionId)) throw new Error('这段会话不支持终端恢复')
+          if (nativeRuntime.terminalBusy(resumeSessionId)) throw new Error('这段会话仍在执行，请等待完成后再恢复')
+          sessionId = resumeSessionId
+        } else {
+          const owner = terminalId ? terminalControl.state(terminalId).ownerSessionId : undefined
+          const inherited = owner ? nativeRuntime.currentModel(owner) : undefined
+          const providers = await backend.getProviders({}) as ResponseOf<'getProviders'>
+          const selected = providers.agents.find(a => a.kind === 'native' && a.agentId === (agentId ?? (owner ? sessionStore.get(owner)?.agentId : undefined)))
+            ?? (!agentId ? providers.agents.find(a => a.kind === 'native') : undefined)
+          if (!selected || selected.kind !== 'native') throw new Error('请先在 DAWN 中选择已配置的 API 模型')
+          const task = await backend.createTask({ agentId: selected.agentId, workspace }) as ResponseOf<'createTask'>
+          if (!task.sessionId) throw new Error('无法创建 CLI 会话')
+          sessionId = task.sessionId
           if (inherited && !agentId) await backend.setSessionModel({ sessionId, ...inherited })
+        }
+        try {
           await backend.acquireLease({ sessionId, holder: 'user' })
           const model = nativeRuntime.currentModel(sessionId)
-          return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : `${selected.provider}/${selected.model}`, directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
+          return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : 'API', directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
+            history: () => sessions.history(sessionId),
+            pictures: () => nativeRuntime.historyPictures(sessionId),
             call: async (operation, input) => {
               const response = await server.handle(operation, input)
               if (!response.ok) throw new Error(response.error.message)

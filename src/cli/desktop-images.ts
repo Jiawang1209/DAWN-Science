@@ -54,6 +54,14 @@ export class DesktopImages {
     if (!image) throw new Error('这张终端图片已不在缓存中，请返回会话或打开原文件')
     return { id: image.id, name: image.name, thumbnail: image.thumbnail, dataUrl: image.dataUrl }
   }
+  async restore(input: readonly { data: string; mimeType: string }[]) {
+    const restored: { id: string; name: string }[] = []
+    for (const [index, picture] of input.slice(-12).entries()) {
+      const image = await this.prepare({ ...picture, name: `历史图片 ${index + 1}` })
+      this.publish(image, event => restored.push({ id: event.id, name: event.name }))
+    }
+    return restored
+  }
   async send(input: Record<string, unknown>, deliver: (input: Record<string, unknown>) => Promise<unknown>, emit: Emit) {
     this.editable()
     if (input.as !== 'user') return deliver(input)

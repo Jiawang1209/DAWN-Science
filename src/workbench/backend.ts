@@ -180,8 +180,9 @@ export interface WorkbenchBackendOptions {
   terminals?: import('../terminal/control.js').TerminalControl
   terminalOwnerAllowed?: (sessionId: string) => boolean
   terminalAgentMode?: {
+    history?: (id: string) => Promise<ResponseOf<'listTerminalAgentHistory'>>
     state: (id: string) => import('../protocol/terminal.js').TerminalAgentState
-    setMode: (id: string, mode: 'normal' | 'dawn') => Promise<import('../protocol/terminal.js').TerminalAgentState>
+    setMode: (id: string, mode: 'normal' | 'dawn', resumeSessionId?: string) => Promise<import('../protocol/terminal.js').TerminalAgentState>
   }
   terminalImages?: {
     read: (id: string, revision?: number) => ResponseOf<'getTerminalAgentAttachments'>
@@ -2842,9 +2843,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return opts.terminalImages.image(terminalId, imageId)
     }),
     getTerminalAgentMode: async ({ terminalId }) => terminalRequest(() => opts.terminalAgentMode?.state(terminalId) ?? { mode: 'normal' as const }),
-    setTerminalAgentMode: async ({ terminalId, mode }) => terminalRequest(async () => {
+    listTerminalAgentHistory: async ({ terminalId }) => terminalRequest(async () => {
+      terminalService().state(terminalId)
+      return opts.terminalAgentMode?.history?.(terminalId) ?? []
+    }),
+    setTerminalAgentMode: async ({ terminalId, mode, resumeSessionId }) => terminalRequest(async () => {
       if (!opts.terminalAgentMode) throw new Error('本次运行没有装配 DAWN CLI')
-      return opts.terminalAgentMode.setMode(terminalId, mode)
+      return opts.terminalAgentMode.setMode(terminalId, mode, resumeSessionId)
     }),
     getTerminalControl: async ({ terminalId }) => terminalRequest(() => terminalService().state(terminalId)),
     sendTerminalPrompt: async ({ terminalId, ownerSessionId, text }) => terminalRequest(async () => {

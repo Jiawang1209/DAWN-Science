@@ -15,6 +15,7 @@ interface Entry {
   owner?: string; controlled: boolean; mode: TerminalMode; generation: number
   task?: TerminalTask; operation?: symbol | undefined
   inputLength: number; inputUncertain: boolean; pasting: boolean
+  directoryQuery?: { token: string; generation: number; resolve: (cwd: string) => void; reject: (error: Error) => void } | undefined
 }
 interface ControlHost {
   grant: (id: string) => void
@@ -60,6 +61,11 @@ export class TerminalControl {
         if (entry.alive && entry.task?.id === token && entry.task.state === 'running') {
           entry.task = { ...entry.task, state: 'completed', exitCode: code }
         }
+      }, (token, cwd) => {
+        const query = entry.directoryQuery
+        if (!query || query.token !== token) return
+        if (entry.alive && query.generation === entry.generation) query.resolve(cwd)
+        else query.reject(new Error('终端已发生变化，请重新选择历史会话'))
       }),
     }
     this.entries.set(port.id, entry)
@@ -152,7 +158,7 @@ export class TerminalControl {
     }
   }
 
-  async launchCli(id: string): Promise<void> {
+  async launchCli(id: string, resumeSessionId?: string): Promise<void> {
     const e = this.entry(id)
     await this.detectMode(id)
     const screen = await e.screen.snapshot()
@@ -161,7 +167,27 @@ export class TerminalControl {
       throw new Error('请先回到空闲 Shell 提示符，并按 Ctrl-U 清空尚未提交的输入，再进入 DAWN 模式')
     }
     this.reclaim(id)
-    e.port.write('dawn\r')
+    if (resumeSessionId && !/^[a-zA-Z0-9-]{1,100}$/.test(resumeSessionId)) throw new Error('无效的历史会话身份')
+    e.port.write(resumeSessionId ? `dawn --resume '${resumeSessionId}'\r` : 'dawn\r')
+  }
+
+  /** Explicit history-picker action probes the idle Shell, using a private marker rather than guessing cwd. */
+  async currentDirectory(id: string): Promise<string> {
+    const e = this.entry(id)
+    const screen = await e.screen.snapshot()
+    const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
+    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.directoryQuery || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorLine, screen.alternate)) throw new Error('请先回到空闲 Shell 并清空未提交的输入，再选择历史会话')
+    this.reclaim(id)
+    const token = randomUUID(), operation = Symbol(), generation = e.generation
+    e.operation = operation
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      return await new Promise<string>((resolve, reject) => {
+        e.directoryQuery = { token, generation, resolve, reject }
+        timer = setTimeout(() => reject(new Error('读取终端当前目录超时，请重试')), 3000)
+        e.port.write(`printf '\\033]7777;dawn-cwd;${token};%s\\007' "$(pwd -P)"\r`)
+      })
+    } finally { clearTimeout(timer); e.directoryQuery = undefined; if (e.operation === operation) e.operation = undefined }
   }
 
   private entry(id: string): Entry {
@@ -253,6 +279,7 @@ export class TerminalControl {
     const e = this.entries.get(id)
     if (!e || !e.alive) return
     e.alive = false; e.controlled = false; e.generation++; e.operation = undefined
+    e.directoryQuery?.reject(new Error('终端已经结束，请重新打开终端'))
     if (e.task?.state === 'running') e.task = { ...e.task, state: 'unknown' }
     e.screen.dispose()
   }

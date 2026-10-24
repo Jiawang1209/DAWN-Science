@@ -8,11 +8,13 @@ export class TerminalScreen {
   private disposed = false
   private revision = 0
 
-  constructor(cols = 100, rows = 30, complete?: (token: string, exitCode: number) => void) {
+  constructor(cols = 100, rows = 30, complete?: (token: string, exitCode: number) => void, directory?: (token: string, cwd: string) => void) {
     this.terminal = new headless.Terminal({ cols, rows, scrollback: 2000, allowProposedApi: true, convertEol: true })
     this.terminal.loadAddon(new Unicode11Addon() as unknown as Parameters<typeof this.terminal.loadAddon>[0])
     this.terminal.unicode.activeVersion = '11'
     this.terminal.parser.registerOscHandler(7777, data => {
+      const cwd = /^dawn-cwd;([a-zA-Z0-9-]+);([^\x00-\x1f\x7f]{1,16384})$/.exec(data)
+      if (cwd) { directory?.(cwd[1]!, cwd[2]!); return true }
       const match = /^dawn;([a-zA-Z0-9-]+);(\d{1,3})$/.exec(data)
       if (match) complete?.(match[1]!, Number(match[2]))
       return true

@@ -544,7 +544,7 @@ export interface ContextUsage {
  * 续接的文字条目保留它显示提问时间；全文搜索拿它给结果排序、写日期。
  */
 export type RestoredItem =
-  | { kind: "text"; who: "user" | "agent"; text: string; at?: number }
+  | { kind: "text"; who: "user" | "agent"; text: string; at?: number; images?: readonly string[] }
   | { kind: "tool"; id: string; name: string; input: unknown; result?: string; caseResults?: import("../protocol/cases.js").案例[]; isError?: boolean; at?: number }
   /** 这里压缩过（2026-09-27）：pi 记录里的 `compaction` 条目，落在它发生的位置。记录里没存起因 */
   | { kind: "compaction"; summary: string; tokensBefore: number }

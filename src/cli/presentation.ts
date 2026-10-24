@@ -14,6 +14,7 @@ export const CLI_HELP = `DAWN Science · 命令行 Agent
 
   dawn                    在当前目录进入 Agent
   dawn --agent <名称>      选择配置中的本地 API Agent
+  dawn --resume [会话ID]   选择或恢复当前目录中的历史会话（连接桌面）
   dawn --help              查看帮助
   dawn agents              列出配置中的 Agent
 

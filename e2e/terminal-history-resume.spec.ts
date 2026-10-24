@@ -1,0 +1,130 @@
+import { test, expect, 在项目里开会话, 等进了对话 } from './fixtures.js'
+import type { Page } from '@playwright/test'
+import { stripVTControlCharacters } from 'node:util'
+import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
+const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
+async function open(page: Page) {
+  await page.locator('.composer-card .attach-trigger').click()
+  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await expect.poll(async () => /[$#%]$/.test(stripVTControlCharacters(await page.locator('.dock .xterm-screen').innerText()).trimEnd())).toBe(true)
+}
+async function type(page: Page, value: string) {
+  await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.type(value); await page.keyboard.press('Enter')
+}
+async function terminal(page: Page) {
+  return page.evaluate(async () => {
+    const projects = (await window.dawn!.invoke('listProjects', {}) as any).data
+    const all = (await Promise.all(projects.map(async (p: any) => (await window.dawn!.invoke('listSessions', { projectId: p.projectId }) as any).data))).flat()
+    return all.find((s: any) => s.kind === 'pty' && s.state !== 'exited').sessionId as string
+  })
+}
+async function mode(page: Page, id: string) { return page.evaluate(async terminalId => (await window.dawn!.invoke('getTerminalAgentMode', { terminalId }) as any).data, id) }
+async function final(page: Page, id: string, count = 1) {
+  await expect.poll(async () => page.evaluate(async id => (await window.dawn!.invoke('subscribeSession', { sessionId: id }) as any).data.items.filter((i: any) => i.type === 'turn' && i.who === 'agent' && i.final).length, id)).toBe(count)
+}
+async function seed(page: Page) {
+  await 在项目里开会话(page); await 等进了对话(page); await open(page)
+  const terminalId = await terminal(page)
+  await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const state = await mode(page, terminalId)
+  await page.locator('.dock .term-host').evaluate((el, data) => {
+    const dt = new DataTransfer(); dt.items.add(new File([Uint8Array.from(atob(data), c => c.charCodeAt(0))], 'history-source.png', { type: 'image/png' }))
+    el.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }))
+  }, png)
+  await expect(page.locator('.terminal-attachment')).toHaveCount(1)
+  await type(page, 'HISTORY_IMAGE_ORIGINAL'); await final(page, state.sessionId)
+  await page.evaluate(async id => { await window.dawn!.invoke('renameSession', { sessionId: id, title: 'HISTORY_ORIGINAL' }) }, state.sessionId)
+  const tasks = await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)
+  await page.getByRole('button', { name: '关闭终端 1', exact: true }).click()
+  await expect(page.locator('.dock .empty')).toContainText('还没有终端')
+  await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+  await expect(page.locator('.composer-card')).toBeVisible()
+  await open(page)
+  return { ...state, tasks, newTerminalId: await terminal(page) }
+}
+
+test('history button restores the original conversation, original image and GUI continuation after closing its last terminal', async ({ dawn }) => {
+  const { page, requests } = dawn, target = await seed(page)
+  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
+  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('HISTORY_IMAGE_ORIGINAL')
+  expect((await mode(page, target.newTerminalId)).sessionId).toBe(target.sessionId)
+  await expect(page.locator('.terminal-inline-image img').first()).toBeVisible()
+  await page.locator('.terminal-inline-image').first().click()
+  await expect(page.getByRole('dialog', { name: '图片预览' })).toBeVisible()
+  await page.getByRole('button', { name: '关闭图片预览', exact: true }).click()
+  await type(page, 'HISTORY_FOLLOWUP_NO_REUPLOAD'); await final(page, target.sessionId, 2)
+  const payload = requests.findLast((r: any) => JSON.stringify(r.body).includes('HISTORY_FOLLOWUP_NO_REUPLOAD')) as any
+  expect(JSON.stringify(payload?.body)).toContain('image_url')
+  expect(JSON.stringify(payload?.body)).toContain('HISTORY_IMAGE_ORIGINAL')
+  expect(await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)).toBe(target.tasks)
+  await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+  await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', target.sessionId)
+  await expect(page.locator('.main')).toContainText('HISTORY_IMAGE_ORIGINAL')
+  await expect(page.locator('.main .turn-images img').first()).toBeVisible()
+})
+
+test('dawn --resume picker cancels without a new task, then explicit CLI resume restores the original ID', async ({ dawn }) => {
+  const { page } = dawn, target = await seed(page)
+  await type(page, 'dawn --resume')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('选择历史会话')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('已取消恢复')
+  expect(await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)).toBe(target.tasks)
+  await type(page, 'dawn --resume')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('编号 >')
+  await type(page, '1')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
+  expect((await mode(page, target.newTerminalId)).sessionId).toBe(target.sessionId)
+  await type(page, '/exit')
+  await expect(page.getByRole('button', { name: 'Normal 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await type(page, `dawn --resume ${target.sessionId}`)
+  await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
+  expect((await mode(page, target.newTerminalId)).sessionId).toBe(target.sessionId)
+  await type(page, 'CLI_HISTORY_CONTINUE'); await final(page, target.sessionId, 2)
+  await type(page, '/exit')
+  await expect(page.getByRole('button', { name: 'Normal 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+  await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', target.sessionId)
+})
+
+test('restarting the desktop preserves the original image context and restores the same saved conversation', async ({ dawn }) => {
+  const target = await seed(dawn.page)
+  const page = await dawn.重开()
+  await page.getByRole('button', { name: /^HISTORY_ORIGINAL/ }).click()
+  await expect(page.locator('.main .turn-images img').first()).toBeVisible()
+  await open(page)
+  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
+  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true }).click()
+  await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
+  const id = await terminal(page)
+  expect((await mode(page, id)).sessionId).toBe(target.sessionId)
+  await expect(page.locator('.terminal-inline-image img').first()).toBeVisible()
+  await type(page, 'RESTART_HISTORY_FOLLOWUP'); await final(page, target.sessionId, 2)
+  const payload = dawn.requests.findLast((r: any) => JSON.stringify(r.body).includes('RESTART_HISTORY_FOLLOWUP')) as any
+  expect(JSON.stringify(payload?.body)).toContain('image_url')
+})
+
+test('history follows a real Shell cd and does not offer conversations from the old directory', async ({ dawn }) => {
+  const { page, workspace } = dawn
+  await seed(page)
+  const nested = join(workspace, 'nested-history'); mkdirSync(nested)
+  const target = await page.evaluate(async workspace => {
+    const providers = (await window.dawn!.invoke('getProviders', {}) as any).data
+    const agentId = providers.agents.find((a: any) => a.kind === 'native').agentId
+    const task = (await window.dawn!.invoke('createTask', { agentId, workspace }) as any).data
+    await window.dawn!.invoke('renameSession', { sessionId: task.sessionId, title: 'NESTED_HISTORY_TARGET' })
+    return task.sessionId as string
+  }, nested)
+  await type(page, 'cd nested-history')
+  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
+  const picker = page.getByRole('dialog', { name: '选择历史会话' })
+  await expect(picker.getByRole('button', { name: 'NESTED_HISTORY_TARGET', exact: true })).toBeVisible()
+  await expect(picker.getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true })).toHaveCount(0)
+  await picker.getByRole('button', { name: 'NESTED_HISTORY_TARGET', exact: true }).click()
+  await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
+  expect((await mode(page, await terminal(page))).sessionId).toBe(target)
+})

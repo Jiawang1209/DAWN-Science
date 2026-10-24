@@ -1018,11 +1018,30 @@ export class NativeRuntime implements AgentRuntime {
     const s = this.sessions.get(sessionId)
     if (!s) return []
     // 翻法在 `history.ts`（2026-09-27 搬出去）：子 agent 的会话文件读回、全文搜索用同一份
-    const 条 = 还原历史(s.sessionManager.getBranch()).map((x): RestoredItem => {
+    const branch = s.sessionManager.getBranch()
+    const 条 = 还原历史(branch).map((x): RestoredItem => {
       if (x.kind !== "question") return x
       const saved = this.questionBooks.get(sessionId)?.get(x.question.requestId)
       return saved ? { ...x, question: saved } : x
     })
+    const users = branch.flatMap(entry => entry.type === 'message' && entry.message.role === 'user' && 取文本(entry.message.content).trim() ? [entry.message] : [])
+    let userIndex = 0
+    for (const item of 条) {
+      if (item.kind !== 'text' || item.who !== 'user') continue
+      const content = users[userIndex++]?.content
+      if (!Array.isArray(content)) continue
+      const pictures = content.filter(block => block.type === 'image')
+      if (!pictures.length) continue
+      const thumbnails: string[] = []
+      for (const picture of pictures) {
+        try {
+          const { resizeImage } = await import('@earendil-works/pi-coding-agent')
+          const thumbnail = await resizeImage(Buffer.from(picture.data, 'base64'), picture.mimeType, { maxWidth: 320, maxHeight: 320 })
+          if (thumbnail) thumbnails.push(`data:${thumbnail.mimeType};base64,${thumbnail.data}`)
+        } catch (error) { console.error('[历史图片] 预览恢复失败，原始图片上下文保留', error) }
+      }
+      if (thumbnails.length) item.images = thumbnails
+    }
     /**
      * 先出方案（2026-09-27）：簿里记着的 `propose_plan` 调用**原位**换成卡片（状态取簿里的，含「你改过」——先核对一遍）；
      * 簿里没有的（簿读坏了、老记录）照旧当工具行，不编一个状态。一换一，条数不变。
@@ -1032,6 +1051,17 @@ export class NativeRuntime implements AgentRuntime {
     await this.刷新文件改过(sessionId, false).catch(() => {})
     // 换法在 `history.ts`（2026-09-28）：全文搜索读旧记录时用同一个，搜到的 id / 第几处才与点开的一致
     return 换上方案卡(条, (id) => 簿.找(id))
+  }
+
+  /** Original image blocks remain in pi's existing branch, never in CLI socket frames. */
+  historyPictures(sessionId: SessionId): ImageAttachment[] {
+    const branch = this.sessions.get(sessionId)?.sessionManager.getBranch() ?? []
+    const pictures: ImageAttachment[] = []
+    for (const entry of branch) {
+      if (entry.type !== 'message' || !['user', 'toolResult'].includes(entry.message.role) || !('content' in entry.message) || !Array.isArray(entry.message.content)) continue
+      for (const block of entry.message.content) if (block.type === 'image') pictures.push({ data: block.data, mimeType: block.mimeType })
+    }
+    return pictures
   }
 
   private emit(event: AgentEvent): void {
@@ -3401,6 +3431,11 @@ ${描述}`
   canControlTerminal(sessionId: string): boolean {
     const spec = this.routeBooks.get(sessionId)?.spec
     return this.sessions.has(sessionId) && Boolean(spec && !spec.remote && !spec.bot)
+  }
+
+  terminalBusy(sessionId: string): boolean {
+    const s = this.sessions.get(sessionId)
+    return Boolean(s && (s.inFlight || s.session.isStreaming || s.session.isCompacting || s.转述中 || s.回退中 || s.中止中))
   }
 
   async abort(sessionId: SessionId): Promise<void> {

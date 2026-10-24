@@ -1,6 +1,7 @@
 import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, type Terminal, type Component, type TuiMouseEvent } from '@earendil-works/pi-tui'
 import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
 import { plain } from './presentation.js'
+import type { CliHistory } from './desktop-wire.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
@@ -131,4 +132,20 @@ export class CliTui {
   toolStart(event: ToolStart) { this.transcript.toolStart(event); this.tui.requestRender() }
   toolEnd(event: ToolEnd) { this.transcript.toolEnd(event); if (event.isError) this.scroll.scrollToEnd(); this.tui.requestRender() }
   image(event: Picture) { this.transcript.image(event); this.tui.requestRender() }
+  restore(history: CliHistory) {
+    this.transcript.notice('已恢复原会话，继续之前的对话。')
+    if (history.truncated) this.transcript.notice('较早记录已收起，返回会话可查看完整过程；模型仍使用原会话上下文。')
+    for (const item of history.items) {
+      if (item.kind === 'text') {
+        if (item.who === 'user') { this.transcript.user(item.text); this.editor.addToHistory(item.text) }
+        else { this.transcript.reply(item.text); this.transcript.finish() }
+      } else if (item.kind === 'tool') {
+        this.transcript.toolStart({ toolCallId: item.id, toolName: item.name, input: item.input })
+        this.transcript.toolEnd({ toolCallId: item.id, toolName: item.name, text: item.result ?? '', isError: item.isError ?? false, truncated: false })
+      } else if (item.kind === 'compaction') this.transcript.notice('历史上下文已压缩：' + item.summary)
+    }
+    for (const picture of history.pictures) this.transcript.image(picture)
+    for (const warning of history.warnings ?? []) this.transcript.notice(warning)
+    this.scroll.scrollToEnd(); this.tui.requestRender()
+  }
 }

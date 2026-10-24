@@ -16,6 +16,12 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "接续旧对话": "Continue saved chat",
+  "选择历史会话": "Choose a conversation",
+  "搜索历史会话": "Search saved conversations",
+  "继续当前项目中的原对话，保留消息、图片和工具上下文。": "Continue a conversation in this project with its messages, images, and tool context.",
+  "正在读取历史会话": "Loading conversations",
+  "没有可恢复的历史会话": "No conversations available to resume",
   "等你提问": "Ready for your request",
   "自然语言交给 AI；手动命令可直接接回": "Ask AI in plain language; switch to manual commands to take over.",
   "终端协助操作失败：{0}": 'Terminal assistance failed: {0}',

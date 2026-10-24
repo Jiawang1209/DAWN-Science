@@ -1,5 +1,5 @@
 /** Shared deterministic model scenario; terminal processes and control operations remain real. */
-export const TERMINAL_CONTROL_OPERATIONS = ['getTerminalAgentAttachments', 'updateTerminalAgentAttachments', 'getTerminalAgentImage', 'getTerminalAgentMode', 'setTerminalAgentMode', 'getTerminalControl', 'setTerminalControl', 'resizeTerminal', 'interruptTerminal', 'sendTerminalPrompt']
+export const TERMINAL_CONTROL_OPERATIONS = ['getTerminalAgentAttachments', 'updateTerminalAgentAttachments', 'getTerminalAgentImage', 'getTerminalAgentMode', 'listTerminalAgentHistory', 'setTerminalAgentMode', 'getTerminalControl', 'setTerminalControl', 'resizeTerminal', 'interruptTerminal', 'sendTerminalPrompt']
 const text = content => typeof content === 'string' ? content : (content ?? []).map(b => b.text ?? '').join('\n')
 function turn(body) {
   const messages = body.messages ?? [], index = messages.findLastIndex(m => m.role === 'user')

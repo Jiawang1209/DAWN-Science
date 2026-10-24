@@ -15,6 +15,7 @@ function backend(): WorkbenchBackend {
     updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },
     getTerminalAgentImage: async () => { throw new Error('Terminal unavailable in this fixture') },
     getTerminalAgentMode: async () => ({ mode: 'normal' }),
+    listTerminalAgentHistory: async () => [],
     setTerminalAgentMode: async () => ({ mode: 'normal' }),
     getTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
     setTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },

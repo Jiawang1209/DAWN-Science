@@ -237,14 +237,18 @@ async function cmdDemo(agentIdArg?: string): Promise<void> {
   console.table(mgr.leases.audit(s.id).map((e) => ({ action: e.action, holder: e.holder, at: e.at })))
 }
 
-async function agent(agentId?: string): Promise<never> {
-  const code = await runCliAgent(agentId)
+async function agent(agentId?: string, resume?: string | true): Promise<never> {
+  const code = await runCliAgent(agentId, resume)
   // Workbench cleanup has completed; flush stdout before handing the terminal back.
   await new Promise<void>(done => process.stdout.write('', () => done()))
   process.exit(code)
 }
 async function main(): Promise<void> {
   const [, , cmd, ...rest] = process.argv
+  if (cmd === '--resume') {
+    if (rest.length > 1 || rest[0]?.startsWith('-')) throw new Error('用法：dawn --resume [完整会话ID]')
+    return agent(undefined, rest[0] || true)
+  }
   if (!cmd || cmd === '--agent') {
     if (cmd === '--agent' && !rest[0]) throw new Error('用法：dawn --agent <名称>')
     return agent(rest[0])

@@ -21,7 +21,7 @@ describe('terminal control protocol', () => {
   it('shares the exact UI operation list with the deterministic model scenario', async () => {
     // @ts-expect-error shared JavaScript model fixture
     const { TERMINAL_CONTROL_OPERATIONS } = await import('../../scripts/mock-terminal-assistance.mjs')
-    expect(TERMINAL_CONTROL_OPERATIONS).toEqual(['getTerminalAgentAttachments', 'updateTerminalAgentAttachments', 'getTerminalAgentImage', 'getTerminalAgentMode', 'setTerminalAgentMode', 'getTerminalControl', 'setTerminalControl', 'resizeTerminal', 'interruptTerminal', 'sendTerminalPrompt'])
+    expect(TERMINAL_CONTROL_OPERATIONS).toEqual(['getTerminalAgentAttachments', 'updateTerminalAgentAttachments', 'getTerminalAgentImage', 'getTerminalAgentMode', 'listTerminalAgentHistory', 'setTerminalAgentMode', 'getTerminalControl', 'setTerminalControl', 'resizeTerminal', 'interruptTerminal', 'sendTerminalPrompt'])
     for (const operation of TERMINAL_CONTROL_OPERATIONS as (keyof typeof OPERATIONS)[]) expect(OPERATIONS[operation]).toBeDefined()
   })
 })

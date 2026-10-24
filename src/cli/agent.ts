@@ -5,10 +5,13 @@ import type { DesktopCliEvent } from './desktop-wire.js'
 import type { QuestionRecord, QuestionAnswer } from '../protocol/questions.js'
 import { openCliContext } from './context.js'
 import { CLI_HELP, plain, toolDetail } from './presentation.js'
+import { ResumeCancelled } from './history-picker.js'
 
 type Permission = Extract<AgentEvent, { kind: 'permission_request' }>
-export async function runCliAgent(agentId?: string): Promise<number> {
-  const context = await openCliContext(agentId)
+export async function runCliAgent(agentId?: string, resume?: string | true): Promise<number> {
+  const context = await openCliContext(agentId, resume).catch(error => { if (error instanceof ResumeCancelled) return undefined; throw error })
+  if (!context) { process.stdout.write('已取消恢复，返回 Shell。\n'); return 0 }
+  const restored = context.resumed ? await context.history().catch(async error => { await context.close(); throw error }) : undefined
   const { call, sessionId } = context
   const input = process.stdin, output = process.stdout, interactive = Boolean(input.isTTY && output.isTTY)
   const rl = interactive ? undefined : createInterface({ input, terminal: false, historySize: 200 })
@@ -152,10 +155,11 @@ export async function runCliAgent(agentId?: string): Promise<number> {
   rl?.on('close', () => { if (!closing) onEnd() })
   input.on('end', onEnd); process.on('SIGTERM', onTerminate); process.on('SIGINT', onInterrupt)
   try {
-    if (view) view.start()
+    if (view) { view.start(); if (restored) view.restore(restored) }
     else {
       say('\nDAWN Science\n')
       status(); say('/exit 返回 Shell · /help 帮助 · Ctrl-C 停止\n')
+      if (restored) for (const item of restored.items) if (item.kind === 'text') say(`${item.who === 'user' ? '你' : 'DAWN'}：${item.text}`)
     }
     prompt()
     await done

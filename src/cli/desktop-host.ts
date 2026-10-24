@@ -194,8 +194,8 @@ export class DesktopCliHost {
           let bytes = 0
           for (const item of items.reverse()) { const size = Buffer.byteLength(JSON.stringify(item)); if (bytes + size > 1024 * 1024) break; bytes += size; bounded.unshift(item) }
           const originals = scope.pictures?.() ?? []
-          const pictures = await connection!.media.restore(originals)
           const warnings: string[] = []
+          const pictures = await connection!.media.restore(originals, message => warnings.push(message))
           for (const item of bounded) {
             if (item.kind !== 'text' || item.who !== 'agent') continue
             await connection!.media.observe({ kind: 'output', sessionId: scope.sessionId, data: item.text }, () => {})

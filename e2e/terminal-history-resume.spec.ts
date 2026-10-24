@@ -128,3 +128,28 @@ test('history follows a real Shell cd and does not offer conversations from the 
   await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
   expect((await mode(page, await terminal(page))).sessionId).toBe(target)
 })
+
+test('an unsupported old image preview warns while the same conversation and original model image context remain usable', async ({ dawn }) => {
+  const { page, requests } = dawn, target = await seed(page)
+  const bmp = Buffer.alloc(58)
+  bmp.write('BM'); bmp.writeUInt32LE(58, 2); bmp.writeUInt32LE(54, 10); bmp.writeUInt32LE(40, 14)
+  bmp.writeInt32LE(1, 18); bmp.writeInt32LE(1, 22); bmp.writeUInt16LE(1, 26); bmp.writeUInt16LE(24, 28)
+  await page.evaluate(async ({ sessionId, data }) => {
+    await window.dawn!.invoke('subscribeSession', { sessionId })
+    await window.dawn!.invoke('acquireLease', { sessionId, holder: 'user' })
+    const response = await window.dawn!.invoke('writeToSession', { sessionId, as: 'user', data: 'GUI_BMP_HISTORY', images: [{ from: 'bytes', data, mimeType: 'image/bmp' }] })
+    if (!response.ok) throw Error(response.error.message)
+  }, { sessionId: target.sessionId, data: bmp.toString('base64') })
+  await final(page, target.sessionId, 2)
+  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
+  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true }).click()
+  await expect(page.locator('.dock .xterm-screen')).toContainText('历史图片 2 无法预览，原始图片上下文保留')
+  expect((await mode(page, target.newTerminalId)).sessionId).toBe(target.sessionId)
+  await expect(page.locator('.terminal-inline-image img').first()).toBeVisible()
+  await type(page, 'CONTINUE_WITH_ORIGINAL_BMP'); await final(page, target.sessionId, 3)
+  const payload = requests.findLast((r: any) => JSON.stringify(r.body).includes('CONTINUE_WITH_ORIGINAL_BMP')) as any
+  expect(JSON.stringify(payload?.body)).toContain('image/bmp')
+  expect(await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)).toBe(target.tasks)
+  await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+  await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', target.sessionId)
+})

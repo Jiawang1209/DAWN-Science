@@ -11,6 +11,7 @@ import { loadRegistryOrDefault } from '../config/loader.js'
 import { createWorkbench } from '../electron/wiring.js'
 import type { CredentialsPort } from '../workbench/backend.js'
 import type { OPERATIONS } from '../protocol/index.js'
+import type { SessionPermission, SessionPermissionValue } from '../protocol/permissions.js'
 type Op = keyof typeof OPERATIONS
 
 /** Each CLI owns its database: startup reconciliation must not touch another live host. */
@@ -57,6 +58,10 @@ export async function openCliContext(agentId?: string, resume?: string | true) {
       history: async () => ({ items: [], pictures: [], truncated: false }),
       suggest: () => suggestLatestPrompt(workbench.events.peek(task.sessionId)?.items ?? [], turnId => call<{ text: string }>('suggestNextPrompt', { sessionId: task.sessionId, turnId })),
       usage: async () => workbench.sessionUsage(task.sessionId),
+      permissions: async (value?: SessionPermissionValue) => {
+        if (value !== undefined) await call('setSessionConfigOption', { sessionId: task.sessionId, configId: 'dawn.permission', value })
+        return call<SessionPermission>('getSessionPermission', { sessionId: task.sessionId })
+      },
       attach: (sink: import('../runtime/types.js').EventSink) => workbench.sessions.attach(task.sessionId, sink),
       waitForIdle: () => workbench.nativeRuntime.waitForIdle(task.sessionId),
       onExit: (_callback: () => void) => () => {},

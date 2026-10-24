@@ -2,6 +2,7 @@ import { createConnection } from 'node:net'
 import type { DesktopCliEvent, CliHistory, CliHistoryEntry } from './desktop-wire.js'
 import { frames, send, type DesktopDescriptor } from './desktop-wire.js'
 import type { CliUsage } from './usage.js'
+import type { SessionPermission, SessionPermissionValue } from '../protocol/permissions.js'
 
 export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace: string, terminalId?: string, agentId?: string, resumeSessionId?: string) {
   if (!descriptor || descriptor.version !== 1 || typeof descriptor.socket !== 'string' || typeof descriptor.token !== 'string') throw new Error('无效的 DAWN 连接文件')
@@ -38,6 +39,7 @@ export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace
     history: () => call<CliHistory>('$history'),
     suggest: () => call<{ text: string }>('$suggest'),
     usage: () => call<CliUsage>('$usage'),
+    permissions: (value?: SessionPermissionValue) => call<SessionPermission>('$permissions', value === undefined ? undefined : { value }),
     attach: (sink: (event: DesktopCliEvent) => void) => { sinks.add(sink); return () => { sinks.delete(sink) } },
     waitForIdle: async () => { await call('$wait') },
     onExit: (callback: () => void) => { exits.add(callback); return () => { exits.delete(callback) } },

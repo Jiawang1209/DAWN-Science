@@ -9078,6 +9078,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 }
 
 .terminal-mode-switch { display: flex; align-items: center; position: relative; flex-shrink: 0; }
+.terminal-permissions { display: flex; align-items: center; position: relative; flex-shrink: 0; }
+.terminal-permissions .perm-pill-menu { top: calc(100% + 8px); bottom: auto; right: 0; max-height: min(30rem, 70vh); overflow-y: auto; transform-origin: top right; background: var(--dawn-surface-elevated); }
 .terminal-mode-options { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-input); }
 .terminal-mode-options button { border: 0; border-radius: var(--dawn-radius-sm); padding: 5px 10px; font: inherit; font-size: var(--dawn-fs-badge); color: var(--dawn-text-3); background: transparent; cursor: pointer; white-space: nowrap; }
 .terminal-mode-options button[aria-pressed="true"] { background: var(--dawn-accent-soft); color: var(--dawn-accent); font-weight: var(--dawn-weight-semibold); box-shadow: var(--dawn-shadow-sm); }

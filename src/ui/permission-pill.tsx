@@ -2,7 +2,7 @@
  * 输入卡附栏右侧那颗「权限」（2026-08-23，作者定的：放进对话框、和上传 / 选目录一行靠右、上拉菜单、
  * 和「优化输入」同一副样子；**替掉设置里的「工具权限」**）。
  *
- * 它是权限档的**唯一入口**：
+ * 会话和终端复用的权限入口：
  * - 有会话时改的是**这一段**（走会话开关 `dawn.permission`），空态屏改的是**默认**；
  * - 菜单底下一行「也作为以后新会话的默认」——默认值的入口留在这里，不另开一屏；
  * - 最底下一行灰字说边界：不是沙箱；硬拒清单任何档都拒；run_code 里的代码在远端一样不经这道门。
@@ -43,12 +43,14 @@ export function PermissionPill({
   当前,
   跟随默认,
   onPick,
+  disabled = false,
 }: {
   当前: 权限档
   /** 这一段没单独设过，跟着默认走（只有会话里才有这个概念） */
   跟随默认?: boolean | undefined
   /** 选了一档；`也作为默认` = 顺手写进设置 */
   onPick: (档: 权限档, 也作为默认: boolean) => void
+  disabled?: boolean
 }) {
   const [开着, 设开着] = useState(false)
   const [也作为默认, 设也作为默认] = useState(false)
@@ -64,7 +66,7 @@ export function PermissionPill({
 
   return (
     <div className="perm-pill" ref={盒} onKeyDown={(e) => e.key === "Escape" && 设开着(false)}>
-      <Button variant="ghost" size="toolbar" className="perm-pill-trigger" data-tier={当前} aria-haspopup="menu" aria-expanded={开着} onClick={() => 设开着((v) => !v)}>
+      <Button variant="ghost" size="toolbar" className="perm-pill-trigger" disabled={disabled} data-tier={当前} aria-haspopup="menu" aria-expanded={开着} onClick={() => 设开着((v) => !v)}>
         {档图标(当前)}
         {短名(当前)}
         <下拉图标 />
@@ -78,6 +80,7 @@ export function PermissionPill({
               size="inline"
               role="menuitemradio"
               aria-checked={档 === 当前}
+              disabled={disabled}
               className="perm-pill-item"
               data-tier={档}
               onClick={() => {

@@ -593,7 +593,8 @@
 /** 8.28：终端 Agent 状态附带权威会话与模型，返回会话沿用同一上下文。 */
 /** 8.29：终端 Agent 待发图片与按图片 ID 的缩略/原图读取。 */
 /** 8.30: scoped terminal history listing and explicit CLI resume identity. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.30"
+/** 8.31: read-only effective session permission snapshot for terminal/conversation parity. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.31"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

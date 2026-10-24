@@ -252,6 +252,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
 
     initScienceLayout: async () => ({ created: [], instructions: "written" as const, file: "AGENTS.md" }),
     getPermissionMode: async () => ({ mode: "allow-all" as const }),
+    getSessionPermission: async () => ({ current: 'inherit', effective: 'allow-all' }),
     getAtFileSettings: async () => ({ ignorePasted: true, globalRules: [] }),
     setAtFileSettings: async () => ({ ignorePasted: true, globalRules: [] }),
     setPermissionMode: async () => ({ mode: "deny-risky" as const }),

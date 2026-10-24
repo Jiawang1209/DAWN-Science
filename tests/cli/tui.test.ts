@@ -5,6 +5,14 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it.each(['/exit', '/permissions deny-risky'])('Enter submits the complete local command %s despite an older asynchronous slash candidate', async command => {
+  const f = fixture(120, 28)
+  f.input('/'); await f.flush()
+  for (const char of command.slice(1)) f.input(char)
+  f.input('\r'); await f.flush()
+  expect(f.submit).toHaveBeenCalledExactlyOnceWith(command)
+  expect(f.ui.draft()).toBe('')
+})
 it('searches sent input and restores the exact multiline draft without sending it', async () => {
   const f = fixture(100, 28)
   f.input('旧问题 数据规模'); f.input('\r')
@@ -318,4 +326,15 @@ it('reveals a tool failure received while reading old output', async () => {
   f.ui.toolStart({ toolCallId: 'err', toolName: 'read', input: { path: 'missing' } })
   f.ui.toolEnd({ toolCallId: 'err', toolName: 'read', isError: true, text: 'VISIBLE_TOOL_FAILURE', truncated: false }); await f.flush()
   expect(f.text()).toContain('VISIBLE_TOOL_FAILURE'); expect(f.text()).toContain('失败')
+})
+it('displays live permission tier and treats /permissions as a local command without recording a user turn', async () => {
+  const f = fixture(120, 28)
+  f.ui.setPermissions({ current: 'inherit', effective: 'ask-risky' })
+  await f.flush()
+  expect(f.text()).toContain('请求批准')
+  f.input('/permissions deny-risky'); f.input('\r'); await f.flush()
+  expect(f.submit).toHaveBeenCalledWith('/permissions deny-risky')
+  expect(f.text()).not.toContain('› /permissions deny-risky')
+  f.ui.setPermissions({ current: 'allow-all', effective: 'allow-all' }); await f.flush()
+  expect(f.text()).toContain('完全访问权限')
 })

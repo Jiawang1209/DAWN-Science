@@ -6,6 +6,28 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { AgentEvent } from '../../src/runtime/types.js'
 
+it('reads and changes only the bound session permission with strict values and no global/config escape', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-permission-wire-'))
+  const call = vi.fn(async () => ({ current: 'ask-risky', effective: 'ask-risky' }))
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: root, call, attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t'), client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    expect(await client.call('$permissions')).toEqual({ current: 'ask-risky', effective: 'ask-risky' })
+    expect(call).toHaveBeenLastCalledWith('getSessionPermission', { sessionId: 'owned' })
+    await client.call('$permissions', { value: 'deny-risky' })
+    expect(call).toHaveBeenCalledWith('setSessionConfigOption', { sessionId: 'owned', configId: 'dawn.permission', value: 'deny-risky' })
+    call.mockClear()
+    for (const input of [{ value: 'allow-all', sessionId: 'other' }, { value: 'bad' }, { configId: 'dawn.plan', value: 'allow-all' }, { value: 'allow-all', global: true }, null]) {
+      await expect(client.call('$permissions', input)).rejects.toThrow()
+    }
+    await expect(client.call('setSessionConfigOption', { sessionId: 'owned', configId: 'dawn.permission', value: 'allow-all' })).rejects.toThrow()
+    await expect(client.call('setPermissionMode', { mode: 'allow-all' })).rejects.toThrow()
+    expect(call).not.toHaveBeenCalled()
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
 it('loads suggestions only for the authenticated bound session without exposing generic desktop operations', async () => {
   const root = mkdtempSync(join(tmpdir(), 'dawn-suggest-wire-'))
   const suggest = vi.fn(async () => ({ text: '检查缺失值' })), call = vi.fn(async () => ({}))

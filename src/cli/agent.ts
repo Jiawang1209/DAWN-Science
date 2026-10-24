@@ -7,6 +7,8 @@ import type { QuestionRecord, QuestionAnswer } from '../protocol/questions.js'
 import { openCliContext } from './context.js'
 import { CLI_HELP, plain, toolDetail } from './presentation.js'
 import { ResumeCancelled } from './history-picker.js'
+import { SessionPermissionSchema, SessionPermissionValueSchema } from '../protocol/permissions.js'
+import { permissionLabel, PERMISSION_HELP } from './permissions.js'
 
 type Permission = Extract<AgentEvent, { kind: 'permission_request' }>
 export async function runCliAgent(agentId?: string, resume?: string | true): Promise<number> {
@@ -34,6 +36,18 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   const suggestions = view ? new CliNextPrompt(() => context.suggest(), text => view.setSuggestion(text)) : undefined
   const updateSuggestion = () => suggestions?.update(!closing && !busy && !permission && !question && !view?.draft())
   let usageRequest = 0
+  let permissionRevision = 0, permissionReading = false, permissionWriting = false
+  let permissionSnapshot: import('../protocol/permissions.js').SessionPermission | undefined
+  const refreshPermissions = async () => {
+    if (closing || permissionReading || permissionWriting) return
+    permissionReading = true
+    const version = permissionRevision
+    try {
+      const next = SessionPermissionSchema.parse(await context.permissions())
+      if (!closing && version === permissionRevision) { permissionSnapshot = next; view?.setPermissions(next) }
+    } catch { if (!closing && version === permissionRevision) { permissionSnapshot = undefined; view?.setPermissions(undefined) } }
+    finally { permissionReading = false }
+  }
   const refreshUsage = async () => {
     if (!view || closing) return
     const request = ++usageRequest
@@ -42,7 +56,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
     if (!closing && request === usageRequest) view.setUsage(usage)
   }
   const flush = () => { if (view) view.finish(); else if (answer.trim()) { say('\n' + answer.trim() + '\n'); answer = '' } }
-  const status = () => say(`\nAgent · ${context.model}\n目录  ${process.cwd()}\n记录  ${context.directory}\n`)
+  const status = () => say(`\nAgent · ${context.model}\n权限  ${permissionSnapshot ? permissionLabel(permissionSnapshot) : '未读取'}\n目录  ${process.cwd()}\n记录  ${context.directory}\n`)
   const showQuestion = () => {
     if (!question) return
     const q = question.record.questions[question.index]!
@@ -60,7 +74,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       finally { await context.close() }
     } finally {
       detachExit(); detach(); input.removeListener('end', onEnd); process.removeListener('SIGTERM', onTerminate); process.removeListener('SIGINT', onInterrupt)
-      clearInterval(renew)
+      clearInterval(renew); clearInterval(permissionTimer)
       view?.stop(); rl?.close(); if (input.isTTY) input.setRawMode(false); input.pause()
       say('\n已退出 Agent，返回 Shell。'); finished()
     }
@@ -78,6 +92,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       case 'output': beginActivity(); if (view) view.reply(event.data); else answer += plain(event.data); break
       case 'turn_end': flush(); break
       case 'model': suggestions?.reset(); updateSuggestion(); void refreshUsage(); break
+      case 'config_options': void refreshPermissions(); break
       case 'turn_usage': case 'compaction_end': void refreshUsage(); break
       case 'tool_start':
         beginActivity()
@@ -122,12 +137,29 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   const detachExit = context.onExit(() => { void shutdown().catch(() => { finished() }) })
   const renew = setInterval(() => { void call('acquireLease', { sessionId, holder: 'user' }).catch(e => say(String(e))) }, 120_000)
   renew.unref()
+  // Default inheritance can change without a session event. Never overlap reads or race writes.
+  const permissionTimer = setInterval(() => { void refreshPermissions() }, 1000)
+  permissionTimer.unref()
   const handle = async (text: string) => {
     const line = text.trim()
     if (closing || !line) { prompt(); return }
     if (line === '/exit' || line === '/quit') { await shutdown(); return }
     if (line === '/help') { say(CLI_HELP); prompt(); return }
     if (line === '/status') { status(); prompt(); return }
+    if (/^\/permissions(?:\s|$)/.test(line)) {
+      const argument = line.slice('/permissions'.length).trim()
+      if (!argument) { await refreshPermissions(); say((permissionSnapshot ? '当前权限：' + permissionLabel(permissionSnapshot) : '权限未读取，请重试。') + '\n' + PERMISSION_HELP); prompt(); return }
+      const tier = SessionPermissionValueSchema.safeParse(argument)
+      if (!tier.success) { say(PERMISSION_HELP); prompt(); return }
+      if (permissionWriting) { say('正在更改权限，请稍候。'); return }
+      permissionWriting = true; permissionRevision++
+      try {
+        const next = SessionPermissionSchema.parse(await context.permissions(tier.data))
+        if (!closing) { permissionSnapshot = next; view?.setPermissions(next); say('当前权限：' + permissionLabel(next)) }
+      } catch (error) { say('权限更改失败：' + (error instanceof Error ? error.message : String(error)), true) }
+      finally { permissionWriting = false; permissionRevision++; void refreshPermissions(); prompt() }
+      return
+    }
     if (permission) {
       const request = permission
       const option = /^y(?:es)?$/i.test(line) ? request.options.find(o => o.kind.startsWith('allow'))
@@ -184,7 +216,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   rl?.on('close', () => { if (!closing) onEnd() })
   input.on('end', onEnd); process.on('SIGTERM', onTerminate); process.on('SIGINT', onInterrupt)
   try {
-    await refreshUsage()
+    await Promise.all([refreshUsage(), refreshPermissions()])
     if (view) { view.start(); if (restored) view.restore(restored) }
     else {
       say('\nDAWN Science\n')

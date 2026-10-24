@@ -1,0 +1,36 @@
+# 终端权限档位检查记录 · 2026-10-24
+
+分支：`codex/terminal-permission-controls`。基线：本地 main `54d5637d`。
+
+终端顶栏复用会话页 PermissionPill，显示自动拦截、请求批准、完全访问权限；默认只写当前 Agent 的 `dawn.permission`。明确勾选以后新会话默认时才写全局默认。`/permissions` 查看，带 `deny-risky`、`ask-risky`、`allow-all`、`inherit` 切换；底栏同步显示有效档位及继承状态。Normal、切换中和没有终端时不显示权限入口。
+
+继续使用现有 Pi SDK/TUI 和 DAWN 权限门，无需替换原生 CLI。已有硬拒规则、方案期和待批工具请求保持原有判断；切换档位不会自动批准已经等待确认的操作。权限仍沿用现有会话运行状态及默认值，不新增权限存储格式或跨应用重启持久化机制。
+
+## 自动检查
+
+- `npm run typecheck`：通过。
+- `npm run build`：通过；最后菜单底色调整后 `npm run build:ui` 再次通过。既有 eval 与 bundle 体积提示仍存在。
+- `npx vitest run`：495 个文件通过，5214 项通过、10 项跳过，0 失败。
+- Electron 原有历史恢复 6 条、空终端返回 2 条：通过，包含原图上下文、应用重启、Shell cd、关闭最后一个终端再接续、返回原会话。
+- `e2e/terminal-permissions.spec.ts`：最终独立运行 2 条通过，覆盖双向切换、默认继承、Normal、历史接续、最后关闭、权限命令不生成模型回合。
+- 独立代码审查：无阻塞项；恒定权限快照不再反复递增上下文显示版本。
+- `git diff --check`：通过。
+
+先写回归并确认失败，再实现后端读取、CLI 范围约束、权限控件和本地命令。补充失败写入、旧读取返回、会话换位、显式全局默认、真实原生工具门的回归。
+
+检查中发现 Pi Editor 的旧异步补全可能把完整 `/exit` 变成 `/exihelp`，随后误当模型消息。内存回归稳定复现；现在完整本地命令 Enter 先取消旧补全，再沿原提交路径执行。`/exit` 和带参数的 `/permissions` 两条回归通过。历史用例同时改为等待真实后端模式和 GUI 状态，避免读取之前留下的 Normal / 恢复文案。
+
+## 实际预览
+
+独立 Electron 窗口：`DAWN Science · 权限同步 · 分支预览`。
+
+- 入口：`/Volumes/RPython/DAWN-previews/terminal-permissions-20261024-54d5637d/launch-permissions.mjs`。
+- 实际 renderer 来自此分支工作区的 `dist/ui/index.html`。
+- 沿用已隔离的预览 profile 和 workspace，启动前完整备份至本次预览目录的 `profile-before-permission-controls/`；安装版配置没有写入。
+- 原试用会话 `0e856412-bd24-4d1f-8717-0857aca07dc2` 及模型 `deepseek/deepseek-flash` 保留。权限检查前后均为 5 个用户回合；没有发送额外模型问题。
+- 实测：终端菜单改为请求批准 → 返回会话同步；会话改自动拦截 → 终端同步；切档保留输入草稿；CLI 命令恢复跟随默认；默认值变化同步到两种页面；关闭最后终端 → 返回 → 重开 Shell 后接续同一历史会话保留档位。
+- 最后恢复原有效权限：`inherit` / `allow-all`，全局默认 `allow-all`。测试草稿已清空。
+- 1512×852 与 900×700 窗口检查：菜单向下展开、底色不透字、没有越出视口。最终回到原窗口大小，保留可输入状态。
+- 截图：预览目录中的 `permission-menu-final.png`、`permission-menu-900.png`、`ready-preview.png`。
+
+旧 main 预览已关闭。仅保留此分支试用窗口。未合并、未推送、未替换安装版；原配置/凭据文件哈希核对不变。

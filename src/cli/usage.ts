@@ -6,7 +6,7 @@ import type { ContextUsage } from '../runtime/types.js'
 
 export type CliUsage = SessionUsage & { context?: ContextUsage }
 
-export function usageLines(usage: CliUsage, width: number, fallbackModel?: string, contextSlot?: string): string[] {
+export function usageLines(usage: CliUsage, width: number, fallbackModel?: string, contextSlot?: string, permission?: string): string[] {
   const number = (field: UsageField) => usage[field] === undefined ? '未提供'
     : usage.partial?.includes(field) && usage[field] === 0 ? '未确认'
     : (usage.partial?.includes(field) ? '≥' : '') + formatTokens(usage[field])
@@ -21,7 +21,7 @@ export function usageLines(usage: CliUsage, width: number, fallbackModel?: strin
   const percent = !context?.afterCompaction && context?.usedTokens !== undefined && limit
     ? `（${context.usedTokens / limit < 0.01 ? '<1' : Math.round(100 * context.usedTokens / limit)}%）` : ''
   const contextText = '上下文 ' + used + (limit ? ' / ' + formatTokens(limit) : context?.usedTokens !== undefined && !context.afterCompaction ? ' / 上限未知' : '') + percent
-  for (const part of [plain(context?.model || fallbackModel || '模型未提供'), usage.turns === undefined ? '会话累计' : `${usage.turns} 轮`, tools, '输入 ' + number('input'), '输出 ' + number('output'), '缓存 ' + number('cacheRead'), '命中 ' + hit, contextSlot ?? contextText]) {
+  for (const part of [plain(context?.model || fallbackModel || '模型未提供'), permission, usage.turns === undefined ? '会话累计' : `${usage.turns} 轮`, tools, '输入 ' + number('input'), '输出 ' + number('output'), '缓存 ' + number('cacheRead'), '命中 ' + hit, contextSlot ?? contextText]) {
     if (!part) continue
     const last = lines.at(-1)
     if (last && visibleWidth(last + ' · ' + part) <= width) lines[lines.length - 1] = last + ' · ' + part

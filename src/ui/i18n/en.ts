@@ -16,6 +16,9 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "这段会话没有可用的权限设置": "Permission settings are unavailable for this session",
+  "权限读取中": "Loading permissions",
+  "读取权限失败": "Could not read permissions",
   "接续旧对话": "Continue saved chat",
   "选择历史会话": "Choose a conversation",
   "搜索历史会话": "Search saved conversations",

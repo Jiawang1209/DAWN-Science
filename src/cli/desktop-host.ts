@@ -4,6 +4,8 @@ import { mkdtemp, mkdir, writeFile, chmod, readFile, rm } from 'node:fs/promises
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { DesktopImages } from './desktop-images.js'
+import { z } from 'zod'
+import { SessionPermissionValueSchema } from '../protocol/permissions.js'
 import type { TerminalAttachmentUpdate } from '../protocol/terminal.js'
 import { frames, send, type DesktopDescriptor, type DesktopScope, type CliHistoryEntry, type CliHistory } from './desktop-wire.js'
 
@@ -206,6 +208,12 @@ export class DesktopCliHost {
         }
         else if (frame.operation === '$suggest') result = await scope.suggest?.() ?? { text: '' }
         else if (frame.operation === '$usage') result = scope.usage?.() ?? {}
+        else if (frame.operation === '$permissions') {
+          // This socket may change one config on its authenticated session only.
+          const input = z.object({ value: SessionPermissionValueSchema.optional() }).strict().parse(frame.input === undefined ? {} : frame.input)
+          if (input.value !== undefined) await scope.call('setSessionConfigOption', { sessionId: scope.sessionId, configId: 'dawn.permission', value: input.value })
+          result = await scope.call('getSessionPermission', { sessionId: scope.sessionId })
+        }
         else if (frame.operation === '$wait') { await scope.waitForIdle(); result = {} }
         else {
           if (!allowed.has(frame.operation)) throw new Error('CLI 不允许调用此操作')

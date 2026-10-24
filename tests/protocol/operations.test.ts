@@ -101,6 +101,7 @@ describe("操作注册表", () => {
         "cancelTransfer",
         "answerPermission",
         "setSessionConfigOption",
+        "getSessionPermission",
         "getUsage",
         "connectRemote",
         "createRemoteSession",

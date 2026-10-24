@@ -43,3 +43,12 @@ it('removes both conversation actions and the mode switch after the last termina
   expect(screen.queryByRole('button', { name: '导出会话' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Normal 模式' })).toBeNull()
 })
+
+it('shows permissions only for the active DAWN Agent and removes them on Normal/last-close', async () => {
+  let mode = 'dawn'
+  const get = vi.fn(async (op: string) => op === 'getSessionPermission' ? { current: 'ask-risky', effective: 'ask-risky' } : { mode, sessionId: 'agent' })
+  mount(get)
+  await screen.findByRole('button', { name: '请求批准' })
+  mode = 'normal'
+  await waitFor(() => expect(screen.queryByRole('button', { name: '请求批准' })).toBeNull(), { timeout: 1800 })
+})

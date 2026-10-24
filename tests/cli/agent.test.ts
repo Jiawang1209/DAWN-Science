@@ -77,6 +77,17 @@ it('noninteractive permission is denied instead of hanging or running the comman
   expect(result.code).toBe(1)
   expect(existsSync(join(f.workspace, 'cli-permission.txt'))).toBe(false)
 }, 30000)
+it('/permissions changes the actual native gate without consuming a model turn or setting the desktop default', async () => {
+  const allowed = await fixture(), a = await piped('/permissions allow-all\nCLI权限\n', allowed)
+  expect(a.output).toContain('当前权限：完全访问权限')
+  expect(a.output).not.toContain('非交互输入无法确认权限')
+  expect(readFileSync(join(allowed.workspace, 'cli-permission.txt'), 'utf8')).toBe('allowed')
+  expect(a.code).toBe(0)
+  const blocked = await fixture(), b = await piped('/permissions deny-risky\nCLI权限\n', blocked)
+  expect(b.output).toContain('当前权限：自动拦截')
+  expect(existsSync(join(blocked.workspace, 'cli-permission.txt'))).toBe(false)
+  expect(readFileSync(blocked.desktopDb, 'utf8')).toBe('untouched-desktop')
+}, 30000)
 it('actual shell launches dawn and receives the same PID, cwd, env and terminal settings after /exit', async () => {
   const f = await fixture(), s = await shell(f)
   s.terminal.write('stty -g > tty-before.txt; printf "%s|%s|%s" "$$" "$PWD" "$DAWN_CLI_SAMPLE" > shell-before.txt; dawn\r')

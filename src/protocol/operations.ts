@@ -35,6 +35,7 @@ import {
   更新状态Schema,
 } from "./entities.js"
 import { SessionSnapshotSchema } from "./events.js"
+import { SessionPermissionSchema } from './permissions.js'
 import { 够长 } from "./search-match.js"
 
 /**
@@ -2375,6 +2376,12 @@ export const OPERATIONS = {
    * **线上那两者的形状不同**（boolean 要多带一个 `type` 字段），
    * 由运行时去分辨，协议这一层只有一个字符串。
    */
+  getSessionPermission: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: SessionPermissionSchema,
+    mutating: false,
+  },
+
   setSessionConfigOption: {
     request: z
       .object({

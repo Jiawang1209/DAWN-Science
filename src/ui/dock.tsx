@@ -18,6 +18,7 @@ import type { SessionSummary } from "../protocol/index.js"
 import { t, tf } from "./i18n/index.js"
 import { 终端图标, 加号图标, 返回图标 } from './icons.js'
 import { TerminalHistoryPicker } from './terminal-history-picker.js'
+import { TerminalPermissionControl } from './terminal-permissions.js'
 export function TerminalDock({
   client,
   terminals,
@@ -94,6 +95,8 @@ export function TerminalDock({
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
         {currentId ? <TerminalConversationActions key={`terminal-actions:${currentId}`} client={client} terminalId={currentId}
           sessionId={agentState?.terminalId === currentId ? agentState.state.sessionId : undefined} onFind={() => requestSearch('content')} /> : null}
+        {client && !exited && currentId && agentState?.terminalId === currentId && agentState.state.mode === 'dawn' && agentState.state.sessionId
+          ? <TerminalPermissionControl key={`terminal-permission:${currentId}:${agentState.state.sessionId}`} client={client} sessionId={agentState.state.sessionId} /> : null}
         {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} exited={exited} onState={reportState} /> : null}
         {fullPage ? <span className="conv-action-tip-wrap terminal-return">
           <Button variant="outline" size="icon" className="terminal-return-button" disabled={returning} aria-busy={returning} onClick={onCloseDock}

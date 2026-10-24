@@ -4,11 +4,13 @@ import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui
 import { plain } from './presentation.js'
 import type { CliHistory } from './desktop-wire.js'
 import { usageLines, type CliUsage } from './usage.js'
+import type { SessionPermission } from '../protocol/permissions.js'
+import { permissionLabel } from './permissions.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal; contextButton?: boolean;
   onDraftChange?: () => void; onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
-const localCommand = (text: string) => /^\/(exit|quit|help|status)$/.test(text.trim())
+const localCommand = (text: string) => /^\/(?:exit|quit|help|status)$|^\/permissions(?:\s|$)/.test(text.trim())
 const INPUT_HELP = 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 补全建议/展开工具 · /exit 返回 Shell'
 class SearchAwareTui extends TuiAltScreen {
   get overlayFocused() { return this.isOverlayFocused() }
@@ -48,6 +50,7 @@ export class CliTui {
   private readonly terminal: Terminal
   private state: State = { busy: false }
   private usage: CliUsage = {}
+  private permissions: SessionPermission | undefined
   private usageRevision = 0
   private contextPlacement: { row: number; col: number; width: number } | undefined
   private stopped = true
@@ -77,6 +80,7 @@ export class CliTui {
     } }, { paddingX: 0, autocompleteMaxVisible: 3 })
     this.editor.setAutocompleteProvider(new CombinedAutocompleteProvider([
       { name: 'help', description: '帮助与快捷键' }, { name: 'status', description: '模型、目录和记录位置' }, { name: 'exit', description: '返回原 Shell' },
+      { name: 'permissions', description: '查看或切换当前会话的工具权限' },
     ], options.workspace))
     this.editor.onSubmit = text => {
       if (!text.trim()) return
@@ -111,7 +115,7 @@ export class CliTui {
       : this.suggestion || (this.firstPrompt ? INPUT_HELP : '继续提问…')
     const footer: Component = { invalidate() {}, render: width => {
       const slot = options.contextButton && width >= 10 ? ' '.repeat(10) : undefined
-      const lines = usageLines(this.usage, width, options.model, slot)
+      const lines = usageLines(this.usage, width, options.model, slot, this.permissions ? permissionLabel(this.permissions) : '权限未读取')
       this.contextPlacement = slot ? { row: this.terminal.rows - 1, col: visibleWidth(lines.at(-1)!) - slot.length, width: slot.length } : undefined
       return [...(this.terminal.rows <= 12 ? [] : ['']), ...lines.map(dim)]
     } }
@@ -144,6 +148,11 @@ export class CliTui {
         const text = this.suggestion; this.suggestion = ''; this.editor.setText(text); this.tui.requestRender(); return { consume: true }
       }
       if (matchesKey(data, 'tab') && !this.editor.getText().startsWith('/')) { this.transcript.toggleTools(); this.tui.requestRender(); return { consume: true } }
+      if (matchesKey(data, 'enter') && localCommand(this.editor.getExpandedText())) {
+        // setText cancels pending async completion; Enter must submit the command
+        // the user actually typed, never an earlier selected slash candidate.
+        this.editor.setText(this.editor.getExpandedText())
+      }
       if (matchesKey(data, 'enter') && this.state.busy && !this.state.permission && !this.state.question && !localCommand(this.editor.getExpandedText())) {
         this.tui.flash('本轮仍在运行；草稿已保留，Ctrl-C 可停止。'); return { consume: true }
       }
@@ -184,6 +193,10 @@ export class CliTui {
     this.tui.stop({ preserveScreen: true })
   }
   renderNow() { if (!this.stopped) this.tui.renderNow() }
+  setPermissions(value?: SessionPermission) {
+    if (this.permissions?.current === value?.current && this.permissions?.effective === value?.effective) return
+    this.permissions = value; this.usageRevision++; this.tui.requestRender()
+  }
   setSuggestion(text: string) { this.suggestion = plain(text).replace(/[\r\n]/g, ' ').slice(0, 120); this.tui.requestRender() }
   setUsage(usage: CliUsage) { this.usage = usage; this.usageRevision++; this.tui.requestRender() }
   setState(state: State) {

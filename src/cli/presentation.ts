@@ -22,6 +22,7 @@ Agent 中：
   /exit                   退出并回到原 Shell（Normal）
   /help                   帮助
   /status                 当前模型、目录和记录位置
+  /permissions [档位]     查看权限；deny-risky / ask-risky / allow-all / inherit 切换当前会话
   Enter                   发送当前输入
   Shift/Alt+Enter          换行（内置终端支持 Shift+Enter）
   ↑ / ↓                   编辑或浏览输入历史

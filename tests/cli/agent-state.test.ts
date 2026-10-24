@@ -11,6 +11,7 @@ const harness = vi.hoisted(() => ({
   started: false,
   usages: [] as SessionUsage[],
   suggestions: [] as string[], draft: '',
+  permissions: [] as unknown[], notices: [] as string[],
 }))
 vi.mock('../../src/cli/context.js', () => ({ openCliContext: async () => harness.context }))
 vi.mock('../../src/cli/tui.js', () => ({
@@ -22,7 +23,8 @@ vi.mock('../../src/cli/tui.js', () => ({
     draft() { return harness.draft }
     setSuggestion(text: string) { harness.suggestions.push(text) }
     setUsage(usage: SessionUsage) { harness.usages.push(usage) }
-    notice() {}
+    notice(text: string) { harness.notices.push(text) }
+    setPermissions(value: unknown) { harness.permissions.push(value) }
     finish() {}
     reply() {}
     image() {}
@@ -35,6 +37,7 @@ import { runCliAgent } from '../../src/cli/agent.js'
 afterEach(() => { vi.restoreAllMocks() })
 
 async function interactiveAgent() {
+  harness.permissions = []; harness.notices = []
   harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []; harness.suggestions = []; harness.draft = ''
   // Replace only the stream getters; the worker's actual terminal and signal
   // handlers are never driven by these controller tests.
@@ -46,8 +49,10 @@ async function interactiveAgent() {
   const call = vi.fn(async (_operation: string, _input: unknown) => ({}))
   const suggest = vi.fn(async () => ({ text: '检查缺失值' }))
   const usage = vi.fn(async (): Promise<SessionUsage> => ({}))
+  let permissionTier = 'inherit'
+  const permissions = vi.fn(async (value?: string) => { if (value) permissionTier = value; return { current: permissionTier, effective: permissionTier === 'inherit' ? 'ask-risky' : permissionTier } })
   harness.context = {
-    call, usage, suggest, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
+    call, usage, suggest, permissions, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
     attach: (sink: typeof emit) => { emit = sink; return vi.fn() },
     onExit: () => vi.fn(), close: vi.fn(async () => {}), waitForIdle: vi.fn(async () => {}),
   }
@@ -58,11 +63,31 @@ async function interactiveAgent() {
     await new Promise<void>(resolve => setImmediate(resolve))
   }
   return {
-    call, usage, suggest, emit, submit,
+    call, usage, suggest, permissions, emit, submit,
     state: () => harness.states.at(-1),
     close: async () => { harness.options!.onExit(); await running },
   }
 }
+
+it('handles /permissions locally, validates tiers, synchronizes config events and never answers a pending approval', async () => {
+  const agent = await interactiveAgent()
+  try {
+    expect(harness.permissions.at(-1)).toEqual({ current: 'inherit', effective: 'ask-risky' })
+    await agent.submit('/permissions allow-all')
+    expect(agent.permissions).toHaveBeenCalledWith('allow-all')
+    expect(harness.permissions.at(-1)).toEqual({ current: 'allow-all', effective: 'allow-all' })
+    agent.permissions.mockClear()
+    await agent.submit('/permissions invalid')
+    expect(agent.permissions).not.toHaveBeenCalled()
+    expect(agent.call.mock.calls.some(([op]) => op === 'writeToSession')).toBe(false)
+    agent.emit({ kind: 'permission_request', sessionId: 'state-test-session', requestId: 'pending', title: '确认？', options: [{ optionId: 'yes', kind: 'allow_once', name: '允许' }] })
+    await agent.submit('/permissions deny-risky')
+    expect(agent.state()?.permission).toBe(true)
+    expect(agent.call.mock.calls.some(([op]) => op === 'answerPermission')).toBe(false)
+    agent.emit({ kind: 'config_options', sessionId: 'state-test-session', options: [] })
+    await vi.waitFor(() => expect(agent.permissions).toHaveBeenCalledWith())
+  } finally { await agent.close() }
+})
 
 const pending: QuestionRecord = {
   requestId: 'question-state-test', state: 'pending',

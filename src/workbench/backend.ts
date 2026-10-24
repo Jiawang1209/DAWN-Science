@@ -4185,6 +4185,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return {}
     },
 
+    getSessionPermission: async ({ sessionId }) => {
+      const option = sessions.configOptions(sessionId)?.find(o => o.id === 'dawn.permission')
+      const current = option?.current
+      if (current !== 'inherit' && current !== 'allow-all' && current !== 'ask-risky' && current !== 'deny-risky') {
+        throw fault("invalid_request", "这段会话没有可用的权限设置")
+      }
+      const value = settings?.get('permission.mode')
+      const defaultTier = value === 'deny-risky' || value === 'ask-risky' ? value : 'allow-all'
+      return { current, effective: current === 'inherit' ? defaultTier : current }
+    },
+
     /** 改一个会话开关（A3）。**广播由运行时发**，这里只管转达 */
     setSessionConfigOption: async ({ sessionId, configId, value }) => {
       await sessions.setConfigOption(sessionId, configId, value)

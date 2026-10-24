@@ -1154,6 +1154,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [目录说明, 设目录说明] = useState<string | undefined>(undefined)
 
   const [权限档, 设权限档] = useState<"allow-all" | "ask-risky" | "deny-risky">("allow-all")
+  const 默认权限写入 = useRef(false), 默认权限版本 = useRef(0)
   /**
    * 用量（S21）。**进那一屏时才拉**——它要扫全表，而绝大多数会话
    * 从头到尾不会打开这一屏。
@@ -1162,16 +1163,28 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 拉用量 = useCallback(() => {
     client.get<用量数据>("getUsage", {}).then(设用量).catch(fail)
   }, [client])
-  // 输入卡上那颗权限是唯一入口（2026-08-23）：默认档一进来就取，不再只在设置屏取
+  // 默认档也能从终端菜单修改：继承默认的会话不能停留在初次读取的值。
   useEffect(() => {
     if (!ready) return
-    client
-      .get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("getPermissionMode", {})
-      .then((r) => 设权限档(r.mode))
-      .catch(fail)
+    let active = true, reading = false
+    const read = async () => {
+      if (reading || 默认权限写入.current) return
+      reading = true
+      const version = 默认权限版本.current
+      try {
+        const r = await client.get<{ mode: "allow-all" | "ask-risky" | "deny-risky" }>("getPermissionMode", {})
+        if (active && version === 默认权限版本.current) 设权限档(r.mode)
+      } catch { /* Keep the last known default; session controls report their own read errors. */ }
+      finally { reading = false }
+    }
+    void read()
+    const timer = setInterval(() => { void read() }, 1000)
+    return () => { active = false; clearInterval(timer) }
   }, [client, ready])
   const 设默认档 = useCallback(
     (m: "allow-all" | "ask-risky" | "deny-risky") => {
+      if (默认权限写入.current) return
+      默认权限写入.current = true; 默认权限版本.current++
       const 旧的 = 权限档
       设权限档(m)
       client
@@ -1181,6 +1194,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           设权限档(旧的)
           fail(e)
         })
+        .finally(() => { 默认权限写入.current = false; 默认权限版本.current++ })
     },
     [client, 权限档],
   )

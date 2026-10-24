@@ -151,6 +151,20 @@ describe("真实后端 · 经服务端端到端", () => {
     repo = newRepo()
   })
 
+  it('reads effective session permissions without starting or mutating another session', async () => {
+    const task = await ctx.backend.createTask({ agentId: 'ds-chat', workspace: repo }) as { sessionId: string }
+    let current = 'inherit'
+    vi.spyOn(ctx.sessions, 'configOptions').mockImplementation(id => id === task.sessionId ? [{ id: 'dawn.permission', name: '权限', kind: 'select', category: 'mode', current, options: [] }] : undefined)
+    await ctx.backend.setPermissionMode({ mode: 'ask-risky' })
+    const read = () => ctx.server.handle('getSessionPermission' as never, { sessionId: task.sessionId })
+    expect(await read()).toMatchObject({ ok: true, data: { current: 'inherit', effective: 'ask-risky' } })
+    await ctx.backend.setPermissionMode({ mode: 'deny-risky' })
+    expect(await read()).toMatchObject({ ok: true, data: { current: 'inherit', effective: 'deny-risky' } })
+    current = 'allow-all'
+    expect(await read()).toMatchObject({ ok: true, data: { current: 'allow-all', effective: 'allow-all' } })
+    expect(await ctx.server.handle('getSessionPermission' as never, { sessionId: 'missing' })).toMatchObject({ ok: false })
+  })
+
   it("@R 指令附给模型但不伪装成文件引用；下一句不会继承", async () => {
     writeFileSync(join(repo, "R"), "not a shortcut file")
     writeFileSync(join(repo, "data.csv"), "x\n1")

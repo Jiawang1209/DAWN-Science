@@ -10,7 +10,7 @@
 
 | 要找什么 | 去哪 |
 |---|---|
-| **DAWN CLI Agent**：Normal 为原 Shell；输入 dawn 进入 Agent，/exit 返回；原生终端占满主区，无重复聊天框（分支预览） | `docs/superpowers/specs/2026-10-23-dawn-cli-design.md` · `docs/reviews/2026-10-23-dawn-cli-verification.md` |
+| **DAWN CLI Agent**：Normal 为原 Shell；输入 dawn 进入 Agent，/exit 返回；原生终端占满主区，无重复聊天框；终端 `/plan` 与会话页共用先出方案，澄清答案随历史恢复 | `docs/superpowers/specs/2026-10-23-dawn-cli-design.md` · `docs/reviews/2026-10-25-terminal-plan-main-review.md` |
 | 目标、五条不变式 | `docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md` |
 | 阶段、决策门、风险 | `docs/superpowers/plans/2026-08-08-master-roadmap.md` |
 | 当前阶段的执行计划 | `docs/superpowers/plans/2026-08-11-phase2b-remote-workspace.md` —— ②-A′ 已完成，当前是 **②-B 远端工作区** |

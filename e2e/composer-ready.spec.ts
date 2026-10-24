@@ -14,21 +14,30 @@ async function 添加菜单(page: import("@playwright/test").Page) {
   return menu
 }
 
-test("**终端**：菜单标记反映开闭，点同一入口能打开和收起", async ({ dawn }) => {
+test("**终端**：菜单打开整页终端，返回保留草稿，再打开复用原终端", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
+  const input = page.locator('.composer-card textarea.composer-field')
+  await input.fill('TERMINAL_RETURN_DRAFT_KEEP')
   const menu = await 添加菜单(page)
   const terminal = menu.getByRole("menuitem", { name: "终端面板", exact: true })
-  // 关闭时只有终端图标；打开后加上勾选图标。
   await expect(terminal.locator("svg")).toHaveCount(1)
   await terminal.click()
   await expect(page.locator(".dock")).toBeVisible()
-  await 添加菜单(page)
-  await expect(terminal.locator("svg")).toHaveCount(2)
-  await terminal.click()
-  await expect(page.locator(".dock")).toHaveCount(0)
+  await expect(page.locator('.dock .term-host')).toBeVisible()
+  await expect(input).toBeHidden()
+  const original = await page.evaluate(() => Object.keys(JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}')))
+  expect(original).toHaveLength(1)
+  // 整页终端隐藏输入卡；返回入口位于终端标题栏，不再点击隐藏的旧菜单。
+  await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
+  await expect(page.locator('.dock')).toHaveCount(0)
+  await expect(input).toHaveValue('TERMINAL_RETURN_DRAFT_KEEP')
   await 添加菜单(page)
   await expect(terminal.locator("svg")).toHaveCount(1)
+  await terminal.click()
+  await expect(page.locator('.dock .term-host')).toBeVisible()
+  await expect(page.locator('.dock .dock-tab')).toHaveCount(1)
+  expect(await page.evaluate(() => Object.keys(JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}')))).toEqual(original)
 })
 
 test("**先出方案**：菜单选中态与方案说明一起开关，选中背景遵循主题", async ({ dawn }) => {

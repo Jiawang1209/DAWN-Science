@@ -1,6 +1,7 @@
 import { test, expect, 在项目里开会话, 等进了对话 } from './fixtures.js'
 import type { Page } from '@playwright/test'
 import { stripVTControlCharacters } from 'node:util'
+import { readFileSync } from 'node:fs'
 
 test.use({ dawnOptions: { reply: Array.from({ length: 28 }, (_, i) => `历史正文 SEARCH_BODY_${i}。`).join('\n\n') } })
 async function open(page: Page, agent = false) {
@@ -16,6 +17,9 @@ async function input(page: Page, text: string, send = false) {
 
 test('DAWN searches offscreen history and finds prior input without submitting or losing drafts', async ({ dawn }) => {
   const { page } = dawn; await open(page, true)
+  await expect(page.getByRole('button', { name: '搜索历史', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出会话', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '找回输入', exact: true })).toHaveCount(0)
   await input(page, 'DAWN_SEARCH_OLD 中文历史', true)
   const screen = page.locator('.dock .xterm-screen')
   await expect(screen).toContainText('1 轮'); await expect(screen).not.toContainText('生成中')
@@ -26,17 +30,25 @@ test('DAWN searches offscreen history and finds prior input without submitting o
   await input(page, 'KEEP_SEARCH_DRAFT')
   await page.getByRole('button', { name: '搜索历史', exact: true }).click(); await page.keyboard.type('DAWN_SEARCH_OLD')
   await expect(screen).toContainText('1/1'); await page.keyboard.press('Enter'); expect(await turns()).toBe(1)
-  await page.keyboard.press('Escape'); await expect(screen).toContainText('> DAWN KEEP_SEARCH_DRAFT')
-  await page.getByRole('button', { name: '找回输入', exact: true }).click(); await expect(screen).toContainText('搜索输入历史')
+  await page.keyboard.press('Escape'); await expect(screen).not.toContainText('↑ Shift+Enter'); await expect(screen).toContainText('> DAWN KEEP_SEARCH_DRAFT')
+  await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.press('Control+r'); await expect(screen).toContainText('搜索输入历史')
   await page.keyboard.type('中文历史'); await expect(screen).toContainText('1/1'); await page.keyboard.press('Enter')
   await expect(screen).toContainText('> DAWN DAWN_SEARCH_OLD 中文历史'); expect(await turns()).toBe(1)
   await page.keyboard.press('Control+c'); await page.keyboard.press('Meta+f'); await page.keyboard.type('NO_SUCH_CONTENT')
-  await expect(screen).toContainText('No matches'); await page.keyboard.press('Escape')
+  await expect(screen).toContainText('No matches'); await page.keyboard.press('Escape'); await expect(screen).not.toContainText('No matches')
   await expect(screen).toContainText('> DAWN'); expect(await turns()).toBe(1)
+  await page.getByRole('button', { name: '导出会话', exact: true }).click()
+  const toast = page.locator('.terminal-conversation-actions [role="status"]')
+  await expect(toast).toContainText('已导出 1 轮到 ')
+  const path = (await toast.innerText()).replace(/^已导出 1 轮到 /, '')
+  const exported = readFileSync(path, 'utf8')
+  expect(exported).toContain('DAWN_SEARCH_OLD 中文历史'); expect(exported).toContain('SEARCH_BODY_27')
+  expect(exported).not.toContain('KEEP_SEARCH_DRAFT'); expect(await turns()).toBe(1)
 })
 
 test('Normal searches retained output with matches and no-results while preserving the Shell draft', async ({ dawn }) => {
   const { page } = dawn; await open(page)
+  await expect(page.getByRole('button', { name: '导出会话', exact: true })).toBeDisabled()
   await input(page, "printf 'NORMAL_SEARCH_ROW_A\\nNORMAL_SEARCH_ROW_B\\n'", true)
   const screen = page.locator('.dock .xterm-screen')
   await expect(screen).toContainText('NORMAL_SEARCH_ROW_B')
@@ -50,7 +62,7 @@ test('Normal searches retained output with matches and no-results while preservi
   await page.keyboard.press('Control+u'); await page.keyboard.press('Meta+f'); await expect(query).toBeVisible()
   await query.fill('NORMAL_SEARCH_ROW_B'); await expect(page.locator('.terminal-find [role="status"]')).toContainText(/\d+\/\d+/)
   await page.getByRole('button', { name: '关闭终端搜索', exact: true }).click()
-  await page.getByRole('button', { name: '找回输入', exact: true }).click(); await page.keyboard.type('NORMAL_SEARCH_ROW_A')
+  await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.press('Control+r'); await page.keyboard.type('NORMAL_SEARCH_ROW_A')
   await expect(screen).toContainText(/(?:reverse|bck)-i-search/); await page.keyboard.press('Escape'); await page.keyboard.press('Control+u')
 })
 

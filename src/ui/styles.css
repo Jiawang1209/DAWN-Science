@@ -9117,5 +9117,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .terminal-find { position: absolute; top: 4px; right: 8px; z-index: var(--z-tooltip); display: flex; align-items: center; gap: 4px; max-width: calc(100% - 16px); padding: 6px; background: var(--dawn-surface-panel); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); box-shadow: var(--dawn-shadow-md-bordered); }
 .terminal-find input { min-width: 60px; width: 220px; flex: 1; }
 .terminal-find [role="status"] { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); white-space: nowrap; }
-.terminal-search-actions { display: flex; flex: 0 0 auto; gap: 2px; }
-.terminal-search-actions button { white-space: nowrap; }
+.terminal-conversation-actions { flex: 0 0 auto; }
+.terminal-conversation-actions .btn { white-space: nowrap; gap: var(--dawn-space-2); }
+.terminal-conversation-actions svg { width: 15px; height: 15px; }

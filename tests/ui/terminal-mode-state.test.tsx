@@ -33,3 +33,13 @@ it('an exited terminal retains its return path but cannot accept input or start 
   fireEvent.click(screen.getByRole('button', { name: '返回会话' }))
   expect(f.onCloseDock).toHaveBeenCalledOnce()
 })
+it('removes both conversation actions and the mode switch after the last terminal closes', async () => {
+  const terminal = { sessionId: 't', projectId: 'p', agentId: 'shell', kind: 'pty' as const, state: 'alive' as const, pinned: false, sortOrder: 0, createdAt: '2026-10-24T00:00:00Z' }
+  const props = { client: { get: vi.fn(async () => ({ mode: 'dawn', sessionId: 'agent' })) as never }, canOpen: true, fullPage: true, onPick: vi.fn(), onNew: vi.fn(), onClose: vi.fn(), onCloseDock: vi.fn(), onInput: vi.fn() }
+  const view = render(<TerminalDock {...props} terminals={[terminal]} currentId="t" />)
+  await waitFor(() => expect((screen.getByRole('button', { name: '导出会话' }) as HTMLButtonElement).disabled).toBe(false))
+  view.rerender(<TerminalDock {...props} terminals={[]} currentId={undefined} />)
+  expect(screen.queryByRole('button', { name: '搜索历史' })).toBeNull()
+  expect(screen.queryByRole('button', { name: '导出会话' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Normal 模式' })).toBeNull()
+})

@@ -1,3 +1,4 @@
+import { TerminalConversationActions } from './terminal-conversation-actions.js'
 import type { TerminalSearchRequest } from './terminal-keys.js'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { WorkbenchClient } from './client.js'
@@ -91,10 +92,8 @@ export function TerminalDock({
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
         {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
-        {currentId ? <div className="terminal-search-actions">
-          <Button variant="ghost" size="sm" aria-keyshortcuts="Meta+f Control+f" onClick={() => requestSearch('content')}>{t('搜索历史')}</Button>
-          <Button variant="ghost" size="sm" disabled={exited} aria-keyshortcuts="Control+r" onClick={() => requestSearch('input')}>{t('找回输入')}</Button>
-        </div> : null}
+        {currentId ? <TerminalConversationActions key={`terminal-actions:${currentId}`} client={client} terminalId={currentId}
+          sessionId={agentState?.terminalId === currentId ? agentState.state.sessionId : undefined} onFind={() => requestSearch('content')} /> : null}
         {client && currentId ? <TerminalModeSwitch key={currentId} client={client} terminalId={currentId} exited={exited} onState={reportState} /> : null}
         {fullPage ? <span className="conv-action-tip-wrap terminal-return">
           <Button variant="outline" size="icon" className="terminal-return-button" disabled={returning} aria-busy={returning} onClick={onCloseDock}

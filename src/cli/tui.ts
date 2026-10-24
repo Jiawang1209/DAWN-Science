@@ -93,7 +93,7 @@ export class CliTui {
         truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''),
         truncateToWidth(dim(plain(options.workspace)), width, ''),
         truncateToWidth(dim(INPUT_HELP), width, ''),
-        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · Ctrl+R 找回输入 · → 采纳建议 · /help 帮助'), width, ''),
+        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · → 采纳建议 · /help 帮助'), width, ''),
       ]
       this.headerRows = lines.length
       return lines

@@ -25,14 +25,7 @@ import { t, tf } from "./i18n/index.js"
  * **不四舍五入到看不出差别的程度**：`12.3k` 与 `12.4k` 仍然分得开，
  * 而这正是「方便统计和查看」要的那种分得开。
  */
-export function formatTokens(n: number): string {
-  if (!Number.isFinite(n)) return "—"
-  const 负 = n < 0 ? "-" : ""
-  const v = Math.abs(n)
-  if (v < 1000) return `${负}${v}`
-  if (v < 1_000_000) return `${负}${去尾(v / 1000)}k`
-  return `${负}${(v / 1_000_000).toFixed(2)}M`
-}
+export { formatTokens } from '../format/tokens.js'
 
 /** `12.0` → `12`，`12.34` → `12.3`。**整千不拖一个没有信息量的小数点** */
 function 去尾(x: number): string {

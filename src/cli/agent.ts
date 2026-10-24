@@ -68,8 +68,10 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       case 'turn_end': flush(); break
       case 'turn_usage': void refreshUsage(); break
       case 'tool_start':
+        void refreshUsage()
         flush(); if (view) { view.toolStart(event); break }; say(`  › ${event.toolName}${toolDetail(event.input) ? '\n    ' + toolDetail(event.input).replaceAll('\n', '\n    ') : ''}`); break
       case 'tool_end':
+        void refreshUsage()
         if (event.isError) failed = true
         if (view) { view.toolEnd(event); break }
         say(`  ${event.isError ? '× 未完成' : '✓ 完成'} · ${event.toolName}`)

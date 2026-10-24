@@ -2,21 +2,45 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { Terminal as Headless } from '@xterm/headless'
 import type { Terminal } from '@earendil-works/pi-tui'
 import { CliTui } from '../../src/cli/tui.js'
+import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('puts hints above the single editor and centers compact cumulative statistics on the final row', async () => {
+  const f = fixture(140, 28)
+  f.ui.setUsage({ input: 4600, output: 14700, cacheRead: 1090000, turns: 5, tools: 70, toolMs: 831000 })
+  f.input('KEEP_DRAFT'); await f.flush()
+  const rows = f.text().split('\n'), prompt = rows.findIndex(row => row.includes('> DAWN'))
+  const hint = rows.findIndex(row => row.includes('Enter 发送')), stats = rows.findIndex(row => row.includes('输入 4.6k'))
+  expect(hint).toBeLessThan(prompt); expect(stats).toBe(rows.length - 1)
+  expect(rows[stats]).toContain('5 轮 · 工具 70 次 13 m 51 s · 输入 4.6k · 输出 14.7k · 缓存 1.09M')
+  const line = rows[stats]!, left = line.length - line.trimStart().length
+  expect(Math.abs(left - (140 - left - visibleWidth(line.trim())))).toBeLessThanOrEqual(1)
+  expect(f.text()).not.toContain('就绪 · Enter'); expect(f.ui.draft()).toBe('KEEP_DRAFT')
+  f.resize(38, 22); await f.flush()
+  expect(f.text()).toContain('> DAWN KEEP_DRAFT'); expect(f.text()).toContain('缓存 1.09M'); expect(f.text()).toContain('命中 100%')
+  f.ui.setState({ busy: true }); await f.flush()
+  expect(f.text().indexOf('生成中')).toBeLessThan(f.text().indexOf('> DAWN'))
+  expect(f.ui.draft()).toBe('KEEP_DRAFT')
+  f.resize(38, 10); await f.flush()
+  expect(f.text()).toContain('> DAWN KEEP_DRAFT'); expect(f.text()).toContain('缓存 1.09M'); expect(f.text()).toContain('命中 100%')
+  f.ui.setState({ busy: false }); await f.flush()
+  expect(f.text()).toContain('> DAWN KEEP_DRAFT'); expect(f.text()).toContain('命中 100%')
+  f.ui.setState({ busy: true, permission: true }); await f.flush()
+  expect(f.text()).toContain('需要确认'); expect(f.text()).toContain('命中 100%')
+})
 it('keeps cumulative usage below the draft, replaces snapshots, and wraps all fields in narrow terminals', async () => {
   const f = fixture(); await f.flush()
   expect(f.text()).toContain('输入 未提供')
   f.ui.setUsage({ input: 30, output: 6, cacheRead: 70 }); f.input('KEEP_DRAFT'); await f.flush()
-  expect(f.text()).toContain('输入 30'); expect(f.text()).toContain('输出 6'); expect(f.text()).toContain('缓存读取 70'); expect(f.text()).toContain('命中 70%')
+  expect(f.text()).toContain('输入 30'); expect(f.text()).toContain('输出 6'); expect(f.text()).toContain('缓存 70'); expect(f.text()).toContain('命中 70%')
   f.ui.setUsage({ input: 30, output: 6, cacheRead: 70 }); await f.flush()
   expect(f.text()).not.toContain('输入 60'); expect(f.ui.draft()).toBe('KEEP_DRAFT')
   f.resize(38, 22); await f.flush()
-  expect(f.text()).toContain('缓存读取 70'); expect(f.text()).toContain('命中 70%'); expect(f.text()).toContain('> DAWN KEEP_DRAFT')
+  expect(f.text()).toContain('缓存 70'); expect(f.text()).toContain('命中 70%'); expect(f.text()).toContain('> DAWN KEEP_DRAFT')
   f.ui.setUsage({ input: 40, output: 8, partial: ['input'] }); await f.flush()
-  expect(f.text()).toContain('输入 ≥40'); expect(f.text()).toContain('缓存读取 未提供'); expect(f.text()).toContain('命中 未提供')
+  expect(f.text()).toContain('输入 ≥40'); expect(f.text()).toContain('缓存 未提供'); expect(f.text()).toContain('命中 未提供')
   f.ui.setUsage({ input: 100, output: 8, cacheRead: 0, partial: ['cacheRead'] }); await f.flush()
-  expect(f.text()).toContain('缓存读取 未确认'); expect(f.text()).toContain('命中 未提供'); expect(f.text()).not.toContain('命中 0%')
+  expect(f.text()).toContain('缓存 未确认'); expect(f.text()).toContain('命中 未提供'); expect(f.text()).not.toContain('命中 0%')
 })
 afterEach(() => { for (const close of cleanup.splice(0)) close() })
 function fixture(cols = 80, rows = 28) {

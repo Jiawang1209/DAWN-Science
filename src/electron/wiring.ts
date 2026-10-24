@@ -1,4 +1,5 @@
 import { desktopWorkspace } from '../cli/workspace.js'
+import { sessionActivity } from '../shared/session-activity.js'
 import type { ResponseOf } from '../protocol/index.js'
 import { DesktopCliHost } from '../cli/desktop-host.js'
 import { BotStore } from "../store/bots.js"
@@ -222,6 +223,7 @@ export interface Workbench {
    * **摘掉接线它们照样绿**（变异验证当场发现）。
    */
   nativeRuntime: NativeRuntime
+  sessionUsage: (sessionId: string) => import('../runtime/session-usage.js').SessionUsage
   /** 事件中枢。`main.ts` 把它的推送接到 webContents */
   events: SessionTranscripts
   /**
@@ -1636,6 +1638,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.onInternalError ? { onInternalError: opts.onInternalError } : {}),
   })
 
+  const cliUsage = (sessionId: string) => ({ ...nativeRuntime.sessionUsage(sessionId),
+    ...sessionActivity(events.peek(sessionId)?.items ?? [], runStore.toolTimingsOf(sessionId)) })
   if (opts.desktopCli) {
     const cliHistory = async (workspace: string) => {
       const canonical = desktopWorkspace(workspace, projectStore.list())
@@ -1678,7 +1682,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           const model = nativeRuntime.currentModel(sessionId)
           return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : 'API', directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
             history: () => sessions.history(sessionId),
-            usage: () => nativeRuntime.sessionUsage(sessionId),
+            usage: () => cliUsage(sessionId),
             pictures: () => nativeRuntime.historyPictures(sessionId),
             call: async (operation, input) => {
               const response = await server.handle(operation, input)
@@ -1712,6 +1716,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      * 这个项目栽在「零件都对、装没装上没人知道」上不止一次。
      */
     nativeRuntime,
+    sessionUsage: cliUsage,
     onRemoteState(cb) {
       远端状态变了 = cb
       return () => {

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { createWorkbench } from '../../src/electron/wiring.js'
 import { connectDesktopCli } from '../../src/cli/desktop-client.js'
 import { memoryCredentials } from '../helpers/credentials.js'
+import { RunStore } from '../../src/store/runs.js'
 
 async function fixture() {
   const dir = mkdtempSync(join(tmpdir(), 'dawn-history-wiring-')), configPath = join(dir, 'providers.yaml')
@@ -20,7 +21,7 @@ async function fixture() {
   task.projectId = (await call('listProjects', {})).find((p: any) => p.workspace === dir).projectId
   await call('createTerminalSession', { agentId: 'shell', projectId: task.projectId })
   const descriptor = JSON.parse(readFileSync(join(dir, 'desktop.json'), 'utf8'))
-  return { dir, task, call, descriptor, native: wb.nativeRuntime, close: async () => { await wb.closeAsync(3000); rmSync(dir, { recursive: true, force: true }) } }
+  return { dir, task, call, descriptor, native: wb.nativeRuntime, db: wb.db, close: async () => { await wb.closeAsync(3000); rmSync(dir, { recursive: true, force: true }) } }
 }
 
 for (const phase of ['inFlight', '转述中', '回退中', '中止中'] as const) {
@@ -60,12 +61,34 @@ it('reads cumulative model usage from the original branch across stop and resume
       usage: { input: 30, output: 6, cacheRead: 70, cacheWrite: 0, totalTokens: 106, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } })
     await f.call('stopSession', { sessionId: f.task.sessionId })
     cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
-    expect(await cli.usage()).toEqual({ input: 30, output: 6, cacheRead: 70 })
-    expect(await cli.call('$usage', { sessionId: 'another-session' })).toEqual({ input: 30, output: 6, cacheRead: 70 })
+    expect(await cli.usage()).toMatchObject({ input: 30, output: 6, cacheRead: 70, turns: 1, tools: 0 })
+    expect(await cli.call('$usage', { sessionId: 'another-session' })).toMatchObject({ input: 30, output: 6, cacheRead: 70, turns: 1, tools: 0 })
     await cli.close(); cli = undefined
     await vi.waitFor(() => expect(f.native.canControlTerminal(f.task.sessionId)).toBe(false))
     cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
-    expect(await cli.usage()).toEqual({ input: 30, output: 6, cacheRead: 70 })
+    expect(await cli.usage()).toMatchObject({ input: 30, output: 6, cacheRead: 70, turns: 1, tools: 0 })
+  } finally { await cli?.close(); await f.close() }
+})
+
+it('restores original turn and tool counts with ledger timing after the live transcript has been rebuilt', async () => {
+  const f = await fixture()
+  let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined
+  try {
+    const state = (f.native as any).sessions.get(f.task.sessionId)
+    state.sessionManager.appendMessage({ role: 'user', content: 'Inspect original data', timestamp: 1 })
+    state.sessionManager.appendMessage({ role: 'assistant', content: [{ type: 'toolCall', id: 'original-tool', name: 'read', arguments: { path: 'data.csv' } }], timestamp: 2 })
+    state.sessionManager.appendMessage({ role: 'toolResult', toolCallId: 'original-tool', toolName: 'read', content: [{ type: 'text', text: 'data' }], timestamp: 3 })
+    new RunStore(f.db).insert({ runId: 'original-run', projectId: f.task.projectId, sessionId: f.task.sessionId, origin: 'agent',
+      requestType: 'tool_call:read', toolCallId: 'original-tool', status: 'completed', hasError: false,
+      startedAt: '2026-10-24T00:00:00Z', finishedAt: '2026-10-24T00:00:02.500Z' })
+    await f.call('stopSession', { sessionId: f.task.sessionId })
+    for (let cycle = 0; cycle < 2; cycle++) {
+      cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
+      expect(await cli.usage()).toMatchObject({ turns: 1, tools: 1, toolMs: 2500 })
+      expect((await cli.usage()).toolMsPartial).toBeUndefined()
+      await cli.close(); cli = undefined
+      await vi.waitFor(() => expect(f.native.canControlTerminal(f.task.sessionId)).toBe(false))
+    }
   } finally { await cli?.close(); await f.close() }
 })
 

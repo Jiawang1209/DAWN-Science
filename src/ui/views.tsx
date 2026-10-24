@@ -80,6 +80,7 @@ import { stripAnsi } from "./ansi.js"
 import { 网页卡 } from "./web.js"
 import { 头一条网址 } from "../policy/local-url.js"
 import { formatDuration, formatTokens, 多久之前, 年月日时分, 拆模型名, 短路径, 基名, 目录显示名 } from "./format.js"
+import { sessionActivity } from '../shared/session-activity.js'
 import { 归档图标, 归档描边图标, 时钟图标, 时钟描边图标, 闹钟描边图标, 加号描边图标, 对话图标, 文件夹图标, 文件图标, 加号图标, 圆加号图标, 实心圆加号图标, 终端图标, 停止图标, 下拉图标, 上箭头图标, 铅笔图标, 回退图标, 删除图标, 三角图标, 复制图标, 技能图标, 设置图标, 插件图标, 勾图标 , 关闭图标 , R图标, Python图标 , 服务器图标 , 文件夹描边图标, 对话描边图标, 服务器描边图标, 搜索图标, 电脑图标, 概览图标, 图片文件图标, 表格文件图标 } from "./icons.js"
 import { StickToBottom, type StickToBottomContext } from "use-stick-to-bottom"
 import { 回到底部 } from "./back-to-bottom.js"
@@ -3709,22 +3710,15 @@ function SessionUsageImpl({ items }: { items: readonly TranscriptItem[] }) {
     let output = 0
     let cache = 0
     let 有过 = false
-    let 轮 = 0
-    let 工具 = 0
-    let 工具毫秒 = 0
+    const activity = sessionActivity(items)
     for (const it of items) {
-      if (it.type === "turn" && it.who === "user") 轮 += 1
-      if (it.type === "tool") {
-        工具 += 1
-        if (it.startedAt !== undefined && it.endedAt !== undefined) 工具毫秒 += Math.max(0, it.endedAt - it.startedAt)
-      }
       if (it.type !== "turn" || !it.usage) continue
       有过 = true
       input += it.usage.input ?? 0
       output += it.usage.output ?? 0
       cache += it.usage.cacheRead ?? 0
     }
-    return 有过 ? { input, output, cache, 轮, 工具, 工具毫秒, 命中: input + cache > 0 ? Math.round((cache / (input + cache)) * 100) : undefined } : undefined
+    return 有过 ? { input, output, cache, 轮: activity.turns, 工具: activity.tools, 工具毫秒: activity.toolMs ?? 0, 命中: input + cache > 0 ? Math.round((cache / (input + cache)) * 100) : undefined } : undefined
   }, [items])
 
   // **一轮都还没说过话时什么都不显示**：一排 0 会被读成「不花钱」

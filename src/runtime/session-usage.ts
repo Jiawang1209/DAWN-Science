@@ -1,5 +1,5 @@
 export type UsageField = 'input' | 'output' | 'cacheRead'
-export type SessionUsage = Partial<Record<UsageField, number>> & { partial?: UsageField[] }
+export type SessionUsage = Partial<Record<UsageField, number>> & { partial?: UsageField[] } & Partial<import('../shared/session-activity.js').SessionActivity>
 const fields: UsageField[] = ['input', 'output', 'cacheRead']
 /** Read the full current branch, including messages preceding compaction. Never add snapshots together. */
 export function sessionUsage(branch: readonly unknown[], zeroesUnverified = false): SessionUsage {

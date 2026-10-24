@@ -484,6 +484,20 @@ export class RunStore {
     return [...出]
   }
 
+  /** Original tool timings survive a desktop restart; do not page or mix other sessions. */
+  toolTimingsOf(sessionId: string): Map<string, import('../shared/session-activity.js').ToolTiming> {
+    const rows = this.db.prepare(`SELECT tool_call_id, started_at, finished_at FROM runs
+      WHERE session_id = ? AND tool_call_id IS NOT NULL AND finished_at IS NOT NULL
+        AND (request_type = 'tool_call' OR request_type LIKE 'tool_call:%')
+      ORDER BY started_at`).all(sessionId) as Pick<RunRow, 'tool_call_id' | 'started_at' | 'finished_at'>[]
+    const timings = new Map<string, import('../shared/session-activity.js').ToolTiming>()
+    for (const row of rows) {
+      const startedAt = Date.parse(row.started_at), endedAt = Date.parse(row.finished_at!)
+      if (Number.isFinite(startedAt) && Number.isFinite(endedAt) && endedAt >= startedAt) timings.set(row.tool_call_id!, { startedAt, endedAt })
+    }
+    return timings
+  }
+
   /** 最近的在前——项目面板的历史栏要的就是这个顺序。 */
   listByProject(
     projectId: string,

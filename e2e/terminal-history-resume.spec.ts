@@ -178,9 +178,10 @@ test('the current owner can close its last resumed terminal, reopen directly and
   await expect(page.locator('.terminal-attachment')).toHaveCount(1)
   await type(page, 'CURRENT_OWNER_IMAGE'); await final(page, ownerId!)
   const usage = async (turns: number) => {
+    await expect(page.locator('.dock .xterm-screen')).toContainText(`${turns} 轮`)
     await expect(page.locator('.dock .xterm-screen')).toContainText(`输入 ${12 * turns}`)
     await expect(page.locator('.dock .xterm-screen')).toContainText(`输出 ${8 * turns}`)
-    await expect(page.locator('.dock .xterm-screen')).toContainText('缓存读取 未确认')
+    await expect(page.locator('.dock .xterm-screen')).toContainText('缓存 未确认')
     await expect(page.locator('.dock .xterm-screen')).toContainText('命中 未提供')
   }
   await usage(1)

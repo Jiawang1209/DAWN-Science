@@ -147,6 +147,19 @@ describe("RunStore", () => {
     runs = seed(db).runs
   })
 
+  it('reads only completed valid tool timings in the original session, without a history page limit', () => {
+    runs.insert({ ...baseRun, runId: 'tool', requestType: 'tool_call:bash', toolCallId: 'c1', status: 'completed', finishedAt: '2026-08-08T00:00:02Z' })
+    runs.insert({ ...baseRun, runId: 'running-tool', requestType: 'tool_call', toolCallId: 'c2' })
+    runs.insert({ ...baseRun, runId: 'bad-tool', requestType: 'tool_call', toolCallId: 'c3', status: 'completed', finishedAt: '2026-08-07T00:00:00Z' })
+    runs.insert({ ...baseRun, runId: 'agent', toolCallId: 'not-tool', status: 'completed', finishedAt: '2026-08-08T00:00:03Z' })
+    expect([...runs.toolTimingsOf('s1')]).toEqual([['c1', { startedAt: Date.parse(baseRun.startedAt), endedAt: Date.parse('2026-08-08T00:00:02Z') }]])
+    expect(runs.toolTimingsOf('another-session').size).toBe(0)
+    for (let i = 0; i < 205; i++) runs.insert({ ...baseRun, runId: `old-tool-${i}`, requestType: 'tool_call:read', toolCallId: `old-call-${i}`,
+      status: 'completed', finishedAt: '2026-08-08T00:00:01Z' })
+    expect(runs.toolTimingsOf('s1').size).toBe(206)
+    expect(runs.toolTimingsOf('s1').has('old-call-204')).toBe(true)
+  })
+
   it("插入后可读回，字段往返一致", () => {
     runs.insert(baseRun)
     const got = runs.get("r1")!

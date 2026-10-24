@@ -26,6 +26,21 @@ async function final(page: Page, sessionId: string) {
   }).toBe(true)
 }
 
+test('keeps shortcuts above the editor and cumulative statistics centered at the bottom', async ({ dawn }) => {
+  const { page } = dawn, target = await open(page)
+  await submit(page, 'FOOTER_LAYOUT'); await final(page, target.sessionId)
+  const screen = page.locator('.dock .xterm-screen')
+  await expect(screen).toContainText('1 轮')
+  const rows = await screen.locator('.xterm-rows > div').allTextContents()
+  const prompt = rows.findIndex(row => row.includes('> DAWN')), hint = rows.findIndex(row => row.includes('Enter 发送'))
+  const stats = rows.findLastIndex(row => row.includes('命中'))
+  expect(hint).toBeGreaterThanOrEqual(0); expect(hint).toBeLessThan(prompt); expect(stats).toBeGreaterThan(prompt)
+  expect(rows.slice(stats + 1).every(row => !row.trim())).toBe(true)
+  expect(rows[stats]).toMatch(/^\s+.*命中/)
+  await expect(screen).not.toContainText('就绪 · Enter')
+  await expect(page.locator('.dock .xterm-helper-textarea')).toHaveCount(1)
+})
+
 test('Shift-Enter edits multiple lines in one terminal input and sends one native user turn', async ({ dawn }) => {
   const { page } = dawn, target = await open(page)
   await page.locator('.dock .xterm-helper-textarea').focus()
@@ -78,6 +93,7 @@ test.describe('tool details', () => {
     const { page } = dawn, target = await open(page)
     await submit(page, 'DETAIL_CHECK'); await final(page, target.sessionId)
     const screen = page.locator('.dock .xterm-screen')
+    await expect(screen).toContainText('工具 1 次')
     await expect(screen).toContainText('行已省略')
     await page.keyboard.press('Tab'); await expect(screen).toContainText('ROW_4')
     await expect(page.locator('.dock .xterm-helper-textarea')).toHaveCount(1)

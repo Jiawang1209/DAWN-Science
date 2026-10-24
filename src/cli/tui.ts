@@ -70,11 +70,13 @@ export class CliTui {
     }
     this.editor.onChange = () => this.tui.requestRender()
     const header: Component = { invalidate() {}, render: width => [truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(options.model)), width, ''), truncateToWidth(dim(plain(options.workspace)), width, '')] }
-    const footer: Component = { invalidate() {}, render: width => [...usageLines(this.usage, width).map(dim), truncateToWidth(dim(
-      (this.state.permission ? '需要确认 · 输入编号或 y/n' : this.state.question ? '等待回答' : this.state.busy ? '生成中 · Ctrl-C 停止' : '就绪')
-      + ' · Enter 发送 · Shift/Alt+Enter 换行 · Tab 工具 · /exit'), width, '')] }
+    const hint: Component = { invalidate() {}, render: width => this.terminal.rows <= 12 && !this.state.busy && !this.state.permission && !this.state.question ? [] : [truncateToWidth(dim(
+      this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认' : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
+        : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿'
+        : 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'), width, '')] }
+    const footer: Component = { invalidate() {}, render: width => [...(this.terminal.rows <= 12 ? [] : ['']), ...usageLines(this.usage, width).map(dim)] }
     this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'auto', scrollbarTrackStyle: dim, scrollbarThumbStyle: accent })
-    this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
+    this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: hint, shrink: 0 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
     this.tui.setFocus(this.editor)
     this.tui.addInputListener(data => {
       if (isKeyRelease(data)) return { consume: true }

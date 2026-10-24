@@ -53,7 +53,7 @@ export async function openCliContext(agentId?: string, resume?: string | true) {
     await call('acquireLease', { sessionId: task.sessionId, holder: 'user' })
     return { call, sessionId: task.sessionId, model: `${def.provider}/${def.model}`, directory, resumed: false,
       history: async () => ({ items: [], pictures: [], truncated: false }),
-      usage: async () => workbench.nativeRuntime.sessionUsage(task.sessionId),
+      usage: async () => workbench.sessionUsage(task.sessionId),
       attach: (sink: import('../runtime/types.js').EventSink) => workbench.sessions.attach(task.sessionId, sink),
       waitForIdle: () => workbench.nativeRuntime.waitForIdle(task.sessionId),
       onExit: (_callback: () => void) => () => {},

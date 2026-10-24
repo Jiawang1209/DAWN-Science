@@ -138,7 +138,7 @@ test('an unsupported old image preview warns while the same conversation and ori
     await window.dawn!.invoke('subscribeSession', { sessionId })
     await window.dawn!.invoke('acquireLease', { sessionId, holder: 'user' })
     const response = await window.dawn!.invoke('writeToSession', { sessionId, as: 'user', data: 'GUI_BMP_HISTORY', images: [{ from: 'bytes', data, mimeType: 'image/bmp' }] })
-    if (!response.ok) throw Error(response.error.message)
+    if (!response.ok) throw Error(response.error?.message ?? 'Could not seed the original BMP conversation')
   }, { sessionId: target.sessionId, data: bmp.toString('base64') })
   await final(page, target.sessionId, 2)
   await page.getByRole('button', { name: '接续旧对话', exact: true }).click()

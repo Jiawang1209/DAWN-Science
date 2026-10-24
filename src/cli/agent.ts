@@ -78,6 +78,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   const status = () => say(`\nAgent · ${context.model}\n权限  ${permissionSnapshot ? permissionLabel(permissionSnapshot) : '未读取'}\n目录  ${process.cwd()}\n记录  ${context.directory}\n`)
   const showQuestion = () => {
     if (!question) return
+    if (view) { view.question(question.record, question.index, question.answers); prompt(); return }
     const q = question.record.questions[question.index]!
     say(q.question)
     q.options?.forEach((option, index) => say(`  ${index + 1}. ${option.label}${option.description ? ' · ' + option.description : ''}`))
@@ -150,11 +151,15 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       case 'question':
         if (event.question.state === 'pending') beginActivity()
         suggestions?.update(false)
-        if (event.question.state !== 'pending') { if (question?.record.requestId === event.question.requestId) { question = undefined; prompt() }; break }
+        if (event.question.state !== 'pending') { view?.question(event.question); if (question?.record.requestId === event.question.requestId) { question = undefined; prompt() }; break }
         if (!interactive) {
           failed = true; say('非交互输入无法回答问题，本次提问已取消。')
           void call('answerQuestion', { sessionId, requestId: event.question.requestId }).catch(e => say(String(e)))
-        } else { question = { record: event.question, index: 0, answers: [] }; showQuestion() }
+        } else {
+          if (question?.record.requestId === event.question.requestId) question.record = event.question
+          else question = { record: event.question, index: 0, answers: [] }
+          showQuestion()
+        }
         break
       case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); void refreshUsage(); void refreshPlan(); updateSuggestion(); break
     }
@@ -255,12 +260,16 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       request.answers.push({ id: q.id, selected: numeric ? indexes.map(i => q.options![i]!.label) : [], ...(!numeric ? { custom: line } : {}) })
       if (++request.index < request.record.questions.length) showQuestion()
       else {
+        view?.question(request.record, request.index, request.answers)
         answering = true; prompt()
         try {
           await call('answerQuestion', { sessionId, requestId: request.record.requestId, answer: { answers: request.answers } })
-          if (question === request) question = undefined
+          if (question === request) {
+            view?.question({ ...request.record, state: 'answered', answer: { answers: request.answers } })
+            question = undefined
+          }
         } catch (error) {
-          if (question === request) { request.index--; request.answers.pop(); showQuestion() }
+          if (question === request) { request.index--; request.answers.pop(); showQuestion(); preserve(line) }
           throw error
         } finally { answering = false; prompt() }
       }

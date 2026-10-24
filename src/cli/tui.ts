@@ -8,6 +8,7 @@ import type { SessionPermission } from '../protocol/permissions.js'
 import { permissionLabel } from './permissions.js'
 import type { SessionPlan } from '../protocol/planning.js'
 import type { CliPlan } from './tui-transcript.js'
+import type { QuestionRecord, QuestionAnswer } from '../protocol/questions.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal; contextButton?: boolean;
@@ -111,7 +112,7 @@ export class CliTui {
     } }
     const hint: Component = { invalidate() {}, render: width => {
       const text = this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认'
-        : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
+        : this.state.question ? '等待你的选择 · 输入编号或文字 · Enter 确认'
         : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿' : ''
       return text ? [truncateToWidth(dim(text), width, '')] : []
     } }
@@ -208,6 +209,9 @@ export class CliTui {
     this.usageRevision++; this.tui.requestRender()
   }
   plan(value: CliPlan) { this.transcript.plan(value); this.tui.requestRender() }
+  question(record: QuestionRecord, index = 0, answers?: QuestionAnswer['answers']) {
+    this.transcript.question(record, index, answers); this.scroll.scrollToEnd(); this.tui.requestRender()
+  }
   user(text: string) { this.firstPrompt = false; this.rememberInput(text); this.transcript.user(text); this.scroll.scrollToEnd(); this.tui.requestRender() }
   recoverDraft(text: string): boolean {
     if (this.editor.getExpandedText()) return false
@@ -241,6 +245,7 @@ export class CliTui {
         this.transcript.toolStart({ toolCallId: item.id, toolName: item.name, input: item.input })
         this.transcript.toolEnd({ toolCallId: item.id, toolName: item.name, text: item.result ?? '', isError: item.isError ?? false, truncated: item.truncated ?? Boolean(item.fullOutputPath), ...(item.fullOutputPath ? { fullOutputPath: item.fullOutputPath } : {}) })
       } else if (item.kind === 'plan') this.transcript.plan(item.plan)
+      else if (item.kind === 'question') this.transcript.question(item.question)
       else if (item.kind === 'compaction') this.transcript.notice('历史上下文已压缩：' + item.summary)
     }
     for (const picture of history.pictures) this.transcript.image(picture)

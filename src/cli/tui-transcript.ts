@@ -2,6 +2,7 @@ import { Markdown, wrapTextWithAnsi, visibleWidth, truncateToWidth, type Markdow
 import { plain, toolDetail } from './presentation.js'
 import { highlightCliCode } from './code-highlighting.js'
 import type { PlanItem } from '../protocol/events.js'
+import type { QuestionRecord, QuestionAnswer } from '../protocol/questions.js'
 export type CliPlan = Omit<PlanItem, 'id' | 'type'>
 
 export type ToolStart = { toolCallId: string; toolName: string; input: unknown }
@@ -10,6 +11,7 @@ export type Picture = { id: string; name: string }
 export type Placement = { id: string; row: number; col: number; width: number; height: number }
 type Node = { kind: 'user' | 'notice'; text: string } | { kind: 'assistant'; text: string; markdown: Markdown }
   | { kind: 'plan'; plan: CliPlan; markdown: Markdown }
+  | { kind: 'question'; record: QuestionRecord; index: number; answers: QuestionAnswer['answers'] }
   | { kind: 'tool'; start: ToolStart; end?: ToolEnd } | { kind: 'image'; image: Picture }
 
 /** Only renderer-owned SGR styles survive; models cannot issue terminal commands. */
@@ -60,6 +62,12 @@ export class CliTranscript implements Component {
     else this.add({ kind: 'tool', start: { ...end, input: {} }, end })
   }
   image(image: Picture) { this.finish(); this.add({ kind: 'image', image }) }
+  question(record: QuestionRecord, index = 0, answers: QuestionAnswer['answers'] = record.answer?.answers ?? []) {
+    const next = { kind: 'question' as const, record, index, answers: structuredClone(answers) }
+    const existing = this.nodes.find((n): n is Extract<Node, { kind: 'question' }> => n.kind === 'question' && n.record.requestId === record.requestId)
+    if (existing) Object.assign(existing, next)
+    else { this.finish(); this.add(next) }
+  }
   plan(plan: CliPlan) {
     const existing = this.nodes.find((n): n is Extract<Node, { kind: 'plan' }> => n.kind === 'plan' && n.plan.planId === plan.planId)
     if (existing) {
@@ -88,6 +96,37 @@ export class CliTranscript implements Component {
         }
         case 'assistant': lines.push(...node.markdown.render(contentWidth).map((line, i) => (i ? '  ' : accent('● ')) + styled(line).trimEnd()), ''); break
         case 'notice': lines.push(...wrap(paint('33', node.text)), ''); break
+        case 'question': {
+          const { record, index, answers } = node
+          const pending = record.state === 'pending'
+          const status = record.state === 'pending' ? index < record.questions.length ? '需要你确认' : '正在提交答案' : ({ answered: '已提交答案', cancelled: '已取消提问', interrupted: '提问已中断' })[record.state]
+          lines.push(...wrap(accent(this.style.bold(status))), '')
+          for (const [i, q] of record.questions.entries()) {
+            if (pending && i > index) break
+            const a = answers.find(a => a.id === q.id)
+            if (!pending || i < index) {
+              lines.push(...wrap(dim(`${i + 1}/${record.questions.length} · ${plain(q.header ?? q.question)}`)))
+              if (a) {
+                const selected = a.selected.map(plain).join('、')
+                if (selected) lines.push(...wrap(accent('✓ 已选：' + selected)))
+                if (a.custom) lines.push(...wrap('你的回答：' + plain(a.custom)))
+                if (!selected && !a.custom) lines.push(...wrap(dim('已跳过')))
+              } else lines.push(...wrap(dim('未提交答案')))
+              lines.push('')
+              continue
+            }
+            lines.push(...wrap(accent(`第 ${i + 1}/${record.questions.length} 题 · ${q.multi_select ? '多选' : q.options?.length ? '单选' : '文字回答'}`)))
+            lines.push(...wrap(this.style.bold(plain(q.question))), '')
+            for (const [optionIndex, option] of (q.options ?? []).entries()) {
+              lines.push(...wrap(`${q.multi_select ? '□' : '○'} ${optionIndex + 1}. ${this.style.bold(plain(option.label))}`, '    '))
+              if (option.description) lines.push(...wrap(dim(plain(option.description)), '       '))
+              lines.push('')
+            }
+            lines.push(...wrap(dim(q.options?.length ? q.multi_select ? '输入编号（如 1,2，逗号分隔），或输入自己的回答。' : '输入一个编号，或输入自己的回答。' : '在下方输入你的回答。')))
+            lines.push(...wrap(dim('Enter 确认 · 回答后会显示你的选择')), '')
+          }
+          break
+        }
         case 'plan': {
           const p = node.plan
           const status = ({ proposed: '等你看', approved: '已批准', superseded: '已被新的一版取代', discarded: '没采用' })[p.status]
@@ -100,7 +139,7 @@ export class CliTranscript implements Component {
         }
         case 'tool': {
           const end = node.end, status = !end ? '◌' : end.isError ? '× 失败' : '✓'
-          const name = ({ bash: '运行命令', read: '读取文件', write: '写入文件', edit: '编辑文件', grep: '搜索内容', find: '查找文件', ls: '查看目录', run_code: '运行代码' } as Record<string, string>)[node.start.toolName] ?? plain(node.start.toolName)
+          const name = ({ bash: '运行命令', read: '读取文件', write: '写入文件', edit: '编辑文件', grep: '搜索内容', find: '查找文件', ls: '查看目录', run_code: '运行代码', ask_user_question: '确认分析选择' } as Record<string, string>)[node.start.toolName] ?? plain(node.start.toolName)
           const detail = toolDetail(node.start.input)
           const summary = (end?.isError ? paint('31', status) : dim(status)) + ' ' + name + (detail ? dim(' · ' + detail.split('\n')[0]!.slice(0, 140)) : '')
           if (!this.expanded && !end?.isError) lines.push('  ' + truncateToWidth(summary, Math.max(1, width - 2), '…'))

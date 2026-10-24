@@ -13,6 +13,7 @@ const harness = vi.hoisted(() => ({
   suggestions: [] as string[], draft: '',
   permissions: [] as unknown[], notices: [] as string[],
   plans: [] as unknown[], users: [] as string[],
+  questions: [] as { record: QuestionRecord; index: number; answers: unknown[] }[],
 }))
 vi.mock('../../src/cli/context.js', () => ({ openCliContext: async () => harness.context }))
 vi.mock('../../src/cli/tui.js', () => ({
@@ -28,6 +29,7 @@ vi.mock('../../src/cli/tui.js', () => ({
     setPermissions(value: unknown) { harness.permissions.push(value) }
     setPlanState(value: unknown) { harness.plans.push(value) }
     plan(value: unknown) { harness.plans.push(value) }
+    question(record: QuestionRecord, index = 0, answers: unknown[] = []) { harness.questions.push(structuredClone({ record, index, answers })) }
     user(text: string) { harness.users.push(text) }
     recoverDraft(text: string) { if (harness.draft) return false; harness.draft = text; return true }
     finish() {}
@@ -43,7 +45,7 @@ afterEach(() => { vi.restoreAllMocks() })
 
 async function interactiveAgent() {
   harness.permissions = []; harness.notices = []
-  harness.plans = []; harness.users = []
+  harness.plans = []; harness.users = []; harness.questions = []
   harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []; harness.suggestions = []; harness.draft = ''
   // Replace only the stream getters; the worker's actual terminal and signal
   // handlers are never driven by these controller tests.
@@ -107,6 +109,22 @@ const pending: QuestionRecord = {
   requestId: 'question-state-test', state: 'pending',
   questions: [{ id: 'range', question: '选择分析范围？', options: [{ label: '全部' }, { label: '部分' }] }],
 }
+
+it('keeps prior choices visible across questions, duplicate pending events and the final accepted answer', async () => {
+  const a = await interactiveAgent()
+  const two = { ...pending, questions: [...pending.questions, { id: 'format', question: '输出格式？', options: [{ label: '表格' }] }] }
+  try {
+    a.emit({ kind: 'question', sessionId: 'state-test-session', question: two })
+    await a.submit('1')
+    expect(harness.questions.at(-1)).toMatchObject({ index: 1, answers: [{ selected: ['全部'] }] })
+    a.emit({ kind: 'question', sessionId: 'state-test-session', question: two })
+    expect(harness.questions.at(-1)?.index).toBe(1)
+    await a.submit('1')
+    expect(harness.questions.at(-1)?.record).toMatchObject({ state: 'answered', answer: { answers: [{ id: 'range', selected: ['全部'] }, { id: 'format', selected: ['表格'] }] } })
+    expect(a.call).toHaveBeenCalledExactlyOnceWith('answerQuestion', expect.objectContaining({ requestId: two.requestId }))
+    expect(harness.users).toEqual([])
+  } finally { await a.close() }
+})
 
 const proposed = { type: 'plan' as const, id: 'plan:p1', planId: 'p1', version: 1, title: '分组方案', markdown: '## 图\n绘制散点图', status: 'proposed' as const }
 it('does not let an old plan read overwrite a newer successful toggle', async () => {

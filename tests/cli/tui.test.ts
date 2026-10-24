@@ -5,6 +5,24 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('shows choices with progress and restores the same submitted answers from native question history', async () => {
+  const f = fixture(100, 36)
+  const record = { requestId: 'tui-question', state: 'pending' as const, questions: [{ id: 'scope', question: '选择分析范围？', options: [{ label: '全部样本', description: '保留全部样本。' }, { label: '健康组' }] }] }
+  f.ui.question(record); f.ui.setState({ busy: true, question: true }); await f.flush()
+  expect(f.text()).toContain('第 1/1 题 · 单选')
+  expect(f.text()).toContain('○ 1. 全部样本')
+  f.input('1'); f.input('\r')
+  expect(f.submit).toHaveBeenCalledExactlyOnceWith('1')
+  expect(f.text()).not.toContain('❯ 1')
+  const done = { ...record, state: 'answered' as const, answer: { answers: [{ id: 'scope', selected: ['全部样本'] }] } }
+  f.ui.question(done); await f.flush()
+  expect(f.text()).toContain('已提交答案')
+  expect(f.text()).toContain('✓ 已选：全部样本')
+  const restored = fixture(100, 36)
+  restored.ui.restore({ items: [{ kind: 'question', question: done }], pictures: [], truncated: false }); await restored.flush()
+  expect(restored.text()).toContain('已提交答案')
+  expect(restored.text()).toContain('✓ 已选：全部样本')
+})
 it('reports an unreadable planning state without pretending planning is disabled or clearing the draft', async () => {
   const f = fixture(120, 28)
   f.input('KEEP_PLAN_READ_DRAFT'); f.ui.setPlanState(undefined); await f.flush()

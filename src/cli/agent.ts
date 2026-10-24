@@ -16,6 +16,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   const input = process.stdin, output = process.stdout, interactive = Boolean(input.isTTY && output.isTTY)
   const rl = interactive ? undefined : createInterface({ input, terminal: false, historySize: 200 })
   const view = interactive ? new CliTui({ model: context.model, workspace: process.cwd(), color: !process.env.NO_COLOR,
+    contextButton: Boolean(process.env.DAWN_TERMINAL_ID),
     onSubmit: text => { void handle(text).catch(e => { failed = true; say(String(e), true); prompt() }) },
     onInterrupt: () => onInterrupt(), onExit: () => { void shutdown() },
   }) : undefined

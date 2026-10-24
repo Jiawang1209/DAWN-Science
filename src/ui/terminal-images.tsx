@@ -7,6 +7,8 @@ import { TerminalPane } from './terminal.js'
 import { Button } from './primitives.js'
 import type { TerminalPicture } from './terminal-image-decorations.js'
 import { t, tf } from './i18n/index.js'
+import { TerminalContextMeter } from './terminal-context-meter.js'
+import type { ContextAnchor } from './terminal-context-decoration.js'
 
 type Attachments = ResponseOf<'getTerminalAgentAttachments'>
 function pictureFiles(data: DataTransfer | null): File[] {
@@ -29,6 +31,7 @@ export function TerminalImageShell({ client, terminalId, state, chunks, onInput,
   const [pending, setPending] = useState<NonNullable<Attachments['pending']>>([])
   const [working, setWorking] = useState(false), [error, setError] = useState('')
   const [preview, setPreview] = useState<TerminalPicture>()
+  const [contextAnchor, setContextAnchor] = useState<ContextAnchor>()
   const active = useRef(true), busy = useRef(false), revision = useRef<number | undefined>(undefined), generation = useRef(0)
   const root = useRef<HTMLDivElement>(null)
   const update = (result: Attachments) => { revision.current = result.revision; if (result.pending) setPending(result.pending) }
@@ -87,8 +90,9 @@ export function TerminalImageShell({ client, terminalId, state, chunks, onInput,
       if (state.mode === 'dawn') void add(files)
     }}
     onKeyDownCapture={event => { if (busy.current && event.key === 'Enter') { event.preventDefault(); event.stopPropagation() } }}>
-    <div className="terminal-image-screen"><TerminalPane agentEditing={state.mode === 'dawn'} chunks={chunks} onResize={onResize} readImage={readImage} onOpenImage={setPreview}
+    <div className="terminal-image-screen"><TerminalPane agentEditing={state.mode === 'dawn'} chunks={chunks} onResize={onResize} readImage={readImage} onOpenImage={setPreview} onContextAnchor={setContextAnchor}
       onInput={data => { if (!(busy.current && /[\r\n]/.test(data))) onInput(data) }} /></div>
+    {state.mode === 'dawn' && state.sessionId && contextAnchor ? <TerminalContextMeter key={state.sessionId} client={client} sessionId={state.sessionId} {...contextAnchor} /> : null}
     {pending.length || working || error ? <div className="terminal-attachment-tray" aria-label={t("终端待发图片")}>
       {pending.map(image => <div key={image.id} className="terminal-attachment">
         <Button variant="ghost" size="inline" aria-label={tf("放大 {0}", image.name)} onClick={() => void openPending(image.id)}><img src={image.thumbnail} alt={image.name} /></Button>

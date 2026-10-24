@@ -5,6 +5,18 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('reserves a centered context button slot and sends only geometry to the embedded UI', async () => {
+  const f = fixture(100, 24, true)
+  f.ui.setUsage({ context: { model: 'deepseek-flash', usedTokens: 28000, contextWindow: 128000, bytes: { system: 0, tools: 0, history: 0 } } } as never)
+  await f.flush()
+  const frames = [...f.bytes().matchAll(/\x1b\]777;dawn-context;([^\x07]+)\x07/g)]
+  const frame = JSON.parse(frames.at(-1)![1]!)
+  expect(frame).toMatchObject({ row: 23, width: 10 }); expect(frame.col + frame.width).toBeLessThanOrEqual(100)
+  expect(frame).not.toHaveProperty('usedTokens'); expect(f.text()).not.toContain('上下文 28k')
+  f.resize(38, 12); await f.flush()
+  const narrow = JSON.parse([...f.bytes().matchAll(/\x1b\]777;dawn-context;([^\x07]+)\x07/g)].at(-1)![1]!)
+  expect(narrow.row).toBe(11); expect(narrow.col + narrow.width).toBeLessThanOrEqual(38)
+})
 it('keeps short-viewport image frames above the editor when the repeated header is hidden', async () => {
   const f = fixture(180, 12); f.ui.image({ id: 'short-picture', name: 'short.png' }); await f.flush()
   const frames = [...f.bytes().matchAll(/\x1b\]777;dawn-viewport;([^\x07]+)\x07/g)]
@@ -58,7 +70,7 @@ it('keeps cumulative usage below the draft, replaces snapshots, and wraps all fi
   expect(f.text()).toContain('缓存 未确认'); expect(f.text()).toContain('命中 未提供'); expect(f.text()).not.toContain('命中 0%')
 })
 afterEach(() => { for (const close of cleanup.splice(0)) close() })
-function fixture(cols = 80, rows = 28) {
+function fixture(cols = 80, rows = 28, contextButton = false) {
   const screen = new Headless({ cols, rows, allowProposedApi: true }), pending: Promise<void>[] = []
   let receive = (_: string) => {}, resize = () => {}, bytes = ''
   const terminal: Terminal = {
@@ -69,7 +81,7 @@ function fixture(cols = 80, rows = 28) {
     hideCursor() {}, showCursor() {}, clearLine() {}, clearFromCursor() {}, clearScreen() {}, setTitle() {}, setProgress() {},
   }
   const submit = vi.fn(), interrupt = vi.fn(), exit = vi.fn()
-  const ui = new CliTui({ model: 'deepseek-flash', workspace: '/work/中文 project', terminal, color: false,
+  const ui = new CliTui({ model: 'deepseek-flash', workspace: '/work/中文 project', terminal, color: false, contextButton,
     onSubmit: submit, onInterrupt: interrupt, onExit: exit })
   ui.start(); cleanup.push(() => { ui.stop(); screen.dispose() })
   const flush = async () => { ui.renderNow(); await Promise.all(pending.splice(0)) }

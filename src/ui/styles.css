@@ -9089,6 +9089,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 /* Terminal pictures remain part of the existing terminal, with one input surface. */
 .terminal-image-shell { height: 100%; display: flex; flex-direction: column; min-height: 0; }
 .terminal-image-screen { flex: 1; min-height: 0; }
+.terminal-context-anchor { position: absolute; z-index: var(--z-tooltip); display: flex; align-items: center; justify-content: center; background: var(--dawn-surface-sidebar); }
+.terminal-context-anchor .ctx-meter-trigger { height: 20px; line-height: 18px; }
+.terminal-context-anchor .ctx-meter-pop { position: fixed; left: var(--terminal-context-pop-left); right: auto; bottom: var(--terminal-context-pop-bottom); width: var(--terminal-context-pop-width); max-width: calc(100vw - 32px); }
 .terminal-attachment-tray { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 2px 0; border-top: 1px solid var(--dawn-stroke-1); font-size: var(--dawn-fs-meta); }
 .terminal-attachment { display: flex; align-items: center; gap: 6px; max-width: 220px; border: 1px solid var(--dawn-stroke-1); border-radius: var(--dawn-radius-sm); padding: 4px; }
 .terminal-attachment > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

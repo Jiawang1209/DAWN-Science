@@ -10,6 +10,7 @@
  */
 import { dawnEditorKey } from './terminal-keys.js'
 import { terminalImageDecorations, type TerminalPicture } from './terminal-image-decorations.js'
+import { terminalContextDecoration, type ContextAnchor } from './terminal-context-decoration.js'
 import { useEffect, useRef } from "react"
 import { useStore } from "@nanostores/react"
 import { $theme, resolveTheme } from "./state/theme.js"
@@ -46,7 +47,9 @@ export function TerminalPane({
   readImage,
   onOpenImage,
   agentEditing = false,
+  onContextAnchor,
 }: {
+  onContextAnchor?: ((anchor: ContextAnchor | undefined) => void) | undefined
   agentEditing?: boolean | undefined
   /** 累积的字节片段。已写过的不重复写——靠下标游标记住写到哪了 */
   chunks: readonly string[]
@@ -56,6 +59,7 @@ export function TerminalPane({
   onResize?: ((cols: number, rows: number) => void) | undefined
 }) {
   const imageRef = useRef({ readImage, onOpenImage }); imageRef.current = { readImage, onOpenImage }
+  const contextRef = useRef(onContextAnchor); contextRef.current = onContextAnchor
   const host = useRef<HTMLDivElement>(null)
   const term = useRef<import("@xterm/xterm").Terminal | undefined>(undefined)
   const fit = useRef<import("@xterm/addon-fit").FitAddon | undefined>(undefined)
@@ -86,6 +90,7 @@ export function TerminalPane({
     const el = host.current
     if (!el) return
     let disposeImages: (() => void) | undefined
+    let disposeContext: (() => void) | undefined
     let disposed = false
     let instance: import("@xterm/xterm").Terminal | undefined
 
@@ -142,6 +147,7 @@ export function TerminalPane({
       // 输出里的 URL 可点。agent 经常吐出文档链接与报错页地址
       instance.loadAddon(new WebLinksAddon())
       instance.open(el)
+      disposeContext = terminalContextDecoration(instance, anchor => contextRef.current?.(anchor))
       if (imageRef.current.readImage) disposeImages = terminalImageDecorations(instance,
         id => imageRef.current.readImage!(id), image => imageRef.current.onOpenImage?.(image))
       instance.onResize(size => resizeRef.current?.(size.cols, size.rows))
@@ -183,6 +189,7 @@ export function TerminalPane({
       disposed = true
       window.removeEventListener("resize", onResize)
       disposeImages?.()
+      disposeContext?.()
       instance?.dispose()
       term.current = undefined
       fit.current = undefined

@@ -1,11 +1,11 @@
-import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, type Terminal, type Component, type TuiMouseEvent } from '@earendil-works/pi-tui'
+import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAutocompleteProvider, getNativeClipboard, matchesKey, isKeyRelease, truncateToWidth, visibleWidth, type Terminal, type Component, type TuiMouseEvent } from '@earendil-works/pi-tui'
 import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
 import { plain } from './presentation.js'
 import type { CliHistory } from './desktop-wire.js'
 import { usageLines, type CliUsage } from './usage.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
-type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
+type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal; contextButton?: boolean;
   onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
 const localCommand = (text: string) => /^\/(exit|quit|help|status)$/.test(text.trim())
 class PromptEditor extends Editor {
@@ -36,6 +36,8 @@ export class CliTui {
   private readonly terminal: Terminal
   private state: State = { busy: false }
   private usage: CliUsage = {}
+  private usageRevision = 0
+  private contextPlacement: { row: number; col: number; width: number } | undefined
   private stopped = true
   constructor(private readonly options: Options) {
     const native = options.terminal ?? new ProcessTerminal()
@@ -73,7 +75,12 @@ export class CliTui {
       this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认' : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
         : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿'
         : 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'), width, '')] }
-    const footer: Component = { invalidate() {}, render: width => [...(this.terminal.rows <= 12 ? [] : ['']), ...usageLines(this.usage, width, options.model).map(dim)] }
+    const footer: Component = { invalidate() {}, render: width => {
+      const slot = options.contextButton && width >= 10 ? ' '.repeat(10) : undefined
+      const lines = usageLines(this.usage, width, options.model, slot)
+      this.contextPlacement = slot ? { row: this.terminal.rows - 1, col: visibleWidth(lines.at(-1)!) - slot.length, width: slot.length } : undefined
+      return [...(this.terminal.rows <= 12 ? [] : ['']), ...lines.map(dim)]
+    } }
     this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'auto', scrollbarTrackStyle: dim, scrollbarThumbStyle: accent })
     this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: hint, shrink: 0 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
     this.tui.setFocus(this.editor)
@@ -109,6 +116,7 @@ export class CliTui {
     const images = this.transcript.placements.filter(x => x.row >= start && x.row + x.height <= start + height)
       .slice(-24).map(x => ({ ...x, row: top + x.row - start }))
     target.write(`\x1b]777;dawn-viewport;${JSON.stringify({ images })}\x07`)
+    if (this.options.contextButton) target.write(`\x1b]777;dawn-context;${JSON.stringify(this.contextPlacement ? { ...this.contextPlacement, revision: this.usageRevision } : null)}\x07`)
   }
   start() {
     if (!this.stopped) return
@@ -119,10 +127,11 @@ export class CliTui {
     if (this.stopped) return
     this.stopped = true
     this.terminal.write('\x1b]777;dawn-viewport;{"images":[]}\x07')
+    if (this.options.contextButton) this.terminal.write('\x1b]777;dawn-context;null\x07')
     this.tui.stop({ preserveScreen: true })
   }
   renderNow() { if (!this.stopped) this.tui.renderNow() }
-  setUsage(usage: CliUsage) { this.usage = usage; this.tui.requestRender() }
+  setUsage(usage: CliUsage) { this.usage = usage; this.usageRevision++; this.tui.requestRender() }
   setState(state: State) {
     const waiting = state.permission && !this.state.permission || state.question && !this.state.question
     this.state = state

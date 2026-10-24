@@ -115,6 +115,49 @@ test.describe('formatted transcript', () => {
 })
 
 const longReply = Array.from({ length: 70 }, (_, i) => `步骤 ${i + 1}：这是逐步生成的中文结果 STREAM_${i}。`).join('\n\n') + '\n\nFINAL_STREAM_MARKER'
+const mixedTable = `| 情况 | 建议 |
+|---|---|
+| 每组 n ≳ 20–30，数据近似对称 | Welch t 检验（不必先验方差齐性，默认不假设等方差） |
+| 样本小且明显偏态、有强异常值、或因变量是有序等级/计数 | Mann-Whitney U |
+| 数据正态但方差极不齐、样本量悬殊 | Welch t 检验（这正是它的用途） |
+| 有极端离群点 | 优先非参数，或做敏感性分析：删点前后各报一次 |`
+test.describe('mixed-language table alignment', () => {
+  test.use({ dawnOptions: { reply: mixedTable } })
+  test('keeps Chinese punctuation and wrapped table borders on the same pixel columns', async ({ dawn }) => {
+    const { page, app } = dawn, target = await open(page)
+    await submit(page, 'TABLE_ALIGNMENT'); await final(page, target.sessionId)
+    const screen = page.locator('.dock .xterm-screen')
+    const checkBorders = async (wrapped = false) => {
+      await expect(screen).toContainText('Mann-Whitney U')
+      await expect(screen).toContainText('└')
+      const rows = await screen.locator('.xterm-rows > div').evaluateAll(rows => rows.filter(row => /^(?:\s*|● )[┌│├└]/.test(row.textContent ?? '')).map(row => {
+        const edges: number[] = [], walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT)
+        let text: Node | null
+        while ((text = walker.nextNode())) for (const match of text.textContent!.matchAll(/[┌┬┐│├┼┤└┴┘]/g)) {
+          const range = document.createRange(); range.setStart(text, match.index!); range.setEnd(text, match.index! + 1)
+          edges.push(range.getBoundingClientRect().x)
+        }
+        return edges
+      }))
+      expect(rows.length).toBeGreaterThanOrEqual(11)
+      if (wrapped) expect(rows.length).toBeGreaterThan(11)
+      const rightEdge = await screen.evaluate(el => el.getBoundingClientRect().right)
+      const top = rows.find(row => row.length === 3)!
+      for (const row of rows) {
+        expect(row).toHaveLength(3)
+        expect(row[2]!).toBeLessThan(rightEdge)
+        for (let i = 0; i < 3; i++) expect(Math.abs(row[i]! - top[i]!)).toBeLessThan(1)
+      }
+    }
+    await checkBorders()
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setSize(900, 900))
+    await expect.poll(async () => page.locator('.dock .xterm-screen').evaluate(el => el.clientWidth)).toBeLessThan(800)
+    await expect(() => checkBorders(true)).toPass({ timeout: 8000 })
+    await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.type('KEEP_TABLE_DRAFT')
+    await expect(screen).toContainText('> DAWN KEEP_TABLE_DRAFT')
+    await expect(page.locator('.dock .xterm-helper-textarea')).toHaveCount(1)
+  })
+})
 test.describe('streamed scrolling', () => {
   test.use({ dawnOptions: { reply: longReply } })
   test('shows a partial answer before completion and does not steal scrolling until returning to the end', async ({ dawn }) => {

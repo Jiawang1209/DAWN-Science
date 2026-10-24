@@ -1517,6 +1517,9 @@ pre {
 .term { color: var(--dawn-text-2); font-size: var(--dawn-code-size); }
 /* xterm 需要一个有确定高度的宿主，否则 fit() 算出 0 行 */
 .term-host { height: 260px; }
+/* xterm measures repeated glyphs, then renders individual runs. CJK punctuation
+   compression makes those widths disagree and shifts table borders and cursors. */
+.term-host .xterm { text-spacing-trim: space-all; text-autospace: no-autospace; }
 
 /* ── 凭证设置 ───────────────────────────────────────────────────── */
 

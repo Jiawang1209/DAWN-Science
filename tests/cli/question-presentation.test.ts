@@ -7,13 +7,15 @@ const record: QuestionRecord = { requestId: 'choices', state: 'pending', questio
   { id: 'scope', header: '分析范围', question: '选择哪些样本？', options: [{ label: '全部样本', description: '保留全部符合条件的样本，逐项核对缺失情况。' }, { label: '健康组', description: '只使用健康组。' }] },
   { id: 'metrics', header: '分析指标', question: '需要哪些指标？', multi_select: true, options: [{ label: '多样性' }, { label: '丰度' }] },
 ] }
-it('separates choices and descriptions, shows question progress, and wraps CJK within the terminal width', () => {
+it('keeps the original numbered inline choices with blank spacing and bounded CJK wrapping', () => {
   const t = new CliTranscript(false)
   t.question(record)
   const lines = t.render(44), text = lines.join('\n')
-  expect(text).toContain('第 1/2 题 · 单选')
-  expect(text).toContain('○ 1. 全部样本')
-  expect(text).toMatch(/情况。\n\n\s+○ 2\. 健康组/)
+  expect(text).toContain('选择哪些样本？')
+  expect(text).not.toContain('需要你确认')
+  expect(text).not.toContain('第 1/2 题')
+  expect(text).toContain('1. 全部样本 ·')
+  expect(text).toMatch(/情况。\n\n\s+2\. 健康组/)
   expect(text).not.toContain('需要哪些指标？')
   expect(lines.every(line => visibleWidth(line) <= 44)).toBe(true)
 })
@@ -22,10 +24,12 @@ it('replaces one question block as it advances and retains visible selections wi
   t.question(record)
   t.question(record, 1, [{ id: 'scope', selected: ['全部样本'] }])
   const text = t.render(90).join('\n')
-  expect(text.match(/需要你确认/g)).toHaveLength(1)
+  expect(text).not.toContain('需要你确认')
+  expect(text).toContain('选择哪些样本？')
+  expect(text).toContain('1. 全部样本 · 保留全部符合条件的样本，逐项核对缺失情况。')
   expect(text).toContain('✓ 已选：全部样本')
-  expect(text).toContain('第 2/2 题 · 多选')
-  expect(text).toContain('□ 1. 多样性')
+  expect(text).toContain('需要哪些指标？')
+  expect(text).toContain('1. 多样性')
   expect(text).toContain('逗号分隔')
   t.question({ ...record, state: 'answered', answer: { answers: [{ id: 'scope', selected: ['全部样本'] }, { id: 'metrics', selected: ['多样性', '丰度'] }] } })
   const done = t.render(90).join('\n')

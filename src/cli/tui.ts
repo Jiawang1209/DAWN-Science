@@ -112,7 +112,7 @@ export class CliTui {
     } }
     const hint: Component = { invalidate() {}, render: width => {
       const text = this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认'
-        : this.state.question ? '等待你的选择 · 输入编号或文字 · Enter 确认'
+        : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
         : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿' : ''
       return text ? [truncateToWidth(dim(text), width, '')] : []
     } }

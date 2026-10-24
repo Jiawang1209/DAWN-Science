@@ -22,7 +22,7 @@ async function start(page: Page) {
   await page.locator('.dock').getByRole('button', { name: 'DAWN 模式', exact: true }).click()
   await expect(page.locator('.dock .xterm-rows')).toContainText('> DAWN')
   await submit(page, '请做结构化澄清')
-  await expect(page.locator('.dock .xterm-rows')).toContainText('第 1/3 题 · 单选')
+  await expect(page.locator('.dock .xterm-rows')).toContainText('这次需要分析哪些样本？')
 }
 
 test('terminal questions separate choices, retain selected answers, return to the same GUI record and restore after closing', async ({ dawn }) => {
@@ -31,12 +31,14 @@ test('terminal questions separate choices, retain selected answers, return to th
   const terminal = page.locator('.dock .xterm-rows')
   // innerText collapses empty xterm rows; inspect the actual rendered row sequence.
   const text = await terminal.evaluate(el => Array.from(el.children).map(row => row.textContent).join('\n'))
-  expect(text).toMatch(/保留所有符合条件的样本。\s*\n\s*\n\s*○ 2\. 仅健康组/)
+  expect(text).toMatch(/保留所有符合条件的样本。\s*\n\s*\n\s*2\. 仅健康组/)
   await submit(page, '1')
-  await expect(terminal).toContainText('第 2/3 题 · 多选')
+  await expect(terminal).toContainText('需要输出哪些指标？')
   await expect(terminal).toContainText('✓ 已选：全部样本（推荐）')
+  await expect(terminal).toContainText('1. 全部样本（推荐） · 保留所有符合条件的样本。')
+  await expect(terminal).not.toContainText('需要你确认')
   await submit(page, '1,2')
-  await expect(terminal).toContainText('第 3/3 题 · 文字回答')
+  await expect(terminal).toContainText('还有需要遵守的要求吗？')
   await expect(terminal).toContainText('✓ 已选：多样性、丰度')
   await submit(page, 'NO_IDENTIFIERS')
   await expect(terminal).toContainText('已提交答案')

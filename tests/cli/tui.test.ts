@@ -5,12 +5,13 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
-it('shows choices with progress and restores the same submitted answers from native question history', async () => {
+it('keeps numbered question choices and restores the same submitted answers from native history', async () => {
   const f = fixture(100, 36)
   const record = { requestId: 'tui-question', state: 'pending' as const, questions: [{ id: 'scope', question: '选择分析范围？', options: [{ label: '全部样本', description: '保留全部样本。' }, { label: '健康组' }] }] }
   f.ui.question(record); f.ui.setState({ busy: true, question: true }); await f.flush()
-  expect(f.text()).toContain('第 1/1 题 · 单选')
-  expect(f.text()).toContain('○ 1. 全部样本')
+  expect(f.text()).toContain('选择分析范围？')
+  expect(f.text()).not.toContain('需要你确认')
+  expect(f.text()).toContain('1. 全部样本 · 保留全部样本。')
   f.input('1'); f.input('\r')
   expect(f.submit).toHaveBeenCalledExactlyOnceWith('1')
   expect(f.text()).not.toContain('❯ 1')

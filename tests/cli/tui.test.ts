@@ -5,7 +5,37 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
-it.each(['/exit', '/permissions deny-risky'])('Enter submits the complete local command %s despite an older asynchronous slash candidate', async command => {
+it('reports an unreadable planning state without pretending planning is disabled or clearing the draft', async () => {
+  const f = fixture(120, 28)
+  f.input('KEEP_PLAN_READ_DRAFT'); f.ui.setPlanState(undefined); await f.flush()
+  expect(f.text()).toContain('方案状态未读取')
+  expect(f.ui.draft()).toBe('KEEP_PLAN_READ_DRAFT')
+})
+it('renders the full plan Markdown, updates that version in place, and preserves a later draft', async () => {
+  const f = fixture(110, 38)
+  const plan = { type: 'plan' as const, id: 'plan:p1', planId: 'p1', version: 1, title: '分组分析方案', markdown: '## 问题与假设\n比较两组。\n## 图\n绘制散点图。', status: 'proposed' as const }
+  f.ui.setPlanState({ planning: true, plan }); await f.flush()
+  expect(f.text()).toContain('生成方案（只看不改）')
+  expect(f.text()).toContain('分组分析方案'); expect(f.text()).toContain('比较两组。')
+  expect(f.text()).toContain('/plan approve p1'); expect(f.text()).toContain('/plan discard p1')
+  f.input('KEEP_LATER_DRAFT')
+  f.ui.setPlanState({ planning: false, plan: { ...plan, status: 'approved', savedPath: 'analysis/plans/a.md' } }); await f.flush()
+  expect(f.text()).toContain('已批准'); expect(f.text()).not.toContain('/plan approve p1')
+  expect(f.text().match(/分组分析方案/g)).toHaveLength(1)
+  expect(f.ui.draft()).toBe('KEEP_LATER_DRAFT')
+  expect(f.ui.recoverDraft('UNSENT_EXECUTION')).toBe(false)
+  expect(f.ui.draft()).toBe('KEEP_LATER_DRAFT')
+})
+it('restores plan cards with their status and keeps /plan out of user input history', async () => {
+  const f = fixture(100, 32)
+  f.ui.restore({ items: [{ kind: 'plan', plan: { planId: 'saved', version: 2, title: '历史方案', markdown: '## 图\n旧图', status: 'discarded' } }], pictures: [], truncated: false }); await f.flush()
+  expect(f.text()).toContain('历史方案'); expect(f.text()).toContain('没采用')
+  f.input('/plan'); f.input('\r'); await f.flush()
+  expect(f.text()).not.toContain('❯ /plan')
+  f.input('\x12'); f.input('/plan'); await f.flush()
+  expect(f.text()).toContain('还没有输入历史')
+})
+it.each(['/exit', '/permissions deny-risky', '/plan', '/plan 比较数据并绘图'])('Enter submits the complete local command %s despite an older asynchronous slash candidate', async command => {
   const f = fixture(120, 28)
   f.input('/'); await f.flush()
   for (const char of command.slice(1)) f.input(char)

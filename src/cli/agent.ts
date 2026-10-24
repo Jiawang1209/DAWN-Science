@@ -9,6 +9,9 @@ import { CLI_HELP, plain, toolDetail } from './presentation.js'
 import { ResumeCancelled } from './history-picker.js'
 import { SessionPermissionSchema, SessionPermissionValueSchema } from '../protocol/permissions.js'
 import { permissionLabel, PERMISSION_HELP } from './permissions.js'
+import { parsePlanCommand, PLAN_HELP } from './planning.js'
+import { SessionPlanSchema, type SessionPlan } from '../protocol/planning.js'
+import { 执行那句, 出方案工具名 } from '../protocol/plan.js'
 
 type Permission = Extract<AgentEvent, { kind: 'permission_request' }>
 export async function runCliAgent(agentId?: string, resume?: string | true): Promise<number> {
@@ -32,10 +35,26 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
     if (view && !closing) view.notice(text, urgent)
     else output.write(plain(text) + '\n')
   }
-  const prompt = () => { if (!closing) view?.setState({ busy, permission: Boolean(permission) && !answering, question: Boolean(question) && !answering }) }
+  const prompt = () => { if (!closing) view?.setState({ busy: busy || planWriting, permission: Boolean(permission) && !answering, question: Boolean(question) && !answering }) }
   const suggestions = view ? new CliNextPrompt(() => context.suggest(), text => view.setSuggestion(text)) : undefined
   const updateSuggestion = () => suggestions?.update(!closing && !busy && !permission && !question && !view?.draft())
   let usageRequest = 0
+  let planRevision = 0, planReading = false, planWriting = false
+  let planSnapshot: SessionPlan | undefined
+  const showPlanState = (state: SessionPlan) => { planSnapshot = state; view?.setPlanState(state) }
+  const refreshPlan = async () => {
+    if (closing || planReading || planWriting) return
+    planReading = true
+    const version = planRevision
+    try {
+      const state = SessionPlanSchema.parse(await context.planning())
+      if (!closing && version === planRevision) showPlanState(state)
+    } catch { if (!closing && version === planRevision) { planSnapshot = undefined; view?.setPlanState(undefined) } }
+    finally { planReading = false; if (!closing && !planWriting && version !== planRevision) void refreshPlan() }
+  }
+  const preserve = (text: string) => {
+    if (!view?.recoverDraft(text)) say('未发送的内容，请重试：\n' + text, true)
+  }
   let permissionRevision = 0, permissionReading = false, permissionWriting = false
   let permissionSnapshot: import('../protocol/permissions.js').SessionPermission | undefined
   const refreshPermissions = async () => {
@@ -74,7 +93,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       finally { await context.close() }
     } finally {
       detachExit(); detach(); input.removeListener('end', onEnd); process.removeListener('SIGTERM', onTerminate); process.removeListener('SIGINT', onInterrupt)
-      clearInterval(renew); clearInterval(permissionTimer)
+      clearInterval(renew); clearInterval(permissionTimer); clearInterval(planTimer)
       view?.stop(); rl?.close(); if (input.isTTY) input.setRawMode(false); input.pause()
       say('\n已退出 Agent，返回 Shell。'); finished()
     }
@@ -92,15 +111,22 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       case 'output': beginActivity(); if (view) view.reply(event.data); else answer += plain(event.data); break
       case 'turn_end': flush(); break
       case 'model': suggestions?.reset(); updateSuggestion(); void refreshUsage(); break
-      case 'config_options': void refreshPermissions(); break
+      case 'config_options': void refreshPermissions(); planRevision++; void refreshPlan(); break
+      case 'plan':
+        planRevision++
+        if (view) view.plan(event.plan)
+        else say(`方案 · 第 ${event.plan.version} 版 · ${event.plan.status}\n${event.plan.title}\n${event.plan.markdown}` + (event.plan.status === 'proposed' ? `\n/plan approve ${event.plan.planId} · /plan discard ${event.plan.planId}` : ''))
+        void refreshPlan(); break
       case 'turn_usage': case 'compaction_end': void refreshUsage(); break
       case 'tool_start':
         beginActivity()
         void refreshUsage()
-        flush(); if (view) { view.toolStart(event); break }; say(`  › ${event.toolName}${toolDetail(event.input) ? '\n    ' + toolDetail(event.input).replaceAll('\n', '\n    ') : ''}`); break
+        flush(); if (event.toolName === 出方案工具名) break
+        if (view) { view.toolStart(event); break }; say(`  › ${event.toolName}${toolDetail(event.input) ? '\n    ' + toolDetail(event.input).replaceAll('\n', '\n    ') : ''}`); break
       case 'tool_end':
         void refreshUsage()
         if (event.isError) failed = true
+        if (event.toolName === 出方案工具名 && !event.isError) break
         if (view) { view.toolEnd(event); break }
         say(`  ${event.isError ? '× 未完成' : '✓ 完成'} · ${event.toolName}`)
         if (event.text.trim()) say(plain(event.text).split('\n').slice(0, 8).map(line => '    ' + line.slice(0, 1200)).join('\n'))
@@ -130,7 +156,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
           void call('answerQuestion', { sessionId, requestId: event.question.requestId }).catch(e => say(String(e)))
         } else { question = { record: event.question, index: 0, answers: [] }; showQuestion() }
         break
-      case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); void refreshUsage(); updateSuggestion(); break
+      case 'idle': busy = false; permission = undefined; question = undefined; flush(); prompt(); void refreshUsage(); void refreshPlan(); updateSuggestion(); break
     }
   }
   const detach = context.attach(onEvent)
@@ -140,12 +166,59 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   // Default inheritance can change without a session event. Never overlap reads or race writes.
   const permissionTimer = setInterval(() => { void refreshPermissions() }, 1000)
   permissionTimer.unref()
+  const planTimer = setInterval(() => { void refreshPlan() }, 1000)
+  planTimer.unref()
   const handle = async (text: string) => {
     const line = text.trim()
     if (closing || !line) { prompt(); return }
     if (line === '/exit' || line === '/quit') { await shutdown(); return }
     if (line === '/help') { say(CLI_HELP); prompt(); return }
     if (line === '/status') { status(); prompt(); return }
+    const planCommand = parsePlanCommand(line)
+    if (planCommand) {
+      if (planCommand.kind === 'help') { say(PLAN_HELP); return }
+      if (planCommand.kind === 'status') {
+        if (planWriting) { say('方案操作正在处理，请稍候再查看状态。'); return }
+        await refreshPlan()
+        say((planSnapshot ? planSnapshot.planning ? '生成方案（只看不改）' : '方案期已关闭' : '方案状态未读取，请重试。') + '\n' + PLAN_HELP)
+        return
+      }
+      if (busy || permission || question || planWriting) { say('当前回合仍在运行，请结束后再操作方案。', true); preserve(text); return }
+      planWriting = true; planRevision++; suggestions?.reset(); prompt()
+      let unsent = text, sending = false
+      try {
+        if (planCommand.kind === 'enable' || planCommand.kind === 'disable') {
+          const state = SessionPlanSchema.parse(await context.planning(planCommand.kind === 'enable'))
+          if (closing) return
+          showPlanState(state)
+          if (planCommand.kind === 'enable' && planCommand.prompt) {
+            unsent = '/plan ' + planCommand.prompt
+            view?.user(planCommand.prompt); beginActivity(); sending = true
+            await call('writeToSession', { sessionId, as: 'user', data: planCommand.prompt })
+          } else say((state.planning ? '生成方案已开启：这一段只看不改，批准方案后执行。' : '方案期已退出；已有方案保留，没有批准或启动执行。') + '\n' + PLAN_HELP)
+        } else {
+          const state = SessionPlanSchema.parse(await context.planning())
+          if (closing) return
+          showPlanState(state)
+          if (!state.plan || state.plan.planId !== planCommand.planId || state.plan.status !== 'proposed') throw Error('这一版方案已经不是当前待审方案，请重新查看方案 ID。')
+          const result = await context.answerPlan(planCommand.planId, planCommand.action)
+          if (closing) return
+          if (planCommand.action === 'approve') {
+            if (!result.savedPath) throw Error('方案已处理，但没有收到存档路径，请返回会话核对。')
+            unsent = 执行那句(result.savedPath, false)
+            view?.user(unsent); beginActivity(); sending = true
+            try { await context.executePlan(planCommand.planId) }
+            catch (error) { say('方案已批准，但执行消息没有发出。', true); throw error }
+          } else say('这版方案没有采用，已退出方案期。')
+        }
+      } catch (error) {
+        if (closing) return
+        if (sending) busy = false
+        say('方案操作失败：' + (error instanceof Error ? error.message : String(error)), true)
+        preserve(unsent)
+      } finally { planWriting = false; planRevision++; if (!closing) { void refreshPlan(); prompt(); updateSuggestion() } }
+      return
+    }
     if (/^\/permissions(?:\s|$)/.test(line)) {
       const argument = line.slice('/permissions'.length).trim()
       if (!argument) { await refreshPermissions(); say((permissionSnapshot ? '当前权限：' + permissionLabel(permissionSnapshot) : '权限未读取，请重试。') + '\n' + PERMISSION_HELP); prompt(); return }
@@ -193,7 +266,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
       }
       return
     }
-    if (busy) { say('当前回合仍在运行；Ctrl-C 停止，或 /exit 返回 Shell。'); return }
+    if (busy || planWriting) { say('当前回合仍在运行；Ctrl-C 停止，或 /exit 返回 Shell。'); return }
     suggestions?.reset()
     busy = true; prompt()
     try { await call('writeToSession', { sessionId, data: line, as: 'user' }) }
@@ -207,6 +280,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   })
   const onEnd = () => { void pipe.then(shutdown).catch(e => { say(String(e)); finished() }) }
   const onInterrupt = () => {
+    if (planWriting) { say('方案操作正在处理；/exit 可退出 Agent。'); return }
     if (busy) {
       void call('abortSession', { sessionId }).then(() => { busy = false; permission = undefined; question = undefined; answer = ''; say('\n本轮已停止。'); prompt() }).catch(e => say(String(e)))
     } else void shutdown()
@@ -216,7 +290,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   rl?.on('close', () => { if (!closing) onEnd() })
   input.on('end', onEnd); process.on('SIGTERM', onTerminate); process.on('SIGINT', onInterrupt)
   try {
-    await Promise.all([refreshUsage(), refreshPermissions()])
+    await Promise.all([refreshUsage(), refreshPermissions(), refreshPlan()])
     if (view) { view.start(); if (restored) view.restore(restored) }
     else {
       say('\nDAWN Science\n')

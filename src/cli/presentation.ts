@@ -23,6 +23,8 @@ Agent 中：
   /help                   帮助
   /status                 当前模型、目录和记录位置
   /permissions [档位]     查看权限；deny-risky / ask-risky / allow-all / inherit 切换当前会话
+  /plan [问题]            先出方案；/plan off 退出；/plan status 查看状态
+  /plan approve <方案ID>  照这个做；/plan discard <方案ID> 不做了
   Enter                   发送当前输入
   Shift/Alt+Enter          换行（内置终端支持 Shift+Enter）
   ↑ / ↓                   编辑或浏览输入历史

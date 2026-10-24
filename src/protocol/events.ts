@@ -402,7 +402,7 @@ export type KernelState = z.infer<typeof KernelStateSchema>
  * 往回翻要看得见批的是哪一版。状态变了按 id 整条覆盖（与 `subagents` 同一纪律）。
  * 字段与 `src/protocol/plan.ts` 的 `方案` 一一对应（`tests/protocol/events.test.ts` 盯着）。
  */
-const PlanItem = z
+export const PlanItemSchema = z
   .object({
     type: z.literal("plan"),
     /** `plan:<planId>`——与工具行的 id 分开，免得按 id 覆盖时撞上 */
@@ -421,7 +421,7 @@ const PlanItem = z
     fileChanged: z.literal(true).optional(),
   })
   .strict()
-export type PlanItem = z.infer<typeof PlanItem>
+export type PlanItem = z.infer<typeof PlanItemSchema>
 
 export const TranscriptItemSchema = z.discriminatedUnion("type", [
   TurnItem,
@@ -431,7 +431,7 @@ export const TranscriptItemSchema = z.discriminatedUnion("type", [
   KernelOutputItem,
   CellItem,
   CompactionItem,
-  PlanItem,
+  PlanItemSchema,
   QuestionRecordSchema.safeExtend({ type: z.literal("question"), id: z.string().min(1) }),
 ])
 export type TranscriptItem = z.infer<typeof TranscriptItemSchema>

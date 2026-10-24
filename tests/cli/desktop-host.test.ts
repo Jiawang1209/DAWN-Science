@@ -5,6 +5,44 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { AgentEvent } from '../../src/runtime/types.js'
+it('executing an approved plan keeps unrelated pending image attachments in the composer', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-plan-images-'))
+  const data = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
+  const plan = { type: 'plan', id: 'plan:p1', planId: 'p1', version: 1, title: '方案', markdown: '## 图\n绘图', status: 'approved', savedPath: 'analysis/plans/a.md' }
+  const call = vi.fn(async (op: string) => op === 'getSessionPlan' ? { planning: false, plan } : {})
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: root, call, attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t'), client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    await host.updateAttachments({ terminalId: 't', sessionId: 'owned', action: 'add', images: [{ name: 'draft.png', mimeType: 'image/png', data }] })
+    await client.executePlan('p1')
+    expect(host.attachments('t').pending).toHaveLength(1)
+    expect(call.mock.calls.at(-1)?.[0]).toBe('writeToSession')
+    expect((call.mock.calls.at(-1) as unknown as [string, any])[1].images).toBeUndefined()
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
+it('scopes planning reads, toggles and versioned answers to the authenticated session only', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-plan-wire-'))
+  const call = vi.fn(async (operation: string) => operation === 'getSessionPlan' ? { planning: true } : { savedPath: 'analysis/plans/a.md' })
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: root, call, attach: () => () => {}, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t'), client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    expect(await client.call('$plan')).toEqual({ planning: true })
+    expect(call).toHaveBeenLastCalledWith('getSessionPlan', { sessionId: 'owned' })
+    await client.call('$plan', { action: 'set', enabled: true })
+    expect(call).toHaveBeenCalledWith('setSessionConfigOption', { sessionId: 'owned', configId: 'dawn.plan', value: '1' })
+    expect(await client.call('$plan', { action: 'answer', planId: 'p1', decision: 'approve' })).toEqual({ savedPath: 'analysis/plans/a.md' })
+    expect(call).toHaveBeenCalledWith('answerPlan', { sessionId: 'owned', planId: 'p1', action: 'approve' })
+    call.mockClear()
+    for (const value of [{ action: 'set', enabled: true, sessionId: 'other' }, { action: 'set', enabled: '1' }, { action: 'answer', planId: '', decision: 'approve' }, { action: 'answer', planId: 'p', decision: 'approve', text: 'override' }, { action: 'answer', planId: 'p', decision: 'execute' }]) await expect(client.call('$plan', value)).rejects.toThrow()
+    await expect(client.call('answerPlan', { sessionId: 'other', planId: 'p', action: 'approve' })).rejects.toThrow()
+    expect(call).not.toHaveBeenCalled()
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
 
 it('reads and changes only the bound session permission with strict values and no global/config escape', async () => {
   const root = mkdtempSync(join(tmpdir(), 'dawn-permission-wire-'))

@@ -12,6 +12,8 @@ import { createWorkbench } from '../electron/wiring.js'
 import type { CredentialsPort } from '../workbench/backend.js'
 import type { OPERATIONS } from '../protocol/index.js'
 import type { SessionPermission, SessionPermissionValue } from '../protocol/permissions.js'
+import type { SessionPlan } from '../protocol/planning.js'
+import { executeApprovedPlan } from './planning.js'
 type Op = keyof typeof OPERATIONS
 
 /** Each CLI owns its database: startup reconciliation must not touch another live host. */
@@ -58,6 +60,12 @@ export async function openCliContext(agentId?: string, resume?: string | true) {
       history: async () => ({ items: [], pictures: [], truncated: false }),
       suggest: () => suggestLatestPrompt(workbench.events.peek(task.sessionId)?.items ?? [], turnId => call<{ text: string }>('suggestNextPrompt', { sessionId: task.sessionId, turnId })),
       usage: async () => workbench.sessionUsage(task.sessionId),
+      planning: async (enabled?: boolean) => {
+        if (enabled !== undefined) await call('setSessionConfigOption', { sessionId: task.sessionId, configId: 'dawn.plan', value: enabled ? '1' : '' })
+        return call<SessionPlan>('getSessionPlan', { sessionId: task.sessionId })
+      },
+      answerPlan: (planId: string, action: 'approve' | 'discard') => call<{ savedPath?: string }>('answerPlan', { sessionId: task.sessionId, planId, action }),
+      executePlan: (planId: string) => executeApprovedPlan(task.sessionId, planId, (op, input) => call(op as Op, input)),
       permissions: async (value?: SessionPermissionValue) => {
         if (value !== undefined) await call('setSessionConfigOption', { sessionId: task.sessionId, configId: 'dawn.permission', value })
         return call<SessionPermission>('getSessionPermission', { sessionId: task.sessionId })

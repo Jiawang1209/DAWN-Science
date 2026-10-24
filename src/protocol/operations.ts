@@ -36,6 +36,7 @@ import {
 } from "./entities.js"
 import { SessionSnapshotSchema } from "./events.js"
 import { SessionPermissionSchema } from './permissions.js'
+import { SessionPlanSchema } from './planning.js'
 import { 够长 } from "./search-match.js"
 
 /**
@@ -1914,6 +1915,11 @@ export const OPERATIONS = {
       .strict(),
     response: z.object({ savedPath: z.string().min(1).optional() }).strict(),
     mutating: true,
+  },
+  getSessionPlan: {
+    request: z.object({ sessionId: z.string().min(1) }).strict(),
+    response: SessionPlanSchema,
+    mutating: false,
   },
   /**
    * 回退这一轮 · 预览（2026-09-27，spec `2026-09-27-回退这一轮-design.md`）。**只读**：扫一遍工作区、算计划，不动任何东西。

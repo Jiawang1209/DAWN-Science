@@ -12,6 +12,7 @@ const harness = vi.hoisted(() => ({
   usages: [] as SessionUsage[],
   suggestions: [] as string[], draft: '',
   permissions: [] as unknown[], notices: [] as string[],
+  plans: [] as unknown[], users: [] as string[],
 }))
 vi.mock('../../src/cli/context.js', () => ({ openCliContext: async () => harness.context }))
 vi.mock('../../src/cli/tui.js', () => ({
@@ -25,6 +26,10 @@ vi.mock('../../src/cli/tui.js', () => ({
     setUsage(usage: SessionUsage) { harness.usages.push(usage) }
     notice(text: string) { harness.notices.push(text) }
     setPermissions(value: unknown) { harness.permissions.push(value) }
+    setPlanState(value: unknown) { harness.plans.push(value) }
+    plan(value: unknown) { harness.plans.push(value) }
+    user(text: string) { harness.users.push(text) }
+    recoverDraft(text: string) { if (harness.draft) return false; harness.draft = text; return true }
     finish() {}
     reply() {}
     image() {}
@@ -38,6 +43,7 @@ afterEach(() => { vi.restoreAllMocks() })
 
 async function interactiveAgent() {
   harness.permissions = []; harness.notices = []
+  harness.plans = []; harness.users = []
   harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []; harness.suggestions = []; harness.draft = ''
   // Replace only the stream getters; the worker's actual terminal and signal
   // handlers are never driven by these controller tests.
@@ -51,8 +57,16 @@ async function interactiveAgent() {
   const usage = vi.fn(async (): Promise<SessionUsage> => ({}))
   let permissionTier = 'inherit'
   const permissions = vi.fn(async (value?: string) => { if (value) permissionTier = value; return { current: permissionTier, effective: permissionTier === 'inherit' ? 'ask-risky' : permissionTier } })
+  const planState: import('../../src/protocol/planning.js').SessionPlan = { planning: false }
+  const planning = vi.fn(async (enabled?: boolean) => { if (enabled !== undefined) planState.planning = enabled; return structuredClone(planState) })
+  const answerPlan = vi.fn(async (_id: string, action: string) => {
+    planState.planning = false
+    planState.plan = { ...planState.plan!, status: action === 'approve' ? 'approved' : 'discarded', ...(action === 'approve' ? { savedPath: 'analysis/plans/approved.md' } : {}) }
+    return action === 'approve' ? { savedPath: 'analysis/plans/approved.md' } : {}
+  })
+  const executePlan = vi.fn(async (_id: string) => ({}))
   harness.context = {
-    call, usage, suggest, permissions, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
+    call, usage, suggest, permissions, planning, answerPlan, executePlan, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
     attach: (sink: typeof emit) => { emit = sink; return vi.fn() },
     onExit: () => vi.fn(), close: vi.fn(async () => {}), waitForIdle: vi.fn(async () => {}),
   }
@@ -63,7 +77,7 @@ async function interactiveAgent() {
     await new Promise<void>(resolve => setImmediate(resolve))
   }
   return {
-    call, usage, suggest, permissions, emit, submit,
+    call, usage, suggest, permissions, planning, answerPlan, executePlan, planState, emit, submit,
     state: () => harness.states.at(-1),
     close: async () => { harness.options!.onExit(); await running },
   }
@@ -93,6 +107,89 @@ const pending: QuestionRecord = {
   requestId: 'question-state-test', state: 'pending',
   questions: [{ id: 'range', question: '选择分析范围？', options: [{ label: '全部' }, { label: '部分' }] }],
 }
+
+const proposed = { type: 'plan' as const, id: 'plan:p1', planId: 'p1', version: 1, title: '分组方案', markdown: '## 图\n绘制散点图', status: 'proposed' as const }
+it('does not let an old plan read overwrite a newer successful toggle', async () => {
+  const a = await interactiveAgent()
+  try {
+    let resolve!: (value: any) => void
+    a.planning.mockImplementationOnce(() => new Promise(r => { resolve = r }))
+    a.emit({ kind: 'config_options', sessionId: 'state-test-session', options: [] })
+    await a.submit('/plan')
+    resolve({ planning: false })
+    await vi.waitFor(() => expect(harness.plans.at(-1)).toMatchObject({ planning: true }))
+  } finally { await a.close() }
+})
+it('locks duplicate plan operations while a mutation is in flight without approving a different version', async () => {
+  const a = await interactiveAgent()
+  try {
+    let resolve!: (value: any) => void
+    a.planning.mockImplementationOnce(() => new Promise(r => { resolve = r }))
+    await a.submit('/plan')
+    expect(a.state()?.busy).toBe(true)
+    await a.submit('/plan status')
+    expect(harness.notices.at(-1)).toContain('方案操作正在处理')
+    await a.submit('/plan approve p1')
+    expect(a.answerPlan).not.toHaveBeenCalled()
+    resolve({ planning: true })
+    await vi.waitFor(() => expect(a.state()?.busy).toBe(false))
+  } finally { await a.close() }
+})
+it('/plan enables before sending only the question; empty /plan and status do not generate model turns', async () => {
+  const a = await interactiveAgent()
+  try {
+    await a.submit('/plan'); expect(a.planning).toHaveBeenCalledWith(true)
+    expect(a.call.mock.calls.some(([op]) => op === 'writeToSession')).toBe(false)
+    await a.submit('/plan 比较两组数据')
+    expect(a.call).toHaveBeenCalledWith('writeToSession', { sessionId: 'state-test-session', as: 'user', data: '比较两组数据' })
+    expect(harness.users).toEqual(['比较两组数据'])
+    a.emit({ kind: 'idle', sessionId: 'state-test-session' })
+    await a.submit('/plan off'); expect(a.planState.planning).toBe(false)
+    expect(a.answerPlan).not.toHaveBeenCalled()
+  } finally { await a.close() }
+})
+it('approves only the exact displayed proposal, sends the shared execution instruction once, and rejects stale IDs', async () => {
+  const a = await interactiveAgent()
+  try {
+    a.planState.planning = true; a.planState.plan = proposed
+    await a.submit('/plan approve wrong')
+    expect(a.answerPlan).not.toHaveBeenCalled()
+    await a.submit('/plan approve p1')
+    expect(a.answerPlan).toHaveBeenCalledExactlyOnceWith('p1', 'approve')
+    expect(a.executePlan).toHaveBeenCalledExactlyOnceWith('p1')
+    expect(harness.users[0]).toContain('照批准的方案做：`analysis/plans/approved.md`')
+    await a.submit('/plan approve p1')
+    expect(a.answerPlan).toHaveBeenCalledTimes(1)
+  } finally { await a.close() }
+})
+it('discards without executing, and busy plan commands never become question or permission answers', async () => {
+  const a = await interactiveAgent()
+  try {
+    a.planState.planning = true; a.planState.plan = proposed
+    await a.submit('/plan discard p1')
+    expect(a.answerPlan).toHaveBeenCalledExactlyOnceWith('p1', 'discard')
+    expect(a.executePlan).not.toHaveBeenCalled()
+    a.emit({ kind: 'permission_request', sessionId: 'state-test-session', requestId: 'p', title: '确认？', options: [{ optionId: 'yes', name: '允许', kind: 'allow_once' }] })
+    await a.submit('/plan off')
+    expect(a.call.mock.calls.some(([op]) => op === 'answerPermission')).toBe(false)
+    expect(a.state()?.permission).toBe(true)
+    expect(harness.draft).toBe('/plan off')
+  } finally { await a.close() }
+})
+it('failed enable preserves the original command and an unsent approved instruction never overwrites a later draft', async () => {
+  const a = await interactiveAgent()
+  try {
+    a.planning.mockRejectedValueOnce(Error('plan unavailable'))
+    await a.submit('/plan 分析数据'); expect(harness.draft).toBe('/plan 分析数据')
+    expect(a.call.mock.calls.some(([op]) => op === 'writeToSession')).toBe(false)
+    harness.draft = 'LATER_DRAFT'; a.planState.planning = true; a.planState.plan = proposed
+    a.executePlan.mockRejectedValueOnce(Error('connection lost'))
+    await a.submit('/plan approve p1')
+    expect(harness.draft).toBe('LATER_DRAFT')
+    expect(harness.notices.join('\n')).toContain('照批准的方案做：`analysis/plans/approved.md`')
+    expect(a.state()?.busy).toBe(false)
+  } finally { await a.close() }
+})
 
 it('loads follow-ups only after idle, hides them for a draft, and does not send suggestions automatically', async () => {
   const agent = await interactiveAgent()

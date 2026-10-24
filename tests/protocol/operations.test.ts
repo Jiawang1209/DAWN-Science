@@ -102,6 +102,7 @@ describe("操作注册表", () => {
         "answerPermission",
         "setSessionConfigOption",
         "getSessionPermission",
+        "getSessionPlan",
         "getUsage",
         "connectRemote",
         "createRemoteSession",

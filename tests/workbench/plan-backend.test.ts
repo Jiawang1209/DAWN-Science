@@ -3,7 +3,7 @@
  *
  * 真 `createWorkbenchBackend` + 真 `SessionManager`；运行时是 `FakeRuntime` 的替身（`make()` 照 `redirect-backend.test.ts`）。
  */
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import Database from "better-sqlite3"
 import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -60,8 +60,21 @@ function make(runtime: FakeRuntime = new 会答方案的()) {
     await backend.acquireLease({ sessionId, holder: "user" })
     return sessionId
   }
-  return { backend, runtime, repo, 开一段 }
+  return { backend, runtime, repo, sessions, events, 开一段 }
 }
+
+it('reads the same planning flag and latest plan card as the GUI without starting another session', async () => {
+  const ctx = make(), sessionId = await ctx.开一段()
+  let current = '1'
+  vi.spyOn(ctx.sessions, 'configOptions').mockImplementation(id => id === sessionId ? [{ id: 'dawn.plan', name: '生成方案', kind: 'boolean', category: 'plan', current, options: [] }] : undefined)
+  const plan = { planId: 'proposal-1', version: 1, title: '分析方案', markdown: '## 问题与假设\n分析问题', status: 'proposed' as const }
+  ctx.events.ingest(sessionId, { kind: 'plan', sessionId, plan })
+  expect(await ctx.backend.getSessionPlan({ sessionId })).toMatchObject({ planning: true, plan })
+  current = ''
+  ctx.events.ingest(sessionId, { kind: 'plan', sessionId, plan: { ...plan, status: 'approved', savedPath: 'analysis/plans/a.md' } })
+  expect(await ctx.backend.getSessionPlan({ sessionId })).toMatchObject({ planning: false, plan: { status: 'approved' } })
+  await expect(ctx.backend.getSessionPlan({ sessionId: 'other' })).rejects.toThrow()
+})
 
 describe("answerPlan", () => {
   it("native：转给运行时（带改过的正文），回存档路径", async () => {

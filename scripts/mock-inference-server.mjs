@@ -263,6 +263,8 @@ function 澄清工具(body) {
   return { toolName: "ask_user_question", args: 假问题, say: "我需要先确认几个分析选择。", ...(last.includes("带写入") ? { extraCalls: [{ toolName: "write", args: { path: "results/tables/after-question.txt", content: "answered-first" } }] } : {}) }
 }
 export const 交方案 = { toolName: "propose_plan", args: 假方案, say: "我先出一份方案。" }
+/** Terminal uses the same real backend operations and deterministic proposal/approval scenario. */
+export const TERMINAL_PLAN_OPERATIONS = ['getSessionPlan', 'setSessionConfigOption', 'answerPlan']
 export const 偷跑 = { toolName: "write", args: { path: "results/tables/偷跑.csv", content: "a\n1\n" }, say: "我先偷偷写一个。" }
 export const 照方案做 = {
   toolName: "write",
@@ -274,7 +276,11 @@ function 方案工具(body) {
   if (文 === undefined) return undefined
   // Anthropic 形状的工具表是 `{ name }`，OpenAI 的是 `{ function: { name } }`——两种都认
   const 在方案期 = (body.tools ?? []).some((t) => (t?.function?.name ?? t?.name) === "propose_plan")
-  if (在方案期) return 文.includes("偷跑") ? 偷跑 : 交方案
+  if (在方案期) {
+    if (文.includes("偷跑")) return 偷跑
+    if (文.includes("终端方案验收")) return { ...交方案, args: { ...假方案, title: '终端方案验收：分组比较' } }
+    return 交方案
+  }
   return 文.includes("照批准的方案做") ? 照方案做 : undefined
 }
 

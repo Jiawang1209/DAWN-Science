@@ -4077,6 +4077,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw fault原样(workbenchCode, error instanceof Error ? error.message : String(error), { code })
       }
     },
+    getSessionPlan: async ({ sessionId }) => {
+      const option = sessions.configOptions(sessionId)?.find(o => o.id === 'dawn.plan')
+      if (!option || (option.current !== '' && option.current !== '1')) throw fault("invalid_request", "这类会话没有生成方案——只有 native 会话有")
+      const plan = events.peek(sessionId)?.items.findLast(i => i.type === 'plan')
+      return { planning: option.current === '1', ...(plan ? { plan } : {}) }
+    },
+
     answerPlan: async ({ sessionId, planId, action, text }) => {
       if (!sessions.get(sessionId)) throw fault("not_found", "没有这段会话：{0}", sessionId)
       if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有生成方案——只有 native 会话有")

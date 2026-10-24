@@ -6,11 +6,13 @@ import type { CliHistory } from './desktop-wire.js'
 import { usageLines, type CliUsage } from './usage.js'
 import type { SessionPermission } from '../protocol/permissions.js'
 import { permissionLabel } from './permissions.js'
+import type { SessionPlan } from '../protocol/planning.js'
+import type { CliPlan } from './tui-transcript.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal; contextButton?: boolean;
   onDraftChange?: () => void; onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
-const localCommand = (text: string) => /^\/(?:exit|quit|help|status)$|^\/permissions(?:\s|$)/.test(text.trim())
+const localCommand = (text: string) => /^\/(?:exit|quit|help|status)$|^\/(?:permissions|plan)(?:\s|$)/.test(text.trim())
 const INPUT_HELP = 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 补全建议/展开工具 · /exit 返回 Shell'
 class SearchAwareTui extends TuiAltScreen {
   get overlayFocused() { return this.isOverlayFocused() }
@@ -51,6 +53,7 @@ export class CliTui {
   private state: State = { busy: false }
   private usage: CliUsage = {}
   private permissions: SessionPermission | undefined
+  private planning: SessionPlan | undefined
   private usageRevision = 0
   private contextPlacement: { row: number; col: number; width: number } | undefined
   private stopped = true
@@ -81,6 +84,7 @@ export class CliTui {
     this.editor.setAutocompleteProvider(new CombinedAutocompleteProvider([
       { name: 'help', description: '帮助与快捷键' }, { name: 'status', description: '模型、目录和记录位置' }, { name: 'exit', description: '返回原 Shell' },
       { name: 'permissions', description: '查看或切换当前会话的工具权限' },
+      { name: 'plan', description: '先出方案，批准后执行' },
     ], options.workspace))
     this.editor.onSubmit = text => {
       if (!text.trim()) return
@@ -99,7 +103,7 @@ export class CliTui {
         truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''),
         truncateToWidth(dim(plain(options.workspace)), width, ''),
         truncateToWidth(dim(INPUT_HELP), width, ''),
-        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · Tab/→ 采纳建议 · /help 帮助'), width, ''),
+        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · Tab/→ 采纳建议 · /plan 先出方案 · /help 帮助'), width, ''),
         border, '',
       ]
       this.headerRows = lines.length
@@ -115,7 +119,7 @@ export class CliTui {
       : this.suggestion || (this.firstPrompt ? INPUT_HELP : '继续提问…')
     const footer: Component = { invalidate() {}, render: width => {
       const slot = options.contextButton && width >= 10 ? ' '.repeat(10) : undefined
-      const lines = usageLines(this.usage, width, options.model, slot, this.permissions ? permissionLabel(this.permissions) : '权限未读取')
+      const lines = usageLines(this.usage, width, options.model, slot, this.permissions ? permissionLabel(this.permissions) : '权限未读取', !this.planning ? '方案状态未读取' : this.planning.planning ? '生成方案（只看不改）' : this.planning.plan?.status === 'proposed' ? '方案待审' : undefined)
       this.contextPlacement = slot ? { row: this.terminal.rows - 1, col: visibleWidth(lines.at(-1)!) - slot.length, width: slot.length } : undefined
       return [...(this.terminal.rows <= 12 ? [] : ['']), ...lines.map(dim)]
     } }
@@ -197,6 +201,18 @@ export class CliTui {
     if (this.permissions?.current === value?.current && this.permissions?.effective === value?.effective) return
     this.permissions = value; this.usageRevision++; this.tui.requestRender()
   }
+  setPlanState(value?: SessionPlan) {
+    if (JSON.stringify(this.planning) === JSON.stringify(value)) return
+    this.planning = value
+    if (!this.stopped && value?.plan) this.transcript.plan(value.plan)
+    this.usageRevision++; this.tui.requestRender()
+  }
+  plan(value: CliPlan) { this.transcript.plan(value); this.tui.requestRender() }
+  user(text: string) { this.firstPrompt = false; this.rememberInput(text); this.transcript.user(text); this.scroll.scrollToEnd(); this.tui.requestRender() }
+  recoverDraft(text: string): boolean {
+    if (this.editor.getExpandedText()) return false
+    this.editor.setText(text); this.tui.requestRender(); return true
+  }
   setSuggestion(text: string) { this.suggestion = plain(text).replace(/[\r\n]/g, ' ').slice(0, 120); this.tui.requestRender() }
   setUsage(usage: CliUsage) { this.usage = usage; this.usageRevision++; this.tui.requestRender() }
   setState(state: State) {
@@ -224,10 +240,12 @@ export class CliTui {
       } else if (item.kind === 'tool') {
         this.transcript.toolStart({ toolCallId: item.id, toolName: item.name, input: item.input })
         this.transcript.toolEnd({ toolCallId: item.id, toolName: item.name, text: item.result ?? '', isError: item.isError ?? false, truncated: item.truncated ?? Boolean(item.fullOutputPath), ...(item.fullOutputPath ? { fullOutputPath: item.fullOutputPath } : {}) })
-      } else if (item.kind === 'compaction') this.transcript.notice('历史上下文已压缩：' + item.summary)
+      } else if (item.kind === 'plan') this.transcript.plan(item.plan)
+      else if (item.kind === 'compaction') this.transcript.notice('历史上下文已压缩：' + item.summary)
     }
     for (const picture of history.pictures) this.transcript.image(picture)
     for (const warning of history.warnings ?? []) this.transcript.notice(warning)
+    if (this.planning?.plan) this.transcript.plan(this.planning.plan)
     this.scroll.scrollToEnd(); this.tui.requestRender()
   }
 }

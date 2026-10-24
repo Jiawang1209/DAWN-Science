@@ -594,7 +594,8 @@
 /** 8.29：终端 Agent 待发图片与按图片 ID 的缩略/原图读取。 */
 /** 8.30: scoped terminal history listing and explicit CLI resume identity. */
 /** 8.31: read-only effective session permission snapshot for terminal/conversation parity. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.31"
+/** 8.32: terminal planning reads the existing session flag and latest plan card. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.32"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

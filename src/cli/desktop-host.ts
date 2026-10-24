@@ -6,6 +6,8 @@ import { join, dirname } from 'node:path'
 import { DesktopImages } from './desktop-images.js'
 import { z } from 'zod'
 import { SessionPermissionValueSchema } from '../protocol/permissions.js'
+import { TerminalPlanRequestSchema } from '../protocol/planning.js'
+import { executeApprovedPlan } from './planning.js'
 import type { TerminalAttachmentUpdate } from '../protocol/terminal.js'
 import { frames, send, type DesktopDescriptor, type DesktopScope, type CliHistoryEntry, type CliHistory } from './desktop-wire.js'
 
@@ -208,6 +210,15 @@ export class DesktopCliHost {
         }
         else if (frame.operation === '$suggest') result = await scope.suggest?.() ?? { text: '' }
         else if (frame.operation === '$usage') result = scope.usage?.() ?? {}
+        else if (frame.operation === '$plan') {
+          const input = TerminalPlanRequestSchema.parse(frame.input === undefined ? { action: 'read' } : frame.input)
+          if (input.action === 'answer') result = await scope.call('answerPlan', { sessionId: scope.sessionId, planId: input.planId, action: input.decision })
+          else if (input.action === 'execute') { await executeApprovedPlan(scope.sessionId, input.planId, scope.call); result = {} }
+          else {
+            if (input.action === 'set') await scope.call('setSessionConfigOption', { sessionId: scope.sessionId, configId: 'dawn.plan', value: input.enabled ? '1' : '' })
+            result = await scope.call('getSessionPlan', { sessionId: scope.sessionId })
+          }
+        }
         else if (frame.operation === '$permissions') {
           // This socket may change one config on its authenticated session only.
           const input = z.object({ value: SessionPermissionValueSchema.optional() }).strict().parse(frame.input === undefined ? {} : frame.input)

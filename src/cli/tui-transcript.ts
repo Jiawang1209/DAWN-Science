@@ -1,12 +1,15 @@
 import { Markdown, wrapTextWithAnsi, visibleWidth, truncateToWidth, type MarkdownTheme, type Component } from '@earendil-works/pi-tui'
 import { plain, toolDetail } from './presentation.js'
 import { highlightCliCode } from './code-highlighting.js'
+import type { PlanItem } from '../protocol/events.js'
+export type CliPlan = Omit<PlanItem, 'id' | 'type'>
 
 export type ToolStart = { toolCallId: string; toolName: string; input: unknown }
 export type ToolEnd = { toolCallId: string; toolName: string; isError: boolean; text: string; truncated: boolean; fullOutputPath?: string | undefined }
 export type Picture = { id: string; name: string }
 export type Placement = { id: string; row: number; col: number; width: number; height: number }
 type Node = { kind: 'user' | 'notice'; text: string } | { kind: 'assistant'; text: string; markdown: Markdown }
+  | { kind: 'plan'; plan: CliPlan; markdown: Markdown }
   | { kind: 'tool'; start: ToolStart; end?: ToolEnd } | { kind: 'image'; image: Picture }
 
 /** Only renderer-owned SGR styles survive; models cannot issue terminal commands. */
@@ -29,7 +32,7 @@ export class CliTranscript implements Component {
   placements: Placement[] = []
   readonly style: ReturnType<typeof cliTheme>
   constructor(color: boolean) { this.style = cliTheme(color) }
-  invalidate() { for (const n of this.nodes) if (n.kind === 'assistant') n.markdown.invalidate() }
+  invalidate() { for (const n of this.nodes) if (n.kind === 'assistant' || n.kind === 'plan') n.markdown.invalidate() }
   private add(node: Node) {
     this.nodes.push(node)
     // Native conversation owns the complete record; bound the live terminal view.
@@ -57,6 +60,17 @@ export class CliTranscript implements Component {
     else this.add({ kind: 'tool', start: { ...end, input: {} }, end })
   }
   image(image: Picture) { this.finish(); this.add({ kind: 'image', image }) }
+  plan(plan: CliPlan) {
+    const existing = this.nodes.find((n): n is Extract<Node, { kind: 'plan' }> => n.kind === 'plan' && n.plan.planId === plan.planId)
+    if (existing) {
+      const old = existing.plan
+      if (old.version === plan.version && old.title === plan.title && old.markdown === plan.markdown && old.status === plan.status && old.savedPath === plan.savedPath && old.edited === plan.edited && old.fileChanged === plan.fileChanged) return
+      existing.plan = plan; existing.markdown.setText(plain(plan.markdown)); return
+    }
+    this.finish()
+    for (const n of this.nodes) if (n.kind === 'plan' && n.plan.status === 'proposed' && n.plan.version < plan.version) n.plan = { ...n.plan, status: 'superseded' }
+    this.add({ kind: 'plan', plan, markdown: new Markdown(plain(plan.markdown), 0, 0, this.style.theme) })
+  }
   toggleTools() { this.expanded = !this.expanded }
   render(width: number): string[] {
     const { accent, dim, paint } = this.style, lines: string[] = []
@@ -74,6 +88,16 @@ export class CliTranscript implements Component {
         }
         case 'assistant': lines.push(...node.markdown.render(contentWidth).map((line, i) => (i ? '  ' : accent('● ')) + styled(line).trimEnd()), ''); break
         case 'notice': lines.push(...wrap(paint('33', node.text)), ''); break
+        case 'plan': {
+          const p = node.plan
+          const status = ({ proposed: '等你看', approved: '已批准', superseded: '已被新的一版取代', discarded: '没采用' })[p.status]
+          lines.push(...wrap(accent(`方案 · 第 ${p.version} 版 · ${status}`)), ...wrap(this.style.bold(plain(p.title))))
+          lines.push(...node.markdown.render(contentWidth).map(line => '  ' + styled(line).trimEnd()))
+          if (p.savedPath) lines.push(...wrap(dim('存档：' + plain(p.savedPath))))
+          if (p.edited || p.fileChanged) lines.push(...wrap(dim(p.fileChanged ? '方案文件已由你修改' : '批的是改过的方案')))
+          if (p.status === 'proposed') lines.push(...wrap(dim(`/plan approve ${plain(p.planId)}  照这个做`)), ...wrap(dim(`/plan discard ${plain(p.planId)}  不做了`)), ...wrap(dim('需要调整时直接说明；也可返回会话修改方案。')))
+          lines.push(''); break
+        }
         case 'tool': {
           const end = node.end, status = !end ? '◌' : end.isError ? '× 失败' : '✓'
           const name = ({ bash: '运行命令', read: '读取文件', write: '写入文件', edit: '编辑文件', grep: '搜索内容', find: '查找文件', ls: '查看目录', run_code: '运行代码' } as Record<string, string>)[node.start.toolName] ?? plain(node.start.toolName)

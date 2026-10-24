@@ -41,6 +41,14 @@ Updated regression assertions first failed against the rejected layout, then pas
 
 Actual preview is now **terminal 3**, session `f4126ea4-cf38-44e1-8fa6-ece534a01015`, terminal `6127a45d-4e61-4c9d-9aa5-78ff8a101792`, titled `终端排版 · 对比试用`. The configured real model asked two choices without executing analysis. The first demonstration choice was selected so the retained complete options and selected-answer line can be compared; the second question remains pending. Inspected `questions-original-style.png` in the same evidence root. The original research terminal and terminal 2's unsent user draft remain untouched. Product direction changes are deferred at the user's request.
 
+## Final spacing adjustment
+
+User approved adjacent option lines within a question, exactly one blank line between question blocks, and retained selected results. Removed only the per-option blank line and reduced the two-blank question separator to one. Original colors, labels, inline descriptions and selected-answer behavior remain intact.
+
+Added exact row-sequence assertions before implementation; they failed with the previous spacing. Final results: 75 related tests, typecheck, CLI build, two real Electron question regressions, and diff check passed. Tests check adjacency after wrapped descriptions and exactly one empty row before the next question, as well as return/history behavior.
+
+Actual preview reused **terminal 3 and the same `f4126ea4` session**, with no new preview window or additional terminal. Completed the demonstration answers without analysis execution, then reopened its saved history using the new CLI build. Inspected `questions-tight-spacing.png`: both choice pairs are consecutive lines, selected results are retained, and question blocks are separated by one empty row. Original analysis and the unsent draft in terminal 2 remain untouched. No product entry changes, merge, push or installed application replacement.
+
 ## Product direction discussed, not implemented
 
 The user clarified that people generally use **one** presentation style, rather than needing synchronized side-by-side panels. Recommended positioning is one DAWN product with conversation and terminal work styles, selectable as primary entry points and remembering the user's preference. This is a future entry/layout decision; this patch does not redesign the home page or add forced switching.

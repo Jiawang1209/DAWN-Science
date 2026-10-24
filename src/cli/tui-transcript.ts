@@ -109,7 +109,6 @@ export class CliTranscript implements Component {
             lines.push(...wrap(paint('33', plain(q.question))))
             for (const [optionIndex, option] of (q.options ?? []).entries()) {
               lines.push(...wrap(paint('33', `${optionIndex + 1}. ${plain(option.label)}${option.description ? ' · ' + plain(option.description) : ''}`), '    '))
-              lines.push('')
             }
             if (a) {
               const selected = a.selected.map(plain).join('、')
@@ -117,7 +116,7 @@ export class CliTranscript implements Component {
               if (a.custom) lines.push(...wrap('你的回答：' + plain(a.custom)))
               if (!selected && !a.custom) lines.push(...wrap(dim('已跳过')))
             } else if (pending) lines.push(...wrap(paint('33', q.multi_select ? '输入选项编号（逗号分隔）或自己的回答。' : '输入选项编号或自己的回答。')))
-            lines.push('', '')
+            lines.push('')
           }
           if (!pending) lines.push(...wrap(dim('已提交答案')), '')
           else if (index >= record.questions.length) lines.push(...wrap(dim('正在提交答案')), '')

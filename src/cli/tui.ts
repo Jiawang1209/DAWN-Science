@@ -81,7 +81,7 @@ export class CliTui {
       this.contextPlacement = slot ? { row: this.terminal.rows - 1, col: visibleWidth(lines.at(-1)!) - slot.length, width: slot.length } : undefined
       return [...(this.terminal.rows <= 12 ? [] : ['']), ...lines.map(dim)]
     } }
-    this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'auto', scrollbarTrackStyle: dim, scrollbarThumbStyle: accent })
+    this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'hidden' })
     this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: hint, shrink: 0 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
     this.tui.setFocus(this.editor)
     this.tui.addInputListener(data => {

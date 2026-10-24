@@ -5,6 +5,15 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('scrolls long replies without painting character scrollbar fragments over the right edge', async () => {
+  const f = fixture(40, 20)
+  f.ui.reply(Array.from({ length: 80 }, (_, i) => `SCROLL_ROW_${i} 中文内容`).join('\n\n')); await f.flush()
+  f.input('\x1b[5~'); await f.flush()
+  expect(f.ui.following()).toBe(false)
+  expect(f.text()).not.toMatch(/[│┃█]/)
+  f.ui.reply('\n\nCLEAN_SCROLL_FINAL'); await f.flush(); expect(f.text()).not.toContain('CLEAN_SCROLL_FINAL')
+  f.input('\x1b[1;5F'); await f.flush(); expect(f.text()).toContain('CLEAN_SCROLL_FINAL')
+})
 it('reserves a centered context button slot and sends only geometry to the embedded UI', async () => {
   const f = fixture(100, 24, true)
   f.ui.setUsage({ context: { model: 'deepseek-flash', usedTokens: 28000, contextWindow: 128000, bytes: { system: 0, tools: 0, history: 0 } } } as never)

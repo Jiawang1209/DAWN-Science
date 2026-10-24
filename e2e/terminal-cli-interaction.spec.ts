@@ -102,6 +102,7 @@ test.describe('streamed scrolling', () => {
     await expect(screen).toContainText('STREAM_0'); await expect(screen).toContainText('生成中')
     await expect(screen).toContainText('STREAM_22')
     await page.keyboard.press('PageUp'); await expect(screen).toContainText('回到底部'); await final(page, target.sessionId)
+    await expect(screen).not.toContainText('│'); await expect(screen).not.toContainText('┃')
     await expect(screen).not.toContainText('FINAL_STREAM_MARKER')
     await page.keyboard.press('Control+End'); await expect(screen).toContainText('FINAL_STREAM_MARKER')
     await expect(screen).toContainText('> DAWN')

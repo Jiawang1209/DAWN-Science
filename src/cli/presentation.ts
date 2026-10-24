@@ -27,7 +27,8 @@ Agent 中：
   ↑ / ↓                   编辑或浏览输入历史
   Ctrl-Shift-F            搜索当前记录；Enter 下一个，Shift-Enter 上一个，Esc 关闭
   Ctrl-R                  搜索输入历史；Enter 填入草稿，Esc 取消
-  Tab                     展开 / 收起工具详情
+  Tab                     空输入时采纳建议；否则展开 / 收起工具详情（斜杠命令正常补全）
+  →                       空输入时采纳建议
   PgUp / PgDn             浏览会话记录；End 回到底部
   Ctrl-L                  刷新当前终端界面
   Ctrl-C                  执行时停止；空闲先清草稿，再退出

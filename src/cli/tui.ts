@@ -9,7 +9,7 @@ type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal; contextButton?: boolean;
   onDraftChange?: () => void; onSubmit: (text: string) => void; onInterrupt: () => void; onExit: () => void }
 const localCommand = (text: string) => /^\/(exit|quit|help|status)$/.test(text.trim())
-const INPUT_HELP = 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'
+const INPUT_HELP = 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 补全建议/展开工具 · /exit 返回 Shell'
 class SearchAwareTui extends TuiAltScreen {
   get overlayFocused() { return this.isOverlayFocused() }
 }
@@ -93,7 +93,7 @@ export class CliTui {
         truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''),
         truncateToWidth(dim(plain(options.workspace)), width, ''),
         truncateToWidth(dim(INPUT_HELP), width, ''),
-        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · → 采纳建议 · /help 帮助'), width, ''),
+        truncateToWidth(dim('⌘/Ctrl+F 搜索历史 · Tab/→ 采纳建议 · /help 帮助'), width, ''),
       ]
       this.headerRows = lines.length
       return lines
@@ -136,7 +136,7 @@ export class CliTui {
       }
       if (matchesKey(data, 'ctrl+d') && !this.editor.getExpandedText() && !this.state.busy) { options.onExit(); return { consume: true } }
       if (matchesKey(data, 'ctrl+end')) { this.scroll.scrollToEnd(); this.tui.requestRender(); return { consume: true } }
-      if (matchesKey(data, 'right') && this.suggestion && !this.editor.getText() && !this.state.busy && !this.state.permission && !this.state.question) {
+      if ((matchesKey(data, 'right') || matchesKey(data, 'tab')) && this.suggestion && !this.editor.getText() && !this.state.busy && !this.state.permission && !this.state.question) {
         const text = this.suggestion; this.suggestion = ''; this.editor.setText(text); this.tui.requestRender(); return { consume: true }
       }
       if (matchesKey(data, 'tab') && !this.editor.getText().startsWith('/')) { this.transcript.toggleTools(); this.tui.requestRender(); return { consume: true } }

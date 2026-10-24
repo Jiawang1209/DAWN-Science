@@ -47,7 +47,7 @@ it('refreshes the alternate-screen keyframe while search is open without consumi
 it('shows onboarding at the top and a non-editable first prompt hint that disappears on typing', async () => {
   const f = fixture(140, 28); await f.flush()
   const rows = f.text().split('\n'), prompt = rows.findIndex(row => row.includes('> DAWN'))
-  expect(rows[prompt]).toContain('Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell')
+  expect(rows[prompt]).toContain('Enter 发送 · Shift/Alt+Enter 换行 · Tab 补全建议/展开工具 · /exit 返回 Shell')
   expect(rows.slice(0, 6).join('')).toContain('/exit 返回 Shell')
   expect(rows[prompt - 2]).not.toContain('Enter 发送')
   expect(f.ui.draft()).toBe(''); f.input('\r'); expect(f.submit).not.toHaveBeenCalled()
@@ -55,16 +55,34 @@ it('shows onboarding at the top and a non-editable first prompt hint that disapp
   expect(f.text().split('\n').find(row => row.includes('> DAWN'))).toContain('> DAWN 新的问题')
   expect(f.text().split('\n').find(row => row.includes('> DAWN'))).not.toContain('Enter 发送')
 })
-it('shows contextual ghost text without submitting it and accepts it only with right arrow', async () => {
+it.each(['\t', '\x1b[C'])('adopts contextual ghost text with %j without submitting it', async key => {
   const f = fixture(100, 24); f.ui.setSuggestion('检查缺失值'); await f.flush()
   expect(f.text()).toContain('> DAWN  检查缺失值'); expect(f.ui.draft()).toBe('')
   f.input('\r'); expect(f.submit).not.toHaveBeenCalled()
-  f.input('\x1b[C'); expect(f.ui.draft()).toBe('检查缺失值'); expect(f.submit).not.toHaveBeenCalled()
+  f.input(key); expect(f.ui.draft()).toBe('检查缺失值'); expect(f.submit).not.toHaveBeenCalled()
   f.input('\r'); expect(f.submit).toHaveBeenCalledWith('检查缺失值')
   f.ui.setState({ busy: true }); f.ui.setSuggestion('旧建议'); await f.flush()
   expect(f.text()).not.toContain('旧建议')
   f.ui.setState({ busy: true, permission: true }); await f.flush()
   expect(f.text()).toContain('需要确认'); f.input('\x1b[C'); expect(f.ui.draft()).toBe('')
+})
+it('Tab adopts the entire suggestion when the grey preview is clipped, and keeps slash completion', async () => {
+  const f = fixture(38, 24), text = '请把按 group 汇总的表格和两张图的绘图代码整理成可直接运行的 Python 脚本。'
+  f.ui.setSuggestion(text); await f.flush(); expect(f.ui.draft()).toBe('')
+  f.input('\t'); expect(f.ui.draft()).toBe(text); expect(f.submit).not.toHaveBeenCalled()
+  f.input('\x03'); f.input('/sta'); f.ui.setSuggestion('不能覆盖命令'); await f.flush()
+  await vi.waitFor(() => expect(f.text()).toContain('→ status'))
+  f.input('\t')
+  expect(f.ui.draft()).toBe('/status '); expect(f.submit).not.toHaveBeenCalled()
+})
+it('Tab never adopts help text, an existing draft, or a suggestion during a waiting state', async () => {
+  const f = fixture(); f.input('\t'); expect(f.ui.draft()).toBe('')
+  f.ui.setSuggestion('不能覆盖草稿'); f.input('MY_DRAFT'); f.input('\t'); expect(f.ui.draft()).toBe('MY_DRAFT')
+  f.input('\x03')
+  for (const state of [{ busy: true }, { busy: false, permission: true }, { busy: false, question: true }]) {
+    f.ui.setState(state); f.ui.setSuggestion('隐藏建议'); f.input('\t'); expect(f.ui.draft()).toBe('')
+  }
+  expect(f.submit).not.toHaveBeenCalled()
 })
 it('scrolls long replies without painting character scrollbar fragments over the right edge', async () => {
   const f = fixture(40, 20)

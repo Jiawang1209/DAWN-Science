@@ -2,8 +2,7 @@ import { Editor, ProcessTerminal, TuiAltScreen, VStack, ScrollView, CombinedAuto
 import { CliTranscript, type Picture, type ToolStart, type ToolEnd } from './tui-transcript.js'
 import { plain } from './presentation.js'
 import type { CliHistory } from './desktop-wire.js'
-import type { SessionUsage } from '../runtime/session-usage.js'
-import { usageLines } from './usage.js'
+import { usageLines, type CliUsage } from './usage.js'
 
 type State = { busy: boolean; permission?: boolean; question?: boolean }
 type Options = { model: string; workspace: string; color: boolean; terminal?: Terminal;
@@ -36,7 +35,7 @@ export class CliTui {
   private readonly scroll: ScrollView
   private readonly terminal: Terminal
   private state: State = { busy: false }
-  private usage: SessionUsage = {}
+  private usage: CliUsage = {}
   private stopped = true
   constructor(private readonly options: Options) {
     const native = options.terminal ?? new ProcessTerminal()
@@ -69,12 +68,12 @@ export class CliTui {
       this.scroll.scrollToEnd(); options.onSubmit(text); this.tui.requestRender()
     }
     this.editor.onChange = () => this.tui.requestRender()
-    const header: Component = { invalidate() {}, render: width => [truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(options.model)), width, ''), truncateToWidth(dim(plain(options.workspace)), width, '')] }
+    const header: Component = { invalidate() {}, render: width => this.terminal.rows <= 12 ? [] : [truncateToWidth(accent(bold('DAWN Science')) + dim(' · ' + plain(this.usage.context?.model ?? options.model)), width, ''), truncateToWidth(dim(plain(options.workspace)), width, '')] }
     const hint: Component = { invalidate() {}, render: width => this.terminal.rows <= 12 && !this.state.busy && !this.state.permission && !this.state.question ? [] : [truncateToWidth(dim(
       this.state.permission ? '需要确认 · 输入编号或 y/n · Enter 确认' : this.state.question ? '等待回答 · Enter 提交 · Shift/Alt+Enter 换行'
         : this.state.busy ? '生成中 · Ctrl-C 停止 · 输入可保留草稿'
         : 'Enter 发送 · Shift/Alt+Enter 换行 · Tab 展开工具 · /exit 返回 Shell'), width, '')] }
-    const footer: Component = { invalidate() {}, render: width => [...(this.terminal.rows <= 12 ? [] : ['']), ...usageLines(this.usage, width).map(dim)] }
+    const footer: Component = { invalidate() {}, render: width => [...(this.terminal.rows <= 12 ? [] : ['']), ...usageLines(this.usage, width, options.model).map(dim)] }
     this.scroll = new ScrollView(this.transcript, { follow: 'end', primary: true, scrollbar: 'auto', scrollbarTrackStyle: dim, scrollbarThumbStyle: accent })
     this.tui.setLayoutRoot(new VStack([{ component: header, shrink: 0 }, { component: this.scroll, grow: 1, minSize: 1 }, { component: hint, shrink: 0 }, { component: this.editor, shrink: 0 }, { component: footer, shrink: 0 }]))
     this.tui.setFocus(this.editor)
@@ -106,7 +105,7 @@ export class CliTui {
   }
   private imageFrame(target: Terminal) {
     if (!this.scroll) return
-    const top = 2, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
+    const top = this.terminal.rows <= 12 ? 0 : 2, start = this.scroll.scrollTop, height = this.scroll.viewportHeight
     const images = this.transcript.placements.filter(x => x.row >= start && x.row + x.height <= start + height)
       .slice(-24).map(x => ({ ...x, row: top + x.row - start }))
     target.write(`\x1b]777;dawn-viewport;${JSON.stringify({ images })}\x07`)
@@ -123,7 +122,7 @@ export class CliTui {
     this.tui.stop({ preserveScreen: true })
   }
   renderNow() { if (!this.stopped) this.tui.renderNow() }
-  setUsage(usage: SessionUsage) { this.usage = usage; this.tui.requestRender() }
+  setUsage(usage: CliUsage) { this.usage = usage; this.tui.requestRender() }
   setState(state: State) {
     const waiting = state.permission && !this.state.permission || state.question && !this.state.question
     this.state = state

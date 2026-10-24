@@ -65,6 +65,19 @@ const pending: QuestionRecord = {
   questions: [{ id: 'range', question: '选择分析范围？', options: [{ label: '全部' }, { label: '部分' }] }],
 }
 
+it('refreshes the current model and context after model switches and compaction', async () => {
+  const agent = await interactiveAgent()
+  try {
+    agent.usage.mockResolvedValue({ context: { model: 'changed-model', usedTokens: 100, contextWindow: 128000 } } as never)
+    agent.emit({ kind: 'model', sessionId: 'state-test-session', provider: 'deepseek', model: 'changed-model' })
+    await vi.waitFor(() => expect(harness.usages.at(-1)).toMatchObject({ context: { model: 'changed-model', usedTokens: 100 } }))
+    agent.usage.mockResolvedValue({ context: { model: 'changed-model', contextWindow: 128000, afterCompaction: true } } as never)
+    agent.emit({ kind: 'compaction_end', sessionId: 'state-test-session', reason: 'manual', status: 'done' })
+    await vi.waitFor(() => expect(harness.usages.at(-1)).toMatchObject({ context: { afterCompaction: true } }))
+    expect(harness.usages.at(-1)).not.toHaveProperty('context.usedTokens')
+  } finally { await agent.close() }
+})
+
 it('updates cumulative snapshots when usage arrives after turn_end without adding history twice', async () => {
   const agent = await interactiveAgent()
   try {

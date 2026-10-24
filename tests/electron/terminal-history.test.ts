@@ -37,6 +37,20 @@ for (const phase of ['inFlight', '转述中', '回退中', '中止中'] as const
   })
 }
 
+it('uses the same live context reading as the GUI and refreshes the model within a CLI connection', async () => {
+  const f = await fixture()
+  let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined
+  try {
+    cli = await connectDesktopCli(f.descriptor, f.dir, undefined, undefined, f.task.sessionId)
+    const reading = vi.spyOn(f.native, 'contextUsage').mockReturnValue({ provider: 'deepseek', model: 'deepseek-flash', usedTokens: 28000, contextWindow: 128000, bytes: { system: 0, tools: 0, history: 0 } })
+    expect((await cli.usage() as any).context).toMatchObject(await f.call('getContextUsage', { sessionId: f.task.sessionId }))
+    reading.mockReturnValue({ provider: 'deepseek', model: 'updated-model', afterCompaction: true, contextWindow: 256000, bytes: { system: 0, tools: 0, history: 0 } })
+    expect((await cli.usage() as any).context).toMatchObject({ model: 'updated-model', afterCompaction: true, contextWindow: 256000 })
+    expect((await cli.usage() as any).context.usedTokens).toBeUndefined()
+    reading.mockRestore()
+  } finally { await cli?.close(); await f.close() }
+})
+
 it('reopens the original stopped native conversation without adding a task or changing its identity', async () => {
   const f = await fixture()
   let cli: Awaited<ReturnType<typeof connectDesktopCli>> | undefined

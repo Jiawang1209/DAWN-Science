@@ -223,7 +223,7 @@ export interface Workbench {
    * **摘掉接线它们照样绿**（变异验证当场发现）。
    */
   nativeRuntime: NativeRuntime
-  sessionUsage: (sessionId: string) => import('../runtime/session-usage.js').SessionUsage
+  sessionUsage: (sessionId: string) => import('../cli/usage.js').CliUsage
   /** 事件中枢。`main.ts` 把它的推送接到 webContents */
   events: SessionTranscripts
   /**
@@ -1638,8 +1638,11 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ...(opts.onInternalError ? { onInternalError: opts.onInternalError } : {}),
   })
 
-  const cliUsage = (sessionId: string) => ({ ...nativeRuntime.sessionUsage(sessionId),
-    ...sessionActivity(events.peek(sessionId)?.items ?? [], runStore.toolTimingsOf(sessionId)) })
+  const cliUsage = (sessionId: string) => {
+    const context = nativeRuntime.contextUsage(sessionId)
+    return { ...nativeRuntime.sessionUsage(sessionId), ...(context ? { context } : {}),
+      ...sessionActivity(events.peek(sessionId)?.items ?? [], runStore.toolTimingsOf(sessionId)) }
+  }
   if (opts.desktopCli) {
     const cliHistory = async (workspace: string) => {
       const canonical = desktopWorkspace(workspace, projectStore.list())

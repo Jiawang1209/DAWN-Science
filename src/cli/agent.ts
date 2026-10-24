@@ -66,7 +66,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
         flush(); if (view) view.image(event); else say(event.name); break
       case 'output': if (view) view.reply(event.data); else answer += plain(event.data); break
       case 'turn_end': flush(); break
-      case 'turn_usage': void refreshUsage(); break
+      case 'turn_usage': case 'model': case 'compaction_end': void refreshUsage(); break
       case 'tool_start':
         void refreshUsage()
         flush(); if (view) { view.toolStart(event); break }; say(`  › ${event.toolName}${toolDetail(event.input) ? '\n    ' + toolDetail(event.input).replaceAll('\n', '\n    ') : ''}`); break

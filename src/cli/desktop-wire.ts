@@ -2,7 +2,7 @@ import type { Socket } from 'node:net'
 import type { AgentEvent } from '../runtime/types.js'
 import type { RestoredItem, ImageAttachment } from '../runtime/types.js'
 import type { SessionSummary } from '../protocol/index.js'
-import type { SessionUsage } from '../runtime/session-usage.js'
+import type { CliUsage } from './usage.js'
 export type CliHistory = { items: RestoredItem[]; pictures: { id: string; name: string }[]; truncated: boolean; warnings?: string[] }
 export type CliHistoryEntry = Pick<SessionSummary, 'sessionId' | 'title' | 'createdAt' | 'lastActiveAt'>
 export type DesktopCliEvent = AgentEvent | import('./desktop-images.js').TerminalImageEvent
@@ -14,7 +14,7 @@ export interface DesktopScope {
   canReadImages?: () => boolean
   history?: () => Promise<RestoredItem[]>
   pictures?: () => ImageAttachment[]
-  usage?: () => SessionUsage
+  usage?: () => CliUsage
   call: (operation: string, input: unknown) => Promise<unknown>
   attach: (sink: (event: AgentEvent) => void) => () => void
   waitForIdle: () => Promise<void>

@@ -5,6 +5,21 @@ import { CliTui } from '../../src/cli/tui.js'
 import { visibleWidth } from '@earendil-works/pi-tui'
 
 const cleanup: (() => void)[] = []
+it('keeps short-viewport image frames above the editor when the repeated header is hidden', async () => {
+  const f = fixture(180, 12); f.ui.image({ id: 'short-picture', name: 'short.png' }); await f.flush()
+  const frames = [...f.bytes().matchAll(/\x1b\]777;dawn-viewport;([^\x07]+)\x07/g)]
+  const frame = JSON.parse(frames.at(-1)![1]!), prompt = f.text().split('\n').findIndex(row => row.includes('> DAWN'))
+  expect(frame.images).toHaveLength(1)
+  expect(frame.images[0].row + frame.images[0].height).toBeLessThan(prompt)
+})
+it('keeps the model and final context visible with the editor in a 38 by 10 terminal', async () => {
+  const f = fixture(38, 10)
+  f.ui.setUsage({ input: 4600, output: 14700, cacheRead: 1090000, turns: 5, tools: 70, toolMs: 831000,
+    context: { model: 'deepseek-flash', usedTokens: 28100, contextWindow: 1000000 } } as never)
+  f.input('KEEP_DRAFT'); f.ui.setState({ busy: true, permission: true }); await f.flush()
+  expect(f.text()).toContain('> DAWN KEEP_DRAFT'); expect(f.text()).toContain('deepseek-flash')
+  expect(f.text()).toContain('命中 100%'); expect(f.text()).toContain('上下文 28.1k / 1.00M（3%）')
+})
 it('puts hints above the single editor and centers compact cumulative statistics on the final row', async () => {
   const f = fixture(140, 28)
   f.ui.setUsage({ input: 4600, output: 14700, cacheRead: 1090000, turns: 5, tools: 70, toolMs: 831000 })

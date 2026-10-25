@@ -17,7 +17,6 @@ import type { SessionSummary } from "../protocol/index.js"
 
 import { t, tf } from "./i18n/index.js"
 import { 终端图标, 加号图标, 返回图标 } from './icons.js'
-import { TerminalHistoryPicker } from './terminal-history-picker.js'
 import { TerminalPermissionControl } from './terminal-permissions.js'
 export function TerminalDock({
   client,
@@ -144,7 +143,6 @@ export function TerminalDock({
 }
 
 function TerminalModeSwitch({ client, terminalId, exited, onState }: { client: Pick<WorkbenchClient, 'get'>; terminalId: string; exited: boolean; onState: (state: TerminalAgentState) => void }) {
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [mode, setMode] = useState<'normal' | 'dawn' | 'starting' | 'stopping'>()
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   const [readError, setReadError] = useState('')
@@ -172,10 +170,10 @@ function TerminalModeSwitch({ client, terminalId, exited, onState }: { client: P
     const timer = setInterval(() => { void read() }, 500)
     return () => { active.current = false; clearInterval(timer) }
   }, [client, terminalId])
-  const switchMode = async (next: 'dawn' | 'normal', resumeSessionId?: string) => {
+  const switchMode = async (next: 'dawn' | 'normal') => {
     mutation.current++; setBusy(true); setError(''); setReadError(''); report.current({ mode: next === 'dawn' ? 'starting' : 'stopping' })
     try {
-      const state = await client.get<TerminalAgentState>('setTerminalAgentMode', { terminalId, mode: next, ...(resumeSessionId ? { resumeSessionId } : {}) })
+      const state = await client.get<TerminalAgentState>('setTerminalAgentMode', { terminalId, mode: next })
       if (active.current) { observed.current = state.mode; setMode(state.mode); report.current(state); document.querySelector<HTMLTextAreaElement>('.dock .xterm-helper-textarea')?.focus() }
     } catch (e) { if (active.current) setError(e instanceof Error ? e.message : String(e)) }
     finally { mutation.current++; if (active.current) setBusy(false) }
@@ -186,8 +184,6 @@ function TerminalModeSwitch({ client, terminalId, exited, onState }: { client: P
       <Button variant="ghost" size="sm" aria-pressed={mode === 'dawn'} disabled={disabled} onClick={() => void switchMode('dawn')}>{t("DAWN 模式")}</Button>
       <Button variant="ghost" size="sm" aria-pressed={mode === 'normal'} disabled={disabled} onClick={() => void switchMode('normal')}>{t("Normal 模式")}</Button>
     </div>
-    <Button variant="ghost" size="sm" disabled={disabled || mode !== 'normal'} onClick={() => setHistoryOpen(true)}>{t("接续旧对话")}</Button>
-    {historyOpen ? <TerminalHistoryPicker client={client} terminalId={terminalId} onCancel={() => setHistoryOpen(false)} onSelect={id => { setHistoryOpen(false); void switchMode('dawn', id) }} /> : null}
     {error || readError ? <span className="terminal-switch-error" role="alert">{error || readError}</span> : null}
   </div>
 }

@@ -45,10 +45,10 @@ async function seed(page: Page) {
   return { ...state, tasks, newTerminalId: await terminal(page) }
 }
 
-test('history button restores the original conversation, original image and GUI continuation after closing its last terminal', async ({ dawn }) => {
+test('CLI resume restores the original conversation, original image and GUI continuation after closing its last terminal', async ({ dawn }) => {
   const { page, requests } = dawn, target = await seed(page)
-  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
-  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true }).click()
+  await expect(page.getByRole('button', { name: '接续旧对话', exact: true })).toHaveCount(0)
+  await type(page, `dawn --resume ${target.sessionId}`)
   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.dock .xterm-screen')).toContainText('HISTORY_IMAGE_ORIGINAL')
   expect((await mode(page, target.newTerminalId)).sessionId).toBe(target.sessionId)
@@ -101,8 +101,7 @@ test('restarting the desktop preserves the original image context and restores t
   await page.getByRole('button', { name: /^HISTORY_ORIGINAL/ }).click()
   await expect(page.locator('.main .turn-images img').first()).toBeVisible()
   await open(page)
-  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
-  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true }).click()
+  await type(page, `dawn --resume ${target.sessionId}`)
   await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
   const id = await terminal(page)
   expect((await mode(page, id)).sessionId).toBe(target.sessionId)
@@ -124,11 +123,11 @@ test('history follows a real Shell cd and does not offer conversations from the 
     return task.sessionId as string
   }, nested)
   await type(page, 'cd nested-history')
-  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
-  const picker = page.getByRole('dialog', { name: '选择历史会话' })
-  await expect(picker.getByRole('button', { name: 'NESTED_HISTORY_TARGET', exact: true })).toBeVisible()
-  await expect(picker.getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true })).toHaveCount(0)
-  await picker.getByRole('button', { name: 'NESTED_HISTORY_TARGET', exact: true }).click()
+  await type(page, 'dawn --resume')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('NESTED_HISTORY_TARGET')
+  await expect(page.locator('.dock .xterm-screen')).not.toContainText('HISTORY_ORIGINAL')
+  await expect(page.locator('.dock .xterm-screen')).toContainText('编号 >')
+  await type(page, '1')
   await expect(page.locator('.dock .xterm-screen')).toContainText('已恢复原会话')
   expect((await mode(page, await terminal(page))).sessionId).toBe(target)
 })
@@ -145,8 +144,7 @@ test('an unsupported old image preview warns while the same conversation and ori
     if (!response.ok) throw Error(response.error?.message ?? 'Could not seed the original BMP conversation')
   }, { sessionId: target.sessionId, data: bmp.toString('base64') })
   await final(page, target.sessionId, 2)
-  await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
-  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'HISTORY_ORIGINAL', exact: true }).click()
+  await type(page, `dawn --resume ${target.sessionId}`)
   await expect(page.locator('.dock .xterm-screen')).toContainText('历史图片 2 无法预览，原始图片上下文保留')
   expect((await mode(page, target.newTerminalId)).sessionId).toBe(target.sessionId)
   await expect(page.locator('.terminal-inline-image img').first()).toBeVisible()
@@ -167,8 +165,7 @@ test('the current owner can close its last resumed terminal, reopen directly and
   const count = await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {}) as any).data.length)
   await open(page)
   const resumeOwner = async () => {
-    await page.getByRole('button', { name: '接续旧对话', exact: true }).click()
-    await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'CURRENT_OWNER_HISTORY', exact: true }).click()
+    await type(page, `dawn --resume ${ownerId}`)
     await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
     expect((await mode(page, await terminal(page))).sessionId).toBe(ownerId)
   }

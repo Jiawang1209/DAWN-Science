@@ -8,21 +8,15 @@ function mount() {
   render(<TerminalDock client={{ get } as any} terminals={[{ ...record, sessionId: 't', kind: 'pty', state: 'alive' }]} currentId="t" canOpen fullPage onPick={() => {}} onNew={() => {}} onClose={() => {}} onCloseDock={() => {}} onInput={() => {}} />)
   return get
 }
-it('offers the saved conversation and starts its exact identity only after selection', async () => {
+it('keeps mode switching and return available without the removed history toolbar entry', async () => {
   const get = mount()
-  const button = screen.getByRole('button', { name: '接续旧对话' })
-  await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false))
-  fireEvent.click(button)
-  await screen.findByRole('dialog', { name: '选择历史会话' })
-  expect(get).toHaveBeenCalledWith('listTerminalAgentHistory', { terminalId: 't' })
-  expect(get.mock.calls.some(([op]) => op === 'setTerminalAgentMode')).toBe(false)
-  fireEvent.click(screen.getByRole('button', { name: 'SAVED_IMAGE_CONVERSATION' }))
-  await waitFor(() => expect(get).toHaveBeenCalledWith('setTerminalAgentMode', { terminalId: 't', mode: 'dawn', resumeSessionId: 'saved' }))
-})
-it('cancels history selection without starting or stopping an Agent', async () => {
-  const get = mount(), button = screen.getByRole('button', { name: '接续旧对话' })
-  await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(button)
-  fireEvent.click(await screen.findByRole('button', { name: '取消' }))
+  const agent = screen.getByRole('button', { name: 'DAWN 模式' })
+  await waitFor(() => expect((agent as HTMLButtonElement).disabled).toBe(false))
+  expect(screen.queryByRole('button', { name: '接续旧对话' })).toBeNull()
   expect(screen.queryByRole('dialog')).toBeNull()
-  expect(get.mock.calls.some(([op]) => op === 'setTerminalAgentMode')).toBe(false)
+  expect(screen.getByRole('button', { name: 'Normal 模式' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: '返回会话' })).toBeTruthy()
+  expect(get.mock.calls.some(([op]) => op === 'listTerminalAgentHistory')).toBe(false)
+  fireEvent.click(agent)
+  await waitFor(() => expect(get).toHaveBeenCalledWith('setTerminalAgentMode', { terminalId: 't', mode: 'dawn' }))
 })

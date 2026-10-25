@@ -17,7 +17,7 @@ async function openTerminal(page: Page) {
 }
 async function start(page: Page) {
   await 在项目里开会话(page); await 等进了对话(page); await openTerminal(page)
-  await expect.poll(async () => /[$#%](?:\s+main)?$/.test((await page.locator('.dock .xterm-rows').innerText()).trimEnd())).toBe(true)
+  await expect.poll(async () => /[$#%](?:\s+[✭*]?main)?$/.test((await page.locator('.dock .xterm-rows').innerText()).trimEnd())).toBe(true)
   await page.locator('.dock').getByRole('button', { name: 'DAWN 模式', exact: true }).click()
   await expect(page.locator('.dock').getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
   const terminalId = Object.keys(await page.evaluate(() => JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}')))[0]!
@@ -93,9 +93,8 @@ test('GUI toggle syncs to the same terminal; revised plans reject old IDs, disca
   await page.locator('.dock').getByRole('button', { name: '关闭终端 1', exact: true }).click()
   await expect(page.locator('.dock .empty')).toContainText('还没有终端')
   await page.locator('.dock').getByRole('button', { name: '＋ 新开一个', exact: true }).click()
-  await expect.poll(async () => /[$#%](?:\s+main)?$/.test((await page.locator('.dock .xterm-rows').innerText()).trimEnd())).toBe(true)
-  await page.locator('.dock').getByRole('button', { name: '接续旧对话', exact: true }).click()
-  await page.getByRole('dialog', { name: '选择历史会话' }).getByRole('button', { name: 'TERMINAL_PLAN_HISTORY', exact: true }).click()
+  await expect.poll(async () => /[$#%](?:\s+[✭*]?main)?$/.test((await page.locator('.dock .xterm-rows').innerText()).trimEnd())).toBe(true)
+  await submit(page, `dawn --resume ${sessionId}`)
   await expect(page.locator('.dock .xterm-rows')).toContainText('没采用')
   await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
   await expect(page.locator('.plan-card[data-status="discarded"]')).toHaveCount(1)

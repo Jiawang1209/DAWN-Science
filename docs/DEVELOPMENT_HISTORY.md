@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 为共享 Markdown 补充本地数学公式排版
+
+- **Type**: feat
+- **Motivation**: 行内和独立 LaTeX 公式此前作为原文显示，科研对话和 Markdown 文件难以阅读。
+- **What**: 接入 Streamdown 官方数学插件与本地 KaTeX 样式/字体，支持美元定界公式、分数、求和、矩阵和流式更新；长公式局部滚动，复制与导出保持源码。共享 mock 的 Markdown 示例仅按用户消息触发，避免路径误判。
+- **Verification**: 分支全部 UI 1678 项、mock 集成 42 项通过；main 相关 166 项、类型/构建通过，分支和 main 各 22/22 Electron（含 14 个未变更视觉基线）通过；固定 Dev Preview 原生窗口目视与滚轮验证通过。见 docs/reviews/2026-10-25-markdown-math-verification.md。
+- **Impact**: 实现提交 c0730079 从独立 codex/markdown-math 快进合入本地 main；保留隔离预览工作树。未推送、未发布、未替换安装版。
+
 ### 2026-10-25 — 后续四项逐分支修复完成主目录总验收
 
 - **Type**: docs

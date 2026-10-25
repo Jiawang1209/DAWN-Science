@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 工作面底色测试按10-21独立右坞契约验收
+
+- **Type**: test
+- **Motivation**: 旧左右同色断言已被独立右坞panel规则替代。
+- **What**: 亮暗分别核验shell/panel/chat-content及非透明解析，不改产品配色。
+- **Verification**: Electron11项、组件20项、类型通过；见 docs/reviews/2026-10-25-electron-pane-surfaces-verification.md。
+- **Impact**: 独立codex/electron-pane-surfaces，本地合并，不推送。
+
 ### 2026-10-25 — 托盘新建按当前首页与草稿保持验收
 
 - **Type**: test

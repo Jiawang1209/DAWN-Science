@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs"
-import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js"
+import { test, expect, 在项目里开会话, 进坞, 进设置 } from "./fixtures.js"
 
 async function checkComposer(area: import('@playwright/test').Locator) {
   const card = area.locator('.composer-card')
@@ -74,14 +74,33 @@ test('确认稿：品牌与三个按钮紧凑排列，收起后仍可展开，�
   await expect(version).toBeVisible()
 })
 
-test('确认稿：两侧共享底色，正文与预览保持独立白色工作面', async ({ dawn }) => {
+test('确认稿：侧栏外壳、正文和右坞使用各自亮暗工作面', async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   await 进坞(page, '文件')
-  const colors = await page.evaluate(() => {
-    const bg = (selector: string) => getComputedStyle(document.querySelector(selector)!).backgroundColor
-    return { sidebar: bg('.sidebar'), dock: bg('.right-dock'), main: bg('main.main') }
-  })
-  expect(colors.dock).toBe(colors.sidebar)
-  expect(colors.main).not.toBe(colors.sidebar)
+  const check = async () => {
+    const colors = await page.evaluate(() => {
+      const bg = (selector: string) => getComputedStyle(document.querySelector(selector)!).backgroundColor
+      const token = (name: string) => {
+        const probe = document.createElement('span')
+        probe.style.backgroundColor = `var(--dawn-surface-${name})`
+        document.body.append(probe)
+        const color = getComputedStyle(probe).backgroundColor
+        probe.remove()
+        return color
+      }
+      return { sidebar: bg('.sidebar'), dock: bg('.right-dock'), main: bg('main.main'), shell: token('shell'), panel: token('panel'), chat: token('chat-content') }
+    })
+    for (const color of [colors.shell, colors.panel, colors.chat]) expect(color).not.toBe('rgba(0, 0, 0, 0)')
+    expect(colors.sidebar).toBe(colors.shell)
+    expect(colors.dock).toBe(colors.panel)
+    expect(colors.main).toBe(colors.chat)
+    expect(colors.dock).not.toBe(colors.sidebar)
+  }
+  await check()
+  await 进设置(page, '外观')
+  await page.getByRole('radio', { name: '暗色', exact: true }).click()
+  await page.getByRole('button', { name: '返回', exact: true }).click()
+  await expect(page.locator('html.dawn-dark')).toHaveCount(1)
+  await check()
 })

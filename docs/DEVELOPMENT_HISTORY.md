@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 远端内核用例校准现行服务器与输入入口
+
+- **Type**: test
+- **Motivation**: 旧服务器/管理/高级检测入口及动态占位定位阻断真实内核链路。
+- **What**: 只校准E2E定位，保留计算、断开重连、变量保持、30秒报警及Python/R图像断言。
+- **Verification**: 完整真实内核+假SSH8项、UI10项、类型通过；见 docs/reviews/2026-10-25-electron-remote-kernel-navigation-verification.md。
+- **Impact**: 独立codex/electron-remote-kernel-navigation，本地合并，不推送。
+
 ### 2026-10-25 — 网页预览增宽测试先确保窗口空间并核验原生坐标
 
 - **Type**: test

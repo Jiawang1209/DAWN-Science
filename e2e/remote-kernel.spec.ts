@@ -80,19 +80,22 @@ test.use({
 
 /** 加一台假服务器，并在它上面开一段对话。三条用例的共同起点 */
 async function 加一台并开对话(page: import("@playwright/test").Page) {
-  // **2026-08-14 改名**：「远端连接」→「远端服务器」；默认收起，先掀开
-  const head = page.getByRole("button", { name: /远端服务器/ })
-  await expect(head).toBeVisible()
-  if ((await head.getAttribute("aria-expanded")) !== "true") await head.click()
   await page.getByRole("button", { name: /添加服务器/ }).click()
   await page.locator("#conn-host").fill("fake.example")
   await page.locator("#conn-user").fill("dawn")
   await page.locator("#conn-label").fill("假机器")
   // 假服务器认的口令写死为 `dawn`（见 src/remote/fake-ssh.ts）
   await page.locator("#conn-secret").fill("dawn")
-  await page.getByRole("button", { name: "保存", exact: true }).click()
-  await page.locator(".remote-row").first().getByRole("button", { name: /新对话/ }).click()
+  await page.getByRole("button", { name: "保存并连接", exact: true }).click()
+  await expect(page.locator(".remote-row").first()).toHaveAttribute("data-state", "ready")
+  await page.locator(".remote-row").first().getByRole("button", { name: "新建远端任务", exact: true }).click()
   await expect(page.locator(".conv-remote")).toBeVisible({ timeout: 30_000 })
+}
+
+/** 现行服务器动作来自机器行的管理菜单，仍走真实断开/重连/编辑。 */
+async function 管理(row: import("@playwright/test").Locator, name: "连接" | "断开" | "编辑") {
+  await row.getByRole("button", { name: "管理服务器：假机器", exact: true }).click()
+  await row.getByRole("menuitem", { name, exact: true }).click()
 }
 
 /**
@@ -142,7 +145,7 @@ async function 起到42(page: import("@playwright/test").Page) {
   await 加一台并开对话(page)
   await 进坞(page, "笔记本")
   await 选中唯一的python(page)
-  await page.getByPlaceholder(/输入问题/).fill("算一下")
+  await page.locator("main.main .composer-card textarea").fill("算一下")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器", { timeout: 90_000 })
   await expect(page.locator(".nb-cell").first().locator(".kout-text")).toContainText("42", { timeout: 60_000 })
@@ -163,7 +166,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     // 选完这一格就是正常的笔记本面板了——**输入框回来了**（选择器那一屏是不画输入框的）
     await expect(page.getByRole("textbox", { name: "要跑的代码" })).toBeVisible()
 
-    await page.getByPlaceholder(/输入问题/).fill("算一下")
+    await page.locator("main.main .composer-card textarea").fill("算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 内核**在那台服务器上**真起了一台，算出 42
@@ -190,12 +193,12 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await 加一台并开对话(page)
     await 进坞(page, "笔记本")
     await 选中唯一的python(page)
-    await page.getByPlaceholder(/输入问题/).fill("算一下")
+    await page.locator("main.main .composer-card textarea").fill("算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器", { timeout: 90_000 })
 
     const row = page.locator(".remote-row").first()
-    await row.getByRole("button", { name: "断开" }).click()
+    await 管理(row, "断开")
     /**
      * **转录里那句话是 `内核变化出声` 写的，不是运行时自己那条**（2026-09-04 跑出来的）。
      *
@@ -212,10 +215,10 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     // 状态词("exited") = 「已退出」
     await expect(page.locator(".nb-pill-label")).toContainText("退出")
 
-    await row.getByRole("button", { name: "连接", exact: true }).click()
+    await 管理(row, "连接")
     await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
 
-    await page.getByPlaceholder(/输入问题/).fill("再算")
+    await page.locator("main.main .composer-card textarea").fill("再算")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     // 起了**新的一台**：还是那台服务器上的 Python，而且不再是退出态
     await expect(page.locator(".nb-pill-label")).toContainText("Python · 假机器 · ", { timeout: 90_000 })
@@ -246,7 +249,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await expect(page.locator(".nb-pill.nb-pill-detached")).toHaveCount(1, { timeout: 15_000 })
     await expect(page.locator(".nb-pill-label")).toContainText("等接回")
 
-    await row.getByRole("button", { name: "连接", exact: true }).click()
+    await 管理(row, "连接")
     await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
     await expect(page.getByText(/Python 内核还活着，变量都在/)).toBeVisible({ timeout: 60_000 })
     await expect(page.locator(".nb-pill-label")).toContainText("空闲", { timeout: 15_000 })
@@ -279,7 +282,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await expect(page.locator(".nb-pill-label")).toContainText("退出")
 
     // 再跑一句：起新的一台（`perTurn` 让第二轮也调 run_code）
-    await page.getByPlaceholder(/输入问题/).fill("再算")
+    await page.locator("main.main .composer-card textarea").fill("再算")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 90_000 })
     await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
@@ -300,11 +303,11 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     // 断着的这段时间里它死了。**链路已经断了，所以这一下 DAWN 更加无从知道**
     expect(await 假服务器开关(page, "killKernels"), "一台内核都没杀掉，接回时它还活着，验的就不是这件事").toBeGreaterThan(0)
 
-    await row.getByRole("button", { name: "连接", exact: true }).click()
+    await 管理(row, "连接")
     await expect(row).toHaveAttribute("data-state", "ready", { timeout: 15_000 })
     await expect(page.getByText(/Python 内核没撑过这次断线/)).toBeVisible({ timeout: 60_000 })
 
-    await page.getByPlaceholder(/输入问题/).fill("再算")
+    await page.locator("main.main .composer-card textarea").fill("再算")
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.locator(".nb-cell").nth(1).locator(".kout-text")).toContainText("42", { timeout: 90_000 })
     await expect(page.locator(".nb-pill-label")).not.toContainText("退出")
@@ -313,14 +316,15 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
   test("设置里那台服务器的对话框有两格，探测后能选；关掉再打开，选中的还是它", async ({ dawn }) => {
     const { page } = dawn
     await 加一台并开对话(page)
-    const 编辑 = page.locator(".remote-row").first().getByRole("button", { name: "编辑" })
+    const 编辑 = () => 管理(page.locator(".remote-row").first(), "编辑")
     const 探一次 = async () => {
+      await page.locator(".conn-dialog .conn-advanced summary").click()
       // 对话框里**不自动探**（那是编辑连接信息的地方），得按一颗
       await page.getByRole("button", { name: /检测 假机器 上的解释器/ }).first().click()
       await expect(page.locator(".ip-python .ip-path", { hasText: PY })).toBeVisible({ timeout: 20_000 })
     }
 
-    await 编辑.click()
+    await 编辑()
     await 探一次()
     await page.locator(".ip-python").getByRole("radio").first().check({ timeout: 20_000 })
 
@@ -338,7 +342,7 @@ test.describe("远程内核 · 真内核 + 假 SSH", () => {
     await page.locator(".conn-dialog").getByRole("button", { name: "取消", exact: true }).click()
     await expect(page.locator(".conn-dialog")).toHaveCount(0)
 
-    await 编辑.click()
+    await 编辑()
     await 探一次()
     await expect(page.locator(".ip-python .ip-item.active .ip-path")).toHaveText(PY)
   })
@@ -372,7 +376,7 @@ test.describe("远程内核 · 图从服务器回来", () => {
     await 加一台并开对话(page)
     await 进坞(page, "笔记本")
     await 选中唯一的python(page)
-    await page.getByPlaceholder(/输入问题/).fill("画一张图")
+    await page.locator("main.main .composer-card textarea").fill("画一张图")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     /**
@@ -442,7 +446,7 @@ test.describe("远程内核 · R（IRkernel）", () => {
     await expect(page.locator(".ip-R .ip-pkg-present")).toBeVisible()
     await page.locator(".ip-R").getByRole("radio").first().click()
 
-    await page.getByPlaceholder(/输入问题/).fill("用 R 算一下")
+    await page.locator("main.main .composer-card textarea").fill("用 R 算一下")
     await page.getByRole("button", { name: "发送", exact: true }).click()
 
     // 42 从**服务器上那台 IRkernel** 回来（连接文件是 DAWN 写过去的，端口是那台机器自己挑的）

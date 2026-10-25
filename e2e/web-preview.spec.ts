@@ -88,18 +88,33 @@ test("**地址栏输一个本机地址，那个页面真的加载了**", async (
 
 test("**它的位置跟着坞走** —— 拖宽之后那块网页也得跟着宽", async ({ dawn }) => {
   const { app, page } = dawn
+  // 292px侧栏 + 正文 + 620px坞需要足够宽的真实窗口。
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setContentSize(1600, 900))
   await 开一段临时会话(page)
   await 进网页(page)
   await page.getByRole("textbox", { name: "网址" }).fill(地址)
   await page.getByRole("textbox", { name: "网址" }).press("Enter")
   await expect.poll(async () => (await 视图(app))?.title, { timeout: 30_000 }).toBe("本机页")
 
+  const 对齐占位 = async () => {
+    await expect.poll(async () => {
+      const box = await page.locator(".webview-slot").boundingBox()
+      const native = (await 视图(app))?.bounds
+      return box && native ? { x: native.x - Math.round(box.x), y: native.y - Math.round(box.y), width: native.width - Math.round(box.width), height: native.height - Math.round(box.height) } : undefined
+    }).toEqual({ x: 0, y: 0, width: 0, height: 0 })
+  }
+  await 对齐占位()
   const 窄 = (await 视图(app))!.bounds.width
   // 坞的宽度是持久化的状态，直接改它比拖那条缝稳
   await page.evaluate(() => localStorage.setItem("dawn.global.right-dock-width", "620"))
   await page.reload()
   await 进网页(page)
   await expect.poll(async () => (await 视图(app))?.bounds.width ?? 0, { timeout: 30_000 }).toBeGreaterThan(窄 + 100)
+  await 对齐占位()
+  const 宽 = (await 视图(app))!.bounds.width
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setContentSize(1280, 900))
+  await expect.poll(async () => (await 视图(app))?.bounds.width ?? 宽).toBeLessThan(宽)
+  await 对齐占位()
 })
 
 test("**有浮层挡着就藏起来** —— 它的 z-index 对命令面板无效", async ({ dawn }) => {

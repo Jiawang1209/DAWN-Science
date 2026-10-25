@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 网页预览增宽测试先确保窗口空间并核验原生坐标
+
+- **Type**: test
+- **Motivation**: 当前侧栏下窄窗口夹住坞，旧增宽绝对假设误报。
+- **What**: 1600px起测，保留偏好重载，补原生bounds四维/缩1280收回检查。
+- **Verification**: 整份Electron13项、状态27项、类型通过；见 docs/reviews/2026-10-25-electron-web-preview-bounds-verification.md。
+- **Impact**: 独立codex/electron-web-preview-bounds，本地合并，不推送。
+
 ### 2026-10-25 — 核对设计后同步8张过期视觉基线
 
 - **Type**: test

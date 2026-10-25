@@ -663,7 +663,7 @@ export interface 插件一个 {
  */
 /** 插件与族的名字来自后端（协议里是数据不是文案）；这里静态映射一层 `t`，让 i18n 的孤儿扫描看得见 */
 const 插件文案 = (n: string): string =>
-  ({ "Office 文档": t("Office 文档"), 电子表格: t("电子表格"), PDF: "PDF", 演示文稿: t("演示文稿"), "Word 文档": t("Word 文档"), 浏览器: t("浏览器"), 浏览: t("浏览"), 读页: t("读页"), 操作: t("操作"), 产物: t("产物"), 记忆: t("记忆"), 提议: t("提议"), 查看: t("查看"), 技能沉淀: t("技能沉淀"), "科研文献 · OpenAlex": t("科研文献 · OpenAlex"), "科研文献 · Crossref": t("科研文献 · Crossref"), "文献检索与核验": t("文献检索与核验"), "保存文献清单": t("保存文献清单"), "科研数据 · GEO": t("科研数据 · GEO"), "科研数据 · NCBI SRA": t("科研数据 · NCBI SRA"), "数据集与实验信息": t("数据集与实验信息"), "保存数据清单": t("保存数据清单") })[n] ?? n
+  ({ "Office 文档": t("Office 文档"), 电子表格: t("电子表格"), PDF: "PDF", 演示文稿: t("演示文稿"), "Word 文档": t("Word 文档"), 浏览器: t("浏览器"), 浏览: t("浏览"), 读页: t("读页"), 操作: t("操作"), 产物: t("产物"), 记忆: t("记忆"), 提议: t("提议"), 查看: t("查看"), 技能沉淀: t("技能沉淀"), "科研文献 · OpenAlex": t("科研文献 · OpenAlex"), "科研文献 · Crossref": t("科研文献 · Crossref"), "文献检索与核验": t("文献检索与核验"), "保存文献清单": t("保存文献清单"), "科研数据 · GEO": t("科研数据 · GEO"), "科研数据 · NCBI SRA": t("科研数据 · NCBI SRA"), "蛋白信息 · UniProt": t("蛋白信息 · UniProt"), "蛋白序列与功能": t("蛋白序列与功能"), "保存蛋白与 FASTA": t("保存蛋白与 FASTA"), "数据集与实验信息": t("数据集与实验信息"), "保存数据清单": t("保存数据清单") })[n] ?? n
 
 export function PluginsView({ load, onFlag }: {
   load: () => Promise<{ plugins: 插件一个[] }>
@@ -719,6 +719,7 @@ export function PluginsView({ load, onFlag }: {
               <div className="svc-body">
                 {p.id === "literature" ? <p className="hint">{t("联网检索文献、核对 DOI 并保存所选记录。默认开启；开关改动对新 API 会话生效。匿名访问受服务额度限制。")}</p> : null}
                 {p.id === "crossref" ? <p className="hint">{t("匿名查询论文和 DOI 登记信息，无需密钥、审批或机构订阅。默认开启；开关改动对新 API 会话生效。公共服务仍有限流。")}</p> : null}
+                {p.id === "uniprot" ? <p className="hint">{t("查询 UniProt 蛋白、功能注释和规范序列，保存所选条目与完整 FASTA。默认开启；新 API 会话生效。缺失序列明确标注，远端仅查询。")}</p> : null}
                 {p.id === "sra" ? <p className="hint">{t("检索 SRA 实验与测序 Run，查询文库和平台信息并保存清单。默认开启；新 API 会话生效。不下载原始数据，Run 数不等于样本量。")}</p> : null}
                 {p.id === "geo" ? <p className="hint">{t("检索 GEO 数据集、查看 GSE 实验设计并保存所选清单。默认开启；新 API 会话生效。不下载原始数据，远端仅查询。")}</p> : null}
                 {p.id === "literature" || p.id === "crossref" ? <p className="hint">{t("仅核对索引元数据，不代表已阅读全文。远端会话仅查询，本地会话可保存文献清单。")}</p> : null}

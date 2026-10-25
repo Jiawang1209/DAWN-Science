@@ -10,7 +10,7 @@
 
 | 要找什么 | 去哪 |
 |---|---|
-| **科研数据**：默认开启的 GEO / NCBI SRA 元数据检索、编号核验和真实清单保存；新 API 会话可用 | `docs/科研数据-怎么用.md` · `docs/reviews/2026-10-25-sra-datasets-verification.md` |
+| **科研数据与蛋白**：默认开启的 GEO / NCBI SRA / UniProt 检索、编号核验和真实清单/FASTA 保存；新 API 会话可用 | `docs/科研数据-怎么用.md` · `docs/reviews/2026-10-25-uniprot-proteins-verification.md` |
 | **科研文献**：默认开启的 OpenAlex / Crossref 索引检索、DOI 元数据核对和所选真实清单保存；API 会话可用 | `docs/科研文献-怎么用.md` · `docs/reviews/2026-10-25-openalex-literature-verification.md` |
 | **DAWN CLI Agent**：Normal 为原 Shell；输入 dawn 进入 Agent，/exit 返回；原生终端占满主区，无重复聊天框；终端 `/plan` 与会话页共用先出方案，澄清答案随历史恢复 | `docs/superpowers/specs/2026-10-23-dawn-cli-design.md` · `docs/reviews/2026-10-25-terminal-plan-main-review.md` |
 | 目标、五条不变式 | `docs/superpowers/specs/2026-08-06-multi-agent-ds-workbench-design.md` |

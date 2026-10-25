@@ -22,8 +22,8 @@ describe("浏览器插件", () => {
     expect(browserTools("/tmp", { ...全开, off: true })).toEqual([])
   })
 
-  it("插件册七条：含独立 GEO 数据源，键前缀各归各", () => {
-    expect(插件册.map((p) => p.id)).toEqual(["office", "browser", "memory", "literature", "crossref", "geo", "sra"])
+  it("插件册八条：含独立 GEO 数据源，键前缀各归各", () => {
+    expect(插件册.map((p) => p.id)).toEqual(["office", "browser", "memory", "literature", "crossref", "geo", "sra", "uniprot"])
     expect(插件册[1]!.键).toBe("plugin.browser")
     expect(插件册[1]!.族们().reduce((n, f) => n + f.tools.length, 0)).toBe(15)
   })

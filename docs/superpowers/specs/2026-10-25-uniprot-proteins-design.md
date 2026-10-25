@@ -10,4 +10,6 @@
 - 保存限于新建 `outputs/proteins/records-*`，`records.json`、`蛋白清单.md`，有完整序列时另生成 `sequences.fasta`（80 字符一行）。JSON 保留查询条件/时间/来源/警告，FASTA 标识与实际记录一致，不能跨源/跨会话；数据集仍保存 outputs/datasets，边界不能放宽。写门/方案只读/远端仅查复用已有契约。
 - dev:mock/Electron 共用本机合成 UniProt 响应、头与模型步骤。测试默认开启、搜索/编号、FUNCTION/FASTA 磁盘内容和预览、关闭重启、限流/零结果/方案无写入；GEO/SRA/文献/原插件/视觉回归。真实匿名客户端核对人 TP53 主编号 P04637、长度 393。固定原生预览保留用户已有配置与会话。
 
+新增 FASTA 只读文本预览（.fasta/.fa/.faa/.fna），保留现有字节上限和字面标题/序列，不按 Markdown/表格解析。
+
 不新增依赖，独立实现，不复制参考项目代码/品牌/素材。官方依据：https://www.uniprot.org/help/api_queries 和 https://www.uniprot.org/help/accession_numbers ，并核对实际 REST JSON 与响应头。

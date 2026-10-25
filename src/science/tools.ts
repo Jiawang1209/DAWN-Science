@@ -1,3 +1,4 @@
+import {UniProtClient} from './uniprot.js'
 import {SraClient} from './sra.js'
 import {randomUUID} from 'node:crypto'
 import {Type} from 'typebox'
@@ -21,6 +22,16 @@ export const SRA_FAMILIES=[
 ] as const
 export function sraTools(workspace:string,flags:ScienceFlags,options:Options={}){
   return scienceTools(workspace,flags,options.client??new SraClient(),SRA_FAMILIES,'NCBI SRA',options.remote)
+}
+export const UNIPROT_FAMILIES=[
+  {key:'read',name:'蛋白序列与功能',tools:[
+    {name:'uniprot_search',description:'查询 UniProt 蛋白条目，可按名称/基因/物种或 UniProt 检索表达式查询。返回实际功能注释、审阅状态与规范序列，审阅状态不代表本应用验证了功能。'},
+    {name:'uniprot_get_accession',description:'按 UniProt 主编号精确核对蛋白、功能和规范序列。次级/旧编号映射不能当作主编号相同；不查询同工型或预测结构。'},
+  ]},
+  {key:'save',name:'保存蛋白与 FASTA',tools:[{name:'uniprot_save',description:'保存当前会话实际查询的 UniProt recordId 为 JSON/Markdown；仅实际完整序列生成 sequences.fasta，缺失/超长序列明确告知。使用 outputs/proteins 新目录。'}]},
+] as const
+export function uniprotTools(workspace:string,flags:ScienceFlags,options:Options={}){
+  return scienceTools(workspace,flags,options.client??new UniProtClient(),UNIPROT_FAMILIES,'UniProt',options.remote)
 }
 type Families=readonly {key:string;name:string;tools:readonly {name:string;description:string}[]}[]
 type Options={client?:ScienceClient;remote?:boolean}
@@ -54,7 +65,7 @@ export function scienceTools(workspace:string,flags:ScienceFlags,client:ScienceC
       tool(families[0]!.tools[1]!,Type.Object({accession:Type.String({minLength:1,maxLength:30})},{additionalProperties:false}),async(p,signal)=>observe(await client.getByAccession(p.accession as string,signal),signal)),
     ]:[]),
     ...(flags.save&&!remote?[
-      tool(families[1]!.tools[0]!,Type.Object({record_ids:Type.Array(Type.String(),{minItems:1,maxItems:20,uniqueItems:true}),directory:Type.String({description:'使用工作区 outputs/datasets，每次新建独立子目录，不覆盖。'})},{additionalProperties:false}),async(p,signal)=>{
+      tool(families[1]!.tools[0]!,Type.Object({record_ids:Type.Array(Type.String(),{minItems:1,maxItems:20,uniqueItems:true}),directory:Type.String({description:source==='UniProt'?'使用工作区 outputs/proteins，每次新建独立子目录，不覆盖。':'使用工作区 outputs/datasets，每次新建独立子目录，不覆盖。'})},{additionalProperties:false}),async(p,signal)=>{
         if(!Array.isArray(p.record_ids)||!p.record_ids.length||p.record_ids.length>20||p.record_ids.some(id=>typeof id!=='string'||!cache.has(id)))throw new ScienceError('invalid_input','包含未查询、已过期或其他会话的记录，请使用实际返回的 recordId')
         return saveScienceRecords(workspace,p.directory as string,[...new Set(p.record_ids as string[])].map(id=>cache.get(id)!),signal)
       }),

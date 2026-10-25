@@ -8,6 +8,10 @@ export const SRA_FIXTURES=[
  {uid:'123',expxml:'<Summary><Title>Synthetic soil RNA experiment</Title><Platform instrument_model="NovaSeq">ILLUMINA</Platform><Statistics total_runs="2" total_spots="10" total_bases="50" total_size="30"/></Summary><Experiment acc="SRX123"/><Study acc="SRP123" name="Synthetic soil study"/><Sample acc="SRS123"/><Organism taxid="9606" ScientificName="Homo sapiens"/><Library_descriptor><LIBRARY_STRATEGY>RNA-Seq</LIBRARY_STRATEGY><LIBRARY_SOURCE>TRANSCRIPTOMIC</LIBRARY_SOURCE><LIBRARY_SELECTION>cDNA</LIBRARY_SELECTION><LIBRARY_LAYOUT><PAIRED/></LIBRARY_LAYOUT></Library_descriptor><Bioproject>PRJNA123</Bioproject>',runs:'<Run acc="SRR123" total_spots="4" total_bases="20" is_public="true"/><Run acc="SRR124" total_spots="6" total_bases="30" is_public="false"/>'},
  {uid:'124',expxml:'<Summary><Title>Synthetic second experiment</Title></Summary><Experiment acc="SRX124"/><Study acc="SRP123"/><Sample acc="SRS124"/>',runs:'<Run acc="SRR125"/>'},
 ]
+export const UNIPROT_FIXTURES=[
+ {primaryAccession:'P04637',uniProtkbId:'P53_HUMAN',entryType:'UniProtKB reviewed (Swiss-Prot)',organism:{scientificName:'Homo sapiens',taxonId:9606},proteinDescription:{recommendedName:{fullName:{value:'Synthetic p53 protein fixture'}}},genes:[{geneName:{value:'TP53'}}],comments:[{commentType:'FUNCTION',texts:[{value:'Synthetic function annotation, not a biological claim.',evidences:[{source:'PubMed',id:'123'}]}]}],sequence:{value:'ACDEFG',length:6}},
+ {primaryAccession:'P12345',uniProtkbId:'SYNTHETIC_ENTRY',entryType:'UniProtKB unreviewed (TrEMBL)'},
+]
 export async function startFakeScienceServer(){
  const requests=[]
  const server=http.createServer((req,res)=>{
@@ -16,6 +20,13 @@ export async function startFakeScienceServer(){
   const send=(status,value)=>{res.statusCode=status;res.setHeader('content-type','application/json');res.end(JSON.stringify(value))}
   if(req.method!=='GET')return send(405,{error:'method'})
   if(q.get('term')?.includes('rate-limit-fixture'))return send(429,{error:'rate limit fixture'})
+  if(url.pathname==='/uniprotkb/search'){
+   const term=q.get('query')??''
+   if(term==='rate-limit-fixture')return send(429,{messages:['rate limit fixture']})
+   const records=term==='no-results-fixture'?[]:term.startsWith('accession:')?UNIPROT_FIXTURES.filter(r=>r.primaryAccession===term.slice(10)):UNIPROT_FIXTURES
+   res.setHeader('x-total-results',String(records.length))
+   return send(200,{results:records.slice(0,Number(q.get('size')??10))})
+  }
   if(url.pathname.endsWith('esearch.fcgi')){
    const term=q.get('term')??''
    const source=q.get('db')==='sra'?SRA_FIXTURES:GEO_FIXTURES

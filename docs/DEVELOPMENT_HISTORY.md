@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — UniProt 蛋白、功能注释与 FASTA
+
+- **Type**: feat
+- **Motivation**: 直接查询真实蛋白条目与序列，完成 GEO/SRA/UniProt 三项独立科研插件。
+- **What**: 默认开启的 UniProt 检索/主编号核验/真实记录保存，保留总量、审阅状态、FUNCTION 及参考、缺失/截断；实际完整序列输出 FASTA，缺失或超预算不伪造。复用会话缓存、权限和产物，限定 outputs/proteins；GEO/SRA 原路径不变。增加 FASTA 字面文本预览，无新增依赖。
+- **Verification**: 最终完整 516 文件、5461 单测通过/10 原有跳过；类型与构建通过，相关 Electron 45/45（含 FASTA 磁盘字节/实际预览和 14 张不变视觉图）通过；官方 P04637/TP53/393 残基及实际 FASTA 一致，固定原生预览8个插件正常。见 docs/reviews/2026-10-25-uniprot-proteins-verification.md。
+- **Impact**: 独立 codex/uniprot-proteins 分支验证后仅合并本地 main；三个新插件和两项文献插件缺省开，旧显式关闭保留。未推送、发布或替换安装版。
+
 ### 2026-10-25 — NCBI SRA 实验与测序 Run 查询
 
 - **Type**: feat

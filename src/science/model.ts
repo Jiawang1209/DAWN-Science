@@ -1,4 +1,4 @@
-export type ScienceSource = 'GEO' | 'NCBI SRA'
+export type ScienceSource = 'GEO' | 'NCBI SRA' | 'UniProt'
 export class ScienceError extends Error {
   constructor(readonly code:string,message:string){super(message);this.name='ScienceError'}
 }

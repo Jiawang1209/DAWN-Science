@@ -1,4 +1,4 @@
-import { geoTools, sraTools, type ScienceFlags } from "../science/tools.js"
+import { geoTools, sraTools, uniprotTools, type ScienceFlags } from "../science/tools.js"
 import type { ScienceClient } from "../science/model.js"
 import type { CrossrefClient } from "../literature/crossref.js"
 import { literatureTools, crossrefTools, type LiteratureFlags } from "../literature/tools.js"
@@ -199,6 +199,8 @@ export interface NativeRuntimeOptions {
   geoClient?: () => ScienceClient
   sraEnable?: () => ScienceFlags
   sraClient?: () => ScienceClient
+  uniprotEnable?: () => ScienceFlags
+  uniprotClient?: () => ScienceClient
   /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：族开关 + 目录依赖；同一套约定 */
   memoryEnable?: () => Memory开关
   memoryDeps?: () => Memory依赖
@@ -1137,6 +1139,7 @@ export class NativeRuntime implements AgentRuntime {
       crossref_save: ["directory"],
       geo_save: ["directory"],
       sra_save: ["directory"],
+      uniprot_save: ["directory"],
     }
     const 产物 = this.产物登记(spec.sessionId)
     const 语境 = {
@@ -1571,6 +1574,10 @@ export class NativeRuntime implements AgentRuntime {
     const sra工具组 = (this.opts.sraEnable ? sraTools(spec.workspace, this.opts.sraEnable(), {
       ...(sraClient ? {client:sraClient} : {}), remote:Boolean(spec.remote),
     }) : []).map(门于插件)
+    const uniprotClient = this.opts.uniprotClient?.()
+    const uniprot工具组 = (this.opts.uniprotEnable ? uniprotTools(spec.workspace, this.opts.uniprotEnable(), {
+      ...(uniprotClient ? {client:uniprotClient} : {}), remote:Boolean(spec.remote),
+    }) : []).map(门于插件)
     const office工具组 = (this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []).map(门于插件)
     const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable(), spec.sessionId) : []).map(门于插件)
     const memory工具组 =
@@ -1589,7 +1596,7 @@ export class NativeRuntime implements AgentRuntime {
       ? createTerminalTools({ control: this.opts.terminals, owner: spec.sessionId,
           target: () => terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []),
           authorize: (code, mode, signal) => this.authorizeTerminal(spec, code, mode, signal) }) : []
-    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...文献工具组, ...crossref工具组, ...geo工具组, ...sra工具组, ...mcp工具, ...终端工具]
+    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...文献工具组, ...crossref工具组, ...geo工具组, ...sra工具组, ...uniprot工具组, ...mcp工具, ...终端工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部

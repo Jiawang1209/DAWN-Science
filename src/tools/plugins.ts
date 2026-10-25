@@ -1,4 +1,4 @@
-import { GEO_FAMILIES, SRA_FAMILIES } from "../science/tools.js"
+import { GEO_FAMILIES, SRA_FAMILIES, UNIPROT_FAMILIES } from "../science/tools.js"
 import { LITERATURE_FAMILIES, CROSSREF_FAMILIES } from "../literature/tools.js"
 /**
  * 插件册（2026-08-25）：**插件 = 仓库里审过的内置工具包**，这里是唯一的名单。
@@ -58,6 +58,10 @@ export const 插件册: readonly 插件册条[] = [
   {
     id: "sra", 名: "科研数据 · NCBI SRA", 键: "plugin.sra", defaultOn: true,
     族们: () => SRA_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
+  },
+  {
+    id: "uniprot", 名: "蛋白信息 · UniProt", 键: "plugin.uniprot", defaultOn: true,
+    族们: () => UNIPROT_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
   },
 ]
 

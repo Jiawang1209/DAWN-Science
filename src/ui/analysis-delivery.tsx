@@ -893,7 +893,7 @@ function DeliveryVerification(p: {
         </label>
         <p className="hint">
           {t(
-            "按既定行序完整比较；样本量、类别和字段精确匹配。图像与科学含义仍需人工核对。",
+            "按既定行序完整比较；文本、整数与样本量精确匹配，小数使用容差。图像与科学含义仍需人工核对。",
           )}
         </p>
       </section>

@@ -18,14 +18,14 @@ afterEach(() => {
 const script = `import sys, pathlib, os\nroot,out=map(pathlib.Path,sys.argv[1:])\nassert str(out) in os.environ['TMPDIR']\nout.mkdir(parents=True,exist_ok=True)\n(out/'model.csv').write_text('n,slope,r2\\n24,2.5,0.8\\n')\nprint('independent validation pid:',os.getpid())\n`;
 async function setup(
   code = script,
-  options: { python?: string; timeout?: number } = {
+  options: { python?: string; timeout?: number; source?: string } = {
     python: "/usr/bin/python3",
   },
 ) {
   const root = mkdtempSync(join(tmpdir(), "dawn-verify-"));
   dirs.push(root);
   mkdirSync(join(root, "results"));
-  writeFileSync(join(root, "results/model.csv"), "n,slope,r2\n24,2.5,0.8\n");
+  writeFileSync(join(root, "results/model.csv"), options.source ?? "n,slope,r2\n24,2.5,0.8\n");
   const plan = {
     language: "python" as const,
     script: "analysis/run.py",
@@ -107,6 +107,25 @@ describe("independent analysis verification", () => {
     expect(r.verification.state).toBe("failed");
     expect(r.verification.checks?.[0]?.note).toMatch(/slope|第/);
     expect(r.verification.exitCode).toBe(0);
+  });
+  it.each([
+    ["id", "001", "1"],
+    ["id", "9007199254740992", "9007199254740993"],
+    ["category", "10000000", "10000001"],
+  ])("records changed %s %s / %s as failed even with process exit zero", async (field, a, b) => {
+    const source = `${field}\n${a}\n`;
+    const current = `${field}\n${b}\n`;
+    const f = await setup(`import pathlib,sys\nout=pathlib.Path(sys.argv[2])\n(out/'model.csv').write_text(${JSON.stringify(current)})\n`, {
+      python: "/usr/bin/python3", source,
+    });
+    const result = await f.service.verify({ id: f.record.id, plan: f.record.plan!, tolerance: 1e-6, outputsReviewed: true });
+    expect(result.verification.state).toBe("failed");
+    expect(result.verification.exitCode).toBe(0);
+    expect(result.verification.checks?.[0]).toMatchObject({ state: "failed", note: expect.stringContaining(`${a} / ${b}`) });
+    expect(readFileSync(join(f.root, "results/model.csv"), "utf8")).toBe(source);
+    const saved = JSON.parse(readFileSync(join(f.root, result.verification.directory!, "verification.json"), "utf8"));
+    expect(saved.state).toBe("failed");
+    expect(f.service.list()[0]?.verification.state).toBe("failed");
   });
   it("records nonzero exits and scoped timeout without touching another run", async () => {
     const a = await setup('raise RuntimeError("broken analysis")');

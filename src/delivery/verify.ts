@@ -1,5 +1,6 @@
 import { UserFacingError } from "../errors.js";
 import { decodeDeliveryText } from "./text.js";
+import { ComparedNumber, equalNumbers, exactNumericField, identityField, numericText, parseComparisonJson } from "./numbers.js";
 /** Explicit user confirmation starts an independent process. It never calls the session kernel. */
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -111,17 +112,12 @@ export async function runIndependent(
     });
   });
 }
-const numeric = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
 function equalValue(a: unknown, b: unknown, tolerance: number): boolean {
-  if (typeof a === "number" && typeof b === "number")
+  if (a instanceof ComparedNumber || b instanceof ComparedNumber)
+    return a instanceof ComparedNumber && b instanceof ComparedNumber && equalNumbers(a, b, tolerance);
+  if (Array.isArray(a) || Array.isArray(b))
     return (
-      Number.isFinite(a) &&
-      Number.isFinite(b) &&
-      Math.abs(a - b) <= tolerance * Math.max(1, Math.abs(a))
-    );
-  if (Array.isArray(a) && Array.isArray(b))
-    return (
-      a.length === b.length && a.every((v, i) => equalValue(v, b[i], tolerance))
+      Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => equalValue(v, b[i], tolerance))
     );
   if (a && b && typeof a === "object" && typeof b === "object") {
     const x = a as Record<string, unknown>,
@@ -135,7 +131,7 @@ function equalValue(a: unknown, b: unknown, tolerance: number): boolean {
           equalValue(
             x[k],
             y[k],
-            /^(n(?:_.+)?|count|sample_size|样本量)$/i.test(k) ? 0 : tolerance,
+            exactNumericField(k) ? 0 : tolerance,
           ),
       )
     );
@@ -151,8 +147,8 @@ export function compareDeliveryText(
   if (kind === "text") return { same: a === b, note: "完整文本逐字比较" };
   if (kind === "json")
     return {
-      same: equalValue(JSON.parse(a), JSON.parse(b), tolerance),
-      note: `JSON 完整字段/数组和数值比较，容差 ${tolerance}`,
+      same: equalValue(parseComparisonJson(a), parseComparisonJson(b), tolerance),
+      note: `JSON 完整字段/数组比较；整数、样本量及已识别编号/类别字段精确比较，其余可安全表示的小数容差 ${tolerance}`,
     };
   const x = 读成表(a, true, 20_000),
     y = 读成表(b, true, 20_000);
@@ -179,12 +175,13 @@ export function compareDeliveryText(
     for (let j = 0; j < columns.length; j++) {
       const v = left[j]!,
         w = right[j]!,
-        numbers = numeric.test(v) && numeric.test(w);
+        numbers = numericText.test(v) && numericText.test(w)
+          && !identityField(columns[j]!) && !/^[+-]?0\d/.test(v) && !/^[+-]?0\d/.test(w);
       if (
         !equalValue(
-          numbers ? Number(v) : v,
-          numbers ? Number(w) : w,
-          /^(n(?:_.+)?|count|sample_size|样本量)$/i.test(columns[j]!)
+          numbers ? new ComparedNumber(v) : v,
+          numbers ? new ComparedNumber(w) : w,
+          exactNumericField(columns[j]!)
             ? 0
             : tolerance,
         )
@@ -197,7 +194,7 @@ export function compareDeliveryText(
   }
   return {
     same: true,
-    note: `完整比较 ${x.rows.length} 行、${columns.length} 列；按既定行序，样本量/类别精确比较，其余数值容差 ${tolerance}`,
+    note: `完整比较 ${x.rows.length} 行、${columns.length} 列；按既定行序，文本、整数、样本量及已识别编号/类别字段精确比较，其余可安全表示的小数容差 ${tolerance}`,
   };
 }
 /** Enumerate new outputs, not only files named by the comparison plan. Never follow links or caches. */

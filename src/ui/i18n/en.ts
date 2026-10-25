@@ -112,7 +112,7 @@ export const EN: Readonly<Record<string, string>> = {
   "已选 {0} 个文件": "{0} files selected",
   "开始整理": "Prepare delivery",
   "待确认运行": "Awaiting run confirmation",
-  "按既定行序完整比较；样本量、类别和字段精确匹配。图像与科学含义仍需人工核对。": "Compares complete data in the specified row order, with exact sample counts, categories and fields. Images and scientific meaning need separate review.",
+  "按既定行序完整比较；文本、整数与样本量精确匹配，小数使用容差。图像与科学含义仍需人工核对。": "Compares complete data in the specified row order. Text, integers and sample counts match exactly; decimals use the tolerance. Images and scientific meaning need separate review.",
   "数值比较容差": "Numeric tolerance",
   "整理交付": "Prepare a delivery",
   "整理失败": "Preparation failed",

@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js";
 import type { DeliveryRecord } from "../src/protocol/delivery.js";
@@ -134,6 +134,47 @@ test("科研交付：真实输出→选择→结果解读→独立重跑→保�
       .getByText("选定输出重跑通过", { exact: true }),
   ).toBeVisible();
 });
+
+for (const [field, a, b] of [
+  ["id", "001", "1"],
+  ["id", "9007199254740992", "9007199254740993"],
+  ["category", "10000000", "10000001"],
+] as const) {
+  test(`交付核验拒绝 ${field} 身份变化 ${a} / ${b}`, async ({ dawn }, testInfo) => {
+    test.skip(!existsSync("/usr/bin/python3"), "Needs /usr/bin/python3");
+    const { page, workspace } = dawn;
+    await configure(page);
+    await 在项目里开会话(page);
+    const composer = page.locator("main.main").getByPlaceholder(/输入问题/);
+    await composer.fill("演示科研分析交付：本地合成数据，不联网、不安装。");
+    await composer.press("Enter");
+    await expect(page.locator(".turns").getByText(/合成草地分析案例已运行/)).toBeVisible({ timeout: 40_000 });
+    // 注入差异到测试工作区；整理仍走共用 mock，核验走真实解释器和完整生产比较入口。
+    const source = `${field}\n${a}\n`;
+    const changed = `${field}\n${b}\n`;
+    const summary = readFileSync(join(workspace, "results/summary.json"), "utf8");
+    writeFileSync(join(workspace, "results/model.csv"), source);
+    writeFileSync(join(workspace, "analysis/run_analysis.py"), `# DAWN_DELIVERY_FIXTURE\nimport pathlib,sys\nout=pathlib.Path(sys.argv[2])\n(out/'model.csv').write_text(${JSON.stringify(changed)})\n(out/'summary.json').write_text(${JSON.stringify(summary)})\n`);
+    await 进坞(page, "产物");
+    const panel = page.getByRole("region", { name: "分析交付", exact: true });
+    await panel.getByRole("button", { name: "整理交付", exact: true }).click();
+    for (const name of ["run_analysis.py", "model.csv", "summary.json"])
+      await panel.getByRole("checkbox", { name: new RegExp(name.replace(".", "\\.")) }).check();
+    await panel.getByRole("button", { name: "下一步", exact: true }).click();
+    await panel.getByLabel("交付名称", { exact: true }).fill("编号类别核验回归");
+    await panel.getByRole("button", { name: "开始整理", exact: true }).click();
+    await expect(panel.getByRole("button", { name: "继续设置运行验证", exact: true })).toBeVisible({ timeout: 30_000 });
+    await panel.getByRole("button", { name: "继续设置运行验证", exact: true }).click();
+    await panel.getByLabel("数值比较容差").fill("0.000001");
+    await panel.getByRole("checkbox", { name: /已核对脚本/ }).check();
+    await panel.getByRole("button", { name: "启动独立验证", exact: true }).click();
+    await expect(panel.getByText("运行验证失败", { exact: true })).toBeVisible({ timeout: 30_000 });
+    await expect(panel.getByText(new RegExp(`${a} / ${b}`))).toBeVisible();
+    await expect(panel.getByText("选定输出重跑通过", { exact: true })).toHaveCount(0);
+    expect(readFileSync(join(workspace, "results/model.csv"), "utf8")).toBe(source);
+    await page.screenshot({ path: testInfo.outputPath("comparison-failed.png") });
+  });
+}
 
 test("整理并验证先等核对；缺少预期输出保持部分验证并保留新增图片报告", async ({
   dawn,

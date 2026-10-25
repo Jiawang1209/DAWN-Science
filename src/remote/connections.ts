@@ -89,50 +89,62 @@ export class RemoteConnections {
     // 正在连就共用那一次（2026-08-23 审查抓的：两处并发 connect 会造两个 executor，前一个的 SSH 永不 end）
     // ready 推送早于登录环境捕获；必须先等在飞的连接，不能抢读一个空 HOME。
     const 在飞 = this.连接中.get(rec.id)
-    if (在飞) return 在飞
+    if (在飞) return 在飞.promise
     if (this.状态.get(rec.id)?.kind === "ready") return this.stateOf(rec.id)
-    const p = this.真连(rec).finally(() => this.连接中.delete(rec.id))
-    this.连接中.set(rec.id, p)
+    const 代 = Symbol(rec.id)
+    this.连接代.set(rec.id, 代)
+    let cancel!: () => void
+    const cancelled = new Promise<RemoteState>(resolve => { cancel = () => resolve({ kind: "idle" }) })
+    const p = Promise.race([Promise.resolve().then(() => this.真连(rec, 代)), cancelled]).finally(() => {
+      if (this.连接中.get(rec.id)?.promise === p) this.连接中.delete(rec.id)
+    })
+    this.连接中.set(rec.id, { promise: p, cancel })
     return p
   }
 
-  private readonly 连接中 = new Map<string, Promise<RemoteState>>()
+  private readonly 连接中 = new Map<string, { promise: Promise<RemoteState>; cancel: () => void }>()
+  private readonly 连接代 = new Map<string, symbol>()
 
-  private async 真连(rec: ConnectionRecord): Promise<RemoteState> {
-
-    const 私钥 = rec.privateKeyPath
-      ? await (this.opts.readKeyFile ?? readFile)(rec.privateKeyPath).catch((e: unknown) => {
-          // **读不到就说读不到**，别退回「试试密码吧」——那样人看到的是
-          // 「认证失败」，而真正的原因是路径写错了
-          throw new Error(
-            `读不了私钥 ${rec.privateKeyPath}：${e instanceof Error ? e.message : String(e)}`,
-          )
-        })
-      : undefined
-    const 秘密 = this.opts.secretFor(rec.id)
-
-    const ex = new RemoteExecutor({
-      config: {
-        host: rec.host,
-        port: rec.port,
-        username: rec.username,
-        ...(私钥 ? { privateKey: 私钥 } : {}),
-        // **同一个秘密，两种用途**：有私钥时它是 passphrase，没有时它是密码。
-        // 分成两个字段要人分得清自己配的是哪一种，而那正是最容易配错的地方
-        ...(秘密 ? (私钥 ? { passphrase: 秘密 } : { password: 秘密 }) : {}),
-        ...(this.opts.agentSock ? { agentSock: this.opts.agentSock } : {}),
-      },
-      createClient: this.opts.createClient,
-      onState: (s) => this.记下(rec.id, s),
-      ...(this.opts.knownHosts ? { knownHosts: this.opts.knownHosts } : {}),
-    })
-    this.活着.set(rec.id, ex)
-
+  private async 真连(rec: ConnectionRecord, 代: symbol): Promise<RemoteState> {
+    const 当前 = () => this.连接代.get(rec.id) === 代
+    if (!当前()) return { kind: "idle" }
+    this.记下(rec.id, { kind: "connecting" })
     try {
+      const 私钥 = rec.privateKeyPath
+        ? await (this.opts.readKeyFile ?? readFile)(rec.privateKeyPath).catch((e: unknown) => {
+            // **读不到就说读不到**，别退回「试试密码吧」——那样人看到的是
+            // 「认证失败」，而真正的原因是路径写错了
+            throw new Error(
+              `读不了私钥 ${rec.privateKeyPath}：${e instanceof Error ? e.message : String(e)}`,
+            )
+          })
+        : undefined
+      if (!当前()) return { kind: "idle" }
+      const 秘密 = this.opts.secretFor(rec.id)
+
+      const ex = new RemoteExecutor({
+        config: {
+          host: rec.host,
+          port: rec.port,
+          username: rec.username,
+          ...(私钥 ? { privateKey: 私钥 } : {}),
+          // **同一个秘密，两种用途**：有私钥时它是 passphrase，没有时它是密码。
+          // 分成两个字段要人分得清自己配的是哪一种，而那正是最容易配错的地方
+          ...(秘密 ? (私钥 ? { passphrase: 秘密 } : { password: 秘密 }) : {}),
+          ...(this.opts.agentSock ? { agentSock: this.opts.agentSock } : {}),
+        },
+        createClient: this.opts.createClient,
+        onState: (s) => { if (当前() && s.kind !== "connecting") this.记下(rec.id, s) },
+        ...(this.opts.knownHosts ? { knownHosts: this.opts.knownHosts } : {}),
+      })
+      this.活着.set(rec.id, ex)
+
       await ex.connect()
     } catch (e) {
-      // `RemoteExecutor` 自己会进 disconnected 并带原因；这里只负责把话传上去
+      if (!当前()) return { kind: "idle" }
       this.活着.delete(rec.id)
+      if (this.stateOf(rec.id).kind !== "disconnected")
+        this.记下(rec.id, { kind: "disconnected", reason: e instanceof Error ? e.message : String(e) })
       throw e
     }
     return this.stateOf(rec.id)
@@ -144,15 +156,20 @@ export class RemoteConnections {
    * 混成一个的话，界面就没法把「我没连」与「它把我踢了」分开说。
    */
   disconnect(id: string): RemoteState {
-    this.活着.get(id)?.close()
+    this.连接代.delete(id)
+    const pending = this.连接中.get(id)
+    this.连接中.delete(id)
+    const ex = this.活着.get(id)
     this.活着.delete(id)
+    ex?.close()
     this.记下(id, { kind: "idle" })
+    pending?.cancel()
     return this.stateOf(id)
   }
 
   /** 全断。退出时用 */
   closeAll(): void {
-    for (const id of [...this.活着.keys()]) this.disconnect(id)
+    for (const id of new Set([...this.活着.keys(), ...this.连接中.keys()])) this.disconnect(id)
   }
 
   private 记下(id: string, s: RemoteState): void {

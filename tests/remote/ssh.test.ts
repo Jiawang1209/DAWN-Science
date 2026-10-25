@@ -280,6 +280,34 @@ describe("引号与解析", () => {
 })
 
 describe("状态", () => {
+  it("握手时 close 立即结束客户端，迟到 ready 不恢复连接", async () => {
+    const f = 造一个假客户端()
+    const end = vi.spyOn(f.client, "end")
+    const r = 造(f)
+    const pending = r.connect().then(() => "connected", e => (e as Error).message)
+    r.close()
+    expect(await pending).toMatch(/取消|关闭/)
+    expect(end).toHaveBeenCalled()
+    expect(r.current().kind).toBe("idle")
+    expect(f.跑过).toHaveLength(0)
+  })
+
+  it("环境捕获期间 close 取消等待，晚到环境不能覆盖已清空状态", async () => {
+    const f = 造一个假客户端()
+    const exec = f.client.exec.bind(f.client)
+    let finish!: () => void
+    f.client.exec = ((cmd, cb) => { finish = () => { exec(cmd, cb) } }) as SshClientLike["exec"]
+    const r = 造(f)
+    const pending = r.connect().then(() => "connected", e => (e as Error).message)
+    await vi.waitFor(() => expect(finish).toBeTypeOf("function"))
+    r.close()
+    finish()
+    expect(await pending).toMatch(/取消|关闭/)
+    await new Promise(resolve => setImmediate(resolve))
+    expect(r.loginEnv()).toEqual({})
+    expect(r.current().kind).toBe("idle")
+  })
+
   it("连上前后状态变化会喊出来", async () => {
     const f = 造一个假客户端()
     const 状态: { kind: string }[] = []

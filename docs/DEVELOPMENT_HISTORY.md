@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — SSH 启动期断开真正取消连接
+
+- **Type**: fix
+- **Motivation**: 握手或读取私钥时断开，旧尝试仍可能晚到 ready、恢复状态并脱离管理器资源所有权。
+- **What**: 启动即登记客户端，关闭取消握手/环境捕获；管理器隔离每次尝试及其清理，私钥读取晚到不再连接，closeAll 包括启动中；共用 fake-ssh 支持延迟握手。
+- **Verification**: 新增 7 项行为回归，核心问题先红后绿；定向 201 通过/8 跳过，全量 497 文件 5279 通过/10 跳过，类型/完整构建通过；真实 Electron 定向 5 项通过。见 docs/reviews/2026-10-25-ssh-connect-cancellation-verification.md。
+- **Impact**: 独立 codex/ssh-connect-cancellation，验证后按授权合入本地 main；无协议或 UI 设计变更，不自动重连、不推送、不替换安装版；真实 SSH 主机未在本轮验收。
+
 ### 2026-10-25 — 交付核验保留编号和数值精度
 
 - **Type**: fix

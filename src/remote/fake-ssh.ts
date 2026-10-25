@@ -147,6 +147,7 @@ const 掐们 = new Set<() => boolean>()
 export function 造一台假服务器(): SshClientLike {
   const c = new EventEmitter() as EventEmitter & SshClientLike
   let 已连 = false
+  let 握手计时: ReturnType<typeof setTimeout> | undefined
 
   /**
    * 掐断这一条（`掐断所有假连接()` 调它）。
@@ -168,7 +169,8 @@ export function 造一台假服务器(): SshClientLike {
   }
 
   c.connect = ((cfg: { password?: string; privateKey?: unknown }) => {
-    setTimeout(() => {
+    握手计时 = setTimeout(() => {
+      握手计时 = undefined
       /**
        * **认证真判。**
        *
@@ -182,7 +184,7 @@ export function 造一台假服务器(): SshClientLike {
       已连 = true
       掐们.add(掐)
       c.emit("ready")
-    }, 10)
+    }, Number(process.env.DAWN_FAKE_SSH_READY_DELAY_MS ?? 10))
   }) as SshClientLike["connect"]
 
   c.exec = ((cmd: string, cb: (e: Error | undefined, ch: 通道) => void) => {
@@ -393,6 +395,8 @@ export function 造一台假服务器(): SshClientLike {
   }) as SshClientLike["sftp"]
 
   c.end = (() => {
+    clearTimeout(握手计时)
+    握手计时 = undefined
     已连 = false
     // 人按了断开，这条就不在「还连着」的名册上了——不注销的话下一次掐线会把它算进回执里
     掐们.delete(掐)

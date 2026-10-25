@@ -28,11 +28,12 @@ const 记录 = (over: Partial<ConnectionRecord> = {}): ConnectionRecord => ({
 })
 
 /** 一个能按需成功/失败/中途断线的假 SSH 客户端 */
-function 假客户端(opts: { 认证失败?: boolean } = {}) {
+function 假客户端(opts: { 认证失败?: boolean; 手动握手?: boolean } = {}) {
   const c = new EventEmitter() as EventEmitter & SshClientLike
   const 收到的配置: Record<string, unknown>[] = []
   c.connect = ((cfg: Record<string, unknown>) => {
     收到的配置.push(cfg)
+    if (opts.手动握手) return
     setTimeout(() => {
       if (opts.认证失败) c.emit("error", new Error("All configured authentication methods failed"))
       else c.emit("ready")
@@ -52,6 +53,89 @@ function 假客户端(opts: { 认证失败?: boolean } = {}) {
 }
 
 describe("连接管理器", () => {
+  it("握手时断开会结束客户端；迟到 ready/error/close 不恢复旧状态", async () => {
+    const { c } = 假客户端({ 手动握手: true })
+    const end = vi.spyOn(c, "end")
+    const exec = vi.spyOn(c, "exec")
+    const m = new RemoteConnections({ createClient: () => c, secretFor: () => "pw" })
+    const pending = m.connect(记录())
+    await vi.waitFor(() => expect(m.stateOf("c1").kind).toBe("connecting"))
+    m.disconnect("c1")
+    c.emit("ready")
+    await pending
+    c.emit("error", new Error("late authentication failure"))
+    c.emit("close")
+    expect(end).toHaveBeenCalled()
+    expect(exec).not.toHaveBeenCalled()
+    expect(m.stateOf("c1").kind).toBe("idle")
+    expect(m.executorOf("c1")).toBeUndefined()
+  })
+
+  it("读取私钥期间断开，读取晚到不创建客户端", async () => {
+    let release!: (key: Buffer) => void
+    const key = new Promise<Buffer>(resolve => { release = resolve })
+    const createClient = vi.fn(() => 假客户端().c)
+    const m = new RemoteConnections({ createClient, secretFor: () => "pw", readKeyFile: () => key })
+    const pending = m.connect(记录({ privateKeyPath: "/test/key" }))
+    m.disconnect("c1")
+    expect(await pending).toEqual({ kind: "idle" })
+    release(Buffer.from("KEY"))
+    await new Promise(resolve => setImmediate(resolve))
+    expect(createClient).not.toHaveBeenCalled()
+    expect(m.stateOf("c1").kind).toBe("idle")
+  })
+
+  it("closeAll 也取消尚在读取私钥的尝试", async () => {
+    let release!: (key: Buffer) => void
+    const key = new Promise<Buffer>(resolve => { release = resolve })
+    const createClient = vi.fn(() => 假客户端().c)
+    const m = new RemoteConnections({ createClient, secretFor: () => "pw", readKeyFile: () => key })
+    const pending = m.connect(记录({ privateKeyPath: "/test/key" }))
+    m.closeAll()
+    expect(await pending).toEqual({ kind: "idle" })
+    release(Buffer.from("KEY"))
+    await new Promise(resolve => setImmediate(resolve))
+    expect(createClient).not.toHaveBeenCalled()
+    expect(m.stateOf("c1").kind).toBe("idle")
+  })
+
+  it("断开后立即重连建立新尝试，旧 finally 和事件不能删掉新 pending", async () => {
+    const a = 假客户端({ 手动握手: true }), b = 假客户端({ 手动握手: true })
+    const createClient = vi.fn().mockReturnValueOnce(a.c).mockReturnValueOnce(b.c)
+    const m = new RemoteConnections({ createClient, secretFor: () => "pw" })
+    const first = m.connect(记录())
+    await vi.waitFor(() => expect(m.stateOf("c1").kind).toBe("connecting"))
+    m.disconnect("c1")
+    const second = m.connect(记录())
+    a.c.emit("ready")
+    await first
+    await vi.waitFor(() => expect(createClient).toHaveBeenCalledTimes(2))
+    const shared = m.connect(记录())
+    expect(createClient).toHaveBeenCalledTimes(2)
+    a.c.emit("error", new Error("late old failure"))
+    a.c.emit("close")
+    b.c.emit("ready")
+    await Promise.all([second, shared])
+    expect(m.stateOf("c1").kind).toBe("ready")
+    expect(m.executorOf("c1")?.loginEnv()["HOME"]).toBe("/home/u")
+    m.closeAll()
+  })
+
+  it("环境捕获期间断开后晚到的环境不能成为可用连接", async () => {
+    const { c } = 假客户端()
+    const original = c.exec.bind(c)
+    let finish!: () => void
+    c.exec = ((_cmd, cb) => { finish = () => { original(_cmd, cb) } }) as SshClientLike["exec"]
+    const m = new RemoteConnections({ createClient: () => c, secretFor: () => "pw" })
+    const pending = m.connect(记录())
+    await vi.waitFor(() => expect(finish).toBeTypeOf("function"))
+    m.disconnect("c1")
+    finish()
+    await pending
+    expect(m.stateOf("c1").kind).toBe("idle")
+    expect(m.executorOf("c1")).toBeUndefined()
+  })
+
   it("ready 推送期间再次 connect，仍须等登录环境捕获完成", async () => {
     const { c }=假客户端()
     let second: Promise<unknown> | undefined

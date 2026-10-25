@@ -171,6 +171,7 @@ export class RemoteExecutor {
    * 混成一个，人点了断开会看到一条故障提示。
    */
   private 自己关的 = false
+  private 取消连接: ((reason: Error) => void) | undefined
 
   constructor(private readonly opts: RemoteExecutorOptions) {}
 
@@ -192,8 +193,12 @@ export class RemoteExecutor {
     if (this.state.kind === "ready") return
     // 重连时把旗放下，否则上一次主动断开会让这一次的真断线被咽掉
     this.自己关的 = false
-    this.设状态({ kind: "connecting" })
     const c = this.opts.createClient()
+    this.client = c
+    const 当前 = () => this.client === c
+    let 取消!: (reason: Error) => void
+    const 已取消 = new Promise<never>((_resolve, reject) => { 取消 = reject })
+    this.取消连接 = 取消
     const { config } = this.opts
 
     /**
@@ -218,57 +223,88 @@ export class RemoteExecutor {
         }
       : undefined
 
-    await new Promise<void>((resolve, reject) => {
-      c.on("ready", (() => resolve()) as never)
-      c.on("error", ((e: Error) => {
-        // 公钥对不上时把底层那句笼统的握手错误换成一句说得清风险的话(A6)
-        const reason = 公钥不符
-          ? `这台机器的 SSH 主机公钥与上次记下的不一样了——可能是中间人,也可能是服务器重装/换了密钥。` +
-            `确认安全后,把这台服务器删掉再重新添加即可重新信任(${主机键})。`
-          : e.message
-        this.设状态({ kind: "disconnected", reason })
-        reject(公钥不符 ? new Error(reason) : e)
-      }) as never)
-      /**
-       * **断线要立刻喊出来。** 不喊的话，下一次工具调用会挂在那里等超时，
-       * 而屏幕上什么都不说——那正是「点了没反应」的另一种形状。
-       */
-      c.on("close", (() => {
-        /**
-         * **我们自己关的那次不算断线。**
-         *
-         * `end()` 之后 socket 的 `close` 也会来一趟，而它长得跟对端把我们
-         * 掐掉一模一样。不分开的话，人点了「断开」，界面显示的是
-         * **「断了 · 连接被对端关闭」**——一次主动操作被报成一次故障。
-         *
-         * 这个缺陷单元测试没抓到（那里的断言是同步的，赶在 close 回调之前），
-         * **是 e2e 在真实产物上撞出来的**。又一次「测试绿了 ≠ 能用了」。
-         */
-        if (this.自己关的) return
-        if (this.state.kind !== "disconnected") {
-          this.设状态({ kind: "disconnected", reason: "连接被对端关闭" })
+    const 启动 = async () => {
+      await new Promise<void>((resolve, reject) => {
+        const 失联 = (error: Error, end: boolean) => {
+          if (!当前()) return
+          this.client = undefined
+          this.sftpHandle = undefined
+          this.环境 = {}
+          取消(error)
+          reject(error)
+          this.设状态({ kind: "disconnected", reason: error.message })
+          if (end) { try { c.end() } catch {} }
         }
-      }) as never)
-      c.connect({
-        host: config.host,
-        port: config.port ?? 22,
-        username: config.username,
-        ...(config.privateKey ? { privateKey: config.privateKey } : {}),
-        ...(config.passphrase ? { passphrase: config.passphrase } : {}),
-        ...(config.password ? { password: config.password } : {}),
-        ...(config.agentSock ? { agent: config.agentSock } : {}),
-        ...(hostVerifier ? { hostVerifier } : {}),
-        // 很多服务器的「密码」实际走 keyboard-interactive
-        tryKeyboard: Boolean(config.password),
-        readyTimeout: 20_000,
-        keepaliveInterval: 20_000,
-        keepaliveCountMax: 3,
+        c.on("ready", (() => {
+          if (当前()) resolve()
+        }) as never)
+        c.on("error", ((e: Error) => {
+          if (!当前()) return
+          // 公钥对不上时把底层那句笼统的握手错误换成一句说得清风险的话(A6)
+          const reason = 公钥不符
+            ? `这台机器的 SSH 主机公钥与上次记下的不一样了——可能是中间人,也可能是服务器重装/换了密钥。` +
+              `确认安全后,把这台服务器删掉再重新添加即可重新信任(${主机键})。`
+            : e.message
+          失联(公钥不符 ? new Error(reason) : e, true)
+        }) as never)
+        /**
+         * **断线要立刻喊出来。** 不喊的话，下一次工具调用会挂在那里等超时，
+         * 而屏幕上什么都不说——那正是「点了没反应」的另一种形状。
+         */
+        c.on("close", (() => {
+          /**
+           * **我们自己关的那次不算断线。**
+           *
+           * `end()` 之后 socket 的 `close` 也会来一趟，而它长得跟对端把我们
+           * 掐掉一模一样。不分开的话，人点了「断开」，界面显示的是
+           * **「断了 · 连接被对端关闭」**——一次主动操作被报成一次故障。
+           *
+           * 这个缺陷单元测试没抓到（那里的断言是同步的，赶在 close 回调之前），
+           * **是 e2e 在真实产物上撞出来的**。又一次「测试绿了 ≠ 能用了」。
+           */
+          if (!当前() || this.自己关的) return
+          失联(new Error("连接被对端关闭"), false)
+        }) as never)
+        // 先挂 error/close，再向外报告 connecting；状态回调可能立即要求取消。
+        this.设状态({ kind: "connecting" })
+        if (!当前()) { reject(new Error("SSH 连接已取消")); return }
+        c.connect({
+          host: config.host,
+          port: config.port ?? 22,
+          username: config.username,
+          ...(config.privateKey ? { privateKey: config.privateKey } : {}),
+          ...(config.passphrase ? { passphrase: config.passphrase } : {}),
+          ...(config.password ? { password: config.password } : {}),
+          ...(config.agentSock ? { agent: config.agentSock } : {}),
+          ...(hostVerifier ? { hostVerifier } : {}),
+          // 很多服务器的「密码」实际走 keyboard-interactive
+          tryKeyboard: Boolean(config.password),
+          readyTimeout: 20_000,
+          keepaliveInterval: 20_000,
+          keepaliveCountMax: 3,
+        })
       })
-    })
-
-    this.client = c
-    this.设状态({ kind: "ready" })
-    await this.捕获环境()
+      if (!当前()) throw new Error("SSH 连接已取消")
+      this.设状态({ kind: "ready" })
+      if (!当前()) throw new Error("SSH 连接已取消")
+      const 环境 = await this.捕获环境()
+      if (!当前()) throw new Error("SSH 连接已取消")
+      this.环境 = 环境
+    }
+    try {
+      await Promise.race([启动(), 已取消])
+    } catch (error) {
+      if (当前()) {
+        this.client = undefined
+        this.sftpHandle = undefined
+        this.环境 = {}
+        this.设状态({ kind: "disconnected", reason: error instanceof Error ? error.message : String(error) })
+        try { c.end() } catch {}
+      }
+      throw error
+    } finally {
+      if (this.取消连接 === 取消) this.取消连接 = undefined
+    }
   }
 
   /**
@@ -276,7 +312,7 @@ export class RemoteExecutor {
    *
    * 只认 `键=值`——横幅爱怎么打怎么打，它不会有我们的键名。
    */
-  private async 捕获环境(): Promise<void> {
+  private async 捕获环境(): Promise<Record<string, string>> {
     const 行 = 要带的环境.map((k) => `echo "DAWNENV_${k}=\${${k}}"`).join("; ")
     const r = await this.原始执行(`bash -lc ${单引号(行)}`)
     const out: Record<string, string> = {}
@@ -285,7 +321,7 @@ export class RemoteExecutor {
       // **空值不记**：`CONDA_PREFIX=` 与「没有 CONDA_PREFIX」是一回事
       if (v) out[k] = v
     }
-    this.环境 = out
+    return out
   }
 
   /**
@@ -572,15 +608,20 @@ export class RemoteExecutor {
   }
 
   close(): void {
+    const c = this.client
+    this.client = undefined
     this.sftpHandle = undefined
+    this.环境 = {}
     // **先立起这面旗再关**：`end()` 可能同步就把 `close` 事件发出来
     this.自己关的 = true
+    const 取消 = this.取消连接
+    this.取消连接 = undefined
+    取消?.(new Error("SSH 连接已取消"))
     try {
-      this.client?.end()
+      c?.end()
     } catch {
       // 关不掉就算了：进程退出会带走它
     }
-    this.client = undefined
     this.设状态({ kind: "idle" })
   }
 }

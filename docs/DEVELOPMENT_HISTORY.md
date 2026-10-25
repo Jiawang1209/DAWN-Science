@@ -13,7 +13,7 @@
 - **Type**: test
 - **Motivation**: 旧最小宽度、操作列、删除/恢复入口及内嵌搜索断言阻断真实 Electron 回归。
 - **What**: 六份 E2E 使用现行侧栏常量与入口，验证独立搜索和焦点归还；预览菜单先等正文滚动稳定，目标边界/恢复/删除断言保留，产品源码不变。
-- **Verification**: 499 文件 5289 项 Vitest 通过、10 跳过；22 文件 130 项不同 Electron 分批去重覆盖，另串行真 Python 内核 2 项通过；类型/完整构建通过。原始失败、覆盖清单与证据见 docs/reviews/2026-10-25-e2e-contract-alignment-verification.md。
+- **Verification**: 499 文件 5289 项 Vitest 通过、10 跳过；22 文件 130 项不同 Electron 分批去重覆盖，另串行真 Python 内核 2 项通过；类型/完整构建通过。主目录合并后类型/完整构建、51 项相关 E2E 及串行真内核 2 项再次通过。原始失败、覆盖清单与证据见 docs/reviews/2026-10-25-e2e-contract-alignment-verification.md。
 - **Impact**: 独立 codex/e2e-contract-alignment，按授权验证后本地合并；不宣称全部 838 项 E2E 已通过，不推送、不替换安装版。
 
 ### 2026-10-25 — 长下载目录不再挤没设置说明

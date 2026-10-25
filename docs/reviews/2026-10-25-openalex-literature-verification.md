@@ -41,4 +41,11 @@ Electron 覆盖：默认关闭无查询请求、界面启用与持久化、新�
 
 ## 本地集成
 
-待分支提交、快进合入 main 与主目录复验后补记。
+实现提交 `ad8516a3` 已从独立分支快进合入本地 main（起点 `289bcb3c`）。主目录复验：
+
+- `npm run typecheck`、`npm run build` 通过，见 `main-typecheck.log`、`main-build.log`。
+- 11 文件、220 项相关测试通过，覆盖文献、共享 mock、方案/讨论/路线只读门、溯源与既有插件；见 `main-related.log`。
+- 同组 40/40 Electron 通过，含 14 个未改视觉基线；见 `main-electron.log`。源代码与分支逐文件一致，无主目录专用改动。
+- 固定 launcher 重启的原生预览来自 `codex/openalex-literature` / `ad8516a3`，保留隔离 profile 和本次真实文献产物，停在文献插件入口；`preview-native.png` 是已提交版本。
+
+保留正在使用的预览工作树。后续仅补记本验收与历史，不推送、不发布、不替换已安装应用。

@@ -18,6 +18,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { test, expect, CANNED_REPLY, 在项目里开会话, 开一段临时会话, 进坞 } from "./fixtures.js"
 
 const 主区 = (page: Page) => page.locator("main.main")
+const 主区页签 = (page: Page) => page.locator(".topbar .session-tabs")
 const 坞 = (page: Page) => page.locator("aside.right-dock")
 const 框 = (区: ReturnType<typeof 主区>) => 区.getByPlaceholder(/输入问题/)
 
@@ -197,7 +198,11 @@ test.describe("侧边对话 · native", () => {
       /** 等标题而不是 `.side-chat-empty`：后者「正在打开」的加载态也有 */
       await expect(坞(page).getByRole("heading", { name: "坞里的对话", exact: true })).toBeVisible()
       await expect(坞(page).locator(".side-chat-head")).toHaveCount(0)
-      await expect(主区(page).locator(".session-tabs .session-tab-title").filter({ hasText: "跑个长的" })).toHaveCount(1)
+      const 原主页签 = 主区页签(page).locator(".session-tab-title").filter({ hasText: "跑个长的" })
+      await expect(原主页签).toHaveCount(1)
+      await 原主页签.click()
+      await expect(主区(page).locator(".turns")).toContainText("我去跑一下。")
+      await expect(主区(page).getByRole("button", { name: "停止", exact: true })).toBeVisible()
     })
   })
 })
@@ -212,7 +217,7 @@ test.describe("侧边对话 · 临时会话", () => {
     await 开一段临时会话(page, "起个头")
     /** 前提：主区真是一段临时会话——散的会话没有分栏，「会话」那一组里只有它 */
     await expect(page.locator(".topbar .conv-title")).toContainText("起个头")
-    await expect(主区(page).locator(".session-tabs")).toHaveCount(0)
+    await expect(主区页签(page)).toHaveCount(0)
     await expect(page.locator(".session-list > li")).toHaveCount(1)
 
     await 进坞(page, "对话")

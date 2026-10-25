@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：侧边会话页签按顶栏验收
+
+- **Type**: test
+- **Motivation**: 旧范围在main正文查已移到topbar的项目会话页签。
+- **What**: 修正两处范围，补充重新打开长任务及仍运行检查；不改产品。
+- **Verification**: 目标2项、相关37项、类型通过；整份7通过/2既存高度失败，main同样复现，另分支处理。见 docs/reviews/2026-10-25-electron-side-session-tabs-verification.md。
+- **Impact**: 按授权本地合并，不推送。
+
 ### 2026-10-25 — 剩余 Electron：向导经添加菜单检查优化入口
 
 - **Type**: test

@@ -18,4 +18,4 @@
 
 ## 本地集成
 
-主目录复验结果在合并后追加。仅本地提交/合并，不推送、不替换安装版。下一项旧 E2E 契约漂移使用独立分支。
+修复提交 f2b51321 已从 30c3a99d 快进合并本地 main。主目录类型检查/完整构建、相关 UI 165 项及同样 5 项真实 Electron（16.8 秒）全部通过，日志 main-typecheck.log、main-build.log、main-focused.log、main-e2e.log 已保存。仅本地提交/合并，不推送、不替换安装版。下一项旧 E2E 契约漂移使用独立 codex/e2e-contract-alignment 分支。

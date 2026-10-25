@@ -8,6 +8,6 @@
 - [x] e2e/settings-path-layout.spec.ts 新增宽/窄、亮/暗、长路径和恢复默认的几何/可见性回归，确认原样式失败。
 - [x] src/ui/styles.css 仅修路径行约束；真实 Electron 查看截图并验证默认下载实际落盘与设置栏不溢出。
 - [x] 类型/构建/相关 UI 与 Electron 验证，自审、review 与 DEVELOPMENT_HISTORY，提交本切片。
-- [ ] 快进合并本地 main、主目录复验；为旧 E2E 契约漂移另建分支。
+- [x] 快进合并本地 main、主目录复验；为旧 E2E 契约漂移另建分支。
 
 原会话串行执行，无子 agent，不推送或替换安装版。

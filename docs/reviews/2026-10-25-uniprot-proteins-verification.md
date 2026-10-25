@@ -27,3 +27,15 @@ API 模型新会话可用，ACP/外部 CLI 不新增工具。GEO/SRA 提供元�
 - uniprot-preview.png、uniprot-flow.png、uniprot-fasta.png。
 
 三项各自通过后合并本地 main。未推送、未发布或替换安装版。main 最终复验另行记录，不把分支结果冒充为 main 运行。
+
+## 本地 main 最终复验
+
+实现提交 `4dab357cd9143978514cd8ead8a0399c15031105` 已由 main 快进合并。三项功能提交依次为 GEO `5de49adb`、SRA `0ca81138`、UniProt `4dab357c`；各自先经独立 codex 分支验证。
+
+- main：20 文件、407 项相关单测通过（科研/文献/文件预览/策略/插件/双语/设计契约），类型检查、完整构建通过。
+- main：与分支同组 45/45 Electron 复验通过，FASTA 实际文本预览与磁盘内容、三个新插件、原有文献/插件/公式、14 张视觉图均覆盖。
+- 源码/脚本/测试新增行扫描未引入参考项目品牌标识；不复制参考代码或素材。Git 工作区清洁、没有 push。
+- 固定原生预览已重新启动到实现提交 4dab357c，8 个插件卡实际可见/开启，宽度1280无水平溢出；运行工作树源码与 main 一致。稳定配置和既有会话保留。
+- 主分支证据：main-related.log、main-typecheck.log、main-build.log、main-electron.log；最终原生截图 final-preview.png，均在同一证据目录。
+
+本次验证使用 API 元数据真实探针和确定性模型/HTTP 的 Electron 回归；未声称以真实模型完成全部科研分析，也未更新安装版。

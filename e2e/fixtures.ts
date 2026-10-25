@@ -22,6 +22,9 @@ import { startFakeFeishuServer, type FakeFeishuServer } from "../scripts/fake-fe
 // @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 npm run dev:mock
 import { startFakeReleaseFeed } from "../scripts/fake-release-feed.mjs"
 
+// @ts-expect-error shared isolated fixture is JavaScript
+import { startFakeOpenAlexServer } from "../scripts/fake-openalex-server.mjs"
+
 const ROOT = resolve(import.meta.dirname, "..")
 
 export { CANNED_REPLY }
@@ -271,6 +274,7 @@ export interface DawnFixture {
   /** 假微信（开了 `fakeIlink` 才有）：推进扫码、塞消息、读发出的、让 token 失效 */
   weixin?: FakeIlinkServer
   feishu?: FakeFeishuServer
+  openalex?: { requests: {path: string; query: Record<string,string>}[] }
   /** 假发布源（开了 `fakeUpdate` 才有）：可以中途换一个版本号 */
   发布源?: { url: string; 设版本(v: string): void }
   /**
@@ -386,6 +390,7 @@ export interface DawnOptions {
    * e2e 没有真机可连，而「添加服务器 → 连接 → 连上了」是这一批的主路径。
    * 假的只有「另一端是谁」——认证仍是真判的，口令不对照样拒。
    */
+  fakeOpenAlex?: boolean
   fakeSsh?: boolean
   /**
    * 指给假服务器一条**本机真实的** python（远程内核，2026-09-03）。
@@ -581,6 +586,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawnOptions: [{}, { option: true }],
 
   dawn: async ({ dawnOptions }, use) => {
+    const openalex = dawnOptions.fakeOpenAlex ? await startFakeOpenAlexServer() : undefined
     const weixin = dawnOptions.fakeIlink ? await startFakeIlinkServer({ longPollMs: 1_000 }) : undefined
     const feishu = dawnOptions.fakeFeishu ? await startFakeFeishuServer({ longPollMs: 1_000 }) : undefined
     const 发布源 = dawnOptions.fakeUpdate
@@ -730,6 +736,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         // **不写 DAWN_CONFIG 指向已有文件**：第一次启动应当自己写出默认配置。
         // 这条路径正是「装好了打不开」那个缺陷的所在，必须被真的走一遍
         DAWN_CONFIG: configPath,
+        DAWN_FAKE_OPENALEX: openalex?.url ?? "",
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
         // 给模型基底时一并跳过凭证守卫(审查 debug G7:拆成独立开关后,e2e 要显式带上它,
@@ -895,6 +902,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       requests: server.requests,
       keyChecks: server.keyChecks,
       mockUrl: server.url,
+      ...(openalex ? { openalex } : {}),
       ...(weixin ? { weixin } : {}),
       ...(feishu ? { feishu } : {}),
       ...(发布源 ? { 发布源 } : {}),
@@ -911,6 +919,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       console.error("[e2e] Electron 关不掉：", err instanceof Error ? err.message : String(err))
     })
     await server.close()
+    await openalex?.close()
     await weixin?.close()
     await feishu?.close()
     await 发布源?.close()

@@ -1,3 +1,5 @@
+import { OpenAlexClient } from "../literature/client.js"
+import { pluginEnabled } from "../tools/plugins.js"
 import { suggestLatestPrompt } from '../cli/next-prompt.js'
 import { desktopWorkspace } from '../cli/workspace.js'
 import { sessionActivity } from '../shared/session-activity.js'
@@ -738,7 +740,21 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       ppt: settingsStore.get("plugin.office.ppt") !== "0",
       docx: settingsStore.get("plugin.office.docx") !== "0",
     }),
-    /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：同一套「没记过 = 开着」 */
+    /** 文献插件按需启用；本地固定 API 只供隔离开发与 Electron 验收。 */
+    literatureEnable: () => ({
+      off: !pluginEnabled("literature", settingsStore.get("plugin.literature.off")),
+      read: settingsStore.get("plugin.literature.read") !== "0",
+      save: settingsStore.get("plugin.literature.save") !== "0",
+    }),
+    literatureClient: () => new OpenAlexClient({
+      ...(process.env.DAWN_FAKE_OPENALEX ? {fetch: async (input: string | URL | Request, init?: RequestInit) => {
+        const target = new URL(process.env.DAWN_FAKE_OPENALEX!)
+        if (target.protocol !== "http:" || target.hostname !== "127.0.0.1" || target.username || target.password) throw new Error("OpenAlex test fixture must use loopback HTTP")
+        const original = new URL(String(input))
+        if (original.origin !== "https://api.openalex.org") throw new Error("Unexpected literature request origin")
+        return fetch(new URL(original.pathname + original.search, target), init)
+      }} : {}),
+    }),
     memoryEnable: () => ({
       off: settingsStore.get("plugin.memory.off") === "1",
       propose: settingsStore.get("plugin.memory.propose") !== "0",

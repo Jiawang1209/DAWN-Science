@@ -28,7 +28,7 @@ import type { NativeRuntime } from "../runtime/native.js"
 import type { BotProfile } from "../bot/types.js"
 import { probeAcpModels } from "../runtime/acp/models.js"
 import type { ProviderRegistry } from "../config/schema.js"
-import { 插件册 } from "../tools/plugins.js"
+import { 插件册, pluginEnabled } from "../tools/plugins.js"
 import { 旁观, 截一帧 } from "../tools/browser/session.js"
 import {
   addAcpAgent,
@@ -3395,7 +3395,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       plugins: 插件册.map((p) => ({
         id: p.id,
         name: p.名,
-        on: settings?.get(`${p.键}.off` as never) !== "1",
+        on: pluginEnabled(p.id, settings?.get(`${p.键}.off` as never)),
         families: p.族们().map((f) => ({
           key: f.key,
           name: f.name,
@@ -3411,8 +3411,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!settings) throw fault("internal_error", "本次运行没有装配设置")
       const now = new Date().toISOString()
       if (!family) {
-        // 整包开关存「off」一把键：默认开着，只记「关」这个偏离
-        settings.set(`${p.键}.off` as never, on ? "" : "1", now)
+        // 默认关闭的插件必须显式存 0；空串会清除设置并恢复默认值。
+        settings.set(`${p.键}.off` as never, on ? (p.defaultOn === false ? "0" : "") : "1", now)
         return { on }
       }
       const 族们 = p.族们()

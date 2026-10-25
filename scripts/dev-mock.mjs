@@ -26,6 +26,7 @@ import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "./mock-i
 import { startFakeIlinkServer } from "./fake-ilink-server.mjs"
 import { startFakeFeishuServer } from "./fake-feishu-server.mjs"
 import { startFakeReleaseFeed } from "./fake-release-feed.mjs"
+import { startFakeOpenAlexServer } from "./fake-openalex-server.mjs"
 
 /**
  * 挑一条本机真的、装了 ipykernel 的 python（远程内核，2026-09-03）。
@@ -79,6 +80,7 @@ const server = await startMockInferenceServer()
  *   curl -X POST <url>/__fake/inbound -d '{"text":"在吗"}'      curl <url>/__fake/sent
  */
 const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
+const openalex = await startFakeOpenAlexServer()
 const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
 /**
  * 假发布源（2026-09-06）：**没有它，「有新版本」这条路在 dev:mock 里根本走不通**——
@@ -151,6 +153,7 @@ const child = spawn(
       // 压缩（2026-09-27）：保留最近 1 个 token，短对话里「现在压缩」也压得出来（与 e2e 同一个旋钮）；要照 pi 默认时设成空
       DAWN_COMPACT_KEEP_RECENT_TOKENS: process.env.DAWN_COMPACT_KEEP_RECENT_TOKENS ?? "1",
       DAWN_FAKE_ILINK: weixin.url,
+      DAWN_FAKE_OPENALEX: openalex.url,
       DAWN_FAKE_FEISHU: feishu.url,
       /**
        * 假服务器（②-B · R3）：dev:mock 此前一直没开它——「添加服务器 → 连接」这条主路径
@@ -171,6 +174,7 @@ const child = spawn(
 
 const shutdown = async () => {
   await server.close()
+  await openalex.close()
   await weixin.close()
   await feishu.close()
   await 发布源.close()

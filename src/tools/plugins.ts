@@ -1,3 +1,4 @@
+import { LITERATURE_FAMILIES } from "../literature/tools.js"
 /**
  * 插件册（2026-08-25）：**插件 = 仓库里审过的内置工具包**，这里是唯一的名单。
  * `listPlugins` / `setPluginFlag` 都照这册子办——加第三个插件时只动这里与装配点。
@@ -11,6 +12,7 @@ export interface 插件册条 {
   名: string
   /** 设置键前缀：`<前缀>.off` 整包，`<前缀>.<族>` 单族（"0" 关；没记 = 开） */
   键: string
+  defaultOn?: boolean
   族们: () => { key: string; name: string; tools: { name: string; description: string }[] }[]
 }
 
@@ -40,4 +42,15 @@ export const 插件册: readonly 插件册条[] = [
         tools: f.工具.map((t) => ({ name: t.name, description: t.description })),
       })),
   },
+  {
+    id: "literature", 名: "科研文献 · OpenAlex", 键: "plugin.literature", defaultOn: false,
+    族们: () => LITERATURE_FAMILIES.map(f => ({key: f.key, name: f.name, tools: [...f.tools]})),
+  },
 ]
+
+/** A missing setting uses the plugin's declared default; an explicit enable persists. */
+export function pluginEnabled(id: string, storedOff: string | undefined): boolean {
+  const plugin = 插件册.find(p => p.id === id)
+  if (!plugin) throw new Error(`Unknown plugin: ${id}`)
+  return storedOff === undefined ? plugin.defaultOn !== false : storedOff !== "1"
+}

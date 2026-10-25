@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 增加可追溯的科研文献检索与清单保存
+
+- **Type**: feat
+- **Motivation**: 科研对话需要可核对来源的文献元数据和可保存的实际引用记录。
+- **What**: 新增默认关闭的“科研文献 · OpenAlex”插件，支持关键词/年份检索、DOI 索引元数据核对及会话内所选真实记录保存为 JSON/Markdown。固定官方接口并限制响应、超时、摘要和缓存预算；保存复用写权限/方案门和产物观察，不覆盖旧文件。不新增依赖、协议或外部参考项目标记。
+- **Verification**: 分支完整 508 文件、5379 项通过/10 原有跳过，类型/构建通过，相关 Electron 40/40（含 14 个未改视觉基线）通过；真实匿名 API、实际保存与固定 Dev Preview 原生阅读检查通过。见 docs/reviews/2026-10-25-openalex-literature-verification.md。
+- **Impact**: 独立 codex/openalex-literature 分支；本地集成结果见验收记录。未推送、未发布、未替换安装版。
+
 ### 2026-10-25 — 为共享 Markdown 补充本地数学公式排版
 
 - **Type**: feat

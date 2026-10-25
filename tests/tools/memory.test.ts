@@ -24,7 +24,7 @@ describe("记忆插件", () => {
     expect(memoryTools("/ws", 全开, d)).toHaveLength(3)
     expect(memoryTools("/ws", { ...全开, skill: false }, d)).toHaveLength(2)
     expect(memoryTools("/ws", { ...全开, off: true }, d)).toEqual([])
-    expect(插件册.map((p) => p.id)).toEqual(["office", "browser", "memory"])
+    expect(插件册.map((p) => p.id)).toEqual(["office", "browser", "memory", "literature"])
     expect(插件册[2]!.键).toBe("plugin.memory")
     expect(插件册[2]!.族们().reduce((n, f) => n + f.tools.length, 0)).toBe(3)
   })

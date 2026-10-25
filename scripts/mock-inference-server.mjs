@@ -6,6 +6,7 @@ import {botCollaborationTool, botCollaborationReply} from "./mock-bot-collaborat
 import {toolSelectionDemoTool, toolSelectionDemoReply} from './mock-tool-selection.mjs'
 import { terminalAssistanceTool, terminalAssistanceReply } from './mock-terminal-assistance.mjs'
 import { literatureMockTool, literatureMockReply } from './mock-literature.mjs'
+import { reviewMockTool, reviewMockReply } from './mock-literature-review.mjs'
 /**
  * 本地 OpenAI 兼容的假推理服务器。
  *
@@ -596,7 +597,7 @@ export function startMockInferenceServer(opts = {}) {
       const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
       const directoryTransferReply = 最后一句 === "目录传输验收" ? "文件与目录批次传输由文件面板执行：使用上传文件夹或下载文件夹，展开批次查看逐文件进度、冲突和失败项。文件字节不进入模型上下文。" : undefined
       const mathReply = 最后一句.includes("数学公式排版验收") ? MATH_REPLY : undefined
-      const reply = 会话标题 ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? mathReply ?? scienceMockReply(body) ?? literatureMockReply(body) ?? terminalAssistanceReply(body) ?? toolSelectionDemoReply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const reply = 会话标题 ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? mathReply ?? scienceMockReply(body) ?? reviewMockReply(body) ?? literatureMockReply(body) ?? terminalAssistanceReply(body) ?? toolSelectionDemoReply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"
@@ -629,7 +630,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复)
 
-      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? scienceMockTool(body) ?? literatureMockTool(body) ?? terminalAssistanceTool(body) ?? toolSelectionDemoTool(body) ?? deliveryDemoTool(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? scienceMockTool(body) ?? reviewMockTool(body) ?? literatureMockTool(body) ?? terminalAssistanceTool(body) ?? toolSelectionDemoTool(body) ?? deliveryDemoTool(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && !是标题 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
       const finishReason = !摘要 && !是标题 && 最后一句.includes("演一次截断") ? "length" : "stop"

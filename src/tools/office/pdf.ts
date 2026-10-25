@@ -268,12 +268,14 @@ async function extractPdfPages(filePath: string): Promise<PdfPageText[]> {
   // pdf-parse 锁 1.1.1（函数 API；v2 换成了 class）。**导内层实现**：它的 index.js 在 ESM 下会误入 debug 分支去读自带的测试 PDF（`!module.parent`），社区标准绕法。interop 兜双层 default（移植时踩的）
   const pdfParseMod = await import('pdf-parse/lib/pdf-parse.js') as unknown as Record<string, unknown>
   const pdfParse = ((pdfParseMod.default as Record<string, unknown> | undefined)?.default ?? pdfParseMod.default ?? pdfParseMod) as (
-    buffer: Buffer,
+    buffer: Uint8Array,
     options?: {
       pagerender?: (pageData: { getTextContent(): Promise<{ items: Array<{ str: string; transform: number[] }> }> }) => Promise<string>
     },
   ) => Promise<{ numpages: number; text: string }>
-  const buffer = readFileSync(filePath)
+  // The bundled older PDF.js assumes typed-array copy/slice semantics.
+  // Node Buffer views can fail on valid documents; pass an owned plain array.
+  const buffer = new Uint8Array(readFileSync(filePath))
   // pdf-parse's bundled pdf.js flakes with 'bad XRef entry' on the first
   // parse(s) after an idle period — retry with a short backoff.
   const pages: PdfPageText[] = []

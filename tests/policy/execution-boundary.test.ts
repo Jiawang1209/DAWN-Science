@@ -42,4 +42,17 @@ describe('明确限制与解除，不猜普通对话的意图', () => {
     for (const text of ['现在保存结果。', '可以，保存结果。', '保存结果到 results/output.csv']) expect(执行指令(text), text).toBe(false)
     for (const text of ['保存结果的位置是什么', '保存后的结果是空的', '保存结果的路径是哪里']) expect(执行指令(text), text).toBeUndefined()
   })
+  it('展开后的技能正文不是用户限制或执行授权，只看其后的请求', () => {
+    const skill = (body: string, request = '') => `<skill name="literature-review" location="/skills/literature-review/SKILL.md">\n${body}\n</skill>${request ? `\n\n${request}` : ''}`
+    expect(执行指令(skill('先只讨论，不写文件。', '请保存论文对照表。'))).toBe(false)
+    expect(执行指令(skill('先只讨论，不写文件。', '比较这三篇论文。'))).toBeUndefined()
+    expect(执行指令(skill('现在开始运行。', '只讨论设计。'))).toBe(true)
+    expect(执行指令(skill('现在开始运行。'))).toBeUndefined()
+    expect(执行指令(skill(内核请求标记(['python'])))).toBeUndefined()
+    expect(执行指令(skill('先只讨论。', 内核请求标记(['python'])))).toBe(false)
+    expect(执行指令([{type: 'text', text: skill('开始执行。', '只讨论。')}, {type: 'image', data: 'irrelevant'}])).toBe(true)
+    expect(仅讨论([user('先讨论'), user(skill('现在开始运行。', '比较这三篇论文。'))])).toBe(true)
+    expect(讨论拒绝理由('pdf_read', [user(skill('先只讨论，不写文件。', '请保存论文对照表。'))])).toBeUndefined()
+    expect(讨论拒绝理由('xlsx_write', [user(skill('现在开始运行。', '只讨论设计。'))])).toContain('讨论')
+  })
 })

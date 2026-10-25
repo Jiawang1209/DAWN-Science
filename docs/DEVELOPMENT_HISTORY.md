@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 多篇论文精读与证据对照
+
+- **Type**: feat
+- **Motivation**: 将既有 PDF、文献及表格能力组织成可回看原文的多篇论文调研流程。
+- **What**: 默认开启的内置 literature-review 技能；实际阅读范围、物理页与短摘连接逐项证据、文献清单及差异对照，交付 Excel/Markdown；明确未提供、未读全文和不可提取状态。修复接入时发现的技能正文误触讨论/内核边界，以及原 PDF 解析器的 Node Buffer 兼容问题；没有增加工具权限、依赖或协议。
+- **Verification**: 分支完整 518 文件、5471 测试通过/10 原有跳过，相关 264 项、类型与构建通过；PDF→三表 Excel/总结真实读写、失败/关闭/讨论边界和 14 张原视觉图复验通过。确定性模型场景只证明接线与产物，不证明科学判断质量；详见 docs/reviews/2026-10-25-literature-comparison-verification.md。
+- **Impact**: codex/literature-comparison 独立工作树实现与验收；仅本地集成，不推送、不发布、不替换安装版，新增内容不含外部参考产品标记。
+
 ### 2026-10-25 — UniProt 蛋白、功能注释与 FASTA
 
 - **Type**: feat

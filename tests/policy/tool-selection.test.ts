@@ -4,6 +4,13 @@ import { 内核请求标记 } from '../../src/kernel/shortcuts.js'
 const user = (content: unknown) => ({ type: 'message', message: { role: 'user', content } })
 
 describe('明确的内核限制', () => {
+  it('技能正文不改变内核许可，用户自己的限制和快捷入口保持有效', () => {
+    const skill = (body: string, request = '') => `<skill name="example" location="/skills/example/SKILL.md">\n${body}\n</skill>${request ? `\n\n${request}` : ''}`
+    expect(内核调用拒绝理由('run_code', [user(skill('不要启动内核。', '读取文件。'))])).toBeUndefined()
+    expect(内核调用拒绝理由('run_code', [user(skill('开始使用内核。', '不要启动内核。'))])).toBeTruthy()
+    expect(内核调用拒绝理由('run_code', [user('不要启动内核。'), user(skill(内核请求标记(['R'])))] )).toBeTruthy()
+    expect(内核调用拒绝理由('run_code', [user('不要启动内核。'), user(skill('不要启动内核。', 内核请求标记(['R'])))] )).toBeUndefined()
+  })
   it.each(['先不要启动 Python 内核', '请不用开启内核', '无需运行R内核', '不要调用 run_code', 'Do not start the Jupyter kernel'])('%s 拒绝两种会起内核的工具，保持其他工具原门', text => {
     for (const tool of ['run_code', 'inspect_data']) expect(内核调用拒绝理由(tool, [user(text)])).toContain('内核')
     for (const tool of ['read', 'bash', 'write', 'unknown']) expect(内核调用拒绝理由(tool, [user(text)])).toBeUndefined()

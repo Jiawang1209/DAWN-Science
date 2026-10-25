@@ -8,6 +8,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { officeTools, OFFICE族, 转JSONSchema } from "../../src/tools/office/index.js"
+import { PDFDocument, StandardFonts } from 'pdf-lib'
 
 const 全开 = { off: false, xlsx: true, pdf: true, ppt: true, docx: true }
 interface 工具 {
@@ -23,6 +24,20 @@ const 取 = (ws: string, name: string): 工具 => {
 const 文字 = (r: { content: { text: string }[] }) => r.content.map((c) => c.text).join("\n")
 
 describe("office 插件", () => {
+  it('合法的小型 PDF 保留实际物理页和正文，不能被 Buffer 兼容问题误判为读取失败', async () => {
+    const ws = mkdtempSync(join(tmpdir(), 'dawn-paper-pages-'))
+    const doc = await PDFDocument.create(), font = await doc.embedFont(StandardFonts.Helvetica)
+    doc.addPage([600, 750]).drawText('Title: Synthetic study A\nDesign: Controlled plant experiment.', {x: 40, y: 680, size: 12, font, lineHeight: 22})
+    doc.addPage([600, 750]).drawText('Biological replicates: 8 per group.\nTechnical repeats: 3.\nMethod: Linear model.', {x: 40, y: 680, size: 12, font, lineHeight: 22})
+    writeFileSync(join(ws, 'study.pdf'), await doc.save({useObjectStreams: false}))
+    const result = await 取(ws, 'pdf_read').execute('pages', {file_path: 'study.pdf', start_page: 1, end_page: 2})
+    expect(result.isError).toBeUndefined()
+    const body = 文字(result)
+    expect(body).toContain('--- Page 1 ---')
+    expect(body).toContain('--- Page 2 ---')
+    expect(body.split('--- Page 2 ---')[1]).toContain('Biological replicates: 8 per group.')
+    expect(body.split('--- Page 2 ---')[1]).toContain('Technical repeats: 3.')
+  })
   it("14 个工具齐全；关一族少一族；off 全关", () => {
     expect((officeTools("/tmp", 全开) as 工具[]).map((t) => t.name).sort()).toEqual(
       [

@@ -91,8 +91,8 @@ async function startSession(page: Page, 首句 = "开始") {
  * 「两处长得一样的东西等于没有判据」的另一面）。
  */
 const 分类计数: ReadonlyArray<[string, string]> = [
-  // main已有analysis-delivery在内的8个内置技能，旧视觉计数尚未同步。
-  ["Skills", "8"],
+  // 新增文献调研技能；只同步数量，保留原截图、阈值和遮罩。
+  ["Skills", "9"],
   ["子 Agent", "22"],
   ["插件", "8"],
   ["MCP 服务器", "0"],

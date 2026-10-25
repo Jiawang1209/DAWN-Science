@@ -5,6 +5,7 @@
 import { 本轮内核语言 } from '../kernel/shortcuts.js'
 import { 扫内核指令 } from '../files/mentions.js'
 import { displayTerminalRequest } from '../terminal/request.js'
+import { skillUserRequest } from '../skills/request.js'
 
 export const 讨论执行指引 =
   '先判断用户当前是在讨论还是要求执行。普通聊天、解释概念、比较方法、讨论方案、询问看法时，直接用文字回答；' +
@@ -23,8 +24,7 @@ type Entry = { type?: string; message?: { role?: string; content?: unknown } }
 
 /** 排除引用 / 代码与附图转述；这些文字不是用户向当前助手发出的指令。 */
 export function 指令文本(content: unknown): string {
-  const text = typeof content === 'string' ? content : Array.isArray(content)
-    ? content.flatMap((b: { type?: string; text?: string }) => b?.type === 'text' && typeof b.text === 'string' ? [b.text] : []).join('\n') : ''
+  const text = skillUserRequest(content)
   let plain = displayTerminalRequest(text).split('[以下是随消息附上的')[0]!
     .replace(/```[^]*?(?:```|$)|~~~[^]*?(?:~~~|$)/g, '')
     .replace(/^\s*>.*$/gm, '')
@@ -61,7 +61,7 @@ export function 执行指令(content: unknown): boolean | undefined {
       || /^(?:please\s+)?(?:(?:start|continue|resume)\s+(?:running|executing|the analysis)|(?:run|execute|calculate)\b)/i.test(clause)) result = false
   }
   // @R/@Py 是用户显式运行入口；同句“先别运行”优先于快捷标记。
-  if (result !== true && 本轮内核语言([{ role: 'user', content }])) return false
+  if (result !== true && 本轮内核语言([{ role: 'user', content: skillUserRequest(content) }])) return false
   return result
 }
 

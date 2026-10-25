@@ -1,6 +1,7 @@
 /** 工具选择靠指引；只有用户明确的内核禁令在运行时强制执行。 */
 import { 指令文本 } from './execution-boundary.js'
 import { 本轮内核语言 } from '../kernel/shortcuts.js'
+import { skillUserRequest } from '../skills/request.js'
 
 export const 工具选择指引 =
   '按当前问题选择必要且代价合适的工具。查询下载进度、任务状态、日志或文件情况时，先读取已有摘要、状态文件和清单，必要时补查有限日志、文件属性或进程状态。' +
@@ -37,7 +38,7 @@ function 内核指令(content: unknown): boolean | undefined {
     if (new RegExp(`^${lead}(?:开始|继续|恢复)?\\s*(?:启动|开启|使用|调用|运行)\\s*(?:${target})`, 'i').test(text)
       || /^(?:please\s+)?(?:start|launch|resume|use)\s+(?:the\s+)?(?:(?:python|r|jupyter)\s+)?kernel\b/i.test(text)) result = false
   }
-  if (result !== true && 本轮内核语言([{ role: 'user', content }])) return false
+  if (result !== true && 本轮内核语言([{ role: 'user', content: skillUserRequest(content) }])) return false
   return result
 }
 

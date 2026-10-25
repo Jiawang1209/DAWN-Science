@@ -43,4 +43,12 @@ Electron 覆盖新插件默认关闭、启用持久化、新会话装配、关�
 
 ## 本地集成
 
-待分支提交、合入本地 main 和主目录复验后补记；不推送。
+规划提交 `2366a58f` 与实现提交 `32e91f31` 已经独立分支快进合入本地 main，起点 `4e1c116b`。主目录复验：
+
+- 类型检查与构建均通过：`main-typecheck.log`、`main-build.log`。
+- 13 文件、243 项相关测试通过，覆盖新旧文献、共享 mock、方案/讨论/路线门、原有插件及溯源：`main-related.log`。
+- 同组 44/44 Electron 通过，含 14 个未改视觉基线：`main-electron.log`。
+- source/scripts/tests 与已验证分支完全一致；没有主目录专用源代码改动。
+- 固定 launcher 已重新启动 `codex/crossref-literature` / `32e91f31` 的预览，保留既有隔离 profile，停在新插件入口，Crossref 保持关闭。`preview-native.png` 是已提交版本。
+
+保留正在使用的预览工作树。随后仅补记验收与开发历史，未推送、未发布、未替换已安装应用。

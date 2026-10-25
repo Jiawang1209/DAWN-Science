@@ -30,5 +30,5 @@
 
 ## 4. 本地集成
 
-- [ ] 新增 `docs/reviews/2026-10-25-crossref-literature-verification.md`，更新用户使用说明、CLAUDE 入口和开发历史；复核权限、来源、限流/取消、命名与依赖。
-- [ ] 提交独立分支，主目录 `git merge --ff-only codex/crossref-literature`，复验主目录类型、构建、相关单元与 Electron，补记实际证据并保持 Git 干净；不推送。
+- [x] 新增 `docs/reviews/2026-10-25-crossref-literature-verification.md`，更新用户使用说明、CLAUDE 入口和开发历史；复核权限、来源、限流/取消、命名与依赖。
+- [x] 提交独立分支，主目录 `git merge --ff-only codex/crossref-literature`，复验主目录类型、构建、相关单元与 Electron，补记实际证据并保持 Git 干净；不推送。

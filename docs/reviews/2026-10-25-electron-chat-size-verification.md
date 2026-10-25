@@ -6,4 +6,4 @@
 
 最终 Electron 1/1（2.6秒）；相关字号状态/设置/设计契约单测3文件108/108；类型与完整构建通过。未修改产品源码、超时、容差或截图基线。自审确认两个角色均明确选择，重载检查的是原会话而非新建样例；git diff --check 通过。
 
-日志/源码SHA256：/Users/liuyue/Documents/Codex/2026-10-25/dawn-science-remaining-electron/chat-size/。主目录合并后复验及提交信息另记。未推送、未替换安装版。
+日志/源码SHA256：/Users/liuyue/Documents/Codex/2026-10-25/dawn-science-remaining-electron/chat-size/。f4b1b601 已快进 main，主目录同用例 1/1 再次通过（2.6秒）；应用源码与构建验证版本一致，main.log 与 run-03.json 留存。未推送、未替换安装版。

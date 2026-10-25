@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：速查包含当前对话查找
+
+- **Type**: test
+- **Motivation**: 速查新增Ctrl/Command+F后，旧E2E仍只数12个键位。
+- **What**: 完整校验13项平台键位与查找行，原焦点/草稿/宽窄亮暗目标保留，不改产品。
+- **Verification**: 整份palette9项、组件26项及类型通过；见 docs/reviews/2026-10-25-electron-shortcut-reference-verification.md。
+- **Impact**: 独立codex/electron-shortcut-reference，按授权本地合并、不推送。
+
 ### 2026-10-25 — 剩余 Electron：版本号按全局状态栏契约验收
 
 - **Type**: test

@@ -169,7 +169,15 @@ test("搜索旁的快捷键速查：分组、只读、退出与命令面板各�
   await expect(dialog.getByText("通用导航", { exact: true })).toBeVisible()
   await expect(dialog.getByText("对话输入", { exact: true })).toBeVisible()
   await expect(dialog.locator("button")).toHaveCount(1)
-  await expect(dialog.locator("kbd")).toHaveCount(12)
+  const mac = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent))
+  const mod = mac ? "⌘" : "Ctrl"
+  // 现行速查包含当前对话查找；核对具体键位，避免只改总数而漏掉错误内容。
+  await expect(dialog.locator("kbd")).toHaveText([
+    `${mod} K`, `${mod} P`, mac ? "⌃ ⇧ G" : "Ctrl Shift G", `${mod} F`,
+    "Enter", "Shift Enter", `${mod} Enter`, mac ? "⌘⇧E" : "Ctrl+Shift+E",
+    "Esc", "Tab", "↑ ↓", `${mod} Enter`, "Ctrl C",
+  ])
+  await expect(dialog.locator(".shortcut-row").filter({ hasText: "查找当前对话" }).locator("kbd")).toHaveText(`${mod} F`)
   await page.keyboard.press("Tab")
   await expect(dialog.getByRole("button")).toBeFocused()
   await page.keyboard.press("Escape")

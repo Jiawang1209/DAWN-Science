@@ -8,6 +8,19 @@
 import { test, expect } from "./fixtures.js"
 import { resolve } from "node:path"
 import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
+import type { Page } from "@playwright/test"
+
+async function 检查优化入口(page: Page) {
+  const add = page.locator("main.main").getByRole("button", { name: "添加内容", exact: true })
+  await add.click()
+  const menu = page.getByRole("menu", { name: "添加内容", exact: true })
+  const enhance = menu.getByRole("menuitem", { name: "优化输入", exact: true })
+  await expect(enhance).toBeVisible()
+  await expect(enhance).toHaveAttribute("aria-haspopup", "menu")
+  await page.keyboard.press("Escape")
+  await expect(menu).toHaveCount(0)
+  await expect(add).toBeFocused()
+}
 
 const 有内核 = resolve(import.meta.dirname, "fixtures", "py-with-kernel")
 const 没内核 = resolve(import.meta.dirname, "fixtures", "py-without-kernel")
@@ -57,8 +70,8 @@ test.describe("首启向导", () => {
     await expect(page.locator(".setup-wizard")).toBeVisible()
     await page.getByRole("button", { name: "先跳过" }).click()
     await expect(page.locator(".setup-wizard")).toHaveCount(0)
-    // 「优化输入」常驻（2026-08-28 作者定的）：这条夹具里有 ds-chat（native），所以它不灰；灰着说理由的形状在「产品原样的默认配置」那组验
-    await expect(page.getByRole("button", { name: /优化/ })).toBeVisible()
+    // 优化入口现位于添加菜单；未填凭证的状态仍由下方红字明确表达。
+    await 检查优化入口(page)
     const 红字 = page.locator(".statusbar").getByRole("button", { name: /还没有填任何 API key/ })
     await expect(红字).toBeVisible()
     await 红字.click()
@@ -90,8 +103,8 @@ test.describe("首启向导 · 产品原样的默认配置", () => {
     await 向导.getByRole("button", { name: "开始使用 →" }).click()
     await expect(向导).toHaveCount(0)
 
-    // 空态屏就该有「优化输入」——它只给 native（草稿为空时它的无障碍名是「先写点什么再优化」）
-    await expect(page.getByRole("button", { name: /优化/ })).toBeVisible()
+    // 默认配置填key后，首页与原生对话均保留可访问的优化菜单入口。
+    await 检查优化入口(page)
 
     const 输入 = page.getByPlaceholder(/输入问题/)
     await 输入.fill("请说一句话")
@@ -100,7 +113,7 @@ test.describe("首启向导 · 产品原样的默认配置", () => {
     await expect(page.locator(".conv-title")).toBeVisible()
     // 假模型回了话 = 这段会话走的是 native 链路；走 claude CLI 的话这里是「找不到 claude」
     await expect(page.locator(".conversation")).toContainText("假模型已应答", { timeout: 30_000 })
-    await expect(page.getByRole("button", { name: /优化/ })).toBeVisible()
+    await 检查优化入口(page)
 
     const agentId = await page.evaluate(async () => {
       const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: Array<{ projectId: string }> }> } }

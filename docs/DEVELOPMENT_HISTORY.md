@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：向导经添加菜单检查优化入口
+
+- **Type**: test
+- **Motivation**: 首启用例仍查旧常驻优化按钮，未走现行添加菜单。
+- **What**: 首页/原样配置/原生回复后三处菜单入口与关闭焦点检查，保留key/解释器/native链路目标，不改产品。
+- **Verification**: 向导Electron3项、组件10项及类型通过；见 docs/reviews/2026-10-25-electron-setup-wizard-verification.md。
+- **Impact**: 独立codex/electron-setup-wizard，按授权本地合并、不推送。
+
 ### 2026-10-25 — 归档临时会话先就绪摘要再打开，保住搜索命中
 
 - **Type**: fix

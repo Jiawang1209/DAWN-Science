@@ -227,3 +227,21 @@ describe("independent analysis verification", () => {
     ).toBe(true);
   });
 });
+
+it.each([
+  ["raw header", " id,value\nA,2.5\n", "id,value\nA,2.5\n", "failed", "表头"],
+  ["placeholder collision", ",value\nA,2.5\n", "（第 1 列没有名字）,value\nA,2.5\n", "failed", "表头"],
+  ["empty record", "id\nA\n\n", "id\nA\n", "failed", "行数"],
+  ["quoted newline", 'id,label\r\nA,"a\r\nb"\r\n', 'id,label\nA,"a\nb"\n', "failed", "label"],
+  ["invalid quoting", "id,label\nA,bad\n", 'id,label\nA,"bad', "partial", "引号未闭合"],
+] as const)("persists %s comparison outcome without altering reference data", async (_name, source, output, state, note) => {
+  const f = await setup(`import pathlib,sys\nout=pathlib.Path(sys.argv[2])\n(out/'model.csv').write_text(${JSON.stringify(output)},encoding='utf-8')\n`, { python: "/usr/bin/python3", source });
+  const result = await run(f.service, f.record);
+  expect(result.verification.state).toBe(state);
+  expect(result.verification.exitCode).toBe(0);
+  expect(result.verification.checks?.[0]?.note).toContain(note);
+  const saved = JSON.parse(readFileSync(join(f.root, result.verification.directory!, "verification.json"), "utf8"));
+  expect(saved.state).toBe(state);
+  expect(f.service.list()[0]?.verification.state).toBe(state);
+  expect(readFileSync(join(f.root, "results/model.csv"), "utf8")).toBe(source);
+});

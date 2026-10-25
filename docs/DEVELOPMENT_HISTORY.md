@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 交付表格核验改用严格原始记录解析
+
+- **Type**: fix
+- **Motivation**: 预览解析会改写表头、移除空记录并宽松接受错误引号，导致不同或损坏的输出被判通过。
+- **What**: 交付比较独立严格解析，保留原始表头和引号内换行/空记录；语法损坏标记未比较，保留数值规则和行数预算，原文件预览保持。
+- **Verification**: 新回归先红后绿，8文件110项及真实Electron8项、类型与构建通过；见 docs/reviews/2026-10-25-delivery-table-parser-verification.md。
+- **Impact**: 独立codex/delivery-table-parser，本地验证后合并main，不推送、不替换安装版。
+
 ### 2026-10-25 — 独立交付验证按流保留UTF-8日志
 
 - **Type**: fix

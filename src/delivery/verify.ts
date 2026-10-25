@@ -19,7 +19,7 @@ import {
   type DeliveryRecord,
   type DeliveryVerify,
 } from "../protocol/delivery.js";
-import { 读成表 } from "../files/table.js";
+import { readComparisonTable } from "./comparison-table.js";
 import {
   deliveryPath,
   writeDeliveryFile,
@@ -156,14 +156,11 @@ export function compareDeliveryText(
       same: equalValue(parseComparisonJson(a), parseComparisonJson(b), tolerance),
       note: `JSON 完整字段/数组比较；整数、样本量及已识别编号/类别字段精确比较，其余可安全表示的小数容差 ${tolerance}`,
     };
-  const x = 读成表(a, true, 20_000),
-    y = 读成表(b, true, 20_000);
-  if (x.rowsRead !== x.totalRows || y.rowsRead !== y.totalRows)
-    throw new UserFacingError("表格超过完整比较行数上限，未比较");
-  const columns = x.columns.map((c) => c.name),
-    other = y.columns.map((c) => c.name);
+  const x = readComparisonTable(a, 20_000),
+    y = readComparisonTable(b, 20_000);
+  const columns = x.columns, other = y.columns;
   if (
-    !columns.length ||
+    !columns.length || columns.every(name => !name.trim()) ||
     new Set(columns).size !== columns.length ||
     !equalValue(columns, other, 0)
   )

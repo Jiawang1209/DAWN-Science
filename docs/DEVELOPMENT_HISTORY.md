@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：预览标题测字行而非滚动条高度
+
+- **Type**: test
+- **Motivation**: 窄坞标题水平滚动条被旧盒高判据误认成文字竖排。
+- **What**: 测Range实际单行文字和原行高阈值，增加聚焦/横向滚动检查，保留按钮/边界断言，不改产品。
+- **Verification**: 先红并记录15px字形/29.2px盒高；files整份14项、相关UI138项、类型通过，复用相同应用构建；见 docs/reviews/2026-10-25-electron-file-preview-heading-verification.md。
+- **Impact**: 独立codex/electron-file-preview-heading，按授权本地合并，不推送。
+
 ### 2026-10-25 — 剩余 Electron：CLI 模型绑定与展示验收
 
 - **Type**: test

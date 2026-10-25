@@ -534,9 +534,23 @@ test("**窄坞：顶行按钮都在、先缩时间戳、预览头不竖排**", a
   await 行.click()
   const 头 = page.locator(".preview-head")
   await expect(头.locator(".name")).toHaveText("AGENTS.md")
-  const 名高 = await 头.locator(".name").evaluate((el) => el.getBoundingClientRect().height)
-  const 一行 = await 头.locator(".name").evaluate((el) => parseFloat(getComputedStyle(el).lineHeight))
-  expect(名高, "文件名竖排了").toBeLessThanOrEqual(一行 + 1)
+  // 单行文件名允许横向滚动；元素盒包含滚动条，不能用盒高判断文字换行。
+  const 名 = 头.locator(".name")
+  await expect(名).toHaveCSS("white-space", "nowrap")
+  const 排版 = await 名.evaluate(el => {
+    const range = document.createRange(); range.selectNodeContents(el)
+    return { 文字行: [...range.getClientRects()].map(r => ({ 高: r.height, 顶: r.y })),
+      行高: parseFloat(getComputedStyle(el).lineHeight), 可见宽: el.clientWidth, 全宽: el.scrollWidth }
+  })
+  expect(排版.文字行, "文件名实际字形应只有一行").toHaveLength(1)
+  expect(排版.文字行[0]!.高, "文件名竖排了").toBeLessThanOrEqual(排版.行高 + 1)
+  expect(排版.可见宽).toBeGreaterThan(0)
+  await 名.focus()
+  await expect(名).toBeFocused()
+  if (排版.全宽 > 排版.可见宽) {
+    await 名.press("ArrowRight")
+    await expect.poll(() => 名.evaluate(el => el.scrollLeft)).toBeGreaterThan(0)
+  }
   const 删 = 头.getByRole("button", { name: "移到废纸篓" })
   const 删高 = (await 删.boundingBox())!.height
   expect(删高, "按钮折成竖条了").toBeLessThan(40)

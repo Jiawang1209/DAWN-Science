@@ -6,6 +6,6 @@
 
 改为测Range实际文字行数/字形高，仍用原line-height+1门限；明确nowrap、非零可读宽度、聚焦及发生溢出时ArrowRight能滚动。顶行可达、时间戳先收缩、按钮高度不竖排均保持；不改产品CSS、不隐藏滚动条、不放宽阈值或超时。临时测量日志移除，证据保留。
 
-最终整份files14/14通过（40.1秒），预览/收起/设计契约3文件138/138，类型通过。应用源码/脚本/依赖/单测与main相同，复用同版本已验证构建；git diff --check与自审通过。主目录集成复验另记。
+最终整份files14/14通过（40.1秒），预览/收起/设计契约3文件138/138，类型通过。应用源码/脚本/依赖/单测与main相同，复用同版本已验证构建；git diff --check与自审通过。17a05a1e 已快进本地main，主目录窄坞及窗口边界2/2再次通过（4.4秒），main.log/run-10.json留存。
 
 证据：/Users/liuyue/Documents/Codex/2026-10-25/dawn-science-remaining-electron/file-preview-heading/，原始失败截图/trace在run-08-results，最终run-09.json。未推送、未替换安装版。

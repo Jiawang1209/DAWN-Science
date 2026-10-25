@@ -22,4 +22,6 @@
 
 ## 本地集成
 
-验证通过后按已有授权快进合并本地 main，并在主目录复验。具体集成提交与主目录结果另记于下方。未推送，不替换已安装应用。
+2026-10-25 已将修复提交 b4d587a29cd43cfe2991a8ecc36ac27927f69aae 从 516f7486 快进合并本地 main。主目录 /Users/liuyue/Desktop/Github_repos/dawn-science 与修复分支代码一致；主目录重新类型检查、完整构建通过，定向 4 文件 75 项通过（3.01 秒），同样的 7 项真实 Electron 全通过（31.2 秒）。日志 main-typecheck.log、main-build.log、main-unit.log、main-e2e.log。后续文档提交只记录这些结果。未推送，不替换已安装应用。
+
+第一项独立交付完成后，下一项从本次 main 创建 codex/delivery-comparison 分支，处理编号、类别和不安全整数被核验误判的问题；不将下一项改动混入本分支。

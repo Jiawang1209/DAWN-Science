@@ -12,6 +12,6 @@
 - [x] 在共用 mock-inference-server 中加入可控多轮定时夹具，在 e2e/schedule.spec.ts 验证真实 Electron 的运行中状态、最终成功、后续失败及用户停止取消；保持 dev:mock 与 E2E 共用模型 mock。
 - [x] 运行定向回归、npm run typecheck、npm test、npm run build、相关 Electron；记录实际结果与边界。
 - [x] 自审变更与失败/取消竞争；更新 DEVELOPMENT_HISTORY 和独立 review 证据；提交本切片。
-- [ ] 将验证通过的提交快进合并本地 main，确认代码相同及相关运行路径；然后才创建下一项分支。
+- [x] 修复提交 b4d587a2 已快进合并本地 main；主目录代码一致、类型/构建、75 项定向及 7 项 Electron 复验通过。下一项从该 main 另建 codex/delivery-comparison 分支。
 
 本轮依用户指示原会话内串行执行，无子 agent。下一项不混入本分支。

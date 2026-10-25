@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 子agent重开后按工具身份和原始入参核验读回
+
+- **Type**: test
+- **Motivation**: 紧凑摘要已与原始路径分开，旧标题匹配误报。
+- **What**: read唯一性、读取摘要和展开README入参分开检查，保留持久化状态/答复。
+- **Verification**: Electron2项、组件25项、类型通过；见 docs/reviews/2026-10-25-electron-subagent-readback-verification.md。
+- **Impact**: 独立codex/electron-subagent-readback，本地合并，不推送。
+
 ### 2026-10-25 — 滚动回归不再依赖会被续问替换的占位文字
 
 - **Type**: test

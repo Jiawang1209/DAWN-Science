@@ -110,7 +110,11 @@ test.describe("子 agent 看得见", () => {
     await chip.click()
     const 格 = page.locator(".subagent-pane")
     // 临时会话的工作目录里未必有 README——read 成败都是一条 read 行，验的是「过程读回来了」
-    await expect(格.locator(".tool-head").filter({ hasText: "README.md" })).toHaveCount(1, { timeout: 30_000 })
+    const 读取 = 格.locator('.tool[data-tool-name="read"]')
+    await expect(读取).toHaveCount(1, { timeout: 30_000 })
+    await expect(读取.locator(".tool-head")).toContainText("读取文件")
+    if (await 读取.locator(".tool-head").getAttribute("aria-expanded") !== "true") await 读取.locator(".tool-head").click()
+    await expect(读取.locator(".tool-input")).toContainText("README.md")
     await expect(格).toContainText("我先读一下 README。")
     await expect(格).toHaveAttribute("data-status", "ok")
     await expect(格.locator(".subagent-title")).not.toContainText("运行中")

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 远端会话时间与菜单列补回父行右侧留白
+
+- **Type**: fix
+- **Motivation**: 侧栏测试入口校准后发现，服务器内层会话右列比项目偏左12px。
+- **What**: 只补内层列表宽度，保留层级；测试按现行导航/计数规范覆盖四组和归档。
+- **Verification**: 几何先红后绿，Electron10项、组件20项、构建/类型及截图检查通过；见 docs/reviews/2026-10-25-sidebar-session-columns-verification.md。
+- **Impact**: 独立codex/sidebar-session-columns，按授权本地合并、不推送。
+
 ### 2026-10-25 — 主侧输入卡环境栏保持相同基础高度
 
 - **Type**: fix

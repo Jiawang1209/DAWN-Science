@@ -8256,7 +8256,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .sidebar .server-navigation .side-subhead { min-height: 48px; padding-left: var(--dawn-space-2); padding-right: 0; font-weight: var(--dawn-weight-medium); background: transparent; }
 .sidebar .server-navigation .side-subhead-row:hover { background: var(--dawn-row-hover); }
 /* remote-row 已缩进 28px；子任务只补剩余距离，与全局 33px 会话列表对齐。 */
-.sidebar .server-navigation .server-session-list { padding-left: calc(33px - var(--dawn-space-3) - var(--dawn-space-4)); }
+/* 父机器行已留右侧12px：内层会话补回宽度，时间/菜单才与项目和普通会话同列。 */
+.sidebar .server-navigation .server-session-list {
+  padding-left: calc(33px - var(--dawn-space-3) - var(--dawn-space-4));
+  width: calc(100% + var(--dawn-space-3));
+}
 /* 窄栏先收起时间，状态与管理入口保持同排；完整时间仍可在名称悬停中读取。 */
 @container dawn-server (max-width: 240px) {
   .server-last { display: none; }

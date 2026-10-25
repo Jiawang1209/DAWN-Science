@@ -23,4 +23,4 @@
 
 ## 本地集成
 
-主目录复验结果在合并后追加。仅本地提交合并，不推送或替换安装版；下一项长下载路径布局使用新分支。
+修复提交 3481f708 已从 2e4c26a0 快进合并本地 main。主目录串行执行类型检查/完整构建、24 文件 239 项定向（34.17 秒）及真实 Python/Electron 2 项（8.5 秒），全部通过，日志 main-typecheck.log、main-build.log、main-focused.log、main-e2e.log 保存在同一证据目录。仅本地提交合并，不推送或替换安装版；下一项长下载路径布局使用 codex/settings-path-layout 分支。

@@ -15,7 +15,7 @@
 - 相关3文件19项通过；类型与完整构建通过。
 - 原归档失败项1/1（4.9秒）；完整搜索、归档、恢复、会话查找4文件18/18（59.1秒）。
 - 最终全量Vitest499文件，5290通过、10跳过（116.05秒）。第一版5293的结果明确不作为修复通过证据。
-- 自审仅App一处等待和对应回归，search-jump/views/E2E均与基线一致；git diff --check通过。主目录集成复验另记。
+- 自审仅App一处等待和对应回归，search-jump/views/E2E均与基线一致；git diff --check通过。22d88d62已快进本地main；主目录重新类型/完整构建，归档相关5/5（11.9秒）通过，main日志/run-28留存。
 
 证据：/Users/liuyue/Documents/Codex/2026-10-25/dawn-science-remaining-electron/archived-search/，包含原始/分层失败、已撤回尝试、最终完整日志/源码SHA256与diagnosis-notes；原run-24、首次方案run-25、最终run-26/27。
 

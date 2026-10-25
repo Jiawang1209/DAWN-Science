@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 子agent用例按自适应坞入口完整性验收
+
+- **Type**: test
+- **Motivation**: 旧9标签铺满断言与现行按宽度收纳契约冲突。
+- **What**: 保留几何与可达性，覆盖当前标签、完整11入口、更多菜单焦点和实际切换。
+- **Verification**: Electron8项、组件34项、类型通过；见 docs/reviews/2026-10-25-electron-subagent-dock-tabs-verification.md。
+- **Impact**: 独立codex/electron-subagent-dock-tabs，本地合并，不推送。
+
 ### 2026-10-25 — 子agent重开后按工具身份和原始入参核验读回
 
 - **Type**: test

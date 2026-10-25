@@ -121,7 +121,7 @@ test.describe("子 agent 看得见", () => {
     await expect(格.locator(".subagent-result")).toContainText(CANNED_REPLY)
   })
 
-  test("看得见：chip、「接着问」、回清单都不是悬停才出现的；坞的九格在默认宽度下都在标签条的可见框里", async ({ dawn }) => {
+  test("看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达", async ({ dawn }) => {
     const { page, workspace } = dawn
     writeFileSync(join(workspace, "README.md"), "# 一个测试仓库\n")
     await 在项目里开会话(page)
@@ -144,21 +144,35 @@ test.describe("子 agent 看得见", () => {
     await 清单项.first().click()
     await expect(page.locator(".subagent-pane .subagent-result")).toBeVisible()
 
-    /**
-     * 九格都摆得下（2026-09-27，加了「子 agent」那一格之后）：标签条横着滚、没有滚动条——
-     * 最后那格「对话」若掉在可见框外面，人就不知道有它（「看不见的能力等于不存在」）。量框，不信 `toBeVisible()`。
-     */
+    // 2026-10-11：按实际宽度收纳标签；当前子agent仍可见，其他入口从更多到达。
     const 条 = 坞(page).locator(".dock-tabs-row")
     const 格们 = 条.getByRole("tab")
-    await expect(格们).toHaveCount(9)
+    const visibleNames = await 格们.evaluateAll(els => els.map(el => el.getAttribute("aria-label")))
+    expect(visibleNames.length).toBeGreaterThan(0)
+    await expect(条.getByRole("tab", { name: "子 agent", exact: true })).toHaveAttribute("aria-selected", "true")
     const 条框 = (await 条.boundingBox())!
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < visibleNames.length; i++) {
       const 框 = (await 格们.nth(i).boundingBox())!
-      const 名 = await 格们.nth(i).getAttribute("aria-label")
-      expect(框.x, `「${名}」左缘在标签条外`).toBeGreaterThanOrEqual(条框.x - 0.5)
-      expect(框.x + 框.width, `「${名}」右缘在标签条外`).toBeLessThanOrEqual(条框.x + 条框.width + 0.5)
+      expect(框.x, `「${visibleNames[i]}」左缘在标签条外`).toBeGreaterThanOrEqual(条框.x - 0.5)
+      expect(框.x + 框.width, `「${visibleNames[i]}」右缘在标签条外`).toBeLessThanOrEqual(条框.x + 条框.width + 0.5)
     }
-    expect(await 条.evaluate((el) => el.scrollWidth - el.clientWidth), "默认宽度下标签条不该需要横滚").toBeLessThanOrEqual(0)
+    expect(await 条.evaluate(el => el.scrollWidth - el.clientWidth), "默认宽度下标签条不该需要横滚").toBeLessThanOrEqual(0)
+    const more = 坞(page).getByRole("button", { name: "更多面板", exact: true })
+    await more.click()
+    const menu = 坞(page).getByRole("menu", { name: "更多面板", exact: true })
+    const hiddenNames = await menu.getByRole("menuitem").allTextContents()
+    expect([...visibleNames, ...hiddenNames].sort()).toEqual(["文件", "产物", "笔记本", "路线", "审阅", "概览", "网页", "子 agent", "团队", "对话", "Bot"].sort())
+    await menu.press("Escape")
+    await expect(menu).toHaveCount(0)
+    await expect(more).toBeFocused()
+    // 同一个入口能到实际面板，再返回原子agent，读回内容不丢。
+    await 进坞(page, "对话")
+    await expect(坞(page).getByRole("tab", { name: "对话", exact: true })).toHaveAttribute("aria-selected", "true")
+    await 进坞(page, "子 agent")
+    await expect(清单项).toHaveCount(1)
+    await 清单项.first().click()
+    await expect(格.locator(".subagent-result")).toContainText(CANNED_REPLY)
+
   })
 })
 

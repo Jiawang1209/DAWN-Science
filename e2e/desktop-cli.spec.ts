@@ -2,9 +2,10 @@ import { test, expect, 在项目里开会话, 等进了对话 } from './fixtures
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { stripVTControlCharacters } from 'node:util'
+import { TerminalAgentStateSchema } from '../src/protocol/terminal.js'
 
 test('DAWN and Normal use the desktop model, preserve Shell state, and refuse pending input', async ({ dawn }) => {
-  const { page, workspace } = dawn
+  const { page, workspace, requests } = dawn
   await 在项目里开会话(page); await 等进了对话(page)
   await page.locator('.composer-card .attach-trigger').click()
   await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
@@ -31,9 +32,19 @@ test('DAWN and Normal use the desktop model, preserve Shell state, and refuse pe
   await dock.locator('.xterm-helper-textarea').focus(); await page.keyboard.press('Control+u')
   await agent.click()
   await expect(agent).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
-  await expect.poll(text).toContain('DAWN Science · deepseek/')
+  // TUI 自 2435cced 起展示模型名；同时核对桌面绑定和实际请求，不能只看标题。
+  const mode = TerminalAgentStateSchema.parse(await page.evaluate(async id => {
+    const response = await window.dawn!.invoke('getTerminalAgentMode', { terminalId: id })
+    if (!response.ok) throw new Error(response.error?.message ?? '读取终端模型失败')
+    return response.data
+  }, terminalId))
+  expect(mode.selection).toEqual({ provider: 'deepseek', model: 'deepseek-flash' })
+  await expect.poll(text).toContain(`DAWN Science · ${mode.selection!.model}`)
   await type('这是桌面 CLI 连接验收，请简短回答。')
   await expect.poll(text, { timeout: 30000 }).toContain('假模型已应答')
+  expect(requests).toEqual(expect.arrayContaining([
+    expect.objectContaining({ body: expect.objectContaining({ model: mode.selection!.model }) }),
+  ]))
   await normal.click()
   await expect(normal).toHaveAttribute('aria-pressed', 'true')
   await type('printf "%s|%s|%s" "$$" "$PWD" "$DAWN_MODE_SAMPLE" > after.txt')

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：CLI 模型绑定与展示验收
+
+- **Type**: test
+- **Motivation**: 桌面CLI用例仍等待旧provider/model标题，阻断后续Shell与会话验收。
+- **What**: 校验实际桌面绑定、当前模型名与请求模型，保留pending input/Shell状态/原会话继续与草稿边界，不改应用。
+- **Verification**: 两项Electron与相关60项通过，类型通过，复用相同应用源码的已验证构建；见 docs/reviews/2026-10-25-electron-desktop-cli-verification.md。
+- **Impact**: 独立 codex/electron-desktop-cli，按授权本地合并、不推送。
+
 ### 2026-10-25 — 剩余 Electron：对话字号区分用户与回答动作
 
 - **Type**: test

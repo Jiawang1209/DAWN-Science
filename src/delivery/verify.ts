@@ -3,6 +3,7 @@ import { decodeDeliveryText } from "./text.js";
 import { ComparedNumber, equalNumbers, exactNumericField, identityField, numericText, parseComparisonJson } from "./numbers.js";
 /** Explicit user confirmation starts an independent process. It never calls the session kernel. */
 import { spawn } from "node:child_process";
+import { StringDecoder } from "node:string_decoder";
 import { createHash, randomUUID } from "node:crypto";
 import {
   existsSync,
@@ -51,9 +52,11 @@ export async function runIndependent(
       detached: process.platform !== "win32",
       windowsHide: true,
     });
-    let stdout = "",
-      stderr = "",
-      truncated = false,
+    const logs = {
+      stdout: { text: "", bytes: 0, capped: false, decoder: new StringDecoder("utf8") },
+      stderr: { text: "", bytes: 0, capped: false, decoder: new StringDecoder("utf8") },
+    };
+    let truncated = false,
       stopped: string | undefined,
       killTimer: ReturnType<typeof setTimeout> | undefined;
     const kill = () => {
@@ -81,12 +84,13 @@ export async function runIndependent(
     signal.addEventListener("abort", abort, { once: true });
     if (signal.aborted) abort();
     const append = (which: "stdout" | "stderr", data: Buffer) => {
-      let text = which === "stdout" ? stdout : stderr;
-      const space = MAX_LOG - text.length;
-      if (data.length > space) truncated = true;
-      text += data.toString("utf8").slice(0, Math.max(0, space));
-      if (which === "stdout") stdout = text;
-      else stderr = text;
+      const log = logs[which];
+      const space = MAX_LOG - log.bytes;
+      if (data.length > space) { log.capped = true; truncated = true; }
+      const kept = data.subarray(0, Math.max(0, space));
+      log.bytes += kept.length;
+      // Pipe chunks can end inside a UTF-8 code point. Each stream owns its decoder.
+      log.text += log.decoder.write(kept);
     };
     child.stdout.on("data", (data) => append("stdout", data));
     child.stderr.on("data", (data) => append("stderr", data));
@@ -102,10 +106,12 @@ export async function runIndependent(
     child.on("close", (code) => {
       cleanup();
       kill();
+      // A budget cutoff must not flush an incomplete final character as replacement text.
+      for (const log of Object.values(logs)) if (!log.capped) log.text += log.decoder.end();
       resolve({
         code,
-        stdout,
-        stderr,
+        stdout: logs.stdout.text,
+        stderr: logs.stderr.text,
         ...(stopped ? { stopped } : {}),
         logTruncated: truncated,
       });

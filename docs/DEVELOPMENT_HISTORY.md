@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 独立交付验证按流保留UTF-8日志
+
+- **Type**: fix
+- **Motivation**: 中文/表情跨stdout或stderr数据块时被逐块解码成乱码，日志预算也混用了字节与字符。
+- **What**: 两路独立流式解码和1MiB字节预算；截断保留完整字符前缀及原有不完整日志标记。
+- **Verification**: 新回归3项先红后绿，交付模块55项、真实Electron6项、类型与构建通过。见 docs/reviews/2026-10-25-delivery-log-encoding-verification.md。
+- **Impact**: 独立codex/delivery-log-encoding，验证后合并本地main；不推送、不替换安装版。
+
 ### 2026-10-25 — 同步用户已接受的工作区视觉基线
 
 - **Type**: test

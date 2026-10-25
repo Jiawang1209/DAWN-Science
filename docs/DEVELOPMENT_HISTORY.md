@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 核对设计后同步8张过期视觉基线
+
+- **Type**: test
+- **Motivation**: 命令面板、概览、设置栏与侧对话仍含旧文字/表面/外框和版本。
+- **What**: 逐类查看亮暗diff/实际/预期，拷稳定actual；产品、mask及严格阈值保持。
+- **Verification**: 更新后全14项连续两遍通过；见 docs/reviews/2026-10-25-electron-visual-baselines-verification.md。
+- **Impact**: 独立codex/electron-visual-baselines，本地合并，不推送；仅macOS基线。
+
 ### 2026-10-25 — 工作面底色测试按10-21独立右坞契约验收
 
 - **Type**: test

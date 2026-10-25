@@ -4312,6 +4312,8 @@ ${描述}`
   }
 
   async stop(sessionId: SessionId): Promise<void> {
+    // 在第一个 await 前取消旧 Notebook 启动/执行；模型会话不在也要回收名下内核。
+    const 内核收尾 = this.opts.kernels?.收(sessionId).catch(() => {})
     this.opts.terminals?.revokeOwner(sessionId)
     this.stopBotTeam(sessionId)
     // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
@@ -4322,7 +4324,7 @@ ${描述}`
       // 到这里 start() 的收尾要么已经把它停干净(下面 get 拿不到直接返回),要么启动失败了
     }
     const s = this.sessions.get(sessionId)
-    if (!s) return
+    if (!s) { await 内核收尾; return }
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
     this.interruptAnalysisRoute(sessionId, '会话已停止')
@@ -4360,7 +4362,7 @@ ${描述}`
     // **这段对话用过的 run_code 内核也回收**(审查 debug H1):它们挂在 `对话内核` 里、不在 SessionManager,
     // 会话停了不收的话,python/R 进程与它的 zeromq socket 一直留着——端口泄漏,退出时还会 SIGABRT。
     // 收全部只在退出时兜底;按会话收才让长时间跑不积压一堆死内核。
-    void this.opts.kernels?.收(sessionId).catch(() => {})
+    await 内核收尾
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
     // 同 id 可以续接；上一段生命周期的观察者不能留下来重复记账和推送。
     this.sinks.delete(sessionId)

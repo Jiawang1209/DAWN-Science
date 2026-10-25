@@ -178,6 +178,8 @@ interface 一台 {
   在飞?: { reject: (e: Error) => void } | undefined
 }
 
+type 收核结果 = { 收了: 内核语言[]; 没收掉: { 语言: 内核语言; 原因: string }[] }
+
 export class 对话内核 {
   /** key：`对话:语言` */
   private readonly 表 = new Map<string, 一台>()
@@ -189,7 +191,10 @@ export class 对话内核 {
    * (进程还活着、再没人 close)。把「正在起」的 promise 也记下来,第二个调用等同一个 promise,
    * 而不是再起一台。起失败/起完都从这张表里摘掉。
    */
-  private readonly 起中 = new Map<string, Promise<一台>>()
+  private readonly 起中 = new Map<string, { 对话: SessionId; 语言: 内核语言; promise: Promise<一台> }>()
+  private readonly 清理代 = new Map<SessionId, number>()
+  private readonly 收中 = new Map<SessionId, Promise<收核结果>>()
+  private 全收中: Promise<void> | undefined
 
   constructor(private readonly opts: 挂载选项) {}
 
@@ -290,6 +295,9 @@ export class 对话内核 {
    * （「没配 Python 解释器」和「内核起崩了」是两回事）。
    */
   async 拿(对话: SessionId, 语言: 内核语言): Promise<一台> {
+    if (this.全收中 || this.收中.has(对话)) throw new Error("这段对话正在清理内核，请等清理结束后再运行")
+    const 代 = this.清理代.get(对话) ?? 0
+    const 当前 = () => !this.全收中 && !this.收中.has(对话) && (this.清理代.get(对话) ?? 0) === 代
     const 键 = 对话内核.键(对话, 语言)
     const 已有 = this.表.get(键)
     if (已有 && 已有.状态 !== "exited") return 已有
@@ -305,25 +313,27 @@ export class 对话内核 {
 
     // TOCTOU 收口(H4):已经有人在起同一台就等它,不再起第二台
     const 起中的 = this.起中.get(键)
-    if (起中的) return 起中的
-
-    const p = this.起一台(对话, 语言, 键)
-    this.起中.set(键, p)
+    const p = 起中的?.promise ?? this.起一台(对话, 语言, 键, 当前)
+    if (!起中的) this.起中.set(键, { 对话, 语言, promise: p })
     try {
-      return await p
+      const 一 = await p
+      if (!当前()) throw new Error("这段对话的内核已收掉，旧请求没有运行")
+      return 一
     } finally {
       // 起完(已进表)或起失败,都从「正在起」里摘掉
-      this.起中.delete(键)
+      // 失效后由收() 认领并删除，不能在全局清理轮到这个对话前丢掉晚到实例。
+      if (当前() && this.起中.get(键)?.promise === p) this.起中.delete(键)
     }
   }
 
-  private async 起一台(对话: SessionId, 语言: 内核语言, 键: string): Promise<一台> {
+  private async 起一台(对话: SessionId, 语言: 内核语言, 键: string, 当前: () => boolean): Promise<一台> {
     const workspace = this.opts.workspaceOf(对话)
     if (!workspace) {
       throw new Error(`这段对话没有工作目录，起不了 ${语言} 内核——代码总得有个地方跑`)
     }
 
     const interpreterPath = await this.opts.interpreterOf(语言, 对话)
+    if (!当前()) throw new Error("这段对话的内核已收掉，取消启动")
     if (!interpreterPath) {
       /**
        * **没配就明说没配，并说清去哪儿配。**
@@ -344,6 +354,7 @@ export class 对话内核 {
     // 起之前先说一声「正在起」：解释器有了、目录有了，剩下的就是等进程——这一段人得看得见
     // 远端要带上是哪台：远端起内核比本机慢得多，而「在等谁」是这段等待里唯一有用的信息
     this.opts.状态变了?.(对话, { language: 语言, state: "starting", ...(远 ? { 服务器: 远.label } : {}) })
+    if (!当前()) throw new Error("这段对话的内核已收掉，取消启动")
     let handle: SessionHandle
     try {
       handle = await this.opts.runtime.start({
@@ -370,7 +381,7 @@ export class 对话内核 {
       })
     } catch (e) {
       // 说过「正在起」就得说「起不来」：这台从没进表，`状态列表` 里看不出它来过
-      this.opts.状态变了?.(对话, { language: 语言, state: "exited", reason: e instanceof Error ? e.message : String(e), 起失败: true })
+      if (当前()) this.opts.状态变了?.(对话, { language: 语言, state: "exited", reason: e instanceof Error ? e.message : String(e), 起失败: true })
       throw e
     }
     /**
@@ -379,6 +390,8 @@ export class 对话内核 {
      * 而那时它还不在表里，`状态列表` 看不到（起不起得来还没定，不该先显示一台）。
      */
     const 一: 一台 = { 内核会话, handle, 对话, 语言, 状态: "idle", 解监听: () => {}, 队列: Promise.resolve(), 排队中: 0 }
+    // 收() 正在等这次启动；晚到实例只交回清理方，不入表、不推 idle、不执行。
+    if (!当前()) { 一.状态 = "exited"; return 一 }
     this.表.set(键, 一)
     this.反查.set(内核会话, 一)
 
@@ -462,6 +475,8 @@ export class 对话内核 {
      * 等执行时才接的话，那些**在屏幕上永远不会出现**——
      * 而它们恰恰是「它到底起来没有」的证据。
      */
+    // 「起来了」的同步回调可能已经收掉它，不能再给旧实例挂新监听。
+    if (!当前()) { 一.解监听(); return 一 }
     const 转 = this.opts.转发
     if (转) {
       const 解转发 = this.opts.runtime.attach(内核会话, (e) => 转(对话, 语言, e))
@@ -508,19 +523,27 @@ export class 对话内核 {
       signal?: AbortSignal
     },
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
+    const 代 = this.清理代.get(对话) ?? 0
+    const 检查 = () => {
+      if (this.全收中 || this.收中.has(对话) || (this.清理代.get(对话) ?? 0) !== 代)
+        throw new Error("这段对话的内核已收掉，旧代码没有运行")
+    }
     let 一 = await this.拿(对话, 语言)
+    检查()
     if (一.状态 === "detached") {
       /**
        * 服务器可能刚连上、接回还在路上（接回，定案 9）：等门。门后重新 `拿`——要么 `idle`（接回了）、
        * 要么 `exited`（没撑过去，`拿` 会摘掉它起新的一台）、要么仍 `detached`（还没连上，`真执行` 会回错）。
        */
       await this.opts.接回门?.(对话)
+      检查()
       一 = await this.拿(对话, 语言)
     }
     // 排队（见 `一台.队列`）：前一段失败了也不拖住后一段——失败是它自己的，队列只管顺序
     一.排队中++
     const 跑 = 一.队列.then(() => {
       一.排队中--
+      检查()
       if (opts?.signal?.aborted) {
         /**
          * **不写进内核也得把状态收回来**（审查 2026-09-25）。前一段收尾的那条 `status: idle` 到常驻监听时，
@@ -705,28 +728,50 @@ export class 对话内核 {
    * **一台起不来不该拦住其余的**：逐台收，收不掉的记下来交给调用方说出去，
    * 而不是抛出去让第一个失败吞掉后面几台。
    */
-  async 收(对话: SessionId): Promise<{ 收了: 内核语言[]; 没收掉: { 语言: 内核语言; 原因: string }[] }> {
-    const 收了: 内核语言[] = []
-    const 没收掉: { 语言: 内核语言; 原因: string }[] = []
-    const 摘了: 内核语言[] = []
-    for (const 一 of [...this.表.values()].filter((k) => k.对话 === 对话)) {
-      // 先摘耳朵再停：stop 引出的 exited 是我们自己要的，不该再当「状态变了」推一遍
-      一.解监听()
-      try {
-        // **`stop` 在运行时上，不在 handle 上**（tsc 当场抓住的想当然）
-        await this.opts.runtime.stop(一.内核会话)
-        收了.push(一.语言)
-      } catch (e) {
-        没收掉.push({ 语言: 一.语言, 原因: e instanceof Error ? e.message : String(e) })
+  async 收(对话: SessionId): Promise<收核结果> {
+    const 已在收 = this.收中.get(对话)
+    if (已在收) return 已在收
+    this.清理代.set(对话, (this.清理代.get(对话) ?? 0) + 1)
+    const 启动中 = [...this.起中.values()].filter(k => k.对话 === 对话)
+    const 已启动 = [...this.表.values()].filter(k => k.对话 === 对话)
+    const p = Promise.resolve().then(async (): Promise<收核结果> => {
+      const 收了: 内核语言[] = []
+      const 没收掉: { 语言: 内核语言; 原因: string }[] = []
+      const 已收 = new Set<SessionId>()
+      const 停 = async (一: 一台) => {
+        if (已收.has(一.内核会话)) return
+        已收.add(一.内核会话)
+        try {
+          await this.opts.runtime.stop(一.内核会话)
+          收了.push(一.语言)
+        } catch (e) {
+          没收掉.push({ 语言: 一.语言, 原因: e instanceof Error ? e.message : String(e) })
+        }
       }
+      // 活着的立即停；每台晚到时独立回收，不因另一台仍在启动而拖延。
+      await Promise.all([
+        ...已启动.map(停),
+        ...启动中.map(async k => { const 一 = await k.promise.catch(() => undefined); if (一) await 停(一) }),
+      ])
+      for (const 语言 of new Set([...已启动, ...启动中].map(k => k.语言))) this.opts.状态变了?.(对话, { language: 语言, state: "exited", 收掉: true })
+      return { 收了, 没收掉 }
+    }).finally(() => {
+      for (const k of 启动中) {
+        const 键 = 对话内核.键(对话, k.语言)
+        if (this.起中.get(键)?.promise === k.promise) this.起中.delete(键)
+      }
+      if (this.收中.get(对话) === p) this.收中.delete(对话)
+    })
+    this.收中.set(对话, p)
+    // 先登记清理屏障，再使旧队列失效；stop 失败也不能让旧代码继续排队。
+    for (const 一 of 已启动) {
+      一.状态 = "exited"
+      一.在飞?.reject(new Error("这段对话的内核已收掉，执行已停止"))
+      一.解监听()
       this.表.delete(对话内核.键(对话, 一.语言))
       this.反查.delete(一.内核会话)
-      摘了.push(一.语言)
     }
-    // 列表少了几项，也是「状态变了」——**在表里删完之后叫**，回调里 `状态列表` 才看不到它。
-    // 收掉是我们自己要的，不是内核退出，所以每台一次 `exited`、不带原因
-    for (const 语言 of 摘了) this.opts.状态变了?.(对话, { language: 语言, state: "exited", 收掉: true })
-    return { 收了, 没收掉 }
+    return p
   }
 
   /**
@@ -744,7 +789,7 @@ export class 对话内核 {
   }
 
   有活内核(): boolean {
-    return this.表.size > 0
+    return this.表.size > 0 || this.起中.size > 0 || this.收中.size > 0 || this.全收中 !== undefined
   }
 
   /**
@@ -752,8 +797,13 @@ export class 对话内核 {
    * 每台 5 个 ZMQ 端口一直留到进程被杀。逐台收,收不掉的吞掉(退出路径不该因一台卡住)。
    */
   async 收全部(): Promise<void> {
-    for (const 对话 of new Set([...this.表.values()].map((k) => k.对话))) {
-      await this.收(对话).catch(() => {})
-    }
+    if (this.全收中) return this.全收中
+    const 对话们 = new Set([...this.表.values(), ...this.起中.values()].map(k => k.对话))
+    for (const 对话 of this.收中.keys()) 对话们.add(对话)
+    const p = Promise.resolve().then(async () => {
+      await Promise.all([...对话们].map(对话 => this.收(对话).catch(() => {})))
+    }).finally(() => { if (this.全收中 === p) this.全收中 = undefined })
+    this.全收中 = p
+    return p
   }
 }

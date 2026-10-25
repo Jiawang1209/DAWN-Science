@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 内核清理涵盖启动中的实例与旧队列
+
+- **Type**: fix
+- **Motivation**: 关闭会话时遗漏正在启动的内核，启动晚到后仍入表并执行旧代码。
+- **What**: 以清理代次和屏障取消旧启动/队列，等待晚到实例回收，停止失败逐语言保留；全局退出计入启动中，Native stop 立即开始并等待名下内核清理；清完仍可明确重新懒起。
+- **Verification**: 10 项新增行为回归全部先红后绿，最终定向 75 项、全量 499 文件 5289 项通过（10 跳过），类型/完整构建通过；串行真实 Electron/真实 Python 2 项通过，核对启动中停止后标记未写入、PID 退出及正常 Notebook 变量复用。见 docs/reviews/2026-10-25-kernel-startup-cleanup-verification.md。
+- **Impact**: 独立 codex/kernel-startup-cleanup，验证后按授权合入本地 main；无协议/UI 改造，不推送、不替换安装版；其他系统/真实远端未在本轮验收。
+
 ### 2026-10-25 — SSH 启动期断开真正取消连接
 
 - **Type**: fix

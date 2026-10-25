@@ -32,4 +32,6 @@
 
 ## 本地集成
 
-分支验证已完成。主目录快进与复验结果在实际运行后补记；不推送、发布或替换安装版。保留此工作树承载固定隔离预览。
+已从 `2f804fbf` 快进合入本地 main（集成点 `8c52ffcf`），主目录重新运行 17 文件 264 项相关测试、typecheck、完整 build 均通过；真实构建上的文献调研、执行权限和全部原视觉基线合计 20/20 Electron 通过。对应 `literature-review-main-related.log`、`literature-review-main-typecheck.log`、`literature-review-main-build.log`、`literature-review-main-electron.log`。
+
+主目录的 src/skills/agents/scripts/tests/e2e 与实现提交 e469d976 无差异，后续变化仅为文档记录。未推送、发布或替换安装版。保留分支工作树承载固定隔离预览。

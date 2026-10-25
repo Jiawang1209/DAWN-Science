@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 增加无需密钥的 Crossref 论文索引
+
+- **Type**: feat
+- **Motivation**: 为科研文献增加一个无需密钥、审批或机构订阅的索引选择。
+- **What**: 独立默认关闭的 Crossref 插件，支持关键词/年份检索、DOI 登记元数据核对和真实记录 JSON/Markdown 保存。共用有界读取/保存，来源与缓存独立，公开请求串行节流且可取消；保留日期精度和缺失字段。不新增依赖、协议或参考项目标识。
+- **Verification**: 分支完整 510 文件、5402 项通过/10 原有跳过，类型/构建通过，相关 Electron 44/44（含 14 个未改视觉基线）通过；匿名真实接口、实际保存与固定原生预览检查通过。见 docs/reviews/2026-10-25-crossref-literature-verification.md。
+- **Impact**: 独立 codex/crossref-literature 分支，本地集成结果见验收记录。未推送、未发布、未替换安装版。
+
 ### 2026-10-25 — 增加可追溯的科研文献检索与清单保存
 
 - **Type**: feat

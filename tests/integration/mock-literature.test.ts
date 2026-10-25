@@ -15,3 +15,8 @@ it('只选择实际工具返回的身份，且失败后不继续保存',()=>{
   expect(literatureMockTool(failed)).toBeUndefined()
   expect(literatureMockReply(failed)).toContain('文献操作未完成')
 })
+it('明确的 Crossref 场景不会落到 OpenAlex 工具',()=>{
+  const body={messages:[{role:'user',content:'Crossref文献检索验收'}],tools:['crossref_search','crossref_lookup_doi','crossref_save'].map(name=>({type:'function',function:{name}}))}
+  expect(literatureMockTool(body).toolName).toBe('crossref_search')
+  expect(literatureMockTool({...body,tools})).toBeUndefined()
+})

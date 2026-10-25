@@ -27,10 +27,11 @@ export function saveReferences(workspace: string, directory: string, records: re
   const destination=mkdtempSync(join(parent,'references-'))
   const savedAt=new Date().toISOString()
   const payload={format:'dawn-literature-v1',savedAt,records}
-  const lines=['# 文献清单','',`保存时间：${savedAt}`,'','以下为 OpenAlex 索引返回的元数据；未据此声称已阅读全文或科学结论已获验证。','']
+  const sources=[...new Set(records.map(item=>item.origin.source))].join('、')
+  const lines=['# 文献清单','',`保存时间：${savedAt}`,'',`以下为 ${sources} 索引返回的元数据；未据此声称已阅读全文或科学结论已获验证。`,'']
   for(const [index,item] of records.entries()){
     const r=item.record
-    lines.push(`## ${index+1}. ${escape(r.title)}`,'',`- 作者：${r.authors.length?r.authors.map(escape).join('；'):'未提供'}${r.authorsTruncated?'（仅列前 40 位）':''}`,`- 年份：${r.year??'未提供'}`,`- 期刊／来源：${r.journal?escape(r.journal):'未提供'}`,`- DOI：${r.doi?`[${escape(r.doi)}](${link(r.doi)})`:'未提供'}`,`- 索引记录：[${r.id}](${r.sourceUrl})`,`- 查询时间：${item.origin.retrievedAt}`,`- 查询方式：${item.origin.query.kind==='doi'?'DOI 核对':'关键词检索'}`,`- 查询条件：${escape(JSON.stringify(item.origin.query))}`,`- 查询来源：[OpenAlex API](${link(item.origin.requestUrl)})`,'','### 摘要','',r.abstract?escape(r.abstract)+(r.abstractStatus==='truncated'?'\n\n（摘要超过预算，已截断）':''):r.abstractStatus==='invalid'?'来源摘要结构无效，未拼接。':'来源未提供摘要。','')
+    lines.push(`## ${index+1}. ${escape(r.title)}`,'',`- 作者：${r.authors.length?r.authors.map(escape).join('；'):'未提供'}${r.authorsTruncated?'（仅列前 40 位）':''}`,`- 年份：${r.year??'未提供'}`,`- 期刊／来源：${r.journal?escape(r.journal):'未提供'}`,`- DOI：${r.doi?`[${escape(r.doi)}](${link(r.doi)})`:'未提供'}`,`- 索引记录：[${escape(r.id)}](${link(r.sourceUrl)})`,`- 查询时间：${item.origin.retrievedAt}`,`- 查询方式：${item.origin.query.kind==='doi'?'DOI 核对':'关键词检索'}`,`- 查询条件：${escape(JSON.stringify(item.origin.query))}`,`- 查询来源：[${item.origin.source} API](${link(item.origin.requestUrl)})`,'','### 摘要','',r.abstract?escape(r.abstract)+(r.abstractStatus==='truncated'?'\n\n（摘要超过预算，已截断）':''):r.abstractStatus==='invalid'?'来源摘要结构无效，未拼接。':'来源未提供摘要。','')
   }
   const files=[['references.json',JSON.stringify(payload,null,2)+'\n'],['文献清单.md',lines.join('\n')+'\n']] as const
   for(const [name,body] of files){if(signal?.aborted)throw Error('文献保存已取消');writeFileSync(join(destination,name),body,{flag:'wx',mode:0o600})}

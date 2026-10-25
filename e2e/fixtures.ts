@@ -24,6 +24,8 @@ import { startFakeReleaseFeed } from "../scripts/fake-release-feed.mjs"
 
 // @ts-expect-error shared isolated fixture is JavaScript
 import { startFakeOpenAlexServer } from "../scripts/fake-openalex-server.mjs"
+// @ts-expect-error shared isolated fixture is JavaScript
+import { startFakeCrossrefServer } from "../scripts/fake-crossref-server.mjs"
 
 const ROOT = resolve(import.meta.dirname, "..")
 
@@ -275,6 +277,7 @@ export interface DawnFixture {
   weixin?: FakeIlinkServer
   feishu?: FakeFeishuServer
   openalex?: { requests: {path: string; query: Record<string,string>}[] }
+  crossref?: { requests: {path: string; query: Record<string,string>}[] }
   /** 假发布源（开了 `fakeUpdate` 才有）：可以中途换一个版本号 */
   发布源?: { url: string; 设版本(v: string): void }
   /**
@@ -391,6 +394,7 @@ export interface DawnOptions {
    * 假的只有「另一端是谁」——认证仍是真判的，口令不对照样拒。
    */
   fakeOpenAlex?: boolean
+  fakeCrossref?: boolean
   fakeSsh?: boolean
   /**
    * 指给假服务器一条**本机真实的** python（远程内核，2026-09-03）。
@@ -586,6 +590,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawnOptions: [{}, { option: true }],
 
   dawn: async ({ dawnOptions }, use) => {
+    const crossref = dawnOptions.fakeCrossref ? await startFakeCrossrefServer() : undefined
     const openalex = dawnOptions.fakeOpenAlex ? await startFakeOpenAlexServer() : undefined
     const weixin = dawnOptions.fakeIlink ? await startFakeIlinkServer({ longPollMs: 1_000 }) : undefined
     const feishu = dawnOptions.fakeFeishu ? await startFakeFeishuServer({ longPollMs: 1_000 }) : undefined
@@ -737,6 +742,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         // 这条路径正是「装好了打不开」那个缺陷的所在，必须被真的走一遍
         DAWN_CONFIG: configPath,
         DAWN_FAKE_OPENALEX: openalex?.url ?? "",
+        DAWN_FAKE_CROSSREF: crossref?.url ?? "",
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
         // 给模型基底时一并跳过凭证守卫(审查 debug G7:拆成独立开关后,e2e 要显式带上它,
@@ -903,6 +909,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       keyChecks: server.keyChecks,
       mockUrl: server.url,
       ...(openalex ? { openalex } : {}),
+      ...(crossref ? { crossref } : {}),
       ...(weixin ? { weixin } : {}),
       ...(feishu ? { feishu } : {}),
       ...(发布源 ? { 发布源 } : {}),
@@ -920,6 +927,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     })
     await server.close()
     await openalex?.close()
+    await crossref?.close()
     await weixin?.close()
     await feishu?.close()
     await 发布源?.close()

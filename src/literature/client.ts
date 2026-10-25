@@ -1,34 +1,12 @@
 /** Bounded OpenAlex metadata access. No model-generated citation fields enter here. */
-export type LiteratureErrorCode = 'invalid_input' | 'invalid_response' | 'source_mismatch' | 'rate_limited' | 'access_denied' | 'service_error' | 'response_too_large' | 'cancelled' | 'timeout' | 'network_error'
-export class LiteratureError extends Error {
-  constructor(readonly code: LiteratureErrorCode, message: string) { super(message); this.name = 'LiteratureError' }
-}
-export interface LiteratureRecord {
-  id: string; title: string; authors: string[]; authorsTruncated: boolean
-  year: number | null; date: string | null; journal: string | null; doi: string | null
-  abstract: string | null; abstractStatus: 'available' | 'missing' | 'invalid' | 'truncated'
-  sourceUrl: string; landingPageUrl: string | null
-}
-export interface LiteratureReport {
-  source: 'OpenAlex'; retrievedAt: string; requestUrl: string
-  query: { kind: 'search' | 'doi'; value: string; fromYear?: number; toYear?: number; limit: number }
-  total: number; returned: number; records: LiteratureRecord[]; warnings: string[]
-}
-export interface LiteratureSearch { query: string; fromYear?: number | undefined; toYear?: number | undefined; limit?: number | undefined }
-export interface OpenAlexOptions { fetch?: typeof fetch; now?: () => Date; timeoutMs?: number; maxBytes?: number }
+import { LiteratureError, normalizeDoi, safeHttpUrl as httpUrl, validateSearch, type LiteratureErrorCode, type LiteratureRecord, type LiteratureReport, type LiteratureSearch, type LiteratureClientOptions as OpenAlexOptions } from './model.js'
+import { requestJson } from './request.js'
+export { LiteratureError, normalizeDoi } from './model.js'
+export type { LiteratureErrorCode, LiteratureRecord, LiteratureReport, LiteratureSearch, LiteratureClientOptions as OpenAlexOptions } from './model.js'
 const fields = 'id,doi,title,publication_year,publication_date,authorships,primary_location,abstract_inverted_index'
 const fail = (code: LiteratureErrorCode, message: string): never => { throw new LiteratureError(code, message) }
 const object = (v: unknown): Record<string, unknown> | undefined => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : undefined
 const text = (v: unknown) => typeof v === 'string' && v.trim() ? v.trim() : null
-function httpUrl(v: unknown): string | null {
-  try { const u = new URL(String(v)); return ['http:', 'https:'].includes(u.protocol) && !u.username && !u.password ? u.href : null } catch { return null }
-}
-export function normalizeDoi(value: string): string {
-  if (typeof value !== 'string' || /[\x00-\x1f\x7f]/.test(value)) return fail('invalid_input', 'DOI 格式无效')
-  const doi = value.trim().replace(/^doi:\s*/i, '').replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').toLowerCase()
-  if (!/^10\.\d{4,9}\/[^\s]+$/.test(doi) || doi.length > 500) return fail('invalid_input', '请输入 DOI 或 doi.org 链接')
-  return doi
-}
 function abstract(value: unknown): Pick<LiteratureRecord, 'abstract' | 'abstractStatus'> {
   if (value == null) return {abstract:null,abstractStatus:'missing'}
   const source = object(value), words = new Map<number,string>()
@@ -65,13 +43,9 @@ function record(raw: unknown): LiteratureRecord {
 }
 
 export class OpenAlexClient {
-  private readonly network: typeof fetch
-  constructor(private readonly options: OpenAlexOptions = {}) { this.network = options.fetch ?? globalThis.fetch }
+  constructor(private readonly options: OpenAlexOptions = {}) {}
   async search(input: LiteratureSearch, signal?: AbortSignal): Promise<LiteratureReport> {
-    const query=typeof input.query==='string' ? input.query.trim() : '', limit=input.limit ?? 10
-    if (!query || query.length>300 || /[\x00-\x1f\x7f]/.test(query) || !Number.isInteger(limit) || limit<1 || limit>25) return fail('invalid_input','检索词需为 1–300 字，数量需为 1–25 的整数')
-    const years=[input.fromYear,input.toYear].filter((y):y is number=>y!==undefined)
-    if (years.some(y=>!Number.isInteger(y)||y<1000||y>2100) || (input.fromYear!==undefined && input.toYear!==undefined && input.fromYear>input.toYear)) return fail('invalid_input','年份范围无效')
+    const {query,limit}=validateSearch(input)
     const url=new URL('https://api.openalex.org/works')
     url.searchParams.set('search',query);url.searchParams.set('per_page',String(limit));url.searchParams.set('select',fields)
     const filters=[...(input.fromYear!==undefined?[`from_publication_date:${input.fromYear}-01-01`]:[]),...(input.toYear!==undefined?[`to_publication_date:${input.toYear}-12-31`]:[])]
@@ -92,34 +66,7 @@ export class OpenAlexClient {
   private report(url: URL, query: LiteratureReport['query'], total: number, records: LiteratureRecord[], warnings: string[] = []): LiteratureReport {
     return {source:'OpenAlex',retrievedAt:(this.options.now?.()??new Date()).toISOString(),requestUrl:url.href,query,total,returned:records.length,records,warnings:[...warnings,'索引元数据仅用于核对引用；不表示已阅读全文或科学结论已获验证。']}
   }
-  private async request(url: URL, signal?: AbortSignal, allowMissing=false): Promise<unknown> {
-    if(signal?.aborted)return fail('cancelled','文献查询已取消')
-    const timeout=AbortSignal.timeout(this.options.timeoutMs??20_000), combined=signal?AbortSignal.any([signal,timeout]):timeout
-    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
-    let body: ReadableStream<Uint8Array> | null = null
-    try {
-      const response=await this.network(url,{signal:combined,redirect:'error',headers:{accept:'application/json','user-agent':'DAWN-Science/Literature'}})
-      body=response.body
-      if(allowMissing && response.status===404)return null
-      if(response.status===429)return fail('rate_limited','OpenAlex 请求过于频繁或匿名额度已用尽，请稍后重试')
-      if(response.status===401 || response.status===403)return fail('access_denied','OpenAlex 拒绝访问，请检查服务的访问条件')
-      if(!response.ok)return fail('service_error',`OpenAlex 服务请求失败（HTTP ${response.status}）`)
-      const max=this.options.maxBytes??2*1024*1024
-      if(Number(response.headers.get('content-length'))>max)return fail('response_too_large','OpenAlex 响应超过读取预算，请减少查询数量')
-      reader=response.body?.getReader()
-      if(!reader)return fail('invalid_response','OpenAlex 返回了空响应')
-      const chunks:Uint8Array[]=[];let size=0
-      for(;;){if(combined.aborted)throw new Error('aborted');const chunk=await reader.read();if(chunk.done)break;size+=chunk.value.byteLength;if(size>max)return fail('response_too_large','OpenAlex 响应超过读取预算，请减少查询数量');chunks.push(chunk.value)}
-      const all=new Uint8Array(size);let offset=0;for(const chunk of chunks){all.set(chunk,offset);offset+=chunk.byteLength}
-      try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(all))}catch{return fail('invalid_response','OpenAlex 返回的内容不是有效 JSON')}
-    } catch(error) {
-      if(signal?.aborted)return fail('cancelled','文献查询已取消')
-      if(timeout.aborted)return fail('timeout','OpenAlex 查询超时，请稍后重试')
-      if(error instanceof LiteratureError)throw error
-      return fail('network_error','无法连接 OpenAlex，请检查网络后重试')
-    } finally {
-      if(reader){await reader.cancel().catch(()=>{});reader.releaseLock()}
-      else await body?.cancel().catch(()=>{})
-    }
+  private request(url: URL, signal?: AbortSignal, allowMissing=false): Promise<unknown> {
+    return requestJson('OpenAlex',url,this.options,signal,allowMissing)
   }
 }

@@ -22,8 +22,8 @@ describe("浏览器插件", () => {
     expect(browserTools("/tmp", { ...全开, off: true })).toEqual([])
   })
 
-  it("插件册四条：office / browser / memory / literature，键前缀各归各", () => {
-    expect(插件册.map((p) => p.id)).toEqual(["office", "browser", "memory", "literature"])
+  it("插件册五条：office / browser / memory / literature / crossref，键前缀各归各", () => {
+    expect(插件册.map((p) => p.id)).toEqual(["office", "browser", "memory", "literature", "crossref"])
     expect(插件册[1]!.键).toBe("plugin.browser")
     expect(插件册[1]!.族们().reduce((n, f) => n + f.tools.length, 0)).toBe(15)
   })

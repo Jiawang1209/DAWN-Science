@@ -99,6 +99,7 @@ export type SettingKey =
   /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：同一套约定 */
   | `plugin.memory.${string}`
   | `plugin.literature.${string}`
+  | `plugin.crossref.${string}`
   /** 远程助理 · 飞书（2026-08-25）：绑定/会话映射/通知/去重环形，与 `weixin.*` 同一家 */
   | `feishu.${string}`
   /**

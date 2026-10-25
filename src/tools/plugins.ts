@@ -1,4 +1,4 @@
-import { LITERATURE_FAMILIES } from "../literature/tools.js"
+import { LITERATURE_FAMILIES, CROSSREF_FAMILIES } from "../literature/tools.js"
 /**
  * 插件册（2026-08-25）：**插件 = 仓库里审过的内置工具包**，这里是唯一的名单。
  * `listPlugins` / `setPluginFlag` 都照这册子办——加第三个插件时只动这里与装配点。
@@ -45,6 +45,10 @@ export const 插件册: readonly 插件册条[] = [
   {
     id: "literature", 名: "科研文献 · OpenAlex", 键: "plugin.literature", defaultOn: false,
     族们: () => LITERATURE_FAMILIES.map(f => ({key: f.key, name: f.name, tools: [...f.tools]})),
+  },
+  {
+    id: "crossref", 名: "科研文献 · Crossref", 键: "plugin.crossref", defaultOn: false,
+    族们: () => CROSSREF_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
   },
 ]
 

@@ -27,6 +27,7 @@ import { startFakeIlinkServer } from "./fake-ilink-server.mjs"
 import { startFakeFeishuServer } from "./fake-feishu-server.mjs"
 import { startFakeReleaseFeed } from "./fake-release-feed.mjs"
 import { startFakeOpenAlexServer } from "./fake-openalex-server.mjs"
+import { startFakeCrossrefServer } from "./fake-crossref-server.mjs"
 
 /**
  * 挑一条本机真的、装了 ipykernel 的 python（远程内核，2026-09-03）。
@@ -81,6 +82,7 @@ const server = await startMockInferenceServer()
  */
 const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
 const openalex = await startFakeOpenAlexServer()
+const crossref = await startFakeCrossrefServer()
 const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
 /**
  * 假发布源（2026-09-06）：**没有它，「有新版本」这条路在 dev:mock 里根本走不通**——
@@ -154,6 +156,7 @@ const child = spawn(
       DAWN_COMPACT_KEEP_RECENT_TOKENS: process.env.DAWN_COMPACT_KEEP_RECENT_TOKENS ?? "1",
       DAWN_FAKE_ILINK: weixin.url,
       DAWN_FAKE_OPENALEX: openalex.url,
+      DAWN_FAKE_CROSSREF: crossref.url,
       DAWN_FAKE_FEISHU: feishu.url,
       /**
        * 假服务器（②-B · R3）：dev:mock 此前一直没开它——「添加服务器 → 连接」这条主路径
@@ -175,6 +178,7 @@ const child = spawn(
 const shutdown = async () => {
   await server.close()
   await openalex.close()
+  await crossref.close()
   await weixin.close()
   await feishu.close()
   await 发布源.close()

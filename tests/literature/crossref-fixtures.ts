@@ -1,0 +1,1 @@
+export const crossrefWork={DOI:'10.1234/example',title:['Warming and soil diversity'],author:[{given:'A.',family:'Researcher'},{name:'Soil Research Group'}],published:{'date-parts':[[2024,5,10]]},'container-title':['Ecology Example'],URL:'https://doi.org/10.1234/example',abstract:'<jats:p>Soil &amp; microbial <jats:italic>diversity</jats:italic> changes.</jats:p>'}

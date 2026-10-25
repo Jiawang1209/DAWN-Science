@@ -1,4 +1,5 @@
-import { literatureTools, type LiteratureFlags } from "../literature/tools.js"
+import type { CrossrefClient } from "../literature/crossref.js"
+import { literatureTools, crossrefTools, type LiteratureFlags } from "../literature/tools.js"
 import type { OpenAlexClient } from "../literature/client.js"
 import { existsSync } from 'node:fs'
 import { AsyncLocalStorage } from 'node:async_hooks'
@@ -190,6 +191,8 @@ export interface NativeRuntimeOptions {
   /** 按需启用的索引检索与本地清单保存。 */
   literatureEnable?: () => LiteratureFlags
   literatureClient?: () => OpenAlexClient
+  crossrefEnable?: () => LiteratureFlags
+  crossrefClient?: () => CrossrefClient
   /** 记忆插件（2026-08-25，学自 dsh-memory-evolve）：族开关 + 目录依赖；同一套约定 */
   memoryEnable?: () => Memory开关
   memoryDeps?: () => Memory依赖
@@ -1125,6 +1128,7 @@ export class NativeRuntime implements AgentRuntime {
       docx_edit: ["output_path"],
       browser_download: ["save_as"],
       literature_save: ["directory"],
+      crossref_save: ["directory"],
     }
     const 产物 = this.产物登记(spec.sessionId)
     const 语境 = {
@@ -1547,6 +1551,10 @@ export class NativeRuntime implements AgentRuntime {
     const 文献工具组 = (this.opts.literatureEnable ? literatureTools(spec.workspace, this.opts.literatureEnable(), {
       ...(文献客户端 ? {client: 文献客户端} : {}), remote: Boolean(spec.remote),
     }) : []).map(门于插件)
+    const crossrefClient = this.opts.crossrefClient?.()
+    const crossref工具组 = (this.opts.crossrefEnable ? crossrefTools(spec.workspace, this.opts.crossrefEnable(), {
+      ...(crossrefClient ? {client:crossrefClient} : {}), remote:Boolean(spec.remote),
+    }) : []).map(门于插件)
     const office工具组 = (this.opts.officeEnable ? officeTools(spec.workspace, this.opts.officeEnable()) : []).map(门于插件)
     const browser工具组 = (this.opts.browserEnable ? browserTools(spec.workspace, this.opts.browserEnable(), spec.sessionId) : []).map(门于插件)
     const memory工具组 =
@@ -1565,7 +1573,7 @@ export class NativeRuntime implements AgentRuntime {
       ? createTerminalTools({ control: this.opts.terminals, owner: spec.sessionId,
           target: () => terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []),
           authorize: (code, mode, signal) => this.authorizeTerminal(spec, code, mode, signal) }) : []
-    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...文献工具组, ...mcp工具, ...终端工具]
+    const 外部 = [...内核工具, ...视觉工具, ...侧边工具, ...office工具组, ...browser工具组, ...memory工具组, ...文献工具组, ...crossref工具组, ...mcp工具, ...终端工具]
     const 观察过的外部 =
       this.opts.provenance === false
         ? 外部

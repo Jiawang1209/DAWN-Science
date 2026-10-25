@@ -2300,6 +2300,8 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 的交付": "Deliveries from {0}",
   "{0} · 任务 {1}": "{0} · task {1}",
   "科研文献 · OpenAlex": "Research literature · OpenAlex",
+  "科研文献 · Crossref": "Research literature · Crossref",
+  "匿名查询论文和 DOI 登记信息，无需密钥、审批或机构订阅。默认关闭；启用后请新建 API 会话。公共服务仍有限流。": "Query papers and DOI registration metadata anonymously, without a key, approval or institutional subscription. Disabled by default; start a new API chat after enabling. Public service limits still apply.",
   "文献检索与核验": "Literature search and verification",
   "保存文献清单": "Save selected references",
   "联网检索文献、核对 DOI 并保存所选记录。默认关闭；启用后请新建会话。匿名访问受服务额度限制。": "Search literature online, check DOIs and save selected records. Disabled by default; start a new chat after enabling. Anonymous access has service limits.",

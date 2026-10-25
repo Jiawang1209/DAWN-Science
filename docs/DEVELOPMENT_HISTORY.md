@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 本地内核设置区分配置状态与路径输入提示
+
+- **Type**: test
+- **Motivation**: 旧placeholder断言与独立状态标签的新设置布局冲突。
+- **What**: 分别核验未配/空值/输入提示/保存后已配，真实执行链保持。
+- **Verification**: 本地内核Electron6项无跳过、组件9项及类型通过；见 docs/reviews/2026-10-25-electron-interpreter-placeholder-verification.md。
+- **Impact**: 独立codex/electron-interpreter-placeholder，本地合并，不推送。
+
 ### 2026-10-25 — 远端内核用例校准现行服务器与输入入口
 
 - **Type**: test

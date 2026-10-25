@@ -301,12 +301,16 @@ test.describe("由配置的解释器路径起内核", () => {
     await 进设置(page, "内核")
     const box = page.getByRole("textbox", { name: "Python 解释器" })
     await expect(box).toBeVisible()
-    await expect(box).toHaveAttribute("placeholder", "还没配置")
+    await expect(page.locator(".ip-python .ip-config-state")).toHaveText("还没配置")
+    await expect(box).toHaveValue("")
+    await expect(box).toHaveAttribute("placeholder", "输入解释器的完整路径")
     await box.fill(PY_PATH)
     await page.getByRole("button", { name: "保存" }).first().click()
 
     // **回显是必须的**：看不见自己配了什么等于没配
     await expect(box).toHaveValue(PY_PATH)
+
+    await expect(page.locator(".ip-python .ip-config-state")).toHaveText("已配置")
 
     // ③ 配完就能跑，而且跑的就是那个解释器
     await 开一段临时会话(page)

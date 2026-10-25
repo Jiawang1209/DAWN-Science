@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 托盘新建按当前首页与草稿保持验收
+
+- **Type**: test
+- **Motivation**: 旧首页标题使托盘新建用例误报。
+- **What**: 校准标题，补无空会话、重新打开原草稿检查。
+- **Verification**: Electron1项、组件11项、类型通过；见 docs/reviews/2026-10-25-electron-tray-home-verification.md。
+- **Impact**: 独立codex/electron-tray-home，本地合并，不推送。
+
 ### 2026-10-25 — 子agent用例按自适应坞入口完整性验收
 
 - **Type**: test

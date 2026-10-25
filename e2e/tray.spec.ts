@@ -17,5 +17,10 @@ test("关闭主窗口保留会话和窗口，应用退出仍可正常收摊", as
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]!.webContents.send("dawn:tray-new-task")
   })
-  await expect(page.getByRole("heading", { name: "开始一段对话" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "今天想分析什么？", exact: true })).toBeVisible()
+  await expect(page.locator("main.main .composer-card textarea")).toHaveValue("")
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
+  await page.locator(".sidebar .sess-item .row").first().click()
+  await expect(page.locator("main.main .composer-card textarea")).toHaveValue("托盘草稿")
+  await expect(page.locator(".sidebar .sess-item")).toHaveCount(1)
 })

@@ -1290,8 +1290,10 @@ describe("设计契约 · 第三方渲染器的挂点", () => {
     // 只看 `.md` 作用域内的选择器行
     const mdLines = styles.split("\n").filter((l) => l.trimStart().startsWith(".md "))
     /** Tailwind 的形态：`.md .flex`、`.md .text-xs`、`.md .my-4` 这类 */
+    // KaTeX's documented display wrapper is its CSS API, not a generated
+    // Streamdown/Tailwind utility. Allow only this exact containment rule.
     const 可疑 = mdLines.filter((l) =>
-      /\.md\s+\.[a-z]+(-[a-z0-9/[\]]+)*[\s,{]/.test(l),
+      /\.md\s+\.[a-z]+(-[a-z0-9/[\]]+)*[\s,{]/.test(l) && l.trim() !== ".md .katex-display {",
     )
     expect(
       可疑,

@@ -1,3 +1,4 @@
+import { MATH_REPLY } from "./mock-markdown-math.mjs"
 import {analysisDeliveryMockReply, deliveryDemoTool, deliveryDemoReply} from './mock-analysis-delivery.mjs'
 import { analysisRouteMockTool, analysisRouteMockReply } from "./mock-analysis-route.mjs"
 import {botCollaborationTool, botCollaborationReply} from "./mock-bot-collaboration.mjs"
@@ -592,7 +593,8 @@ export function startMockInferenceServer(opts = {}) {
       const 问答结果 = body.messages?.findLast?.((m) => m.role === "tool" && (m.name === "ask_user_question" || String(m.content).includes('"answers"') || String(m.content).includes('"cancelled"')))
       const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
       const directoryTransferReply = 最后一句 === "目录传输验收" ? "文件与目录批次传输由文件面板执行：使用上传文件夹或下载文件夹，展开批次查看逐文件进度、冲突和失败项。文件字节不进入模型上下文。" : undefined
-      const reply = 会话标题 ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? terminalAssistanceReply(body) ?? toolSelectionDemoReply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      const mathReply = 最后一句.includes("数学公式排版验收") ? MATH_REPLY : undefined
+      const reply = 会话标题 ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? mathReply ?? terminalAssistanceReply(body) ?? toolSelectionDemoReply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"
@@ -615,7 +617,7 @@ export function startMockInferenceServer(opts = {}) {
               ? LONG_REPLY
             : 最后一句.includes("长代码")
               ? LONG_CODE_REPLY
-            : 用户说的.includes("markdown")
+            : 最后一句.includes("markdown")
               ? MARKDOWN_REPLY
               : 用户说的.includes("科研分析路线验收")
                 ? 科研分析路线回复

@@ -1590,6 +1590,14 @@ pre {
 /* 段落之间给足呼吸。8px 太挤——整段回复会糊成一片 */
 .md p { margin: 0 0 12px; }
 
+/* KaTeX ships its fonts locally; wide equations scroll inside their own box. */
+.md .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: .25em;
+}
+
 /**
  * **标题要有层级。** 此前 h1~h4 除 h1 外全是同一个字号，
  * 「二级标题」和「三级标题」在屏幕上一模一样，那等于没有层级。

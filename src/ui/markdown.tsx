@@ -46,6 +46,8 @@ import {
   type CustomRendererProps,
 } from "streamdown"
 import { t } from "./i18n/index.js"
+import { createMathPlugin } from "@streamdown/math"
+import "katex/dist/katex.min.css"
 import { 像本机地址吗 } from "../policy/local-url.js"
 import { observeCodeBlockVisibility } from "./code-block-visibility.js"
 import { CODE_LANGUAGES } from "./code-languages.js"
@@ -86,7 +88,10 @@ function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps)
   )
 }
 
-const CODE_PLUGINS = {
+const MARKDOWN_PLUGINS = {
+  // Keep math in Streamdown's parser so inline/fenced code stays literal.
+  // KaTeX's default trust=false also applies to model-provided formulas.
+  math: createMathPlugin({ singleDollarTextMath: true, errorColor: "var(--dawn-danger)" }),
   renderers: [{ language: ["", "plain", "plaintext", "text", "txt", ...CODE_LANGUAGES], component: LazyCodeRenderer }],
 }
 
@@ -220,7 +225,7 @@ export function AgentMarkdown({
             // 动效会跟流式更新抢帧；DESIGN.md：动效跟随状态，永不延迟状态
             animated={false}
             components={components}
-            plugins={CODE_PLUGINS}
+            plugins={MARKDOWN_PLUGINS}
           >
             {text}
           </Streamdown>

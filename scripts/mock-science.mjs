@@ -2,7 +2,7 @@ const text=c=>typeof c==='string'?c:(c??[]).map(b=>b.text??'').join('\n')
 function turn(body){
  const messages=body.messages??[],index=messages.findLastIndex(m=>m.role==='user'),request=text(messages[index]?.content)
  if(!request.includes('科研数据验收'))return
- const prefix='geo',accession='GSE123',current=messages.slice(index+1),calls=current.flatMap(m=>m.tool_calls??[])
+ const prefix=request.includes('SRA')?'sra':'geo',accession=prefix==='sra'?'SRR123':'GSE123',current=messages.slice(index+1),calls=current.flatMap(m=>m.tool_calls??[])
  const results=current.filter(m=>m.role==='tool').map(m=>{
   let data;try{data=JSON.parse(text(m.content))}catch{data={error:text(m.content)}}
   return {name:m.name??calls.find(c=>c.id===m.tool_call_id)?.function?.name,data}
@@ -11,8 +11,8 @@ function turn(body){
 }
 export function scienceMockTool(body){
  const t=turn(body);if(!t||t.results.at(-1)?.data?.error)return
- const search=`${t.prefix}_search`,detail='geo_get_series',save=`${t.prefix}_save`
- if(!t.results.length)return t.available(search)?{toolName:search,args:{query:t.request.includes('限流')?'rate-limit-fixture':t.request.includes('无结果')?'no-results-fixture':'drought',limit:2}}:undefined
+ const search=`${t.prefix}_search`,detail=t.prefix==='sra'?'sra_get_accession':'geo_get_series',save=`${t.prefix}_save`
+ if(!t.results.length)return t.available(search)?{toolName:search,args:{query:t.request.includes('限流')?'rate-limit-fixture':t.request.includes('无结果')?'no-results-fixture':t.prefix==='sra'?'soil':'drought',limit:2}}:undefined
  if(!t.results[0].data.records?.length||t.request.includes('只检索'))return
  if(!t.results.some(r=>r.name===detail))return {toolName:detail,args:{accession:t.accession}}
  if(!t.results.some(r=>r.name===save)&&t.available(save)){

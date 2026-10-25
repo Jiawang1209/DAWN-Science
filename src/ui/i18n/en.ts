@@ -2301,6 +2301,8 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} · 任务 {1}": "{0} · task {1}",
   "科研文献 · OpenAlex": "Research literature · OpenAlex",
   "科研文献 · Crossref": "Research literature · Crossref",
+  "科研数据 · NCBI SRA": "Research data · NCBI SRA",
+  "检索 SRA 实验与测序 Run，查询文库和平台信息并保存清单。默认开启；新 API 会话生效。不下载原始数据，Run 数不等于样本量。": "Search SRA experiments and runs, inspect libraries and platforms, and save records. Enabled by default in new API chats. No raw data download; run count is not biological sample size.",
   "科研数据 · GEO": "Research data · GEO",
   "数据集与实验信息": "Datasets and experiments",
   "保存数据清单": "Save dataset list",

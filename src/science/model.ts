@@ -1,10 +1,12 @@
-export type ScienceSource = 'GEO'
+export type ScienceSource = 'GEO' | 'NCBI SRA'
 export class ScienceError extends Error {
   constructor(readonly code:string,message:string){super(message);this.name='ScienceError'}
 }
+export interface ScienceRun {accession:string;spots:string|null;bases:string|null;public:boolean|null}
 export interface ScienceRecord {
   accession:string; title:string; sourceUrl:string
   fields:Record<string,string|number|null|string[]>
+  runs?:ScienceRun[]
   sequence?:string
 }
 export interface ScienceReport {

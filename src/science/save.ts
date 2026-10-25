@@ -24,6 +24,7 @@ export function saveScienceRecords(workspace:string,directory:string,records:rea
     const r=item.record
     lines.push(`## ${i+1}. ${escape(r.title)}`,'',`- 编号：[${escape(r.accession)}](${link(r.sourceUrl)})`,`- 数据源：${item.origin.source}`,`- 查询时间：${item.origin.retrievedAt}`,`- 查询条件：${escape(JSON.stringify(item.origin.query))}`)
     for(const [key,value] of Object.entries(r.fields))lines.push(`- ${escape(key)}：${value==null||Array.isArray(value)&&!value.length?'未提供':Array.isArray(value)?value.map(escape).join('；'):escape(String(value))}`)
+    if(r.runs){lines.push('','### 测序运行（Run）','',...r.runs.map(run=>`- ${escape(run.accession)} · spots: ${run.spots??'未提供'} · bases: ${run.bases??'未提供'} · ${run.public===true?'公开':run.public===false?'受限':'公开状态未提供'}`),'')}
     lines.push('','### 查询来源','',...item.origin.requestUrls.map(url=>`- [API](${link(url)})`),'',...item.origin.warnings.map(w=>`- 提示：${escape(w)}`),'')
   }
   const files=[['records.json',JSON.stringify({format:'dawn-science-records-v1',savedAt,records},null,2)+'\n'],['数据清单.md',lines.join('\n')+'\n']] as const

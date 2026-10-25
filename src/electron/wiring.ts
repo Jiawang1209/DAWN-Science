@@ -1,3 +1,4 @@
+import { SraClient } from "../science/sra.js"
 import { GeoClient } from "../science/geo.js"
 import { CrossrefClient } from "../literature/crossref.js"
 import { OpenAlexClient } from "../literature/client.js"
@@ -777,6 +778,20 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       save: settingsStore.get("plugin.geo.save") !== "0",
     }),
     geoClient: () => new GeoClient({
+      ...(process.env.DAWN_FAKE_SCIENCE ? {fetch: async (input: string | URL | Request, init?: RequestInit) => {
+        const target = new URL(process.env.DAWN_FAKE_SCIENCE!)
+        if (target.protocol !== "http:" || target.hostname !== "127.0.0.1" || target.username || target.password) throw new Error("Science fixture must use loopback HTTP")
+        const original = new URL(String(input))
+        if (!["https://eutils.ncbi.nlm.nih.gov", "https://www.ncbi.nlm.nih.gov"].includes(original.origin)) throw new Error("Unexpected research request origin")
+        return fetch(new URL(original.pathname + original.search, target), init)
+      }} : {}),
+    }),
+    sraEnable: () => ({
+      off: !pluginEnabled("sra", settingsStore.get("plugin.sra.off")),
+      read: settingsStore.get("plugin.sra.read") !== "0",
+      save: settingsStore.get("plugin.sra.save") !== "0",
+    }),
+    sraClient: () => new SraClient({
       ...(process.env.DAWN_FAKE_SCIENCE ? {fetch: async (input: string | URL | Request, init?: RequestInit) => {
         const target = new URL(process.env.DAWN_FAKE_SCIENCE!)
         if (target.protocol !== "http:" || target.hostname !== "127.0.0.1" || target.username || target.password) throw new Error("Science fixture must use loopback HTTP")

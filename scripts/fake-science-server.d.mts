@@ -1,3 +1,4 @@
+export const SRA_FIXTURES: Record<string,unknown>[]
 export const GEO_FIXTURES: Record<string,unknown>[]
 export function startFakeScienceServer():Promise<{
  url:string

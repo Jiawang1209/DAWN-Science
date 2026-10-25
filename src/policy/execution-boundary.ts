@@ -17,7 +17,7 @@ export const 讨论执行指引 =
   '提供未执行的代码时如实说明未运行。已有方案审批与权限要求继续生效。'
 
 /** 类型明确的读取工具；inspect_data 会起内核，因此不属于纯讨论的只读入口。 */
-const 讨论只读 = new Set(['terminal_list', 'terminal_snapshot', 'terminal_wait', 'read', 'ls', 'grep', 'find', 'look_at_image', 'read_main_session', 'openalex_search', 'openalex_lookup_doi', 'crossref_search', 'crossref_lookup_doi', 'geo_search', 'geo_get_series', 'ask_user_question', 'propose_plan', 'get_analysis_route', 'update_analysis_route'])
+const 讨论只读 = new Set(['terminal_list', 'terminal_snapshot', 'terminal_wait', 'read', 'ls', 'grep', 'find', 'look_at_image', 'read_main_session', 'openalex_search', 'openalex_lookup_doi', 'crossref_search', 'crossref_lookup_doi', 'geo_search', 'geo_get_series', 'sra_search', 'sra_get_accession', 'ask_user_question', 'propose_plan', 'get_analysis_route', 'update_analysis_route'])
 
 type Entry = { type?: string; message?: { role?: string; content?: unknown } }
 

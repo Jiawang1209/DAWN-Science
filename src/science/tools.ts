@@ -1,3 +1,4 @@
+import {SraClient} from './sra.js'
 import {randomUUID} from 'node:crypto'
 import {Type} from 'typebox'
 import {GeoClient} from './geo.js'
@@ -11,6 +12,16 @@ export const GEO_FAMILIES=[
   ]},
   {key:'save',name:'保存数据清单',tools:[{name:'geo_save',description:'仅保存本会话实际查询到且选定的 GEO recordId，输出 records.json 与数据清单.md，不下载原始数据。'}]},
 ] as const
+export const SRA_FAMILIES=[
+  {key:'read',name:'数据集与实验信息',tools:[
+    {name:'sra_search',description:'检索 NCBI SRA 公开元数据，支持关键词/Entrez 表达式。返回实验记录和文库/测序 Run 信息；数量以 Experiment 为单位，不等于生物学样本量。'},
+    {name:'sra_get_accession',description:'按 SRA Study/Sample/Experiment/Run 编号查询并核对所属实验。支持 SR/ER/DR 编号；研究最多返回20个实验，运行列表有界，不下载测序数据。'},
+  ]},
+  {key:'save',name:'保存数据清单',tools:[{name:'sra_save',description:'仅保存本会话实际从 NCBI SRA 查到的 recordId，生成实验与 Run 元数据 JSON/Markdown 清单；不下载 FASTQ/SRA，不获取受控数据权限。'}]},
+] as const
+export function sraTools(workspace:string,flags:ScienceFlags,options:Options={}){
+  return scienceTools(workspace,flags,options.client??new SraClient(),SRA_FAMILIES,'NCBI SRA',options.remote)
+}
 type Families=readonly {key:string;name:string;tools:readonly {name:string;description:string}[]}[]
 type Options={client?:ScienceClient;remote?:boolean}
 export function geoTools(workspace:string,flags:ScienceFlags,options:Options={}){

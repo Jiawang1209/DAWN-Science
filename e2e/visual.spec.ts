@@ -94,7 +94,7 @@ const 分类计数: ReadonlyArray<[string, string]> = [
   // main已有analysis-delivery在内的8个内置技能，旧视觉计数尚未同步。
   ["Skills", "8"],
   ["子 Agent", "22"],
-  ["插件", "6"],
+  ["插件", "7"],
   ["MCP 服务器", "0"],
 ]
 

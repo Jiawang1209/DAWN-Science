@@ -1,4 +1,4 @@
-import { GEO_FAMILIES } from "../science/tools.js"
+import { GEO_FAMILIES, SRA_FAMILIES } from "../science/tools.js"
 import { LITERATURE_FAMILIES, CROSSREF_FAMILIES } from "../literature/tools.js"
 /**
  * 插件册（2026-08-25）：**插件 = 仓库里审过的内置工具包**，这里是唯一的名单。
@@ -54,6 +54,10 @@ export const 插件册: readonly 插件册条[] = [
   {
     id: "geo", 名: "科研数据 · GEO", 键: "plugin.geo", defaultOn: true,
     族们: () => GEO_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
+  },
+  {
+    id: "sra", 名: "科研数据 · NCBI SRA", 键: "plugin.sra", defaultOn: true,
+    族们: () => SRA_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
   },
 ]
 

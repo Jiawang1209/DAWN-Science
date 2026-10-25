@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — NCBI SRA 实验与测序 Run 查询
+
+- **Type**: feat
+- **Motivation**: 为公开测序数据提供独立查询入口，与 GEO 互补。
+- **What**: 默认开启的 SRA 插件，关键词检索、Study/Sample/Experiment/Run 编号归属核验与真实清单保存。明确实验/样本/Run 单位，保留文库/平台/运行元数据、大整数精度及受限状态。复用 NCBI 队列、缓存/写门和共用 mock。将锁文件已有 xmldom 0.8.15 声明为直接依赖，未改变已安装依赖版本。
+- **Verification**: 514 文件、5444 单测通过/10 原有跳过，类型/构建通过；相关 Electron 34/34（含 14 张未改视觉图）通过；官方 SRR390728 → SRX079566/RNA-Seq/PAIRED 查询及固定原生预览通过。见 docs/reviews/2026-10-25-sra-datasets-verification.md。
+- **Impact**: 独立 codex/sra-datasets 分支验证后仅合并本地 main；不下载原始测序数据，未推送或替换安装版。
+
 ### 2026-10-25 — GEO 数据集插件与科研插件缺省开启
 
 - **Type**: feat

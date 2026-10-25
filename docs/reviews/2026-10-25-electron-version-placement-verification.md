@@ -6,4 +6,4 @@
 
 最终Electron1/1（2.0秒），设计契约103/103、类型通过；git diff --check、自审通过，应用源码与已验证构建一致。中间新增品牌检查曾错误以32px图标尺寸约束34px按钮，已改测实际文字行数后重新通过；该失败日志/run-12仍保留，不据此改产品或放宽阈值。未更新截图基线/超时。
 
-证据：/Users/liuyue/Documents/Codex/2026-10-25/dawn-science-remaining-electron/version-placement/，原始run-11和最终run-13.json及两种宽度状态栏截图。主目录集成复验另记。未推送。
+证据：/Users/liuyue/Documents/Codex/2026-10-25/dawn-science-remaining-electron/version-placement/，原始run-11和最终run-13.json及两种宽度状态栏截图。9b7d9804 已快进本地main；主目录同用例1/1（2.0秒）通过，run-14/main.log留存。未推送。

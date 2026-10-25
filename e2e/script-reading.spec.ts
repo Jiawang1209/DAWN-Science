@@ -1,6 +1,20 @@
 import { test, expect, 在项目里开会话, 进设置 } from "./fixtures.js"
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
+import type { Locator } from "@playwright/test"
+
+async function expectScriptSurface(frame: Locator) {
+  const colors = await frame.evaluate(el => {
+    const probe = document.createElement("span")
+    probe.style.backgroundColor = "var(--dawn-surface-sidebar)"
+    el.appendChild(probe)
+    const expected = getComputedStyle(probe).backgroundColor
+    probe.remove()
+    return { actual: getComputedStyle(el).backgroundColor, expected }
+  })
+  expect(colors.expected).not.toBe("rgba(0, 0, 0, 0)")
+  expect(colors.actual).toBe(colors.expected)
+}
 
 for (const extension of ["R", "py"]) {
   const file = `reading.${extension}`
@@ -31,7 +45,7 @@ for (const extension of ["R", "py"]) {
       expect(await dock.locator(".dock-tab-btn.current").evaluate(el => getComputedStyle(el).boxShadow)).toContain(frameStyle.color)
       expect(frameStyle.radius).toBeGreaterThan(0)
       expect(frameStyle.padding).toBeGreaterThan(0)
-      expect(await frame.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await dock.evaluate(el => getComputedStyle(el).backgroundColor))
+      await expectScriptSurface(frame)
       const style = await pre.evaluate(el => {
         const s = getComputedStyle(el)
         return { leading: parseFloat(s.lineHeight) / parseFloat(s.fontSize), border: s.borderTopWidth, borderStyle: s.borderTopStyle, borderColor: s.borderTopColor, stroke: s.getPropertyValue("--mix-stroke-1").trim(), radius: parseFloat(s.borderTopLeftRadius), padding: parseFloat(s.paddingTop), overflow: s.overflowY }
@@ -142,7 +156,7 @@ for (const extension of ["R", "py"]) {
         await dock.screenshot({ path: testInfo.outputPath("python-file-frame-wide-dark-english.png") })
         await dock.getByRole("button", { name: "Reading view", exact: true }).click()
         await expect(dock.getByRole("button", { name: "Wrap lines", exact: true })).toHaveCount(0)
-        expect(await frame.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await dock.evaluate(el => getComputedStyle(el).backgroundColor))
+        await expectScriptSurface(frame)
         expect(await frame.evaluate(el => getComputedStyle(el).borderTopWidth)).toBe("1px")
         expect(await dock.locator(".dock-tab-btn.current").evaluate(el => getComputedStyle(el).boxShadow)).toContain(await frame.evaluate(el => getComputedStyle(el).borderTopColor))
         expect(await pre.evaluate(el => getComputedStyle(el).borderTopWidth)).toBe("0px")

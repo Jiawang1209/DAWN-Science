@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：脚本底色按预览令牌验收
+
+- **Type**: test
+- **Motivation**: 脚本预览surface-sidebar与外层dock surface-panel分开后，旧颜色参照误报。
+- **What**: 亮暗均按浏览器解析的语义令牌检查；原阅读/滚动/完整性目标保留，不改产品配色。
+- **Verification**: script-reading3项、预览相关138项及类型通过；见 docs/reviews/2026-10-25-electron-script-reading-verification.md。
+- **Impact**: 独立codex/electron-script-reading，按授权本地合并、不推送。
+
 ### 2026-10-25 — 剩余 Electron：项目入口行高与单行文字分开验收
 
 - **Type**: test

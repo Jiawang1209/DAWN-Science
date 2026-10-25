@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 同步用户已接受的工作区视觉基线
+
+- **Type**: test
+- **Motivation**: 工作区界面已目视验收并合并，但14张像素基线仍为旧侧栏。
+- **What**: 检查expected/actual/diff后同步14张macOS图片；产品、脚本、遮罩和容差不变。
+- **Verification**: 完整构建通过；完整视觉14项连续两轮通过。证据见 docs/reviews/2026-10-25-workspace-visual-baselines-verification.md。
+- **Impact**: 独立codex/workspace-visual-baselines，验证后本地合并；未推送、未替换安装版。
+
 ### 2026-10-25 — 固定工作区入口与消息细节优化
 
 - **Type**: feat

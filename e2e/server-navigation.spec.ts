@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN } from "../src/ui/state/sidebar.js"
 import { test, expect, 在项目里开会话, 开一段临时会话 } from "./fixtures.js"
 import type { Page } from "@playwright/test"
 import { mkdirSync } from "node:fs"
@@ -176,13 +177,20 @@ test("项目、服务器、最近和会话的任务左缘一致，窄栏操作�
   const sash = page.getByRole('separator', { name: '调整侧栏宽度', exact: true })
   await sash.focus()
   for (let i = 0; i < 3; i++) await sash.press('ArrowLeft')
-  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(200)
+  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(SIDEBAR_MIN)
   const header = page.locator('.server-navigation .side-section')
   const addButton = page.getByRole('button', { name: '添加服务器', exact: true })
-  const tailCenters = await page.locator('.side-section .side-bulk, .side-section .server-add').evaluateAll(nodes => nodes.map(node => {
+  // 2026-10-16 契约：多选保持末列；服务器添加在其左侧，并非与多选同一列。
+  const tailCenters = await page.locator('.side-section .side-bulk').evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect(); return rect.left + rect.width / 2
   }))
   expect(Math.max(...tailCenters) - Math.min(...tailCenters)).toBeLessThanOrEqual(1)
+  const actionOrder = await header.evaluate(el => {
+    const add = el.querySelector('.server-add')!.getBoundingClientRect()
+    const bulk = el.querySelector('.server-bulk')!.getBoundingClientRect()
+    return add.right <= bulk.left + 1
+  })
+  expect(actionOrder).toBe(true)
   for (const button of [bulk, addButton]) {
     const head = (await header.boundingBox())!, b = (await button.boundingBox())!
     expect(Math.abs((b.y + b.height / 2) - (head.y + head.height / 2))).toBeLessThanOrEqual(3)
@@ -206,5 +214,5 @@ test("项目、服务器、最近和会话的任务左缘一致，窄栏操作�
   await expect(server.locator('.server-session-list .sess-item')).toHaveCount(2)
   await expect(page.locator('.conv-remote')).toContainText('生态分析服务器')
   mkdirSync(shots, { recursive: true })
-  await page.screenshot({ animations: 'disabled', caret: 'hide', path: `${shots}/server-hierarchy-200.png` })
+  await page.screenshot({ animations: 'disabled', caret: 'hide', path: `${shots}/server-hierarchy-min.png` })
 })

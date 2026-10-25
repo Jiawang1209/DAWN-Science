@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN } from "../src/ui/state/sidebar.js"
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { test, expect, 在项目里开会话, 进坞, 进设置 } from "./fixtures.js"
@@ -98,14 +99,14 @@ test("完整分析界面：多尺寸、暗色、自选强调色与真实图像�
   expect(hierarchy.folderArrow - hierarchy.sectionArrow).toBeGreaterThanOrEqual(8)
   expect(hierarchy.folderTitle - hierarchy.sectionTitle).toBeGreaterThanOrEqual(8)
   expect(Math.abs(hierarchy.taskTitle - hierarchy.recentTitle)).toBeLessThanOrEqual(1)
-  // 同级分区的数量不能跟字号/标题长短漂移；多选与添加共享尾列中心。
+  // 同级分区的数量不能跟字号/标题长短漂移；多选保持尾列，服务器添加在其左侧。
   // 刚展开最近时三角仍在旋转；等现有过渡结束，避免把动画中间帧当作错位。
   await page.locator('.side-section-toggle .twisty').evaluateAll(async nodes => {
     await Promise.all(nodes.flatMap(node => node.getAnimations()).map(animation => animation.finished.catch(() => {})))
   })
   const headers = await page.locator('.sidebar .side-section[data-section]').evaluateAll(nodes => nodes.map(node => {
     const left = (selector: string) => node.querySelector(selector)!.getBoundingClientRect().left
-    const action = node.querySelector('.server-add, .side-bulk')?.getBoundingClientRect()
+    const action = node.querySelector('.side-bulk')?.getBoundingClientRect()
     return { arrow: left('.twisty'), icon: left('.side-section-icon'), title: left('.side-section-title'), count: left('.side-section-count'), action: action ? action.left + action.width / 2 : undefined }
   }))
   expect(headers).toHaveLength(4)
@@ -136,8 +137,8 @@ test("完整分析界面：多尺寸、暗色、自选强调色与真实图像�
   const sash = page.getByRole("separator", { name: "调整侧栏宽度", exact: true })
   await sash.focus()
   for (let i = 0; i < 3; i++) await sash.press("ArrowLeft")
-  await expect(sash).toHaveAttribute("aria-valuenow", "200")
-  await expect.poll(() => page.locator(".sidebar").evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(200)
+  await expect(sash).toHaveAttribute("aria-valuenow", String(SIDEBAR_MIN))
+  await expect.poll(() => page.locator(".sidebar").evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(SIDEBAR_MIN)
   // 最窄侧栏下主入口及常驻操作仍在栏内；名称可以省略，但操作不能被裁掉。
   const sidebarRight = await page.locator(".sidebar").evaluate(el => el.getBoundingClientRect().right)
   for (const button of await page.locator(".proj-head .row-actions button, .side-section .side-bulk, .server-bulk, .server-add, .server-menu-anchor > button, .server-new").all()) {
@@ -145,20 +146,32 @@ test("完整分析界面：多尺寸、暗色、自选强调色与真实图像�
     expect(bounds.x).toBeGreaterThanOrEqual(0)
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(sidebarRight + 1)
   }
-  await page.screenshot({ animations: "disabled", caret: "hide", path: `${shots}/sidebar-200.png` })
+  await page.screenshot({ animations: "disabled", caret: "hide", path: `${shots}/sidebar-min.png` })
   const projectActions = project.getByRole("button", { name: "项目操作：workspace", exact: true })
+  // 连续切窗后的正文仍可能平滑滚动；菜单按现行契约遇到外部滚动会关闭。
+  // 先等真实滚动位置与尺寸稳定，再验证菜单，不删掉关闭监听或放宽边界。
+  let previousScroll = "", stableScroll = 0
+  await expect.poll(async () => {
+    const current = await page.locator("main.main").evaluate(main => Array.from(main.querySelectorAll("div"))
+      .filter(el => el.scrollHeight > el.clientHeight + 1)
+      .map(el => [el.scrollTop, el.scrollHeight, el.clientWidth, el.clientHeight].map(Math.round).join(",")).join("|"))
+    stableScroll = current === previousScroll ? stableScroll + 1 : 0
+    previousScroll = current
+    return stableScroll
+  }, { intervals: [100], timeout: 5000 }).toBeGreaterThanOrEqual(3)
   await projectActions.click()
   const menu = page.getByRole("menu", { name: "项目操作：workspace", exact: true })
+  await expect(menu).toBeVisible()
   const menuBounds = (await menu.boundingBox())!
   expect(menuBounds.x).toBeGreaterThanOrEqual(0)
   expect(menuBounds.x + menuBounds.width).toBeLessThanOrEqual(1440)
   expect(menuBounds.y + menuBounds.height).toBeLessThanOrEqual(900)
-  await page.screenshot({ animations: "disabled", caret: "hide", path: `${shots}/project-menu-200.png` })
+  await page.screenshot({ animations: "disabled", caret: "hide", path: `${shots}/project-menu-min.png` })
   await page.keyboard.press("Escape")
   await expect(menu).toHaveCount(0)
   await expect(projectActions).toBeFocused()
   for (let i = 0; i < 3; i++) await sash.press("ArrowRight")
-  await expect(sash).toHaveAttribute("aria-valuenow", "248")
+  await expect(sash).toHaveAttribute("aria-valuenow", String(SIDEBAR_MIN + 3 * 16))
   await 进设置(page, "外观")
   await page.getByRole("radio", { name: "暗色", exact: true }).click()
   await page.getByRole("button", { name: "返回", exact: true }).click()

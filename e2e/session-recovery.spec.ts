@@ -16,15 +16,16 @@ async function invoke(page: Page, op: string, req: unknown = {}) {
 
 async function remoteChat(dawn: DawnFixture) {
   const {page}=dawn
-  const head=page.getByRole("button",{name:/远端服务器/})
+  const head=page.getByRole("button",{name:/^服务器/})
   if (await head.getAttribute("aria-expanded") !== "true") await head.click()
   await page.getByRole("button",{name:/添加服务器/}).click()
   await page.locator("#conn-host").fill("fake.example")
   await page.locator("#conn-user").fill("dawn")
   await page.locator("#conn-label").fill("恢复测试服务器")
   await page.locator("#conn-secret").fill("dawn")
-  await page.getByRole("button",{name:"保存",exact:true}).click()
-  await page.locator(".remote-row").first().getByRole("button",{name:/新对话/}).click()
+  await page.getByRole("button",{name:"保存并连接",exact:true}).click()
+  await expect(page.getByRole("dialog", { name: "添加服务器", exact: true })).toHaveCount(0)
+  await page.locator(".remote-row").first().getByRole("button",{name:"新建远端任务",exact:true}).click()
   await expect(page.locator(".conv-remote")).toBeVisible()
   await page.getByPlaceholder(/输入问题/).fill("保留在原对话里的话")
   await page.getByRole("button",{name:"发送",exact:true}).click()

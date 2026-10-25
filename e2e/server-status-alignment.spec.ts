@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN } from "../src/ui/state/sidebar.js"
 import { test, expect } from "./fixtures.js"
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
@@ -77,7 +78,7 @@ test("服务器状态与名称同排，连接失败不展示技术错误，仍�
   await row.screenshot({ path: `${shots}/server-status-time-row.png` })
   await sash.focus()
   for (let i = 0; i < 12; i++) await sash.press('ArrowLeft')
-  await expect(page.locator('.sidebar')).toHaveCSS('width', '200px')
+  await expect(page.locator('.sidebar')).toHaveCSS('width', `${SIDEBAR_MIN}px`)
   await check()
   await row.locator(".side-subhead").hover()
   await expect(page.locator(".sess-hover-card")).toContainText(lastConnectedLabel!)

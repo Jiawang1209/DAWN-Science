@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN } from "../src/ui/state/sidebar.js"
 /**
  * 远端连接（②-B · R3/R4）。**跑真实构建产物，对着那台假服务器。**
  *
@@ -404,7 +405,7 @@ test("最窄侧栏仍能打开服务器管理菜单，操作不被裁掉", async
   const sash = page.locator('.side-sash').first()
   await sash.focus()
   for (let i = 0; i < 8; i++) await sash.press("ArrowLeft")
-  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(200)
+  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(SIDEBAR_MIN)
   const row = page.locator('.remote-row').first()
   await row.getByRole('button', { name: '管理服务器：假机器', exact: true }).click()
   for (const name of ['断开', '编辑']) {
@@ -441,7 +442,7 @@ test("远端新建入口固定为机器行图标，不额外占行", async ({ da
  * 而下一个被加进侧栏的长词照样会断——那正是今天这件事的来路：
  * 上一轮修好了服务器那三颗动作，分区标题却还在断。
  *
- * 扫的是每个入口的几何；200px 时标题与添加入口允许分行，入口文字自身不能拆开。
+ * 扫的是每个入口的几何；最小侧栏宽度时标题与添加入口允许分行，入口文字自身不能拆开。
  * **内容高度超过一个行高 = 断了**。中英各扫一遍，
  * 且把侧栏收到最窄——**英文 + 最窄是最紧的那个组合**，
  * 实测也只有它抓得出东西（`Remote servers` 断成两行，52px）。
@@ -485,7 +486,7 @@ test("**侧栏所有固定入口都不换行**：中英 × 最窄侧栏", async 
       .poll(() =>
         page.evaluate(() => Math.round(document.querySelector(".sidebar")!.getBoundingClientRect().width)),
       )
-      .toBe(200)
+      .toBe(SIDEBAR_MIN)
   }
 
   await 收到最窄()
@@ -768,13 +769,14 @@ test("远端删除说「永久」，本地说「废纸篓」，且都落账", as
   const { writeFileSync, existsSync } = await import("node:fs")
   writeFileSync(`${workspace}/要删的.txt`, "删我\n")
 
-  // ── 本地：文案是「移到废纸篓」，确认框说找得回来
+  // ── 本地：文本预览不放删除按钮，经目录菜单进入；确认框说「移到废纸篓」且找得回来
   await 在项目里开会话(page)
   await 进坞(page, "文件")
   const 面板 = page.locator(".right-dock .files-view")
   await 面板.getByRole("button", { name: /^要删的\.txt/ }).click()
   await expect(page.locator(".file-preview")).toContainText("删我", { timeout: 30_000 })
-  await page.getByRole("button", { name: "移到废纸篓", exact: true }).click()
+  await 面板.getByRole("button", { name: "文件操作：要删的.txt", exact: true }).click()
+  await page.getByRole("menu", { name: "文件操作：要删的.txt", exact: true }).getByRole("menuitem", { name: "删除", exact: true }).click()
   await expect(page.getByText(/可以从废纸篓找回来/)).toBeVisible()
   await page.getByRole("dialog").getByRole("button", { name: "移到废纸篓", exact: true }).click()
 

@@ -197,36 +197,46 @@ test("**搜索筛掉不匹配的，且搜不到时说出来**", async ({ dawn })
   await page.getByRole("button", { name: "搜索", exact: true }).click()
   const 框 = page.getByPlaceholder(/搜索项目与会话/)
   await expect(框).toBeVisible()
+  const 结果 = page.getByRole("dialog", { name: "搜索", exact: true })
 
   await 框.fill("甲测试")
-  await expect(page.locator(".session-list .sess-item")).toHaveCount(1)
-  await expect(page.locator(".session-list .sess .name")).toContainText("甲测试会话")
+  await expect(结果.locator(".search-name-result")).toHaveCount(1)
+  await expect(结果.locator(".search-name-result")).toContainText("甲测试会话")
+  // 当前搜索独立于导航：筛结果浮层，原侧栏名单仍保留。
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(2)
 
   // 搜不到：**说出来**，而不是一片空白
   await 框.fill("这个词一定搜不到")
-  await expect(page.locator(".session-list .sess-item")).toHaveCount(0)
-  await expect(page.locator(".side-empty")).toContainText("没有匹配")
+  await expect(结果.locator(".search-name-result")).toHaveCount(0)
+  await expect(结果.locator(".side-empty")).toContainText("没有匹配")
 
   // Esc 关掉它，列表原样回来
   await 框.press("Escape")
   await expect(框).toHaveCount(0)
+  await expect(结果).toHaveCount(0)
   await expect(page.locator(".session-list .sess-item")).toHaveCount(2)
 })
 
 /**
- * **侧栏收着的时候按搜索，要先把侧栏打开。**
- *
- * 输入框长在侧栏里；不打开的话按下去屏幕上什么都不会发生——
- * 那就是本项目已经报过三次的「点了没反应」。
+ * **侧栏收着时，独立搜索仍可用。**
+ * 搜索已移至 SearchPanel 浮层；打开与关闭它应保留导航折叠状态，
+ * 且 Escape 后把焦点交还搜索入口。
  */
-test("**收着的时候点搜索，侧栏会自己打开**", async ({ dawn }) => {
+test("**收着的时候点搜索，独立浮层可用且焦点归还**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "收起侧边栏" }).click()
   await 等宽(page).toBe(0)
 
-  await page.getByRole("button", { name: "搜索", exact: true }).click()
-  await 等宽(page).toBeGreaterThan(100)
-  await expect(page.getByPlaceholder(/搜索项目与会话/)).toBeVisible()
+  const 搜索 = page.getByRole("button", { name: "搜索", exact: true })
+  await 搜索.click()
+  const 框 = page.getByPlaceholder(/搜索项目与会话/)
+  await expect(page.getByRole("dialog", { name: "搜索", exact: true })).toBeVisible()
+  await expect(框).toBeFocused()
+  await 等宽(page).toBe(0)
+  await 框.press("Escape")
+  await expect(框).toHaveCount(0)
+  await expect(搜索).toBeFocused()
+  await 等宽(page).toBe(0)
 })
 
 /**

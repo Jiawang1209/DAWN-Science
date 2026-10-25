@@ -3,6 +3,7 @@ import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
 test("对话字号按一根轴缩放，并在重载后保留", async ({ dawn }) => {
   const { page } = dawn
   await 开一段临时会话(page, "检查字号缩放")
+  await expect(page.locator(".turn.agent .turn-actions .btn-icon").first()).toBeVisible()
 
   const 读取样式 = () => page.locator(".turns").evaluate((turns) => {
     const 根 = getComputedStyle(document.documentElement)
@@ -20,7 +21,9 @@ test("对话字号按一根轴缩放，并在重载后保留", async ({ dawn }) 
       行高: 对话.lineHeight,
       标题,
       头像: 像素(getComputedStyle(document.querySelector(".who-avatar")!).width),
-      操作图标: 像素(getComputedStyle(document.querySelector(".turn-actions .btn-icon")!).width),
+      // 用户操作行自 2026-10-14 起固定 32px，与时间同排；回答动作仍随字号缩放。
+      用户操作图标: 像素(getComputedStyle(document.querySelector(".turn.user .turn-actions .btn-icon")!).width),
+      回答操作图标: 像素(getComputedStyle(document.querySelector(".turn.agent .turn-actions .btn-icon")!).width),
     }
   })
 
@@ -30,7 +33,8 @@ test("对话字号按一根轴缩放，并在重载后保留", async ({ dawn }) 
     行高: "29.75px",
     标题: [23.8, 20.4, 17.9],
     头像: 34,
-    操作图标: 31.7,
+    用户操作图标: 32,
+    回答操作图标: 31.7,
   })
 
   await 进设置(page, "外观")
@@ -47,10 +51,24 @@ test("对话字号按一根轴缩放，并在重载后保留", async ({ dawn }) 
     行高: "31.5px",
     标题: [25.2, 21.6, 18.9],
     头像: 36,
-    操作图标: 33.6,
+    用户操作图标: 32,
+    回答操作图标: 33.6,
   })
 
   await page.reload()
+  // 启动契约是回到首页；重新打开已存会话，核对字号真正应用于恢复的转录。
+  await expect(page.locator(".session-list .sess-item")).toHaveCount(1)
+  await page.locator(".session-list .sess-item .row").first().click()
+  await expect(page.locator(".turn.agent .turn-actions .btn-icon").first()).toBeVisible()
+  expect(await 读取样式()).toEqual({
+    根字号: "18px",
+    正文: 18,
+    行高: "31.5px",
+    标题: [25.2, 21.6, 18.9],
+    头像: 36,
+    用户操作图标: 32,
+    回答操作图标: 33.6,
+  })
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--dawn-chat-size").trim())).toBe("18px")
   await 进设置(page, "外观")
   await expect(page.getByRole("slider", { name: "对话字号" })).toHaveValue("18")

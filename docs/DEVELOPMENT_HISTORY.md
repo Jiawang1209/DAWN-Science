@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：对话字号区分用户与回答动作
+
+- **Type**: test
+- **Motivation**: 剩余回归首个失败把用户固定32px按钮当成随字号缩放的回答动作。
+- **What**: 显式选择两类动作，保留文字/头像缩放；重载后重开原会话并复核完整样式，不改产品。
+- **Verification**: 原用例先红；最终 Electron 1项、相关UI108项、类型与完整构建通过，见 docs/reviews/2026-10-25-electron-chat-size-verification.md。
+- **Impact**: 独立 codex/electron-chat-size，按用户授权验证后本地合并，不推送。
+
 ### 2026-10-25 — E2E 对齐现行侧栏、搜索与恢复契约
 
 - **Type**: test

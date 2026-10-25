@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：版本号按全局状态栏契约验收
+
+- **Type**: test
+- **Motivation**: 旧用例仍在品牌旁查找版本并期待旧首页标题。
+- **What**: 校验宽窄窗口实际版本在状态栏最右、品牌单行及设置页返回首页，不改产品。
+- **Verification**: Electron1项、设计契约103项及类型通过；见 docs/reviews/2026-10-25-electron-version-placement-verification.md。
+- **Impact**: 独立codex/electron-version-placement，本地合并、不推送，标题改名有基线映射。
+
 ### 2026-10-25 — 剩余 Electron：预览标题测字行而非滚动条高度
 
 - **Type**: test

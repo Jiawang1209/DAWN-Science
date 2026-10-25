@@ -1,21 +1,38 @@
 import { readFileSync } from "node:fs"
-import { test, expect } from "./fixtures.js"
+import { test, expect, 进设置 } from "./fixtures.js"
 
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version
 
-test("品牌名后显示实际应用版本，同一行且入口仍可点击", async ({ dawn }, testInfo) => {
+test("状态栏最右显示实际应用版本，窄窗不隐藏且品牌入口仍可点击", async ({ dawn }, testInfo) => {
   const { page } = dawn
   const name = page.locator(".topbar .brand")
-  const label = page.locator(".topbar .brand-version")
+  const label = page.locator(".statusbar .brand-version")
+  await expect(page.locator(".brand-version")).toHaveCount(1)
   await expect(label).toHaveText(`v${version}`, { timeout: 5000 })
   await expect(name).toHaveText("DAWN Science")
-  const nameBox = (await name.boundingBox())!
-  const labelBox = (await label.boundingBox())!
-  const barBox = (await page.locator(".topbar").boundingBox())!
-  expect(labelBox.x).toBeGreaterThan(nameBox.x + nameBox.width)
-  expect(Math.abs(labelBox.y + labelBox.height / 2 - nameBox.y - nameBox.height / 2)).toBeLessThanOrEqual(1)
-  expect(labelBox.y + labelBox.height).toBeLessThanOrEqual(barBox.y + barBox.height)
-  await page.locator(".topbar").screenshot({ path: testInfo.outputPath("header.png") })
+  for (const width of [1280, 880]) {
+    await page.setViewportSize({ width, height: 760 })
+    await expect(label).toBeVisible()
+    const geometry = await label.evaluate(el => {
+      const box = el.getBoundingClientRect(), bar = el.closest(".statusbar")!
+      const bounds = bar.getBoundingClientRect()
+      return { rightGap: bounds.right - box.right - parseFloat(getComputedStyle(bar).paddingRight),
+        inside: box.left >= bounds.left && box.top >= bounds.top && box.bottom <= bounds.bottom,
+        last: bar.lastElementChild === el }
+    })
+    expect(geometry.inside).toBe(true)
+    expect(geometry.last).toBe(true)
+    expect(Math.abs(geometry.rightGap)).toBeLessThanOrEqual(1)
+    const textLines = await name.locator(".brand-name").evaluate(el => {
+      const range = document.createRange(); range.selectNodeContents(el)
+      return range.getClientRects().length
+    })
+    expect(textLines).toBe(1)
+    await page.locator(".statusbar").screenshot({ path: testInfo.outputPath(`status-${width}.png`) })
+  }
+  await 进设置(page, "外观")
+  await expect(page.locator(".settings-nav")).toBeVisible()
   await name.click()
-  await expect(page.getByRole("heading", { name: "开始一段对话" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "今天想分析什么？", exact: true })).toBeVisible()
+  await expect(page.locator(".settings-nav")).toHaveCount(0)
 })

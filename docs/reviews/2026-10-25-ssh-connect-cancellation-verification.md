@@ -26,4 +26,4 @@ RemoteConnections 在读私钥前登记每次尝试；取消立即结束外部�
 
 ## 本地集成
 
-合并后在本节追加主目录复验。仅本地提交与合并，不推送、不替换安装版。下一项内核启动期清理另开分支。
+修复提交 aa97562c 已从 4ed7aa1d 快进合并本地 main。主目录重新类型检查/完整构建通过，14 文件 201 项通过、8 跳过（4.61 秒），同样 5 项 Electron 全通过（12.2 秒）。main-typecheck.log、main-build.log、main-focused.log、main-e2e.log 保存于同一证据目录。仅本地提交与合并，不推送、不替换安装版。下一项内核启动期清理另开 codex/kernel-startup-cleanup 分支。

@@ -1554,7 +1554,7 @@ describe("设计契约 · 过程压低、人话抬高", () => {
     expect(档(暗, "app"), "暗色对话区要比侧栏深（档号越大越深）").toBeGreaterThan(档(暗, "sidebar"))
   })
 
-  it("**小白块不用面色**：头像圆与思考秒数放在对话区上，面色与底同色就消失", () => {
+  it("**小白块不用面色**：头像圆与等待秒数放在对话区上，面色与底同色就消失", () => {
     for (const 选择器 of [".who-avatar", ".thought-secs"]) {
       expect(规则块(css(), 选择器), `${选择器} 用了 surface-*`).not.toMatch(/background: *var\(--dawn-surface-/)
     }

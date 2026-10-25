@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 固定工作区入口与消息细节优化
+
+- **Type**: feat
+- **Motivation**: 用户要求待发按钮不拆字、深度思考文案、描边复制图标和更紧凑的工作区侧栏。
+- **What**: 搜索迁至固定工作区标题，新增支持已有/新建目录的文件夹入口，显式目录持久化；默认/最小侧栏260px，保留草稿与既有合法偏好。统一复制图标和思考标题，待发操作按完整按钮排布。
+- **Verification**: 类型、构建及全量UI1669项通过，相关UI188项通过，Electron52通过/1原有跳过；实际预览见 docs/reviews/2026-10-25-workspace-ui-polish-verification.md。
+- **Impact**: 独立codex/workspace-ui-polish，开发预览待用户目视确认；未合并、未推送、未替换安装版。
+
 ### 2026-10-25 — 剩余706项Electron与既有132项完成去重总验收
 
 - **Type**: docs

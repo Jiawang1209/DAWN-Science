@@ -29,8 +29,9 @@ test.describe("思考", () => {
      * 而人要看的是答案。
      */
     await expect(块.locator(".thought-body")).toHaveCount(0)
-    // 那个方块里是秒数
-    await expect(块.locator(".thought-secs")).toHaveText(/^\d+s$/)
+    // 标题固定，思考原文仍可展开
+    await expect(块.locator(".thought-label")).toHaveText("深度思考")
+    await expect(块.locator(".thought-secs")).toHaveCount(0)
 
     await 块.locator(".thought-head").click()
     await expect(块.locator(".thought-body")).toContainText("用户问我是什么模型")
@@ -79,10 +80,11 @@ test.describe("思考", () => {
     await page.getByRole("button", { name: "发送", exact: true }).click()
     await expect(page.getByText(/假模型已应答/).last()).toBeVisible({ timeout: 30_000 })
 
-    // 思考块在，而且带着秒数
+    // 只有思考的块仍在，而且使用相同标题
     const 块 = page.locator(".thought").first()
     await expect(块).toBeVisible()
-    await expect(块.locator(".thought-secs")).toHaveText(/^\d+s$/)
+    await expect(块.locator(".thought-label")).toHaveText("深度思考")
+    await expect(块.locator(".thought-secs")).toHaveCount(0)
   })
 
   /**

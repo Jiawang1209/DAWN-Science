@@ -652,7 +652,6 @@ export const EN: Readonly<Record<string, string>> = {
   "连接": "Connect",
   "正在打开这段对话": "Opening this chat",
   "这个任务还没有活动的对话——重启之后需要重新拉起（T3 后半）": "This task has no live chat yet — it needs to be resumed after a restart (later half of T3)",
-  "思考中": "Thinking",
   "界面语言。": "Interface language.",
   "；完整内容：{0}": "; full text at: {0}",
   /* ── 侧栏与导航 ─────────────────────────────────────────────── */
@@ -805,8 +804,8 @@ export const EN: Readonly<Record<string, string>> = {
   "发送会在对话末尾新说一句，上面那句留在原处":
     "Sending adds a new message at the end; the original stays where it is.",
   "正在思考": "Thinking",
-  "想了一下": "thought for a moment",
-  "想了": "Thought for",
+  "深度思考": "Deep thinking",
+  "添加工作区文件夹": "Add workspace folder",
   "这一整段对话累计": "across this whole chat",
   "还没有对话": "No messages yet",
   // 只渲染最近若干条（2026-09-22）：更早的没进 DOM，屏幕上要说清

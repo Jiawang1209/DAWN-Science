@@ -18,7 +18,7 @@
  * ```
  *
  * **上下界它没写在样式里**（在 JS 里），所以那两个数是我们自己定的：
- * 292 是「完整品牌与三个按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
+ * 260 是「完整品牌与折叠、快捷键按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
  * 这两个数只有这一个家。
  *
  * ## 为什么是 `global` 而不是 `window`
@@ -37,10 +37,10 @@ import { setValue } from "./identity.js"
 export const SIDEBAR_WIDTH_KEY = "dawn.global.sidebar-width"
 export const SIDEBAR_COLLAPSED_KEY = "dawn.global.sidebar-collapsed"
 
-/** 2026-10-16：按钮间距收紧后，完整品牌与三个按钮在292px侧栏内同排。 */
-export const SIDEBAR_DEFAULT = 292
+/** 2026-10-25：搜索移至工作区标题；顶栏只保留折叠与快捷键，默认260px。 */
+export const SIDEBAR_DEFAULT = 260
 /** 再窄会挤到品牌与操作按钮；旧存储宽度也经过此下限清洗。 */
-export const SIDEBAR_MIN = 292
+export const SIDEBAR_MIN = 260
 /** 再宽，正文栏就低于 `.body` 里那个 `minmax(420px, 1fr)` 的承诺 */
 export const SIDEBAR_MAX = 420
 
@@ -115,6 +115,7 @@ export function loadSidebar(): { width: number; collapsed: boolean } {
   } catch (e) {
     console.error("[sidebar] 读不到已保存的侧栏布局，回落到默认：", e)
   }
+  $workspaceFolders.set(readWorkspaceFolders())
   $sidebarWidth.set(宽)
   $sidebarCollapsed.set(折叠)
   return { width: 宽, collapsed: 折叠 }
@@ -189,4 +190,34 @@ export function 记项目展开(展开: ReadonlyMap<string, boolean>): void {
   } catch (e) {
     console.error("[sidebar] 项目展开状态保存失败，本次切换仍然生效，但重启后不会被记住：", e)
   }
+}
+
+/** 显式加入的工作区目录；与历史项目、当前会话独立，不改变其工作路径。 */
+export const WORKSPACE_FOLDERS_KEY = "dawn.global.workspace-folders"
+export const $workspaceFolders = atom<readonly string[]>([])
+
+export function readWorkspaceFolders(): string[] {
+  try {
+    const raw = localStorage.getItem(WORKSPACE_FOLDERS_KEY)
+    if (raw === null) return []
+    const value: unknown = JSON.parse(raw)
+    if (Array.isArray(value) && value.every(p => typeof p === "string" && p.trim().length > 0)) return [...new Set(value)]
+    console.error("[sidebar] 工作区目录列表无法识别")
+  } catch (error) { console.error("[sidebar] 读取工作区目录失败：", error) }
+  return []
+}
+
+function saveWorkspaceFolders(paths: readonly string[]): void {
+  setValue($workspaceFolders, paths)
+  try { localStorage.setItem(WORKSPACE_FOLDERS_KEY, JSON.stringify(paths)) }
+  catch (error) { console.error("[sidebar] 保存工作区目录失败，本次仍然生效：", error) }
+}
+
+export function addWorkspaceFolder(path: string): void {
+  if (!path.trim() || $workspaceFolders.get().includes(path)) return
+  saveWorkspaceFolders([...$workspaceFolders.get(), path])
+}
+
+export function removeWorkspaceFolder(path: string): void {
+  saveWorkspaceFolders($workspaceFolders.get().filter(p => p !== path))
 }

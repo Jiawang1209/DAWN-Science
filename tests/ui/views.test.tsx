@@ -1044,3 +1044,18 @@ describe("侧栏搜索 · 按内容时的键盘与焦点", () => {
     expect(document.activeElement).toBe(框())
   })
 })
+
+it("工作区标题固定在滚动列表外，搜索与添加目录沿用调用方动作", () => {
+  const action = vi.fn()
+  const { container } = render(<SessionSidebar {...base} workspaceActions={<button onClick={action}>添加工作区文件夹</button>} />)
+  const header = container.querySelector(".workspace-header")!
+  expect(header.textContent).toContain("工作区")
+  expect(header.closest(".side-scroll")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "添加工作区文件夹" }))
+  expect(action).toHaveBeenCalledOnce()
+})
+
+it("显式加入的多个空工作区可见，与有任务的同路径项目不重复", () => {
+  const { container } = render(<SessionSidebar {...base} workspaceFolders={["/one", "/two", "/w"]} tasks={[task({ workspace: "/w" })]} />)
+  expect([...container.querySelectorAll(".proj-head .sess-title")].map(e => e.textContent)).toEqual(["w", "one", "two"])
+})

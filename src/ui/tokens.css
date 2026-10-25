@@ -338,7 +338,7 @@
   /**
    * 侧栏宽度。实测 WorkBuddy 是 **264px**。
    *
-   * **这里只有默认值；上下界（292–420）住在 `state/sidebar.ts`**（2026-08-13）。
+   * **这里只有默认值；上下界（260–420）住在 `state/sidebar.ts`**（2026-08-13）。
    * 人拖过之后 `.body` 上会有一个内联的同名变量把它盖掉——
    * 覆盖是显式的，而在两处各写一遍范围就是同一条规则的两个家。
    *
@@ -347,7 +347,7 @@
    * 而写着的却像是一条会跟着窗口变的规则。窄窗口那件事由
    * `@media (max-width: 768px)` 管（整条侧栏收掉），不由它管。
    */
-  --dawn-sidebar-w: 292px; /* 2026-10-16：紧凑导航，与state默认值一致 */
+  --dawn-sidebar-w: 260px; /* 2026-10-25：搜索移至工作区，与state默认值一致 */
   /**
    * 右侧坞那一列此刻多宽（2026-08-17）。
    *
@@ -371,7 +371,7 @@
    *
    * 默认值与 `--dawn-sidebar-w` 一致；人拖过之后由 `App.tsx` 覆盖它。
    */
-  --dawn-sidebar-content-w: 292px;
+  --dawn-sidebar-content-w: 260px;
   /* 分组与归档共用名称列；英文覆盖由侧栏lang选择。 */
   --dawn-nav-action-w: calc(var(--dawn-unit) * 7); /* 顶栏按钮28px占位，图标与高度不变 */
   --dawn-sidebar-label-w: calc(var(--dawn-fs-sub) * 3);

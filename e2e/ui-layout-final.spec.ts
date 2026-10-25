@@ -45,14 +45,14 @@ test('确认稿：顶部环境与底部操作行在首页、主会话和窄侧�
   }
 })
 
-test('确认稿：品牌与三个按钮紧凑排列，收起后仍可展开，版本常驻全局右下角', async ({ dawn }) => {
+test('确认稿：品牌与折叠、快捷键按钮紧凑排列，收起后仍可展开，版本常驻全局右下角', async ({ dawn }) => {
   const { page } = dawn
   const toggle = page.locator('.side-toggle')
   const sash = page.getByRole('separator', { name: '调整侧栏宽度', exact: true })
   for (let i = 0; i < 4; i++) {
     await expect.poll(async () => {
       const brand = (await page.locator('.topbar .brand').boundingBox())!
-      const buttons = await Promise.all(['.side-toggle', '.side-search-toggle', '.shortcut-toggle'].map(selector => page.locator(selector).boundingBox()))
+      const buttons = await Promise.all(['.side-toggle', '.shortcut-toggle'].map(selector => page.locator(selector).boundingBox()))
       const gaps = [buttons[0]!.x - brand.x - brand.width, ...buttons.slice(1).map((b, j) => b!.x - buttons[j]!.x - buttons[j]!.width)]
       // 顶栏已有的紧凑规则：按钮间4px，品牌组另留4px（本轮未修改顶栏）。
       return Math.max(...gaps.map((gap, index) => Math.abs(gap - (index === 0 ? 8 : 4))))

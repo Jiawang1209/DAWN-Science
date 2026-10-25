@@ -170,16 +170,17 @@ test("**重开之后，宽度与折叠都还是上次那样**", async ({ dawn })
  * *「左上角的 logo 和 折叠按钮，换一下位置，先是 logo，再是折叠按钮，
  * 此外帮我增加一个搜索功能，放一个搜索按钮，搜索按钮放在折叠按钮旁边。」*
  */
-test("**顺序是：标志 → 折叠 → 搜索**", async ({ dawn }) => {
+test("**顶栏标志 → 折叠 → 快捷键，搜索移至工作区**", async ({ dawn }) => {
   const { page } = dawn
   const 标志 = (await page.getByRole("button", { name: "DAWN Science" }).boundingBox())!
   const 折叠 = (await page.getByRole("button", { name: "收起侧边栏" }).boundingBox())!
-  const 搜索 = (await page.getByRole("button", { name: "搜索", exact: true }).boundingBox())!
-
+  const 快捷键 = (await page.getByRole("button", { name: "快捷键速查" }).boundingBox())!
+  const 搜索 = (await page.locator(".workspace-header .side-search-toggle").boundingBox())!
   expect(标志.x).toBeLessThan(折叠.x)
-  expect(折叠.x).toBeLessThan(搜索.x)
-  // 搜索紧挨着折叠：中间不该再塞别的东西
-  expect(搜索.x - (折叠.x + 折叠.width)).toBeLessThan(16)
+  expect(折叠.x).toBeLessThan(快捷键.x)
+  expect(快捷键.x - (折叠.x + 折叠.width)).toBe(4)
+  expect(搜索.y).toBeGreaterThan(标志.y + 标志.height)
+  await expect(page.locator(".topbar .side-search-toggle")).toHaveCount(0)
 })
 
 /**
@@ -222,20 +223,20 @@ test("**搜索筛掉不匹配的，且搜不到时说出来**", async ({ dawn })
  * 搜索已移至 SearchPanel 浮层；打开与关闭它应保留导航折叠状态，
  * 且 Escape 后把焦点交还搜索入口。
  */
-test("**收着的时候点搜索，独立浮层可用且焦点归还**", async ({ dawn }) => {
+test("**收着时通过原命令面板搜索，独立浮层可用且焦点归还**", async ({ dawn }) => {
   const { page } = dawn
   await page.getByRole("button", { name: "收起侧边栏" }).click()
   await 等宽(page).toBe(0)
 
-  const 搜索 = page.getByRole("button", { name: "搜索", exact: true })
-  await 搜索.click()
-  const 框 = page.getByPlaceholder(/搜索项目与会话/)
+  await page.keyboard.press("ControlOrMeta+k")
+  await page.getByRole("option", { name: /搜索对话内容/ }).click()
+  const 框 = page.locator(".side-search-field")
   await expect(page.getByRole("dialog", { name: "搜索", exact: true })).toBeVisible()
   await expect(框).toBeFocused()
   await 等宽(page).toBe(0)
   await 框.press("Escape")
   await expect(框).toHaveCount(0)
-  await expect(搜索).toBeFocused()
+  await expect(page.getByRole("button", { name: "展开侧边栏", exact: true })).toBeFocused()
   await 等宽(page).toBe(0)
 })
 

@@ -62,22 +62,24 @@ export function 待发条({
               {q.text || tf("{0} 张图", q.images?.length ?? 0)}
             </span>
             {q.images?.length ? <span className="queued-imgs">{tf("{0} 张图", q.images.length)}</span> : null}
-            <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "redirect"))}>
-              {t("调整方向")}
-            </Button>
-            {onToDock ? (
-              <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onToDock(q.id))}>
-                {t("到坞里问")}
+            <div className="queued-actions">
+              <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "redirect"))}>
+                {t("调整方向")}
               </Button>
-            ) : null}
-            {onNewSession ? (
-              <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, async () => { await onNewSession() })}>
-                {t("新增会话")}
+              {onToDock ? (
+                <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onToDock(q.id))}>
+                  {t("到坞里问")}
+                </Button>
+              ) : null}
+              {onNewSession ? (
+                <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, async () => { await onNewSession() })}>
+                  {t("新增会话")}
+                </Button>
+              ) : null}
+              <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "remove"))}>
+                {t("取回")}
               </Button>
-            ) : null}
-            <Button size="xs" variant="ghost" disabled={灰} aria-describedby={`${前缀}-${q.id}`} onClick={() => 动(q.id, () => onEdit(q.id, "remove"))}>
-              {t("取回")}
-            </Button>
+            </div>
           </li>
         ))}
       </ul>

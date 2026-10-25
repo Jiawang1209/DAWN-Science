@@ -1260,6 +1260,8 @@ function 变了才记<T>(值: T, 记: (v: T) => void): void {
 export function SessionSidebar({
   服务器名,
   刚选的工作区,
+  workspaceActions,
+  workspaceFolders = [],
   projects,
   排序全集,
   agents,
@@ -1307,6 +1309,8 @@ export function SessionSidebar({
    * 没有新版时它自己渲染成 `null`，这一行就不占地方。
    */
   更新入口?: React.ReactNode
+  workspaceActions?: React.ReactNode
+  workspaceFolders?: readonly string[]
   projects: readonly ProjectSummary[]
   /**
    * **拖拽排序算新次序时的那个全集**（2026-08-19 从 `sessions` 改名）。
@@ -1722,6 +1726,11 @@ export function SessionSidebar({
   if (刚选的工作区 && !项目组.some(([p]) => p === 刚选的工作区)) {
     项目组.unshift([刚选的工作区, []])
   }
+  // 只有人从“工作区”显式加入的空目录才常驻；不展开所有历史项目。
+  for (const path of workspaceFolders) {
+    if (按内容 || (search?.value && !path.toLocaleLowerCase().includes(search.value.toLocaleLowerCase()))) continue
+    if (!项目组.some(([p]) => p === path)) 项目组.push([path, []])
+  }
   /** 项目那一列多选的全集：**是会话，不是项目**（2026-08-21 起能逐段勾） */
   const 项目里全部 = 项目组.flatMap(([, 里面的]) => 里面的)
 
@@ -2116,6 +2125,10 @@ export function SessionSidebar({
         * 底部那行「设置」跟着滚出屏幕。现在滚动交给这个盒子：
         * 顶部动作、横线、底部入口都不动，中间这片超高就出滚轮。
         */}
+      <div className="workspace-header">
+        <span className="workspace-title">{t("工作区")}</span>
+        <div className="workspace-actions">{workspaceActions}</div>
+      </div>
       <div className="side-scroll">
       {按内容 ? search?.内容结果 : null}
       {agents.length === 0 ? (
@@ -2247,6 +2260,7 @@ export function SessionSidebar({
           {收起了("项目") ? null : (
           <ul className="proj-list">
             {项目组.map(([路径, 里面的]) => {
+              const projectId = 项目id(里面的) ?? projects.find(p => p.workspace === 路径)?.projectId
               // 人点过的按人的；没点过的：装着当前会话就自动展开（自动展开是默认值，不压过人的选择）
               const 展开 = 手动展开.get(路径) ?? 里面的.some((t) => t.taskId === activeTaskId)
               return (
@@ -2301,7 +2315,7 @@ export function SessionSidebar({
                     <ProjectActions
                       name={基名(路径)}
                       onNew={onNewTaskIn ? () => { 设展开(路径, true); onNewTaskIn(路径) } : undefined}
-                      onDelete={onDeleteProject && 项目id(里面的) ? () => onDeleteProject(项目id(里面的)!) : undefined}
+                      onDelete={onDeleteProject && projectId ? () => onDeleteProject(projectId) : undefined}
                     />
                   </div>
                   {展开 ? (
@@ -3599,19 +3613,11 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
 /**
  * 「它在想什么」那一块（2026-08-12，形态学自 Hermes）。
  *
- * **秒数只在还在想的时候自己走**：想完了就定住——
- * 一个停不下来的计时器会让人以为它还没结束。
+ * 标题统一为深度思考；活动动画、摘要及展开原文保留，标题不再显示秒数。
  */
 export function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefined }) {
   const [open, setOpen] = useState(false)
-  /**
-   * **还在想的时候才装定时器**（与工具那个秒表同一条纪律）：
-   * 想完之后每秒重渲染一次，而屏幕上没有任何东西在变。
-   */
   const 在想 = ms === undefined
-  const [起点] = useState(() => Date.now())
-  const now = useTick(在想)
-  const 秒 = Math.max(0, Math.round((在想 ? now - 起点 : ms) / 1000))
   const 摘要 = 思考段落摘要(text, !在想)
 
   return (
@@ -3624,18 +3630,7 @@ export function ThinkingBlock({ text, ms }: { text: string; ms?: number | undefi
         onClick={() => setOpen((v) => !v)}
       >
         <三角图标 className={`caret${open ? " open" : ""}`} />
-        {!在想 && 摘要 ? <span className="thought-label">{t("想了")}</span> : null}
-        {/* **秒数放在方块里**：它是这一行里唯一会动的东西，要好认 */}
-        <span className="thought-secs">{秒}s</span>
-        {/**
-         * **「正在思考」只说一遍**（2026-08-12 修）。
-         *
-         * 上一版这里写了「正在思考」，而下面那个动画自带一句给读屏的
-         * 「正在思考」——作者截图里因此出现了两行一模一样的字。
-         * 动画那句留着（读屏要听得到状态），文字这句换个说法。
-         */}
-        {!在想 && !摘要 ? <span className="thought-label">{t("想了一下")}</span> : null}
-        {在想 ? <span className="thought-label">{t("思考中")}</span> : null}
+        <span className="thought-label">{t("深度思考")}</span>
         {在想 ? <Thinking /> : null}
         {摘要 ? <span className="thought-preview-separator" aria-hidden="true">·</span> : null}
         {摘要 ? <span className={`thought-preview${在想 ? " sweeping" : ""}`}>{摘要}</span> : null}
@@ -3662,7 +3657,7 @@ function 等着({ 从, 在想 }: { 从: number; 在想: boolean }) {
     <div className="waiting">
       {/* `Loader` 的 label 是必填的：**说不出在等什么的加载指示等于没说** */}
       <Loader label={在想 ? t("模型正在思考") : t("正在等模型回话")} />
-      {/* **秒数与思考块里那个同一个样式**：它们是同一件事的两段 */}
+      {/* 等待模型的秒数保留；真实思考块的标题另用“深度思考” */}
       <span className="thought-secs">{秒}s</span>
     </div>
   )
@@ -6200,9 +6195,9 @@ function TranscriptRowImpl({
         * 然后是 Thought briefly，可以点击展开。」*
         *
         * 两个状态，各说各的事：
-        *   - **还在想**：秒数在走。它回答的是「它没死，只是在想」——
+        *   - **还在想**：动画与段落摘要更新。它回答的是「它没死，只是在想」——
         *     而那正是作者说的「否则我以为会话可能死掉了」。
-        *   - **想完了**：收成一行「想了 N 秒」，点开才是内容。
+        *   - **想完了**：收成一行「深度思考」与末段摘要，点开才是原文。
         *     **默认收起**：思考往往比答案长得多，摊开会把答案挤到屏幕外。
         *
         * **它不是回答**，所以不进气泡、字号更小、颜色更淡——

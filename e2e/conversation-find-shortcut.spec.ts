@@ -51,7 +51,7 @@ test("会话快捷键按焦点切换查找开关，Esc返回，顶栏只保留�
   await side.getByRole("searchbox").press("Escape")
   await expect(sideInput).toBeFocused()
   await expect(sideInput).toHaveValue("侧边草稿")
-  await page.locator(".topbar .side-search-toggle").click()
+  await page.locator(".workspace-header .side-search-toggle").click()
   const global = page.getByRole("dialog", { name: "搜索" })
   await expect(global).toBeVisible()
   await global.getByRole("textbox").press("Meta+f")
@@ -74,7 +74,7 @@ test("顶栏导航右边界跟随侧栏，默认与拖宽后对齐，折叠后�
     const n = (await nav.boundingBox())!
     const s = (await page.locator(".sidebar").boundingBox())!
     expect(Math.abs(n.x + n.width - s.x - s.width)).toBeLessThanOrEqual(1)
-    for (const selector of [".side-toggle", ".side-search-toggle", ".shortcut-toggle"]) {
+    for (const selector of [".side-toggle", ".shortcut-toggle"]) {
       const b = (await nav.locator(selector).boundingBox())!
       expect(b.x).toBeGreaterThanOrEqual(n.x)
       expect(b.x + b.width).toBeLessThanOrEqual(n.x + n.width)

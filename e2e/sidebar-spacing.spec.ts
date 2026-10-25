@@ -2,7 +2,7 @@ import { test, expect, 开一段临时会话, 在项目里开会话 } from "./fi
 
 test.use({ dawnOptions: { fakeSsh: true } })
 
-test("292px紧凑导航、分组字体与计数列、服务器多选顺序", async ({ dawn }, info) => {
+test("260px紧凑导航、分组字体与计数列、服务器多选顺序", async ({ dawn }, info) => {
   const { page } = dawn
   await 开一段临时会话(page, "归档排版样本")
   await page.locator(".loose-list .sess-item .row-more").first().click()
@@ -17,6 +17,10 @@ test("292px紧凑导航、分组字体与计数列、服务器多选顺序", asy
   await page.getByRole("button", { name: "保存并连接", exact: true }).click()
   await expect(page.locator(".remote-row")).toHaveAttribute("data-state", "ready")
   await page.locator(".remote-row").getByRole("button", { name: "新建远端任务", exact: true }).click()
+  // 新建远端任务先回到页面，再异步刷新任务列表；等完整目录后量计数与操作列。
+  await expect(page.locator(".server-bulk")).toBeVisible()
+  await expect(page.locator(".side-action-archive")).toBeVisible()
+  await expect(page.locator(".side-section-count, .side-action-archive .side-count")).toHaveCount(5)
 
   const check = async (width: number) => {
     await expect.poll(async () => (await page.locator(".sidebar").boundingBox())!.width).toBe(width)
@@ -34,7 +38,7 @@ test("292px紧凑导航、分组字体与计数列、服务器多选顺序", asy
           return count.getBoundingClientRect().x - range.getBoundingClientRect().right
         }),
         fonts: [...document.querySelectorAll(".side-section-title, .side-bottom .name")].map(e => getComputedStyle(e).fontSize),
-        buttonGaps: [rect(".side-search-toggle").x - rect(".side-toggle").right, rect(".shortcut-toggle").x - rect(".side-search-toggle").right],
+        buttonGaps: [rect(".shortcut-toggle").x - rect(".side-toggle").right],
         brandGap: rect(".side-toggle").x - rect(".brand-stack").right,
         nameHeight: rect(".brand-name").height,
         fits: rect(".shortcut-toggle").right <= rect(".sidebar").right,
@@ -45,7 +49,7 @@ test("292px紧凑导航、分组字体与计数列、服务器多选顺序", asy
       }
     })
     await info.attach(`geometry-${width}`, { body: JSON.stringify(geometry, null, 2), contentType: "application/json" })
-    expect(geometry.buttonGaps).toEqual([4, 4])
+    expect(geometry.buttonGaps).toEqual([4])
     expect(geometry.brandGap).toBe(8)
     expect(geometry.fits).toBe(true)
     expect(geometry.nameHeight).toBeLessThan(32)
@@ -59,8 +63,8 @@ test("292px紧凑导航、分组字体与计数列、服务器多选顺序", asy
     expect(geometry.serverOrder).toBe(true)
     expect(geometry.overflow).toBe(false)
   }
-  await check(292)
-  await page.screenshot({ path: info.outputPath("sidebar-292-light.png"), animations: "disabled" })
+  await check(260)
+  await page.screenshot({ path: info.outputPath("sidebar-260-light.png"), animations: "disabled" })
   await expect(page.locator(".side-actions .side-action").first().locator("svg path")).toHaveCount(2)
   // 多选入口仍然可以切换选择模式，添加仍独立。
   await page.locator(".server-bulk").click()
@@ -75,19 +79,19 @@ test("292px紧凑导航、分组字体与计数列、服务器多选顺序", asy
   await sash.focus()
   for (let i = 0; i < 10; i++) await sash.press("ArrowLeft")
   await page.setViewportSize({ width: 900, height: 800 })
-  await check(292)
+  await check(260)
   await page.evaluate(() => localStorage.setItem("dawn.global.theme", "dark"))
   await page.reload()
-  await check(292)
-  await page.screenshot({ path: info.outputPath("sidebar-292-dark-900.png"), animations: "disabled" })
+  await check(260)
+  await page.screenshot({ path: info.outputPath("sidebar-260-dark-900.png"), animations: "disabled" })
   await page.addInitScript(() => localStorage.setItem("dawn.global.lang", "en"))
   await page.reload()
   await expect(page.locator('.side-section[data-section="projects"] .side-section-title')).toHaveText("Projects")
-  await check(292)
+  await check(260)
   const buttons = page.locator(".side-section .side-bulk, .side-section .server-bulk")
   await expect(buttons).toHaveCount(3)
   for (const button of await buttons.all()) expect(await button.evaluate(e => e.scrollWidth <= e.clientWidth)).toBe(true)
-  await page.screenshot({ path: info.outputPath("sidebar-292-english.png"), animations: "disabled" })
+  await page.screenshot({ path: info.outputPath("sidebar-260-english.png"), animations: "disabled" })
 })
 
 
@@ -104,11 +108,11 @@ test("顶栏18px品牌保留28px按钮和32px标志", async ({ dawn }) => {
       endPadding: rect('.sidebar').right - rect('.shortcut-toggle').right,
     }
   })
-  expect(geometry.buttons).toEqual(Array.from({ length: 3 }, () => ({ width: 28, height: 32 })))
+  expect(geometry.buttons).toEqual(Array.from({ length: 2 }, () => ({ width: 28, height: 32 })))
   expect(geometry.brand).toBe('DAWN Science')
   expect(geometry.font).toBe('18px')
   expect(geometry.logo).toBe(32)
-  expect(geometry.sidebar).toBe(292)
+  expect(geometry.sidebar).toBe(260)
   expect(geometry.endPadding).toBeGreaterThanOrEqual(4)
   expect(geometry.endPadding).toBeLessThanOrEqual(6)
 })

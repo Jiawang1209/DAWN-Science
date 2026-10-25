@@ -972,7 +972,7 @@ app.whenReady().then(() => {
      * 不给就交给系统决定——**不猜一个**。
      */
     const opts = {
-      properties: ["openDirectory" as const],
+      properties: ["openDirectory" as const, "createDirectory" as const],
       ...(defaultPath ? { defaultPath } : {}),
     }
     const r = owner

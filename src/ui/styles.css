@@ -4027,6 +4027,7 @@ pre {
   font-family: var(--dawn-font-mono);
   font-variant-numeric: tabular-nums;
 }
+.thought-label { flex: 0 0 auto; white-space: nowrap; }
 .thought-body {
   margin-top: 2px;
   padding: var(--dawn-space-2) var(--dawn-space-3);
@@ -5007,6 +5008,7 @@ pre {
 }
 .queued-one {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--dawn-space-2);
   min-width: 0;
@@ -5017,13 +5019,24 @@ pre {
   color: var(--dawn-text-3);
 }
 .queued-text {
-  flex: 1 1 auto;
+  flex: 1 1 8em;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   color: var(--dawn-text-1);
 }
+.queued-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dawn-space-1);
+  max-width: 100%;
+  margin-left: auto;
+}
+.queued-actions > .btn { flex: 0 0 auto; white-space: nowrap; }
+
 .queued-imgs {
   flex: 0 0 auto;
   font-size: var(--dawn-fs-meta);
@@ -8313,7 +8326,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .composer-controls .config-pill .sess-config-trigger { padding-inline: var(--dawn-space-2); }
 }
 
-.topbar .side-search-toggle { flex: 0 0 32px; width: 32px; height: 32px; padding: 0; color: var(--dawn-text-2); }
 
 /* 搜索浮层不挤占或过滤侧栏导航。 */
 .search-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; justify-content: center; align-items: flex-start; padding: min(12vh, 96px) var(--dawn-space-4) var(--dawn-space-4); background: var(--dawn-scrim); -webkit-app-region: no-drag; }
@@ -8689,7 +8701,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   width: calc(var(--dawn-sidebar-content-w) - var(--dawn-space-4));
   min-width: 0;
 }
-.topbar-navigation > :is(.side-toggle, .side-search-toggle, .shortcut-toggle) {
+.topbar-navigation > :is(.side-toggle, .shortcut-toggle) {
   flex: 0 0 var(--dawn-nav-action-w);
   min-width: var(--dawn-nav-action-w);
   width: var(--dawn-nav-action-w);
@@ -9129,3 +9141,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .terminal-find input { min-width: 60px; width: 220px; flex: 1; }
 .terminal-find [role="status"] { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); white-space: nowrap; }
 .terminal-conversation-actions { flex: 0 0 auto; }
+
+/* 工作区固定在列表滚动区之外；搜索沿用原弹层，只移动入口。 */
+.workspace-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--dawn-space-2);
+  padding: var(--dawn-space-1) var(--dawn-space-3);
+  color: var(--dawn-text-3);
+}
+.workspace-title { flex: 1; font-size: var(--dawn-fs-sub); }
+.workspace-actions { display: flex; align-items: center; gap: var(--dawn-space-1); }
+.workspace-actions > .btn { width: var(--dawn-nav-action-w); height: var(--dawn-nav-action-w); min-width: var(--dawn-nav-action-w); padding: 0; color: var(--dawn-text-2); }

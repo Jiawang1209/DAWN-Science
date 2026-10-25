@@ -142,13 +142,13 @@ export function 更多图标({ className }: 图标属性 = {}) {
   )
 }
 
-/** 复制。两张叠着的纸 */
+/** 复制：两张描边圆角方形（2026-10-25，用户 P3）。 */
 export function 复制图标({ className }: 图标属性 = {}) {
   return (
-    <壳 {...(className ? { className } : {})}>
-      <path d="M5.6 1.8h5.2c1 0 1.8.8 1.8 1.8v5.2c0 1-.8 1.8-1.8 1.8H5.6c-1 0-1.8-.8-1.8-1.8V3.6c0-1 .8-1.8 1.8-1.8Z" />
-      <path d="M2.4 5.2v6c0 1.4 1.2 2.6 2.6 2.6h5a.9.9 0 0 0 0-1.8H5c-.4 0-.8-.4-.8-.8v-6a.9.9 0 0 0-1.8 0Z" />
-    </壳>
+    <描边壳 {...(className ? { className } : {})}>
+      <rect x="2.5" y="4.5" width="9" height="9" rx="2" />
+      <path d="M5 2.5h6.5a2 2 0 0 1 2 2V11" />
+    </描边壳>
   )
 }
 
@@ -800,5 +800,13 @@ export function 键盘图标({ className }: 图标属性 = {}) {
   return <描边壳 {...(className ? { className } : {})}>
     <rect x="1.5" y="3.5" width="13" height="9" rx="1.6" />
     <path d="M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6" />
+  </描边壳>
+}
+
+/** 加入工作区：可选已有文件夹，也可在系统选择器中新建。 */
+export function 新增文件夹图标({ className }: 图标属性 = {}) {
+  return <描边壳 {...(className ? { className } : {})}>
+    <path d="M8 4.5H6.8L5.5 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8" />
+    <path d="M12 2v5M9.5 4.5h5" />
   </描边壳>
 }

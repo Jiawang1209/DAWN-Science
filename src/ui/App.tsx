@@ -1,3 +1,4 @@
+import { $workspaceFolders, addWorkspaceFolder, removeWorkspaceFolder } from "./state/sidebar.js"
 import type { TerminalAgentState } from '../protocol/terminal.js'
 import { TransferConfirmationDetails } from "./transfer-confirmation.js"
 import { TransferBatchesPanel } from "./transfer-batches.js"
@@ -82,7 +83,7 @@ import { AtFilePanel, type 艾特设置 } from "./at-settings.js"
 import { 更新侧栏行, 关于一格, type 更新回执, type 更新动作 } from "./update-panel.js"
 import { SessionTabs } from "./session-tabs.js"
 import { 编文件规则, 剥掉粘贴标记 } from "../files/mentions.js"
-import { 概览图标, 外观图标, 文件夹图标, 文件夹描边图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 键盘图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
+import { 概览图标, 外观图标, 文件夹图标, 文件夹描边图标, 新增文件夹图标, 文件图标, 模型图标, 终端图标, 侧栏图标, 搜索图标, 键盘图标, 设置图标, 用量图标, 技能图标, 对话图标, 插件图标, 手机图标, 记忆图标, 铃图标 } from "./icons.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
 import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type SearchResult } from "./files.js"
@@ -349,6 +350,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const rightDockOpen = useStore($rightDockOpen)
   const rightDockTenant = useStore($rightDockTenant)
   const rightDockWidth = useStore($rightDockWidth)
+  const workspaceFolders = useStore($workspaceFolders)
   const sidebarWidth = useStore($sidebarWidth)
   const sidebarCollapsed = useStore($sidebarCollapsed)
   const [conversationHeaderTarget, setConversationHeaderTarget] = useState<HTMLDivElement | null>(null)
@@ -379,6 +381,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const lang = useStore($lang)
   /** 搜索浮层的短期状态留在 App；关闭清空查询与模式，不影响侧栏分区。 */
   const 搜索按钮 = useRef<HTMLButtonElement>(null)
+  const 侧栏按钮 = useRef<HTMLButtonElement>(null)
   const 快捷键按钮 = useRef<HTMLButtonElement>(null)
   const [快捷键开着, 设快捷键开着] = useState(false)
   const 命令面板开着 = useStore($paletteOpen)
@@ -3033,6 +3036,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             client
               .get("deleteProject", { projectId: pid })
               .then(() => {
+                removeWorkspaceFolder(impact.workspace)
+                设刚选的工作区(current => current === impact.workspace ? undefined : current)
                 /**
                  * **删的是当前那个才清空选中**（2026-08-11）。
                  * 侧栏现在能删任意一个——把别的项目删掉却把人从他正看着的
@@ -3671,6 +3676,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 这个值也就无关紧要了（侧栏那边会去重）。
    */
   const [刚选的工作区, 设刚选的工作区] = useState<string | undefined>(undefined)
+
+  // 两个入口共用选目录、注册项目与刷新列表；添加工作区不切换会话或清空草稿。
+  async function chooseWorkspaceDirectory(): Promise<{ path: string; projectId: string } | null> {
+    try {
+      const path = await client.pickDirectory(默认工作区?.path)
+      if (!path) return null
+      const project = await client.get<{ projectId: string }>("openProject", { workspace: path })
+      await loadProjects(client)
+      return { path, projectId: project.projectId }
+    } catch (error) { fail(error); return null }
+  }
 
   const 侧栏此刻多宽 = sidebarCollapsed ? 0 : sidebarWidth
 
@@ -5139,22 +5155,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           </Button>
 
         </div>
-        {/* 品牌到首按钮8px，三个按钮之间4px；完整名称始终一行，折叠后也保留。 */}
+        {/* 品牌到首按钮8px，折叠与快捷键按钮之间4px；完整名称始终一行，折叠后也保留。 */}
         <Button
           variant="ghost"
           size="icon"
           className="side-toggle"
+          ref={侧栏按钮}
           aria-label={sidebarCollapsed ? t("展开侧边栏") : t("收起侧边栏")}
           aria-expanded={!sidebarCollapsed}
           onClick={toggleSidebar}
         >
           <侧栏图标 />
         </Button>
-        <Button
-          ref={搜索按钮} variant="ghost" size="icon" className="side-search-toggle"
-          aria-label={t("搜索")} aria-haspopup="dialog" aria-expanded={搜索开着}
-          onClick={() => { 设快捷键开着(false); closePalette(); 设搜索开着(true); 设搜索聚焦(n => n + 1) }}
-        ><搜索图标 /></Button>
         <Button ref={快捷键按钮} variant="ghost" size="icon" className="shortcut-toggle"
           aria-label={t("快捷键速查")} aria-haspopup="dialog" aria-expanded={快捷键开着}
           onClick={() => {
@@ -5215,7 +5227,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
       {快捷键开着 ? <ShortcutPanel onClose={() => 设快捷键开着(false)} returnFocusRef={快捷键按钮} /> : null}
       {搜索开着 ? <SearchPanel
-        query={搜索词} mode={搜索模式} focusSignal={搜索聚焦} returnFocusRef={搜索按钮}
+        query={搜索词} mode={搜索模式} focusSignal={搜索聚焦} returnFocusRef={sidebarCollapsed ? 侧栏按钮 : 搜索按钮}
         projects={projects} tasks={tasks}
         sessionOf={id => tempSessions.find(x => x.sessionId === id) ?? sessions.find(x => x.sessionId === id)}
         serverName={id => connections.find(x => x.id === id)?.label}
@@ -5342,6 +5354,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         }
       >
         <SessionSidebar
+          workspaceFolders={workspaceFolders}
+          workspaceActions={<>
+            <Button
+              ref={搜索按钮} variant="ghost" size="icon" className="side-search-toggle"
+              aria-label={t("搜索")} aria-haspopup="dialog" aria-expanded={搜索开着}
+              onClick={() => { 设快捷键开着(false); closePalette(); 设搜索开着(true); 设搜索聚焦(n => n + 1) }}
+            ><搜索图标 /></Button>
+            <Button variant="ghost" size="icon" aria-label={t("添加工作区文件夹")}
+              onClick={() => { void chooseWorkspaceDirectory().then(p => { if (p) addWorkspaceFolder(p.path) }) }}>
+              <新增文件夹图标 />
+            </Button>
+          </>}
           更新入口={<更新侧栏行 回执={更新回执} 动作={更新动作} />}
           /**
            * 服务器那一列的名字（2026-08-14）。
@@ -5811,30 +5835,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                *
                * **取消就什么都不做**：改主意不是错误。
                */
-              onPickDirectory={() =>
-                client.pickDirectory(默认工作区?.path).then(async (d) => {
-                  if (!d) return null
-                  try {
-                    const p = await client.get<{ projectId: string }>("openProject", {
-                      workspace: d,
-                    })
-                    setActiveProjectId(p.projectId)
-                    // **让它立刻出现在「项目」收纳里**（作者要的）
-                    设刚选的工作区(d)
-                    // **项目名单也要跟上**：头上那一条要写得出它叫什么
-                    await loadProjects(client)
-                  } catch (e) {
-                    /**
-                     * **认不下来要出声，而且这一次不往下走**（规格 7.5）。
-                     * 静默吞掉的表现是「选了个文件夹，chip 变了、树没变」——
-                     * 而那正是这一轮要消掉的那个自相矛盾的中间态。
-                     */
-                    fail(e)
-                    return null
-                  }
-                  return d
-                })
-              }
+              onPickDirectory={async () => {
+                const picked = await chooseWorkspaceDirectory()
+                if (!picked) return null
+                setActiveProjectId(picked.projectId)
+                设刚选的工作区(picked.path)
+                return picked.path
+              }}
               onOpenSettings={actions.openSettings}
             />
           )}

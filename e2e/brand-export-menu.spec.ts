@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { test, expect, 开一段临时会话 } from "./fixtures.js"
 
-test("DAWN Science与三个按钮始终单行，展开侧栏加宽并对齐", async ({ dawn }, info) => {
+test("DAWN Science与折叠、快捷键按钮始终单行，展开侧栏加宽并对齐", async ({ dawn }, info) => {
   const { page } = dawn
   await 开一段临时会话(page, "校正500米8月数据偏差")
   const check = async () => {
@@ -21,7 +21,7 @@ test("DAWN Science与三个按钮始终单行，展开侧栏加宽并对齐", as
     }).toBeLessThanOrEqual(1)
     expect(await name.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
     const nav = (await page.locator(".topbar-navigation").boundingBox())!
-    for (const selector of [".brand", ".side-toggle", ".side-search-toggle", ".shortcut-toggle"]) {
+    for (const selector of [".brand", ".side-toggle", ".shortcut-toggle"]) {
       const box = (await page.locator(`.topbar ${selector}`).boundingBox())!
       expect(box.x).toBeGreaterThanOrEqual(nav.x)
       expect(box.x + box.width).toBeLessThanOrEqual(nav.x + nav.width + 1)

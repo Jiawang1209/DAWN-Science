@@ -7,11 +7,11 @@ afterEach(cleanup)
 beforeEach(() => setLang("zh"))
 
 describe("思考段落摘要组件", () => {
-  it("流式更新最近完成段落，结束后显示末段与停住的秒数", () => {
+  it("深度思考保留流式摘要和展开原文，不显示秒数", () => {
     const 第一帧 = "第一段首行\n第一段续行\n\n第二段首行\n第二段续行\n\n正在形成的新段"
     const { container, rerender } = render(<ThinkingBlock text={第一帧} />)
 
-    expect(screen.getByText("思考中")).toBeTruthy()
+    expect(screen.getByText("深度思考")).toBeTruthy()
     expect(container.querySelector(".thought-preview")?.textContent).toBe("第二段首行")
     expect(container.querySelector(".thought-preview")?.classList.contains("sweeping")).toBe(true)
 
@@ -20,8 +20,8 @@ describe("思考段落摘要组件", () => {
     expect(container.querySelector(".thought-preview")?.textContent).toBe("第二段首行")
 
     rerender(<ThinkingBlock text={下一帧} ms={2_600} />)
-    expect(screen.getByText("想了")).toBeTruthy()
-    expect(container.querySelector(".thought-secs")?.textContent).toBe("3s")
+    expect(screen.getByText("深度思考")).toBeTruthy()
+    expect(container.querySelector(".thought-secs")).toBeNull()
     expect(container.querySelector(".thought-preview")?.textContent).toBe("正在形成的新段")
     expect(container.querySelector(".thought-preview")?.classList.contains("sweeping")).toBe(false)
 

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余706项Electron与既有132项完成去重总验收
+
+- **Type**: docs
+- **Motivation**: 继续剩余Electron，一项一分支验证后本地合并、不推送。
+- **What**: 21项独立修复记录，含3个实际产品问题；838项逐条对账，保留失败/稳定帧和来源run。
+- **Verification**: 剩余705通过/1原有跳过，既有132项修复后再次通过；合计837通过/1跳过/0未跑。类型及全量Vitest499文件5290通过/10跳过。见 docs/reviews/2026-10-25-remaining-electron-summary.md。
+- **Impact**: 本地main；未推送、未替换安装版或安装解释器。
+
 ### 2026-10-25 — 本地内核设置区分配置状态与路径输入提示
 
 - **Type**: test

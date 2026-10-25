@@ -22,4 +22,4 @@ CSV 编号/文本和前导零不再经过 Number 折叠；已识别编号/编码
 
 ## 本地集成
 
-本节在快进合并后追加实际主目录验证。仅本地提交/合并，不推送、不替换已安装应用。下一项为 SSH 握手期间断开的资源清理，使用新分支。
+修复提交 6cbd5401 已从 de6ebf84 快进合并本地 main。主目录重新 typecheck / 完整 build 通过，定向 8 文件 70 项通过（2.83 秒），真实 Electron 5 项通过（18.5 秒）；main-typecheck.log、main-build.log、main-focused.log、main-e2e.log 保存于同一证据目录。代码树与修复分支一致。仅本地提交/合并，不推送、不替换已安装应用。下一项 SSH 握手期间断开的资源清理使用新分支 codex/ssh-connect-cancellation。

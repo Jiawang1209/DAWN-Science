@@ -9,7 +9,7 @@
 - [x] src/delivery/numbers.ts 与 verify.ts：实现精确保留、数值比较和角色规则；更新 analysis-delivery.tsx 与英文同义文案。
 - [x] tests/delivery/verify.test.ts：真实独立 Python 进程验证差异不能落 passed，原参照与 verification.json 保留；e2e/analysis-delivery.spec.ts 验证真实 UI 状态。
 - [x] 完成 delivery/UI/后端定向、typecheck、完整 build、全量 Vitest 和相关 Electron；自审后记录 review 与 DEVELOPMENT_HISTORY。
-- [ ] 提交本切片并快进本地 main；主目录构建/类型/定向/Electron 复验；记录精确提交、日志与边界。
+- [x] 提交本切片并快进本地 main；主目录构建/类型/定向/Electron 复验；记录精确提交、日志与边界。
 - [ ] 从验证后的 main 为 SSH 握手期间断开创建新分支，后续改动不混入本分支。
 
 依用户逐项授权，原会话串行执行，不委派子 agent；使用 executing-plans 的验证检查点。无需重复请求已授权的本地提交合并。

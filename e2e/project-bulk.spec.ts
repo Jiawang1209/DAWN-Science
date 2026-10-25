@@ -220,9 +220,14 @@ test("**项目行一行：名字在行上，路径与对话数在悬停卡上**"
 
   const 行 = page.locator(".proj-list .proj-item .row").first()
   await expect(行.locator(".sess > .sub")).toHaveCount(0)
-  // 单行：行高不超过会话行那种单行的高度（实测 WorkBuddy 是 31）
-  const 高 = (await 行.boundingBox())!.height
-  expect(高).toBeLessThan(40)
+  // 现行项目主入口有48px点击行；单行由实际文字判定，不能用旧会话行高度推断。
+  const geometry = await 行.evaluate(el => {
+    const title = el.querySelector(".sess-title-run")!
+    const range = document.createRange(); range.selectNodeContents(title)
+    return { height: Math.round(el.getBoundingClientRect().height), lines: range.getClientRects().length }
+  })
+  expect(geometry.height).toBe(48)
+  expect(geometry.lines).toBe(1)
 
   await 行.hover()
   const 卡 = page.locator(".sess-hover-card")

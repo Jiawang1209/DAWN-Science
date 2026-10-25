@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 剩余 Electron：项目入口行高与单行文字分开验收
+
+- **Type**: test
+- **Motivation**: 旧项目行<40px断言与现行48px主入口规范冲突。
+- **What**: 显式48px行高及Range单行字形，保留无常驻细节和hover路径/对话数，不改产品。
+- **Verification**: 整份project-bulk6项、相关UI109项及类型通过；见 docs/reviews/2026-10-25-electron-project-row-verification.md。
+- **Impact**: 独立codex/electron-project-row，按授权本地合并、不推送。
+
 ### 2026-10-25 — 剩余 Electron：速查包含当前对话查找
 
 - **Type**: test

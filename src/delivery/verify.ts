@@ -176,15 +176,17 @@ export function compareDeliveryText(
     if (left.length !== columns.length || right.length !== columns.length)
       return { same: false, note: `第 ${i + 1} 行列数不一致` };
     for (let j = 0; j < columns.length; j++) {
+      // Normalize only the inferred role; raw column identity was compared above.
+      const fieldName = columns[j]!.trim();
       const v = left[j]!,
         w = right[j]!,
         numbers = numericText.test(v) && numericText.test(w)
-          && !identityField(columns[j]!) && !/^[+-]?0\d/.test(v) && !/^[+-]?0\d/.test(w);
+          && !identityField(fieldName) && !/^[+-]?0\d/.test(v) && !/^[+-]?0\d/.test(w);
       if (
         !equalValue(
           numbers ? new ComparedNumber(v) : v,
           numbers ? new ComparedNumber(w) : w,
-          exactNumericField(columns[j]!)
+          exactNumericField(fieldName)
             ? 0
             : tolerance,
         )

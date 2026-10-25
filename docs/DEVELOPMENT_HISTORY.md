@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 保持带空格计数字段的精确核验
+
+- **Type**: fix
+- **Motivation**: 严格解析保留表头后，计数字段带空格会失去原有精确比较策略。
+- **What**: 只规范用于推断角色的名称，原始表头身份保持；计数精确、连续测量容差保持。
+- **Verification**: 新回归4红后绿，115项及真实Electron9项、类型与构建通过；见 docs/reviews/2026-10-25-delivery-padded-counts-verification.md。
+- **Impact**: 独立codex/delivery-padded-counts，验证后本地合并，不推送、不替换安装版。
+
 ### 2026-10-25 — 交付表格核验改用严格原始记录解析
 
 - **Type**: fix

@@ -45,3 +45,12 @@ it("keeps the full-comparison row budget", () => {
   const data = "id\n" + Array.from({ length: 20_001 }, (_, i) => String(i)).join("\n");
   expect(() => compare(data, data)).toThrow(/完整比较行数上限/);
 });
+
+it.each([" n_effective ", "count ", " sample_size", " 样本量 "])("keeps padded count header %s on exact numeric comparison", field => {
+  expect(compareDeliveryText(`${field}\n28.1`, `${field}\n28.2`, "table", 0.01).same).toBe(false);
+});
+
+it("preserves continuous tolerance and raw identity for padded measurement headers", () => {
+  expect(compareDeliveryText(" value \n2.5", " value \n2.5001", "table", 0.01).same).toBe(true);
+  expect(compareDeliveryText(" value \n2.5", "value\n2.5001", "table", 0.01).same).toBe(false);
+});

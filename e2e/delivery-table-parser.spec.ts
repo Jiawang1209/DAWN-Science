@@ -4,6 +4,7 @@ import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js";
 
 for (const [name, source, output, state, reason] of [
   ["原始表头变化", " id,value\nA,2.5\n", "id,value\nA,2.5\n", "运行验证失败", "表头"],
+  ["带空格计数列", " n_effective ,value\n28.1,2.5\n", " n_effective ,value\n28.2,2.5\n", "运行验证失败", "28.1 / 28.2"],
   ["未闭合引号", "id,label\nA,bad\n", 'id,label\nA,"bad', "部分验证", "引号未闭合"],
 ] as const) {
   test(`交付表格${name}不会显示重跑通过`, async ({ dawn }, info) => {
@@ -30,6 +31,7 @@ for (const [name, source, output, state, reason] of [
     await panel.getByLabel("交付名称", { exact: true }).fill(name);
     await panel.getByRole("button", { name: "开始整理", exact: true }).click();
     await panel.getByRole("button", { name: "继续设置运行验证", exact: true }).click();
+    await panel.getByLabel("数值比较容差").fill("0.01");
     await panel.getByRole("checkbox", { name: /已核对脚本/ }).check();
     await panel.getByRole("button", { name: "启动独立验证", exact: true }).click();
     await expect(panel.getByText(state, { exact: true })).toBeVisible({ timeout: 30_000 });

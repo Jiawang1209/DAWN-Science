@@ -155,3 +155,63 @@ test("**第二档的计划与筛**：每月、每 N 天、权限档标签、记�
   await 记录区.getByLabel("状态").selectOption("succeeded")
   await expect(记录区.locator(".skill-row")).toHaveCount(1)
 })
+
+/** 真实 pi 多轮工具链：中间回复不能终结定时运行。 */
+test.describe("完整回合结算", () => {
+  test.use({ dawnOptions: {
+    toolCall: { toolName: "bash", args: { command: "printf 'SCHEDULE_TOOL_STEP'" }, say: "中间回复：还在检查数据", repeat: 2 },
+    firstChunkDelayMs: 1200,
+    reply: "最终回复：分析请求已完整结束",
+  } })
+
+  for (const outcome of ["succeeded", "failed", "cancelled"] as const) {
+    const failed = outcome === "failed"
+    const cancelled = outcome === "cancelled"
+    test(failed ? "工具后的模型失败记为失败，中间回复不提前报成功" : cancelled ? "在定时会话停止后记录取消，不能报成功" : "两次模型迭代后才报成功，摘要使用最终回复", async ({ dawn }) => {
+      const { page, requests } = dawn
+      const prompt = failed ? "定时整轮失败验收" : "定时整轮成功验收"
+      const task = await page.evaluate(async ({ workspace, prompt }) => {
+        const call = async (op: string, input: unknown) => {
+          const response = await window.dawn!.invoke(op, input)
+          if (!response.ok) throw new Error(JSON.stringify(response.error))
+          return response.data as any
+        }
+        const { agents } = await call("getProviders", {})
+        const agentId = agents.find((agent: { kind: string }) => agent.kind === "native")?.agentId
+        if (!agentId) throw new Error("缺少验收用 native agent")
+        const definition = await call("createSchedule", { name: "整轮结算验收", prompt, agentId, workspace, permission: "allow-all", schedule: { kind: "daily", time: "09:00", timeZone: "Asia/Shanghai" } })
+        const run = await call("runScheduleNow", { id: definition.id })
+        return { definitionId: definition.id, runId: run.id }
+      }, { workspace: dawn.workspace, prompt })
+      await page.getByRole("button", { name: "定时", exact: true }).click()
+      // 第二次请求已带工具结果：前一条中间发言已经 final，整轮尚未结束。
+      await expect.poll(() => requests.some(request => (request as { body?: { messages?: { role: string }[] } }).body?.messages?.at(-1)?.role === "tool")).toBe(true)
+      const runRow = page.locator(".schedule-runs .skill-row").first()
+      await expect(runRow).toContainText("跑着")
+      await expect(runRow).not.toContainText("成功")
+      if (cancelled) {
+        await page.evaluate(async () => {
+          // sessionId 在调度器结算时才写入运行记录；运行中从真实任务取会话。
+          const result = await window.dawn!.invoke("listTasks", {})
+          if (!result.ok) throw new Error(JSON.stringify(result.error))
+          const tasks = result.data as { sessionId?: string }[]
+          const sessionId = tasks.find(task => task.sessionId)?.sessionId
+          if (!sessionId) throw new Error("缺少运行中的定时会话")
+          const stopped = await window.dawn!.invoke("abortSession", { sessionId })
+          if (!stopped.ok) throw new Error(JSON.stringify(stopped.error))
+        })
+      }
+      await expect(runRow).toContainText(failed ? "失败" : cancelled ? "取消了" : "成功", { timeout: 30_000 })
+      await expect(runRow).toContainText(failed ? "定时工具之后模型失败" : cancelled ? "用户已停止本次定时运行" : "最终回复：分析请求已完整结束")
+      const recorded = await page.evaluate(async id => {
+        const result = await window.dawn!.invoke("listScheduleRuns", { id, limit: 10 })
+        if (!result.ok) throw new Error(JSON.stringify(result.error))
+        return result.data as { runs: { id: string; status: string; summary?: string; error?: { code: string } }[] }
+      }, task.definitionId)
+      const run = recorded.runs.find(run => run.id === task.runId)
+      expect(run?.status).toBe(outcome)
+      if (failed || cancelled) expect(run?.error?.code).toBe(failed ? "agent_error" : "cancelled")
+      else expect(run?.summary).toBe("最终回复：分析请求已完整结束")
+    })
+  }
+})

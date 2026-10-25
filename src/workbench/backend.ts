@@ -2002,7 +2002,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   }
   /**
    * 跑一次。**全新会话、不继承任何对话**（照 dsh-automation）：`createTask` 开一段，标题「<任务名> · <时刻>」，
-   * 以用户身份写进任务说明，等 agent 这一轮的 `final` 那条——那段文字就是摘要。
+   * 以用户身份写进任务说明，等 runtime 的整轮 idle；final 只表示一次模型发言结束。
    * 会话退出 / 超时 / 被取消都各自落一个码。无人值守，权限用设置里的档，问不到人的一律拒（门本来就是这么做的）。
    */
   const 定时执行器 = async (d: 定时定义, r: 定时运行, signal: AbortSignal): Promise<定时完成> => {
@@ -2023,28 +2023,46 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         完了 = true
         clearTimeout(计时)
         退订()
+        退订收尾()
         signal.removeEventListener("abort", 取消)
         resolve({ ...v, sessionId })
       }
       const 退订 = events.onAnyUpdate((u) => {
         if (u.sessionId !== sessionId) return
         if (u.type === "state" && u.state === "exited") 收({ status: "failed", error: { code: "session_exited", message: `会话在这一轮结束前退出了（exit ${u.exitCode ?? "?"}）` } })
-        if (u.type === "item" && u.item.type === "turn" && u.item.who === "agent" && u.item.final) 收({ status: "succeeded", summary: u.item.text.trim().slice(0, 2000) })
+      })
+      const 退订收尾 = events.on回合收尾((v) => {
+        if (v.sessionId !== sessionId) return
+        if (signal.aborted) { 取消(); return }
+        if ((停止次数.get(sessionId) ?? 0) > 0) {
+          收({ status: "cancelled", error: { code: "cancelled", message: "用户已停止本次定时运行" } })
+          return
+        }
+        if (v.失败 !== undefined) {
+          收({ status: "failed", error: { code: "agent_error", message: v.失败 } })
+          return
+        }
+        const last = events.peekItems(sessionId).findLast((item): item is Extract<typeof item, { type: "turn" }> => item.type === "turn" && item.who === "agent" && item.final)
+        const summary = last?.text.trim().slice(0, 2000)
+        收({ status: "succeeded", ...(summary ? { summary } : {}) })
       })
       const 计时 = setTimeout(() => {
-        void sessions.abort(sessionId).catch(() => {})
+        // 先认领终态：中止可能同步触发 idle，不能让它抢先报成功。
         收({ status: "failed", error: { code: "timeout", message: `跑了 ${定时设置?.超时分钟 ?? 60} 分钟还没结束，停了` } })
+        void sessions.abort(sessionId).catch(() => {})
       }, 超时毫秒)
       const 取消 = () => {
-        void sessions.abort(sessionId).catch(() => {})
         收({ status: "cancelled", error: { code: "cancelled", message: "DAWN 停了，这一次取消" } })
+        void sessions.abort(sessionId).catch(() => {})
       }
       signal.addEventListener("abort", 取消)
+      // 创建会话需要 await；取消可能在监听挂上之前已经发生。
+      if (signal.aborted) 取消()
       收外 = 收
     })
     try {
       sessions.leases.acquire(sessionId, "user")
-      await backend.writeToSession({ sessionId, data: r.prompt, as: "user" })
+      if (!signal.aborted) await backend.writeToSession({ sessionId, data: r.prompt, as: "user" })
     } catch (e) {
       // 写话失败也要把监听、计时、abort 钩子收干净（2026-08-23 审查抓的：此前留到 60 分钟超时才触发一次无谓的 abort）
       const 失败: 定时完成 = { status: "failed", sessionId, error: { code: "write_failed", message: e instanceof Error ? e.message : String(e) } }

@@ -512,6 +512,13 @@ export function startMockInferenceServer(opts = {}) {
       // 演一次失败（桌面通知，2026-09-27）：只这一问 401，会话里其它问照常。
       // 摘要请求不算——它的 user 那条装着整段对话原文，里面的「演一次失败」是被摘要的话
       const 是摘要 = 是摘要请求(文本(body.messages?.find?.((m) => m.role === "system" || m.role === "developer")?.content))
+      // 定时结算回归：工具执行后才失败，覆盖中间文本 final 之后的真实 agent loop。
+      if (!是key验证 && !是摘要 && !是标题 && 最后一句.includes("定时整轮失败验收") && body.messages?.at(-1)?.role === "tool") {
+        if (opts.firstChunkDelayMs) await new Promise(r => setTimeout(r, opts.firstChunkDelayMs))
+        res.writeHead(401, { "content-type": "application/json" })
+        res.end(JSON.stringify({ error: { message: "mock：定时工具之后模型失败", type: "invalid_request_error" } }))
+        return
+      }
       if (!是key验证 && !是摘要 && !是标题 && 最后一句用户话(body)?.includes("演一次失败")) {
         res.writeHead(401, { "content-type": "application/json" })
         res.end(JSON.stringify({ error: { message: "mock：演一次失败", type: "invalid_request_error" } }))

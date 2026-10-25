@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 定时任务等待整次请求结束再结算
+
+- **Type**: fix
+- **Motivation**: 模型中间回复 final 被误记为定时成功，工具链还在执行或后续模型失败时无法正确反映状态。
+- **What**: 改用 runtime idle / on回合收尾 结算；保留实际模型失败、用户停止取消和最终摘要；宿主取消、超时先结算再中止，避免同步 idle 竞争；启动期间已取消的不再发送任务说明。
+- **Verification**: 新增 9 项 backend / SQLite 行为回归，先复现失败再修正；定向 75 项、全量 497 文件 5246 项通过（10 跳过），类型与完整构建通过；真实 Electron 定时 7 项通过，覆盖多次工具调用后的成功、后续模型失败及用户停止取消。详见 docs/reviews/2026-10-25-schedule-completion-verification.md。
+- **Impact**: 独立 codex/schedule-completion 分支，验证后按用户授权合入本地 main；无协议或界面设计变更，不推送、不替换安装版。
+
 ### 2026-10-24 — 关闭顶部会话后误入终端记录的导航恢复
 
 - **Type**: fix

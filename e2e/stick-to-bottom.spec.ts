@@ -40,7 +40,7 @@ import { test, 开一段临时会话 } from "./fixtures.js"
 const 滚的是 = ".turns > div"
 
 async function 灌几轮(page: import("@playwright/test").Page, 句们: string[]): Promise<void> {
-  const 框 = page.getByPlaceholder(/输入问题/)
+  const 框 = page.locator("main.main .composer-card textarea")
   for (const s of 句们) {
     await 框.fill(s)
     await 框.press("Enter")
@@ -259,7 +259,7 @@ test.describe("对话区只许有一层能滚的容器", () => {
     await page.waitForTimeout(400)
 
     // 一段够长的转录：静态位置逃逸要长转录才看得出来（末尾离 .turns 顶好几千像素）
-    const 框 = page.getByPlaceholder(/输入问题/)
+    const 框 = page.locator("main.main .composer-card textarea")
     await 框.fill(Array.from({ length: 300 }, (_, i) => `第 ${i} 行：把转录撑高一点点。`).join("\n"))
     await 框.press("Enter")
     await page.locator(".turns").getByText("第 299 行：把转录撑高一点点。").waitFor({ timeout: 30_000 })

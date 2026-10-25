@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 滚动回归不再依赖会被续问替换的占位文字
+
+- **Type**: test
+- **Motivation**: 多轮灌消息时续问建议替换placeholder，旧定位先于浮标断言失败。
+- **What**: 两处使用主区输入卡textarea，不改产品与滚动目标。
+- **Verification**: 整份Electron7项、组件16项、类型通过；见 docs/reviews/2026-10-25-electron-scroll-input-verification.md。
+- **Impact**: 独立codex/electron-scroll-input，按授权本地合并，不推送。
+
 ### 2026-10-25 — 远端会话时间与菜单列补回父行右侧留白
 
 - **Type**: fix

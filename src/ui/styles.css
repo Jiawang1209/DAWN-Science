@@ -8349,6 +8349,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-environment {
   display: flex;
   align-items: center;
+  /* 无目录按钮的侧边对话也保留同一环境栏高度：32px 控件 + 上下留白。 */
+  min-height: calc(var(--dawn-space-8) + 2 * var(--dawn-space-1));
   gap: var(--dawn-space-4);
   min-width: 0;
   padding: var(--dawn-space-1) var(--dawn-space-3);

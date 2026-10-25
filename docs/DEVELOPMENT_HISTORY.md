@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 主侧输入卡环境栏保持相同基础高度
+
+- **Type**: fix
+- **Motivation**: 侧边临时对话无目录按钮，环境栏比主区矮10px。
+- **What**: 环境栏最小高度匹配已有32px目录控件加上下留白，保留自然增高。
+- **Verification**: 原双宽度失败先红后绿，整份Electron9项、相关18项、构建/类型及实际截图检查通过；见 docs/reviews/2026-10-25-side-composer-alignment-verification.md。
+- **Impact**: 独立codex/side-composer-alignment，按授权本地合并、不推送。
+
 ### 2026-10-25 — 剩余 Electron：侧边会话页签按顶栏验收
 
 - **Type**: test

@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 归档临时会话先就绪摘要再打开，保住搜索命中
+
+- **Type**: fix
+- **Motivation**: 归档结果打开后临时摘要缺失，项目列表刷新使对话短暂卸载并丢掉高亮。
+- **What**: 原恢复流程选中前等待临时摘要刷新；不改高亮模块/协议/原Electron断言，撤回未解决根因的DOM观察尝试。
+- **Verification**: 新App异步gate回归先红后绿；相关19项、Electron18项、类型/完整构建及全量499文件5290项通过（10跳过）；见 docs/reviews/2026-10-25-electron-archived-search-verification.md。
+- **Impact**: 独立codex/electron-archived-search，按授权验证后本地合并，不推送。
+
 ### 2026-10-25 — 剩余 Electron：脚本底色按预览令牌验收
 
 - **Type**: test

@@ -4018,6 +4018,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         if (s.projectId && !projects.find((p) => p.projectId === s.projectId)?.temporary) setActiveProjectId(s.projectId)
         if (s.projectId) await loadSessions(client, s.projectId)
         await loadTasks(client)
+        // 临时会话摘要就绪后再选中，避免项目列表刷新时短暂丢失会话、重挂并丢掉搜索命中。
+        await loadTempSessions(client)
         await 重取归档数()
         setActiveSessionId(s.sessionId)
         // 从侧栏搜索点进来时整页设置可能开着：走 `关掉设置`（它会把被顶掉的坞房客还回去）

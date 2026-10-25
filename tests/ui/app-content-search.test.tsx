@@ -16,6 +16,8 @@ import { createClient, type RawResponse } from "../../src/ui/client.js"
 import { OPERATIONS, WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 import { setRightDockOpen } from "../../src/ui/state/right-dock.js"
 import { $notes } from "../../src/ui/state/connection.js"
+import { $activeSessionId } from "../../src/ui/state/view.js"
+import { setSessions } from "../../src/ui/state/catalog.js"
 
 const 会话 = (sessionId: string, title: string) => ({
   sessionId,
@@ -46,8 +48,10 @@ const 转录: Record<string, unknown[]> = {
   s2: [{ type: "turn", id: "x0", who: "user", text: "别的事", final: true }],
 }
 
-function harness(命中: { itemId: string; nth: number }) {
+function harness(命中: { itemId: string; nth: number }, options: { archived?: boolean; tempRefresh?: Promise<void> } = {}) {
   const calls: { op: string; req: unknown }[] = []
+  let restored = !options.archived
+  let waitingForTemp = false
   const data = (op: string, req: unknown): unknown => {
     switch (op) {
       case "getCapabilities":
@@ -69,9 +73,14 @@ function harness(命中: { itemId: string; nth: number }) {
         }
       case "listSessions":
       case "listTemporarySessions":
-        return [会话("s1", "甲会话"), 会话("s2", "乙会话")]
+        return [...(restored ? [会话("s1", "甲会话")] : []), 会话("s2", "乙会话")]
       case "listTasks":
-        return [任务(1, "s1", "甲会话"), 任务(2, "s2", "乙会话")]
+        return [...(restored ? [任务(1, "s1", "甲会话")] : []), 任务(2, "s2", "乙会话")]
+      case "listArchivedSessions":
+        return { sessions: restored ? [] : [{ ...会话("s1", "甲会话"), archivedAt: "2026-09-03T00:00:00Z", projectName: "tmp", workspace: "/tmp/search" }] }
+      case "setSessionArchived":
+        restored = true
+        return {}
       case "listRuns":
         return []
       case "subscribeSession": {
@@ -91,7 +100,8 @@ function harness(命中: { itemId: string; nth: number }) {
             {
               sessionId: "s1",
               title: "甲会话",
-              archived: false,
+              archived: !restored,
+              ...(options.archived ? { projectId: "tmp" } : {}),
               lastAt: "2026-09-03T10:00:00.000Z",
               hits: [{ itemId: 命中.itemId, nth: 命中.nth, where: "user", snippet: "鲸落 Cox 回归", marks: [[0, 2]] }],
               moreHits: 0,
@@ -104,6 +114,10 @@ function harness(命中: { itemId: string; nth: number }) {
   }
   const invoke = async (op: string, req: unknown): Promise<RawResponse> => {
     calls.push({ op, req })
+    if (op === "listTemporarySessions" && restored && options.tempRefresh) {
+      waitingForTemp = true
+      await options.tempRefresh
+    }
     const raw = data(op, req)
     const def = (OPERATIONS as Record<string, { response: { parse(v: unknown): unknown } }>)[op]
     if (def) def.response.parse(raw)
@@ -114,7 +128,7 @@ function harness(命中: { itemId: string; nth: number }) {
     () => () => {},
     async () => null,
   )
-  return { client, calls }
+  return { client, calls, waitingForTemp: () => waitingForTemp }
 }
 
 const 侧栏 = () => document.querySelector<HTMLElement>(".sidebar")!
@@ -148,6 +162,27 @@ afterEach(() => {
 })
 
 describe("全文搜索 · 点结果 → 打开 → 跳到", () => {
+  it("归档临时会话先等摘要就绪；项目列表更新不卸载恢复后的命中", async () => {
+    let release!: () => void
+    const tempRefresh = new Promise<void>(resolve => { release = resolve })
+    const h = harness({ itemId: "r0", nth: 0 }, { archived: true, tempRefresh })
+    render(<App client={h.client} />)
+    try {
+      await 侧栏点("乙会话")
+      await waitFor(() => expect(当前转录行("x0")).not.toBeNull())
+      await 搜并点第一处()
+      await waitFor(() => expect(h.waitingForTemp()).toBe(true))
+      expect($activeSessionId.get()).toBe("s2")
+      await act(async () => { release() })
+      await waitFor(() => expect(当前转录行("r0")?.getAttribute("data-search-hit")).toBe("true"))
+      const highlighted = 当前转录行("r0")
+      // 后续项目列表响应不包含临时会话；它必须由已刷新的临时摘要继续承接。
+      act(() => setSessions([]))
+      expect(当前转录行("r0")).toBe(highlighted)
+      expect(highlighted?.getAttribute("data-search-hit")).toBe("true")
+    } finally { await act(async () => { release() }) }
+  })
+
   it("点一处：那段打开，那一条被描上", async () => {
     const h = harness({ itemId: "r0", nth: 0 })
     render(<App client={h.client} />)

@@ -7,7 +7,7 @@ test.use({dawnOptions:{fakeCrossref:true}})
 async function enable(page: Page) {
   await 进设置(page,'插件')
   const card=page.locator('.plugin-card').filter({hasText:'科研文献 · Crossref'})
-  await expect(card.getByRole('checkbox',{name:'启用这个插件',exact:true})).not.toBeChecked()
+  await expect(card.getByRole('checkbox',{name:'启用这个插件',exact:true})).toBeChecked()
   await expect(card).toContainText('仅核对索引元数据')
   await card.getByRole('checkbox',{name:'启用这个插件',exact:true}).check()
   await page.getByRole('button',{name:'返回',exact:true}).click()
@@ -17,12 +17,8 @@ async function send(page: Page, value: string) {
   await page.getByPlaceholder(/输入问题/).fill(value)
   await page.getByRole('button',{name:'发送',exact:true}).click()
 }
-test('默认关闭 → 界面开启并持久化 → 真工具检索、DOI 核对、只保存所选记录',async({dawn},testInfo)=>{
+test('默认开启 → 界面设置并持久化 → 真工具检索、DOI 核对、只保存所选记录',async({dawn},testInfo)=>{
   const {page,workspace}=dawn
-  await 在项目里开会话(page)
-  await send(page,'Crossref文献检索验收')
-  await expect(page.locator('.turn.agent').last()).toContainText('请先在设置', {timeout:30_000})
-  expect(dawn.crossref!.requests).toHaveLength(0)
   await enable(page)
   await send(page,'Crossref文献检索验收，请检索并核对 DOI，保存第一条。')
   await expect(page.locator('.turn.agent').last()).toContainText('文献清单已保存', {timeout:30_000})

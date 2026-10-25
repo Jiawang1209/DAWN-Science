@@ -1,3 +1,4 @@
+import { GeoClient } from "../science/geo.js"
 import { CrossrefClient } from "../literature/crossref.js"
 import { OpenAlexClient } from "../literature/client.js"
 import { pluginEnabled } from "../tools/plugins.js"
@@ -767,6 +768,20 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         if (target.protocol !== "http:" || target.hostname !== "127.0.0.1" || target.username || target.password) throw new Error("Crossref test fixture must use loopback HTTP")
         const original = new URL(String(input))
         if (original.origin !== "https://api.crossref.org") throw new Error("Unexpected literature request origin")
+        return fetch(new URL(original.pathname + original.search, target), init)
+      }} : {}),
+    }),
+    geoEnable: () => ({
+      off: !pluginEnabled("geo", settingsStore.get("plugin.geo.off")),
+      read: settingsStore.get("plugin.geo.read") !== "0",
+      save: settingsStore.get("plugin.geo.save") !== "0",
+    }),
+    geoClient: () => new GeoClient({
+      ...(process.env.DAWN_FAKE_SCIENCE ? {fetch: async (input: string | URL | Request, init?: RequestInit) => {
+        const target = new URL(process.env.DAWN_FAKE_SCIENCE!)
+        if (target.protocol !== "http:" || target.hostname !== "127.0.0.1" || target.username || target.password) throw new Error("Science fixture must use loopback HTTP")
+        const original = new URL(String(input))
+        if (!["https://eutils.ncbi.nlm.nih.gov", "https://www.ncbi.nlm.nih.gov"].includes(original.origin)) throw new Error("Unexpected research request origin")
         return fetch(new URL(original.pathname + original.search, target), init)
       }} : {}),
     }),

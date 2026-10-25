@@ -18,8 +18,8 @@ const client=()=>new CrossrefClient({schedule:async task=>task(),fetch:async url
 const tools=(ws=workspace())=>crossrefTools(ws,flags,{client:client()})
 const data=(result:any)=>JSON.parse(result.content[0].text)
 const call=(ts:any[],name:string,args:Record<string,unknown>)=>ts.find(t=>t.name===name)!.execute('test',args)
-it('新插件默认关闭，启用后工具名和族独立，远端无保存',()=>{
-  expect(pluginEnabled('crossref',undefined)).toBe(false)
+it('新插件默认开启，启用后工具名和族独立，远端无保存',()=>{
+  expect(pluginEnabled('crossref',undefined)).toBe(true)
   expect(tools().map(t=>t.name)).toEqual(['crossref_search','crossref_lookup_doi','crossref_save'])
   expect(crossrefTools(workspace(),{...flags,off:true})).toEqual([])
   expect(crossrefTools(workspace(),flags,{client:client(),remote:true}).map(t=>t.name)).toEqual(['crossref_search','crossref_lookup_doi'])

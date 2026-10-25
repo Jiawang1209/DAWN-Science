@@ -1,3 +1,4 @@
+import { startFakeScienceServer } from "./fake-science-server.mjs"
 /**
  * 用假推理服务器启动 DAWN —— 不需要任何真 API key。
  *
@@ -82,6 +83,7 @@ const server = await startMockInferenceServer()
  */
 const weixin = await startFakeIlinkServer({ longPollMs: 25_000 })
 const openalex = await startFakeOpenAlexServer()
+const science = await startFakeScienceServer()
 const crossref = await startFakeCrossrefServer()
 const feishu = await startFakeFeishuServer({ longPollMs: 2000 })
 /**
@@ -156,6 +158,7 @@ const child = spawn(
       DAWN_COMPACT_KEEP_RECENT_TOKENS: process.env.DAWN_COMPACT_KEEP_RECENT_TOKENS ?? "1",
       DAWN_FAKE_ILINK: weixin.url,
       DAWN_FAKE_OPENALEX: openalex.url,
+      DAWN_FAKE_SCIENCE: science.url,
       DAWN_FAKE_CROSSREF: crossref.url,
       DAWN_FAKE_FEISHU: feishu.url,
       /**
@@ -178,6 +181,7 @@ const child = spawn(
 const shutdown = async () => {
   await server.close()
   await openalex.close()
+  await science.close()
   await crossref.close()
   await weixin.close()
   await feishu.close()

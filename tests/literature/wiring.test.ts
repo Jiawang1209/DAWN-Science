@@ -8,8 +8,8 @@ import {插件册,pluginEnabled} from '../../src/tools/plugins.js'
 import {work} from './fixtures.js'
 const dirs:string[]=[]
 afterEach(()=>{for(const p of dirs.splice(0))rmSync(p,{recursive:true,force:true})})
-it('科研文献默认关闭，已有插件默认状态不改变',()=>{
-  expect(pluginEnabled('literature',undefined)).toBe(false)
+it('科研文献默认开启，明确关闭和已有插件状态保留',()=>{
+  expect(pluginEnabled('literature',undefined)).toBe(true)
   expect(pluginEnabled('literature','')).toBe(true)
   expect(pluginEnabled('literature','0')).toBe(true)
   expect(pluginEnabled('literature','1')).toBe(false)

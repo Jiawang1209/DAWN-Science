@@ -1,3 +1,4 @@
+import { startFakeScienceServer } from "../scripts/fake-science-server.mjs"
 /**
  * e2e 的启动夹具。
  *
@@ -277,6 +278,7 @@ export interface DawnFixture {
   weixin?: FakeIlinkServer
   feishu?: FakeFeishuServer
   openalex?: { requests: {path: string; query: Record<string,string>}[] }
+  science?: { requests: {path: string; query: Record<string,string>}[] }
   crossref?: { requests: {path: string; query: Record<string,string>}[] }
   /** 假发布源（开了 `fakeUpdate` 才有）：可以中途换一个版本号 */
   发布源?: { url: string; 设版本(v: string): void }
@@ -395,6 +397,7 @@ export interface DawnOptions {
    */
   fakeOpenAlex?: boolean
   fakeCrossref?: boolean
+  fakeScience?: boolean
   fakeSsh?: boolean
   /**
    * 指给假服务器一条**本机真实的** python（远程内核，2026-09-03）。
@@ -590,6 +593,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   dawnOptions: [{}, { option: true }],
 
   dawn: async ({ dawnOptions }, use) => {
+    const science = dawnOptions.fakeScience ? await startFakeScienceServer() : undefined
     const crossref = dawnOptions.fakeCrossref ? await startFakeCrossrefServer() : undefined
     const openalex = dawnOptions.fakeOpenAlex ? await startFakeOpenAlexServer() : undefined
     const weixin = dawnOptions.fakeIlink ? await startFakeIlinkServer({ longPollMs: 1_000 }) : undefined
@@ -742,6 +746,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         // 这条路径正是「装好了打不开」那个缺陷的所在，必须被真的走一遍
         DAWN_CONFIG: configPath,
         DAWN_FAKE_OPENALEX: openalex?.url ?? "",
+        DAWN_FAKE_SCIENCE: science?.url ?? "",
         DAWN_FAKE_CROSSREF: crossref?.url ?? "",
         DAWN_DB: dbPath,
         DAWN_DEFAULT_WORKSPACE: workspace,
@@ -910,6 +915,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       mockUrl: server.url,
       ...(openalex ? { openalex } : {}),
       ...(crossref ? { crossref } : {}),
+      ...(science ? { science } : {}),
       ...(weixin ? { weixin } : {}),
       ...(feishu ? { feishu } : {}),
       ...(发布源 ? { 发布源 } : {}),
@@ -927,6 +933,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     })
     await server.close()
     await openalex?.close()
+    await science?.close()
     await crossref?.close()
     await weixin?.close()
     await feishu?.close()

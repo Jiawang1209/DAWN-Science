@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — GEO 数据集插件与科研插件缺省开启
+
+- **Type**: feat
+- **Motivation**: 直接查询科研数据和实验信息，开箱即用，保留用户明确关闭选择。
+- **What**: GEO 独立插件，关键词/GSE 查询、SOFT brief 实验设计、受限样本清单和实际记录保存。NCBI 有界串行请求；查询接入方案/讨论策略，保存经过写门。GEO、OpenAlex、Crossref 缺省开启，明确关闭仍保留。
+- **Verification**: 513 文件、5424 单测通过/10 原有跳过，类型与构建通过；30/30 相关 Electron（含 14 张原有视觉图）通过；官方匿名查询与固定隔离原生预览通过。图像/阈值/遮罩均未修改，只调整启用数断言 3→6。见 docs/reviews/2026-10-25-geo-datasets-verification.md。
+- **Impact**: 独立 codex/geo-datasets 分支验证后仅合并本地 main；未推送、未发布、未替换安装版。
+
 ### 2026-10-25 — 增加无需密钥的 Crossref 论文索引
 
 - **Type**: feat

@@ -1,3 +1,4 @@
+import { GEO_FAMILIES } from "../science/tools.js"
 import { LITERATURE_FAMILIES, CROSSREF_FAMILIES } from "../literature/tools.js"
 /**
  * 插件册（2026-08-25）：**插件 = 仓库里审过的内置工具包**，这里是唯一的名单。
@@ -43,12 +44,16 @@ export const 插件册: readonly 插件册条[] = [
       })),
   },
   {
-    id: "literature", 名: "科研文献 · OpenAlex", 键: "plugin.literature", defaultOn: false,
+    id: "literature", 名: "科研文献 · OpenAlex", 键: "plugin.literature", defaultOn: true,
     族们: () => LITERATURE_FAMILIES.map(f => ({key: f.key, name: f.name, tools: [...f.tools]})),
   },
   {
-    id: "crossref", 名: "科研文献 · Crossref", 键: "plugin.crossref", defaultOn: false,
+    id: "crossref", 名: "科研文献 · Crossref", 键: "plugin.crossref", defaultOn: true,
     族们: () => CROSSREF_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
+  },
+  {
+    id: "geo", 名: "科研数据 · GEO", 键: "plugin.geo", defaultOn: true,
+    族们: () => GEO_FAMILIES.map(f => ({key:f.key,name:f.name,tools:[...f.tools]})),
   },
 ]
 

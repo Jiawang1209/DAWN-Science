@@ -48,7 +48,7 @@ export const 方案期放行: ReadonlySet<string> = new Set([
   "find",
   "look_at_image",
   "read_main_session",
-  "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi",
+  "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series",
   出方案工具名,
   看数据工具名,
 ])
@@ -73,7 +73,7 @@ export interface 方案期语境 {
 // ── 路径：已批准的方案文件 ──
 
 /** 读路径的工具：参数里的路径是读，不算碰（`read` 读方案文件天经地义） */
-const 只读取工具 = new Set(["terminal_list", "terminal_snapshot", "terminal_wait", "get_analysis_route", "update_analysis_route", "ask_user_question", "read", "ls", "grep", "find", "look_at_image", "read_main_session", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", 看数据工具名, 出方案工具名])
+const 只读取工具 = new Set(["terminal_list", "terminal_snapshot", "terminal_wait", "get_analysis_route", "update_analysis_route", "ask_user_question", "read", "ls", "grep", "find", "look_at_image", "read_main_session", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", 看数据工具名, 出方案工具名])
 /** 写类工具里哪些参数名是路径：pi 的 `path`，插件的 `output` / `file_path` / `dest`…… */
 const 路径参数名 = /path|file|output|dest|target/i
 

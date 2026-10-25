@@ -2784,6 +2784,9 @@ pre {
   padding: var(--dawn-space-3) 0;
   border-bottom: 1px solid var(--dawn-stroke-4);
 }
+/* 路径行两列都可收缩，长路径不能按 max-content 吞掉左侧说明。 */
+.set-row:has(.ws-setting) { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.set-control:has(.ws-setting) { min-width: 0; }
 /** 说明文字不许拉满一行：**一行超过 60 个字，眼睛回到行首会找错行** */
 .set-desc, .set-section-desc, .settings-section > .caveat, .settings-section > .hint {
   max-width: 62ch;
@@ -2958,6 +2961,7 @@ pre {
 }
 
 @media (max-width: 900px) {
+  .set-row:has(.ws-setting) { grid-template-columns: minmax(0, 1fr); }
   /* 窄了就上下排——**控件宁可换行也不该被挤扁** */
   .set-row {
     align-items: flex-start;
@@ -4462,7 +4466,7 @@ pre {
   color: var(--dawn-text-1);
 }
 /** 默认工作目录那一行：路径可能很长，别把按钮挤出去 */
-.ws-setting { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+.ws-setting { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; flex: 1 1 auto; }
 /**
  * **路径让位，按钮不让位**（2026-08-18）。
  *

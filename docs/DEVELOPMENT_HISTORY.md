@@ -8,6 +8,14 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-25 — 长下载目录不再挤没设置说明
+
+- **Type**: fix
+- **Motivation**: 设置路径行右列按完整路径撑开，下载目录标题说明被挤至 0 宽、逐字竖排。
+- **What**: 仅约束路径行两列与控件最小宽度，路径省略、按钮保持单行，较窄窗口改为既定单列；不重排其他设置项。
+- **Verification**: 真实 Electron 先复现说明列宽 0，再通过亮/暗/窄窗 3 项新增及目录下载落盘/右栏设置 2 项回归；165 项相关 UI 测试、类型与完整构建通过，3 张截图逐张核对。见 docs/reviews/2026-10-25-settings-path-layout-verification.md。
+- **Impact**: 独立 codex/settings-path-layout，验证后按授权合入本地 main；无目录操作或协议变更，不推送、不替换安装版。
+
 ### 2026-10-25 — 内核清理涵盖启动中的实例与旧队列
 
 - **Type**: fix

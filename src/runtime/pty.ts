@@ -6,6 +6,7 @@
  */
 import { execFileSync } from "node:child_process"
 import * as pty from "node-pty"
+import { ptyEnvironment } from "./pty-environment.js"
 import type {
   AgentEvent,
   AgentRuntime,
@@ -115,7 +116,7 @@ export class PtyRuntime implements AgentRuntime {
       cols: this.opts.cols ?? 100,
       rows: this.opts.rows ?? 30,
       cwd: spec.workspace,
-      env: { ...process.env, ...extraEnv, ...environment } as Record<string, string>,
+      env: ptyEnvironment({ ...process.env, ...extraEnv, ...environment }) as Record<string, string>,
     })
 
     this.procs.set(spec.sessionId, proc)

@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.36 npx
+npm notice run 'vitest' run tests/terminal tests/runtime/pty-environment.test.ts tests/runtime/pty-locale.test.ts tests/integration/pty.test.ts tests/electron/terminal-control.test.ts tests/cli/agent.test.ts
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-utf8-fallback/dawn-science
+
+
+ Test Files  9 passed (9)
+      Tests  63 passed (63)
+   Start at  08:48:57
+   Duration  33.01s (transform 2.46s, setup 0ms, import 4.38s, tests 38.07s, environment 0ms)

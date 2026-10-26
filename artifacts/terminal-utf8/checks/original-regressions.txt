@@ -1,0 +1,80 @@
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-utf8-fallback/dawn-science
+
+ ❯ |node| tests/runtime/pty-locale.test.ts (4 tests | 4 failed) 2161ms
+     × shows a Chinese working-directory prompt when launched without a locale 290ms
+     × keeps Chinese input, backspace editing and command output intact without a locale 1293ms
+     × keeps the idle prompt cursor after $ with a Unicode right-side status 288ms
+     × treats empty locale values as missing 289ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/pty-locale.test.ts > PTY UTF-8 fallback with a real zsh > shows a Chinese working-directory prompt when launched without a locale
+AssertionError: expected '/var/folders/2t/y0qcl9r50cv427189l7px…' to contain '中文路径-ezJdAC'
+
+Expected: "中文路径-ezJdAC"
+Received: "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/�\M--�\M-^V\M-^G路�\M-^D-ezJdAC % "
+
+ ❯ tests/runtime/pty-locale.test.ts:39:56
+     37|     finderEnvironment()
+     38|     const shell = await startShell()
+     39|     expect((await shell.screen.snapshot()).cursorLine).toContain(basen…
+       |                                                        ^
+     40|   })
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/runtime/pty-locale.test.ts > PTY UTF-8 fallback with a real zsh > keeps Chinese input, backspace editing and command output intact without a locale
+AssertionError: expected '/var/folders/2t/y0qcl9r50cv427189l7px…' to contain '中文输入错'
+
+Expected: "中文输入错"
+Received: "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/�\M--�\M-^V\M-^G路�\M-^D-9EQDdq % �<00ad>�<0096><0087>�<0093>�<0085>��<0094><0099>"
+
+ ❯ tests/runtime/pty-locale.test.ts:46:85
+     44|     const shell = await startShell()
+     45|     shell.write('中文输入错')
+     46|     await vi.waitFor(async () => expect((await shell.screen.snapshot()…
+       |                                                                                     ^
+     47|     shell.write('\x7f')
+     48|     await vi.waitFor(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/runtime/pty-locale.test.ts > PTY UTF-8 fallback with a real zsh > keeps the idle prompt cursor after $ with a Unicode right-side status
+AssertionError: expected 'user@host ~/Desktop/test' to be 'user@host ~/Desktop/test$ ' // Object.is equality
+
+Expected: "user@host ~/Desktop/test$ "
+Received: "user@host ~/Desktop/test"
+
+ ❯ tests/runtime/pty-locale.test.ts:64:35
+     62|     const snapshot = await shell.screen.snapshot()
+     63|     expect(snapshot.cursorLine).toContain('130 ↵')
+     64|     expect(snapshot.cursorPrefix).toBe('user@host ~/Desktop/test$ ')
+       |                                   ^
+     65|   })
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/runtime/pty-locale.test.ts > PTY UTF-8 fallback with a real zsh > treats empty locale values as missing
+AssertionError: expected '/var/folders/2t/y0qcl9r50cv427189l7px…' to contain '中文路径-URNqBR'
+
+Expected: "中文路径-URNqBR"
+Received: "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/�\M--�\M-^V\M-^G路�\M-^D-URNqBR % "
+
+ ❯ tests/runtime/pty-locale.test.ts:70:56
+     68|     finderEnvironment()
+     69|     const shell = await startShell({ LANG: '', LC_ALL: '', LC_CTYPE: '…
+     70|     expect((await shell.screen.snapshot()).cursorLine).toContain(basen…
+       |                                                        ^
+     71|   })
+     72| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  08:49:59
+   Duration  2.31s (transform 30ms, setup 0ms, import 67ms, tests 2.16s, environment 0ms)

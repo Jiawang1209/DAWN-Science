@@ -1,0 +1,8 @@
+
+ RUN  v4.1.10 /Users/liuyue/.codex/worktrees/terminal-utf8-fallback/dawn-science
+
+
+ Test Files  9 passed (9)
+      Tests  63 passed (63)
+   Start at  08:57:51
+   Duration  33.19s (transform 2.17s, setup 0ms, import 3.79s, tests 38.27s, environment 0ms)

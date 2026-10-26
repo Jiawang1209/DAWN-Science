@@ -1,0 +1,8 @@
+
+ RUN  v4.1.10 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  8 passed (8)
+      Tests  50 passed (50)
+   Start at  08:59:16
+   Duration  2.75s (transform 1.62s, setup 0ms, import 2.85s, tests 5.42s, environment 0ms)

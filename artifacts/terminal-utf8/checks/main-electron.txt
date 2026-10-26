@@ -1,0 +1,17 @@
+
+Running 1 test using 1 worker
+
+(node:62159) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [Bot] 恢复送达失败 Error: Bot Team 第一版只支持 native/API 主会话
+    at botRuntime (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:215815:64)
+    at Object.busy (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:215886:70)
+    at BotDelivery.once (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209770:19)
+    at BotDelivery.flush (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:209760:23)
+    at file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:216369:109
+[主进程] Debugger ending on ws://127.0.0.1:59660/31f8dcec-772f-4b6e-a8fa-da27c65348a3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/terminal-utf8.spec.ts:9:1 › Chinese paths and editing remain readable, and a Unicode right prompt allows DAWN mode (6.2s)
+
+  1 passed (6.7s)

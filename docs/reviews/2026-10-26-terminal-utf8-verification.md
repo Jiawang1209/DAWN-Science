@@ -35,7 +35,7 @@ Finder/launchd 启动的应用可能没有 LANG、LC_CTYPE、LC_ALL。原 PTY �
 
 检查了 1280×808 和 900×668 内容区，文档宽高分别等于视口宽高。截图未见乱码、控制字节转义、中文缺字或横向溢出。输入验证通过终端键盘/文本自动化完成，未切换或重配系统输入法。
 
-详细日志在 `artifacts/terminal-utf8/checks/`。修复保留在独立 worktree，未合并 main、未推送、未发布。
+详细日志在 `artifacts/terminal-utf8/checks/`。以上为分支验收记录；现已本地合并 main，集成复核见末节。未推送、未发布。
 
 
 ## 预览终端误关闭事件与恢复
@@ -52,3 +52,12 @@ Finder/launchd 启动的应用可能没有 LANG、LC_CTYPE、LC_ALL。原 PTY �
 用户已授权合并入本地 main。独立只读审查未发现阻断问题；环境覆盖顺序、显式 locale 保留、Windows 不变和测试覆盖均符合本轮范围。
 
 重新执行：9 文件 / 63 项重点测试通过，typecheck 与完整 build 通过，新增真实 Electron 回归 1 项通过（6.6 秒）。本轮全部运行使用独立自动化夹具，未操作正在使用的预览终端。日志保存在 `artifacts/terminal-utf8/checks/premerge-*.txt`。
+
+
+## 本地 main 集成复核
+
+在确认主 checkout 干净且位于 main 后，以 `git merge --ff-only codex/terminal-utf8-fallback` 将 main 从 `c7dc9c3b` 快进到修复提交 `c3f3deb4`。
+
+随后在 `/Users/liuyue/Desktop/Github_repos/dawn-science` 实际主 checkout 执行：8 文件 / 50 项重点测试通过，typecheck 与完整 build 通过，中文路径、输入编辑、文件写入和 DAWN/Normal 切换的真实 Electron 回归 1 项通过（6.7 秒）。合并前额外运行的 13 项 CLI 测试也已通过，未将重复运行累计为不同测试数。日志保存于 `artifacts/terminal-utf8/checks/main-*.txt`。
+
+本轮未重启、关闭或清理用户正在使用的预览终端。保留分支 worktree 及现有预览进程；未推送、未修改安装版或系统配置。

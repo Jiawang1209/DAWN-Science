@@ -31,4 +31,4 @@
 - [x] Update `src/ui/app.tsx` remote terminal creation/return path and `src/ui/dock.tsx` remote title while preserving layout and draft.
 - [x] Validate two terminals/two servers, interrupted commands, dropped connections, UTF-8 and a narrow viewport. Use independent fixture data only.
 - [x] Run focused tests, typecheck, build and Electron tests; request spec and quality review and address findings.
-- [ ] Save evidence and prepare an independent, visibly labeled test preview. Retain the branch/worktree; do not merge, push or replace installed software.
+- [x] Save evidence and prepare an independent, visibly labeled test preview. Retain the branch/worktree; do not merge, push or replace installed software.

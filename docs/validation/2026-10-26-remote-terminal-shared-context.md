@@ -22,8 +22,14 @@ File tools resolve relative paths through the shared remote cwd and existing con
 - Runtime tests cover Bash/zsh, unavailable locale, pending input, abort, explicit timeout, bounded output/history, local presentation and cursor restoration.
 - Spec and quality reviews completed; reported correctness/isolation issues were fixed and regression-tested.
 
-All fixtures use fresh temporary databases/workspaces, independent Electron userData, in-memory test credentials and random loopback SSH endpoints. No test controlled or restarted the user's running preview or production sessions. The visible demo will use a new subdirectory under the standard development-preview root, a copied launcher with its own PREVIEW_ROOT, and a deterministic test model. The original launcher/profile are preserved.
+All fixtures use fresh temporary databases/workspaces, independent Electron userData, in-memory test credentials and random loopback SSH endpoints. No test controlled or restarted the user's running preview or production sessions. The visible demo uses a new subdirectory under the standard development-preview root, a copied launcher with its own PREVIEW_ROOT, and a deterministic test model. The original launcher/profile are preserved.
 
 ## Boundaries
 
 This verifies the remote transport and application integration against isolated local SSH servers, including real shell and file channels. It does not claim acceptance against the user's production server, its custom shell startup configuration or network conditions. No real-server credentials were copied to the test profile.
+
+## Visible preview acceptance
+
+The isolated Electron preview was opened after verification from feature commit `4130db9a`. Its title identifies the feature branch; a new `remote-terminal-isolated-*` profile lives under the standard DAWN Science Dev Preview directory. It shows the original Chinese conversation and the remote DAWN terminal after manually entering a Chinese directory and exporting a variable. Preview verification records one authenticated SSH connection. The actual window and narrow-viewport test screenshots, logs and verification.json are retained in that separate profile. No original launcher/profile was edited or reused.
+
+The primary checkout was rechecked: `main` remains at `ab9c1e18` (release 0.0.37), clean. The feature branch is retained separately; no merge or push was performed.

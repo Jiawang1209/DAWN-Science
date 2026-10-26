@@ -61,3 +61,14 @@ The old preview was deliberately left running. A second copied launcher/profile 
 The fixed preview root is `~/Library/Application Support/DAWN Science Dev Preview/genek-real-verified-2026-10-26T02-12-27-421Z`. Its `verification.json` and `evidence/GENEK_FIXED_mvomn0zk/` retain native tool results, identity/mode snapshots and window screenshots. Only the test profile's own extra terminal was closed while preparing the final preview; the retained terminal is in DAWN mode in the Chinese verification directory, attached to the same native conversation. Two small temporary test directories on genek are retained as acceptance evidence. No existing server files, workloads or sessions were modified by these checks.
 
 This establishes the tested genek configuration and current connection behavior; it does not claim acceptance for every SSH server, shell or network interruption scenario.
+
+## Local main integration
+
+After explicit user approval, local `main` was fast-forwarded from `ab9c1e18` to the accepted branch tip `a0c2ab93`. No conflict resolution or implementation change was needed. Verification was then repeated from the primary main checkout:
+
+- Focused regression suite: **26 files; 429 passed, 1 skipped**.
+- Typecheck and production build passed.
+- Remote terminal, desktop CLI and UTF-8 Electron flows: **5 passed**.
+- Main working-tree diff checks passed. The remote-tracking `origin/main` reference remains at `ab9c1e18`; no push, release or installed-app replacement was performed.
+
+Both existing preview processes were still running when integration was checked. Their profiles and server sessions were not restarted. The feature branch/worktree is retained because the live isolated previews still use its files.

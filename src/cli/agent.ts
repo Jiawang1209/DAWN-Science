@@ -19,9 +19,11 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
   if (!context) { process.stdout.write('已取消恢复，返回 Shell。\n'); return 0 }
   const restored = context.resumed ? await context.history().catch(async error => { await context.close(); throw error }) : undefined
   const { call, sessionId } = context
+  const shared = 'shared' in context && context.shared === true
+  const workspace = shared ? context.directory : process.cwd()
   const input = process.stdin, output = process.stdout, interactive = Boolean(input.isTTY && output.isTTY)
   const rl = interactive ? undefined : createInterface({ input, terminal: false, historySize: 200 })
-  const view = interactive ? new CliTui({ model: context.model, workspace: process.cwd(), color: !process.env.NO_COLOR,
+  const view = interactive ? new CliTui({ model: context.model, workspace, color: !process.env.NO_COLOR,
     contextButton: Boolean(process.env.DAWN_TERMINAL_ID),
     onDraftChange: () => updateSuggestion(),
     onSubmit: text => { void handle(text).catch(e => { failed = true; say(String(e), true); prompt() }) },
@@ -75,7 +77,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
     if (!closing && request === usageRequest) view.setUsage(usage)
   }
   const flush = () => { if (view) view.finish(); else if (answer.trim()) { say('\n' + answer.trim() + '\n'); answer = '' } }
-  const status = () => say(`\nAgent · ${context.model}\n权限  ${permissionSnapshot ? permissionLabel(permissionSnapshot) : '未读取'}\n目录  ${process.cwd()}\n记录  ${context.directory}\n`)
+  const status = () => say(`\nAgent · ${context.model}\n权限  ${permissionSnapshot ? permissionLabel(permissionSnapshot) : '未读取'}\n目录  ${workspace}\n记录  ${context.directory}\n`)
   const showQuestion = () => {
     if (!question) return
     if (view) { view.question(question.record, question.index, question.answers); prompt(); return }
@@ -90,7 +92,7 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
     closing = true
     suggestions?.close()
     try {
-      try { await call('abortSession', { sessionId }) }
+      try { if (!shared) await call('abortSession', { sessionId }) }
       finally { await context.close() }
     } finally {
       detachExit(); detach(); input.removeListener('end', onEnd); process.removeListener('SIGTERM', onTerminate); process.removeListener('SIGINT', onInterrupt)

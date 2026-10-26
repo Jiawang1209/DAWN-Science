@@ -632,6 +632,11 @@ export const OPERATIONS = {
     response: TerminalAgentStateSchema,
     mutating: true,
   },
+  selectTerminal: {
+    request: z.object({ terminalId: z.string().min(1) }).strict(),
+    response: Empty, mutating: true,
+  },
+
   getTerminalControl: {
     request: z.object({ terminalId: z.string().min(1) }).strict(),
     response: TerminalControlSchema,

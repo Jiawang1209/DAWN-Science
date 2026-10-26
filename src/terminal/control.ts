@@ -5,6 +5,7 @@ import { TerminalScreen } from './screen.js'
 import { readyPrompt, terminalCommand } from './commands.js'
 
 interface TerminalPort {
+  connectionId?: string
   id: string; pid: number; cwd: string; command: string; cols: number; rows: number
   write: (data: string) => void
   resize: (cols: number, rows: number) => void
@@ -76,6 +77,7 @@ export class TerminalControl {
   state(id: string): TerminalControlState {
     const e = this.entry(id)
     return {
+      ...(e.port.connectionId ? { connectionId: e.port.connectionId } : {}),
       id, instanceId: e.instanceId, pid: e.port.pid, cwd: e.port.cwd, command: e.port.command,
       alive: e.alive, controlled: e.controlled && (!this.host || this.host.valid(id)), mode: e.mode,
       cols: e.port.cols, rows: e.port.rows, revision: e.generation,
@@ -158,6 +160,11 @@ export class TerminalControl {
       else if (c === '\x1b' || c === '\t' || c < ' ' && !'\x01\x05\x0c'.includes(c)) e.inputUncertain = true
       else if (c >= ' ') e.inputLength++
     }
+  }
+
+  hasPendingInput(id: string): boolean {
+    const e = this.entry(id)
+    return Boolean(e.inputLength || e.inputUncertain || e.pasting)
   }
 
   async launchCli(id: string, resumeSessionId?: string): Promise<void> {

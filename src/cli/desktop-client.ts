@@ -11,8 +11,8 @@ export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace
   const sinks = new Set<(event: DesktopCliEvent) => void>(), exits = new Set<() => void>()
   const pending = new Map<number, { resolve: (v: any) => void; reject: (error: Error) => void }>()
   let sequence = 0, expectedClose = false
-  let ready!: (v: { sessionId: string; model: string; directory: string; resumed?: boolean }) => void, rejectReady!: (e: Error) => void
-  const connected = new Promise<{ sessionId: string; model: string; directory: string; resumed?: boolean }>((resolve, reject) => { ready = resolve; rejectReady = reject })
+  let ready!: (v: { sessionId: string; model: string; directory: string; resumed?: boolean; shared?: boolean }) => void, rejectReady!: (e: Error) => void
+  const connected = new Promise<{ sessionId: string; model: string; directory: string; resumed?: boolean; shared?: boolean }>((resolve, reject) => { ready = resolve; rejectReady = reject })
   const timer = setTimeout(() => socket.destroy(new Error('连接 DAWN 超时')), 15_000)
   socket.once('connect', () => send(socket, { ...descriptor, workspace, terminalId, agentId, resumeSessionId }))
   socket.on('error', error => rejectReady(error))

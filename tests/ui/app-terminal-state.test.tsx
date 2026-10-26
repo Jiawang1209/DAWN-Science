@@ -16,8 +16,10 @@ function harness() {
   const modes = new Map<string, any>()
   const snapshots: ((text: string) => void)[] = []
   const modeReplies: ((value: unknown) => void)[] = []
+  const modeChangeReplies: (() => void)[] = []
+  const selectionReplies: (() => void)[] = []
   let projectIds = ['p1', 'p2']
-  let serial = 0, defer = false, deferSnapshots = false, holdMode = false
+  let serial = 0, defer = false, deferSnapshots = false, holdMode = false, holdSelection = false, holdModeChange = false, rejectModeChange = false, rejectedSelection: string | undefined
   const invoke = async (op: string, req: any) => {
     calls.push({ op, req })
     let value: unknown
@@ -34,6 +36,11 @@ function harness() {
       case 'createTerminalSession': {
         const made = session('t' + ++serial, 'pty', req.projectId ?? entries.find(x => x.sessionId === req.ownerSessionId)?.projectId ?? 'p1')
         if (defer) await new Promise<void>((resolve, reject) => pending.push({ id: made.sessionId, req, finish: resolve, fail: () => reject(Error('terminal creation failed')) }))
+        const owner = entries.find(x => x.sessionId === req.ownerSessionId)
+        if (owner?.remote) {
+          made.remote = owner.remote
+          modes.set(made.sessionId, { mode: 'normal', sessionId: owner.sessionId, projectId: owner.projectId, remote: owner.remote })
+        }
         entries.push(made); value = made; break
       }
       case 'subscribeSession': {
@@ -45,13 +52,26 @@ function harness() {
         ? await new Promise(resolve => { holdMode = false; modeReplies.push(resolve) })
         : modes.get(req.terminalId) ?? { mode: 'normal' }; break
       case 'getTerminalAgentAttachments': value = { revision: 0, pending: [] }; break
+      case 'setTerminalAgentMode':
+        if (rejectModeChange) throw Error('remote detach rejected')
+        if (holdModeChange) await new Promise<void>(resolve => { holdModeChange = false; modeChangeReplies.push(resolve) })
+        value = { ...modes.get(req.terminalId), mode: req.mode }; modes.set(req.terminalId, value); break
+      case 'selectTerminal':
+        if (req.terminalId === rejectedSelection) throw Error('terminal selection rejected')
+        if (holdSelection) await new Promise<void>(resolve => { holdSelection = false; selectionReplies.push(resolve) })
+        value = {}; break
       default: value = {}; break
     }
     // Reject unsupported fixture responses instead of leaking malformed data into App.
     ;(OPERATIONS as any)[op]?.response.parse(value)
     return { ok: true, workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, data: value, warnings: [] }
   }
-  return { client: createClient(invoke, () => () => {}, async () => null), calls, pending, modes, snapshots, modeReplies,
+  return { client: createClient(invoke, () => () => {}, async () => null), calls, pending, modes, snapshots, modeReplies, modeChangeReplies, selectionReplies,
+    holdNextModeChange() { holdModeChange = true },
+    rejectModeChange() { rejectModeChange = true },
+    rejectSelection(id: string) { rejectedSelection = id },
+    holdNextSelection() { holdSelection = true },
+    remoteOwner() { entries[0]!.remote = { connectionId: 'server-a', label: 'Research server', cwd: '/remote/work' } },
     removeProjects() { projectIds = []; $projects.set([]) },
     defer() { defer = true },
     holdSnapshots() { deferSnapshots = true },
@@ -76,6 +96,107 @@ it('a slow creation cannot overwrite the terminal of the conversation switched t
   await waitFor(() => expect(h.pending).toHaveLength(2))
   await h.finish(1); await waitFor(() => expect($dockSessionId.get()).toBe('t2'))
   await h.finish(0)
+  expect($dockSessionId.get()).toBe('t2')
+  expect(h.calls.filter(x => x.op === 'selectTerminal').map(x => x.req.terminalId)).toEqual(['t2'])
+})
+
+it.each(['normal', 'dawn'])('opens a remote terminal with its original owner and returns to that owner in %s mode', async mode => {
+  const h = harness(); h.remoteOwner(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  expect(h.calls.find(x => x.op === 'createTerminalSession')!.req).toEqual({ agentId: 'shell', ownerSessionId: 's1' })
+  await waitFor(() => expect(h.calls.filter(x => x.op === 'selectTerminal').map(x => x.req.terminalId)).toEqual(['t1']))
+  await screen.findByText('Research server:/remote/work')
+  h.modes.set('t1', { ...h.modes.get('t1'), mode })
+  fireEvent.click(screen.getByRole('button', { name: '返回会话' }))
+  await waitFor(() => expect($dockOpen.get()).toBe(false))
+  expect($activeSessionId.get()).toBe('s1')
+  expect(h.calls.filter(x => x.op === 'createTerminalSession')).toHaveLength(1)
+  expect(h.calls.filter(x => x.op === 'setTerminalAgentMode').map(x => x.req)).toEqual(mode === 'dawn' ? [{ terminalId: 't1', mode: 'normal' }] : [])
+})
+
+it('waits for remote DAWN detach before returning to the original owner without stopping it', async () => {
+  const h = harness(); h.remoteOwner(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  h.modes.set('t1', { ...h.modes.get('t1'), mode: 'dawn' })
+  h.holdNextModeChange()
+  fireEvent.click(screen.getByRole('button', { name: '返回会话' }))
+  await waitFor(() => expect(h.modeChangeReplies).toHaveLength(1))
+  expect($dockOpen.get()).toBe(true)
+  expect($dockSessionId.get()).toBe('t1')
+  await act(async () => { h.modeChangeReplies[0]!() })
+  await waitFor(() => expect($dockOpen.get()).toBe(false))
+  expect($activeSessionId.get()).toBe('s1')
+  expect(h.modes.get('t1').mode).toBe('normal')
+  expect(h.calls.some(x => ['abortSession', 'stopSession', 'createTask'].includes(x.op))).toBe(false)
+})
+
+it('keeps the remote terminal visible and reports a failed DAWN detach instead of navigating away', async () => {
+  const h = harness(); h.remoteOwner(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  h.modes.set('t1', { ...h.modes.get('t1'), mode: 'dawn' }); h.rejectModeChange()
+  fireEvent.click(screen.getByRole('button', { name: '返回会话' }))
+  await screen.findByText(/remote detach rejected/)
+  expect($dockOpen.get()).toBe(true)
+  expect($dockSessionId.get()).toBe('t1')
+  expect($activeSessionId.get()).toBe('s1')
+  expect(h.modes.get('t1').mode).toBe('dawn')
+  await waitFor(() => expect((screen.getByRole('button', { name: '返回会话' }) as HTMLButtonElement).disabled).toBe(false))
+})
+
+it('returns from local DAWN without changing its existing presentation lifecycle', async () => {
+  const h = harness(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  h.modes.set('t1', { mode: 'dawn', sessionId: 's1', projectId: 'p1' })
+  fireEvent.click(screen.getByRole('button', { name: '返回会话' }))
+  await waitFor(() => expect($dockOpen.get()).toBe(false))
+  expect(h.calls.some(x => x.op === 'setTerminalAgentMode')).toBe(false)
+  expect($activeSessionId.get()).toBe('s1')
+})
+
+it('does not create a local fallback when the remote owner terminal cannot open', async () => {
+  const h = harness(); h.remoteOwner(); h.defer(); await mount(h, 's1')
+  await waitFor(() => expect(h.pending).toHaveLength(1))
+  await h.fail(0)
+  expect(h.calls.filter(x => x.op === 'createTerminalSession').map(x => x.req)).toEqual([{ agentId: 'shell', ownerSessionId: 's1' }])
+  expect(h.calls.filter(x => x.op === 'selectTerminal')).toHaveLength(0)
+  expect($dockSessionId.get()).toBeUndefined()
+  expect($activeSessionId.get()).toBe('s1')
+  expect((screen.getByRole('button', { name: '＋ 新开一个' }) as HTMLButtonElement).disabled).toBe(false)
+})
+
+it('selects the terminal on a manual tab click without letting mode reads select it again', async () => {
+  const h = harness(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  fireEvent.click(screen.getByRole('button', { name: '＋ 新开一个' }))
+  await waitFor(() => expect($dockSessionId.get()).toBe('t2'))
+  fireEvent.click(screen.getByRole('button', { name: '终端 1' }))
+  await waitFor(() => expect(h.calls.filter(x => x.op === 'selectTerminal').map(x => x.req.terminalId)).toEqual(['t1', 't2', 't1']))
+  await waitFor(() => expect(h.calls.filter(x => x.op === 'getTerminalAgentMode' && x.req.terminalId === 't1').length).toBeGreaterThanOrEqual(2), { timeout: 1600 })
+  expect(h.calls.filter(x => x.op === 'selectTerminal').map(x => x.req.terminalId)).toEqual(['t1', 't2', 't1'])
+})
+
+it('keeps the current terminal visible when selecting another terminal is rejected', async () => {
+  const h = harness(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  fireEvent.click(screen.getByRole('button', { name: '＋ 新开一个' }))
+  await waitFor(() => expect($dockSessionId.get()).toBe('t2'))
+  h.rejectSelection('t1')
+  fireEvent.click(screen.getByRole('button', { name: '终端 1' }))
+  await waitFor(() => expect(h.calls.filter(x => x.op === 'selectTerminal')).toHaveLength(3))
+  expect($dockSessionId.get()).toBe('t2')
+})
+
+it('does not navigate to an obsolete terminal selection after a newer tab choice', async () => {
+  const h = harness(); await mount(h, 's1')
+  await waitFor(() => expect($dockSessionId.get()).toBe('t1'))
+  fireEvent.click(screen.getByRole('button', { name: '＋ 新开一个' }))
+  await waitFor(() => expect($dockSessionId.get()).toBe('t2'))
+  h.holdNextSelection()
+  fireEvent.click(screen.getByRole('button', { name: '终端 1' }))
+  await waitFor(() => expect(h.selectionReplies).toHaveLength(1))
+  expect($dockSessionId.get()).toBe('t2')
+  fireEvent.click(screen.getByRole('button', { name: '终端 2' }))
+  await act(async () => { h.selectionReplies[0]!() })
   expect($dockSessionId.get()).toBe('t2')
 })
 

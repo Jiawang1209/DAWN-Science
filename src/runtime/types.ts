@@ -30,6 +30,10 @@ export interface McpServerSpec {
  * 让它 import 一个具体实现（连带 ssh2 的类型）会把传输层拖进契约里。
  */
 export interface RemoteLike {
+  openShell?(size: { cols: number; rows: number }): Promise<import("../remote/ssh.js").RemoteShell>
+  /** Selected persistent terminal; undefined means this session has never attached one. */
+  execInTerminal?(command: string, options: { cwd?: string; signal?: AbortSignal; timeoutSec?: number }): Promise<{ code: number | undefined; signal?: string; stdout: string; stderr: string; cwd?: string }> | undefined
+
   exec(
     command: string,
     options?: { cwd?: string; signal?: AbortSignal; timeoutSec?: number },

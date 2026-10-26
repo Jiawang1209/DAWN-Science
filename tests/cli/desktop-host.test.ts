@@ -1,10 +1,64 @@
 import { expect, it, vi } from 'vitest'
 import { DesktopCliHost } from '../../src/cli/desktop-host.js'
 import { connectDesktopCli } from '../../src/cli/desktop-client.js'
-import { mkdtempSync, rmSync, readFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { AgentEvent } from '../../src/runtime/types.js'
+it.each([true, false])('keeps remote filesystem image paths separate from local shared image paths (remote=%s)', async remote => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-remote-image-wire-'))
+  const path = join(root, 'private-local.png')
+  writeFileSync(path, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg==', 'base64'))
+  let publish!: (event: AgentEvent) => void
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', shared: true, remote, model: 'desktop/model', directory: root,
+      history: async () => [{ kind: 'text' as const, who: 'agent' as const, text: `![历史图](${path})` }],
+      call: async () => ({}), attach: sink => { publish = sink; return () => {} }, waitForIdle: async () => {}, close: async () => {} }) })
+  try {
+    const env = await host.environment('t')
+    const client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't')
+    const events: unknown[] = []
+    client.attach(event => events.push(event))
+    publish({ kind: 'tool_files', sessionId: 'owned', toolCallId: 'files', filesCreated: [path], filesWritten: [], filesRead: [], mayIncludeUserEdits: false })
+    await vi.waitFor(() => expect(events).toHaveLength(2))
+    if (remote) {
+      expect(events).toContainEqual(expect.objectContaining({ kind: 'notice', text: expect.stringMatching(/远端.*图片/) }))
+      expect(events).not.toContainEqual(expect.objectContaining({ kind: 'desktop_image' }))
+    } else expect(events).toContainEqual(expect.objectContaining({ kind: 'desktop_image', name: 'private-local.png' }))
+    const history = await client.history()
+    if (remote) {
+      expect(history.pictures).toEqual([])
+      expect(history.warnings).toEqual([expect.stringMatching(/远端.*图片/)])
+    } else expect(history.warnings).toEqual([])
+    await client.close()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
+it.each([
+  { shared: true, resumed: true, request: undefined, expectedResumed: true },
+  { shared: true, resumed: false, request: 'owned', expectedResumed: false },
+  { shared: false, resumed: undefined, request: 'owned', expectedResumed: true },
+  { shared: undefined, resumed: undefined, request: undefined, expectedResumed: false },
+])('forwards authoritative shared/resumed scope metadata (%j)', async ({ shared, resumed, request, expectedResumed }) => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-shared-cli-wire-'))
+  const close = vi.fn(async () => {}), call = vi.fn(async () => ({}))
+  const host = new DesktopCliHost({ entry: '/unused', executable: process.execPath, descriptor: join(root, 'desktop.json'), launch: async () => {},
+    open: async () => ({ sessionId: 'owned', model: 'desktop/model', directory: '/remote/分析',
+      ...(shared === undefined ? {} : { shared }), ...(resumed === undefined ? {} : { resumed }),
+      call, attach: () => () => {}, waitForIdle: async () => {}, close }) })
+  try {
+    const env = await host.environment('t')
+    const client = await connectDesktopCli(JSON.parse(readFileSync(env.DAWN_CLI_DESCRIPTOR!, 'utf8')), root, 't', undefined, request)
+    expect(client.resumed).toBe(expectedResumed)
+    expect(client.directory).toBe('/remote/分析')
+    if (shared) expect(client).toHaveProperty('shared', true)
+    else expect(client).not.toHaveProperty('shared')
+    await client.close()
+    await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+    expect(call).not.toHaveBeenCalled()
+  } finally { await host.dispose(); rmSync(root, { recursive: true, force: true }) }
+})
+
 it('executing an approved plan keeps unrelated pending image attachments in the composer', async () => {
   const root = mkdtempSync(join(tmpdir(), 'dawn-plan-images-'))
   const data = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='

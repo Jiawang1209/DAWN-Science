@@ -370,3 +370,32 @@ describe('远端 shell 的实际执行观察',()=>{
     expect(observed).toHaveBeenCalledExactlyOnceWith('actual-exit')
   })
 })
+
+describe('persistent terminal execution adapter', () => {
+  it('sends the original command to the selected Shell and takes its structured cwd', async () => {
+    const { ex } = 假执行器()
+    const ws = 目录()
+    const execInTerminal = vi.fn(async () => ({code: 0, stdout: 'kept-env', stderr: '', cwd: '/home/u/中文'}))
+    Object.assign(ex, {execInTerminal})
+    const tool = 取(改造成远端工具(原定义(), {executor: ex, cwd: ws}), 'bash')
+    const result = await tool.execute('call', {command: 'export KEEP=yes; cd ../中文'})
+    expect(execInTerminal).toHaveBeenCalledWith('export KEEP=yes; cd ../中文', {cwd: WS})
+    expect(ex.exec).not.toHaveBeenCalled()
+    expect(ws.get()).toBe('/home/u/中文')
+    expect(JSON.stringify(result)).toContain('kept-env')
+  })
+  it('fails a disconnected selected Shell without falling back to exec', async () => {
+    const {ex} = 假执行器()
+    Object.assign(ex, {execInTerminal: () => Promise.reject(new Error('selected terminal disconnected'))})
+    const tool = 取(改造成远端工具(原定义(), {executor: ex, cwd: 目录()}), 'bash')
+    expect(await tool.execute('call', {command: 'touch must-not-run'})).toMatchObject({isError: true})
+    expect(ex.exec).not.toHaveBeenCalled()
+  })
+  it('preserves exec for a conversation that never attached a terminal', async () => {
+    const {ex} = 假执行器()
+    Object.assign(ex, {execInTerminal: () => undefined})
+    const tool = 取(改造成远端工具(原定义(), {executor: ex, cwd: 目录()}), 'bash')
+    await tool.execute('call', {command: 'pwd'})
+    expect(ex.exec).toHaveBeenCalledOnce()
+  })
+})

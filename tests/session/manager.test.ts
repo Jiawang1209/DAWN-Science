@@ -72,6 +72,11 @@ describe("SessionManager · 创建与销毁", () => {
     expect(ctx.mgr.isLive(s.id)).toBe(false)
   })
 
+  it("缺少远端 PTY 运行时在落库前失败，不留下 starting 会话", async () => {
+    await expect(ctx.mgr.create("claude-code", "/tmp/dawn-unused-remote", {remote:{connectionId:"remote-test",executor:{exec:async()=>({code:0,stdout:"",stderr:""}),readFile:async()=>Buffer.alloc(0),writeFile:async()=>{}},cwd:{get:()=>"/server/home",set:()=>{}}}})).rejects.toThrow("没有装配远端终端")
+    expect(ctx.store.list()).toHaveLength(0)
+  })
+
   it("创建会话：先落库，再启动运行时", async () => {
     const s = await ctx.mgr.create("ds-agent", "/tmp/w")
     expect(ctx.store.get(s.id)?.state).toBe("alive")

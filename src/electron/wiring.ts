@@ -42,6 +42,7 @@ import { SessionManager, type PtyAgentDef } from "../session/manager.js"
 import { NativeRuntime } from "../runtime/native.js"
 import { CliRuntime } from "../runtime/cli/runtime.js"
 import { AcpRuntime } from "../runtime/acp/runtime.js"
+import { RemoteTerminalRuntime } from "../runtime/remote-terminal.js"
 import { PtyRuntime } from "../runtime/pty.js"
 import { TerminalControl } from '../terminal/control.js'
 import { KernelRuntime } from "../runtime/kernel.js"
@@ -699,6 +700,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   let cliHost: DesktopCliHost | undefined
   const cliEnvironment = async (spec: import("../runtime/types.js").SessionSpec) => cliHost ? cliHost.environment(spec.sessionId) : {}
   const terminalControl = new TerminalControl()
+  const remoteTerminals = new RemoteTerminalRuntime({ terminalControl, environment: async spec => { if (!cliHost) throw new Error("本次运行没有装配桌面 DAWN CLI，不能启动远端呈现"); return cliHost.environment(spec.sessionId) }, onExit: id => cliHost?.forgetTerminal(id) })
   const nativeRuntime = new NativeRuntime({
     terminals: terminalControl,
     credentials: piCredentials,
@@ -836,6 +838,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
 
   const sessions = new SessionManager({
+    remotePtyRuntime: remoteTerminals,
     store: sessionStore,
     /**
      * 写权租约的 TTL（秒）。**默认 300**（`SessionManager` 里）。
@@ -1326,32 +1329,73 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     })
   })()
 
+  const preparingRemoteTurns = new Map<string, number>()
+  const remoteOwnerBusy = (owner: string) => Boolean(preparingRemoteTurns.get(owner)) || nativeRuntime.terminalBusy(owner)
   const backend = createWorkbenchBackend({
+    beforeSessionWrite: (id, as) => {
+      if (as !== 'user' || !nativeRuntime.remoteContextOf(id)) return undefined
+      if (preparingRemoteTurns.has(id)) throw new Error('当前会话正在准备输入，请稍后再发送')
+      preparingRemoteTurns.set(id, (preparingRemoteTurns.get(id) ?? 0) + 1)
+      return () => { const left = (preparingRemoteTurns.get(id) ?? 1) - 1; if (left) preparingRemoteTurns.set(id, left); else preparingRemoteTurns.delete(id) }
+    },
     terminalImages: {
       read: (id, revision) => cliHost?.attachments(id, revision) ?? { revision: 0, pending: [] },
       update: async request => { if (!cliHost) throw new Error('本次运行没有装配 DAWN CLI'); return cliHost.updateAttachments(request) },
       image: (id, imageId) => { if (!cliHost) throw new Error('本次运行没有装配 DAWN CLI'); return cliHost.image(id, imageId) },
     },
+    remoteTerminalContext: owner => {
+      if (remoteOwnerBusy(owner)) throw new Error("当前会话仍在执行，请等待完成后打开终端")
+      const remote = nativeRuntime.remoteContextOf(owner)
+      const record = sessionStore.get(owner)
+      if (!remote || !record?.connectionId) throw new Error('当前服务器会话不可用')
+      remote.executor.execInTerminal = (command, options) => remoteTerminals.executeForOwner(owner, command, options)
+      return { ...remote, connectionId: record.connectionId }
+    },
+    terminalInput: id => {
+      const owner = remoteTerminals.ownerOf(id)
+      const presenting = remoteTerminals.isPresenting(id)
+      if (owner && !presenting && remoteOwnerBusy(owner)) throw new Error('当前会话仍在执行，请等待完成后操作 Shell')
+      return { presenting }
+    },
+    terminalBound: (id, owner) => { if (remoteTerminals.has(id)) { if (remoteOwnerBusy(owner)) throw new Error("原会话已开始执行，请完成后重新打开终端"); remoteTerminals.bindOwner(id, owner); remoteTerminals.select(id) } },
     terminalAgentMode: {
-      history: async id => cliHost?.history(await terminalControl.currentDirectory(id)) ?? [],
+      select: id => { if (remoteTerminals.has(id)) { const owner = remoteTerminals.ownerOf(id); if (owner && remoteOwnerBusy(owner)) throw new Error('当前会话仍在执行，请等待完成后再切换终端'); remoteTerminals.select(id) } },
+      history: async id => {
+        const owner = remoteTerminals.ownerOf(id)
+        if (owner) return (await backend.listSessions({ projectId: sessionStore.get(owner)!.projectId!, pageSize: 200 }) as ResponseOf<'listSessions'>).filter(s => s.sessionId === owner)
+        return cliHost?.history(await terminalControl.currentDirectory(id)) ?? []
+      },
       state: id => {
         terminalControl.state(id)
         const state = cliHost?.state(id) ?? { mode: 'normal' as const }
-        const session = state.sessionId ? sessionStore.get(state.sessionId) : undefined
-        const selection = state.sessionId ? nativeRuntime.currentModel(state.sessionId) : undefined
-        return { ...state, ...(session ? { projectId: session.projectId } : {}), ...(selection ? { selection } : {}) }
+        const owner = remoteTerminals.ownerOf(id)
+        const sessionId = owner ?? state.sessionId
+        const session = sessionId ? sessionStore.get(sessionId) : undefined
+        const selection = sessionId ? nativeRuntime.currentModel(sessionId) : undefined
+        const remote = owner ? nativeRuntime.remoteContextOf(owner) : undefined
+        return { ...state, ...(sessionId ? { sessionId } : {}), ...(session ? { projectId: session.projectId } : {}), ...(selection ? { selection } : {}), ...(remote?.connectionId ? { remote: { connectionId: remote.connectionId, label: remote.label ?? remote.connectionId, cwd: remoteTerminals.currentDirectory(id) } } : {}) }
       },
-      setMode: async (id, mode, resumeSessionId) => { terminalControl.state(id); if (!cliHost) throw new Error("本次运行没有装配 DAWN CLI"); return cliHost.setMode(id, mode, resumeSessionId) },
+      setMode: async (id, mode, resumeSessionId) => { if (!terminalControl.state(id).alive) throw new Error("终端已经结束，请新开终端"); const owner = remoteTerminals.ownerOf(id); if (owner && mode === "dawn") { if (remoteOwnerBusy(owner)) throw new Error("当前会话仍在执行，请等待完成后进入 DAWN 模式"); remoteTerminals.select(id); if (!remoteTerminals.isReady(id)) throw new Error("请先回到空闲 Shell 提示符，并清除未提交输入"); } if (!cliHost) throw new Error("本次运行没有装配 DAWN CLI"); return cliHost.setMode(id, mode, resumeSessionId) },
     },
     terminals: terminalControl,
     terminalOwnerAllowed: id => nativeRuntime.canControlTerminal(id),
-    terminalPrompt: (owner, terminal, text, mode, queueId) => nativeRuntime.promptTerminal(owner, terminal, text, () => {
+    terminalPrompt: (owner, terminal, text, mode, queueId) => {
+      if (remoteTerminals.has(terminal)) {
+        if (nativeRuntime.terminalBusy(owner)) throw new Error('当前对话仍在执行，请等待完成')
+        if (!remoteTerminals.isReady(terminal)) throw new Error('远端 Shell 仍在运行或有未提交输入')
+        remoteTerminals.select(terminal)
+        sessions.leases.acquire(owner, 'user')
+        sessions.write(owner, text, 'user', undefined, undefined, queueId)
+        return
+      }
+      nativeRuntime.promptTerminal(owner, terminal, text, () => {
       sessions.leases.acquire(owner, 'user')
       const previous = terminalControl.state(terminal)
       terminalControl.grant(owner, terminal, mode)
       try { sessions.write(owner, text, 'user', undefined, undefined, queueId) }
       catch (error) { if (!previous.controlled) terminalControl.reclaim(terminal); throw error }
-    }),
+      })
+    },
     transferDirectory: join(dirname(opts.dbPath), "transfers"),
     bots: new BotStore(db),
     configureBots: bridge => nativeRuntime.configureBots(bridge),
@@ -1733,11 +1777,20 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     }
     cliHost = new DesktopCliHost({ ...opts.desktopCli,
       history: cliHistory,
-      launch: (id, resumeSessionId) => terminalControl.launchCli(id, resumeSessionId),
+      launch: (id, resumeSessionId) => remoteTerminals.has(id) ? remoteTerminals.launchCli(id) : terminalControl.launchCli(id, resumeSessionId),
       open: async (terminalId, workspace, agentId, resumeSessionId) => {
-        workspace = desktopWorkspace(workspace, projectStore.list())
+        const sharedOwner = terminalId ? remoteTerminals.ownerOf(terminalId) : undefined
+        const shared = Boolean(sharedOwner)
+        workspace = sharedOwner ? remoteTerminals.currentDirectory(terminalId!) : desktopWorkspace(workspace, projectStore.list())
         let sessionId: string
-        if (resumeSessionId) {
+        if (sharedOwner) {
+          const record = sessionStore.get(sharedOwner)
+          if (!record || record.archivedAt || !record.connectionId || !nativeRuntime.canControlTerminal(sharedOwner)) throw new Error('原服务器会话已结束')
+          if (resumeSessionId && resumeSessionId !== sharedOwner || agentId && agentId !== record.agentId) throw new Error('远端终端必须使用原服务器会话和模型')
+          if (remoteOwnerBusy(sharedOwner)) throw new Error('原会话仍在执行，请等待完成')
+          remoteTerminals.select(terminalId!)
+          sessionId = sharedOwner
+        } else if (resumeSessionId) {
           const record = sessionStore.get(resumeSessionId)
           if (!record || record.archivedAt || record.connectionId || record.workspace !== workspace || registry.agents[record.agentId]?.kind !== 'native' || !taskStore.list().some(t => t.sessionId === resumeSessionId)) throw new Error('这段历史会话不可恢复，请选择当前目录中未归档的本地 API 会话')
           if (nativeRuntime.terminalBusy(resumeSessionId)) throw new Error('这段会话仍在执行，请等待完成后再恢复')
@@ -1760,21 +1813,25 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
         try {
           await backend.acquireLease({ sessionId, holder: 'user' })
           const model = nativeRuntime.currentModel(sessionId)
-          return { sessionId, projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : 'API', directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
+          return { sessionId, ...(shared ? { shared: true, resumed: true, remote: true } : {}), projectId: sessionStore.get(sessionId)!.projectId, get selection() { return nativeRuntime.currentModel(sessionId) ?? model }, model: model ? `${model.provider}/${model.model}` : 'API', directory: workspace, canReadImages: () => nativeRuntime.canReadImages(sessionId),
             history: () => sessions.history(sessionId),
             usage: () => cliUsage(sessionId),
             suggest: () => suggestLatestPrompt(events.peek(sessionId)?.items ?? [], turnId => backend.suggestNextPrompt({ sessionId, turnId }) as Promise<{ text: string }>),
             pictures: () => nativeRuntime.historyPictures(sessionId),
             call: async (operation, input) => {
+              if (shared && operation === 'writeToSession') {
+                if (remoteOwnerBusy(sessionId)) throw new Error('原会话仍在执行，请等待完成')
+                remoteTerminals.select(terminalId!)
+              }
               const response = await nativeRuntime.withTerminalReply(sessionId, () => server.handle(operation, input))
               if (!response.ok) throw new Error(response.error.message)
               return response.data
             },
             attach: sink => sessions.attach(sessionId, sink),
             waitForIdle: () => nativeRuntime.waitForIdle(sessionId),
-            close: async () => { await backend.abortSession({ sessionId }); await backend.stopSession({ sessionId }) },
+            close: async () => { if (!shared) { await backend.abortSession({ sessionId }); await backend.stopSession({ sessionId }) } },
           }
-        } catch (error) { await backend.stopSession({ sessionId }); throw error }
+        } catch (error) { if (!shared) await backend.stopSession({ sessionId }); throw error }
       },
     })
     收摊们.push(() => cliHost!.dispose())

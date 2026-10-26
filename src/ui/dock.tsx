@@ -58,7 +58,10 @@ export function TerminalDock({
   const searchRequest = search && search.terminalId === currentId ? search.request : undefined
   const [agentState, setAgentState] = useState<{ terminalId: string; state: TerminalAgentState }>()
   const reportState = useCallback((state: TerminalAgentState) => { if (currentId) setAgentState({ terminalId: currentId, state }) }, [currentId])
-  const exited = terminals.find(x => x.sessionId === currentId)?.state === 'exited'
+  const currentTerminal = terminals.find(x => x.sessionId === currentId)
+  const exited = currentTerminal?.state === 'exited'
+  const remote = (agentState && agentState.terminalId === currentId ? agentState.state.remote : undefined) ?? currentTerminal?.remote
+  const location = remote ? `${remote.label}:${remote.cwd}` : workspace
 
   return (
     <section className={`dock${fullPage ? " terminal-workspace" : ""}`} aria-label={t("终端")}>
@@ -91,7 +94,7 @@ export function TerminalDock({
         <Button variant="ghost" size="icon" disabled={!canOpen} onClick={onNew} aria-label={t("＋ 新开一个")}><加号图标 /></Button>
         <span className="spacer" />
         {/* **路径要摆出来**：终端开在哪个目录，是它唯一会让人猜错的事 */}
-        {workspace ? <span className="dock-cwd" title={workspace}>{fullPage ? workspace.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || workspace : workspace}</span> : null}
+        {location ? <span className="dock-cwd" title={location}>{fullPage && !remote ? location.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || location : location}</span> : null}
         {currentId ? <TerminalConversationActions key={`terminal-actions:${currentId}`} client={client} terminalId={currentId}
           sessionId={agentState?.terminalId === currentId ? agentState.state.sessionId : undefined} onFind={() => requestSearch('content')} /> : null}
         {client && !exited && currentId && agentState?.terminalId === currentId && agentState.state.mode === 'dawn' && agentState.state.sessionId

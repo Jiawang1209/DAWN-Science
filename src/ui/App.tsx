@@ -3137,6 +3137,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /** 起终端用哪个 agent。**配置里没有 pty agent 就开不了**，如实说 */
   const ptyAgentId = providers.agents.find((a) => a.kind === "pty")?.agentId
   const currentWorkspace = projects.find((p) => p.projectId === projectId)?.workspace
+  // Selection is an explicit navigation action. Polling terminal state must stay read-only.
+  const 选中终端 = useCallback(async (terminalId: string) => {
+    const request = terminalIntent.current
+    const current = () => request === terminalIntent.current && $dockOpen.get()
+    try {
+      await client.get('selectTerminal', { terminalId })
+      if (current()) setDockSessionId(terminalId)
+    } catch (error) { if (current()) fail(error) }
+  }, [client])
 
   /**
    * 开一个新终端。
@@ -3163,18 +3172,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     client
       .get<SessionSummary>("createTerminalSession", {
         agentId: ptyAgentId,
-        ...(session?.kind === 'native' && !session.remote && sessionId ? { ownerSessionId: sessionId } : {}),
+        ...(session?.kind === 'native' && sessionId ? { ownerSessionId: sessionId } : {}),
         /**
          * **没有项目就不给**——那时服务端把终端开在家目录
          * （作者：*「如果没有选择的话，那么终端就在家目录下」*）。
          * 路径由服务端定：让界面拼路径等于把「shell 从哪儿开」交给渲染进程。
          */
-        ...(session?.kind === 'native' && !session.remote && sessionId ? {} : 项目还在 ? { projectId: pid! } : {}),
+        ...(session?.kind === 'native' && sessionId ? {} : 项目还在 ? { projectId: pid! } : {}),
       })
       .then((r) => {
         // **记下它是从哪段对话开的**：dock 按对话分，不记就哪儿都不归
         记终端归属(r.sessionId, 终端主人)
-        if (current()) { setLinkedTerminals(previous => [...previous.filter(x => x.sessionId !== r.sessionId), r]); setDockSessionId(r.sessionId) }
+        if (current()) { setLinkedTerminals(previous => [...previous.filter(x => x.sessionId !== r.sessionId), r]); 选中终端(r.sessionId) }
         if (项目还在 && $activeProjectId.get() === pid) void loadSessions(client, pid!)
         void loadTempSessions(client)
         void loadProjects(client)
@@ -3190,7 +3199,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         return 取写权(r.sessionId)
       })
       .catch(error => { if (current()) fail(error) })
-  }, [client, ptyAgentId, 终端主人, session?.kind, session?.remote, sessionId, projectId])
+  }, [client, ptyAgentId, 终端主人, session?.kind, sessionId, projectId, 选中终端])
 
   /**
    * 掀开 dock 时**如果还没有终端，就开一个**。
@@ -3224,10 +3233,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     掀开过的主人.current = 终端主人
     // A legacy PTY selection must show that exact record, including its exited state.
     const legacyTerminal = session?.kind === 'pty' && 终端们.find(t => t.sessionId === sessionId)
-    if (legacyTerminal) { setDockSessionId(legacyTerminal.sessionId); return }
+    if (legacyTerminal) { 选中终端(legacyTerminal.sessionId); return }
     const 活着的 = 终端们.find((t) => t.state !== "exited")
     if (活着的) {
-      setDockSessionId(活着的.sessionId)
+      选中终端(活着的.sessionId)
       return
     }
     setDockSessionId(undefined)
@@ -3256,10 +3265,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       })
       setLinkedTerminals(owned)
       const live = owned.find(x => x.state !== 'exited')
-      if (live) setDockSessionId(live.sessionId)
+      if (live) 选中终端(live.sessionId)
       else 开一个终端()
     }).catch(error => { if (current()) fail(error) })
-  }, [dockOpen, 终端主人, 终端们, ptyAgentId, 开一个终端])
+  }, [dockOpen, 终端主人, 终端们, ptyAgentId, 开一个终端, 选中终端])
 
 
   /**
@@ -3997,6 +4006,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const state = await client.get<TerminalAgentState>('getTerminalAgentMode', { terminalId })
       if (!current()) return
       if (state.mode === 'starting' || state.mode === 'stopping') { note(t("终端模式正在切换，请稍后重试")); return }
+      if (state.remote && state.mode === 'dawn') {
+        await client.get('setTerminalAgentMode', { terminalId, mode: 'normal' })
+        if (!current()) return
+      }
       if (!state.sessionId) { if (legacy) leaveLegacyTerminal(); else setDockOpen(false); return }
       const targetSessions = state.projectId
         ? await client.get<SessionSummary[]>('listSessions', { projectId: state.projectId }) : undefined
@@ -5858,7 +5871,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               currentId={currentTerminalId}
               workspace={currentWorkspace ?? t("家目录")}
               canOpen={Boolean(ptyAgentId)}
-              onPick={id => { terminalIntent.current++; setReturningTerminalId(undefined); setDockSessionId(id) }}
+              onPick={id => { terminalIntent.current++; setReturningTerminalId(undefined); 选中终端(id) }}
               onNew={开一个终端}
               onClose={(id) => {
                 /**
@@ -5872,7 +5885,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 if ($activeSessionId.get() === id && session?.kind === 'pty') leaveLegacyTerminal()
                 设关掉的终端((前) => new Set(前).add(id))
                 const 下一个 = 终端们.find((x) => x.sessionId !== id && x.state !== "exited")
-                if ($dockSessionId.get() === id) { terminalIntent.current++; setDockSessionId(下一个?.sessionId) }
+                if ($dockSessionId.get() === id) {
+                  terminalIntent.current++
+                  if (下一个) 选中终端(下一个.sessionId)
+                  else setDockSessionId(undefined)
+                }
                 /**
                  * **停掉之后连记录一起删**（2026-08-21，作者：*「我关掉的，应该彻底关掉」*）。
                  * 终端没有可恢复的东西；留一条 exited 记录只会在下次变成一排「已结束」。

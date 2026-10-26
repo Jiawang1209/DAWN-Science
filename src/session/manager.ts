@@ -167,6 +167,7 @@ export interface SessionManagerOptions {
    * 单一共享的 pty runtime 只能起一种命令。没有这个钩子，配置里的 `codex`
    * 会被错误地起成 claude——而进程照样起得来，失效方式很隐蔽。
    */
+  remotePtyRuntime?: AgentRuntime
   ptyRuntimeFor?: (agentId: string, def: PtyAgentDef) => AgentRuntime
   /**
    * 某个 provider 配没配凭证。**只问有无，不取值**——
@@ -186,6 +187,7 @@ export class SessionManager {
   private readonly registry: ProviderRegistry
   private readonly runtimes: { native: AgentRuntime; pty: AgentRuntime; cli?: AgentRuntime; kernel?: AgentRuntime; acp?: AgentRuntime }
   private readonly interpreterOf: ((language: "python" | "R") => string | undefined) | undefined
+  private readonly remotePtyRuntime: AgentRuntime | undefined
   private readonly ptyRuntimeFor: ((agentId: string, def: PtyAgentDef) => AgentRuntime) | undefined
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
@@ -197,6 +199,7 @@ export class SessionManager {
     this.store = opts.store
     this.registry = opts.registry
     this.runtimes = opts.runtimes
+    this.remotePtyRuntime = opts.remotePtyRuntime
     this.ptyRuntimeFor = opts.ptyRuntimeFor
     this.interpreterOf = opts.interpreterOf
     this.hasCredential = opts.hasCredential
@@ -228,6 +231,7 @@ export class SessionManager {
     const def = this.registry.agents[agentId]
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
     if (!def) throw new UserFacingError(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
+    if (def.kind === "pty" && opts.remote && !this.remotePtyRuntime) throw new UserFacingError("本次运行没有装配远端终端")
 
     const source = opts.contextFromSessionId ? this.store.get(opts.contextFromSessionId) : undefined
     if (opts.contextFromSessionId && !source) throw new UserFacingError("要继承的会话已经不存在")
@@ -271,7 +275,7 @@ export class SessionManager {
       workspace,
       sessionDir,
       ...(opts.bot ? {bot: opts.bot} : {}),
-      ...(opts.remote ? { remote: { executor: opts.remote.executor, cwd: opts.remote.cwd } } : {}),
+      ...(opts.remote ? { remote: { ...opts.remote } } : {}),
       ...(forkTranscript ? { forkFrom: forkTranscript } : {}),
     }
     if (def.kind === "native") {
@@ -370,7 +374,7 @@ export class SessionManager {
       }
       runtime = acp
     } else {
-      runtime = this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
+      runtime = opts.remote ? this.remotePtyRuntime! : this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
     }
     try {
       const handle = await runtime.start(spec)
@@ -477,7 +481,7 @@ export class SessionManager {
       sessionDir: rec.sessionDir,
       native: { provider: def.provider, model: def.model },
       resume: true,
-      ...(remote ? { remote: { executor: remote.executor, cwd: remote.cwd } } : {}),
+      ...(remote ? { remote: { ...remote } } : {}),
     }
     const handle = await this.runtimes.native.start(spec)
     this.bound.set(sessionId, this.runtimes.native)

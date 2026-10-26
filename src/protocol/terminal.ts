@@ -8,6 +8,7 @@ export const TerminalTaskSchema = z.object({
 })
 export type TerminalTask = z.infer<typeof TerminalTaskSchema>
 export const TerminalControlSchema = z.object({
+  connectionId: z.string().optional(),
   id: z.string(), instanceId: z.string(), pid: z.number(), cwd: z.string(), command: z.string(),
   alive: z.boolean(), controlled: z.boolean(), ownerSessionId: z.string().optional(),
   mode: TerminalModeSchema, cols: z.number().int(), rows: z.number().int(),
@@ -16,6 +17,7 @@ export const TerminalControlSchema = z.object({
 export type TerminalControlState = z.infer<typeof TerminalControlSchema>
 
 export const TerminalAgentStateSchema = z.object({
+  remote: z.object({ connectionId: z.string(), label: z.string(), cwd: z.string() }).optional(),
   mode: z.enum(['normal', 'dawn', 'starting', 'stopping']),
   sessionId: z.string().min(1).optional(),
   projectId: z.string().min(1).optional(),

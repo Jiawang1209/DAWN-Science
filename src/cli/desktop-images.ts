@@ -23,7 +23,7 @@ export class DesktopImages {
   private sending = false
   private closed = false
   private answer = ''
-  constructor(readonly sessionId: string, private workspace: string) {}
+  constructor(readonly sessionId: string, private workspace: string, private options: { remote?: boolean } = {}) {}
 
   read(afterRevision?: number) {
     return { sessionId: this.sessionId, revision: this.revision,
@@ -107,6 +107,7 @@ export class DesktopImages {
   }
   private async file(path: string, emit: Emit) {
     if (!imagePath.test(path) || /^\w+:/.test(path) || path.startsWith('//')) return
+    if (this.options.remote) throw new Error('远端文件图片暂不支持终端预览，请通过远端文件查看')
     const local = isAbsolute(path) ? relative(this.workspace, path) : path
     const full = resolveInWorkspace(this.workspace, local)
     if ((await stat(full)).size > maxBytes) throw new Error('输出图片超过 10 MB，请打开原文件查看')

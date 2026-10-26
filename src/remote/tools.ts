@@ -273,7 +273,12 @@ async function 跑(
 ): Promise<ToolResult> {
   const 带标记 = `{ ${p.command}\n}; rc=$?; printf '\\n${CWD标记}%s\\n' "$(pwd)"; exit $rc`
   try {
-    const r = await ex.exec(带标记, {
+    const options = {
+      cwd: ws.get(), ...(signal ? { signal } : {}),
+      ...(p.timeout === undefined ? {} : { timeoutSec: p.timeout }),
+    }
+    const persistent = ex.execInTerminal?.(p.command, options)
+    const r = persistent ? await persistent : await ex.exec(带标记, {
       cwd: ws.get(),
       ...(signal ? { signal } : {}),
       // **没有默认超时**（作者定的）：远端一条 `bwa index` 跑二十分钟是正常的，
@@ -281,7 +286,7 @@ async function 跑(
       ...(p.timeout === undefined ? {} : { timeoutSec: p.timeout }),
     })
     if (typeof r.code === "number" || r.signal || r.stdout || r.stderr) onExecutionObserved?.()
-    const { 正文, 目录 } = 摘出目录(r.stdout)
+    const { 正文, 目录 } = persistent ? { 正文: r.stdout, 目录: (r as { cwd?: string }).cwd } : 摘出目录(r.stdout)
     const 目录变了 = 目录 !== undefined && 目录 !== ws.get()
     // **只在真读到时才改**：读不到就保持原样，不拿一个猜的目录去覆盖
     if (目录变了) ws.set(目录)

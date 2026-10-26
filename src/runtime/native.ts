@@ -3516,9 +3516,13 @@ ${描述}`
     this.发会话开关(sessionId)
   }
 
+  remoteContextOf(sessionId: string): SessionSpec["remote"] | undefined {
+    return this.routeBooks.get(sessionId)?.spec.remote
+  }
+
   canControlTerminal(sessionId: string): boolean {
     const spec = this.routeBooks.get(sessionId)?.spec
-    return this.sessions.has(sessionId) && Boolean(spec && !spec.remote && !spec.bot)
+    return this.sessions.has(sessionId) && Boolean(spec && !spec.bot)
   }
 
   terminalBusy(sessionId: string): boolean {

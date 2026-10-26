@@ -52,3 +52,13 @@ it('shows permissions only for the active DAWN Agent and removes them on Normal/
   mode = 'normal'
   await waitFor(() => expect(screen.queryByRole('button', { name: '请求批准' })).toBeNull(), { timeout: 1800 })
 })
+
+it('shows the remote label and full live directory in the existing terminal header', async () => {
+  let cwd = '/remote/initial'
+  const get = vi.fn(async (_op: string) => ({ mode: 'normal', sessionId: 'owner', remote: { connectionId: 'server', label: 'Research server', cwd } }))
+  mount(get)
+  await screen.findByText('Research server:/remote/initial')
+  cwd = '/remote/new directory'
+  await screen.findByText('Research server:/remote/new directory', {}, { timeout: 1600 })
+  expect(get.mock.calls.some(([op]) => op === 'selectTerminal')).toBe(false)
+})

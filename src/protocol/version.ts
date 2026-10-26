@@ -595,7 +595,8 @@
 /** 8.30: scoped terminal history listing and explicit CLI resume identity. */
 /** 8.31: read-only effective session permission snapshot for terminal/conversation parity. */
 /** 8.32: terminal planning reads the existing session flag and latest plan card. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.32"
+/** 8.33: remote terminals share the existing SSH connection and owning conversation. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.33"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

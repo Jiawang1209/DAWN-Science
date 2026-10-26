@@ -47,7 +47,7 @@ export class TerminalScreen {
       cursorLine: buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true) ?? '',
       cursorPrefix: buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true, 0, buffer.cursorX) ?? '',
       cols: this.terminal.cols, rows: this.terminal.rows, revision: this.revision,
-      cursorX: buffer.cursorX,
+      cursorX: buffer.cursorX, cursorY: buffer.cursorY,
       alternate: buffer.type === 'alternate',
     }
   }

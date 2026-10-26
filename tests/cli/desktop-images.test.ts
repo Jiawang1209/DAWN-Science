@@ -1,11 +1,47 @@
 import { expect, it, vi } from 'vitest'
-import { mkdtemp, writeFile, symlink, rm } from 'node:fs/promises'
+import { mkdtemp, writeFile, symlink, rm, readFile, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DesktopImages } from '../../src/cli/desktop-images.js'
 
+vi.mock('node:fs/promises', async importOriginal => {
+  const fs = await importOriginal<typeof import('node:fs/promises')>()
+  return { ...fs, readFile: vi.fn(fs.readFile), stat: vi.fn(fs.stat) }
+})
+
 const data = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
 const image = { name: '截图.png', mimeType: 'image/png', data }
+
+it('never stats or reads a remote image path even when the same absolute path contains a valid local image', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'dawn-remote-image-test-'))
+  try {
+    const path = join(dir, '本机私有图.png')
+    await writeFile(path, Buffer.from(data, 'base64'))
+    const m = new DesktopImages('s', dir, { remote: true }), emit = vi.fn(), warn = vi.fn()
+    vi.mocked(readFile).mockClear(); vi.mocked(stat).mockClear()
+    await m.observe({ kind: 'output', sessionId: 's', data: `![结果](${path}) ![relative](本机私有图.png)` }, emit, warn)
+    await m.observe({ kind: 'turn_end', sessionId: 's' }, emit, warn)
+    await m.observe({ kind: 'tool_files', sessionId: 's', toolCallId: 'files', filesCreated: [path], filesWritten: [], filesRead: [], mayIncludeUserEdits: false }, emit, warn)
+    expect(stat).not.toHaveBeenCalled()
+    expect(readFile).not.toHaveBeenCalled()
+    expect(emit).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledTimes(3)
+    expect(warn.mock.calls.every(([message]) => /远端.*图片/.test(message))).toBe(true)
+  } finally { await rm(dir, { recursive: true, force: true }) }
+})
+
+it('keeps byte attachments, restored pictures and kernel images available in remote mode', async () => {
+  const m = new DesktopImages('s', '/remote/analysis', { remote: true }), emit = vi.fn(), warn = vi.fn()
+  await m.add([image])
+  await m.send({ as: 'user', data: '分析图片' }, async input => {
+    expect(input.images).toEqual([{ from: 'bytes', data, mimeType: 'image/png' }])
+  }, emit)
+  await m.observe({ kind: 'kernel_output', sessionId: 's', entry: { kind: 'display', mediaType: 'image/png', data, bytes: 76, alsoAvailable: [], provenance: {} as never } }, emit, warn)
+  expect(emit).toHaveBeenCalledTimes(2)
+  const history = new DesktopImages('s', '/remote/analysis', { remote: true })
+  expect(await history.restore([image], warn)).toHaveLength(1)
+  expect(warn).not.toHaveBeenCalled()
+})
 
 it('holds images until the next successful user message and preserves them on failure', async () => {
   const media = new DesktopImages('s', '/tmp'), emit = vi.fn()

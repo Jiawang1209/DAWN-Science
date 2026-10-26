@@ -9,6 +9,11 @@ export type DesktopCliEvent = AgentEvent | import('./desktop-images.js').Termina
 export interface DesktopDescriptor { socket: string; token: string; version: 1 }
 export interface DesktopScope {
   sessionId: string; model: string; directory: string
+  /** A presentation attachment to an existing owner; close detaches only. */
+  shared?: boolean
+  resumed?: boolean
+  /** Paths in this scope belong to the remote filesystem, never this host. */
+  remote?: boolean
   projectId?: string | undefined
   selection?: { provider: string; model: string } | undefined
   canReadImages?: () => boolean

@@ -67,6 +67,7 @@ export class RemoteConnections {
       throw new Error(`服务器「${label}」已断开${为什么}——在侧栏按「连接」再继续`)
     }
     return {
+      openShell: size => Promise.resolve().then(() => 拿().openShell(size)),
       exec: (command, options) => Promise.resolve().then(() => 拿().exec(command, options)),
       readFile: (path) => Promise.resolve().then(() => 拿().readFile(path)),
       writeFile: (path, data) => Promise.resolve().then(() => 拿().writeFile(path, data)),

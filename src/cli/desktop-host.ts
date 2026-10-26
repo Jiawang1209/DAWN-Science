@@ -160,7 +160,7 @@ export class DesktopCliHost {
         }
         if (socket.destroyed || this.disposed || terminal && this.connections.has(terminal)) { await scope.close(); if (claimed) this.claimedSessions.delete(claimed); socket.destroy(); return }
         let finish!: () => void
-        connection = { socket, scope, media: new DesktopImages(scope.sessionId, scope.directory), done: new Promise<void>(r => { finish = r }), finish: () => finish() }
+        connection = { socket, scope, media: new DesktopImages(scope.sessionId, scope.directory, { remote: scope.remote === true }), done: new Promise<void>(r => { finish = r }), finish: () => finish() }
         this.opened.add(connection)
         if (terminal) {
           this.connections.set(terminal, connection)
@@ -178,7 +178,9 @@ export class DesktopCliHost {
             await media.observe(event, image => send(socket, { event: image }), message => send(socket, { event: { kind: 'notice', sessionId: scope.sessionId, text: message } }))
           }).catch(() => { send(socket, { event: { kind: 'notice', sessionId: scope.sessionId, text: '终端图片预览未完成，请返回会话查看' } }) })
         })
-        send(socket, { ready: { sessionId: scope.sessionId, model: scope.model, directory: scope.directory, resumed: Boolean(frame.resumeSessionId) } })
+        send(socket, { ready: { sessionId: scope.sessionId, model: scope.model, directory: scope.directory,
+          resumed: scope.resumed ?? Boolean(frame.resumeSessionId), ...(scope.shared === true ? { shared: true } : {}),
+        } })
         return
       }
       if (!Number.isSafeInteger(frame.id)) throw new Error('无效的请求编号')

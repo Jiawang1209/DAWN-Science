@@ -17,6 +17,7 @@ function backend(): WorkbenchBackend {
     getTerminalAgentMode: async () => ({ mode: 'normal' }),
     listTerminalAgentHistory: async () => [],
     setTerminalAgentMode: async () => ({ mode: 'normal' }),
+    selectTerminal: async () => ({}),
     getTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
     setTerminalControl: async () => { throw new Error('Terminal unavailable in this fixture') },
     resizeTerminal: async () => ({}),

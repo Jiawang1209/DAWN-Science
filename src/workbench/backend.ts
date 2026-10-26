@@ -179,7 +179,12 @@ export interface CredentialsPort {
 export interface WorkbenchBackendOptions {
   terminals?: import('../terminal/control.js').TerminalControl
   terminalOwnerAllowed?: (sessionId: string) => boolean
+  remoteTerminalContext?: (ownerId: string) => NonNullable<import("../runtime/types.js").SessionSpec["remote"]> & { connectionId: string }
+  terminalBound?: (terminalId: string, ownerId: string) => void
+  terminalInput?: (terminalId: string) => { presenting: boolean }
+  beforeSessionWrite?: (sessionId: string, as: string) => (() => void) | undefined
   terminalAgentMode?: {
+    select?: (id: string) => void
     history?: (id: string) => Promise<ResponseOf<'listTerminalAgentHistory'>>
     state: (id: string) => import('../protocol/terminal.js').TerminalAgentState
     setMode: (id: string, mode: 'normal' | 'dawn', resumeSessionId?: string) => Promise<import('../protocol/terminal.js').TerminalAgentState>
@@ -587,13 +592,15 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   }
   const terminalOwner = (id: string) => {
     const owner = opts.sessions.get(id)
-    if (!owner || !opts.terminalOwnerAllowed?.(id)) throw new Error('请先打开一段本地内置模型主对话')
+    if (!owner || !opts.terminalOwnerAllowed?.(id)) throw new Error('请先打开一段内置模型主对话')
     return owner
   }
   const validateTerminalOwner = (ownerId: string, terminalId: string) => {
     const owner = terminalOwner(ownerId), terminal = opts.sessions.get(terminalId)
     if (!terminal || !opts.sessions.isLive(terminalId) || opts.registry.agents[terminal.agentId]?.kind !== 'pty') throw new Error('终端已经结束或不是可协助的 PTY')
-    if (owner.workspace !== terminal.workspace || owner.projectId !== terminal.projectId) throw new Error('终端与当前对话不在同一个工作区或项目')
+    if (owner.connectionId || terminal.connectionId) {
+      if (!owner.connectionId || owner.connectionId !== terminal.connectionId || terminalService().state(terminalId).ownerSessionId !== ownerId) throw new Error('终端与当前对话不属于同一个服务器会话')
+    } else if (owner.workspace !== terminal.workspace || owner.projectId !== terminal.projectId) throw new Error('终端与当前对话不在同一个工作区或项目')
   }
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
@@ -2836,14 +2843,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // Live model control still goes through terminalOwner / validateTerminalOwner.
         const owner = sessions.get(ownerSessionId)
         const savedMain = tasks?.list().some(task => task.sessionId === ownerSessionId)
-        if (!owner || owner.archivedAt || owner.connectionId || registry.agents[owner.agentId]?.kind !== 'native'
-          || !savedMain && !opts.terminalOwnerAllowed?.(ownerSessionId)) throw new Error('请先打开一段本地内置模型主对话')
+        if (!owner || owner.archivedAt || registry.agents[owner.agentId]?.kind !== 'native'
+          || !savedMain && !opts.terminalOwnerAllowed?.(ownerSessionId)) throw new Error('请先打开一段内置模型主对话')
         if (registry.agents[agentId]?.kind !== 'pty') throw new Error('终端协助只支持 PTY')
         if (projectId && projectId !== owner.projectId) throw new Error('终端与当前对话不在同一个项目')
         if (!owner.projectId) throw new Error('当前对话没有可绑定的项目')
-        const terminal = await 起一个会话(owner.projectId, agentId, owner.workspace)
-        terminalService().bind(ownerSessionId, terminal.sessionId)
-        return terminal
+        const context = owner.connectionId ? opts.remoteTerminalContext?.(ownerSessionId) : undefined
+        if (owner.connectionId && (!context || context.connectionId !== owner.connectionId)) throw new Error('当前服务器会话暂不支持终端')
+        const terminal = await 起一个会话(owner.projectId, agentId, owner.workspace, context)
+        try {
+          opts.terminalBound?.(terminal.sessionId, ownerSessionId)
+          terminalService().bind(ownerSessionId, terminal.sessionId)
+          return terminal
+        } catch (error) { await sessions.stop(terminal.sessionId); throw error }
       })
       if (projectId) return 起一个会话(projectId, agentId)
       if (!scratchRoot) throw fault("internal_error", "本次运行没有装配临时会话的目录根")
@@ -2874,6 +2886,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!opts.terminalAgentMode) throw new Error('本次运行没有装配 DAWN CLI')
       return opts.terminalAgentMode.setMode(terminalId, mode, resumeSessionId)
     }),
+    selectTerminal: async ({ terminalId }) => terminalRequest(() => { terminalService().state(terminalId); opts.terminalAgentMode?.select?.(terminalId); return {} }),
     getTerminalControl: async ({ terminalId }) => terminalRequest(() => terminalService().state(terminalId)),
     sendTerminalPrompt: async ({ terminalId, ownerSessionId, text }) => terminalRequest(async () => {
       validateTerminalOwner(ownerSessionId, terminalId)
@@ -3809,7 +3822,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         sessions.leases.acquire(sessionId, 'user')
       }
       if (as === 'user' && opts.terminals?.has(sessionId)) {
-        const cliMode = opts.terminalAgentMode?.state(sessionId).mode
+        const remoteInput = opts.terminalInput?.(sessionId)
+        const cliMode = remoteInput?.presenting ? 'dawn' : opts.terminalAgentMode?.state(sessionId).mode
         if (cliMode && cliMode !== 'normal') opts.terminals.reclaim(sessionId)
         else opts.terminals.humanInput(sessionId, data)
       }
@@ -5593,5 +5607,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   opts.注册收摊?.(() => 微信.stop())
   opts.注册收摊?.(() => 飞书.stop())
   if (调度器) opts.注册收摊?.(() => 调度器.stop())
+  // Keep the selected remote Shell stable through asynchronous attachment/reference
+  // preprocessing, until the native runtime owns the turn's busy state.
+  const writeToSession = backend.writeToSession
+  backend.writeToSession = async request => {
+    const release = opts.beforeSessionWrite?.(request.sessionId, request.as)
+    try { return await writeToSession(request) } finally { release?.() }
+  }
   return backend
 }

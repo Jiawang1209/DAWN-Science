@@ -6,7 +6,7 @@ import type { SessionUsage } from '../../src/runtime/session-usage.js'
 
 const harness = vi.hoisted(() => ({
   context: undefined as unknown,
-  options: undefined as { onSubmit: (text: string) => void; onExit: () => void; onDraftChange: () => void } | undefined,
+  options: undefined as { workspace: string; onSubmit: (text: string) => void; onExit: () => void; onDraftChange: () => void } | undefined,
   states: [] as { busy: boolean; permission?: boolean; question?: boolean }[],
   started: false,
   usages: [] as SessionUsage[],
@@ -43,7 +43,7 @@ import { runCliAgent } from '../../src/cli/agent.js'
 
 afterEach(() => { vi.restoreAllMocks() })
 
-async function interactiveAgent() {
+async function interactiveAgent(options: { shared?: boolean; directory?: string } = {}) {
   harness.permissions = []; harness.notices = []
   harness.plans = []; harness.users = []; harness.questions = []
   harness.options = undefined; harness.states = []; harness.started = false; harness.usages = []; harness.suggestions = []; harness.draft = ''
@@ -67,10 +67,12 @@ async function interactiveAgent() {
     return action === 'approve' ? { savedPath: 'analysis/plans/approved.md' } : {}
   })
   const executePlan = vi.fn(async (_id: string) => ({}))
+  const contextClose = vi.fn(async () => {})
   harness.context = {
     call, usage, suggest, permissions, planning, answerPlan, executePlan, sessionId: 'state-test-session', model: 'state-test-model', directory: '/isolated/state-test',
     attach: (sink: typeof emit) => { emit = sink; return vi.fn() },
-    onExit: () => vi.fn(), close: vi.fn(async () => {}), waitForIdle: vi.fn(async () => {}),
+    ...options,
+    onExit: () => vi.fn(), close: contextClose, waitForIdle: vi.fn(async () => {}),
   }
   const running = runCliAgent()
   await vi.waitFor(() => expect(harness.started).toBe(true))
@@ -79,11 +81,41 @@ async function interactiveAgent() {
     await new Promise<void>(resolve => setImmediate(resolve))
   }
   return {
-    call, usage, suggest, permissions, planning, answerPlan, executePlan, planState, emit, submit,
+    call, usage, suggest, permissions, planning, answerPlan, executePlan, planState, emit, submit, contextClose,
     state: () => harness.states.at(-1),
     close: async () => { harness.options!.onExit(); await running },
   }
 }
+
+it('shows the shared remote workspace instead of the local CLI presentation directory', async () => {
+  const directory = '/remote/共享分析', agent = await interactiveAgent({ shared: true, directory })
+  try {
+    expect(harness.options?.workspace).toBe(directory)
+    await agent.submit('/status')
+    expect(harness.notices.at(-1)).toContain(`目录  ${directory}\n`)
+  } finally { await agent.close() }
+})
+
+it.each(['command', 'view'] as const)('detaches shared CLI on %s exit without aborting the owner turn', async source => {
+  const agent = await interactiveAgent({ shared: true })
+  try {
+    await agent.submit('开始分析')
+    expect(agent.state()?.busy).toBe(true)
+    if (source === 'command') await agent.submit('/exit')
+    else await agent.close()
+    expect(agent.call.mock.calls.some(([operation]) => operation === 'abortSession')).toBe(false)
+    expect(agent.contextClose).toHaveBeenCalledExactlyOnceWith()
+  } finally { await agent.close() }
+})
+
+it('keeps the local workspace and aborts dedicated CLI work before closing its context', async () => {
+  const agent = await interactiveAgent()
+  expect(harness.options?.workspace).toBe(process.cwd())
+  await agent.close()
+  expect(agent.call).toHaveBeenCalledWith('abortSession', { sessionId: 'state-test-session' })
+  expect(agent.contextClose).toHaveBeenCalledExactlyOnceWith()
+  expect(agent.call.mock.invocationCallOrder.at(-1)).toBeLessThan(agent.contextClose.mock.invocationCallOrder[0]!)
+})
 
 it('handles /permissions locally, validates tiers, synchronizes config events and never answers a pending approval', async () => {
   const agent = await interactiveAgent()

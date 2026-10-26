@@ -40,6 +40,7 @@ import { createReadStream, createWriteStream } from "node:fs"
 import { rename as 改名, rm as 删掉, stat as 本地stat, link } from "node:fs/promises"
 import { deadline, transferStream, missingFile } from "./transfer-io.js"
 import { createHash, randomUUID } from "node:crypto"
+import { StringDecoder } from "node:string_decoder"
 import type { Client, ClientChannel, ConnectConfig, SFTPWrapper } from "ssh2"
 
 /** 一台远端机器怎么连。**密码不在这里**——它由上层从钥匙串取了再传进来 */
@@ -85,6 +86,27 @@ export interface ExecOptions {
   timeoutSec?: number
 }
 
+export interface RemoteShellExit {
+  code?: number
+  signal?: string
+  reason?: string
+}
+
+/** 已连接 SSH 上的交互 PTY。关闭它只关闭 channel，不影响 SSH 或其他终端。 */
+export interface RemoteShell {
+  write(data: string): void
+  resize(cols: number, rows: number): void
+  close(): void
+  onData(listener: (data: string) => void): () => void
+  onExit(listener: (event: RemoteShellExit) => void): () => void
+}
+
+function checkShellSize(cols: number, rows: number): void {
+  if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 1 || rows < 1) {
+    throw new Error("终端尺寸必须是正整数")
+  }
+}
+
 /**
  * 从登录环境里带过去的变量。
  *
@@ -127,6 +149,10 @@ export interface SshClientLike {
   on(event: "ready" | "error" | "close" | "end", cb: (...a: never[]) => void): unknown
   connect(cfg: ConnectConfig): unknown
   exec(cmd: string, cb: (err: Error | undefined, ch: ClientChannel) => void): unknown
+  shell?(
+    window: { term: string; cols: number; rows: number },
+    cb: (err: Error | undefined, ch: ClientChannel) => void,
+  ): unknown
   forwardOut(
     srcIP: string, srcPort: number, dstIP: string, dstPort: number,
     cb: (err: Error | undefined, ch: ClientChannel) => void,
@@ -172,6 +198,8 @@ export class RemoteExecutor {
    */
   private 自己关的 = false
   private 取消连接: ((reason: Error) => void) | undefined
+  /** 也包括正在申请的 shell，SSH 断开时不能让 openShell 永远等待。 */
+  private readonly shellStops = new Set<(reason: string) => void>()
 
   constructor(private readonly opts: RemoteExecutorOptions) {}
 
@@ -230,6 +258,7 @@ export class RemoteExecutor {
           this.client = undefined
           this.sftpHandle = undefined
           this.环境 = {}
+          this.stopShells(error.message)
           取消(error)
           reject(error)
           this.设状态({ kind: "disconnected", reason: error.message })
@@ -265,6 +294,10 @@ export class RemoteExecutor {
           if (!当前() || this.自己关的) return
           失联(new Error("连接被对端关闭"), false)
         }) as never)
+        c.on("end", (() => {
+          if (!当前() || this.自己关的) return
+          失联(new Error("SSH 连接已结束"), false)
+        }) as never)
         // 先挂 error/close，再向外报告 connecting；状态回调可能立即要求取消。
         this.设状态({ kind: "connecting" })
         if (!当前()) { reject(new Error("SSH 连接已取消")); return }
@@ -298,6 +331,7 @@ export class RemoteExecutor {
         this.client = undefined
         this.sftpHandle = undefined
         this.环境 = {}
+        this.stopShells(error instanceof Error ? error.message : String(error))
         this.设状态({ kind: "disconnected", reason: error instanceof Error ? error.message : String(error) })
         try { c.end() } catch {}
       }
@@ -366,6 +400,110 @@ export class RemoteExecutor {
       // 清掉那个 pid 文件。**失败不出声**：它只是块草稿纸
       void this.原始执行(`rm -f ${pid文件}`).catch(() => {})
     }
+  }
+
+  /** 打开独立交互 channel。没有默认超时，也不重连或退回本地执行。 */
+  async openShell({ cols, rows }: { cols: number; rows: number }): Promise<RemoteShell> {
+    const c = this.client
+    if (this.state.kind !== "ready" || !c) {
+      throw new Error(`远端不可用（${this.state.kind}）：${this.说明() || "还没连上"}`)
+    }
+    checkShellSize(cols, rows)
+    if (!c.shell) throw new Error("此 SSH 客户端不支持交互 shell")
+
+    return new Promise<RemoteShell>((resolve, reject) => {
+      let cancelled = false
+      const pendingStop = (reason: string) => {
+        cancelled = true
+        this.shellStops.delete(pendingStop)
+        reject(new Error(reason))
+      }
+      this.shellStops.add(pendingStop)
+      try {
+        c.shell!({ term: "xterm-256color", cols, rows }, (err, ch) => {
+          this.shellStops.delete(pendingStop)
+          if (cancelled || this.client !== c) {
+            try { ch?.close() } catch {}
+            reject(new Error("SSH 连接已关闭"))
+            return
+          }
+          if (err) { reject(err); return }
+
+          const dataListeners = new Set<(data: string) => void>()
+          const exitListeners = new Set<(event: RemoteShellExit) => void>()
+          const stdout = new StringDecoder("utf8"), stderr = new StringDecoder("utf8")
+          let result: RemoteShellExit = {}
+          let ended = false
+          // SSH 的首屏可能与 shell 成功响应同批到达，早于 await 后的 onData。
+          // 仅保留订阅前的有限首屏，避免无人订阅的长任务无限占用内存。
+          let initialData: string | undefined = ""
+          const emitData = (data: string) => {
+            if (!data) return
+            if (initialData !== undefined) initialData = (initialData + data).slice(-64 * 1024)
+            for (const listener of [...dataListeners]) {
+              try { listener(data) } catch { /* 观察者失败不能中断通道收尾。 */ }
+            }
+          }
+          const finish = (event: RemoteShellExit) => {
+            if (ended) return
+            ended = true
+            result = event
+            this.shellStops.delete(stop)
+            emitData(stdout.end())
+            emitData(stderr.end())
+            dataListeners.clear()
+            for (const listener of [...exitListeners]) {
+              try { listener(result) } catch { /* 每个终端都必须收到结束并关闭。 */ }
+            }
+            exitListeners.clear()
+          }
+          const stop = (reason: string) => {
+            if (ended) return
+            finish({ ...result, reason })
+            try { ch.close() } catch {}
+          }
+          this.shellStops.add(stop)
+          ch.on("data", (data: Buffer) => { if (!ended) emitData(stdout.write(data)) })
+          ch.stderr.on("data", (data: Buffer) => { if (!ended) emitData(stderr.write(data)) })
+          ch.on("exit", (code: number | null, signal: string | null) => {
+            if (!ended) result = {
+              ...(code == null ? {} : { code }),
+              ...(signal ? { signal } : {}),
+            }
+          })
+          ch.on("close", () => finish(result))
+          ch.on("error", (error: Error) => stop(error.message))
+          resolve({
+            write(data) { if (!ended) ch.write(data) },
+            resize(nextCols, nextRows) {
+              if (ended) return
+              checkShellSize(nextCols, nextRows)
+              ch.setWindow(nextRows, nextCols, 0, 0)
+            },
+            close() { stop("终端已关闭") },
+            onData(listener) {
+              if (!ended) dataListeners.add(listener)
+              const initial = initialData
+              initialData = undefined
+              if (initial) { try { listener(initial) } catch {} }
+              return () => { dataListeners.delete(listener) }
+            },
+            onExit(listener) {
+              if (ended) { try { listener(result) } catch {} }
+              else exitListeners.add(listener)
+              return () => { exitListeners.delete(listener) }
+            },
+          })
+        })
+      } catch (error) {
+        this.shellStops.delete(pendingStop)
+        reject(error)
+      }
+    })
+  }
+
+  private stopShells(reason: string): void {
+    for (const stop of [...this.shellStops]) stop(reason)
   }
 
   /**
@@ -612,6 +750,7 @@ export class RemoteExecutor {
     this.client = undefined
     this.sftpHandle = undefined
     this.环境 = {}
+    this.stopShells("SSH 连接已关闭")
     // **先立起这面旗再关**：`end()` 可能同步就把 `close` 事件发出来
     this.自己关的 = true
     const 取消 = this.取消连接

@@ -1,6 +1,6 @@
 # Remote terminal shared context validation — 2026-10-26
 
-Branch: `codex/remote-terminal-shared-context`. No merge, push, release, installed-app replacement or production-server operation.
+Branch: `codex/remote-terminal-shared-context`. No merge, push, release or installed-app replacement. Initial verification used loopback SSH; the subsequent user-authorized genek run was restricted to newly created temporary verification directories.
 
 ## Implemented
 
@@ -24,7 +24,7 @@ File tools resolve relative paths through the shared remote cwd and existing con
 
 All fixtures use fresh temporary databases/workspaces, independent Electron userData, in-memory test credentials and random loopback SSH endpoints. No test controlled or restarted the user's running preview or production sessions. The visible demo uses a new subdirectory under the standard development-preview root, a copied launcher with its own PREVIEW_ROOT, and a deterministic test model. The original launcher/profile are preserved.
 
-## Boundaries
+## Initial loopback boundaries
 
 This verifies the remote transport and application integration against isolated local SSH servers, including real shell and file channels. It does not claim acceptance against the user's production server, its custom shell startup configuration or network conditions. No real-server credentials were copied to the test profile.
 
@@ -33,3 +33,31 @@ This verifies the remote transport and application integration against isolated 
 The isolated Electron preview was opened after verification from feature commit `4130db9a`. Its title identifies the feature branch; a new `remote-terminal-isolated-*` profile lives under the standard DAWN Science Dev Preview directory. It shows the original Chinese conversation and the remote DAWN terminal after manually entering a Chinese directory and exporting a variable. Preview verification records one authenticated SSH connection. The actual window and narrow-viewport test screenshots, logs and verification.json are retained in that separate profile. No original launcher/profile was edited or reused.
 
 The primary checkout was rechecked: `main` remains at `ab9c1e18` (release 0.0.37), clean. The feature branch is retained separately; no merge or push was performed.
+
+## Authorized real genek verification
+
+The user selected genek for real-server acceptance. Existing authenticated application credentials were reused through selected encrypted copies in isolated preview profiles; plaintext credentials were never printed or retained. The original application database, launcher and profiles were not edited. Connecting a fresh profile uses its own installation ID, so the existing installation-scoped remote-kernel sweep does not target other installations' kernels.
+
+The first real run exposed a late xterm device reply reaching the idle remote Shell after DAWN presentation detached. Its printable suffix (`1;2c`) prefixed the next Agent wrapper and prevented execution. The model's explicit command timeout then fired; this was not a session lifetime limit. Commit `774e55cb` filters complete known replies at the raw input boundary only while the Shell is idle, redrawing, or Agent-owned. The shared editing tracker uses the same parser. DA/DSR, focus, keyboard flags, DECRPM, DECRPSS and OSC color replies are covered; manual foreground remote programs and active presentation still receive protocol input intact.
+
+Regression evidence for that fix:
+
+- Extended the real PTY regression first: the missing DECRPM/DCS/OSC4 cases failed before the shared filter and passed afterwards.
+- Runtime, terminal-control and Electron wiring: **87 passed, 1 skipped** across six files.
+- Typecheck and build passed.
+- Remote Electron integration: **2 passed**, including detach during an active task, late-reply injection and continued original conversation.
+- Local desktop CLI and Chinese path/input Electron regressions: **3 passed**.
+- Independent quality review found no remaining blocking issue in the revised filter.
+
+The old preview was deliberately left running. A second copied launcher/profile under the standard development-preview root launched the fixed commit with the real Moonshot `kimi-k2.6` provider and a new genek native session. The real checks passed:
+
+1. The GUI conversation stored an unpredictable verification code. DAWN terminal recalled it without the code being repeated in its prompt.
+2. Manual Normal input created a fresh `dawn-fixed-verify.*` temporary directory, entered `中文目录`, exported a Chinese environment value and wrote `人工输入.txt` containing `中文输入正常`.
+3. DAWN bash returned the exact environment value, remote Chinese cwd and file content with exit code 0. The terminal and GUI used the same original native session and connection IDs.
+4. After submitting a `sleep 20` verification task, returning directly to the GUI detached presentation. The GUI showed the original bash task executing; it completed in about 20.3 seconds with exit code 0 and wrote the expected completion file.
+5. After injecting the late DA/DECRPM/DCS/OSC4 reports into the idle raw terminal, a subsequent GUI bash call successfully read the same environment, cwd, Chinese file and completion content. Exit code was 0.
+6. The isolated Electron main process had one established SSH TCP socket. Old preview sessions were re-read without mutation and remained `alive`; its process was not restarted.
+
+The fixed preview root is `~/Library/Application Support/DAWN Science Dev Preview/genek-real-verified-2026-10-26T02-12-27-421Z`. Its `verification.json` and `evidence/GENEK_FIXED_mvomn0zk/` retain native tool results, identity/mode snapshots and window screenshots. Only the test profile's own extra terminal was closed while preparing the final preview; the retained terminal is in DAWN mode in the Chinese verification directory, attached to the same native conversation. Two small temporary test directories on genek are retained as acceptance evidence. No existing server files, workloads or sessions were modified by these checks.
+
+This establishes the tested genek configuration and current connection behavior; it does not claim acceptance for every SSH server, shell or network interruption scenario.

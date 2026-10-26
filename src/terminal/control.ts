@@ -3,6 +3,7 @@ import { basename } from 'node:path'
 import type { TerminalControlState, TerminalMode, TerminalTask } from '../protocol/terminal.js'
 import { TerminalScreen } from './screen.js'
 import { readyPrompt, terminalCommand } from './commands.js'
+import { stripTerminalReplies } from './replies.js'
 
 interface TerminalPort {
   connectionId?: string
@@ -146,8 +147,7 @@ export class TerminalControl {
     this.reclaim(id)
     const e = this.entry(id)
     // xterm also sends device/cursor/color replies through onData; those are not editing.
-    data = data.replace(/\x1b\[(?:[?>=]?\d+(?:;\d+)*)[Rcnu]|\x1b\[[IO]/g, '')
-      .replace(/\x1b\](?:10|11|12);[^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    data = stripTerminalReplies(data)
     for (let i = 0; i < data.length; i++) {
       if (data.startsWith('\x1b[200~', i)) { e.pasting = true; i += 5; continue }
       if (data.startsWith('\x1b[201~', i)) { e.pasting = false; i += 5; continue }

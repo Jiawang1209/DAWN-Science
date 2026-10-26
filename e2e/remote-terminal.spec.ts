@@ -91,6 +91,13 @@ test.describe('detach an active shared remote Agent',()=>{
    await expect.poll(()=>existsSync(join(ssh.workspace,'completed.txt'))).toBe(true)
    expect((await call(page,'subscribeSession',{sessionId:task.sessionId})).state).not.toBe('exited')
    expect((await call(page,'getTerminalControl',{terminalId})).alive).toBe(true)
+   await expect.poll(async()=> (await call(page,'subscribeSession',{sessionId:task.sessionId})).items.filter((i:any)=>i.type==='turn'&&i.who==='agent'&&i.final).length).toBe(1)
+   // Device replies can outlive the local presenter and reach the raw Shell after detach.
+   await call(page,'writeToSession',{sessionId:terminalId,as:'user',data:'\x1b[?1;2c'})
+   const composer=page.locator('.main .composer-card textarea.composer-field')
+   await composer.fill('REMOTE_LONG_TURN continue from GUI after delayed presenter report');await composer.press('Enter')
+   await expect.poll(async()=> (await call(page,'subscribeSession',{sessionId:task.sessionId})).items.filter((i:any)=>i.type==='tool'&&i.status==='ok').length).toBe(2)
+   await expect.poll(async()=> (await call(page,'subscribeSession',{sessionId:task.sessionId})).items.filter((i:any)=>i.type==='turn'&&i.who==='agent'&&i.final).length).toBe(2)
    expect(ssh.connections).toBe(1)
   }finally{await ssh.close()}
  })

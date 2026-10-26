@@ -31,7 +31,12 @@ async function setup(options: {
   })
   shell.onExit(() => { exited = true })
   const close = () => { if (!exited) { try { process.kill(shell.pid, 'SIGHUP') } catch {} } }
-  cleanup.push(async () => { await runtime.stop(id); close(); if (!options.control) control.dispose(); rmSync(dir, { force: true, recursive: true }) })
+  cleanup.push(async () => {
+    await runtime.stop(id); close()
+    await vi.waitFor(() => expect(exited).toBe(true))
+    if (!options.control) control.dispose()
+    rmSync(dir, { force: true, recursive: true })
+  })
   const writes: string[] = []
   const openShell = vi.fn(async () => ({
     write: (data: string) => { writes.push(data); shell.write(data) }, resize: (cols: number, rows: number) => shell.resize(cols, rows), close,
@@ -81,6 +86,39 @@ describe('persistent remote terminal runtime', () => {
     const x = await setup(); await x.runtime.stop('t')
     await expect(x.runtime.executeForOwner('chat', 'echo lost', {})).rejects.toThrow(/结束|断开/)
     expect(x.runtime.executeForOwner('unrelated', 'echo local', {})).toBeUndefined()
+  })
+
+  it('does not append late presenter device replies to the next remote Shell command', async () => {
+    const x = await setup()
+    const before = x.writes.length
+    x.write('\x1b[?1;2c\x1b[>0;276;0c\x1b[8;1R\x1b[?2026;2$y\x1bP1$r0m\x1b\\\x1b]4;0;rgb:0000/0000/0000\x1b\\')
+    expect(x.writes.slice(before)).toEqual([])
+    expect(x.control.hasPendingInput('t')).toBe(false)
+    expect(x.runtime.isReady('t')).toBe(true)
+    expect((await x.runtime.executeForOwner('chat', 'printf clean-command', { timeoutSec: 1 }))?.stdout).toBe('clean-command')
+  })
+
+  it('ignores delayed terminal reports during an Agent task while still rejecting human edits', async () => {
+    const x = await setup()
+    const running = x.runtime.executeForOwner('chat', 'sleep 0.15; printf complete', { timeoutSec: 2 })!
+    try {
+      expect(() => x.runtime.write('t', '\x1b[?1;2c')).not.toThrow()
+      expect(() => x.runtime.write('t', 'human text')).toThrow(/运行|占用/)
+      expect((await running).stdout).toBe('complete')
+    } finally { await running.catch(() => undefined) }
+  })
+
+  it('keeps device replies available to a foreground remote interactive program', async () => {
+    const x = await setup()
+    const output: string[] = []
+    x.runtime.attach('t', e => { if (e.kind === 'output') output.push(e.data) })
+    x.write("printf FOREGROUND_READY; read -r reply; printf '%s' \"$reply\" > foreground.txt\r")
+    await vi.waitFor(() => expect(output.join('')).toContain('FOREGROUND_READY'))
+    const before = x.writes.length
+    x.write('\x1b[?1;2c\r')
+    expect(x.writes.slice(before)).toEqual(['\x1b[?1;2c\r'])
+    await vi.waitFor(() => expect(readFileSync(join(x.dir, 'foreground.txt'), 'utf8')).toBe('\x1b[?1;2c'))
+    await ready(x.runtime)
   })
 
   it('rejects human edits and selection while an Agent command owns the shell', async () => {

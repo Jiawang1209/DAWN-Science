@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
 import { TerminalScreen } from '../terminal/screen.js'
+import { stripTerminalReplies } from '../terminal/replies.js'
 import type { TerminalControl } from '../terminal/control.js'
 import type { RemoteShell, RemoteShellExit } from '../remote/ssh.js'
 import { PtyRuntime } from './pty.js'
@@ -274,6 +275,13 @@ export class RemoteTerminalRuntime implements AgentRuntime {
       e.presentation.runtime.write(id, data); return
     }
     if (e.launching) throw new Error('DAWN 本地呈现正在启动')
+    // Xterm replies can arrive after the local presenter has already exited. An
+    // idle Shell must never receive those bytes as command text (e.g. 1;2c).
+    // Keep reports for a manually running remote interactive program.
+    if (e.ready || e.task || e.redrawing) {
+      data = stripTerminalReplies(data)
+      if (!data) return
+    }
     if (e.task) throw new Error('Agent 命令正在占用远端 Shell，请先等待完成或取消')
     if (data.includes('\x03') || /[\r\n]/.test(data) && (e.draft || /[^\r\n]/.test(data))) e.ready = false
     if (/[\r\n\x03]/.test(data)) e.draft = false

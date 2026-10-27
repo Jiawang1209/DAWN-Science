@@ -2,6 +2,8 @@
 
 日期：2026-10-28。分支 `codex/artifact-provenance`，基线 `846e1c35`。继续使用原独立工作树 `/Users/liuyue/.codex/worktrees/artifact-provenance/dawn-science`；没有提交、合并、推送或替换安装版。
 
+用户随后批准最终检查及本地 main 集成；最新结果见 [本地 main 最终检查](2026-10-28-artifact-provenance-main-verification.md)。下文保留本次极简流程阶段的验收事实。
+
 ## 用户可见变化
 
 - 默认产物页只保留结果、历史、更多菜单，交付说明和交付页签移出日常视图。

@@ -336,6 +336,7 @@ export async function verifyDelivery(
   };
   record.verification = {
     state: "running",
+    references:plan.comparisons.map(c=>{const e=record.evidence.find(e=>e.path===c.source);return{path:c.source,...(e?.sha256?{sha256:e.sha256}:{}),...(e?.retained??{})}}),
     note: "正在独立进程运行；保留当前内核。",
     directory: validation,
     command: [interpreter, ...actualArgs],

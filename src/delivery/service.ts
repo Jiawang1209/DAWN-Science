@@ -40,6 +40,7 @@ export interface DeliveryOptions {
   skills: string;
   interpreters?: { python?: string; r?: string };
   validationTimeoutMs?: number | undefined;
+  readRetained?: (reference: NonNullable<DeliveryCreate['retained']>[number]) => Promise<{bytes:Buffer;observationId:string;versionId?:string|undefined;source?:unknown}>
 }
 const COPY_MAX = 8 * 1024 * 1024,
   COPY_TOTAL = 64 * 1024 * 1024,
@@ -179,8 +180,11 @@ export class DeliveryService {
     const prior = this.records.find((r) => r.id === request.requestId);
     if (prior) return Promise.resolve(structuredClone(prior));
     // Fail closed on every selected path before creating output or contacting the model.
+    const retainedPaths=new Set(request.retained?.map(r=>r.path)??[])
+    if(retainedPaths.size!==(request.retained?.length??0)||[...retainedPaths].some(path=>!request.paths.includes(path)))throw new UserFacingError('留存引用必须唯一且属于本次选定结果')
+    if(retainedPaths.size&&!this.options.readRetained)throw new UserFacingError('本次未接入留存内容读取，不能回退到当前文件')
     for (const p of [...request.paths, ...request.references])
-      deliveryPath(this.options.workspace, p);
+      if(!retainedPaths.has(p))deliveryPath(this.options.workspace, p);
     deliveryPath(this.options.workspace, "outputs/delivery");
     const directory = `outputs/delivery/${request.name.replace(/[^\p{L}\p{N}_-]/gu, "-").slice(0, 60)}-${randomUUID().slice(0, 12)}`;
     mkdirSync(deliveryPath(this.options.workspace, directory), {
@@ -231,6 +235,14 @@ export class DeliveryService {
       );
       for (const p of new Set([...request.paths, ...request.references])) {
         signal.throwIfAborted();
+        const reference=request.retained?.find(r=>r.path===p)
+        const retained=reference?await this.options.readRetained!(reference):undefined
+        let bytes: Buffer;
+        if(retained){
+          bytes=retained.bytes
+          if(bytes.length>COPY_MAX||bytes.length>copyBudget)throw new UserFacingError('留存结果超过本次交付复制上限；没有改读工作区文件')
+          if(createHash('sha256').update(bytes).digest('hex')!==reference!.sha256)throw new UserFacingError('留存身份与交付选择不一致')
+        }else{
         const path = deliveryPath(this.options.workspace, p);
         if (!existsSync(path)) {
           record.evidence.push({
@@ -254,7 +266,6 @@ export class DeliveryService {
           continue;
         }
         const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-        let bytes: Buffer;
         try {
           bytes = Buffer.alloc(st.size);
           let offset = 0;
@@ -265,6 +276,7 @@ export class DeliveryService {
           }
         } finally {
           closeSync(fd);
+        }
         }
         const digest = createHash("sha256").update(bytes).digest("hex");
         const textFile = /\.(py|r|md|txt|log|csv|tsv|json|yaml|yml)$/i.test(p);
@@ -304,6 +316,7 @@ export class DeliveryService {
           sha256: digest,
           note,
           ...(copyPath ? { copyPath } : {}),
+          ...(reference&&retained?{retained:{retainedId:reference.retainedId,memberId:reference.memberId,observationId:retained.observationId,sha256:reference.sha256,...(retained.versionId?{versionId:retained.versionId}:{})}}:{}),
         });
         evidence.push({
           path: p,
@@ -311,6 +324,7 @@ export class DeliveryService {
           bytes: bytes.length,
           sha256: digest,
           ...(text !== undefined ? { text } : {}),
+          ...(reference&&retained?{retainedReference:reference,source:retained.source}:{}),
         });
       }
       this.update(record);

@@ -50,7 +50,7 @@ describe("migrate v2", () => {
     const row = db.prepare(`SELECT value FROM schema_meta WHERE key='version'`).get() as { value: string }
     // 库里写的与常量一致：**迁移跑了没有，靠这一条**
     expect(row.value).toBe(String(SCHEMA_VERSION))
-    expect(SCHEMA_VERSION).toBe(17)
+    expect(SCHEMA_VERSION).toBe(18)
   })
 
   it("可重复执行（幂等）", () => {

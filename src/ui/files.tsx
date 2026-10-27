@@ -504,7 +504,7 @@ export function FilePreview({
 }: {
   path: string | undefined
   content: FileContent | undefined
-  onOpenExternally: (path: string) => void
+  onOpenExternally?: ((path: string) => void) | undefined
   /** 给了才画「下载」。**本地文件不给**——它已经在这台机器上了 */
   onDownload?: (path: string) => void
   /** 给了才画那颗删除。**文案跟着 `进废纸篓` 走** */

@@ -39,6 +39,7 @@ test("科研交付：真实输出→选择→结果解读→独立重跑→保�
   expect(JSON.parse(source).n_effective).toBe(28);
   await 进坞(page, "产物");
   const panel = page.getByRole("region", { name: "分析交付", exact: true });
+  await panel.getByLabel("产物操作菜单", { exact: true }).click();
   await panel.getByRole("button", { name: "整理交付", exact: true }).click();
   for (const name of [
     "run_analysis.py",
@@ -157,6 +158,7 @@ for (const [field, a, b] of [
     writeFileSync(join(workspace, "analysis/run_analysis.py"), `# DAWN_DELIVERY_FIXTURE\nimport pathlib,sys\nout=pathlib.Path(sys.argv[2])\n(out/'model.csv').write_text(${JSON.stringify(changed)})\n(out/'summary.json').write_text(${JSON.stringify(summary)})\n`);
     await 进坞(page, "产物");
     const panel = page.getByRole("region", { name: "分析交付", exact: true });
+    await panel.getByLabel("产物操作菜单", { exact: true }).click();
     await panel.getByRole("button", { name: "整理交付", exact: true }).click();
     for (const name of ["run_analysis.py", "model.csv", "summary.json"])
       await panel.getByRole("checkbox", { name: new RegExp(name.replace(".", "\\.")) }).check();
@@ -198,6 +200,7 @@ test("整理并验证先等核对；缺少预期输出保持部分验证并保�
   ).toBeVisible({ timeout: 40_000 });
   await 进坞(page, "产物");
   const panel = page.getByRole("region", { name: "分析交付", exact: true });
+  await panel.getByLabel("产物操作菜单", { exact: true }).click();
   await panel.getByRole("button", { name: "整理交付", exact: true }).click();
   for (const name of ["run_analysis.py", "model.csv", "summary.json"])
     await panel

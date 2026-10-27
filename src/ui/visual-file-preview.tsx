@@ -10,7 +10,7 @@ import type { FileContent } from './files.js'
 type VisualContent = Extract<FileContent, { kind: 'image' | 'pdf' }>
 export type PreviewNavigation = { onBack: () => void; onLocate: () => void }
 export function VisualFilePreview({ path, content, onOpenExternally, onDownload, onDelete, 进废纸篓, navigation, fitContainer = false, onClosePreview }: {
-  path: string; content: VisualContent; onOpenExternally: (path: string) => void
+  path: string; content: VisualContent; onOpenExternally?: ((path: string) => void) | undefined
   onDownload?: ((path: string) => void) | undefined
   onDelete?: ((path: string) => void) | undefined
   进废纸篓?: boolean | undefined
@@ -44,7 +44,7 @@ export function VisualFilePreview({ path, content, onOpenExternally, onDownload,
       <span className="name">{name}</span>
       <div className="visual-preview-actions">
         <Button ref={trigger} variant="ghost" size="icon" aria-label={t("放大预览")} onClick={() => setExpanded(true)}><放大预览图标 /></Button>
-        <Button variant="ghost" size="icon" aria-label={t("用系统程序打开")} onClick={() => onOpenExternally(path)}><外部打开图标 /></Button>
+        {onOpenExternally ? <Button variant="ghost" size="icon" aria-label={t("用系统程序打开")} onClick={() => onOpenExternally(path)}><外部打开图标 /></Button> : null}
         {onDownload ? <Button variant="ghost" size="icon" aria-label={t("下载")} onClick={() => onDownload(path)}><下载图标 /></Button> : null}
         {navigation || onDelete ? <div className="visual-preview-more" ref={menuRoot}>
           <Button variant="ghost" size="icon" aria-label={t("文件操作")} aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(v => !v)}>⋯</Button>

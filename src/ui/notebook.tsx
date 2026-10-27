@@ -87,7 +87,7 @@ export function NotebookPanel({
   cells: readonly Cell[]
   running: boolean
   error: string | undefined
-  onRun: (language: 语言, code: string) => Promise<void>
+  onRun: (language: 语言, code: string, inputPaths?: string[]) => Promise<void>
   onInterrupt: (language: 语言) => void
   onOpenVariables: () => void
   /** 导出 .ipynb / .md（2026-08-27）。不给就没有那两颗按钮 */
@@ -99,6 +99,8 @@ export function NotebookPanel({
     return 最近?.language ?? "python"
   })
   const [draft, setDraft] = useState("")
+  const [inputFiles, setInputFiles] = useState("")
+  const [inputsOpen,setInputsOpen]=useState(false)
   /** `onRun` 自己抛出来的错——跟外面传进来的 `error` 分开放，各说各的 */
   const [runError, setRunError] = useState<string | undefined>(undefined)
   /**
@@ -257,7 +259,9 @@ export function NotebookPanel({
     if (running || code.trim() === "") return
     setRunError(undefined)
     try {
-      await onRun(language, code)
+      const inputs=inputFiles.split('\n').map(path=>path.trim()).filter(Boolean).slice(0,50)
+      if(inputs.length)await onRun(language,code,inputs)
+      else await onRun(language, code)
       setDraft("")
     } catch (e) {
       // **失败必须出声，草稿不丢**（§6）：红字放在输入框上方，输入框里的字原样留着
@@ -393,6 +397,13 @@ export function NotebookPanel({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
         />
+        <details onToggle={e=>setInputsOpen(e.currentTarget.open)}>
+          <summary>{t("本次输入（可选）")}</summary>
+          {inputsOpen?<>
+            <textarea className="control" aria-label={t("声明输入文件，每行一个工作区相对路径")} value={inputFiles} onChange={e=>setInputFiles(e.target.value)} rows={2} />
+            <p className="hint">{t("仅记录声明的文件身份，不证明代码实际读取")}</p>
+          </>:null}
+        </details>
         <p className="nb-caption">{t("会记进对话，agent 下一轮知道")}</p>
       </div>
     </div>

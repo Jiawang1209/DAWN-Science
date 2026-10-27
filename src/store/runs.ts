@@ -355,6 +355,12 @@ export class RunStore {
       })
   }
 
+  /** 在执行结束前绑定实际解释器的环境；不改写已结束运行。 */
+  patchEnvironment(runId: string, snapshotId: string): void {
+    this.db.prepare("UPDATE runs SET environment_snapshot_id=? WHERE id=? AND status='running'")
+      .run(snapshotId, runId)
+  }
+
   /**
    * 只补文件事实，不动状态。
    *

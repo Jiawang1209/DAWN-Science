@@ -948,6 +948,11 @@ export class SessionTranscripts {
     this.putItem(sessionId, e, { type: "notice", id: `notice-${++e.turnSeq}`, text })
   }
 
+  invalidateArtifacts(sessionId: SessionId): void {
+    const entry=this.entries.get(sessionId)
+    if(entry)this.bump(sessionId,entry,{type:'artifactsChanged'})
+  }
+
   /**
    * 远端会话换目录了（②-B · R4′）。
    *

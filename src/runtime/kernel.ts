@@ -60,6 +60,7 @@ interface Live {
    * 它记的是「这个会话是在什么环境里起来的」。
    */
   environment?: EnvironmentSnapshot | undefined
+  environmentReady?: Promise<void>
   /**
    * 隧道本地这头的五个端口（远端才有）。`attachKernelChannel` 把它挂在通道对象上，
    * 但 `KernelChannel` 类型里没有——心跳要开 `hb_port`，所以这里单独存一份
@@ -297,7 +298,7 @@ export class KernelRuntime implements AgentRuntime {
      * 失败不阻断会话——**探测不到只是少一份证据，不是不能干活**。
      * 但它要出声（规格 7.5），所以走 `console.error` 而不是静静吞掉。
      */
-    void this.captureEnvironment(spec.sessionId)
+    this.sessions.get(spec.sessionId)!.environmentReady=this.captureEnvironment(spec.sessionId)
 
     this.接线(spec.sessionId, channel)
     // 远端才有心跳；**等它武装好再回**——不然 `start` 回了心跳还没排上，那几秒的猝死没人看
@@ -812,7 +813,7 @@ export class KernelRuntime implements AgentRuntime {
       }
       // 会话可能在探测期间就没了——**别把快照挂到一个已经死掉的会话上**
       const still = this.sessions.get(sessionId)
-      if (!still) return
+      if (still !== live) return
       // 远端内核：同一个 conda env 搬到另一台服务器，是另一份快照（指纹里带上是哪台）
       if (still.远端?.connectionId) snap.where = { connectionId: still.远端.connectionId }
       still.environment = snap
@@ -826,6 +827,13 @@ export class KernelRuntime implements AgentRuntime {
   environmentOf(sessionId: SessionId): EnvironmentSnapshot | undefined {
     // 等着接回的那台也答：同一个进程，快照没变（定案 13）
     return this.sessions.get(sessionId)?.environment ?? this.分离的.get(sessionId)?.environment
+  }
+
+  /** Wait for the already-started admission probe; never re-probe a live kernel. */
+  async waitForEnvironment(sessionId:SessionId):Promise<EnvironmentSnapshot|undefined>{
+    const live=this.sessions.get(sessionId)
+    await live?.environmentReady
+    return this.sessions.get(sessionId)===live?live?.environment:undefined
   }
 
   async variables(sessionId: SessionId): Promise<

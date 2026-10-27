@@ -1,3 +1,4 @@
+import { createArtifactOperations } from '../../src/artifacts/operations.js'
 import { describe, expect, it } from "vitest"
 import { IPC_CHANNEL, createIpcHandler } from "../../src/electron/ipc.js"
 import { WorkbenchServer, type WorkbenchBackend } from "../../src/workbench/server.js"
@@ -11,6 +12,7 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    ...createArtifactOperations({session:()=>undefined}),
     getTerminalAgentAttachments: async () => ({ revision: 0, pending: [] }),
     updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },
     getTerminalAgentImage: async () => { throw new Error('Terminal unavailable in this fixture') },

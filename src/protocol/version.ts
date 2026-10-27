@@ -598,7 +598,7 @@
 /** 8.33: remote terminals share the existing SSH connection and owning conversation. */
 /** 8.34: provider catalog exposes credential-free endpoint defaults for setup. */
 /** 8.35: endpoint defaults include per-model API and base URL metadata. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.35"
+export const WORKBENCH_PROTOCOL_VERSION = "8.36"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 
@@ -626,3 +626,5 @@ export function isCompatible(uiVersion: string, serverVersion: string): boolean 
   if (!ui || !server) return false
   return ui.major === server.major && ui.minor <= server.minor
 }
+
+/** 8.36: optional artifact observations, source history and selected result retention. */

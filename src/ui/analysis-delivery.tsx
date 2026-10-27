@@ -1,3 +1,4 @@
+import { ArtifactHistoryPanel } from './artifact-history.js'
 import { createPortal } from "react-dom";
 import {
   useEffect,
@@ -60,6 +61,9 @@ export const verificationLabel = (s: DeliveryRecord["verification"]["state"]) =>
     failed: t("运行验证失败"),
   })[s];
 export function AnalysisDeliveryPanel(p: Props) {
+  const [evidenceView,setEvidenceView]=useState<{path?:string}|undefined>()
+  const [moreOpen,setMoreOpen]=useState(false)
+  useEffect(()=>{setEvidenceView(undefined);setMoreOpen(false)},[p.scopeKey])
   const views = useStore($deliveryViews),
     view = views.get(p.scopeKey) ?? deliveryView(p.scopeKey);
   const [catalog, setCatalog] = useState<Catalog>(),
@@ -213,6 +217,7 @@ export function AnalysisDeliveryPanel(p: Props) {
         .map((s) => s.trim())
         .filter(Boolean),
       mode: view.mode,
+      ...(view.retained?.length?{retained:view.retained.filter(r=>view.selected.includes(r.path))}:{}),
     };
     const valid = DeliveryCreateSchema.safeParse(request);
     if (!valid.success) {
@@ -291,7 +296,21 @@ export function AnalysisDeliveryPanel(p: Props) {
       aria-label={t("分析交付")}
     >
       <header className="delivery-header">
-        {view.page === "files" || view.page === "records" ? (
+        {view.page === "files" ? (
+          <>
+            <strong>{t("结果")}</strong>
+            <div className="artifact-page-actions">
+              <Button variant="ghost" size="sm" aria-label={t("历史")} aria-pressed={Boolean(evidenceView)} onClick={()=>setEvidenceView({})}>{t("历史")}</Button>
+              <details className="artifact-more-menu" open={moreOpen} onToggle={e=>setMoreOpen(e.currentTarget.open)}>
+                <summary aria-label={t("产物操作菜单")}>{t("更多")}</summary>
+                {moreOpen ? <div className="artifact-more-menu-body">
+                  <Button variant="ghost" size="sm" disabled={!allowed||busy} onClick={()=>{setMoreOpen(false);setEvidenceView(undefined);beginDelivery(p.scopeKey);setError(undefined)}}>{t("整理交付")}</Button>
+                  <Button variant="ghost" size="sm" onClick={()=>{setMoreOpen(false);update({page:"records"})}}>{tf("交付记录 · {0}",catalog?.records.length??0)}</Button>
+                </div>:null}
+              </details>
+            </div>
+          </>
+        ) : view.page === "records" ? (
           <>
             <div>
               <strong>{t("本次分析产物")}</strong>
@@ -342,12 +361,12 @@ export function AnalysisDeliveryPanel(p: Props) {
           </>
         )}
       </header>
-      {view.page === "files" || view.page === "records" ? (
+      {view.page === "records" ? (
         <nav className="delivery-tabs" aria-label={t("产物视图")}>
           <Button
             variant="ghost"
             size="sm"
-            aria-pressed={view.page === "files"}
+            aria-pressed={false}
             onClick={() => update({ page: "files" })}
           >
             {t("文件清单")}
@@ -379,7 +398,9 @@ export function AnalysisDeliveryPanel(p: Props) {
       ) : null}
       <div className="delivery-body">
         {view.page === "files" ? (
-          <ArtifactsPanel {...p} />
+          <>
+            {evidenceView ? <ArtifactHistoryPanel key={p.scopeKey} sessionId={p.sessionId} client={p.client} paths={artifactEntries(p.data).map(a=>a.path)} readOnly={p.readOnly} onClose={()=>setEvidenceView(undefined)} onUseForDelivery={group=>{beginDelivery(p.scopeKey,group.members.map(m=>m.observation.path));update({name:group.name,retained:group.members.map(m=>({path:m.observation.path,retainedId:group.id,memberId:m.id,sha256:m.sha256}))});setEvidenceView(undefined)}} /> : <ArtifactsPanel {...p} renderPreviewActions={path=><ArtifactHistoryPanel key={`${p.scopeKey}:${path}`} sessionId={p.sessionId} client={p.client} paths={artifactEntries(p.data).map(a=>a.path)} path={path} readOnly={p.readOnly} onClose={()=>{}}/>} />}
+          </>
         ) : view.page === "select" ? (
           <>
             <p className="hint">

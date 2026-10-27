@@ -10,6 +10,7 @@ const ViewSchema = z.object({
   name: z.string(),
   references: z.string(),
   mode: z.enum(["organize", "validate"]),
+  retained: z.array(z.object({path:z.string(),retainedId:z.string(),memberId:z.string(),sha256:z.string()})).optional(),
   recordId: z.string().optional(),
   file: z.string().optional(),
   pendingId: z.string().optional(),
@@ -71,6 +72,7 @@ export function beginDelivery(
     page: "select",
     selected: [...new Set(paths)],
     candidates: [...new Set(paths)],
+    retained: [],
     file: undefined,
     recordId: undefined,
   });

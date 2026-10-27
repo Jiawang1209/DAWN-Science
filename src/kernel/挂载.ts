@@ -38,6 +38,7 @@ export const 静默超时 = 5 * 60_000
 export type 内核语言 = "python" | "R"
 
 export interface 挂载选项 {
+  captureExecution?: (request: { sessionId: string; language: string; code: string; kernelId: string; sequence: number; toolCallId?: string | undefined; runId?: string | undefined; inputPaths?: string[] | undefined }) => Promise<import('../artifacts/capture.js').CaptureHandle | undefined>
   /**
    * 起内核用的运行时。**注入进来的**——测试塞 `FakeRuntime`，生产是 `KernelRuntime`。
    * 不在这里 `new` 一个：那会让这一层没法脱离真内核测试。
@@ -181,6 +182,7 @@ interface 一台 {
 type 收核结果 = { 收了: 内核语言[]; 没收掉: { 语言: 内核语言; 原因: string }[] }
 
 export class 对话内核 {
+  private evidenceKernels = new WeakMap<object, {id:string; sequence:number}>()
   /** key：`对话:语言` */
   private readonly 表 = new Map<string, 一台>()
   /** 反查：内核会话 id → 它是谁的、哪门语言 */
@@ -521,6 +523,7 @@ export class 对话内核 {
        * 已经在跑的那段归调用方去中断（`run_code` 收到中止信号时调 `中断`）——这里只管「还没开始的别开始」。
        */
       signal?: AbortSignal
+      evidence?: { toolCallId?: string | undefined; runId?: string | undefined; inputPaths?: string[] | undefined }
     },
   ): Promise<{ 内核会话: SessionId; 语言: 内核语言; 输出: unknown[] }> {
     const 代 = this.清理代.get(对话) ?? 0
@@ -541,7 +544,7 @@ export class 对话内核 {
     }
     // 排队（见 `一台.队列`）：前一段失败了也不拖住后一段——失败是它自己的，队列只管顺序
     一.排队中++
-    const 跑 = 一.队列.then(() => {
+    const 跑 = 一.队列.then(async () => {
       一.排队中--
       检查()
       if (opts?.signal?.aborted) {
@@ -553,7 +556,18 @@ export class 对话内核 {
         if (一.排队中 === 0 && 一.状态 === "busy") this.置状态(一, "idle")
         return Promise.reject(new Error("这一轮已经停了，这段没有跑"))
       }
-      return this.真执行(一, 语言, 代码, opts?.开始了)
+      let identity = this.evidenceKernels.get(一)
+      if (!identity) { identity={id:globalThis.crypto.randomUUID(),sequence:0};this.evidenceKernels.set(一,identity) }
+      let capture: import('../artifacts/capture.js').CaptureHandle | undefined
+      try { capture=await this.opts.captureExecution?.({sessionId:对话,language:语言,code:代码,kernelId:identity.id,sequence:++identity.sequence,...opts?.evidence}) }
+      catch(e) { console.error('[产物来源] 内核执行前采集失败',e instanceof Error?e.message:String(e)) }
+      // Cancellation can arrive during pre-execution hashing. Do not dispatch it.
+      if(opts?.signal?.aborted){await capture?.finish({failed:true});throw new Error('这一轮已经停了，这段没有跑')}
+      try {
+        const result=await this.真执行(一,语言,代码,()=>{capture?.dispatched();opts?.开始了?.()})
+        await capture?.finish({failed:result.输出.some(o=>typeof o==='object'&&o!==null&&(o as {kind?:string}).kind==='error'),ambiguous:true,logText:result.输出.flatMap(o=>{const x=o as {kind?:string;text?:string;ename?:string;evalue?:string;traceback?:string[]};return x.kind==='stream'?[x.text??'']:x.kind==='error'?[x.ename??'',x.evalue??'',...(x.traceback??[])]:[]}).join('\n')})
+        return result
+      }catch(e){await capture?.finish({failed:true,ambiguous:true});throw e}
     })
     一.队列 = 跑.catch(() => {})
     return 跑

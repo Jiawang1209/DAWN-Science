@@ -1,3 +1,5 @@
+import { FileContentSchema } from "./file-content.js"
+import { artifactHistoryOperations } from "./artifact-history.js"
 import { DirectoryTransferRequest, TransferBatchSchema, TransferDetailSchema } from "../remote/transfer-types.js"
 import {DeliveryCreateSchema, DeliveryRecordSchema, DeliveryVerifySchema} from './delivery.js'
 import { AnalysisRouteReadResultSchema, AnalysisRouteActionRequestSchema, AnalysisRouteActionResultSchema } from './analysis-route.js'
@@ -22,6 +24,7 @@ import { BotCreateSchema, BotUpdateSchema, BotProfileSchema } from "../bot/types
 import { FaultI18nSchema } from "./fault-i18n.js"
 import {
   ArtifactSchema,
+  ObservedArtifactSchema,
   RouteArtifactSchema,
   CostSchema,
   FileChangeFactsSchema,
@@ -261,6 +264,7 @@ export const InterpreterCandidateSchema = z
 export type InterpreterCandidate = z.infer<typeof InterpreterCandidateSchema>
 
 export const OPERATIONS = {
+  ...artifactHistoryOperations,
   listBots: {
     request: z.object({ includeArchived: z.boolean().optional() }).strict(),
     response: z.object({ bots: z.array(BotProfileSchema) }).strict(),
@@ -397,6 +401,7 @@ export const OPERATIONS = {
     response: z
       .object({
         artifacts: z.array(ArtifactSchema),
+        observedArtifacts: z.array(ObservedArtifactSchema).optional(),
         routeArtifacts: z.array(RouteArtifactSchema).optional(),
         unknown: z.array(z.object({ runId: z.string().min(1), toolCallId: z.string().min(1).optional() }).strict()),
       })
@@ -2229,6 +2234,7 @@ export const OPERATIONS = {
         sessionId: z.string().min(1),
         language: z.enum(["python", "R"]),
         code: z.string().min(1),
+        inputPaths: z.array(z.string().min(1)).max(50).optional(),
       })
       .strict(),
     response: z.object({ cellId: z.string().min(1) }).strict(),
@@ -2933,82 +2939,7 @@ export const OPERATIONS = {
       .refine((r) => [r.projectId, r.connectionId, r.sessionId].filter(Boolean).length === 1, {
         message: "projectId、connectionId、sessionId 要给且只给一个",
       }),
-    response: z.discriminatedUnion("kind", [
-      /**
-       * **分隔文本读成一张表**（2026-08-14）。
-       *
-       * 此前 `.csv` 落在 `text` 那一支上，界面上是一坨逗号原文——
-       * 一个叫 DAWN **Science** 的应用打开数据文件却看不见数据。
-       *
-       * **类型是推断的，字段名里就写着 `inferred`**：CSV 没有 schema，
-       * 把猜出来的东西摆成事实，下一步就会有人拿它当依据（不变式 5）。
-       */
-      z
-        .object({
-          kind: z.literal("table"),
-          mediaType: z.string().min(1),
-          bytes: z.int().min(0),
-          table: z
-            .object({
-              columns: z.array(
-                z
-                  .object({
-                    name: z.string(),
-                    inferred: z.enum(["数值", "整数", "布尔", "日期", "文本", "空"]),
-                    /** 读到的那些行里缺了多少个 */
-                    missing: z.int().min(0),
-                  })
-                  .strict(),
-              ),
-              /** 前若干行，**每格都是原文**——转换过的东西不该冒充原始数据 */
-              rows: z.array(z.array(z.string())),
-              rowsRead: z.int().min(0),
-              /** **只有完整读完才有**：没读完却报一个总数，那个数是假的 */
-              totalRows: z.int().min(0).optional(),
-              delimiter: z.enum([",", "\t", ";"]),
-              /** 截断要出声（规格 7.5）。缺席 = 完整读完了 */
-              truncated: z.string().min(1).optional(),
-            })
-            .strict(),
-        })
-        .strict(),
-      z
-        .object({
-          kind: z.literal("pdf"),
-          mediaType: z.literal("application/pdf"),
-          /** 字节。**经守卫过的后端取回，不给渲染进程 `file://`** */
-          base64: z.string(),
-          bytes: z.int().min(0),
-        })
-        .strict(),
-      z
-        .object({
-          kind: z.literal("text"),
-          mediaType: z.string(),
-          text: z.string(),
-          bytes: z.int().min(0),
-          /** 截断要说清**省了多少**（规格 7.5） */
-          truncated: z.object({ originalBytes: z.int(), keptBytes: z.int() }).strict().optional(),
-        })
-        .strict(),
-      z
-        .object({
-          kind: z.literal("image"),
-          mediaType: z.string(),
-          /** base64。**不给 file:// 路径**——那等于把守卫的判断权交给渲染进程 */
-          base64: z.string(),
-          bytes: z.int().min(0),
-        })
-        .strict(),
-      z
-        .object({
-          kind: z.literal("other"),
-          mediaType: z.string(),
-          bytes: z.int().min(0),
-          reason: z.string().min(1),
-        })
-        .strict(),
-    ]),
+    response: FileContentSchema,
     mutating: false,
   },
 
@@ -3234,9 +3165,9 @@ export const OPERATIONS = {
    * 不可逆的操作要能事后对账。
    */
   deleteProject: {
-    request: z.object({ projectId: z.string().min(1) }).strict(),
+    request: z.object({ projectId: z.string().min(1), retainedRevision:z.string().optional(),deleteRetained:z.literal(true).optional() }).strict(),
     response: z
-      .object({ sessionsDeleted: z.int().min(0), runsDeleted: z.int().min(0), workspace: z.string() })
+      .object({ sessionsDeleted: z.int().min(0), runsDeleted: z.int().min(0), workspace: z.string(),retentionCleanup:z.string().optional() })
       .strict(),
     mutating: true,
   },
@@ -3250,7 +3181,7 @@ export const OPERATIONS = {
    */
   deletionImpact: {
     request: z.object({ projectId: z.string().min(1) }).strict(),
-    response: z.object({ sessions: z.int().min(0), runs: z.int().min(0), workspace: z.string() }).strict(),
+    response: z.object({ sessions: z.int().min(0), runs: z.int().min(0), workspace: z.string(),retained:z.object({count:z.number().int().nonnegative(),bytes:z.number().int().nonnegative(),revision:z.string()}).optional() }).strict(),
     mutating: false,
   },
 

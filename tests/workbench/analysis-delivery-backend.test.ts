@@ -1,4 +1,6 @@
 import { WorkbenchServer } from "../../src/workbench/server.js";
+import { ArtifactStore } from '../../src/artifacts/store.js'
+import { ArtifactRetention } from '../../src/artifacts/retention.js'
 /**
  * 先出方案的后端一侧（spec §4.5）：`answerPlan` 分码与租约、非 native、中枢的 `plan` 条目与 `propose_plan` 不画工具行。
  *
@@ -66,7 +68,9 @@ function make(
   const scratch = mkdtempSync(join(tmpdir(), "dawn-scratch-"));
   const repo = mkdtempSync(join(tmpdir(), "dawn-plan-"));
   dirs.push(scratch, repo);
+  const artifactStore=new ArtifactStore(db),artifactRetention=new ArtifactRetention({store:artifactStore,directory:join(scratch,'retained')})
   const backend = createWorkbenchBackend({
+    artifactStore,artifactRetention,
     ...extra,
     projects,
     projectStore: new ProjectStore(db),
@@ -89,8 +93,28 @@ function make(
     await backend.acquireLease({ sessionId, holder: "user" });
     return sessionId;
   };
-  return { backend, runtime, repo, 开一段, sessions, events };
+  return { backend, runtime, repo, 开一段, sessions, events, artifactStore };
 }
+
+it('retains results across chat deletion and rejects stale project removal confirmation',async()=>{
+ const f=make(),sessionId=await f.开一段();writeFileSync(join(f.repo,'result.csv'),'n\n4\n')
+ const group=await f.backend.captureAndRetainCurrent({sessionId,path:'result.csv',requestId:'g1',name:'first'}) as import('../../src/artifacts/model.js').RetainedResult
+ const projectId=f.sessions.get(sessionId)!.projectId!
+ await f.backend.deleteSession({sessionId})
+ const next=await f.开一段()
+ expect((await f.backend.listRetainedResults({sessionId:next}) as {results:unknown[]}).results).toHaveLength(1)
+ const saved=await f.backend.readRetainedArtifact({sessionId:next,retainedId:group.id,memberId:group.members[0]!.id}) as {content: {kind: string,table?: {rows: string[][]}}}
+ expect(saved.content).toMatchObject({kind:'table',table:{rows:[['4']]}})
+ const old=f.artifactStore.impact(projectId)
+ await expect(f.backend.deleteProject({projectId})).rejects.toBeTruthy()
+ writeFileSync(join(f.repo,'result.csv'),'n\n5\n')
+ await f.backend.captureAndRetainCurrent({sessionId:next,path:'result.csv',requestId:'g2',name:'second'})
+ await expect(f.backend.deleteProject({projectId,retainedRevision:old.revision,deleteRetained:true})).rejects.toBeTruthy()
+ const current=f.artifactStore.impact(projectId)
+ await f.backend.deleteProject({projectId,retainedRevision:current.revision,deleteRetained:true})
+ expect(f.artifactStore.retainedList(projectId)).toEqual([])
+ expect(group.members[0]?.observation.sha256).toBeTruthy()
+})
 
 describe("analysis delivery backend", () => {
   it("uses this native session model, selected output evidence and persisted owner records", async () => {

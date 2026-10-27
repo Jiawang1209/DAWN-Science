@@ -436,6 +436,8 @@ export const ArtifactSchema = z
   })
   .strict()
 export type Artifact = z.infer<typeof ArtifactSchema>
+export const ObservedArtifactSchema = ArtifactSchema.pick({path:true,kind:true,exists:true}).extend({observationId:z.string(),observedAt:Iso}).strict()
+export type ObservedArtifact = z.infer<typeof ObservedArtifactSchema>
 
 /** 路线交付引用，不伪造工具新建记录或生成时间。 */
 export const RouteArtifactSchema = ArtifactSchema.pick({ path: true, kind: true, exists: true }).extend({

@@ -180,6 +180,7 @@ export type ToolGate = (
 ) => import("../policy/permissions.js").门的决定
 
 export interface NativeRuntimeOptions {
+  artifactCapture?: import('../artifacts/capture.js').ArtifactCapture
   terminals?: TerminalControl
   /**
    * 压缩参数的覆盖（2026-09-27）。**只在内存里改**（pi 的 `SettingsManager.applyOverrides`），不写 pi 的 `settings.json`
@@ -1106,6 +1107,9 @@ export class NativeRuntime implements AgentRuntime {
     }
     for (const sink of [...(this.sinks.get(event.sessionId) ?? [])]) sink(event)
   }
+  recordArtifactFiles(sessionId:SessionId,toolCallId:string,facts:{filesWritten:string[];filesCreated:string[];mayIncludeUserEdits:boolean}):void{
+    this.emit({kind:'tool_files',sessionId,toolCallId,...facts,filesRead:[]})
+  }
 
   /** 子 agent 的三层：项目 > 全局 > 自带 */
   private 子agent层(workspace: string): { dir: string; from: "builtin" | "global" | "project" }[] {
@@ -1195,6 +1199,7 @@ export class NativeRuntime implements AgentRuntime {
   private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"]): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
+    const thisCapture = this.opts.artifactCapture
     // 即使没有权限 / 溯源，也显式注册内置工具，确保外层讨论门和方案门没有旁路。
     const probe = provenance ? new ProvenanceProbe(cwd) : undefined
     const emit = (e: AgentEvent) => this.emit(e)
@@ -1240,8 +1245,14 @@ export class NativeRuntime implements AgentRuntime {
           // 这正是 Spike A-2 选「包装工具定义」而非 pi 文件扩展的原因之一：
           // 包装器天然是同步点，而普通事件订阅不阻塞
           const handle = await probe?.begin(name, params)
+          let source: import('../artifacts/capture.js').CaptureHandle | undefined
+          let failed = true
+          try { if(!remote) source=await thisCapture?.begin(sessionId,{tool:name,toolCallId,code:JSON.stringify(params),reading:name==='read',inputPaths:name==='read'&&typeof params.path==='string'?[params.path]:[],direct:['write','edit','multiedit','apply_patch'].includes(name)}) }
+          catch(e){console.error('[产物来源] 工具前置采集失败',e instanceof Error?e.message:String(e))}
           try {
+            source?.dispatched()
             const r = await original(toolCallId, params, signal, onUpdate, ctx)
+            failed=Boolean((r as {isError?:boolean}|undefined)?.isError)
             if (!(r as { isError?: boolean } | undefined)?.isError) {
               for (const [p, 有] of 之前) 产物.登记新建(p, 有)
               /**
@@ -1278,8 +1289,10 @@ export class NativeRuntime implements AgentRuntime {
                 // 清理动作则更保守，只清它确认安全的那部分。
                 const 登记到的 = 之前.filter(([p, 有]) => !有 && 产物登记.存在(p)).map(([p]) => p)
                 emit({ kind: "tool_files", sessionId, toolCallId, ...并进登记新建(facts, 登记到的, cwd) })
+                await source?.finish({paths:facts.filesWritten,failed,ambiguous:facts.mayIncludeUserEdits})
               }
             }
+            await source?.finish({failed})
           }
         },
       }
@@ -1602,8 +1615,9 @@ export class NativeRuntime implements AgentRuntime {
       this.opts.provenance === false
         ? 外部
         : 外部.map((d) =>
-            String((d as { name: string }).name).startsWith('terminal_') ? d : 套上溯源(d as Record<string, unknown>, new ProvenanceProbe(spec.workspace), (toolCallId, facts) =>
+            String((d as { name: string }).name).startsWith('terminal_') || (String((d as {name:string}).name)==='run_code'&&this.opts.artifactCapture&&!spec.remote&&!spec.bot) ? d : 套上溯源(d as Record<string, unknown>, new ProvenanceProbe(spec.workspace), (toolCallId, facts) =>
               this.emit({ kind: "tool_files", sessionId: spec.sessionId, toolCallId, ...facts }),
+              this.opts.artifactCapture&&!spec.remote&&!spec.bot&&String((d as {name:string}).name)!=='run_code'?{capture:this.opts.artifactCapture,sessionId:spec.sessionId}:undefined,
             ),
           )
 

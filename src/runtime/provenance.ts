@@ -331,6 +331,7 @@ export function 套上溯源<T extends Record<string, unknown>>(
   定义: T,
   probe: ProvenanceProbe,
   报: (toolCallId: string, facts: ToolFileFacts) => void,
+  source?: {capture:import('../artifacts/capture.js').ArtifactCapture;sessionId:string},
 ): T {
   const original = (定义.execute as (...a: unknown[]) => Promise<unknown>).bind(定义)
   return {
@@ -344,13 +345,20 @@ export function 套上溯源<T extends Record<string, unknown>>(
     ) {
       // **before 必须在真正执行之前拍完**，所以要 await（与内置那条同理）
       const handle = await probe.beginExternal()
+      let evidence:import('../artifacts/capture.js').CaptureHandle|undefined
+      try{evidence=await source?.capture.begin(source.sessionId,{tool:String(定义.name),toolCallId,code:JSON.stringify(params)??'',inputPaths:[],direct:false})}catch(e){console.error('[产物来源] 外部工具采集失败',e instanceof Error?e.message:String(e))}
+      let failed=true
       try {
-        return await original(toolCallId, params, signal, onUpdate, ctx)
+        evidence?.dispatched()
+        const result=await original(toolCallId, params, signal, onUpdate, ctx)
+        failed=Boolean((result as {isError?:boolean}|undefined)?.isError)
+        return result
       } finally {
         if (handle) {
           const facts = await handle.finish()
-          if (facts) 报(String(toolCallId), facts)
+          if (facts) {报(String(toolCallId), facts);await evidence?.finish({paths:facts.filesWritten,failed,ambiguous:true})}
         }
+        await evidence?.finish({failed})
       }
     },
   } as unknown as T

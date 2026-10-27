@@ -41,11 +41,13 @@ const parameters = Type.Object({
     description: "在哪门语言的内核里跑。两门可以同时挂着，各有各的变量",
   }),
   code: Type.String({ description: "要执行的代码" }),
+  inputPaths: Type.Optional(Type.Array(Type.String(), { maxItems: 50, description: '可选：本次声明的工作区输入文件；仅核对身份，不证明程序实际消费' })),
 })
 
 interface Params {
   language?: unknown
   code?: unknown
+  inputPaths?: unknown
 }
 
 /** 条目的最小形状。**只认用得上的字段**，其余原样留给转录 */
@@ -198,6 +200,7 @@ export function createRunCodeTool(opts: {
       let 放手!: (why: "没跑" | "超时") => void
       const 放手了 = new Promise<"没跑" | "超时">((r) => (放手 = r))
       const 跑 = opts.内核.执行(opts.对话, lang, code, {
+        evidence: {toolCallId:_toolCallId,inputPaths:Array.isArray((params as Params).inputPaths)?((params as Params).inputPaths as unknown[]).filter((v):v is string=>typeof v==='string').slice(0,50):[]},
         开始了: () => {
           已开始 = true
           opts.onExecutionStarted?.(_toolCallId)

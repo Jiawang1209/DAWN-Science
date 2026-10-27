@@ -294,6 +294,13 @@ export class RunRecorder {
     return runId
   }
 
+  beginNotebook(sessionId: SessionId, language: 'python'|'R'): string | undefined {
+    return this.begin(sessionId,language==='R'?'execute_r':'execute_python','user')
+  }
+  finishNotebook(runId: string, result: {hasError:boolean; terminalReason?: string}): void {
+    this.runs.finish(runId,{status:result.hasError?'failed':'completed',finishedAt:this.now(),hasError:result.hasError,...(result.terminalReason?{terminalReason:result.terminalReason}:{})})
+  }
+
   /**
    * PTY 会话开始。
    *

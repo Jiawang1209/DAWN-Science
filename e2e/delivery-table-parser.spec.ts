@@ -24,6 +24,7 @@ for (const [name, source, output, state, reason] of [
     writeFileSync(join(workspace, "analysis/run_analysis.py"), `# DAWN_DELIVERY_FIXTURE\nimport pathlib,sys\nout=pathlib.Path(sys.argv[2])\n(out/'model.csv').write_text(${JSON.stringify(output)},encoding='utf-8')\n(out/'summary.json').write_text(${JSON.stringify(summary)},encoding='utf-8')\n`);
     await 进坞(page, "产物");
     const panel = page.getByRole("region", { name: "分析交付", exact: true });
+    await panel.getByLabel("产物操作菜单", { exact: true }).click();
     await panel.getByRole("button", { name: "整理交付", exact: true }).click();
     for (const file of ["run_analysis.py", "model.csv", "summary.json"])
       await panel.getByRole("checkbox", { name: new RegExp(file.replace(".", "\\.")) }).check();

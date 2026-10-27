@@ -19,6 +19,7 @@ test("交付验证日志：跨块中文和表情在真实Python、落盘及预�
   writeFileSync(join(workspace, "analysis/run_analysis.py"), `# DAWN_DELIVERY_FIXTURE\nimport pathlib,sys,os,time\nout=pathlib.Path(sys.argv[2])\n(out/'model.csv').write_text(${JSON.stringify(model)})\n(out/'summary.json').write_text(${JSON.stringify(summary)})\na='模型完成🌱'.encode('utf-8');b='警告说明🧪'.encode('utf-8')\nos.write(1,a[:1]);os.write(2,b[:2]);time.sleep(.08)\nos.write(1,a[1:]);os.write(2,b[2:])\n`);
   await 进坞(page, "产物");
   const panel = page.getByRole("region", { name: "分析交付", exact: true });
+  await panel.getByLabel("产物操作菜单", { exact: true }).click();
   await panel.getByRole("button", { name: "整理交付", exact: true }).click();
   for (const name of ["run_analysis.py", "model.csv", "summary.json"])
     await panel.getByRole("checkbox", { name: new RegExp(name.replace(".", "\\.")) }).check();

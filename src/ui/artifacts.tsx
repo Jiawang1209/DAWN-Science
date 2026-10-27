@@ -1,8 +1,8 @@
 /**
  * 坞的「产物」格（spec 2026-08-26-产物 §5）：本会话生成了什么，实时列出来，点一个能看。
- * 只有清单与预览两个视图；版本 / 来源 / 批注在下一轮。
+ * 保留清单和预览；保留/来源控件由父级注入，不替换结果预览。
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { artifactEntries, type DisplayedArtifact } from "./artifact-list.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { Button, EmptyState, Loader } from "./primitives.js"
@@ -83,8 +83,10 @@ export function ArtifactsPanel({
   onOpenExternally,
   focus,
   onReload,
+  renderPreviewActions,
 }: {
   data: ArtifactList | undefined
+  renderPreviewActions?: ((path: string) => ReactNode) | undefined
   readFile: (path: string) => Promise<FileContent>
   /** 图片产物的缩略图源（2026-08-27）：给它返回 data URL 才画格子里的小图，缺省就都退回占位方块 */
   loadThumb?: ((path: string) => Promise<string | undefined>) | undefined
@@ -199,6 +201,7 @@ export function ArtifactsPanel({
       <div ref={previewRoot} className="artifacts-pane artifacts-preview"
         onFocusCapture={e => { focusedClose.current = e.target.closest<HTMLElement>('.preview-close-button') }}
         onBlurCapture={e => { if (e.target.isConnected) focusedClose.current = null }}>
+        {renderPreviewActions?.(看的)}
         <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
           {entries.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
             <Button variant="ghost" size="sm" aria-label={a.path} aria-pressed={a.path === 看的} disabled={a.exists === false} onClick={() => 设看的(a.path)}>

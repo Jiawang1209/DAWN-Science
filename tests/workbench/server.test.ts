@@ -1,3 +1,4 @@
+import { createArtifactOperations } from '../../src/artifacts/operations.js'
 import { describe, expect, it } from "vitest"
 import { WorkbenchServer, fault, fault原样, type WorkbenchBackend } from "../../src/workbench/server.js"
 import { WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
@@ -51,6 +52,7 @@ const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动
 
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
+    ...createArtifactOperations({session:()=>undefined}),
     getTerminalAgentAttachments: async () => ({ revision: 0, pending: [] }),
     updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },
     getTerminalAgentImage: async () => { throw new Error('Terminal unavailable in this fixture') },

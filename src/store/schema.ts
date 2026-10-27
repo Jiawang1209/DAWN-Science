@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 17
+export const SCHEMA_VERSION = 18
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -784,6 +784,17 @@ function 迁移步骤(db: Database.Database): void {
       delivered_at TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_bot_results_pending ON bot_results(owner_session_id, created_at) WHERE delivered_at IS NULL;
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS artifact_files (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), workspace TEXT NOT NULL, path TEXT NOT NULL, UNIQUE(project_id,workspace,path));
+    CREATE TABLE IF NOT EXISTS artifact_versions (id TEXT PRIMARY KEY, file_id TEXT NOT NULL REFERENCES artifact_files(id), sha256 TEXT NOT NULL CHECK(length(sha256)=64), bytes INTEGER NOT NULL CHECK(bytes>=0), UNIQUE(file_id,sha256));
+    CREATE TABLE IF NOT EXISTS artifact_observations (id TEXT PRIMARY KEY, file_id TEXT NOT NULL REFERENCES artifact_files(id), version_id TEXT REFERENCES artifact_versions(id), project_id TEXT NOT NULL REFERENCES projects(id), workspace TEXT NOT NULL, path TEXT NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload)));
+    CREATE INDEX IF NOT EXISTS idx_artifact_observations_scope ON artifact_observations(project_id,workspace,path);
+    CREATE INDEX IF NOT EXISTS idx_artifact_observations_execution ON artifact_observations(project_id,json_extract(payload,'$.executionId'));
+    CREATE TABLE IF NOT EXISTS artifact_executions (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), payload TEXT NOT NULL CHECK(json_valid(payload)));
+    CREATE TABLE IF NOT EXISTS artifact_retention_requests (project_id TEXT NOT NULL REFERENCES projects(id), request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('pending','ready','failed','interrupted')), result_id TEXT, request_payload TEXT NOT NULL CHECK(json_valid(request_payload)), temp_key TEXT, PRIMARY KEY(project_id,request_id));
+    CREATE TABLE IF NOT EXISTS artifact_retained (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), payload TEXT NOT NULL CHECK(json_valid(payload)));
   `)
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(

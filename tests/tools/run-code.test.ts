@@ -209,6 +209,7 @@ describe("run_code · 工具本身", () => {
     const 工具 = 挂上([])
     expect(Object.keys((工具.parameters as { properties: object }).properties).sort()).toEqual([
       "code",
+      "inputPaths",
       "language",
     ])
   })

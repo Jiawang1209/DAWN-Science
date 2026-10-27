@@ -66,9 +66,20 @@ function props() {
   };
 }
 describe("analysis delivery in artifacts", () => {
+  it("keeps delivery actions secondary while results remain directly accessible", async () => {
+    const p = props();
+    render(<AnalysisDeliveryPanel {...p} />);
+    expect(await screen.findByRole("button", {name: "results/model.csv"})).toBeTruthy();
+    expect(screen.queryByRole("button", {name: "整理交付"})).toBeNull();
+    expect(screen.queryByText("查看结果，或整理成可复用的交付")).toBeNull();
+    expect(screen.getByRole("button", {name: "历史"})).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("产物操作菜单"));
+    expect(await screen.findByRole("button", {name: "整理交付"})).toBeTruthy();
+  });
   it("requires explicit file choice and defaults to organize without execution", async () => {
     const p = props();
     render(<AnalysisDeliveryPanel {...p} />);
+    fireEvent.click(screen.getByLabelText("产物操作菜单"));
     await waitFor(() =>
       expect(
         screen
@@ -116,6 +127,7 @@ describe("analysis delivery in artifacts", () => {
         : record,
     );
     render(<AnalysisDeliveryPanel {...p} />);
+    fireEvent.click(screen.getByLabelText("产物操作菜单"));
     fireEvent.click(await screen.findByRole("button", { name: /交付记录/ }));
     fireEvent.click(await screen.findByRole("button", { name: /草地结果/ }));
     fireEvent.click(screen.getByRole("button", { name: "阅读结果解读" }));
@@ -137,10 +149,11 @@ describe("analysis delivery in artifacts", () => {
     rerender(
       <AnalysisDeliveryPanel {...next} sessionId="other" scopeKey="other:/w" />,
     );
-    await screen.findByRole("button", { name: "整理交付" });
+    await screen.findByRole("button", { name: "results/model.csv" });
     finish({ supported: true, records: [record] });
     await Promise.resolve();
-    fireEvent.click(screen.getByRole("button", { name: /交付记录/ }));
+    fireEvent.click(screen.getByLabelText("产物操作菜单"));
+    fireEvent.click(await screen.findByRole("button", { name: /交付记录/ }));
     expect(screen.queryByText("草地结果")).toBeNull();
   });
   it("keeps a selected route or Bot handoff in the same scoped selection flow", async () => {

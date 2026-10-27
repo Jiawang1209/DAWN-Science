@@ -2919,7 +2919,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 后者正是作者上一轮报过的「历史遗留的删不掉」，这里从一开始就避开。
    */
   const askDeleteProjects = useCallback(
-    (
+    async (
       groups: readonly {
         workspace: string
         projectId?: string
@@ -2933,6 +2933,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 会话数 = groups.reduce((n, g) => n + g.tasks.length, 0)
       const 整个的 = groups.filter((g) => g.整个 !== false)
       const 只删几段 = 整个的.length < groups.length
+      const retainedImpacts=new Map<string,{count:number;bytes:number;revision:string}>()
+      try{for(const g of 整个的)if(g.projectId){const impact=await client.get<{retained?:{count:number;bytes:number;revision:string}}>('deletionImpact',{projectId:g.projectId});if(impact.retained)retainedImpacts.set(g.projectId,impact.retained)}}catch(e){note(e instanceof Error?e.message:String(e));return}
+      const retainedCount=[...retainedImpacts.values()].reduce((n,r)=>n+r.count,0),retainedBytes=[...retainedImpacts.values()].reduce((n,r)=>n+r.bytes,0)
       setConfirming({
         // **按实际发生的事起标题**：只勾了几段会话时，说「删对话」，不说「移除项目」
         title: 只删几段
@@ -2946,6 +2949,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 ? tf("其中 {0} 个项目名下的对话全选了，会连项目一起从工作台移除。", 整个的.length)
                 : t("会一并删除相应的账本记录。项目本身留着。")
               : tf("会一并移除它们名下的 {0} 段对话与相应的账本记录。", 会话数)}
+            {retainedCount?<p>{tf("还会删除应用内的 {0} 组关键结果留存（{1} MiB）。工作区原文件保留。",retainedCount,(retainedBytes/1024/1024).toFixed(2))}</p>:null}
           </>
         ),
         safety: (
@@ -2966,7 +2970,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             for (const g of groups) {
               try {
                 if (g.projectId && g.整个 !== false) {
-                  await client.get("deleteProject", { projectId: g.projectId })
+                  const retained=retainedImpacts.get(g.projectId)
+                  await client.get("deleteProject", { projectId: g.projectId,...(retained?.count?{deleteRetained:true,retainedRevision:retained.revision}:{}) })
                   // 整个项目没了：坞里挂的若是这个项目的，它也没了（任务清单未必列全这个项目的会话）
                   const 那处 = `p:${g.projectId}`
                   if ($侧边地方.get() === 那处) 删掉的.push($侧边会话id.get())
@@ -3009,7 +3014,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (!pid) return
     const 名 = projects.find((p) => p.projectId === pid)?.name ?? pid
     client
-      .get<{ sessions: number; runs: number; workspace: string }>("deletionImpact", { projectId: pid })
+      .get<{ sessions: number; runs: number; workspace: string;retained?:{count:number;bytes:number;revision:string} }>("deletionImpact", { projectId: pid })
       .then((impact) => {
         setConfirming({
           title: tf("从工作台移除项目「{0}」？", 名),
@@ -3020,6 +3025,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 impact.sessions,
                 impact.runs,
               )}
+              {impact.retained?.count?<p>{tf("还会删除应用内的 {0} 组关键结果留存（{1} MiB）。工作区原文件保留。",impact.retained.count,(impact.retained.bytes/1024/1024).toFixed(2))}</p>:null}
             </>
           ),
           safety: (
@@ -3032,7 +3038,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           confirmLabel: t("移除项目"),
           onConfirm: () => {
             client
-              .get("deleteProject", { projectId: pid })
+              .get("deleteProject", { projectId: pid,...(impact.retained?.count?{deleteRetained:true,retainedRevision:impact.retained.revision}:{}) })
               .then(() => {
                 removeWorkspaceFolder(impact.workspace)
                 设刚选的工作区(current => current === impact.workspace ? undefined : current)
@@ -6192,7 +6198,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 cells={笔记本cells}
                 running={笔记本在跑}
                 error={笔记本错}
-                onRun={async (language: 内核语言, code: string) => {
+                onRun={async (language: 内核语言, code: string, inputPaths?: string[]) => {
                   if (!sessionId) throw new Error("没有会话，跑不了")
                   /**
                    * **收尾只认当时的会话**（审查 2026-08-26）：`await` 期间人可能已切到别的会话，
@@ -6203,7 +6209,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   设笔记本在跑(true)
                   设笔记本错(undefined)
                   try {
-                    await client.get<{ cellId: string }>("runInKernel", { sessionId, language, code })
+                    await client.get<{ cellId: string }>("runInKernel", { sessionId, language, code, ...(inputPaths?.length?{inputPaths}:{}) })
                   } finally {
                     if ($activeSessionId.get() === 当时) 设笔记本在跑(false)
                   }

@@ -23,7 +23,7 @@ export const EN: Readonly<Record<string, string>> = {
   "填写模型 ID 后即可检测这个端点。": "Enter a model ID to test this endpoint.",
   "指定协议时请同时填写 API URL。": "Enter an API URL when specifying a protocol.",
   "本次运行未提供连接配置保存功能。": "Connection settings cannot be saved in this run.",
-  "填写 URL 可自动识别目录中的服务；留空使用所选服务商的地址。": "Enter a URL to identify a service from the catalog, or leave it blank to use the selected provider’s address.",
+  "切换服务商会自动填写默认地址；你可以手动修改后测试连通。": "Switching providers fills in the default URL. You can edit it and test the connection.",
   "连接模型": "Connection model",
   "填写服务商提供的模型 ID": "Enter the model ID supplied by your provider",
   "接口协议": "API protocol",

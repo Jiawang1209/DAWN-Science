@@ -40,3 +40,11 @@ Node 定向测试 6 文件、111 项通过：native、setup-model、credential-a
 链接未打开的原因是交互预览误带了测试用 DAWN_NO_EXTERNAL=1。当前已有配置的预览仅解除该进程开关，未改动保存的连接；另开的干净预览不设置该开关。产品外链处理代码无需修改。API URL 灰字是 placeholder，输入实际为空；DeepSeek 正式目录默认地址经本地 pi 目录读取为 https://api.deepseek.com，假服务预览则展示本地测试端点。
 
 本轮截图和原始日志：`/Users/liuyue/Documents/Codex/2026-10-27/dawn-first-launch-guide/blur-background/`。此前填写的预览配置保留在原 `dawn-guide-preview-hGpXlN` 临时目录，新预览使用独立 `dawn-guide-blur-iDj1WG` 临时目录。
+
+## 后续增量：API URL 真实自动填充
+
+初始 DeepSeek 地址直接写入输入值，切换服务商同步更新；手动草稿与自动跟随分开，避免异步目录覆盖用户修改。无默认地址的服务商清空输入。提示文案同步更新中英文。
+
+本轮 4 个 UI 文件 138 项通过；Electron setup-wizard 9 项通过（18.7 秒），覆盖实际输入值、服务商切换、手动改址后检测、旧检测结论失效，以及完整保存/对话回归。typecheck、build 和 diff 检查通过。新增用例先在旧实现下因实际输入为空失败，修正后通过。
+
+实际 Electron 预览使用原生正式目录，确认 DeepSeek 自动填 https://api.deepseek.com，切换 Anthropic 自动填 https://api.anthropic.com；返回 DeepSeek 恢复默认地址。交互预览没有模型假服务覆盖和外链抑制；使用独立临时目录 dawn-autofill-preview-ybBED4，未迁移或修改此前配置，未发起真实供应商鉴权。截图与日志存放在 `/Users/liuyue/Documents/Codex/2026-10-27/dawn-first-launch-guide/url-autofill/`。

@@ -87,6 +87,41 @@ describe("SetupWizard", () => {
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "中文" }))
   })
 
+  it("默认选择 DeepSeek 并填入实际地址，切换服务商同步更新，手动地址仍可检测", async () => {
+    const onTest = vi.fn(async () => ({ ok: true as const, model: "custom-model", ms: 10 }))
+    render(<SetupWizard initialStep="key" {...基本} providers={["anthropic", "deepseek", "azure"]} configured={[]} onSaveKey={async () => {}} onTest={onTest}
+      modelCatalog={{ deepseek: ["ds-model"], anthropic: ["claude-model"] }} endpointDefaults={{
+        deepseek: { baseUrl: "https://api.deepseek.com", api: "openai-completions" },
+        anthropic: { baseUrl: "https://api.anthropic.com", api: "anthropic-messages" },
+      }} />)
+    const url = screen.getByLabelText("API URL") as HTMLInputElement
+    expect((screen.getByLabelText("服务商") as HTMLSelectElement).value).toBe("deepseek")
+    expect(url.value).toBe("https://api.deepseek.com")
+    fireEvent.change(screen.getByLabelText("服务商"), { target: { value: "anthropic" } })
+    expect(url.value).toBe("https://api.anthropic.com")
+    fireEvent.change(url, { target: { value: "https://lab.example/v1" } })
+    fireEvent.change(screen.getByLabelText("连接模型"), { target: { value: "custom-model" } })
+    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "custom-key" } })
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "测试连通" })))
+    expect(onTest).toHaveBeenCalledWith({ providerId: expect.stringMatching(/^custom-/), baseUrl: "https://lab.example/v1", secret: "custom-key", api: "openai-completions", model: "custom-model" })
+    fireEvent.change(screen.getByLabelText("服务商"), { target: { value: "deepseek" } })
+    expect(url.value).toBe("https://api.deepseek.com")
+    expect(screen.queryByText(/通了/)).toBeNull()
+    fireEvent.change(screen.getByLabelText("服务商"), { target: { value: "azure" } })
+    expect(url.value).toBe("")
+  })
+
+  it("目录异步到达后补齐默认地址，后续刷新不覆盖手动修改", () => {
+    const { rerender } = render(<SetupWizard initialStep="key" {...基本} providers={[]} configured={[]} onSaveKey={async () => {}} />)
+    const defaults = { deepseek: { baseUrl: "https://api.deepseek.com", api: "openai-completions" } }
+    rerender(<SetupWizard initialStep="key" {...基本} providers={["deepseek"]} configured={[]} onSaveKey={async () => {}} endpointDefaults={defaults} />)
+    const url = screen.getByLabelText("API URL") as HTMLInputElement
+    expect(url.value).toBe("https://api.deepseek.com")
+    fireEvent.change(url, { target: { value: "https://lab.example/v1" } })
+    rerender(<SetupWizard initialStep="key" {...基本} providers={["deepseek"]} configured={[]} onSaveKey={async () => {}} endpointDefaults={{ ...defaults, other: { baseUrl: "https://other.example" } }} />)
+    expect(url.value).toBe("https://lab.example/v1")
+  })
+
   it("自定义 URL 与 Key 可直接检测，保存先落连接再保存凭证", async () => {
     const calls: string[] = []
     const onSaveConnection = vi.fn(async () => { calls.push("connection") })

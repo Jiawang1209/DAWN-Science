@@ -99,8 +99,7 @@ test.describe("首启向导", () => {
     await 到模型页(page)
     const wizard = page.locator(".setup-wizard")
     await expect(wizard.getByLabel("服务商", { exact: true })).toHaveValue("deepseek")
-    await expect(wizard.getByLabel("API URL", { exact: true })).toHaveValue("")
-    await expect(wizard.getByLabel("API URL", { exact: true })).toHaveAttribute("placeholder", dawn.mockUrl)
+    await expect(wizard.getByLabel("API URL", { exact: true })).toHaveValue(dawn.mockUrl)
     const logs: string[] = []
     const record = (data: Buffer) => logs.push(data.toString())
     app.process().stdout?.on("data", record)
@@ -112,6 +111,29 @@ test.describe("首启向导", () => {
     } finally {
       app.process().stdout?.off("data", record)
     }
+  })
+
+  test("服务商切换自动填写目录默认地址，手动改址仍可检测", async ({ dawn }) => {
+    const { page } = dawn
+    await 到模型页(page)
+    const wizard = page.locator(".setup-wizard")
+    const provider = wizard.getByLabel("服务商", { exact: true })
+    const url = wizard.getByLabel("API URL", { exact: true })
+    await expect(provider).toHaveValue("deepseek")
+    await expect(url).toHaveValue(dawn.mockUrl)
+    await provider.selectOption("anthropic")
+    await expect(url).toHaveValue("https://api.anthropic.com")
+    await provider.selectOption("deepseek")
+    await expect(url).toHaveValue(dawn.mockUrl)
+    await url.fill(`${dawn.mockUrl}/chat/completions`)
+    await wizard.getByLabel("连接模型", { exact: true }).fill("autofill-model")
+    await wizard.getByLabel("API key", { exact: true }).fill("sk-test")
+    await wizard.getByRole("button", { name: "测试连通", exact: true }).click()
+    await expect(wizard.locator(".svc-test-ok")).toContainText("autofill-model")
+    expect((dawn.keyChecks as { body: { model: string } }[])[0]?.body.model).toBe("autofill-model")
+    await provider.selectOption("deepseek")
+    await expect(url).toHaveValue(dawn.mockUrl)
+    await expect(wizard.locator(".svc-test-ok")).toHaveCount(0)
   })
 
   test("引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景", async ({ dawn }) => {

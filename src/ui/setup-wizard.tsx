@@ -126,12 +126,14 @@ export function SetupWizard({
   useEffect(() => {
     if (!provider && providers.length) setProvider(默认服务商(providers))
   }, [providers, provider])
-  const [baseUrl, setBaseUrl] = useState(() => connections?.[默认服务商(providers)]?.baseUrl ?? "")
+  // undefined 跟随所选服务商的地址；字符串（包括空串）保留用户手动草稿。
+  const [baseUrlDraft, setBaseUrlDraft] = useState<string | undefined>(undefined)
   const [api, setApi] = useState("")
   const [model, setModel] = useState("")
   const [secret, setSecret] = useState("")
   const defaults: EndpointDefaults = { ...endpointDefaults }
   for (const [id, conn] of Object.entries(connections ?? {})) defaults[id] = { ...defaults[id], ...conn }
+  const baseUrl = baseUrlDraft ?? defaults[provider]?.baseUrl ?? ""
   const 模型候选 = [...new Set([...(connections?.[provider]?.models ?? []), ...(modelCatalog?.[provider] ?? [])])]
   const 模型 = model.trim() || 模型候选[0]
   const 取请求 = (): 测试请求 | string => {
@@ -140,7 +142,7 @@ export function SetupWizard({
     let endpoint
     const 待解析地址 = baseUrl.trim() || (api || model.trim() ? defaults[provider]?.baseUrl : undefined)
     if (待解析地址) {
-      try { endpoint = parseSetupEndpoint(待解析地址, defaults, api || undefined) }
+      try { endpoint = parseSetupEndpoint(待解析地址, defaults, api || (baseUrlDraft === undefined ? defaults[provider]?.api : undefined)) }
       catch { return t("API URL 需为 http(s) 地址，且不能包含账号、查询参数或片段。") }
     }
     if (!endpoint && needsBaseUrl?.includes(provider)) return t("这个服务商需要填写 API URL。")
@@ -156,13 +158,13 @@ export function SetupWizard({
   }
   const 选服务商 = (id: string) => {
     setProvider(id)
-    setBaseUrl(connections?.[id]?.baseUrl ?? "")
+    setBaseUrlDraft(undefined)
     setApi("")
     setModel("")
     setKeyError(undefined)
   }
   const 改地址 = (value: string) => {
-    setBaseUrl(value)
+    setBaseUrlDraft(value)
     setKeyError(undefined)
     if (!value.trim()) return
     try {
@@ -308,9 +310,9 @@ export function SetupWizard({
             >
               <label className="sw-url-field">
                 API URL
-                <input className="control" type="url" aria-label="API URL" disabled={saving} value={baseUrl} placeholder={defaults[provider]?.baseUrl ?? "https://api.example.com/v1"} spellCheck={false} onChange={e => 改地址(e.target.value)} />
+                <input className="control" type="url" aria-label="API URL" disabled={saving} value={baseUrl} placeholder={t("例如 https://api.example.com/v1")} spellCheck={false} onChange={e => 改地址(e.target.value)} />
               </label>
-              <p className="hint sw-url-field">{t("填写 URL 可自动识别目录中的服务；留空使用所选服务商的地址。")}</p>
+              <p className="hint sw-url-field">{t("切换服务商会自动填写默认地址；你可以手动修改后测试连通。")}</p>
               <label>
                 {t("服务商")}
                 <select className="control" disabled={saving} value={provider} onChange={(e) => 选服务商(e.target.value)} aria-label={t("服务商")}>

@@ -94,6 +94,48 @@ test.describe("首启向导", () => {
     await expect(reopened.locator(".setup-wizard").getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
   })
 
+  test("密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写", async ({ dawn }) => {
+    const { page, app } = dawn
+    await 到模型页(page)
+    const wizard = page.locator(".setup-wizard")
+    await expect(wizard.getByLabel("服务商", { exact: true })).toHaveValue("deepseek")
+    await expect(wizard.getByLabel("API URL", { exact: true })).toHaveValue("")
+    await expect(wizard.getByLabel("API URL", { exact: true })).toHaveAttribute("placeholder", dawn.mockUrl)
+    const logs: string[] = []
+    const record = (data: Buffer) => logs.push(data.toString())
+    app.process().stdout?.on("data", record)
+    try {
+      await wizard.getByRole("link", { name: "获取 deepseek API Key →", exact: true }).click()
+      await expect.poll(() => logs.some(line => line.includes("本该交给系统浏览器") && line.includes("https://platform.deepseek.com/api_keys"))).toBe(true)
+      expect(app.windows()).toHaveLength(1)
+      await expect(wizard.getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+    } finally {
+      app.process().stdout?.off("data", record)
+    }
+  })
+
+  test("引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景", async ({ dawn }) => {
+    const { page } = dawn
+    const wizard = page.locator(".setup-wizard")
+    await expect(wizard).toBeVisible()
+    const surface = await page.locator(".setup-stage").evaluate(el => {
+      const bounds = el.getBoundingClientRect()
+      return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height, viewportWidth: innerWidth, viewportHeight: innerHeight, blur: getComputedStyle(el).backdropFilter }
+    })
+    expect(surface).toMatchObject({ x: 0, y: 0 })
+    expect(surface.width).toBe(surface.viewportWidth)
+    expect(surface.height).toBe(surface.viewportHeight)
+    expect(surface.blur).toContain("blur(")
+    await expect(wizard).toHaveAttribute("role", "dialog")
+    await expect(wizard).toHaveAttribute("aria-modal", "true")
+    expect(await wizard.evaluate(el => getComputedStyle(el).filter)).toBe("none")
+    await wizard.getByRole("button", { name: "下一页", exact: true }).focus()
+    await page.keyboard.press("Tab")
+    await expect(wizard.getByRole("radio", { name: "中文", exact: true })).toBeFocused()
+    await page.keyboard.press("Escape")
+    await expect(wizard).toBeVisible()
+  })
+
   test("四步实机截图；语言选择立即传递到工作台；窄窗口可操作", async ({ dawn }, info) => {
     const { page } = dawn
     const wizard = page.locator(".setup-wizard")

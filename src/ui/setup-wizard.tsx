@@ -227,7 +227,19 @@ export function SetupWizard({
 
   return (
     <div className="setup-stage">
-    <div className="setup-wizard" role="region" aria-label={t("首次设置")}>
+    <div className="setup-wizard" role="dialog" aria-modal="true" aria-label={t("首次设置")} onKeyDown={e => {
+      e.stopPropagation()
+      // 通过明确操作结束引导，Esc 不记录跳过，避免误触丢失当前步骤。
+      if (e.key === "Escape") { e.preventDefault(); return }
+      if (e.key !== "Tab") return
+      const controls = [...e.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex='0']")].filter(el => el.tabIndex >= 0)
+      const first = controls[0], last = controls.at(-1)
+      if (e.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement as HTMLElement))) {
+        e.preventDefault(); last?.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first?.focus()
+      }
+    }}>
       <header className="sw-head">
         <span className="sw-brand"><img src={rpIcon} alt="" />DAWN Science<span className="sw-eyebrow">{t("首次设置")}</span></span>
         <div className="sw-head-actions">

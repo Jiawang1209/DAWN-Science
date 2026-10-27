@@ -7592,7 +7592,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .nb-caption { margin: 0; color: var(--dawn-text-4); font-size: var(--dawn-fs-meta); }
 
 /* ── 首启向导与解释器检测（2026-08-27）──────────────────────────────── */
-.setup-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: var(--dawn-space-6); background: var(--dawn-fill-1); border-radius: var(--dawn-radius-lg); }
+/* 首次引导是一张覆盖工作台的浮层；仅背景虚化，卡片内容保持清晰。 */
+.setup-stage { position: fixed; inset: 0; z-index: var(--z-onboarding); box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: var(--dawn-space-6); background: var(--dawn-scrim); backdrop-filter: var(--dawn-blur-overlay); box-shadow: var(--dawn-shadow-float); }
 .setup-wizard {
   width: min(100%, 36rem);
   max-height: 100%;

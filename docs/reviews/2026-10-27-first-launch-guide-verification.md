@@ -30,3 +30,13 @@ Node 定向测试 6 文件、111 项通过：native、setup-model、credential-a
 本地截图和原始日志：`/Users/liuyue/Documents/Codex/2026-10-27/dawn-first-launch-guide/`。预览目录为独立的临时 `dawn-guide-preview-*`。本轮使用假密钥和本地假推理，未验证真实供应商鉴权，也未安装或替换发布应用。
 
 代码、开发文档与新增提交文本已按用户命名约束检查。保留功能分支，不合并、不推送。
+
+## 后续增量：全窗口背景虚化和外链说明
+
+用户要求引导时 App 桌面整体虚化。引导已改为全窗口固定遮罩，卡片清晰；补充模态语义、焦点循环和 Escape 防误跳。新增 Electron 回归先复现旧版未覆盖全窗口的失败，再验证修正。
+
+本轮 UI 定向 4 文件 153 项通过；Electron setup-wizard 8 项通过（16.9 秒），新增检查遮罩覆盖完整视口、backdrop blur 生效、卡片 filter 保持 none、焦点循环，以及密钥链接交给系统浏览器分发而不创建新的 Electron 窗口。typecheck、build、diff 检查通过。只读复核未发现必须修复项。
+
+链接未打开的原因是交互预览误带了测试用 DAWN_NO_EXTERNAL=1。当前已有配置的预览仅解除该进程开关，未改动保存的连接；另开的干净预览不设置该开关。产品外链处理代码无需修改。API URL 灰字是 placeholder，输入实际为空；DeepSeek 正式目录默认地址经本地 pi 目录读取为 https://api.deepseek.com，假服务预览则展示本地测试端点。
+
+本轮截图和原始日志：`/Users/liuyue/Documents/Codex/2026-10-27/dawn-first-launch-guide/blur-background/`。此前填写的预览配置保留在原 `dawn-guide-preview-hGpXlN` 临时目录，新预览使用独立 `dawn-guide-blur-iDj1WG` 临时目录。

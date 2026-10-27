@@ -1,3 +1,4 @@
+import type { ResponseOf } from "../protocol/index.js"
 import { geoTools, sraTools, uniprotTools, type ScienceFlags } from "../science/tools.js"
 import type { ScienceClient } from "../science/model.js"
 import type { CrossrefClient } from "../literature/crossref.js"
@@ -3201,14 +3202,16 @@ ${描述}`
   }
 
   /** 向导识别连接地址使用的目录元数据；不包含凭证或请求头。 */
-  async providerEndpointDefaults(): Promise<Record<string, { baseUrl?: string; api?: string }>> {
+  async providerEndpointDefaults(): Promise<NonNullable<ResponseOf<"listKnownProviders">["endpointDefaults"]>> {
     const all = (await this.runtime()).getModels()
-    const out: Record<string, { baseUrl?: string; api?: string }> = {}
+    const out: NonNullable<ResponseOf<"listKnownProviders">["endpointDefaults"]> = {}
     for (const provider of await this.providerList()) {
       const id = String(provider["id"] ?? "")
       if (!id) continue
-      const api = all.find(m => m.provider === id)?.api
+      const providerModels = all.filter(m => m.provider === id)
+      const api = providerModels[0]?.api
       out[id] = {
+        modelDefaults: Object.fromEntries(providerModels.map(m => [m.id, { api: m.api, ...(m.baseUrl ? { baseUrl: m.baseUrl } : {}) }])),
         ...(typeof provider["baseUrl"] === "string" && provider["baseUrl"] ? { baseUrl: provider["baseUrl"] } : {}),
         ...(api ? { api } : {}),
       }

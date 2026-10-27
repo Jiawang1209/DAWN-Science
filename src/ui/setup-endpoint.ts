@@ -1,5 +1,6 @@
 /** 首次设置的地址解析；只识别目录与 URL，不从密钥内容猜测服务商。 */
-export type EndpointDefaults = Record<string, { baseUrl?: string; api?: string }>
+import type { ResponseOf } from "../protocol/index.js"
+export type EndpointDefaults = NonNullable<ResponseOf<"listKnownProviders">["endpointDefaults"]>
 export type SetupConnection = { baseUrl?: string; api?: string; models?: string[] }
 
 export function parseSetupEndpoint(raw: string, defaults: EndpointDefaults, apiOverride?: string) {

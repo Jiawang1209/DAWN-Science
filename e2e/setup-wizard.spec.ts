@@ -94,6 +94,21 @@ test.describe("首启向导", () => {
     await expect(reopened.locator(".setup-wizard").getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
   })
 
+  test("解释器路径保存失败在卡片内显示，未配置时仍可跳过", async ({ dawn }) => {
+    const { page } = dawn
+    await 到模型页(page)
+    const wizard = page.locator(".setup-wizard")
+    await wizard.getByRole("button", { name: "稍后配置", exact: true }).click()
+    await wizard.locator(".ip-python").getByRole("button", { name: "手动填写路径", exact: true }).click()
+    await wizard.getByLabel("Python 解释器路径", { exact: true }).fill("/dawn-test-missing/python")
+    await wizard.getByRole("button", { name: "用这个", exact: true }).click()
+    await expect(wizard.getByRole("alert")).toContainText("Python")
+    await expect(wizard.getByRole("alert")).toContainText("/dawn-test-missing/python")
+    await expect(wizard.getByRole("button", { name: "跳过，进入工作台", exact: true })).toBeEnabled()
+    await wizard.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
+    await expect(wizard).toHaveCount(0)
+  })
+
   test("密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写", async ({ dawn }) => {
     const { page, app } = dawn
     await 到模型页(page)
@@ -293,5 +308,41 @@ test.describe("首启向导 · 产品原样的默认配置", () => {
       return sessions[0]?.agentId
     })
     expect(agentId).toBe("deepseek")
+  })
+})
+
+
+test.describe("首启向导 · 混合协议目录", () => {
+  test.use({ dawnOptions: { showSetup: true, providersYaml: DEFAULT_CONFIG_YAML + '\nproviders:\n  fireworks:\n    baseUrl: "{{MOCK_URL}}"\n' } })
+
+  test("自动协议按所选目录模型检测、保存并对话", async ({ dawn }) => {
+    const { page } = dawn
+    await 到模型页(page)
+    const wizard = page.locator(".setup-wizard")
+    await wizard.getByLabel("服务商", { exact: true }).selectOption("fireworks")
+    const model = await page.evaluate(async () => {
+      const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { endpointDefaults?: Record<string, { modelDefaults?: Record<string, { api: string }> }> } }> } }
+      const metadata = (await w.dawn.invoke("listKnownProviders", {})).data?.endpointDefaults?.fireworks?.modelDefaults ?? {}
+      const entries = Object.entries(metadata)
+      if (!entries.some(([, value]) => value.api === "anthropic-messages")) throw new Error("测试需要混合协议目录")
+      return entries.find(([, value]) => value.api === "openai-completions")?.[0]
+    })
+    expect(model).toBeTruthy()
+    await wizard.getByLabel("连接模型", { exact: true }).fill(model!)
+    await wizard.getByLabel("API key", { exact: true }).fill("sk-test")
+    await wizard.getByRole("button", { name: "测试连通", exact: true }).click()
+    await expect(wizard.locator(".svc-test-ok")).toContainText(model!)
+    await wizard.getByRole("button", { name: "保存", exact: true }).click()
+    await expect(wizard).toContainText("已填 fireworks")
+    await expect(wizard.locator(".caveat")).toHaveCount(0)
+    await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+    await wizard.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
+    await page.getByPlaceholder(/输入问题/).fill("请说一句话")
+    await page.getByPlaceholder(/输入问题/).press("Enter")
+    await expect(page.locator(".conversation")).toContainText("假模型已应答")
+    for (const request of [...dawn.keyChecks, dawn.requests[0]] as { url: string; body: { model: string } }[]) {
+      expect(request.body.model).toBe(model)
+      expect(request.url).toMatch(/^\/v1\/chat\/completions/)
+    }
   })
 })

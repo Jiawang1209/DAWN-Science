@@ -1,3 +1,4 @@
+import { buildModelsJson } from "../../src/config/models-json.js"
 /**
  * NativeRuntime 的契约层（返工 R2 重写）。
  *
@@ -244,5 +245,24 @@ it("连接默认值来自运行时目录，只返回地址和协议", async () =
   const defaults = await runtime().providerEndpointDefaults()
   expect(defaults.deepseek).toMatchObject({ baseUrl: expect.stringContaining("deepseek"), api: "openai-completions" })
   expect(defaults.anthropic).toMatchObject({ baseUrl: expect.stringContaining("anthropic"), api: "anthropic-messages" })
-  for (const value of Object.values(defaults)) expect(Object.keys(value).every(k => ["baseUrl", "api"].includes(k))).toBe(true)
+  for (const value of Object.values(defaults)) expect(Object.keys(value).every(k => ["baseUrl", "api", "modelDefaults"].includes(k))).toBe(true)
+})
+
+
+it("混合协议服务商返回每个模型自己的 API 和基址", async () => {
+  const defaults = await runtime().providerEndpointDefaults()
+  expect(defaults["github-copilot"]?.modelDefaults?.["gpt-5-mini"]?.api).toBe("openai-responses")
+})
+
+
+it("仅固定首选模型时保留混合服务商其他模型自己的 API 与基址", async () => {
+  const before = (await runtime().providerEndpointDefaults()).fireworks!.modelDefaults!
+  const selected = Object.keys(before).find(id => before[id]!.api === "openai-completions")!
+  const sibling = Object.keys(before).find(id => before[id]!.api === "anthropic-messages")!
+  const dir = mkdtempSync(join(tmpdir(), "dawn-model-defaults-"))
+  const modelsPath = join(dir, "models.json")
+  writeFileSync(modelsPath, JSON.stringify(buildModelsJson({ fireworks: { models: [selected] } })))
+  const after = (await new NativeRuntime({ credentials: fakeCredentials(), modelsPath }).providerEndpointDefaults()).fireworks!.modelDefaults!
+  expect(after[selected]).toEqual(before[selected])
+  expect(after[sibling]).toEqual(before[sibling])
 })

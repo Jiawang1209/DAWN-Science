@@ -597,7 +597,8 @@
 /** 8.32: terminal planning reads the existing session flag and latest plan card. */
 /** 8.33: remote terminals share the existing SSH connection and owning conversation. */
 /** 8.34: provider catalog exposes credential-free endpoint defaults for setup. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.34"
+/** 8.35: endpoint defaults include per-model API and base URL metadata. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.35"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

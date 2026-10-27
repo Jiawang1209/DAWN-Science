@@ -1085,19 +1085,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (没有钥匙 && !跳过向导) 设向导中(true)
   }, [没有钥匙, 跳过向导])
   const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
-  const saveInterpreter = useCallback(
-    (language: "python" | "R", path: string) => {
-      client
-        .get<{ python?: string; r?: string; problem?: string }>("setInterpreter", { language, path })
-        .then((r) => {
-          setInterpreters({ ...(r.python ? { python: r.python } : {}), ...(r.r ? { r: r.r } : {}) })
-          // **当场把问题说出来**：保存成功却用不了，比直接说不行更糟
-          if (r.problem) fail(new Error(r.problem))
-        })
-        .catch(fail)
-    },
-    [client],
-  )
+  const 存解释器 = useCallback(async (language: "python" | "R", path: string) => {
+    const r = await client.get<{ python?: string; r?: string; problem?: string }>("setInterpreter", { language, path })
+    setInterpreters({ ...(r.python ? { python: r.python } : {}), ...(r.r ? { r: r.r } : {}) })
+    if (r.problem) throw new Error(r.problem)
+  }, [client])
+  const saveInterpreter = useCallback((language: "python" | "R", path: string) => {
+    void 存解释器(language, path).catch(fail)
+  }, [存解释器])
   // 设置在场就取——窄栏也算（2026-09-28：此前只认整页，而窄栏打开时会把 view 切走，窄栏里的「内核」从没刷新过）
   useEffect(() => {
     if (!设置在场) return
@@ -2149,7 +2144,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [knownProviders, setKnownProviders] = useState<{
     providers: string[]
     models?: Record<string, string[]>
-    endpointDefaults?: Record<string, { baseUrl?: string; api?: string }>
+    endpointDefaults?: NonNullable<ResponseOf<"listKnownProviders">["endpointDefaults"]>
     needsBaseUrl?: string[]
     anthropicProtocol?: string[]
     connections?: Record<string, { baseUrl?: string; api?: string; models?: string[] }>
@@ -5763,7 +5758,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
                   .then(() => undefined)
               }
-              onSetInterpreter={saveInterpreter}
+              onSetInterpreter={存解释器}
               onProbe={探测解释器}
               onSkip={() => {
                 记引导完成()

@@ -168,13 +168,46 @@ describe("SetupWizard", () => {
     expect(onSaveConnection).toHaveBeenCalledWith("deepseek", { baseUrl: "https://api.example", api: "anthropic-messages", models: ["first-model"] })
   })
 
-  it("已有多模型连接补填密钥时保留其余模型", async () => {
+  it("混合协议目录按所选模型检测，自动地址随模型更新且不强制改写其他模型协议", async () => {
+    const onTest = vi.fn(async () => ({ ok: true as const, model: "responses-model", ms: 10 }))
     const onSaveConnection = vi.fn(async () => {})
-    render(<SetupWizard initialStep="key" {...基本} providers={["lab"]} configured={[]} onSaveKey={async () => {}} onSaveConnection={onSaveConnection}
+    render(<SetupWizard initialStep="key" {...基本} providers={["mixed"]} configured={[]} onSaveKey={async () => {}} onSaveConnection={onSaveConnection} onTest={onTest}
+      modelCatalog={{ mixed: ["anthropic-model", "responses-model"] }} endpointDefaults={{ mixed: {
+        baseUrl: "https://mixed.example", api: "anthropic-messages",
+        modelDefaults: { "anthropic-model": { api: "anthropic-messages", baseUrl: "https://mixed.example" }, "responses-model": { api: "openai-responses", baseUrl: "https://mixed.example/v1" } },
+      } }} />)
+    fireEvent.change(screen.getByLabelText("连接模型"), { target: { value: "responses-model" } })
+    expect((screen.getByLabelText("API URL") as HTMLInputElement).value).toBe("https://mixed.example/v1")
+    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "key" } })
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "测试连通" })))
+    expect(onTest).toHaveBeenCalledWith({ providerId: "mixed", secret: "key", baseUrl: "https://mixed.example/v1", api: "openai-responses", model: "responses-model" })
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "保存" })))
+    expect(onSaveConnection).toHaveBeenCalledWith("mixed", { models: ["responses-model"] })
+  })
+
+  it("解释器保存时等待结果，失败在卡片内按语言显示，仍允许跳过", async () => {
+    let rejectSave!: (error: Error) => void
+    const onSetInterpreter = vi.fn(() => new Promise<void>((_, reject) => { rejectSave = reject }))
+    render(<SetupWizard initialStep="key" {...基本} configured={["deepseek"]} onSaveKey={async () => {}} onSetInterpreter={onSetInterpreter} />)
+    fireEvent.click(screen.getByRole("button", { name: "下一页" }))
+    fireEvent.click(screen.getAllByRole("button", { name: "手动填写路径" })[0]!)
+    fireEvent.change(screen.getByLabelText("Python 解释器路径"), { target: { value: "/missing/python" } })
+    fireEvent.click(screen.getByRole("button", { name: "用这个" }))
+    expect((screen.getByRole("button", { name: "跳过，进入工作台" }) as HTMLButtonElement).disabled).toBe(true)
+    await act(async () => rejectSave(new Error("路径不存在")))
+    expect(screen.getByRole("alert").textContent).toBe("Python 解释器未配置成功：路径不存在")
+    expect((screen.getByRole("button", { name: "跳过，进入工作台" }) as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it("已有多模型连接只补填密钥时不重写连接", async () => {
+    const onSaveConnection = vi.fn(async () => {})
+    const onSaveKey = vi.fn(async () => {})
+    render(<SetupWizard initialStep="key" {...基本} providers={["lab"]} configured={[]} onSaveKey={onSaveKey} onSaveConnection={onSaveConnection}
       connections={{ lab: { baseUrl: "https://lab.example/v1", api: "openai-completions", models: ["model-a", "model-b"] } }} />)
     fireEvent.change(screen.getByLabelText("API key"), { target: { value: "new-key" } })
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "保存" })))
-    expect(onSaveConnection).toHaveBeenCalledWith("lab", { baseUrl: "https://lab.example/v1", api: "openai-completions", models: ["model-a", "model-b"] })
+    expect(onSaveConnection).not.toHaveBeenCalled()
+    expect(onSaveKey).toHaveBeenCalledWith("lab", "new-key")
   })
 
   it("连接保存失败不继续存 Key，并在当前页显示失败", async () => {

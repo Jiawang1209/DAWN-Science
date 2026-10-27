@@ -106,7 +106,7 @@ export function SetupWizard({
   unusable?: readonly { providerId: string; reason: string; soft?: boolean | undefined; kind?: "catalog" | "key" | undefined; i18n?: FaultI18n | undefined }[] | undefined
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
-  onSetInterpreter: (language: "python" | "R", path: string) => void
+  onSetInterpreter: (language: "python" | "R", path: string) => void | Promise<void>
   onProbe: () => Promise<探测结果>
   onSkip: () => void
   onStart: () => void
@@ -133,16 +133,17 @@ export function SetupWizard({
   const [secret, setSecret] = useState("")
   const defaults: EndpointDefaults = { ...endpointDefaults }
   for (const [id, conn] of Object.entries(connections ?? {})) defaults[id] = { ...defaults[id], ...conn }
-  const baseUrl = baseUrlDraft ?? defaults[provider]?.baseUrl ?? ""
   const 模型候选 = [...new Set([...(connections?.[provider]?.models ?? []), ...(modelCatalog?.[provider] ?? [])])]
   const 模型 = model.trim() || 模型候选[0]
+  const 模型默认值 = 模型 ? defaults[provider]?.modelDefaults?.[模型] : undefined
+  const baseUrl = baseUrlDraft ?? connections?.[provider]?.baseUrl ?? 模型默认值?.baseUrl ?? defaults[provider]?.baseUrl ?? ""
   const 取请求 = (): 测试请求 | string => {
     if (!provider) return t("请选择服务商或填写 API URL。")
     if (!secret.trim()) return t("先填一个 key")
     let endpoint
     const 待解析地址 = baseUrl.trim() || (api || model.trim() ? defaults[provider]?.baseUrl : undefined)
     if (待解析地址) {
-      try { endpoint = parseSetupEndpoint(待解析地址, defaults, api || (baseUrlDraft === undefined ? defaults[provider]?.api : undefined)) }
+      try { endpoint = parseSetupEndpoint(待解析地址, defaults, api || connections?.[provider]?.api || 模型默认值?.api || (baseUrlDraft === undefined ? defaults[provider]?.api : undefined)) }
       catch { return t("API URL 需为 http(s) 地址，且不能包含账号、查询参数或片段。") }
     }
     if (!endpoint && needsBaseUrl?.includes(provider)) return t("这个服务商需要填写 API URL。")
@@ -183,6 +184,22 @@ export function SetupWizard({
   const [probed, setProbed] = useState<探测结果 | undefined>(undefined)
   const [probing, setProbing] = useState(false)
   const [probeError, setProbeError] = useState<string | undefined>(undefined)
+  const [interpreterErrors, setInterpreterErrors] = useState<Partial<Record<"python" | "R", string>>>({})
+  const [interpreterSaving, setInterpreterSaving] = useState({ python: false, R: false })
+  const interpreterRevision = useRef({ python: 0, R: 0 })
+  const 存解释器 = async (language: "python" | "R", path: string) => {
+    const revision = ++interpreterRevision.current[language]
+    setInterpreterErrors(current => { const next = { ...current }; delete next[language]; return next })
+    setInterpreterSaving(current => ({ ...current, [language]: true }))
+    try {
+      await onSetInterpreter(language, path)
+    } catch (error) {
+      if (revision === interpreterRevision.current[language]) setInterpreterErrors(current => ({ ...current, [language]: error instanceof Error ? error.message : String(error) }))
+    } finally {
+      if (revision === interpreterRevision.current[language]) setInterpreterSaving(current => ({ ...current, [language]: false }))
+    }
+  }
+  const busy = saving || interpreterSaving.python || interpreterSaving.R
 
   /** 「开始使用」的门槛是**至少一家能用**：全都建不出 agent 时放人进去，等于把他锁在一个空屏里 */
   const 用不了的 = (unusable ?? []).filter((u) => configured.includes(u.providerId))
@@ -196,11 +213,14 @@ export function SetupWizard({
     setSaving(true)
     setKeyError(undefined)
     try {
-      if (req.baseUrl || api || model.trim()) {
+      if (baseUrlDraft !== undefined || api || model.trim()) {
         if (!onSaveConnection) throw new Error(t("本次运行未提供连接配置保存功能。"))
         await onSaveConnection(provider, {
           ...connections?.[provider],
-          ...(req.baseUrl ? { baseUrl: req.baseUrl, api: req.api } : {}),
+          // 自动填充的原生地址不转成全服务商覆盖，保留兄弟模型各自的基址。
+          ...(req.baseUrl && (baseUrlDraft !== undefined || api || !模型默认值) ? { baseUrl: req.baseUrl } : {}),
+          // 已知模型沿用目录自己的协议；手选协议和未知端点才写全局覆盖。
+          ...(api ? { api } : !模型默认值 && req.api ? { api: req.api } : {}),
           ...(req.model ? { models: [...new Set([req.model, ...(connections?.[provider]?.models ?? [])])] } : {}),
         })
       }
@@ -254,7 +274,7 @@ export function SetupWizard({
           }}>
             {(["zh", "en"] as const).map(value => <Button key={value} size="sm" variant={lang === value ? "secondary" : "ghost"} role="radio" aria-checked={lang === value} tabIndex={lang === value ? 0 : -1} data-lang={value} data-native-name onClick={() => setLang(value)}>{value === "zh" ? "中文" : "English"}</Button>)}
           </div>
-          <Button variant="ghost" size="sm" disabled={saving} onClick={onSkip}>{t("先跳过")}</Button>
+          <Button variant="ghost" size="sm" disabled={busy} onClick={onSkip}>{t("先跳过")}</Button>
         </div>
       </header>
       <div className={`sw-page sw-page-${step}`}>
@@ -364,8 +384,11 @@ export function SetupWizard({
         <h2>
           {t("解释器")} <span className="sw-opt">{t("（可选）")}</span>
         </h2>
-        <InterpreterPicker language="python" candidates={probed?.python} probing={probing} error={probeError} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={() => void 探()} />
-        <InterpreterPicker language="R" candidates={probed?.r} probing={probing} current={interpreters.r} onPick={(p) => onSetInterpreter("R", p)} onProbe={() => void 探()} />
+        <InterpreterPicker language="python" candidates={probed?.python} probing={probing} error={probeError} current={interpreters.python} onPick={(p) => void 存解释器("python", p)} onProbe={() => void 探()} />
+        {interpreterErrors.python ? <p className="field-error" role="alert">{tf("{0} 解释器未配置成功：{1}", "Python", interpreterErrors.python)}</p> : null}
+        <InterpreterPicker language="R" candidates={probed?.r} probing={probing} current={interpreters.r} onPick={(p) => void 存解释器("R", p)} onProbe={() => void 探()} />
+        {interpreterErrors.R ? <p className="field-error" role="alert">{tf("{0} 解释器未配置成功：{1}", "R", interpreterErrors.R)}</p> : null}
+        {interpreterSaving.python || interpreterSaving.R ? <p className="hint" role="status">{t("正在保存解释器…")}</p> : null}
       </section>
 
         <p className="hint">{t("未配置不影响进入工作台，需要时可在「设置 → 内核」中补充。")}</p>
@@ -380,13 +403,13 @@ export function SetupWizard({
         ))}
       </ol>
       <footer className="sw-foot">
-        {step > 0 ? <Button variant="ghost" disabled={saving} onClick={() => setStep(step - 1)}>{t("上一步")}</Button> : <span />}
+        {step > 0 ? <Button variant="ghost" disabled={busy} onClick={() => setStep(step - 1)}>{t("上一步")}</Button> : <span />}
         <div className="sw-foot-actions">
           {step === 2 ? <>
             <Button variant="text" disabled={saving} onClick={() => setStep(3)}>{t("稍后配置")}</Button>
             <Button variant="primary" disabled={!有key || saving} onClick={() => setStep(3)}>{t("下一页")}</Button>
           </> : step === 3 ? (
-            <Button variant="primary" onClick={完成}>{interpreters.python || interpreters.r ? t("开始使用 →") : t("跳过，进入工作台")}</Button>
+            <Button variant="primary" disabled={busy} onClick={完成}>{(interpreters.python && !interpreterErrors.python) || (interpreters.r && !interpreterErrors.R) ? t("开始使用 →") : t("跳过，进入工作台")}</Button>
           ) : <Button variant="primary" onClick={() => setStep(step + 1)}>{t("下一页")}</Button>}
         </div>
       </footer>

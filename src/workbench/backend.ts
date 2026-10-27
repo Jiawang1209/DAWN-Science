@@ -392,7 +392,7 @@ export interface WorkbenchBackendOptions {
     available(providerId: string): Promise<string[]>
     /** pi 认识的全部 provider。**「我能配谁」**，与 `getProviders` 的「我配过谁」不同 */
     known?(): Promise<string[]>
-    endpointDefaults?(): Promise<Record<string, { baseUrl?: string; api?: string }>>
+    endpointDefaults?(): Promise<NonNullable<ResponseOf<"listKnownProviders">["endpointDefaults"]>>
     /** 地址 pi 不自带的那几个。**界面据此给输入框** */
     needsBaseUrl?(): Promise<string[]>
     /** 整家都走 Anthropic 协议的那几个。**界面据此提醒地址别带 `/v1`** */

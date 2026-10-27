@@ -16,6 +16,8 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "{0} 解释器未配置成功：{1}": "Could not configure the {0} interpreter: {1}",
+  "正在保存解释器…": "Saving interpreter…",
   "模型目录里没有配置的 {0} 模型：{1}": "The catalogue does not contain the configured models for {0}: {1}",
   "请选择服务商或填写 API URL。": "Choose a provider or enter an API URL.",
   "API URL 需为 http(s) 地址，且不能包含账号、查询参数或片段。": "Use an http(s) API URL without embedded credentials, query parameters, or fragments.",

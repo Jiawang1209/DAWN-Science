@@ -3200,6 +3200,22 @@ ${描述}`
     return [...new Set(rt.getModels().map((m) => m.provider))].sort()
   }
 
+  /** 向导识别连接地址使用的目录元数据；不包含凭证或请求头。 */
+  async providerEndpointDefaults(): Promise<Record<string, { baseUrl?: string; api?: string }>> {
+    const all = (await this.runtime()).getModels()
+    const out: Record<string, { baseUrl?: string; api?: string }> = {}
+    for (const provider of await this.providerList()) {
+      const id = String(provider["id"] ?? "")
+      if (!id) continue
+      const api = all.find(m => m.provider === id)?.api
+      out[id] = {
+        ...(typeof provider["baseUrl"] === "string" && provider["baseUrl"] ? { baseUrl: provider["baseUrl"] } : {}),
+        ...(api ? { api } : {}),
+      }
+    }
+    return out
+  }
+
   /**
    * 地址 pi 不自带的那几个 provider（2026-08-10）。
    *

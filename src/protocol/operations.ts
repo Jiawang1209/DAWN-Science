@@ -3277,6 +3277,7 @@ export const OPERATIONS = {
          * 挑模型——那时前者是空的。
          */
         models: z.record(z.string(), z.array(z.string())).optional(),
+        endpointDefaults: z.record(z.string(), z.object({ baseUrl: z.string().optional(), api: z.string().optional() }).strict()).optional(),
         /**
          * **这些 provider 的地址 pi 不自带**，得人自己填
          * （Bedrock / Azure / Vertex / Cloudflare×2 / opencode×2 / radius）。

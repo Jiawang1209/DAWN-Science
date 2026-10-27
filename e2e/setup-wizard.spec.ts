@@ -1,7 +1,7 @@
 /**
  * 首启向导（2026-08-27，spec `2026-08-27-首启向导与环境检测-design.md`）。
  *
- * 门槛只有 key：没凭证时首屏是向导，填了 key「开始使用」才亮。
+ * 四步主区域向导；密钥页保留验证，可暂缓；计算环境可选。
  * 解释器是可选的检测：两枚假 `python3` 放进 PATH，一枚有 ipykernel 一枚没有，列出来、状态对、选中即写进设置。
  * **只列不装**：页面上不该有任何「帮我装」的按钮。
  */
@@ -22,6 +22,15 @@ async function 检查优化入口(page: Page) {
   await expect(add).toBeFocused()
 }
 
+async function 到模型页(page: Page) {
+  const wizard = page.locator(".setup-wizard")
+  await expect(wizard.getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeVisible()
+  await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+  await expect(wizard.getByRole("heading", { name: "让研究工作在这里衔接" })).toBeVisible()
+  await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+  await expect(wizard.getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+}
+
 const 有内核 = resolve(import.meta.dirname, "fixtures", "py-with-kernel")
 const 没内核 = resolve(import.meta.dirname, "fixtures", "py-without-kernel")
 
@@ -32,8 +41,14 @@ test.describe("首启向导", () => {
     const { page } = dawn
     const 向导 = page.locator(".setup-wizard")
     await expect(向导).toBeVisible()
-    const 开始 = 向导.getByRole("button", { name: "开始使用 →" })
-    await expect(开始).toBeDisabled()
+    await 到模型页(page)
+    const 下一页 = 向导.getByRole("button", { name: "下一页", exact: true })
+    await expect(下一页).toBeDisabled()
+    await 向导.getByLabel("API key", { exact: true }).fill("sk-e2e-test")
+    await 向导.getByRole("button", { name: "保存", exact: true }).click()
+    await expect(向导).toContainText(/已填/)
+    await expect(向导.getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+    await 下一页.click()
 
     // 解释器检测（可选那段）
     await 向导.getByRole("button", { name: "检测本机解释器" }).first().click()
@@ -55,12 +70,7 @@ test.describe("首启向导", () => {
       }),
     ).toBe(`${有内核}/python3`)
 
-    // 门槛：key
-    await 向导.getByLabel("API key").fill("sk-e2e-test")
-    await 向导.getByRole("button", { name: "保存", exact: true }).click()
-    await expect(向导).toContainText(/已填/)
-    await expect(开始).toBeEnabled()
-    await 开始.click()
+    await 向导.getByRole("button", { name: "开始使用 →" }).click()
     await expect(page.locator(".setup-wizard")).toHaveCount(0)
     await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
   })
@@ -75,7 +85,74 @@ test.describe("首启向导", () => {
     const 红字 = page.locator(".statusbar").getByRole("button", { name: /还没有填任何 API key/ })
     await expect(红字).toBeVisible()
     await 红字.click()
-    await expect(page.locator(".setup-wizard")).toBeVisible()
+    await expect(page.locator(".setup-wizard").getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+    await page.getByRole("button", { name: "稍后配置", exact: true }).click()
+    await page.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
+    const reopened = await dawn.重开()
+    await expect(reopened.locator(".setup-wizard")).toHaveCount(0)
+    await reopened.locator(".statusbar").getByRole("button", { name: /还没有填任何 API key/ }).click()
+    await expect(reopened.locator(".setup-wizard").getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+  })
+
+  test("四步实机截图；语言选择立即传递到工作台；窄窗口可操作", async ({ dawn }, info) => {
+    const { page } = dawn
+    const wizard = page.locator(".setup-wizard")
+    await expect(wizard).toBeVisible()
+    const card = await wizard.boundingBox()
+    expect(card!.width).toBeLessThanOrEqual(620)
+    await page.screenshot({ animations: "disabled", path: info.outputPath("01-welcome.png") })
+    await wizard.getByRole("radio", { name: "English", exact: true }).click()
+    await expect(wizard.getByRole("heading", { name: "Welcome to DAWN Science" })).toBeVisible()
+    await page.screenshot({ animations: "disabled", path: info.outputPath("01-welcome-en.png") })
+    await wizard.getByRole("radio", { name: "中文", exact: true }).click()
+    await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+    await page.screenshot({ animations: "disabled", path: info.outputPath("02-features.png") })
+    await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+    await page.screenshot({ animations: "disabled", path: info.outputPath("03-api-key.png") })
+    await wizard.getByRole("button", { name: "稍后配置", exact: true }).click()
+    await page.screenshot({ animations: "disabled", path: info.outputPath("04-environment.png") })
+    await page.setViewportSize({ width: 960, height: 640 })
+    await wizard.getByRole("button", { name: "跳过，进入工作台", exact: true }).scrollIntoViewIfNeeded()
+    expect(await wizard.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    await page.screenshot({ animations: "disabled", path: info.outputPath("04-environment-compact.png") })
+    await wizard.getByRole("radio", { name: "English", exact: true }).click()
+    await wizard.getByRole("button", { name: "Enter workbench", exact: true }).click()
+    await expect(wizard).toHaveCount(0)
+    expect(await page.evaluate(() => localStorage.getItem("dawn.global.lang"))).toBe("en")
+    await expect(page.locator(".statusbar-setup")).toContainText("API key")
+    await expect(page.locator(".statusbar-setup")).not.toContainText("还没有")
+  })
+
+  test("自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话", async ({ dawn }) => {
+    const { page } = dawn
+    const wizard = page.locator(".setup-wizard")
+    await 到模型页(page)
+    await wizard.getByLabel("API URL", { exact: true }).fill(`${dawn.mockUrl}/chat/completions`)
+    await wizard.getByLabel("连接模型", { exact: true }).fill("lab-model")
+    await wizard.getByLabel("API key", { exact: true }).fill("sk-bad")
+    await wizard.getByRole("button", { name: "测试连通", exact: true }).click()
+    await expect(wizard.locator(".svc-test .caveat")).toContainText("Incorrect API key")
+    await wizard.getByLabel("API key", { exact: true }).fill("sk-good")
+    await expect(wizard.locator(".svc-test .caveat")).toHaveCount(0)
+    await wizard.getByRole("button", { name: "测试连通", exact: true }).click()
+    await expect(wizard.locator(".svc-test-ok")).toContainText("lab-model")
+    await expect(wizard.getByRole("button", { name: "下一页", exact: true })).toBeDisabled()
+    const readCreds = () => page.evaluate(async () => {
+      const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { configured: string[] } }> } }
+      return (await w.dawn.invoke("listCredentials", {})).data?.configured
+    })
+    expect(await readCreds()).toEqual([])
+    const id = await wizard.getByLabel("服务商", { exact: true }).inputValue()
+    // 本地假端点可能由目录识别为现有服务；也支持目录外自定义 ID。
+    await wizard.getByRole("button", { name: "保存", exact: true }).click()
+    await expect(wizard).toContainText(`已填 ${id}`)
+    expect(await readCreds()).toContain(id)
+    await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+    await wizard.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
+    await page.getByPlaceholder(/输入问题/).fill("请说一句话")
+    await page.getByPlaceholder(/输入问题/).press("Enter")
+    await expect(page.locator(".conversation")).toContainText("假模型已应答")
+    expect(dawn.requests.length).toBeGreaterThan(0)
   })
 })
 
@@ -90,17 +167,47 @@ test.describe("首启向导", () => {
 test.describe("首启向导 · 产品原样的默认配置", () => {
   test.use({ dawnOptions: { showSetup: true, providersYaml: DEFAULT_CONFIG_YAML } })
 
+  test("明确模型和协议在检测、保存验证、首次对话中一致", async ({ dawn }) => {
+    const { page } = dawn
+    await 到模型页(page)
+    const wizard = page.locator(".setup-wizard")
+    await wizard.getByLabel("连接模型", { exact: true }).fill("deepseek-special")
+    await wizard.getByLabel("接口协议", { exact: true }).selectOption("anthropic-messages")
+    await wizard.getByLabel("API key", { exact: true }).fill("sk-test")
+    await wizard.getByRole("button", { name: "测试连通", exact: true }).click()
+    await expect(wizard.locator(".svc-test-ok")).toContainText("deepseek-special")
+    await wizard.getByRole("button", { name: "保存", exact: true }).click()
+    await expect(wizard).toContainText("已填 deepseek")
+    await expect(wizard.locator(".caveat")).toHaveCount(0)
+    const checks = dawn.keyChecks as { url: string; body: { model: string } }[]
+    expect(checks).toHaveLength(2)
+    for (const check of checks) {
+      expect(check.body.model).toBe("deepseek-special")
+      expect(check.url).toMatch(/^\/v1\/messages/)
+    }
+    await wizard.getByRole("button", { name: "下一页", exact: true }).click()
+    await wizard.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
+    await page.getByPlaceholder(/输入问题/).fill("请说一句话")
+    await page.getByPlaceholder(/输入问题/).press("Enter")
+    await expect(page.locator(".conversation")).toContainText("假模型已应答")
+    const requests = dawn.requests as { url: string; body: { model: string } }[]
+    expect(requests[0]?.body.model).toBe("deepseek-special")
+    expect(requests[0]?.url).toMatch(/^\/v1\/messages/)
+  })
+
   test("**填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在", async ({ dawn }) => {
     const { page } = dawn
     const 向导 = page.locator(".setup-wizard")
     await expect(向导).toBeVisible()
+    await 到模型页(page)
     await 向导.getByLabel("API key").fill("sk-e2e-test")
     await 向导.getByRole("button", { name: "保存", exact: true }).click()
     await expect(向导).toContainText(/已填/)
     // 存完当场验了一次（B9）：假服务器另一本账上有它，且验过是好的——向导上没有红字
     expect(dawn.keyChecks.length).toBe(1)
     await expect(向导.locator(".caveat")).toHaveCount(0)
-    await 向导.getByRole("button", { name: "开始使用 →" }).click()
+    await 向导.getByRole("button", { name: "下一页", exact: true }).click()
+    await 向导.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
     await expect(向导).toHaveCount(0)
 
     // 默认配置填key后，首页与原生对话均保留可访问的优化菜单入口。

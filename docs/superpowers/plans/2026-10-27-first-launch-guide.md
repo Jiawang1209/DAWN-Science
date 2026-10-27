@@ -24,3 +24,12 @@
 - README.md：同步中英文首次使用说明。
 - 运行 `npm run build`、`npx playwright test e2e/setup-wizard.spec.ts`。在实际 Electron 窗口截图四页并检查窄窗口/英文排版；假密钥走本地假服务。
 - 审查差异、检查新增开发文件与提交文本符合命名要求，记录验证证据，提交在当前分支，保留给用户预览。
+
+## 用户补充与执行结果
+
+- [x] 使用主应用语言偏好在向导中切换中文/English，保留步骤、草稿与检测结果，支持键盘操作。
+- [x] 通过 listKnownProviders 的可选 endpointDefaults 返回运行时地址/协议元数据；协议 minor 更新至 8.34。
+- [x] 新增 setup-endpoint.ts 规范化 http(s) 地址和常见接口路径；复用 Settings 的测试连通组件及 testProviderKey。
+- [x] URL/Key/模型/协议可检测后保存；连接先落地，Key 后保存；统一所选模型，保留已有多模型清单。
+- [x] 完成组件、后端、协议和 Electron 定向验证，记录于 docs/reviews/2026-10-27-first-launch-guide-verification.md。
+- [x] 保留独立分支与隔离实机预览供用户检查。

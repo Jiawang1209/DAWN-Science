@@ -55,7 +55,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 | Windows | Run `…-setup.exe`, or just run `…-portable.exe` | SmartScreen: *More info → Run anyway*. **Windows builds are not yet verified on a real machine** — please report what breaks |
 | Linux | `chmod +x *.AppImage && ./DAWN-Science-*.AppImage`, or `sudo dpkg -i *.deb` | AppImage needs `sudo apt install libfuse2` |
 
-**First launch** is a wizard: pick a provider (DeepSeek / Kimi / Qwen / Anthropic / OpenAI …), paste an API key, start chatting. The same screen can *detect local interpreters* and hook an existing Python / R up as a kernel — optional; chat works without it.
+**First launch** walks through four compact cards in the main area: meet DAWN Science, explore its features, connect an AI model, and optionally connect R/Python interpreters. Choose 中文 or English in the guide; that preference also applies in the workbench. Pick a provider from the runtime catalog, or enter an API URL and key; catalog URLs and common endpoint paths help identify the connection. You can specify a model ID and protocol for custom services, test connectivity before saving, and see validation errors on the same page. Interpreter setup can be skipped and completed later in Settings → Kernel.
 
 **The app itself does not need Node.js.** External tools are only needed for the features that use them, and the UI says so when one is missing:
 
@@ -298,7 +298,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 | Windows | 运行 `…-setup.exe`；或直接跑 `…-portable.exe` | SmartScreen：「更多信息 → 仍要运行」。**Windows 版尚未在真机上验证过**——哪里不对请反馈 |
 | Linux | `chmod +x *.AppImage && ./DAWN-Science-*.AppImage`；或 `sudo dpkg -i *.deb` | AppImage 需要 `sudo apt install libfuse2` |
 
-**第一次打开**是一个向导：选服务商（DeepSeek / Kimi / Qwen / Anthropic / OpenAI …）、填 API key，就能聊。同一屏可以「检测本机解释器」，从已有的 Python / R 里选一个接成内核——可选，不配也能聊。
+**第一次打开**通过主区域居中的四张卡片依次介绍产品、主要功能、API Key 和可选的 R/Python 计算环境。向导可切换中文或 English，选择会沿用到工作台。可从运行时目录选择服务商，或填写 API URL 和 Key；目录中的地址和常见接口路径帮助识别连接，自定义服务可以指定模型 ID 和协议。保存前可直接测试连通，保存仍会验证并显示原有错误提示。R/Python 路径可检测或手动填写，也可跳过，之后到「设置 → 内核」补充。
 
 **软件本身不需要 Node.js。** 要用哪个功能才装哪样，缺了界面会明说：
 

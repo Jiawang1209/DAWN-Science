@@ -238,3 +238,11 @@ describe("NativeRuntime · 整家都走 Anthropic 协议的 provider（2026-09-2
     expect(名单).not.toContain("deepseek")
   })
 })
+
+
+it("连接默认值来自运行时目录，只返回地址和协议", async () => {
+  const defaults = await runtime().providerEndpointDefaults()
+  expect(defaults.deepseek).toMatchObject({ baseUrl: expect.stringContaining("deepseek"), api: "openai-completions" })
+  expect(defaults.anthropic).toMatchObject({ baseUrl: expect.stringContaining("anthropic"), api: "anthropic-messages" })
+  for (const value of Object.values(defaults)) expect(Object.keys(value).every(k => ["baseUrl", "api"].includes(k))).toBe(true)
+})

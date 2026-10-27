@@ -392,6 +392,7 @@ export interface WorkbenchBackendOptions {
     available(providerId: string): Promise<string[]>
     /** pi 认识的全部 provider。**「我能配谁」**，与 `getProviders` 的「我配过谁」不同 */
     known?(): Promise<string[]>
+    endpointDefaults?(): Promise<Record<string, { baseUrl?: string; api?: string }>>
     /** 地址 pi 不自带的那几个。**界面据此给输入框** */
     needsBaseUrl?(): Promise<string[]>
     /** 整家都走 Anthropic 协议的那几个。**界面据此提醒地址别带 `/v1`** */
@@ -1332,6 +1333,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 那时同名的可能已是 `providers.yaml` 里手写的——那是人的声明，不归这里收。
    */
   const 自动造的 = new Map<string, unknown>()
+  /** 显式配置的模型优先；目录合并顺序不能改变用户的选择。 */
+  function 首选连接模型(providerId: string, list: string[]): string | undefined {
+    const selected = registry.providers?.[providerId]?.models
+    return selected?.length ? selected.find(id => list.includes(id)) : list[0]
+  }
   async function 确保配过key的都能用(): Promise<Map<string, FaultI18n>> {
     // 存 msgid 与 args 而不是渲染好的句子：界面按当前语言 `tf`，端出去时再渲染一份中文 `reason` 给旧读者（B15）
     const 建不出agent的理由 = new Map<string, FaultI18n>()
@@ -1370,9 +1376,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         console.error(`[凭证] ${providerId} 填了 key 但模型目录读不出来，建不出 agent：${原话}`)
         continue
       }
-      const model = list[0]
+      const model = 首选连接模型(providerId, list)
       if (!model) {
-        建不出agent的理由.set(providerId, i18n消息("模型目录里没有 {0} 的模型，挑不出一个来建 agent", providerId))
+        const selected = registry.providers?.[providerId]?.models
+        建不出agent的理由.set(providerId, selected?.length && list.length
+          ? i18n消息("模型目录里没有配置的 {0} 模型：{1}", providerId, selected.join("、"))
+          : i18n消息("模型目录里没有 {0} 的模型，挑不出一个来建 agent", providerId))
         continue
       }
       registry.agents[providerId] = {
@@ -2490,7 +2499,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * **存在前、验在后，验的结果从不让保存失败**——key 已经在钥匙串里了，验证只产出一条话。
        * 没接 `askOnce`（这次运行没有 native 运行时）或目录里挑不出模型（B8 会说这件事）就不验、
        * 也不留结果：「没验」与「验过是好的」在 `key验证结果` 里都是「没有这一条」，界面上都是不出现。
-       * 模型挑目录里第一个——与 `确保配过key的都能用` 造 agent 时挑的是同一个，验的就是要用的。
+       * 模型优先取连接里明确配置的选择，否则取目录首项；与自动创建 agent 使用同一规则。
        *
        * **地址要自己填的那几家（Azure / Bedrock…）还没填地址也不验**（2026-09-01 终审）：请求没处发，
        * pi 当场抛「base URL is required」，归 soft 端出去就是一句「可能是网络」——而摘要上已经写着「还没填地址」。
@@ -2499,7 +2508,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       key验证结果.delete(providerId)
       if (askOnce && models?.available) {
         const 还没地址 = (await models.needsBaseUrl?.().catch((): string[] => []))?.includes(providerId) ?? false
-        const model = 还没地址 ? undefined : (await models.available(providerId).catch(() => []))[0]
+        const model = 还没地址 ? undefined : 首选连接模型(providerId, await models.available(providerId).catch(() => []))
         if (model) {
           const r = await 验一次key(askOnce, { provider: providerId, model }, keyCheckTimeoutMs)
           if (r.kind !== "ok") {
@@ -2519,7 +2528,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 不通 = (i18n: FaultI18n, soft: boolean) => ({ ok: false as const, soft, message: 渲染i18n(i18n.msgid, i18n.args), i18n })
       if (!probeKey) return 不通(i18n消息("这次运行没有模型运行时，测不了——保存后发一句试试"), true)
       const 自定义 = baseUrl !== undefined
-      const 模型 = model ?? (自定义 ? undefined : (await models?.available(providerId).catch((): string[] => []))?.[0])
+      const 模型 = model ?? (自定义 ? undefined : 首选连接模型(providerId, await models?.available(providerId).catch((): string[] => []) ?? []))
       if (!模型) {
         return 不通(
           自定义 ? i18n消息("要填至少一个模型 id 才能测") : i18n消息("模型目录里没有 {0} 的模型，挑不出一个来测", providerId),
@@ -5067,6 +5076,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         return {
           providers: ids,
           models: table,
+          ...(models.endpointDefaults ? { endpointDefaults: await models.endpointDefaults() } : {}),
           // **地址 pi 不自带的那几个**：界面据此给输入框
           ...(models.needsBaseUrl ? { needsBaseUrl: await models.needsBaseUrl() } : {}),
           ...(models.anthropicProtocol ? { anthropicProtocol: await models.anthropicProtocol() } : {}),

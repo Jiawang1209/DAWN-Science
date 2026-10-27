@@ -1163,7 +1163,7 @@ export type 测试 = (req: 测试请求) => Promise<测试回话>
  * `指纹` 是这一问依赖的输入拼起来的：**输入一改，旧结论就撤掉**——不然屏幕上那句「通了」说的是上一把 key。
  * 名字不叫「测试」：它是「测试视觉模型」的子串，按名字找按钮会指向两个东西（设计契约）。
  */
-function 测试连通({ 取请求, 指纹, onTest }: { 取请求: () => 测试请求 | string; 指纹: string; onTest: 测试 }) {
+export function 测试连通({ 取请求, 指纹, onTest }: { 取请求: () => 测试请求 | string; 指纹: string; onTest: 测试 }) {
   const [在测, set在测] = useState(false)
   const [结果, set结果] = useState<测试回话 | { 缺: string } | undefined>(undefined)
   // 第几问：输入改了或又点了一次，上一问迟到的回话不许盖掉新的

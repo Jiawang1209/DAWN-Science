@@ -16,3 +16,9 @@
 - Electron 7 文件 25 项通过（49.3 秒）：setup-wizard、base-url、key-is-enough、model-switch、external-link、i18n、model-error。
 
 自动化使用隔离数据与假服务，未验证真实供应商鉴权，不安装或替换发布应用。其他开发 worktree 和原始预览配置保持原状。命名限制适用于本分支新增代码、文档和提交文本。
+
+## 本地 main 合并与复验
+
+功能分支以 fast-forward 合并到本地 main，代码提交为 c7d293db。合并后 typecheck 通过，关键组件/模型回归 3 文件 34 项通过；完整 setup-wizard Electron 11 项通过（21.9 秒），包括混合协议与解释器错误分支。合并后未修改应用代码，工作区保持清洁；未推送、未发布或替换已安装应用。
+
+原始日志位于 `/Users/liuyue/Documents/Codex/2026-10-27/dawn-first-launch-guide/main-merge/`。保留已合并功能分支供追溯，其他 worktree 不作清理。

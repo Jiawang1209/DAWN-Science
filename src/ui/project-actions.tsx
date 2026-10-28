@@ -43,7 +43,7 @@ export function ProjectActions({ name, onNew, onDelete }: {
   if (!onNew && !onDelete) return null
   return <div className="row-actions project-actions">
     {onNew ? <Button variant="ghost" size="inline" className="project-new" aria-label={tf("在「{0}」里开一段新对话", name)} onClick={() => { setOpen(false); onNew() }}><新建会话图标 /></Button> : null}
-    {onDelete ? <Button ref={trigger} variant="ghost" size="icon" className="row-more" aria-label={tf("项目操作：{0}", name)} aria-haspopup="menu" aria-expanded={open}
+    {onDelete ? <Button ref={trigger} variant="ghost" size="row-action" className="row-more" aria-label={tf("项目操作：{0}", name)} aria-haspopup="menu" aria-expanded={open}
       onClick={() => setOpen(!open)} onKeyDown={e => {
         if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true) }
       }}>⋯</Button> : null}

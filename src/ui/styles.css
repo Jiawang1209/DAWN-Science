@@ -76,6 +76,9 @@ pre {
 /* 嵌在句子或标题里的按钮：零盒子，不要再写 padding:0 */
 .btn-inline { padding: 0; border-radius: 0; }
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
+/* 侧栏项目与会话共享同一操作按钮尺寸，焦点反馈不向外扩大。 */
+.btn-row-action { width: 28px; min-width: 28px; height: 32px; padding: 0; flex: 0 0 auto; justify-content: center; line-height: 20px; }
+.btn-row-action:focus-visible { outline-offset: -2px; }
 /* 工具栏文字入口与图标入口共用默认圆角，不采用行内文字的直角背景。 */
 .btn-toolbar { min-height: 36px; padding: 0; font-size: var(--dawn-fs-sub); }
 /* 目录选择菜单与输入区目录入口使用相同字号和行高。 */
@@ -8318,10 +8321,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .sidebar .proj-session-list { padding-left: 33px; }
 .sidebar .proj-head:has(> .row.active) { background: var(--dawn-accent-soft); }
 .sidebar .proj-head:hover { background: var(--dawn-row-hover); }
-.sidebar .proj-head > .row { min-height: 48px; margin: 0; padding-left: var(--dawn-space-2); padding-right: 0; font-weight: var(--dawn-weight-medium); background: transparent; }
+.sidebar .proj-head > .row { font-size: var(--dawn-fs-sub); line-height: 20px; min-height: 48px; margin: 0; padding-left: var(--dawn-space-2); padding-right: 0; font-weight: var(--dawn-weight-medium); background: transparent; }
 .sidebar .proj-head > .row.active { color: var(--dawn-accent); }
 .sidebar .proj-head > .row-actions { gap: 0; margin-left: var(--dawn-space-1); }
-.sidebar .proj-head > .row-actions .row-more { width: 28px; height: 32px; padding: 0; color: var(--dawn-text-3); }
+.sidebar .proj-head > .row-actions .row-more { color: var(--dawn-text-3); }
 .sidebar .server-navigation .remote-row { margin-left: calc(var(--dawn-space-3) + var(--dawn-space-4)); margin-right: var(--dawn-space-3); width: calc(100% - var(--dawn-space-6) - var(--dawn-space-4)); padding-top: 0; container: dawn-server / inline-size; }
 .sidebar .server-navigation .side-subhead-row { margin-inline: 0; padding-right: var(--dawn-space-1); border-radius: var(--dawn-radius-row); background: transparent; }
 .sidebar .server-navigation .side-subhead { min-height: 48px; padding-left: var(--dawn-space-2); padding-right: 0; font-weight: var(--dawn-weight-medium); background: transparent; }

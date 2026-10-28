@@ -659,7 +659,7 @@ export function SessionRow({
         <div className="row-actions">
           <Button
             variant="ghost"
-            size="icon"
+            size="row-action"
             className="row-more"
             ref={按钮}
             aria-label={tf("会话操作：{0}", 名字)}
@@ -836,7 +836,7 @@ function TaskSessionMenu({ title, onDelete }: { title: string; onDelete: () => v
   const trigger = useRef<HTMLButtonElement>(null)
   const [position, setPosition] = useState({ top: 0, left: 0 })
   return <div className="row-actions">
-    <Button ref={trigger} variant="ghost" size="icon" className="row-more"
+    <Button ref={trigger} variant="ghost" size="row-action" className="row-more"
       aria-label={tf("会话操作：{0}", title)} aria-haspopup="menu" aria-expanded={open}
       onClick={() => {
         const rect = trigger.current?.getBoundingClientRect()

@@ -31,6 +31,23 @@ test("跨项目切换保持省略号入口，删除经菜单确认且只作用�
   }
   const check = async () => {
     await expect(sidebar.getByRole("button", { name: /^删除会话：/ })).toHaveCount(0)
+    const projectTrigger = sidebar.getByRole("button", { name: "项目操作：项目甲", exact: true })
+    const projectSize = (await projectTrigger.boundingBox())!
+    expect([projectSize.width, projectSize.height]).toEqual([28, 32])
+    await projectTrigger.focus()
+    await page.keyboard.press("Tab")
+    await page.keyboard.press("Shift+Tab")
+    await expect(projectTrigger).toBeFocused()
+    await expect(projectTrigger).toHaveCSS("outline-offset", "-2px")
+    for (const trigger of await sidebar.locator(".sess-item .row-more").all()) {
+      const size = (await trigger.boundingBox())!
+      expect([size.width, size.height]).toEqual([projectSize.width, projectSize.height])
+      await trigger.focus()
+      await expect(trigger).toHaveCSS("outline-offset", "-2px")
+    }
+    for (const name of await sidebar.locator(".proj-head .name, .side-section-title").all()) {
+      await expect(name).toHaveCSS("font-size", "14px")
+    }
     for (const title of ["会话甲", "会话乙"]) {
       const trigger = sidebar.getByRole("button", { name: `会话操作：${title}`, exact: true })
       await expect(trigger).toHaveText("⋯")

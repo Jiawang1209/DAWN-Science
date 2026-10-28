@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from "react"
+import { Fragment, useEffect, useRef, type RefObject } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "./primitives.js"
 import { 关闭图标, 键盘图标 } from "./icons.js"
@@ -22,6 +22,8 @@ export function ShortcutPanel({ onClose, returnFocusRef }: {
   }, [returnFocusRef])
   const mac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
   const mod = mac ? "⌘" : "Ctrl"
+  const keyParts = (keys: string) => keys.replace(/([⌘⌃⌥⇧])/g, '$1 ').split(/[+\s]+/).filter(Boolean)
+  const keyLabel = (key: string) => mac ? ({ Ctrl: '⌃', Shift: '⇧', Alt: '⌥' } as Record<string, string>)[key] ?? key : key
   const groups = [
     { title: t("通用导航"), rows: [
       { title: t("命令面板"), keys: `${mod} K` },
@@ -44,7 +46,7 @@ export function ShortcutPanel({ onClose, returnFocusRef }: {
     ] },
   ]
   return createPortal(
-    <div className="search-backdrop" role="dialog" aria-modal="true" aria-label={t("快捷键速查")}
+    <div className="search-backdrop shortcut-backdrop" role="dialog" aria-modal="true" aria-label={t("快捷键速查")}
       onMouseDown={e => { if (e.target === e.currentTarget) { e.preventDefault(); onClose() } }}
       onKeyDown={e => {
         if (在组词(e)) return
@@ -61,7 +63,12 @@ export function ShortcutPanel({ onClose, returnFocusRef }: {
             <h3>{group.title}</h3>
             <dl>{group.rows.map(row => <div className="shortcut-row" key={row.title}>
               <dt>{row.title}{"hint" in row ? <small>{row.hint}</small> : null}</dt>
-              <dd><kbd>{row.keys}</kbd></dd>
+              <dd><span className="shortcut-keys" role="group" aria-label={row.keys}>
+                {keyParts(row.keys).map((key, i) => <Fragment key={`${key}-${i}`}>
+                  {row.keys === '↑ ↓' && i > 0 ? <span className="shortcut-key-separator" aria-hidden="true">/</span> : null}
+                  <kbd aria-hidden="true">{keyLabel(key)}</kbd>
+                </Fragment>)}
+              </span></dd>
             </div>)}</dl>
           </section>)}
           <p className="shortcut-panel-note">{t("焦点在终端时，命令面板和文件快捷键交给终端。")}</p>

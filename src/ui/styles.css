@@ -1320,6 +1320,11 @@ pre {
      0.5px 在 2x 屏上正好是一个物理像素——面与面因此是"分开"，不是"框住"。
      这里敢用是因为还有阴影兜底；输入框、按钮那种需要明确边界的仍是 1px */
 }
+/* LLM 菜单用菜单行几何，名称与类型标记各占一列，长名称保持单行。 */
+.agent-menu.llm-menu { width: max-content; min-width: min(240px, calc(100vw - 32px)); max-width: min(300px, calc(100vw - 32px)); max-height: min(420px, calc(100vh - 96px)); overflow-y: auto; background: var(--dawn-surface-elevated); }
+.llm-menu .btn-menu-row { width: 100%; justify-content: flex-start; }
+.llm-menu .name { display: block; min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.llm-menu .kind, .llm-menu .hint { flex: 0 0 auto; margin-left: 0; white-space: nowrap; }
 /**
  * 底部那一组（2026-08-12）。**`auto` 只留一个**——
  * 挂在每一行上的话，剩余空间会被它们各分一份，
@@ -8587,22 +8592,26 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .files-view-visual .file-preview .pdf-page-controls { flex: 0 0 auto; }
 .files-view-visual .file-preview .visual-preview-stage .preview-img { width: 100%; height: 100%; max-height: 100%; }
 
-/* 快捷键只读速查，与搜索入口和浮层共用尺寸。 */
+/* 快捷键只读速查：紧凑分组和独立键帽，保留原有键位与生效说明。 */
+.shortcut-backdrop { align-items: center; padding: var(--dawn-space-4); }
 .topbar .shortcut-toggle { flex: 0 0 32px; width: 32px; height: 32px; padding: 0; color: var(--dawn-text-2); }
-.shortcut-panel-head { display: flex; align-items: center; gap: var(--dawn-space-3); padding: var(--dawn-space-3) var(--dawn-space-4); border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-3); }
-.shortcut-panel-head > svg { color: var(--dawn-text-3); }
+.shortcut-panel-head { display: flex; align-items: center; gap: var(--dawn-space-2); padding: var(--dawn-space-2) var(--dawn-space-4); border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-3); }
+.shortcut-panel-head > svg { width: 18px; height: 18px; flex: 0 0 auto; color: var(--dawn-accent); }
 .shortcut-panel-head h2 { flex: 1; margin: 0; font-size: var(--dawn-fs-sub); font-weight: var(--dawn-weight-semibold); }
-.shortcut-panel-body { overflow-y: auto; overscroll-behavior: contain; padding: var(--dawn-space-4); }
+.shortcut-panel-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--dawn-space-3) var(--dawn-space-4); }
 .shortcut-group + .shortcut-group { margin-top: var(--dawn-space-4); }
-.shortcut-group h3 { margin: 0 0 var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-medium); }
+.shortcut-group h3 { margin: 0 0 var(--dawn-space-1); color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-semibold); }
 .shortcut-group dl { margin: 0; }
-.shortcut-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--dawn-space-4); padding: var(--dawn-space-2) 0; }
-.shortcut-row dt { font-size: var(--dawn-fs-sub); color: var(--dawn-text-1); }
-.shortcut-row dt small { display: block; margin-top: var(--dawn-space-1); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+.shortcut-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--dawn-space-4); padding: 7px 0; }
+.shortcut-row + .shortcut-row { border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); }
+.shortcut-row dt { font-size: var(--dawn-fs-sub); line-height: 20px; color: var(--dawn-text-1); }
+.shortcut-row dt small { display: block; margin-top: 2px; font-size: var(--dawn-fs-badge); line-height: 16px; color: var(--dawn-text-3); }
 .shortcut-row dd { margin: 0; }
-.shortcut-row kbd { display: inline-block; min-width: 3rem; padding: var(--dawn-space-1) var(--dawn-space-2); border: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); background: var(--dawn-fill-1); color: var(--dawn-text-2); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); text-align: center; white-space: nowrap; }
+.shortcut-keys { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--dawn-space-1); white-space: nowrap; }
+.shortcut-row kbd { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 24px; height: 24px; padding: 0 6px; border: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-xs); background: var(--dawn-surface-app); box-shadow: 0 1px 0 var(--dawn-stroke-3); color: var(--dawn-text-2); font-family: var(--dawn-font-sans); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-medium); line-height: 20px; text-align: center; white-space: nowrap; }
+.shortcut-key-separator { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .shortcut-panel-note { margin: var(--dawn-space-4) 0 0; padding-top: var(--dawn-space-3); border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
-.shortcut-panel { color: var(--dawn-text-1); }
+.shortcut-panel { width: min(520px, 100%); max-height: min(720px, calc(100dvh - var(--dawn-space-8))); color: var(--dawn-text-1); }
 
 /* 当前会话查找：顶部居中的紧凑卡片，独立一行，不覆盖命中消息。 */
 .conv-search-toggle { flex-shrink: 0; white-space: nowrap; }

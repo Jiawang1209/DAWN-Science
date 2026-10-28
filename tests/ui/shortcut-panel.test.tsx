@@ -13,8 +13,12 @@ it.each([
     // 优化输入的共享文案在模块加载时读取平台，也必须按实际启动环境验证。
     const { ShortcutPanel: PlatformPanel } = await import("../../src/ui/shortcut-panel.js")
     const { unmount } = render(<PlatformPanel onClose={vi.fn()} />)
-    const keys = Array.from(screen.getByRole("dialog").querySelectorAll("kbd"), k => k.textContent)
+    const keys = Array.from(screen.getByRole("dialog").querySelectorAll(".shortcut-keys"), k => k.getAttribute("aria-label"))
     expect(keys).toEqual([command, files, review, platform === "MacIntel" ? "⌘ F" : "Ctrl F", "Enter", "Shift Enter", enter, enhance, "Esc", "Tab", "↑ ↓", enter, "Ctrl C"])
+    const commandKeys = screen.getByRole('group', { name: command }).querySelectorAll('kbd')
+    expect(Array.from(commandKeys, k => k.textContent)).toEqual(platform === 'MacIntel' ? ['⌘', 'K'] : ['Ctrl', 'K'])
+    const enhanceKeys = screen.getByRole('group', { name: enhance }).querySelectorAll('kbd')
+    expect(Array.from(enhanceKeys, k => k.textContent)).toEqual(platform === 'MacIntel' ? ['⌘', '⇧', 'E'] : ['Ctrl', 'Shift', 'E'])
     unmount()
   } finally {
     platformGetter.mockRestore()

@@ -3139,9 +3139,16 @@ export function AgentPill({
   }, [open])
 
   if (agents.length === 0) return null
+  const optionLabel = (name: string, isCurrent: boolean, k?: SessionSummary["kind"]) =>
+    [name, k ? KIND_LABEL[k] : undefined, isCurrent ? t("当前") : undefined].filter(Boolean).join(' ')
 
   return (
-    <div className="pill agent-pill" ref={box}>
+    <div className="pill agent-pill" ref={box} onKeyDown={e => {
+      if (open && e.key === "Escape" && !在组词(e)) {
+        e.preventDefault(); e.stopPropagation(); setOpen(false)
+        box.current?.querySelector<HTMLButtonElement>('button')?.focus()
+      }
+    }}>
       <Button
         variant="ghost"
         size="sm"
@@ -3162,13 +3169,10 @@ export function AgentPill({
 
       {open ? (
         <div
-          className="agent-menu"
+          className="agent-menu llm-menu"
           role="menu"
           aria-label={services && services.length > 0 ? t("切换服务或新建会话") : t("新建会话")}
           tabIndex={-1}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOpen(false)
-          }}
         >
           {/**
             * **两组，各说各的语义**（2026-08-11）。
@@ -3186,8 +3190,9 @@ export function AgentPill({
               <ul>
                 {services.map((sv) => (
                   <li key={sv.providerId}>
-                    <Row
+                    <Button variant="ghost" size="menu-row"
                       role="menuitem"
+                      aria-label={optionLabel(sv.name, sv.name === currentLabel)}
                       onClick={() => {
                         setOpen(false)
                         onSwitchService?.(sv.providerId)
@@ -3196,7 +3201,7 @@ export function AgentPill({
                       <ServiceMark provider={sv.providerId} label={sv.name} />
                       <span className="name">{sv.name}</span>
                       {sv.name === currentLabel ? <span className="hint">{t("当前")}</span> : null}
-                    </Row>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -3222,8 +3227,9 @@ export function AgentPill({
               .flatMap((组) => 组.agentIds)
               .map((a) => (
                 <li key={a}>
-                  <Row
+                  <Button variant="ghost" size="menu-row"
                     role="menuitem"
+                    aria-label={optionLabel(label ? label(a) : a, a === current, agentKind?.(a))}
                     onClick={() => {
                       setOpen(false)
                       onPick(a)
@@ -3237,7 +3243,7 @@ export function AgentPill({
                       return k ? <span className="kind">{KIND_LABEL[k]}</span> : null
                     })()}
                     {a === current ? <span className="hint">{t("当前")}</span> : null}
-                  </Row>
+                  </Button>
                 </li>
               ))}
           </ul>

@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-28 — 默认分析交付与 Markdown 流程本地 main 合并
+
+- **Type**: docs
+- **What**: 用户确认预览后，完成整个分支最终检查；`codex/markdown-project-delivery` 的6个提交从 `fa321f8c` 快进合入本地 main 至 `24dba07f`，涵盖 Markdown 文件引用、全项目选文件及默认分析交付规范。
+- **Verification**: 合并前538文件、5640项通过/11跳过，类型/构建及36项Electron（含14张原视觉基线）通过；main 合并后22文件299项、类型/构建及8项Electron通过，实现和测试与验收分支一致。见 `docs/reviews/2026-10-28-default-delivery-main-verification.md`。
+- **Impact**: 无冲突、无stash，原预览资料和运行分支工作树保留；origin/main 跟踪引用未变，未推送、发布或替换安装版。
+
 ### 2026-10-28 — 默认分析交付规范与脚本调用报告
 
 - **Type**: feat

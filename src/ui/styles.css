@@ -8513,7 +8513,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 /* 极窄侧栏带推理/适配器开关时，为模型保留完整可点击空间。 */
 @container (max-width: 360px) {
   .composer-footer:has(.config-pill, .composer-status:not(:empty)) { flex-wrap: wrap; }
-  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .composer-controls { flex-basis: 100%; margin-left: 0; }
+  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .composer-controls { flex-basis: 100%; margin-left: 0; flex-wrap: wrap; }
+  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .composer-controls > .ctx-meter { flex-basis: 100%; justify-content: flex-end; }
+  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .model-trigger { min-width: 5rem; }
   .composer-footer .composer-status { flex: 1 1 0; min-width: 0; }
   .composer-footer .composer-status > .sess-config { min-width: 0; max-width: 100%; }
   .composer-footer .composer-status .sess-config-trigger { max-width: 100%; overflow: hidden; white-space: nowrap; }

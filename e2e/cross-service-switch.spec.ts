@@ -43,7 +43,9 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   // 开一段 DeepSeek 的对话，先说一句
   await 开一段临时会话(page)
   await 等进了对话(page)
-  await expect(page.locator(".statusbar > span").first()).toHaveText("已连接 DeepSeek", { timeout: 5000 })
+  const statusbar = page.getByRole("contentinfo", { name: "应用状态" })
+  await expect(statusbar.getByRole("button", { name: `当前模型：${本来的}`, exact: true })).toBeVisible()
+  await expect(statusbar.locator('[data-service-mark="deepseek"]')).toBeVisible()
   await page.getByPlaceholder(/输入问题/).fill("第一句")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(page.locator(".turns")).toContainText(CANNED_REPLY, { timeout: 60_000 })
@@ -69,7 +71,11 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
 
   // 换完，那颗 pill 自己就对上了
   await expect(page.locator(".composer .model-pill")).toContainText(另一家的)
-  await expect(page.locator(".statusbar > span").first()).toHaveText("已连接 other")
+  const currentModel = statusbar.getByRole("button", { name: `当前模型：${另一家的}`, exact: true })
+  await expect(currentModel).toBeVisible()
+  await currentModel.click()
+  await expect(page.getByRole("dialog", { name: "当前模型", exact: true })).toContainText("other")
+  await page.keyboard.press("Escape")
 
   // ① 还是同一段：会话没多，前面说过的话还在
   expect(await page.locator(".session-list > li").count()).toBe(会话数)

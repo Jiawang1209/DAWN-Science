@@ -32,4 +32,4 @@
 ## 4. 交付
 
 - [x] `npx vitest run tests/delivery tests/skills/default-analysis-delivery.test.ts tests/ui/analysis-delivery.test.tsx tests/workbench/analysis-delivery-backend.test.ts`、`npm run typecheck`、`npm run build`、全量单测与相关 Electron。
-- [ ] 复核 diff、更新开发历史与验收记录并本地提交。正常退出旧预览，备份并核对隔离资料，用本机标准启动器启动此分支，在专用样例中展示实际生成的报告。
+- [x] 复核 diff、更新开发历史与验收记录并本地提交。正常退出旧预览，备份并核对隔离资料，用本机标准启动器启动此分支，在专用样例中展示实际生成的报告。

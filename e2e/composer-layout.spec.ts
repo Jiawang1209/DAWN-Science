@@ -117,7 +117,7 @@ test("项目目录、文件选择、方案提交、普通发送与亮暗主题",
   const input = root.getByPlaceholder(/输入问题/)
   await expect(root.locator(".composer-environment")).toContainText("workspace")
   await root.getByRole("button", { name: `工作目录：${workspace}`, exact: true }).click()
-  await expect(page.getByRole("dialog", { name: "工作目录" })).toContainText(workspace)
+  await expect(page.getByRole("dialog", { name: "工作目录" })).not.toContainText(workspace)
   await page.keyboard.press("Escape")
   writeFileSync(join(workspace, "samples.csv"), "sample,value\nA,12\nB,18\n")
   await app.evaluate(({ dialog }, file) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] }) }, join(workspace, "samples.csv"))

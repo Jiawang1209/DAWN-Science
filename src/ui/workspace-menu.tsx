@@ -100,13 +100,12 @@ export function WorkspaceMenu({ workspace, onPick, data, onSelect }: {
       <label className="workspace-menu-search"><搜索图标 />
         <input ref={search} className="control" type="search"
         aria-label={t("搜索工作目录")} placeholder={t("搜索工作目录")} value={query} onChange={event => setQuery(event.target.value)} /></label>
-      {workspace ? <div className="ws-pop-path">{workspace}</div> : null}
       {error || data.error ? <p className="caveat workspace-menu-error" role="alert">{error ?? data.error}</p> : null}
       <div className="workspace-menu-options" role="menu" aria-label={t("选择工作目录")}>
         <div className="workspace-menu-recent" role="group" aria-label={t("最近工作目录")}>
           {paths.map(path => <Button key={path} variant="ghost" size="inline" role="menuitemradio" aria-label={path}
             aria-checked={workspace === path} disabled={busy} onClick={() => void select(path)}>
-            <文件夹图标 /><span className="workspace-menu-label"><span>{目录显示名(path)}</span><span className="workspace-menu-path">{path}</span></span>
+            <文件夹图标 /><span className="workspace-menu-label"><span>{目录显示名(path)}</span></span>
             {workspace === path ? <勾图标 /> : null}
           </Button>)}
           {!paths.length ? <p className="hint workspace-menu-empty">{query ? t("没有匹配的工作目录") : t("暂无最近工作目录")}</p> : null}
@@ -116,7 +115,7 @@ export function WorkspaceMenu({ workspace, onPick, data, onSelect }: {
         <Button variant="ghost" size="inline" className="workspace-menu-default" role="menuitemradio"
           aria-checked={!workspace} disabled={busy || !data.defaultPath} onClick={() => void select(undefined)}>
           <文件夹图标 /><span className="workspace-menu-label"><span>{t("默认工作目录")}</span>
-            <span className="workspace-menu-path">{data.defaultPath ?? (data.error ? t("默认工作目录暂不可用") : t("正在读取默认工作目录…"))}</span></span>
+            {!data.defaultPath ? <span className="workspace-menu-path">{data.error ? t("默认工作目录暂不可用") : t("正在读取默认工作目录…")}</span> : null}</span>
           {!workspace ? <勾图标 /> : null}
         </Button>
       </div>

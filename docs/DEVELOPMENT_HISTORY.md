@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-28 — 工具栏、工作目录和状态栏最终检查后合并本地main
+
+- **Type**: chore
+- **What**: 完成独立代码审查及扩大回归，修正极窄侧栏模型空间和旧跨服务验收定位；从cc142f46快进合并codex/composer-toolbar-order至功能提交2e5391fc，本条及验收记录为后续文档提交。
+- **Verification**: 合并前完整UI1786、Node3868（10项条件跳过）、68项Electron、类型检查及完整构建通过。主仓库合并后再次完整UI1786、Node3868（同10项跳过）、10项Electron、类型检查与完整构建通过。并发运行时一条旧40ms传输测试先超时；保留失败日志，未放宽阈值，原文件和Node全量单独复跑通过。详见 `docs/reviews/2026-10-28-composer-toolbar-main-verification.md`。
+- **Impact**: 仅本地main；未推送、未替换安装版，保留原预览、运行中的终端及功能工作树。
+
 ### 2026-10-28 — 合并前修复极窄侧栏模型空间与跨服务验收
 
 - **Type**: fix

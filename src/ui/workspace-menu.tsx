@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { TaskSummary } from '../protocol/index.js'
 import { Button } from './primitives.js'
-import { 文件夹图标, 下拉图标, 勾图标, 搜索图标 } from './icons.js'
+import { 文件夹描边图标, 下拉图标, 勾图标, 搜索图标 } from './icons.js'
 import { 目录显示名 } from './format.js'
 import { t, tf } from './i18n/index.js'
 
@@ -46,7 +46,7 @@ export function WorkspaceMenu({ workspace, onPick, data, onSelect }: {
       if (!popup.current || !trigger.current) return
       const rect = trigger.current.getBoundingClientRect()
       const menu = popup.current
-      menu.style.width = `${Math.min(360, window.innerWidth - 24)}px`
+      menu.style.width = `${Math.min(420, window.innerWidth - 24)}px`
       menu.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 12))}px`
       const above = rect.top - menu.offsetHeight - 8
       menu.style.top = `${Math.max(12, above >= 12 ? above : Math.min(rect.bottom + 8, window.innerHeight - menu.offsetHeight - 12))}px`
@@ -79,7 +79,7 @@ export function WorkspaceMenu({ workspace, onPick, data, onSelect }: {
       aria-label={tf("工作目录：{0}", workspace ?? t("默认工作目录"))} aria-haspopup="dialog" aria-expanded={open}
       onClick={() => open ? close() : show()}
       onKeyDown={event => { if (event.key === 'ArrowDown') { event.preventDefault(); show() } }}>
-      <文件夹图标 /><span className="ws-chip-label">{workspace ? 目录显示名(workspace) : t("默认工作目录")}</span><下拉图标 />
+      <文件夹描边图标 /><span className="ws-chip-label">{workspace ? 目录显示名(workspace) : t("默认工作目录")}</span><下拉图标 />
     </Button>
     {open ? createPortal(<div ref={popup} className="ws-pop workspace-menu" role="dialog" aria-label={t("工作目录")}
       onBlur={event => {
@@ -98,26 +98,28 @@ export function WorkspaceMenu({ workspace, onPick, data, onSelect }: {
         buttons[next]?.focus()
       }}>
       <label className="workspace-menu-search"><搜索图标 />
-        <input ref={search} className="control" type="search"
+        <input ref={search} className="control control-integrated" type="search"
         aria-label={t("搜索工作目录")} placeholder={t("搜索工作目录")} value={query} onChange={event => setQuery(event.target.value)} /></label>
       {error || data.error ? <p className="caveat workspace-menu-error" role="alert">{error ?? data.error}</p> : null}
       <div className="workspace-menu-options" role="menu" aria-label={t("选择工作目录")}>
         <div className="workspace-menu-recent" role="group" aria-label={t("最近工作目录")}>
-          {paths.map(path => <Button key={path} variant="ghost" size="inline" role="menuitemradio" aria-label={path}
+          {paths.map(path => <Button key={path} variant="ghost" size="menu-row" role="menuitemradio" aria-label={path}
             aria-checked={workspace === path} disabled={busy} onClick={() => void select(path)}>
-            <文件夹图标 /><span className="workspace-menu-label"><span>{目录显示名(path)}</span></span>
+            <文件夹描边图标 /><span className="workspace-menu-label"><span>{目录显示名(path)}</span></span>
             {workspace === path ? <勾图标 /> : null}
           </Button>)}
           {!paths.length ? <p className="hint workspace-menu-empty">{query ? t("没有匹配的工作目录") : t("暂无最近工作目录")}</p> : null}
         </div>
-        {onPick ? <Button variant="ghost" size="inline" className="workspace-menu-browse" role="menuitem" disabled={busy}
-          onClick={() => { close(); onPick() }}><文件夹图标 /><span>{t("另选文件夹…")}</span></Button> : null}
-        <Button variant="ghost" size="inline" className="workspace-menu-default" role="menuitemradio"
+        <div className="workspace-menu-actions" role="group">
+        {onPick ? <Button variant="ghost" size="menu-row" className="workspace-menu-browse" role="menuitem" disabled={busy}
+          onClick={() => { close(); onPick() }}><文件夹描边图标 /><span>{t("另选文件夹…")}</span></Button> : null}
+        <Button variant="ghost" size="menu-row" className="workspace-menu-default" role="menuitemradio"
           aria-checked={!workspace} disabled={busy || !data.defaultPath} onClick={() => void select(undefined)}>
-          <文件夹图标 /><span className="workspace-menu-label"><span>{t("默认工作目录")}</span>
+          <文件夹描边图标 /><span className="workspace-menu-label"><span>{t("默认工作目录")}</span>
             {!data.defaultPath ? <span className="workspace-menu-path">{data.error ? t("默认工作目录暂不可用") : t("正在读取默认工作目录…")}</span> : null}</span>
           {!workspace ? <勾图标 /> : null}
         </Button>
+        </div>
       </div>
     </div>, document.body) : null}
   </span>

@@ -58,7 +58,7 @@ export type ButtonVariant =
  * 内距/高度/圆角——**而那正是本文件顶上明令禁止的事**。多一档尺寸，
  * 几何就仍然只有一个家。
  */
-export type ButtonSize = "default" | "sm" | "xs" | "inline" | "icon" | "toolbar" | "card" | "card-compact" | "pill"
+export type ButtonSize = "default" | "sm" | "xs" | "inline" | "icon" | "toolbar" | "card" | "card-compact" | "pill" | "menu-row"
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
   variant?: ButtonVariant

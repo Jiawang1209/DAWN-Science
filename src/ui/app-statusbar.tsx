@@ -2,14 +2,15 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefO
 import { createPortal } from 'react-dom'
 import type { InterpreterCandidate, KernelState } from '../protocol/index.js'
 import { Button } from './primitives.js'
-import { 模型图标, 插件图标, 技能图标, 设置图标, 对话图标 } from './icons.js'
+import { 插件图标, 技能图标, 设置图标, 对话图标 } from './icons.js'
+import { ServiceMark } from './service-mark.js'
 import { SessionMenu } from './session-menu-items.js'
 import { t, tf } from './i18n/index.js'
 
 type ProbeResult = { python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] }
 type Extension = 'plugins' | 'skills' | 'mcp' | 'subagents'
 export interface AppStatusBarProps {
-  model?: { name: string; provider?: string | undefined; kind?: string | undefined } | undefined
+  model?: { name: string; provider?: string | undefined; providerId?: string | undefined; kind?: string | undefined } | undefined
   environment: {
     scopeId: string
     label: string
@@ -114,6 +115,7 @@ export function AppStatusBar({ model, environment, counts, scopeLabel, version, 
   const extensionLabel = (item: typeof definitions[number]) => `${item.label} ${counts[item.id] ?? '—'}`
   const toggleDetail = (id: typeof detail) => { setExtensionsOpen(false); setDetail(detail === id ? undefined : id) }
   const interpreter = detail === 'R' || detail === 'python' ? state(detail) : undefined
+  const detected = detail === 'R' ? currentProbe?.result?.r : detail === 'python' ? currentProbe?.result?.python : undefined
   const modelName = model?.name ?? t("未配置模型")
   return <footer className="statusbar app-statusbar" aria-label={t("应用状态")}>
     {alerts ? <div className="app-status-alerts">{alerts}</div> : null}
@@ -121,7 +123,7 @@ export function AppStatusBar({ model, environment, counts, scopeLabel, version, 
       <div className="app-status-environment">
         <Button ref={modelButton} variant="ghost" size="status" className="app-status-model" aria-label={tf("当前模型：{0}", modelName)}
           aria-description={modelName} aria-haspopup="dialog" aria-expanded={detail === 'model'} onClick={() => toggleDetail('model')}>
-          <模型图标 /><span>{modelName}</span>
+          <ServiceMark provider={model?.providerId} label={model?.provider ?? model?.name} /><span>{modelName}</span>
         </Button>
         {(['R', 'python'] as const).map(language => {
           const s = state(language), name = language === 'R' ? 'R' : 'Python'
@@ -154,6 +156,7 @@ export function AppStatusBar({ model, environment, counts, scopeLabel, version, 
         <p>{environment.label} · {interpreter.text}</p>
         {interpreter.path ? <code>{interpreter.path}</code> : null}
         {interpreter.candidate?.version ? <p>{tf("解释器版本：{0}", interpreter.candidate.version)}</p> : null}
+        {detected && !interpreter.path ? <p>{tf("检测到 {0} 个候选，其中 {1} 个可用；请在配置中选择。", detected.length, detected.filter(c => c.kernelPackage === 'present' && !c.problem).length)}</p> : null}
         {interpreter.kernel && interpreter.kernel.state !== 'exited' ? <p className="hint">{t("内核状态来自当前会话；配置路径需单独检测。")}</p> : null}
         {interpreter.problem ? <p className="caveat" role="alert">{interpreter.problem}</p> : null}
         <div className="app-status-detail-actions">

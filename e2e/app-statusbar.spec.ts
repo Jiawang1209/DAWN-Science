@@ -23,6 +23,17 @@ test('底部数量来自实际名册，模型切换同步，详情及设置入�
   ]
   for (const name of expected) await expect(bar.getByRole('button', { name, exact: true })).toBeVisible()
   await expect(bar.getByRole('button', { name: '当前模型：deepseek-flash' })).toBeVisible()
+  const bottomMark = bar.locator('[data-service-mark="deepseek"]')
+  const composerMark = page.locator('.composer .model-trigger [data-service-mark="deepseek"]')
+  await expect(bottomMark.locator('svg')).toBeVisible()
+  await expect(composerMark.locator('svg')).toBeVisible()
+  for (const mark of [bottomMark, composerMark]) {
+    await expect(mark).toHaveCSS('width', '18px')
+    await expect(mark).toHaveCSS('height', '18px')
+  }
+  await page.evaluate(() => document.documentElement.style.setProperty('--dawn-accent', 'rgb(72, 94, 174)'))
+  for (const mark of [bottomMark, composerMark]) await expect(mark.locator('svg')).toHaveCSS('color', 'rgb(72, 94, 174)')
+  await page.evaluate(() => document.documentElement.style.removeProperty('--dawn-accent'))
   await page.locator('.composer .model-pill .model-trigger').click()
   await page.getByRole('menuitem', { name: /deepseek-v4-deep/ }).click()
   const model = bar.getByRole('button', { name: '当前模型：deepseek-v4-deep' })

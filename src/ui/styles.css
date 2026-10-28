@@ -9324,3 +9324,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .app-status-model { max-width: 125px; }
   .app-status-state { max-width: 70px; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* 服务标识共用尺寸和主题色；无专用素材时保留首字母。 */
+.service-mark { width: 18px; height: 18px; color: var(--dawn-accent); font-size: var(--dawn-fs-meta); }
+.service-mark:not([data-service-mark="initial"]) { background: transparent; }
+.service-mark svg, .app-status-main .service-mark svg { width: 100%; height: 100%; }
+
+.service-mark-icon { display: block; width: 100%; height: 100%; background: currentColor; mask-position: center; mask-size: contain; mask-repeat: no-repeat; }

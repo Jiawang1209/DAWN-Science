@@ -4268,7 +4268,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // MCP / 插件这两发**读的是 `载MCP` / `载插件`**（不是各自另写一份 `client.get`）——
     // MCP 屏、插件屏与这一发是同一个接口的三处调用点，各写各的迟早会漂移（2026-09-16 审查抓的）。
     // 这两发失败要出声（`console.error`），跟旁边三发的静默 `.catch(() => {})` 不一样：
-    // 数字读不到时那一行就干脆不显示（`count` 传 `undefined`），界面上看不出异常，
+    // 数字读不到时设置项不显示数字，底部状态栏显示横线（`count` 传 `undefined`），
     // 不出声就真的没人知道——这是评审过的取舍，不是疏漏。
     载MCP()
       .then((r) => 还在 && 设MCP计数({ projectId, count: r.servers.filter((s) => !s.off).length }))
@@ -6359,7 +6359,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       <CommandPalette commands={commands} />
 
       <AppStatusBar
-        model={状态栏模型名 ? { name: 状态栏模型名,
+        model={状态栏模型名 ? { name: 状态栏模型名, providerId: 状态栏模型?.provider,
           provider: 状态栏模型?.provider ? serviceLabel(状态栏模型.provider) : undefined,
           kind: 状态栏agent?.kind === 'native' ? 'API' : 状态栏agent?.kind?.toUpperCase(),
         } : undefined}

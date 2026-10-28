@@ -1,3 +1,4 @@
+import { ServiceMark } from "./service-mark.js"
 import { WorkspaceMenu, type WorkspaceMenuData } from "./workspace-menu.js"
 import { AnalysisRouteSummary } from "./analysis-route.js"
 import type { KernelState } from '../protocol/index.js'
@@ -3153,6 +3154,7 @@ export function AgentPill({
           * 作者：*「ds-chat 我感觉不如直接叫 DeepSeek。」*
           * `label` 缺省时退回 id——那至少是实话。
           */}
+        <ServiceMark label={triggerLabel ?? currentLabel ?? (current ? (label ? label(current) : current) : undefined)} />
         {triggerLabel ?? currentLabel ?? (current ? (label ? label(current) : current) : t("选择 agent"))}
         {kind ? <span className="kind">{KIND_LABEL[kind]}</span> : null}
         <下拉图标 />
@@ -3191,6 +3193,7 @@ export function AgentPill({
                         onSwitchService?.(sv.providerId)
                       }}
                     >
+                      <ServiceMark provider={sv.providerId} label={sv.name} />
                       <span className="name">{sv.name}</span>
                       {sv.name === currentLabel ? <span className="hint">{t("当前")}</span> : null}
                     </Row>
@@ -3226,6 +3229,7 @@ export function AgentPill({
                       onPick(a)
                     }}
                   >
+                    <ServiceMark label={label ? label(a) : a} />
                     <span className="name">{label ? label(a) : a}</span>
                     {/* **每一条都标出它是哪一路**（2026-08-19 作者要的）：挑之前才是需要知道的时候 */}
                     {(() => {
@@ -3420,7 +3424,6 @@ export function ModelPill({
   const 当前名 = kind === "acp"
     ? ACP当前名 && !/^(default(?:\s*\(.*\))?|auto)$/i.test(ACP当前名.trim()) ? ACP当前名 : label ?? "ACP"
     : current?.model ?? t("CLI 默认")
-  const 当前标 = 叫什么(current?.provider).slice(0, 1).toUpperCase()
 
   /**
    * **按服务分组**（2026-08-12）。
@@ -3459,9 +3462,7 @@ export function ModelPill({
         aria-label={tf("当前模型：{0}。点击切换", 当前名)}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="svc-mark" aria-hidden="true">
-          {当前标}
-        </span>
+        <ServiceMark provider={current?.provider} label={叫什么(current?.provider)} />
         <span className="model-name">{当前名}</span>
         <三角图标 className={`model-caret${open ? " open" : ""}`} />
       </Button>
@@ -3499,9 +3500,7 @@ export function ModelPill({
                           onPick(c)
                         }}
                       >
-                        <span className="svc-mark" aria-hidden="true">
-                          {叫什么(c.provider).slice(0, 1).toUpperCase()}
-                        </span>
+                        <ServiceMark provider={c.provider} label={叫什么(c.provider)} />
                         <span className="name">{c.model}</span>
                         {/**
                           * **当前那条打勾，且同时留一个字**——

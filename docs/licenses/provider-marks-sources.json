@@ -1,0 +1,218 @@
+{
+  "package": "@lobehub/icons-static-svg",
+  "version": "1.101.0",
+  "tarballIntegrity": "sha512-Ob6WJOjXauLP/A1qZ9OlPlrncPNbwsIGH+ToFdxWt3APtaaMKtbIBGqJ0/LY2eBeUwTQuG7GpUw9LwPiv7OTdg==",
+  "note": "Monochrome marks bundled locally; mask uses theme accent. Names and marks belong to respective owners. Kimi remains K; DeepSeek uses its official MIT favicon separately.",
+  "assets": [
+    {
+      "brand": "anthropic",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/anthropic.svg",
+      "sha256": "e833fdfa7e7187a86a05b870925067556a506dcd4239089aed73e1e58c9366a3"
+    },
+    {
+      "brand": "azure",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/azure.svg",
+      "sha256": "a48fa106b32093acac4cb858df39c4ee6bf1049d2ecec92ad556190f7c4d9a0e"
+    },
+    {
+      "brand": "baseten",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/baseten.svg",
+      "sha256": "d560883f6df500c1290b2fb2018836d853c72697c1fc252793538fabf53ff28d"
+    },
+    {
+      "brand": "bedrock",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/bedrock.svg",
+      "sha256": "b07f07bb6b77a1ee83916430250dc9adfc799ec43fbc5932947af099bcfcb9f9"
+    },
+    {
+      "brand": "cerebras",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/cerebras.svg",
+      "sha256": "05af9593eca3fefdb30c5ad042040f008beea2b27e0a6b7315c319492f7a44ff"
+    },
+    {
+      "brand": "claude",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/claude.svg",
+      "sha256": "365a70a7eb3956d9b9a96086058ebe04e1dbd8e291a756ad964e8a283fbd6d38"
+    },
+    {
+      "brand": "cloudflare",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/cloudflare.svg",
+      "sha256": "78f8973dad59f8af7c4042ef6be451d809a4e14bdb2151a75a76b4e0811fd22f"
+    },
+    {
+      "brand": "cohere",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/cohere.svg",
+      "sha256": "72851dd36d6ab017f535202744765eead8f99cfb5ced77e1840bfdb70db7a85c"
+    },
+    {
+      "brand": "copilot",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/copilot.svg",
+      "sha256": "5d8f86934fb4d7a85686dfbc6f12625567b15f92424030259dcc2e73b92ea943"
+    },
+    {
+      "brand": "doubao",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/doubao.svg",
+      "sha256": "cbda61929dbe7263a969d34ca8a022226d45d20fddfe333c1608abcb52de7b52"
+    },
+    {
+      "brand": "fireworks",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/fireworks.svg",
+      "sha256": "9991ab2a8331096d3f408e07a5f2e1cb54c369143dd9fc7a97f6458478b33fe3"
+    },
+    {
+      "brand": "gemini",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/gemini.svg",
+      "sha256": "87d5b3c4be75a66f54c1936482a263df68185545b741129badd1b7c2449c18d3"
+    },
+    {
+      "brand": "google",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/google.svg",
+      "sha256": "c4bb45d362cb0a98b33b1f2fb424db2a5cd95a90e1043ae4e387de81a5e64951"
+    },
+    {
+      "brand": "groq",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/groq.svg",
+      "sha256": "078d5cf6e7a54905040c15ddacf5ea33c13042fe7739e820cedc2096e4406651"
+    },
+    {
+      "brand": "huggingface",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/huggingface.svg",
+      "sha256": "de7f2c60f974b75b385116ef0dc6a9fa62f2fd7bf58156b5623301a5436b91c4"
+    },
+    {
+      "brand": "hunyuan",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/hunyuan.svg",
+      "sha256": "7306a65eb71c4de61e21a637e5c4fef94afde823678e225c46f891cc783f6531"
+    },
+    {
+      "brand": "ling",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/ling.svg",
+      "sha256": "7fea1375aea75a52afef914dde585f35d0055916f83ae74f35ed42da2e59b9f9"
+    },
+    {
+      "brand": "minimax",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/minimax.svg",
+      "sha256": "bb96e2005081494716de6af5fd030701ae551ee68393ad61b325c07325607848"
+    },
+    {
+      "brand": "mistral",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/mistral.svg",
+      "sha256": "a06cfa54e7deff7f7544175b006b7f8a03fbc5624c44f7d553a44d07ea96e629"
+    },
+    {
+      "brand": "nvidia",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/nvidia.svg",
+      "sha256": "5a419b99e0ffdbfbe8caa7ec25581054eae03024da59cb860c54ea55ac8e7e73"
+    },
+    {
+      "brand": "ollama",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/ollama.svg",
+      "sha256": "3a268218fb2e6e81fa31df70f70b51331625047794db81db21d35359428fae7a"
+    },
+    {
+      "brand": "openai",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/openai.svg",
+      "sha256": "a595df6b423920c67a7f8f73c063e4bfb72d415948097b6cac063a2366bb5186"
+    },
+    {
+      "brand": "opencode",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/opencode.svg",
+      "sha256": "7cfa6e9d6726f7c9fa26c7d9aef0dfec52d20a137380454340f30f12ccbfd302"
+    },
+    {
+      "brand": "openrouter",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/openrouter.svg",
+      "sha256": "ae671cc83de9bd45db97a47ed5e38a4e1bd9f93a12be495ba4b4f8b284026bca"
+    },
+    {
+      "brand": "perplexity",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/perplexity.svg",
+      "sha256": "c66c64e9e3c273ef6c235f743808d67ffa7d482e8cbe4a79496a42b60333e1fe"
+    },
+    {
+      "brand": "ppio",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/ppio.svg",
+      "sha256": "b6f815ab19730f01c6a3857a3de6232cf33a64401c110033696d6a0c837b044e"
+    },
+    {
+      "brand": "qwen",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/qwen.svg",
+      "sha256": "b2c16efc3bd32b88a941842d41222e1e1e0e40441222218b725afc0aef6d9a36"
+    },
+    {
+      "brand": "sambanova",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/sambanova.svg",
+      "sha256": "4f82732325bba2496cb91f2e72636d05c03276763562b75795c37f764ae4357f"
+    },
+    {
+      "brand": "siliconcloud",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/siliconcloud.svg",
+      "sha256": "50025587d401e07f7d82a2977146176bd8c9d9f52c54c452f31bb49c16d0cf3c"
+    },
+    {
+      "brand": "spark",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/spark.svg",
+      "sha256": "e19b6b5d7c398d115934e4c8762a8fde525db792e2c4e8bc6934a71e70e7ce7c"
+    },
+    {
+      "brand": "stepfun",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/stepfun.svg",
+      "sha256": "90138fab370e3c0ce3105d38a496d6796ce73d44f9829d8e1045013dc064bcd2"
+    },
+    {
+      "brand": "together",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/together.svg",
+      "sha256": "b3ec218e7e0b0432a2ce07f5ec98a1dcd24f808c74d5fee624ab31e4947feef3"
+    },
+    {
+      "brand": "vercel",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/vercel.svg",
+      "sha256": "4874d52d8b2ce7c309cbd10c424fee123b2c9483e76d76ad0dca41794483eb24"
+    },
+    {
+      "brand": "volcengine",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/volcengine.svg",
+      "sha256": "f29d0bdc284b33d8664ef221add7fbf06a5b370ef92767fa33f6020c914d3d33"
+    },
+    {
+      "brand": "xiaomimimo",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/xiaomimimo.svg",
+      "sha256": "b04ad7dad52af2212c4567daf0ee6856f2c4625c92c680a27f9880295d558b71"
+    },
+    {
+      "brand": "zai",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/zai.svg",
+      "sha256": "e748cb5108ce37b116d7a5ba97d37e0ae97eadf6849b0de11afb248e244a01e1"
+    },
+    {
+      "brand": "zhipu",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/zhipu.svg",
+      "sha256": "d4c3fe5ff92820b2ae5e3ddaaa30e6fc622cb746b75baad97f4bb2428fa25c5d"
+    },
+    {
+      "brand": "baichuan",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/baichuan.svg",
+      "sha256": "6f2640b1b3eca4bd3758bb823b1a2df0327d286959706ba14bb564de11ae0ffb"
+    },
+    {
+      "brand": "baiducloud",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/baiducloud.svg",
+      "sha256": "21d141d12d3aad70dd39e5ef0f0713de1dbe5f403298f9a939c23394a47a3ec8"
+    },
+    {
+      "brand": "alibabacloud",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/alibabacloud.svg",
+      "sha256": "7a62c43622e764c416b9069a8ce505d2560f4b4bcf71ed46bbc32d7259416c56"
+    },
+    {
+      "brand": "tencentcloud",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/tencentcloud.svg",
+      "sha256": "0563b1dbaa01aff4f20352bc9eb49bec17debeb3901a9ee80b044ac4d792c97d"
+    },
+    {
+      "brand": "xai",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.101.0/icons/xai.svg",
+      "sha256": "89eb7de9f0d02a41cfecd9109e253d7fd3529e27467dee4254faa67f3ac21451"
+    }
+  ]
+}

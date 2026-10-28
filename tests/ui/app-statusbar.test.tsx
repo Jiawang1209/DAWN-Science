@@ -104,6 +104,16 @@ describe('App 底部状态栏', () => {
     expect((screen.getByRole('button', { name: '检测解释器' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
+  it('未配置时检测显示候选及可用数量，不擅自绑定解释器', async () => {
+    const p = props()
+    render(<AppStatusBar {...p} environment={{ ...p.environment, paths: {} }} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Python：未配置' }))
+    fireEvent.click(screen.getByRole('button', { name: '检测解释器' }))
+    await screen.findByText('检测到 1 个候选，其中 1 个可用；请在配置中选择。')
+    expect(screen.getByRole('button', { name: 'Python：未配置' })).toBeTruthy()
+    expect(p.environment.configure).not.toHaveBeenCalled()
+  })
+
   it('内核 busy/starting/detached 如实显示，退出后回到配置检测状态', () => {
     const p = props(); const { rerender } = render(<AppStatusBar {...p} />)
     for (const [state, text] of [['busy', '运行中'], ['starting', '启动中'], ['detached', '连接中断'], ['exited', '已配置待检测']] as const) {

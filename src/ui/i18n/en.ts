@@ -16,6 +16,7 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "检测到 {0} 个候选，其中 {1} 个可用；请在配置中选择。": "Found {0} candidates, {1} ready to use; choose one in configuration.",
   "未找到当前会话的服务器配置": "Server configuration for this conversation was not found",
   "当前项目": "Current project",
   "{0} 解释器状态": "{0} interpreter status",

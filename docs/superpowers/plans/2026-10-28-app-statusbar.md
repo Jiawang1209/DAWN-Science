@@ -30,4 +30,11 @@
 - [x] 新建 `e2e/app-statusbar.spec.ts`，验证真实 Electron 下模型、数量、设置跳转、详情、窄窗口不溢出与版本末尾位置，截图。
 - [x] 运行 typecheck、完整 UI 测试、build 和相关 Electron：新状态栏、侧栏菜单、工具栏/目录选择和设置向导。
 - [x] 检查 diff 和边界，更新开发记录与验证报告，提交到当前分支。
-- [ ] 空闲确认后停止旧预览，运行本机 canonical launch-preview.sh，确认新提交/PID，实际检查底部布局和主题色并截图。保留运行中的预览，确认 main/origin/main 不变。
+- [x] 空闲确认后停止旧预览，运行本机 canonical launch-preview.sh，确认新提交/PID，实际检查底部布局和主题色并截图。保留运行中的预览，确认 main/origin/main 不变。
+
+## 用户追加 — 共用品牌标识
+
+- [x] 核对运行时40个内置服务入口，整理别名；找不到可靠素材的Radius保留R。
+- [x] 使用官方DeepSeek鲸鱼和Lobe Icons单色矢量，42份本地素材约47KB，记录版本/来源/散列/MIT版权，不增加运行时依赖。Kimi保留K。
+- [x] 首页、会话模型菜单、底部摘要复用ServiceMark，统一18px和主题色；有明确服务ID时优先于显示名，防止聚合服务误用托管模型logo。
+- [x] 组件与目录/素材完整性测试；Electron核对实际图标尺寸/主题色、42份素材画布非空及亮暗截图。

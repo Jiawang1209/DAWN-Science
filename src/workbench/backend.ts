@@ -892,16 +892,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   }
 
   /**
-   * 系统给的默认工作目录（2026-08-12，作者定的两个平台各一个）。
-   *
-   * 作者：*「windows 的话就默认设置在桌面吧，mac 默认家目录下设置一个
-   * `DAWN` 的目录就行。」*
-   *
-   * **不是 app data 目录**：那儿是给应用自己放数据的，用户永远找不到，
-   * 而这个目录里会真的落下他的文件。
+   * 未配置时显示实际装配的临时根之父目录，保证设置、菜单与运行位置一致。
+   * 本机预览和CLI可注入隔离根；没有装配信息时才展示系统候选路径。
+   * 只调整默认路径读数，不修改或搬迁任何现有工作区。
    */
-  const 系统默认工作目录 = () =>
-    process.platform === "win32" ? join(homedir(), "Desktop") : join(homedir(), "DAWN")
+  const 系统默认工作目录 = () => scratchRoot ? dirname(resolve(scratchRoot))
+    : process.platform === "win32" ? join(homedir(), "Desktop") : join(homedir(), "DAWN")
 
   /**
    * 正在跑的那些传输（批 4a，2026-08-17）。

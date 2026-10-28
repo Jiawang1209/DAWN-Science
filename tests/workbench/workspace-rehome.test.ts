@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest"
 import Database from "better-sqlite3"
 import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { NativeRuntime } from "../../src/runtime/native.js"
 import type { AgentEvent } from "../../src/runtime/types.js"
 import { SessionManager } from "../../src/session/manager.js"
@@ -54,6 +54,7 @@ it("迁移、重复选择目录及停止恢复后，原会话的回复和用量�
     db.close()
     rmSync(root, { recursive: true, force: true })
   })
+  expect(await backend.getDefaultWorkspace({})).toEqual({ path: dirname(root), isDefault: true })
   const task = await backend.createTask({ agentId: "chat" }) as { taskId: string; sessionId: string }
   const sid = task.sessionId
   const emit = (e: AgentEvent) => (runtime as unknown as { emit(e: AgentEvent): void }).emit(e)

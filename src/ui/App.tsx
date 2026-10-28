@@ -1,3 +1,4 @@
+import { recentWorkspacePaths, type WorkspaceMenuData } from "./workspace-menu.js"
 import { $workspaceFolders, addWorkspaceFolder, removeWorkspaceFolder } from "./state/sidebar.js"
 import type { TerminalAgentState } from '../protocol/terminal.js'
 import { TransferConfirmationDetails } from "./transfer-confirmation.js"
@@ -1820,7 +1821,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 选工作目录 = async (taskId: string) => {
     const ws = await client.pickDirectory(默认工作区?.path)
-    if (!ws) return
+    if (ws) await 选用工作目录(taskId, ws)
+  }
+  const 选用工作目录 = async (taskId: string, ws: string | undefined) => {
+    // Default is a fresh temporary task, never a rehome of an existing project's history.
+    if (ws === undefined) { 回到初始画面(); return }
     const 现在 = tasks.find((x) => x.taskId === taskId)?.workspace
     if (现在 === ws) return
     if (现在) {
@@ -1839,20 +1844,27 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [默认工作区, 设默认工作区状态] = useState<{ path: string; isDefault: boolean } | undefined>(
     undefined,
   )
-  useEffect(() => {
-    if (!ready) return
-    client
-      .get<{ path: string; isDefault: boolean }>("getDefaultWorkspace", {})
-      .then(设默认工作区状态)
-      .catch(() => {
-        /** **读不到就不显示那一格**，不摆一个猜出来的路径——那会指错地方 */
-      })
-  }, [client, ready])
+  const [默认工作区错误, 设默认工作区错误] = useState<string>()
+  const 读取默认工作区 = useCallback(async () => {
+    try {
+      const value = await client.get<{ path: string; isDefault: boolean }>("getDefaultWorkspace", {})
+      设默认工作区状态(value); 设默认工作区错误(undefined)
+    } catch (error) {
+      设默认工作区状态(undefined)
+      设默认工作区错误(error instanceof Error ? error.message : String(error))
+    }
+  }, [client])
+  useEffect(() => { if (ready) void 读取默认工作区() }, [ready, 读取默认工作区])
+  const 工作目录菜单: WorkspaceMenuData = {
+    defaultPath: 默认工作区?.path, recentPaths: recentWorkspacePaths(tasks), error: 默认工作区错误,
+    onOpen: () => { void 读取默认工作区() },
+  }
   const 设默认工作区 = async (path: string) => {
     try {
       设默认工作区状态(
         await client.get<{ path: string; isDefault: boolean }>("setDefaultWorkspace", { path }),
       )
+      设默认工作区错误(undefined)
     } catch (e) {
       fail(e)
     }
@@ -3691,9 +3703,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const [刚选的工作区, 设刚选的工作区] = useState<string | undefined>(undefined)
 
   // 两个入口共用选目录、注册项目与刷新列表；添加工作区不切换会话或清空草稿。
-  async function chooseWorkspaceDirectory(): Promise<{ path: string; projectId: string } | null> {
+  async function chooseWorkspaceDirectory(selected?: string): Promise<{ path: string; projectId: string } | null> {
     try {
-      const path = await client.pickDirectory(默认工作区?.path)
+      const path = selected ?? await client.pickDirectory(默认工作区?.path)
       if (!path) return null
       const project = await client.get<{ projectId: string }>("openProject", { workspace: path })
       await loadProjects(client)
@@ -5723,7 +5735,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                      * 没有账本、agent 的手还没伸出去。那时它只是「我改主意了」，
                      * 不是一扇反向的门。
                      */
-                    { onPickWorkspace: () => void 选工作目录(当前任务.taskId) }
+                    { onPickWorkspace: () => void 选工作目录(当前任务.taskId), workspaceMenu: 工作目录菜单, onSelectWorkspace: (path: string | undefined) => 选用工作目录(当前任务.taskId, path) }
                   : {})}
                 onPickAgent={(id) => {
                   void 换运行时另起一段(id).catch(fail)
@@ -5869,8 +5881,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                *
                * **取消就什么都不做**：改主意不是错误。
                */
-              onPickDirectory={async () => {
-                const picked = await chooseWorkspaceDirectory()
+              workspaceMenu={工作目录菜单}
+              onPickDirectory={async (path) => {
+                const picked = await chooseWorkspaceDirectory(path)
                 if (!picked) return null
                 setActiveProjectId(picked.projectId)
                 设刚选的工作区(picked.path)

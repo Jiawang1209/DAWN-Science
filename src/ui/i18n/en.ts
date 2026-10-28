@@ -2447,4 +2447,12 @@ export const EN: Readonly<Record<string, string>> = {
   "保存文献清单": "Save selected references",
   "联网检索文献、核对 DOI 并保存所选记录。默认开启；开关改动对新 API 会话生效。匿名访问受服务额度限制。": "Search literature online, check DOIs and save selected records. Enabled by default; start a new chat after enabling. Anonymous access has service limits.",
   "仅核对索引元数据，不代表已阅读全文。远端会话仅查询，本地会话可保存文献清单。": "Checks indexed metadata, without claiming full-text review. Remote chats can query; local chats can also save references.",
+  "搜索工作目录": "Search working directories",
+  "选择工作目录": "Choose working directory",
+  "最近工作目录": "Recent working directories",
+  "没有匹配的工作目录": "No matching working directories",
+  "暂无最近工作目录": "No recent working directories",
+  "默认工作目录暂不可用": "Default working directory is unavailable",
+  "正在读取默认工作目录…": "Loading default working directory…",
+
 }

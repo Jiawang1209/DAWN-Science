@@ -10,6 +10,7 @@
 
 | 要找什么 | 去哪 |
 |---|---|
+| **输入区目录与上下文**：可搜索最近目录，默认工作目录固定底部并进入临时任务；上下文跟随主题色、预警仍红色 | `docs/superpowers/specs/2026-10-28-workspace-menu-design.md` · `docs/reviews/2026-10-28-workspace-menu-verification.md` |
 | **产物来源与关键结果留存**：预览内一键保留、历史直接查看，来源与组合折叠；本地工具/内核自动记录与固定版本交付 | `docs/产物来源与留存-怎么用.md` · `docs/superpowers/specs/2026-10-27-artifact-provenance-retention-design.md` |
 | **Markdown 与分步脚本交付**：文档相对图片和脚本链接、整理交付中从整个项目添加已有文件 | `docs/产物来源与留存-怎么用.md` · `docs/reviews/2026-10-28-markdown-project-delivery-verification.md` |
 | **默认分析交付规范**：报告说明分步脚本、调用方式和输入输出，不嵌入脚本全文；程序保证采用文件链接与调用目标 | `skills/analysis-delivery/SKILL.md` · `docs/superpowers/specs/2026-10-28-default-analysis-delivery-design.md` |

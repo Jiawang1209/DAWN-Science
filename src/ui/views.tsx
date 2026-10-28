@@ -1,3 +1,4 @@
+import { WorkspaceMenu, type WorkspaceMenuData } from "./workspace-menu.js"
 import { AnalysisRouteSummary } from "./analysis-route.js"
 import type { KernelState } from '../protocol/index.js'
 import { artifactEntries } from "./artifact-list.js"
@@ -157,7 +158,17 @@ function ComposerEnvironment({ children, remote }: {
   )
 }
 
-function WorkspaceEntry({
+function WorkspaceEntry({ workspace, onPick, menu, onSelect }: {
+  workspace?: string | undefined
+  onPick?: (() => void) | undefined
+  menu?: WorkspaceMenuData | undefined
+  onSelect?: ((path: string | undefined) => void | Promise<void>) | undefined
+}) {
+  return menu && onSelect ? <WorkspaceMenu workspace={workspace} onPick={onPick} data={menu} onSelect={onSelect} />
+    : <WorkspacePathEntry workspace={workspace} onPick={onPick} />
+}
+
+function WorkspacePathEntry({
   workspace,
   onPick,
 }: {
@@ -3802,6 +3813,8 @@ export function ConversationView({
   currentKernels,
   workspace,
   onPickWorkspace,
+  workspaceMenu,
+  onSelectWorkspace,
   serviceLabel,
   onOpenSettings,
   待发: 传进来的待发,
@@ -3853,6 +3866,8 @@ export function ConversationView({
   workspace?: string | undefined
   /** 去弹原生目录选择器（设一个 / 换一个）。**不给就不画那颗按钮** */
   onPickWorkspace?: (() => void) | undefined
+  workspaceMenu?: WorkspaceMenuData | undefined
+  onSelectWorkspace?: ((path: string | undefined) => void | Promise<void>) | undefined
   /** provider id → 该怎么称呼（`deepseek` → `DeepSeek`）。模型 pill 的分组标题用它 */
   serviceLabel?: ((providerId: string) => string) | undefined
   /** 「配置自定义模型」通向哪。**不给就不画那一条** */
@@ -5244,7 +5259,8 @@ export function ConversationView({
         <div className="composer-card" hidden={questionTakeover}>
         <ComposerEnvironment remote={session.remote}>
             {session.remote || onPickWorkspace || workspace ? (
-              <WorkspaceEntry
+              <WorkspaceEntry key={session.sessionId}
+                {...(!session.remote ? { menu: workspaceMenu, onSelect: onSelectWorkspace } : {})}
                 {...(session.remote ? { workspace: session.remote.cwd } : workspace ? { workspace } : {})}
                 {...(!session.remote && onPickWorkspace ? { onPick: onPickWorkspace } : {})}
               />
@@ -7073,6 +7089,7 @@ export function EmptyConversation({
   enhanceReason,
   onOpenSettings,
   onPickDirectory,
+  workspaceMenu,
   先出方案,
 }: {
   agents: readonly string[]
@@ -7123,7 +7140,8 @@ export function EmptyConversation({
    * 因为只有选择了，才归类为项目，如果不选择目录，那么就是会话。」*
    * ——**归类的那个决定应该在开口之前就能做**。
    */
-  onPickDirectory?: (() => Promise<string | null>) | undefined
+  onPickDirectory?: ((path?: string) => Promise<string | null>) | undefined
+  workspaceMenu?: WorkspaceMenuData | undefined
   onOpenSettings: () => void
   /**
    * 空态那颗「先出方案」（2026-09-27）：按下只是记住「第一句按先出方案发」，由 App 在会话建出来、第一句发出去之前打开。
@@ -7426,6 +7444,12 @@ export function EmptyConversation({
             <ComposerEnvironment>
                 {onPickDirectory ? (
                   <WorkspaceEntry
+                    menu={workspaceMenu}
+                    onSelect={async path => {
+                      if (path === undefined) { 设工作目录(undefined); return }
+                      const selected = await onPickDirectory(path)
+                      if (selected) 设工作目录(selected)
+                    }}
                     {...(工作目录 ? { workspace: 工作目录 } : {})}
                     onPick={() => {
                       void onPickDirectory().then((d) => {

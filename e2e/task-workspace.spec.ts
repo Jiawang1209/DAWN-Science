@@ -102,6 +102,7 @@ test.describe("设完之后", () => {
      * 绕过界面直接打 IPC 验的是后端，而**接线才是本项目翻过车的地方**。
      */
     await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
+    await page.getByRole("menuitem", { name: "另选文件夹…" }).click()
 
     /**
      * ① **对话里留了一行。**
@@ -167,6 +168,7 @@ test.describe("空态就选好目录", () => {
     const chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
     await expect(chip).toBeVisible()
     await chip.click()
+    await page.getByRole("menuitem", { name: "另选文件夹…" }).click()
     // 选完之后 chip 上写的是路径，不再是「工作目录」
     await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
       /工作目录/,
@@ -221,6 +223,7 @@ test.describe("开场卡", () => {
 
     const chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
     await chip.click()
+    await page.getByRole("menuitem", { name: "另选文件夹…" }).click()
     await expect(page.locator(".composer-card .ws-chip-label").first()).not.toHaveText(
       /工作目录/,
     )
@@ -266,6 +269,7 @@ test.describe("选好目录之后", () => {
      */
     const 空态chip = page.locator(".composer-card").getByRole("button", { name: /工作目录/ })
     await 空态chip.click()
+    await page.getByRole("menuitem", { name: "另选文件夹…" }).click()
     await expect(
       page.locator(".composer-card").getByRole("button", { name: "改回普通对话" }),
     ).toHaveCount(0)
@@ -293,6 +297,7 @@ test.describe("选好目录之后", () => {
   test("**chip 只写文件夹名；点开看得到整条路径，能另选**", async ({ dawn }) => {
     const { page } = dawn
     await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
+    await page.getByRole("menuitem", { name: "另选文件夹…" }).click()
 
     const 底栏 = page.locator(".composer-card")
     const 名 = 目标2.split(/[\\/]/).pop()!
@@ -311,7 +316,7 @@ test.describe("选好目录之后", () => {
 
     // 「另选文件夹…」真去弹选择器；选完卡收起、chip 照旧写名字
     await chip.click()
-    await 卡.getByRole("button", { name: "另选文件夹…" }).click()
+    await 卡.getByRole("menuitem", { name: "另选文件夹…" }).click()
     await expect(卡).toHaveCount(0)
     await expect(标签).toHaveText(名)
   })
@@ -348,6 +353,7 @@ test.describe("普通对话聊了几句再选目录", () => {
     await 最后一轮说完(page)
 
     await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
+    await page.getByRole("menuitem", { name: "另选文件夹…" }).click()
     await expect(page.locator(".turns")).toContainText("已归入项目", { timeout: 30_000 })
     // 之前那句还在屏幕上（同一段对话，不是新开的）
     await expect(page.locator(".turns").getByText("先记住：暗号是蓝鲸", { exact: true })).toBeVisible()
@@ -380,7 +386,7 @@ test.describe("已在项目里再选另一个目录", () => {
 
     const chip = page.locator(".composer-card .ws-chip").first()
     await chip.click()
-    await page.getByRole("dialog", { name: "工作目录" }).getByRole("button", { name: "另选文件夹…" }).click()
+    await page.getByRole("dialog", { name: "工作目录" }).getByRole("menuitem", { name: "另选文件夹…" }).click()
 
     // 主区换成了新目录里的一段空对话：chip 写着新文件夹名，之前那句不在这一屏
     const 名 = 目标5.split(/[\\/]/).pop()!

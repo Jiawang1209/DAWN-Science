@@ -359,6 +359,7 @@ describe("MVP 主路径 · 给任务选工作目录", () => {
     const h = harness()
     render(<App client={h.client} />)
     fireEvent.click(await screen.findByRole("button", { name: /工作目录/ }))
+    fireEvent.click(await screen.findByRole("menuitem", { name: "另选文件夹…" }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
 
     // 选完之后开口，任务就带着这个目录建出来
@@ -375,6 +376,7 @@ describe("MVP 主路径 · 给任务选工作目录", () => {
     const h = harness({ pick: null })
     render(<App client={h.client} />)
     fireEvent.click(await screen.findByRole("button", { name: /工作目录/ }))
+    fireEvent.click(await screen.findByRole("menuitem", { name: "另选文件夹…" }))
     await waitFor(() => expect(h.pickDirectory).toHaveBeenCalled())
 
     // chip 还写着「工作目录」——**没设就说没设**，不编一个出来

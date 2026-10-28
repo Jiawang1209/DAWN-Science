@@ -7951,9 +7951,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   display: inline-flex;
   align-items: center;
   gap: var(--dawn-space-1);
-  font-size: var(--dawn-fs-meta);
+  font-size: var(--dawn-fs-sub);
+  font-weight: var(--dawn-weight-semibold);
   font-variant-numeric: tabular-nums;
-  color: var(--dawn-text-2);
+  color: var(--dawn-accent);
   background: transparent;
 }
 .ctx-meter .btn.ctx-meter-trigger:hover:not(:disabled) { background: var(--dawn-control-hover); }
@@ -7961,7 +7962,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .ctx-meter[data-level="warn"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="dim"] .btn.ctx-meter-trigger { color: var(--dawn-text-3); }
-.ctx-meter-ring { flex: none; }
+.ctx-meter-ring { flex: none; width: 18px; height: 18px; }
 /* 「窄了只留环 + 数」那条容器查询（2026-09-27）撤了：2026-09-28 起仪表处处只写环 + 数，「上下文」三个字不再画（见 context-meter.tsx） */
 /**
  * **坞那么窄时「优化输入」也只留星**（2026-09-27）。仪表收成「◯ 37%」之后，坞默认宽 380 的附栏仍差约 46px——
@@ -9256,3 +9257,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .project-file-picker-list > .btn { justify-content: flex-start; overflow-wrap: anywhere; white-space: normal; }
 .project-file-picker-list .delivery-choice-row { padding: var(--dawn-space-2); overflow-wrap: anywhere; }
 .preview-document .md img { display: block; max-width: 100%; height: auto; }
+
+/* 本地工作目录选择：可搜索的最近目录，默认项固定在底部。 */
+.ws-pop.workspace-menu { position: fixed; bottom: auto; min-width: 0; max-width: calc(100vw - 24px); max-height: min(34rem, calc(100vh - 24px)); padding: var(--dawn-space-2); gap: var(--dawn-space-2); box-sizing: border-box; }
+.workspace-menu-search { display: flex; align-items: center; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-2); flex: 0 0 auto; }
+.workspace-menu-search > .icon { color: var(--dawn-text-3); flex: 0 0 auto; }
+.workspace-menu-search .control { min-width: 0; width: 100%; border: 0; background: transparent; }
+.workspace-menu-options { display: flex; flex-direction: column; min-height: 0; }
+.workspace-menu-recent { min-height: 0; max-height: 16rem; overflow-y: auto; }
+.workspace-menu-options .btn { display: flex; align-items: center; justify-content: flex-start; gap: var(--dawn-space-2); width: 100%; text-align: left; }
+.workspace-menu-options .btn > .icon { flex: 0 0 auto; color: var(--dawn-text-3); }
+.workspace-menu-options .btn[aria-checked="true"] > .icon { color: var(--dawn-accent); }
+.workspace-menu-label { display: flex; flex: 1; flex-direction: column; gap: var(--dawn-space-1); min-width: 0; }
+.workspace-menu-path { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); white-space: normal; overflow-wrap: anywhere; }
+.workspace-menu-browse, .workspace-menu-default { flex: 0 0 auto; border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: 0; }
+.workspace-menu-empty, .workspace-menu-error { margin: var(--dawn-space-2); }

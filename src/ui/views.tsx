@@ -705,15 +705,13 @@ const 上传项 = [
   { kind: "data", 名: msgid("上传数据") },
 ] as const
 
-function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, onToggleDock, dockOpen, enhanceControl }: {
+function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, enhanceControl }: {
   enhanceControl?: ((close: () => void, open: boolean) => React.ReactNode) | undefined
   ready?: boolean | undefined
   workspace?: string | undefined
   onInsert: (text: string) => void
   onAttachImages?: ((paths: readonly string[]) => void) | undefined
   plan?: { on: boolean; reason?: string | undefined; onToggle?: ((on: boolean) => void) | undefined } | undefined
-  onToggleDock?: (() => void) | undefined
-  dockOpen?: boolean | undefined
 }) {
   const [开着, 设开着] = useState(false)
   const 盒 = useRef<HTMLDivElement>(null)
@@ -803,7 +801,7 @@ function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, onTogg
               <span>{t(item.名)}</span>
             </Button>
           ))}
-          {enhanceControl || plan || onToggleDock ? <div className="composer-menu-divider" role="separator" /> : null}
+          {enhanceControl || plan ? <div className="composer-menu-divider" role="separator" /> : null}
           {enhanceControl?.(收起, 开着)}
           {plan ? (
             <Button variant="ghost" size="inline" role="menuitemcheckbox" tabIndex={-1} aria-label={t("先出方案")}
@@ -815,14 +813,17 @@ function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, onTogg
               {plan.on && !plan.reason ? <勾图标 className="composer-plan-check" /> : null}
             </Button>
           ) : null}
-          {onToggleDock ? (
-            <Button variant="ghost" size="inline" role="menuitem" tabIndex={-1} onClick={() => { 收起(); onToggleDock() }}>
-              <终端图标 /><span className="composer-menu-label">{t("终端面板")}</span>{dockOpen ? <勾图标 /> : null}
-            </Button>
-          ) : null}
         </div>, document.body)}
     </div>
   )
+}
+
+/** 常驻终端入口与命令面板共用现有开关，不提交输入框草稿。 */
+function ComposerTerminalButton({ onToggle, open }: { onToggle?: (() => void) | undefined; open?: boolean | undefined }) {
+  return onToggle ? <Button variant="ghost" size="icon" className="dock-toggle"
+    aria-label={t("终端面板")} aria-pressed={Boolean(open)} onClick={onToggle}>
+    <终端图标 />
+  </Button> : null
 }
 
 /**
@@ -3688,10 +3689,10 @@ function 同账(a: readonly TranscriptItem[], b: readonly TranscriptItem[]): boo
   })
 }
 
-function ComposerSessionUsage({ items, context }: { items: readonly TranscriptItem[]; context?: React.ReactNode }) {
+function ComposerSessionUsage({ items }: { items: readonly TranscriptItem[] }) {
   const { ref, height } = useComposerUsageSpace()
   return <div className="composer-session-usage" style={{ minHeight: height }} data-reserved={height > 0}>
-    <div className="composer-session-usage-content" ref={ref}><SessionUsage items={items} />{context}</div>
+    <div className="composer-session-usage-content" ref={ref}><SessionUsage items={items} /></div>
   </div>
 }
 
@@ -5597,7 +5598,7 @@ export function ConversationView({
 
         </div>
 
-          {/* 输入卡底栏：左侧添加与权限，右侧模型、推理与发送。 */}
+          {/* 输入卡底栏：左侧添加、终端与权限，右侧上下文、模型、推理与发送。 */}
           {/* 主区那张报自己几行、坞里那张跟着排（2026-09-29，与主区同高，见 `footer-rows.ts`） */}
           <div className="composer-footer" ref={附栏ref} data-follow-main={紧凑 && 主区附栏行数 ? (主区附栏行数 === 1 ? "one-row" : "two-rows") : undefined}>
             <div className="composer-tools">
@@ -5620,7 +5621,6 @@ export function ConversationView({
               坞里={紧凑}
             />)}
 
-              {...(onToggleDock ? { onToggleDock, dockOpen } : {})}
               {...(画方案开关 ? { plan: { on: 方案开着, reason: 方案不能, onToggle: 方案开关 && onSetPlan ? (on: boolean) => {
                 设发送出错(undefined)
                 void onSetPlan(on).catch((e: unknown) => 设发送出错(e instanceof Error ? e.message : String(e)))
@@ -5674,6 +5674,7 @@ export function ConversationView({
               },
                   })}
             />
+            <ComposerTerminalButton onToggle={onToggleDock} open={dockOpen} />
             {/**
               * **一颗 pill，不是两颗**（2026-08-12，作者指的那件）。
               *
@@ -5723,6 +5724,18 @@ export function ConversationView({
         </div>
 
         <div className="composer-controls">
+            {仪表 ? (
+              <ContextMeter
+                读数={仪表}
+                onOpen={上下文.重取}
+                {...(onCompact ? { onCompact: () => onCompact() } : {})}
+                {...(压缩中
+                  ? { 不能压的原因: t("正在压缩上下文，压完再说") }
+                  : busy
+                    ? { 不能压的原因: t("这一轮还在跑，做完再压缩") }
+                    : {})}
+              />
+            ) : null}
             {/**
               * 会话开关（A3，只有 acp 会话有）。**一个都没有时不画**——
               * 不摆一个点开是空的菜单。
@@ -5853,18 +5866,7 @@ export function ConversationView({
           </div>
           </div>
         </div>
-        <ComposerSessionUsage items={items} context={仪表 ? (
-          <ContextMeter
-            读数={仪表}
-            onOpen={上下文.重取}
-            {...(onCompact ? { onCompact: () => onCompact() } : {})}
-            {...(压缩中
-              ? { 不能压的原因: t("正在压缩上下文，压完再说") }
-              : busy
-                ? { 不能压的原因: t("这一轮还在跑，做完再压缩") }
-                : {})}
-          />
-        ) : null} />
+        <ComposerSessionUsage items={items} />
       </form>
     </div>
   )
@@ -7610,7 +7612,6 @@ export function EmptyConversation({
                   onNote={设增强说明}
                 />)}
 
-                  {...(onToggleDock ? { onToggleDock } : {})}
                   {...(先出方案 ? { plan: { on: 先出方案.on, reason: 先出方案.不能的原因, onToggle: 先出方案.onToggle } } : {})}
                   {...(工作目录 ? { workspace: 工作目录 } : {})}
                   ready={空态图.length > 0 || 空态附过 || 空态文件.some((f) => 草稿.includes(`@${f.令牌}`))}
@@ -7636,6 +7637,7 @@ export function EmptyConversation({
                     }
                   }}
                 />
+                <ComposerTerminalButton onToggle={onToggleDock} open={dockOpen} />
                 {/**
                   * **与对话里那张同一处位置**（2026-08-16 一起搬上来的）。
                   *

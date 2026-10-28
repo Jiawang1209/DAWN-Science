@@ -6,8 +6,7 @@ import { stripVTControlCharacters } from 'node:util'
 
 async function open(page: Page) {
   await 在项目里开会话(page); await 等进了对话(page)
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock .term-host')).toBeVisible()
   return terminals(page)
 }

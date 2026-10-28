@@ -153,7 +153,7 @@ test.describe("窄附栏", () => {
    * 2026-09-27 视觉基线抓的：坞里那张卡（对话格 380 宽）附栏五样都不缩，整句「上下文 <1%」把权限那颗顶出卡外，只剩「●完」。
    * 判据量盒子，不看像素：权限那颗整颗在卡里；仪表只写数、读屏名字仍是全句（2026-09-28 起主区也只写数）。
    */
-  test("**坞里的输入卡**：仪表在卡外统计行可用，权限在卡内，弹层留在窗口内", async ({ dawn }) => {
+  test("**坞里的输入卡**：仪表在右侧模型前可用，权限在左侧，弹层留在窗口内", async ({ dawn }) => {
     const { page } = dawn
     const 坞 = page.locator("aside.right-dock")
     await 在项目里开会话(page)
@@ -171,16 +171,14 @@ test.describe("窄附栏", () => {
     expect(卡 && 权限).toBeTruthy()
     expect(权限!.x).toBeGreaterThanOrEqual(卡!.x)
     expect(权限!.x + 权限!.width).toBeLessThanOrEqual(卡!.x + 卡!.width)
-    // 统计与上下文在卡外同一行，窄栏内仍可用，不挤占权限与发送。
-    const 统计 = 坞.locator(".composer-session-usage")
-    await expect(统计.locator(".ctx-meter-trigger")).toBeVisible()
-    await expect(坞.locator(".composer-card .ctx-meter-trigger")).toHaveCount(0)
-    const 统计盒 = (await 统计.boundingBox())!
+    // 上下文在卡内右侧组，统计仍在卡外；极窄栏两组可以分行。
+    await expect(坞.locator(".composer-controls > .ctx-meter .ctx-meter-trigger")).toBeVisible()
+    await expect(坞.locator(".composer-session-usage .ctx-meter-trigger")).toHaveCount(0)
     const 仪表盒 = (await 钮.boundingBox())!
-    expect(统计盒.y).toBeGreaterThanOrEqual(卡!.y + 卡!.height - 1)
-    expect(仪表盒.x).toBeGreaterThanOrEqual(统计盒.x)
-    expect(仪表盒.x + 仪表盒.width).toBeLessThanOrEqual(统计盒.x + 统计盒.width + 1)
-    expect(await 统计.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+    const 模型盒 = (await 坞.locator(".composer-controls .model-pill").boundingBox())!
+    expect(仪表盒.x).toBeGreaterThanOrEqual(卡!.x)
+    expect(仪表盒.x + 仪表盒.width).toBeLessThanOrEqual(模型盒.x + 1)
+    expect(仪表盒.y + 仪表盒.height).toBeLessThanOrEqual(卡!.y + 卡!.height)
     expect(await 坞.locator(".composer-footer").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
     await 钮.click()
     const 弹层 = 坞.getByRole("dialog", { name: "上下文", exact: true })

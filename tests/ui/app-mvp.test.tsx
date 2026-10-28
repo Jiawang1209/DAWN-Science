@@ -716,11 +716,10 @@ describe("PTY 会话：终端就是这个会话本身", () => {
    * 侧栏那一行是它的入口：**必须点得动**，否则又是一次
    * 「看不见/点不动的能力等于不存在」。
    */
-  it("添加菜单有终端入口，且是能点的", async () => {
+  it("输入栏有直接可见且能点的终端入口", async () => {
     const h = harness({ projects: [proj("/w/proj")] })
     render(<App client={h.client} />)
-    fireEvent.click(await screen.findByRole("button", { name: "添加内容" }))
-    const 入口 = await screen.findByRole("menuitem", { name: "终端面板" })
+    const 入口 = await screen.findByRole("button", { name: "终端面板" })
     expect((入口 as HTMLButtonElement).disabled).toBe(false)
   })
 })

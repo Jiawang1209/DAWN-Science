@@ -5,8 +5,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
 async function open(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect.poll(async () => /[$#%]$/.test(stripVTControlCharacters(await page.locator('.dock .xterm-screen').innerText()).trimEnd())).toBe(true)
 }
 async function type(page: Page, value: string) {
@@ -194,8 +193,7 @@ test('the current owner can close its last resumed terminal, reopen directly and
     if (viaGui) {
       await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
       await expect(page.locator('.main .turn-images img').first()).toBeVisible()
-      await page.locator('.composer-card .attach-trigger').click()
-      await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+      await page.getByRole('button', { name: '终端面板', exact: true }).click()
     }
     // Deliberately never subscribe to the owner or click the GUI reconnect button here.
     await page.getByRole('button', { name: '＋ 新开一个', exact: true }).click(); await ready()

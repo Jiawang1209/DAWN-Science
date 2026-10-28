@@ -1,4 +1,4 @@
-/** 输入卡的备好态：附件与目录保留标记；终端与方案在添加菜单内显示当前状态。 */
+/** 输入卡的备好态：附件与目录保留标记；终端直接显示，方案在添加菜单内显示当前状态。 */
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -14,13 +14,12 @@ async function 添加菜单(page: import("@playwright/test").Page) {
   return menu
 }
 
-test("**终端**：菜单打开整页终端，返回保留草稿，再打开复用原终端", async ({ dawn }) => {
+test("**终端**：直接入口打开整页终端，返回保留草稿，再打开复用原终端", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   const input = page.locator('.composer-card textarea.composer-field')
   await input.fill('TERMINAL_RETURN_DRAFT_KEEP')
-  const menu = await 添加菜单(page)
-  const terminal = menu.getByRole("menuitem", { name: "终端面板", exact: true })
+  const terminal = page.getByRole("button", { name: "终端面板", exact: true })
   await expect(terminal.locator("svg")).toHaveCount(1)
   await terminal.click()
   await expect(page.locator(".dock")).toBeVisible()
@@ -32,7 +31,6 @@ test("**终端**：菜单打开整页终端，返回保留草稿，再打开复�
   await page.locator('.dock').getByRole('button', { name: '返回会话', exact: true }).click()
   await expect(page.locator('.dock')).toHaveCount(0)
   await expect(input).toHaveValue('TERMINAL_RETURN_DRAFT_KEEP')
-  await 添加菜单(page)
   await expect(terminal.locator("svg")).toHaveCount(1)
   await terminal.click()
   await expect(page.locator('.dock .term-host')).toBeVisible()

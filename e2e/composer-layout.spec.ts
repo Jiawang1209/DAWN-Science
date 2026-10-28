@@ -8,23 +8,40 @@ const shots = "tmp/composer-layout/e2e"
 async function checkFit(root: Locator) {
   const errors = await root.locator(".composer-card").evaluate(card => {
     const bounds = card.getBoundingClientRect()
-    return Array.from(card.querySelectorAll(".composer-environment, .composer-field, .composer-footer, .composer-controls, .perm-pill, .model-trigger, .agent-pill > .btn, .send-btn, .attach-trigger"))
+    return Array.from(card.querySelectorAll(".composer-environment, .composer-field, .composer-footer, .composer-controls, .perm-pill, .model-trigger, .agent-pill > .btn, .send-btn, .attach-trigger, .dock-toggle, .ctx-meter-trigger"))
       .filter(el => {
         const rect = el.getBoundingClientRect()
         return rect.width > 0 && (rect.left < bounds.left - 1 || rect.right > bounds.right + 1 || rect.width < 15)
       }).map(el => el.className)
   })
   expect(errors).toEqual([])
-  const alignment = await root.locator(".composer-footer").evaluate(footer => {
-    const selectors = [".attach-trigger", ".perm-pill-trigger", ".model-trigger", ".agent-pill > .btn", ".send-btn"]
-    return selectors.flatMap(selector => {
-      const el = footer.querySelector(selector)
-      if (!el) return []
-      const rect = el.getBoundingClientRect()
-      return [rect.y + rect.height / 2]
+  const orderErrors = await root.locator(".composer-footer").evaluate(footer => {
+    const groups = [
+      [".attach-trigger", ".dock-toggle", ".perm-pill-trigger"],
+      [".ctx-meter-trigger", ".model-trigger, .agent-pill > .btn", ".config-pill .sess-config-trigger", ".send-btn"],
+    ]
+    return groups.flatMap(selectors => {
+      const bounds = selectors.flatMap(selector => {
+        const element = footer.querySelector(selector)
+        return element ? [element.getBoundingClientRect()] : []
+      })
+      return bounds.slice(1).filter((rect, index) => rect.left < bounds[index]!.right - 1)
+        .map(rect => rect.x)
     })
   })
-  expect(Math.max(...alignment) - Math.min(...alignment)).toBeLessThanOrEqual(1)
+  expect(orderErrors).toEqual([])
+  for (const group of [".composer-tools", ".composer-controls"]) {
+    const alignment = await root.locator(`.composer-footer ${group}`).evaluate(footer => {
+      const selectors = [".attach-trigger", ".dock-toggle", ".perm-pill-trigger", ".ctx-meter-trigger", ".model-trigger", ".agent-pill > .btn", ".send-btn"]
+      return selectors.flatMap(selector => {
+        const el = footer.querySelector(selector)
+        if (!el) return []
+        const rect = el.getBoundingClientRect()
+        return [rect.y + rect.height / 2]
+      })
+    })
+    expect(Math.max(...alignment) - Math.min(...alignment)).toBeLessThanOrEqual(1)
+  }
 }
 
 test("首页添加菜单支持键盘，方案状态可见，草稿不丢失", async ({ dawn }) => {
@@ -38,7 +55,7 @@ test("首页添加菜单支持键盘，方案状态可见，草稿不丢失", as
   await add.press("ArrowDown")
   await expect(page.getByRole("menuitem", { name: "上传文件", exact: true })).toBeFocused()
   await page.keyboard.press("End")
-  await expect(page.getByRole("menuitem", { name: "终端面板", exact: true })).toBeFocused()
+  await expect(page.getByRole("menuitemcheckbox", { name: "先出方案", exact: true })).toBeFocused()
   await page.keyboard.press("Home")
   await expect(page.getByRole("menuitem", { name: "上传文件", exact: true })).toBeFocused()
   await page.keyboard.press("Escape")
@@ -121,8 +138,8 @@ test("项目目录、文件选择、方案提交、普通发送与亮暗主题",
   await input.fill("你好")
   await root.getByRole("button", { name: "发送", exact: true }).click()
   await expect(root.locator(".turns")).toContainText(CANNED_REPLY)
-  await expect(root.locator(".composer-session-usage .ctx-meter")).toBeVisible()
-  await expect(root.locator(".composer-card .ctx-meter")).toHaveCount(0)
+  await expect(root.locator(".composer-controls > .ctx-meter")).toBeVisible()
+  await expect(root.locator(".composer-session-usage .ctx-meter")).toHaveCount(0)
   await root.getByRole("button", { name: /^上下文 / }).click()
   await expect(root.getByRole("button", { name: "现在压缩", exact: true })).toBeVisible()
   await page.keyboard.press("Escape")
@@ -200,9 +217,10 @@ test("主侧对话输入区在窄栏可操作且不横向溢出", async ({ dawn 
   }
 })
 
-test("顶部融入输入区，两级菜单悬停跟随自选主题色", async ({ dawn }) => {
+test("终端跟随强调色，上下文无底色，两级菜单跟随主题色", async ({ dawn }) => {
   const { page } = dawn
   mkdirSync(shots, { recursive: true })
+  await 在项目里开会话(page)
   const environment = page.locator(".composer-environment")
   const inputBackground = await page.locator(".composer-box").evaluate(el => getComputedStyle(el).backgroundColor)
   await expect(environment).toHaveCSS("background-color", inputBackground)
@@ -226,6 +244,18 @@ test("顶部融入输入区，两级菜单悬停跟随自选主题色", async ({
       probe.remove()
       return result
     })
+    const terminal = page.locator(".composer-tools .dock-toggle")
+    await expect(terminal.locator("svg")).toHaveCSS("color", colors.accent)
+    await expect(page.locator(".composer-tools .attach-trigger svg")).toHaveCSS("color", colors.accent)
+    const meter = page.locator(".composer-controls .ctx-meter-trigger")
+    await expect(meter).toHaveCSS("background-color", "rgba(0, 0, 0, 0)")
+    await meter.hover()
+    await expect(meter).toHaveCSS("background-color", "rgba(0, 0, 0, 0)")
+    await meter.click()
+    await expect(page.getByRole("dialog", { name: "上下文", exact: true })).toBeVisible()
+    await expect(meter).toHaveCSS("background-color", "rgba(0, 0, 0, 0)")
+    await page.screenshot({ path: `${shots}/toolbar-accent-${theme}.png`, animations: "disabled", scale: "css" })
+    await page.keyboard.press("Escape")
     await page.getByRole("button", { name: "添加内容", exact: true }).click()
     const upload = page.getByRole("menuitem", { name: "上传文件", exact: true })
     await upload.hover()

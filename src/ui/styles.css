@@ -7954,6 +7954,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   font-size: var(--dawn-fs-meta);
   font-variant-numeric: tabular-nums;
   color: var(--dawn-text-2);
+  background: transparent;
 }
 .ctx-meter[data-level="warn"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
@@ -8457,7 +8458,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-footer .composer-status:empty { display: none; }
 .composer-footer .composer-controls { flex: 1 1 auto; justify-content: flex-end; margin-left: auto; }
 .composer-tools .attach-trigger { width: 36px; height: 36px; }
-.composer-tools .attach-trigger > .icon { color: var(--dawn-accent); }
+.composer-tools .attach-trigger > .icon,
+.composer-tools .dock-toggle > .icon { color: var(--dawn-accent); }
 .composer-tools .attach-trigger > .icon, .composer-tools .perm-pill-trigger > .icon:first-child { width: 20px; height: 20px; }
 .composer-tools .perm-pill-trigger > .icon:last-child { width: 12px; height: 12px; }
 .composer-tools .enhance-main { font-size: var(--dawn-fs-meta); }
@@ -8822,9 +8824,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   text-align: center;
   overflow-wrap: anywhere;
 }
-.composer-session-usage .ctx-meter { position: static; display: flex; align-items: center; line-height: 20px; }
-.composer-session-usage .ctx-meter-trigger { height: 20px; line-height: 18px; }
-.composer-session-usage .ctx-meter-pop { left: 0; right: 0; margin-inline: auto; width: min(20rem, 100%); transform-origin: bottom center; }
+/* 上下文跟随右侧模型组；详情以上方输入区为边界，窄栏不越出窗口。 */
+.composer-controls > .ctx-meter { position: static; display: flex; align-items: center; flex: 0 0 auto; }
+.composer-controls > .ctx-meter .ctx-meter-pop { right: var(--dawn-space-3); width: min(20rem, calc(100% - var(--dawn-space-6))); }
+.composer-tools > .dock-toggle { flex: 0 0 auto; width: 36px; height: 36px; }
+@container (max-width: 600px) {
+  .composer-footer { flex-wrap: wrap; }
+  .composer-footer .composer-controls { flex-basis: 100%; margin-left: auto; }
+}
 /* 时间和消息动作共用一行；与气泡分别定宽，短句不被动作撑宽。 */
 .turn.user .turn-actions { flex-wrap: nowrap; max-width: 100%; gap: var(--dawn-space-1); }
 .turn.user .turn-time { align-self: center; flex: 0 0 auto; margin-top: 0; white-space: nowrap; }

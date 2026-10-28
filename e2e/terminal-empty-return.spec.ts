@@ -2,8 +2,7 @@ import { test, expect } from './fixtures.js'
 import type { Page } from '@playwright/test'
 
 async function openTerminal(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock')).toBeVisible()
 }
 

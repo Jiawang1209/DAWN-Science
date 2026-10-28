@@ -13,8 +13,7 @@ for (const agent of [false, true]) {
   test(`quitting with two live ${agent ? 'DAWN' : 'Normal'} terminals exits cleanly and reopening retains the conversations`, async ({ dawn }) => {
     const { page, app } = dawn
     await 在项目里开会话(page); await 等进了对话(page)
-    await page.locator('.composer-card .attach-trigger').click()
-    await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+    await page.getByRole('button', { name: '终端面板', exact: true }).click()
     const start = async () => {
       await expect(page.locator('.dock').getByRole('button', { name: 'Normal 模式', exact: true })).toBeEnabled()
       await expect.poll(async () => /[$#%]$/.test((await page.locator('.dock .xterm-rows').innerText()).trimEnd())).toBe(true)

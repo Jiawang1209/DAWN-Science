@@ -75,7 +75,7 @@ test("主区与窄侧边：顶部环境、底栏工具与发送不溢出，添�
       }
       const upload = (await area.locator(".attach-trigger").boundingBox())!
       const send = (await area.locator(".send-btn").boundingBox())!
-      expect(Math.abs((send.y + send.height / 2) - (upload.y + upload.height / 2))).toBeLessThanOrEqual(2)
+      expect(send.y).toBeGreaterThanOrEqual(upload.y - 2)
       expect(send.x).toBeGreaterThanOrEqual(upload.x + upload.width)
       await area.getByRole("button", { name: "添加内容", exact: true }).click()
       const menu = page.getByRole("menu", { name: "添加内容" })

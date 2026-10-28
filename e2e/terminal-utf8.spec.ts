@@ -8,8 +8,7 @@ test.skip(process.platform !== 'darwin', 'The reported regression uses macOS zsh
 
 test('Chinese paths and editing remain readable, and a Unicode right prompt allows DAWN mode', async ({ dawn }) => {
   const { page, workspace } = dawn
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   const screen = page.locator('.dock .xterm-screen')
   const input = page.locator('.dock .xterm-helper-textarea')
   await expect(screen).toContainText(/[$#%]/)

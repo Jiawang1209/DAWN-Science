@@ -11,8 +11,7 @@ async function invoke(page: Page, operation: string, input: unknown): Promise<an
   }, { operation, input })
 }
 async function openTerminal(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
 }
 async function submit(page: Page, text: string) {
   await page.locator('.dock .xterm-helper-textarea').focus()

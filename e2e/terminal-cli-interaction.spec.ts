@@ -4,7 +4,7 @@ import { stripVTControlCharacters } from 'node:util'
 
 async function open(page: Page, enterAgent = true) {
   await 在项目里开会话(page); await 等进了对话(page)
-  await page.locator('.composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect.poll(async () => stripVTControlCharacters(await page.locator('.dock .xterm-screen').innerText()).trimEnd().endsWith('$')).toBe(true)
   if (enterAgent) {
     await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()
@@ -208,7 +208,7 @@ test('reopening a trimmed PTY snapshot restores the editor and bracketed multili
   const target = await page.evaluate(async terminalId => (await window.dawn!.invoke('getTerminalAgentMode', { terminalId }) as any).data, first.terminalId)
   await page.getByRole('button', { name: '返回会话', exact: true }).click()
   await expect(page.locator('.main .composer-card')).toBeVisible()
-  await page.locator('.composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock .xterm-screen')).toContainText('> DAWN')
   await app.evaluate(({ clipboard }) => clipboard.writeText('RECOVERY_A\nRECOVERY_B'))
   await page.locator('.dock .xterm-helper-textarea').focus(); await page.keyboard.press(process.platform === 'darwin' ? 'Meta+v' : 'Control+v')

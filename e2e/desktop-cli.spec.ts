@@ -7,8 +7,7 @@ import { TerminalAgentStateSchema } from '../src/protocol/terminal.js'
 test('DAWN and Normal use the desktop model, preserve Shell state, and refuse pending input', async ({ dawn }) => {
   const { page, workspace, requests } = dawn
   await 在项目里开会话(page); await 等进了对话(page)
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   const dock = page.locator('.main .dock')
   await expect(dock.locator('.term-host')).toBeVisible()
   const terminalId = await page.evaluate(async () => {
@@ -63,8 +62,7 @@ test('return opens the same Agent conversation and continues it without creating
   const composer = page.locator('.main .composer-card textarea.composer-field')
   await composer.fill('保留原会话草稿 CONTEXT_DRAFT')
   const open = async () => {
-    await page.locator('.composer-card .attach-trigger').click()
-    await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+    await page.getByRole('button', { name: '终端面板', exact: true }).click()
     await expect(page.locator('.dock .term-host')).toBeVisible()
   }
   const sessions = () => page.evaluate(async () => {

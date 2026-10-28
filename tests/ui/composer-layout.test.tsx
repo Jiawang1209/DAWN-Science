@@ -9,24 +9,27 @@ const session: SessionSummary = { sessionId: "layout", projectId: "p", agentId: 
 beforeEach(resetAllState)
 afterEach(cleanup)
 
-it("权限紧邻添加入口，模型和发送共用底栏，上下文位于卡外统计区", () => {
+it("左侧添加、终端、权限，右侧上下文、模型、发送", () => {
   const { container } = render(<ConversationView session={session} items={[]} onSend={vi.fn()}
-    models={[{ provider: "deepseek", model: "deepseek-v4" }]} model={{ provider: "deepseek", model: "deepseek-v4" }} onPickModel={vi.fn()}
+    models={[{ provider: "deepseek", model: "deepseek-v4" }]} model={{ provider: "deepseek", model: "deepseek-v4" }} onPickModel={vi.fn()} onToggleDock={vi.fn()}
     权限={{ 当前: "allow-all", 跟随默认: true, onPick: vi.fn() }} />)
   const tools = container.querySelector(".composer-tools")!
-  expect(tools.querySelector(".attach")?.nextElementSibling?.classList.contains("perm-pill")).toBe(true)
+  expect(tools.querySelector(".attach")?.nextElementSibling?.classList.contains("dock-toggle")).toBe(true)
+  expect(tools.querySelector(".dock-toggle")?.nextElementSibling?.classList.contains("perm-pill")).toBe(true)
   const controls = container.querySelector(".composer-footer > .composer-controls")!
   expect(controls.querySelector(".model-pill")).toBeTruthy()
   expect(controls.querySelector(".send-btn")).toBeTruthy()
   expect(container.querySelector(".composer-box .composer-controls")).toBeNull()
-  expect(container.querySelector(".composer-session-usage .ctx-meter")).toBeTruthy()
-  expect(container.querySelector(".composer-card .ctx-meter")).toBeNull()
+  expect(controls.firstElementChild?.classList.contains("ctx-meter")).toBe(true)
+  expect(controls.querySelector(".ctx-meter")?.nextElementSibling?.classList.contains("model-pill")).toBe(true)
+  expect(container.querySelector(".composer-session-usage .ctx-meter")).toBeNull()
 })
 
 it("首页权限和模型发送也与添加入口同栏", () => {
-  const { container } = render(<EmptyConversation agents={["ds-chat"]} onStart={vi.fn()} onOpenSettings={vi.fn()}
+  const { container } = render(<EmptyConversation agents={["ds-chat"]} onStart={vi.fn()} onOpenSettings={vi.fn()} onToggleDock={vi.fn()} dockOpen
     权限={{ 当前: "allow-all", onPick: vi.fn() }} />)
-  expect(container.querySelector(".composer-tools .attach")?.nextElementSibling?.classList.contains("perm-pill")).toBe(true)
+  expect(container.querySelector(".composer-tools .attach")?.nextElementSibling?.classList.contains("dock-toggle")).toBe(true)
+  expect(screen.getByRole("button", { name: "终端面板" }).getAttribute("aria-pressed")).toBe("true")
   expect(container.querySelector(".composer-footer > .composer-controls .agent-pill")).toBeTruthy()
   expect(container.querySelector(".composer-footer > .composer-controls .send-btn")).toBeTruthy()
   expect(container.querySelector(".composer-box .composer-controls")).toBeNull()
@@ -44,14 +47,14 @@ it("目录和真实运行位置位于输入卡上沿，查看路径保留草稿"
   expect(input.value).toBe("检查样本缺失值")
 })
 
-it("添加菜单收纳方案与终端，Escape返回触发按钮且不提交草稿", () => {
+it("终端直接可见，添加菜单保留方案，Escape返回且不提交草稿", () => {
   const onSetPlan = vi.fn(async (_on: boolean) => {})
   const onSend = vi.fn()
   const onToggleDock = vi.fn()
   render(<ConversationView session={session} items={[]} onSend={onSend} 会话开关们={[{ id: "dawn.plan", name: "先出方案", category: "plan", kind: "boolean", current: "", options: [] }]} onSetPlan={onSetPlan} onToggleDock={onToggleDock} />)
   const input = screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement
   fireEvent.change(input, { target: { value: "先看一眼数据" } })
-  expect(screen.queryByRole("button", { name: "终端面板" })).toBeNull()
+  expect(screen.getByRole("button", { name: "终端面板" }).getAttribute("aria-pressed")).toBe("false")
   const add = screen.getByRole("button", { name: "添加内容" })
   fireEvent.click(add)
   const plan = screen.getByRole("menuitemcheckbox", { name: "先出方案" })
@@ -62,7 +65,9 @@ it("添加菜单收纳方案与终端，Escape返回触发按钮且不提交草�
   expect(onSetPlan).toHaveBeenCalledWith(true)
   expect(screen.queryByRole("menu")).toBeNull()
   fireEvent.click(add)
-  fireEvent.click(screen.getByRole("menuitem", { name: "终端面板" }))
+  expect(screen.queryByRole("menuitem", { name: "终端面板" })).toBeNull()
+  fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" })
+  fireEvent.click(screen.getByRole("button", { name: "终端面板" }))
   expect(onToggleDock).toHaveBeenCalledOnce()
   fireEvent.click(add)
   fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" })

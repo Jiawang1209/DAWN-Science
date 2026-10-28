@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs'
 test.use({ dawnOptions: { reply: Array.from({ length: 28 }, (_, i) => `历史正文 SEARCH_BODY_${i}。`).join('\n\n') } })
 async function open(page: Page, agent = false) {
   await 在项目里开会话(page); await 等进了对话(page)
-  await page.locator('.composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect.poll(async () => /[$#%]$/.test(stripVTControlCharacters(await page.locator('.dock .xterm-screen').innerText()).trimEnd())).toBe(true)
   if (agent) { await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click(); await expect(page.locator('.dock .xterm-screen')).toContainText('> DAWN') }
 }
@@ -76,6 +76,6 @@ test('search state stays local when switching modes and closing the last termina
   await page.getByRole('button', { name: '关闭终端 1', exact: true }).click(); await expect(page.locator('.dock')).toContainText('还没有终端')
   await expect(page.getByRole('button', { name: '搜索历史', exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: '返回会话', exact: true }).click(); await expect(page.locator('.main .composer-card')).toBeVisible()
-  await page.locator('.main .composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock .xterm-screen')).toBeVisible(); await expect(page.locator('.dock')).not.toContainText('OLD_SEARCH')
 })

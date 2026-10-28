@@ -12,8 +12,7 @@ async function invoke(page: Page, operation: string, input: unknown): Promise<an
   }, { operation, input })
 }
 async function openTerminal(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
 }
 async function start(page: Page) {
   await 在项目里开会话(page); await 等进了对话(page); await openTerminal(page)

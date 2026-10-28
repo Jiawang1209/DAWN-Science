@@ -3,8 +3,7 @@ import type { Page } from '@playwright/test'
 import { stripVTControlCharacters } from 'node:util'
 
 async function open(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await ready(page)
 }
 async function ready(page: Page) {
@@ -93,8 +92,7 @@ test('closing the last DAWN terminal preserves its conversation; a new Agent is 
   await expect(page.locator('.session-tab[aria-selected="true"]')).toHaveAttribute('data-session', state.sessionId)
   await expect(page.locator('.main')).toContainText('LIFECYCLE_AGENT_CONTEXT_KEEP')
   // Reopen through the Agent conversation, then close its only PTY.
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true')
   expect((await ptys(page)).map(t => t.sessionId)).toEqual([terminalId])
   await closed(page, terminalId); await back(page)
@@ -161,8 +159,7 @@ test('an ended sibling remains selectable after closing the live terminal and ca
   await page.getByRole('button', { name: '终端 1 已结束', exact: true }).click()
   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toBeDisabled()
   await back(page)
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await ready(page)
   // A fresh live Shell is created only on explicitly opening again, not on close.
   await expect(page.locator('.dock-tab')).toHaveCount(2)

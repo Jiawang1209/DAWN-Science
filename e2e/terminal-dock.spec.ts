@@ -18,8 +18,7 @@ import { homedir } from "node:os"
 import { join } from "node:path"
 
 async function 切换终端面板(page: import("@playwright/test").Page) {
-  await page.locator(".composer-card .attach-trigger").click()
-  await page.getByRole("menu", { name: "添加内容" }).getByRole("menuitem", { name: "终端面板", exact: true }).click()
+  await page.getByRole("button", { name: "终端面板", exact: true }).click()
   await page.locator('.main .dock .term-host').waitFor({ state: 'visible' })
 }
 

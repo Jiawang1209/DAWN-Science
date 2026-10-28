@@ -3,7 +3,7 @@
  *
  * - native（给了 `onCompact`）：整句 `/compact …` 不当一句话发，走压缩；框清空；失败时话放回框里、原因写在框下。
  * - ACP（不给 `onCompact`）：原样当一句话发——外部 agent 自己认这个命令，我们不吞掉它。
- * - 仪表在卡外统计区（native 与 ACP 都是）；正在压缩时「现在压缩」灰着说的是「正在压缩」。
+ * - 仪表在右侧模型前（native 与 ACP 都是）；正在压缩时「现在压缩」灰着说的是「正在压缩」。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
@@ -82,13 +82,13 @@ describe("输入框里的 /compact", () => {
   })
 })
 
-describe("统计区的上下文仪表", () => {
+describe("模型前的上下文仪表", () => {
   for (const [名, s] of [["native", native], ["ACP", acp]] as const) {
-    it(`${名}：仪表在输入卡外的统计区，权限保留在添加入口旁`, () => {
+    it(`${名}：仪表在右侧模型前，权限留在左侧`, () => {
       const { container } = 摆({ session: s, ...(s.kind === "native" ? { onCompact: async () => {} } : {}) })
-      const 仪表 = container.querySelector(".composer-session-usage-content > .ctx-meter")
+      const 仪表 = container.querySelector(".composer-controls > .ctx-meter")
       expect(仪表).toBeTruthy()
-      expect(仪表!.closest(".composer-card")).toBeNull()
+      expect(仪表!.closest(".composer-card")).not.toBeNull()
       expect(container.querySelector(".composer-tools > .perm-pill")).toBeTruthy()
     })
   }

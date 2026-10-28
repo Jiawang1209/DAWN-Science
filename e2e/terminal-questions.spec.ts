@@ -2,8 +2,7 @@ import { test, expect, 在项目里开会话, 等进了对话 } from './fixtures
 import type { Page } from '@playwright/test'
 
 async function openTerminal(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
 }
 async function submit(page: Page, text: string) {
   await page.locator('.dock .xterm-helper-textarea').focus()

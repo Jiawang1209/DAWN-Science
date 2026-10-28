@@ -8,8 +8,7 @@ const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAw
 async function open(page: Page) {
   await 在项目里开会话(page); await 等进了对话(page)
   await page.locator('.composer-card textarea.composer-field').fill('原会话的草稿 IMAGE_ORIGINAL_DRAFT')
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock .term-host')).toBeVisible()
   await expect.poll(async () => {
     const tail = await page.locator('.dock .xterm-screen').innerText()
@@ -59,7 +58,7 @@ test('pastes a real clipboard image, previews inline, and continues the same ima
     const snapshot = (await page.evaluate(async id => (await window.dawn!.invoke('subscribeSession', { sessionId: id }) as any).data, target.sessionId))
     return snapshot.items.filter((x: any) => x.type === 'turn' && x.who === 'agent' && x.final).length
   }).toBeGreaterThanOrEqual(2)
-  await page.locator('.composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.terminal-inline-image img').first()).toBeVisible()
 })
 

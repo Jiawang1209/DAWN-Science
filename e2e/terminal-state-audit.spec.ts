@@ -8,8 +8,7 @@ async function open(page: Page) {
   return page.evaluate(() => Object.keys(JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner') || '{}'))[0]!)
 }
 async function panel(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock .term-host')).toBeVisible()
 }
 async function type(page: Page, value: string) {

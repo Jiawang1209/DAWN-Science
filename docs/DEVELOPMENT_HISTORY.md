@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-28 — 输入栏终端入口与上下文排列
+
+- **Type**: feat
+- **What**: 左侧按添加、终端、权限排列，终端移出添加菜单并跟随强调色；右侧上下文移到模型前，沿用推理和发送顺序，上下文按钮背景透明。主/侧对话及首页入口一致，窄栏分组排布。
+- **Verification**: 181文件1726项UI测试、类型检查及完整构建通过；39项Electron及最后4项颜色/布局复验通过，涵盖窄栏、亮暗主题、自选强调色、透明背景、上下文压缩、草稿保留和终端回环SSH。见 `docs/reviews/2026-10-28-composer-toolbar-order-verification.md`。
+- **Impact**: 独立分支 `codex/composer-toolbar-order`，保留本机隔离预览资料；未合并或推送。
+
 ### 2026-10-28 — 默认分析交付与 Markdown 流程本地 main 合并
 
 - **Type**: docs

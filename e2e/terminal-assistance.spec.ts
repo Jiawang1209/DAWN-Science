@@ -9,8 +9,7 @@ const quote = (s: string) => "'" + s.replaceAll("'", "'\\''") + "'"
 async function open(page: Page) {
   await 在项目里开会话(page); await 等进了对话(page)
   await page.locator('.composer-card .composer-field').fill('这份桌面对话草稿要保留')
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   const dock = page.locator('.main .dock')
   await expect(dock.locator('.term-host')).toBeVisible()
   return dock
@@ -66,6 +65,6 @@ test('900×700 原生终端占满主区，真实行列尺寸同步，退出工�
   expect(readFileSync(join(workspace, 'terminal-size.txt'), 'utf8').trim()).toBe(`${state.rows} ${state.cols}`)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await dock.getByRole('button', { name: '返回会话', exact: true }).click()
-  await page.locator('.composer-card .attach-trigger').click(); await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   expect((await terminal(page)).pid).toBe(state.pid)
 })

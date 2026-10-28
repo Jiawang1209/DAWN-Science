@@ -28,8 +28,7 @@ test('remote Normal and DAWN share the original chat, SSH connection, Chinese cw
   await composer.fill('REMOTE_ORIGINAL_HISTORY 中文会话上下文');await composer.press('Enter')
   await expect(page.locator('.turns')).toContainText('假模型已应答')
   const tasksBefore=await call(page,'listTasks')
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem',{name:'终端面板',exact:true}).click()
+  await page.getByRole('button', { name: '终端面板',exact:true}).click()
   const dock=page.locator('.dock'),input=dock.locator('.xterm-helper-textarea'),screen=dock.locator('.xterm-rows')
   await expect(screen).toContainText('dawn-test>')
   const terminalId=Object.keys(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner')||'{}')))[0]!
@@ -77,7 +76,7 @@ test.describe('detach an active shared remote Agent',()=>{
    const providers=await call(page,'getProviders')
    const task=await call(page,'createTask',{agentId:providers.agents.find((a:any)=>a.kind==='native').agentId,connectionId:connection.id})
    await page.reload();await page.getByRole('region',{name:'服务器',exact:true}).getByRole('button',{name:/新会话 刚刚/}).click();await 等进了对话(page)
-   await page.locator('.composer-card .attach-trigger').click();await page.getByRole('menuitem',{name:'终端面板',exact:true}).click()
+   await page.getByRole('button', { name: '终端面板',exact:true}).click()
    const dock=page.locator('.dock')
    await expect(dock.locator('.xterm-rows')).toContainText('dawn-test>')
    const terminalId=Object.keys(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('dawn.window.terminal-owner')||'{}')))[0]!

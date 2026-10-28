@@ -8,8 +8,7 @@ async function invoke(page: Page, operation: string, input: unknown) {
   }, { operation, input })
 }
 async function open(page: Page) {
-  await page.locator('.composer-card .attach-trigger').click()
-  await page.getByRole('menuitem', { name: '终端面板', exact: true }).click()
+  await page.getByRole('button', { name: '终端面板', exact: true }).click()
   await expect(page.locator('.dock').getByRole('button', { name: 'DAWN 模式', exact: true })).toBeEnabled()
   if (await page.locator('.dock').getByRole('button', { name: 'DAWN 模式', exact: true }).getAttribute('aria-pressed') !== 'true') {
     await expect.poll(async () => /[$#%]$/.test((await page.locator('.dock .xterm-rows').innerText()).trimEnd())).toBe(true)

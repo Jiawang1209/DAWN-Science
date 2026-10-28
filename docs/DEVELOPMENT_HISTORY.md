@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-28 — 模型菜单与快捷键优化合并本地main
+
+- **Type**: chore
+- **What**: 将codex/model-menu-shortcuts的29a2ea84从f776e6e6快进合并本地main，补充验收记录。
+- **Verification**: 分支完整UI1786项、相关Electron22项；最终定向144项及2项视觉检查通过。主仓库合并后再次完整UI1786项、2项新增Electron、类型检查及完整构建通过。独立复审无阻塞，见 `docs/reviews/2026-10-28-model-menu-shortcuts-verification.md`。
+- **Impact**: 未推送；仅刷新原预览的界面构建资源，后端与终端进程保留，未替换正式安装。
+
 ### 2026-10-28 — 模型菜单单行名称与快捷键速查优化
 
 - **Type**: fix

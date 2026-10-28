@@ -59,11 +59,11 @@ test("科研交付：真实输出→选择→结果解读→独立重跑→保�
   await expect(panel.getByRole("radio", { name: /仅整理/ })).toBeChecked();
   await panel.getByRole("button", { name: "开始整理", exact: true }).click();
   await expect(
-    panel.getByRole("button", { name: "阅读结果解读", exact: true }),
+    panel.getByRole("button", { name: "阅读分析报告", exact: true }),
   ).toBeVisible({ timeout: 30_000 });
   await expect(panel.getByText("未运行验证", { exact: true })).toBeVisible();
   await panel
-    .getByRole("button", { name: "阅读结果解读", exact: true })
+    .getByRole("button", { name: "阅读分析报告", exact: true })
     .click();
   await expect(page.locator(".delivery-preview")).toContainText(
     "有效样本 28 / 30",
@@ -108,7 +108,7 @@ test("科研交付：真实输出→选择→结果解读→独立重跑→保�
     source,
   );
   expect(
-    readFileSync(join(workspace, record.directory, "结果解读.md"), "utf8"),
+    readFileSync(join(workspace, record.directory, "分析报告.md"), "utf8"),
   ).toContain("28 / 30");
   await panel
     .getByRole("button", {

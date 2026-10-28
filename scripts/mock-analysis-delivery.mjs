@@ -50,10 +50,21 @@ export function analysisDeliveryMockReply(body){
  const script=input.evidence?.find(e=>e.path.endsWith('.py')&&e.text?.includes('DAWN_DELIVERY_FIXTURE'))
  const summaryFile=input.evidence?.find(e=>e.path.endsWith('summary.json')&&e.text)
  const table=input.evidence?.find(e=>e.path.endsWith('model.csv')&&e.text)
+ const selected=new Set(input.selected??[])
+ const savedScripts=(input.evidence??[]).filter(e=>selected.has(e.path)&&/\.(py|r)$/i.test(e.path))
+ const resultPaths=(input.selected??[]).filter(p=>!/\.(py|r)$/i.test(p))
+ const steps=savedScripts.map((s,i)=>({title:`${i+1}. ${s.path.split('/').pop()}`,purpose:'沿用选定的分步脚本；具体处理以脚本及实际结果为准。',script:s.path,...(s===script?{args:['.','<新输出目录>']}:s.text?.split(/\r?\n/).some(line=>line.trim()===`# Usage: python3 ${s.path}`||line.trim()===`# Usage: Rscript --vanilla ${s.path}`)?{args:[]}:{}),inputs:s===script?input.inputReferences??[]:[],outputs:s===script?resultPaths:[],interpretation:'只据已提供文件整理，脚本选中不等于执行过；图像仅核对文件信息，未作像素解读。'}))
+ if(!script&&!summaryFile&&!table){
+  const summary=(input.evidence??[]).find(e=>e.path.endsWith('summary.csv')&&e.text)
+  const text=summary?.text?.trim().split(/\r?\n/)
+  const facts=text?.length===2?`统计表记录：${text[0]}；对应值 ${text[1]}。`: '未提供可以直接核对的统计摘要，不推断样本量或显著性。'
+  return JSON.stringify({readme:'从分析报告查看采用的脚本和调用方式。原始输入和依赖需要在原项目根目录核对；本次没有执行分析，也没有生成总脚本。',interpretation:`本次采用已有分步脚本、选定图表和说明文件整理分析报告。${facts} 图像只读取文件信息，未确认其像素与科学结论。`,steps,scripts:[],gaps:savedScripts.length?[]:['未提供原分析脚本，调用方式未确认。']})
+ }
  let summary;try{summary=summaryFile?JSON.parse(summaryFile.text):undefined}catch{}
  const details=summary?`有效样本 ${summary.n_effective} / ${summary.n_total}，排除 ${summary.n_excluded} 条生物量缺失编码 -999；OLS 斜率 ${summary.slope}，截距 ${summary.intercept}，R² ${summary.r2}。`:'当前选定材料中无法完整核对样本量与模型摘要，需补充 summary.json 或统计表。'
  const interpretation=`# 结果解读：土壤水分与草地生物量\n\n> 合成数据工程验收；本段由确定性模型夹具基于实际文件生成。\n\n## 问题与数据\n\n考察土壤水分（%）与地上生物量（g/m²）的线性关联。输入引用为 data/raw/grassland.csv；单位来自脚本字段及本案例设定，不能用于真实野外推断。\n\n## 过滤、方法与实际结果\n\n${details}\n\n依据：${summaryFile?.path??table?.path??'未提供统计结果'}。方法为带截距普通最小二乘；没有计算 p 值、置信区间或外部验证。\n\n## 图表阅读\n\nmodel.csv 为总体样本及回归摘要，summary.json 保存相同指标。regression.png 的散点和拟合线对应此分析；本次模型只接收文件元信息，图像像素与坐标需在预览核对，不能据此宣称视觉验收。\n\n## 可支持的结论与限制\n\n在此合成数据中关联方向为正；不代表水分变化导致生物量变化。拟合优度不能代替独立预测验证，缺少混杂控制、独立样地、p 值与置信区间。本报告未宣称运行验证通过。`
  const generated={readme:`# 科研分析交付\n\n这是合成草地 OLS 案例。先读结果解读，再核对统计表和图。\n\n## 运行\n\n原始输入仅引用：data/raw/grassland.csv（30 条合成观测，-999 为生物量缺失编码）。请将该文件放入运行根目录的 data/raw/。\n\nPython 3 标准库 csv/json/pathlib/struct/zlib/math；本次只整理，未查询实际版本，不编造依赖锁定。\n\n命令：\n\n\`\`\`sh\n<已配置的Python> scripts/analysis/run_analysis.py <原工作区> <全新输出目录>\n\`\`\`\n\n输出 model.csv、summary.json、analysis_report.md、regression.png。生成脚本保留明确 argv 参数，不依赖当前内核。原文件保存在 files/；原始输入不复制。\n\n## 验证状态\n\n整理不运行分析。验证方案先比较 model.csv 和 summary.json 的完整数据；图像需要单独查看，科学结论仍需审阅。最新验证结果以工作台交付记录及 validation 下 verification.json 为准。`,interpretation,scripts:script?[{path:'analysis/run_analysis.py',content:script.text}]:[],gaps:[...(!script?['没有选定本案例脚本，无法生成可确认的运行方案']:[]),...(!summary?['缺少完整模型摘要，解读范围有限']:[])]}
  if(script&&table&&summaryFile)generated.validation={language:'python',script:'analysis/run_analysis.py',args:['{workspace}','{output}'],comparisons:[{source:table.path,output:'model.csv',kind:'table'},{source:summaryFile.path,output:'summary.json',kind:'json'}],note:'完整比较统计表与 JSON 数值。PNG 仅交回预览，未纳入自动像素比较；不宣称科学独立核验。'}
+ generated.steps=steps
  return JSON.stringify(generated)
 }

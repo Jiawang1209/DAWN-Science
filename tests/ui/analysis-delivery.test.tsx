@@ -153,10 +153,10 @@ describe("analysis delivery in artifacts", () => {
     fireEvent.click(screen.getByLabelText("产物操作菜单"));
     fireEvent.click(await screen.findByRole("button", { name: /交付记录/ }));
     fireEvent.click(await screen.findByRole("button", { name: /草地结果/ }));
-    fireEvent.click(screen.getByRole("button", { name: "阅读结果解读" }));
+    fireEvent.click(screen.getByRole("button", { name: "阅读分析报告" }));
     expect(await screen.findByText("真实结果解读")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "收起预览" }));
-    expect(screen.getByRole("button", { name: "阅读结果解读" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "阅读分析报告" })).toBeTruthy();
   });
   it("does not let a late response from the old scope replace the current view", async () => {
     let finish: (v: unknown) => void = () => {};

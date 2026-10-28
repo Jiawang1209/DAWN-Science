@@ -33,6 +33,15 @@ export const DeliveryPlanSchema = z
     note: z.string().max(4000),
   })
   .strict();
+export const DeliveryStepSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  purpose: z.string().max(4000),
+  script: DeliveryPathSchema.refine(p => /\.(py|r)$/i.test(p)),
+  args: z.array(z.string().max(2048)).max(30).optional(),
+  inputs: z.array(DeliveryPathSchema).max(30).default([]),
+  outputs: z.array(DeliveryPathSchema).max(30).default([]),
+  interpretation: z.string().max(12000).default(''),
+}).strict();
 export const DeliveryGenerationSchema = z
   .object({
     readme: z.string().trim().min(10).max(80_000),
@@ -49,6 +58,7 @@ export const DeliveryGenerationSchema = z
       .max(8),
     gaps: z.array(z.string().max(2000)).max(30),
     validation: DeliveryPlanSchema.optional(),
+    steps: z.array(DeliveryStepSchema).max(60).optional(),
   })
   .strict();
 export const DeliveryCreateSchema = z
@@ -148,6 +158,7 @@ export const DeliveryRecordSchema = z
   })
   .strict();
 export type DeliveryRecord = z.infer<typeof DeliveryRecordSchema>;
+export type DeliveryGeneration = z.infer<typeof DeliveryGenerationSchema>;
 export type DeliveryCreate = z.infer<typeof DeliveryCreateSchema>;
 export type DeliveryPlan = z.infer<typeof DeliveryPlanSchema>;
 export type DeliveryVerify = z.infer<typeof DeliveryVerifySchema>;

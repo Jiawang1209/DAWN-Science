@@ -484,7 +484,7 @@ export function AnalysisDeliveryPanel(p: Props) {
                   <strong>{t("仅整理")}</strong>
                   <small>
                     {t(
-                      "读取已有结果，生成脚本、运行说明和结果解读；不运行分析。",
+                      "沿用分步脚本，整理调用说明、分析报告和选定结果；不运行分析。",
                     )}
                   </small>
                 </span>
@@ -523,7 +523,7 @@ export function AnalysisDeliveryPanel(p: Props) {
             </section>
             <p className="hint">
               {t(
-                "交付包含 README、结果解读、选定结果与可整理的脚本。缺失依据会明确标注。",
+                "交付包含分析报告、脚本调用说明与选定文件；完整代码保留在脚本中，缺口会明确标注。",
               )}
             </p>
           </>
@@ -629,7 +629,7 @@ export function AnalysisDeliveryPanel(p: Props) {
                     )
                   }
                 >
-                  {t("阅读结果解读")}
+                  {t("阅读分析报告")}
                 </Button>
               ) : null}
               {current.files.find((f) => f.role === "readme") ? (

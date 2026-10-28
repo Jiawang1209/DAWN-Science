@@ -57,6 +57,21 @@ const request = {
   mode: "organize" as const,
 };
 describe("analysis delivery generation", () => {
+  it('keeps existing step scripts and writes invocation guidance without embedding their source', async () => {
+    const {service,root}=setup({readme:'# 运行说明\n原始输入在项目中',interpretation:'# 分析结果\n有效样本24，模型关联仍需审阅。',scripts:[],gaps:[],steps:[{title:'统计分析',purpose:'读取清洗结果并计算回归',script:'analysis/run.py',args:['--input','data/clean.csv'],inputs:[],outputs:['results/model.csv'],interpretation:'统计表记录有效样本量。'}]})
+    const r=await service.create(request)
+    const report=readFileSync(join(root,r.directory,'分析报告.md'),'utf8')
+    expect(report).toContain('[analysis/run.py](files/analysis/run.py)')
+    expect(report).toContain('建议调用方式（未执行）')
+    expect(report).toContain("'analysis/run.py' '--input' 'data/clean.csv'")
+    expect(report).not.toContain('raise Exception')
+    expect(report).toContain('[results/model.csv](files/results/model.csv)')
+    expect(r.gaps.join('\n')).not.toContain('未生成可独立运行')
+    expect(r.state).toBe('organized')
+    expect(existsSync(join(root,r.directory,'结果解读.md'))).toBe(false)
+    expect(readFileSync(join(root,r.directory,'README.md'),'utf8')).toContain('[分析报告](分析报告.md)')
+    expect(r.verification.state).toBe('not_run')
+  })
   it("requires explicit selection, never runs analysis and grounds interpretation in actual output", async () => {
     const { service, root, ask } = setup();
     await expect(service.create({ ...request, paths: [] })).rejects.toThrow();
@@ -65,7 +80,7 @@ describe("analysis delivery generation", () => {
     expect(r.verification.state).toBe("not_run");
     expect(ask.mock.calls[0]?.[0].user).toContain("24,2.5,0.8");
     expect(
-      readFileSync(join(root, r.directory, "结果解读.md"), "utf8"),
+      readFileSync(join(root, r.directory, "分析报告.md"), "utf8"),
     ).toContain("slope=2.5");
     expect(readFileSync(join(root, "analysis/run.py"), "utf8")).toContain(
       "must not execute",
@@ -84,6 +99,31 @@ describe("analysis delivery generation", () => {
       "user edited",
     );
   });
+  it('links the copied script snapshot when the workspace changes during report generation', async()=>{
+    const {service,root,ask}=setup()
+    ask.mockImplementation(async()=>{
+      writeFileSync(join(root,'analysis/run.py'),'# changed after selection\nprint(999)\n')
+      return {model:'test',text:JSON.stringify({readme:'Run from the original project root.',interpretation:'Only the chosen statistical output is described; no new execution occurred.',scripts:[],gaps:[],steps:[{title:'Saved step',purpose:'Use selected script',script:'analysis/run.py',args:[],inputs:[],outputs:[]}]})}
+    })
+    const r=await service.create(request)
+    expect(readFileSync(join(root,r.directory,'files/analysis/run.py'),'utf8')).toContain('must not execute')
+    const report=readFileSync(join(root,r.directory,'分析报告.md'),'utf8')
+    expect(report).toContain('(files/analysis/run.py)')
+    expect(report).not.toContain('print(999)')
+    expect(report).not.toContain('raise Exception')
+  })
+  it('does not link a script copy removed while the model was preparing the report', async()=>{
+    const {service,root,ask}=setup()
+    ask.mockImplementation(async()=>{
+      rmSync(join(root,service.list()[0]!.directory,'files/analysis/run.py'))
+      return {model:'test',text:JSON.stringify({readme:'Original project instructions; no execution.',interpretation:'The selected statistical results are available; the script copy is missing.',scripts:[],gaps:[],steps:[{title:'Step',purpose:'Original script',script:'analysis/run.py',args:[],inputs:[],outputs:[]}]})}
+    })
+    const r=await service.create(request)
+    const report=readFileSync(join(root,r.directory,'分析报告.md'),'utf8')
+    expect(r.state).toBe('partial')
+    expect(report).not.toContain('(files/analysis/run.py)')
+    expect(r.gaps.join('\n')).toContain('交付副本已不可用')
+  })
   it("rejects traversal, credential files and outward links before calling the model", async () => {
     const { service, root, ask } = setup();
     symlinkSync(tmpdir(), join(root, "link"));

@@ -11,6 +11,7 @@
 | 要找什么 | 去哪 |
 |---|---|
 | **产物来源与关键结果留存**：预览内一键保留、历史直接查看，来源与组合折叠；本地工具/内核自动记录与固定版本交付 | `docs/产物来源与留存-怎么用.md` · `docs/superpowers/specs/2026-10-27-artifact-provenance-retention-design.md` |
+| **Markdown 与分步脚本交付**：文档相对图片和脚本链接、整理交付中从整个项目添加已有文件 | `docs/产物来源与留存-怎么用.md` · `docs/reviews/2026-10-28-markdown-project-delivery-verification.md` |
 | **文献调研**：内置 literature-review，逐篇 PDF 页码证据、多论文设计/样本量/结论对照，Excel + Markdown 交付 | `docs/文献调研-怎么用.md` |
 | **科研数据与蛋白**：默认开启的 GEO / NCBI SRA / UniProt 检索、编号核验和真实清单/FASTA 保存；新 API 会话可用 | `docs/科研数据-怎么用.md` · `docs/reviews/2026-10-25-uniprot-proteins-verification.md` |
 | **科研文献**：默认开启的 OpenAlex / Crossref 索引检索、DOI 元数据核对和所选真实清单保存；API 会话可用 | `docs/科研文献-怎么用.md` · `docs/reviews/2026-10-25-openalex-literature-verification.md` |

@@ -42,6 +42,7 @@ import {
   CodeBlockDownloadButton,
   CodeBlockHeader,
   Streamdown,
+  defaultRemarkPlugins,
   type Components,
   type CustomRendererProps,
 } from "streamdown"
@@ -51,6 +52,7 @@ import "katex/dist/katex.min.css"
 import { 像本机地址吗 } from "../policy/local-url.js"
 import { observeCodeBlockVisibility } from "./code-block-visibility.js"
 import { CODE_LANGUAGES } from "./code-languages.js"
+import { fileReferencePlugin, markdownFilePath, MarkdownFileImage, type MarkdownFileContext } from './markdown-files.js'
 
 const MarkdownStreamingContext = createContext(false)
 
@@ -107,8 +109,8 @@ const MARKDOWN_PLUGINS = {
  * 以前它是模块级常量。现在链接要认得「本机地址点了进坞」，
  * 而那个动作是调用点给的回调——闭包得进得来。
  */
-function 造组件(onOpenLocal?: (url: string) => void): Components {
-  return {
+function 造组件(onOpenLocal?: (url: string) => void, file?: MarkdownFileContext): Components {
+  const components: Components = {
     strong: ({ children }) => <strong>{children}</strong>,
     em: ({ children }) => <em>{children}</em>,
     /**
@@ -122,7 +124,10 @@ function 造组件(onOpenLocal?: (url: string) => void): Components {
      * 判据用的是 `policy/local-url.ts`，与主进程那道门**同一份规则**——
      * 各写一份的话，一条链接会在「界面说能开」与「主进程说不能」之间打架。
      */
-    a: ({ href, children }) => (
+    a: ({ href, children }) => {
+      const path = file ? markdownFilePath(href) : undefined
+      if (path && file) return <a href="#" onClick={e => { e.preventDefault(); file.onOpenFile(path) }}>{children}</a>
+      return (
       <a
         href={href}
         target="_blank"
@@ -135,8 +140,13 @@ function 造组件(onOpenLocal?: (url: string) => void): Components {
       >
         {children}
       </a>
-    ),
+    )},
   }
+  if (file) components.img = ({ src, alt }) => {
+    const path = markdownFilePath(src)
+    return path ? <MarkdownFileImage key={file.path + ':' + path} path={path} alt={alt ?? ''} context={file} /> : <img src={src} alt={alt ?? ''} />
+  }
+  return components
 }
 
 /**
@@ -194,6 +204,7 @@ export function AgentMarkdown({
   streaming,
   className,
   onOpenLocal,
+  file,
 }: {
   text: string
   streaming: boolean
@@ -202,6 +213,7 @@ export function AgentMarkdown({
    * 所有链接一律去系统浏览器。
    */
   onOpenLocal?: (url: string) => void
+  file?: MarkdownFileContext | undefined
   /**
    * 额外的类名，落在**同一个元素**上（2026-08-14）。
    *
@@ -211,20 +223,29 @@ export function AgentMarkdown({
    */
   className?: string
 }) {
-  const components = useMemo(() => 造组件(onOpenLocal), [onOpenLocal])
+  const components = useMemo(() => 造组件(onOpenLocal, file), [onOpenLocal, file])
+  // Streamdown's top-level memo ignores component/callback changes. Remount on reader identity changes.
+  const fileIdentity = useRef({ path: file?.path, readFile: file?.readFile, onOpenFile: file?.onOpenFile, revision: 0 })
+  if (fileIdentity.current.path !== file?.path || fileIdentity.current.readFile !== file?.readFile || fileIdentity.current.onOpenFile !== file?.onOpenFile) {
+    fileIdentity.current = { path: file?.path, readFile: file?.readFile, onOpenFile: file?.onOpenFile, revision: fileIdentity.current.revision + 1 }
+  }
+  // Streamdown caches processors by plugin name + serialized options, not closure identity.
+  const remarkPlugins = useMemo(() => file ? [...Object.values(defaultRemarkPlugins), [fileReferencePlugin, { document: file.path }] as [typeof fileReferencePlugin, { document: string }]] : undefined, [file?.path])
   return (
     <div className={className ? `md ${className}` : "md"}>
       <渲染兜底 text={text}>
         <MarkdownStreamingContext.Provider value={streaming}>
           <Streamdown
-            // Keep the parser tree stable across the streaming → completed transition;
-            // the context controls the highlighter separately from Streamdown's parser mode.
-            mode="streaming"
+            key={fileIdentity.current.revision}
+            // File documents parse as a whole so reference-style links can use definitions below.
+            // Chat keeps the same parser through streaming → completed transitions.
+            mode={file ? 'static' : 'streaming'}
             // **半截围栏不吞掉后文。** 没有它，流式过程中界面会一跳一跳
             parseIncompleteMarkdown
             // 动效会跟流式更新抢帧；DESIGN.md：动效跟随状态，永不延迟状态
             animated={false}
             components={components}
+            {...(remarkPlugins ? { remarkPlugins } : {})}
             plugins={MARKDOWN_PLUGINS}
           >
             {text}

@@ -3856,6 +3856,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onToggle={切展开}
         content={fileContent}
         loadDir={loadDir}
+        readFile={读产物}
         search={searchFiles}
         路径={行路径}
         {...(sessionId ? { onInsert: 插进输入框 } : {})}

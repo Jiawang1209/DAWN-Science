@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-10-28 — Markdown 文件引用与项目已有文件交付
+
+- **Type**: fix / feat
+- **What**: 文件、当前产物和交付预览支持文档相对图片及脚本链接，沿用后端工作区路径守卫，脚本点击只预览。整理交付可按目录浏览或搜索整个项目，显式添加已存在文件；保持极简主界面、原生成与验证行为。
+- **Verification**: 536 文件、5629 项通过/11 跳过；最终相关 12 文件、208 项、类型检查和完整构建通过。新增 3 项 Electron、原流程 7 项及14张原视觉基线通过；复制交付的 Markdown 能继续引用选定图片和脚本。见 `docs/reviews/2026-10-28-markdown-project-delivery-verification.md`。
+- **Impact**: 分支 `codex/markdown-project-delivery`，保留 main 与既有预览资料；准备实际 Python/R 生成的分步体验项目。未合并、推送或替换安装版。
+
 ### 2026-10-28 — 产物来源与极简留存本地 main 集成
 
 - **Type**: docs

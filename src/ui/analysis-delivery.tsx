@@ -1,4 +1,5 @@
 import { ArtifactHistoryPanel } from './artifact-history.js'
+import { ProjectFilePicker } from './project-file-picker.js'
 import { createPortal } from "react-dom";
 import {
   useEffect,
@@ -63,7 +64,8 @@ export const verificationLabel = (s: DeliveryRecord["verification"]["state"]) =>
 export function AnalysisDeliveryPanel(p: Props) {
   const [evidenceView,setEvidenceView]=useState<{path?:string}|undefined>()
   const [moreOpen,setMoreOpen]=useState(false)
-  useEffect(()=>{setEvidenceView(undefined);setMoreOpen(false)},[p.scopeKey])
+  const [projectFilesOpen, setProjectFilesOpen] = useState(false)
+  useEffect(()=>{setEvidenceView(undefined);setMoreOpen(false);setProjectFilesOpen(false)},[p.scopeKey])
   const views = useStore($deliveryViews),
     view = views.get(p.scopeKey) ?? deliveryView(p.scopeKey);
   const [catalog, setCatalog] = useState<Catalog>(),
@@ -403,10 +405,17 @@ export function AnalysisDeliveryPanel(p: Props) {
           </>
         ) : view.page === "select" ? (
           <>
-            <p className="hint">
+            {!projectFilesOpen ? <><p className="hint">
               {t("只采用你选定的文件；同名候选和草稿不会自动认定为最终结果。")}
             </p>
-            <div
+            <Button variant="outline" size="sm" disabled={!allowed} onClick={() => setProjectFilesOpen(true)}>{t("从项目添加文件")}</Button></> : null}
+            {projectFilesOpen ? <ProjectFilePicker key={p.scopeKey} sessionId={p.sessionId} client={p.client} selected={view.selected} onClose={() => setProjectFilesOpen(false)} onAdd={paths => {
+              if (!allowed) return
+              if (new Set([...view.selected, ...paths]).size > 60) { setError(t("每份交付最多选择 60 个文件")); return }
+              update({ candidates: [...new Set([...view.candidates, ...paths])], selected: [...new Set([...view.selected, ...paths])] })
+              setProjectFilesOpen(false)
+            }} /> : null}
+            {!projectFilesOpen ? <div
               className="delivery-selection"
               role="group"
               aria-label={t("交付文件选择")}
@@ -416,6 +425,7 @@ export function AnalysisDeliveryPanel(p: Props) {
                   <input
                     type="checkbox"
                     checked={view.selected.includes(path)}
+                    disabled={projectFilesOpen || !allowed || (view.selected.length >= 60 && !view.selected.includes(path))}
                     onChange={(e) =>
                       update({
                         selected: e.target.checked
@@ -431,11 +441,11 @@ export function AnalysisDeliveryPanel(p: Props) {
                   </span>
                 </label>
               ))}
-            </div>
-            {!candidates.length ? (
+            </div> : null}
+            {!projectFilesOpen && !candidates.length ? (
               <EmptyState
                 title={t("还没有可选择的产物")}
-                description={t("先完成分析，或从路线、Bot 的交付文件进入。")}
+                description={t("可从项目添加已有脚本、图片、表格和说明。")}
               />
             ) : null}
           </>
@@ -711,7 +721,7 @@ export function AnalysisDeliveryPanel(p: Props) {
           className="delivery-validation-controls"
         />
       ) : null}
-      {view.page === "select" ? (
+      {view.page === "select" && !projectFilesOpen ? (
         <footer className="delivery-footer">
           <span>{tf("已选 {0} 个文件", view.selected.length)}</span>
           <Button
@@ -808,6 +818,8 @@ function DeliveryPreview(p: {
     <FilePreview
       path={p.path}
       content={content}
+      readFile={p.readFile}
+      onOpenFile={p.onLocate}
       onOpenExternally={p.onOpenExternally}
       onClosePreview={p.onClose}
       readingExpanded={reading && canExpandFilePreview(content)}

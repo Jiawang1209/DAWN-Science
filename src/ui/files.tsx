@@ -501,6 +501,8 @@ export function FilePreview({
   readingExpanded = false,
   onToggleReading,
   onClosePreview,
+  readFile,
+  onOpenFile,
 }: {
   path: string | undefined
   content: FileContent | undefined
@@ -517,6 +519,8 @@ export function FilePreview({
   readingExpanded?: boolean
   onToggleReading?: () => void
   onClosePreview?: (() => void) | undefined
+  readFile?: ((path: string) => Promise<FileContent>) | undefined
+  onOpenFile?: ((path: string) => void) | undefined
 }) {
   if (!path) {
     return <EmptyState title={t("选一个文件")} description={t("上面是这台机器上的目录。")} />
@@ -556,7 +560,7 @@ export function FilePreview({
       </header>
 
       {script ? <FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} /> : (
-        <div className="preview-body"><FilePreviewContent path={path} content={content} onOpenExternally={onOpenExternally} /></div>
+        <div className="preview-body"><FilePreviewContent path={path} content={content} readFile={readFile} onOpenFile={onOpenFile} onOpenExternally={onOpenExternally} /></div>
       )}
     </div>
   )
@@ -564,8 +568,10 @@ export function FilePreview({
 
 
 /** Shared read-only content; callers own their toolbar and collapse behavior. */
-export function FilePreviewContent({path,content,onOpenExternally}: {
+export function FilePreviewContent({path,content,onOpenExternally,readFile,onOpenFile}: {
   path: string; content: FileContent; onOpenExternally?: ((path: string) => void) | undefined
+  readFile?: ((path: string) => Promise<FileContent>) | undefined
+  onOpenFile?: ((path: string) => void) | undefined
 }) {
   if(content.kind === "image") return <div className="visual-preview-stage"><img className="preview-img" src={`data:${content.mediaType};base64,${content.base64}`} alt={tf("预览：{0}",path)} /></div>
   if(content.kind === "pdf") return <PdfCanvas path={path} base64={content.base64}/>
@@ -576,7 +582,7 @@ export function FilePreviewContent({path,content,onOpenExternally}: {
         <>
           {/* Markdown渲染，脚本只上色；不通过Markdown重写代码原文。 */}
           {content.mediaType === "text/markdown" ? (
-            <AgentMarkdown text={content.text} streaming={false} />
+            <AgentMarkdown key={path} text={content.text} streaming={false} file={readFile && onOpenFile ? { path, readFile, onOpenFile } : undefined} />
           ) : (
             <ScriptPreview key={path} path={path} text={content.text} mediaType={content.mediaType} wrap={true} />
           )}
@@ -758,6 +764,7 @@ export function FilesView({
   selected,
   content,
   loadDir,
+  readFile,
   onSelect,
   onOpenExternally,
   onInitLayout,
@@ -788,6 +795,7 @@ export function FilesView({
   selected: string | undefined
   content: FileContent | undefined
   loadDir: (path: string) => Promise<Listing>
+  readFile?: ((path: string) => Promise<FileContent>) | undefined
   onSelect: (path: string) => void
   onOpenExternally: (path: string) => void
   /**
@@ -1304,6 +1312,8 @@ export function FilesView({
         <FilePreview
           path={selected}
           content={content}
+          readFile={readFile}
+          onOpenFile={onSelect}
           onOpenExternally={onOpenExternally}
           fitContainer
           {...(onClosePreview ? { onClosePreview: closePreview } : {})}

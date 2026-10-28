@@ -66,6 +66,29 @@ function props() {
   };
 }
 describe("analysis delivery in artifacts", () => {
+  it("adds existing files from the project even when this session has no generated artifacts", async () => {
+    const p = props()
+    p.data.artifacts = []
+    p.invoke.mockImplementation(async (op, request: unknown) => {
+      if (op === 'listAnalysisDeliveries') return { supported: true, records: [] }
+      if (op === 'listDirectory') {
+        const path = (request as {path: string}).path
+        return { path, entries: path ? [{ name: '01_clean.py', kind: 'file', modifiedAt: '2026' }] : [{ name: 'analysis', kind: 'dir', modifiedAt: '2026' }], ignored: 0, omitted: 0 }
+      }
+      return record
+    })
+    render(<AnalysisDeliveryPanel {...p} />)
+    fireEvent.click(screen.getByLabelText('产物操作菜单'))
+    fireEvent.click(await screen.findByRole('button', {name: '整理交付'}))
+    fireEvent.click(await screen.findByRole('button', {name: '从项目添加文件'}))
+    fireEvent.click(await screen.findByRole('button', {name: 'analysis'}))
+    fireEvent.click(await screen.findByRole('checkbox', {name: /01_clean.py/}))
+    fireEvent.click(screen.getByRole('button', {name: '添加所选文件'}))
+    expect((await screen.findByRole('checkbox', {name: /analysis\/01_clean.py/}) as HTMLInputElement).checked).toBe(true)
+    expect(p.invoke).toHaveBeenCalledWith('listDirectory', {sessionId: 's', path: 'analysis'})
+    fireEvent.click(screen.getByRole('button', {name: '下一步'}))
+    expect(screen.getByText('已选 1 个文件')).toBeTruthy()
+  })
   it("keeps delivery actions secondary while results remain directly accessible", async () => {
     const p = props();
     render(<AnalysisDeliveryPanel {...p} />);

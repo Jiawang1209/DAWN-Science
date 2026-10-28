@@ -9239,3 +9239,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .delivery-header > .artifact-page-actions { flex-direction: row; }
 .analysis-delivery > .delivery-header > strong { flex-shrink: 0; white-space: nowrap; }
 .artifact-more-menu > summary { white-space: nowrap; }
+.project-file-picker { display: grid; gap: var(--dawn-space-2); padding: var(--dawn-space-3); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); min-width: 0; }
+.project-file-picker-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); min-width: 0; }
+.project-file-picker-toolbar .control { flex: 1; min-width: 100px; }
+.project-file-picker-toolbar .hint { overflow-wrap: anywhere; }
+.project-file-picker-list { display: flex; flex-direction: column; max-height: 280px; overflow: auto; min-width: 0; }
+.project-file-picker-list > .btn { justify-content: flex-start; overflow-wrap: anywhere; white-space: normal; }
+.project-file-picker-list .delivery-choice-row { padding: var(--dawn-space-2); overflow-wrap: anywhere; }

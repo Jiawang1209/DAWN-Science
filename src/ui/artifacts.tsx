@@ -228,6 +228,8 @@ export function ArtifactsPanel({
           <FilePreview
             path={看的}
             content={内容}
+            readFile={readFile}
+            onOpenFile={onOpenInFiles}
             onOpenExternally={onOpenExternally}
             onClosePreview={closePreview}
             readingExpanded={readingExpanded}

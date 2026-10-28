@@ -663,6 +663,7 @@ export function SessionRow({
             className="row-more"
             ref={按钮}
             aria-label={tf("会话操作：{0}", 名字)}
+            aria-haspopup="menu"
             aria-expanded={menu}
             onClick={() => (menu ? setMenu(false) : 打开菜单())}
           >
@@ -827,6 +828,26 @@ function AttachButton({ workspace, onInsert, onAttachImages, ready, plan, enhanc
         </div>, document.body)}
     </div>
   )
+}
+
+/** 摘要未加载的会话仍使用同一菜单入口；删除沿用原任务确认流程。 */
+function TaskSessionMenu({ title, onDelete }: { title: string; onDelete: () => void }) {
+  const [open, setOpen] = useState(false)
+  const trigger = useRef<HTMLButtonElement>(null)
+  const [position, setPosition] = useState({ top: 0, left: 0 })
+  return <div className="row-actions">
+    <Button ref={trigger} variant="ghost" size="icon" className="row-more"
+      aria-label={tf("会话操作：{0}", title)} aria-haspopup="menu" aria-expanded={open}
+      onClick={() => {
+        const rect = trigger.current?.getBoundingClientRect()
+        if (rect) setPosition({ top: rect.top - 4, left: rect.right + 6 })
+        setOpen(value => !value)
+      }}>⋯</Button>
+    {open ? <SessionMenu label={tf("会话操作：{0}", title)} position={position}
+      onClose={() => setOpen(false)} restoreFocus={() => trigger.current?.focus()}>
+      <SessionMenuItems actions={{ onDelete }} onRename={() => {}} onClose={() => setOpen(false)} />
+    </SessionMenu> : null}
+  </div>
 }
 
 /** 常驻终端入口与命令面板共用现有开关，不提交输入框草稿。 */
@@ -1754,7 +1775,7 @@ export function SessionSidebar({
    * （*「我们现在在服务器的对话，我发现不能删除，也不能挪动顺序」*，
    * 那时远端那一列正是自绘的）。
    *
-   * 拿不到会话摘要时退回一行纯文字：**不画一个点了没反应的 `⋯`**。
+   * 拿不到摘要时也保留 `⋯` 菜单，按已知taskId提供删除；不伪造缺少摘要的其他操作。
    */
   /**
    * **它是一个函数，不是一个组件——这一点是必须的。**
@@ -1877,7 +1898,7 @@ export function SessionSidebar({
     const s = task.sessionId ? sessionOf?.(task.sessionId) : undefined
     if (!s) {
       /**
-       * **界面不认识这段会话，但这一行照样要能删**（2026-08-12）。
+       * **摘要尚未加载时仍保留统一的会话菜单和删除能力**。
        *
        * 上一版这里是一行纯文字：没有勾选框、没有 `⋯`。
        * 而「界面认不认识它」取决于它挂在哪个项目——
@@ -1910,19 +1931,7 @@ export function SessionSidebar({
               </span>
             </span>
           </Row>
-          {onDeleteTask ? (
-            <div className="row-actions">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="row-more"
-                aria-label={tf("删除会话：{0}", task.title ?? t("新任务"))}
-                onClick={() => onDeleteTask(task)}
-              >
-                <删除图标 />
-              </Button>
-            </div>
-          ) : null}
+          {onDeleteTask ? <TaskSessionMenu title={task.title ?? t("新任务")} onDelete={() => onDeleteTask(task)} /> : null}
         </li>
       )
     }

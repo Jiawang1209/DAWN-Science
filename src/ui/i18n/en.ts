@@ -551,7 +551,6 @@ export const EN: Readonly<Record<string, string>> = {
   "{0} 小时 {1} 分": "{0}h {1}m",
   "正在连接本地后端…": "Connecting to the local backend…",
   "连接失败，已重试 {0} 次": "Connection failed after {0} attempts",
-  "删除会话：{0}": "Delete chat: {0}",
   "还没有选中项目": "No project selected",
   "配置里还没有可用的 agent——先去设置里加一个": "No usable agent in the config — add one in settings first",
   "没有能在服务器上干活的 agent——API 模型可以，标了「能上服务器」的 ACP 适配器（如 Claude Code）也可以":

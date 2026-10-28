@@ -1,9 +1,17 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { crc32, deflateSync } from 'node:zlib'
 import { test, expect, 在项目里开会话, 进坞 } from './fixtures.js'
 import type { DeliveryRecord } from '../src/protocol/delivery.js'
 
-const PNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')
+function pngChunk(name: string, bytes: Buffer) {
+  const type=Buffer.from(name),size=Buffer.alloc(4),crc=Buffer.alloc(4)
+  size.writeUInt32BE(bytes.length);crc.writeUInt32BE(crc32(Buffer.concat([type,bytes])))
+  return Buffer.concat([size,type,bytes,crc])
+}
+const header=Buffer.alloc(13);header.writeUInt32BE(1000,0);header.writeUInt32BE(580,4);header[8]=8;header[9]=2
+const row=Buffer.concat([Buffer.from([0]),Buffer.alloc(3000,120)])
+const PNG=Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),pngChunk('IHDR',header),pngChunk('IDAT',deflateSync(Buffer.concat(Array(580).fill(row)))),pngChunk('IEND',Buffer.alloc(0))])
 function seed(workspace:string){
   for(const dir of ['analysis/scripts','figures','results/reports'])mkdirSync(join(workspace,dir),{recursive:true})
   writeFileSync(join(workspace,'analysis/scripts/01_clean.py'),"# Step 1: saved before this session\nprint('cleaned')\n")
@@ -21,7 +29,8 @@ test('Markdown 相对图片实际解码，分步脚本链接进入只读预览',
   await page.getByRole('button',{name:/^分析记录\.md/}).click()
   const image=page.locator('.file-preview').getByRole('img',{name:'结果图',exact:true})
   await expect(image).toBeVisible()
-  await expect.poll(()=>image.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBe(1)
+  await expect.poll(()=>image.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBe(1000)
+  expect(await image.evaluate(el=>el.getBoundingClientRect().width <= el.closest('.preview-body')!.clientWidth)).toBe(true)
   await page.screenshot({path:info.outputPath('markdown-relative-files.png')})
   await page.getByRole('link',{name:'第一步脚本',exact:true}).click()
   await expect(page.locator('.preview-code')).toContainText("print('cleaned')")
@@ -71,7 +80,7 @@ test('整理交付可选整个项目的已有分步脚本和图片，保持原�
   expect(readFileSync(join(workspace,record.directory,'README.md'),'utf8').length).toBeGreaterThan(10)
   await panel.getByRole('button',{name:'分析记录.md files/results/reports/分析记录.md',exact:true}).click()
   const image=page.locator('.delivery-preview').getByRole('img',{name:'结果图',exact:true})
-  await expect.poll(()=>image.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBe(1)
+  await expect.poll(()=>image.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBe(1000)
   await page.getByRole('link',{name:'第一步脚本',exact:true}).click()
   await expect(page.locator('.file-preview .preview-code')).toContainText("print('cleaned')")
 })

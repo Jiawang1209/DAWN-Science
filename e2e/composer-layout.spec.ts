@@ -217,7 +217,7 @@ test("主侧对话输入区在窄栏可操作且不横向溢出", async ({ dawn 
   }
 })
 
-test("终端跟随强调色，上下文无底色，两级菜单跟随主题色", async ({ dawn }) => {
+test("终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色", async ({ dawn }) => {
   const { page } = dawn
   mkdirSync(shots, { recursive: true })
   await 在项目里开会话(page)
@@ -240,7 +240,9 @@ test("终端跟随强调色，上下文无底色，两级菜单跟随主题色",
       probe.style.backgroundColor = "var(--dawn-accent-soft)"
       el.appendChild(probe)
       const style = getComputedStyle(probe)
-      const result = { accent: style.color, background: style.backgroundColor }
+      const result = { accent: style.color, background: style.backgroundColor, hover: "" }
+      probe.style.backgroundColor = "var(--dawn-control-hover)"
+      result.hover = getComputedStyle(probe).backgroundColor
       probe.remove()
       return result
     })
@@ -250,9 +252,11 @@ test("终端跟随强调色，上下文无底色，两级菜单跟随主题色",
     const meter = page.locator(".composer-controls .ctx-meter-trigger")
     await expect(meter).toHaveCSS("background-color", "rgba(0, 0, 0, 0)")
     await meter.hover()
-    await expect(meter).toHaveCSS("background-color", "rgba(0, 0, 0, 0)")
+    await expect(meter).toHaveCSS("background-color", colors.hover)
     await meter.click()
     await expect(page.getByRole("dialog", { name: "上下文", exact: true })).toBeVisible()
+    await expect(meter).toHaveCSS("background-color", colors.hover)
+    await page.mouse.move(0, 0)
     await expect(meter).toHaveCSS("background-color", "rgba(0, 0, 0, 0)")
     await page.screenshot({ path: `${shots}/toolbar-accent-${theme}.png`, animations: "disabled", scale: "css" })
     await page.keyboard.press("Escape")

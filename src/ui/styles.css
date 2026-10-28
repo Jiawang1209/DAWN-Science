@@ -7956,6 +7956,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   color: var(--dawn-text-2);
   background: transparent;
 }
+.ctx-meter .btn.ctx-meter-trigger:hover:not(:disabled) { background: var(--dawn-control-hover); }
+.ctx-meter .btn.ctx-meter-trigger:active:not(:disabled) { background: var(--dawn-control-active); }
 .ctx-meter[data-level="warn"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="over"] .btn.ctx-meter-trigger { color: var(--dawn-danger); }
 .ctx-meter[data-level="dim"] .btn.ctx-meter-trigger { color: var(--dawn-text-3); }

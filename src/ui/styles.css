@@ -9219,7 +9219,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   padding: var(--dawn-space-1) var(--dawn-space-3);
   color: var(--dawn-text-3);
 }
-.workspace-title { font-weight: var(--dawn-weight-semibold); flex: 1; font-size: var(--dawn-fs-sub); }
+.workspace-title { color: var(--dawn-text-2); font-weight: var(--dawn-weight-semibold); flex: 1; font-size: var(--dawn-fs-sub); }
 .workspace-actions { display: flex; align-items: center; gap: var(--dawn-space-1); }
 .workspace-actions > .btn { width: var(--dawn-nav-action-w); height: var(--dawn-nav-action-w); min-width: var(--dawn-nav-action-w); padding: 0; color: var(--dawn-text-2); }
 

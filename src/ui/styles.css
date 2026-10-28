@@ -78,8 +78,8 @@ pre {
 .btn-icon { padding: 4px; min-width: 26px; justify-content: center; }
 /* 工具栏文字入口与图标入口共用默认圆角，不采用行内文字的直角背景。 */
 .btn-toolbar { min-height: 36px; padding: 0; font-size: var(--dawn-fs-sub); }
-/* 导航选择菜单使用宽松的整行点击区域。 */
-.btn-menu-row { min-height: 48px; padding: 10px 14px; font-size: var(--dawn-fs-sub-navigation); line-height: 24px; border-radius: var(--dawn-radius-md); }
+/* 目录选择菜单与输入区目录入口使用相同字号和行高。 */
+.btn-menu-row { min-height: 32px; padding: 5px 10px; font-size: var(--dawn-fs-sub); line-height: 20px; border-radius: var(--dawn-radius-md); }
 /**
  * 浮在转录上的那颗药丸（「回到底部」浮标，2026-09-08；2026-09-09 换成方案一的形状）。
  *
@@ -9260,9 +9260,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .project-file-picker-list .delivery-choice-row { padding: var(--dawn-space-2); overflow-wrap: anywhere; }
 .preview-document .md img { display: block; max-width: 100%; height: auto; }
 
-/* 本地工作目录选择：宽松的导航列表，默认项固定在底部。 */
-.ws-pop.workspace-menu { position: fixed; bottom: auto; min-width: 0; max-width: calc(100vw - 24px); max-height: min(38rem, calc(100vh - 24px)); padding: var(--dawn-space-3); gap: var(--dawn-space-3); border-radius: var(--dawn-radius-lg); box-sizing: border-box; }
-.workspace-menu-search { display: flex; align-items: center; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-3); min-height: 48px; flex: 0 0 auto; border: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); background: var(--dawn-control-rest); transition: border-color 120ms ease, box-shadow 120ms ease; }
+/* 本地工作目录选择：与目录入口协调的导航列表，默认项固定在底部。 */
+.ws-pop.workspace-menu { position: fixed; bottom: auto; min-width: 0; max-width: calc(100vw - 24px); max-height: min(38rem, calc(100vh - 24px)); padding: var(--dawn-space-2); gap: var(--dawn-space-2); border-radius: var(--dawn-radius-lg); box-sizing: border-box; }
+.workspace-menu-search { display: flex; align-items: center; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-3); min-height: 36px; flex: 0 0 auto; border: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); background: var(--dawn-control-rest); transition: border-color 120ms ease, box-shadow 120ms ease; }
 .workspace-menu-search:focus-within { border-color: var(--dawn-stroke-accent); box-shadow: 0 0 0 2px var(--dawn-accent-soft); }
 .workspace-menu-search > .icon { color: var(--dawn-accent); flex: 0 0 auto; width: 20px; height: 20px; }
 .workspace-menu-search .control { min-width: 0; width: 100%; }

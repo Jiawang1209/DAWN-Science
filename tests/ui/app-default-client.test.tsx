@@ -87,7 +87,10 @@ describe("App · 默认 client 路径（生产环境唯一走的那条）", () =
     // （2026-09-28 +1：头一批名单取回后拉一次 `takePendingOpenSession`——点通知时界面还没在听，那一段记在主进程里等这一拉）
     // Bot registry is loaded once to populate main slash dispatch.
     expect(invokes.filter(x => x === "listBots")).toHaveLength(1)
-    expect(invokes.length).toBeLessThan(23)
+    // 底部状态栏读取本机解释器配置一次，不自动启动解释器检测。
+    expect(invokes.filter(x => x === "getInterpreters")).toHaveLength(1)
+    expect(invokes).not.toContain("probeInterpreters")
+    expect(invokes.length).toBeLessThan(24)
   })
 
   it("IPC 监听器只注册一次 —— 每次渲染都注册会把内存吃穿", async () => {

@@ -18,6 +18,8 @@ import { $routeTurnMarker } from "./state/route-activity.js"
 import { activeRouteStep } from "./route-map-model.js"
 import { 标记待回答, $待回答的会话 } from "./state/catalog.js"
 import { StatusNotices } from "./status-notices.js"
+import { AppStatusBar } from "./app-statusbar.js"
+import { 拆模型名 } from "./format.js"
 /**
  * 外壳。
  *
@@ -1066,9 +1068,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * **没配的那个是 undefined**，界面据此显示「还没配置」而不是一个空串。
    */
   const [interpreters, setInterpreters] = useState<{ python?: string; r?: string }>({})
+  const [interpreterRead, setInterpreterRead] = useState<{ loaded: boolean; error?: string }>({ loaded: false })
   const refreshInterpreters = useCallback(() => {
-    client.get<{ python?: string; r?: string }>("getInterpreters", {}).then(setInterpreters).catch(fail)
+    client.get<{ python?: string; r?: string }>("getInterpreters", {}).then(paths => {
+      setInterpreters(paths); setInterpreterRead({ loaded: true })
+    }).catch(error => setInterpreterRead({ loaded: false, error: error instanceof Error ? error.message : String(error) }))
   }, [client])
+  useEffect(() => { if (ready) refreshInterpreters() }, [ready, refreshInterpreters])
   /**
    * 首启向导（2026-08-27）：没有任何凭证、且没点过「先跳过」时替换主区。
    * 判据与底部红字同一条（`没有钥匙`）：目录与凭证**都回来了**且没有凭证。
@@ -1089,6 +1095,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 存解释器 = useCallback(async (language: "python" | "R", path: string) => {
     const r = await client.get<{ python?: string; r?: string; problem?: string }>("setInterpreter", { language, path })
     setInterpreters({ ...(r.python ? { python: r.python } : {}), ...(r.r ? { r: r.r } : {}) })
+    setInterpreterRead({ loaded: true })
     if (r.problem) throw new Error(r.problem)
   }, [client])
   const saveInterpreter = useCallback((language: "python" | "R", path: string) => {
@@ -3422,12 +3429,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return currentProvider ? serviceLabel(currentProvider) : undefined
   }
 
-  // 跟随主区正在使用的服务；中途换模型后优先读取会话值。
-  const 状态栏模型名 = session
-    ? currentServiceLabelOf(session) ?? (agentCfgOf(session) ? agentLabel(session.agentId) : undefined)
-    : !没有钥匙 && agentIds[0] ? agentLabel(agentIds[0]) : undefined
-  const 连接说明 = !ready ? t("未连接")
-    : 状态栏模型名 ? tf("已连接 {0}", 状态栏模型名) : t("未配置任何模型")
+  const 状态栏agent = session ? agentCfgOf(session) : providers.agents.find(a => a.agentId === agentIds[0])
+  const 状态栏模型 = session ? currentModelOf(session) : 状态栏agent?.model ? { model: 状态栏agent.model, provider: 状态栏agent.provider } : undefined
+  const 状态栏模型选项 = session?.kind === 'acp' ? 主区开关们?.find(o => o.category === 'model') : undefined
+  const 状态栏模型选中 = 状态栏模型选项?.options.find(o => o.value === 状态栏模型选项.current)
+  const 状态栏模型名 = 状态栏模型选中 ? 拆模型名(状态栏模型选中.name, 状态栏模型选中.description).主
+    : 状态栏模型?.model ?? (状态栏agent ? agentLabel(状态栏agent.agentId) : undefined)
 
   /**
    * 能选哪些模型。**所有配好的服务 × 各自的模型**（2026-08-12 放开）。
@@ -4197,7 +4204,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   // 项目切换的首帧即隔离旧名册；新请求失败时也不能套用另一项目的同名角色。
   const 子agent名册 = useMemo(() => 子agent名册快照?.projectId === projectId ? 子agent名册快照?.agents ?? [] : [], [子agent名册快照, projectId])
   /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
-  const [技能数, 设技能数] = useState<number | undefined>(undefined)
+  const [技能计数, 设技能计数] = useState<{ projectId: string | undefined; count: number }>()
+  const 技能数 = 技能计数?.projectId === projectId ? 技能计数?.count : undefined
   /**
    * 「扩展」那一组的行尾计数（2026-09-16，作者要的）。
    *
@@ -4212,7 +4220,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * `|| undefined` 是因为那边 0 的意思是「没有待确认」，是另一个问题，两处口径
    * 不同不是疏漏。
    */
-  const [MCP开着数, 设MCP开着数] = useState<number | undefined>(undefined)
+  const [MCP计数, 设MCP计数] = useState<{ projectId: string | undefined; count: number }>()
+  const MCP开着数 = MCP计数?.projectId === projectId ? MCP计数?.count : undefined
   const [插件开着数, 设插件开着数] = useState<number | undefined>(undefined)
   /** 设置「记忆」入口的待确认角标(建议 + 待装技能;0 = 不显示) */
   const [记忆待确认数, 设记忆待确认数] = useState<number | undefined>(undefined)
@@ -4242,16 +4251,16 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     client
       .get<SkillLoad>("listSubagents", projectId ? { projectId } : {})
       .then((r) => 还在 && 设子agent名册({projectId, agents: r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))}))
-      .catch(() => {})
+      .catch(() => { if (还在) 设子agent名册(undefined) })
     client
       .get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
       .then((r) => {
         if (!还在) return
         const 开着的 = r.skills.filter((x) => x.invocation !== "off")
-        设技能数(开着的.length)
+        设技能计数({ projectId, count: 开着的.length })
         设技能单(开着的.map((x) => ({ kind: "skill" as const, name: x.name, description: x.description })))
       })
-      .catch(() => {})
+      .catch(() => { if (还在) { 设技能计数(undefined); 设技能单([]) } })
     client
       .get<{ pending: number }>("memoryOverview", 当前工作区路径 ? { workspace: 当前工作区路径 } : {})
       .then((r) => 还在 && 设记忆待确认数(r.pending))
@@ -4262,11 +4271,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 数字读不到时那一行就干脆不显示（`count` 传 `undefined`），界面上看不出异常，
     // 不出声就真的没人知道——这是评审过的取舍，不是疏漏。
     载MCP()
-      .then((r) => 还在 && 设MCP开着数(r.servers.filter((s) => !s.off).length))
-      .catch((e: unknown) => console.error("[设置] MCP 台数读不到，那一行就不显示数字：", e))
+      .then((r) => 还在 && 设MCP计数({ projectId, count: r.servers.filter((s) => !s.off).length }))
+      .catch((e: unknown) => { if (还在) 设MCP计数(undefined); console.error("[设置] MCP 台数读取失败：", e) })
     载插件()
       .then((r) => 还在 && 设插件开着数(r.plugins.filter((p) => p.on).length))
-      .catch((e: unknown) => console.error("[设置] 插件数读不到，那一行就不显示数字：", e))
+      .catch((e: unknown) => { if (还在) 设插件开着数(undefined); console.error("[设置] 插件数读取失败：", e) })
     // **`名册代` 也覆盖 MCP / 插件**：拨信任、拨「先别连它」、增删服务器、开关插件都
     // 走 `名册变了()`（同一条「名册动过了」频道，技能/子agent/记忆早就在用）。
     // 代价是那三个也会跟着重取一遍——`MemoryPanel` 已经在付这个代价，不是新债，
@@ -6349,34 +6358,43 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       {/* 命令面板。**放在最外层**——它盖住整个窗口，且要在任何视图下都能叫出来 */}
       <CommandPalette commands={commands} />
 
-      <div className="statusbar">
-        <span>{连接说明}</span>
-        {没有钥匙 ? (
-          /**
-           * **不说「native agent」。** 那是我们内部的词，作者已经为它抱怨过一次
-           * （*「为什么还会多一个新建 agent 这种奇怪的东西呢？」*）。
-           * 这一行要说的是他关心的事实：还没有钥匙，所以还不能对话。
-           */
-          <Button
-            variant="text"
-            size="inline"
-            className="caveat statusbar-setup"
-            onClick={() => {
-              // 回到向导（2026-08-27）：跳过了的人从这里回来；也把主区切回对话那一侧
-              设向导起点("key")
-              记跳过(false)
-              设跳过向导(false)
-              setView("conversation")
-            }}
-          >
-            {t("还没有填任何 API key，暂时不能对话——点这里填一个")}
-          </Button>
-        ) : null}
-        <StatusNotices notes={notes} />
-          {更新回执 ? (
-            <span className="brand-version">v{更新回执.状态.当前.replace(/^v/, "")}</span>
-          ) : null}
-      </div>
+      <AppStatusBar
+        model={状态栏模型名 ? { name: 状态栏模型名,
+          provider: 状态栏模型?.provider ? serviceLabel(状态栏模型.provider) : undefined,
+          kind: 状态栏agent?.kind === 'native' ? 'API' : 状态栏agent?.kind?.toUpperCase(),
+        } : undefined}
+        environment={{
+          scopeId: session?.remote?.connectionId ?? 'local',
+          label: session?.remote ? connections.find(c => c.id === session.remote!.connectionId)?.label ?? session.remote.connectionId : t("本机"),
+          paths: session?.remote
+            ? (connections.find(c => c.id === session.remote!.connectionId) ? connections.find(c => c.id === session.remote!.connectionId)?.interpreters ?? {} : undefined)
+            : interpreterRead.loaded ? interpreters : undefined,
+          error: !ready ? t("未连接") : session?.remote
+            ? connections.some(c => c.id === session.remote!.connectionId) ? undefined : t("未找到当前会话的服务器配置")
+            : interpreterRead.error,
+          kernels: session ? 对话内核 : undefined,
+          probe: () => client.get<探测结果>("probeInterpreters", session?.remote ? { connectionId: session.remote.connectionId } : {}),
+          configure: () => {
+            if (!session?.remote) { 开设置栏('kernels'); return }
+            const c = connections.find(c => c.id === session.remote!.connectionId)
+            if (!c) { note(t("未连接")); return }
+            setConnIntent("edit"); setConnProblem(undefined); setConnProblemId(undefined)
+            setConnDraft({ id: c.id, label: c.label, group: c.group, host: c.host, port: c.port, username: c.username, privateKeyPath: c.privateKeyPath, hasSecret: c.hasSecret })
+          },
+        }}
+        counts={{ plugins: 插件开着数, skills: 技能数, mcp: MCP开着数,
+          subagents: 子agent名册快照?.projectId === projectId ? 子agent名册快照?.agents.length : undefined }}
+        scopeLabel={projectId ? projects.find(p => p.projectId === projectId)?.name ?? t("当前项目") : t("全局")}
+        version={更新回执?.状态.当前}
+        onOpenSettings={id => 开设置栏(id)}
+        alerts={<>
+          {!ready ? <span role="status">{t("未连接")}</span> : null}
+          {没有钥匙 ? <Button variant="text" size="inline" className="caveat statusbar-setup" onClick={() => {
+            设向导起点("key"); 记跳过(false); 设跳过向导(false); setView("conversation")
+          }}>{t("还没有填任何 API key，暂时不能对话——点这里填一个")}</Button> : null}
+          <StatusNotices notes={notes} />
+        </>}
+      />
     </div>
   )
 }

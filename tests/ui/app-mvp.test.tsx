@@ -748,7 +748,7 @@ describe("cli 会话也能换模型（①-C 后续）", () => {
     const h = cliHarness(["opus", "sonnet"])
     render(<App client={h.client} />)
     await 从首页开始()
-    expect(await screen.findByRole("button", { name: /sonnet/ })).toBeDefined()
+    expect(await screen.findByRole("button", { name: "当前模型：sonnet。点击切换" })).toBeDefined()
   })
 
   it("**没声明就不显示** —— 取不到就不假装有得选", async () => {
@@ -756,14 +756,14 @@ describe("cli 会话也能换模型（①-C 后续）", () => {
     render(<App client={h.client} />)
     await 从首页开始()
     await screen.findByPlaceholderText(/输入问题/)
-    expect(screen.queryByRole("button", { name: /sonnet|opus/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /当前模型：(sonnet|opus)。点击切换/ })).toBeNull()
   })
 
   it("**选一个之后走 setSessionModel，不是新建会话**", async () => {
     const h = cliHarness(["opus", "sonnet"])
     render(<App client={h.client} />)
     await 从首页开始()
-    fireEvent.click(await screen.findByRole("button", { name: /sonnet/ }))
+    fireEvent.click(await screen.findByRole("button", { name: "当前模型：sonnet。点击切换" }))
     fireEvent.click(await screen.findByRole("menuitem", { name: /opus/ }))
     await waitFor(() => expect(h.calls.some((c) => c.op === "setSessionModel")).toBe(true))
     // **不是新建**：会话数没变（顶上那颗 2026-08-11 起建的是临时会话）

@@ -334,7 +334,7 @@
 
   /* ── 骨架尺寸（规范 §3.1 / §3.3 / §3.5）─────────────────────── */
   --dawn-topbar-h: 60px;
-  --dawn-statusbar-h: 24px;
+  --dawn-statusbar-h: 30px;
   /**
    * 侧栏宽度。实测 WorkBuddy 是 **264px**。
    *

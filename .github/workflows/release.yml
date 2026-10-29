@@ -50,6 +50,8 @@ jobs:
           echo "版本一致：$PKG"
       - run: npm run build
       - run: ${{ matrix.cmd }}
+      - name: Smoke test packaged CLI with system Node
+        run: node scripts/test-packaged-cli.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: dawn-science-${{ matrix.name }}

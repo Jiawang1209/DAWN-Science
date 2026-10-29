@@ -30,3 +30,25 @@ describe("electron-builder.yml", () => {
     }
   })
 })
+
+
+it("keeps every external CLI package in the production dependency tree", async () => {
+  const { build } = await import("esbuild")
+  const { isBuiltin } = await import("node:module")
+  const root = join(__dirname, "..")
+  const lock = JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8"))
+  const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"))
+  expect(lock.packages[""].dependencies).toEqual(manifest.dependencies)
+  expect(lock.packages[""].devDependencies).toEqual(manifest.devDependencies)
+  const result = await build({ absWorkingDir: root, entryPoints: ["src/cli.ts"], bundle: true,
+    platform: "node", format: "esm", target: "node22", packages: "external", write: false, metafile: true, logLevel: "silent" })
+  const external = [...new Set(Object.values(result.metafile!.outputs).flatMap(output => output.imports)
+    .filter(item => item.external && !isBuiltin(item.path))
+    .map(item => item.path.split("/").slice(0, item.path.startsWith("@") ? 2 : 1).join("/")))]
+  expect(external).toContain("@xterm/addon-unicode11")
+  const missing = external.filter(name => {
+    const installed = lock.packages[`node_modules/${name}`]
+    return !installed || installed.dev === true
+  })
+  expect(missing, "external CLI imports would be pruned from the installed app").toEqual([])
+})

@@ -16,6 +16,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createWorkbench } from "../../src/electron/wiring.js"
 import type { CredentialsPort } from "../../src/workbench/backend.js"
+import { mcpHttpFixture } from '../mcp/http-fixture.js'
 
 /**
  * **走服务端而不是后端对象**：`createWorkbench` 只暴露 `server`，
@@ -162,6 +163,21 @@ describe("testMcpServer", () => {
     const r = await 试(wb, { name: "crashy" })
     expect(r.ok).toBe(false)
     expect(r.error, "失败了却没有原因").toBeTruthy()
+    expect((await 列(wb)).servers[0]).toMatchObject({ state: 'failed', error: expect.any(String) })
+  })
+
+  it('normalizes remote connection keys when checking or restarting from a project', async () => {
+    const remote = await mcpHttpFixture()
+    const { wb } = 起一个(`mcp:\n  cloud:\n    type: http\n    url: ${remote.config.url}\n`)
+    try {
+      const workspace = mkdtempSync(join(tmpdir(), 'dawn-mcp-project-'))
+      cleanups.push(() => rmSync(workspace, { recursive: true, force: true }))
+      const project = await 叫(wb, 'openProject', { workspace }) as { projectId: string }
+      await 试(wb, { name: 'cloud', projectId: project.projectId })
+      expect((await 列(wb, { projectId: project.projectId })).servers[0]?.state).toBe('ready')
+      await 试(wb, { name: 'cloud', projectId: project.projectId })
+      expect(remote.generations()).toBe(2)
+    } finally { await wb.closeAsync(3000); await remote.close() }
   })
 
   it("名单里没有这台时如实报错，不静静回一个空清单", async () => {
@@ -220,5 +236,26 @@ describe("setMcpSecret / setMcpFlag", () => {
     const s = (await 列(wb)).servers[0]!
     expect(s.name).toBe("testbox")
     expect(s.off).toBe(true)
+  })
+
+  it('disabling a server closes existing directory scopes and prevents stale tools from restarting it', async () => {
+    const { wb } = 起一个(一台('testbox'))
+    await 试(wb, { name: 'testbox' })
+    const pool = (wb.nativeRuntime as any).opts.mcp.池
+    expect(pool.连着的()).toContain('testbox')
+    await 拨(wb, { name: 'testbox', flag: 'off', value: true })
+    expect(pool.连着的()).toEqual([])
+    expect((await pool.备好('testbox', { command: process.execPath, args: [脚本] })).失败).toContain('停用')
+    await wb.closeAsync(3000)
+  })
+
+  it('removing a server revokes stale session configuration as well as its cached connection', async () => {
+    const { wb } = 起一个(一台('testbox'))
+    await 试(wb, { name: 'testbox' })
+    const pool = (wb.nativeRuntime as any).opts.mcp.池
+    await 叫(wb, 'removeMcpServer', { name: 'testbox' })
+    expect(pool.连着的()).toEqual([])
+    expect((await pool.备好('testbox', { command: process.execPath, args: [脚本] })).失败).toBeTruthy()
+    await wb.closeAsync(3000)
   })
 })

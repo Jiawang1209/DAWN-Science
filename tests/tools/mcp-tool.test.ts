@@ -11,12 +11,12 @@ import { describe, expect, it } from "vitest"
 import { createMcpTools, MCP只读标记 } from "../../src/tools/mcp-tool.js"
 import { 造MCP门 } from "../../src/policy/permissions.js"
 import type { McpServer } from "../../src/config/schema.js"
-import type { MCP池 } from "../../src/mcp/客户端.js"
+import type { MCP池, MCP调用结果 } from "../../src/mcp/客户端.js"
 
 const 一台: McpServer = { command: "node", args: ["x.mjs"] }
 
 /** 一个只记账的假池子。**这一层要验的是装配与门，不是协议** */
-function 假池(回?: { 文字: string; 出错了: boolean }) {
+function 假池(回?: MCP调用结果) {
   const 调过: { 名: string; 工具: string; 参数: unknown }[] = []
   const 池 = {
     调: async (名: string, _配: McpServer, 工具名: string, 参数: Record<string, unknown>) => {
@@ -142,12 +142,7 @@ describe("MCP 工具 · 门", () => {
 })
 
 describe("MCP 工具 · 说清是谁", () => {
-  /**
-   * **工具报错不标 `isError`**（与 `run_code` 同一条）：
-   * 模型要看着错误改参数再来一次，而有些实现看到 `isError` 会中断整轮。
-   * 但**要说清是哪台报的**——同时挂着几台时这不能靠猜。
-   */
-  it("工具报错时标明是哪台，且不标 isError", async () => {
+  it("工具报错时标明是哪台，并保留 isError", async () => {
     const { 池 } = 假池({ 文字: "连不上库", 出错了: true })
     const 工具 = createMcpTools({
       池,
@@ -155,10 +150,46 @@ describe("MCP 工具 · 说清是谁", () => {
       工具: [一个工具],
     }) as { execute: Function }[]
     const r = (await 工具[0]!.execute("c1", {})) as { isError?: boolean; content: { text: string }[] }
-    expect(r.isError).toBeFalsy()
+    expect(r.isError).toBe(true)
     expect(r.content[0]!.text).toContain("[testbox]")
     expect(r.content[0]!.text).toContain("报错")
     expect(r.content[0]!.text).toContain("连不上库")
+  })
+
+  it('projects original structured facts without copying App metadata', async () => {
+    const { 池 } = 假池({ 文字: 'compatibility summary', 出错了: true, result: { content: [], structuredContent: { receipt: 'r-7' }, isError: true, _meta: { hidden: 'APP_ONLY' } } })
+    const { 工具 } = 造({ 池 })
+    const result = await 工具[0]!.execute('c1', {})
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result.content)).toContain('r-7')
+    expect(JSON.stringify(result)).not.toContain('APP_ONLY')
+  })
+
+  it('forwards the caller abort signal to approval and to the pool', async () => {
+    const controller = new AbortController(), observed: unknown[] = []
+    const 池 = { 调: async (...args: unknown[]) => { observed.push(args[5]); return { 文字: 'ok', 出错了: false } } } as unknown as MCP池
+    const { 工具 } = 造({ 池, 门: () => ({ kind: 'ask', reason: 'approval', 类别: '外部工具' }), 问: async (...args: unknown[]) => { observed.push(args[2]); return 'allow' } })
+    await 工具[0]!.execute('c1', {}, controller.signal)
+    expect(observed).toEqual([controller.signal, controller.signal])
+  })
+
+  it('cancels an approval wait promptly and never calls the server after a late approval', async () => {
+    const controller = new AbortController()
+    let approve: ((result: 'allow') => void) | undefined
+    const { 工具, 调过 } = 造({ 门: () => ({ kind: 'ask', reason: 'approval', 类别: '外部工具' }), 问: () => new Promise(resolve => { approve = resolve }) })
+    const result = 工具[0]!.execute('c1', {}, controller.signal)
+    controller.abort()
+    expect(await result).toMatchObject({ isError: true })
+    approve?.('allow')
+    expect(调过).toEqual([])
+  })
+
+  it('does not ask approval or call the server for an already aborted signal', async () => {
+    let asked = false
+    const { 工具, 调过 } = 造({ 门: () => ({ kind: 'ask', reason: 'approval', 类别: '外部工具' }), 问: async () => { asked = true; return 'allow' } })
+    expect(await 工具[0]!.execute('c1', {}, AbortSignal.abort())).toMatchObject({ isError: true })
+    expect(asked).toBe(false)
+    expect(调过).toEqual([])
   })
 
   /** 配置改过而工具清单还是旧的。**如实说，不猜** */

@@ -3137,8 +3137,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           const 服务器 = 台.服务器
           const 远端 = 是远端MCP(服务器)
           const 指纹 = mcp指纹(服务器 as { command?: string; args?: readonly string[]; url?: string })
-          const cwd = 远端 ? 工作区 : (服务器.cwd ?? 工作区)
-          const 已连 = mcp?.池.查(台.名, cwd)
+          const cwd = 远端 ? undefined : (服务器.cwd ?? 工作区)
+          const 状态 = mcp?.池.状态(台.名, cwd)
           const 要的 = 远端 ? (服务器.headers ?? []) : (服务器.env ?? [])
           const 缺 = 要的.filter((v) => credentials.get(`mcp:${台.名}:${v}`) === undefined)
           return {
@@ -3155,8 +3155,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             trusted: settings?.get(`mcp.trusted.${台.名}:${指纹}`) === "1",
             fingerprint: 指纹,
             off: settings?.get(`mcp.off.${台.名}`) === "1",
-            state: 已连 ? ("ready" as const) : ("unknown" as const),
-            tools: (已连?.工具 ?? []).map((t) => ({ name: t.工具名, description: t.描述 })),
+            state: 状态?.state ?? 'unknown',
+            ...(状态?.error ? { error: 状态.error } : {}),
+            tools: (状态?.工具 ?? []).map((t) => ({ name: t.工具名, description: t.描述 })),
           }
         }),
         problems: 名单.问题,
@@ -3181,7 +3182,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * `cwd` 只有本机那种才有——远端那种我们连它的进程都看不见（2026-08-19）。
        */
       const 那台 = 台.服务器
-      await mcp.池.关(name, 是远端MCP(那台) ? 工作区 : (那台.cwd ?? 工作区))
+      await mcp.池.关(name, 是远端MCP(那台) ? undefined : (那台.cwd ?? 工作区))
       const r = await mcp.池.备好(name, 台.服务器, 工作区)
       return {
         ok: !r.失败,
@@ -3234,7 +3235,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw e
       }
       // **连接也要断掉**：不断的话，删掉的那台还在池子里活着、工具还挂着
-      await mcp?.池.关(name)
+      await mcp?.池.关服务器(name)
       return { ok: true as const }
     },
 
@@ -3317,6 +3318,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             : `mcp.trusted.${name}`
           : `mcp.off.${name}`
       settings.set(key, value ? "1" : "", new Date().toISOString())
+      if (flag === 'off' && value) await mcp?.池.关服务器(name)
       return { ok: true as const }
     },
 
@@ -3325,6 +3327,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 键 = `mcp:${name}:${varName}`
       if (secret) credentials.set(键, secret)
       else credentials.delete(键)
+      await mcp?.池.关服务器(name)
       return { ok: true as const }
     },
 

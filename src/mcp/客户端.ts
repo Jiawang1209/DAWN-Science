@@ -7,8 +7,8 @@
  * （`pi-ai` 里那几处命中是 OAuth 的 scope 字符串）。所以这不是「接线」，
  * 是我们当客户端。坐的是官方 SDK 的 `Client` + `StdioClientTransport`
  * （`@modelcontextprotocol/sdk`，spike B 时就在依赖里了）。
- * **放弃的**：MCP 的 resources / prompts 两块（第一批只做 tools）、
- * 以及 HTTP/SSE 传输（要处理鉴权与重连，是另一件事——不假装支持）。
+ * 支持 stdio、Streamable HTTP 和 SSE。普通 tools/call 无默认执行期限，
+ * 结果保留原始信封，模型投影由 results.ts 负责；暂不提供独立 resources/prompts 目录。
  *
  * ## 四件事在这里定死
  *
@@ -21,8 +21,8 @@
  * 4. **进程按「名字 + 目录」共用**，不是每段会话起一份：
  *    开五段对话就起五个 postgres 客户端，既慢又会把连接数打满。
  */
-import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
+import { CallToolResultSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
@@ -30,6 +30,9 @@ import { 是远端MCP } from "../config/schema.js"
 import type { McpServer } from "../config/schema.js"
 import { 工具全名 } from "./名单.js"
 import { legacyMlaiReads } from "./readonly-compat.js"
+import { createHash } from "node:crypto"
+import { McpClient, McpCallCancelled, McpConnectionError, waitForMcp } from "./requests.js"
+import { McpRequestFetch } from './request-fetch.js'
 
 /**
  * 起一台服务器最多等多久。**一台起不来不该让整段会话开不了。**
@@ -74,7 +77,8 @@ export interface 一台的结果 {
 export type 取密 = (服务器名: string, 变量名: string) => string | undefined
 
 interface 一条连接 {
-  client: Client
+  client: McpClient
+  signature: string
   /**
    * **三种传输都可能**（2026-08-19 起）。这里用 SDK 的公共接口，
    * 而不是钉死 `StdioClientTransport`——钉死的话，远端那两种在类型上就进不来。
@@ -83,6 +87,19 @@ interface 一条连接 {
   工具: MCP工具[]
   /** **只有本机那种有**：远端那条没有子进程，也就没有 stderr */
   stderr尾巴: string[]
+}
+
+interface 正在连接 {
+  signature: string
+  controller: AbortController
+  promise: Promise<一台的结果>
+}
+
+export interface MCP调用结果 {
+  文字: string
+  出错了: boolean
+  /** Original server envelope. The tool must project it before exposing it to a model. */
+  result?: CallToolResult
 }
 
 /**
@@ -94,13 +111,15 @@ interface 一条连接 {
 export class MCP池 {
   private readonly 连着 = new Map<string, 一条连接>()
   /** 正在起的那些。**同一台被两段会话同时要到时，只起一次** */
-  private readonly 起着 = new Map<string, Promise<一台的结果>>()
+  private readonly 起着 = new Map<string, 正在连接>()
+  private readonly 失败过 = new Map<string, string>()
+  private closed = false
 
   /**
    * @param opts.起动上限毫秒 **可注入只为可测**——按默认值验一次超时要等一分钟，
    *   那种测试没人会跑，于是这条路等于没人看（与 `leaseTtlSeconds` 同一副做法）。
    */
-  constructor(private readonly opts: { 取密: 取密; 起动上限毫秒?: number }) {}
+  constructor(private readonly opts: { 取密: 取密; 起动上限毫秒?: number; 可用?: (名: string, 配: McpServer, 工作区?: string) => boolean }) {}
 
   private get 上限(): number {
     return this.opts.起动上限毫秒 ?? 默认起动上限毫秒
@@ -123,20 +142,42 @@ export class MCP池 {
    * ——抛出去的话，一台坏服务器会让整段会话开不了。
    */
   async 备好(名: string, 配: McpServer, 默认cwd?: string): Promise<一台的结果> {
+    if (this.closed || this.opts.可用?.(名, 配, 默认cwd) === false) return { 服务器名: 名, 工具: [], 失败: this.closed ? 'MCP 连接池已关闭。' : 'MCP 服务器已停用、移除或配置已变化，请求未发送；请重新加载会话。' }
     /**
      * **远端那种没有 cwd**（2026-08-19）：它已经跑在别处了，
      * 我们连它的进程都看不见，更谈不上决定它从哪个目录起。
      */
     const cwd = 是远端MCP(配) ? undefined : (配.cwd ?? 默认cwd)
     const k = this.键(名, cwd)
+    // Credentials are represented only by this in-memory digest, never logged.
+    const keys = 是远端MCP(配) ? 配.headers : 配.env
+    const signature = createHash('sha256').update(JSON.stringify([配, cwd, (keys ?? []).map(key => [key, this.opts.取密(名, key)])])).digest('hex')
     const 有 = this.连着.get(k)
-    if (有) return { 服务器名: 名, 工具: 有.工具 }
     const 在起 = this.起着.get(k)
-    if (在起) return 在起
+    if (有?.signature === signature) return { 服务器名: 名, 工具: 有.工具 }
+    if (在起?.signature === signature) return 在起.promise
 
-    const p = this.起一台(名, 配, cwd, k).finally(() => this.起着.delete(k))
-    this.起着.set(k, p)
-    return p
+    const pending: 正在连接 = { signature, controller: new AbortController(), promise: undefined as unknown as Promise<一台的结果> }
+    // Claim the replacement before the first await. New requests and explicit
+    // close can now invalidate it while the previous generation is shutting down.
+    this.连着.delete(k)
+    this.起着.set(k, pending)
+    在起?.controller.abort()
+    pending.promise = (async () => {
+      await Promise.all([
+        ...(有 ? [限时(有.client.close(), 5000, 'MCP 关闭超时').catch(() => {})] : []),
+        ...(在起 ? [在起.promise] : []),
+      ])
+      if (this.closed || pending.controller.signal.aborted || this.起着.get(k) !== pending) return { 服务器名: 名, 工具: [], 失败: 'MCP 初始化已取消，连接未启用。' }
+      return this.起一台(名, 配, cwd, k, pending)
+    })().then(result => {
+      if (this.起着.get(k) === pending) {
+        if (result.失败) this.失败过.set(k, result.失败)
+        else this.失败过.delete(k)
+      }
+      return result
+    }).finally(() => { if (this.起着.get(k) === pending) this.起着.delete(k) })
+    return pending.promise
   }
 
   private async 起一台(
@@ -144,6 +185,7 @@ export class MCP池 {
     配: McpServer,
     cwd: string | undefined,
     k: string,
+    pending: 正在连接,
   ): Promise<一台的结果> {
     /**
      * **密钥先取齐再起进程。**
@@ -230,13 +272,16 @@ export class MCP池 {
      * **收窄到这一行**，而不是把编译选项调松：那个选项在别处替我们挡过
      * 真实的错误。
      */
+    const requestFetch = new McpRequestFetch()
     const transport: Transport = (是远端MCP(配)
       ? 配.type === "sse"
         ? new SSEClientTransport(new URL(配.url), {
+            fetch: requestFetch.fetch,
             requestInit: { headers: env },
             eventSourceInit: { fetch: (u, i) => fetch(u, { ...i, headers: { ...i?.headers, ...env } }) },
           })
         : new StreamableHTTPClientTransport(new URL(配.url), {
+            fetch: requestFetch.fetch,
             requestInit: { headers: env },
           })
       : new StdioClientTransport({
@@ -251,10 +296,19 @@ export class MCP池 {
       stderr: "pipe",
     })) as Transport
 
-    const client = new Client(
-      { name: "dawn-science", version: "0.0.1" },
-      { capabilities: {} },
-    )
+    const client = new McpClient(transport, requestFetch)
+    const signal = pending.controller.signal
+    const abort = () => { void client.close().catch(() => {}) }
+    signal.addEventListener('abort', abort, { once: true })
+    // Attach before initialization: early process stderr is often the only diagnosis.
+    const 子进程的 = transport instanceof StdioClientTransport ? transport : undefined
+    子进程的?.stderr?.on('data', (b: Buffer) => {
+      for (const 行 of String(b).split('\n')) {
+        if (!行.trim()) continue
+        尾巴.push(行)
+        if (尾巴.length > 留几行) 尾巴.shift()
+      }
+    })
 
     try {
       /**
@@ -262,23 +316,13 @@ export class MCP池 {
        * 不说的话，一次首启下载会被读成「这台服务器是坏的」。
        */
       await 限时(
-        client.connect(transport),
+        waitForMcp(client.connect(client.channel, { signal, timeout: this.上限 + 1000 }), signal),
         this.上限,
         `连 ${名} 超过 ${Math.round(this.上限 / 1000)} 秒。` +
           `如果它是用 npx / uvx 起的，第一次要先把包下下来，多半就是慢在这儿——` +
           `在终端里先跑一遍那条命令，下完再回来按「试一次」。`,
       )
-      // **只有本机那条有 stderr**：远端那两种连不上时只有状态码与响应体
-      const 子进程的 = transport instanceof StdioClientTransport ? transport : undefined
-      子进程的?.stderr?.on("data", (b: Buffer) => {
-        for (const 行 of String(b).split("\n")) {
-          if (!行.trim()) continue
-          尾巴.push(行)
-          if (尾巴.length > 留几行) 尾巴.shift()
-        }
-      })
-
-      const 列 = await 限时(client.listTools(), this.上限, `列 ${名} 的工具超时`)
+      const 列 = await 限时(waitForMcp(client.listTools(undefined, { signal, timeout: this.上限 }), signal), this.上限, `列 ${名} 的工具超时`)
       const 兼容只读 = legacyMlaiReads(client.getServerVersion(), 列.tools)
       const 工具: MCP工具[] = 列.tools.map((t) => ({
         全名: 工具全名(名, t.name),
@@ -289,23 +333,31 @@ export class MCP池 {
         入参: t.inputSchema,
         ...(t.annotations?.readOnlyHint === true || 兼容只读.has(t.name) ? { 只读: true as const } : {}),
       }))
-      this.连着.set(k, { client, transport, 工具, stderr尾巴: 尾巴 })
+      if (this.closed || signal.aborted || this.起着.get(k) !== pending) throw new Error('MCP 初始化已取消，连接未启用。')
+      if (!client.transport) throw new Error('MCP 服务器在发现工具期间断开，连接未启用。')
+      const connection: 一条连接 = { client, signature: pending.signature, transport, 工具, stderr尾巴: 尾巴 }
+      client.onclose = () => {
+        if (this.连着.get(k) !== connection) return
+        this.连着.delete(k)
+        this.失败过.set(k, `${名} 的 MCP 连接已断开；下次使用时重新连接，已发送请求不会自动重放。`)
+      }
+      this.连着.set(k, connection)
       return { 服务器名: 名, 工具 }
     } catch (e) {
-      await client.close().catch(() => {})
+      await 限时(client.close(), 5000, 'MCP 关闭超时').catch(() => {})
       const 原因 = e instanceof Error ? e.message : String(e)
       const 补 = 尾巴.length > 0 ? `\n它自己说：\n${尾巴.join("\n")}` : ""
       return { 服务器名: 名, 工具: [], 失败: `${原因}${补}` }
+    } finally {
+      signal.removeEventListener('abort', abort)
     }
   }
 
   /**
    * 调一次工具。
    *
-   * **回的是给模型看的文字**：MCP 的结果是一串 content 块（文本、图片、
-   * 资源引用），这里只把文本拼起来，其余如实说明有但没带进来——
-   * 与 `run_code` 的 `摘要()` 同一条纪律：**不说清的话，
-   * 模型会以为自己什么都没拿到，然后反复重试**。
+   * Preserve the original result and a compatibility text summary. A lost response
+   * is an unknown outcome, never permission to replay a write after reconnecting.
    */
   async 调(
     名: string,
@@ -313,18 +365,33 @@ export class MCP池 {
     工具名: string,
     参数: Record<string, unknown>,
     默认cwd?: string,
-  ): Promise<{ 文字: string; 出错了: boolean }> {
-    const 备 = await this.备好(名, 配, 默认cwd)
-    if (备.失败) return { 文字: `${名} 没连上：${备.失败}`, 出错了: true }
-    // **远端那种没有 cwd**——键里那一格对它恒为空（与 `备好` 里同一条）
-    const 连 = this.连着.get(this.键(名, 是远端MCP(配) ? undefined : (配.cwd ?? 默认cwd)))
-    if (!连) return { 文字: `${名} 没连上。`, 出错了: true }
-
+    signal?: AbortSignal,
+    expectedTool?: MCP工具,
+  ): Promise<MCP调用结果> {
+    let 连: 一条连接 | undefined
+    const cwd = 是远端MCP(配) ? undefined : (配.cwd ?? 默认cwd)
+    const k = this.键(名, cwd)
     try {
-      const r = await 连.client.callTool({ name: 工具名, arguments: 参数 })
-      return { 文字: 摘出文字(r), 出错了: r.isError === true }
+      if (signal?.aborted) throw new McpCallCancelled(false)
+      const 备 = await waitForMcp(this.备好(名, 配, 默认cwd), signal)
+      if (备.失败) return { 文字: `${名} 没连上：${备.失败}`, 出错了: true }
+      连 = this.连着.get(k)
+      if (!连) return { 文字: `${名} 没连上，请求未发送。`, 出错了: true }
+      if (expectedTool) {
+        const current = 连.工具.find(tool => tool.工具名 === 工具名)
+        if (!current || current.只读 !== expectedTool.只读 || JSON.stringify(current.入参) !== JSON.stringify(expectedTool.入参)) {
+          return { 文字: `${名}__${工具名} 的定义已变化，请新建会话重新加载工具及权限声明；本次请求未发送。`, 出错了: true }
+        }
+      }
+      const r = await 连.client.callTool({ name: 工具名, arguments: 参数 }, undefined, signal ? { signal } : undefined)
+      return { 文字: 摘出文字(r), 出错了: r.isError === true, result: CallToolResultSchema.parse(r) }
     } catch (e) {
-      const 补 = 连.stderr尾巴.length > 0 ? `\n它自己说：\n${连.stderr尾巴.join("\n")}` : ""
+      if (e instanceof McpConnectionError && 连 && this.连着.get(k) === 连) {
+        this.连着.delete(k)
+        this.失败过.set(k, e.message)
+        await 限时(连.client.close(), 5000, 'MCP 关闭超时').catch(() => {})
+      }
+      const 补 = !(e instanceof McpCallCancelled) && 连?.stderr尾巴.length ? `\n它自己说：\n${连.stderr尾巴.join("\n")}` : ""
       return { 文字: `${名}__${工具名} 调用失败：${e instanceof Error ? e.message : String(e)}${补}`, 出错了: true }
     }
   }
@@ -333,16 +400,28 @@ export class MCP池 {
   async 关(名: string, cwd?: string): Promise<void> {
     const k = this.键(名, cwd)
     const 连 = this.连着.get(k)
-    if (!连) return
+    const pending = this.起着.get(k)
     this.连着.delete(k)
-    await 连.client.close().catch(() => {})
+    this.起着.delete(k)
+    this.失败过.delete(k)
+    pending?.controller.abort()
+    await Promise.all([
+      ...(连 ? [限时(连.client.close(), 5000, 'MCP 关闭超时').catch(() => {})] : []),
+      ...(pending ? [pending.promise] : []),
+    ])
+  }
+
+  /** Configuration/credential changes and disable/remove affect every directory scope. */
+  async 关服务器(名: string): Promise<void> {
+    const keys = new Set([...this.连着.keys(), ...this.起着.keys(), ...this.失败过.keys()])
+    await Promise.all([...keys].filter(key => key.split('\x00')[0] === 名).map(key => this.关(名, key.split('\x00')[1] || undefined)))
   }
 
   /** 全关掉（退出时）。**每个单独兜底**：一个关不掉不该拖住其余的 */
   async 全关(): Promise<void> {
-    const 全部 = [...this.连着.values()]
-    this.连着.clear()
-    await Promise.all(全部.map((c) => c.client.close().catch(() => {})))
+    this.closed = true
+    const keys = new Set([...this.连着.keys(), ...this.起着.keys()])
+    await Promise.all([...keys].map(key => this.关(key.split('\x00')[0]!, key.split('\x00')[1] || undefined)))
   }
 
   /**
@@ -355,6 +434,13 @@ export class MCP池 {
   查(名: string, cwd?: string): { 工具: MCP工具[] } | undefined {
     const 连 = this.连着.get(this.键(名, cwd))
     return 连 ? { 工具: 连.工具 } : undefined
+  }
+
+  状态(名: string, cwd?: string): { state: 'unknown' | 'ready' | 'failed'; error?: string; 工具: MCP工具[] } {
+    const ready = this.查(名, cwd)
+    if (ready) return { state: 'ready', 工具: ready.工具 }
+    const error = this.失败过.get(this.键(名, cwd))
+    return error ? { state: 'failed', error, 工具: [] } : { state: 'unknown', 工具: [] }
   }
 
   /** 现在连着哪几台。界面要能说清楚 */

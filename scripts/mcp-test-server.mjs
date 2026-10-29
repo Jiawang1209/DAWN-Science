@@ -55,6 +55,36 @@ if (process.env.DAWN_MCP_TEST_REQUIRE === "1" && !process.env.DAWN_MCP_TEST_SECR
  * 而单独 curl 一次 `initialize` 却一切正常。
  */
 function 装上工具(server) {
+if (process.argv.includes('--reliability')) {
+const log = message => {
+  if (process.env.DAWN_MCP_TEST_LOG) appendFileSync(process.env.DAWN_MCP_TEST_LOG, `${JSON.stringify({ message, pid: process.pid })}\n`)
+}
+server.tool('rich', 'Rich MCP fixture.', {}, async () => ({
+  content: [
+    { type: 'text', text: 'partial output' },
+    { type: 'image', data: 假封面.toString('base64'), mimeType: 'image/png' },
+    { type: 'resource_link', uri: 'https://example.invalid/receipt', name: 'receipt' },
+    { type: 'resource', resource: { uri: 'file:///fixture/method.txt', text: 'observed method', mimeType: 'text/plain' } },
+  ],
+  structuredContent: { count: 7, receipt: 'r-1' },
+  isError: true,
+  _meta: { secret: 'APP_ONLY' },
+}))
+server.tool('pid', 'Process identity fixture.', {}, async () => ({ content: [{ type: 'text', text: String(process.pid) }] }))
+server.tool('hold', 'Cancellable wait fixture.', { milliseconds: z.number() }, async ({ milliseconds }, extra) => {
+  log('hold-started')
+  await new Promise(resolve => {
+    const timer = setTimeout(resolve, milliseconds)
+    extra.signal.addEventListener('abort', () => { clearTimeout(timer); log('hold-cancelled'); resolve() }, { once: true })
+  })
+  return { content: [{ type: 'text', text: 'wait finished' }] }
+})
+server.tool('crash_after_write', 'Write once then lose the response.', {}, async () => {
+  log('performed-once')
+  setImmediate(() => process.exit(19))
+  return await new Promise(() => {})
+})
+}
 server.tool("echo", "把收到的话原样回给你。测试用。", { message: z.string() }, async ({ message }) => ({
   content: [{ type: "text", text: `echo: ${message}` }],
 }))
@@ -197,5 +227,10 @@ if (Number.isFinite(端口) && 端口 > 0) {
     })
     .listen(端口, () => process.stderr.write(`[假 MCP] streamable HTTP 起在 ${端口}\n`))
 } else {
+  const startupDelay = Number(process.argv.find(arg => arg.startsWith('--startup-delay='))?.split('=')[1] ?? 0)
+  if (startupDelay) {
+    if (process.env.DAWN_MCP_TEST_LOG) appendFileSync(process.env.DAWN_MCP_TEST_LOG, `${JSON.stringify({ message: 'starting', pid: process.pid })}\n`)
+    await new Promise(resolve => setTimeout(resolve, startupDelay))
+  }
   await 造一台().connect(new StdioServerTransport())
 }

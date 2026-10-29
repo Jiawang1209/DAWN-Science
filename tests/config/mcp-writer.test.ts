@@ -132,6 +132,14 @@ describe("删一台", () => {
     expect(r.agents["ds-chat"]).toBeDefined()
   })
 
+  it('MCP 在文件前部时，后续 agents 的缩进键不能被当成剩余服务器', () => {
+    writeFileSync(文件, `mcp:\n  only:\n    command: node\n${基础}`)
+    const result = removeMcpServer(文件, 'only')
+    expect(result.mcp).toBeUndefined()
+    expect(result.agents['ds-chat']).toBeDefined()
+    expect(读()).toContain(基础)
+  })
+
   it("**带点的名字删对那一台,不误删相似名**(审查 debug G4)", () => {
     // pg.dev 是手写进来的(addMcpServer 会拒带点名),同段还有 pgxdev
     addMcpServer(文件, { 名: "pgxdev", command: "x" })

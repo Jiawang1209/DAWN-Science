@@ -224,9 +224,12 @@ export function removeMcpServer(file: string, 名: string): ProviderRegistry {
    */
   const 段行 = 剩下.findIndex((l) => /^mcp:\s*$/.test(l))
   if (段行 >= 0) {
-    const 还有 = 剩下
-      .slice(段行 + 1)
-      .some((l) => (l.trim() === "" ? false : /^\s/.test(l) ? /^\s{2}\S/.test(l) : false))
+    let 还有 = false
+    for (const line of 剩下.slice(段行 + 1)) {
+      if (!line.trim() || /^\s*#/.test(line)) continue
+      if (!/^\s/.test(line)) break // 后续 providers/agents 里的缩进不属于 MCP 段
+      if (/^\s{2}\S/.test(line)) { 还有 = true; break }
+    }
     if (!还有) {
       let 头 = 段行
       // 连同它上面紧挨着的注释与空行一起

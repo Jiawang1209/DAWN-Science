@@ -20,9 +20,12 @@
 import type { McpServer } from "../config/schema.js"
 import { mcp指纹 } from "../policy/permissions.js"
 import type { MCP池, MCP工具 } from "../mcp/客户端.js"
+import { projectMcpResult } from "../mcp/results.js"
+import { McpCallCancelled, waitForMcp } from "../mcp/requests.js"
+import type { ImageContent, TextContent } from '@earendil-works/pi-ai'
 
 interface ToolResult {
-  content: { type: "text"; text: string }[]
+  content: (TextContent | ImageContent)[]
   isError?: boolean
   details?: undefined
 }
@@ -49,7 +52,7 @@ export interface MCP工具装配 {
    */
   门?: ((服务器名: string, 指纹: string) => import("../policy/permissions.js").门的决定) | undefined
   /** 「问一句」档时问人（2026-08-23）。不给就把 ask 当拒 */
-  问?: ((title: string, reason: string) => Promise<"allow" | "deny" | "timeout">) | undefined
+  问?: ((title: string, reason: string, signal?: AbortSignal) => Promise<"allow" | "deny" | "timeout">) | undefined
 }
 
 /**
@@ -82,28 +85,33 @@ export function createMcpTools(装配: MCP工具装配): unknown[] {
       parameters: t.入参,
       ...(t.只读 ? { [MCP只读标记]: true } : {}),
 
-      async execute(_toolCallId: string, params: Record<string, unknown>): Promise<ToolResult> {
-        if (!配) {
-          // **名单里没有它**：配置改过而工具清单还是旧的。如实说，不猜
-          return text(`「${t.服务器名}」已经不在名单里了，这个工具不能用。`, true)
-        }
-        const 决定 = 装配.门?.(t.服务器名, mcp指纹(配 as { command?: string; args?: readonly string[]; url?: string }))
-        if (决定?.kind === "deny") return text(决定.reason, true)
-        if (决定?.kind === "ask") {
-          const 答 = 装配.问 ? await 装配.问(`${t.服务器名} · ${t.工具名}`, 决定.reason) : "deny"
-          if (答 !== "allow") return text(`${决定.reason}${答 === "timeout" ? "（等了 5 分钟没有人回答，按拒绝处理）" : "（人拒绝了这一次）"}`, true)
-        }
+      async execute(_toolCallId: string, params: Record<string, unknown>, signal?: AbortSignal): Promise<ToolResult> {
+        try {
+          if (signal?.aborted) throw new McpCallCancelled(false)
+          if (!配) {
+            // **名单里没有它**：配置改过而工具清单还是旧的。如实说，不猜
+            return text(`「${t.服务器名}」已经不在名单里了，这个工具不能用。`, true)
+          }
+          const 决定 = 装配.门?.(t.服务器名, mcp指纹(配 as { command?: string; args?: readonly string[]; url?: string }))
+          if (决定?.kind === "deny") return text(决定.reason, true)
+          if (决定?.kind === "ask") {
+            const 答 = 装配.问 ? await waitForMcp(装配.问(`${t.服务器名} · ${t.工具名}`, 决定.reason, signal), signal) : "deny"
+            if (答 !== "allow") return text(`${决定.reason}${答 === "timeout" ? "（等了 5 分钟没有人回答，按拒绝处理）" : "（人拒绝了这一次）"}`, true)
+          }
 
-        const r = await 装配.池.调(t.服务器名, 配, t.工具名, params ?? {}, 装配.工作区)
-        /**
-         * **工具报错不标 `isError`。**
-         *
-         * 与 `run_code` 同一条：模型要看着错误改参数再来一次，
-         * 而有些实现看到 `isError` 会直接中断这一轮。
-         * 但**要说清是哪台服务器报的**——同时挂着几台时，
-         * 「这个错是谁报的」不能靠猜。
-         */
-        return text(`[${t.服务器名}]${r.出错了 ? "（这个工具报错了）" : ""}\n${r.文字}`)
+          if (signal?.aborted) throw new McpCallCancelled(false)
+          const r = await 装配.池.调(t.服务器名, 配, t.工具名, params ?? {}, 装配.工作区, signal, t)
+          const prefix = `[${t.服务器名}]${r.出错了 ? "（这个工具报错了）" : ""}`
+          if (!r.result) return text(`${prefix}\n${r.文字}`, r.出错了)
+          const projected = await projectMcpResult(r.result)
+          const first = projected.content[0]
+          const content = first?.type === 'text'
+            ? [{ ...first, text: `${prefix}\n${first.text}` }, ...projected.content.slice(1)]
+            : [{ type: 'text' as const, text: prefix }, ...projected.content]
+          return { content, isError: r.出错了 || projected.isError, details: undefined }
+        } catch (error) {
+          return text(`[${t.服务器名}] ${error instanceof Error ? error.message : String(error)}`, true)
+        }
       },
     }
   })

@@ -98,7 +98,7 @@ Persistent Python and R kernels (variables kept across cells, sessions and resta
 
 ### A · Agent
 
-An agent that plans, calls tools, executes and reports — not just chats. By default a local agent loop drives any API endpoint (DeepSeek / Kimi / Qwen …); it can also hand off to a locally installed Claude Code or Codex. MCP tool gateway · progressive skill loading · **optional multi-agent orchestration**.
+An agent that plans, calls tools, executes and reports — not just chats. By default a local agent loop drives any API endpoint (DeepSeek / Kimi / Qwen …); it can also hand off to a locally installed Claude Code or Codex. MCP tool gateway · progressive skill loading · **optional multi-agent orchestration**. [MCP results, cancellation and recovery](docs/mcp.md).
 
 ### W · Workbench
 
@@ -341,7 +341,7 @@ Python 与 R 持久内核（变量跨 cell、跨会话、跨重启保留，且**
 
 ### A · Agent
 
-能规划、调工具、执行、回报的 agent，而不只是聊天。默认走本地 agent loop 驱动任意 API 端点（DeepSeek / Kimi / Qwen 等），也可切换到本机安装的 Claude Code 或 Codex。MCP 工具网关 · Skills 渐进式加载 · **可选的多智能体编排模块**。
+能规划、调工具、执行、回报的 agent，而不只是聊天。默认走本地 agent loop 驱动任意 API 端点（DeepSeek / Kimi / Qwen 等），也可切换到本机安装的 Claude Code 或 Codex。MCP 工具网关 · Skills 渐进式加载 · **可选的多智能体编排模块**。[MCP 返回内容、取消与断线恢复](docs/mcp.md)。
 
 ### W · Workbench
 

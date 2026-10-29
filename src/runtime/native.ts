@@ -1847,7 +1847,7 @@ export class NativeRuntime implements AgentRuntime {
           ...(spec.workspace ? { 工作区: spec.workspace } : {}),
           // 把这段会话的 id 绑进门(审查 debug A8):好让会话级/定时级权限档也对 MCP 工具生效
           ...(门 ? { 门: (名: string, 指纹: string) => 门(名, 指纹, spec.sessionId) } : {}),
-          问: (title, reason) => this.问权限(spec.sessionId, title, reason, undefined),
+          问: (title, reason, signal) => this.问权限(spec.sessionId, title, reason, signal),
         })
         for (const 问题 of r.问题) {
           this.emit({ kind: "notice", sessionId: spec.sessionId, text: `MCP：${问题}` })

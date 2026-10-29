@@ -630,6 +630,10 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
    */
   const mcp池 = new MCP池({
     取密: (服务器名, 变量名) => opts.credentials.get(`mcp:${服务器名}:${变量名}`),
+    可用: (名, 配, 工作区) => {
+      const current = 合名单(registry.mcp, 工作区).服务器.find(server => server.名 === 名)
+      return settingsStore.get(`mcp.off.${名}`) !== '1' && !!current && JSON.stringify(current.服务器) === JSON.stringify(配)
+    },
   })
 
   const mcp门 = 造MCP门(

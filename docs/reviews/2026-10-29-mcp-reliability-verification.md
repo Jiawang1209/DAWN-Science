@@ -38,6 +38,21 @@ Independent code review was read-only. Its concrete findings were checked agains
 
 ## Acceptance limits
 
-This is local source/build acceptance, not a run against a real external MCP service or API account. No external writes, publication, deployment, installed-app replacement, merge or push were performed. Native Windows/Linux installation and real-provider authentication were not exercised. MCP OAuth, a plugin installer, MCP Apps, and independent resources/prompts browsing remain outside this change.
+This is local source/build acceptance, not a run against a real external MCP service or API account. At the initial branch verification, no external writes, publication, deployment, installed-app replacement, merge or push were performed. The subsequent local merge is recorded below. Native Windows/Linux installation and real-provider authentication were not exercised. MCP OAuth, a plugin installer, MCP Apps, and independent resources/prompts browsing remain outside this change.
 
 Cancellation and a lost response never establish that an external operation stopped or rolled back. Check the server's state/receipt before issuing another write.
+
+## Pre-merge review and local main acceptance
+
+A second independent review of `61898078` identified concrete stream and configuration gaps. Follow-up commit `9177ef6b` fixes them and the additional large-image validation defect:
+
+- A shared HTTP 202 response stream that ends after returning only some results now settles remaining calls as unknown instead of leaving them waiting indefinitely. A later call establishes a new connection; no tool operation is replayed.
+- Abrupt socket failure on a token-bearing POST stream or an SDK-owned shared GET stream now reaches safe GET resumption. Regressions distinguish actual socket failure from clean EOF.
+- Initialization checks the original workspace's current configuration before caching. Dispatch checks it again after awaiting initialization, preventing an externally removed or changed project server from being invoked.
+- A valid image near the 5 MiB limit no longer triggers a stack overflow in grouped base64 validation. Image decoding, dimensions, MIME checks and byte limits remain enforced.
+
+The new regressions failed before their fixes. Independent read-only follow-up review found no remaining blocking issue.
+
+Local `main` was fast-forwarded from `83f0bf91` to `9177ef6b`. The same regression command above was then repeated on merged `main`: **21 files, 416 tests passed**, exit 0. `npm run typecheck`, `npm run build` and `git diff --check` also passed. The build retained the existing direct-eval and UI chunk-size warnings described above.
+
+No push or other remote mutation was performed. External-service, real-provider and native-platform acceptance limits above still apply.

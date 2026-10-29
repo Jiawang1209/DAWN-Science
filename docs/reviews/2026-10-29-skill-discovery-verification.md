@@ -76,3 +76,10 @@ The new regressions failed against the previous implementation (six failures: pr
 Fresh broad validation after these fixes: **288 files passed; 2975 tests passed, 2 existing skips**, exit 0. Typecheck and full Electron/CLI/UI build passed. Existing canvas/eval/chunk-size notices remain as described above.
 
 Fresh built Electron acceptance passed **13/13** cases after these fixes. Detail and compact screenshots were visually inspected again. Two read-only reviewers rechecked source/backend and UI changes; no remaining confirmed merge blockers were found.
+
+
+## Local main integration
+
+Local `main` was fast-forwarded from `f9d0007d` to implementation/fix commit `d616af65` after the review. The feature worktree and branch are retained. No remote push or installed application replacement was performed.
+
+Against the merged checkout at `/Users/liuyue/Desktop/Github_repos/dawn-science`, typecheck, full Electron/CLI/UI build and diff checks passed; the focused source/protocol/backend/IPC/UI/runtime regression passed **18 files, 239 tests**; and a fresh built **13/13 real Electron acceptance** passed again. This section is a documentation-only follow-up to that verified code commit. The native Windows/Linux and packaged-installer limits above still apply.

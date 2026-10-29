@@ -26,3 +26,10 @@ Tests cover resource-edit/signing policy, all seven ICO sizes, explicit installe
 - An independent read-only review found no actionable defects.
 
 These Windows artifacts are resource-verification outputs from a Mac cross-build. They must not be published or installed as Windows-qualified release artifacts: platform-native modules were not rebuilt for Windows. Windows runtime, installer execution, Explorer/taskbar rendering and icon-cache behavior have not been tested on a Windows host. Native Windows CI builds retain that responsibility and now include both packaged CLI startup and PE-icon checks. No remote push, tag, public release, installed-app replacement or system configuration change was performed.
+
+
+## Local main integration
+
+Local main fast-forwarded from `735db8dd` to Windows-icon fix commit `21036f46`. Against `/Users/liuyue/Desktop/Github_repos/dawn-science`, all **21 files / 195 tests** passed again, along with typecheck, full Electron/CLI/UI build, script syntax and diff checks. The merged verifier passed against all three previously built Windows executables with every RP frame matching. The same exact artifacts were reused for this fast-forward integration; there was no second cross-build and no new claim of native Windows runtime acceptance.
+
+The CLI Unicode dependency fix and Windows icon fix are both in local main. Feature worktrees/branches are retained; no cross-built binaries are tracked in Git. No push, release tag, public publication or installed-app replacement was performed.

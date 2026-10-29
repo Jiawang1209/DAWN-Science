@@ -75,7 +75,7 @@ test.describe("首启向导", () => {
     await expect(page.getByPlaceholder(/输入问题/)).toBeVisible()
   })
 
-  test("先跳过 → 回到普通首页，底部红字还在；点红字回到向导", async ({ dawn }) => {
+  test("先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".setup-wizard")).toBeVisible()
     await page.getByRole("button", { name: "先跳过" }).click()
@@ -85,13 +85,13 @@ test.describe("首启向导", () => {
     const 红字 = page.locator(".statusbar").getByRole("button", { name: /还没有填任何 API key/ })
     await expect(红字).toBeVisible()
     await 红字.click()
-    await expect(page.locator(".setup-wizard").getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+    await 到模型页(page)
     await page.getByRole("button", { name: "稍后配置", exact: true }).click()
     await page.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
     const reopened = await dawn.重开()
     await expect(reopened.locator(".setup-wizard")).toHaveCount(0)
     await reopened.locator(".statusbar").getByRole("button", { name: /还没有填任何 API key/ }).click()
-    await expect(reopened.locator(".setup-wizard").getByRole("heading", { name: "连接 AI 模型" })).toBeVisible()
+    await 到模型页(reopened)
   })
 
   test("解释器路径保存失败在卡片内显示，未配置时仍可跳过", async ({ dawn }) => {

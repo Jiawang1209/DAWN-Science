@@ -6400,7 +6400,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         alerts={<>
           {!ready ? <span role="status">{t("未连接")}</span> : null}
           {没有钥匙 ? <Button variant="text" size="inline" className="caveat statusbar-setup" onClick={() => {
-            设向导起点("key"); 记跳过(false); 设跳过向导(false); setView("conversation")
+            设向导起点("welcome"); 记跳过(false); 设跳过向导(false); setView("conversation")
           }}>{t("还没有填任何 API key，暂时不能对话——点这里填一个")}</Button> : null}
           <StatusNotices notes={notes} />
         </>}

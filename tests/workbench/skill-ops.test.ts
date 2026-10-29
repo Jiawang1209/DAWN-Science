@@ -4,7 +4,7 @@
  */
 import { describe, expect, it, afterEach, vi } from "vitest"
 import Database from "better-sqlite3"
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs"
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, symlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { migrate } from "../../src/store/schema.js"
@@ -150,6 +150,25 @@ describe("GitHub skill backend boundaries",()=>{
     expect(service.install).toHaveBeenCalledWith("opaque",全局,expect.arrayContaining(["mine","shipped"]))
     expect(result.origin.commit).toBe(origin.commit)
     expect(账.some(x=>x.startsWith("import:")&&x.includes(origin.commit))).toBe(true)
+  })
+  it("rejects project ancestors pointing outside before creating any install directories",async()=>{
+    const service=port(),{backend,dir}=起一套({skillDiscovery:service} as any)
+    const workspace=join(dir,"project"), outside=join(dir,"outside")
+    mkdirSync(workspace);mkdirSync(outside)
+    symlinkSync(outside,join(workspace,".dawn"),process.platform === "win32" ? "junction" : "dir")
+    const project=await backend.openProject({workspace}) as {projectId:string}
+    await expect(backend.installGithubSkill({previewId:"opaque",to:"project",projectId:project.projectId})).rejects.toThrow(/outside|project/i)
+    expect(service.install).not.toHaveBeenCalled()
+    expect(existsSync(join(outside,"skills"))).toBe(false)
+  })
+  it("allows missing project directories and symlink ancestors staying inside the workspace",async()=>{
+    const service=port(),{backend,dir}=起一套({skillDiscovery:service} as any)
+    const workspace=join(dir,"project"), inner=join(workspace,"config")
+    mkdirSync(inner,{recursive:true})
+    symlinkSync(inner,join(workspace,".dawn"),process.platform === "win32" ? "junction" : "dir")
+    const project=await backend.openProject({workspace}) as {projectId:string}
+    await backend.installGithubSkill({previewId:"opaque",to:"project",projectId:project.projectId})
+    expect(service.install).toHaveBeenCalledWith("opaque",join(workspace,".dawn/skills"),expect.any(Array))
   })
   it("does not pass arbitrary origin file paths to the service",async()=>{
     const service=port(),{backend,全局,自带,dir}=起一套({skillDiscovery:service} as any)

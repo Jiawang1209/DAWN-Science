@@ -1,3 +1,4 @@
+import { assertProjectInstallRoot } from "../skills/project-install-root.js"
 import { SkillDiscoveryService } from "../skills/discovery.js"
 import { createArtifactOperations } from '../artifacts/operations.js'
 import type { ResponseOf } from '../protocol/index.js'
@@ -3370,7 +3371,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
     installGithubSkill: async ({previewId, to, projectId}) => {
       const root = 技能目标根(to, projectId)
-      const result = await skillAction(() => onlineSkills().install(previewId, root, onlineSkillNames(projectId)))
+      const result = await skillAction(() => {
+        if (to === "project") assertProjectInstallRoot(projectStore.get(projectId!)!.workspace, root)
+        return onlineSkills().install(previewId, root, onlineSkillNames(projectId))
+      })
       记一次技能?.("import", result.dest, `${result.origin.repository}@${result.origin.commit}:${result.origin.path}`)
       return result
     },

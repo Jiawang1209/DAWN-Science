@@ -8,7 +8,7 @@ import {
   mkdirSync,
   mkdtempSync,
   openSync,
-  readFileSync,
+  readSync,
   realpathSync,
   rmSync,
   writeFileSync,
@@ -656,12 +656,26 @@ export class SkillDiscoveryService {
       )
         return undefined
       const file = join(dirname(target), '.dawn-source.json')
-      if (lstatSync(file).isSymbolicLink()) return undefined
-      const fd = openSync(file, constants.O_RDONLY | constants.O_NOFOLLOW)
+      if (!lstatSync(file).isFile()) return undefined
+      const fd = openSync(
+        file,
+        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+      )
       try {
         const stat = fstatSync(fd)
         if (!stat.isFile() || stat.size > 16384) return undefined
-        const raw: unknown = JSON.parse(readFileSync(fd, 'utf8'))
+        // Read at most one byte past the budget, even if another process grows the file.
+        const bytes = Buffer.alloc(16385)
+        let size = 0
+        while (size < bytes.length) {
+          const count = readSync(fd, bytes, size, bytes.length - size, null)
+          if (count === 0) break
+          size += count
+        }
+        if (size > 16384) return undefined
+        const raw: unknown = JSON.parse(
+          bytes.subarray(0, size).toString('utf8'),
+        )
         const parsed = SkillOriginSchema.safeParse(raw)
         return parsed.success ? parsed.data : undefined
       } finally {

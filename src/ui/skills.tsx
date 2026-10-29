@@ -527,7 +527,10 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
         <Button variant={tab === "installed" ? "primary" : "secondary"} size="sm" role="tab" aria-selected={tab === "installed"} onClick={() => setTab("installed")}>{t("已安装")}</Button>
         <Button variant={tab === "discover" ? "primary" : "secondary"} size="sm" role="tab" aria-selected={tab === "discover"} onClick={() => setTab("discover")}>{t("发现技能")}</Button>
       </div> : null}
-      {tab === "discover" && actions?.discovery ? <SkillDiscoveryPanel actions={actions.discovery} hasProject={actions.hasProject} onInstalled={() => {设代(n => n + 1); actions.onChanged?.()}} /> : <>
+      {actions?.discovery ? <div hidden={tab !== "discover"}>
+        <SkillDiscoveryPanel actions={actions.discovery} hasProject={actions.hasProject} onInstalled={() => {设回话(undefined); 设代(n => n + 1); actions.onChanged?.()}} onInstallError={error => 设回话({kind: "bad", text: error})} />
+      </div> : null}
+      {tab === "installed" ? <>
 
       {/**
         * **三个目录都写出来。** 不说清放哪儿，「怎么加一个」就无从下手
@@ -638,7 +641,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
           </ul>
         </section>
       ) : null}
-      </>}
+      </> : null}
     </div>
   )
 }

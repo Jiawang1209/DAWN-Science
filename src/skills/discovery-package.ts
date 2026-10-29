@@ -159,10 +159,16 @@ export async function readArchive(bytes: Buffer): Promise<ArchiveFiles> {
     prefix ??= parts[0]
     if (parts[0] !== prefix)
       throw new Error('Archive requires a single repository root')
+    if (
+      parts
+        .slice(1)
+        .some(
+          (part) => part.normalize('NFC').toLowerCase() === '.dawn-source.json',
+        )
+    )
+      throw new Error('Reserved origin metadata in source')
     if (entry.dir) continue
     const path = safePackagePath(parts.slice(1).join('/'))
-    if (path.split('/').includes('.dawn-source.json'))
-      throw new Error('Reserved origin metadata in source')
     if (path === '.gitmodules' || path.endsWith('/.gitmodules'))
       throw new Error('Submodules are unsupported')
     if (path.endsWith('SKILL.md') && declared.size > DISCOVERY_LIMITS.manifest)

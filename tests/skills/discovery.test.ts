@@ -11,7 +11,9 @@ import {
   statSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { spawnSync } from 'node:child_process'
 import { SkillDiscoveryService } from '../../src/skills/discovery'
 const sha = 'a'.repeat(40)
 const body =
@@ -630,4 +632,61 @@ describe('package permissions and normalized frontmatter', () => {
     expect(skill.dependencies.join(' ')).toContain('Requires Python 3')
     expect(skill.license).toBe('MIT')
   })
+})
+
+describe('origin sidecar filesystem boundaries', () => {
+  it.skipIf(process.platform === 'win32')(
+    'rejects a FIFO sidecar without blocking the calling process',
+    () => {
+      const dir = root()
+      const skill = join(dir, 'SKILL.md')
+      const sidecar = join(dir, '.dawn-source.json')
+      writeFileSync(skill, body)
+      expect(spawnSync('mkfifo', [sidecar]).status).toBe(0)
+      const script = `import { SkillDiscoveryService } from ${JSON.stringify(pathToFileURL(resolve('src/skills/discovery.ts')).href)}; console.log(new SkillDiscoveryService().origin(${JSON.stringify(skill)}) === undefined)`
+      const child = spawnSync(
+        process.execPath,
+        ['--import', 'tsx', '--input-type=module', '-e', script],
+        { encoding: 'utf8', timeout: 4000, killSignal: 'SIGKILL' },
+      )
+      expect(child.error).toBeUndefined()
+      expect(child.status).toBe(0)
+      expect(child.stdout.trim()).toBe('true')
+    },
+    6000,
+  )
+
+  it('rejects a sidecar that grows after descriptor validation without reading beyond the metadata budget', async () => {
+    const { service } = await fixture()
+    const preview = await service.preview(
+      'https://github.com/acme/repo',
+      undefined,
+      'skills/sample',
+    )
+    const installed = await service.install(preview.previewId, root(), [])
+    const skill = join(installed.dest, 'SKILL.md')
+    const sidecar = join(installed.dest, '.dawn-source.json')
+    const script = `
+      import fs from 'node:fs';
+      import { syncBuiltinESMExports } from 'node:module';
+      import { SkillDiscoveryService } from ${JSON.stringify(pathToFileURL(resolve('src/skills/discovery.ts')).href)};
+      const original = fs.fstatSync;
+      fs.fstatSync = (...args) => {
+        const stat = original(...args);
+        fs.appendFileSync(${JSON.stringify(sidecar)}, ' '.repeat(20000));
+        return stat;
+      };
+      syncBuiltinESMExports();
+      console.log(new SkillDiscoveryService().origin(${JSON.stringify(skill)}) === undefined);
+    `
+    const child = spawnSync(
+      process.execPath,
+      ['--import', 'tsx', '--input-type=module', '-e', script],
+      { encoding: 'utf8', timeout: 4000, killSignal: 'SIGKILL' },
+    )
+    expect(child.error).toBeUndefined()
+    expect(child.status).toBe(0)
+    expect(statSync(sidecar).size).toBeGreaterThan(16384)
+    expect(child.stdout.trim()).toBe('true')
+  }, 6000)
 })

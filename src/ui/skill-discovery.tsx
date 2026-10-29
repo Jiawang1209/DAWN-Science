@@ -130,10 +130,12 @@ export function SkillDiscoveryPanel({
   actions,
   hasProject,
   onInstalled,
+  onInstallError,
 }: {
   actions: SkillDiscoveryActions;
   hasProject: boolean;
   onInstalled: () => void;
+  onInstallError?: (error: string) => void;
 }) {
   const [query, setQuery] = useState(""),
     [source, setSource] = useState(""),
@@ -241,11 +243,11 @@ export function SkillDiscoveryPanel({
     setError("");
     try {
       const result = await actions.install(preview.previewId, to);
-      if (current === generation.current) {
-        setInstalled(result);
-        onInstalled();
-      }
+      // Installation changes the library even if this panel has since unmounted.
+      onInstalled();
+      if (current === generation.current) setInstalled(result);
     } catch (e) {
+      onInstallError?.(message(e));
       if (current === generation.current) setError(message(e));
     } finally {
       if (current === generation.current) setBusy(undefined);

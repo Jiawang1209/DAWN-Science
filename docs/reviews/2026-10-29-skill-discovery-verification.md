@@ -1,6 +1,6 @@
 # Skill discovery verification — 2026-10-29
 
-Branch: `codex/skill-discovery`; isolated workspace: `/Users/liuyue/.codex/worktrees/skill-discovery/dawn-science`. Base: local `main` at `f9d0007d`. No push, merge into main, installed-app replacement or user-library installation.
+Branch: `codex/skill-discovery`; isolated workspace: `/Users/liuyue/.codex/worktrees/skill-discovery/dawn-science`. Base: local `main` at `f9d0007d`. The initial implementation validation below preceded local integration; the pre-merge review and integration results are recorded at the end. No push, installed-app replacement or user-library installation.
 
 ## Delivered behavior
 
@@ -60,3 +60,19 @@ Private repositories, authenticated GitHub-wide code search, automatic upgrades,
 Actual Windows/Linux hosts and a newly packaged installer were not exercised. POSIX publication protects ordinary competing installs and existing directories; portable Node filesystem APIs do not provide protection against a hostile external process replacing the reserved directory between its final ownership check and rename.
 
 Actual Electron screenshots were visually inspected and retained locally under `/Users/liuyue/.codex/visualizations/2026/10/29/skill-discovery/` (`detail.png`, `compact.png`). They use synthetic package contents and commit IDs.
+
+
+## Pre-merge review and regression
+
+A fresh source/backend review and a separate UI review found and corrected four boundaries before local integration:
+
+- Project installs now check the nearest existing ancestor against the canonical workspace before any mkdir or package publication. A `.dawn` ancestor pointing outside the project is rejected; missing directories and symlinks staying within the project remain supported. Configured global roots retain their existing semantics.
+- Offline origin reads reject nonregular sidecars before opening, use no-follow/nonblocking flags plus descriptor validation, and read at most 16 KiB + 1 byte. FIFO metadata cannot block the main process, and growth after fstat cannot cause an unbounded read.
+- Reserved `.dawn-source.json` components are checked with NFC/case normalization, including directory entries, so case variations cannot collide with generated origin metadata on case-insensitive filesystems.
+- Discovery stays mounted across tab switches. A pending install still refreshes the installed list/sidebar counts, errors remain visible, and the preview remains available for retry. Successful completion also notifies the parent after panel unmount.
+
+The new regressions failed against the previous implementation (six failures: project escape, FIFO/growth, portable reserved names, tab-switch success/failure) and passed after the fixes. The FIFO subprocess has a hard SIGKILL timeout so a regression cannot leave the runner blocked.
+
+Fresh broad validation after these fixes: **288 files passed; 2975 tests passed, 2 existing skips**, exit 0. Typecheck and full Electron/CLI/UI build passed. Existing canvas/eval/chunk-size notices remain as described above.
+
+Fresh built Electron acceptance passed **13/13** cases after these fixes. Detail and compact screenshots were visually inspected again. Two read-only reviewers rechecked source/backend and UI changes; no remaining confirmed merge blockers were found.

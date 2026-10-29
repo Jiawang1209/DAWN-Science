@@ -83,3 +83,27 @@ describe('bounded ZIP package decoder', () => {
     await expect(readArchive(bytes)).rejects.toThrow(/size|length|content/i)
   })
 })
+
+describe('portable reserved origin metadata names', () => {
+  it('rejects case variations of the reserved sidecar in files and directory components', async () => {
+    for (const path of [
+      'sample/.dawn-source.JSON',
+      'sample/.DAWN-SOURCE.json',
+      'sample/.Dawn-Source.Json/child.txt',
+    ]) {
+      const bytes = await zipBytes({
+        'sample/SKILL.md': 'manifest',
+        [path]: 'untrusted',
+      })
+      await expect(readArchive(bytes)).rejects.toThrow(
+        /reserved.*origin|origin.*metadata/i,
+      )
+    }
+    const bytes = await zipBytes({ 'sample/SKILL.md': 'manifest' }, (zip) => {
+      zip.folder('repo/sample/.DAWN-SOURCE.JSON')
+    })
+    await expect(readArchive(bytes)).rejects.toThrow(
+      /reserved.*origin|origin.*metadata/i,
+    )
+  })
+})

@@ -1,3 +1,4 @@
+import { AgentSkillsView, type SkillActions } from "../../src/ui/skills.js";
 import {
   act,
   fireEvent,
@@ -185,4 +186,63 @@ it("moves keyboard focus to selected details even after a long catalog", async (
   expect(document.activeElement).toBe(
     screen.getByRole("region", { name: "技能详情" }),
   );
+});
+
+async function pendingInstallation() {
+  const a = actions();
+  let resolve!: (
+    value: Awaited<ReturnType<SkillDiscoveryActions["install"]>>,
+  ) => void;
+  let reject!: (error: Error) => void;
+  const result = await a.install("id", "global");
+  a.install = vi.fn(
+    () =>
+      new Promise<typeof result>((yes, no) => {
+        resolve = yes;
+        reject = no;
+      }),
+  );
+  const changed = vi.fn();
+  const load = vi.fn(async () => ({
+    skills: [],
+    problems: [],
+    dirs: { global: "/skills" },
+  }));
+  const managed: SkillActions = {
+    discovery: a,
+    hasProject: true,
+    onChanged: changed,
+    setInvocation: vi.fn(),
+    importSkill: vi.fn(),
+    deleteSkill: vi.fn(),
+    pickDirectory: vi.fn(),
+    问: vi.fn(),
+  };
+  render(<AgentSkillsView load={load} actions={managed} />);
+  fireEvent.click(await screen.findByRole("tab", { name: "发现技能" }));
+  fireEvent.click(screen.getByRole("button", { name: "检索技能源" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "预览 plot-data" }),
+  );
+  await screen.findByText(candidate.commit);
+  fireEvent.click(screen.getByRole("button", { name: "安装此技能" }));
+  fireEvent.click(screen.getByRole("tab", { name: "已安装" }));
+  return { a, changed, load, resolve, reject, result };
+}
+it("refreshes the installed list and counts when installation finishes after switching tabs", async () => {
+  const p = await pendingInstallation();
+  await act(async () => p.resolve(p.result));
+  await waitFor(() => expect(p.changed).toHaveBeenCalledOnce());
+  await waitFor(() => expect(p.load).toHaveBeenCalledTimes(2));
+});
+it("reports installation failure after switching tabs and retains the preview for retry", async () => {
+  const p = await pendingInstallation();
+  await act(async () => p.reject(new Error("Disk is full")));
+  expect(screen.getByRole("status").textContent).toContain("Disk is full");
+  fireEvent.click(screen.getByRole("tab", { name: "发现技能" }));
+  expect(screen.getByText(candidate.commit)).toBeTruthy();
+  expect(
+    (screen.getByRole("button", { name: "安装此技能" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
 });

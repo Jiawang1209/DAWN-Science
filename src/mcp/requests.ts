@@ -54,7 +54,12 @@ class ToolCallTransport {
   private closed = false
 
   constructor(private readonly inner: Transport, private readonly requestFetch?: McpRequestFetch) {
+    if (requestFetch) requestFetch.onSharedResponseEnd = () => {
+      this.disconnected(new Error('MCP 共享响应流在返回部分结果后结束，剩余请求的结果未知。'))
+      void inner.close().catch(() => {})
+    }
     inner.onmessage = (message, extra) => {
+      if (!('method' in message) && 'id' in message && (typeof message.id === 'string' || typeof message.id === 'number')) this.requestFetch?.noteResponse(message.id)
       if ('id' in message && !('method' in message) && typeof message.id === 'string' && message.id.startsWith(this.prefix)) {
         this.pending.get(message.id)?.complete(message)
         return // discard late results after cancellation

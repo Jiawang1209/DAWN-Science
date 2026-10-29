@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mkdtempSync, readFileSync, existsSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, existsSync, rmSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { MCP池 } from '../../src/mcp/客户端.js'
 import type { McpServer } from '../../src/config/schema.js'
 import { McpClient } from '../../src/mcp/requests.js'
+import { 合名单 } from '../../src/mcp/名单.js'
 
 const script = join(process.cwd(), 'scripts/mcp-test-server.mjs')
 let dir: string, log: string, pool: MCP池
@@ -121,5 +122,25 @@ describe('MCP connection recovery with a real stdio server', () => {
       expect((await pool.备好('fixture', config())).失败).toContain('断开')
       expect(pool.查('fixture')).toBeUndefined()
     } finally { closing.mockRestore() }
+  })
+
+  it('does not dispatch after project configuration is removed during initialization', async () => {
+    const delayed = config(['--startup-delay=400'])
+    mkdirSync(join(dir, '.dawn'))
+    const file = join(dir, '.dawn', 'mcp.yaml')
+    writeFileSync(file, JSON.stringify({ mcp: { fixture: delayed } }))
+    pool = new MCP池({ 取密: () => log, 可用: (name, expected, cwd) => {
+      const current = 合名单(undefined, cwd).服务器.find(server => server.名 === name)
+      return JSON.stringify(current?.服务器) === JSON.stringify(expected)
+    } })
+    const dispatch = vi.spyOn(McpClient.prototype, 'callTool')
+    try {
+      const waiting = pool.调('fixture', delayed, 'pid', {}, dir)
+      await vi.waitFor(() => expect(logs()).toContain('starting'))
+      writeFileSync(file, 'mcp: {}\n')
+      expect((await waiting).出错了).toBe(true)
+      expect(dispatch).not.toHaveBeenCalled()
+      expect(pool.查('fixture', dir)).toBeUndefined()
+    } finally { dispatch.mockRestore() }
   })
 })

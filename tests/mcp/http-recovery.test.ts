@@ -134,12 +134,12 @@ describe('MCP remote transports', () => {
     expect(f.calls.filter(name => name === 'hold')).toHaveLength(1)
   })
 
-  it('preserves SDK-owned shared GET resumption for a tool accepted with HTTP 202', async () => {
+  it.each(['endEvents', 'breakEvents'] as const)('preserves SDK-owned shared GET resumption for HTTP 202 after %s', async drop => {
     const f = await setup('http', 'shared')
     let result: Awaited<ReturnType<MCP池['调']>> | undefined
     const waiting = f.pool.调('remote', f.config, 'hold', {}).then(value => { result = value })
     await vi.waitFor(() => { expect(f.calls).toContain('hold'); expect(f.eventsOpen()).toBe(true) })
-    f.endEvents()
+    f[drop]()
     await vi.waitFor(() => expect(result?.文字).toContain('shared resumed receipt'))
     await waiting
     expect(f.resumed()).toBe(1)
@@ -159,5 +159,36 @@ describe('MCP remote transports', () => {
     expect(f.pool.查('remote')).toBeDefined()
     controller.abort()
     expect((await waiting).文字).toContain('取消')
+  })
+
+  it('settles remaining shared HTTP202 calls after a stream closes following partial completion', async () => {
+    const f = await setup('http', 'shared-partial')
+    const results: Awaited<ReturnType<MCP池['调']>>[] = []
+    const first = f.pool.调('remote', f.config, 'hold', {}).then(result => { results[0] = result })
+    const second = f.pool.调('remote', f.config, 'hold', {}).then(result => { results[1] = result })
+    await vi.waitFor(() => { expect(f.calls.filter(name => name === 'hold')).toHaveLength(2); expect(f.eventsOpen()).toBe(true) })
+    f.completeFirstSharedAndEnd()
+    await vi.waitFor(() => {
+      expect(results[0]).toMatchObject({ 出错了: false, 文字: 'first receipt' })
+      expect(results[1]).toMatchObject({ 出错了: true })
+    })
+    await Promise.all([first, second])
+    expect(results[1]!.文字).toContain('结果未知')
+    expect(f.calls.filter(name => name === 'hold')).toHaveLength(2)
+    expect(f.pool.查('remote')).toBeUndefined()
+    expect((await f.pool.调('remote', f.config, 'echo', {})).出错了).toBe(false)
+  })
+
+  it('resumes a response after an actual socket interruption when the server supplied an event ID', async () => {
+    const f = await setup('http', 'resume-broken')
+    let result: Awaited<ReturnType<MCP池['调']>> | undefined
+    const waiting = f.pool.调('remote', f.config, 'hold', {}).then(value => { result = value })
+    await vi.waitFor(() => expect(f.calls).toContain('hold'))
+    await f.pool.调('remote', f.config, 'echo', {})
+    f.breakWaits()
+    await vi.waitFor(() => expect(result).toMatchObject({ 出错了: false, 文字: 'resumed receipt' }))
+    await waiting
+    expect(f.resumed()).toBe(1)
+    expect(f.calls.filter(name => name === 'hold')).toHaveLength(1)
   })
 })

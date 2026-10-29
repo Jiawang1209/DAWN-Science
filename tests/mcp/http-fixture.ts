@@ -6,12 +6,13 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
   let generations = 0, expireNext = false, catalogChanged = false
   let events: ServerResponse | undefined
   let sharedPendingId: unknown
+  const sharedPendingIds: unknown[] = []
   const pending = new Map<string, ServerResponse>()
   const resumable = new Map<string, unknown>()
   let resumed = 0
   const calls: string[] = [], cancelled: string[] = [], closedWaits: string[] = []
   const server = createServer((req, res) => {
-    if (req.method === 'GET' && mode === 'http' && streaming === 'shared') {
+    if (req.method === 'GET' && mode === 'http' && typeof streaming === 'string' && streaming.startsWith('shared')) {
       events = res
       res.writeHead(200, { 'content-type': 'text/event-stream' })
       if (req.headers['last-event-id']) {
@@ -71,7 +72,7 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
         }
         if (name === 'write' && expireNext) { expireNext = false; res.writeHead(404).end('Session expired after accepting operation'); return }
         if (name === 'hold') {
-          if (streaming === 'shared') { sharedPendingId = message.id; res.writeHead(202).end(); return }
+          if (typeof streaming === 'string' && streaming.startsWith('shared')) { sharedPendingId = message.id; sharedPendingIds.push(message.id); res.writeHead(202).end(); return }
           pending.set(id, res)
           res.on('close', () => { closedWaits.push(id); pending.delete(id) })
           if (mode === 'sse') res.writeHead(202).end()
@@ -81,7 +82,9 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
             if (typeof streaming === 'string' && streaming.startsWith('resume')) {
               const token = `receipt-${id}`
               resumable.set(token, message.id)
-              res.end(`id: ${token}\nretry: 1\nevent: message\ndata: ${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/message', params: { level: 'info', data: 'working' } })}\n\n`)
+              const priming = `id: ${token}\nretry: 1\nevent: message\ndata: ${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/message', params: { level: 'info', data: 'working' } })}\n\n`
+              if (streaming === 'resume-broken') res.write(priming)
+              else res.end(priming)
             }
           }
           return
@@ -107,6 +110,9 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
     breakEvents: () => events?.destroy(),
     endEvents: () => events?.end(),
     eventsOpen: () => !!events,
+    completeFirstSharedAndEnd: () => {
+      events?.end(`event: message\ndata: ${JSON.stringify({ jsonrpc: '2.0', id: sharedPendingIds[0], result: { content: [{ type: 'text', text: 'first receipt' }] } })}\n\n`)
+    },
     close: async () => {
       events?.end()
       server.closeAllConnections()

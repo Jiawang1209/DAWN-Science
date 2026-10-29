@@ -43,7 +43,7 @@ export async function projectMcpResult(raw: unknown): Promise<McpModelResult> {
           if (!supported.has(String(block.mimeType))) throw new Error('不支持的图片格式')
           if (imageCount >= MAX_IMAGES) throw new Error(`超过 ${MAX_IMAGES} 张图片上限`)
           if (typeof block.data !== 'string' || block.data.length > Math.ceil(MAX_IMAGE_BYTES / 3) * 4
-            || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(block.data)) throw new Error('图片过大或 base64 无效')
+            || block.data.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(block.data)) throw new Error('图片过大或 base64 无效')
           const bytes = Buffer.from(block.data, 'base64')
           if (!bytes.length || bytes.length > MAX_IMAGE_BYTES || totalImageBytes + bytes.length > MAX_TOTAL_IMAGE_BYTES) throw new Error('图片字节数超过上限')
           const mimeType = imageMime(bytes)

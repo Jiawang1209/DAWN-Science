@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { projectMcpResult } from '../../src/mcp/results.js'
+import { randomBytes } from 'node:crypto'
+import { crc32, deflateSync } from 'node:zlib'
 
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGO4o6YGRAwQCgAjRgSh7v9IEwAAAABJRU5ErkJggg=='
 const text = (result: Awaited<ReturnType<typeof projectMcpResult>>) => result.content.flatMap(c => c.type === 'text' ? [c.text] : []).join('\n')
@@ -78,5 +80,22 @@ describe('MCP model projection', () => {
     const result = await projectMcpResult({ content: [{ type: 'image', data: bytes.toString('base64'), mimeType: 'image/png' }] })
     expect(text(result)).toContain('4000 万像素')
     expect(result.content.some(c => c.type === 'image')).toBe(false)
+  })
+
+  it('accepts a valid image near the 5 MiB limit without overflowing base64 validation', async () => {
+    const width = 1536, height = 1024, stride = width * 3 + 1
+    const pixels = randomBytes(stride * height)
+    for (let row = 0; row < height; row++) pixels[row * stride] = 0
+    const header = Buffer.alloc(13)
+    header.writeUInt32BE(width, 0); header.writeUInt32BE(height, 4); header[8] = 8; header[9] = 2
+    const chunk = (name: string, data: Buffer) => {
+      const body = Buffer.concat([Buffer.from(name), data]), size = Buffer.alloc(4), crc = Buffer.alloc(4)
+      size.writeUInt32BE(data.length); crc.writeUInt32BE(crc32(body))
+      return Buffer.concat([size, body, crc])
+    }
+    const bytes = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(pixels)), chunk('IEND', Buffer.alloc(0))])
+    expect(bytes.length).toBeLessThan(5 * 1024 * 1024)
+    const result = await projectMcpResult({ content: [{ type: 'image', data: bytes.toString('base64'), mimeType: 'image/png' }] })
+    expect(result.content.some(c => c.type === 'image')).toBe(true)
   })
 })

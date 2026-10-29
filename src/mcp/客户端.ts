@@ -91,6 +91,7 @@ interface 一条连接 {
 
 interface 正在连接 {
   signature: string
+  workspace: string | undefined
   controller: AbortController
   promise: Promise<一台的结果>
 }
@@ -157,7 +158,7 @@ export class MCP池 {
     if (有?.signature === signature) return { 服务器名: 名, 工具: 有.工具 }
     if (在起?.signature === signature) return 在起.promise
 
-    const pending: 正在连接 = { signature, controller: new AbortController(), promise: undefined as unknown as Promise<一台的结果> }
+    const pending: 正在连接 = { signature, workspace: 默认cwd, controller: new AbortController(), promise: undefined as unknown as Promise<一台的结果> }
     // Claim the replacement before the first await. New requests and explicit
     // close can now invalidate it while the previous generation is shutting down.
     this.连着.delete(k)
@@ -334,6 +335,7 @@ export class MCP池 {
         ...(t.annotations?.readOnlyHint === true || 兼容只读.has(t.name) ? { 只读: true as const } : {}),
       }))
       if (this.closed || signal.aborted || this.起着.get(k) !== pending) throw new Error('MCP 初始化已取消，连接未启用。')
+      if (this.opts.可用?.(名, 配, pending.workspace) === false) throw new Error('MCP 服务器配置在初始化期间已变化，连接未启用，请求未发送。')
       if (!client.transport) throw new Error('MCP 服务器在发现工具期间断开，连接未启用。')
       const connection: 一条连接 = { client, signature: pending.signature, transport, 工具, stderr尾巴: 尾巴 }
       client.onclose = () => {
@@ -375,6 +377,7 @@ export class MCP池 {
       if (signal?.aborted) throw new McpCallCancelled(false)
       const 备 = await waitForMcp(this.备好(名, 配, 默认cwd), signal)
       if (备.失败) return { 文字: `${名} 没连上：${备.失败}`, 出错了: true }
+      if (this.opts.可用?.(名, 配, 默认cwd) === false) return { 文字: 'MCP 服务器已停用、移除或配置已变化，请求未发送。', 出错了: true }
       连 = this.连着.get(k)
       if (!连) return { 文字: `${名} 没连上，请求未发送。`, 出错了: true }
       if (expectedTool) {

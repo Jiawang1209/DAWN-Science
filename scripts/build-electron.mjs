@@ -9,6 +9,7 @@
  * 打进 bundle 只会得到一个坏掉的文件。
  */
 import { build } from "esbuild"
+import { execFileSync } from "node:child_process"
 import { chmodSync, cpSync, existsSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
@@ -49,6 +50,7 @@ const external = [
   "@earendil-works/pi-ai",
   "@earendil-works/pi-agent-core",
   "@earendil-works/pi-coding-agent",
+  "@earendil-works/pi-tui",
   /**
    * **Jupyter 那一串（②-A · 2026-08-10 加入）。**
    *
@@ -147,6 +149,11 @@ await build({
  * 而 npm 的 allowScripts 策略会拦掉那个脚本。打包后同样会丢——
  * 失败表现是 `posix_spawnp failed`，错误信息里没有任何线索。
  */
+// Parse generated files too: esbuild can emit a banner/import binding collision.
+for (const file of ["main.js", "subagent-child.js", "preload.cjs"]) {
+  execFileSync(process.execPath, ["--check", join("dist/electron", file)], { stdio: "inherit" })
+}
+
 let fixed = 0
 for (const platform of ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64"]) {
   const helper = join("node_modules", "node-pty", "prebuilds", platform, "spawn-helper")

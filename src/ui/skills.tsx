@@ -1,3 +1,4 @@
+import { SkillDiscoveryPanel, SkillOriginDetails, type SkillDiscoveryActions } from "./skill-discovery.js"
 /**
  * 技能与 MCP 两屏（2026-08-12）。
  *
@@ -284,6 +285,7 @@ function 子agent行尾菜单({ a, 忙, 可删, onToggle, onDelete }: { a: Skill
 
 /** 一个 Agent Skill 在界面上的样子（协议 6.0） */
 export interface AgentSkill {
+  hasOrigin?: boolean
   name: string
   description: string
   filePath: string
@@ -311,6 +313,7 @@ export interface 导入回执 {
  * 没给就还是那张只读清单。
  */
 export interface SkillActions {
+  discovery?: SkillDiscoveryActions
   setInvocation: (filePath: string, mode: 调用档) => Promise<unknown>
   importSkill: (req: { source: string; to: "global" | "project"; overwrite?: boolean; dryRun?: boolean }) => Promise<导入回执>
   deleteSkill: (filePath: string) => Promise<unknown>
@@ -401,6 +404,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
   const [回话, 设回话] = useState<{ kind: "ok" | "bad"; text: string } | undefined>(undefined)
   const [筛, 设筛] = useState<"all" | AgentSkill["from"]>("all")
   const [搜, 设搜] = useState("")
+  const [tab, setTab] = useState<"installed" | "discover">("installed")
   const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
 
   useEffect(() => {
@@ -496,7 +500,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
         <p className="hint">
           {t("技能 = 文件夹 + SKILL.md。模型按需读取，也可用 /skill:名字 显式调用。")}
         </p>
-        {actions ? (
+        {actions && tab === "installed" ? (
           <div className="skills-actions">
             {/**
               * **导入**（skills-manage）：从本机选一个含 SKILL.md 的文件夹（或一筐），复制进来。
@@ -518,6 +522,12 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
           </p>
         ) : null}
       </header>
+
+      {actions?.discovery ? <div className="theme-choices skill-discovery-tabs" role="tablist" aria-label={t("技能管理")}>
+        <Button variant={tab === "installed" ? "primary" : "secondary"} size="sm" role="tab" aria-selected={tab === "installed"} onClick={() => setTab("installed")}>{t("已安装")}</Button>
+        <Button variant={tab === "discover" ? "primary" : "secondary"} size="sm" role="tab" aria-selected={tab === "discover"} onClick={() => setTab("discover")}>{t("发现技能")}</Button>
+      </div> : null}
+      {tab === "discover" && actions?.discovery ? <SkillDiscoveryPanel actions={actions.discovery} hasProject={actions.hasProject} onInstalled={() => {设代(n => n + 1); actions.onChanged?.()}} /> : <>
 
       {/**
         * **三个目录都写出来。** 不说清放哪儿，「怎么加一个」就无从下手
@@ -602,6 +612,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
                     </p>
                     {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
                     <p className="skill-desc">{s.description}</p>
+                    {s.hasOrigin && actions?.discovery ? <SkillOriginDetails filePath={s.filePath} actions={actions.discovery} /> : null}
                   </div>
                   {actions ? (
                     <行尾菜单 s={s} 忙={忙 === s.filePath} 可删={s.mutable} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
@@ -627,6 +638,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
           </ul>
         </section>
       ) : null}
+      </>}
     </div>
   )
 }

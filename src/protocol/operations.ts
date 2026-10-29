@@ -1357,6 +1357,7 @@ export const OPERATIONS = {
               /** 它从哪儿来。**界面要能说清楚**：自带的与你写的不是一回事 */
               from: z.enum(["builtin", "global", "project"]),
               /** 只能显式 `/skill:名` 调，模型不会自己用 */
+              hasOrigin: z.boolean().optional(),
               manualOnly: z.boolean(),
               /**
                * 三档调用策略（7.17）：`model` 缺省 / `manual` 只手动 / `off` 谁都不给。

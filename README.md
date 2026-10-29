@@ -81,7 +81,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 | **Multi-agent** | 22 bundled sub-agents; team mode with a lead, resumable members and a task board with dependencies |
 | **Professional Bots** | Manage reusable native/API assistants in the Bot dock, chat privately within a workspace, dispatch with `/`, discuss in one shared chat with individual avatars and bubbles, follow up with peers, hand off work and accept user intervention, or let the main conversation form a team and collect verified scripts, notes and figures with inline previews |
 | **Three permission levels** | Allow all / ask / block, plus a hard-deny list |
-| **Skills & plugins** | Skills with three-level toggles and import; Office (Word/Excel/PowerPoint/PDF, 14 tools), browser (15 tools) and long-term memory (three-track confirmation) plugins |
+| **Skills & plugins** | Skills with three-level toggles, local import and [public GitHub discovery / pinned installation](docs/skills.md); Office (Word/Excel/PowerPoint/PDF, 14 tools), browser (15 tools) and long-term memory (three-track confirmation) plugins |
 | **Remote assistant** | WeChat / Feishu channels — scan a QR code, keep asking from your phone |
 | **Scheduled tasks** | At the set time, open a fresh session and run the task description |
 | **Artifacts** | `GENERATED · N` in the conversation, live list in the dock |

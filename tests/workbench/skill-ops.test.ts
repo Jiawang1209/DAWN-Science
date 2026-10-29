@@ -2,7 +2,7 @@
  * 技能管理三个操作（7.17，skills-manage）：守卫、写文件、落账、进废纸篓。
  * 学自 dsh-skills-manager 的测试口径：目录穿越名拒、只读根拒、改完的文件只动那两行。
  */
-import { describe, expect, it, afterEach } from "vitest"
+import { describe, expect, it, afterEach, vi } from "vitest"
 import Database from "better-sqlite3"
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -33,7 +33,7 @@ const 技能 = (root: string, name: string) => {
   return f
 }
 
-function 起一套() {
+function 起一套(extra: Partial<Parameters<typeof createWorkbenchBackend>[0]> = {}) {
   const dir = mkdtempSync(join(tmpdir(), "dawn-skill-ops-"))
   dirs.push(dir)
   const 全局 = join(dir, "global-skills")
@@ -51,6 +51,7 @@ function 起一套() {
   const 账: string[] = []
   const settings = new SettingsStore(db)
   const backend = createWorkbenchBackend({
+    ...extra,
     settings,
     projects: new ProjectManager({ projects: projectStore, sessions: sessionStore, runs, registry }),
     projectStore,
@@ -68,7 +69,7 @@ function 起一套() {
     },
     记一次技能: (event, 路径, 详情) => 账.push(`${event}:${路径}${详情 ? `:${详情}` : ""}`),
   })
-  return { backend, settings, 全局, 自带, dir, 扔了, 账 }
+  return { backend, settings, 全局, 自带, dir, 扔了, 账, projectStore }
 }
 
 describe("技能管理", () => {
@@ -133,5 +134,43 @@ describe("技能管理", () => {
     const p = (await backend.openProject({ workspace: 工作区 })) as { projectId: string }
     const 进项目 = (await backend.importSkill({ source: join(来源, "mine"), to: "project", projectId: p.projectId })) as 回
     expect(进项目.imported[0]?.dest).toBe(join(工作区, ".dawn/skills", "mine"))
+  })
+})
+
+
+describe("GitHub skill backend boundaries",()=>{
+  const origin={provider:"github" as const,repository:"owner/repo",sourceUrl:"https://github.com/owner/repo",ref:"main",commit:"a".repeat(40),path:"skills/new-skill",packageSha256:"b".repeat(64),installedAt:"2026-10-29T00:00:00Z",runtimeVerification:"not_verified" as const}
+  const port=()=>({search:vi.fn(async()=>({sources:[],skills:[],problems:[]})),inspect:vi.fn(async()=>({sources:[],skills:[],problems:[]})),preview:vi.fn(),readFile:vi.fn(),discard:vi.fn(),origin:vi.fn(()=>origin),install:vi.fn(async(_id:string,root:string,_names:readonly string[])=>({name:"new-skill",dest:join(root,"new-skill"),origin}))})
+  it("routes catalog queries and installs only to the authorized root with fresh visible names",async()=>{
+    const service=port(),{backend,全局,账}=起一套({skillDiscovery:service} as any)
+    expect(typeof (backend as any).searchSkillCatalog).toBe("function")
+    await backend.searchSkillCatalog({query:"plot",source:"chosen"})
+    expect(service.search).toHaveBeenCalledWith("plot","chosen")
+    const result=await backend.installGithubSkill({previewId:"opaque",to:"global"}) as import("../../src/protocol/skill-discovery.js").SkillInstall
+    expect(service.install).toHaveBeenCalledWith("opaque",全局,expect.arrayContaining(["mine","shipped"]))
+    expect(result.origin.commit).toBe(origin.commit)
+    expect(账.some(x=>x.startsWith("import:")&&x.includes(origin.commit))).toBe(true)
+  })
+  it("does not pass arbitrary origin file paths to the service",async()=>{
+    const service=port(),{backend,全局,自带,dir}=起一套({skillDiscovery:service} as any)
+    expect(typeof (backend as any).getSkillOrigin).toBe("function")
+    await expect(backend.getSkillOrigin({filePath:join(dir,"SKILL.md")})).rejects.toThrow()
+    await expect(backend.getSkillOrigin({filePath:join(自带,"shipped","SKILL.md")})).resolves.toEqual({})
+    expect(service.origin).not.toHaveBeenCalled()
+    expect(await backend.getSkillOrigin({filePath:join(全局,"mine","SKILL.md")})).toEqual({origin})
+  })
+  it("requires an existing local project before project installation",async()=>{
+    const service=port(),{backend,dir}=起一套({skillDiscovery:service} as any)
+    expect(typeof (backend as any).installGithubSkill).toBe("function")
+    await expect(backend.installGithubSkill({previewId:"opaque",to:"project"})).rejects.toThrow(/项目/)
+    await expect(backend.installGithubSkill({previewId:"opaque",to:"project",projectId:"absent"})).rejects.toThrow(/项目/)
+    expect(service.install).not.toHaveBeenCalled()
+    const workspace=join(dir,"online-project");mkdirSync(workspace)
+    const project=await backend.openProject({workspace}) as {projectId:string}
+    await backend.installGithubSkill({previewId:"opaque",to:"project",projectId:project.projectId})
+    expect(service.install).toHaveBeenCalledWith("opaque",join(workspace,".dawn/skills"),expect.any(Array))
+    技能(join(workspace,".dawn/skills"),"project-visible")
+    await backend.installGithubSkill({previewId:"global-from-project",to:"global",projectId:project.projectId})
+    expect(service.install).toHaveBeenCalledWith("global-from-project",expect.any(String),expect.arrayContaining(["project-visible","mine","shipped"]))
   })
 })

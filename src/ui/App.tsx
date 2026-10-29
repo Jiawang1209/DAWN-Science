@@ -4959,14 +4959,24 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
  * 只有自带与全局那些——**那不是错误，是实情**。
  */
 <AgentSkillsView
+  key={projectId ?? "global"}
   load={载技能}
   actions={{
     setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
+    discovery: {
+      search: (query, source) => client.get("searchSkillCatalog", {query, ...(source ? {source} : {})}),
+      inspect: (url, ref) => client.get("inspectGithubSkills", {url, ...(ref ? {ref} : {})}),
+      preview: (skill) => client.get("previewGithubSkill", {url: skill.url, ref: skill.ref, path: skill.path, commit: skill.commit}),
+      readFile: (previewId, path) => client.get("readSkillPreviewFile", {previewId, path}),
+      discard: (previewId) => client.get("discardSkillPreview", {previewId}),
+      install: (previewId, to) => client.get("installGithubSkill", {previewId, to, ...(projectId && !session?.remote ? {projectId} : {})}),
+      origin: (filePath) => client.get("getSkillOrigin", {filePath}),
+    },
     onChanged: 名册变了,
     importSkill: (req) => client.get<导入回执>("importSkill", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
     deleteSkill: (filePath) => client.get("deleteSkill", { filePath }),
     pickDirectory: () => client.pickDirectory(默认工作区?.path),
-    hasProject: Boolean(projectId),
+    hasProject: Boolean(projectId) && !session?.remote,
     问: 问一句,
   }}
 />

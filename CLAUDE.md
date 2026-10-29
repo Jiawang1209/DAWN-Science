@@ -36,6 +36,7 @@
 | **分析交付**：坞产物内显式选文件，生成脚本、README 和结果解读，独立验证与整理状态分开留存；路线/Bot 共用入口 | `docs/superpowers/specs/2026-10-18-analysis-delivery-workflow-design.md` · `docs/superpowers/plans/2026-10-18-analysis-delivery-workflow.md` · `docs/reviews/2026-10-18-analysis-delivery-workflow-verification.md` |
 | **定时任务**：到点开一段全新会话跑任务说明（学自 dsh-automation） | `specs/2026-08-22-定时任务-design.md` |
 | **会话归档**：藏不是删；删会话真删会话目录（学自 dsh-archive-manager） | `specs/2026-08-22-会话归档-design.md` |
+| **GitHub 技能发现**：已安装 / 发现技能、收录源检索、链接预览、固定提交安装与离线来源记录 | `docs/skills.md` · `docs/superpowers/specs/2026-10-29-skill-discovery-design.md` |
 | **技能管理**：三档开关写进 SKILL.md、导入、删除（学自 dsh-skills-manager） | `specs/2026-08-21-技能管理-design.md` |
 | **权限三档**：全放行 / 问一句 / 拦下；硬拒清单；本会话产物（学自 dsh-auto-mode） | `specs/2026-08-23-权限三档-design.md` · 解读在 `ccb_hive_code_learn/dsh-auto-mode-解读.md` |
 | **团队**：队长 + 可续聊成员 + 带依赖与 attempt 令牌的任务板（学自 dsh-agent-teams） | `specs/2026-08-22-团队-design.md` · 解读在 `ccb_hive_code_learn/dsh-agent-teams-解读.md` |

@@ -9342,3 +9342,42 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .service-mark svg, .app-status-main .service-mark svg { width: 100%; height: 100%; }
 
 .service-mark-icon { display: block; width: 100%; height: 100%; background: currentColor; mask-position: center; mask-size: contain; mask-repeat: no-repeat; }
+
+/* GitHub Skill discovery uses the existing Settings typography and controls. */
+.skill-discovery-tabs { margin: 12px 0 18px; }
+.skill-discovery { min-width: 0; container-type: inline-size; }
+.skill-discovery-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.skill-discovery-form label { display: grid; gap: 6px; min-width: 140px; color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); }
+.skill-discovery-form .grow { flex: 1 1 260px; }
+.skill-discovery-form .control { width: 100%; min-width: 0; }
+.skill-discovery-progress, .skill-discovery-detail-head, .skill-discovery-install, .skill-discovery-badges { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.skill-discovery-results { list-style: none; padding: 0; margin: 20px 0; max-height: 360px; overflow: auto; }
+.skill-discovery-results li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--dawn-stroke-2); }
+.skill-discovery-results li > div { min-width: 0; }
+.skill-discovery-results .tag { margin-left: 8px; }
+.skill-discovery-results p { margin: 5px 0; color: var(--dawn-text-2); }
+.skill-discovery-results code, .skill-source-fields dd { overflow-wrap: anywhere; }
+.skill-discovery-detail { border-top: 1px solid var(--dawn-stroke-2); margin-top: 20px; padding-top: 16px; }
+.skill-discovery-detail-head { justify-content: space-between; }
+.skill-discovery-detail h2 { margin: 0; font-size: var(--dawn-fs-sub); }
+.skill-discovery-detail h3 { font-size: var(--dawn-fs-meta); margin: 18px 0 6px; }
+.skill-source-fields { display: grid; grid-template-columns: minmax(80px, auto) minmax(0, 1fr); gap: 8px 18px; font-size: var(--dawn-fs-meta); margin: 16px 0; }
+.skill-source-fields dt { color: var(--dawn-text-3); }
+.skill-source-fields dd { margin: 0; min-width: 0; white-space: pre-wrap; }
+.skill-package-preview { display: grid; grid-template-columns: minmax(130px, 28%) minmax(0, 1fr); border: 1px solid var(--dawn-stroke-2); border-radius: var(--dawn-radius-md); margin-top: 16px; overflow: hidden; }
+.skill-package-preview nav { display: flex; flex-direction: column; align-items: stretch; gap: 5px; padding: 12px; border-right: 1px solid var(--dawn-stroke-2); max-height: 380px; overflow: auto; }
+.skill-package-preview nav .btn { text-align: left; overflow-wrap: anywhere; white-space: normal; justify-content: start; }
+.skill-package-content { padding: 12px; min-width: 0; }
+.skill-package-content p { margin-top: 0; font-size: var(--dawn-fs-meta); }
+.skill-package-content pre { margin: 0; max-height: 380px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.skill-discovery-install label { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.skill-discovery-install .control { width: auto; min-width: 140px; }
+.skill-origin { margin-top: 6px; }
+.skill-origin-detail { margin: 8px 0; }
+@media (max-width: 620px) { .skill-package-preview { grid-template-columns: 1fr; } .skill-package-preview nav { max-height: 150px; border-right: 0; border-bottom: 1px solid var(--dawn-stroke-2); } }
+
+.skill-discovery-detail li { white-space: normal; overflow-wrap: anywhere; }
+@container (max-width: 520px) {
+  .skill-package-preview { grid-template-columns: minmax(0, 1fr); }
+  .skill-package-preview nav { max-height: 150px; border-right: 0; border-bottom: 1px solid var(--dawn-stroke-2); }
+}

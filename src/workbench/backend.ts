@@ -1,3 +1,4 @@
+import { SkillDiscoveryService } from "../skills/discovery.js"
 import { createArtifactOperations } from '../artifacts/operations.js'
 import type { ResponseOf } from '../protocol/index.js'
 import { TransferBatches } from "../remote/transfer-batches.js"
@@ -178,6 +179,7 @@ export interface CredentialsPort {
 }
 
 export interface WorkbenchBackendOptions {
+  skillDiscovery?: Pick<SkillDiscoveryService, "search" | "inspect" | "preview" | "readFile" | "discard" | "install" | "origin">
   terminals?: import('../terminal/control.js').TerminalControl
   terminalOwnerAllowed?: (sessionId: string) => boolean
   remoteTerminalContext?: (ownerId: string) => NonNullable<import("../runtime/types.js").SessionSpec["remote"]> & { connectionId: string }
@@ -609,6 +611,23 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   }
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
+
+  let onlineSkillService = opts.skillDiscovery
+  const onlineSkills = () => onlineSkillService ??= new SkillDiscoveryService()
+  const skillAction = async <T>(run: () => T | Promise<T>): Promise<T> => {
+    try { return await run() }
+    catch (error) { throw fault("invalid_request", "技能操作失败：{0}", error instanceof Error ? error.message : String(error)) }
+  }
+  const visibleSkillRoots = (projectId?: string) => {
+    const project = projectId ? projectStore.get(projectId) : undefined
+    if (projectId && !project) throw fault("not_found", "没有这个项目：{0}", projectId)
+    return [
+      ...(project && skills?.项目目录名 ? [{path: join(project.workspace, skills.项目目录名), builtin: false}] : []),
+      ...(skills?.全局目录 ? [{path: skills.全局目录, builtin: false}] : []),
+      ...(skills?.自带目录 ? [{path: skills.自带目录, builtin: true}] : []),
+    ]
+  }
+  const onlineSkillNames = (projectId?: string) => loadSkills({cwd: homedir(), agentDir: join(homedir(), ".pi"), skillPaths: visibleSkillRoots(projectId).map(x => x.path), includeDefaults: false}).skills.map(x => x.name)
 
   const analysisDeliveries = new Map<
     string,
@@ -3341,6 +3360,34 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **发现这件事整个交给 pi**（`loadSkills`）：它就是那个标准的实现，
      * 我们自己再解析一遍 frontmatter 只会在边角情形上与它分家。
      */
+    searchSkillCatalog: ({query, source}) => skillAction(() => onlineSkills().search(query, source)),
+    inspectGithubSkills: ({url, ref}) => skillAction(() => onlineSkills().inspect(url, ref)),
+    previewGithubSkill: ({url, ref, path, commit}) => skillAction(() => onlineSkills().preview(url, ref, path, commit)),
+    readSkillPreviewFile: ({previewId, path}) => skillAction(() => onlineSkills().readFile(previewId, path)),
+    discardSkillPreview: async ({previewId}) => {
+      onlineSkills().discard(previewId)
+      return {discarded: true as const}
+    },
+    installGithubSkill: async ({previewId, to, projectId}) => {
+      const root = 技能目标根(to, projectId)
+      const result = await skillAction(() => onlineSkills().install(previewId, root, onlineSkillNames(projectId)))
+      记一次技能?.("import", result.dest, `${result.origin.repository}@${result.origin.commit}:${result.origin.path}`)
+      return result
+    },
+    getSkillOrigin: async ({filePath}) => {
+      const file = resolve(filePath)
+      const roots = [...visibleSkillRoots(), ...projectStore.list().flatMap(p => skills?.项目目录名 ? [{path: join(p.workspace, skills.项目目录名), builtin: false}] : [])]
+      const owner = roots.find(root => file.startsWith(resolve(root.path) + sep))
+      if (!owner || basename(file) !== "SKILL.md") throw fault("invalid_request", "只能查看已安装技能的来源")
+      const listed = loadSkills({cwd: homedir(), agentDir: join(homedir(), ".pi"), skillPaths: [owner.path], includeDefaults: false}).skills.some(s => resolve(s.filePath) === file)
+      if (!listed) throw fault("invalid_request", "只能查看已安装技能的来源")
+      const canonicalRoot = realpathSync(owner.path), canonicalFile = realpathSync(file)
+      if (!canonicalFile.startsWith(canonicalRoot + sep)) throw fault("invalid_request", "只能查看已安装技能的来源")
+      if (owner.builtin) return {}
+      const origin = await skillAction(() => onlineSkills().origin(file))
+      return origin ? {origin} : {}
+    },
+
     listAgentSkills: async ({ projectId }) => {
       const 工作区 = projectId ? projects.summary(projectId)?.workspace : undefined
       const 位置 = skills ?? {}
@@ -3381,6 +3428,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             invocation,
             // 自带的在应用包里，只读
             mutable: from !== "builtin",
+            hasOrigin: from !== "builtin" && existsSync(join(dirname(s.filePath), ".dawn-source.json")),
           }
         }),
         problems: r.diagnostics

@@ -1,3 +1,4 @@
+import { skillDiscoveryOperations } from "./skill-discovery.js"
 import { FileContentSchema } from "./file-content.js"
 import { artifactHistoryOperations } from "./artifact-history.js"
 import { DirectoryTransferRequest, TransferBatchSchema, TransferDetailSchema } from "../remote/transfer-types.js"
@@ -1339,6 +1340,8 @@ export const OPERATIONS = {
    * 标准是 Anthropic 的 Agent Skills（`SKILL.md` + frontmatter），
    * **pi 已经把它实现完了**，这里只是把它端到界面上。
    */
+  ...skillDiscoveryOperations,
+
   listAgentSkills: {
     /** 按项目问：项目级 `.dawn/skills/` 会追加几个 */
     request: z.object({ projectId: z.string().min(1).optional() }).strict(),

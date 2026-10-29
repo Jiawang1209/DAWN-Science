@@ -29,4 +29,11 @@ Move the existing addon constraint (`^0.9.0`, lock resolves 0.9.0) into producti
 
 Build notices remain for existing browser-tool eval and UI chunk size. The package is an ad-hoc signed local macOS ARM64 development build, without notarization. Windows, Linux, Intel Mac and the user-reported Node 24 runtime were not exercised locally. The new release checks will run on their native CI hosts when authorized changes are pushed.
 
-No push, public release, local-main merge, PATH/launcher modification or replacement of `/Applications/DAWN Science.app` was performed. The installed v0.0.38 remains unchanged and will retain the reported failure until an approved repaired build is installed.
+At initial branch verification, no push, public release, local-main merge, PATH/launcher modification or replacement of `/Applications/DAWN Science.app` was performed. Subsequent local integration is recorded below. The installed v0.0.38 remains unchanged and will retain the reported failure until an approved repaired build is installed.
+
+
+## Local main integration
+
+At the user's request, local `main` was fast-forwarded from `2a373dec` to fix commit `c48c39b3`. Against the merged checkout at `/Users/liuyue/Desktop/Github_repos/dawn-science`, all **20 files / 191 related tests** passed again, as did typecheck, full Electron/CLI/UI build, script syntax checks and diff checks. The merged smoke script also passed against the exact fixed ARM64 package retained in the feature worktree; the full package was not rebuilt for this fast-forward-only integration. The preceding complete packaged acceptance remains the validation of that artifact.
+
+The feature branch/worktree are retained. No push, release, installed-app replacement or PATH change was performed; the installed original v0.0.38 still requires replacement by a repaired build.

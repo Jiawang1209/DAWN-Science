@@ -22,6 +22,20 @@ describe("electron-builder.yml", () => {
     expect(config.mac.identity).toBeDefined()
   })
 
+  it("Windows keeps resource editing enabled while code signing stays disabled", () => {
+    expect(config.win.signAndEditExecutable).toBe(true)
+    expect(config.win.signExecutable).toBe(false)
+    expect(config.win.icon).toBe("packaging/icon.ico")
+    expect(config.nsis.installerIcon).toBe(config.win.icon)
+    expect(config.nsis.uninstallerIcon).toBe(config.win.icon)
+    const ico = readFileSync(join(__dirname, "..", config.win.icon))
+    expect(ico.readUInt16LE(0)).toBe(0)
+    expect(ico.readUInt16LE(2)).toBe(1)
+    const count = ico.readUInt16LE(4)
+    const sizes = Array.from({length: count}, (_, i) => ico.readUInt8(6 + i * 16) || 256)
+    expect(sizes).toEqual([16, 24, 32, 48, 64, 128, 256])
+  })
+
   it("开着 hardenedRuntime 做 ad-hoc 签名时，entitlements 要关掉库校验（否则原生模块加载不了）", () => {
     if (config.mac.identity !== "-" || config.mac.hardenedRuntime === false) return
     for (const key of ["entitlements", "entitlementsInherit"] as const) {

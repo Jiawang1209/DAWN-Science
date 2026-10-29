@@ -52,6 +52,9 @@ jobs:
       - run: ${{ matrix.cmd }}
       - name: Smoke test packaged CLI with system Node
         run: node scripts/test-packaged-cli.mjs
+      - name: Verify Windows application, installer and portable icons
+        if: runner.os == 'Windows'
+        run: node scripts/verify-windows-icon.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: dawn-science-${{ matrix.name }}

@@ -3,6 +3,28 @@ import type { FetchLike } from '@modelcontextprotocol/sdk/shared/transport.js'
 const CANCEL_REASON = 'DAWN_MCP_REQUEST_FINISHED'
 export const isMcpFetchCancellation = (error: Error): boolean => error.message.includes(CANCEL_REASON)
 
+/** Retain same-origin MCP redirects, never forward credentials or RPC bodies to another origin. */
+export const mcpSafeFetch: FetchLike = async (input, init) => {
+  let request = new Request(input, init)
+  for (let hop = 0; ; hop++) {
+    // Keep a clone before fetch consumes the body, for a same-origin 307/308.
+    const next = request.clone()
+    const response = await fetch(request, { redirect: 'manual' })
+    const location = response.headers.get('location')
+    if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response
+    const url = new URL(location, request.url)
+    await response.body?.cancel()
+    if (url.origin !== new URL(request.url).origin || url.username || url.password) throw new Error('MCP 拒绝跨源重定向；请配置服务的最终 URL')
+    if (hop >= 19) throw new Error('MCP 重定向次数过多')
+    const method = next.method
+    if ((response.status === 303 && method !== 'GET' && method !== 'HEAD') || ([301,302].includes(response.status) && method === 'POST')) {
+      const headers = new Headers(next.headers)
+      for (const name of ['content-type','content-length','content-encoding','content-language','content-location']) headers.delete(name)
+      request = new Request(url, { method:'GET', headers, signal:next.signal })
+    } else request = new Request(url, next)
+  }
+}
+
 interface ActiveRequest {
   id: string
   controller: AbortController
@@ -75,7 +97,7 @@ export class McpRequestFetch {
     if (token && this.retiredTokens.delete(token)) return new Response(null, { status: 405 })
     if (active && token && ++active.resumeAttempts > 2) throw new Error('MCP 响应续传未取得进展，结果未知；不会重新发送工具调用。')
     const signal = active ? (init?.signal ? AbortSignal.any([active.controller.signal, init.signal]) : active.controller.signal) : init?.signal
-    const response = await fetch(input, { ...init, ...(signal ? { signal } : {}) })
+    const response = await mcpSafeFetch(input, { ...init, ...(signal ? { signal } : {}) })
     if (route && rpcId !== undefined && this.routes.get(rpcId) === route) route.dedicated = response.status !== 202
     if (response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'text/event-stream' || !response.body) return response
     const shared = !active && init?.method?.toUpperCase() === 'GET' ? { receivedResponse: false } : undefined

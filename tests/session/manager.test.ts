@@ -48,6 +48,23 @@ function stubRuntime(over: Partial<AgentRuntime> = {}): AgentRuntime {
 }
 
 describe("SessionManager · 创建与销毁", () => {
+  it("恢复还未完成时删除：先等启动清理完成，不能留下孤儿运行时", async () => {
+    const {mgr,store,db} = makeManager()
+    const original = await mgr.create("ds-agent", "/tmp/w")
+    await mgr.stop(original.id)
+    let release!: () => void
+    let stopped = 0
+    const runtime = stubRuntime({start: async spec => { await new Promise<void>(r => release=r); return {sessionId:spec.sessionId,pid:1} },stop:async()=>{stopped++}})
+    const manager = new SessionManager({store,registry,runtimes:{native:runtime,pty:runtime},workspaceRoot:"/tmp/dawn-test"})
+    const resumed = manager.resume(original.id)
+    const removed = manager.remove(original.id)
+    release()
+    await Promise.all([resumed,removed])
+    expect(store.get(original.id)).toBeUndefined()
+    expect(manager.isLive(original.id)).toBe(false)
+    expect(stopped).toBe(1)
+    db.close()
+  })
   let ctx: ReturnType<typeof makeManager>
   beforeEach(() => {
     ctx = makeManager()

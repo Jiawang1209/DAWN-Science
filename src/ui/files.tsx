@@ -1026,7 +1026,7 @@ export function FilesView({
   const 树宽 = useStore($fileTreeWidth)
   const 树高 = useStore($fileTreeHeight)
   const 容器 = useRef<HTMLDivElement>(null)
-  const [可用, 设可用] = useState({ width: 0, height: 0, transferMaxHeight: 0 })
+  const [可用, 设可用] = useState({ width: 0, height: 0, transferMaxHeight: 0, toolbarMaxHeight: Infinity, treeMinimumHeight: 0 })
   // 文件读取期间仍按后缀识别，切换两张图时不闪回旧树高。
   const 文件类 = selected ? 文件类按名字(selected, "file") : undefined
   const 视觉文件 = content ? content.kind === "pdf" || content.kind === "image" : 文件类 === "pdf" || 文件类 === "image"
@@ -1042,19 +1042,43 @@ export function FilesView({
       const footer = el.querySelector<HTMLElement>(":scope > .files-transfers")
       const footerHeight = footer?.getBoundingClientRect().height ?? 0
       const details = footer?.querySelector<HTMLElement>(".transfer-scroll")
-      const detailsHeight = details?.getBoundingClientRect().height ?? 0
       // 展开后至少留到首条任务进度线底部，避免5px的线只露出一部分。
-      // 通常占三分之一，必要时增长到一半；仍给目录32px、预览64px留空间。
+      // 通常占三分之一，必要时增长到一半；仍给目录32px、带内边距的预览96px留空间。
       const firstProgress = details?.querySelector<HTMLElement>(".transfer-job > .transfer-progress")
       const detailMinimum = details && firstProgress
         ? Math.ceil(firstProgress.getBoundingClientRect().bottom - details.getBoundingClientRect().top + details.scrollTop) + 1
         : 32
-      const transferMaxHeight = Math.min(el.clientHeight / 2, Math.max(0, el.clientHeight - fixed + footerHeight - 96), Math.max(
-        footerHeight - detailsHeight + detailMinimum,
+      const surface = footer?.querySelector<HTMLElement>(".xfer")
+      const summary = surface?.querySelector<HTMLElement>(":scope > .transfer-summary")
+      const progress = surface?.querySelector<HTMLElement>(":scope > .transfer-progress")
+      const css = surface ? getComputedStyle(surface) : undefined
+      const px = (key: keyof CSSStyleDeclaration) => css ? parseFloat(String(css[key])) || 0 : 0
+      // Measure the unshrinkable summary separately: clipped flex children can
+      // have zero clientHeight, which must not erase the space needed to reopen details.
+      const minimumFooter = surface ? (summary?.getBoundingClientRect().height ?? 0) + (progress?.getBoundingClientRect().height ?? 0)
+        + px("paddingTop") + px("paddingBottom") + px("marginTop") + px("marginBottom")
+        + px("borderTopWidth") + px("borderBottomWidth") + px("rowGap") * (details ? 2 : 1)
+        + (details ? detailMinimum : 0) : 0
+      const toolbarHeight = el.querySelector<HTMLElement>(":scope > .files-where")?.getBoundingClientRect().height ?? 0
+      const otherFixed = fixed - footerHeight - toolbarHeight
+      const tree = el.querySelector<HTMLElement>(".file-tree")
+      const treeCss = tree ? getComputedStyle(tree) : undefined
+      const treePx = (key: keyof CSSStyleDeclaration) => treeCss ? parseFloat(String(treeCss[key])) || 0 : 0
+      // The directory row budget includes the nav's margins, padding and borders.
+      // Reserving only 32 outer pixels can leave its actual content viewport empty.
+      const treeMinimumHeight = Math.ceil((tree?.querySelector(".tree-row")?.getBoundingClientRect().height || 24)
+        + treePx("marginTop") + treePx("marginBottom") + treePx("paddingTop") + treePx("paddingBottom")
+        + treePx("borderTopWidth") + treePx("borderBottomWidth"))
+      const bodyMinimum = treeMinimumHeight + 96
+      // In a narrow/short dock the wrapped toolbar can consume almost all height.
+      // Keep every action reachable by scrolling that toolbar, rather than hiding preview or transfer controls.
+      const toolbarMaxHeight = Math.max(0, el.clientHeight - otherFixed - bodyMinimum - Math.min(el.clientHeight / 2, minimumFooter))
+      const transferMaxHeight = Math.min(el.clientHeight / 2, Math.max(0, el.clientHeight - fixed + footerHeight - bodyMinimum), Math.max(
+        minimumFooter,
         (el.clientHeight - fixed + footerHeight) / 3,
       ))
-      const next = { width: el.clientWidth, height: Math.max(0, el.clientHeight - fixed), transferMaxHeight }
-      设可用(prev => prev.width === next.width && prev.height === next.height && prev.transferMaxHeight === next.transferMaxHeight ? prev : next)
+      const next = { width: el.clientWidth, height: Math.max(0, el.clientHeight - fixed), transferMaxHeight, toolbarMaxHeight, treeMinimumHeight }
+      设可用(prev => prev.width === next.width && prev.height === next.height && prev.transferMaxHeight === next.transferMaxHeight && prev.toolbarMaxHeight === next.toolbarMaxHeight && prev.treeMinimumHeight === next.treeMinimumHeight ? prev : next)
     }
     const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure)
     observer?.observe(el)
@@ -1062,6 +1086,8 @@ export function FilesView({
     const footerContent = el.querySelector(":scope > .files-transfers")
     const contentObserver = typeof MutationObserver === "undefined" ? undefined : new MutationObserver(measure)
     if (footerContent) contentObserver?.observe(footerContent, { childList: true, subtree: true, characterData: true })
+    const treeContent = el.querySelector(".file-tree")
+    if (treeContent) contentObserver?.observe(treeContent, { childList: true, subtree: true, characterData: true })
     window.addEventListener("resize", measure)
     measure()
     return () => { observer?.disconnect(); contentObserver?.disconnect(); window.removeEventListener("resize", measure) }
@@ -1071,7 +1097,7 @@ export function FilesView({
     : 树高
   // 矮窗临时缩小目录，避免最小树高把预览挤出网格；不改写用户拖动偏好。
   const 显示树高 = 可用.height > 0 && 可用.height < FILE_TREE_MIN + 160
-    ? Math.min(期望树高, 可用.height * .4)
+    ? Math.min(期望树高, Math.max(可用.treeMinimumHeight, Math.min(可用.height * .4, 可用.height - 96)))
     : 期望树高
   const 显示树宽 = 可用.width > 0 ? clampFileTree(树宽, 可用.width) : 树宽
   return (
@@ -1083,7 +1109,8 @@ export function FilesView({
        * 宽坞是列宽、窄坞是行高——两个数两个键，上下界按容器此刻的尺寸夹。
        */
       style={{
-        ...(可用.transferMaxHeight > 0 ? { "--file-transfer-max-height": `${可用.transferMaxHeight}px` } : {}),
+        ...(可用.width > 0 ? { "--file-transfer-max-height": `${可用.transferMaxHeight}px` } : {}),
+        ...(可用.width > 0 ? { "--file-toolbar-max-height": `${可用.toolbarMaxHeight}px` } : {}),
         ...(!previewOpen
           ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "auto auto minmax(0, 1fr) auto", gridTemplateAreas: '"where" "note" "tree" "xfer"' }
           : readingExpanded

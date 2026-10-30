@@ -81,38 +81,38 @@ export async function 描述图片(
       body: JSON.stringify(body),
       signal: 控.signal,
     })
+    if (!res.ok) {
+      const 原话 = await res.text().catch(() => "")
+      const 引 =
+        原话.length > 报错引用上界
+          ? `${原话.slice(0, 报错引用上界)}…（原文 ${原话.length} 字，只引了前 ${报错引用上界}）`
+          : 原话
+      throw new 视觉失败(`视觉端点回了 ${res.status}：${引 || "（响应体是空的）"}`)
+    }
+
+    const 载荷 = (await res.json().catch(() => undefined)) as
+      | { choices?: { message?: { content?: unknown } }[] }
+      | undefined
+    const content = 载荷?.choices?.[0]?.message?.content
+    const 文字 =
+      typeof content === "string"
+        ? content
+        : Array.isArray(content)
+          ? content
+              .map((c) => (typeof c === "object" && c !== null && "text" in c ? String((c as { text: unknown }).text) : ""))
+              .join("")
+          : ""
+    if (!文字.trim()) {
+      throw new 视觉失败("视觉端点回了 200，但内容是空的——模型名对吗？")
+    }
+    return 文字
   } catch (err) {
     if (控.signal.aborted) {
       throw new 视觉失败(`视觉端点 ${超时毫秒 / 1000}s 没回话：${url}`)
     }
+    if (err instanceof 视觉失败) throw err
     throw new 视觉失败(`连不上视觉端点 ${url}：${err instanceof Error ? err.message : String(err)}`)
   } finally {
     clearTimeout(表)
   }
-
-  if (!res.ok) {
-    const 原话 = await res.text().catch(() => "")
-    const 引 =
-      原话.length > 报错引用上界
-        ? `${原话.slice(0, 报错引用上界)}…（原文 ${原话.length} 字，只引了前 ${报错引用上界}）`
-        : 原话
-    throw new 视觉失败(`视觉端点回了 ${res.status}：${引 || "（响应体是空的）"}`)
-  }
-
-  const 载荷 = (await res.json().catch(() => undefined)) as
-    | { choices?: { message?: { content?: unknown } }[] }
-    | undefined
-  const content = 载荷?.choices?.[0]?.message?.content
-  const 文字 =
-    typeof content === "string"
-      ? content
-      : Array.isArray(content)
-        ? content
-            .map((c) => (typeof c === "object" && c !== null && "text" in c ? String((c as { text: unknown }).text) : ""))
-            .join("")
-        : ""
-  if (!文字.trim()) {
-    throw new 视觉失败("视觉端点回了 200，但内容是空的——模型名对吗？")
-  }
-  return 文字
 }

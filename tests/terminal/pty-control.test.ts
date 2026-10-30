@@ -30,7 +30,11 @@ describe('same real PTY process', () => {
     x.control.reclaim('t')
     x.runtime.write('t', 'mkdir nested; cd nested\r')
     await x.prompt(/[$#] ?$/)
-    expect(await x.control.currentDirectory('t')).toBe(realpathSync(join(x.workspace, 'nested')))
+    // The screen may still contain the previous prompt while cd is in flight.
+    // Wait for the actual idle-shell query and changed directory together.
+    await vi.waitFor(async () => {
+      expect(await x.control.currentDirectory('t')).toBe(realpathSync(join(x.workspace, 'nested')))
+    }, { timeout: 5000 })
   })
   it('keeps the human cwd, environment and shell PID across an AI handoff', async () => {
     const x = await setup()

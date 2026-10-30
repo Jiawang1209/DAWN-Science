@@ -6,19 +6,19 @@ const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.u
 test("状态栏最右显示实际应用版本，窄窗不隐藏且品牌入口仍可点击", async ({ dawn }, testInfo) => {
   const { page } = dawn
   const name = page.locator(".topbar .brand")
-  const label = page.locator(".statusbar .brand-version")
-  await expect(page.locator(".brand-version")).toHaveCount(1)
+  const label = page.locator(".statusbar .app-status-version")
+  await expect(page.locator(".app-status-version")).toHaveCount(1)
   await expect(label).toHaveText(`v${version}`, { timeout: 5000 })
   await expect(name).toHaveText("DAWN Science")
   for (const width of [1280, 880]) {
     await page.setViewportSize({ width, height: 760 })
     await expect(label).toBeVisible()
     const geometry = await label.evaluate(el => {
-      const box = el.getBoundingClientRect(), bar = el.closest(".statusbar")!
+      const box = el.getBoundingClientRect(), bar = el.closest(".app-status-main")!
       const bounds = bar.getBoundingClientRect()
       return { rightGap: bounds.right - box.right - parseFloat(getComputedStyle(bar).paddingRight),
         inside: box.left >= bounds.left && box.top >= bounds.top && box.bottom <= bounds.bottom,
-        last: bar.lastElementChild === el }
+        last: el.parentElement?.lastElementChild === el }
     })
     expect(geometry.inside).toBe(true)
     expect(geometry.last).toBe(true)

@@ -1,4 +1,14 @@
-import { memo, type ReactNode } from "react"
+import { memo, useCallback, useLayoutEffect, useRef, type ReactNode } from "react"
+
+/** Stable event identity without retaining an earlier session/action closure. */
+export function useComposerCallback<Args extends unknown[], Result>(callback: (...args: Args) => Result): (...args: Args) => Result
+export function useComposerCallback<Args extends unknown[], Result>(callback: ((...args: Args) => Result) | undefined): ((...args: Args) => Result) | undefined
+export function useComposerCallback<Args extends unknown[], Result>(callback: ((...args: Args) => Result) | undefined): ((...args: Args) => Result) | undefined {
+  const latest = useRef(callback)
+  useLayoutEffect(() => { latest.current = callback }, [callback])
+  const stable = useCallback((...args: Args) => latest.current!(...args), [])
+  return callback ? stable : undefined
+}
 
 /**
  * Transcript updates arrive for every streamed chunk. Keep the editable composer surface

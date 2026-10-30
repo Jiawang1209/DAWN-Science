@@ -180,6 +180,16 @@ describe('terminal control ownership and execution', () => {
   })
 })
 
+it.each(['powershell.exe','pwsh.exe'])('Windows %s空闲提示符能进入DAWN，未提交输入仍拒绝', async program => {
+  const {control,write}=setup(()=>program)
+  try {
+    control.output('t','\r\x1b[KPS C:\\work> ')
+    await control.launchCli('t','saved-session')
+    expect(write).toHaveBeenLastCalledWith("dawn --resume 'saved-session'\r")
+    control.humanInput('t','draft')
+    await expect(control.launchCli('t')).rejects.toThrow(/空闲 Shell/)
+  } finally { control.dispose() }
+})
 it('starts the CLI only at an empty, idle shell prompt', async () => {
   let program = 'bash'
   const { control, write } = setup(() => program)

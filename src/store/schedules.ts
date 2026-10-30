@@ -78,7 +78,7 @@ export class ScheduleStore {
   prune(scheduleId: string, keep: number): number {
     return this.db
       .prepare(
-        `DELETE FROM schedule_runs WHERE schedule_id = ? AND id NOT IN (
+        `DELETE FROM schedule_runs WHERE schedule_id = ? AND status NOT IN ('queued','running') AND id NOT IN (
            SELECT id FROM schedule_runs WHERE schedule_id = ? ORDER BY scheduled_for DESC LIMIT ?)`,
       )
       .run(scheduleId, scheduleId, keep).changes

@@ -88,10 +88,17 @@ jobs:
           check() {
             if ! compgen -G "artifacts/$1" > /dev/null; then missing="$missing $2"; fi
           }
-          check "*.dmg" "macOS"
-          check "*.exe" "Windows"
-          check "*.AppImage" "Linux AppImage"
-          check "*.deb" "Linux deb"
+          version="${GITHUB_REF_NAME#v}"
+          check "DAWN-Science-$version-mac-arm64.dmg" "macOS arm64 dmg"
+          check "DAWN-Science-$version-mac-arm64.zip" "macOS arm64 zip"
+          check "DAWN-Science-$version-mac-x64.dmg" "macOS x64 dmg"
+          check "DAWN-Science-$version-mac-x64.zip" "macOS x64 zip"
+          check "DAWN-Science-$version-win-x64.exe" "Windows installer x64"
+          check "DAWN-Science-$version-win-x64-portable.exe" "Windows portable x64"
+          check "DAWN-Science-$version-linux-x64.AppImage" "Linux x64 AppImage"
+          check "DAWN-Science-$version-linux-x64.deb" "Linux x64 deb"
+          check "DAWN-Science-$version-linux-arm64.AppImage" "Linux arm64 AppImage"
+          check "DAWN-Science-$version-linux-arm64.deb" "Linux arm64 deb"
           # 一个都没有就没什么可发的，如实红
           if ! compgen -G "artifacts/*" > /dev/null; then
             echo "::error::一个产物都没收到，四个平台全失败了"
@@ -102,7 +109,7 @@ jobs:
             if [ -n "$missing" ]; then
               echo "> ⚠️ 这次发布**缺**这些平台的包：$missing —— 对应的打包 job 失败了，去 Actions 看。"
             else
-              echo "四个平台的包都在。"
+              echo "预期的10份安装包与便携归档均已收到。"
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"

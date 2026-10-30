@@ -357,15 +357,15 @@ test("**新建任务那一屏：坞里另开一段是普通对话，不带文件
  * 两种宽度都量：只量一种的话，另一种会悄悄错开一行（实测 1920 下 203 vs 176）。
  */
 for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
-  test(`**${宽} 宽：坞里的输入卡与主区一样高、底边对齐**`, async ({ dawn }) => {
+  test(`**${宽} 宽：窄栏工具可分行，输入正文同高、底边对齐**`, async ({ dawn }) => {
     const { page, app } = dawn
     await app.evaluate(({ BrowserWindow }, [w, h]) => BrowserWindow.getAllWindows()[0]!.setContentSize(w!, h!), [宽, 高])
     await 开一段临时会话(page, "你好")
     await 坞里另开一段(page)
     const 量 = async () => {
-      const 主 = await 主区(page).locator(".composer-card").boundingBox()
-      const 侧 = await 坞(page).locator(".composer-card").boundingBox()
-      return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.y + 主.height - (侧.y + 侧.height))) } : undefined
+      const measure = (area: import("@playwright/test").Locator) => area.locator(".composer-card").evaluate(el => {const card=el.getBoundingClientRect(),footer=el.querySelector(".composer-footer")!.getBoundingClientRect();return {height:card.height-footer.height,bottom:card.bottom}})
+      const [主,侧] = await Promise.all([measure(主区(page)),measure(坞(page))])
+      return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.bottom - 侧.bottom)) } : undefined
     }
     await expect.poll(量, { timeout: 10_000 }).toEqual({ 高差: 0, 底差: 0 })
     // 空占位文字不撑高；真实内容仍能增高，清空后收回。

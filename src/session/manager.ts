@@ -927,6 +927,10 @@ export class SessionManager {
   }
 
   async stop(sessionId: SessionId): Promise<void> {
+    // resume may still be creating the runtime before it can be found in bound.
+    // Wait for its settlement before stopping/deleting; its caller retains errors.
+    const pending = this.resuming.get(sessionId)
+    if (pending) await pending.catch(() => {})
     const rt = this.bound.get(sessionId)
     if (rt) await rt.stop(sessionId)
     this.store.updateState(sessionId, "exited")

@@ -2225,6 +2225,7 @@ pre {
  */
 .files-view {
   --file-transfer-max-height: 33vh;
+  --file-toolbar-max-height: none;
   display: grid;
   /**
    * 显式安排工具栏、提示、目录、预览、底部传输。
@@ -2314,6 +2315,8 @@ pre {
  */
 .files-where {
   display: flex;
+  max-height: var(--file-toolbar-max-height);
+  overflow: auto;
   /**
    * **放不下就折行，按钮一个都不许丢**（2026-08-21 作者：窗口没最大化时
    * 「收窄 / 搜索 / 恢复」根本看不见——此前 `nowrap` 让它们被裁在右边外面）。
@@ -8854,6 +8857,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .composer-footer { flex-wrap: wrap; }
   .composer-footer .composer-controls { flex-basis: 100%; margin-left: auto; }
 }
+/* Short windows still need a transcript viewport beside the complete composer. */
+@media (max-height: 600px) {
+  .conversation .turns { padding-block: var(--dawn-space-2); }
+  .conversation .composer { padding-block: var(--dawn-space-2); }
+  .conversation .composer-card > .composer-box { padding-bottom: var(--dawn-space-2); }
+}
 /* 时间和消息动作共用一行；与气泡分别定宽，短句不被动作撑宽。 */
 .turn.user .turn-actions { flex-wrap: nowrap; max-width: 100%; gap: var(--dawn-space-1); }
 .turn.user .turn-time { align-self: center; flex: 0 0 auto; margin-top: 0; white-space: nowrap; }
@@ -8981,7 +8990,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .route-file-preview .visual-preview-stage .preview-img { width:100%; height:100%; max-height:100%; }
 .route-file-preview .pdf-page-controls { flex:0 0 auto; }
 .route-file-error { padding:12px; overflow:auto; }
-.route-file-level .route-overview { max-height:40%; }
+.route-file-level .route-overview { max-height:32%; }
 .route-file-level .route-map-node { min-height:60px; gap:4px; padding-block:6px; }
 .route-file-level .route-node-number { display:none; }
 

@@ -96,7 +96,7 @@ import { 分组转录, 汇总工具组, 工具组人话 } from "./tool-group.js"
 import { 从工具结果收案例, 本轮提到的案例, type 本轮案例 } from "./case-cards.js"
 import { 案例卡片们 } from "./case-cards-view.js"
 import type { ArtifactList } from "./state/catalog.js"
-import { ComposerInputSurface } from "./composer-input-surface.js"
+import { ComposerInputSurface, useComposerCallback } from "./composer-input-surface.js"
 import { $workStepMode } from "./state/work-steps.js"
 import { 分组已完成过程 } from "./turn-process.js"
 import { 思考段落摘要 } from "./thinking-summary.js"
@@ -3799,11 +3799,11 @@ export function ConversationView({
   dockOpen,
   models,
   model,
-  onSend,
+  onSend: onSendAction,
   allowBotDispatch = false,
   onEcho,
   onPickModel,
-  onAbort,
+  onAbort: onAbortAction,
   onResume,
   recovery,
   onEditQueue,
@@ -3816,9 +3816,9 @@ export function ConversationView({
   onRewind,
   rewinding,
   queueLocked,
-  onSetPlan,
+  onSetPlan: onSetPlanAction,
   onAnswerPlan,
-  onCompact,
+  onCompact: onCompactAction,
   取上下文用量,
   disabled,
   readOnlyReason,
@@ -4062,6 +4062,10 @@ export function ConversationView({
   /** 消息里点到本机地址时交给它（批 2）。**动作的家在 `App.tsx`** */
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
+  const onSend = useComposerCallback(onSendAction)
+  const onAbort = useComposerCallback(onAbortAction)
+  const onSetPlan = useComposerCallback(onSetPlanAction)
+  const onCompact = useComposerCallback(onCompactAction)
   // 附栏几行（2026-09-29，坞里的输入卡与主区同高，见 `footer-rows.ts`）：主区这张报、坞里那张读
   const 附栏ref = use报主区附栏行数(!紧凑)
   const 主区附栏行数 = useStore($主区附栏行数)
@@ -5357,6 +5361,8 @@ export function ConversationView({
               高亮滚,
               busy,
               disabled,
+              nextPrompt,
+              disabled ? readOnlyReason ?? t("会话已结束") : t("输入问题，@ 引用文件，/ 使用指令"),
               history,
               位置,
               斜杠关了,
@@ -7102,6 +7108,7 @@ export function EmptyConversation({
   onCancelEnhance,
   enhanceReason,
   onOpenSettings,
+  onOpenSetup,
   onPickDirectory,
   workspaceMenu,
   先出方案,
@@ -7157,6 +7164,7 @@ export function EmptyConversation({
   onPickDirectory?: ((path?: string) => Promise<string | null>) | undefined
   workspaceMenu?: WorkspaceMenuData | undefined
   onOpenSettings: () => void
+  onOpenSetup?: (() => void) | undefined
   /**
    * 空态那颗「先出方案」（2026-09-27）：按下只是记住「第一句按先出方案发」，由 App 在会话建出来、第一句发出去之前打开。
    * `不能的原因`：选的 agent 不是 native 时给。
@@ -7764,11 +7772,11 @@ export function EmptyConversation({
         </div>
       ) : (
         <EmptyState
-          title={t("还没有可用的 agent")}
-          description={t("配置文件里没有 agent，或它需要的 API key 还没填。")}
+          title={t("欢迎使用 DAWN Science")}
+          description={t("连接 AI 模型，开始你的研究工作。")}
           action={
-            <Button variant="primary" onClick={onOpenSettings}>
-              {t("去设置")}
+            <Button variant="primary" onClick={onOpenSetup ?? onOpenSettings}>
+              {t("开始设置")}
             </Button>
           }
         />

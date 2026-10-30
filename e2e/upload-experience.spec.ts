@@ -16,6 +16,11 @@ async function setTransferExpanded(page:import("@playwright/test").Page,expanded
  await expect(button).toHaveAttribute("aria-expanded",String(expanded))
 }
 async function expectTransferFooter(page:import("@playwright/test").Page,mode:"normal"|"wide"|"reading"|"closed"="normal") {
+ if(mode!=="reading")await expect.poll(async()=>page.locator(".file-tree").evaluate(el=>{
+  const css=getComputedStyle(el),row=el.querySelector(".tree-row")
+  const contentHeight=el.clientHeight-parseFloat(css.paddingTop)-parseFloat(css.paddingBottom)
+  return contentHeight >= (row?.getBoundingClientRect().height ?? 24)-1
+ }),{message:"目录视口至少容纳一整行文件，不能只剩边框和内边距"}).toBe(true)
  const layout=await page.locator(".files-view").evaluate(el=>{
   const rect=(selector:string)=>{const r=el.querySelector(selector)?.getBoundingClientRect();return r ? {top:r.top,bottom:r.bottom,height:r.height,left:r.left,right:r.right} : undefined}
   return {panel:{bottom:el.getBoundingClientRect().bottom,height:el.clientHeight},tree:rect(".file-tree-box"),preview:rect(".file-preview"),footer:rect(".files-transfers")}
@@ -97,8 +102,10 @@ test("多文件确认可取消，统一任务保留每个文件与源文件，�
  await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setSize(900,720));await page.evaluate(()=>{document.documentElement.classList.remove("dawn-light");document.documentElement.classList.add("dawn-dark")});await setTransferExpanded(page,false)
  await expect.poll(async()=>page.locator(".transfer-batches").evaluate(el=>el.scrollWidth<=el.clientWidth+2)).toBe(true)
  expect(await page.locator(".transfer-batches").evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(90)
+ await expectTransferFooter(page)
  await page.screenshot({path:info.outputPath("upload-summary-narrow.png")})
  await setTransferExpanded(page,true)
+ await page.evaluate(()=>new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r()))))
  if(await job.getByRole("button").first().getAttribute("aria-expanded")!=="true")await job.getByRole("button").first().click()
  await expect(job.locator(".transfer-entry-line")).toHaveCount(3)
  await expectAlignedColumns(job)
@@ -114,6 +121,7 @@ test("多文件确认可取消，统一任务保留每个文件与源文件，�
   const footer=el.querySelector(".files-transfers")!.getBoundingClientRect(),preview=el.querySelector(".file-preview")!.getBoundingClientRect()
   return Math.abs(footer.bottom-el.getBoundingClientRect().bottom)<=1&&footer.height<=el.clientHeight/2+1&&preview.height>60
  })).toBe(true)
+ await expectTransferFooter(page)
  await page.screenshot({path:info.outputPath("upload-tasks-dark-narrow.png")});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  const rootUpload=await call(page,"startFileUploadBatch",{connectionId:batch.connectionId,sources:[paths[0]],targetParent:"/"})
  await expect.poll(async()=>(await call(page,"getTransferBatch",{batchId:rootUpload.id})).batch.state).toBe("completed")

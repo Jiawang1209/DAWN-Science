@@ -306,6 +306,7 @@ export function 造网页预览(
        * 留到回调里去读是自找麻烦（它是一个会被回收的原生对象）。
        */
       const 来源 = item.getURL()
+      const 下载项目 = 上次项目
       item.once("done", (_e2, state) => {
         const 成了 = state === "completed"
         上次错 = 成了 ? undefined : `下载没成：${item.getFilename()}（${state}）`
@@ -314,7 +315,7 @@ export function 造网页预览(
          * 与上传那条「失败也记」同一条规矩。
          */
         记下载?.({
-          ...(上次项目 ? { projectId: 上次项目 } : {}),
+          ...(下载项目 ? { projectId: 下载项目 } : {}),
           url: 来源,
           落点: item.getSavePath(),
           字节: item.getReceivedBytes(),

@@ -147,14 +147,14 @@ test("**英文界面上每一屏都没有汉字**", async ({ dawn }) => {
    */
   await 屏("设置那一栏", () => page.getByRole("button", { name: "Settings", exact: true }).click())
   await page.getByRole("button", { name: "Expand", exact: true }).click()
-  await 屏("Skills", () => page.getByRole("button", { name: "Skills" }).click())
-  await 屏("子 Agent", () => page.getByRole("button", { name: "Subagents" }).click())
-  await 屏("插件", () => page.getByRole("button", { name: "Plugins" }).click())
-  await 屏("MCP", () => page.getByRole("button", { name: "MCP servers" }).click())
+  await 屏("Skills", () => page.locator(".settings-nav").getByRole("button", { name: "Skills", exact: true }).click())
+  await 屏("子 Agent", () => page.locator(".settings-nav").getByRole("button", { name: "Subagents", exact: true }).click())
+  await 屏("插件", () => page.locator(".settings-nav").getByRole("button", { name: "Plugins", exact: true }).click())
+  await 屏("MCP", () => page.locator(".settings-nav").getByRole("button", { name: "MCP servers", exact: true }).click())
 
   // 设置的四块各看一遍——它们是同一屏的四种内容
   for (const 块 of ["Appearance", "Working folder", "Model providers", "Kernel"]) {
-    const 入口 = page.getByRole("button", { name: 块, exact: true })
+    const 入口 = page.locator(".settings-nav").getByRole("button", { name: 块, exact: true })
     if ((await 入口.count()) === 0) continue // 那一块没上就跳过，不假装它在
     await 屏(`设置 · ${块}`, () => 入口.click())
   }

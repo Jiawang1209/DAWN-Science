@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest"
-import { act, cleanup, render } from "@testing-library/react"
+import { act, cleanup, render, waitFor } from "@testing-library/react"
 import { AgentMarkdown } from "../../src/ui/markdown.js"
 
 const NativeIntersectionObserver = globalThis.IntersectionObserver
@@ -46,6 +46,19 @@ afterEach(() => {
 })
 
 describe("transcript code block highlighting", () => {
+  it("keeps long code in the transcript scroll flow so sticky headers span the full block", async () => {
+    const text="```python\n"+Array.from({length:90},(_,i)=>`print(${i})`).join("\n")+"\n```"
+    const view=render(<AgentMarkdown text={text} streaming={false} />)
+    await waitFor(()=>expect(view.container.querySelector('[data-streamdown="code-block-body"]')).toBeTruthy())
+    const body=view.container.querySelector<HTMLElement>('[data-streamdown="code-block-body"]')!
+    expect(body.style.maxHeight).toBe("")
+  })
+  it("keeps long tables in the existing transcript flow rather than adding a vertical scroll cap", () => {
+    const text="| column |\n| --- |\n"+Array.from({length:40},(_,i)=>`| row ${i} |`).join("\n")
+    const view=render(<AgentMarkdown text={text} streaming={false} />)
+    expect(view.container.querySelectorAll('tbody tr')).toHaveLength(40)
+    expect([...view.container.querySelectorAll<HTMLElement>('[style]')].filter(el=>el.style.maxHeight)).toHaveLength(0)
+  })
   it("waits for the turn and visibility, uses one observer, and keeps copy controls available", () => {
     globalThis.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver
     const text = "```ts\nconst first = 1\n```\n\n```python\nsecond = 2\n```"

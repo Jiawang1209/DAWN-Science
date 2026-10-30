@@ -28,15 +28,16 @@ async function checkActions(area: Locator) {
   const message = area.locator(".turn.user").last()
   const time = message.locator(".turn-time")
   expect(await time.evaluate(el => !!el.closest(".turn-actions"))).toBe(true)
-  const timestamp = (await time.boundingBox())!
-  const row = (await message.locator(".turn-actions").boundingBox())!
-  for (const control of await message.locator(".turn-actions button").all()) {
-    const b = (await control.boundingBox())!
+  const geometry = await message.evaluate(el => {
+    const rect = (selector: string) => { const b=el.querySelector(selector)!.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height} }
+    return {timestamp:rect('.turn-time'),row:rect('.turn-actions'),body:rect('.turn-body'),controls:[...el.querySelectorAll('.turn-actions button')].map(c=>{const b=c.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height}})}
+  })
+  const {timestamp,row,body}=geometry
+  for (const b of geometry.controls) {
     expect(Math.abs(b.y + b.height / 2 - timestamp.y - timestamp.height / 2)).toBeLessThanOrEqual(1)
     expect(b.x).toBeGreaterThanOrEqual(row.x)
     expect(b.x + b.width).toBeLessThanOrEqual(row.x + row.width + 1)
   }
-  const body = (await message.locator(".turn-body").boundingBox())!
   expect(row.x).toBeGreaterThanOrEqual(body.x - 1)
   expect(row.x + row.width).toBeLessThanOrEqual(body.x + body.width + 1)
 }

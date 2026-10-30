@@ -32,7 +32,7 @@ import { 工具全名 } from "./名单.js"
 import { legacyMlaiReads } from "./readonly-compat.js"
 import { createHash } from "node:crypto"
 import { McpClient, McpCallCancelled, McpConnectionError, waitForMcp } from "./requests.js"
-import { McpRequestFetch } from './request-fetch.js'
+import { McpRequestFetch, mcpSafeFetch } from './request-fetch.js'
 
 /**
  * 起一台服务器最多等多久。**一台起不来不该让整段会话开不了。**
@@ -279,7 +279,7 @@ export class MCP池 {
         ? new SSEClientTransport(new URL(配.url), {
             fetch: requestFetch.fetch,
             requestInit: { headers: env },
-            eventSourceInit: { fetch: (u, i) => fetch(u, { ...i, headers: { ...i?.headers, ...env } }) },
+            eventSourceInit: { fetch: (u, i) => mcpSafeFetch(u, { ...i, headers: { ...i?.headers, ...env } }) },
           })
         : new StreamableHTTPClientTransport(new URL(配.url), {
             fetch: requestFetch.fetch,

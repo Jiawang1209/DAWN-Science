@@ -2,7 +2,7 @@
  * 浏览器插件（2026-08-25，学自 dsh-reef）：名册与纯逻辑（清理 / 净化）在 node 下直接验；
  * 真开浏览器的整链路验证在 e2e（假模型点名调工具）与人工。
  */
-import { mkdtempSync, writeFileSync, readdirSync, utimesSync } from "node:fs"
+import { mkdtempSync, writeFileSync, readdirSync, utimesSync, existsSync, readFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
@@ -64,6 +64,22 @@ describe("浏览器插件", () => {
   })
 
   describe("browser_download 写入目标守卫(审查 debug E2)", () => {
+    it("拒绝最终文件符号链接，不覆盖工作区外文件", () => {
+      const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
+      const outside = mkdtempSync(join(tmpdir(), "dawn-outside-"))
+      const file = join(outside, "keep.txt")
+      writeFileSync(file, "original")
+      symlinkSync(file, join(ws, "download.txt"))
+      expect(() => 工作区内写入目标(ws, "download.txt")).toThrow(/符号链接|工作区之外/)
+      expect(readFileSync(file, "utf8")).toBe("original")
+    })
+    it("先检查现存父目录，拒绝后不在外部创建后续目录", () => {
+      const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
+      const outside = mkdtempSync(join(tmpdir(), "dawn-outside-"))
+      symlinkSync(outside, join(ws, "link"))
+      expect(() => 工作区内写入目标(ws, "link/new/nested/file.txt")).toThrow(/符号链接|工作区之外/)
+      expect(existsSync(join(outside, "new"))).toBe(false)
+    })
     it("正常相对路径落工作区,建出父目录", () => {
       const ws = mkdtempSync(join(tmpdir(), "dawn-dl-"))
       const 目标 = 工作区内写入目标(ws, "sub/dir/a.csv")

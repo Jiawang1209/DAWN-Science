@@ -154,12 +154,13 @@ test("搜不到时说明情况，不是留白", async ({ dawn }) => {
   await expect(page.getByText(/没有匹配/)).toBeVisible()
 })
 
-test("搜索旁的快捷键速查：分组、只读、退出与命令面板各自可用", async ({ dawn }) => {
+test("顶部快捷键速查：分组、只读、退出与命令面板各自可用", async ({ dawn }) => {
   const { page } = dawn
   const trigger = page.getByRole("button", { name: "快捷键速查", exact: true })
   const search = page.getByRole("button", { name: "搜索", exact: true })
+  const neighbor = page.locator(".topbar .side-toggle")
   await expect(trigger).toBeVisible()
-  const a = (await search.boundingBox())!, b = (await trigger.boundingBox())!
+  const a = (await neighbor.boundingBox())!, b = (await trigger.boundingBox())!
   expect(b.x).toBeGreaterThan(a.x + a.width)
   expect(b.x - a.x - a.width).toBeLessThanOrEqual(16)
   expect(b.height).toBe(a.height)
@@ -172,12 +173,14 @@ test("搜索旁的快捷键速查：分组、只读、退出与命令面板各�
   const mac = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent))
   const mod = mac ? "⌘" : "Ctrl"
   // 现行速查包含当前对话查找；核对具体键位，避免只改总数而漏掉错误内容。
-  await expect(dialog.locator("kbd")).toHaveText([
+  const expectedKeys = [
     `${mod} K`, `${mod} P`, mac ? "⌃ ⇧ G" : "Ctrl Shift G", `${mod} F`,
     "Enter", "Shift Enter", `${mod} Enter`, mac ? "⌘⇧E" : "Ctrl+Shift+E",
     "Esc", "Tab", "↑ ↓", `${mod} Enter`, "Ctrl C",
-  ])
-  await expect(dialog.locator(".shortcut-row").filter({ hasText: "查找当前对话" }).locator("kbd")).toHaveText(`${mod} F`)
+  ]
+  await expect(dialog.locator(".shortcut-keys")).toHaveCount(expectedKeys.length)
+  for (const [index, keys] of expectedKeys.entries()) await expect(dialog.locator(".shortcut-keys").nth(index)).toHaveAttribute("aria-label", keys)
+  await expect(dialog.locator(".shortcut-row").filter({ hasText: "查找当前对话" }).locator(".shortcut-keys")).toHaveAttribute("aria-label", `${mod} F`)
   await page.keyboard.press("Tab")
   await expect(dialog.getByRole("button")).toBeFocused()
   await page.keyboard.press("Escape")

@@ -3,6 +3,11 @@ import Database from"better-sqlite3"
 import{migrate}from"../../src/store/schema.js"
 import{BotStore}from"../../src/store/bots.js"
 import{BotDelivery}from"../../src/bot/delivery.js"
+it("没有待送结果的普通会话不查询native专用忙碌状态",async()=>{
+ const db=new Database(":memory:");migrate(db);const store=new BotStore(db)
+ const delivery=new BotDelivery({store,busy:()=>{throw Error("native only")},history:async()=>"",send:async()=>{throw Error("unexpected send")}})
+ try{await expect(delivery.flush("kernel-session")).resolves.toBeUndefined()}finally{db.close()}
+})
 it("忙碌时不发、转录已有结果不重发、送达失败保留待送",async()=>{
  const db=new Database(":memory:");migrate(db);const store=new BotStore(db)
  const bot=store.create({name:"b",role:"r",instructions:"i"});store.enqueueResult({resultId:"r",ownerSessionId:"main",botId:bot.id,teamId:"t",taskId:"task",attemptId:"a",memberSessionId:"s",status:"completed",summary:"result",artifacts:[]})

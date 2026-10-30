@@ -32,11 +32,14 @@ import { evaluateStreamingBudget, STREAMING_BUDGET } from "./performance-budget.
  */
 const 标记 = "最后一段。"
 
-const 输入框 = (page: Page) => page.getByPlaceholder(/输入问题/)
+const 输入框 = (page: Page) => page.locator("main.main .composer-field")
 
 async function 说一句并等完(page: Page, 话: string): Promise<void> {
   await 输入框(page).fill(话)
   await 输入框(page).press("Enter")
+  // LONG_REPLY repeats the same tail in each of its five sections. Establish this
+  // turn first, then wait for idle; an earlier section/turn is not completion.
+  await page.locator(".turn.user").getByText(话, { exact: true }).waitFor()
   await page.waitForFunction(
     (m) => {
       const 末 = [...document.querySelectorAll(".turns .turn")].pop()
@@ -45,6 +48,7 @@ async function 说一句并等完(page: Page, 话: string): Promise<void> {
     标记,
     { polling: 500, timeout: 120_000 },
   )
+  await page.getByRole("button", { name: "发送", exact: true }).waitFor({ timeout: 120_000 })
 }
 
 /** 已经说过几轮由调用方自己记——DOM 里数不出来（更早的不在里面） */

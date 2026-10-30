@@ -34,10 +34,10 @@ export function 记跳过(v: boolean): void {
 
 const 引导完成键 = "dawn.global.onboardingDone"
 
-/** 兼容旧版本已完成或主动跳过首次设置的用户。 */
+/** 只有完成或主动跳过新版四步引导，才算看过介绍。旧跳过标记由 App 按可用模型迁移。 */
 export function 读引导完成(): boolean {
   try {
-    return localStorage.getItem(引导完成键) === "1" || 读跳过()
+    return localStorage.getItem(引导完成键) === "1"
   } catch {
     return false
   }

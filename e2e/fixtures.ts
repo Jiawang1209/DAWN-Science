@@ -77,12 +77,13 @@ export async function 开一段临时会话(page: Page, 首句?: string): Promis
    */
   const 建好了 = await page.evaluate(async () => {
     const w = window as unknown as {
-      dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: unknown }> }
+      dawn: { invoke: (op: string, req: unknown) => Promise<{ ok: boolean; data?: unknown; error?: unknown }> }
     }
     const p = (await w.dawn.invoke("getProviders", {})) as { data?: { agents?: { agentId: string }[] } }
     const agentId = p.data?.agents?.[0]?.agentId
     if (!agentId) return false
-    await w.dawn.invoke("createTask", { agentId })
+    const created = await w.dawn.invoke("createTask", { agentId })
+    if (!created.ok) throw new Error(`createTask failed: ${JSON.stringify(created.error)}`)
     return true
   })
   if (!建好了) throw new Error("夹具里一个 agent 都没有——`开一段临时会话` 建不出会话")
@@ -874,7 +875,10 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
         try {
           localStorage.setItem("dawn.global.lang", "zh")
           // 首启向导默认按「已跳过」（理由见 `showSetup` 的注释）
-          if (!showSetup) localStorage.setItem("dawn.global.setupSkipped", "1")
+          if (!showSetup) {
+            localStorage.setItem("dawn.global.setupSkipped", "1")
+            localStorage.setItem("dawn.global.onboardingDone", "1")
+          }
         } catch {
           /* 存不进去就算了：那时整个应用都会退回默认，用例自然会红 */
         }

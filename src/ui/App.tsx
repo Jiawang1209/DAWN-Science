@@ -1082,6 +1082,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 全新安装的机器上向导从来没亮过。
    */
   const [跳过向导, 设跳过向导] = useState(读跳过)
+  const [引导已完成, 设引导已完成] = useState(读引导完成)
   const [向导起点, 设向导起点] = useState<"welcome" | "key">(() => 读引导完成() ? "key" : "welcome")
   /**
    * 向导一旦因「没凭证」亮起，就留到人按「开始使用」或「先跳过」——key 保存成功那一瞬不能把它抽走
@@ -1089,8 +1090,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const [向导中, 设向导中] = useState(false)
   useEffect(() => {
-    if (没有钥匙 && !跳过向导) 设向导中(true)
-  }, [没有钥匙, 跳过向导])
+    if (!没有钥匙) return
+    // Old skipped-only installs with no usable model must see the new guide.
+    // Keep working legacy agents and an explicit skip of the new guide intact.
+    if (跳过向导 && !引导已完成 && 对话agent顺序(providers.agents).length === 0) {
+      设向导起点("welcome")
+      记跳过(false)
+      设跳过向导(false)
+      设向导中(true)
+    } else if (!跳过向导) 设向导中(true)
+  }, [没有钥匙, 跳过向导, 引导已完成, providers.agents])
+  const 打开首次引导 = useCallback(() => {
+    设向导起点("welcome")
+    记跳过(false)
+    设跳过向导(false)
+    设向导中(true)
+    setView("conversation")
+  }, [])
   const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
   const 存解释器 = useCallback(async (language: "python" | "R", path: string) => {
     const r = await client.get<{ python?: string; r?: string; problem?: string }>("setInterpreter", { language, path })
@@ -5800,12 +5816,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onProbe={探测解释器}
               onSkip={() => {
                 记引导完成()
+                设引导已完成(true)
                 记跳过(true)
                 设跳过向导(true)
                 设向导中(false)
               }}
               onStart={() => {
                 记引导完成()
+                设引导已完成(true)
                 记跳过(true)
                 设跳过向导(true)
                 设向导中(false)
@@ -5909,6 +5927,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 return picked.path
               }}
               onOpenSettings={actions.openSettings}
+              onOpenSetup={打开首次引导}
             />
           )}
           {/* 原生终端占据主区；原对话保持挂载，CLI 在同一 PTY 中运行。 */}
@@ -6399,9 +6418,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onOpenSettings={id => 开设置栏(id)}
         alerts={<>
           {!ready ? <span role="status">{t("未连接")}</span> : null}
-          {没有钥匙 ? <Button variant="text" size="inline" className="caveat statusbar-setup" onClick={() => {
-            设向导起点("welcome"); 记跳过(false); 设跳过向导(false); setView("conversation")
-          }}>{t("还没有填任何 API key，暂时不能对话——点这里填一个")}</Button> : null}
+          {没有钥匙 ? <Button variant="text" size="inline" className="caveat statusbar-setup" onClick={打开首次引导}>{t("还没有填任何 API key，暂时不能对话——点这里填一个")}</Button> : null}
           <StatusNotices notes={notes} />
         </>}
       />

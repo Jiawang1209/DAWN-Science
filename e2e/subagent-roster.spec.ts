@@ -39,12 +39,12 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   expect(readFileSync(join(全局, "my-helper.md"), "utf8")).toContain("disabled: true")
   await expect(屏).toContainText("23 个，22 个开着")
   // 侧栏的数跟着动（停用一个 → 22），不用等轮询
-  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("22")
+  await expect(page.locator(".settings-nav").getByRole("button", { name: /^子 Agent/ })).toContainText("22")
   await 行.getByRole("button", { name: "子 agent 操作：my-helper" }).click()
   await page.getByRole("menu").getByRole("menuitem", { name: "启用" }).click()
   await expect(行).toContainText("已启用")
   expect(readFileSync(join(全局, "my-helper.md"), "utf8")).not.toContain("disabled")
-  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("23")
+  await expect(page.locator(".settings-nav").getByRole("button", { name: /^子 Agent/ })).toContainText("23")
 
   // **自带的也能停用**（2026-08-23 作者要的）：菜单里有「停用」、没有「删除」；停用落在设置里、文件不动；`/` 菜单里它就没了
   const 自带 = 屏.locator(".skill-row", { hasText: "stat-consultant" })
@@ -53,7 +53,7 @@ test("**名册：22 份自带、分组与搜索、停用写进文件**", async (
   await expect(自带菜单.getByRole("menuitem", { name: "删除" })).toHaveCount(0)
   await 自带菜单.getByRole("menuitem", { name: "停用" }).click()
   await expect(自带).toContainText("已停用")
-  await expect(page.getByRole("button", { name: /^子 Agent/ })).toContainText("22")
+  await expect(page.locator(".settings-nav").getByRole("button", { name: /^子 Agent/ })).toContainText("22")
   await page.getByRole("button", { name: "返回", exact: true }).click()
   const 框 = page.getByPlaceholder(/输入问题/)
   await 框.fill("/统计顾问")

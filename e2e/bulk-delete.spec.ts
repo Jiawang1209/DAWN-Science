@@ -128,7 +128,8 @@ test("**指向不存在会话的任务，照样删得掉**", async ({ dawn }) =>
    */
   const 行 = page.locator(".sidebar .sess-item")
   await expect(行).toHaveCount(1, { timeout: 30_000 })
-  await 行.getByRole("button", { name: /删除会话/ }).click()
+  await 行.getByRole("button", { name: /^会话操作/ }).click()
+  await page.getByRole("menuitem", { name: "删除", exact: true }).click()
   await page.locator(".confirm").getByRole("button", { name: /删除 1 段/ }).click()
 
   await expect(page.locator(".sidebar .sess-item")).toHaveCount(0, { timeout: 30_000 })

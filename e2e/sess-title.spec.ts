@@ -191,6 +191,7 @@ test.describe("项目里的那条", () => {
 
     // 给它一个工作目录：这一步之后它会从「会话」栏挪到「项目」栏
     await page.locator(".composer-card").getByRole("button", { name: /工作目录/ }).click()
+    await page.getByRole("menuitem", { name: "另选文件夹…", exact: true }).click()
     await expect(page.locator(".proj-list .proj-item")).toHaveCount(1, { timeout: 30_000 })
 
     await page.locator(".proj-session-list .sess-title").first().hover()
@@ -280,7 +281,8 @@ test("**窗口矮的时候，靠下那行的悬停卡整张都在屏幕里**", a
   const 行 = page.locator(".session-list li .sess-title").last()
   await 行.scrollIntoViewIfNeeded()
   const 行框 = (await 行.boundingBox())!
-  expect(行框.y, "这一行没在下半截，用例测不到要测的事").toBeGreaterThan(560 * 0.7)
+  const listBounds = (await page.locator('.side-scroll').boundingBox())!
+  expect(行框.y, "这一行必须位于可滚动列表的底部区域").toBeGreaterThan(listBounds.y + listBounds.height * 0.7)
   // 行的一角可能压在侧栏底那条之下，不做可点性检查，直接把鼠标挪到行上
   await 行.hover({ force: true })
   const 卡 = page.locator(".sess-hover-card")

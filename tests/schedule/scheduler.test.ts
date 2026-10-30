@@ -44,6 +44,15 @@ function 造(now = "2026-08-22T00:00:00.000Z", opts: { 执行?: 执行器; 补�
 }
 
 describe("Scheduler", () => {
+  it("超过50条跳过记录后仍记住最早未结束的运行", async () => {
+    let release!: () => void
+    let starts=0
+    const c=造("2026-08-22T00:00:00.000Z", {执行:async()=>{starts++;await new Promise<void>(r=>release=r);return {status:"succeeded"}}})
+    c.store.put(c.定义({schedule:{kind:"interval",everyMinutes:1,anchor:"2026-08-22T00:00:00.000Z",timeZone:"Asia/Shanghai"}}))
+    for(let minute=0;minute<53;minute++)await c.拨到(new Date(Date.parse("2026-08-22T00:00:00.000Z")+minute*60_000).toISOString())
+    expect(starts).toBe(1)
+    release();await c.s.等跑完()
+  })
   it("到期一次只跑一次：pump 跑几遍都只有一条记录；下一次到期再跑一次", async () => {
     const { store, s, 拨到, 跑过, 定义 } = 造()
     store.put(定义())

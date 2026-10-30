@@ -3,12 +3,15 @@ import type { TerminalMode } from '../protocol/terminal.js'
 const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`
 
 /** Execute in the existing interpreter; no new interpreter, kernel or script file. */
-export function terminalCommand(mode: TerminalMode, code: string, token: string): string {
+export function terminalCommand(mode: TerminalMode, code: string, token: string, shell = 'sh'): string {
   if (!code.trim() || code.length > 32_000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(code)) {
     throw new Error('终端代码不能为空、超过32000字符或包含控制字符')
   }
   const marker = `\x1b]7777;dawn;${token};`
   if (mode === 'shell') {
+    if (['powershell','pwsh'].includes(shell)) {
+      return `try {\n${code}\n$dawnExit = if ($?) { 0 } else { 1 }\n} catch { Write-Error -ErrorRecord $_ -ErrorAction Continue; $dawnExit = 1 }; [Console]::Write([char]27 + ']7777;dawn;${token};' + $dawnExit + [char]7)\r`
+    }
     return `eval ${quote(code)}; printf '\\033]7777;dawn;${token};%s\\007' "$?"\r`
   }
   if (mode === 'python') {
@@ -25,5 +28,5 @@ export function readyPrompt(mode: TerminalMode, line: string, alternate: boolean
   const text = line.trimEnd()
   if (mode === 'python') return /(?:^|\s)>>>$/.test(text)
   if (mode === 'R') return /^>$/.test(text.trim())
-  return /[$#%]$/.test(text)
+  return /[$#%]$/.test(text) || /^PS [^\r\n]*>$/.test(text)
 }

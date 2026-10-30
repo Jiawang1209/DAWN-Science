@@ -2,7 +2,7 @@ import { createServer, type Socket } from 'node:net'
 import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { mkdtemp, mkdir, writeFile, chmod, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, dirname } from 'node:path'
+import { join, dirname, delimiter } from 'node:path'
 import { DesktopImages } from './desktop-images.js'
 import { z } from 'zod'
 import { SessionPermissionValueSchema } from '../protocol/permissions.js'
@@ -55,7 +55,7 @@ export class DesktopCliHost {
   async environment(terminalId: string): Promise<Record<string, string>> {
     if (this.disposed) throw new Error('DAWN 连接已关闭')
     await this.initialize()
-    return { DAWN_CLI_DESCRIPTOR: join(this.root!, 'desktop.json'), DAWN_TERMINAL_ID: terminalId, PATH: this.root + ':' + (process.env.PATH || '/usr/bin:/bin') }
+    return { DAWN_CLI_DESCRIPTOR: join(this.root!, 'desktop.json'), DAWN_TERMINAL_ID: terminalId, PATH: this.root + delimiter + (process.env.PATH || '/usr/bin:/bin') }
   }
   state(terminalId: string) {
     const scope = this.connections.get(terminalId)?.scope

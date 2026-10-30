@@ -11,8 +11,8 @@ export class BotDelivery {
   const work=this.once(owner).finally(()=>{this.flushing.delete(owner);if(this.dirty.delete(owner)&&!this.suspended.has(owner))queueMicrotask(()=>{void this.flush(owner).catch(error=>console.error("[Bot] delivery",error))})});this.flushing.set(owner,work);return work
  }
  private async once(owner:string){
-  if(this.opts.busy(owner))return
   const results=this.opts.store.pendingResults(owner);if(!results.length)return
+  if(this.opts.busy(owner))return
   const history=await this.opts.history(owner)
   const missing=results.filter(r=>!history.includes(`[bot-result:${r.resultId}]`))
   for(const r of results)if(!missing.includes(r))this.opts.store.markResultDelivered(r.resultId)

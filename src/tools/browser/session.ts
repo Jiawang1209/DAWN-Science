@@ -18,6 +18,9 @@ interface 标签 {
 }
 
 let 浏览器: Browser | null = null
+let starting: Promise<Browser> | undefined
+let closing: Promise<void> | undefined
+let browserGeneration = 0
 let 频道: string | undefined
 const 标签们 = new Map<string, 标签>()
 /** **全局最近活跃标签**:给坞「旁观」那格用(它旁观的是「agent 的浏览器」这一整个,不分会话) */
@@ -41,7 +44,12 @@ function 记历史(url: string, title: string): void {
 }
 
 async function 启动(): Promise<Browser> {
+  if (closing) await closing
   if (浏览器?.isConnected()) return 浏览器
+  return starting ??= 实际启动().finally(() => { starting = undefined })
+}
+
+async function 实际启动(): Promise<Browser> {
   const { chromium } = await import("playwright-core")
   const 错们: string[] = []
   for (const channel of ["msedge", "chrome"]) {
@@ -65,8 +73,13 @@ async function 启动(): Promise<Browser> {
 }
 
 export async function 开标签(url?: string, 会话?: string): Promise<标签> {
+  const generation = browserGeneration
   const b = await 启动()
   const page = await b.newPage()
+  if (generation !== browserGeneration || !b.isConnected()) {
+    await page.close().catch(() => {})
+    throw new Error("浏览器已关闭，请重新打开标签")
+  }
   const id = `tab-${++计数}`
   const t = { id, page }
   标签们.set(id, t)
@@ -162,12 +175,17 @@ export function 状态(会话?: string): { open: boolean; channel: string; tabs:
 }
 
 export async function 关浏览器(): Promise<void> {
-  await 浏览器?.close().catch(() => {})
-  浏览器 = null
-  标签们.clear()
-  活跃 = null
-  会话活跃.clear()
-  标签主.clear()
+  if (closing) return closing
+  browserGeneration++
+  return closing = (async () => {
+    const browser = starting ? await starting.catch(() => null) : 浏览器
+    await browser?.close().catch(() => {})
+    浏览器 = null
+    标签们.clear()
+    活跃 = null
+    会话活跃.clear()
+    标签主.clear()
+  })().finally(() => { closing = undefined })
 }
 
 /** 旁观面（2026-08-25，坞「网页」格「agent 旁观」页签）：便宜的状态 + 历史，轮询用它 */

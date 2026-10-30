@@ -16,7 +16,7 @@ import { cleanup } from "@testing-library/react"
 import { afterEach, beforeEach } from "vitest"
 import { resetAllState } from "../../src/ui/state/index.js"
 import { $lang } from "../../src/ui/i18n/index.js"
-import { 记跳过 } from "../../src/ui/setup-wizard.js"
+import { 记跳过, 记引导完成 } from "../../src/ui/setup-wizard.js"
 
 /**
  * jsdom 没有实现 `ResizeObserver`，但真实 Chromium 有。
@@ -88,5 +88,6 @@ beforeEach(() => {
    * 与 e2e 夹具 `dawn.global.setupSkipped` 同一个理由。向导自己的测试直接渲染组件，不受它影响。
    */
   记跳过(true)
+  记引导完成()
 })
 afterEach(cleanup)

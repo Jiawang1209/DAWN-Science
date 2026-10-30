@@ -78,7 +78,8 @@ writeFileSync(modelsPath, JSON.stringify(mockModelsJson(server.url), null, 2))
 console.log(`[packaged] 起 ${exe}`)
 const app = await _electron.launch({
   executablePath: exe,
-  args: [`--user-data-dir=${join(dir, "electron-user-data")}`],
+  args: [`--user-data-dir=${join(dir, "electron-user-data")}`,
+    ...(process.platform === "darwin" && process.env.DAWN_PACKAGED_MOCK_KEYCHAIN === "1" ? ["--use-mock-keychain"] : [])],
   env: {
     ...process.env,
     DAWN_CONFIG: configPath, DAWN_DB: join(dir, "dawn.db"), DAWN_DEFAULT_WORKSPACE: workspace,

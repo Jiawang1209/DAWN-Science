@@ -2,7 +2,7 @@
  * 视觉客户端的三种失败与一种成功（2026-08-20）。
  * **失败必须出声**（规格 7.5）：超时 / 非 200 / 回空，各说各的话。
  */
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { 描述图片, 转述提问 } from "../../src/runtime/vision.js"
 
 const 端点 = { baseUrl: "https://v.example/v1/", model: "qwen-vl", apiKey: "k" }
@@ -13,6 +13,16 @@ function 假fetch(应答: (url: string, init: RequestInit) => Response | Promise
 }
 
 describe("描述图片", () => {
+  it("响应头已到但正文未结束时，60秒期限仍中止读取并报告超时", async () => {
+    vi.useFakeTimers()
+    try {
+      const f=假fetch((_url,init)=>new Response(new ReadableStream({start(controller){init.signal!.addEventListener('abort',()=>controller.error(new Error('aborted')))}})))
+      const pending=描述图片(端点,一张图,undefined,f)
+      const assertion=expect(pending).rejects.toThrow(/60s.*没回话/)
+      await vi.advanceTimersByTimeAsync(60_001)
+      await assertion
+    } finally { vi.useRealTimers() }
+  })
   it("成功：POST 到 /chat/completions，带图、带钥匙、不要流", async () => {
     let 收到的: { url?: string; body?: Record<string, unknown>; auth?: string | undefined } = {}
     const f = 假fetch((url, init) => {

@@ -141,6 +141,19 @@ describe("握手：就绪之前不许发出去", () => {
  * **一条都没有**。用户看到的是「第一次运行代码没有输出，胶囊一直转」。
  */
 describe("握手：iopub 也要自己出过一声", () => {
+  it("重问使用全新消息身份；首轮回复和PUB都丢失后仍能完成握手", async () => {
+    vi.useFakeTimers()
+    const m = make()
+    try {
+      const ready = m.ch.ready()
+      await vi.advanceTimersByTimeAsync(260)
+      const retry = m.f.sent.at(-1)!
+      expect(retry.header.msg_id).not.toBe(m.handshake.header.msg_id)
+      m.f.incoming(msg("kernel_info_reply", retry.header.msg_id))
+      m.f.incoming(msg("status", retry.header.msg_id))
+      await ready
+    } finally { await m.ch.close(); vi.useRealTimers() }
+  })
   it("**只回 kernel_info_reply 不算就绪** —— 那一刻发出去的执行，输出会被 ZMQ 静默丢掉", async () => {
     const m = make()
     let 就绪 = false

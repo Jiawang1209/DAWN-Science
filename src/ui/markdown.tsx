@@ -244,6 +244,9 @@ export function AgentMarkdown({
             parseIncompleteMarkdown
             // 动效会跟流式更新抢帧；DESIGN.md：动效跟随状态，永不延迟状态
             animated={false}
+            // Preserve transcript scrolling and sticky headers across Streamdown upgrades.
+            codeBlockMaxHeight={0}
+            tableMaxHeight={0}
             components={components}
             {...(remarkPlugins ? { remarkPlugins } : {})}
             plugins={MARKDOWN_PLUGINS}

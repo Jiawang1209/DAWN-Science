@@ -6,7 +6,7 @@ test("结构化澄清：多题、单选、多选补充、跳过；模型收到�
  const { page, requests } = dawn
  await 在项目里开会话(page); await 等进了对话(page)
  const main = page.locator("main.main")
- const input = main.getByPlaceholder(/输入问题/)
+ const input = main.locator(".composer-field")
  await input.fill("请做结构化澄清"); await input.press("Enter")
  const card = main.locator(".question-card")
  await expect(card).toContainText("这次需要分析哪些样本？", { timeout: 30000 })
@@ -63,7 +63,7 @@ test("结构化澄清：多题、单选、多选补充、跳过；模型收到�
 test("停止等待使提问中断；取消提问返回取消结果", async ({ dawn }) => {
  const { page } = dawn
  await 在项目里开会话(page); await 等进了对话(page)
- const main = page.locator("main.main"), input = main.getByPlaceholder(/输入问题/)
+ const main = page.locator("main.main"), input = main.locator(".composer-field")
  await input.fill("结构化澄清"); await input.press("Enter")
  await expect(main.locator(".question-card")).toBeVisible({ timeout: 30000 })
  await main.locator(".question-card").getByRole("button", { name: "收起提问" }).click()
@@ -83,7 +83,7 @@ test("停止等待使提问中断；取消提问返回取消结果", async ({ da
 test("切换会话保留草稿；侧边问答与主区隔离；调整方向撤销原提问", async ({ dawn }) => {
  const { page } = dawn
  await 在项目里开会话(page); await 等进了对话(page)
- const main = page.locator("main.main"), input = main.getByPlaceholder(/输入问题/)
+ const main = page.locator("main.main"), input = main.locator(".composer-field")
  await input.fill("草稿结构化澄清"); await input.press("Enter")
  const card = main.locator(".question-card")
  await expect(card).toBeVisible({ timeout: 30000 })
@@ -95,7 +95,7 @@ test("切换会话保留草稿；侧边问答与主区隔离；调整方向撤�
  const side = page.locator("aside.right-dock")
  await side.getByRole("button", { name: "另开一段", exact: true }).click()
  await side.locator(".side-chat-head").waitFor()
- const sideInput = side.getByPlaceholder(/输入问题/)
+ const sideInput = side.locator(".composer-field")
  await sideInput.fill("侧边结构化澄清"); await sideInput.press("Enter")
  const sideCard = side.locator(".question-card")
  await expect(sideCard).toBeVisible({ timeout: 30000 })
@@ -126,7 +126,7 @@ test("先出方案阶段可澄清，回答后仍处于只读方案期", async ({
  await plan.click()
  await expect(menu).toHaveCount(0)
  await expect(main.locator(".plan-band")).toContainText("只看不改")
- const input = main.getByPlaceholder(/输入问题/)
+ const input = main.locator(".composer-field")
  await input.fill("方案前结构化澄清"); await input.press("Enter")
  const card = main.locator(".question-card")
  await expect(card).toBeVisible({ timeout: 30000 })
@@ -154,7 +154,7 @@ test("暗色主题与窄窗：提问不横向溢出，正文可滚动，操作�
  await page.getByRole("radio", { name: "暗色", exact: true }).click()
  await page.getByRole("button", { name: "返回", exact: true }).click()
  await 在项目里开会话(page); await 等进了对话(page)
- const main = page.locator("main.main"), input = main.getByPlaceholder(/输入问题/)
+ const main = page.locator("main.main"), input = main.locator(".composer-field")
  await input.fill("暗色结构化澄清"); await input.press("Enter")
  const card = main.locator(".question-card")
  await expect(card).toBeVisible({ timeout: 30000 })
@@ -171,7 +171,7 @@ test("暗色主题与窄窗：提问不横向溢出，正文可滚动，操作�
 test("同一模型消息问答后接写入：等待答案期间绝不提前执行后续工具", async ({ dawn }) => {
  const { page, workspace } = dawn
  await 在项目里开会话(page); await 等进了对话(page)
- const main = page.locator("main.main"), input = main.getByPlaceholder(/输入问题/)
+ const main = page.locator("main.main"), input = main.locator(".composer-field")
  const file = join(workspace, "results/tables/after-question.txt")
  await input.fill("结构化澄清带写入"); await input.press("Enter")
  const card = main.locator(".question-card")

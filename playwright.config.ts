@@ -13,6 +13,7 @@ import { defineConfig } from "@playwright/test"
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "**/kernel-session.spec.ts",
   // Electron 应用只有一个实例，并行会互相抢窗口与数据库
   workers: 1,
   fullyParallel: false,

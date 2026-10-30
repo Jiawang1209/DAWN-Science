@@ -96,8 +96,7 @@ export class Scheduler {
     if (!到期 || Date.parse(到期) <= Date.parse(d.updatedAt)) return
     const 候选 = 造到期运行(d, 到期)
     if (this.deps.store.hasOccurrence(候选.occurrenceKey) || this.deps.store.getRun(候选.id)) return
-    const 同一条的 = this.deps.store.runs(d.id, 50)
-    const 重叠 = 同一条的.some((r) => r.status === "queued" || r.status === "running")
+    const 重叠 = this.deps.store.unfinished().some((r) => r.scheduleId === d.id)
     const 晚了 = Date.parse(now) - Date.parse(到期)
     if (重叠 || 晚了 > this.deps.补跑窗口毫秒) {
       this.deps.store.putRun({

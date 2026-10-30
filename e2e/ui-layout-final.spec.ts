@@ -15,7 +15,11 @@ async function checkComposer(area: import('@playwright/test').Locator) {
   const add = (await card.locator('.attach-trigger').boundingBox())!
   expect(environment.y + environment.height).toBeLessThanOrEqual(input.y + 1)
   expect(input.y + input.height).toBeLessThanOrEqual(footer.y + 1)
-  expect(Math.abs((send.y + send.height / 2) - (add.y + add.height / 2))).toBeLessThanOrEqual(2)
+  // 极窄栏允许左右两组分行；每组内部对齐，控件完整留在卡片内。
+  const perm = (await card.locator('.perm-pill').boundingBox())!
+  const model = (await card.locator('.composer-controls').boundingBox())!
+  expect(Math.abs((perm.y + perm.height / 2) - (add.y + add.height / 2))).toBeLessThanOrEqual(2)
+  expect(Math.abs((send.y + send.height / 2) - (model.y + model.height / 2))).toBeLessThanOrEqual(2)
   expect(send.y).toBeGreaterThanOrEqual(footer.y)
   expect(send.y + send.height).toBeLessThanOrEqual(footer.y + footer.height)
   expect(footer.y + footer.height).toBeLessThanOrEqual(bounds.y + bounds.height)
@@ -65,9 +69,9 @@ test('确认稿：品牌与折叠、快捷键按钮紧凑排列，收起后仍�
   await expect(toggle).toBeVisible()
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-label', '收起侧边栏')
-  const version = page.locator('.statusbar .brand-version')
+  const version = page.locator('.statusbar .app-status-version')
   await expect(version).toContainText(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version)
-  await expect(page.locator('.topbar .brand-version')).toHaveCount(0)
+  await expect(page.locator('.topbar .app-status-version')).toHaveCount(0)
   const b = (await version.boundingBox())!
   expect(b.x + b.width).toBeGreaterThan(await page.evaluate(() => window.innerWidth - 24))
   await page.setViewportSize({ width: 900, height: 800 })

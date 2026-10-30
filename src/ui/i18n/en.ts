@@ -996,9 +996,6 @@ export const EN: Readonly<Record<string, string>> = {
   "排队中": "after this turn",
   "{0} 张图": "{0} image(s)",
   "配置里还没有可用的 agent": "No usable agent in the config yet",
-  "还没有可用的 agent": "No usable agent yet",
-  "配置文件里没有 agent，或它需要的 API key 还没填。":
-    "The config has no agent, or the API key it needs is missing.",
 
   /* ── 对话 ───────────────────────────────────────────────────── */
   "发送": "Send",
@@ -1176,6 +1173,8 @@ export const EN: Readonly<Record<string, string>> = {
   "还没有填任何 API key，暂时不能对话——点这里填一个": "No API key yet, so chatting is not possible — click here to add one",
   "首次设置": "First-time setup",
   "欢迎使用 DAWN Science": "Welcome to DAWN Science",
+  "连接 AI 模型，开始你的研究工作。": "Connect an AI model to start your research.",
+  "开始设置": "Start setup",
   "先跳过": "Skip for now",
   "模型 key": "Model key",
   "（必需）": "(required)",

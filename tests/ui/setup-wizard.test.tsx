@@ -62,14 +62,15 @@ describe("SetupWizard", () => {
     expect(onProbe).toHaveBeenCalledTimes(1)
   })
 
-  it("已看介绍的标记独立保存，兼容旧版跳过状态", () => {
+  it("新版介绍完成独立记录，旧跳过标记不能冒充完成四步引导", () => {
     expect(读引导完成()).toBe(false)
     记引导完成()
     expect(读引导完成()).toBe(true)
     expect(读跳过()).toBe(false)
     localStorage.clear()
     记跳过(true)
-    expect(读引导完成()).toBe(true)
+    expect(读跳过()).toBe(true)
+    expect(读引导完成()).toBe(false)
     记跳过(false)
     expect(读引导完成()).toBe(false)
   })

@@ -16,7 +16,7 @@ import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
 
 test.describe("全新安装", () => {
   // 显式用发布的那份默认配置——**不是夹具补过的那份**
-  test.use({ dawnOptions: { providersYaml: DEFAULT_CONFIG_YAML } })
+  test.use({ dawnOptions: { providersYaml: DEFAULT_CONFIG_YAML, showSetup: true } })
 
   test("**默认配置里没有 deepseek**，也没有任何 native agent", async ({ dawn }) => {
     const { dir } = dawn
@@ -35,12 +35,12 @@ test.describe("全新安装", () => {
     expect(yaml).toContain("claude:")
   })
 
-  test("**首屏不摆一个用不了的 agent**，而是指路去设置", async ({ dawn }) => {
+  test("**首屏不摆一个用不了的 agent**，直接进入四步引导", async ({ dawn }) => {
     const { page } = dawn
     await expect(page.locator(".app-shell")).toBeVisible()
     // 选择器里不该出现 deepseek 相关的东西
     await expect(page.locator(".sidebar")).not.toContainText("ds-chat")
-    // 底部那条提示仍在，它是通往设置的路
-    await expect(page.locator(".app-shell")).toContainText("设置")
+    await expect(page.locator(".setup-wizard").getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeVisible()
+    await expect(page.getByText("还没有可用的 agent", { exact: true })).toHaveCount(0)
   })
 })

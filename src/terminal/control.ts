@@ -4,6 +4,8 @@ import type { TerminalControlState, TerminalMode, TerminalTask } from '../protoc
 import { TerminalScreen } from './screen.js'
 import { readyPrompt, terminalCommand } from './commands.js'
 import { stripTerminalReplies } from './replies.js'
+const shellName = (program: string) => basename(program.replaceAll('\\', '/')).replace(/^-/, '').replace(/\.exe$/i, '').toLowerCase()
+const isShell = (program: string) => ['sh','bash','zsh','powershell','pwsh'].includes(program)
 
 interface TerminalPort {
   connectionId?: string
@@ -135,10 +137,10 @@ export class TerminalControl {
       if (!e.alive || this.entry(id) !== e) throw new Error('终端已经结束或实例已经变化')
       screen = await e.screen.snapshot()
     }
-    const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
+    const program = shellName(e.port.process?.() || e.port.command)
     if (/^python(?:\d+(?:\.\d+)*)?$/i.test(program) && readyPrompt('python', screen.cursorLine, screen.alternate)) return 'python'
     if (/^R(?:term)?$/i.test(program) && readyPrompt('R', screen.cursorLine, screen.alternate)) return 'R'
-    if (['sh', 'bash', 'zsh'].includes(program)) return 'shell'
+    if (isShell(program)) return 'shell'
     return e.mode
   }
 
@@ -171,8 +173,8 @@ export class TerminalControl {
     const e = this.entry(id)
     await this.detectMode(id)
     const screen = await e.screen.snapshot()
-    const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
-    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorPrefix, screen.alternate)) {
+    const program = shellName(e.port.process?.() || e.port.command)
+    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !isShell(program) || e.operation || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorPrefix, screen.alternate)) {
       throw new Error('请先回到空闲 Shell 提示符，并按 Ctrl-C 取消未提交的输入，再进入 DAWN 模式')
     }
     this.reclaim(id)
@@ -184,8 +186,8 @@ export class TerminalControl {
   async currentDirectory(id: string): Promise<string> {
     const e = this.entry(id)
     const screen = await e.screen.snapshot()
-    const program = basename(e.port.process?.() || e.port.command).replace(/^-/, '')
-    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !['sh', 'bash', 'zsh'].includes(program) || e.operation || e.directoryQuery || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorPrefix, screen.alternate)) throw new Error('请先回到空闲 Shell，按 Ctrl-C 取消未提交的输入，再选择历史会话')
+    const program = shellName(e.port.process?.() || e.port.command)
+    if (!e.alive || e.inputLength || e.inputUncertain || e.pasting || !isShell(program) || e.operation || e.directoryQuery || e.task?.state === 'running' || !readyPrompt('shell', screen.cursorPrefix, screen.alternate)) throw new Error('请先回到空闲 Shell，按 Ctrl-C 取消未提交的输入，再选择历史会话')
     this.reclaim(id)
     const token = randomUUID(), operation = Symbol(), generation = e.generation
     e.operation = operation
@@ -194,7 +196,9 @@ export class TerminalControl {
       return await new Promise<string>((resolve, reject) => {
         e.directoryQuery = { token, generation, resolve, reject }
         timer = setTimeout(() => reject(new Error('读取终端当前目录超时，请重试')), 3000)
-        e.port.write(`printf '\\033]7777;dawn-cwd;${token};%s\\007' "$(pwd -P)"\r`)
+        e.port.write(['powershell','pwsh'].includes(program)
+          ? `[Console]::Write([char]27 + ']7777;dawn-cwd;${token};' + (Get-Location).ProviderPath + [char]7)\r`
+          : `printf '\\033]7777;dawn-cwd;${token};%s\\007' "$(pwd -P)"\r`)
       })
     } finally { clearTimeout(timer); e.directoryQuery = undefined; if (e.operation === operation) e.operation = undefined }
   }
@@ -223,7 +227,7 @@ export class TerminalControl {
   async execute(owner: string, id: string, code: string, authorize: Authorize, signal?: AbortSignal): Promise<TerminalTask> {
     const e = this.access(owner, id), generation = e.generation
     if (e.operation || e.task?.state === 'running') throw new Error('已有命令正在运行或等待批准，请先等待完成，不要重复执行')
-    const token = randomUUID(), input = terminalCommand(e.mode, code, token), operation = Symbol()
+    const token = randomUUID(), input = terminalCommand(e.mode, code, token, shellName(e.port.process?.() || e.port.command)), operation = Symbol()
     e.operation = operation
     try {
       await this.ready(e)

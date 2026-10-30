@@ -146,7 +146,7 @@ agent says "mergeable", diff ≠ plan             → back to REWORKING
 
 ## Run from source
 
-Node.js ≥ 22.
+Node.js 22.22.2+ (22.x), 24.15.0+ (24.x), or 26+.
 
 ```bash
 git clone https://github.com/Jiawang1209/DAWN-Science.git
@@ -162,6 +162,7 @@ Development:
 npm run dev:mock            # real pipeline + fake model, isolated dir, never touches real credentials
 npm test                    # unit + integration
 npm run test:e2e            # build, then Playwright against the real build
+npm run test:e2e:kernel     # kernel group in its own worker (requires an existing build)
 npm run dist                # package for the current platform → release/
 ```
 
@@ -389,7 +390,7 @@ agent 说「可合并」，但 diff 与计划不一致     → 回到 REWORKING
 
 ## 从源码运行
 
-需要 Node.js ≥ 22。
+需要 Node.js 22.22.2 及以上的 22.x、24.15.0 及以上的 24.x，或 26 及以上版本。
 
 ```bash
 git clone https://github.com/Jiawang1209/DAWN-Science.git
@@ -405,6 +406,7 @@ npm run app                 # 构建并启动
 npm run dev:mock            # 真链路 + 假模型，隔离目录，不碰真实凭证
 npm test                    # 单元 + 集成
 npm run test:e2e            # 先 build，再 Playwright 跑真实产物
+npm run test:e2e:kernel     # 已构建后单跑独立内核组
 npm run dist                # 打当前平台的安装包，产物在 release/
 ```
 

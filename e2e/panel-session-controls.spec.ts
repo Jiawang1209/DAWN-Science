@@ -66,7 +66,7 @@ test("查找导出直接属于主对话内容区，与面板分行，键盘返�
   for (const width of [900, 1512]) {
     await page.setViewportSize({ width, height: 480 })
     const scroll = main.locator(".turns > div").first()
-    await expect.poll(() => scroll.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true)
+    await expect.poll(() => scroll.evaluate(el => el.clientHeight > 0 && el.scrollHeight > el.clientHeight)).toBe(true)
     const railLeft = await scroll.evaluate(el => el.getBoundingClientRect().right - ((el as HTMLElement).offsetWidth - el.clientWidth) / 2)
     for (const button of [find, download]) {
       const bounds = (await button.boundingBox())!

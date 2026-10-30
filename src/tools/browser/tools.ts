@@ -8,8 +8,8 @@
  * 产物纪律：截图落工作区 `.dawn/screenshots/` 并自动清理（7 天 / 200 张，只扫直属文件）；
  * 下载经页面上下文（带 Cookie）落工作区。复用 office 插件的定义 DSL（shape.ts）。
  */
-import { mkdirSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { dirname, join, resolve as pathResolve, sep } from "node:path"
+import { closeSync, constants, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { basename, dirname, join, relative, resolve as pathResolve, sep, win32 } from "node:path"
 import type { Office工具定义 } from "../office/shape.js"
 import { 开标签, 要页面, 列标签, 切标签, 关标签, 状态, 关浏览器 } from "./session.js"
 
@@ -21,12 +21,12 @@ const 默认超时 = 10_000
  * (它是读取用);下载写的是新文件,父目录还可能不存在,所以单列一个写入版:
  *   ① 拒绝绝对路径(把守卫判断权交给调用方等于没守卫);
  *   ② `resolve` 归一化后字符串前缀比对,挡 `../../x` 逃逸;
- *   ③ `mkdir` 父目录后对**父目录** realpath 再验一次,挡符号链接逃逸
+ *   ③ 逐层先验现存父目录，再建下一层；最终文件拒绝符号链接
  *      (工作区里若有个软链指向外面,字符串比对看不出来)。
  * 浏览器工具不过权限门(见审查清单 B1),这道守卫是 browser_download 唯一的边界。
  */
 export function 工作区内写入目标(workspace: string, 相对: string): string {
-  if (相对.startsWith("/") || /^[A-Za-z]:[\\/]/.test(相对)) {
+  if (相对.startsWith("/") || win32.isAbsolute(相对) || /^[A-Za-z]:/.test(相对)) {
     throw new Error("只能下载到工作区内(不接受绝对路径)")
   }
   const root = realpathSync(workspace)
@@ -34,12 +34,25 @@ export function 工作区内写入目标(workspace: string, 相对: string): str
   if (目标 !== root && !目标.startsWith(root + sep)) {
     throw new Error(`拒绝:「${相对}」在工作区之外`)
   }
-  mkdirSync(dirname(目标), { recursive: true })
-  const 父 = realpathSync(dirname(目标))
-  if (父 !== root && !父.startsWith(root + sep)) {
-    throw new Error(`拒绝:「${相对}」的父目录经符号链接指到了工作区之外`)
+  let 父 = root
+  for (const part of relative(root, dirname(目标)).split(sep).filter(Boolean)) {
+    const next = join(父, part)
+    try { 父 = realpathSync(next) } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error
+      mkdirSync(next)
+      父 = realpathSync(next)
+    }
+    if (父 !== root && !父.startsWith(root + sep)) {
+      throw new Error(`拒绝:「${相对}」的父目录经符号链接指到了工作区之外`)
+    }
   }
-  return 目标
+  const file = join(父, basename(目标))
+  try {
+    if (lstatSync(file).isSymbolicLink()) throw new Error(`拒绝:「${相对}」是符号链接`)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error
+  }
+  return file
 }
 
 /**
@@ -364,7 +377,8 @@ export function browser工具定义(workspace: string, 会话?: string): { 族: 
         const 名 = String(args.save_as ?? (尾 || "下载文件"))
         // 目录穿越守卫:save_as="../../x" 或经软链逃逸都在这里被拦下
         const 目标 = 工作区内写入目标(workspace, 名)
-        writeFileSync(目标, body)
+        const fd = openSync(目标, constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW)
+        try { writeFileSync(fd, body) } finally { closeSync(fd) }
         return { content: `已下载 ${body.byteLength} 字节 → ${名}` }
       },
     },

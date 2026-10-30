@@ -25,4 +25,12 @@
 - 完整流式性能3/3通过，85.36秒，原预算未调整；`perf.json`及`perf-当前-*.json`。
 - 新包CLI help、窗口/数据库、技能、模型测试链路、真实PTY、解释器探测和内核设置全部通过；`packaged-smoke.log`。
 
-合并后结果在执行完成后追加。本机仍仅验证macOS arm64；真实服务鉴权、Windows/Linux真机、正式签名公证及安装升级边界沿用前序报告。
+## 本地 main 合并与复验
+
+修复代码提交为`fcdf3b69`（`fix: remediate audit findings and restore first-run onboarding`）。本地main从`89aab93e`fast-forward到该提交，无合并冲突；当前检出main。合并后1473个源码、测试、配置和基线文件与合并前指纹一致，623个打包运行文件也保持与工作区构建产物一致。
+
+合并后typecheck通过；6个文件37项关键回归通过，覆盖四步引导、双语、真实R端口竞争和旧消息清理、MCP重定向、发布库存。启动入口2项真实Electron回归再次全部通过，含旧标记迁移、新版主动跳过后的重启与重开、已有模型兼容。见`postmerge-typecheck.log`、`postmerge-tests.log`、`postmerge-e2e.json`及`.log`。
+
+跟踪文件无遗留修改；原始审查、失败现场、性能及打包验证证据继续保存在本地`artifacts/`，未将大体积原始证据加入提交。保留修复分支与其他worktree。没有推送、发布或替换安装版。
+
+本机仍仅验证macOS arm64；真实服务鉴权、Windows/Linux真机、正式签名公证及安装升级边界沿用前序报告。

@@ -95,8 +95,8 @@ jobs:
           check "DAWN-Science-$version-mac-x64.zip" "macOS x64 zip"
           check "DAWN-Science-$version-win-x64.exe" "Windows installer x64"
           check "DAWN-Science-$version-win-x64-portable.exe" "Windows portable x64"
-          check "DAWN-Science-$version-linux-x64.AppImage" "Linux x64 AppImage"
-          check "DAWN-Science-$version-linux-x64.deb" "Linux x64 deb"
+          check "DAWN-Science-$version-linux-x86_64.AppImage" "Linux x64 AppImage"
+          check "DAWN-Science-$version-linux-amd64.deb" "Linux x64 deb"
           check "DAWN-Science-$version-linux-arm64.AppImage" "Linux arm64 AppImage"
           check "DAWN-Science-$version-linux-arm64.deb" "Linux arm64 deb"
           # 一个都没有就没什么可发的，如实红
@@ -107,7 +107,7 @@ jobs:
           {
             echo "note<<EOF"
             if [ -n "$missing" ]; then
-              echo "> ⚠️ 这次发布**缺**这些平台的包：$missing —— 对应的打包 job 失败了，去 Actions 看。"
+              echo "> ⚠️ 这次发布**缺**这些平台的包：$missing —— 未收到对应文件，请检查产物名称和打包上传步骤。"
             else
               echo "预期的10份安装包与便携归档均已收到。"
             fi

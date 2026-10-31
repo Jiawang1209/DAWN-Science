@@ -78,6 +78,18 @@ const settle = async () => {
 }
 
 describe("App · 默认 client 路径（生产环境唯一走的那条）", () => {
+  it("保留旧数据的重新安装也从欢迎页同步开始，不等钥匙串", async () => {
+    localStorage.setItem("dawn.global.setupSkipped", "1")
+    localStorage.setItem("dawn.global.onboardingDone", "1")
+    const h = installBridge(true)
+    Object.assign(window.dawn!, { onboardingInstallationId: "new-installation" })
+    render(<App />)
+    expect(screen.getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeTruthy()
+    expect(screen.getByRole("list", { name: "设置进度" }).children).toHaveLength(4)
+    h.releaseCredentials()
+    await settle()
+  })
+
   it("首次渲染即显示四步引导，钥匙串读取尚未完成时也可查看介绍", async () => {
     localStorage.removeItem("dawn.global.setupSkipped")
     localStorage.removeItem("dawn.global.onboardingDone")

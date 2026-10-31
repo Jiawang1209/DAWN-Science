@@ -52,6 +52,7 @@ win:
 portable:
   artifactName: DAWN-Science-${version}-${os}-${arch}-portable.${ext}
 nsis:
+  include: packaging/onboarding.nsh
   installerIcon: packaging/icon.ico
   uninstallerIcon: packaging/icon.ico
   oneClick: false

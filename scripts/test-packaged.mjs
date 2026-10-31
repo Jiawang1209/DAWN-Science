@@ -99,7 +99,15 @@ const 查 = async (名, fn) => {
 }
 try {
   const page = await app.firstWindow()
-  await page.addInitScript(() => { try { localStorage.setItem("dawn.global.lang", "zh"); localStorage.setItem("dawn.global.setupSkipped", "1") } catch {} })
+  await page.waitForFunction(() => !!window.dawn?.invoke)
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem("dawn.global.lang", "zh")
+      const suffix = window.dawn?.onboardingInstallationId ? `.${window.dawn.onboardingInstallationId}` : ""
+      localStorage.setItem(`dawn.global.setupSkipped${suffix}`, "1")
+      localStorage.setItem(`dawn.global.onboardingDone${suffix}`, "1")
+    } catch {}
+  })
   await page.reload()
   await 查("窗口起来、数据库开了（better-sqlite3）", () => page.locator(".app-shell").waitFor({ timeout: 60_000 }))
   await 查("自带技能与子 agent 从磁盘读到了（/ 菜单有条目）", async () => {

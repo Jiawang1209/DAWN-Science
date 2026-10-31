@@ -55,7 +55,7 @@ export type 换包参数 =
 export async function 换包(p: 换包参数, 依赖: 换包依赖): Promise<void> {
   if (p.方式 === "win-nsis") {
     // NSIS 的静默安装。**装完由它自己拉起新版**，我们只负责退出
-    await 依赖.运行(p.包路径, ["/S"])
+    await 依赖.运行(p.包路径, ["/S", "--updated"])
     return
   }
 

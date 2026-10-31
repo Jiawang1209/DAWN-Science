@@ -27,6 +27,7 @@ const WEB_CONTROL = "dawn:web:control"
 const WEB_STATE = "dawn:web:state"
 
 contextBridge.exposeInMainWorld("dawn", {
+  onboardingInstallationId: process.argv.find(arg => arg.startsWith("--dawn-onboarding-installation="))?.split("=")[1],
   invoke: (operation: string, request: unknown, requestId?: string) =>
     ipcRenderer.invoke(CHANNEL, operation, request, requestId),
 

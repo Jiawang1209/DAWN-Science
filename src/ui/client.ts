@@ -40,6 +40,8 @@ export type EventSource = (cb: (raw: unknown) => void) => () => void
 declare global {
   interface Window {
     dawn?: {
+      /** 非敏感安装世代，preload 同步提供，不等待凭证/IPC。 */
+      onboardingInstallationId?: string | undefined
       invoke(operation: string, request: unknown, requestId?: string): Promise<RawResponse>
       onEvent?: EventSource
       onTrayNewTask?: (cb: () => void) => () => void

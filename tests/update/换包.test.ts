@@ -80,13 +80,13 @@ describe("mac：解开 → 核对 → 备份 → 换上", () => {
 })
 
 describe("windows", () => {
-  it("静默拉起安装器（/S）", async () => {
+  it("静默拉起安装器并明确传递应用内升级标记，保留安装引导状态", async () => {
     const { 账, 依赖 } = 记账()
     await 换包(
       { 方式: "win-nsis", 包路径: "C:\\dl\\DAWN.exe", 期望版本: "0.0.3", 当前版本: "0.0.2" },
       依赖,
     )
-    expect(账.some((l) => l === "运行 C:\\dl\\DAWN.exe /S")).toBe(true)
+    expect(账.some((l) => l === "运行 C:\\dl\\DAWN.exe /S --updated")).toBe(true)
   })
 })
 

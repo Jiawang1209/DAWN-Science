@@ -9,6 +9,7 @@ import { app, clipboard, Tray, Menu, nativeImage, BrowserWindow, dialog, ipcMain
 import { fileURLToPath } from "node:url"
 import { extname, join, dirname } from "node:path"
 import { 迁旧数据 } from "./migrate-userdata.js"
+import { createOnboardingInstallation } from "./onboarding-installation.js"
 import { 合并PATH, 问PATH的命令 } from "./login-shell-path.js"
 import { readFile } from "node:fs/promises"
 import { appendFileSync, mkdirSync, statSync } from "node:fs"
@@ -26,6 +27,8 @@ import { 本机机器id } from "../update/机器id.js"
 import { 托盘图标 } from "./tray-icon.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
 import { acquireDatabaseInstance } from "./single-instance.js"
+
+let onboardingInstallation: ReturnType<typeof createOnboardingInstallation> | undefined
 
 /**
  * 配置落在 `userData`，**不是 `process.cwd()`**。
@@ -288,6 +291,7 @@ function createWindow(): void {
     // 窗口标题栏留给 Rho 那种自绘顶栏（46px），但 ①-B 先用系统标题栏，不做无谓的自绘
     webPreferences: {
       preload: join(import.meta.dirname, "preload.cjs"),
+      additionalArguments: onboardingInstallation ? [`--dawn-onboarding-installation=${onboardingInstallation.id}`] : [],
       // 渲染进程不给 node 能力：它只经 IPC 的单一入口取数（AgentDeck 的「不靠开洞」）
       nodeIntegration: false,
       contextIsolation: true,
@@ -629,6 +633,18 @@ app.whenReady().then(() => {
   启动日志("app ready")
   补登录shell的PATH()
   打包版首启迁移()
+  if (app.isPackaged) {
+    const portable = process.platform === "win32" ? process.env.PORTABLE_EXECUTABLE_FILE : undefined
+    const image = process.platform === "linux" ? process.env.APPIMAGE : undefined
+    const exe = portable ?? image ?? app.getPath("exe")
+    const bundle = process.platform === "darwin" ? mac的app路径() : undefined
+    onboardingInstallation = createOnboardingInstallation({
+      stateFile: join(app.getPath("userData"), "onboarding-installation.json"),
+      identityPaths: portable || image ? [exe] : [...(bundle ? [bundle] : []), exe, join(app.getAppPath(), "package.json")],
+      installMarkerFile: process.platform === "win32" && !portable ? join(dirname(exe), ".dawn-onboarding-install-id") : undefined,
+      log: message => 启动日志(`首次引导：${message}`),
+    })
+  }
   /**
    * **连 Dock 图标也不要跳**（e2e 用，2026-08-11）。
    *
@@ -837,6 +853,7 @@ app.whenReady().then(() => {
          * 「退出后再起一个我」，真正的退出还得自己做。
          */
         重启: () => {
+          onboardingInstallation?.adoptAutomaticUpdate()
           app.relaunch()
           app.exit(0)
         },

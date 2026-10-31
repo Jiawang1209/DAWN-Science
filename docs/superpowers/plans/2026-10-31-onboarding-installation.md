@@ -12,4 +12,4 @@
 - [x] 在 `packaging/onboarding.nsh` 增加 NSIS 安装标记并配置 include；`src/update/换包.ts` 传递 `--updated`，成功换包重启时接续身份。编译实际 Windows NSIS，运行现有更新测试。
 - [x] 顺序运行 `npm run typecheck`、`npm run build`、完整 `npm test`；再运行首启、向导、设置、更新 Electron 回归。测试运行期间不与完整单测里的浏览器争抢。
 - [x] 构建实际 Mac 包，在临时位置保留同一 userData 依次验证新装、普通重启、同版本覆盖安装和受控更新，检查四步界面及数据保留，保存截图与结果。
-- [ ] 复核差异和证据，更新验收文档；仅本地合并 main，保留用户已有预览数据，不推送、不替换已安装 App。
+- [x] 复核差异和证据，更新验收文档；仅本地合并 main，保留用户已有预览数据，不推送、不替换已安装 App。

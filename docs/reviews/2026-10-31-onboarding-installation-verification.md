@@ -30,3 +30,5 @@ Mac 生命周期脚本 `scripts/test-packaged-onboarding.mjs` 使用临时 .app 
 Windows 仅完成安装器构建和逻辑测试，没有 Windows 真机运行证明；Linux AppImage 未做实际安装包验证。文件实例识别针对实际替换/复制安装，不能把原文件实例的原地恢复或备份还原普遍识别为新的安装事件。跨入首次支持安装世代版本前，没有可靠安装来源标记的旧完成状态不迁移。
 
 原始证据在 `artifacts/onboarding-installation-2026-10-31/`：red/green、完整复跑、Electron、签名、包功能冒烟、NSIS、文件指纹、生命周期结果及截图。原始目录保持本地，不把大体积包或测试数据提交 Git。
+
+本地集成：修复提交 `56320581` 已 fast-forward 合并 main；源文件指纹保持不变。没有推送、发布或替换已安装 App。

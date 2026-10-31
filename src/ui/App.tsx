@@ -1076,8 +1076,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [client])
   useEffect(() => { if (ready) refreshInterpreters() }, [ready, refreshInterpreters])
   /**
-   * 首启向导（2026-08-27）：没有任何凭证、且没点过「先跳过」时替换主区。
-   * 判据与底部红字同一条（`没有钥匙`）：目录与凭证**都回来了**且没有凭证。
+   * 首次未完成、未跳过引导时，首帧就展示介绍，不能等系统钥匙串返回。
+   * 已有跳过标记的补填/迁移仍待目录与凭证到手，避免打断已可用的旧用户。
    * 2026-08-28 之前这里看的是 `providers.providers.length > 0`——那个列表在发布出去的默认配置下永远为空，
    * 全新安装的机器上向导从来没亮过。
    */
@@ -1088,7 +1088,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 向导一旦因「没凭证」亮起，就留到人按「开始使用」或「先跳过」——key 保存成功那一瞬不能把它抽走
    * （e2e 抓的：第 ② 段解释器还没来得及选，屏幕就换了）。
    */
-  const [向导中, 设向导中] = useState(false)
+  const [向导中, 设向导中] = useState(() => !读引导完成() && !读跳过())
   useEffect(() => {
     if (!没有钥匙) return
     // Old skipped-only installs with no usable model must see the new guide.

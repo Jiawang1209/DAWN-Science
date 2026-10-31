@@ -14,7 +14,7 @@
  * **被测的形态和真实运行的形态不是同一个。**
  */
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { act, render } from "@testing-library/react"
+import { act, render, screen, fireEvent, within } from "@testing-library/react"
 import { App } from "../../src/ui/App.js"
 import { WORKBENCH_PROTOCOL_VERSION, OPERATIONS } from "../../src/protocol/index.js"
 
@@ -28,12 +28,15 @@ afterEach(() => {
 })
 
 /** 计数用的假桥接。挂在 window 上，走 App 的默认 client 路径 */
-function installBridge() {
+function installBridge(holdCredentials = false) {
   const invokes: string[] = []
+  let releaseCredentials!: () => void
+  const credentialsReady = new Promise<void>(resolve => { releaseCredentials = resolve })
   const listeners = new Set<(raw: unknown) => void>()
   window.dawn = {
     invoke: async (op: string) => {
       invokes.push(op)
+      if (op === "listCredentials" && holdCredentials) await credentialsReady
       const data =
         op === "getCapabilities"
           ? {
@@ -47,6 +50,8 @@ function installBridge() {
             ? updateReceipt
           : op === "listBots"
             ? { bots: [] }
+          : op === "listKnownProviders"
+            ? { providers: [], models: {} }
           : op === "listCredentials"
             ? { configured: [], encrypted: true }
             : op === "getProviders"
@@ -60,7 +65,7 @@ function installBridge() {
     },
     pickDirectory: async () => null,
   }
-  return { invokes, listeners }
+  return { invokes, listeners, releaseCredentials }
 }
 
 const settle = async () => {
@@ -73,6 +78,23 @@ const settle = async () => {
 }
 
 describe("App · 默认 client 路径（生产环境唯一走的那条）", () => {
+  it("首次渲染即显示四步引导，钥匙串读取尚未完成时也可查看介绍", async () => {
+    localStorage.removeItem("dawn.global.setupSkipped")
+    localStorage.removeItem("dawn.global.onboardingDone")
+    const h = installBridge(true)
+    render(<App />)
+    const wizard = screen.getByRole("dialog", { name: "首次设置" })
+    expect(within(wizard).getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeTruthy()
+    expect(within(wizard).getByRole("list", { name: "设置进度" }).children).toHaveLength(4)
+    await settle()
+    expect(h.invokes).toContain("listCredentials")
+    fireEvent.click(within(wizard).getByRole("button", { name: "下一页" }))
+    expect(within(wizard).getByRole("heading", { name: "让研究工作在这里衔接" })).toBeTruthy()
+    h.releaseCredentials()
+    await settle()
+    expect(within(wizard).getByRole("heading", { name: "让研究工作在这里衔接" })).toBeTruthy()
+  })
+
   it("不传 client 时也不空转 —— 取数次数必须收敛", async () => {
     const { invokes } = installBridge()
     render(<App />)

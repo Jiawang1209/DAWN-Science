@@ -118,6 +118,12 @@ export class CredentialStore {
     return this.加密可用
   }
 
+  /** 只代表记录仍存在，不代表可以解密；交接时用于尊重用户的删除操作。 */
+  hasStored(endpointId: string): boolean {
+    const data = this.read()
+    return Object.hasOwn(data.entries, endpointId) || Object.hasOwn(data.undecrypted ?? {}, endpointId)
+  }
+
   get(endpointId: string): string | undefined {
     const data = this.read()
     const raw = data.entries[endpointId]
@@ -222,7 +228,8 @@ export class CredentialStore {
   导出明文(): Record<string, string> {
     const data = this.read()
     const 出: Record<string, string> = {}
-    for (const id of Object.keys(data.entries)) {
+    // 暂存密文在系统存储恢复后也可能已能读取，不能在升级时漏交接。
+    for (const id of new Set([...Object.keys(data.entries), ...Object.keys(data.undecrypted ?? {})])) {
       const v = this.get(id)
       if (v !== undefined) 出[id] = v
     }

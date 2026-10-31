@@ -22,6 +22,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from "../protocol/index.js"
 import { 真通知出口, 假通知出口, 待回的段 } from "./desktop-notify.js"
 import { createWorkbench, type Workbench } from "./wiring.js"
 import { CredentialStore, defaultCredentialFile, readOnlyCredentials } from "./credentials.js"
+import { 收凭证交接 } from "./credential-handoff.js"
 import { 交接箱 } from "../update/交接.js"
 import { 本机机器id } from "../update/机器id.js"
 import { 托盘图标 } from "./tray-icon.js"
@@ -133,34 +134,6 @@ const 启动日志路径 = join(app.getPath("userData"), "startup.log")
 declare const __APP_VERSION__: string
 function 我们的版本(): string {
   return typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : app.getVersion()
-}
-
-/**
- * 接上一版交来的凭证（规格 U5）。
- *
- * **先看自己解不解得开**：解得开就说明钥匙串认这个二进制（签过名、或者根本没换过包），
- * 那份交接文件用不上，直接删掉——留着它等于让一份能解开的密文在盘上多待一天。
- */
-function 收交接(凭证库: CredentialStore, 交接: 交接箱): void {
-  const 条目 = 交接.读()
-  if (!条目) {
-    交接.清()
-    return
-  }
-  try {
-    if (凭证库.broken().length === 0 && 凭证库.verified()) {
-      启动日志("更新交接：自己解得开，交接文件用不上，删了")
-    } else {
-      凭证库.导入明文(条目)
-      启动日志(`更新交接：${Object.keys(条目).length} 条凭证已用这一版的钥匙重新加密`)
-    }
-  } catch (e) {
-    // **不许静默**：人会以为 key 还在，到发第一句话时才发现不在
-    启动日志(`更新交接失败，需要重新填写 key：${e instanceof Error ? e.message : String(e)}`)
-  } finally {
-    // 成功与失败两条路都删
-    交接.清()
-  }
 }
 
 function mac的app路径(): string | undefined {
@@ -736,7 +709,7 @@ app.whenReady().then(() => {
         } catch (e) {
           启动日志(`钥匙串预热失败 · ${Date.now() - t} ms · ${e instanceof Error ? e.message : String(e)}`)
         }
-        收交接(凭证库, 交接)
+        收凭证交接(凭证库, 交接, 启动日志)
       }, 5_000).unref?.()
     }
   })

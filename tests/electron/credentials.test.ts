@@ -34,6 +34,17 @@ const unavailable: SafeStorageLike = {
 }
 
 describe("凭证库 · 基本读写", () => {
+  it("升级交接也导出暂存后已经能解密的密钥，不漏掉其他服务商与扩展", () => {
+    const file = newFile()
+    const old = new CredentialStore({ file, safeStorage: working })
+    old.set("deepseek", "fixture-deepseek")
+    old.set("openai", "fixture-openai")
+    old.set("vision:apiKey", "fixture-vision")
+    new CredentialStore({ file, safeStorage: unavailable, onInsecure: () => {} }).set("anthropic", "fixture-anthropic")
+    const recovered = new CredentialStore({ file, safeStorage: working })
+    expect(recovered.导出明文()).toEqual({ deepseek: "fixture-deepseek", openai: "fixture-openai", "vision:apiKey": "fixture-vision", anthropic: "fixture-anthropic" })
+  })
+
   it("存进去能取出来", () => {
     const s = new CredentialStore({ file: newFile(), safeStorage: working })
     s.set("deepseek", "sk-abc")

@@ -33,7 +33,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import type { SubagentDefinition } from "./definitions.js"
 import { join } from "node:path"
-import type { SubagentChildSpec, 子事件 } from "./protocol.js"
+import { 子事件Schema, type SubagentChildSpec, type 子事件 } from "./protocol.js"
 import { 按字节截 } from "./clip.js"
 import type { ResourceHost } from "./resources.js"
 
@@ -363,7 +363,10 @@ export class SubagentExecutor {
           else void resources.call(v.name, v.params).then(result => reply(true, result), error => reply(false, message(error)))
         }
         // 已收尾（中止 / 超时）之后到的过程不再转：chip 已经 settled，再来一行只会让界面以为它还活着
-        else if (v.type === "event" && v.event && !settled) this.onProgress({ type: "event", index, event: v.event })
+        else if (v.type === "event" && v.event && !settled) {
+          const parsed = 子事件Schema.safeParse(v.event)
+          if (parsed.success) this.onProgress({ type: "event", index, event: parsed.data })
+        }
       }
       let settled = false
       // 墙钟(H7):到点按中止同一条路杀干净、报超时

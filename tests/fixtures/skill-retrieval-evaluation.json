@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "scope": "Offline metadata retrieval over the nine checked-in built-in Skills; labels come from their descriptions and when-to-use/when-not-to-use instructions. No model calls or Skill code execution.",
+  "expectedBuiltinNames": ["analysis-delivery", "analyze-like-case", "dataset-first-look", "figure-like-this", "literature-review", "office-docs", "reproducible-analysis", "scientific-review", "writing-skills"],
+  "positiveCases": [
+    {"id":"cn-delivery","query":"把已完成的 R 分析整理成交付脚本和说明，交给合作者复跑","acceptableSkills":["analysis-delivery"],"basis":"analysis-delivery: completed analysis, scripts and handoff to collaborators"},
+    {"id":"cn-route","query":"我想做土壤微生物研究，需要完整分析路线和真实案例","acceptableSkills":["analyze-like-case"],"basis":"analyze-like-case: comprehensive analysis route and real cases"},
+    {"id":"cn-first-look","query":"拿到一份没见过的生态 CSV 数据集，请先看有哪些坑","acceptableSkills":["dataset-first-look"],"basis":"dataset-first-look: first inspection of unfamiliar ecological tabular data"},
+    {"id":"cn-figure","query":"我带来一张文献截图，这种图我也想画，请找到怎么画的案例","acceptableSkills":["figure-like-this"],"basis":"figure-like-this: reproduce the type of figure from a paper screenshot"},
+    {"id":"cn-literature","query":"精读多篇论文，比较实验设计和样本量并整理证据矩阵","acceptableSkills":["literature-review"],"basis":"literature-review: multi-paper design/sample-size evidence comparison"},
+    {"id":"cn-office","query":"读取 xlsx 工作簿并编辑 docx 文档","acceptableSkills":["office-docs"],"basis":"office-docs: read and edit Office documents"},
+    {"id":"cn-reproduce","query":"写论文分析代码时固定随机种子、集中参数并记录版本，保证可复现","acceptableSkills":["reproducible-analysis"],"basis":"reproducible-analysis: code parameters, seeds and version records"},
+    {"id":"cn-review","query":"做一次科研审查，核对统计方法、实验单位和样本量","acceptableSkills":["scientific-review"],"basis":"scientific-review: statistical design, units and sample-size review"},
+    {"id":"cn-writing","query":"把这套做法记下来，做成一个技能，以后都这么干","acceptableSkills":["writing-skills"],"basis":"writing-skills: explicit request to save a reusable Skill"},
+    {"id":"en-delivery","query":"Package the completed analysis with scripts and a report for collaborator handoff","acceptableSkills":["analysis-delivery"],"basis":"analysis-delivery: completed-analysis delivery package, English paraphrase"},
+    {"id":"en-route","query":"Plan a complete research workflow and find real analysis case studies","acceptableSkills":["analyze-like-case"],"basis":"analyze-like-case: full research route and real analysis cases, English paraphrase"},
+    {"id":"en-first-look","query":"Perform exploratory data analysis on this unfamiliar ecological dataset","acceptableSkills":["dataset-first-look"],"basis":"dataset-first-look: initial tabular data inspection; EDA synonym"},
+    {"id":"en-figure","query":"Use this paper screenshot as a reference for plotting a similar figure","acceptableSkills":["figure-like-this"],"basis":"figure-like-this: paper-image-driven plotting, English paraphrase"},
+    {"id":"en-literature","query":"Write a literature review comparing the methods and evidence from these papers","acceptableSkills":["literature-review"],"basis":"literature-review: multi-paper methods/evidence comparison, English paraphrase"},
+    {"id":"en-office","query":"Read the xlsx spreadsheet and edit the docx document","acceptableSkills":["office-docs"],"basis":"office-docs: supported file formats and read/edit tools"},
+    {"id":"en-reproduce","query":"Improve reproducibility of the analysis script with fixed random seeds and version records","acceptableSkills":["reproducible-analysis"],"basis":"reproducible-analysis: reproducibility synonym and script-writing task"},
+    {"id":"en-review","query":"Perform a statistical review of the experimental units and sample size","acceptableSkills":["scientific-review"],"basis":"scientific-review: statistical review synonym and research-design checks"},
+    {"id":"en-writing","query":"Save this workflow as a reusable skill so we can follow it next time","acceptableSkills":["writing-skills"],"basis":"writing-skills: explicit reusable Skill authoring request, English paraphrase"}
+  ],
+  "negativeCases": [
+    {"id":"chat-greeting","query":"你好，今天心情不错","basis":"Ordinary conversation"},
+    {"id":"chat-weekend","query":"推荐一个周末散步的地方","basis":"Personal leisure request unrelated to research Skills"},
+    {"id":"chat-cake","query":"Please help create a birthday cake recipe","basis":"Cooking request unrelated to research Skills"},
+    {"id":"chat-poem","query":"写一首描绘秋日森林的短诗","basis":"Creative prose unrelated to research Skills"},
+    {"id":"chat-arithmetic","query":"What is two plus two","basis":"Simple arithmetic question"}
+  ],
+  "hardNegativeCases": [
+    {"id":"concept-eda","query":"Explain the concept of EDA without inspecting a dataset","basis":"dataset-first-look requires actual first inspection; conceptual question only"},
+    {"id":"concept-reproduce","query":"只解释什么是可复现，不写分析代码也不整理文件","basis":"reproducible-analysis is for writing analysis code; explanation only"},
+    {"id":"concept-literature","query":"文献这个词是什么意思？只解释概念","basis":"literature-review excludes ordinary Q&A"},
+    {"id":"concept-statistics","query":"只解释统计审查的定义，不检查实验或脚本","basis":"scientific-review requires an actual review request"},
+    {"id":"concept-office","query":"What does the xlsx file extension mean? Just explain the term","basis":"office-docs is for actual document generation, reading or editing"}
+  ]
+}

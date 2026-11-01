@@ -44,6 +44,10 @@ import { type QuestionAnswer } from "../protocol/questions.js"
  * **本文件的职责因此变得很窄**：把 pi 的会话事件翻译成本项目的 `AgentEvent`，
  * 以及把每个会话隔离在自己的 agentDir 里。
  */
+import { NativeSkillResources } from "./skill-resources.js"
+import { createSkillTools } from "../tools/skills.js"
+import { skillPromptEntries, SKILL_RETRIEVAL_GUIDANCE } from "../skills/prompt.js"
+import { SkillReadSchema } from "../protocol/skill-reads.js"
 import { 读调用策略 } from "../skills/invocation.js"
 import { UserFacingError } from "../errors.js"
 import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
@@ -262,6 +266,8 @@ export interface NativeRuntimeOptions {
     自带目录?: string
     /** 自带技能的档位（2026-08-23）：文件只读，档位记在设置里；没记过回 undefined = 按文件 */
     自带档?: ((name: string) => "model" | "manual" | "off" | undefined) | undefined
+    /** Personal tag overrides use the same per-manifest keys as installed Skill settings. */
+    tagOverride?: ((filePath: string) => readonly string[] | undefined) | undefined
   }
   /**
    * MCP（2026-08-15）。**给了才有那些外部工具。**
@@ -337,6 +343,8 @@ interface NativeSession {
   /** 改「你现在跑在哪个模型上」那句话。**换模型时必须调**，否则它照旧答上一个 */
   设当前模型: (v: string) => void
   setTerminalReply: (enabled: boolean) => void
+  skillResources?: NativeSkillResources | undefined
+  dispatchedInputs: string[]
   refreshSkillResources: () => { count: number; problems: { path: string; reason: string }[] }
   unsubscribe: () => void
   /** 关会话时收尾：中止团队调度器里还在跑的成员（2026-08-23 审查抓的：此前关会话后成员子进程照跑、向已删会话 emit） */
@@ -470,7 +478,7 @@ interface PiEvent {
    */
   result?: {
     isError?: boolean
-    details?: { truncation?: { truncated?: boolean }; fullOutputPath?: string }
+    details?: { truncation?: { truncated?: boolean }; fullOutputPath?: string; skillRead?: unknown }
     content?: { type?: string; text?: string }[]
     summary?: string
     tokensBefore?: number
@@ -498,6 +506,7 @@ interface PiEvent {
    * context accounting**."* 计划里原本指的就是那一个，是错的。
    */
   message?: {
+    content?: string | { type: string; text?: string }[]
     role?: string
     usage?: { input?: number; output?: number; cacheRead?: number }
     /**
@@ -1197,7 +1206,7 @@ export class NativeRuntime implements AgentRuntime {
     }
   }
 
-  private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"]): unknown[] | undefined {
+  private gatedTools(cwd: string, sessionId: SessionId, remote?: SessionSpec["remote"], skillResources?: NativeSkillResources): unknown[] | undefined {
     const gate = this.opts.gate
     const provenance = this.opts.provenance !== false
     const thisCapture = this.opts.artifactCapture
@@ -1325,7 +1334,7 @@ export class NativeRuntime implements AgentRuntime {
       },
     }
     const 原始 = [
-      createReadToolDefinition(cwd),
+      skillResources?.createReadTool(cwd) ?? createReadToolDefinition(cwd),
       /**
        * **不要把 `PI_*` 塞进命令的环境**（2026-08-12）。
        *
@@ -1497,8 +1506,9 @@ export class NativeRuntime implements AgentRuntime {
     模型收图 = true,
     /** 递给子进程的 api key（provider → key）；见 `子进程凭证` */
     子进程凭证?: Record<string, string>,
+    skillResources?: NativeSkillResources,
   ): unknown[] | undefined {
-    const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote)
+    const base = this.gatedTools(spec.workspace, spec.sessionId, spec.remote, spec.remote ? undefined : skillResources)
 
 
     /**
@@ -1892,6 +1902,21 @@ export class NativeRuntime implements AgentRuntime {
     if (!spec.bot) this.interruptAnalysisRoute(spec.sessionId, '会话恢复，先前进行中的步骤未正常收尾')
     const restoredRoute = routeEntry.book?.read()
     if (restoredRoute) this.emit({ kind: 'analysis_route', sessionId: spec.sessionId, route: restoredRoute })
+    const skillOptions = this.opts.skills
+    const skillResources = skillOptions ? new NativeSkillResources({
+      roots: [
+        ...(!spec.remote && skillOptions.项目目录名 ? [{ path: join(spec.workspace, skillOptions.项目目录名), scope: 'project' as const }] : []),
+        ...(skillOptions.全局目录 ? [{ path: skillOptions.全局目录, scope: 'global' as const }] : []),
+        ...(skillOptions.自带目录 ? [{ path: skillOptions.自带目录, scope: 'builtin' as const }] : []),
+      ],
+      workspace: spec.remote ? undefined : spec.workspace,
+      builtinMode: skillOptions.自带档,
+      tagsOverride: skillOptions.tagOverride,
+      authorize: (tool, params) => {
+        const decision = this.opts.gate?.(tool, params, { workspace: spec.workspace, sessionId: spec.sessionId })
+        return decision && decision.kind !== 'allow' ? decision.reason : undefined
+      },
+    }) : undefined
     const 原工具 = this.toolsFor(
       spec,
       native,
@@ -1900,6 +1925,7 @@ export class NativeRuntime implements AgentRuntime {
       // 也不给收图的模型塞一个绕路的（`writeWithImages` 的「明确不收」同一口径）
       !(Array.isArray(model.input) && !model.input.includes("image")),
       子进程凭证,
+      skillResources,
     )
     /**
      * **回退这一轮：每一件工具执行前，先等这一句的「开头」拍完**（2026-09-27，spec §4.1）。
@@ -1908,7 +1934,16 @@ export class NativeRuntime implements AgentRuntime {
      * 内置工具始终显式注册；关闭权限或溯源也不能绕过外层讨论 / 方案门。
      */
     const 存档开 = !spec.remote && this.opts.checkpoints !== false
-    const customTools = 存档开 && 原工具 ? 原工具.map((d) => this.套上存档(spec.sessionId, d)) : 原工具
+    const skillTools = skillResources ? createSkillTools({ catalog: () => skillResources.catalog, allowManual: skillResources.allowManual }).map(definition => {
+      const execute = definition.execute.bind(definition)
+      return { ...definition, execute: async (id: string, params: Parameters<typeof execute>[1]) => {
+        const result = await execute(id, params)
+        if (this.opts.provenance !== false && !result.isError) this.emit({ kind: 'tool_files', sessionId: spec.sessionId, toolCallId: id, ...只读工具的空事实() })
+        return result
+      } }
+    }) : []
+    const resourceTools = [...(原工具 ?? []).map(d => !spec.remote && skillResources ? skillResources.wrapRead(d as Record<string, unknown>) : d), ...skillTools]
+    const customTools = 存档开 ? resourceTools.map(d => this.套上存档(spec.sessionId, d)) : resourceTools
 
     /**
      * **先出方案（2026-09-27，spec §4.1）：交给 pi 的每一件工具都再套一层方案期门，套在最外面、先判。**
@@ -2016,6 +2051,47 @@ export class NativeRuntime implements AgentRuntime {
       })
     }
     const settingsManager = SettingsManager.create(spec.workspace, agentDir)
+    const projectSkills = (base: ReturnType<DefaultResourceLoader["getSkills"]>) => {
+        // 自带的档位记在设置里（文件只读）——先问它，没记过再看文件
+        const 自带根 = this.opts.skills?.自带目录
+        const 档 = (sk: { name: string; filePath: string }): "model" | "manual" | "off" => {
+          const 记的 = 自带根 && sk.filePath.startsWith(自带根) ? this.opts.skills?.自带档?.(sk.name) : undefined
+          if (记的) return 记的
+          try {
+            return 读调用策略(readFileSync(sk.filePath, "utf8"))
+          } catch {
+            return "model"
+          }
+        }
+        const entries = skillResources ? skillResources.catalog.skills.map(skill => ({
+          name: skill.name, description: skill.description, filePath: skill.filePath, baseDir: skill.baseDir,
+          sourceInfo: createSyntheticSourceInfo(skill.filePath, { source: 'dawn', scope: skill.scope === 'project' ? 'project' : 'user', origin: 'top-level', baseDir: skill.baseDir }),
+          disableModelInvocation: skill.invocation !== 'model',
+        })) : base.skills
+        const 留下 = entries
+          .map((sk) => {
+            const m = skillResources?.catalog.skills.find(entry => entry.filePath === sk.filePath)?.invocation ?? 档(sk)
+            return m === "off" ? undefined : m === "manual" ? { ...sk, disableModelInvocation: true } : sk
+          })
+          .filter((sk): sk is NonNullable<typeof sk> => sk !== undefined)
+        /**
+         * **子 agent 的人设同时也是技能**（2026-08-22，作者定的「一份两用」）：`/skill:名` 把那套规矩叫进主对话，
+         * `subagent` 工具把它派出去。同一份文件——pi 读技能时剥掉 frontmatter，正文正好就是人设。
+         * 技能名撞了的让技能赢（那是人专门写的）。停用的不登记。
+         */
+        const 已有 = new Set([...(skillResources?.catalog.skills.map(sk => sk.name) ?? []), ...留下.map((sk) => sk.name)])
+        const 来自子agent = loadSubagentsFrom(this.子agent层(spec.workspace), { 自带停用: this.opts.subagents?.自带停用 }).agents
+          .filter((a) => !a.disabled && !已有.has(a.name))
+          .map((a) => ({
+            name: a.name,
+            description: a.description,
+            filePath: a.filePath,
+            baseDir: dirname(a.filePath),
+            sourceInfo: createSyntheticSourceInfo(a.filePath, { source: "dawn-subagent", scope: a.from === "project" ? "project" : "user", origin: "top-level", baseDir: dirname(a.filePath) }),
+            disableModelInvocation: false,
+          }))
+        return { ...base, skills: [...skillPromptEntries(留下, 留下.filter(sk => !sk.disableModelInvocation).length), ...来自子agent] }
+    }
     const resourceLoader = new DefaultResourceLoader({
       cwd: spec.workspace,
       agentDir,
@@ -2034,44 +2110,10 @@ export class NativeRuntime implements AgentRuntime {
        * pi 认 `disable-model-invocation`（模型看不见、`/skill:` 还能调），但不认 `user-invocable: false`；
        * 三档里的「关」= 谁都不给，只能在这儿过滤——读的是文件上那两行，与技能屏同一份真相。
        */
-      skillsOverride: (base) => {
-        // 自带的档位记在设置里（文件只读）——先问它，没记过再看文件
-        const 自带根 = this.opts.skills?.自带目录
-        const 档 = (sk: { name: string; filePath: string }): "model" | "manual" | "off" => {
-          const 记的 = 自带根 && sk.filePath.startsWith(自带根) ? this.opts.skills?.自带档?.(sk.name) : undefined
-          if (记的) return 记的
-          try {
-            return 读调用策略(readFileSync(sk.filePath, "utf8"))
-          } catch {
-            return "model"
-          }
-        }
-        const 留下 = base.skills
-          .map((sk) => {
-            const m = 档(sk)
-            return m === "off" ? undefined : m === "manual" ? { ...sk, disableModelInvocation: true } : sk
-          })
-          .filter((sk): sk is NonNullable<typeof sk> => sk !== undefined)
-        /**
-         * **子 agent 的人设同时也是技能**（2026-08-22，作者定的「一份两用」）：`/skill:名` 把那套规矩叫进主对话，
-         * `subagent` 工具把它派出去。同一份文件——pi 读技能时剥掉 frontmatter，正文正好就是人设。
-         * 技能名撞了的让技能赢（那是人专门写的）。停用的不登记。
-         */
-        const 已有 = new Set(留下.map((sk) => sk.name))
-        const 来自子agent = loadSubagentsFrom(this.子agent层(spec.workspace), { 自带停用: this.opts.subagents?.自带停用 }).agents
-          .filter((a) => !a.disabled && !已有.has(a.name))
-          .map((a) => ({
-            name: a.name,
-            description: a.description,
-            filePath: a.filePath,
-            baseDir: dirname(a.filePath),
-            sourceInfo: createSyntheticSourceInfo(a.filePath, { source: "dawn-subagent", scope: a.from === "project" ? "project" : "user", origin: "top-level", baseDir: dirname(a.filePath) }),
-            disableModelInvocation: false,
-          }))
-        return { ...base, skills: [...留下, ...来自子agent] }
-      },
+      skillsOverride: projectSkills,
       appendSystemPromptOverride: (base) => [
         ...base,
+        ...(this.opts.skills ? [SKILL_RETRIEVAL_GUIDANCE] : []),
         讨论执行指引,
         工具选择指引,
         ...(spec.remote ? [远端执行上下文(spec.workspace, spec.remote.cwd.get())] : []),
@@ -2107,71 +2149,22 @@ export class NativeRuntime implements AgentRuntime {
      */
     if (this.opts.compaction) settingsManager.applyOverrides({ compaction: { ...this.opts.compaction } })
 
-    /**
-     * **技能的两个位置，显式指给 pi**（S20，2026-08-15）。
-     *
-     * pi 自己认 `<agentDir>/skills` 与 `<cwd>/.pi/skills`，而这两条在我们这儿
-     * 都不好使：
-     *
-     * - `agentDir` 是**每会话一个**（见上面那段注释：换模型会写进去，
-     *   共用会让一个会话的默认值渗进另一个）。所以「全局技能」放那儿
-     *   等于每段会话各要放一份——**等于不存在**。
-     * - 项目级那条指向 `.pi/`，而我们自己的约定是 `.dawn/`
-     *   （`.dawn/agents/`、`.dawn/mcp.yaml` 都在那儿）。
-     *
-     * 所以两处都由装配显式给（`skills` 选项）。**不给就完全是原来的样子**——
-     * CLI 与测试替身一个字节不受影响。
-     *
-     * ## 必须在 `reload()` **之后**扩展
-     *
-     * 第一版写在前面，结果**一个自带技能都没进来，反倒进来 14 个不相干的**
-     * （开发机上 `~/.claude` 里那套）。实测三种顺序：
-     *
-     * | 顺序 | 结果 |
-     * |---|---|
-     * | 先扩展 → `reload()` | ✗ 扩展被洗掉 |
-     * | `reload()` → 扩展 | ✓ |
-     * | 扩展 → `reload()` → 扩展 | ✓ |
-     *
-     * `reload()` 会按设置重算一遍资源路径，把之前扩展进去的丢掉。
-     * **这条只有真跑一次才看得见**——类型对、编译过、单元测试全绿。
-     */
+    // Desktop Skills are supplied from the guarded catalog. Refreshing this
+    // snapshot preserves the SDK session, command expansion and tool history.
     const refreshSkillResources = () => {
-      if (this.opts.skills) {
-        const { 全局目录, 项目目录名, 自带目录 } = this.opts.skills
-        /**
-         * **顺序即优先级：越具体的越靠前。**
-         *
-         * pi 按名字去重，**先到先得**（2026-08-15 实测：把同名的两份分别放前放后，
-         * 赢的都是靠前那个）。所以顺序不是随手排的：
-         *
-         *   ① 项目级 —— 这个课题特有的做法，最具体
-         *   ② 全局   —— 你自己攒的那些
-         *   ③ 自带   —— 我们发的，**排最后**：同名时你写的那份赢，
-         *              否则「我改了却不生效」会变成一个查不出来的谜
-         */
-        const 加 = [
-          ...(!spec.remote && spec.workspace && 项目目录名
-            ? [{ path: join(spec.workspace, 项目目录名), meta: "project" as const }]
-            : []),
-          ...(全局目录 ? [{ path: 全局目录, meta: "user" as const }] : []),
-          ...(自带目录 ? [{ path: 自带目录, meta: "user" as const }] : []),
-        ]
-        if (加.length > 0) {
-          resourceLoader.extendResources({
-            skillPaths: 加.map((x) => ({
-              path: x.path,
-              metadata: { source: "dawn", scope: x.meta, origin: "top-level" as const },
-            })),
-          })
-        }
+      skillResources?.refresh()
+      if (skillResources) {
+        // Supply the already guarded, deduplicated catalog through the public
+        // loader interface. Never let a second SDK scan re-read excluded paths.
+        const current = projectSkills({ skills: [], diagnostics: [] })
+        resourceLoader.getSkills = () => current
       }
       const loaded = resourceLoader.getSkills()
       return {
         count: loaded.skills.length,
-        problems: loaded.diagnostics
+        problems: [...loaded.diagnostics
           .filter(d => !/skill path does not exist/i.test(d.message))
-          .map(d => ({ path: d.path ?? '', reason: d.message })),
+          .map(d => ({ path: d.path ?? '', reason: d.message })), ...(skillResources?.catalog.problems ?? [])],
       }
     }
     refreshSkillResources()
@@ -2256,6 +2249,8 @@ export class NativeRuntime implements AgentRuntime {
       },
       setTerminalReply: (enabled: boolean) => { terminalReply = enabled },
       refreshSkillResources,
+      skillResources,
+      dispatchedInputs: [],
       /**
        * **起会话时就记下当前是谁**（2026-08-12 修）。
        *
@@ -2509,6 +2504,20 @@ export class NativeRuntime implements AgentRuntime {
      */
     this.emitUsageIfNew(sessionId)
 
+    if (e.type === 'message_end' && e.message?.role === 'user') {
+      const state = this.sessions.get(sessionId)
+      const receipt = state?.skillResources?.observeManual(state.dispatchedInputs.shift(), 取文本(e.message.content ?? ""))
+      if (state && receipt) {
+        const id = `skill-read-${randomUUID()}`, at = Date.now()
+        // SDK appends the user message after notifying subscribers. Defer so the
+        // host receipt follows the delivered instructions in persisted history.
+        queueMicrotask(() => {
+          state.sessionManager.appendCustomEntry('dawn-skill-read', { id, skillRead: receipt, at })
+          this.emit({ kind: 'tool_end', sessionId, toolCallId: id, toolName: 'skill_read', isError: false, text: '', truncated: false, bytes: 0, skillRead: receipt })
+        })
+      }
+    }
+
     if (e.type === "queue_update") {
       // 只看排队单：插队（steering）2026-09-25 起我们不再用
       this.对账待发(sessionId, e.followUp?.length ?? 0)
@@ -2636,6 +2645,8 @@ export class NativeRuntime implements AgentRuntime {
           ? budgetToolResult(full, { sessionDir, toolName })
           : { text: full, truncated: false, bytes: Buffer.byteLength(full, "utf8") }
         const upstream = e.result?.details
+        const receipt = !e.isError && !e.result?.isError && !(this.sessions.get(sessionId)?.中止中)
+          && ['read', 'use_skill', 'resource_read'].includes(toolName) ? SkillReadSchema.safeParse(upstream?.skillRead) : undefined
         const fullOutputPath = typeof upstream?.fullOutputPath === 'string' && upstream.fullOutputPath ? upstream.fullOutputPath : out.fullOutputPath
         this.emit({
           kind: "tool_end",
@@ -2650,6 +2661,7 @@ export class NativeRuntime implements AgentRuntime {
           isError: Boolean(e.isError || e.result?.isError),
           text: out.text,
           ...(caseResults ? { caseResults } : {}),
+          ...(receipt?.success ? { skillRead: receipt.data } : {}),
           truncated: out.truncated || Boolean(upstream?.truncation?.truncated || fullOutputPath),
           bytes: out.bytes,
           ...(fullOutputPath ? { fullOutputPath } : {}),
@@ -2887,6 +2899,7 @@ ${描述}`
       throw Object.assign(new Error('会话正在运行、停止或回退，请稍后重新操作路线'), { routeCode: 'SESSION_BUSY' })
     }
     this.不许在回退(s)
+    s.skillResources?.prepareManual(data)
     const 图 =
       images && images.length > 0
         ? images.map((i) => ({ type: "image" as const, data: i.data, mimeType: i.mimeType }))
@@ -2958,6 +2971,7 @@ ${描述}`
      * **以为在忙、其实刚跑完**（人按下时还在跑，到这儿那一轮收了尾；或撤回重送时已经空闲）：
      * 它就是新一轮的开头。先报「送到了」再开跑——转录里人那句话要排在回复前面。
      */
+    if (s.skillResources) s.dispatchedInputs.push(data)
     s.setTerminalReply(replyTerminal)
     if (queueId) this.emit({ kind: "queue_delivered", sessionId, id: queueId, newTurn: true })
     // 新的一轮开始：上一轮的重复不该算到这一轮头上
@@ -3017,6 +3031,7 @@ ${描述}`
     const run = s.session
       .prompt(data, { ...(图 ? { images: 图 } : {}), preflightResult: () => 起跑了() })
       .catch((err: unknown) => {
+        if (s.skillResources) s.dispatchedInputs.length = 0
         const msg = err instanceof Error ? err.message : String(err)
         /**
          * **这一轮没做成**（2026-09-28 审查）：走带 `failed` 的 notice，不走 `output`——
@@ -3631,6 +3646,7 @@ ${描述}`
       const i = s.待发.findIndex((x) => x.在 === "pi")
       if (i < 0) break
       const [送走的] = s.待发.splice(i, 1)
+      if (送走的 && s.skillResources) s.dispatchedInputs.push(送走的.文)
       s.setTerminalReply(送走的?.replyTerminal ?? false)
       if (!送走的!.id) continue // 没身份的（飞书之类）：转录早在写的时候就进了
       this.emit({ kind: "queue_delivered", sessionId, id: 送走的!.id, newTurn: false })

@@ -1,0 +1,718 @@
+{
+  "version": 1,
+  "scope": "Offline metadata retrieval over the nine checked-in built-in Skills; labels come from their descriptions and when-to-use/when-not-to-use instructions. No model calls or Skill code execution.",
+  "corpus": {
+    "source": "skills/*/SKILL.md",
+    "skills": 9,
+    "discoveryProblems": 0,
+    "metadataSha256": "6f45800fa24031d72ea7cfe053dc986497255b3e17c5d934a7543c1730453c34"
+  },
+  "fixture": {
+    "version": 1,
+    "sha256": "ba15ea904dec168259895bc82d43fd582fa055f1cde90648802604de6b80b075",
+    "positive": 18,
+    "negative": 5,
+    "hardNegative": 5
+  },
+  "limit": 5,
+  "acceptance": "Every positive must hit@3; ordinary and hard negatives must return zero; all hard constraints must pass",
+  "metrics": {
+    "baseline": {
+      "hitAt3": 0,
+      "hitAt5": 0,
+      "negativeMatchedCases": 0,
+      "negativeCandidateCount": 0,
+      "hardNegativeMatchedCases": 0,
+      "hardNegativeCandidateCount": 0
+    },
+    "current": {
+      "hitAt3": 18,
+      "hitAt5": 18,
+      "negativeMatchedCases": 0,
+      "negativeCandidateCount": 0,
+      "hardNegativeMatchedCases": 0,
+      "hardNegativeCandidateCount": 0
+    }
+  },
+  "cases": [
+    {
+      "id": "cn-delivery",
+      "query": "把已完成的 R 分析整理成交付脚本和说明，交给合作者复跑",
+      "acceptableSkills": [
+        "analysis-delivery"
+      ],
+      "basis": "analysis-delivery: completed analysis, scripts and handoff to collaborators",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "analysis-delivery",
+          "literature-review",
+          "office-docs",
+          "reproducible-analysis"
+        ],
+        "total": 4,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-route",
+      "query": "我想做土壤微生物研究，需要完整分析路线和真实案例",
+      "acceptableSkills": [
+        "analyze-like-case"
+      ],
+      "basis": "analyze-like-case: comprehensive analysis route and real cases",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "analyze-like-case",
+          "analysis-delivery",
+          "figure-like-this"
+        ],
+        "total": 3,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-first-look",
+      "query": "拿到一份没见过的生态 CSV 数据集，请先看有哪些坑",
+      "acceptableSkills": [
+        "dataset-first-look"
+      ],
+      "basis": "dataset-first-look: first inspection of unfamiliar ecological tabular data",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "dataset-first-look",
+          "analyze-like-case"
+        ],
+        "total": 2,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-figure",
+      "query": "我带来一张文献截图，这种图我也想画，请找到怎么画的案例",
+      "acceptableSkills": [
+        "figure-like-this"
+      ],
+      "basis": "figure-like-this: reproduce the type of figure from a paper screenshot",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "figure-like-this",
+          "literature-review",
+          "analyze-like-case"
+        ],
+        "total": 3,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-literature",
+      "query": "精读多篇论文，比较实验设计和样本量并整理证据矩阵",
+      "acceptableSkills": [
+        "literature-review"
+      ],
+      "basis": "literature-review: multi-paper design/sample-size evidence comparison",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "literature-review",
+          "scientific-review",
+          "analysis-delivery",
+          "reproducible-analysis"
+        ],
+        "total": 4,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-office",
+      "query": "读取 xlsx 工作簿并编辑 docx 文档",
+      "acceptableSkills": [
+        "office-docs"
+      ],
+      "basis": "office-docs: read and edit Office documents",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "office-docs",
+          "writing-skills"
+        ],
+        "total": 2,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-reproduce",
+      "query": "写论文分析代码时固定随机种子、集中参数并记录版本，保证可复现",
+      "acceptableSkills": [
+        "reproducible-analysis"
+      ],
+      "basis": "reproducible-analysis: code parameters, seeds and version records",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "reproducible-analysis",
+          "literature-review",
+          "scientific-review",
+          "analysis-delivery",
+          "figure-like-this"
+        ],
+        "total": 5,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-review",
+      "query": "做一次科研审查，核对统计方法、实验单位和样本量",
+      "acceptableSkills": [
+        "scientific-review"
+      ],
+      "basis": "scientific-review: statistical design, units and sample-size review",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "scientific-review",
+          "literature-review",
+          "analysis-delivery",
+          "reproducible-analysis",
+          "analyze-like-case"
+        ],
+        "total": 5,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "cn-writing",
+      "query": "把这套做法记下来，做成一个技能，以后都这么干",
+      "acceptableSkills": [
+        "writing-skills"
+      ],
+      "basis": "writing-skills: explicit request to save a reusable Skill",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "writing-skills"
+        ],
+        "total": 1,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-delivery",
+      "query": "Package the completed analysis with scripts and a report for collaborator handoff",
+      "acceptableSkills": [
+        "analysis-delivery"
+      ],
+      "basis": "analysis-delivery: completed-analysis delivery package, English paraphrase",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "analysis-delivery",
+          "literature-review",
+          "office-docs"
+        ],
+        "total": 3,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-route",
+      "query": "Plan a complete research workflow and find real analysis case studies",
+      "acceptableSkills": [
+        "analyze-like-case"
+      ],
+      "basis": "analyze-like-case: full research route and real analysis cases, English paraphrase",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "analyze-like-case"
+        ],
+        "total": 1,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-first-look",
+      "query": "Perform exploratory data analysis on this unfamiliar ecological dataset",
+      "acceptableSkills": [
+        "dataset-first-look"
+      ],
+      "basis": "dataset-first-look: initial tabular data inspection; EDA synonym",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "dataset-first-look",
+          "figure-like-this"
+        ],
+        "total": 2,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-figure",
+      "query": "Use this paper screenshot as a reference for plotting a similar figure",
+      "acceptableSkills": [
+        "figure-like-this"
+      ],
+      "basis": "figure-like-this: paper-image-driven plotting, English paraphrase",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "figure-like-this"
+        ],
+        "total": 1,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-literature",
+      "query": "Write a literature review comparing the methods and evidence from these papers",
+      "acceptableSkills": [
+        "literature-review"
+      ],
+      "basis": "literature-review: multi-paper methods/evidence comparison, English paraphrase",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "literature-review",
+          "figure-like-this"
+        ],
+        "total": 2,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-office",
+      "query": "Read the xlsx spreadsheet and edit the docx document",
+      "acceptableSkills": [
+        "office-docs"
+      ],
+      "basis": "office-docs: supported file formats and read/edit tools",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "office-docs"
+        ],
+        "total": 1,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-reproduce",
+      "query": "Improve reproducibility of the analysis script with fixed random seeds and version records",
+      "acceptableSkills": [
+        "reproducible-analysis"
+      ],
+      "basis": "reproducible-analysis: reproducibility synonym and script-writing task",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "reproducible-analysis",
+          "scientific-review",
+          "analysis-delivery",
+          "figure-like-this"
+        ],
+        "total": 4,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-review",
+      "query": "Perform a statistical review of the experimental units and sample size",
+      "acceptableSkills": [
+        "scientific-review"
+      ],
+      "basis": "scientific-review: statistical review synonym and research-design checks",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "scientific-review"
+        ],
+        "total": 1,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "en-writing",
+      "query": "Save this workflow as a reusable skill so we can follow it next time",
+      "acceptableSkills": [
+        "writing-skills"
+      ],
+      "basis": "writing-skills: explicit reusable Skill authoring request, English paraphrase",
+      "kind": "positive",
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [
+          "writing-skills",
+          "figure-like-this"
+        ],
+        "total": 2,
+        "hitAt3": true,
+        "hitAt5": true
+      }
+    },
+    {
+      "id": "chat-greeting",
+      "query": "你好，今天心情不错",
+      "basis": "Ordinary conversation",
+      "kind": "negative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "chat-weekend",
+      "query": "推荐一个周末散步的地方",
+      "basis": "Personal leisure request unrelated to research Skills",
+      "kind": "negative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "chat-cake",
+      "query": "Please help create a birthday cake recipe",
+      "basis": "Cooking request unrelated to research Skills",
+      "kind": "negative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "chat-poem",
+      "query": "写一首描绘秋日森林的短诗",
+      "basis": "Creative prose unrelated to research Skills",
+      "kind": "negative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "chat-arithmetic",
+      "query": "What is two plus two",
+      "basis": "Simple arithmetic question",
+      "kind": "negative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "concept-eda",
+      "query": "Explain the concept of EDA without inspecting a dataset",
+      "basis": "dataset-first-look requires actual first inspection; conceptual question only",
+      "kind": "hardNegative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "concept-reproduce",
+      "query": "只解释什么是可复现，不写分析代码也不整理文件",
+      "basis": "reproducible-analysis is for writing analysis code; explanation only",
+      "kind": "hardNegative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "concept-literature",
+      "query": "文献这个词是什么意思？只解释概念",
+      "basis": "literature-review excludes ordinary Q&A",
+      "kind": "hardNegative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "concept-statistics",
+      "query": "只解释统计审查的定义，不检查实验或脚本",
+      "basis": "scientific-review requires an actual review request",
+      "kind": "hardNegative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    },
+    {
+      "id": "concept-office",
+      "query": "What does the xlsx file extension mean? Just explain the term",
+      "basis": "office-docs is for actual document generation, reading or editing",
+      "kind": "hardNegative",
+      "acceptableSkills": [],
+      "baseline": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      },
+      "current": {
+        "candidates": [],
+        "total": 0,
+        "hitAt3": false,
+        "hitAt5": false
+      }
+    }
+  ],
+  "hardConstraints": [
+    {
+      "id": "manual-and-off-excluded",
+      "passed": true,
+      "visibleCandidates": [
+        "visible"
+      ]
+    },
+    {
+      "id": "project-shadowing-before-filter",
+      "passed": true
+    }
+  ],
+  "promptSize": {
+    "formatter": "@earendil-works/pi-coding-agent formatSkillsForPrompt",
+    "measure": "JavaScript string length and UTF-8 bytes; no token or cost estimate",
+    "locations": "Stable /skills/<name>/SKILL.md placeholders; descriptions are actual checked-in metadata",
+    "small": {
+      "installed": 9,
+      "before": {
+        "chars": 2458,
+        "bytes": 3644
+      },
+      "after": {
+        "chars": 2458,
+        "bytes": 3644
+      }
+    },
+    "large": {
+      "installed": 200,
+      "before": {
+        "chars": 52409,
+        "bytes": 78783
+      },
+      "after": {
+        "chars": 0,
+        "bytes": 0
+      }
+    }
+  },
+  "passed": true,
+  "failures": [],
+  "limitations": [
+    "Fixed, hand-labeled metadata fixture; not an estimate of general retrieval accuracy.",
+    "No real model selection, instruction following, real-provider behavior, analysis execution, or scientific correctness is evaluated.",
+    "Prompt comparison measures only the SDK Skill metadata block, not the complete system prompt or tool schemas."
+  ]
+}

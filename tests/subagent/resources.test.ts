@@ -52,7 +52,7 @@ describe("子任务只读资源", () => {
     expect(repeated.items.map((i: {description: string}) => i.description)).toEqual([rows[1], rows[2], rows[0], rows[3]])
   })
 
-  it("归一化查询但不改正文；空查询保留目录序，技能不扩大到分词匹配", async () => {
+  it("归一化查询但不改正文；空查询保留目录序，技能支持名称与用途分词", async () => {
     const s = setup(), body = "生物量单位为 g/m²；脚本用 Rscript，设置 seed 42，产物 outputs。"
     writeFileSync(join(s.memories, "MEMORY.md"), serializeEntries([body, "另一个样例"]))
     s.skill(0, "sample", "生物量单位 Rscript")
@@ -63,7 +63,7 @@ describe("子任务只读资源", () => {
       expect((await s.call(h, "resource_read", {id: found.items[0].id})).content).toBe(body)
     }
     expect((await s.search(h, {kind: "memory", query: "\t \n"})).items.map((i: {description: string}) => i.description)).toEqual([body, "另一个样例"])
-    expect((await s.search(h, {kind: "skill", query: "sample 用途"})).total).toBe(0)
+    expect((await s.search(h, {kind: "skill", query: "sample 用途"})).total).toBe(1)
   })
 
   it("长查询仍先过滤项目/分支/开关和权限；匹配正文160字以后的内容", async () => {
@@ -163,4 +163,30 @@ describe("子任务只读资源", () => {
     expect(found.warnings.join(" ")).toMatch(/oversized.*上限/)
     expect(found.items[0].description.length).toBeLessThanOrEqual(240)
   })
+})
+
+it('shared Skill search returns task reasons and successful reads alone carry trusted receipt metadata', async()=>{
+ const s=setup();const file=s.skill(0,'eda');writeFileSync(join(file,'SKILL.md'),'---\nname: eda\ndescription: Exploratory data analysis\ntags: [数据初探]\n---\nbody')
+ const h=createResourceHost(s.opts)
+ const found=await s.search(h,{kind:'skill',query:'请进行数据初探'})
+ expect(found.items[0]).toMatchObject({name:'eda',scope:'project',tags:['数据初探'],match:{fields:expect.any(Array),terms:expect.any(Array)}})
+ expect(JSON.stringify(found)).not.toContain('skillRead')
+ const result=await s.call(h,'resource_read',{id:found.items[0].id,limit:20})
+ expect(result.skillRead).toMatchObject({name:'eda',manifestPath:join(file,'SKILL.md'),resourcePath:'SKILL.md',scope:'project',via:'resource',partial:true})
+ expect(result.skillRead.contentSha256).toMatch(/^[a-f0-9]{64}$/)
+})
+
+it('mixed-kind searches retain exact memory phrase priority over newly expanded semantic Skill matches',async()=>{
+ const s=setup();const base=s.skill(0,'eda');writeFileSync(join(base,'SKILL.md'),'---\nname: eda\ndescription: Exploratory data analysis\n---\nbody')
+ writeFileSync(join(s.memories,'MEMORY.md'),serializeEntries(['数据初探中保留原始单位']))
+ const h=createResourceHost(s.opts), found=await s.search(h,{kind:'all',query:'数据初探'})
+ expect(found.items.map((x:{kind:string})=>x.kind)).toEqual(['memory','skill'])
+})
+
+it('all-kind merge preserves the shared Skill ranking and bounds tags',async()=>{
+ const s=setup();const alpha=s.skill(0,'soil-quality');writeFileSync(join(alpha,'SKILL.md'),'---\nname: soil-quality\ndescription: soil assessment\ntags: ['+Array.from({length:30},()=> 'x'.repeat(100)).join(',')+']\n---\nbody')
+ const beta=s.skill(0,'beta');writeFileSync(join(beta,'SKILL.md'),'---\nname: beta\ndescription: soil quality assessment\n---\nbody')
+ const h=createResourceHost(s.opts), skill=await s.search(h,{kind:'skill',query:'soil quality'}), all=await s.search(h,{query:'soil quality'})
+ expect(all.items.filter((x:{kind:string})=>x.kind==='skill').map((x:{id:string})=>x.id)).toEqual(skill.items.map((x:{id:string})=>x.id))
+ expect(all.items[0].tags.every((t:string)=>t.length<=64)).toBe(true)
 })

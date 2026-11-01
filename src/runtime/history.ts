@@ -1,3 +1,5 @@
+import { z } from "zod"
+import { SkillReadSchema, type SkillReadReceipt } from "../protocol/skill-reads.js"
 import { ASK_USER_QUESTION, QuestionsSchema, validateQuestionAnswer } from "../protocol/questions.js"
 import { displayTerminalRequest } from '../terminal/request.js'
 /**
@@ -16,6 +18,14 @@ import type { RestoredItem } from "./types.js"
 import { 提取案例字段 } from "../cases/results.js"
 import { 出方案工具名, type 方案 } from "../protocol/plan.js"
 
+// A symbol cannot be forged by JSON in a chat message. Only host custom entries get this marker.
+const hostSkillRead = Symbol("host-skill-read")
+const customSkillReadSchema = z.object({
+  id: z.string().min(1).max(512), skillRead: SkillReadSchema,
+  at: z.number().int().nonnegative().max(8_640_000_000_000_000).optional(),
+}).strict()
+const trustedSkillTools = new Set(["use_skill", "read", "resource_read"])
+
 /** pi 记下的一条消息。**只声明我们真的读的那几个字段** */
 export type 历史消息 =
   | { role: "user"; content: string | { type: string; text?: string }[]; timestamp?: number }
@@ -24,9 +34,10 @@ export type 历史消息 =
       content: ({ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; arguments: unknown } | { type: "thinking" })[]
       timestamp?: number
     }
-  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[]; isError?: boolean; details?: { truncation?: { truncated?: boolean }; fullOutputPath?: string }; timestamp?: number }
+  | { role: "toolResult"; toolCallId: string; toolName: string; content: { type: string; text?: string }[]; isError?: boolean; details?: { truncation?: { truncated?: boolean }; fullOutputPath?: string; skillRead?: unknown }; timestamp?: number }
   /** 不是 pi 的消息：`getBranch()` 里的 `compaction` 条目，`history()` 自己造的记号（2026-09-27） */
   | { role: "compaction"; summary: string; tokensBefore: number }
+  | { role: "skill_read"; id: string; skillRead: SkillReadReceipt; timestamp?: number; [hostSkillRead]: true }
 
 /** 内容可能是一段字符串，也可能是一串块。**图片不还原成文字**，如实标一下 */
 export function 取文本(content: string | { type: string; text?: string }[]): string {
@@ -46,13 +57,20 @@ function 时刻(m: { timestamp?: unknown }): { at: number } | Record<string, nev
  * 走完整的那条路径、不走 `buildSessionContext()`（那是给模型的，压缩过就只剩摘要），见 `native.ts` 的 `history()`。
  */
 export function 分支转消息(分支: readonly unknown[]): 历史消息[] {
-  return (分支 as { type: string; message?: unknown; summary?: string; tokensBefore?: number }[]).flatMap((x): 历史消息[] =>
-    x.type === "message" && x.message
-      ? [x.message as 历史消息]
-      : x.type === "compaction"
-        ? [{ role: "compaction", summary: x.summary ?? "", tokensBefore: x.tokensBefore ?? 0 }]
-        : [],
-  )
+  return (分支 as { type: string; message?: unknown; summary?: string; tokensBefore?: number; customType?: string; data?: unknown }[]).flatMap((x): 历史消息[] => {
+    if (x.type === "message" && x.message) {
+      // Internal synthetic records must come from a host custom entry, never a message role.
+      if ((x.message as { role?: unknown }).role === "skill_read") return []
+      return [x.message as 历史消息]
+    }
+    if (x.type === "compaction") return [{ role: "compaction", summary: x.summary ?? "", tokensBefore: x.tokensBefore ?? 0 }]
+    if (x.type === "custom" && x.customType === "dawn-skill-read") {
+      const parsed = customSkillReadSchema.safeParse(x.data)
+      if (parsed.success) return [{ role: "skill_read", id: parsed.data.id, skillRead: parsed.data.skillRead,
+        ...(parsed.data.at === undefined ? {} : { timestamp: parsed.data.at }), [hostSkillRead]: true }]
+    }
+    return []
+  })
 }
 
 export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[] {
@@ -60,6 +78,10 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
   const 待补结果 = new Map<string, RestoredItem & { kind: "tool" }>()
 
   for (const m of 消息) {
+    if (m.role === "skill_read") {
+      if (m[hostSkillRead]) 出.push({ kind: "tool", id: m.id, name: "skill_read", input: {}, result: "", skillRead: m.skillRead, ...时刻(m) })
+      continue
+    }
     if (m.role === "compaction") {
       出.push({ kind: "compaction", summary: m.summary, tokensBefore: m.tokensBefore })
       continue
@@ -91,7 +113,10 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
     }
     if (m.role === "toolResult") {
       const 条 = 待补结果.get(m.toolCallId)
+      const skillRead = !m.isError && trustedSkillTools.has(m.toolName) && (!条 || 条.name === m.toolName)
+        ? SkillReadSchema.safeParse(m.details?.skillRead) : undefined
       const metadata = {
+        ...(skillRead?.success ? { skillRead: skillRead.data } : {}),
         ...(typeof m.isError === 'boolean' ? { isError: m.isError } : {}),
         ...(m.details?.truncation?.truncated ? { truncated: true } : {}),
         ...(typeof m.details?.fullOutputPath === 'string' && m.details.fullOutputPath ? { fullOutputPath: m.details.fullOutputPath } : {}),
@@ -110,6 +135,7 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
         continue
       }
       条.result = 取文本(m.content)
+      delete 条.skillRead
       Object.assign(条, metadata)
     }
   }

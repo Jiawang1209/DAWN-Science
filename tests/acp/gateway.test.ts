@@ -11,11 +11,13 @@
  * 这里连「另一端」都是真的——真进程、真 stdio、真 socket。
  */
 import { afterEach, describe, expect, it } from "vitest"
-import { mkdtempSync, rmSync } from "node:fs"
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import { 建调用, 工具清单 } from "../../src/acp/tools.js"
+import { loadSkillCatalog } from "../../src/skills/catalog.js"
 import { 开网关, 网关地址, type 网关工具 } from "../../src/acp/gateway.js"
 
 const 服务器脚本 = join(import.meta.dirname, "..", "..", "scripts", "dawn-mcp-server.mjs")
@@ -146,4 +148,29 @@ describe("跨平台", () => {
       expect(网关地址("abc", "/私有", p)).toBe("/私有/abc.sock")
     }
   })
+})
+
+
+it("shared Skill search/read and its host receipt survive the real local MCP transport", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "dawn-gateway-skills-"))
+  收摊.push(() => rmSync(directory, { recursive: true, force: true }))
+  const packageDir = join(directory, "soil")
+  mkdirSync(packageDir)
+  writeFileSync(join(packageDir, "SKILL.md"), "---\nname: soil\ndescription: soil sampling workflow\n---\nRead sampling instructions.")
+  const reads: unknown[] = []
+  const { client } = await 接起来({
+    工具们: () => 工具清单(false),
+    调用: 建调用({ 项目of: () => undefined, 查溯源: () => undefined, 记一笔: () => {},
+      技能目录: () => loadSkillCatalog({ roots: [{ path: directory, scope: "global" }] }),
+      记录技能读取: (_sessionId, receipt) => { reads.push(receipt) },
+    }),
+  })
+  const search = await client.callTool({ name: "dawn_search_skills", arguments: { query: "soil" } })
+  expect(JSON.parse((search.content as { text: string }[])[0]!.text).items[0]).toMatchObject({ name: "soil", scope: "global" })
+  expect(reads).toHaveLength(0)
+  const read = await client.callTool({ name: "dawn_use_skill", arguments: { name: "soil" } })
+  const content = JSON.parse((read.content as { text: string }[])[0]!.text)
+  expect(content.content).toContain("Read sampling instructions.")
+  expect(content.skillRead).toMatchObject({ name: "soil", via: "acp", partial: false })
+  expect(reads).toEqual([content.skillRead])
 })

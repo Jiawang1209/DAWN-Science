@@ -13,6 +13,11 @@ const words = (text: string) => [...segmenter.segment(text)].filter(part => part
 const functionalWords = new Set(["相关", "关于", "查询", "检索", "记忆", "请问", "一下", "the", "and", "or", "of", "for", "to", "in", "with", "please", "find", "search", "memory"])
 const hasHan = (text: string) => /\p{Script=Han}/u.test(text)
 
+/** Shared exact-phrase priority for mixed catalogs; does not expand memory matching. */
+export function resourceMatchesPhrase(entry: SearchableResource, query: string): boolean {
+  return normalize(`${entry.name}\n${entry.searchText ?? entry.description}\n${entry.content ?? ""}`).includes(normalize(query))
+}
+
 export function searchResources<T extends SearchableResource>(entries: readonly T[], query: string): T[] {
   const phrase = normalize(query)
   if (!phrase) return [...entries]
@@ -20,7 +25,7 @@ export function searchResources<T extends SearchableResource>(entries: readonly 
   const needsWordBoundaries = terms.some(term => !hasHan(term))
   const ranked = entries.map((entry, index) => {
     const text = normalize(`${entry.name}\n${entry.searchText ?? entry.description}\n${entry.content ?? ""}`)
-    const exact = text.includes(phrase)
+    const exact = resourceMatchesPhrase(entry, phrase)
     if (exact) return {entry, index, exact, hits: 0, length: 0}
     // 技能继续只查名称/用途的字面匹配；记忆至少两个有效词命中，避免一个泛词扩大目录。
     if (entry.kind !== "memory" || terms.length < 2) return undefined

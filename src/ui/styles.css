@@ -9410,3 +9410,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .skill-package-preview { grid-template-columns: minmax(0, 1fr); }
   .skill-package-preview nav { max-height: 150px; border-right: 0; border-bottom: 1px solid var(--dawn-stroke-2); }
 }
+
+.skill-read-summary { display: flex; flex-direction: column; gap: 3px; padding: 0 12px 8px; overflow-wrap: anywhere; }
+.skill-read-details dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 0 0 8px; }
+.skill-read-details dd { margin: 0; overflow-wrap: anywhere; }
+.skill-read-details dt { color: var(--dawn-text-2); }

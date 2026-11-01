@@ -16,6 +16,16 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "已读取技能 {0}": "Read Skill {0}",
+  "项目技能": "Project Skill",
+  "内置技能": "Built-in Skill",
+  "部分内容": "Partial content",
+  "完整内容": "Full content",
+  "已读资源": "Read resource",
+  "读取方式": "Read via",
+  "内容 SHA-256": "Content SHA-256",
+  "技能说明": "Skill instructions",
+  "仅记录技能说明已读取，不代表代码已执行或科学结论已验证。": "Records instruction reads only; does not mean code was executed or scientific conclusions verified.",
   "标签已保存": "Tags saved",
   "刷新详情": "Re-read package",
   "标签管理": "Tag management",

@@ -1,3 +1,4 @@
+import { SkillReadSummary, SkillReadDetails } from "./skill-read-record.js"
 import { ServiceMark } from "./service-mark.js"
 import { WorkspaceMenu, type WorkspaceMenuData } from "./workspace-menu.js"
 import { AnalysisRouteSummary } from "./analysis-route.js"
@@ -6807,6 +6808,7 @@ export function ToolRow({
    * 但对错固定红绿——红说的是「它错了」，而它是被你停下的。所以：不挂 `error` 类（不画红线、不写红字）、
    * 不自己弹开、不补那句「失败了但没给原因」。只换字不换长相，等于没分开。
    */
+  const skillRead = item.status === "ok" && !item.interrupted ? item.skillRead : undefined
   const 失败 = item.status === "error" && !item.interrupted
   // **表是模块级常量**：在那里 `t()` 会在 `loadLang()` 之前跑，取到的是默认语言
   const label = t(状态msgid)
@@ -6863,7 +6865,7 @@ export function ToolRow({
       >
         <三角图标 className={`caret${open ? " open" : ""}`} />
         <span className="tool-name">
-          {mark} {summary?.label ?? item.name}
+          {mark} {summary?.label ?? (item.name === "skill_read" && skillRead ? t("技能说明") : item.name)}
         </span>
         {/* **折叠时也要看得见做了什么**：命令本身就是最有信息量的那一行。
             展开之后它在下面完整出现，这里就不重复了 */}
@@ -6894,8 +6896,10 @@ export function ToolRow({
         {item.status === "running" ? <Thinking /> : null}
       </Button>
 
+      {skillRead ? <SkillReadSummary receipt={skillRead} /> : null}
       {open ? (
         <div className="tool-body">
+          {skillRead ? <SkillReadDetails receipt={skillRead} /> : null}
           {summary ? <p className="hint">{item.name}</p> : null}
           {input.text ? <pre className="tool-input">{input.text}</pre> : null}
           {input.truncated ? <span className="hint">{t("入参已截断")}</span> : null}
@@ -7034,6 +7038,8 @@ function ToolGroupRowImpl({
         ) : null}
         {显示运行文案 ? <Thinking /> : null}
       </Button>
+      {!open ? tools.filter(x => x.status === "ok" && !x.interrupted && x.skillRead).map(x =>
+        <SkillReadSummary key={x.id} receipt={x.skillRead!} />) : null}
       {open ? (
         <div className="tool-group-body">
           {tools.map((x) => (

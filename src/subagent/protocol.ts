@@ -1,3 +1,5 @@
+import { z } from "zod"
+import { SkillReadSchema } from "../protocol/skill-reads.js"
 /**
  * 父子进程之间的契约（①-B″ · S1）。
  *
@@ -79,12 +81,17 @@ export interface SubagentCallMessage {
  * 子 → 父：一条过程（2026-09-27，spec §4.1）。形状就是 `AgentEvent` 同名几种**去掉 `sessionId`**——
  * 父侧补上子转录的 id 就能原样交给事件中枢，不另写一套归并。用量本轮不吐（spec §4.1）。
  */
-export type 子事件 =
-  | { kind: "output"; data: string }
-  | { kind: "thinking"; delta: string }
-  | { kind: "tool_start"; toolCallId: string; toolName: string; input: unknown }
-  | { kind: "tool_end"; toolCallId: string; toolName: string; isError: boolean; text: string; truncated: boolean; bytes: number }
-  | { kind: "turn_end" }
+export const 子事件Schema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("output"), data: z.string() }).strict(),
+  z.object({ kind: z.literal("thinking"), delta: z.string() }).strict(),
+  z.object({ kind: z.literal("tool_start"), toolCallId: z.string(), toolName: z.string(), input: z.unknown() }).strict(),
+  z.object({ kind: z.literal("tool_end"), toolCallId: z.string(), toolName: z.string(), isError: z.boolean(),
+    text: z.string(), truncated: z.boolean(), bytes: z.number().int().nonnegative(),
+    interrupted: z.literal(true).optional(), skillRead: SkillReadSchema.optional(),
+  }).strict().refine(event => !event.skillRead || (!event.isError && !event.interrupted && ["resource_read", "use_skill", "read"].includes(event.toolName)), "Unsuccessful reads cannot carry a receipt"),
+  z.object({ kind: z.literal("turn_end") }).strict(),
+])
+export type 子事件 = z.infer<typeof 子事件Schema>
 
 export interface SubagentEventMessage {
   type: "event"

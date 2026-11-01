@@ -1,3 +1,4 @@
+import { SkillReadSchema } from "../protocol/skill-reads.js"
 import { ASK_USER_QUESTION } from "../protocol/questions.js"
 /**
  * 会话记录中枢（返工 R4 重写）。
@@ -844,6 +845,7 @@ export class SessionTranscripts {
       case "tool_end": {
         // 交成了的不画（卡片就是它）；交失败的（缺节）照画——模型要改，人也该看见它交错了
         if ((event.toolName === 出方案工具名 || event.toolName === ASK_USER_QUESTION) && !event.isError) return
+        const skillRead = !event.isError && !event.interrupted ? SkillReadSchema.safeParse(event.skillRead) : undefined
         const id = event.toolCallId || `tool${e.revision + 1}`
         const 先前 = e.items.find((i) => i.id === id)
         // 没见过 start 的 end 也照记——**宁可多一条，不可丢一条**
@@ -857,6 +859,7 @@ export class SessionTranscripts {
           ...(event.interrupted ? { interrupted: true as const } : {}),
           result: event.text,
           ...(event.caseResults ? { caseResults: event.caseResults } : {}),
+          ...(skillRead?.success ? { skillRead: skillRead.data } : {}),
           // **截断的三件套一起走。** 只传正文等于把「这是残缺品」这个事实丢掉，
           // 界面就只能猜——那正是修复前的样子（规格 7.5）
           resultTruncated: event.truncated,

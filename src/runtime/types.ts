@@ -494,6 +494,8 @@ export type AgentEvent =
       fullOutputPath?: string
       /** 截断前提取的案例摘要；不含代码、笔记或图片数据。 */
       caseResults?: import("../protocol/cases.js").案例[]
+      /** Host-observed instruction read; never an execution or verification claim. */
+      skillRead?: import("../protocol/skill-reads.js").SkillReadReceipt
       /** 停止 / 调整方向时被停下的（2026-09-25）：运行时在 `abort()` 期间收到的结束都带它。只在 true 时出现 */
       interrupted?: true
     }
@@ -549,7 +551,7 @@ export interface ContextUsage {
  */
 export type RestoredItem =
   | { kind: "text"; who: "user" | "agent"; text: string; at?: number; images?: readonly string[] }
-  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; caseResults?: import("../protocol/cases.js").案例[]; isError?: boolean; truncated?: boolean; fullOutputPath?: string; at?: number }
+  | { kind: "tool"; id: string; name: string; input: unknown; result?: string; caseResults?: import("../protocol/cases.js").案例[]; skillRead?: import("../protocol/skill-reads.js").SkillReadReceipt; isError?: boolean; truncated?: boolean; fullOutputPath?: string; at?: number }
   /** 这里压缩过（2026-09-27）：pi 记录里的 `compaction` 条目，落在它发生的位置。记录里没存起因 */
   | { kind: "compaction"; summary: string; tokensBefore: number }
   /**

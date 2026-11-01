@@ -598,7 +598,7 @@
 /** 8.33: remote terminals share the existing SSH connection and owning conversation. */
 /** 8.34: provider catalog exposes credential-free endpoint defaults for setup. */
 /** 8.35: endpoint defaults include per-model API and base URL metadata. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.38"
+export const WORKBENCH_PROTOCOL_VERSION = "8.39"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 
@@ -631,3 +631,5 @@ export function isCompatible(uiVersion: string, serverVersion: string): boolean 
 
 /** 8.37: public GitHub Skill discovery, pinned previews, installation and offline origin records. */
 /** 8.38: installed Skill package inspection, personal tags, bulk invocation and live session refresh. */
+
+/** 8.39: host-issued Skill instruction-read receipts on tool records. */

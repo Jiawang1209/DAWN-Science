@@ -21,6 +21,7 @@ export function childResourceFactory(opts: NativeRuntimeOptions, spec: SessionSp
         ...(skills?.自带目录 ? [{path: skills.自带目录, scope: "builtin" as const}] : []),
       ],
       builtinMode: skills?.自带档,
+      tagsOverride: skills?.tagOverride,
       ...(memory ? {memory: {store: new MemoryStore(memory.memoriesDir), enabled: true, branch: gitBranch(workspace)}} : {}),
       authorize: (tool, params) => {
         const decision = opts.gate?.(tool, params, {workspace: spec.workspace, sessionId: spec.sessionId})

@@ -28,3 +28,15 @@ it("每轮重新读取记忆开关；远端会话不读取本机同名项目资�
   expect(JSON.parse(await remote.call("resource_search", {kind: "memory"})).total).toBe(1)
   expect(JSON.parse(await remote.call("resource_search", {kind: "skill"})).total).toBe(0)
 })
+
+it('injects settings tag overrides into the shared child catalog, including an empty override',async()=>{
+ const workspace=mkdtempSync(join(tmpdir(),'dawn-child-tags-'));dirs.push(workspace)
+ const base=join(workspace,'.dawn/skills/tagged');mkdirSync(base,{recursive:true})
+ const file=join(base,'SKILL.md');writeFileSync(file,'---\nname: tagged\ndescription: unrelated\ntags: [manifest-tag]\n---\nbody')
+ let tags:readonly string[]=['settings-tag']
+ const opts:NativeRuntimeOptions={skills:{项目目录名:'.dawn/skills',tagOverride:()=>tags}}
+ const factory=childResourceFactory(opts,{sessionId:'tags',workspace,sessionDir:join(workspace,'session')})!
+ expect(JSON.parse(await factory().call('resource_search',{kind:'skill',query:'settings-tag'})).items[0].tags).toEqual(['settings-tag'])
+ tags=[]
+ expect(JSON.parse(await factory().call('resource_search',{kind:'skill',query:'manifest-tag'})).total).toBe(0)
+})

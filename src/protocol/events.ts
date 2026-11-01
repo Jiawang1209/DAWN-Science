@@ -1,3 +1,4 @@
+import { SkillReadSchema } from "./skill-reads.js"
 import { AnalysisRouteSchema } from './analysis-route.js'
 /**
  * 会话快照与增量更新（返工 R4 重写）。
@@ -115,6 +116,8 @@ const ToolItem = z
     result: z.string().optional(),
     /** 完整工具输出中提取的案例字段，不受 result 文本预算影响。 */
     caseResults: z.array(CaseResultSchema).optional(),
+    /** Host-issued evidence of successfully delivered Skill instructions. */
+    skillRead: SkillReadSchema.optional(),
     /**
      * 结果被截断了。**必须出声**（规格 7.5）。
      *

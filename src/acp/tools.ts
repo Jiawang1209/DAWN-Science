@@ -19,15 +19,22 @@
  * 所以**刻意不做通用门面**：门面省的是 schema 体积，
  * 代价是账本上留下的是一句 `use_tool`，而不是「它到底调了什么」。
  */
-import { readFileSync } from "node:fs"
+import { randomUUID } from "node:crypto"
+import { z } from "zod"
+import { readSkill, searchSkills, type SkillCatalog } from "../skills/catalog.js"
+import { SkillReadSchema, type SkillReadReceipt } from "../protocol/skill-reads.js"
 import type { 网关工具 } from "./gateway.js"
 
 /** 这一层要用到的外部能力。**全部注入**——这个文件不认识数据库，也不认识 Electron */
 export interface 工具装配 {
   /** 这个会话属于哪个项目。**没有项目的会话拿不到项目级的东西** */
   项目of: (sessionId: string) => string | undefined
-  /** 列出可用技能（与「Agent Skills」那一屏同一条路，**两处分家就会各说各的**） */
-  列技能: (projectId: string | undefined) => Promise<{ name: string; description: string; filePath: string }[]>
+  /** Legacy assembly property; controlled Skill tools now require 技能目录. */
+  列技能?: (projectId: string | undefined) => Promise<{ name: string; description: string; filePath: string }[]>
+  /** Shared discovery and read policy. Missing wiring never falls back to arbitrary file reads. */
+  技能目录?: (sessionId: string) => SkillCatalog | Promise<SkillCatalog>
+  /** Host event only; a receipt says instructions were read, never that code ran. */
+  记录技能读取?: (sessionId: string, skillRead: SkillReadReceipt, toolCallId: string) => void
   /** 查一个产物是哪一次 Run 出的 */
   查溯源: (resourceId: string) => { producingRunId?: string | undefined; recordedAt?: string | undefined } | undefined
   /**
@@ -52,7 +59,7 @@ export interface 工具装配 {
   记一笔: (
     sessionId: string,
     requestType: string,
-    详情: { 出错: boolean; 说明?: string },
+    详情: { 出错: boolean; 说明?: string; skillRead?: SkillReadReceipt; toolCallId?: string },
   ) => void
   /** 子 agent 的名册（7.20，两级发现的第二级）：名字、分组、说明 */
   列子agent?: (sessionId: string) => Promise<{ name: string; description: string; group?: string | undefined }[]>
@@ -67,6 +74,14 @@ export interface 工具装配 {
     列: () => Promise<{ id: string; name: string; status: string; schedule: Record<string, unknown>; nextAt?: string; lastRun?: { status: string; summary?: string; error?: { message: string } } }[]>
     删: (id: string) => Promise<void>
   }
+}
+
+interface 工具结果 { 文本: string; 出错?: boolean; details?: { skillRead: SkillReadReceipt } }
+const searchArgs = z.object({ query: z.string().max(500), offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(), limit: z.number().int().min(1).max(20).optional() }).strict()
+const readArgs = z.object({ name: z.string().min(1).max(512), path: z.string().min(1).max(4000).optional(), offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(), limit: z.number().int().min(1).max(4000).optional() }).strict()
+async function catalogFor(ports: 工具装配, sessionId: string): Promise<SkillCatalog> {
+  if (!ports.技能目录) throw new Error("本次运行没有装配共享技能目录")
+  return ports.技能目录(sessionId)
 }
 
 const 空参数 = { type: "object", properties: {}, additionalProperties: false }
@@ -96,16 +111,34 @@ export function 工具清单(有内核: boolean): 网关工具[] {
     {
       name: "dawn_list_skills",
       description:
-        "列出当前项目里可用的 Agent Skills（DAWN 管理的技能，含项目级、全局与自带三处）。返回名字、说明与文件路径。",
+        "兼容入口：列出当前可自动调用的 Agent Skills；按项目、全局、自带去重，排除 manual/off。大量技能请用 dawn_search_skills 分页检索。",
       schema: 空参数,
+    },
+    {
+      name: "dawn_search_skills",
+      description: "按具体任务词检索 Agent Skills 的名称、说明和标签，返回分页候选、来源与字面匹配依据。普通概念解释无需调用；不返回正文或执行代码。",
+      schema: {
+        type: "object",
+        properties: {
+          query: { type: "string", maxLength: 500 },
+          offset: { type: "integer", minimum: 0 },
+          limit: { type: "integer", minimum: 1, maximum: 20 },
+        },
+        required: ["query"], additionalProperties: false,
+      },
     },
     {
       name: "dawn_use_skill",
       description:
-        "读出一个 Agent Skill 的完整内容（SKILL.md）。先用 dawn_list_skills 拿到名字。",
+        "按检索结果的精确名称分页读取 Skill 说明或包内相对参考文件。排除 manual/off，不执行脚本、改变权限或验证科学结论。",
       schema: {
         type: "object",
-        properties: { name: { type: "string", description: "技能名" } },
+        properties: {
+          name: { type: "string", minLength: 1, maxLength: 512, description: "技能名" },
+          path: { type: "string", maxLength: 4000, description: "包内相对文本资源路径；默认 SKILL.md" },
+          offset: { type: "integer", minimum: 0 },
+          limit: { type: "integer", minimum: 1, maximum: 4000 },
+        },
         required: ["name"],
         additionalProperties: false,
       },
@@ -184,12 +217,16 @@ export function 建调用(装配: 工具装配) {
     sessionId: string,
     工具名: string,
     参数: Record<string, unknown>,
-  ): Promise<{ 文本: string; 出错?: boolean }> => {
+  ): Promise<工具结果> => {
     const 记 = (出错: boolean, 说明?: string) =>
       装配.记一笔(sessionId, `acp_tool:${工具名}`, { 出错, ...(说明 ? { 说明 } : {}) })
     try {
       const r = await 干(装配, sessionId, 工具名, 参数)
-      记(false)
+      if (r.details?.skillRead && !r.出错) {
+        const toolCallId = `acp-skill-read:${randomUUID()}`
+        装配.记一笔(sessionId, `acp_tool:${工具名}`, { 出错: false, skillRead: r.details.skillRead, toolCallId })
+        装配.记录技能读取?.(sessionId, r.details.skillRead, toolCallId)
+      } else 记(Boolean(r.出错))
       return r
     } catch (e) {
       const 因 = e instanceof Error ? e.message : String(e)
@@ -205,35 +242,27 @@ async function 干(
   sessionId: string,
   工具名: string,
   参数: Record<string, unknown>,
-): Promise<{ 文本: string; 出错?: boolean }> {
-  const 项目 = 装配.项目of(sessionId)
-
+): Promise<工具结果> {
   if (工具名 === "dawn_list_skills") {
-    const 技能 = await 装配.列技能(项目)
-    if (技能.length === 0) {
-      // **如实说「没有」**，不返回一个空列表让它自己猜
-      return { 文本: "这个项目里没有可用的 Agent Skill。" }
-    }
-    return {
-      文本: 技能.map((s) => `- ${s.name}：${s.description}`).join("\n"),
-    }
+    const catalog = await catalogFor(装配, sessionId)
+    const page = searchSkills(catalog.skills, "", { limit: 20 })
+    const text = page.items.map(skill => `- ${skill.name}：${skill.description}`).join("\n")
+    return { 文本: text ? text + (page.nextOffset === undefined ? "" : `\n仅列前 20 项；请用 dawn_search_skills（query: \"\", offset: ${page.nextOffset}）继续。`) : "这个项目里没有可用的 Agent Skill。" }
   }
-
+  if (工具名 === "dawn_search_skills") {
+    const args = searchArgs.parse(参数)
+    const catalog = await catalogFor(装配, sessionId)
+    const problems = catalog.problems.slice(0, 20).map(problem => ({ path: problem.path.slice(0, 2048), reason: problem.reason.slice(0, 512) }))
+    const problemsTruncated = problems.length < catalog.problems.length || catalog.problems.some(problem => problem.path.length > 2048 || problem.reason.length > 512)
+    return { 文本: JSON.stringify({ ...searchSkills(catalog.skills, args.query, { ...(args.offset === undefined ? {} : { offset: args.offset }), ...(args.limit === undefined ? {} : { limit: args.limit }) }),
+      problems, problemsTotal: catalog.problems.length, problemsTruncated }) }
+  }
   if (工具名 === "dawn_use_skill") {
-    const 名 = 参数["name"]
-    if (typeof 名 !== "string") throw new Error("要给 name")
-    const 技能 = await 装配.列技能(项目)
-    const 命中 = 技能.find((s) => s.name === 名)
-    /**
-     * **找不到就把有哪些列出来**。只说「没有这个技能」的话，
-     * 模型下一步多半是再猜一个名字——而那是可以避免的一轮。
-     */
-    if (!命中) {
-      throw new Error(
-        `没有叫「${名}」的技能。现在有：${技能.map((s) => s.name).join("、") || "（一个都没有）"}`,
-      )
-    }
-    return { 文本: readFileSync(命中.filePath, "utf8") }
+    const args = readArgs.parse(参数)
+    const read = readSkill(await catalogFor(装配, sessionId), { name: args.name, ...(args.path === undefined ? {} : { path: args.path }), ...(args.offset === undefined ? {} : { offset: args.offset }), ...(args.limit === undefined ? {} : { limit: args.limit }) })
+    const skillRead = SkillReadSchema.parse({ name: read.name, manifestPath: read.manifestPath, resourcePath: read.resourcePath,
+      scope: read.scope, via: "acp", contentSha256: read.contentSha256, partial: read.partial })
+    return { 文本: JSON.stringify({ ...read, skillRead }), details: { skillRead } }
   }
 
   if (工具名 === "dawn_provenance") {

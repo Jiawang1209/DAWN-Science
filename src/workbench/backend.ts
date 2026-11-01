@@ -1,3 +1,4 @@
+import { readAcpSkillHistory } from "../acp/skill-read-history.js"
 import { assertProjectInstallRoot } from "../skills/project-install-root.js"
 import { SkillDiscoveryService } from "../skills/discovery.js"
 import { installedFiles, readInstalledFile, manifestTags, normalizeSkillTags } from "../skills/installed.js"
@@ -2716,6 +2717,16 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          */
         const 记录 = sessions.get(sessionId)
         const restoringBots = !!记录 && !sessions.isLive(sessionId)
+        // ACP has no host chat replay/resume port. A closed receipt-only view can still show durable host evidence.
+        if (记录?.projectId && !sessions.isLive(sessionId) && registry.agents[记录.agentId]?.kind === "acp") {
+          const skillReads = readAcpSkillHistory(runs, 记录.projectId, sessionId)
+          if (skillReads.length > 0) {
+            events.track(sessionId, "acp", { 已结束: true })
+            events.restore(sessionId, [...skillReads, { type: "notice", id: `acp-skill-read-history:${sessionId}`,
+              text: "仅恢复了已记录的技能读取凭据；完整 ACP 对话未恢复，此类会话暂不支持接着上一次聊。" }])
+            return events.subscribe(sessionId)
+          }
+        }
         // 本进程仍在运行才是活跃的依据；修复被另一个旧实例误写的数据库状态。
         if (记录?.state === "exited" && sessions.isLive(sessionId)) await sessions.resume(sessionId)
         /** 续接为什么没成。**留着**，下面那句订阅失败时要拿它说话 */

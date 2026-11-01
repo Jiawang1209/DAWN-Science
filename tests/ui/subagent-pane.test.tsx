@@ -1,6 +1,7 @@
 /** 坞里「子 agent」那一格（2026-09-27，spec §2.2 草图 A） */
 import { afterEach, describe, expect, it } from "vitest"
 import { render, screen, fireEvent, cleanup, act } from "@testing-library/react"
+import { receipt } from "../fixtures/skill-read.js"
 import { SubagentPane } from "../../src/ui/subagent-pane.js"
 import { 子槽, $子agent信息, $子转录id, 看子agent } from "../../src/ui/state/subagent-view.js"
 import type { TranscriptItem } from "../../src/protocol/index.js"
@@ -23,6 +24,18 @@ const 看 = (p: Partial<Parameters<typeof SubagentPane>[0]> = {}) =>
   render(<SubagentPane groups={[组]} onPick={() => {}} onBack={() => {}} onAsk={async () => {}} {...p} />)
 
 describe("子 agent 那一格", () => {
+  it("子任务技能读取凭据在工具折叠时仍可见，展开后可查哈希", () => {
+    $子转录id.set("s#sub:c1:0")
+    子槽.setItems([{type: "tool", id: "skill-read", name: "resource_read", input: {id: "skill:soil"}, status: "ok", skillRead: {...receipt, via: "resource"}}])
+    $子agent信息.set({agent: "data-auditor", task: "读取说明", status: "ok", canAsk: true})
+    const view = 看()
+    expect(screen.getByText("已读取技能 soil-analysis")).toBeTruthy()
+    expect(screen.queryByText(receipt.contentSha256)).toBeNull()
+    fireEvent.click(view.container.querySelector(".tool-head")!)
+    expect(screen.getByText(receipt.contentSha256)).toBeTruthy()
+    expect(screen.getByText("仅记录技能说明已读取，不代表代码已执行或科学结论已验证。")).toBeTruthy()
+  })
+
   it("紧凑过程不重复头像，资源ID仅在展开参数中出现，原始交回文本保留", () => {
     $子转录id.set("s#sub:c1:0")
     子槽.setItems([

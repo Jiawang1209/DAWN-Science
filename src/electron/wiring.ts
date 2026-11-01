@@ -1,3 +1,5 @@
+import { loadSkillCatalog } from "../skills/catalog.js"
+import { normalizeSkillTags } from "../skills/installed.js"
 import { UniProtClient } from "../science/uniprot.js"
 import { SraClient } from "../science/sra.js"
 import { GeoClient } from "../science/geo.js"
@@ -698,6 +700,15 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     全局目录: opts.skillsDir ?? join(homedir(), "DAWN", "skills"),
     项目目录名: join(".dawn", "skills"),
     ...(opts.builtinSkillsDir ? { 自带目录: opts.builtinSkillsDir } : {}),
+    /** Personal tags share the installed catalog setting; [] deliberately clears package tags. */
+    tagOverride: (filePath: string): readonly string[] | undefined => {
+      const raw = settingsStore.get(`skill.tags.${resolve(filePath)}`)
+      if (raw === undefined) return undefined
+      try {
+        const value: unknown = JSON.parse(raw)
+        return Array.isArray(value) && value.every(tag => typeof tag === "string") ? normalizeSkillTags(value) : undefined
+      } catch { return undefined }
+    },
     /** 自带技能的档位：设置里那把键（2026-08-23）。没记过 = 按文件 */
     自带档: (name: string) => {
       const v = settingsStore.get(`skill.mode.${name}`)
@@ -1712,10 +1723,29 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     调用: 建调用({
       跑内核,
       项目of: (sessionId) => sessionStore.get(sessionId)?.projectId,
-      // **与「Agent Skills」那一屏同一条路**：两处分家就会各说各的
-      列技能: async (projectId) => {
-        const r = await backend.listAgentSkills(projectId ? { projectId } : {})
-        return (r as { skills?: { name: string; description: string; filePath: string }[] }).skills ?? []
+      技能目录: (sessionId) => {
+        const rec = sessionStore.get(sessionId)
+        if (!rec) throw new Error(`没有这段会话：${sessionId}`)
+        // A remote cwd belongs to another filesystem; only host global/builtin roots apply.
+        const workspace = rec.projectId && !rec.connectionId ? rec.workspace : undefined
+        return loadSkillCatalog({
+          roots: [
+            ...(workspace ? [{ path: join(workspace, 技能位置.项目目录名), scope: "project" as const }] : []),
+            { path: 技能位置.全局目录, scope: "global" as const },
+            ...(技能位置.自带目录 ? [{ path: 技能位置.自带目录, scope: "builtin" as const }] : []),
+          ],
+          ...(workspace ? { workspace } : {}),
+          builtinMode: 技能位置.自带档,
+          tagsOverride: 技能位置.tagOverride,
+          authorize: (tool, params) => {
+            const decision = 权限门(tool, params, { workspace: rec.workspace, sessionId, ...(rec.connectionId ? { remote: true } : {}) })
+            return decision.kind === "allow" ? undefined : decision.reason
+          },
+        })
+      },
+      记录技能读取: (sessionId, skillRead, toolCallId) => {
+        events.ingest(sessionId, { kind: "tool_end", sessionId, toolCallId, toolName: "acp_skill_read", skillRead,
+          text: "", isError: false, truncated: false, bytes: 0 })
       },
       查溯源: (resourceId) => runStore.getProvenance(resourceId),
       /**
@@ -1771,6 +1801,13 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
           finishedAt: 此刻,
           hasError: 详情.出错,
           ...(详情.说明 ? { terminalReason: 详情.说明 } : {}),
+          // ACP has no host transcript history() port. Keep typed evidence in the existing durable ledger.
+          ...(详情.skillRead ? {
+            terminalReason: JSON.stringify({ skillRead: 详情.skillRead }),
+            filesRead: [resolve(dirname(详情.skillRead.manifestPath), 详情.skillRead.resourcePath)],
+            filesWritten: [],
+          } : {}),
+          ...(详情.toolCallId ? { toolCallId: 详情.toolCallId } : {}),
         })
       },
     }),

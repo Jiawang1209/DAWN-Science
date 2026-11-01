@@ -1,3 +1,4 @@
+import { SkillReadSchema } from "../protocol/skill-reads.js"
 /**
  * pi 事件 → 子事件（2026-09-27，spec §4.1）。**只翻译，不解释**——与 `native.ts` 的 `translate` 同一套判据，
  * 但只留坞里要画的那几种（文字、思考、工具、轮次）。
@@ -33,7 +34,8 @@ interface Pi事件 {
   args?: unknown
   input?: unknown
   isError?: boolean
-  result?: { content?: { text?: string }[]; isError?: boolean }
+  interrupted?: boolean
+  result?: { content?: { text?: string }[]; isError?: boolean; details?: { skillRead?: unknown } }
 }
 
 export function 翻成子事件(raw: unknown): 子事件 | undefined {
@@ -48,12 +50,17 @@ export function 翻成子事件(raw: unknown): 子事件 | undefined {
     case "tool_execution_end": {
       const full = (e.result?.content ?? []).map((c) => c.text ?? "").join("")
       const 截过 = 截工具结果(full)
+      const isError = Boolean(e.isError || e.result?.isError || e.interrupted)
+      const skillRead = !isError && ["resource_read", "use_skill", "read"].includes(String(e.toolName))
+        ? SkillReadSchema.safeParse(e.result?.details?.skillRead) : undefined
       return {
         kind: "tool_end",
         toolCallId: String(e.toolCallId ?? ""),
         toolName: String(e.toolName ?? "?"),
         // **两处任一说失败就是失败**——与 native 那句同一个判据（`||` 不是 `??`：false 不是空值）
-        isError: Boolean(e.isError || e.result?.isError),
+        isError,
+        ...(e.interrupted ? { interrupted: true as const } : {}),
+        ...(skillRead?.success ? { skillRead: skillRead.data } : {}),
         ...截过,
       }
     }

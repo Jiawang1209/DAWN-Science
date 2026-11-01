@@ -32,7 +32,23 @@ Tags initially come from `tags` or `metadata.dawn.tags` in the package frontmatt
 
 Select individual rows, or **Select filtered results**, to change the selected Skills to automatic, manual-only or off. Filtering does not silently select anything; the selected count includes selections outside the current filter. **Deselect** clears them. Bulk changes report individual failures and retain those rows as selected for retry; there is no bulk delete.
 
-**Re-read Skill list** reloads the settings catalog. This is independent from **Refresh conversation Skills**, which refreshes the active built-in conversation's Skill index and prompt for the next turn. It preserves messages, current model, enabled tools, permission settings and Python/R interpreter state. A busy conversation must finish its current operation first. External agents manage their own Skill resources. Previously loaded Skill text remains in conversation history; refresh does not rewrite historical messages.
+**Re-read Skill list** reloads the settings catalog. This is independent from **Refresh conversation Skills**, which refreshes the active built-in conversation's Skill index and prompt for the next turn. It preserves messages, current model, enabled tools, permission settings and Python/R interpreter state. A busy conversation must finish its current operation first. External agents manage their own Skill resources. Previously loaded Skill text remains in conversation history; refresh does not rewrite historical messages. Explicit Skill commands are expanded when they enter the SDK queue: changing a mode later does not erase an already authorized queued snapshot. Its receipt appears only when that snapshot is delivered; fresh reads and commands recheck the current mode.
+
+## Retrieve workflows in a conversation
+
+Native conversations expose `search_skills` and `use_skill`; ACP exposes `dawn_search_skills` and the compatible `dawn_list_skills` / `dawn_use_skill` names. Child tasks use `resource_search` / `resource_read`. They share project > global > builtin precedence, personal tags and the same lexical ranking for Skills. A remote project path is never scanned as a local project directory.
+
+Search uses names, descriptions and tags, with Unicode normalization and a small Chinese/English scientific synonym list. Results include literal matching fields/terms and pagination; they are candidates, not evidence that a method fits the scientific question. Definition-only queries and unrelated chat need no workflow. Uncovered specialist paraphrases can still miss; try a concrete domain term or exact installed name. There are no embedding services or retrieval network calls.
+
+Automatic search excludes manual-only and off Skills after resolving same-name precedence. In native conversations, `/skill:name` explicitly loads a manual Skill. Off Skills cannot be loaded through controlled read routes. Reads recheck policy and package containment; they do not execute a package's scripts or grant any execution permissions. With more than 20 automatic Skills, native conversations use retrieval instead of including every Skill description in the system prompt; slash command entries remain available.
+
+## Instruction-read evidence
+
+Successful controlled reads show **已读取技能 / Read Skill**, scope, relative resource and partial/full status even when tool rows are collapsed. Expand the row for the manifest path, read route and SHA-256 of the delivered text. Paged reads produce separate partial receipts; a search result, failed read or arbitrary JSON in a different tool's output does not create a receipt. Native direct `read` calls inside a known Skill package and actual explicit Skill expansion are also observed. Standalone Shell reads or files opened by an external agent outside DAWN's gateway are outside this guarantee.
+
+Native and child history retain these receipts. ACP gateway reads also persist in the tool ledger. After restart DAWN can reopen ACP Skill receipts as an exited, read-only history view; this does not restore the external agent's full chat or resume its process. Reading instructions is distinct from executing code, applying a workflow successfully or validating scientific conclusions.
+
+Run `npx tsx scripts/evaluate-skills.ts --json /tmp/skill-evaluation.json` for the bounded offline acceptance fixture. See [the evaluation report](superpowers/reports/2026-11-01-skill-retrieval-evaluation.md) for baseline, prompt metadata sizes and limitations; mock-provider integration tests verify the transport/UI rather than real model selection quality.
 
 ## Dock refresh
 

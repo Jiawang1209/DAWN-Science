@@ -6573,7 +6573,26 @@ pre {
 .tree-row .name { flex: 1 1 auto; }
 
 /* ── 技能管理（skills-manage，2026-08-21；清单形状照作者给的 DSH 技能页那张图） ── */
-.skills-actions { display: flex; gap: var(--dawn-space-2); margin-top: var(--dawn-space-2); }
+.skills-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); margin-top: var(--dawn-space-2); }
+.skills-tag-filters, .skills-bulk, .skill-tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); }
+.skills-bulk { padding-block: var(--dawn-space-2); }
+.skill-tag-editor label { display: flex; flex-direction: column; gap: var(--dawn-space-2); }
+.skill-package-browser { display: grid; grid-template-columns: minmax(10rem, 25%) minmax(0, 1fr); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); margin-top: var(--dawn-space-3); }
+.skill-package-files { display: flex; flex-direction: column; gap: 2px; padding: var(--dawn-space-2); border-right: 1px solid var(--dawn-stroke-3); max-height: 32rem; overflow: auto; }
+.skill-package-files .btn { display: flex; flex-direction: column; align-items: flex-start; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.skill-package-files [aria-current="true"] { background: var(--dawn-row-hover); color: var(--dawn-text-1); }
+.installed-skill-content { min-width: 0; padding: var(--dawn-space-3); }
+.installed-skill-content pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 36rem; overflow: auto; font-size: var(--dawn-fs-meta); }
+.installed-skill-detail { container-type: inline-size; }
+.installed-skill-detail .skill-path { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .skill-package-browser { grid-template-columns: minmax(0, 1fr); }
+  .skill-package-files { max-height: 12rem; border-right: 0; border-bottom: 1px solid var(--dawn-stroke-3); }
+}
+@container (max-width: 560px) {
+  .skill-package-browser { grid-template-columns: minmax(0, 1fr); }
+  .skill-package-files { max-height: 12rem; border-right: 0; border-bottom: 1px solid var(--dawn-stroke-3); }
+}
 .skills-filters {
   display: flex;
   align-items: center;

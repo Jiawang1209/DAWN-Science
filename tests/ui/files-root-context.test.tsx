@@ -72,3 +72,51 @@ it("树根提供文件夹下载但不引入删除根目录入口", async () => {
   expect(screen.getByRole("menuitem", { name: "下载文件夹" })).toBeTruthy()
   expect(screen.queryByRole("menuitem", { name: "删除" })).toBeNull()
 })
+
+
+it("shows a labeled refresh, keeps expanded folders and preview, and reports refresh failures", async () => {
+  let reject!: (error: Error) => void
+  let refreshing = false
+  const p = props()
+  const loadDir = vi.fn(async (path: string): Promise<Listing> => {
+    if (refreshing && path === "folder") return new Promise((_, fail) => { reject = fail })
+    return { path, entries: path ? [{ name: "a.txt", kind: "file", modifiedAt: "2026" }] : [{ name: "folder", kind: "dir", modifiedAt: "2026" }], ignored: 0, omitted: 0 }
+  })
+  render(<FilesView {...p} loadDir={loadDir} selected="folder/a.txt" content={{ kind: "text", text: "preview survives", bytes: 16, mediaType: "text/plain" }} previewOpen />)
+  fireEvent.click(await screen.findByRole("button", { name: "folder" }))
+  await screen.findByRole("button", { name: /a\.txt/ })
+  const refresh = screen.getByRole("button", { name: "刷新当前文件夹" })
+  expect(refresh.textContent).toContain("刷新")
+  refreshing = true
+  fireEvent.click(refresh)
+  await waitFor(() => expect(refresh.hasAttribute("disabled")).toBe(true))
+  expect(screen.getByText("preview survives")).toBeTruthy()
+  reject(new Error("folder denied"))
+  expect((await screen.findByRole("alert")).textContent).toContain("folder denied")
+  await waitFor(() => expect(refresh.hasAttribute("disabled")).toBe(false))
+  refreshing = false
+  fireEvent.click(refresh)
+  await screen.findByRole("button", { name: /a\.txt/ })
+  expect(screen.getByText("preview survives")).toBeTruthy()
+})
+
+
+it("keeps expanded descendants mounted when the current root refresh fails", async () => {
+  let failRoot = false
+  const p = props()
+  const loadDir = vi.fn(async (path: string): Promise<Listing> => {
+    if (failRoot && !path) throw new Error("root unavailable")
+    return { path, entries: path ? [{ name: "a.txt", kind: "file", modifiedAt: "2026" }] : [{ name: "folder", kind: "dir", modifiedAt: "2026" }], ignored: 0, omitted: 0 }
+  })
+  render(<FilesView {...p} loadDir={loadDir} />)
+  fireEvent.click(await screen.findByRole("button", { name: "folder" }))
+  const leaf = await screen.findByRole("button", { name: /a\.txt/ })
+  failRoot = true
+  fireEvent.click(screen.getByRole("button", { name: "刷新当前文件夹" }))
+  expect((await screen.findByRole("alert")).textContent).toContain("root unavailable")
+  expect(screen.getByRole("button", { name: /a\.txt/ })).toBe(leaf)
+  failRoot = false
+  fireEvent.click(screen.getByRole("button", { name: "刷新当前文件夹" }))
+  await waitFor(() => expect(screen.queryByRole("alert")).toBeNull())
+  expect(screen.getByRole("button", { name: /a\.txt/ })).toBe(leaf)
+})

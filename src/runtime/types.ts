@@ -662,6 +662,8 @@ export interface AgentRuntime {
    * 界面、命令面板、将来的 CLI 共用同一道，加入口时不必记得补一次。
    */
   setModel?(sessionId: SessionId, provider: string, model: string): Promise<void>
+  /** Refresh only Skill resources for the next turn; preserve history, tools and kernels. */
+  refreshSkills?(sessionId: SessionId): Promise<{ count: number; problems: { path: string; reason: string }[] }>
   /**
    * 回答一次权限询问（A2，**只有 acp 有**）。
    *

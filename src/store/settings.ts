@@ -58,6 +58,7 @@ export type SettingKey =
    * `subagent.off.<名>` = "1" 停用。运行时与设置屏读的是同一把键（都经 `技能位置.自带档` / `子agent位置.自带停用`）。
    */
   | `skill.mode.${string}`
+  | `skill.tags.${string}`
   | `subagent.off.${string}`
   | "atfile.ignorePasted"
   | "atfile.rules"

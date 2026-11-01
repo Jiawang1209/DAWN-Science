@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -291,3 +292,100 @@ it("recovers a stale pending request without an endless spinner when no backend 
   await screen.findByText("还没有交付记录");
   expect(screen.getByRole("alert").textContent).toContain("未找到本次交付记录");
 });
+
+
+it("refreshes artifacts and delivery records from the header while preserving the current page and preview", async () => {
+  const p = props()
+  const onReload = vi.fn().mockResolvedValue(undefined)
+  p.invoke.mockImplementation(async () => ({ supported: true, records: [record] }))
+  setDeliveryView(p.scopeKey, { page: "detail", recordId: "d" })
+  render(<AnalysisDeliveryPanel {...p} onReload={onReload} />)
+  fireEvent.click(await screen.findByRole("button", { name: "阅读分析报告" }))
+  await screen.findByText("真实结果解读")
+  p.invoke.mockClear()
+  p.readFile.mockClear()
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  await waitFor(() => expect(onReload).toHaveBeenCalledOnce())
+  await waitFor(() => expect(p.invoke).toHaveBeenCalledWith("listAnalysisDeliveries", { sessionId: "s" }))
+  await waitFor(() => expect(p.readFile).toHaveBeenCalledOnce())
+  expect(screen.getByRole("button", { name: "收起预览" })).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "收起预览" }))
+  expect(screen.getByRole("button", { name: "阅读分析报告" })).toBeTruthy()
+})
+
+
+it("retains a delivery preview and scroll while its refreshed file is unavailable", async () => {
+  let reject!: (error: Error) => void
+  const reread = new Promise<never>((_, fail) => { reject = fail })
+  const p = props()
+  p.invoke.mockImplementation(async () => ({ supported: true, records: [record] }))
+  p.readFile.mockImplementationOnce(async () => ({ kind: "text", text: "last valid delivery", bytes: 19, mediaType: "text/plain" })).mockImplementationOnce(() => reread)
+  setDeliveryView(p.scopeKey, { page: "detail", recordId: "d" })
+  const { container } = render(<AnalysisDeliveryPanel {...p} onReload={vi.fn()} />)
+  fireEvent.click(await screen.findByRole("button", { name: "阅读分析报告" }))
+  await screen.findByText("last valid delivery")
+  const preview = container.querySelector<HTMLElement>(".preview-text")!
+  preview.scrollTop = 150
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  await waitFor(() => expect(p.readFile).toHaveBeenCalledTimes(2))
+  expect(screen.getByText("last valid delivery")).toBeTruthy()
+  await act(async () => reject(new Error("delivery reread unavailable")))
+  expect(screen.getByRole("alert").textContent).toContain("delivery reread unavailable")
+  expect(container.querySelector(".preview-text")).toBe(preview)
+  expect(preview.scrollTop).toBe(150)
+  p.readFile.mockImplementation(() => new Promise(() => {}))
+  act(() => setDeliveryView(p.scopeKey, { file: "other.txt" }))
+  expect(screen.queryByText("last valid delivery")).toBeNull()
+  expect(screen.queryByRole("alert")).toBeNull()
+})
+
+
+it("waits for slow delivery polling before starting another scheduled request and still shows completion", async () => {
+  vi.useFakeTimers()
+  try {
+    let finish!: (value: unknown) => void
+    const slow = new Promise(resolve => { finish = resolve })
+    const p = props()
+    p.invoke.mockImplementationOnce(() => slow).mockResolvedValue({ supported: true, records: [record] })
+    setDeliveryView(p.scopeKey, { page: "detail", recordId: "d", pendingId: "d" })
+    render(<AnalysisDeliveryPanel {...p} />)
+    expect(p.invoke).toHaveBeenCalledTimes(1)
+    await act(async () => { vi.advanceTimersByTime(3600) })
+    expect(p.invoke).toHaveBeenCalledTimes(1)
+    await act(async () => finish({ supported: true, records: [{ ...record, state: "generating" }] }))
+    expect(p.invoke).toHaveBeenCalledTimes(1)
+    await act(async () => { vi.advanceTimersByTime(1200) })
+    expect(screen.getByRole("button", { name: "阅读分析报告" })).toBeTruthy()
+    expect($deliveryViews.get().get(p.scopeKey)?.pendingId).toBeUndefined()
+  } finally {
+    cleanup()
+    vi.useRealTimers()
+  }
+})
+
+it("lets explicit refresh supersede a slow poll without scheduled overlaps or a stale failure", async () => {
+  vi.useFakeTimers()
+  try {
+    let rejectOld!: (error: Error) => void
+    let finishRefresh!: (value: unknown) => void
+    const old = new Promise<never>((_, reject) => { rejectOld = reject })
+    const refreshed = new Promise(resolve => { finishRefresh = resolve })
+    const p = props()
+    p.invoke.mockImplementationOnce(() => old).mockImplementationOnce(() => refreshed)
+      .mockResolvedValue({ supported: true, records: [record] })
+    setDeliveryView(p.scopeKey, { page: "detail", recordId: "d", pendingId: "d" })
+    render(<AnalysisDeliveryPanel {...p} onReload={vi.fn()} />)
+    fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+    expect(p.invoke).toHaveBeenCalledTimes(2)
+    await act(async () => { vi.advanceTimersByTime(3600) })
+    expect(p.invoke).toHaveBeenCalledTimes(2)
+    await act(async () => finishRefresh({ supported: true, records: [record] }))
+    expect(screen.getByRole("button", { name: "阅读分析报告" })).toBeTruthy()
+    await act(async () => rejectOld(new Error("stale poll failed")))
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect($deliveryViews.get().get(p.scopeKey)?.pendingId).toBeUndefined()
+  } finally {
+    cleanup()
+    vi.useRealTimers()
+  }
+})

@@ -1,5 +1,6 @@
 import { assertProjectInstallRoot } from "../skills/project-install-root.js"
 import { SkillDiscoveryService } from "../skills/discovery.js"
+import { installedFiles, readInstalledFile, manifestTags, normalizeSkillTags } from "../skills/installed.js"
 import { createArtifactOperations } from '../artifacts/operations.js'
 import type { ResponseOf } from '../protocol/index.js'
 import { TransferBatches } from "../remote/transfer-batches.js"
@@ -256,7 +257,7 @@ export interface WorkbenchBackendOptions {
   /** 归档 / 取消归档落账（7.18）。**删除不落**——删除那条账本自己留着，见 `deleteSession` */
   记一次会话?: (event: "archive" | "unarchive", projectId: string | undefined, sessionId: string) => void
   /** 技能的改动也落账（7.17）：启停、导入、删除——都是对磁盘的一次写 */
-  记一次技能?: (event: "invocation" | "import" | "import-overwrite" | "delete", 路径: string, 详情?: string) => void
+  记一次技能?: (event: "invocation" | "import" | "import-overwrite" | "delete" | "tags", 路径: string, 详情?: string) => void
   /**
    * 把一个本地文件扔进废纸篓。**只有主进程碰得到 `shell.trashItem`**，
    * 与 `openPath` 走同一条注入缝。
@@ -629,6 +630,33 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     ]
   }
   const onlineSkillNames = (projectId?: string) => loadSkills({cwd: homedir(), agentDir: join(homedir(), ".pi"), skillPaths: visibleSkillRoots(projectId).map(x => x.path), includeDefaults: false}).skills.map(x => x.name)
+  const installedManifest = (filePath: string, projectId?: string) => {
+    const file = resolve(filePath), roots = visibleSkillRoots(projectId)
+    const owner = roots.find(root => file.startsWith(resolve(root.path) + sep))
+    if (!owner || basename(file) !== 'SKILL.md') throw fault("invalid_request", "只能查看当前技能目录中的 SKILL.md")
+    const found = loadSkills({ cwd: homedir(), agentDir: join(homedir(), '.pi'), skillPaths: roots.map(x => x.path), includeDefaults: false }).skills
+    if (!found.some(skill => resolve(skill.filePath) === file)) throw fault("not_found", "技能不存在或已被同名技能覆盖，请刷新清单")
+    let part = resolve(owner.path)
+    for (const segment of ['', ...相对(part, file).split(sep)]) {
+      if (segment) part = join(part, segment)
+      if (lstatSync(part).isSymbolicLink()) throw fault("invalid_request", "技能文件浏览不读取符号链接")
+    }
+    return file
+  }
+  const skillTags = (filePath: string, onProblem?: (reason: string) => void) => {
+    const raw = settings?.get(`skill.tags.${resolve(filePath)}`)
+    if (raw !== undefined) {
+      try { const value: unknown = JSON.parse(raw); if (Array.isArray(value) && value.every(x => typeof x === 'string')) return { tags: normalizeSkillTags(value), tagsOverridden: true } }
+      catch { /* Invalid local metadata falls back to package tags. */ }
+    }
+    try {
+      const source = readInstalledFile(filePath, 'SKILL.md')
+      return { tags: source.text ? manifestTags(source.text) : [], tagsOverridden: false }
+    } catch (error) {
+      onProblem?.(error instanceof Error ? error.message : String(error))
+      return { tags: [], tagsOverridden: false }
+    }
+  }
 
   const analysisDeliveries = new Map<
     string,
@@ -3392,6 +3420,34 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       return origin ? {origin} : {}
     },
 
+    listInstalledSkillFiles: ({ filePath, projectId }) => skillAction(() => installedFiles(installedManifest(filePath, projectId))),
+    readInstalledSkillFile: ({ filePath, projectId, path }) => skillAction(() => readInstalledFile(installedManifest(filePath, projectId), path)),
+    setSkillTags: ({ filePath, projectId, tags, reset }) => skillAction(() => {
+      const file = installedManifest(filePath, projectId)
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置")
+      settings.set(`skill.tags.${file}`, reset ? '' : JSON.stringify(normalizeSkillTags(tags ?? [])), new Date().toISOString())
+      记一次技能?.('tags', file, reset ? 'reset' : JSON.stringify(tags ?? []))
+      return skillTags(file)
+    }),
+    setSkillsInvocation: async ({ filePaths, mode, projectId }) => {
+      const updated: string[] = [], failed: { filePath: string; reason: string }[] = []
+      for (const filePath of new Set(filePaths)) {
+        try { const file = installedManifest(filePath, projectId); await backend.setSkillInvocation({ filePath: file, mode }); updated.push(filePath) }
+        catch (error) { failed.push({ filePath, reason: error instanceof Error ? error.message : String(error) }) }
+      }
+      return { updated, failed }
+    },
+    refreshSessionSkills: async ({ sessionId }) => {
+      try { return await sessions.refreshSkills(sessionId) }
+      catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (/还没说完|正在/.test(message)) throw fault("conflict", "会话正忙，请稍后刷新技能")
+        if (/不支持/.test(message)) throw fault("invalid_request", "当前会话不支持刷新技能")
+        if (/未在本进程|未启动/.test(message)) throw fault("not_found", "请先打开要刷新技能的会话")
+        throw fault("internal_error", "刷新技能失败：{0}", message)
+      }
+    },
+
     listAgentSkills: async ({ projectId }) => {
       const 工作区 = projectId ? projects.summary(projectId)?.workspace : undefined
       const 位置 = skills ?? {}
@@ -3412,6 +3468,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const 判来处 = (filePath: string): "builtin" | "global" | "project" =>
         // 带分隔符比（`/a/skills` 不该认成 `/a/skills-old` 下面的）
         按序.find((x) => filePath === x.path || filePath.startsWith(x.path.replace(/\/+$/, "") + sep))?.from ?? "global"
+      const inspectionProblems: { path: string; reason: string }[] = []
       return {
         skills: r.skills.map((s) => {
           const from = 判来处(s.filePath)
@@ -3433,6 +3490,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
             // 自带的在应用包里，只读
             mutable: from !== "builtin",
             hasOrigin: from !== "builtin" && existsSync(join(dirname(s.filePath), ".dawn-source.json")),
+            ...skillTags(s.filePath, reason => inspectionProblems.push({ path: s.filePath, reason })),
           }
         }),
         problems: r.diagnostics
@@ -3441,7 +3499,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           .map((d) => ({
             path: String((d as { path?: unknown }).path ?? ""),
             reason: String((d as { message?: unknown }).message ?? ""),
-          })),
+          })).concat(inspectionProblems),
         dirs: {
           ...(位置.自带目录 ? { builtin: 位置.自带目录 } : {}),
           ...(位置.全局目录 ? { global: 位置.全局目录 } : {}),

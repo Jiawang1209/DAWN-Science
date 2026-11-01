@@ -10,13 +10,14 @@ import { canExpandFilePreview, FilePreview, 类型图标, type FileContent } fro
 import { 文件类按名字 } from "./file-kind.js"
 import { t, tf } from "./i18n/index.js"
 import { PreviewCloseButton } from "./preview-close-button.js"
+import { 刷新图标 } from "./icons.js"
 
 /**
  * 坞清单里的一个图片格子（2026-08-27）：缩略图 + 文件名，点开走与文本行同一条预览。
  * `loadThumb` 缺省 / 返回 undefined / 图片已不在时，格子里是一个占位方块（**不画断图**），
  * 已不存在的还要划掉文件名。缩略图按 path 缓在本组件 state，卸载时用 `活` 挡迟到的 setState。
  */
-function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: DisplayedArtifact; dir: string; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined }) {
+function ArtifactThumb({ a, dir, onOpen, loadThumb, refreshToken }: { a: DisplayedArtifact; dir: string; onOpen: (path: string) => void; loadThumb?: ((path: string) => Promise<string | undefined>) | undefined; refreshToken: number }) {
   const 可缩略 = a.exists !== false && !!loadThumb
   const [缩略, 设缩略] = useState<string | undefined>(undefined)
   /** 解码失败（读得到但不是一张能画的图，比如生成到一半的文件）→ 留占位方块，绝不画断图 */
@@ -49,6 +50,8 @@ function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: DisplayedArtifact; di
   useEffect(() => {
     if (!可缩略 || !进视野 || !loadThumb) return
     let 活 = true
+    设缩略(undefined)
+    设失败(false)
     loadThumb(a.path)
       .then((u) => {
         if (活 && u) 设缩略(u)
@@ -59,7 +62,7 @@ function ArtifactThumb({ a, dir, onOpen, loadThumb }: { a: DisplayedArtifact; di
     return () => {
       活 = false
     }
-  }, [可缩略, 进视野, a.path, loadThumb])
+  }, [可缩略, 进视野, a.path, loadThumb, refreshToken])
   // **在渲染这一刻再判 exists**：读完之后又被删的图要立刻退回占位方块，不留一张划掉名字的旧图
   const 显缩略 = 缩略 && !失败 && a.exists !== false
   return (
@@ -84,6 +87,8 @@ export function ArtifactsPanel({
   focus,
   onReload,
   renderPreviewActions,
+  refreshToken = 0,
+  hideRefreshAction = false,
 }: {
   data: ArtifactList | undefined
   renderPreviewActions?: ((path: string) => ReactNode) | undefined
@@ -103,20 +108,59 @@ export function ArtifactsPanel({
    * 光看 `path` 没变不会触发（effect 只挂在 `nonce` 上）。
    */
   focus?: { path: string; nonce: number } | undefined
-  /** 清单取失败时「重试」按这个；缺省就不给那颗 */
-  onReload?: (() => void) | undefined
+  /** 重读已登记的产物清单，不扫描工作区中未登记的文件。 */
+  onReload?: (() => void | Promise<void>) | undefined
+  refreshToken?: number | undefined
+  /** 父面板已有常驻刷新入口时，复用父级的刷新令牌。 */
+  hideRefreshAction?: boolean | undefined
 }) {
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState<string>()
+  const [localRefresh, setLocalRefresh] = useState(0)
+  const refreshVersion = refreshToken + localRefresh
+  const refreshPending = useRef(false)
+  const refresh = async () => {
+    if (!onReload || refreshPending.current) return
+    refreshPending.current = true
+    setRefreshing(true)
+    setRefreshError(undefined)
+    try {
+      await onReload()
+      setLocalRefresh(n => n + 1)
+    } catch (error) {
+      setRefreshError(error instanceof Error ? error.message : String(error))
+    } finally {
+      refreshPending.current = false
+      setRefreshing(false)
+    }
+  }
+  // 取清单失败时保留上一份清单和当前预览，错误仍在常驻入口旁显示。
+  const lastData = useRef<ArtifactList | undefined>(undefined)
+  if (!data) lastData.current = undefined
+  if (data && !data.error) lastData.current = data
+  const catalog = data?.error && lastData.current ? lastData.current : data
+  const refreshAction = !hideRefreshAction && onReload ? <div className="artifacts-head">
+    <Button variant="ghost" size="sm" aria-label={t("刷新产物")} aria-busy={refreshing} disabled={refreshing} onClick={() => void refresh()}>
+      <刷新图标 />{refreshing ? t("正在刷新") : t("刷新")}
+    </Button>
+  </div> : null
+  const refreshNotice = refreshError || (data?.error && lastData.current ? data.error : undefined)
+  const refreshStatus = refreshNotice ? <p className="caveat" role="alert">{refreshNotice}</p> : null
   const listRoot = useRef<HTMLDivElement>(null)
   const previewRoot = useRef<HTMLDivElement>(null)
   const focusedClose = useRef<HTMLElement | null>(null)
   const returnFocusPath = useRef<string | undefined>(undefined)
   const [看的, 设看的] = useState<string | undefined>(undefined)
-  const [内容, 设内容] = useState<FileContent | undefined>(undefined)
+  const [preview, setPreview] = useState<{ path: string; content: FileContent }>()
+  const 内容 = preview?.path === 看的 ? preview?.content : undefined
   const [读错, 设读错] = useState<string | undefined>(undefined)
   const [重试次数, 设重试次数] = useState(0)
   const [readingPath, setReadingPath] = useState<string>()
   const readingExpanded = readingPath === 看的 && 看的 !== undefined && canExpandFilePreview(内容)
-  useEffect(() => { setReadingPath(undefined) }, [看的])
+  useEffect(() => {
+    setReadingPath(undefined)
+    setPreview(undefined)
+  }, [看的])
   useLayoutEffect(() => {
     // 读取中的外层关闭入口换成文件自身的关闭入口时，只接回原本属于关闭按钮的焦点。
     if (focusedClose.current && !focusedClose.current.isConnected && document.activeElement === document.body) {
@@ -154,12 +198,11 @@ export function ArtifactsPanel({
   useEffect(() => {
     if (!看的) return
     let 活 = true
-    设内容(undefined)
     设读错(undefined)
     readFileRef
       .current(看的)
       .then((c) => {
-        if (活) 设内容(c)
+        if (活) setPreview({ path: 看的, content: c })
       })
       .catch((e: unknown) => {
         if (活) 设读错(e instanceof Error ? e.message : String(e))
@@ -169,24 +212,26 @@ export function ArtifactsPanel({
       活 = false
     }
     // 重试次数只用来强制重跑这个 effect——同一个 看的 也要能再读一遍
-  }, [看的, 重试次数])
+  }, [看的, 重试次数, refreshVersion])
 
-  if (!data) return <Loader label={t("正在取产物清单")} />
-  const entries = artifactEntries(data)
+  if (!catalog) return <div className="artifacts-pane">{refreshAction}{refreshStatus}<Loader label={t("正在取产物清单")} /></div>
+  const entries = artifactEntries(catalog)
   // **取失败要出声**（规格 7.5）：与「还在取」分开，否则转圈转到天荒地老
-  if (data.error) {
+  if (catalog.error) {
     return (
+      <div className="artifacts-pane">{refreshAction}{refreshStatus}
       <EmptyState
         title={t("取不到产物清单")}
-        description={data.error}
-        {...(onReload ? { action: <Button size="sm" onClick={onReload}>{t("重试")}</Button> } : {})}
+        description={catalog.error}
+        {...(onReload ? { action: <Button size="sm" disabled={refreshing} onClick={() => void refresh()}>{t("重试")}</Button> } : {})}
       />
+      </div>
     )
   }
 
   if (看的) {
     const visual = 内容?.kind === "pdf" || 内容?.kind === "image"
-    const pending = !内容 || Boolean(读错)
+    const pending = !内容
     const navigation = !visual ? <header className="artifacts-head" hidden={readingExpanded}>
       <Button variant="ghost" size="sm" onClick={closePreview}>
         {t("回到清单")}
@@ -201,6 +246,7 @@ export function ArtifactsPanel({
       <div ref={previewRoot} className="artifacts-pane artifacts-preview"
         onFocusCapture={e => { focusedClose.current = e.target.closest<HTMLElement>('.preview-close-button') }}
         onBlurCapture={e => { if (e.target.isConnected) focusedClose.current = null }}>
+        {refreshAction}{refreshStatus}
         {renderPreviewActions?.(看的)}
         <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
           {entries.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
@@ -214,7 +260,11 @@ export function ArtifactsPanel({
           </li>)}
         </ul>
         {navigation}
-        {读错 ? (
+        {读错 && 内容 ? <p className="caveat" role="alert">
+          {t("读不到这个文件")}：{读错}
+          <Button variant="text" size="xs" onClick={() => 设重试次数(n => n + 1)}>{t("重试")}</Button>
+        </p> : null}
+        {读错 && !内容 ? (
           <EmptyState
             title={t("读不到这个文件")}
             description={读错}
@@ -238,13 +288,13 @@ export function ArtifactsPanel({
             {...(onDownload ? { onDownload } : {})}
           />
         )}
-        {data.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", data.unknown.length)}</p> : null}
+        {catalog.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", catalog.unknown.length)}</p> : null}
       </div>
     )
   }
 
-  if (entries.length === 0 && data.unknown.length === 0) {
-    return <EmptyState title={t("这段会话还没有生成文件")} description={t("agent 新建的文件会实时出现在这里。")} />
+  if (entries.length === 0 && catalog.unknown.length === 0) {
+    return <div className="artifacts-pane">{refreshAction}{refreshStatus}<EmptyState title={t("这段会话还没有生成文件")} description={t("agent 新建的文件会实时出现在这里。")} /></div>
   }
 
   const 组 = new Map<string, DisplayedArtifact[]>()
@@ -256,7 +306,8 @@ export function ArtifactsPanel({
 
   return (
     <div className="artifacts-pane" ref={listRoot}>
-      {data.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", data.unknown.length)}</p> : null}
+      {refreshAction}{refreshStatus}
+      {catalog.unknown.length > 0 ? <p className="caveat">{tf("另有 {0} 次运行产出未知", catalog.unknown.length)}</p> : null}
       {[...组.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([dir, list]) => {
@@ -275,7 +326,7 @@ export function ArtifactsPanel({
             {图片.length > 0 ? (
               <ul className="artifact-thumb-grid">
                 {图片.map((a) => (
-                  <ArtifactThumb key={a.path} a={a} dir={dir} onOpen={设看的} loadThumb={loadThumb} />
+                  <ArtifactThumb key={a.path} a={a} dir={dir} onOpen={设看的} loadThumb={loadThumb} refreshToken={refreshVersion} />
                 ))}
               </ul>
             ) : null}

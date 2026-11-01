@@ -849,6 +849,13 @@ export class SessionManager {
     await rt.setModel(sessionId, provider, model)
   }
 
+  async refreshSkills(sessionId: SessionId) {
+    const rt = this.bound.get(sessionId)
+    if (!rt) throw new Error(`会话 "${sessionId}" 未在本进程中活动，请先打开会话`)
+    if (!rt.refreshSkills) throw new Error('当前会话的运行时不支持刷新技能；外部 agent 的技能由它自己管理')
+    return rt.refreshSkills(sessionId)
+  }
+
   /** 转发终端尺寸变化。只有 pty runtime 实现了 resize，其余是空操作。 */
   resize(sessionId: SessionId, cols: number, rows: number): void {
     this.bound.get(sessionId)?.resize?.(sessionId, cols, rows)

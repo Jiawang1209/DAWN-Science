@@ -263,3 +263,82 @@ it("产物展开阅读隐藏导航与清单但保持节点和代码滚动，切�
   expect(screen.queryByRole("button", { name: "还原" })).toBeNull()
   expect(list.hidden).toBe(false)
 })
+
+
+it("refreshes recorded artifacts and thumbnails, then rereads the selected preview without leaving it", async () => {
+  const pending = 挂起<void>()
+  const onReload = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(undefined)
+  const loadThumb = vi.fn().mockResolvedValue("data:image/png;base64,AA")
+  const readFile = vi.fn().mockResolvedValueOnce(文本内容()).mockResolvedValue({ kind: "text", text: "updated", bytes: 7 })
+  render(<ArtifactsPanel data={{ artifacts: [art("a.txt"), imgArt("plot.png")], unknown: [] }} {...noop} readFile={readFile} loadThumb={loadThumb} onReload={onReload} />)
+  await waitFor(() => expect(loadThumb).toHaveBeenCalledTimes(1))
+  const refresh = screen.getByRole("button", { name: "刷新产物" })
+  expect(refresh.textContent).toContain("刷新")
+  fireEvent.click(refresh)
+  expect(screen.getByRole("button", { name: "刷新产物" }).hasAttribute("disabled")).toBe(true)
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  expect(onReload).toHaveBeenCalledTimes(1)
+  await act(async () => pending.resolve())
+  await waitFor(() => expect(loadThumb).toHaveBeenCalledTimes(2))
+  fireEvent.click(screen.getByRole("button", { name: "a.txt" }))
+  await screen.findByText("hi")
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  await screen.findByText("updated")
+  expect(screen.getByRole("button", { name: "回到清单" })).toBeTruthy()
+  expect(readFile).toHaveBeenCalledTimes(2)
+})
+
+it("keeps artifacts accessible after refresh fails and allows retry", async () => {
+  const onReload = vi.fn().mockRejectedValueOnce(new Error("inventory unavailable")).mockResolvedValue(undefined)
+  render(<ArtifactsPanel data={{ artifacts: [art("a.txt")], unknown: [] }} {...noop} onReload={onReload} />)
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  expect((await screen.findByRole("alert")).textContent).toContain("inventory unavailable")
+  expect(screen.getByRole("button", { name: "a.txt" })).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  await waitFor(() => expect(screen.queryByRole("alert")).toBeNull())
+})
+
+
+it("keeps the last recorded inventory and active preview when a reload supplies an error", async () => {
+  const data = { artifacts: [art("a.txt")], unknown: [] }
+  const readFile = vi.fn().mockResolvedValue(文本内容())
+  const p = { ...noop, readFile, onReload: vi.fn() }
+  const { rerender } = render(<ArtifactsPanel {...p} data={data} />)
+  fireEvent.click(screen.getByRole("button", { name: "a.txt" }))
+  await screen.findByText("hi")
+  rerender(<ArtifactsPanel {...p} data={{ artifacts: [], unknown: [], error: "inventory unavailable" }} />)
+  expect(screen.getByRole("alert").textContent).toContain("inventory unavailable")
+  expect(screen.getByText("hi")).toBeTruthy()
+  expect(screen.getByRole("button", { name: "a.txt" })).toBeTruthy()
+})
+
+
+it("clears the retained inventory after the owner resets data", () => {
+  const { rerender } = render(<ArtifactsPanel {...noop} data={{ artifacts: [art("previous.txt")], unknown: [] }} />)
+  rerender(<ArtifactsPanel {...noop} data={undefined} />)
+  expect(screen.getByText("正在取产物清单")).toBeTruthy()
+  rerender(<ArtifactsPanel {...noop} data={{ artifacts: [], unknown: [], error: "new scope unavailable" }} />)
+  expect(screen.getByText("取不到产物清单")).toBeTruthy()
+  expect(screen.queryByRole("button", { name: "previous.txt" })).toBeNull()
+})
+
+
+it("preserves the last valid preview and its scroll when the same file fails to refresh", async () => {
+  const reread = 挂起<FileContent>()
+  const readFile = vi.fn().mockResolvedValueOnce(文本内容()).mockReturnValueOnce(reread.promise).mockImplementation(() => new Promise(() => {}))
+  const { container } = render(<ArtifactsPanel {...noop} readFile={readFile} onReload={vi.fn()} data={{ artifacts: [art("a.txt"), art("b.txt")], unknown: [] }} />)
+  fireEvent.click(screen.getByRole("button", { name: "a.txt" }))
+  await screen.findByText("hi")
+  const preview = container.querySelector<HTMLElement>(".preview-text")!
+  preview.scrollTop = 125
+  fireEvent.click(screen.getByRole("button", { name: "刷新产物" }))
+  await waitFor(() => expect(readFile).toHaveBeenCalledTimes(2))
+  expect(screen.getByText("hi")).toBeTruthy()
+  await act(async () => reread.reject(new Error("preview refresh unavailable")))
+  expect(screen.getByRole("alert").textContent).toContain("preview refresh unavailable")
+  expect(container.querySelector(".preview-text")).toBe(preview)
+  expect(preview.scrollTop).toBe(125)
+  fireEvent.click(screen.getByRole("button", { name: "b.txt" }))
+  expect(screen.queryByText("hi")).toBeNull()
+  expect(screen.queryByRole("alert")).toBeNull()
+})

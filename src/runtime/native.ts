@@ -337,6 +337,7 @@ interface NativeSession {
   /** 改「你现在跑在哪个模型上」那句话。**换模型时必须调**，否则它照旧答上一个 */
   设当前模型: (v: string) => void
   setTerminalReply: (enabled: boolean) => void
+  refreshSkillResources: () => { count: number; problems: { path: string; reason: string }[] }
   unsubscribe: () => void
   /** 关会话时收尾：中止团队调度器里还在跑的成员（2026-08-23 审查抓的：此前关会话后成员子进程照跑、向已删会话 emit） */
   收尾?: () => void
@@ -2026,6 +2027,8 @@ export class NativeRuntime implements AgentRuntime {
        * 设计契约里有扫描：每个 `DefaultResourceLoader(` / `createAgentSession(` 都得带它。
        */
       noExtensions: true,
+      // Desktop Skill roots are explicit. Do not merge unrelated SDK default packages.
+      noSkills: Boolean(this.opts.skills),
       /**
        * **「关」了的技能从清单里剔掉**（skills-manage，2026-08-21）。
        * pi 认 `disable-model-invocation`（模型看不见、`/skill:` 还能调），但不认 `user-invocable: false`；
@@ -2133,35 +2136,45 @@ export class NativeRuntime implements AgentRuntime {
      * `reload()` 会按设置重算一遍资源路径，把之前扩展进去的丢掉。
      * **这条只有真跑一次才看得见**——类型对、编译过、单元测试全绿。
      */
-    if (this.opts.skills) {
-      const { 全局目录, 项目目录名, 自带目录 } = this.opts.skills
-      /**
-       * **顺序即优先级：越具体的越靠前。**
-       *
-       * pi 按名字去重，**先到先得**（2026-08-15 实测：把同名的两份分别放前放后，
-       * 赢的都是靠前那个）。所以顺序不是随手排的：
-       *
-       *   ① 项目级 —— 这个课题特有的做法，最具体
-       *   ② 全局   —— 你自己攒的那些
-       *   ③ 自带   —— 我们发的，**排最后**：同名时你写的那份赢，
-       *              否则「我改了却不生效」会变成一个查不出来的谜
-       */
-      const 加 = [
-        ...(spec.workspace && 项目目录名
-          ? [{ path: join(spec.workspace, 项目目录名), meta: "project" as const }]
-          : []),
-        ...(全局目录 ? [{ path: 全局目录, meta: "user" as const }] : []),
-        ...(自带目录 ? [{ path: 自带目录, meta: "user" as const }] : []),
-      ]
-      if (加.length > 0) {
-        resourceLoader.extendResources({
-          skillPaths: 加.map((x) => ({
-            path: x.path,
-            metadata: { source: "dawn", scope: x.meta, origin: "top-level" as const },
-          })),
-        })
+    const refreshSkillResources = () => {
+      if (this.opts.skills) {
+        const { 全局目录, 项目目录名, 自带目录 } = this.opts.skills
+        /**
+         * **顺序即优先级：越具体的越靠前。**
+         *
+         * pi 按名字去重，**先到先得**（2026-08-15 实测：把同名的两份分别放前放后，
+         * 赢的都是靠前那个）。所以顺序不是随手排的：
+         *
+         *   ① 项目级 —— 这个课题特有的做法，最具体
+         *   ② 全局   —— 你自己攒的那些
+         *   ③ 自带   —— 我们发的，**排最后**：同名时你写的那份赢，
+         *              否则「我改了却不生效」会变成一个查不出来的谜
+         */
+        const 加 = [
+          ...(!spec.remote && spec.workspace && 项目目录名
+            ? [{ path: join(spec.workspace, 项目目录名), meta: "project" as const }]
+            : []),
+          ...(全局目录 ? [{ path: 全局目录, meta: "user" as const }] : []),
+          ...(自带目录 ? [{ path: 自带目录, meta: "user" as const }] : []),
+        ]
+        if (加.length > 0) {
+          resourceLoader.extendResources({
+            skillPaths: 加.map((x) => ({
+              path: x.path,
+              metadata: { source: "dawn", scope: x.meta, origin: "top-level" as const },
+            })),
+          })
+        }
+      }
+      const loaded = resourceLoader.getSkills()
+      return {
+        count: loaded.skills.length,
+        problems: loaded.diagnostics
+          .filter(d => !/skill path does not exist/i.test(d.message))
+          .map(d => ({ path: d.path ?? '', reason: d.message })),
       }
     }
+    refreshSkillResources()
 
 
     /**
@@ -2242,6 +2255,7 @@ export class NativeRuntime implements AgentRuntime {
         session.setActiveToolsByName(session.getActiveToolNames())
       },
       setTerminalReply: (enabled: boolean) => { terminalReply = enabled },
+      refreshSkillResources,
       /**
        * **起会话时就记下当前是谁**（2026-08-12 修）。
        *
@@ -3426,6 +3440,18 @@ ${描述}`
       .map((c) => c.text)
       .join("")
     return { text, model: `${目标.provider}/${目标.model}` }
+  }
+
+  async refreshSkills(sessionId: SessionId) {
+    const state = this.sessions.get(sessionId)
+    if (!state) throw new Error(`会话 "${sessionId}" 未启动，无法刷新技能`)
+    if (this.terminalBusy(sessionId)) throw new Error('这一轮还没说完或正在调整会话，请稍后刷新技能')
+    // extendResources re-reads the Skill paths synchronously, including mode overrides.
+    // Avoid session.reload(): it also resets provider/settings/extensions/tool permissions.
+    const result = state.refreshSkillResources()
+    const session = state.session
+    session.setActiveToolsByName(session.getActiveToolNames())
+    return result
   }
 
   async setModel(sessionId: SessionId, provider: string, modelId: string): Promise<void> {

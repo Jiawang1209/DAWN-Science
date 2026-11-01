@@ -73,6 +73,51 @@ function 起一套(extra: Partial<Parameters<typeof createWorkbenchBackend>[0]> 
 }
 
 describe("技能管理", () => {
+  it('optional tag inspection never makes legacy or linked skills hide the rest of the catalog', async () => {
+    const { backend, 全局, dir } = 起一套()
+    const linked = join(dir, 'external'); 技能(linked, 'linked')
+    symlinkSync(join(linked, 'linked'), join(全局, 'linked'), process.platform === 'win32' ? 'junction' : 'dir')
+    writeFileSync(join(全局, 'legacy.md'), '---\nname: legacy\ndescription: Legacy root file\n---\nBody')
+    const result = await backend.listAgentSkills({}) as { skills: { name: string; tags: string[] }[] }
+    expect(result.skills.map(s => s.name)).toEqual(expect.arrayContaining(['mine', 'shipped', 'legacy', 'linked']))
+    expect(result.skills.find(s => s.name === 'mine')?.tags).toEqual([])
+  })
+  it('installed inspection is limited to discovered manifests and reads bundled/disabled packages', async () => {
+    const { backend, 全局, 自带, dir } = 起一套()
+    const manifest = join(全局, 'mine', 'SKILL.md')
+    mkdirSync(join(全局, 'mine', 'references')); writeFileSync(join(全局, 'mine', 'references', 'a.md'), '# Reference')
+    await backend.setSkillInvocation({ filePath: manifest, mode: 'off' })
+    expect(await (backend as any).listInstalledSkillFiles({ filePath: manifest })).toMatchObject({ files: expect.arrayContaining([{ path: 'references/a.md', bytes: 11 }]) })
+    expect(await (backend as any).readInstalledSkillFile({ filePath: join(自带, 'shipped', 'SKILL.md'), path: 'SKILL.md' })).toMatchObject({ text: expect.stringContaining('shipped') })
+    writeFileSync(join(dir, 'SKILL.md'), 'outside')
+    await expect((backend as any).readInstalledSkillFile({ filePath: join(dir, 'SKILL.md'), path: 'SKILL.md' })).rejects.toThrow()
+    await expect((backend as any).readInstalledSkillFile({ filePath: manifest, path: '../../SKILL.md' })).rejects.toThrow()
+  })
+
+  it('personal tags inherit metadata, persist per package, clear intentionally and reset without editing source', async () => {
+    const { backend, 自带 } = 起一套()
+    const filePath = join(自带, 'shipped', 'SKILL.md')
+    const original = '---\nname: shipped\ndescription: Builtin\nmetadata:\n  dawn:\n    tags: [科研, 可复现]\n---\nBody'
+    writeFileSync(filePath, original)
+    const row = async () => ((await backend.listAgentSkills({})) as any).skills.find((s: any) => s.name === 'shipped')
+    expect(await row()).toMatchObject({ tags: ['科研', '可复现'], tagsOverridden: false })
+    await (backend as any).setSkillTags({ filePath, tags: [' Soil ', 'soil', '统计'] })
+    expect(await row()).toMatchObject({ tags: ['Soil', '统计'], tagsOverridden: true })
+    await (backend as any).setSkillTags({ filePath, tags: [] })
+    expect(await row()).toMatchObject({ tags: [], tagsOverridden: true })
+    await (backend as any).setSkillTags({ filePath, reset: true })
+    expect(await row()).toMatchObject({ tags: ['科研', '可复现'], tagsOverridden: false })
+    expect(readFileSync(filePath, 'utf8')).toBe(original)
+  })
+
+  it('bulk invocation updates selected packages and returns per-item failures', async () => {
+    const { backend, 全局, 自带, dir } = 起一套()
+    const result = await (backend as any).setSkillsInvocation({ filePaths: [join(全局, 'mine', 'SKILL.md'), join(dir, 'outside', 'SKILL.md'), join(自带, 'shipped', 'SKILL.md')], mode: 'manual' })
+    expect(result.updated).toHaveLength(2); expect(result.failed).toHaveLength(1)
+    const rows = (await backend.listAgentSkills({})) as any
+    expect(rows.skills.every((s: any) => s.invocation === 'manual')).toBe(true)
+  })
+
   it("列表带三档与 mutable；改档只动那两行；落账", async () => {
     const { backend, 全局, 账 } = 起一套()
     const 文件 = join(全局, "mine", "SKILL.md")

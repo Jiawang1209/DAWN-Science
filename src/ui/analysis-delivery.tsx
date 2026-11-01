@@ -33,6 +33,7 @@ import {
   setDeliveryView,
 } from "./state/delivery.js";
 import { t, tf } from "./i18n/index.js";
+import { 刷新图标 } from "./icons.js";
 type Props = ComponentProps<typeof ArtifactsPanel> & {
   sessionId: string;
   scopeKey: string;
@@ -72,6 +73,12 @@ export function AnalysisDeliveryPanel(p: Props) {
     [error, setError] = useState<string>(),
     [busy, setBusy] = useState(false),
     [reload, setReload] = useState(0);
+  const [refreshing, setRefreshing] = useState(false),
+    [refreshError, setRefreshError] = useState<string>(),
+    [refreshVersion, setRefreshVersion] = useState(0);
+  const refreshPending = useRef(false);
+  const refreshCatalog = useRef<(() => Promise<void>) | undefined>(undefined);
+  const catalogRequest = useRef(0);
   const [validationFooter, setValidationFooter] = useState<HTMLElement | null>(
     null,
   );
@@ -97,6 +104,9 @@ export function AnalysisDeliveryPanel(p: Props) {
     setCatalog(undefined);
     setError(undefined);
     setBusy(false);
+    setRefreshing(false);
+    setRefreshError(undefined);
+    refreshPending.current = false;
   }, [p.scopeKey]);
   const outstanding =
     Boolean(view.pendingId) ||
@@ -105,13 +115,18 @@ export function AnalysisDeliveryPanel(p: Props) {
     );
   useEffect(() => {
     let live = true;
+    let activeLoads = 0;
     const gen = ++generation.current;
-    const load = async () => {
+    const load = async (explicit = false) => {
+      // 定时轮询等当前读取结束；手动刷新仍能发出新请求，并由请求序号挡住旧响应。
+      if (!explicit && activeLoads > 0) return;
+      activeLoads++;
+      const request = ++catalogRequest.current;
       try {
         const result = await p.client.get<Catalog>("listAnalysisDeliveries", {
           sessionId: p.sessionId,
         });
-        if (live && gen === generation.current) {
+        if (live && gen === generation.current && request === catalogRequest.current) {
           setCatalog(result);
           const pending = deliveryView(p.scopeKey).pendingId;
           if (pending) {
@@ -138,9 +153,13 @@ export function AnalysisDeliveryPanel(p: Props) {
           }
         }
       } catch (e) {
-        if (live && gen === generation.current) setError(message(e));
+        if (live && gen === generation.current && request === catalogRequest.current) setError(message(e));
+      } finally {
+        activeLoads--;
       }
     };
+    const reloadCatalog = () => load(true);
+    refreshCatalog.current = reloadCatalog;
     void load();
     const timer = outstanding
       ? setInterval(() => void load(), 1200)
@@ -148,9 +167,31 @@ export function AnalysisDeliveryPanel(p: Props) {
     return () => {
       live = false;
       generation.current++;
+      if (refreshCatalog.current === reloadCatalog) refreshCatalog.current = undefined;
       if (timer) clearInterval(timer);
     };
   }, [p.scopeKey, p.sessionId, p.client, reload, outstanding]);
+  const refresh = async () => {
+    if (refreshPending.current) return;
+    const scope = p.scopeKey, token = lifetime.current;
+    refreshPending.current = true;
+    setRefreshing(true);
+    setRefreshError(undefined);
+    setError(undefined);
+    const results = await Promise.allSettled([
+      Promise.resolve().then(() => p.onReload?.()),
+      refreshCatalog.current?.(),
+    ]);
+    if (identity.current !== scope || token !== lifetime.current) return;
+    const failure = results.find(r => r.status === "rejected");
+    if (failure?.status === "rejected") setRefreshError(message(failure.reason));
+    setRefreshVersion(n => n + 1);
+    refreshPending.current = false;
+    setRefreshing(false);
+  };
+  const refreshAction = <Button variant="ghost" size="sm" aria-label={t("刷新产物")} aria-busy={refreshing} disabled={refreshing} onClick={() => void refresh()}>
+    <刷新图标 />{refreshing ? t("正在刷新") : t("刷新")}
+  </Button>;
   useEffect(() => {
     if (p.focus) update({ page: "files", file: undefined });
   }, [p.focus?.nonce]);
@@ -281,13 +322,16 @@ export function AnalysisDeliveryPanel(p: Props) {
           <Button variant="ghost" size="sm" onClick={close}>
             {t("交付详情")}
           </Button>
+          {refreshAction}
         </header>
+        {refreshError || error ? <p className="delivery-error" role="alert">{refreshError || error}</p> : null}
         <DeliveryPreview
           path={view.file}
           readFile={p.readFile}
           onClose={close}
           onLocate={p.onOpenInFiles}
           onOpenExternally={p.onOpenExternally}
+          refreshToken={refreshVersion}
         />
       </section>
     );
@@ -302,6 +346,7 @@ export function AnalysisDeliveryPanel(p: Props) {
           <>
             <strong>{t("结果")}</strong>
             <div className="artifact-page-actions">
+              {refreshAction}
               <Button variant="ghost" size="sm" aria-label={t("历史")} aria-pressed={Boolean(evidenceView)} onClick={()=>setEvidenceView({})}>{t("历史")}</Button>
               <details className="artifact-more-menu" open={moreOpen} onToggle={e=>setMoreOpen(e.currentTarget.open)}>
                 <summary aria-label={t("产物操作菜单")}>{t("更多")}</summary>
@@ -362,7 +407,9 @@ export function AnalysisDeliveryPanel(p: Props) {
             </strong>
           </>
         )}
+        {view.page !== "files" ? refreshAction : null}
       </header>
+      {refreshError ? <p className="delivery-error" role="alert">{refreshError}</p> : null}
       {view.page === "records" ? (
         <nav className="delivery-tabs" aria-label={t("产物视图")}>
           <Button
@@ -401,7 +448,7 @@ export function AnalysisDeliveryPanel(p: Props) {
       <div className="delivery-body">
         {view.page === "files" ? (
           <>
-            {evidenceView ? <ArtifactHistoryPanel key={p.scopeKey} sessionId={p.sessionId} client={p.client} paths={artifactEntries(p.data).map(a=>a.path)} readOnly={p.readOnly} onClose={()=>setEvidenceView(undefined)} onUseForDelivery={group=>{beginDelivery(p.scopeKey,group.members.map(m=>m.observation.path));update({name:group.name,retained:group.members.map(m=>({path:m.observation.path,retainedId:group.id,memberId:m.id,sha256:m.sha256}))});setEvidenceView(undefined)}} /> : <ArtifactsPanel {...p} renderPreviewActions={path=><ArtifactHistoryPanel key={`${p.scopeKey}:${path}`} sessionId={p.sessionId} client={p.client} paths={artifactEntries(p.data).map(a=>a.path)} path={path} readOnly={p.readOnly} onClose={()=>{}}/>} />}
+            {evidenceView ? <ArtifactHistoryPanel key={p.scopeKey} sessionId={p.sessionId} client={p.client} paths={artifactEntries(p.data).map(a=>a.path)} readOnly={p.readOnly} onClose={()=>setEvidenceView(undefined)} onUseForDelivery={group=>{beginDelivery(p.scopeKey,group.members.map(m=>m.observation.path));update({name:group.name,retained:group.members.map(m=>({path:m.observation.path,retainedId:group.id,memberId:m.id,sha256:m.sha256}))});setEvidenceView(undefined)}} /> : <ArtifactsPanel {...p} hideRefreshAction refreshToken={refreshVersion} renderPreviewActions={path=><ArtifactHistoryPanel key={`${p.scopeKey}:${path}`} sessionId={p.sessionId} client={p.client} paths={artifactEntries(p.data).map(a=>a.path)} path={path} readOnly={p.readOnly} onClose={()=>{}}/>} />}
           </>
         ) : view.page === "select" ? (
           <>
@@ -557,7 +604,8 @@ export function AnalysisDeliveryPanel(p: Props) {
             <Button
               variant="text"
               size="sm"
-              onClick={() => setReload((n) => n + 1)}
+              disabled={refreshing}
+              onClick={() => void refresh()}
             >
               {t("刷新记录")}
             </Button>
@@ -784,17 +832,22 @@ function DeliveryPreview(p: {
   onClose: () => void;
   onLocate: (path: string) => void;
   onOpenExternally: (path: string) => void;
+  refreshToken: number;
 }) {
-  const [content, setContent] = useState<FileContent>(),
+  const [preview, setPreview] = useState<{ path: string; content: FileContent }>(),
     [error, setError] = useState<string>(),
     [reading, setReading] = useState(false);
+  const content = preview?.path === p.path ? preview.content : undefined;
+  useEffect(() => {
+    setPreview(undefined);
+    setReading(false);
+  }, [p.path]);
   useEffect(() => {
     let live = true;
-    setContent(undefined);
     setError(undefined);
     void p.readFile(p.path).then(
       (c) => {
-        if (live) setContent(c);
+        if (live) setPreview({ path: p.path, content: c });
       },
       (e) => {
         if (live) setError(message(e));
@@ -803,8 +856,8 @@ function DeliveryPreview(p: {
     return () => {
       live = false;
     };
-  }, [p.path, p.readFile]);
-  return error ? (
+  }, [p.path, p.readFile, p.refreshToken]);
+  return error && !content ? (
     <EmptyState
       title={t("读不到这个文件")}
       description={error}
@@ -815,6 +868,8 @@ function DeliveryPreview(p: {
       }
     />
   ) : (
+    <>
+    {error ? <p className="delivery-error" role="alert">{t("读不到这个文件")}：{error}</p> : null}
     <FilePreview
       path={p.path}
       content={content}
@@ -826,6 +881,7 @@ function DeliveryPreview(p: {
       onToggleReading={() => setReading((v) => !v)}
       navigation={{ onBack: p.onClose, onLocate: () => p.onLocate(p.path) }}
     />
+    </>
   );
 }
 function DeliveryVerification(p: {

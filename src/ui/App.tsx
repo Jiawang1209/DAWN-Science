@@ -1402,7 +1402,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     setArtifacts(undefined)
     void loadArtifacts(client, sessionId)
   }, [client, ready, sessionId])
-  const 重拉产物 = useCallback(() => void loadArtifacts(client, sessionId), [client, sessionId])
+  const 重拉产物 = useCallback(() => loadArtifacts(client, sessionId), [client, sessionId])
   const openArtifact = useCallback((path: string) => {
     const sid = $activeSessionId.get()
     if (!sid) return
@@ -4975,9 +4975,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
  * 只有自带与全局那些——**那不是错误，是实情**。
  */
 <AgentSkillsView
-  key={projectId ?? "global"}
+  key={`${projectId ?? "global"}:${sessionId ?? "none"}`}
   load={载技能}
   actions={{
+    listFiles: filePath => client.get('listInstalledSkillFiles', { filePath, ...(projectId ? { projectId } : {}) }),
+    readFile: (filePath, path) => client.get('readInstalledSkillFile', { filePath, path, ...(projectId ? { projectId } : {}) }),
+    setTags: (filePath, tags, reset) => client.get('setSkillTags', { filePath, ...(reset ? { reset: true } : { tags }), ...(projectId ? { projectId } : {}) }),
+    setBulkInvocation: (filePaths, mode) => client.get('setSkillsInvocation', { filePaths, mode, ...(projectId ? { projectId } : {}) }),
+    ...(sessionId ? { refreshSession: () => client.get<{ count: number; problems: { path: string; reason: string }[] }>('refreshSessionSkills', { sessionId }) } : {}),
+    refreshSessionReason: !sessionId ? t("打开内置会话后可刷新当前会话技能。") : session?.kind !== 'native' ? t("外部 agent 的技能由其自身管理。") : undefined,
     setInvocation: (filePath, mode) => client.get("setSkillInvocation", { filePath, mode }),
     discovery: {
       search: (query, source) => client.get("searchSkillCatalog", {query, ...(source ? {source} : {})}),

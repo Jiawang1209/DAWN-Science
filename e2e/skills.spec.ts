@@ -15,7 +15,63 @@
  * 判据挑**物证**：让假模型把系统提示里的技能名回显出来。
  * 屏幕上「看起来知道」是不算数的。
  */
-import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 进设置, 进坞 } from "./fixtures.js"
+
+test('已安装技能详情、标签批量管理与当前会话刷新接通真实应用', async ({ dawn }) => {
+  const { page, dir } = dawn
+  const folder = join(dir, 'skills', 'field-method')
+  mkdirSync(join(folder, 'references'), { recursive: true })
+  const manifest = '---\nname: field-method\ndescription: Field data workflow\nmetadata:\n  dawn:\n    tags: [科研]\n---\n# Field workflow\n\nRead references/method.md.\n'
+  writeFileSync(join(folder, 'SKILL.md'), manifest)
+  writeFileSync(join(folder, 'references', 'method.md'), '# Method reference\n\nKeep raw observations.\n')
+  await 开一段临时会话(page)
+  await 进设置(page, 'Skills')
+  await page.getByRole('button', { name: '查看技能 field-method', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Field workflow', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'references/method.md', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Method reference', exact: true })).toBeVisible()
+  const toolbar = await page.locator('.installed-skill-content > .skills-actions').boundingBox()
+  const method = await page.getByRole('heading', { name: 'Method reference', exact: true }).boundingBox()
+  expect(toolbar!.y + toolbar!.height).toBeLessThanOrEqual(method!.y)
+  await page.getByRole('textbox', { name: '个人标签', exact: true }).fill('野外, 对账')
+  await page.getByRole('button', { name: '应用标签：field-method', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('标签已保存')
+  expect(readFileSync(join(folder, 'SKILL.md'), 'utf8')).toBe(manifest)
+  await page.locator('.skill-package-browser').scrollIntoViewIfNeeded()
+  await page.screenshot({ path: 'test-results/installed-skill-detail.png', animations: 'disabled' })
+  await page.setViewportSize({ width: 980, height: 820 })
+  const browser = page.locator('.skill-package-browser')
+  await browser.scrollIntoViewIfNeeded()
+  expect(await browser.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await page.screenshot({ path: 'test-results/installed-skill-detail-compact.png', animations: 'disabled' })
+  await page.setViewportSize({ width: 1280, height: 808 })
+  await page.getByRole('button', { name: '技能目录', exact: true }).click()
+  await page.getByRole('group', { name: '按标签筛选', exact: true }).getByRole('button', { name: '野外', exact: true }).click()
+  await page.getByRole('button', { name: '选择筛选结果', exact: true }).click()
+  await page.getByRole('button', { name: '批量只手动', exact: true }).click()
+  await expect(page.locator('.skills-page [role="status"]')).toContainText('已更新 1 个技能，0 个失败')
+  await expect(page.locator('.skill-row', { hasText: 'field-method' })).toContainText('只能手动调用')
+  const fresh = join(dir, 'skills', 'live-refresh-probe'); mkdirSync(fresh)
+  writeFileSync(join(fresh, 'SKILL.md'), '---\nname: live-refresh-probe\ndescription: Newly installed live index probe\n---\n# Probe\n')
+  await page.getByRole('button', { name: '刷新技能清单', exact: true }).click()
+  await page.getByRole('button', { name: '刷新当前会话技能', exact: true }).click()
+  await expect(page.locator('.skills-page [role="status"]')).toContainText('当前会话已刷新')
+  await page.screenshot({ path: 'test-results/installed-skill-catalog.png', animations: 'disabled' })
+  await page.getByRole('button', { name: '设置', exact: true }).click()
+  await page.getByPlaceholder(/输入问题/).fill('列出当前可用技能')
+  await page.getByRole('button', { name: '发送', exact: true }).click()
+  await expect(page.getByText(/假模型已应答/).last()).toBeVisible()
+  expect(JSON.stringify(dawn.requests)).toContain('live-refresh-probe')
+  await 进坞(page, '产物')
+  await expect(page.getByRole('button', { name: '刷新产物', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '刷新产物', exact: true }).click()
+  await expect(page.getByRole('button', { name: '刷新产物', exact: true })).toBeEnabled()
+  await 进坞(page, '文件')
+  await expect(page.getByRole('button', { name: '刷新当前文件夹', exact: true })).toContainText('刷新')
+  await page.getByRole('button', { name: '刷新当前文件夹', exact: true }).click()
+  await expect(page.getByRole('button', { name: '刷新当前文件夹', exact: true })).toBeEnabled()
+  await page.screenshot({ path: 'test-results/dock-refresh-visible.png', animations: 'disabled' })
+})
 
 test.describe("自带技能", () => {
   test("共用科研审查规范可显式展开，保留静态审查和独立验证边界", async ({ dawn }) => {

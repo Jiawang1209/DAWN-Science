@@ -1,4 +1,6 @@
 import { SkillDiscoveryPanel, SkillOriginDetails, type SkillDiscoveryActions } from "./skill-discovery.js"
+import { InstalledSkillDetail } from './installed-skill-detail.js'
+import type { InstalledSkillFile, InstalledSkillFiles, SkillBulkResult } from '../protocol/skill-management.js'
 /**
  * 技能与 MCP 两屏（2026-08-12）。
  *
@@ -286,6 +288,8 @@ function 子agent行尾菜单({ a, 忙, 可删, onToggle, onDelete }: { a: Skill
 /** 一个 Agent Skill 在界面上的样子（协议 6.0） */
 export interface AgentSkill {
   hasOrigin?: boolean
+  tags?: string[]
+  tagsOverridden?: boolean
   name: string
   description: string
   filePath: string
@@ -313,6 +317,12 @@ export interface 导入回执 {
  * 没给就还是那张只读清单。
  */
 export interface SkillActions {
+  listFiles?: ((filePath: string) => Promise<InstalledSkillFiles>) | undefined
+  readFile?: ((filePath: string, path: string) => Promise<InstalledSkillFile>) | undefined
+  setTags?: ((filePath: string, tags: string[] | undefined, reset: boolean) => Promise<unknown>) | undefined
+  setBulkInvocation?: ((filePaths: string[], mode: 调用档) => Promise<SkillBulkResult>) | undefined
+  refreshSession?: (() => Promise<{ count: number; problems: { path: string; reason: string }[] }>) | undefined
+  refreshSessionReason?: string | undefined
   discovery?: SkillDiscoveryActions
   setInvocation: (filePath: string, mode: 调用档) => Promise<unknown>
   importSkill: (req: { source: string; to: "global" | "project"; overwrite?: boolean; dryRun?: boolean }) => Promise<导入回执>
@@ -405,14 +415,24 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
   const [筛, 设筛] = useState<"all" | AgentSkill["from"]>("all")
   const [搜, 设搜] = useState("")
   const [tab, setTab] = useState<"installed" | "discover">("installed")
+  const [detail, setDetail] = useState<string>()
+  const [tag, setTag] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
   const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
 
   useEffect(() => {
     if (!load) return
     let 还在 = true
+    setLoading(true)
     load()
-      .then((d) => 还在 && 设数据(d))
+      .then((d) => { if (还在) {
+        设数据(d); 设出错(undefined)
+        setSelected(old => new Set([...old].filter(path => d.skills.some(s => s.filePath === path))))
+        setTag(current => d.skills.some(s => s.tags?.includes(current)) ? current : '')
+      } })
       .catch((e: unknown) => 还在 && 设出错(e instanceof Error ? e.message : String(e)))
+      .finally(() => { if (还在) setLoading(false) })
     return () => {
       还在 = false
     }
@@ -483,14 +503,23 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
   }
 
   if (!load) return <EmptyState title={t("本次运行没有装配技能")} description={t("这是启动时的装配问题，不是配置问题。")} />
-  if (出错) return <EmptyState title={t("读不到技能")} description={出错} />
+  if (出错 && !数据) return <EmptyState title={t("读不到技能")} description={出错} action={<Button onClick={() => 设代(n => n + 1)}>{t("重试")}</Button>} />
   if (!数据) return <Loader label={t("正在读技能")} />
+  const currentDetail = 数据.skills.find(s => s.filePath === detail)
+  if (currentDetail && actions?.listFiles && actions.readFile) return <InstalledSkillDetail key={currentDetail.filePath} skill={currentDetail} actions={actions} onBack={() => setDetail(undefined)} onChanged={() => { 设代(n => n + 1); actions.onChanged?.() }} />
 
   const 来处 = (f: AgentSkill["from"]) =>
     f === "builtin" ? t("自带") : f === "project" ? t("这个项目带的") : t("你写的")
   const 档名 = (m: 调用档) => (m === "model" ? t("开") : m === "manual" ? t("只手动") : t("关"))
   const 状态名 = (m: 调用档) => (m === "model" ? t("已启用") : m === "manual" ? t("只能手动调用") : t("已关"))
-  const 筛出来 = 数据.skills.filter((x) => (筛 === "all" || x.from === 筛) && (!搜.trim() || `${x.name} ${x.description}`.toLowerCase().includes(搜.trim().toLowerCase())))
+  const 筛出来 = 数据.skills.filter((x) => (筛 === "all" || x.from === 筛) && (!tag || x.tags?.includes(tag)) && (!搜.trim() || `${x.name} ${x.description} ${(x.tags ?? []).join(' ')}`.toLowerCase().includes(搜.trim().toLowerCase())))
+  const tags = [...new Set(数据.skills.flatMap(s => s.tags ?? []))].sort()
+  const batchMode = (mode: 调用档) => void 做('bulk', async () => {
+    if (!actions?.setBulkInvocation) return undefined
+    const result = await actions.setBulkInvocation([...selected], mode)
+    setSelected(new Set(result.failed.map(item => item.filePath)))
+    return tf("已更新 {0} 个技能，{1} 个失败。刷新当前会话技能后生效。", result.updated.length, result.failed.length) + (result.failed.length ? '\n' + result.failed.map(item => `${item.filePath}: ${item.reason}`).join('\n') : '')
+  })
 
   return (
     <div className="skills-page">
@@ -502,20 +531,27 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
         </p>
         {actions && tab === "installed" ? (
           <div className="skills-actions">
+            <Button size="sm" variant="secondary" disabled={loading || !!忙} aria-busy={loading} onClick={() => 设代(n => n + 1)}>{t("刷新技能清单")}</Button>
+            {actions.refreshSession ? <Button size="sm" variant="secondary" disabled={!!忙 || !!actions.refreshSessionReason} onClick={() => void 做('session-refresh', async () => {
+              const result = await actions.refreshSession!()
+              return tf("当前会话已刷新：{0} 项技能与角色，{1} 个诊断。下一轮生效。", result.count, result.problems.length) + (result.problems.length ? '\n' + result.problems.map(p => `${p.path}: ${p.reason}`).join('\n') : '')
+            })}>{t("刷新当前会话技能")}</Button> : null}
             {/**
               * **导入**（skills-manage）：从本机选一个含 SKILL.md 的文件夹（或一筐），复制进来。
               * 「新建」仍然不做——让 agent 写（`writing-skills`），这里只管「下下来的怎么进来」。
               */}
-            <Button variant="primary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("global")}>
+            <Button variant="primary" size="sm" disabled={!!忙} onClick={() => void 去导入("global")}>
               {t("导入到你写的…")}
             </Button>
             {actions.hasProject ? (
-              <Button variant="primary" size="sm" disabled={忙 === "import"} onClick={() => void 去导入("project")}>
+              <Button variant="primary" size="sm" disabled={!!忙} onClick={() => void 去导入("project")}>
                 {t("导入到这个项目…")}
               </Button>
             ) : null}
           </div>
         ) : null}
+        {tab === 'installed' && actions?.refreshSessionReason ? <p className="hint">{actions.refreshSessionReason}</p> : null}
+        {出错 ? <p className="caveat" role="alert">{出错}</p> : null}
         {回话 ? (
           <p className={回话.kind === "bad" ? "caveat" : "mcp-ok"} role="status">
             {回话.text}
@@ -598,27 +634,41 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
               {tf("{0} 个，{1} 个开着", 数据.skills.length, 数据.skills.filter((x) => x.invocation === "model").length)}
             </span>
           </div>
+          {tags.length ? <div className="skills-tag-filters" role="group" aria-label={t("按标签筛选")}>
+            <Button size="sm" variant={!tag ? 'primary' : 'secondary'} aria-pressed={!tag} onClick={() => setTag('')}>{t("所有标签")}</Button>
+            {tags.map(value => <Button key={value} size="sm" variant={tag === value ? 'primary' : 'secondary'} aria-pressed={tag === value} onClick={() => setTag(old => old === value ? '' : value)}>{value}</Button>)}
+          </div> : null}
+          {actions?.setBulkInvocation ? <div className="skills-bulk" role="group" aria-label={t("批量管理技能")}>
+            <Button size="sm" variant="secondary" disabled={!筛出来.length || !!忙} onClick={() => setSelected(old => new Set([...old, ...筛出来.map(s => s.filePath)]))}>{t("选择筛选结果")}</Button>
+            <Button size="sm" variant="ghost" disabled={!selected.size || !!忙} onClick={() => setSelected(new Set())}>{t("清除选择")}</Button>
+            <span className="hint">{tf("已选 {0} 个", selected.size)}</span>
+            <Button size="sm" disabled={!selected.size || !!忙} onClick={() => batchMode('model')}>{t("批量启用")}</Button>
+            <Button size="sm" disabled={!selected.size || !!忙} onClick={() => batchMode('manual')}>{t("批量只手动")}</Button>
+            <Button size="sm" disabled={!selected.size || !!忙} onClick={() => batchMode('off')}>{t("批量停用")}</Button>
+          </div> : null}
           {筛出来.length === 0 ? (
             <EmptyState title={t("没有对上的技能")} description={t("换个词，或者把筛选清掉。")} />
           ) : (
             <ul className="skill-group" aria-label={t("技能清单")}>
               {筛出来.map((s) => (
                 <li key={s.filePath} className="skill-row" data-authored="" data-state={s.invocation === "off" ? "off" : undefined}>
+                  {actions?.setBulkInvocation ? <input type="checkbox" aria-label={tf("选择技能 {0}", s.name)} checked={selected.has(s.filePath)} disabled={!!忙} onChange={e => setSelected(old => { const next = new Set(old); if (e.target.checked) next.add(s.filePath); else next.delete(s.filePath); return next })} /> : null}
                   <div
                     className="skill-row-main"
                     {...浮层事件(设浮着的, s.name, s.description, [{ 图: "文件夹", 文: s.filePath }], undefined, 清单上的卡)}
                   >
                     <p className="skill-name">
-                      <span className="skill-name-text">{s.name}</span>
+                      {actions?.listFiles && actions.readFile ? <Button variant="text" size="inline" className="skill-name-text" aria-label={tf("查看技能 {0}", s.name)} onClick={() => { 设浮着的(undefined); setDetail(s.filePath) }}>{s.name}</Button> : <span className="skill-name-text">{s.name}</span>}
                       <span className="tag">{来处(s.from)}</span>
                       <span className={`tag tag-${s.invocation}`}>{状态名(s.invocation)}</span>
                     </p>
                     {/* **模型选它的依据**，不是装饰——写得含糊的技能永远不会被用上 */}
                     <p className="skill-desc">{s.description}</p>
+                    {s.tags?.length ? <p className="skill-tags">{s.tags.map(tag => <span key={tag} className="tag">{tag}</span>)}</p> : null}
                     {s.hasOrigin && actions?.discovery ? <SkillOriginDetails filePath={s.filePath} actions={actions.discovery} /> : null}
                   </div>
                   {actions ? (
-                    <行尾菜单 s={s} 忙={忙 === s.filePath} 可删={s.mutable} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
+                    <行尾菜单 s={s} 忙={!!忙} 可删={s.mutable} 档名={档名} onMode={(m) => void 做(s.filePath, async () => { await actions.setInvocation(s.filePath, m); return tf("「{0}」改为{1}。新会话起生效", s.name, 档名(m)) })} onDelete={() => void 去删(s)} />
                   ) : null}
                 </li>
               ))}

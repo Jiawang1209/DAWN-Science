@@ -422,11 +422,9 @@ function DirNode({
         * 树根仅在支持文件夹下载时提供菜单，且不提供删除。删掉正在查看的根目录会使树失去位置。
         */}
       {操作 && (depth > 0 || 操作.onDownloadDir) ? <行操作钮 path={path} name={name} kind="dir" 操作={depth === 0 ? { ...操作, onDelete: undefined } : 操作} 菜单={菜单} 设菜单={设菜单} /> : null}
+      {open && error ? <p className="caveat tree-note" role="alert">{error}</p> : null}
       {open ? (
-        error ? (
-          // **读不了要说出来**，不是显示成一个空目录
-          <p className="caveat tree-note">{error}</p>
-        ) : !listing ? (
+        !listing ? (error ? null :
           <Loader label={t("正在读目录")} inline />
         ) : (
           <ul className="tree-list">
@@ -970,6 +968,15 @@ export function FilesView({
    */
   const [手动刷新, 设手动刷新] = useState(0)
   const 合令牌 = (刷新令牌 ?? 0) + 手动刷新
+  const [directoryLoads, setDirectoryLoads] = useState(0)
+  const trackedLoadDir = useMemo(() => async (path: string) => {
+    setDirectoryLoads(n => n + 1)
+    try {
+      return await loadDir(path)
+    } finally {
+      setDirectoryLoads(n => n - 1)
+    }
+  }, [loadDir])
   /** 悬停在哪一行上（那张卡是 fixed 的，画在面板最外层） */
   const [浮着的, 设浮着的] = useState<悬停浮层 | undefined>(undefined)
   /** 行菜单做完一件事说一句（复制成没成）；三秒后自己消失 */
@@ -1022,7 +1029,7 @@ export function FilesView({
       作废 = true
       clearTimeout(id)
     }
-  }, [搜着, 查询, 根, search])
+  }, [搜着, 查询, 根, search, 合令牌])
   const 树宽 = useStore($fileTreeWidth)
   const 树高 = useStore($fileTreeHeight)
   const 容器 = useRef<HTMLDivElement>(null)
@@ -1185,16 +1192,18 @@ export function FilesView({
          * 而这个项目已经为「进得去出不来」改过一次（项目概览与文件的返回键）。
          */}
         {/**
-          * 图标按钮，照作者常用的 SFTP 客户端那一颗。读屏名字是「刷新当前文件夹」。
+          * 图标配文字，使手动刷新入口始终可发现。读屏名字是「刷新当前文件夹」。
           * **不用 `title=`**（设计契约：无样式、半秒延迟、与主题不符）。
           */}
         <Button
           variant="ghost"
-          size="icon"
+          size="sm"
           aria-label={t("刷新当前文件夹")}
+          aria-busy={directoryLoads > 0 || 搜忙}
+          disabled={directoryLoads > 0 || 搜忙}
           onClick={() => 设手动刷新((n) => n + 1)}
         >
-          <刷新图标 />
+          <刷新图标 />{directoryLoads > 0 || 搜忙 ? t("正在刷新") : t("刷新")}
         </Button>
         {onUpload ? <FileUploadMenu onFile={() => onUpload(根)} {...(onUploadDirectory ? { onFolder: () => onUploadDirectory(根) } : {})} /> : null}
         {根 !== (初始根 ?? "") ? (
@@ -1308,7 +1317,7 @@ export function FilesView({
             depth={0}
             selected={selected}
             onSelect={onSelect}
-            load={loadDir}
+            load={trackedLoadDir}
             刷新令牌={合令牌}
             {...(操作 ? { 操作 } : {})}
             浮={设浮着的}

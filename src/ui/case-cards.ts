@@ -1,7 +1,7 @@
 /**
  * 案例卡片的数据那一半（2026-09-15，规格 `2026-09-15-案例卡片-design.md`）。
  *
- * **数据从这一轮 MLAI 工具的返回里取，不靠模型按格式写**（K1，第二版）。
+ * **数据从 MLAI 工具的返回里取，不靠模型按格式写**（K1，第二版）。
  * 第一版让 agent 附一段 ```mlai-cases 清单；作者真机试的第二次，模型根本没去读技能、直接调了 8 次 MLAI 工具，
  * 写出一大段带 case_id 的文字——清单没有，卡片自然也没有。「模型记得按格式写」不可靠，工具返回是结构化的、一定在。
  *
@@ -10,6 +10,8 @@
  */
 
 import type { 案例 } from "../protocol/cases.js"
+import type { TranscriptItem } from "../protocol/events.js"
+import { 从工具结果收案例 } from "../cases/results.js"
 export type { 案例 } from "../protocol/cases.js"
 export { 从工具结果收案例 } from "../cases/results.js"
 
@@ -18,6 +20,23 @@ export interface 本轮案例 {
   服务器: string
   案例: 案例
   n: number
+}
+
+/** 本轮结果优先；本轮没有案例数据时，允许从本会话更早的工具结果恢复明确提及的卡片。 */
+export function 会话提到的案例(items: readonly TranscriptItem[], 下标: number, 正文: string): 本轮案例[] {
+  let i = 下标 - 1
+  const tools: Extract<TranscriptItem, { type: "tool" }>[] = []
+  while (i >= 0) {
+    const x = items[i]!
+    if (x.type === "turn" && x.who === "user") break
+    if (x.type === "tool") tools.push(x)
+    i--
+  }
+  const 当前 = 从工具结果收案例(tools.reverse())
+  const 已知 = 当前.size > 0 || i <= 0 ? 当前 : 从工具结果收案例(
+    items.slice(0, i).filter((x): x is Extract<TranscriptItem, { type: "tool" }> => x.type === "tool"),
+  )
+  return 本轮提到的案例(正文, 已知)
 }
 
 /**

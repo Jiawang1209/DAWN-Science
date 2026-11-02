@@ -115,7 +115,9 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
       const 条 = 待补结果.get(m.toolCallId)
       const skillRead = !m.isError && trustedSkillTools.has(m.toolName) && (!条 || 条.name === m.toolName)
         ? SkillReadSchema.safeParse(m.details?.skillRead) : undefined
+      const caseResults = 提取案例字段(条?.name ?? m.toolName, m.content)
       const metadata = {
+        ...(caseResults ? { caseResults } : {}),
         ...(skillRead?.success ? { skillRead: skillRead.data } : {}),
         ...(typeof m.isError === 'boolean' ? { isError: m.isError } : {}),
         ...(m.details?.truncation?.truncated ? { truncated: true } : {}),
@@ -140,10 +142,6 @@ export function 消息转历史(消息: readonly 历史消息[]): RestoredItem[]
     }
   }
   return 出.map((item): RestoredItem => {
-    if (item.kind === "tool" && item.result) {
-      const caseResults = 提取案例字段(item.name, item.result)
-      if (caseResults) item = { ...item, caseResults }
-    }
     if (item.kind !== "tool" || item.name !== ASK_USER_QUESTION) return item
     const parsed = QuestionsSchema.safeParse((item.input as { questions?: unknown } | undefined)?.questions)
     if (!parsed.success) return item

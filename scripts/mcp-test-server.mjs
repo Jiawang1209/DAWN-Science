@@ -98,7 +98,8 @@ server.registerTool("search_cases", {
   description: "假的案例检索。测试用。",
   inputSchema: { query: z.string().optional(), ...(process.argv.includes("--changed-search") ? { execute: z.boolean().optional() } : {}) },
   annotations: process.argv.includes("--deny-search") ? { readOnlyHint: false } : legacyMlai ? {} : { readOnlyHint: true },
-}, async ({ query }) => ({
+}, async ({ query }) => {
+  const result = {
   content: [
     {
       type: "text",
@@ -117,7 +118,11 @@ server.registerTool("search_cases", {
       ]),
     },
   ],
-}))
+  }
+  // 真实 MLAI 同时返回文本数组与 { result: [...] }，SDK 投影后会成为两个文本块。
+  if (query === "large-case-cards") result.structuredContent = { result: JSON.parse(result.content[0].text) }
+  return result
+})
 if (legacyMlai) {
   server.tool("get_case", "读取测试案例。", { case_id: z.string(), figure_limit: z.number().optional() }, async ({ case_id }) => ({ content: [{ type: "text", text: JSON.stringify({ case_id, title: "测试案例" }) }] }))
   server.tool("list_taxonomy", "读取测试词表。", { dimension: z.string().optional() }, async () => ({ content: [{ type: "text", text: "{}" }] }))

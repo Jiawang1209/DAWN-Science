@@ -94,7 +94,7 @@ import { EnhanceControl, type EnhanceMode, type EnhanceOutcome } from "./enhance
 import { 按类分组 } from "./agent-groups.js"
 import { GeneratedStrip, 本轮产物, type 轮产物 } from "./generated-strip.js"
 import { 分组转录, 汇总工具组, 工具组人话 } from "./tool-group.js"
-import { 从工具结果收案例, 本轮提到的案例, type 本轮案例 } from "./case-cards.js"
+import { 会话提到的案例, type 本轮案例 } from "./case-cards.js"
 import { 案例卡片们 } from "./case-cards-view.js"
 import type { ArtifactList } from "./state/catalog.js"
 import { ComposerInputSurface, useComposerCallback } from "./composer-input-surface.js"
@@ -4461,7 +4461,7 @@ export function ConversationView({
     const 表 = new Map<string, 本轮案例[]>()
     items.forEach((x, k) => {
       if (x.type !== "turn" || x.who !== "agent" || !x.final) return
-      const 有 = 本轮案例(items, k, x.text)
+      const 有 = 会话提到的案例(items, k, x.text)
       if (有.length > 0) 表.set(x.id, 有)
     })
     return 表
@@ -6300,7 +6300,7 @@ function TranscriptRowImpl({
           * 走这张卡上的「在这儿打开」。
           */}
         {/**
-          * **案例卡片**（2026-09-15）：这条回复提到了这一轮 MLAI 工具查到的案例，就画成卡片。
+          * **案例卡片**：展示正文明确提及的真实检索案例；本轮无案例数据时可复用本会话历史。
           * 数据由对话层从工具返回里收好传进来（`cases`），这里只管画。
           */}
         {cases && cases.length > 0 && onOpenWeb ? (
@@ -6941,23 +6941,6 @@ export function ToolRow({
       ) : null}
     </div>
   )
-}
-
-/**
- * 这条 agent 发言提到的、**这一轮**（上一句用户发言之后）MLAI 工具查到的案例（2026-09-15）。
- * 这一轮没调过 MLAI 工具、或正文一篇都没提 → 空数组，不出卡。
- */
-function 本轮案例(items: readonly TranscriptItem[], 下标: number, 正文: string): 本轮案例[] {
-  let i = 下标 - 1
-  const tools: Extract<TranscriptItem, { type: "tool" }>[] = []
-  while (i >= 0) {
-    const x = items[i]!
-    if (x.type === "turn" && x.who === "user") break
-    if (x.type === "tool") tools.push(x)
-    i--
-  }
-  if (tools.length === 0) return []
-  return 本轮提到的案例(正文, 从工具结果收案例(tools.reverse()))
 }
 
 /**

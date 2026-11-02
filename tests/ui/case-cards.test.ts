@@ -6,6 +6,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { 从工具结果收案例, 本轮提到的案例, 图廊根, 封面地址, 详情地址, 选这篇的话 } from "../../src/ui/case-cards.js"
+import { 提取案例字段 } from "../../src/cases/results.js"
 
 const 检索结果 = `[mlai-science] ${JSON.stringify([
   { case_id: "20191101-sxbxy3b71-deseq2", title: "R包DESeq2作差异基因分析", language: "r", cover: "figures/1.preview.png", task: ["differential_expression"], figure_types: ["ma_plot", "volcano_plot"] },
@@ -102,6 +103,20 @@ describe("本轮提到的案例", () => {
 })
 
 describe("独立案例字段", () => {
+  it("多个文本块补齐字段、保留不同案例，忽略非文本块及坏块", () => {
+    const cases = 提取案例字段("mlai-science__search_cases", [
+      { type: "text", text: `[mlai-science] ${JSON.stringify([{ case_id: "layout", title: "含 MCP structuredContent: 标签的标题" }])}` },
+      { type: "text", text: `MCP structuredContent: ${JSON.stringify({ result: [{ case_id: "layout", cover: "figures/1.png" }, { case_id: "wgcna", title: "WGCNA 分析" }] })}` },
+      { type: "text", text: "无效 JSON" },
+      { type: "image", text: '{"case_id":"not-text"}' },
+    ])
+    expect(cases).toMatchObject([
+      { case_id: "layout", title: "含 MCP structuredContent: 标签的标题", cover: "figures/1.png" },
+      { case_id: "wgcna", title: "WGCNA 分析" },
+    ])
+    expect(cases).toHaveLength(2)
+  })
+
   it("有精简案例字段时不再解析截断正文，旧记录仍能解析完整正文", () => {
     const cases = [{ case_id: "20251016-layout", title: "网络布局浅览", language: "r" }]
     expect([...从工具结果收案例([{ name: "mlai-science__search_cases", result: "[mlai-science] [{截断", caseResults: cases }]).values()]

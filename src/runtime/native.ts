@@ -2637,7 +2637,7 @@ export class NativeRuntime implements AgentRuntime {
         const content = e.result?.content ?? []
         const toolName = String(e.toolName ?? "?")
         const full = content.map((c) => c.text ?? "").join("")
-        const caseResults = 提取案例字段(toolName, full)
+        const caseResults = 提取案例字段(toolName, content)
         // **此前这里是 `.slice(0, 2000)`：硬砍、不出声、不留路径。**
         // 现在全文写盘、摘要进事件流、字节数如实上报（规格 7.5）
         const sessionDir = this.sessions.get(sessionId)?.sessionDir

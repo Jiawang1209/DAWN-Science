@@ -16,6 +16,35 @@ const dirs: string[] = []
 afterEach(() => dirs.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })))
 
 describe("案例字段跨运行时和转录", () => {
+  const blocks = [
+    { type: "text", text: full },
+    { type: "text", text: `MCP structuredContent: ${JSON.stringify({ result: raw })}` },
+  ]
+
+  it.each([blocks, [blocks[1]!], [{ type: "text", text: "not JSON" }, blocks[0]!]].map(content => ({ content })))(
+    "多内容块或仅结构化内容在实时截断之前提取，并按案例 ID 去重 (%#)", ({ content }) => {
+      const rt = new NativeRuntime({}), events: AgentEvent[] = []
+      const dir = mkdtempSync(join(tmpdir(), "dawn-case-blocks-")); dirs.push(dir)
+      ;(rt as any).sessions.set("s", { sessionDir: dir })
+      rt.attach("s", event => events.push(event))
+      ;(rt as any).translate("s", { type: "tool_execution_end", toolName: name, toolCallId: "t", result: { content } })
+      const event = events.find(e => e.kind === "tool_end")
+      expect(event).toMatchObject({ truncated: true, caseResults: [{ case_id: "20251016-layout", title: "网络布局浅览", cover: "figures/1.png" }] })
+      expect(event?.kind === "tool_end" && event.caseResults).toHaveLength(1)
+    },
+  )
+
+  it.each([true, false])("多内容块历史恢复保留案例，包括孤立结果（有调用=%s）", withCall => {
+    const messages: Parameters<typeof 消息转历史>[0] = [
+      ...(withCall ? [{ role: "assistant" as const, content: [{ type: "toolCall" as const, id: "t", name, arguments: {} }] }] : []),
+      { role: "toolResult", toolCallId: "t", toolName: name, content: blocks },
+    ]
+    const item = 还原成条目(消息转历史(messages)[0]!, 0)
+    expect(item.type === "tool" ? item.caseResults : undefined).toMatchObject([{ case_id: "20251016-layout", title: "网络布局浅览" }])
+    expect(item.type === "tool" && item.caseResults).toHaveLength(1)
+    expect(TranscriptItemSchema.safeParse(item).success).toBe(true)
+  })
+
   it.each([false, true])('retains upstream truncation and the original output path (event budget exceeded=%s)', overBudget => {
     const rt = new NativeRuntime({}), events: AgentEvent[] = []
     const dir = mkdtempSync(join(tmpdir(), 'dawn-upstream-output-')); dirs.push(dir)

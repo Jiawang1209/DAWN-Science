@@ -8,10 +8,10 @@ const 字 = (v: unknown): string | undefined => (typeof v === "string" && v.trim
 const 串 = (v: unknown): string | undefined =>
   Array.isArray(v) ? 字(v.filter((x) => typeof x === "string").join(" · ")) : undefined
 
-/** 工具返回的文本 → JSON。我们给 MCP 结果加了 `[服务器名] ` 前缀；解析不了（被截断）就当没有 */
+/** 单个文本块 → JSON；兼容服务器前缀与模型投影的结构化内容标签。坏块不影响其他块。 */
 function 解析(text: string): unknown {
   try { return JSON.parse(text) } catch { /* MCP 文字可能带服务器前缀 */ }
-  const 去前缀 = text.replace(/^\s*\[[^\]\n]+\]\s*/, "")
+  const 去前缀 = text.replace(/^\s*\[[^\]\n]+\]\s*/, "").replace(/^\s*MCP structuredContent:\s*/, "")
   try {
     return JSON.parse(去前缀)
   } catch {
@@ -53,8 +53,9 @@ export function 从工具结果收案例(
   return 表
 }
 
-/** 在文本预算截断前提取；只保留卡片字段，不复制代码、笔记或原始结果。 */
-export function 提取案例字段(name: string, result: string): 案例[] | undefined {
-  const cases = [...从工具结果收案例([{ name, result }]).values()].map((x) => x.案例)
+/** 在拼接及预算截断前逐块提取；保留字符串入口兼容旧调用。只保留卡片字段。 */
+export function 提取案例字段(name: string, result: string | readonly { type?: string | undefined; text?: string | undefined }[]): 案例[] | undefined {
+  const texts = typeof result === "string" ? [result] : result.flatMap(c => c.type === "text" && c.text ? [c.text] : [])
+  const cases = [...从工具结果收案例(texts.map(text => ({ name, result: text }))).values()].map((x) => x.案例)
   return cases.length > 0 ? cases : undefined
 }

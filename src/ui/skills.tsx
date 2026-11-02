@@ -74,6 +74,8 @@ export function SubagentsView({ load, actions }: { load?: (() => Promise<SkillLo
   useEffect(() => {
     if (!load) return
     let 还在 = true
+    设数据(undefined)
+    设出错(undefined)
     load()
       .then((d) => 还在 && 设数据(d))
       .catch((e: unknown) => 还在 && 设出错(e instanceof Error ? e.message : String(e)))

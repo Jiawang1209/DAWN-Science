@@ -5,9 +5,50 @@
  * ③ 命令面板里有「派子 agent」「按规矩聊」，选中往草稿写开头；
  * ④ **一份两用**：`/skill:名` 真的把人设送进了模型（假模型收到的请求里有那段正文）。
  */
-import { test, expect, 开一段临时会话, 进设置 } from "./fixtures.js"
+import { test, expect, 开一段临时会话, 在项目里开会话, 进设置 } from "./fixtures.js"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+
+test("当前项目在后台移除后，子 Agent 名册自动恢复全局定义", async ({ dawn }) => {
+  const { page } = dawn
+  await 在项目里开会话(page)
+  // 走真实 IPC 模拟另一个窗口移除项目，当前窗口尚保留旧选择。
+  await page.evaluate(async () => {
+    const bridge = window.dawn!
+    const reply = await bridge.invoke("listProjects", {}) as { data: { projectId: string; temporary?: boolean }[] }
+    const project = reply.data.find(p => !p.temporary)!
+    const deleted = await bridge.invoke("deleteProject", { projectId: project.projectId }) as { ok: boolean }
+    if (!deleted.ok) throw new Error("测试项目移除失败")
+  })
+  await 进设置(page, "子 Agent")
+  await expect(page.locator(".skill-row", { hasText: "stat-consultant" })).toBeVisible()
+  await expect(page.getByText("读不到子 agent", { exact: true })).toHaveCount(0)
+  await expect(page.locator(".skills-count")).toContainText("22 个，22 个开着")
+  await expect(page.locator(".settings-nav").getByRole("button", { name: /^子 Agent/ })).toContainText("22")
+  await expect(page.getByRole("button", { name: "导入到这个项目…", exact: true })).toHaveCount(0)
+})
+
+test("项目有效时保留项目定义，项目移除后已打开的名册切回全局", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  const local = join(workspace, ".dawn", "agents")
+  mkdirSync(local, { recursive: true })
+  writeFileSync(join(local, "project-helper.md"), "---\nname: project-helper\ndescription: 当前项目的助手\n---\n仅用于当前项目。\n")
+  await 在项目里开会话(page)
+  await 进设置(page, "子 Agent")
+  await expect(page.locator(".skill-row", { hasText: "project-helper" })).toBeVisible()
+  await expect(page.locator(".skills-count")).toContainText("23 个，23 个开着")
+  await expect(page.getByRole("button", { name: "导入到这个项目…", exact: true })).toBeVisible()
+  await page.evaluate(async () => {
+    const reply = await window.dawn!.invoke("listProjects", {}) as { data: { projectId: string; temporary?: boolean }[] }
+    const project = reply.data.find(p => !p.temporary)!
+    const deleted = await window.dawn!.invoke("deleteProject", { projectId: project.projectId }) as { ok: boolean }
+    if (!deleted.ok) throw new Error("测试项目移除失败")
+  })
+  await expect(page.locator(".skills-count")).toContainText("22 个，22 个开着")
+  await expect(page.locator(".skill-row", { hasText: "project-helper" })).toHaveCount(0)
+  await expect(page.locator(".skill-row", { hasText: "stat-consultant" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "导入到这个项目…", exact: true })).toHaveCount(0)
+})
 
 test("**名册：22 份自带、分组与搜索、停用写进文件**", async ({ dawn }) => {
   const { page, dir } = dawn

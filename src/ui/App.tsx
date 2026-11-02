@@ -3361,7 +3361,10 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 载微信状态 = useCallback(() => client.get<WeixinStatus>("weixinGetStatus", {}), [client])
   /** 扩展三屏的 `load` 记住引用（2026-08-23 审查抓的：内联箭头函数让那三屏的 effect 每次渲染都重拉一遍——后台会话每到一个 token 就打一次） */
   const 载技能 = useCallback(() => client.get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {}), [client, projectId])
-  const 载子agent = useCallback(() => client.get<SkillLoad>("listSubagents", projectId ? { projectId } : {}), [client, projectId])
+  // 项目被移除后，窗口可能还留着旧选择；按最新目录确定名册作用域。
+  // 只收敛子 Agent 查询，不改导航选择（它也决定终端等入口的归属）。
+  const 子agent项目id = projects.some(p => p.projectId === projectId) ? projectId : undefined
+  const 载子agent = useCallback(() => client.get<SkillLoad>("listSubagents", 子agent项目id ? { projectId: 子agent项目id } : {}), [client, 子agent项目id])
   const 载MCP = useCallback(() => client.get<MCP装载>("listMcpServers", projectId ? { projectId } : {}), [client, projectId])
   /** 插件屏与「扩展」行尾计数共用同一发（2026-09-16 审查抓的：两处各写一份 `client.get` 会各自漂移） */
   const 载插件 = useCallback(() => client.get<{ plugins: import("./skills.js").插件一个[] }>("listPlugins", {}), [client])
@@ -4218,7 +4221,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   /** 子 agent 名册（命令面板里「派」与「按规矩聊」两组用）。启动取一次，项目切换时再取；停用的不列 */
   const [子agent名册快照, 设子agent名册] = useState<{projectId: string | undefined; agents: { name: string; title?: string | undefined; description: string; group?: string | undefined }[]} | undefined>(undefined)
   // 项目切换的首帧即隔离旧名册；新请求失败时也不能套用另一项目的同名角色。
-  const 子agent名册 = useMemo(() => 子agent名册快照?.projectId === projectId ? 子agent名册快照?.agents ?? [] : [], [子agent名册快照, projectId])
+  const 子agent名册 = useMemo(() => 子agent名册快照?.projectId === 子agent项目id ? 子agent名册快照?.agents ?? [] : [], [子agent名册快照, 子agent项目id])
   /** 侧栏「Agent Skills」后面那个数：开着的（不含「关」了的） */
   const [技能计数, 设技能计数] = useState<{ projectId: string | undefined; count: number }>()
   const 技能数 = 技能计数?.projectId === projectId ? 技能计数?.count : undefined
@@ -4264,9 +4267,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const 名册变了 = useCallback(() => 设名册代((n) => n + 1), [])
   useEffect(() => {
     let 还在 = true
-    client
-      .get<SkillLoad>("listSubagents", projectId ? { projectId } : {})
-      .then((r) => 还在 && 设子agent名册({projectId, agents: r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))}))
+    载子agent()
+      .then((r) => 还在 && 设子agent名册({projectId: 子agent项目id, agents: r.agents.filter((a) => !a.disabled).map((a) => ({ name: a.name, description: a.description, ...(a.title ? { title: a.title } : {}), ...(a.group ? { group: a.group } : {}) }))}))
       .catch(() => { if (还在) 设子agent名册(undefined) })
     client
       .get<AgentSkill装载>("listAgentSkills", projectId ? { projectId } : {})
@@ -4299,7 +4301,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     return () => {
       还在 = false
     }
-  }, [client, projectId, view, 名册代, 当前工作区路径, 载MCP, 载插件])
+  }, [client, projectId, view, 名册代, 当前工作区路径, 载MCP, 载插件, 载子agent, 子agent项目id])
   const 优化输入态 = useStore($优化输入)
   const commands = useMemo(
     () =>
@@ -5029,11 +5031,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   load={载子agent}
   actions={{
     setEnabled: (filePath, enabled) => client.get("setSubagentEnabled", { filePath, enabled }),
-    importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && projectId ? { projectId } : {}) }),
+    importSubagents: (req) => client.get<导入回执>("importSubagents", { ...req, ...(req.to === "project" && 子agent项目id ? { projectId: 子agent项目id } : {}) }),
     deleteSubagent: (filePath) => client.get("deleteSubagent", { filePath }),
     pickDirectory: () => client.pickDirectory(默认工作区?.path),
     问: 问一句,
-    hasProject: Boolean(projectId),
+    hasProject: Boolean(子agent项目id),
     onChanged: 名册变了,
   }}
 />
@@ -6418,7 +6420,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           },
         }}
         counts={{ plugins: 插件开着数, skills: 技能数, mcp: MCP开着数,
-          subagents: 子agent名册快照?.projectId === projectId ? 子agent名册快照?.agents.length : undefined }}
+          subagents: 子agent名册快照?.projectId === 子agent项目id ? 子agent名册快照?.agents.length : undefined }}
         scopeLabel={projectId ? projects.find(p => p.projectId === projectId)?.name ?? t("当前项目") : t("全局")}
         version={更新回执?.状态.当前}
         onOpenSettings={id => 开设置栏(id)}

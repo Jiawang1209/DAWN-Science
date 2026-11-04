@@ -1,5 +1,6 @@
 /** Host acceptance reuses analysis-route evidence and file checks. */
 import {Type} from 'typebox'
+import {resolve} from 'node:path'
 import type {AnalysisRoute} from '../protocol/analysis-route.js'
 import {TaskResultSchema,type TaskContract,type TaskReceipt} from '../protocol/task-contract.js'
 export * from '../protocol/task-contract.js'
@@ -7,7 +8,7 @@ import {validateRouteEvidence,type RouteToolEvidence} from '../runtime/analysis-
 import {routeDeliverableEvidence} from '../runtime/analysis-route-files.js'
 export function taskPrompt(task:string,contract?:TaskContract):string {
   if(!contract)return task
-  return `${task}\n\n任务契约（范围已冻结）：${JSON.stringify(contract)}\n最终答复必须仅为 JSON 对象：{summary:string,blockers:string[],deliverables:[{path:string,note?:string}],execution:{state:"not_run"|"partial"|"completed"|"failed",note:string,toolCallIds?:string[]},verification:{state:"unreviewed"|"reviewed"|"issues",note:string,toolCallIds?:string[]}}。执行/审阅声明须引用实际本轮工具 callId。文件只存在不等于由本轮生成；不得把完成或格式通过当科学正确。遇到范围限制用 blockers 交还主 agent，不得扩大权限。`
+  return `${task}\n\n任务契约（范围已冻结）：${JSON.stringify(contract)}\n${contract.submission==='tool'?'必须调用 submit_task_result 提交最终结果；纯文本/JSON 不算提交。工具报错可在本轮修正参数。提交成功（含 blocked）后不能再调用其他工具。':'可调用 submit_task_result 正式提交；未使用时最终答复须仅为 JSON。'}格式：{summary:string,blockers:string[],deliverables:[{path:string,note?:string}],execution:{state:"not_run"|"partial"|"completed"|"failed",note:string,toolCallIds?:string[]},verification:{state:"unreviewed"|"reviewed"|"issues",note:string,toolCallIds?:string[]},data?:按 resultType 要求的数据对象}。resultType=data-summary 时 data={kind:"data-summary",rows:number,columns:[{name,type?,unit?}],issues:string[]}；model-metrics 时 data={kind:"model-metrics",method:string,metrics:{名称:number},sampleCount?:number,caveats:string[]}；review 时 data={kind:"review",verdict:"pass"|"revise"|"blocked",findings:string[],reviewedPaths:string[],revisionInstructions?:string}。执行/审阅声明须引用实际本轮工具 callId。审阅须真实读取 reviewedPaths 中的文件。文件存在、格式通过和工具执行不等于科学正确。阻塞用 blockers 交还主 agent，不得扩大权限。`
 }
 /** Declared inputs must be existing in-workspace files; this is readiness, not a read snapshot. */
 export function taskInputReceipt(contract:TaskContract,workspace:string):TaskReceipt|undefined {
@@ -26,6 +27,15 @@ export function acceptTaskResult(contract:TaskContract,text:string,evidence:read
     const inputProblem=taskInputReceipt(contract,workspace)
     if(inputProblem)return inputProblem
     const result=TaskResultSchema.parse(JSON.parse(text.trim()))
+    if(contract.resultType&&result.data?.kind!==contract.resultType)throw new Error('缺少契约指定的科学结果 data 类型')
+    if(result.data?.kind==='data-summary'&&contract.requireReview){const ids=new Set(result.verification.toolCallIds??[]);if(contract.inputs.some(path=>!evidence.some(tool=>ids.has(tool.toolCallId)&&tool.name==='read'&&tool.status==='done'&&typeof tool.input==='object'&&tool.input!==null&&typeof (tool.input as {path?:unknown}).path==='string'&&resolve(workspace,(tool.input as {path:string}).path)===resolve(workspace,path))))throw new Error('数据核查缺少声明输入的真实 read 证据')}
+    if(result.data?.kind==='review'){
+      const ids=new Set(result.verification.toolCallIds??[])
+      const reviewed=result.data.reviewedPaths
+      if(contract.inputs.some(path=>!reviewed.includes(path))||reviewed.some(path=>!contract.inputs.includes(path)))throw new Error('审阅文件须与声明输入一致')
+      if(reviewed.some(path=>!evidence.some(tool=>ids.has(tool.toolCallId)&&tool.name==='read'&&tool.status==='done'&&typeof tool.input==='object'&&tool.input!==null&&typeof (tool.input as {path?:unknown}).path==='string'&&resolve(workspace,(tool.input as {path:string}).path)===resolve(workspace,path))))throw new Error('审阅文件缺少本轮真实 read 证据')
+      if(result.verification.state==='unreviewed')throw new Error('审阅结果需要实际审阅证据')
+    }
     if(new Set(result.deliverables.map(d=>d.path)).size!==result.deliverables.length)throw new Error('Duplicate deliverables')
     if(result.deliverables.some(d=>!contract.outputs.includes(d.path)))throw new Error('产物未在契约 outputs 声明')
     const step={id:'task',title:'子任务',purpose:'契约验收',inputs:contract.inputs,outputs:contract.outputs,dependencies:[],status:'pending' as const,blockers:result.blockers,cases:[],deliverables:result.deliverables,execution:result.execution,verification:result.verification,needsReview:true,notes:[]}
@@ -34,11 +44,11 @@ export function acceptTaskResult(contract:TaskContract,text:string,evidence:read
     validateRouteEvidence(route,undefined,scoped,'')
     const physical=routeDeliverableEvidence(route,[],workspace,false)
     const deliverables=routeDeliverableEvidence(route,scoped,workspace,false)
-    if(result.blockers.length||result.execution.state==='failed'||result.verification.state==='issues'||contract.requireExecution&&result.execution.state!=='completed'||contract.requireReview&&result.verification.state!=='reviewed')return{version:1,state:'blocked',summary:result.summary,reason:'存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游',result,deliverables}
+    if(result.blockers.length||result.execution.state==='failed'||result.verification.state==='issues'||result.data?.kind==='review'&&result.data.verdict!=='pass'||result.data?.kind==='data-summary'&&result.data.issues.length>0||contract.requireExecution&&result.execution.state!=='completed'||contract.requireReview&&result.verification.state!=='reviewed')return{version:1,state:'blocked',summary:result.summary,reason:'存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游',result,deliverables}
     if(contract.outputs.some(p=>!result.deliverables.some(d=>d.path===p)))throw new Error('缺少声明的产物回执')
     if(physical.some(d=>d.state==='missing'||d.state==='unknown'))throw new Error('声明产物不存在、不是文件或无法安全核验')
     return{version:1,state:'accepted',summary:result.summary,result,deliverables}
   }catch(error){return invalid(error instanceof Error?error.message:String(error))}
 }
 
-export const TaskContractParameters=Type.Object({requireExecution:Type.Optional(Type.Boolean()),requireReview:Type.Optional(Type.Boolean()),version:Type.Optional(Type.Literal(1)),inputs:Type.Optional(Type.Array(Type.String())),outputs:Type.Optional(Type.Array(Type.String())),access:Type.Optional(Type.Union([Type.Literal("read-only"),Type.Literal("workspace-write"),Type.Literal("workspace-exec")]))})
+export const TaskContractParameters=Type.Object({submission:Type.Optional(Type.Literal('tool')),resultType:Type.Optional(Type.Union([Type.Literal('data-summary'),Type.Literal('model-metrics'),Type.Literal('review')])),requireExecution:Type.Optional(Type.Boolean()),requireReview:Type.Optional(Type.Boolean()),version:Type.Optional(Type.Literal(1)),inputs:Type.Optional(Type.Array(Type.String())),outputs:Type.Optional(Type.Array(Type.String())),access:Type.Optional(Type.Union([Type.Literal("read-only"),Type.Literal("workspace-write"),Type.Literal("workspace-exec")]))})

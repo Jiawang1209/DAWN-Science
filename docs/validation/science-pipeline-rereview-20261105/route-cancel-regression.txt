@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/analysis-route.test.ts -t keeps aborted
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/runtime/analysis-route.test.ts (13 tests | 1 failed | 12 skipped) 42ms
+     × keeps aborted, invalid-timeout and missing-cwd shell preflight failures unobserved 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/analysis-route.test.ts > native analysis route > keeps aborted, invalid-timeout and missing-cwd shell preflight failures unobserved
+AssertionError: expected { content: [ { …(2) } ], …(2) } to match object { isError: true, details: { …(1) } }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "details": {
+-     "analysisRouteEvidence": {
+-       "execution": "not_observed",
+-     },
+-   },
++   "details": undefined,
+    "isError": true,
+  }
+
+ ❯ tests/runtime/analysis-route.test.ts:133:20
+    131|    const bash=x.state.session.getToolDefinition('bash')
+    132|    const aborted=await bash.execute('before-abort',{command:'true'},co…
+    133|    expect(aborted).toMatchObject({isError:true,details:{analysisRouteE…
+       |                    ^
+    134|    const invalid=await bash.execute('invalid-timeout',{command:'true',…
+    135|    expect(invalid).toMatchObject({isError:true,details:{analysisRouteE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  00:35:41
+   Duration  3.51s (transform 1.71s, setup 0ms, import 3.27s, tests 42ms, environment 0ms)

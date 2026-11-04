@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/runtime/remote-terminal.test.ts (19 tests | 1 failed) 8667ms
+     × rejects an explicit timeout and waits for a fresh ready hook before accepting more work 1188ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > persistent remote terminal runtime > rejects an explicit timeout and waits for a fresh ready hook before accepting more work
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/runtime/remote-terminal.test.ts:36:43
+     34|   cleanup.push(async () => {
+     35|     await runtime.stop(id); close()
+     36|     await vi.waitFor(() => expect(exited).toBe(true))
+       |                                           ^
+     37|     if (!options.control) control.dispose()
+     38|     rmSync(dir, { force: true, recursive: true })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 607 passed (608)
+      Tests  1 failed | 6119 passed | 11 skipped (6131)
+   Start at  00:08:16
+   Duration  210.17s (transform 10.76s, setup 43.25s, import 157.80s, tests 343.29s, environment 90.93s)

@@ -12,6 +12,7 @@ import type { SubagentDefinition } from "../subagent/definitions.js"
 import { 团队调度器, 状态文本 } from "./scheduler.js"
 import { 建团队, 加成员, 加任务, 转派, 取消任务, 发消息, 未送达的消息, 标记送达, 领取, 结算, 结束团队, 全部终态, 移除成员, 写团队, 读团队, 团队错误, 成员手上的任务 } from "./state.js"
 import { 团队上限, type 团队 } from "./types.js"
+import {cancelPipeline} from './science-pipeline.js'
 
 interface ToolResult {
   content: { type: "text"; text: string }[]
@@ -55,8 +56,10 @@ export function createTeamTools(opts: 团队工具选项) {
     if (!id) throw new 团队错误("现在没有活着的团队。先 team_create。")
     return id
   }
-  const 跑 = async (f: () => Promise<string> | string): Promise<ToolResult> => {
+  const 跑 = async (f: () => Promise<string> | string,allowPipeline=false): Promise<ToolResult> => {
     try {
+      const id=opts.当前.get()
+      if(id&&!allowPipeline)调.assertExternalMutation(id)
       return text(await f())
     } catch (e) {
       if (e instanceof 团队错误) return text(e.message, true)
@@ -204,7 +207,7 @@ export function createTeamTools(opts: 团队工具选项) {
           const 信 = 未送达的消息(team, "captain")
           if (信.length) 调.改(id, (t) => 标记送达(t, 信.map((x) => x.id)))
           return out
-        })
+        },true)
       },
     },
     {
@@ -232,7 +235,7 @@ export function createTeamTools(opts: 团队工具选项) {
           if (信.length) 调.改(id, (t) => 标记送达(t, 信.map((x) => x.id)))
           const 头 = 全部终态(team) ? "所有任务都到终态了。" : 变了 ? "有进展。" : `等了 ${秒} 秒没有变化（${调.正在跑的成员().join("、") || "没有人"}在跑）。`
           return `${头}\n\n${状态文本(team)}`
-        })
+        },true)
       },
     },
     {
@@ -244,10 +247,10 @@ export function createTeamTools(opts: 团队工具选项) {
         return 跑(async () => {
           const id = 当前团队()
           调.中止全部(id)
-          调.改(id, (t) => 结束团队(t))
+          调.改(id, (t) => {cancelPipeline(t);结束团队(t)})
           opts.当前.set(undefined)
           return `团队 ${id} 已结束并归档。`
-        })
+        },true)
       },
     },
     {

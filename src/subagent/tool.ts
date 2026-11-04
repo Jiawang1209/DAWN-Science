@@ -214,7 +214,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       summary.results.forEach((r, index) => {
         const 错 = r.error ?? "子 agent 失败，但没有给出原因"
         const 旧 = 读元(目录(index))
-        if (旧) 记(index, { ...旧, status: r.ok ? "ok" : "error", ...(r.receipt?{receipt:r.receipt}:{}), ...(r.ok ? { result: 交回的(r) } : { error: 错 }), endedAt: Date.now() })
+        if (旧) 记(index, { ...旧, status: r.ok ? "ok" : "error", ...(r.receipt?{receipt:r.receipt}:{}),...(r.observation?{observation:r.observation}:{}), ...(r.ok ? { result: 交回的(r) } : { error: 错 }), endedAt: Date.now() })
         // 先收子转录、再收 chip：界面看到 chip 变成完成时，点开那一格里结果已经在了
         opts.emit({
           kind: "subagent_event",

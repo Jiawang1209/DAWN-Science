@@ -13,6 +13,7 @@ export type 任务状态 = "pending" | "claimed" | "in_progress" | "completed" |
 export const 终态: readonly 任务状态[] = ["completed", "failed", "cancelled"]
 
 export interface 任务 {
+  observation?:import('../protocol/task-observation.js').TaskObservation
   contract?: import("../orchestration/task-contract.js").TaskContract
   settings?: import("../orchestration/task-contract.js").TaskSettings
   receipt?: import("../orchestration/task-contract.js").TaskReceipt
@@ -127,6 +128,7 @@ export interface BotExchange {
 }
 
 export interface 团队 {
+  pipeline?:import('../protocol/science-pipeline.js').SciencePipeline
   /** Scope captured on the first Bot binding; survives removal, ending and owner rehoming. */
   botOriginScopeKey?: string
   id: string
@@ -146,6 +148,7 @@ export interface 团队 {
 
 /** 一轮成员执行的结果（子进程回来的） */
 export interface 成员轮结果 {
+  observation?:import('../protocol/task-observation.js').TaskObservation
   receipt?: import("../orchestration/task-contract.js").TaskReceipt
   evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[]
   ok: boolean

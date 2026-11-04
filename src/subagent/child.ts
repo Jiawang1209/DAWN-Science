@@ -35,6 +35,7 @@
  */
 import {TaskSettingsSchema} from "../orchestration/task-contract.js"
 import {createTaskTools,taskToolDenial} from "./task-tools.js"
+import {sessionUsage} from '../runtime/session-usage.js'
 import { mkdirSync } from "node:fs"
 import { 关掉pi自己下载 } from "../runtime/no-tool-download.js"
 import { 续接或新建 } from "../runtime/pi-resume.js"
@@ -131,11 +132,11 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   const taskTools=settings?createTaskTools(spec.cwd,settings,spec.authorize?async(name,params)=>{
     const response=await 调父进程('task_authorize',{name,params});return response||undefined
   }:undefined):undefined
-  const customTools = [
-    ...(taskTools?.tools??[]),
+  const extras = [
     ...(spec.member ? 成员工具(spec.member.name).filter(tool=>!settings||!taskToolDenial(settings.scope,spec.cwd,tool.name,{})) : []),
     ...(spec.resources ? createResourceTools(调父进程) : []),
   ]
+  const customTools=[...(taskTools?.tools??[]),...(taskTools?taskTools.guardExtras(extras as never):extras)]
   const { session } = await createAgentSession({
     cwd: spec.cwd,
     agentDir: spec.agentDir,
@@ -148,10 +149,15 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
     ...(taskTools ? {tools:customTools.map(t=>t.name)} : spec.tools ? {tools: [...new Set([...spec.tools, ...customTools.map(t => t.name)])]} : {}),
     ...(customTools.length ? {customTools: customTools as never} : {}),
   })
+  if(taskTools?.submission){const before=session.agent.shouldStopAfterTurn;session.agent.shouldStopAfterTurn=async(...args)=>Boolean(taskTools.submission?.result())||Boolean(await before?.(...args))}
+  const beforeIds=new Set(session.sessionManager.getBranch().map(entry=>entry.id))
 
   return {
     prompt: (text) => session.prompt(text),
     ...(taskTools?{evidence:taskTools.evidence}:{}),
+    submitted:()=>taskTools?.submission?.result(),
+    submissionObservation:()=>taskTools?.submission?.observation()??{submissionAttempts:0,invalidSubmissions:0},
+    usage:()=>sessionUsage(session.sessionManager.getBranch().filter(entry=>!beforeIds.has(entry.id)),true),
     finalText:()=>{const last=[...session.messages].reverse().find(m=>m.role==='assistant');return last&&Array.isArray(last.content)?last.content.filter(c=>c.type==='text').map(c=>c.text).join('\n'):undefined},
     subscribe: (cb) => session.subscribe(cb as never),
   }

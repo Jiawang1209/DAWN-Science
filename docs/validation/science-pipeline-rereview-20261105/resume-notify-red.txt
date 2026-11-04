@@ -1,0 +1,31 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline-tools.test.ts -t failed resume notification
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (6 tests | 1 failed | 5 skipped) 22ms
+   × a failed resume notification returns to an interrupted checkpoint that can be explicitly retried 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > a failed resume notification returns to an interrupted checkpoint that can be explicitly retried
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-pipeline-tools.test.ts:65:33
+     63|  failNotify=false
+     64|  const saved=scheduler.读(current!)
+     65|  expect(saved.pipeline?.status).toBe('interrupted');expect(saved.tasks…
+       |                                 ^
+     66|  expect((await resume.execute('retry',{stateRevision:saved.pipeline!.s…
+     67| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  00:24:58
+   Duration  1.02s (transform 149ms, setup 0ms, import 905ms, tests 22ms, environment 0ms)

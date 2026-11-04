@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/bot/output-locks.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/bot/output-locks.test.ts (3 tests | 1 failed) 668ms
+   × scientific readonly validation reserves its inputs against other task writers until acceptance drains 663ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/bot/output-locks.test.ts > scientific readonly validation reserves its inputs against other task writers until acceptance drains
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/output-locks.test.ts:26:75
+     24|   const release=await taskOutputReservation(root,review,signal);let en…
+     25|   const pending=taskOutputReservation(root,writer,signal).then(unlock=…
+     26|   await new Promise<void>(resolve=>setImmediate(resolve));expect(enter…
+       |                                                                           ^
+     27|  }finally{rmSync(root,{recursive:true,force:true})}
+     28| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  00:03:25
+   Duration  788ms (transform 73ms, setup 0ms, import 27ms, tests 668ms, environment 0ms)

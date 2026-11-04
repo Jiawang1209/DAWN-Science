@@ -4,13 +4,14 @@ import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from 'no
 import {join} from 'node:path'
 import {z} from 'zod'
 import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-contract.js'
+import {TaskObservationSchema} from '../protocol/task-observation.js'
 
 export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
 export type ChildKind = z.infer<typeof ChildKindSchema>
 export const RunStateSchema = z.enum(['idle', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted'])
 export type RunState = z.infer<typeof RunStateSchema>
-export const OutcomeSchema = z.object({ok: z.boolean(), output: z.string(), error: z.string().optional(), receipt: TaskReceiptSchema.optional()}).strict()
-export interface Outcome {ok: boolean; output: string; error?: string; receipt?: import('./task-contract.js').TaskReceipt}
+export const OutcomeSchema = z.object({ok: z.boolean(), output: z.string(), error: z.string().optional(), receipt: TaskReceiptSchema.optional(),observation:TaskObservationSchema.optional()}).strict()
+export interface Outcome {ok: boolean; output: string; error?: string; receipt?: import('./task-contract.js').TaskReceipt;observation?:import('../protocol/task-observation.js').TaskObservation}
 const ChildSchema = z.object({
   id: z.string(), kind: ChildKindSchema, address: z.array(z.string().min(1)).min(1).max(8),
   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),

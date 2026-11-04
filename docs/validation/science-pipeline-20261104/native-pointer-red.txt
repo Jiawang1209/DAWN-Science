@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/orchestration.test.ts -t real pipeline pointer
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+stderr | tests/runtime/orchestration.test.ts > a real pipeline pointer write failure stays reviewable and cannot launch an orphan
+[团队] 记不住当前团队： EISDIR: illegal operation on a directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-pipeline-pointer-o92D5s/session/teams/current'
+
+ ❯ |node| tests/runtime/orchestration.test.ts (10 tests | 1 failed | 9 skipped) 65ms
+   × a real pipeline pointer write failure stays reviewable and cannot launch an orphan 64ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > a real pipeline pointer write failure stays reviewable and cannot launch an orphan
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/runtime/orchestration.test.ts:209:53
+    207|  try{
+    208|   mkdirSync(join(sessionDir,'teams','current'),{recursive:true})
+    209|   expect((await start.execute('req',args)).isError).toBe(true);expect(…
+       |                                                     ^
+    210|   rmSync(join(sessionDir,'teams','current'),{recursive:true})
+    211|   expect((await start.execute('req',args)).isError).not.toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  00:05:05
+   Duration  1.89s (transform 717ms, setup 0ms, import 1.72s, tests 65ms, environment 0ms)

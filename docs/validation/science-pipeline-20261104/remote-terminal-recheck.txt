@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/remote-terminal.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  00:12:18
+   Duration  5.18s (transform 76ms, setup 0ms, import 128ms, tests 4.95s, environment 0ms)

@@ -3,7 +3,13 @@ import {z} from 'zod'
 import {RouteExecutionSchema,RouteVerificationSchema,WorkspaceRelativePathSchema} from './analysis-route.js'
 const paths = z.array(WorkspaceRelativePathSchema).max(64)
 export const TaskAccessSchema = z.enum(['read-only','workspace-write','workspace-exec'])
+export const TaskDataSchema=z.discriminatedUnion('kind',[
+ z.object({kind:z.literal('data-summary'),rows:z.number().int().nonnegative(),columns:z.array(z.object({name:z.string().min(1).max(200),type:z.string().max(200).optional(),unit:z.string().max(200).optional()}).strict()).max(256),issues:z.array(z.string().min(1).max(2000)).max(64)}).strict(),
+ z.object({kind:z.literal('model-metrics'),method:z.string().min(1).max(2000),metrics:z.record(z.string().min(1).max(100),z.number().finite()).refine(v=>Object.keys(v).length<=64,'Too many metrics'),sampleCount:z.number().int().nonnegative().optional(),caveats:z.array(z.string().max(2000)).max(64)}).strict(),
+ z.object({kind:z.literal('review'),verdict:z.enum(['pass','revise','blocked']),findings:z.array(z.string().min(1).max(2000)).max(64),reviewedPaths:paths,revisionInstructions:z.string().min(1).max(8000).optional()}).strict().refine(v=>v.verdict==='pass'||v.findings.length>0,'Review issues need concrete findings'),
+])
 export const TaskContractSchema = z.object({
+  submission:z.literal('tool').optional(),resultType:z.enum(['data-summary','model-metrics','review']).optional(),
   version:z.literal(1).default(1), inputs:paths.default([]), outputs:paths.default([]), access:TaskAccessSchema.default('read-only'),requireExecution:z.boolean().default(false),requireReview:z.boolean().default(false),
 }).strict().superRefine((c,ctx) => {
   if (new Set(c.inputs).size!==c.inputs.length || new Set(c.outputs).size!==c.outputs.length) ctx.addIssue({code:'custom',message:'Duplicate task paths'})
@@ -14,10 +20,13 @@ export const TaskContractSchema = z.object({
 })
 export type TaskContract=z.infer<typeof TaskContractSchema>
 export const TaskResultSchema=z.object({
+  data:TaskDataSchema.optional(),
   summary:z.string().trim().min(1).max(64*1024), blockers:z.array(z.string().min(1)).max(64),
   deliverables:z.array(z.object({path:WorkspaceRelativePathSchema,note:z.string().optional()}).strict()).max(64),
   execution:RouteExecutionSchema,verification:RouteVerificationSchema,
 }).strict()
+export type TaskResult=z.infer<typeof TaskResultSchema>
+export const TaskResultParameters=z.toJSONSchema(TaskResultSchema,{io:'input',unrepresentable:'any'})
 export const TaskReceiptSchema=z.object({
   version:z.literal(1),state:z.enum(['accepted','blocked','invalid']),summary:z.string(),reason:z.string().optional(),
   result:TaskResultSchema.optional(),deliverables:z.array(z.object({stepId:z.string(),path:z.string(),state:z.enum(['exists','missing','unknown','observed'])}).strict()),

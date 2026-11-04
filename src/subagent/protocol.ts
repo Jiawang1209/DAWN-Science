@@ -68,8 +68,8 @@ export interface SubagentChildSpec {
  * 进度行 2026-09-27 起有了，见 `SubagentEventMessage`——加的是联合里一个成员，父侧的解析形状没改。
  */
 export type SubagentDoneMessage =
-  | { type: "done"; ok: true; output: string; evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[] }
-  | { type: "done"; ok: false; error: string }
+  | { type: "done"; ok: true; output: string;submitted?:true; evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[];observation?:import('../protocol/task-observation.js').TaskObservation }
+  | { type: "done"; ok: false; error: string;observation?:import('../protocol/task-observation.js').TaskObservation }
 
 /** 成员模式：一次工具调用，等父进程回一行 `reply` */
 export interface SubagentCallMessage {

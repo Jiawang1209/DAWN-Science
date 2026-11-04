@@ -54,6 +54,8 @@ export function outputLockScope(workspace:string):string {
 }
 export async function taskOutputReservation(workspace:string,settings:import('../orchestration/task-contract.js').TaskSettings,signal:AbortSignal):Promise<()=>void> {
  const {scope}=settings
+ // Scientific checks/reviews hold the existing reservation pool through host acceptance.
+ if(scope.access==='read-only'&&settings.contract?.resultType&&scope.inputs.length)return sharedTaskOutputLocks.acquire(outputLockScope(workspace),localOutputReservationPaths(scope.inputs,workspace),signal)
  if(scope.access==='read-only'||(!scope.tools.includes('*')&&scope.tools.every(name=>['read','ls','grep','find','resource_search','resource_read','team_send','team_status'].includes(name))))return()=>{}
  const outputs=scope.access==='workspace-write'?localOutputReservationPaths(scope.outputs,workspace):undefined
  return sharedTaskOutputLocks.acquire(outputLockScope(workspace),outputs,signal)

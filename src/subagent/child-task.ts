@@ -9,9 +9,13 @@
  */
 import type { SubagentDoneMessage, SubagentChildSpec, 子事件 } from "./protocol.js"
 import { 翻成子事件 } from "./child-events.js"
+import {taskObservation} from '../runtime/task-observation.js'
 
 /** 本层需要 pi 会话的**全部**能力。窄到这个程度，假实现才写得出来 */
 export interface ChildPiSession {
+  submitted?:()=>import('../protocol/task-contract.js').TaskResult|undefined
+  submissionObservation?:()=>{submissionAttempts:number;invalidSubmissions:number}
+  usage?:()=>import('../protocol/task-observation.js').TaskUsage
   finalText?: ()=>string|undefined
   evidence?: ()=>import("../runtime/analysis-route-evidence.js").RouteToolEvidence[]
   /** 跑完一整轮才 resolve —— pi 的 `prompt()` 就是这个语义 */
@@ -34,13 +38,15 @@ export async function runChildTask(
   /** 过程（2026-09-27）：每条能翻的 pi 事件交给它；`child.ts` 把它写成 stdout 上的 `event` 行 */
   onEvent?: (e: 子事件) => void,
 ): Promise<SubagentDoneMessage> {
-  let session: ChildPiSession
+  const started=Date.now()
+  let session: ChildPiSession|undefined
+  const observed=(result:SubagentDoneMessage):SubagentDoneMessage=>spec.taskSettings?{...result,observation:taskObservation(started,session?.submissionObservation?.(),session?.usage?.())}:result
   try {
     session = await createSession(spec)
   } catch (err) {
     // 建会话就失败（模型不存在、凭证不对）——**也是一条 done，不是崩溃**。
     // 崩溃的话父侧只能看到「退出码非 0」，丢掉了这句话
-    return { type: "done", ok: false, error: `建立子 agent 会话失败：${message(err)}` }
+    return observed({ type: "done", ok: false, error: `建立子 agent 会话失败：${message(err)}` })
   }
 
   let text = ""
@@ -62,15 +68,18 @@ export async function runChildTask(
   try {
     await session.prompt(spec.task)
   } catch (err) {
-    return done(false, withPartial(`子 agent 执行失败：${message(err)}`, text))
+    return observed(done(false, withPartial(`子 agent 执行失败：${message(err)}`, text)))
   } finally {
     // **失败路径上也要退订。** 子进程虽然马上就退，但挂着的订阅会挡住 exit
     unsubscribe()
   }
 
-  if(spec.taskSettings?.contract)text=session.finalText?.()??text
+  const submitted=session.submitted?.()
+  if(spec.taskSettings?.contract?.submission==='tool'&&!submitted)return observed(done(false,'任务要求 submit_task_result，未收到宿主接受的提交'))
+  if(submitted)text=JSON.stringify(submitted)
+  else if(spec.taskSettings?.contract)text=session.finalText?.()??text
 
-  if (streamError) return done(false, withPartial(`子 agent 报错：${streamError}`, text))
+  if (streamError) return observed(done(false, withPartial(`子 agent 报错：${streamError}`, text)))
 
   /**
    * **空输出算失败。**
@@ -86,12 +95,12 @@ export async function runChildTask(
      * chain 模式仍然算失败：上一步空结果往下传等于编造，那条理由没变。
      */
     if (spec.member) {
-      return { type: "done", ok: true, output: `（成员「${spec.member.name}」这一轮没有给出文字结果。它应当已把产物写进了文件——核对产物后再用，别把这句当结论。）` }
+      return observed({ type: "done", ok: true, output: `（成员「${spec.member.name}」这一轮没有给出文字结果。它应当已把产物写进了文件——核对产物后再用，别把这句当结论。）` })
     }
-    return done(false, `子 agent "${spec.agent}" 跑完了，但没有产生任何输出`)
+    return observed(done(false, `子 agent "${spec.agent}" 跑完了，但没有产生任何输出`))
   }
 
-  return { type: "done", ok: true, output: text, ...(spec.taskSettings?.contract?{evidence:session.evidence?.()??[]}:{}) }
+  return observed({ type: "done", ok: true, output: text,...(submitted?{submitted:true as const}:{}), ...(spec.taskSettings?.contract?{evidence:session.evidence?.()??[]}:{}) })
 }
 
 /** 已经吐出来的半截要带上——排查时它常常是唯一的线索 */

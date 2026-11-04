@@ -10,7 +10,10 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { TERMINAL_REPLY_STYLE } from './terminal-reply-style.js'
 import { getCurrentSystemMessage, getSystemMessageText } from '@earendil-works/pi-ai'
 import {resolveTaskSettings,taskToolDenial} from "../subagent/task-tools.js"
-import type {TaskSettings} from "../orchestration/task-contract.js"
+import {TaskResultParameters,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
+import {TaskSubmission} from '../orchestration/task-submission.js'
+import {taskObservation} from './task-observation.js'
+import type {TaskObservation} from '../protocol/task-observation.js'
 import { sessionUsage } from './session-usage.js'
 import { AnalysisRouteBook } from './analysis-route-book.js'
 import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
@@ -55,7 +58,7 @@ import { UserFacingError } from "../errors.js"
 import { loadSubagentsFrom, AGENTS_DIR } from "../subagent/definitions.js"
 import { dirname } from "node:path"
 import { randomUUID } from "node:crypto"
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync, renameSync, rmSync } from "node:fs"
 import { join, isAbsolute } from "node:path"
 import {
   createAgentSession,
@@ -123,6 +126,8 @@ import { createReadMainSessionTool, READ_MAIN_SESSION } from "../tools/read-main
 import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器, 状态文本 } from "../team/scheduler.js"
 import { createTeamTools, 队长协议 } from "../team/tools.js"
+import {createSciencePipelineTools} from '../team/science-pipeline-tools.js'
+import {projectPipelineRoute} from './science-pipeline-route.js'
 import { 描述图片 } from "./vision.js"
 import { createMcpTools, MCP只读标记 } from "../tools/mcp-tool.js"
 import { createProposePlanTool } from "../tools/propose-plan.js"
@@ -613,12 +618,20 @@ function 最后一次真回复(messages: readonly unknown[]): number | undefined
 }
 
 export class NativeRuntime implements AgentRuntime {
-  private readonly taskScopes=new Map<string,{settings:TaskSettings;evidence:RouteToolEvidence[]}>()
-  async runWithTaskScope<T extends {ok:boolean;output:string}>(sessionId:string,settings:TaskSettings,work:()=>Promise<T>):Promise<T&{evidence:RouteToolEvidence[]}> {
+  private readonly taskScopes=new Map<string,{settings:TaskSettings;evidence:RouteToolEvidence[];submission?:TaskSubmission}>()
+  async runWithTaskScope<T extends {ok:boolean;output:string}>(sessionId:string,settings:TaskSettings,work:()=>Promise<T>):Promise<T&{evidence:RouteToolEvidence[];observation:TaskObservation}> {
     if(this.taskScopes.has(sessionId))throw new Error('子任务会话已有冻结的执行范围')
-    const scope={settings,evidence:[] as RouteToolEvidence[]}
+    const bound=TaskSettingsSchema.parse(settings),evidence:RouteToolEvidence[]=[],started=Date.now()
+    const before=new Set(this.sessions.get(sessionId)?.sessionManager.getBranch().map(entry=>entry.id)??[])
+    const scope={settings:bound,evidence,...(bound.contract?{submission:new TaskSubmission(bound.contract,this.routeBooks.get(sessionId)?.spec.workspace??'',()=>evidence)}:{})}
     this.taskScopes.set(sessionId,scope)
-    try{return{...await work(),evidence:structuredClone(scope.evidence)}}finally{if(this.taskScopes.get(sessionId)===scope)this.taskScopes.delete(sessionId)}
+    try{
+      const result=await work(),submitted=scope.submission?.result()
+      const usage=sessionUsage(this.sessions.get(sessionId)?.sessionManager.getBranch().filter(entry=>!before.has(entry.id))??[],true)
+      const observation=taskObservation(started,scope.submission?.observation(),usage)
+      const missing=result.ok&&bound.contract?.submission==='tool'&&!submitted
+      return{...result,...(submitted&&result.ok?{output:JSON.stringify(submitted)}:{}),...(missing?{ok:false,output:'',error:'任务要求 submit_task_result，未收到宿主接受的提交'}:{}),evidence:scope.submission?.sealedEvidence()??structuredClone(scope.evidence),observation}
+    }finally{if(this.taskScopes.get(sessionId)===scope)this.taskScopes.delete(sessionId)}
   }
   private botBridge: BotRuntimeBridge | undefined
   private readonly botTeams = new Map<string, { scheduler: 团队调度器; current: { id: string | undefined }; create: (botId: string) => Promise<void> }>()
@@ -689,6 +702,7 @@ export class NativeRuntime implements AgentRuntime {
   async messageBotTask(sessionId: string, teamId: string, taskId: string, instruction: string): Promise<void> {
     const {control, member, team: original} = this.botTask(sessionId, teamId, taskId)
     if (original.finishedAt) throw new UserFacingError("团队已经结束")
+    control.scheduler.assertExternalMutation(teamId)
     control.scheduler.改(teamId, team => { 发消息(team, {from: "captain", to: member.name, content: instruction}) })
     await control.scheduler.踢一下(teamId)
   }
@@ -740,6 +754,7 @@ export class NativeRuntime implements AgentRuntime {
     if (!instruction.trim()) throw new UserFacingError("请填写 Bot 任务。")
     if (!control.current.id || control.scheduler.读(control.current.id).finishedAt) await control.create(botId)
     const teamId = control.current.id!
+    control.scheduler.assertExternalMutation(teamId)
     let taskId = ""
     control.scheduler.改(teamId, team => {
       let member = team.members.find(m => m.botId === botId && m.status !== "removed")
@@ -1690,7 +1705,11 @@ export class NativeRuntime implements AgentRuntime {
           return {content: [{type: "text" as const, text: JSON.stringify({exchangeId: exchange.id, status: exchange.status, notice: "请求已记录。结束本轮等待；队友的实际回应会自动返回，再继续原任务。"})}], details: undefined}
         }},
       ] : []
-      return [...(base ?? []), ...观察过的外部, ...memberTools]
+      const submissionTools=bot?.member?[{name:'submit_task_result',label:'submit_task_result',description:'正式提交当前任务契约结果；错误可当轮修正，成功（含 blocked）后冻结后续工具。',parameters:TaskResultParameters,execute:async(_id:string,args:unknown,signal?:AbortSignal)=>{
+        const submission=this.taskScopes.get(spec.sessionId)?.submission
+        return submission?submission.submit(args,signal):{content:[{type:'text' as const,text:'当前轮次没有可提交的任务契约'}],isError:true,details:undefined}
+      }}]:[]
+      return [...(base ?? []), ...观察过的外部, ...memberTools,...submissionTools]
     }
 
     const orchestration = new OrchestrationService(new OrchestrationStore(spec.sessionDir, spec.sessionId), this.opts.orchestrationMaxConcurrent ?? 4)
@@ -1779,6 +1798,7 @@ export class NativeRuntime implements AgentRuntime {
     }
     let 团队轮序 = 0
     const 团队轮标识 = new Map<string, number>()
+    let 流程进展版本: string | undefined
     const 调度器 = new 团队调度器({
       orchestration,
       prepareTask:(member,task)=>{
@@ -1804,6 +1824,16 @@ export class NativeRuntime implements AgentRuntime {
         onResult: (event: Parameters<BotRuntimeBridge["result"]>[1]) => this.botBridge!.result(spec.sessionId, event),
       } : {}),
       onChange: (team) => {
+        // A durable stage/recovery transition is real progress; repeated status reads are not.
+        const progress=team.pipeline?`${team.id}:${team.pipeline.stateRevision}`:undefined
+        if(progress&&progress!==流程进展版本){流程进展版本=progress;this.sessions.get(spec.sessionId)?.stuck.reset()}
+        if(team.pipeline?.status==='completed'&&team.pipeline.routeSync==='pending'){
+          try{
+            const book=this.routeBooks.get(spec.sessionId)?.book
+            const sync=book?projectPipelineRoute(book,team):'conflict'
+            if(sync!=='pending'){team=调度器.改(team.id,t=>{t.pipeline!.routeSync=sync});if(book?.read())this.emit({kind:'analysis_route',sessionId:spec.sessionId,route:book.read()!})}
+          }catch(error){this.emit({kind:'notice',sessionId:spec.sessionId,text:`流程回执已保存，路线同步尚未完成：${String(error)}`})}
+        }
         for (const member of team.members) if (!orchestration.isClosed && member.status !== "removed") orchestration.register(member.botId ? "bot" : "team", [team.id, member.name, memberGeneration(member)], member.agent)
         this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, team) as never })
         for (const task of team.tasks) if (task.status === "cancelled") {
@@ -1831,13 +1861,20 @@ export class NativeRuntime implements AgentRuntime {
       调度器,
       定义,
       resolveBot: id => { const bot = this.botBridge?.list().find(b => b.id === id);return bot ? {...bot, scopeKey: this.botBridge?.scopeKey?.(spec.sessionId), model: bot.model ?? this.botModel(spec.sessionId) ?? {provider: native.provider, model: native.model}} : undefined },
-      当前: { get: () => 当前团队.id, set: (id) => { 当前团队.id = id; 记当前团队(spec.sessionDir, id) } },
+      当前: { get: () => 当前团队.id, set: (id) => { 记当前团队(spec.sessionDir, id); 当前团队.id = id } },
       已知模型: async () => (await this.runtime()).getModels().map((m) => ({ provider: m.provider, model: m.id })),
     })
     this.botTeams.set(spec.sessionId, { scheduler: 调度器, current: 当前团队, create: async (botId) => {
       const result = await 团队工具.find(t => t.name === "team_create")!.execute("bot-dispatch", { name: "Bot Team", goal: "完成用户委派的科研任务", members: [{ name: `bot_${botId.replace(/-/g, "").slice(0, 30)}`, botId }] } as never)
       if (result.isError) throw new UserFacingError(result.content.map(c => c.text).join("\n"))
     } })
+    const 流程工具=createSciencePipelineTools({sessionId:spec.sessionId,调度器,定义,
+      resolveBot:id=>{const bot=this.botBridge?.list().find(b=>b.id===id);return bot?{...bot,scopeKey:this.botBridge?.scopeKey?.(spec.sessionId),model:bot.model??this.botModel(spec.sessionId)??{provider:native.provider,model:native.model}}:undefined},
+      当前:{get:()=>当前团队.id,set:id=>{记当前团队(spec.sessionDir,id);当前团队.id=id}},
+      已知模型:async()=>(await this.runtime()).getModels().map(m=>({provider:m.provider,model:m.id})),
+      route:()=>this.routeBooks.get(spec.sessionId)?.book?.read(),remote:Boolean(spec.remote),defaultModel:{provider:native.provider,model:native.model},
+      freeze:(member,contract)=>resolveTaskSettings(contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:定义().find(d=>d.name===member.agent)?.tools),
+    })
     const botListTool = this.botBridge ? [{ name: "bot_list", label: "bot_list", description: "列出用户配置的专业 Bot。用户要求组建 Bot Team 时，先查名册，按职责自动选择成员，用 team_create 的 botId 分工；依赖按顺序，最后汇总真实脚本、图表与说明。", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text" as const, text: JSON.stringify(this.botBridge!.list().filter(b => b.enabled && !b.archivedAt).map(({id,name,role,model}) => ({id,name,role,model}))) }], details: undefined }) }] : []
     this.团队收尾.set(spec.sessionId, () => {
       if (当前团队.id) 调度器.中止全部(当前团队.id)
@@ -1847,6 +1884,7 @@ export class NativeRuntime implements AgentRuntime {
       try {
         let t = 调度器.读(当前团队.id)
         if (spec.resume && recoverTeamExecution(t)) t = 调度器.改(当前团队.id, team => { recoverTeamExecution(team) })
+        if(t.pipeline?.status==='completed'&&t.pipeline.routeSync==='pending')t=调度器.改(当前团队.id,()=>{})
         for (const member of t.members) if (member.status !== "removed") {
           const child = orchestration.register(member.botId ? "bot" : "team", [t.id, member.name, memberGeneration(member)], member.agent)
           if (child.state === "idle" && member.turns > 0) orchestration.store.update(child.id, {state: "idle", reason: "从既有团队恢复身份；任务结果以 team_status 为准"})
@@ -1871,13 +1909,14 @@ export class NativeRuntime implements AgentRuntime {
     const controls = createOrchestrationTools({service: orchestration, mailbox: subagentControl.mailbox, start: subagentControl.start,
       sendMember: async (child, text, requestId) => {
         const {team, member} = memberFor(child)
+        调度器.assertExternalMutation(team.id)
         调度器.改(team.id, current => 发消息(current, {id: requestId, from: "captain", to: member.name, content: text}))
         await 调度器.踢一下(team.id)
         return {childId: child.id, delivery: "queued"}
       },
       interruptMember: child => {const {team, member} = memberFor(child); 调度器.中止(team.id, member.name)},
     })
-    return [...(base ?? []), ...观察过的外部, tool, ...controls, ...团队工具, ...botListTool]
+    return [...(base ?? []), ...观察过的外部, tool, ...controls, ...团队工具,...流程工具, ...botListTool]
   }
 
   /**
@@ -2318,6 +2357,8 @@ export class NativeRuntime implements AgentRuntime {
       if (!result && isError === context.isError) return undefined
       return { ...result, isError: result?.isError ?? isError }
     }
+    const oldStopAfterTurn=session.agent.shouldStopAfterTurn
+    session.agent.shouldStopAfterTurn=async(...args)=>Boolean(this.taskScopes.get(spec.sessionId)?.submission?.result())||Boolean(await oldStopAfterTurn?.(...args))
     session.agent.transformContext = async (messages, signal) => {
       const transformed = originalTransform ? await originalTransform(messages, signal) : messages
       if (!terminalReply) return transformed
@@ -4378,6 +4419,8 @@ ${描述}`
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
         const frozenTask=this.taskScopes.get(spec.sessionId)
+        const sealed=frozenTask?.submission?.denial()
+        if(sealed&&name!=='submit_task_result')return{content:[{type:'text',text:sealed}],isError:true,details:undefined}
         const taskDenial=frozenTask?taskToolDenial(frozenTask.settings.scope,spec.workspace,name,params):undefined
         if(taskDenial)return{content:[{type:'text',text:taskDenial}],isError:true,details:undefined}
         if (terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []) &&
@@ -4402,7 +4445,11 @@ ${描述}`
           ...(mcp只读 ? { mcp只读: true } : {}),
         })
         if (决定.kind === "deny") return { content: [{ type: "text", text: 决定.reason }], isError: true, details: undefined }
+        let release=()=>{}
+        try{
+        if(frozenTask?.submission&&name!=='submit_task_result')release=frozenTask.submission.enter()
         await this.记轮基线(spec.sessionId)
+        if(signal?.aborted)return{content:[{type:'text',text:'调用已中止，未进入工具执行'}],isError:true,details:{analysisRouteEvidence:{execution:'not_observed'}}}
         const currentStep = parseRouteActionMessage(latestRouteUserText(branch))?.stepId
         let result: unknown
         try {
@@ -4428,6 +4475,7 @@ ${描述}`
         // Persist app observations in the actual tool result. Models cannot supply
         // these details; a denied outer gate returns before this point.
         return { ...response, details: { ...response.details, analysisRouteEvidence: observation } }
+        }finally{release()}
       },
     }
   }
@@ -4642,12 +4690,10 @@ function 读当前团队(sessionDir: string): string | undefined {
   }
 }
 function 记当前团队(sessionDir: string, id: string | undefined): void {
-  try {
-    mkdirSync(join(sessionDir, "teams"), { recursive: true })
-    writeFileSync(join(sessionDir, "teams", "current"), id ?? "", "utf8")
-  } catch (e) {
-    console.error("[团队] 记不住当前团队：", e instanceof Error ? e.message : String(e))
-  }
+  const dir=join(sessionDir,'teams'),tmp=join(dir,`.current-${randomUUID()}.tmp`)
+  mkdirSync(dir,{recursive:true})
+  try{writeFileSync(tmp,id??'','utf8');renameSync(tmp,join(dir,'current'))}
+  catch(error){try{rmSync(tmp,{force:true})}catch{};throw new Error('当前团队指针保存失败，未启动新执行',{cause:error})}
 }
 
 /** 方案期才启用的那几件（先出方案）。`按标记设方案工具` 只动其中这段会话真装了的 */

@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/bot/output-locks.test.ts tests/subagent/task-tools.test.ts tests/workbench/bot-contract.test.ts tests/integration/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+
+ Test Files  4 passed (4)
+      Tests  18 passed (18)
+   Start at  00:02:35
+   Duration  9.61s (transform 1.33s, setup 0ms, import 4.05s, tests 8.98s, environment 0ms)

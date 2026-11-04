@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline-tools.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  00:26:36
+   Duration  754ms (transform 135ms, setup 0ms, import 609ms, tests 60ms, environment 0ms)

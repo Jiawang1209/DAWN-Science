@@ -16,6 +16,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
+// @ts-expect-error shared local scientific acceptance scenario
+import {sciencePipelineScenario} from '../scripts/mock-science-pipeline.mjs'
 // @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 npm run dev:mock
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "../scripts/mock-inference-server.mjs"
 import { startFakeIlinkServer, type FakeIlinkServer } from "../scripts/fake-ilink-server.mjs"
@@ -347,6 +349,8 @@ export interface MockToolCallSpec {
 }
 
 export interface DawnOptions {
+  sciencePipeline?: 'pass'|'revise'|'blocked'|'interrupt'
+
   /**
    * 额外的环境变量（A2）。**盖不过隔离用的那几条**——见下面 `env` 的注释。
    * 目前用来打开假 ACP agent 的几种行为（问权限、报用量）。
@@ -611,6 +615,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     await 发布源?.已就绪
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
+      ...(dawnOptions.sciencePipeline ? {scenario:sciencePipelineScenario(dawnOptions.sciencePipeline)} : {}),
       ...(dawnOptions.reply !== undefined ? { reply: dawnOptions.reply } : {}),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),
       ...(dawnOptions.thinkingHoldMs ? { thinkingHoldMs: dawnOptions.thinkingHoldMs } : {}),

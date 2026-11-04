@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline.test.ts tests/team/science-pipeline-tools.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/team/science-pipeline.test.ts (5 tests | 1 failed) 21ms
+   × a replacement check becomes the dependency after the original check is interrupted 5ms
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (5 tests | 1 failed) 45ms
+   × an exception after the pointer is published leaves an explicit recovery checkpoint 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > an exception after the pointer is published leaves an explicit recovery checkpoint
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-pipeline-tools.test.ts:51:115
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-pipeline.test.ts > a replacement check becomes the dependency after the original check is interrupted
+AssertionError: expected [ 'p-check-0-0' ] to deeply equal [ 'p-check-0-1' ]
+
+- Expected
++ Received
+
+  [
+-   "p-check-0-1",
++   "p-check-0-0",
+  ]
+
+ ❯ tests/team/science-pipeline.test.ts:43:77
+     41|  resumePipeline(team,true);settle(team,'data-summary')
+     42|  const replacement=team.tasks[1]!,analysis=team.tasks[2]!
+     43|  expect(replacement.status).toBe('completed');expect(analysis.dependen…
+       |                                                                             ^
+     44|  settle(team,'model-metrics');settle(team,'review');expect(team.pipeli…
+     45| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 8 passed (10)
+   Start at  00:05:26
+   Duration  919ms (transform 294ms, setup 0ms, import 1.49s, tests 66ms, environment 0ms)

@@ -137,7 +137,7 @@ export class OrchestrationService {
       let outcome: Outcome
       try {outcome = await entry.work(entry.controller.signal)}
       catch (error) {outcome = {ok: false, output: '', error: error instanceof Error ? error.message : String(error)}}
-      if (entry.controller.signal.aborted) outcome = cancelled()
+      if (entry.controller.signal.aborted) outcome = {...cancelled(),...(outcome.observation?{observation:outcome.observation}:{})}
       this.store.update(entry.id, {
         state: entry.controller.signal.aborted ? 'cancelled' : outcome.ok ? 'completed' : 'failed',
         result: outcome, reason: outcome.error ?? '',

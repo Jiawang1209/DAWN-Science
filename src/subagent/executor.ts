@@ -39,6 +39,7 @@ import type { ResourceHost } from "./resources.js"
 import {taskOutputReservation} from "../bot/output-locks.js"
 import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskEvidenceSchema,type TaskSettings,type TaskContract,type TaskReceipt} from "../orchestration/task-contract.js"
 import type {RouteToolEvidence} from "../runtime/analysis-route-evidence.js"
+import {TaskObservationSchema,type TaskObservation} from '../protocol/task-observation.js'
 import type { OrchestrationService } from "../orchestration/service.js"
 
 /**
@@ -79,6 +80,7 @@ export type SubagentRequest =
   | { mode: "chain"; chain: SubagentTask[] }
 
 export interface SubagentResult {
+  observation?:TaskObservation
   receipt?: TaskReceipt
   evidence?: RouteToolEvidence[]
   agent: string
@@ -339,7 +341,7 @@ export class SubagentExecutor {
     let result:SubagentResult|undefined
     const outcome=await service.run(child.id,async childSignal=>{
       result=await execute(childSignal)
-      return{ok:result.ok,output:result.output,...(result.error?{error:result.error}:{}),...(result.receipt?{receipt:result.receipt}:{})}
+      return{ok:result.ok,output:result.output,...(result.error?{error:result.error}:{}),...(result.receipt?{receipt:result.receipt}:{}),...(result.observation?{observation:result.observation}:{})}
     },signal)
     return result&&result.ok===outcome.ok?result:fail(task,outcome.error??"子任务未执行")
   }
@@ -500,10 +502,14 @@ export class SubagentExecutor {
           )
         }
 
+        const measured=report.observation===undefined?undefined:TaskObservationSchema.safeParse(report.observation)
+        if(measured&&!measured.success)return done(fail(task,'子进程观测格式无效'))
+        const observation=measured?.success?{observation:measured.data}:{}
         if (!report.ok) {
-          return done(fail(task, report.error ?? "子 agent 报告失败，但没有说原因"))
+          return done({...fail(task, report.error ?? "子 agent 报告失败，但没有说原因"),...observation})
         }
 
+        if(settings?.contract?.submission==='tool'&&report.submitted!==true)return done({...fail(task,'缺少宿主提交标记，不能用文本完成工具契约'),...observation})
         let evidence:RouteToolEvidence[]|undefined
         if(report.evidence!==undefined){const parsed=TaskEvidenceSchema.safeParse(report.evidence);if(!parsed.success)return done(fail(task,'子进程证据格式无效'));evidence=parsed.data.map(({filesWritten,stepId,execution,...rest})=>({...rest,...(filesWritten?{filesWritten}:{}),...(stepId?{stepId}:{}),...(execution?{execution}:{})}))}
         const full = report.output ?? ""
@@ -513,6 +519,7 @@ export class SubagentExecutor {
           agent: task.agent,
           task: task.task,
           ...(evidence?{evidence}:{}),
+          ...observation,
           ok: true,
           // 截断按字节算，但切在字符边界上——按字节切会把 UTF-8 切成半个汉字
           output: truncated ? 按字节截(full, this.limits.maxOutputBytes) : full,
@@ -568,6 +575,8 @@ function toTasks(req: SubagentRequest): SubagentTask[] {
 }
 
 interface DoneLine {
+  submitted?:unknown
+  observation?:unknown
   evidence?: unknown
   type: "done"
   ok: boolean

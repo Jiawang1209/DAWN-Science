@@ -20,6 +20,7 @@ import { t, tf } from "./i18n/index.js"
 import { Button } from "./primitives.js"
 import { 三角图标 } from "./icons.js"
 import type { TeamSnapshot } from "../protocol/index.js"
+import {SciencePipelineStatus} from './science-pipeline-status.js'
 import { 任务的态, 分列布局, 相关任务, 短标题, 色号, 首字, 节点宽, 节点高, type 任务, type 任务态 } from "./team-dag.js"
 
 type 成员 = TeamSnapshot["members"][number]
@@ -318,6 +319,7 @@ export function TeamPanel() {
           <span>{tf("{0} 消息", team.messages.length)}</span>
         </span>
       </header>
+      <SciencePipelineStatus pipeline={team.pipeline} tasks={team.tasks}/>
       {team.finishedAt ? null : <p className="team-goal" data-authored="1">{team.goal}</p>}
 
       {/* ② 队长卡 */}

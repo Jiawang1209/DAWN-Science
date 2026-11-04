@@ -15,3 +15,14 @@ it("同一 scope 的冲突写入排队，互不重叠的产物可以并行，取
  const parallel=await locks.acquire("scope",["scripts/model.py"],a.signal);parallel();await Promise.resolve();expect(entered).toBe(false);release();await pending;expect(entered).toBe(true)
  const held=await locks.acquire("scope",["*"],a.signal),c=new AbortController();const cancelled=locks.acquire("scope",["results.csv"],c.signal);c.abort();await expect(cancelled).rejects.toThrow(/停止/);held()
 })
+it('scientific readonly validation reserves its inputs against other task writers until acceptance drains',async()=>{
+ const {taskOutputReservation}=await import('../../src/bot/output-locks.js'),{resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const root=mkdtempSync(join(tmpdir(),'science-review-lock-')),signal=new AbortController().signal
+ try{
+  const review=resolveTaskSettings(TaskContractSchema.parse({resultType:'review',inputs:['result.csv']}),'allow-all')
+  const writer=resolveTaskSettings(TaskContractSchema.parse({access:'workspace-write',outputs:['result.csv']}),'allow-all')
+  const release=await taskOutputReservation(root,review,signal);let entered=false
+  const pending=taskOutputReservation(root,writer,signal).then(unlock=>{entered=true;unlock()})
+  await new Promise<void>(resolve=>setImmediate(resolve));expect(entered).toBe(false);release();await pending;expect(entered).toBe(true)
+ }finally{rmSync(root,{recursive:true,force:true})}
+})

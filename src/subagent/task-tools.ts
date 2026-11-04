@@ -7,6 +7,7 @@ import {canonicalOutputPaths} from '../bot/output-locks.js'
 import {不自己下载} from '../runtime/no-tool-download.js'
 import type {TaskContract,TaskSettings,TaskScope} from '../orchestration/task-contract.js'
 import type {RouteToolEvidence} from '../runtime/analysis-route-evidence.js'
+import {TaskSubmission} from '../orchestration/task-submission.js'
 const readers=new Set(['read','ls','grep','find','resource_search','resource_read','team_status','bot_say'])
 const defaults=['*']
 export function resolveTaskSettings(contract:TaskContract|undefined,tier:权限档,tools:readonly string[]=defaults):TaskSettings {
@@ -17,6 +18,7 @@ export function resolveTaskSettings(contract:TaskContract|undefined,tier:权限�
 }
 const canonical=(cwd:string,path:string)=>canonicalOutputPaths([path],cwd)![0]!
 export function taskToolDenial(scope:TaskScope,cwd:string,name:string,params:Record<string,unknown>):string|undefined {
+ if(name==='submit_task_result')return undefined // control capability; never a filesystem or execution grant
  if(!scope.tools.includes('*')&&!scope.tools.includes(name)&&!['resource_search','resource_read','team_send','team_status','bot_message','bot_say'].includes(name))return `子任务范围不允许 ${name}；请交还主 agent 处理，不能扩大范围`
  if(scope.access==='read-only'&&!readers.has(name))return '子任务为只读，不允许执行或写入'
  if(scope.access==='workspace-write'&&!readers.has(name)&&!['write','edit'].includes(name))return '限定路径写入不支持 shell 或未知副作用工具'
@@ -42,9 +44,13 @@ export function taskToolDenial(scope:TaskScope,cwd:string,name:string,params:Rec
 export interface TaskTool {name:string;label:string;description:string;parameters:unknown;execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown):Promise<{content:{type:string;text?:string}[];isError?:boolean;details?:unknown}>}
 export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(name:string,params:Record<string,unknown>,signal?:AbortSignal)=>Promise<string|undefined>){
  const records:RouteToolEvidence[]=[]
+ const submission=settings.contract?new TaskSubmission(settings.contract,cwd,()=>records):undefined
  const shell=createLocalBashOperations()
  const definitions=[createReadToolDefinition(cwd),createWriteToolDefinition(cwd),createEditToolDefinition(cwd),createBashToolDefinition(cwd,{exposeSessionEnvironment:false}),createLsToolDefinition(cwd),不自己下载(createGrepToolDefinition(cwd),'rg'),不自己下载(createFindToolDefinition(cwd),'fd')] as TaskTool[]
- const tools:TaskTool[]=definitions.filter(t=>settings.scope.tools.includes('*')||settings.scope.tools.includes(t.name)).map(def=>({...def,async execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown){
+ const wrap=(def:TaskTool,observe=true):TaskTool=>({...def,async execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown){
+  let release=()=>{}
+  try{if(submission)release=submission.enter()}catch(error){return{content:[{type:'text',text:String(error)}],isError:true}}
+  try{
   let denial=taskToolDenial(settings.scope,cwd,def.name,params)
   if(!denial)denial=await authorize?.(def.name,params,signal)
   if(signal?.aborted)denial='调用已中止'
@@ -57,13 +63,17 @@ export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(nam
   }}}) as TaskTool:def
   try{
    const result=await actual.execute(id,params,signal,onUpdate,ctx)
-   records.push({toolCallId:id,name:def.name,status:result.isError?'error':'done',input:params,result:result.content.map(c=>c.text??'').join('\n'),
+   if(observe)records.push({toolCallId:id,name:def.name,status:result.isError?'error':'done',input:params,result:result.content.map(c=>c.text??'').join('\n'),
     execution:def.name==='bash'&&observed?(result.isError?'failed':'ran'):'not_observed',
     ...(!result.isError&&['write','edit'].includes(def.name)&&typeof params.path==='string'?{filesWritten:[resolve(cwd,params.path)]}:{})})
+   if(!observe)return result
    const observedRecord=records[records.length-1]!
    const details=typeof result.details==='object'&&result.details?result.details:{}
    return {...result,details:{...details,analysisRouteEvidence:{execution:observedRecord.execution,...(observedRecord.filesWritten?{filesWritten:observedRecord.filesWritten}:{})}}}
-  }catch(error){records.push({toolCallId:id,name:def.name,status:'error',input:params,result:String(error),execution:observed?'failed':'not_observed'});throw error}
- }}))
- return{tools,evidence:()=>structuredClone(records)}
+  }catch(error){if(observe)records.push({toolCallId:id,name:def.name,status:'error',input:params,result:String(error),execution:observed?'failed':'not_observed'});throw error}
+  }finally{release()}
+ }})
+ const tools:TaskTool[]=definitions.filter(t=>settings.scope.tools.includes('*')||settings.scope.tools.includes(t.name)).map(def=>wrap(def))
+ if(submission)tools.push(submission.tool() as TaskTool)
+ return{tools,submission,evidence:()=>submission?.sealedEvidence()??structuredClone(records),guardExtras:(extra:TaskTool[])=>extra.map(def=>wrap(def,false))}
 }

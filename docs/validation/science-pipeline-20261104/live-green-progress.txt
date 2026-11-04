@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline-tools.test.ts tests/integration/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (4 tests | 2 failed) 36ms
+   × keeps admission safe during conflict 6ms
+   × keeps admission safe during orphan 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > keeps admission safe during conflict
+AssertionError: expected true not to be true // Object.is equality
+ ❯ tests/team/science-pipeline-tools.test.ts:37:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > keeps admission safe during orphan
+AssertionError: expected true not to be true // Object.is equality
+ ❯ tests/team/science-pipeline-tools.test.ts:40:58
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 5 passed (7)
+   Start at  00:00:54
+   Duration  7.50s (transform 732ms, setup 0ms, import 2.34s, tests 5.82s, environment 0ms)

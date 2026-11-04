@@ -20,6 +20,7 @@ import { 子目录段 } from "../protocol/subagent-id.js"
 import { 截工具结果 } from "./child-events.js"
 
 export interface 子运行元 {
+  observation?:import('../protocol/task-observation.js').TaskObservation
   settings?: import("../orchestration/task-contract.js").TaskSettings
   receipt?: import("../orchestration/task-contract.js").TaskReceipt
   agent: string

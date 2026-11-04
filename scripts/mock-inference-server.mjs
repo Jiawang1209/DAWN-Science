@@ -780,7 +780,7 @@ function streamChunks(reply, tool, thinking, 每段字数, 用量 = 默认用量
           finish_reason: null,
         }],
       },
-      { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }] },
+      { id, object: "chat.completion.chunk", model: MODEL_ID, choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }], ...(tool.usage ? {usage:tool.usage} : {}) },
     ]
   }
 

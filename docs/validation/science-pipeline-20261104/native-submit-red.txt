@@ -1,0 +1,24 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/orchestration.test.ts -t actual scoped control
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/runtime/orchestration.test.ts (9 tests | 1 failed | 8 skipped) 43ms
+   × a persistent Bot submits through the actual scoped control tool and freezes later effects 42ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > a persistent Bot submits through the actual scoped control tool and freezes later effects
+AssertionError: expected undefined to be defined
+ ❯ tests/runtime/orchestration.test.ts:187:80
+
+ ❯ NativeRuntime.runWithTaskScope src/runtime/native.ts:621:25
+ ❯ tests/runtime/orchestration.test.ts:186:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  23:36:29
+   Duration  2.06s (transform 523ms, setup 0ms, import 1.92s, tests 43ms, environment 0ms)

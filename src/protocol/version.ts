@@ -599,7 +599,8 @@
 /** 8.34: provider catalog exposes credential-free endpoint defaults for setup. */
 /** 8.35: endpoint defaults include per-model API and base URL metadata. */
 /** 8.40：团队任务可选契约与宿主验收回执；执行权限快照不进入 UI。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.40"
+/** 8.41：可选科学结果载荷、流程检查点摘要和宿主观测；内部冻结设置不进入 UI。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.41"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

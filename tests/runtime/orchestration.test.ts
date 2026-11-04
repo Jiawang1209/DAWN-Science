@@ -175,3 +175,84 @@ it('a scoped persistent Bot turn uses the same gate and cannot retain a wider sc
   expect((await tools.getToolDefinition('write').execute('allowed',{path:'out.txt',content:'right'})).isError).not.toBe(true)
  }finally{await runtime.stop('p')}
 })
+
+it('a persistent Bot submits through the actual scoped control tool and freezes later effects',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-submit-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'})
+ await runtime.start({sessionId:'s',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'},bot:{instructions:'scoped worker',member:true}})
+ const {resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const session=(runtime as unknown as {sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean}>}|undefined}}>} ).sessions.get('s')!.session
+ try{
+  const result=await runtime.runWithTaskScope('s',resolveTaskSettings(TaskContractSchema.parse({submission:'tool'}),'allow-all'),async()=>{
+   const submit=session.getToolDefinition('submit_task_result');expect(submit).toBeDefined()
+   expect((await submit!.execute('bad',{summary:'incomplete'})).isError).toBe(true)
+   expect((await submit!.execute('good',{summary:'submitted',blockers:[],deliverables:[],execution:{state:'not_run',note:'read only'},verification:{state:'unreviewed',note:'not scientific review'}})).isError).not.toBe(true)
+   expect((await session.getToolDefinition('write')!.execute('late',{path:'late.txt',content:'wrong'})).isError).toBe(true)
+   return{ok:true,output:'not authoritative'}
+  })
+  expect(JSON.parse(result.output).summary).toBe('submitted')
+  expect(result).toMatchObject({observation:{submissionAttempts:2,invalidSubmissions:1}})
+ }finally{await runtime.stop('s')}
+})
+it('a real pipeline pointer write failure stays reviewable and cannot launch an orphan',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-pointer-'));roots.push(root)
+ mkdirSync(join(root,'.dawn','agents'),{recursive:true})
+ for(const name of ['check','analyze','review'])writeFileSync(join(root,'.dawn','agents',name+'.md'),`---\nname: ${name}\ndescription: ${name}\n---\n${name}\n`)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session')
+ await runtime.start({sessionId:'p',workspace:root,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}})
+ const internal=runtime as unknown as {routeBooks:Map<string,{book:import('../../src/runtime/analysis-route-book.js').AnalysisRouteBook}>;botTeams:Map<string,{current:{id?:string};scheduler:import('../../src/team/scheduler.js').团队调度器}>;sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean}>}}}>}
+ const control=internal.botTeams.get('p')!,{vi}=await import('vitest'),kick=vi.spyOn(control.scheduler,'踢一下').mockResolvedValue()
+ const route=internal.routeBooks.get('p')!.book.replace(0,{title:'study',goal:'approved',dataContext:[],steps:[{id:'s',title:'s',purpose:'confirmed',inputs:[],outputs:[],dependencies:[],status:'pending',blockers:[],cases:[],deliverables:[],execution:{state:'not_run',note:'pending'},verification:{state:'unreviewed',note:'pending'},needsReview:true,notes:[]}]})
+ const start=internal.sessions.get('p')!.session.getToolDefinition('start_science_pipeline'),args={routeId:route.routeId,revision:1,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],executors:{check:{agent:'check'},analyze:{agent:'analyze'},review:{agent:'review'}},instructions:'confirmed',requireExecution:false}
+ try{
+  mkdirSync(join(sessionDir,'teams','current'),{recursive:true})
+  expect((await start.execute('req',args)).isError).toBe(true);expect(control.current.id).toBeUndefined();expect(kick).not.toHaveBeenCalled()
+  rmSync(join(sessionDir,'teams','current'),{recursive:true})
+  expect((await start.execute('req',args)).isError).not.toBe(true)
+  expect(control.scheduler.读(control.current.id!).pipeline?.status).toBe('interrupted');expect(kick).not.toHaveBeenCalled()
+ }finally{await runtime.stop('p')}
+})
+it('all external message and Bot dispatch adapters preserve a fixed pipeline team',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-external-entry-'));roots.push(root)
+ mkdirSync(join(root,'.dawn','agents'),{recursive:true})
+ for(const name of ['check','analyze','review'])writeFileSync(join(root,'.dawn','agents',name+'.md'),`---\nname: ${name}\ndescription: test\n---\n${name}\n`)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),{vi}=await import('vitest')
+ const bot={id:'extra',name:'extra',role:'writer',instructions:'test',enabled:true}
+ runtime.configureBots({list:()=>[bot],scopeKey:()=> 'scope',run:async()=>({ok:true,output:'unused'}),result:async()=>{},recover:async()=>{}})
+ await runtime.start({sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
+ const internal=runtime as unknown as {routeBooks:Map<string,{book:import('../../src/runtime/analysis-route-book.js').AnalysisRouteBook}>;botTeams:Map<string,{current:{id:string};scheduler:import('../../src/team/scheduler.js').团队调度器}>;orchestrations:Map<string,OrchestrationService>;sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean}>}}}>}
+ const control=internal.botTeams.get('p')!;vi.spyOn(control.scheduler,'踢一下').mockResolvedValue()
+ const route=internal.routeBooks.get('p')!.book.replace(0,{title:'study',goal:'approved',dataContext:[],steps:[{id:'s',title:'s',purpose:'confirmed',inputs:[],outputs:[],dependencies:[],status:'pending',blockers:[],cases:[],deliverables:[],execution:{state:'not_run',note:'pending'},verification:{state:'unreviewed',note:'pending'},needsReview:true,notes:[]}]})
+ const session=internal.sessions.get('p')!.session
+ try{
+  expect((await session.getToolDefinition('start_science_pipeline').execute('start',{routeId:route.routeId,revision:1,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],executors:{check:{botId:'extra'},analyze:{agent:'analyze'},review:{agent:'review'}},instructions:'confirmed',requireExecution:false})).isError).not.toBe(true)
+  const child=internal.orchestrations.get('p')!.store.list().find(c=>c.label==='analyze')!
+  for(const state of ['running','interrupted','completed','cancelled'] as const){
+   control.scheduler.改(control.current.id,t=>{t.pipeline!.status=state})
+   const before=control.scheduler.读(control.current.id)
+   expect((await session.getToolDefinition('send_subagent_message').execute('inject-'+state,{childId:child.id,message:'alter the output outside the current stage'})).isError).toBe(true)
+   await expect(runtime.dispatchBotTask('p','extra','extra task')).rejects.toThrow(/科研流程/)
+   await expect(runtime.messageBotTask('p',before.id,before.tasks[0]!.id,'extra message')).rejects.toThrow(/科研流程/)
+   expect((await session.getToolDefinition('team_add_task').execute('extra-'+state,{subject:'extra task'})).isError).toBe(true)
+   await expect(runtime.messageBotTeam('p',before.id,{requestId:'public-'+state,message:'extra turn'})).rejects.toThrow(/科研流程/)
+   expect(control.scheduler.读(control.current.id)).toEqual(before)
+  }
+ }finally{await runtime.stop('p')}
+})
+it('a scoped Native tool cancelled while awaiting its checkpoint never enters the underlying adapter',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-cancel-checkpoint-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials}),spec={sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}}
+ await runtime.start(spec)
+ const {vi}=await import('vitest'),{resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const internal=runtime as unknown as {记轮基线(id:string):Promise<unknown>;套方案期门(def:Record<string,unknown>,context:typeof spec):{execute(id:string,args:unknown,signal:AbortSignal):Promise<{isError?:boolean}>}}
+ let release!:()=>void;const checkpoint=new Promise<void>(r=>{release=r}),controller=new AbortController();let executed=false
+ vi.spyOn(internal,'记轮基线').mockReturnValue(checkpoint)
+ const tool=internal.套方案期门({name:'external_effect',execute:async()=>{executed=true;return{content:[{type:'text',text:'effect'}]}}},spec)
+ try{
+  const result=await runtime.runWithTaskScope('p',resolveTaskSettings(TaskContractSchema.parse({submission:'tool',access:'workspace-exec'}),'allow-all'),async()=>{
+   const pending=tool.execute('call',{},controller.signal);controller.abort();release()
+   expect((await pending).isError).toBe(true);return{ok:false,output:'cancelled'}
+  })
+  expect(executed).toBe(false);expect(result.evidence).toEqual([])
+ }finally{release();await runtime.stop('p')}
+})

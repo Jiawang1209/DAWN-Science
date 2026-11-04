@@ -31,11 +31,11 @@ const 放 = { kind: "allow" }
 
 describe("方案期：名单", () => {
   it("只读的几件放（含 pi 的 ls / grep / find：不过 shell）", () => {
-    for (const n of ["list_subagents", "wait_subagents", "read", "look_at_image", "read_main_session", "propose_plan", "inspect_data", "ls", "grep", "find", "get_analysis_route", "update_analysis_route"]) {
+    for (const n of ["science_pipeline_status", "list_subagents", "wait_subagents", "read", "look_at_image", "read_main_session", "propose_plan", "inspect_data", "ls", "grep", "find", "get_analysis_route", "update_analysis_route"]) {
       expect(方案期判(n, {}, 语境()), n).toEqual(放)
     }
     expect([...方案期放行].sort()).toEqual(
-      ["list_subagents", "wait_subagents", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", "sra_search", "sra_get_accession", "uniprot_search", "uniprot_get_accession", "terminal_list", "terminal_snapshot", "terminal_wait", "ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
+      ["science_pipeline_status", "list_subagents", "wait_subagents", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", "sra_search", "sra_get_accession", "uniprot_search", "uniprot_get_accession", "terminal_list", "terminal_snapshot", "terminal_wait", "ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
     )
   })
 

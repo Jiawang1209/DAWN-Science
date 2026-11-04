@@ -23,6 +23,13 @@ const SPEC: SubagentChildSpec = {
   agentDir: "/tmp/w/.dawn/x/pi",
 }
 
+it('requires a real submission in tool mode rather than accepting a plain final JSON',async()=>{
+ const {TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const {resolveTaskSettings}=await import('../../src/subagent/task-tools.js')
+ const spec={...SPEC,taskSettings:resolveTaskSettings(TaskContractSchema.parse({submission:'tool'}),'allow-all')}
+ expect((await runChildTask(spec,fakeSession({deltas:['{"summary":"trust me"}']}))).ok).toBe(false)
+})
+
 /** 一个假的 pi 会话：`prompt()` 时按脚本吐事件 */
 function fakeSession(script: {
   /** prompt() 时先原样吐这些 pi 事件（2026-09-27，子 agent 看得见） */

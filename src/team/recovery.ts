@@ -1,8 +1,10 @@
 /** Reconcile both legacy and managed members; execution with unknown effects is never replayed. */
 import {recoverBotTeam} from '../bot/recovery.js'
 import type {团队} from './types.js'
+import {recoverPipeline} from './science-pipeline.js'
 export function recoverTeamExecution(team: 团队): boolean {
-  let changed = recoverBotTeam(team)
+  let changed = recoverPipeline(team)
+  changed = recoverBotTeam(team)||changed
   const legacy = new Set(team.members.filter(member => !member.botId).map(member => member.name))
   for (const task of team.tasks) if (task.assignee && legacy.has(task.assignee) && ['claimed', 'in_progress'].includes(task.status)) {
     task.status = 'failed'

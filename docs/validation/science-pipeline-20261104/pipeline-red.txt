@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/team/science-pipeline.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline.test.ts [ tests/team/science-pipeline.test.ts ]
+Error: Cannot find module '../../src/team/science-pipeline.js' imported from /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/tests/team/science-pipeline.test.ts
+ ❯ tests/team/science-pipeline.test.ts:3:1
+      1| import {expect,it} from 'vitest'
+      2| import {建团队,加成员,领取,结算} from '../../src/team/state.js'
+      3| import {startPipeline,advancePipeline,resumePipeline,recoverPipeline,p…
+       | ^
+      4| import {AnalysisRouteSchema} from '../../src/protocol/analysis-route.j…
+      5| import type {TaskReceipt} from '../../src/protocol/task-contract.js'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  23:39:37
+   Duration  272ms (transform 64ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)

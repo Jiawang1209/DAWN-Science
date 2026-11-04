@@ -1,0 +1,74 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-pipeline.spec.ts e2e/task-contract.spec.ts e2e/orchestration.spec.ts e2e/bot-team.spec.ts e2e/team.spec.ts e2e/subagent.spec.ts
+
+Running 15 tests using 1 worker
+
+(node:84009) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已检查数据：[质量报告](results/quality.json) [检查说明](notes/data.md)
+[主进程] Debugger ending on ws://127.0.0.1:53884/e1a50158-92ce-4c4a-b2d3-c242618ab568
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-team.spec.ts:11:1 › native captain selects configured Bots and delivers executed dependency results (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53904/684365fb-2d2a-4452-82c2-3dea0b5937d4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53928/fc855749-ea38-4794-89e7-73df8db293b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53993/245fd5dc-674c-4052-9f96-61488c681124
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:54103/b63412f6-8520-429d-9dbf-a15b0640aa27
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54138/5cd8d63d-ebf3-45df-8576-7bb25c8affad
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54156/994653bc-c6cc-42d0-950c-7f6d3a665b71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54186/c149216f-90a2-4db5-a3c1-4240b266b0e5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54273/77ee24e7-b87f-4fe4-b564-7e35b0e03d57
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54321/1ca2c221-d37b-4461-8e08-80f0ab09d39a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54336/2b4e4bb8-d45d-431c-9636-c7bce7429452
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/task-contract.spec.ts:33:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54350/d0a2568e-38fe-46bf-ba48-a10dbf2aee71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/task-contract.spec.ts:62:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54378/79ab9339-96a2-4663-945f-68a5e25a936b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54431/16272766-55ce-4be1-bfce-7d368c72eb6c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54466/1d829930-3f41-4e4f-b9dd-56192b413592
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/team.spec.ts:119:3 › 成员指了一个目录里没有的模型 › **建队时就拒**，并说清有哪些模型——不让它跑起来才报 (1.9s)
+
+  15 passed (48.2s)

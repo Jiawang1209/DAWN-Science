@@ -1,0 +1,124 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+stderr | tests/runtime/orchestration.test.ts > a real pipeline pointer write failure stays reviewable and cannot launch an orphan
+[团队] 记不住当前团队： EISDIR: illegal operation on a directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-pipeline-pointer-dTHwtl/session/teams/current'
+
+ ❯ |node| tests/runtime/orchestration.test.ts (10 tests | 1 failed) 193ms
+   × a real pipeline pointer write failure stays reviewable and cannot launch an orphan 34ms
+ ❯ |node| tests/policy/plan-mode.test.ts (51 tests | 1 failed) 50ms
+     × 只读的几件放（含 pi 的 ls / grep / find：不过 shell） 6ms
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (5 tests | 1 failed) 42ms
+   × an exception after the pointer is published leaves an explicit recovery checkpoint 8ms
+ ❯ |node| tests/team/science-pipeline.test.ts (5 tests | 1 failed) 18ms
+   × a replacement check becomes the dependency after the original check is interrupted 4ms
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 856ms
+     × **JSX 里的类名，styles.css 里都定义过** 25ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **JSX 里的类名，styles.css 里都定义过**
+AssertionError: 这些类名只存在于 JSX 里——写它的人以为自己配了样式: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "science-pipeline-status.tsx：.science-pipeline-status",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1151:7
+    1149|       [...缺的].filter((x) => !欠账.has(x)).sort(),
+    1150|       "这些类名只存在于 JSX 里——写它的人以为自己配了样式",
+    1151|     ).toEqual([])
+       |       ^
+    1152|   })
+    1153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/policy/plan-mode.test.ts > 方案期：名单 > 只读的几件放（含 pi 的 ls / grep / find：不过 shell）
+AssertionError: expected [ 'ask_user_question', …(26) ] to deeply equal [ 'ask_user_question', …(25) ]
+
+- Expected
++ Received
+
+@@ -14,10 +14,11 @@
+    "openalex_lookup_doi",
+    "openalex_search",
+    "propose_plan",
+    "read",
+    "read_main_session",
++   "science_pipeline_status",
+    "sra_get_accession",
+    "sra_search",
+    "terminal_list",
+    "terminal_snapshot",
+    "terminal_wait",
+
+ ❯ tests/policy/plan-mode.test.ts:37:31
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > a real pipeline pointer write failure stays reviewable and cannot launch an orphan
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/runtime/orchestration.test.ts:209:53
+    207|  try{
+    208|   mkdirSync(join(sessionDir,'teams','current'),{recursive:true})
+    209|   expect((await start.execute('req',args)).isError).toBe(true);expect(…
+       |                                                     ^
+    210|   rmSync(join(sessionDir,'teams','current'),{recursive:true})
+    211|   expect((await start.execute('req',args)).isError).not.toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > an exception after the pointer is published leaves an explicit recovery checkpoint
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-pipeline-tools.test.ts:51:115
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |node| tests/team/science-pipeline.test.ts > a replacement check becomes the dependency after the original check is interrupted
+AssertionError: expected [ 'p-check-0-0' ] to deeply equal [ 'p-check-0-1' ]
+
+- Expected
++ Received
+
+  [
+-   "p-check-0-1",
++   "p-check-0-0",
+  ]
+
+ ❯ tests/team/science-pipeline.test.ts:43:77
+     41|  resumePipeline(team,true);settle(team,'data-summary')
+     42|  const replacement=team.tasks[1]!,analysis=team.tasks[2]!
+     43|  expect(replacement.status).toBe('completed');expect(analysis.dependen…
+       |                                                                             ^
+     44|  settle(team,'model-metrics');settle(team,'review');expect(team.pipeli…
+     45| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  5 failed | 603 passed (608)
+      Tests  5 failed | 6112 passed | 11 skipped (6128)
+   Start at  00:04:16
+   Duration  194.79s (transform 9.75s, setup 45.17s, import 137.25s, tests 295.84s, environment 93.48s)

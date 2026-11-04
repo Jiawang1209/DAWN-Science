@@ -9415,3 +9415,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .skill-read-details dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 0 0 8px; }
 .skill-read-details dd { margin: 0; overflow-wrap: anywhere; }
 .skill-read-details dt { color: var(--dawn-text-2); }
+
+/* Scientific workflow facts share the existing Team layout. */
+.science-pipeline-status { white-space: normal; overflow-wrap: anywhere; }

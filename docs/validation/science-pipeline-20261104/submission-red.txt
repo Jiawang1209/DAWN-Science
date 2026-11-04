@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-submission.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/task-submission.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-submission.test.ts [ tests/orchestration/task-submission.test.ts ]
+Error: Cannot find module '../../src/orchestration/task-submission.js' imported from /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/tests/orchestration/task-submission.test.ts
+ ❯ tests/orchestration/task-submission.test.ts:6:1
+      4| import {join} from 'node:path'
+      5| import {TaskContractSchema,acceptTaskResult} from '../../src/orchestra…
+      6| import {TaskSubmission} from '../../src/orchestration/task-submission.…
+       | ^
+      7| const roots:string[]=[];afterEach(()=>{for(const p of roots.splice(0))…
+      8| const result=()=>({summary:'checked',blockers:[],deliverables:[],execu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  23:30:52
+   Duration  409ms (transform 71ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)

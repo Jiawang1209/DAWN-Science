@@ -8,6 +8,12 @@ import {TaskContractSchema} from '../../src/orchestration/task-contract.js'
 const roots:string[]=[];afterEach(()=>{for(const p of roots.splice(0))rmSync(p,{recursive:true,force:true})})
 const output={summary:'file checked',blockers:[],deliverables:[{path:'out.txt'}],execution:{state:'not_run',note:'no code run'},verification:{state:'unreviewed',note:'no scientific review'}}
 const definitions=[{name:'a',description:'a',systemPrompt:'a',filePath:'/a'}]
+it('the parent refuses a tool-mode child that reports plain JSON without a host submission marker',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-missing-submit-'));roots.push(cwd)
+ const contract=TaskContractSchema.parse({submission:'tool'}),answer={...output,deliverables:[]}
+ const executor=new SubagentExecutor({context:{cwd,provider:'p',model:'m',agentDirOf:()=>join(cwd,'run')},prepareTask:()=>resolveTaskSettings(contract,'allow-all'),childOf:()=>({command:process.execPath,args:['-e',`process.stdin.resume();process.stdin.on('end',()=>console.log(JSON.stringify({type:'done',ok:true,output:${JSON.stringify(JSON.stringify(answer))}})))`]})})
+ expect((await executor.run({mode:'single',agent:'a',task:'check'},definitions)).results[0]).toMatchObject({ok:false,error:expect.stringContaining('提交')})
+})
 it('accepts a real-file receipt and persists structured meaning rather than only a text result',async()=>{
  const cwd=mkdtempSync(join(tmpdir(),'dawn-task-executor-'));roots.push(cwd);writeFileSync(join(cwd,'out.txt'),'result')
  const contract=TaskContractSchema.parse({access:'workspace-write',outputs:['out.txt']})

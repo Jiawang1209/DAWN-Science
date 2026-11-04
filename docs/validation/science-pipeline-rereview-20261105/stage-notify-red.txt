@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline-tools.test.ts -t stage settlement notification failure
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+stderr | tests/team/science-pipeline-tools.test.ts > a stage settlement notification failure preserves accepted work and pauses the next stage for explicit recovery
+[团队] 团队状态无法保存或读取，执行已暂停；请核对已有产物与记录后再继续：stage settlement notification failed
+
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (8 tests | 1 failed | 7 skipped) 84ms
+   × a stage settlement notification failure preserves accepted work and pauses the next stage for explicit recovery 83ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > a stage settlement notification failure preserves accepted work and pauses the next stage for explicit recovery
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-pipeline-tools.test.ts:93:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  00:40:31
+   Duration  1.18s (transform 297ms, setup 0ms, import 987ms, tests 84ms, environment 0ms)

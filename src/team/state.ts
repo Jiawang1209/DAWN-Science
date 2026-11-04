@@ -8,6 +8,8 @@
  * - 结束团队是归档（`finishedAt`），不是删。
  */
 import {TaskContractSchema,TaskReceiptSchema,type TaskContract,type TaskReceipt} from "../orchestration/task-contract.js"
+import {SciencePipelineSchema} from '../protocol/science-pipeline.js'
+import {TaskObservationSchema} from '../protocol/task-observation.js'
 import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -39,6 +41,8 @@ export function 读团队(dir: string): 团队 | undefined {
   const f = join(dir, "team.json")
   if (!existsSync(f)) return undefined
   const team = JSON.parse(readFileSync(f, "utf8")) as 团队
+  if(team.pipeline)team.pipeline=SciencePipelineSchema.parse(team.pipeline)
+  for(const task of team.tasks)if(task.observation)task.observation=TaskObservationSchema.parse(task.observation)
   const origin = botTeamOriginScope(team)
   if (!team.botOriginScopeKey && origin) { team.botOriginScopeKey = origin; 写团队(dir, team) }
   return team
@@ -46,6 +50,7 @@ export function 读团队(dir: string): 团队 | undefined {
 
 /** 原子写：先写临时文件再改名，崩在半路也不会留下半份 */
 export function 写团队(dir: string, team: 团队): void {
+  if(team.pipeline)SciencePipelineSchema.parse(team.pipeline)
   const existing = join(dir, "team.json")
   const original = existsSync(existing) ? botTeamOriginScope(JSON.parse(readFileSync(existing, "utf8")) as 团队) : undefined
   const origin = original ?? botTeamOriginScope(team)
@@ -214,13 +219,14 @@ export function 开始做(team: 团队, taskId: string, attemptId: string, now =
 }
 
 /** 结算：必须出示当前令牌；终态不可覆盖 */
-export function 结算(team: 团队, taskId: string, attemptId: string, 结果: { ok: boolean; output: string; receipt?: TaskReceipt }, now = Date.now()): 任务 {
+export function 结算(team: 团队, taskId: string, attemptId: string, 结果: { ok: boolean; output: string; receipt?: TaskReceipt;observation?:import('../protocol/task-observation.js').TaskObservation }, now = Date.now()): 任务 {
   const t = 验令牌(team, taskId, attemptId)
   const receipt=结果.receipt?TaskReceiptSchema.parse(结果.receipt):undefined
   if(t.contract&&结果.ok&&receipt?.state!=='accepted')throw new 团队错误('严格契约任务缺少宿主验收回执，不能凭文本标为完成；请交由成员执行并验收。')
   t.status = 结果.ok ? "completed" : "failed"
   t.output = 结果.output
   if(receipt)t.receipt=receipt
+  if(结果.observation)t.observation=结果.observation
   t.updatedAt = now
   return t
 }

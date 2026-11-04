@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-executor.test.ts tests/subagent/child-task.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  23:39:36
+   Duration  1.22s (transform 194ms, setup 0ms, import 1.12s, tests 1.01s, environment 0ms)

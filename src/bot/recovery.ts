@@ -6,6 +6,7 @@ export function recoverBotTeam(team:团队):boolean {
  const bots=new Set(team.members.filter(m=>m.botId).map(m=>m.name))
  const onlyBots=team.members.some(m=>m.botId)&&team.members.filter(m=>m.status!=="removed").every(m=>m.botId)
  for(const task of team.tasks){
+  if(team.pipeline&&task.status==='pending')continue // never started; pipeline still requires explicit resume
   if((task.assignee?!bots.has(task.assignee):!onlyBots)||["completed","failed","cancelled"].includes(task.status))continue
   task.status="failed";task.output="应用已重启，该任务中断；请核对已有产物后重新派单，未自动重放操作。";delete task.attemptId;task.updatedAt=Date.now();changed=true
  }

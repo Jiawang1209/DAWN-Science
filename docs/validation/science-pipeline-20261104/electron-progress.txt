@@ -1,0 +1,24 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-pipeline.spec.ts
+
+Running 3 tests using 1 worker
+
+(node:20005) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52114/3423beec-792e-45ba-8198-52999fffb05d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (5.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52152/49aaa8d3-0361-4342-a45e-491b18b028aa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52181/4a6e21e2-acc2-4c14-b991-4d3cdaf53795
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (2.9s)
+
+  3 passed (14.4s)

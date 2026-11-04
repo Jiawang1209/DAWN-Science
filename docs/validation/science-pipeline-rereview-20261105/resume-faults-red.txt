@@ -1,0 +1,43 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline-tools.test.ts -t failed resume|failed resumed
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (7 tests | 2 failed | 5 skipped) 38ms
+   × a failed resume notification returns to an interrupted checkpoint that can be explicitly retried 25ms
+   × a failed resumed claim with no live backend can be recovered without restarting the host 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > a failed resume notification returns to an interrupted checkpoint that can be explicitly retried
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-pipeline-tools.test.ts:65:33
+     63|  failNotify=false
+     64|  const saved=scheduler.读(current!)
+     65|  expect(saved.pipeline?.status).toBe('interrupted');expect(saved.tasks…
+       |                                 ^
+     66|  expect((await resume.execute('retry',{stateRevision:saved.pipeline!.s…
+     67| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > a failed resumed claim with no live backend can be recovered without restarting the host
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-pipeline-tools.test.ts:78:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 skipped (7)
+   Start at  00:26:22
+   Duration  791ms (transform 149ms, setup 0ms, import 664ms, tests 38ms, environment 0ms)

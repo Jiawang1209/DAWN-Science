@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/orchestration.test.ts -t cancelled while awaiting its checkpoint
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/runtime/orchestration.test.ts (12 tests | 1 failed | 11 skipped) 44ms
+   × a scoped Native tool cancelled while awaiting its checkpoint never enters the underlying adapter 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > a scoped Native tool cancelled while awaiting its checkpoint never enters the underlying adapter
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/runtime/orchestration.test.ts:254:36
+    252|   const result=await runtime.runWithTaskScope('p',resolveTaskSettings(…
+    253|    const pending=tool.execute('call',{},controller.signal);controller.…
+    254|    expect((await pending).isError).toBe(true);return{ok:false,output:'…
+       |                                    ^
+    255|   })
+    256|   expect(executed).toBe(false);expect(result.evidence).toEqual([])
+ ❯ NativeRuntime.runWithTaskScope src/runtime/native.ts:629:20
+ ❯ tests/runtime/orchestration.test.ts:252:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  00:30:39
+   Duration  1.74s (transform 491ms, setup 0ms, import 1.60s, tests 44ms, environment 0ms)

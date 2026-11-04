@@ -1,0 +1,64 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-pipeline-tools.test.ts -t persists once
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (7 tests | 1 failed | 6 skipped) 28ms
+   × persists once before admission, deduplicates retries and refuses conflicting requests 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > persists once before admission, deduplicates retries and refuses conflicting requests
+AssertionError: expected { …(10) } to deeply equal { …(10) }
+
+- Expected
++ Received
+
+@@ -83,10 +83,11 @@
+          "title": "study",
+          "updatedAt": 1,
+        },
+        "stepId": "s",
+      },
++     "reason": "执行已停止，流程已暂停；核对产物后显式恢复，未自动重放",
+      "requestFingerprint": "1c493aa714147e564fa9ec1b25efffda21a7048d31881bfd974d628af647961b",
+      "requestId": "req",
+      "round": 0,
+      "routeSync": "pending",
+      "settingsByStage": {
+@@ -196,16 +197,16 @@
+          },
+        },
+      },
+      "stage": "check",
+      "startedAt": 1793809942279,
+-     "stateRevision": 1,
+-     "status": "running",
++     "stateRevision": 2,
++     "status": "interrupted",
+      "taskIds": [
+        "p-check-0-0",
+      ],
+-     "updatedAt": 1793809942279,
++     "updatedAt": 1793809942289,
+      "version": 1,
+    },
+    "taskSeq": 0,
+    "tasks": [
+      {
+
+ ❯ tests/team/science-pipeline-tools.test.ts:21:26
+     19|  const beforeInvalidResume=scheduler.读(id)
+     20|  expect((await tools.find(t=>t.name==='resume_science_pipeline')!.exec…
+     21|  expect(scheduler.读(id)).toEqual(beforeInvalidResume)
+       |                          ^
+     22|  live={...live,revision:2};expect((await start.execute('req',args)).is…
+     23|  expect((await start.execute('req',{...args,outputs:['different.csv']}…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  00:32:21
+   Duration  662ms (transform 136ms, setup 0ms, import 553ms, tests 28ms, environment 0ms)

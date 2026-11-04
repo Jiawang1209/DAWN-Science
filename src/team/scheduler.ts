@@ -10,6 +10,8 @@
  */
 import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
 import {taskOutputReservation} from "../bot/output-locks.js"
+import {advancePipeline,recoverPipeline} from './science-pipeline.js'
+import {recoverTeamExecution} from './recovery.js'
 import { join } from "node:path"
 import { randomUUID } from "node:crypto"
 import type { SubagentDefinition } from "../subagent/definitions.js"
@@ -71,10 +73,15 @@ export class 团队调度器 {
     return t
   }
 
+  assertExternalMutation(teamId: string): void {
+    if(this.读(teamId).pipeline)throw new 团队错误('科研流程使用固定阶段；请使用专用状态/取消/恢复入口，后续任务请结束旧团队后另建团队')
+  }
+
   /** 读 → 改 → 写 → 通知。所有变更都走这里 */
   改(teamId: string, f: (team: 团队) => void): 团队 {
     const team = this.读(teamId)
     f(team)
+    advancePipeline(team,this.now())
     reconcileBotExchanges(team, this.now())
     写团队(this.dir(teamId), team)
     // Persist invalidation before aborting delegated tools; their late completion cannot publish a reply.
@@ -97,6 +104,7 @@ export class 团队调度器 {
 
   /** Called only from the managed Bot tool context while its original task turn is active. */
   requestBot(teamId: string, from: string, input: BotRequestInput): BotExchange {
+    if(this.读(teamId).pipeline)throw new 团队错误('科研流程使用固定阶段，不能递归委派；需要帮助时提交 blockers')
     const key = `${teamId}/${from}`
     const turn = this.botTurns.get(key)
     if (!turn || !this.跑着.has(key) || this.跑着.get(key)!.signal.aborted) throw new 团队错误("Bot 协作请求必须来自正在执行的活动 Bot 轮次。")
@@ -133,6 +141,7 @@ export class 团队调度器 {
 
   /** User identity is assigned here, never accepted from model/tool content. */
   messageTeam(teamId: string, input: BotMessageInput & {toBotId?: string | undefined}): BotTeamMessage {
+    this.assertExternalMutation(teamId)
     validateBotMessage(input)
     let message!: BotTeamMessage
     this.改(teamId, team => {
@@ -172,6 +181,10 @@ export class 团队调度器 {
     return this.跑着.size
   }
 
+  hasActiveTeam(teamId: string): boolean {
+    return [...this.跑着.keys()].some(key => key.startsWith(`${teamId}/`))
+  }
+
   正在跑的成员(): string[] {
     return [...this.跑着.keys()].map((k) => k.split("/")[1]!)
   }
@@ -192,6 +205,7 @@ export class 团队调度器 {
     this.跑着.get(`${teamId}/${member}`)?.abort()
     for (const task of this.读(teamId).tasks) if (task.assignee === member && task.attemptId) this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     this.改(teamId, team => {
+      if(team.pipeline&&team.tasks.find(t=>t.id===team.pipeline!.currentTaskId)?.assignee===member)recoverPipeline(team,this.now(),'执行已停止，流程已暂停；核对产物后显式恢复，未自动重放')
       for (const turn of team.conversationTurns ?? []) if (turn.member === member && ["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
       for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted" && (exchange.from === member || exchange.to === member || exchange.rootOwner === member)) {
         exchange.status = "cancelled"; exchange.reply = "协作取消：成员执行已停止。"; exchange.updatedAt = this.now()
@@ -216,6 +230,7 @@ export class 团队调度器 {
       this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     }
     this.改(teamId, team => {
+      recoverPipeline(team,this.now(),'执行已停止，流程已暂停；核对产物后显式恢复，未自动重放')
       for (const turn of team.conversationTurns ?? []) if (["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
       for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted") {
         exchange.status = "cancelled"; exchange.reply = "协作取消：团队执行已停止。"; exchange.updatedAt = this.now()
@@ -244,7 +259,7 @@ export class 团队调度器 {
 
   private 派一轮(teamId: string): void {
     const team = this.读(teamId)
-    if (team.finishedAt || this.stoppedTeams.has(teamId)) return
+    if (team.finishedAt || this.stoppedTeams.has(teamId) || team.pipeline&&team.pipeline.status!=='running') return
     for (const m of team.members) {
       if (m.status === "removed") continue
       if (this.跑着.has(`${teamId}/${m.name}`)) continue
@@ -435,7 +450,7 @@ export class 团队调度器 {
           yielded = !ctrl.signal.aborted && !!outstanding
           if (yielded) return
           try {
-            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因",...(结果.receipt?{receipt:结果.receipt}:{}) }, this.now())
+            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因",...(结果.receipt?{receipt:结果.receipt}:{}),...(结果.observation?{observation:结果.observation}:{}) }, this.now())
           if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
           } catch (e) {
             丢了 = e instanceof Error ? e.message : String(e)
@@ -468,6 +483,18 @@ export class 团队调度器 {
       ctrl.abort()
       const reason = `团队状态无法保存或读取，执行已暂停；请核对已有产物与记录后再继续：${error instanceof Error ? error.message : String(error)}`
       console.error("[团队]", reason)
+      // This turn has either not entered its backend or has awaited its cleanup already.
+      if(this.跑着.get(key)===ctrl){this.跑着.delete(key);this.botTurns.delete(key)}
+      try{
+        const paused=this.读(teamId)
+        if(paused.pipeline){
+          recoverPipeline(paused,this.now(),'阶段保存或通知失败，流程已暂停；核对检查点后显式恢复')
+          if(!this.hasActiveTeam(teamId))recoverTeamExecution(paused)
+          写团队(this.dir(teamId),paused);snapshot=paused
+          // Persist the pause independently of the observer which may have caused the failure.
+          try{this.opts.onChange(paused)}catch(notification){console.error('[团队] 暂停通知失败',notification)}
+        }
+      }catch(pauseError){console.error('[团队] 暂停检查点未能保存，核对记录后需重开恢复',pauseError)}
       if (snapshot && !ended) this.opts.onTurn?.({runId, team: snapshot, member, taskId: 任务?.taskId, phase: "end", ok: false, error: reason})
     } finally {
       if (this.跑着.get(key) === ctrl) {this.跑着.delete(key); this.botTurns.delete(key)}
@@ -479,6 +506,7 @@ export class 团队调度器 {
     const p = (params ?? {}) as Record<string, unknown>
     if (name === "team_send") {
       const to = typeof p.to === "string" ? p.to : ""
+      if(this.读(teamId).pipeline&&to!=='captain')throw new 团队错误('科研流程成员不能触发阶段外执行；请提交 blockers 或报告队长')
       const content = typeof p.content === "string" ? p.content : ""
       this.改(teamId, (t) => 发消息(t, { from: member, to, content }, this.now()))
       // 后台踢一下:失败(如会话目录被外部删)只记一笔,不冒泡成 unhandledRejection 炸进程(审查 debug H12)

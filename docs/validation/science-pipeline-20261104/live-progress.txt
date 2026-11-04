@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/integration/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+ ❯ |node| tests/integration/science-pipeline.test.ts (3 tests | 3 failed) 25645ms
+   × real Pi children and persisted route/receipts complete the pass scenario 2007ms
+   × real Pi children and persisted route/receipts complete the revise scenario 22406ms
+   × real Pi children and persisted route/receipts complete the blocked scenario 1230ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > real Pi children and persisted route/receipts complete the pass scenario
+ FAIL  |node| tests/integration/science-pipeline.test.ts > real Pi children and persisted route/receipts complete the blocked scenario
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ tests/integration/science-pipeline.test.ts:32:52
+     30|   expect(team.tasks).toHaveLength(mode==='revise'?5:mode==='blocked'?1…
+     31|   expect(team.tasks[0]?.observation?.invalidSubmissions).toBe(1)
+     32|   expect(team.tasks[0]?.observation?.usage?.input).toBeGreaterThan(0)
+       |                                                    ^
+     33|   expect(readFileSync(join(root,'in.csv'),'utf8')).toBe('x\n1\n2\n3\n4…
+     34|   if(mode!=='blocked'){
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > real Pi children and persisted route/receipts complete the revise scenario
+AssertionError: expected [ 'completed', 'blocked' ] to include 'interrupted'
+ ❯ vi.waitFor.timeout tests/integration/science-pipeline.test.ts:27:56
+     25|   const internals=runtime as unknown as {botTeams:Map<string,{current:…
+     26|   const control=internals.botTeams.get('parent');expect(control?.curre…
+     27|   await vi.waitFor(()=>expect(['completed','blocked']).toContain(contr…
+       |                                                        ^
+     28|   const team=control!.scheduler.读(control!.current.id)
+     29|   expect(team.pipeline?.status).toBe(mode==='blocked'?'blocked':'compl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  23:55:28
+   Duration  27.75s (transform 613ms, setup 0ms, import 2.01s, tests 25.64s, environment 0ms)

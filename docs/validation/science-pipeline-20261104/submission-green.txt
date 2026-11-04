@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-submission.test.ts tests/orchestration/task-contract.test.ts tests/protocol/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-science-pipeline-20261104/dawn-science
+
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  23:31:44
+   Duration  883ms (transform 182ms, setup 0ms, import 1.22s, tests 31ms, environment 0ms)

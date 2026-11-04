@@ -1,4 +1,6 @@
 import {TaskContractSchema,TaskReceiptSchema} from "./task-contract.js"
+import {TaskObservationSchema} from './task-observation.js'
+import {PipelineSummarySchema} from './science-pipeline.js'
 import { SkillReadSchema } from "./skill-reads.js"
 import { AnalysisRouteSchema } from './analysis-route.js'
 /**
@@ -458,6 +460,7 @@ export type QueuedMessage = z.infer<typeof QueuedMessageSchema>
 /** 团队快照（team-board，7.22）。字段照 `src/team/types.ts`；协议这一侧只管形状 */
 export const TeamSnapshotSchema = z
   .object({
+    pipeline:PipelineSummarySchema.optional(),
     id: z.string().min(1),
     name: z.string(),
     goal: z.string(),
@@ -492,6 +495,7 @@ export const TeamSnapshotSchema = z
           subject: z.string(),
           contract: TaskContractSchema.optional(),
           receipt: TaskReceiptSchema.optional(),
+          observation:TaskObservationSchema.optional(),
           description: z.string().optional(),
           status: z.enum(["pending", "claimed", "in_progress", "completed", "failed", "cancelled"]),
           assignee: z.string().optional(),

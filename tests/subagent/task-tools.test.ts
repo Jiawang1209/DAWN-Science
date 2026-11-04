@@ -54,3 +54,27 @@ it('records actual silent shell execution in the Pi result and satisfies require
  expect(result.details).toMatchObject({analysisRouteEvidence:{execution:'ran'}})
  expect(acceptTaskResult(contract,JSON.stringify({summary:'ran',blockers:[],deliverables:[],execution:{state:'completed',note:'silent command exited',toolCallIds:['actual-shell']},verification:{state:'unreviewed',note:'no scientific review'}}),evidence(),cwd).state).toBe('accepted')
 })
+
+it('registers submission for a contract, permits fixing its arguments and blocks writes after commit',async()=>{
+ const cwd=root(),contract=TaskContractSchema.parse({access:'workspace-write',outputs:['out.txt'],submission:'tool'})
+ const task=createTaskTools(cwd,resolveTaskSettings(contract,'allow-all',['write']))
+ const submit=task.tools.find(t=>t.name==='submit_task_result')!
+ expect(submit).toBeDefined();expect((await submit.execute('bad',{summary:'incomplete'})).isError).toBe(true)
+ await task.tools.find(t=>t.name==='write')!.execute('w',{path:'out.txt',content:'original'})
+ expect((await submit.execute('good',{summary:'done',blockers:[],deliverables:[{path:'out.txt'}],execution:{state:'not_run',note:'document'},verification:{state:'unreviewed',note:'not scientific review'}})).isError).not.toBe(true)
+ expect((await task.tools.find(t=>t.name==='write')!.execute('late',{path:'out.txt',content:'changed'})).isError).toBe(true)
+ const {readFileSync}=await import('node:fs');expect(readFileSync(join(cwd,'out.txt'),'utf8')).toBe('original')
+})
+it('a pending authorization blocks submission, and ancillary tools share the terminal gate',async()=>{
+ const cwd=root();let release!:()=>void
+ const gate=new Promise<void>(r=>{release=r})
+ const task=createTaskTools(cwd,resolveTaskSettings(TaskContractSchema.parse({submission:'tool'}),'allow-all',['read']),async()=>{await gate;return undefined})
+ writeFileSync(join(cwd,'in.txt'),'input')
+ const read=task.tools.find(t=>t.name==='read')!.execute('r',{path:'in.txt'})
+ const submit=task.tools.find(t=>t.name==='submit_task_result')!,value={summary:'checked',blockers:[],deliverables:[],execution:{state:'not_run',note:'readonly'},verification:{state:'unreviewed',note:'not science review'}}
+ expect((await submit.execute('early',value)).isError).toBe(true);release();await read
+ const proof=task.evidence();expect((await submit.execute('done',value)).isError).not.toBe(true)
+ let ran=false;const extra=task.guardExtras([{name:'resource_read',label:'resource_read',description:'test',parameters:{},execute:async()=>{ran=true;return{content:[]}}}])[0]!
+ expect((await extra.execute('late',{})).isError).toBe(true);expect(ran).toBe(false)
+ proof[0]!.status='error';expect(task.evidence()[0]?.status).toBe('done')
+})

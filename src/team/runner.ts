@@ -9,6 +9,7 @@
  */
 import {TaskEvidenceSchema,taskPrompt,type TaskSettings} from "../orchestration/task-contract.js"
 import {taskToolDenial} from '../subagent/task-tools.js'
+import {TaskObservationSchema} from '../protocol/task-observation.js'
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import { 杀掉后代 } from "../subagent/executor.js"
 import type { SubagentDefinition } from "../subagent/definitions.js"
@@ -114,13 +115,17 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
         return
       }
       if (m.type === "done") {
+        const observation=m.observation===undefined?undefined:TaskObservationSchema.safeParse(m.observation)
+        if(observation&&!observation.success){结果={ok:false,output:'',error:'子进程观测格式无效'};return}
+        const measured=observation?.success?{observation:observation.data}:{}
         if (m.ok) {
+          if(规格.settings?.contract?.submission==='tool'&&m.submitted!==true){结果={...measured,ok:false,output:'',error:'缺少宿主提交标记，不能用文本完成工具契约'};return}
           const bytes = Buffer.byteLength(m.output, "utf8")
           const parsed=m.evidence===undefined?undefined:TaskEvidenceSchema.safeParse(m.evidence)
           if(parsed&&!parsed.success){结果={ok:false,output:'',error:'子进程证据格式无效'};return}
           const evidence=parsed?.success?parsed.data.map(({filesWritten,stepId,execution,...rest})=>({...rest,...(filesWritten?{filesWritten}:{}),...(stepId?{stepId}:{}),...(execution?{execution}:{})})):undefined
-          结果 = { ...(evidence?{evidence}:{}), ok: true, output: bytes > 团队上限.maxOutputBytes ? `${m.output.slice(0, 团队上限.maxOutputBytes)}\n…（输出超过 ${团队上限.maxOutputBytes} 字节，已截断）` : m.output }
-        } else 结果 = { ok: false, output: "", error: m.error || "子 agent 报告失败，但没有说原因" }
+          结果 = { ...measured,...(evidence?{evidence}:{}), ok: true, output: bytes > 团队上限.maxOutputBytes ? `${m.output.slice(0, 团队上限.maxOutputBytes)}\n…（输出超过 ${团队上限.maxOutputBytes} 字节，已截断）` : m.output }
+        } else 结果 = { ...measured,ok: false, output: "", error: m.error || "子 agent 报告失败，但没有说原因" }
       }
     }
     child.stdout.setEncoding("utf8")

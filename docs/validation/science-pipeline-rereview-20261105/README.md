@@ -12,6 +12,6 @@
 - `unit-before-stage-fault-fix.txt`：正常阶段通知故障修复前的一次完整绿色运行；最终验收另在 `unit-final.txt`，不混用源码版本。
 - `typecheck-final.txt`、`build-final.txt`、`electron-final.txt`、`unit-final.txt`：本轮固定源码的完整验收。
 - `source-sha256.txt`：待集成的 56 个变更代码/测试/夹具，文档日志不计入。
-- `main-*`：本地 main 集成后的验证和源码匹配（完成后补充）。
+- `main-*`：本地 main 集成后类型检查、构建、11 文件/72 项关键回归及 56 个源码/测试/夹具匹配，均已通过。
 
 结论见 [二次审查报告](../../reviews/2026-11-05-science-pipeline-rereview.md)。localhost 确定性推理仅用于软件验收，不证明真实服务商成功率、科学正确性或成本收益。

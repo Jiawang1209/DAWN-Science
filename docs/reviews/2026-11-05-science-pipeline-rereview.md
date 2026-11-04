@@ -38,4 +38,8 @@
 - Electron：15 场景全部通过，48.2 秒，覆盖新流水线及原普通子任务、后台编排、Team/Bot、契约及缺输入路径。
 - 56 个代码/测试/夹具的源码 SHA256 核对一致，diff 检查通过。
 
-用户已授权本地提交及合并；实际提交和 main 验证另补记。不推送、不发布、不替换已安装应用。只使用合成数据和 localhost 推理验收，真实模型、跨平台清理和科学正确性仍不在本轮证明范围。
+功能与本轮修复已提交为 `59eccd6e`（feat(orchestration): add verified recoverable science pipelines），本地 main 从 `5c88414e` 快进至该提交，无合并冲突。主目录合并前干净，专项分支和隔离工作区保留。
+
+合并后 main 上再次完成类型检查和完整构建，11 文件/72 项关键回归全部通过（10.91 秒），覆盖实际 Pi 取消/恢复、Native 装配、分析路线、正式提交、共享锁与 SQLite Bot。56 个代码/测试/夹具的哈希与已完整验收的专项源码完全相同；没有为集成修改运行代码。证据：[类型检查](../validation/science-pipeline-rereview-20261105/main-typecheck.txt)、[构建](../validation/science-pipeline-rereview-20261105/main-build.txt)、[关键回归](../validation/science-pipeline-rereview-20261105/main-targeted.txt)、[源码匹配](../validation/science-pipeline-rereview-20261105/main-source-match.txt)。本补记及 main 输出单独作为本地文档提交。
+
+未推送、发布或替换已安装应用。只使用合成数据和 localhost 推理验收，真实模型、跨平台清理和科学正确性仍不在本轮证明范围。

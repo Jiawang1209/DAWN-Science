@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-11-05 — 科研流水线二次审查后合并本地 main
+
+- **Type**: chore
+- **What**: 将 `codex/science-pipeline` 的功能与审查修复提交 `59eccd6e` 从 `5c88414e` 快进集成本地 main，无冲突；补齐 main 验证记录。
+- **Verification**: 合并前完整608文件/6127项通过、11跳过及15个Electron场景通过；main上类型检查、完整构建与11文件/72项关键回归通过。56个代码/测试/夹具哈希匹配，无源码漂移，独立复审无阻塞。详见 `docs/reviews/2026-11-05-science-pipeline-rereview.md`。
+- **Impact**: 仅本地集成及文档留证；未推送、未发布，保留专项分支和工作区。
+
 ### 2026-11-05 — 正式结果提交、可恢复科研流水线与轻量观测
 
 - **Type**: feat

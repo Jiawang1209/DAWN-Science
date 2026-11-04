@@ -43,6 +43,12 @@
 
 沿用本轮已明确授权：验证通过后在专项分支提交，主目录干净且仍在预期基线时快进合并 main，随后在 main 重建并核对源码及关键回归。合并后结果另在本文补记；不拉取、不推送、不发布，不删除专项分支或隔离工作区。
 
+修复已本地提交为 `6a3c2fe4`（fix(orchestration): close Bot cleanup and contract acceptance gaps），main 从 `dbf4e26b` 快进到该提交，无合并冲突。合并前主目录干净，合并后 main 的 8 个变更源码/测试哈希与已完整验证版本一致，src/tests/e2e 与专项分支无差异。
+
+main 上再次运行完整构建、类型检查均通过，45 文件 / 305 项关键回归通过（7.34 秒）。本补记与合并后日志作为单独本地文档提交，不改变运行代码。此前各专项分支及隔离工作区均保留，未修改已安装应用或真实会话/科研数据。
+
+合并后证据：[构建](../validation/orchestration-e2e-review-20261104/main-build.txt)、[类型检查](../validation/orchestration-e2e-review-20261104/main-typecheck.txt)、[关键回归](../validation/orchestration-e2e-review-20261104/main-targeted.txt)、[源码一致性](../validation/orchestration-e2e-review-20261104/main-source-match.txt)。
+
 ## 范围边界
 
 严格契约当前覆盖本地普通子任务、Team 成员和托管 Bot；严格 captain 文本结算与远端严格契约明确不支持。workspace-exec 仍使用原有风险规则，并非 OS/网络沙箱。产物锁只协调同一规范工作目录、同一宿主进程中已接入的子任务写者，不提供输入快照或阻止外部编辑。测试使用临时文件与确定性本地模型；真实服务商协作质量、原生 Windows/Linux 进程清理和科学准确性未由此证明。实时 Steer、任意 JSON Schema、条件工作流及跨进程租约仍属后续独立能力，没有在本轮冒称完成。

@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --maxWorkers=4 tests/artifacts/task-versions.test.ts tests/orchestration/task-submission.test.ts tests/bot/output-locks.test.ts tests/bot/output-lock-identity.test.ts tests/team/science-pipeline.test.ts tests/team/science-pipeline-tools.test.ts tests/team/science-batch.test.ts tests/team/science-batch-paths.test.ts tests/team/science-batch-recovery.test.ts tests/team/science-batch-tools.test.ts tests/runtime/science-pipeline-projection.test.ts tests/runtime/science-pipeline-route.test.ts tests/integration/science-batch.test.ts tests/integration/science-pipeline.test.ts tests/workbench/bot-contract.test.ts tests/evaluation/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  16 passed (16)
+      Tests  71 passed (71)
+   Start at  07:44:07
+   Duration  21.72s (transform 2.18s, setup 0ms, import 11.22s, tests 35.02s, environment 1ms)
+

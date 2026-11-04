@@ -8,6 +8,13 @@
 
 **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
 
+### 2026-11-05 — 版本化科研交付专项本地合并 main
+
+- **Type**: chore
+- **What**: 功能及复审修复提交 `ce96f1b0` 从 `07275d77` 无冲突快进合并本地 main；保留 codex/versioned-science-batches 分支及工作区。
+- **Verification**: 合并前冻结源码619文件/6171项通过、11跳过，11个Electron场景通过；main上67文件哈希一致，类型检查、完整构建及16文件/71项关键回归通过。独立复审无剩余阻塞，详见 `docs/reviews/2026-11-05-versioned-science-rereview.md`。
+- **Impact**: 按用户授权本地提交与合并；不推送、不发布，不替换安装应用，不把本地软件基线外推为真实模型收益。
+
 ### 2026-11-05 — 内容版本、批量汇总与恢复合并前复审
 
 - **Type**: fix

@@ -13,3 +13,5 @@
 - source-sha256.json / source-check.json：67个文件无漂移，评测源码及child构建匹配。
 
 提交和main集成验证另记 main-* 证据及 ../../reviews/2026-11-05-versioned-science-rereview.md。保留专项分支和工作区，不推送、不发布。
+
+集成结果：功能提交ce96f1b0已快进本地main；main-source-check.json确认67文件一致，main-typecheck.txt/main-build.txt通过，main-critical.txt记录16文件71项通过。本目录新增收尾证据的提交只涉及文档，不变更功能源码。原始工具日志含原样空白，源码与Markdown检查通过。

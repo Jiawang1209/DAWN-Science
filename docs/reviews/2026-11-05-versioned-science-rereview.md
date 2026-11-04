@@ -44,7 +44,7 @@
 
 ## 验收与本地集成
 
-当前冻结源码清单 `source-sha256.json` 共67个变更源码/测试/夹具/配置文件。类型检查、完整构建、当前成对本地基线与针对回归已通过；冻结源码完整619文件/6171项通过、11跳过，11个Electron场景通过。两位独立只读复审最终无剩余阻塞。提交和main验证在本地集成后登记。
+当前冻结源码清单 `source-sha256.json` 共67个变更源码/测试/夹具/配置文件。类型检查、完整构建、当前成对本地基线与针对回归已通过；冻结源码完整619文件/6171项通过、11跳过，11个Electron场景通过。两位独立只读复审最终无剩余阻塞。功能提交与main集成验证见下方。
 
 最终命令：`npm run typecheck`、`npm run build`、`npm test -- --maxWorkers=4`、四个相关 Electron 文件（批量、单项、普通 subagent、Team）和 `npm run evaluate:science -- docs/validation/versioned-science-rereview-20261105/evaluation`。
 
@@ -52,3 +52,13 @@
 
 
 分支最终验收：`typecheck-final.txt` 与 `build-final.txt` 退出0；`full-final.txt` 619文件/6171项通过、11跳过；`electron-final.txt` 11场景通过，退出0。`source-check.json` 确认67个文件无漂移、当前评测源码及child构建指纹匹配。两模式仍各5/5成功、错误放行0，缺失/部分用量如实保留。
+
+
+### 本地提交与 main 验证
+
+- 功能及审查修复提交：`ce96f1b0f094e8827e78cbafaac5f0663b5d5039`。
+- main 从 `07275d7708f061d6624218530fbed530b857af32` 快进至功能提交，无冲突；没有 fetch/pull/push、tag 或发布操作。
+- main 类型检查及完整 Electron/CLI/UI 构建通过，见 `main-typecheck.txt`、`main-build.txt`。
+- main 关键16文件/71项通过，包含真实Pi批量（两种模板、长且同前缀ID、fail-fast和修正）、单项取消/恢复、Bot/SQLite、版本、锁、路线与汇总；见 `main-critical.txt`。
+- `main-source-check.json` 确认67个文件与分支全量验收源码一致；没有功能源码漂移，因此不重复无目的执行整套测试。源码与Markdown的 diff --check 通过；原始工具日志保留原样尾空白，不清洗测试证据。
+- 本提交仅补齐验证记录与历史。保留专项分支和隔离工作区；未推送、未发布、未替换安装应用。

@@ -195,7 +195,7 @@ it('a persistent Bot submits through the actual scoped control tool and freezes 
  }finally{await runtime.stop('s')}
 })
 it('a real pipeline pointer write failure stays reviewable and cannot launch an orphan',async()=>{
- const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-pointer-'));roots.push(root)
+ const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-pointer-'));roots.push(root);writeFileSync(join(root,'in.csv'),'x\n1\n')
  mkdirSync(join(root,'.dawn','agents'),{recursive:true})
  for(const name of ['check','analyze','review'])writeFileSync(join(root,'.dawn','agents',name+'.md'),`---\nname: ${name}\ndescription: ${name}\n---\n${name}\n`)
  const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session')
@@ -213,7 +213,7 @@ it('a real pipeline pointer write failure stays reviewable and cannot launch an 
  }finally{await runtime.stop('p')}
 })
 it('all external message and Bot dispatch adapters preserve a fixed pipeline team',async()=>{
- const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-external-entry-'));roots.push(root)
+ const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-external-entry-'));roots.push(root);writeFileSync(join(root,'in.csv'),'x\n1\n')
  mkdirSync(join(root,'.dawn','agents'),{recursive:true})
  for(const name of ['check','analyze','review'])writeFileSync(join(root,'.dawn','agents',name+'.md'),`---\nname: ${name}\ndescription: test\n---\n${name}\n`)
  const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),{vi}=await import('vitest')

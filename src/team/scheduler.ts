@@ -1,3 +1,4 @@
+import {versionInputReceipt,finalizeTaskVersions,validateVersionReceipt} from '../artifacts/task-versions.js'
 /**
  * 团队调度器（team-board，2026-08-22，学自 dsh-agent-teams `scheduler.ts`）。
  *
@@ -10,6 +11,8 @@
  */
 import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
 import {taskOutputReservation} from "../bot/output-locks.js"
+import {advanceScienceBatch,recoverScienceBatch} from './science-batch.js'
+import {runScienceSummary} from './science-summary.js'
 import {advancePipeline,recoverPipeline} from './science-pipeline.js'
 import {recoverTeamExecution} from './recovery.js'
 import { join } from "node:path"
@@ -35,6 +38,7 @@ export interface BotMemberRun {
 }
 
 export interface 调度器选项 {
+  recordReceipt?:(receipt:import('../protocol/task-contract.js').TaskReceipt)=>import('../protocol/task-contract.js').TaskReceipt
   prepareTask?: (member:成员,task:import("./types.js").任务|undefined)=>TaskSettings|undefined
   orchestration?: import("../orchestration/service.js").OrchestrationService | undefined
   memberRunner?: (request: BotMemberRun) => Promise<成员轮结果>
@@ -63,6 +67,8 @@ export class 团队调度器 {
 
   constructor(private readonly opts: 调度器选项) {}
 
+  get workspace(): string {return this.opts.跑.context.cwd}
+
   dir(teamId: string) {
     return 团队目录(this.opts.sessionDir, teamId)
   }
@@ -82,6 +88,7 @@ export class 团队调度器 {
     const team = this.读(teamId)
     f(team)
     advancePipeline(team,this.now())
+    advanceScienceBatch(team,this.now())
     reconcileBotExchanges(team, this.now())
     写团队(this.dir(teamId), team)
     // Persist invalidation before aborting delegated tools; their late completion cannot publish a reply.
@@ -205,6 +212,7 @@ export class 团队调度器 {
     this.跑着.get(`${teamId}/${member}`)?.abort()
     for (const task of this.读(teamId).tasks) if (task.assignee === member && task.attemptId) this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     this.改(teamId, team => {
+      if(team.scienceBatch&&(team.tasks.find(t=>t.id===team.pipeline?.currentTaskId)?.assignee===member||member==='aggregate'))recoverScienceBatch(team,this.now())
       if(team.pipeline&&team.tasks.find(t=>t.id===team.pipeline!.currentTaskId)?.assignee===member)recoverPipeline(team,this.now(),'执行已停止，流程已暂停；核对产物后显式恢复，未自动重放')
       for (const turn of team.conversationTurns ?? []) if (turn.member === member && ["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
       for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted" && (exchange.from === member || exchange.to === member || exchange.rootOwner === member)) {
@@ -230,6 +238,7 @@ export class 团队调度器 {
       this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     }
     this.改(teamId, team => {
+      recoverScienceBatch(team,this.now())
       recoverPipeline(team,this.now(),'执行已停止，流程已暂停；核对产物后显式恢复，未自动重放')
       for (const turn of team.conversationTurns ?? []) if (["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
       for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted") {
@@ -259,7 +268,7 @@ export class 团队调度器 {
 
   private 派一轮(teamId: string): void {
     const team = this.读(teamId)
-    if (team.finishedAt || this.stoppedTeams.has(teamId) || team.pipeline&&team.pipeline.status!=='running') return
+    if (team.finishedAt || this.stoppedTeams.has(teamId) || (team.scienceBatch?!['running','aggregating'].includes(team.scienceBatch.status):team.pipeline&&team.pipeline.status!=='running')) return
     for (const m of team.members) {
       if (m.status === "removed") continue
       if (this.跑着.has(`${teamId}/${m.name}`)) continue
@@ -350,6 +359,7 @@ export class 团队调度器 {
       this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
       let 结果: 成员轮结果
       const backend = async (runSignal: AbortSignal): Promise<成员轮结果> => {
+        if(team.scienceBatch?.aggregateTaskId===任务?.taskId&&m.name==='aggregate'&&settings)return runScienceSummary(team,settings,this.workspace,runSignal)
         if (m.botId && this.opts.memberRunner) {
           try {
             return await this.opts.memberRunner({ team, member: m, ...(settings?{settings}:{}), taskId: 任务?.taskId, collaboration, conversation, prompt: taskPrompt(prompt,settings?.contract) + botRoomPrompt(team), signal: runSignal, onSession: (sessionId) => {
@@ -388,21 +398,25 @@ export class 团队调度器 {
         }
       }
       const execute=async(runSignal:AbortSignal):Promise<成员轮结果>=>{
+        const record=(result:成员轮结果):成员轮结果=>result.receipt?.versions&&this.opts.recordReceipt?{...result,receipt:this.opts.recordReceipt(result.receipt)}:result
         const release=settings&&!m.botId?await taskOutputReservation(this.opts.跑.context.cwd,settings,runSignal):()=>{}
         try {
           if(runSignal.aborted)return{ok:false,output:'',error:'已中止'}
           const inputProblem=settings?.contract?taskInputReceipt(settings.contract,this.opts.跑.context.cwd):undefined
           if(inputProblem)return{ok:false,output:'',error:inputProblem.reason??inputProblem.summary,receipt:inputProblem}
+          const versionProblem=!m.botId?await versionInputReceipt(settings,this.opts.跑.context.cwd,runSignal):undefined
+          if(versionProblem)return{ok:false,output:'',error:versionProblem.reason??versionProblem.summary,receipt:versionProblem}
           const result=await backend(runSignal)
-          if(result.ok&&settings?.contract&&!result.receipt){const receipt=acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd);return{...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})}}
-          return result
+          if(result.ok&&settings?.contract&&!result.receipt){const receipt=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd),this.opts.跑.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions});return record({...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})})}
+          if(result.receipt&&settings?.versions){const receipt=validateVersionReceipt(settings,result.receipt);return record({...result,receipt,ok:result.ok&&receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.summary}:{})})}
+          return record(result)
         }finally{release()}
       }
       try {
         const coordinator = this.opts.orchestration
         if (coordinator) {
           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
-          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,...outcome}=await execute(signal);return outcome}, ctrl.signal)
+          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return outcome}, ctrl.signal)
         } else 结果 = await execute(ctrl.signal)
       } catch (error) {
         结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
@@ -488,6 +502,7 @@ export class 团队调度器 {
       try{
         const paused=this.读(teamId)
         if(paused.pipeline){
+          recoverScienceBatch(paused,this.now())
           recoverPipeline(paused,this.now(),'阶段保存或通知失败，流程已暂停；核对检查点后显式恢复')
           if(!this.hasActiveTeam(teamId))recoverTeamExecution(paused)
           写团队(this.dir(teamId),paused);snapshot=paused

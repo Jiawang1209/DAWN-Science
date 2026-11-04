@@ -33,7 +33,7 @@ it.each(['pass','revise','blocked'] as const)('real Pi children and persisted ro
   expect(readFileSync(join(root,'in.csv'),'utf8')).toBe('x\n1\n2\n3\n4\n5\n')
   if(mode!=='blocked'){
    expect(readFileSync(join(root,'results','pipeline.csv'),'utf8')).toContain('synthetic')
-   expect(team.pipeline?.routeSync).toBe('applied');expect(internals.routeBooks.get('parent')?.book.read()?.steps[0]?.status).toBe('delivered')
+   await vi.waitFor(()=>expect(control!.scheduler.读(control!.current.id).pipeline?.routeSync).toBe('applied')); expect(internals.routeBooks.get('parent')?.book.read()?.steps[0]?.status).toBe('delivered')
    expect(team.tasks.at(-1)?.receipt?.result?.data).toMatchObject({kind:'review',verdict:'pass'})
   }else expect(existsSync(join(root,'results','pipeline.csv'))).toBe(false)
  }finally{await runtime.stop('parent');await server.close()}
@@ -63,7 +63,7 @@ it('reopens without replay and explicitly resumes only the interrupted stage',as
   await vi.waitFor(()=>expect(control.scheduler.读(control.current.id).pipeline?.status).toBe('completed'),{timeout:15000})
   const team=control.scheduler.读(control.current.id)
   expect(team.tasks).toHaveLength(4);expect(team.tasks[0]).toEqual(before.tasks[0]);expect(team.tasks[2]?.settings).toEqual(before.tasks[1]?.settings)
-  expect(team.pipeline?.acknowledgedTaskIds).toEqual([before.tasks[1]!.id]);expect(team.pipeline?.routeSync).toBe('applied')
+  expect(team.pipeline?.acknowledgedTaskIds).toEqual([before.tasks[1]!.id]);await vi.waitFor(()=>expect(control.scheduler.读(control.current.id).pipeline?.routeSync).toBe('applied'))
  }finally{await runtime.stop('parent');await server.close()}
 },30000)
 
@@ -73,15 +73,15 @@ it.each(['queued','executing'] as const)('cancel_science_pipeline closes %s work
  writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)));writeFileSync(join(root,'in.csv'),'x\n1\n2\n3\n4\n5\n');mkdirSync(join(root,'.dawn','agents'),{recursive:true})
  for(const stage of ['check','analyze','review'])writeFileSync(join(root,'.dawn','agents',`pipeline-${stage}.md`),`---\nname: pipeline-${stage}\ndescription: test\ntools: read, write, bash\n---\n按冻结契约执行。\n`)
  const runtime=new NativeRuntime({modelsPath,credentials:{read:async()=>({type:'api_key',key:'offline-mock'}),list:async()=>[],modify:async()=>undefined,delete:async()=>{}},subagentChildEntry:resolve('dist/electron/subagent-child.js')})
- const {sharedTaskOutputLocks,outputLockScope,taskOutputReservation}=await import('../../src/bot/output-locks.js'),{resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const {sharedTaskOutputLocks,outputLockScope,taskOutputReservation,localOutputReservationPaths}=await import('../../src/bot/output-locks.js'),{resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
  let release=()=>{},competitor:Promise<void>|undefined
- if(phase==='queued')release=await sharedTaskOutputLocks.acquire(outputLockScope(root),undefined,new AbortController().signal)
+ if(phase==='queued')release=await sharedTaskOutputLocks.acquire(outputLockScope(root),localOutputReservationPaths(['results/pipeline.csv'],root),new AbortController().signal)
  const internal=runtime as unknown as {botTeams:Map<string,{current:{id:string};scheduler:团队调度器}>;sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean}>}}}>}
  try{
   await runtime.start({sessionId:'parent',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
   runtime.write('parent','科研流水线验收：按已确认方法执行。');await runtime.waitForIdle('parent')
   const control=internal.botTeams.get('parent')!
-  await vi.waitFor(()=>{const t=control.scheduler.读(control.current.id);expect(t.pipeline?.stage).toBe(phase==='queued'?'check':'analyze');expect(t.tasks.at(-1)?.status).toBe('in_progress')},{timeout:5000})
+  await vi.waitFor(()=>{const t=control.scheduler.读(control.current.id);expect(t.pipeline?.stage).toBe('analyze');expect(t.tasks.at(-1)?.status).toBe('in_progress')},{timeout:5000})
   if(phase==='executing')await vi.waitFor(()=>expect(server.requests.some((r:{body?:unknown})=>JSON.stringify(r.body??{}).includes('阶段 analyze'))).toBe(true),{timeout:5000})
   let competitorEntered=false
   competitor=taskOutputReservation(root,resolveTaskSettings(TaskContractSchema.parse({access:'workspace-write',outputs:['results/pipeline.csv']}),'allow-all'),new AbortController().signal).then(unlock=>{competitorEntered=true;unlock()})
@@ -90,7 +90,7 @@ it.each(['queued','executing'] as const)('cancel_science_pipeline closes %s work
   expect((await cancel.execute('stale',{stateRevision:before.pipeline!.stateRevision+1})).isError).toBe(true);expect(control.scheduler.读(control.current.id)).toEqual(before)
   expect((await cancel.execute('cancel',{stateRevision:before.pipeline!.stateRevision})).isError).not.toBe(true)
   await vi.waitFor(()=>expect(control.scheduler.几个在跑()).toBe(0),{timeout:5000})
-  const team=control.scheduler.读(control.current.id);expect(team.pipeline?.status).toBe('cancelled');expect(team.tasks).toHaveLength(phase==='queued'?1:2);expect(team.tasks.at(-1)?.status).toBe('cancelled')
+  const team=control.scheduler.读(control.current.id);expect(team.pipeline?.status).toBe('cancelled');expect(team.tasks).toHaveLength(2);expect(team.tasks.at(-1)?.status).toBe('cancelled')
   if(phase==='queued'){expect(competitorEntered).toBe(false);release()}
   await competitor;expect(competitorEntered).toBe(true);expect(existsSync(join(root,'results','pipeline.csv'))).toBe(false)
   const count=server.requests.length;await control.scheduler.踢一下(team.id);await new Promise<void>(done=>setImmediate(done));expect(server.requests).toHaveLength(count)

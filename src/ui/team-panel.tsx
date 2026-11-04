@@ -319,7 +319,7 @@ export function TeamPanel() {
           <span>{tf("{0} 消息", team.messages.length)}</span>
         </span>
       </header>
-      <SciencePipelineStatus pipeline={team.pipeline} tasks={team.tasks}/>
+      <SciencePipelineStatus batch={team.scienceBatch} pipeline={team.pipeline} tasks={team.tasks}/>
       {team.finishedAt ? null : <p className="team-goal" data-authored="1">{team.goal}</p>}
 
       {/* ② 队长卡 */}

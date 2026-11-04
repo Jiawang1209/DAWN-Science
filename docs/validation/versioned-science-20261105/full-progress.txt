@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/integration/rewind.test.ts (14 tests | 1 failed) 2088ms
+     × 回退途中关会话：stop() 等回退做完再拆，对话那一半不会做到一半 273ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/integration/rewind.test.ts > 回退这一轮 · 真 pi > 回退途中关会话：stop() 等回退做完再拆，对话那一半不会做到一半
+AssertionError: expected [ 'dispose', 'navigate' ] to deeply equal [ 'navigate', 'dispose' ]
+
+- Expected
++ Received
+
+  [
+-   "navigate",
+    "dispose",
++   "navigate",
+  ]
+
+ ❯ tests/integration/rewind.test.ts:264:16
+    262|     const r = await 这次
+    263|     expect(r.conversationError).toBeUndefined()
+    264|     expect(次序).toEqual(["navigate", "dispose"])
+       |                ^
+    265|     expect(事件.some((e) => e.kind === "exited")).toBe(true)
+    266|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 614 passed (615)
+      Tests  1 failed | 6149 passed | 11 skipped (6161)
+   Start at  06:06:14
+   Duration  203.68s (transform 10.15s, setup 43.18s, import 146.42s, tests 323.80s, environment 88.35s)
+

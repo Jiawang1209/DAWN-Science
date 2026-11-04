@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/artifacts/task-versions.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/artifacts/task-versions.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/artifacts/task-versions.test.ts [ tests/artifacts/task-versions.test.ts ]
+Error: Cannot find module '../../src/artifacts/task-versions.js' imported from /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science/tests/artifacts/task-versions.test.ts
+ ❯ tests/artifacts/task-versions.test.ts:5:1
+      3| import {tmpdir} from 'node:os'
+      4| import {join} from 'node:path'
+      5| import {captureFileVersions,assertFileVersions,finalizeTaskVersions} f…
+       | ^
+      6| import {TaskContractSchema,TaskSettingsSchema} from '../../src/protoco…
+      7| import {resolveTaskSettings} from '../../src/subagent/task-tools.js'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  05:44:10
+   Duration  119ms (transform 15ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

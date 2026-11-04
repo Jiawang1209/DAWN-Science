@@ -1,3 +1,4 @@
+import {TaskVersionsSchema} from '../protocol/file-versions.js'
 /**
  * 成员的一轮（team-board，2026-08-22）：起一个子进程、递规格、回答它的工具调用、收结果。
  *
@@ -117,7 +118,9 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       if (m.type === "done") {
         const observation=m.observation===undefined?undefined:TaskObservationSchema.safeParse(m.observation)
         if(observation&&!observation.success){结果={ok:false,output:'',error:'子进程观测格式无效'};return}
-        const measured=observation?.success?{observation:observation.data}:{}
+        const versions='versions' in m&&m.versions!==undefined?TaskVersionsSchema.safeParse(m.versions):undefined
+        if(versions&&!versions.success){结果={ok:false,output:'',error:'子进程内容版本格式无效'};return}
+        const measured={...(observation?.success?{observation:observation.data}:{}),...(versions?.success?{versions:versions.data}:{})}
         if (m.ok) {
           if(规格.settings?.contract?.submission==='tool'&&m.submitted!==true){结果={...measured,ok:false,output:'',error:'缺少宿主提交标记，不能用文本完成工具契约'};return}
           const bytes = Buffer.byteLength(m.output, "utf8")

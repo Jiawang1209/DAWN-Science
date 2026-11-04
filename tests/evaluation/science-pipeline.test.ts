@@ -1,0 +1,6 @@
+import {expect,it} from 'vitest'
+import {baselineUsage,judgeScienceBaseline,summarizeScienceBaseline} from '../../src/evaluation/science-pipeline.js'
+it('checks actual numeric output and expected blocking independently of provider self-report',()=>{expect(judgeScienceBaseline('normal',true,{n:5,mean:3,unit:'m'},true).success).toBe(true);expect(judgeScienceBaseline('normal',true,{n:5,mean:99,unit:'m'},true).falseAcceptance).toBe(true);expect(judgeScienceBaseline('missing-units',true,{n:5,mean:3,unit:'m'},true).falseAcceptance).toBe(true);expect(judgeScienceBaseline('changed-input',false,undefined,true).success).toBe(true);expect(judgeScienceBaseline('normal',true,{n:5,mean:3,unit:'m'},false).success).toBe(false)})
+it('refuses missing or non-comparable paired runs',()=>{expect(()=>summarizeScienceBaseline([])).toThrow(/配对/);expect(()=>summarizeScienceBaseline([{scenario:'normal',mode:'single',comparisonFingerprint:'a'},{scenario:'normal',mode:'multi',comparisonFingerprint:'b'}] as never)).toThrow(/配对/)})
+
+it('keeps populated but partial token observations incomplete in row and aggregate accounting',()=>{expect(baselineUsage([{elapsedMs:1,submissionAttempts:1,invalidSubmissions:0,usage:{input:12,output:8,partial:['input','output']}}])).toEqual({visibleTokens:20,partialUsage:true,unknownUsageTasks:1})})

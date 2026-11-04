@@ -1,0 +1,86 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/bot/output-lock-identity.test.ts tests/team/science-batch-paths.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-batch-paths.test.ts (2 tests | 1 failed) 8ms
+   × refuses future output directory case aliases before either item writes files 3ms
+ ❯ |node| tests/bot/output-lock-identity.test.ts (4 tests | 3 failed) 15ms
+   × refreshes a queued reader after the prior owner atomically replaces an input and creates a new alias 8ms
+   × keeps both historical and current inode reservations while an active writer replaces a file (new alias) 2ms
+   × reserves future case aliases before either output directory exists 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/bot/output-lock-identity.test.ts > refreshes a queued reader after the prior owner atomically replaces an input and creates a new alias
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/output-lock-identity.test.ts:16:61
+     14|  writeFileSync(join(root,'replacement'),'same');renameSync(join(root,'…
+     15|  let entered=false;const ctrl=new AbortController(),competitor=taskOut…
+     16|  await tick();ctrl.abort();await competitor;expect(entered).toBe(false)
+       |                                                             ^
+     17|  }finally{reader();owner();rmSync(root,{recursive:true,force:true})}
+     18| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/bot/output-lock-identity.test.ts > keeps both historical and current inode reservations while an active writer replaces a file (new alias)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/output-lock-identity.test.ts:25:61
+     23|  writeFileSync(join(root,'replacement'),'new');renameSync(join(root,'r…
+     24|  let entered=false;const ctrl=new AbortController(),competitor=taskOut…
+     25|  await tick();ctrl.abort();await competitor;expect(entered).toBe(false)
+       |                                                             ^
+     26|  }finally{release();rmSync(root,{recursive:true,force:true})}
+     27| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/bot/output-lock-identity.test.ts > reserves future case aliases before either output directory exists
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/output-lock-identity.test.ts:30:343
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/team/science-batch-paths.test.ts > refuses future output directory case aliases before either item writes files
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/team/science-batch-paths.test.ts:10:159
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 2 passed (6)
+   Start at  07:34:56
+   Duration  591ms (transform 99ms, setup 0ms, import 520ms, tests 23ms, environment 0ms)
+

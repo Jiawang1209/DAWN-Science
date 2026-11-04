@@ -8,7 +8,7 @@ import {AnalysisRouteSchema} from '../../src/protocol/analysis-route.js'
 const roots:string[]=[];afterEach(()=>{for(const p of roots.splice(0))rmSync(p,{recursive:true,force:true})})
 const route=()=>AnalysisRouteSchema.parse({routeId:'r',revision:1,updatedAt:1,title:'study',goal:'approved goal',dataContext:[],steps:[{id:'s',title:'s',purpose:'approved method',inputs:[],outputs:[],dependencies:[],status:'pending',blockers:[],cases:[],deliverables:[],execution:{state:'not_run',note:'pending'},verification:{state:'unreviewed',note:'pending'},needsReview:true,notes:[]}]})
 it('persists once before admission, deduplicates retries and refuses conflicting requests',async()=>{
- const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-tools-'));roots.push(cwd)
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-tools-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
  const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:()=>{}})
  const kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue();let current:string|undefined,live=route()
  const definitions=['check','analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name,tools:['read','write']}))
@@ -26,7 +26,7 @@ it('persists once before admission, deduplicates retries and refuses conflicting
 })
 
 it.each(['conflict','abort','orphan'] as const)('keeps admission safe during %s',async mode=>{
- const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-admission-'));roots.push(cwd)
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-admission-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
  const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:()=>{}})
  const kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue();let current:string|undefined,failPointer=mode==='orphan',release!:()=>void
  const gate=new Promise<void>(r=>{release=r}),controller=new AbortController()
@@ -45,7 +45,7 @@ it.each(['conflict','abort','orphan'] as const)('keeps admission safe during %s'
  }
 })
 it('an exception after the pointer is published leaves an explicit recovery checkpoint',async()=>{
- const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-notify-'));roots.push(cwd)
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-notify-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
  let failNotify=true,current:string|undefined
  const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:()=>{if(failNotify)throw new Error('notify failed')}})
  const kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue(),start=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['check','analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route})[0]!
@@ -54,7 +54,7 @@ it('an exception after the pointer is published leaves an explicit recovery chec
  expect((await start.execute('same',args)).isError).not.toBe(true);expect(scheduler.读(current!).pipeline?.status).toBe('interrupted');expect(kick).not.toHaveBeenCalled()
 })
 it('a failed resume notification returns to an interrupted checkpoint that can be explicitly retried',async()=>{
- const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-resume-fault-'));roots.push(cwd)
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-resume-fault-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
  let failNotify=false,current:string|undefined
  const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:()=>{if(failNotify)throw new Error('resume snapshot notification failed')}})
  const kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue(),tools=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['check','analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route})
@@ -69,7 +69,7 @@ it('a failed resume notification returns to an interrupted checkpoint that can b
  expect((await resume.execute('retry',{stateRevision:saved.pipeline!.stateRevision})).isError).not.toBe(true);expect(kick).toHaveBeenCalledTimes(1)
 })
 it('a failed resumed claim with no live backend can be recovered without restarting the host',async()=>{
- const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-resume-claim-'));roots.push(cwd)
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-resume-claim-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
  let current:string|undefined,failClaim=false
  const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:team=>{if(failClaim&&team.tasks.at(-1)?.status==='claimed')throw new Error('claim notification failed')}})
  const kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue(),tools=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['check','analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route})
@@ -84,9 +84,9 @@ it('a failed resumed claim with no live backend can be recovered without restart
  expect(scheduler.读(current!).tasks).toHaveLength(2)
 })
 it('a stage settlement notification failure preserves accepted work and pauses the next stage for explicit recovery',async()=>{
- const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-settle-notify-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-settle-notify-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n');writeFileSync(join(cwd,'in.csv'),'x\n1\n')
  let current:string|undefined,failNotify=true
- const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},memberRunner:async()=>({ok:true,output:'checked',receipt:{version:1,state:'accepted',summary:'checked',deliverables:[],result:{summary:'checked',blockers:[],deliverables:[],execution:{state:'not_run',note:'readonly'},verification:{state:'reviewed',note:'adapter fixture'},data:{kind:'data-summary',rows:1,columns:[{name:'x'}],issues:[]}}}}),onChange:team=>{if(failNotify&&team.pipeline?.stage==='analyze'){failNotify=false;throw new Error('stage settlement notification failed')}}})
+ const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},memberRunner:async request=>({ok:true,output:'checked',receipt:{version:1,state:'accepted',summary:'checked',deliverables:[],...(request.settings?.versions?{versions:{version:1,inputs:request.settings.versions.inputs,outputs:[]}}:{}),result:{summary:'checked',blockers:[],deliverables:[],execution:{state:'not_run',note:'readonly'},verification:{state:'reviewed',note:'adapter fixture'},data:{kind:'data-summary',rows:1,columns:[{name:'x'}],issues:[]}}}}),onChange:team=>{if(failNotify&&team.pipeline?.stage==='analyze'){failNotify=false;throw new Error('stage settlement notification failed')}}})
  const tools=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),resolveBot:()=>({id:'checker',name:'checker',role:'check',instructions:'check',enabled:true}),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route})
  await tools[0]!.execute('start',{routeId:'r',revision:1,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],executors:{check:{botId:'checker'},analyze:{agent:'analyze'},review:{agent:'review'}},instructions:'confirmed',requireExecution:false})
  await vi.waitFor(()=>{expect(current).toBeTruthy();expect(scheduler.读(current!).pipeline?.stage).toBe('analyze');expect(scheduler.几个在跑()).toBe(0)})
@@ -94,4 +94,32 @@ it('a stage settlement notification failure preserves accepted work and pauses t
  const kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue()
  expect((await tools.find(t=>t.name==='resume_science_pipeline')!.execute('resume',{stateRevision:saved.pipeline!.stateRevision})).isError).not.toBe(true)
  expect(scheduler.读(current!).tasks[0]).toEqual(saved.tasks[0]);expect(scheduler.读(current!).tasks).toHaveLength(2);expect(kick).toHaveBeenCalledTimes(1)
+})
+it('a changed input keeps an interrupted checkpoint frozen instead of blessing new bytes on acknowledgement',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-version-resume-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
+ let current:string|undefined
+ const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:()=>{}})
+ vi.spyOn(scheduler,'踢一下').mockResolvedValue()
+ const tools=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['check','analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route})
+ expect((await tools[0]!.execute('start',{routeId:'r',revision:1,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],executors:{check:{agent:'check'},analyze:{agent:'analyze'},review:{agent:'review'}},instructions:'approved',requireExecution:false})).isError).not.toBe(true)
+ scheduler.中止全部(current!);const before=scheduler.读(current!);writeFileSync(join(cwd,'in.csv'),'x\n2\n')
+ expect((await tools.find(t=>t.name==='resume_science_pipeline')!.execute('resume',{stateRevision:before.pipeline!.stateRevision,acknowledgeInterrupted:true})).isError).toBe(true)
+ expect(scheduler.读(current!)).toEqual(before)
+})
+it('does not admit an accepted legacy Bot receipt into a content-bound pipeline',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-pipeline-missing-bot-versions-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n');let current:string|undefined
+ const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},memberRunner:async()=>({ok:true,output:'claimed',receipt:{version:1,state:'accepted',summary:'claimed',deliverables:[],result:{summary:'claimed',blockers:[],deliverables:[],execution:{state:'not_run',note:'read'},verification:{state:'reviewed',note:'claimed'},data:{kind:'data-summary',rows:1,columns:[],issues:[]}}}}),onChange:()=>{}})
+ const tools=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),resolveBot:()=>({id:'checker',name:'checker',role:'check',instructions:'check',enabled:true}),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route})
+ await tools[0]!.execute('start',{routeId:'r',revision:1,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],executors:{check:{botId:'checker'},analyze:{agent:'analyze'},review:{agent:'review'}},instructions:'approved',requireExecution:false})
+ await vi.waitFor(()=>expect(scheduler.读(current!).pipeline?.status).toBe('blocked'))
+ expect(scheduler.读(current!).tasks).toHaveLength(1)
+})
+it('rechecks the route after queued recovery verification without changing the interrupted checkpoint',async()=>{
+ const {sharedTaskOutputLocks,outputLockScope}=await import('../../src/bot/output-locks.js')
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-resume-route-race-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1\n')
+ const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{context:{cwd,provider:'p',model:'m'},childOf:()=>({command:'unused',args:[]})},onChange:()=>{}}),kick=vi.spyOn(scheduler,'踢一下').mockResolvedValue();let current:string|undefined,live=route()
+ const tools=createSciencePipelineTools({sessionId:'p',调度器:scheduler,定义:()=>['check','analyze','review'].map(name=>({name,description:name,systemPrompt:name,filePath:'/'+name})),当前:{get:()=>current,set:id=>{current=id}},已知模型:async()=>[],route:()=>live})
+ await tools.find(t=>t.name==='start_science_pipeline')!.execute('req',{routeId:'r',revision:1,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],executors:{check:{agent:'check'},analyze:{agent:'analyze'},review:{agent:'review'}},instructions:'approved',requireExecution:false})
+ scheduler.中止全部(current!);kick.mockClear();const before=scheduler.读(current!),release=await sharedTaskOutputLocks.acquire(outputLockScope(cwd),undefined,new AbortController().signal)
+ try{const pending=tools.find(t=>t.name==='resume_science_pipeline')!.execute('resume',{stateRevision:before.pipeline!.stateRevision});await new Promise<void>(done=>setImmediate(done));live={...live,revision:2};release();expect((await pending).isError).toBe(true);expect(scheduler.读(current!)).toEqual(before);expect(kick).not.toHaveBeenCalled()}finally{release()}
 })

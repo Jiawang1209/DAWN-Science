@@ -1,0 +1,6 @@
+import {expect,it} from 'vitest'
+import {scienceTemplate} from '../../src/team/science-templates.js'
+import {ScienceBatchRequestSchema} from '../../src/protocol/science-batch.js'
+const template={id:'tabular-ecology' as const,version:1 as const,language:'python' as const,method:'mean',units:'m',missingValues:'block'}
+it('freezes approved method, units, missing-value rules and stable isolated outputs',()=>{const t=scienceTemplate(template,'results/request/a',['in.csv']);expect(t.outputs).toEqual(['results/request/a/analysis.py','results/request/a/result.json','results/request/a/report.md']);expect(t.instructions).toContain('单位规则：m');expect(()=>scienceTemplate({...template,version:2} as never,'r',['in.csv'])).toThrow()})
+it('bounds batches and rejects duplicate item IDs and undeclared literature evidence',()=>{const item={id:'a',label:'a',inputs:['in.csv']};expect(ScienceBatchRequestSchema.safeParse({template,items:[item,item],outputRoot:'results'}).success).toBe(false);expect(ScienceBatchRequestSchema.safeParse({template,items:Array.from({length:9},(_,n)=>({...item,id:String(n)})),outputRoot:'results'}).success).toBe(false);expect(()=>scienceTemplate({id:'figure-reproduction',version:1,language:'r',method:'replot',evidencePath:'paper.md',citation:'paper',page:'1',targetFigure:'2',transformations:'none'},'r',['in.csv'])).toThrow(/证据/)})

@@ -44,7 +44,7 @@ export function taskToolDenial(scope:TaskScope,cwd:string,name:string,params:Rec
 export interface TaskTool {name:string;label:string;description:string;parameters:unknown;execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown):Promise<{content:{type:string;text?:string}[];isError?:boolean;details?:unknown}>}
 export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(name:string,params:Record<string,unknown>,signal?:AbortSignal)=>Promise<string|undefined>){
  const records:RouteToolEvidence[]=[]
- const submission=settings.contract?new TaskSubmission(settings.contract,cwd,()=>records):undefined
+ const submission=settings.contract?new TaskSubmission(settings.contract,cwd,()=>records,settings.versions):undefined
  const shell=createLocalBashOperations()
  const definitions=[createReadToolDefinition(cwd),createWriteToolDefinition(cwd),createEditToolDefinition(cwd),createBashToolDefinition(cwd,{exposeSessionEnvironment:false}),createLsToolDefinition(cwd),不自己下载(createGrepToolDefinition(cwd),'rg'),不自己下载(createFindToolDefinition(cwd),'fd')] as TaskTool[]
  const wrap=(def:TaskTool,observe=true):TaskTool=>({...def,async execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown){

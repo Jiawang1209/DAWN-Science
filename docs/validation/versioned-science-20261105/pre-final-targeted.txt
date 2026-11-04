@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-tools.test.ts tests/workbench/bot-contract.test.ts tests/integration/science-baseline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+
+ Test Files  3 passed (3)
+      Tests  5 passed (5)
+   Start at  06:10:40
+   Duration  14.08s (transform 1.67s, setup 0ms, import 4.99s, tests 13.72s, environment 0ms)
+

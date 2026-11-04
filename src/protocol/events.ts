@@ -1,5 +1,6 @@
 import {TaskContractSchema,TaskReceiptSchema} from "./task-contract.js"
 import {TaskObservationSchema} from './task-observation.js'
+import {ScienceBatchSummarySchema} from './science-batch.js'
 import {PipelineSummarySchema} from './science-pipeline.js'
 import { SkillReadSchema } from "./skill-reads.js"
 import { AnalysisRouteSchema } from './analysis-route.js'
@@ -461,6 +462,7 @@ export type QueuedMessage = z.infer<typeof QueuedMessageSchema>
 export const TeamSnapshotSchema = z
   .object({
     pipeline:PipelineSummarySchema.optional(),
+    scienceBatch:ScienceBatchSummarySchema.optional(),
     id: z.string().min(1),
     name: z.string(),
     goal: z.string(),

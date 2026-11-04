@@ -128,6 +128,7 @@ export interface BotExchange {
 }
 
 export interface 团队 {
+  scienceBatch?:import('../protocol/science-batch.js').ScienceBatch
   pipeline?:import('../protocol/science-pipeline.js').SciencePipeline
   /** Scope captured on the first Bot binding; survives removal, ending and owner rehoming. */
   botOriginScopeKey?: string
@@ -148,6 +149,7 @@ export interface 团队 {
 
 /** 一轮成员执行的结果（子进程回来的） */
 export interface 成员轮结果 {
+  versions?:import('../protocol/file-versions.js').TaskVersions
   observation?:import('../protocol/task-observation.js').TaskObservation
   receipt?: import("../orchestration/task-contract.js").TaskReceipt
   evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[]

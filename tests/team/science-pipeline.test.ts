@@ -56,3 +56,13 @@ it('bounds repeated interrupted attempts without losing the last checkpoint',()=
  }
  expect(team.tasks).toHaveLength(16);expect(team.pipeline).toMatchObject({status:'blocked',reason:expect.stringContaining('16')})
 })
+it('freezes initial input identities and binds review to the latest accepted analysis output',()=>{
+ const team=建团队({id:'versioned',name:'study',goal:'approved',captainSessionId:'p'});for(const name of ['check','analyze','review'])加成员(team,{name,agent:name})
+ const input={path:'in.csv',sha256:'a'.repeat(64),bytes:5},output={path:'out.csv',sha256:'b'.repeat(64),bytes:8}
+ startPipeline(team,'versioned',{route,stepId:'s',inputs:['in.csv'],outputs:['out.csv'],members:{check:'check',analyze:'analyze',review:'review'},instructions:'approved',requireExecution:false,maxRevisions:1,initialVersions:[input]})
+ expect(team.tasks[0]?.settings?.versions?.inputs).toEqual([input]);settle(team,'data-summary')
+ expect(team.tasks[1]?.settings?.versions?.inputs).toEqual([input])
+ const task=team.tasks[1]!,attempt=领取(team,task.id,'analyze')
+ 结算(team,task.id,attempt.attemptId,{ok:true,output:'host accepted',receipt:{version:1,state:'accepted',summary:'done',deliverables:[],versions:{version:1,inputs:[input],outputs:[output]},result:{summary:'done',blockers:[],deliverables:[{path:'out.csv'}],execution:{state:'not_run',note:'document'},verification:{state:'unreviewed',note:'pending'},data:{kind:'model-metrics',method:'approved',metrics:{n:1},caveats:[]}}}});advancePipeline(team)
+ expect(team.tasks[2]?.settings?.versions?.inputs).toEqual([output])
+})

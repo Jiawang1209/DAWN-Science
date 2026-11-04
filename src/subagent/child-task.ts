@@ -13,6 +13,7 @@ import {taskObservation} from '../runtime/task-observation.js'
 
 /** 本层需要 pi 会话的**全部**能力。窄到这个程度，假实现才写得出来 */
 export interface ChildPiSession {
+  submittedVersions?:()=>import('../protocol/file-versions.js').TaskVersions|undefined
   submitted?:()=>import('../protocol/task-contract.js').TaskResult|undefined
   submissionObservation?:()=>{submissionAttempts:number;invalidSubmissions:number}
   usage?:()=>import('../protocol/task-observation.js').TaskUsage
@@ -100,7 +101,7 @@ export async function runChildTask(
     return observed(done(false, `子 agent "${spec.agent}" 跑完了，但没有产生任何输出`))
   }
 
-  return observed({ type: "done", ok: true, output: text,...(submitted?{submitted:true as const}:{}), ...(spec.taskSettings?.contract?{evidence:session.evidence?.()??[]}:{}) })
+  return observed({ type: "done", ok: true, output: text,...(submitted?{submitted:true as const,...(session.submittedVersions?.()?{versions:session.submittedVersions()!}:{})}:{}), ...(spec.taskSettings?.contract?{evidence:session.evidence?.()??[]}:{}) })
 }
 
 /** 已经吐出来的半截要带上——排查时它常常是唯一的线索 */

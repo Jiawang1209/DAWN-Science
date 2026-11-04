@@ -1,0 +1,120 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/integration/science-batch.test.ts tests/integration/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/integration/science-pipeline.test.ts (6 tests | 6 failed) 42549ms
+   × real Pi children and persisted route/receipts complete the pass scenario 912ms
+   × real Pi children and persisted route/receipts complete the revise scenario 713ms
+   × real Pi children and persisted route/receipts complete the blocked scenario 742ms
+   × reopens without replay and explicitly resumes only the interrupted stage 5080ms
+   × cancel_science_pipeline closes queued work and releases only drained reservations 30011ms
+   × cancel_science_pipeline closes executing work and releases only drained reservations 5091ms
+ ❯ |node| tests/integration/science-batch.test.ts (2 tests | 2 failed) 50266ms
+   × real Pi tabular-ecology batch freezes versions and aggregates accepted receipts 25156ms
+   × real Pi figure-reproduction batch freezes versions and aggregates accepted receipts 25109ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/integration/science-batch.test.ts > real Pi tabular-ecology batch freezes versions and aggregates accepted receipts
+ FAIL  |node| tests/integration/science-batch.test.ts > real Pi figure-reproduction batch freezes versions and aggregates accepted receipts
+AssertionError: [{"id":"p-a-check-0-0","status":"failed","output":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"versions\"\n    ],\n    \"path\": [\n      \"result\"\n    ],\n    \"message\": \"Unrecognized key: \\\"versions\\\"\"\n  }\n]"}]: expected 'blocked' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "blocked"
+
+ ❯ vi.waitFor.timeout tests/integration/science-batch.test.ts:25:179
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > real Pi children and persisted route/receipts complete the pass scenario
+AssertionError: expected 'blocked' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "blocked"
+
+ ❯ tests/integration/science-pipeline.test.ts:29:33
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > real Pi children and persisted route/receipts complete the revise scenario
+AssertionError: expected 'blocked' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "blocked"
+
+ ❯ tests/integration/science-pipeline.test.ts:29:33
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > real Pi children and persisted route/receipts complete the blocked scenario
+AssertionError: expected undefined to be 1 // Object.is equality
+
+- Expected:
+1
+
++ Received:
+undefined
+
+ ❯ tests/integration/science-pipeline.test.ts:31:58
+     29|   expect(team.pipeline?.status).toBe(mode==='blocked'?'blocked':'compl…
+     30|   expect(team.tasks).toHaveLength(mode==='revise'?5:mode==='blocked'?1…
+     31|   expect(team.tasks[0]?.observation?.invalidSubmissions).toBe(1)
+       |                                                          ^
+     32|   expect(team.tasks[0]?.observation?.usage?.input,JSON.stringify(team.…
+     33|   expect(readFileSync(join(root,'in.csv'),'utf8')).toBe('x\n1\n2\n3\n4…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > reopens without replay and explicitly resumes only the interrupted stage
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ vi.waitFor.timeout tests/integration/science-pipeline.test.ts:54:125
+     52|   const first=internals.botTeams.get('parent')!
+     53|   await vi.waitFor(()=>expect(first.scheduler.读(first.current.id).task…
+     54|   await vi.waitFor(()=>expect(server.requests.some((r:{body?:unknown})…
+       |                                                                                                                             ^
+     55|   const before=first.scheduler.读(first.current.id);expect(before.tasks…
+     56|   await runtime.stop('parent');await runtime.start({...spec,resume:tru…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > cancel_science_pipeline closes queued work and releases only drained reservations
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/science-pipeline.test.ts:70:41
+     68| },30000)
+     69|
+     70| it.each(['queued','executing'] as const)('cancel_science_pipeline clos…
+       |                                         ^
+     71|  const root=mkdtempSync(join(tmpdir(),'dawn-pipeline-cancel-'));roots.…
+     72|  const server=await startMockInferenceServer({scenario:sciencePipeline…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > cancel_science_pipeline closes executing work and releases only drained reservations
+AssertionError: expected 'check' to be 'analyze' // Object.is equality
+
+Expected: "analyze"
+Received: "check"
+
+ ❯ vi.waitFor.timeout tests/integration/science-pipeline.test.ts:84:99
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed (8)
+   Start at  06:03:04
+   Duration  52.38s (transform 1.29s, setup 0ms, import 4.02s, tests 92.82s, environment 0ms)
+

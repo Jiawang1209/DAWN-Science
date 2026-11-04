@@ -1,3 +1,4 @@
+import {TaskVersionsSchema,type TaskVersions} from '../protocol/file-versions.js'
 import { createHash, randomUUID } from "node:crypto"
 import { resolve } from "node:path"
 import {
@@ -57,6 +58,18 @@ export class ArtifactCapture {
     },
   ) {
     this.limits = { ...DEFAULT_LIMITS, ...options.limits }
+  }
+  /** Persist bounded host-verified identities; this does not claim write authorship or retain bytes. */
+  recordTaskVersions(sessionId:string,raw:TaskVersions):TaskVersions {
+    const versions=TaskVersionsSchema.parse(raw),scope=this.options.scope(sessionId)
+    if(!scope)return versions
+    const record=(files:TaskVersions['inputs'],relation:'declared_input'|'late_capture')=>files.map(file=>{
+      const observation=this.options.store.observe(scope,{path:file.path,sha256:file.sha256,bytes:file.bytes,relation,attribution:relation==='declared_input'?'declared':'unknown',gaps:relation==='late_capture'?['阶段内容核验不单独证明写入归属']:[]})
+      return {...file,observationId:observation.id,...(observation.versionId?{versionId:observation.versionId}:{})}
+    })
+    const recorded={version:1 as const,inputs:record(versions.inputs,'declared_input'),outputs:record(versions.outputs,'late_capture')}
+    this.options.changed?.(sessionId)
+    return recorded
   }
   async begin(
     sessionId: string,

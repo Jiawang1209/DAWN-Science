@@ -1,0 +1,17 @@
+import {z} from 'zod'
+import {ScienceTemplateSchema} from './science-template.js'
+import {SciencePipelineSchema,PipelineDefinitionSchema} from './science-pipeline.js'
+import {TaskSettingsSchema} from './task-contract.js'
+import {WorkspaceRelativePathSchema} from './analysis-route.js'
+const id=z.string().regex(/^[a-zA-Z0-9_-]{1,32}$/)
+export const ScienceBatchRequestSchema=z.object({template:ScienceTemplateSchema,items:z.array(z.object({id,label:z.string().trim().min(1).max(200),inputs:z.array(WorkspaceRelativePathSchema).min(1).max(4)}).strict()).min(1).max(8),outputRoot:WorkspaceRelativePathSchema}).strict().superRefine((v,c)=>{if(new Set(v.items.map(i=>i.id)).size!==v.items.length)c.addIssue({code:'custom',message:'批量项 ID 重复'})})
+export type ScienceBatchRequest=z.infer<typeof ScienceBatchRequestSchema>
+const states=z.enum(['running','aggregating','blocked','interrupted','completed','cancelled'])
+export const ScienceBatchSchema=z.object({version:z.literal(1),requestId:z.string().min(1).max(512),requestFingerprint:z.string().max(100).optional(),template:ScienceTemplateSchema,items:z.array(z.object({id,label:z.string().min(1).max(200),definition:PipelineDefinitionSchema,settingsByStage:SciencePipelineSchema.shape.settingsByStage,completed:SciencePipelineSchema.optional()}).strict()).min(1).max(8),index:z.number().int().min(0).max(7),status:states,stateRevision:z.number().int().positive(),aggregateTaskIds:z.array(z.string().min(1)).max(16),aggregateTaskId:z.string().optional(),summaryOutputs:z.array(WorkspaceRelativePathSchema).length(2),summarySettings:TaskSettingsSchema.optional(),reason:z.string().max(8000).optional(),startedAt:z.number().finite(),endedAt:z.number().finite().optional()}).strict().superRefine((b,c)=>{
+ if(b.index>=b.items.length||new Set(b.items.map(i=>i.id)).size!==b.items.length)c.addIssue({code:'custom',message:'批量项索引或身份冲突'})
+ if(b.items.some(i=>!i.definition.initialVersions))c.addIssue({code:'custom',message:'批量项必须冻结输入版本'})
+ if(b.aggregateTaskId&&!b.aggregateTaskIds.includes(b.aggregateTaskId))c.addIssue({code:'custom',message:'汇总尝试记录冲突'})
+})
+export type ScienceBatch=z.infer<typeof ScienceBatchSchema>
+export function publicScienceBatch(b:ScienceBatch){return{version:b.version,template:{id:b.template.id,version:b.template.version},status:b.status,stateRevision:b.stateRevision,index:b.index,total:b.items.length,completed:b.items.filter(i=>i.completed?.status==='completed').length,items:b.items.map(i=>({id:i.id,label:i.label,status:i.completed?.status??(b.items[b.index]===i?b.status:'pending')})),summaryOutputs:b.summaryOutputs,...(b.aggregateTaskId?{aggregateTaskId:b.aggregateTaskId}:{}),...(b.reason?{reason:b.reason}:{})}}
+export const ScienceBatchSummarySchema=z.object({version:z.literal(1),template:z.object({id:z.enum(['tabular-ecology','figure-reproduction']),version:z.literal(1)}).strict(),status:states,stateRevision:z.number().int().positive(),index:z.number().int(),total:z.number().int(),completed:z.number().int(),items:z.array(z.object({id,label:z.string(),status:z.string()}).strict()).max(8),summaryOutputs:z.array(WorkspaceRelativePathSchema).length(2),aggregateTaskId:z.string().optional(),reason:z.string().optional()}).strict()

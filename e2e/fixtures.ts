@@ -16,7 +16,9 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { DEFAULT_CONFIG_YAML } from "../src/config/loader.js"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
-// @ts-expect-error shared local scientific acceptance scenario
+// @ts-expect-error shared isolated batch fixture
+import {scienceBatchScenario} from '../scripts/mock-science-batch.mjs'
+// @ts-expect-error shared isolated pipeline fixture
 import {sciencePipelineScenario} from '../scripts/mock-science-pipeline.mjs'
 // @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 npm run dev:mock
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "../scripts/mock-inference-server.mjs"
@@ -349,6 +351,7 @@ export interface MockToolCallSpec {
 }
 
 export interface DawnOptions {
+  scienceBatch?:boolean
   sciencePipeline?: 'pass'|'revise'|'blocked'|'interrupt'
 
   /**
@@ -615,6 +618,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     await 发布源?.已就绪
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
+      ...(dawnOptions.scienceBatch?{scenario:scienceBatchScenario()}:{}),
       ...(dawnOptions.sciencePipeline ? {scenario:sciencePipelineScenario(dawnOptions.sciencePipeline)} : {}),
       ...(dawnOptions.reply !== undefined ? { reply: dawnOptions.reply } : {}),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),

@@ -8,27 +8,34 @@ import type {团队,成员} from './types.js'
 export function pipelineStageContract(def:PipelineDefinition,stage:PipelineStage):TaskContract {
  return stageContract(def,stage)
 }
-export function startPipeline(team:团队,requestId:string,raw:PipelineDefinition,freeze:(member:成员,contract:TaskContract)=>TaskSettings=(m,c)=>resolveTaskSettings(c,'ask-risky'),now=Date.now()):void {
+export function startPipeline(team:团队,requestId:string,raw:PipelineDefinition,freeze:(member:成员,contract:TaskContract)=>TaskSettings=(m,c)=>resolveTaskSettings(c,'ask-risky'),now=Date.now(),namespace?:string):void {
  const definition=PipelineDefinitionSchema.parse(raw)
- if(team.pipeline){if(team.pipeline.requestId===requestId&&JSON.stringify(team.pipeline.definition)===JSON.stringify(definition))return;throw new 团队错误('流程身份已存在，不能修改或覆盖')}
- if(team.tasks.length)throw new 团队错误('科研流程使用独立团队，不能覆盖已有任务')
+ if(namespace){if(!team.scienceBatch||team.scienceBatch.items[team.scienceBatch.index]?.id!==namespace||team.pipeline?.status==='running')throw new 团队错误('批量内部阶段身份冲突')}
+ else if(team.pipeline){if(team.pipeline.requestId===requestId&&JSON.stringify(team.pipeline.definition)===JSON.stringify(definition))return;throw new 团队错误('流程身份已存在，不能修改或覆盖')}
+ if(team.tasks.length&&!namespace)throw new 团队错误('科研流程使用独立团队，不能覆盖已有任务')
  const members=Object.fromEntries((['check','analyze','review'] as const).map(stage=>{const member=team.members.find(m=>m.name===definition.members[stage]&&m.status!=='removed');if(!member)throw new 团队错误(`流程成员不存在：${stage}`);return[stage,member]})) as Record<PipelineStage,成员>
  if((members.analyze.botId??members.analyze.agent)===(members.review.botId??members.review.agent))throw new 团队错误('分析与审阅必须选择不同执行者')
- const settingsByStage=Object.fromEntries((['check','analyze','review'] as const).map(stage=>{const contract=pipelineStageContract(definition,stage),settings=TaskSettingsSchema.parse(freeze(members[stage],contract));if(JSON.stringify(settings.contract)!==JSON.stringify(contract))throw new 团队错误('冻结设置与流程契约不一致');return[stage,settings]})) as SciencePipeline['settingsByStage']
- const p:SciencePipeline={version:1,requestId,definition,settingsByStage,status:'running',stage:'check',round:0,currentTaskId:'p-check-0-0',taskIds:[],stateRevision:1,startedAt:now,updatedAt:now,routeSync:'pending'}
+ const settingsByStage=Object.fromEntries((['check','analyze','review'] as const).map(stage=>{const contract=pipelineStageContract(definition,stage),settings=TaskSettingsSchema.parse({...freeze(members[stage],contract),...(definition.initialVersions&&stage!=='review'?{versions:{version:1,inputs:definition.initialVersions}}:{})});if(JSON.stringify(settings.contract)!==JSON.stringify(contract))throw new 团队错误('冻结设置与流程契约不一致');return[stage,settings]})) as SciencePipeline['settingsByStage']
+ const p:SciencePipeline={...(namespace?{namespace}:{}),version:1,requestId,definition,settingsByStage,status:'running',stage:'check',round:0,currentTaskId:'p-check-0-0',taskIds:[],stateRevision:1,startedAt:now,updatedAt:now,routeSync:'pending'}
  team.pipeline=p;enqueueStage(team,now);SciencePipelineSchema.parse(p)
 }
 function enqueueStage(team:团队,now:number){
  const p=team.pipeline!
  if(p.taskIds.length>=16){finish(p,'blocked','已达到 16 个阶段尝试上限；请核对检查点与产物后另建流程',now);return}
  const def=p.definition,step=def.route.steps.find(s=>s.id===def.stepId)!
- const id=`p-${p.stage}-${p.round}-${p.taskIds.length}`
+ // Batch index supplies uniqueness; bounded display slug keeps every attempt below Team's 40-char limit.
+ const namespace=p.namespace?`${team.scienceBatch!.index}-${p.namespace.slice(0,16)}-`:''
+ const id=`p-${namespace}${p.stage}-${p.round}-${p.taskIds.length}`
  const check=[...p.taskIds].reverse().map(id=>team.tasks.find(t=>t.id===id)!).find(t=>t.contract?.resultType==='data-summary'&&t.status==='completed'&&t.receipt?.state==='accepted')
  const lastAnalysis=[...p.taskIds].reverse().map(id=>team.tasks.find(t=>t.id===id)!).find(t=>t.contract?.resultType==='model-metrics'&&t.status==='completed')
  const previous=p.taskIds.at(-1)?team.tasks.find(t=>t.id===p.taskIds.at(-1)):undefined
  const description=[`科研流程 ${team.id}，阶段 ${p.stage}，修正轮次 ${p.round}/${def.maxRevisions}。`,def.instructions,`用户已确认路线：${JSON.stringify({goal:def.route.goal,dataContext:def.route.dataContext,step})}`,previous?.receipt?`上一阶段宿主回执：${JSON.stringify(previous.receipt)}`:'',p.stage==='analyze'&&check?.receipt?`核查回执：${JSON.stringify(check.receipt)}`:'',p.stage==='review'?'只读审阅声明产物，逐个真实 read 并引用 callId；明确 pass/revise/blocked。不能写入或让分析者代审。':'使用冻结契约；完成时调用 submit_task_result。'].filter(Boolean).join('\n\n')
  const dependencies=p.stage==='review'&&lastAnalysis?[lastAnalysis.id]:p.stage==='analyze'&&check?[check.id]:[]
- const settings=p.settingsByStage[p.stage]
+ const settings=structuredClone(p.settingsByStage[p.stage])
+ if(def.initialVersions&&p.stage==='review'){
+  if(!lastAnalysis?.receipt?.versions){finish(p,'blocked','分析阶段缺少内容版本，未放行审阅',now);return}
+  settings.versions={version:1,inputs:structuredClone(lastAnalysis.receipt.versions.outputs)}
+ }
  const task=加任务(team,{id,subject:`${p.stage} · 修正 ${p.round}`,description,assignee:def.members[p.stage],contract:settings.contract!,dependencies},now)
  task.settings=structuredClone(settings);p.currentTaskId=id;p.taskIds.push(id);p.updatedAt=now
 }

@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/artifacts/task-versions.test.ts tests/orchestration/task-submission.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/artifacts/task-versions.test.ts (4 tests | 1 failed) 296ms
+   × records verified identities in the existing artifact version tables and keeps other projects isolated 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/artifacts/task-versions.test.ts > records verified identities in the existing artifact version tables and keeps other projects isolated
+SqliteError: FOREIGN KEY constraint failed
+ ❯ src/artifacts/store.ts:31:10
+     29|           "INSERT OR IGNORE INTO artifact_files(id,project_id,workspac…
+     30|         )
+     31|         .run(key, scope.projectId, workspace, path)
+       |          ^
+     32|       let versionId: string | undefined
+     33|       if (input.sha256) {
+ ❯ sqliteTransaction ../../../../Desktop/Github_repos/dawn-science/node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ ArtifactStore.observe src/artifacts/store.ts:71:7
+ ❯ src/artifacts/capture.ts:67:44
+ ❯ record src/artifacts/capture.ts:66:97
+ ❯ ArtifactCapture.recordTaskVersions src/artifacts/capture.ts:70:47
+ ❯ tests/artifacts/task-versions.test.ts:43:79
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 8 passed (9)
+   Start at  05:47:51
+   Duration  849ms (transform 125ms, setup 0ms, import 617ms, tests 347ms, environment 0ms)
+

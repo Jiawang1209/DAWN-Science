@@ -127,7 +127,7 @@ import { 产物登记, 重定向目标 } from "../policy/artifacts.js"
 import { 团队调度器, 状态文本 } from "../team/scheduler.js"
 import { createTeamTools, 队长协议 } from "../team/tools.js"
 import {createSciencePipelineTools} from '../team/science-pipeline-tools.js'
-import {projectPipelineRoute} from './science-pipeline-route.js'
+import {SciencePipelineProjection,projectionKey} from './science-pipeline-projection.js'
 import { 描述图片 } from "./vision.js"
 import { createMcpTools, MCP只读标记 } from "../tools/mcp-tool.js"
 import { createProposePlanTool } from "../tools/propose-plan.js"
@@ -619,18 +619,18 @@ function 最后一次真回复(messages: readonly unknown[]): number | undefined
 
 export class NativeRuntime implements AgentRuntime {
   private readonly taskScopes=new Map<string,{settings:TaskSettings;evidence:RouteToolEvidence[];submission?:TaskSubmission}>()
-  async runWithTaskScope<T extends {ok:boolean;output:string}>(sessionId:string,settings:TaskSettings,work:()=>Promise<T>):Promise<T&{evidence:RouteToolEvidence[];observation:TaskObservation}> {
+  async runWithTaskScope<T extends {ok:boolean;output:string}>(sessionId:string,settings:TaskSettings,work:()=>Promise<T>):Promise<T&{evidence:RouteToolEvidence[];observation:TaskObservation;versions?:import('../protocol/file-versions.js').TaskVersions}> {
     if(this.taskScopes.has(sessionId))throw new Error('子任务会话已有冻结的执行范围')
     const bound=TaskSettingsSchema.parse(settings),evidence:RouteToolEvidence[]=[],started=Date.now()
     const before=new Set(this.sessions.get(sessionId)?.sessionManager.getBranch().map(entry=>entry.id)??[])
-    const scope={settings:bound,evidence,...(bound.contract?{submission:new TaskSubmission(bound.contract,this.routeBooks.get(sessionId)?.spec.workspace??'',()=>evidence)}:{})}
+    const scope={settings:bound,evidence,...(bound.contract?{submission:new TaskSubmission(bound.contract,this.routeBooks.get(sessionId)?.spec.workspace??'',()=>evidence,bound.versions)}:{})}
     this.taskScopes.set(sessionId,scope)
     try{
       const result=await work(),submitted=scope.submission?.result()
       const usage=sessionUsage(this.sessions.get(sessionId)?.sessionManager.getBranch().filter(entry=>!before.has(entry.id))??[],true)
       const observation=taskObservation(started,scope.submission?.observation(),usage)
       const missing=result.ok&&bound.contract?.submission==='tool'&&!submitted
-      return{...result,...(submitted&&result.ok?{output:JSON.stringify(submitted)}:{}),...(missing?{ok:false,output:'',error:'任务要求 submit_task_result，未收到宿主接受的提交'}:{}),evidence:scope.submission?.sealedEvidence()??structuredClone(scope.evidence),observation}
+      return{...result,...(submitted&&result.ok?{output:JSON.stringify(submitted)}:{}),...(missing?{ok:false,output:'',error:'任务要求 submit_task_result，未收到宿主接受的提交'}:{}),evidence:scope.submission?.sealedEvidence()??structuredClone(scope.evidence),observation,...(scope.submission?.receipt()?.versions?{versions:scope.submission.receipt()!.versions!}:{})}
     }finally{if(this.taskScopes.get(sessionId)===scope)this.taskScopes.delete(sessionId)}
   }
   private botBridge: BotRuntimeBridge | undefined
@@ -1471,6 +1471,7 @@ export class NativeRuntime implements AgentRuntime {
   private readonly 团队收尾 = new Map<SessionId, () => void>()
   /** 每段会话一份「接着问子 agent」（2026-09-27）：与 `subagent` 工具同一份 childOf / context，建会话时一起装 */
   private readonly orchestrationControls = new Map<SessionId, {mailbox: import("../orchestration/mailbox.js").OrchestrationMailbox; delivery: OrchestrationDelivery; flush: () => void}>()
+  private readonly pipelineProjections = new Map<SessionId, SciencePipelineProjection>()
   private readonly orchestrations = new Map<SessionId, OrchestrationService>()
   private readonly 子agent续问 = new Map<SessionId, ReturnType<typeof createSubagentFollowUp>>()
   /** 正在答的那几轮：关会话时整组杀（中止信号 → 执行器 `杀掉后代`，与主 agent 派的那一轮同一条收尾） */
@@ -1731,6 +1732,7 @@ export class NativeRuntime implements AgentRuntime {
         env: { [RUN_AS_NODE]: "1" },
       }),
       context: {
+        recordReceipt:receipt=>receipt.versions&&this.opts.artifactCapture?{...receipt,versions:this.opts.artifactCapture.recordTaskVersions(spec.sessionId,receipt.versions)}:receipt,
         provider: native.provider,
         model: native.model,
         cwd: spec.workspace,
@@ -1799,8 +1801,10 @@ export class NativeRuntime implements AgentRuntime {
     let 团队轮序 = 0
     const 团队轮标识 = new Map<string, number>()
     let 流程进展版本: string | undefined
+    let projection:SciencePipelineProjection|undefined
     const 调度器 = new 团队调度器({
       orchestration,
+      recordReceipt:receipt=>receipt.versions&&this.opts.artifactCapture?{...receipt,versions:this.opts.artifactCapture.recordTaskVersions(spec.sessionId,receipt.versions)}:receipt,
       prepareTask:(member,task)=>{
         if(spec.remote&&task?.contract)throw new Error('远端任务尚不支持严格子任务契约验收')
         return resolveTaskSettings(task?.contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:定义().find(d=>d.name===member.agent)?.tools)
@@ -1825,15 +1829,9 @@ export class NativeRuntime implements AgentRuntime {
       } : {}),
       onChange: (team) => {
         // A durable stage/recovery transition is real progress; repeated status reads are not.
-        const progress=team.pipeline?`${team.id}:${team.pipeline.stateRevision}`:undefined
+        const progress=team.pipeline?`${team.id}:${team.pipeline.stateRevision}:${team.scienceBatch?.stateRevision}`:undefined
         if(progress&&progress!==流程进展版本){流程进展版本=progress;this.sessions.get(spec.sessionId)?.stuck.reset()}
-        if(team.pipeline?.status==='completed'&&team.pipeline.routeSync==='pending'){
-          try{
-            const book=this.routeBooks.get(spec.sessionId)?.book
-            const sync=book?projectPipelineRoute(book,team):'conflict'
-            if(sync!=='pending'){team=调度器.改(team.id,t=>{t.pipeline!.routeSync=sync});if(book?.read())this.emit({kind:'analysis_route',sessionId:spec.sessionId,route:book.read()!})}
-          }catch(error){this.emit({kind:'notice',sessionId:spec.sessionId,text:`流程回执已保存，路线同步尚未完成：${String(error)}`})}
-        }
+        projection?.schedule(team)
         for (const member of team.members) if (!orchestration.isClosed && member.status !== "removed") orchestration.register(member.botId ? "bot" : "team", [team.id, member.name, memberGeneration(member)], member.agent)
         this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, team) as never })
         for (const task of team.tasks) if (task.status === "cancelled") {
@@ -1855,6 +1853,11 @@ export class NativeRuntime implements AgentRuntime {
         }
       },
     })
+    projection=new SciencePipelineProjection({workspace:spec.workspace,read:id=>调度器.读(id),book:()=>this.routeBooks.get(spec.sessionId)?.book,alive:()=>!orchestration.isClosed,settle:(id,status,key)=>{
+      调度器.改(id,t=>{if(projectionKey(t)!==key||t.pipeline?.routeSync!=='pending')return;t.pipeline.routeSync=status;if(status==='conflict'){t.pipeline.reason='输入、产物内容或路线版本冲突；交付待核对，原验收回执保留';if(t.scienceBatch)t.scienceBatch.reason=t.pipeline.reason}})
+      const route=this.routeBooks.get(spec.sessionId)?.book?.read();if(status==='applied'&&route)this.emit({kind:'analysis_route',sessionId:spec.sessionId,route})
+    },notice:error=>this.emit({kind:'notice',sessionId:spec.sessionId,text:`流程回执已保存，路线同步尚未完成：${String(error)}`})})
+    this.pipelineProjections.set(spec.sessionId,projection)
     const 当前团队: { id: string | undefined } = { id: 读当前团队(spec.sessionDir) }
     const 团队工具 = createTeamTools({
       sessionId: spec.sessionId,
@@ -1872,6 +1875,7 @@ export class NativeRuntime implements AgentRuntime {
       resolveBot:id=>{const bot=this.botBridge?.list().find(b=>b.id===id);return bot?{...bot,scopeKey:this.botBridge?.scopeKey?.(spec.sessionId),model:bot.model??this.botModel(spec.sessionId)??{provider:native.provider,model:native.model}}:undefined},
       当前:{get:()=>当前团队.id,set:id=>{记当前团队(spec.sessionDir,id);当前团队.id=id}},
       已知模型:async()=>(await this.runtime()).getModels().map(m=>({provider:m.provider,model:m.id})),
+      recordInputs:inputs=>this.opts.artifactCapture?.recordTaskVersions(spec.sessionId,{version:1,inputs,outputs:[]}).inputs??inputs,
       route:()=>this.routeBooks.get(spec.sessionId)?.book?.read(),remote:Boolean(spec.remote),defaultModel:{provider:native.provider,model:native.model},
       freeze:(member,contract)=>resolveTaskSettings(contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:定义().find(d=>d.name===member.agent)?.tools),
     })
@@ -1943,6 +1947,7 @@ export class NativeRuntime implements AgentRuntime {
       }
       return handle
     } catch (error) {
+      await this.pipelineProjections.get(id)?.close();this.pipelineProjections.delete(id)
       const control = this.orchestrationControls.get(id)
       control?.delivery.close()
       await control?.mailbox.close()
@@ -3051,6 +3056,8 @@ ${描述}`
     }
     this.不许在回退(s)
     this.orchestrationControls.get(sessionId)?.delivery.resume()
+    const projection=this.pipelineProjections.get(sessionId);projection?.resume()
+    const teamControl=this.botTeams.get(sessionId);if(projection&&teamControl?.current.id)projection.schedule(teamControl.scheduler.读(teamControl.current.id))
     s.skillResources?.prepareManual(data)
     const 图 =
       images && images.length > 0
@@ -3758,6 +3765,7 @@ ${描述}`
   }
 
   async abort(sessionId: SessionId): Promise<void> {
+    const projectionClosing=this.pipelineProjections.get(sessionId)?.cancelPending()
     this.orchestrationControls.get(sessionId)?.delivery.suspend()
     try {this.orchestrationControls.get(sessionId)?.mailbox.pauseAll()}
     catch (error) {this.emit({kind: "notice", sessionId, text: `子任务已请求中止，但暂停状态未能保存：${String(error)}`, failed: true})}
@@ -3775,12 +3783,13 @@ ${描述}`
     for (const id of this.clearQueue(sessionId)) {
       this.emit({ kind: "queue_failed", sessionId, id, message: "这一轮被中止了，这句还排着、没有送出去" })
     }
-    if (!s) return
+    if (!s) {await projectionClosing;return}
     // 中止期间结束的工具标「已中断」（2026-09-25）；`run_code` 收到中止信号会给内核发中断
     s.中止中 += 1
     try {
       await s.session.abort()
     } finally {
+      await projectionClosing
       s.中止中 -= 1
       this.interruptAnalysisRoute(sessionId, '用户已停止本轮执行')
     }
@@ -4263,7 +4272,8 @@ ${描述}`
     this.orchestrationControls.get(sessionId)?.delivery.suspend()
     try {this.orchestrationControls.get(sessionId)?.mailbox.pauseAll()}
     catch (error) {this.emit({kind: "notice", sessionId, text: `子任务已请求暂停，但暂停状态未能保存：${String(error)}`, failed: true})}
-    const 这次 = this.真回退(sessionId, s, 那句, 做法, 内核们)
+    const projection=this.pipelineProjections.get(sessionId)
+    const 这次 = projection?projection.cancelPending().then(()=>this.真回退(sessionId,s,那句,做法,内核们)):this.真回退(sessionId,s,那句,做法,内核们)
     s.回退 = 这次
     try {
       return await 这次
@@ -4613,6 +4623,8 @@ ${描述}`
   }
 
   private async 停止一次(sessionId: SessionId): Promise<void> {
+    const projectionClosing=this.pipelineProjections.get(sessionId)?.close()
+    this.pipelineProjections.delete(sessionId)
     // 在第一个 await 前取消旧 Notebook 启动/执行；模型会话不在也要回收名下内核。
     const 内核收尾 = this.opts.kernels?.收(sessionId).catch(() => {})
     this.opts.terminals?.revokeOwner(sessionId)
@@ -4630,7 +4642,7 @@ ${描述}`
       // 到这里 start() 的收尾要么已经把它停干净(下面 get 拿不到直接返回),要么启动失败了
     }
     const s = this.sessions.get(sessionId)
-    if (!s) { await coordinationClosing; this.orchestrations.delete(sessionId); this.orchestrationControls.delete(sessionId); await 内核收尾; if (coordinationError) throw coordinationError; return }
+    if (!s) { await projectionClosing;await coordinationClosing; this.orchestrations.delete(sessionId); this.orchestrationControls.delete(sessionId); await 内核收尾; if (coordinationError) throw coordinationError; return }
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
     this.interruptAnalysisRoute(sessionId, '会话已停止')
@@ -4654,6 +4666,7 @@ ${描述}`
       clearTimeout(表)
     }
     try {s.收尾?.()} catch (error) {coordinationError ??= error}
+    await projectionClosing
     await coordinationClosing
     this.orchestrations.delete(sessionId)
     this.orchestrationControls.delete(sessionId)

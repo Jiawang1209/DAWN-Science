@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/integration/science-batch.test.ts tests/integration/science-pipeline.test.ts tests/runtime/science-pipeline-projection.test.ts tests/team/science-batch-paths.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/integration/science-pipeline.test.ts (6 tests | 1 failed) 11068ms
+   × cancel_science_pipeline closes queued work and releases only drained reservations 746ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/integration/science-pipeline.test.ts > cancel_science_pipeline closes queued work and releases only drained reservations
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/integration/science-pipeline.test.ts:94:50
+     92|   await vi.waitFor(()=>expect(control.scheduler.几个在跑()).toBe(0),{timeo…
+     93|   const team=control.scheduler.读(control.current.id);expect(team.pipel…
+     94|   if(phase==='queued'){expect(competitorEntered).toBe(false);release()}
+       |                                                  ^
+     95|   await competitor;expect(competitorEntered).toBe(true);expect(existsS…
+     96|   const count=server.requests.length;await control.scheduler.踢一下(team.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 12 passed (13)
+   Start at  06:04:29
+   Duration  12.62s (transform 1.26s, setup 0ms, import 3.69s, tests 22.04s, environment 0ms)
+

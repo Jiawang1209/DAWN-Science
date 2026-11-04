@@ -1,0 +1,4 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsc' --noEmit
+src/runtime/native.ts(1858,19): error TS2532: Object is possibly 'undefined'.
+src/runtime/science-pipeline-route.ts(16,39): error TS2739: Type '{ version: 1; access: "read-only"; inputs: string[]; outputs: never[]; resultType: "data-summary"; submission: "tool"; }' is missing the following properties from type '{ submission?: "tool" | undefined; resultType?: "data-summary" | "model-metrics" | "review" | undefined; version: 1; inputs: string[]; outputs: string[]; access: "read-only" | "workspace-exec" | "workspace-write"; requireExecution: boolean; requireReview: boolean; }': requireExecution, requireReview

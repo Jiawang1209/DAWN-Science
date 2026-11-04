@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsc' --noEmit
+src/team/science-summary.ts(28,211): error TS2353: Object literal may only specify known properties, and 'startedAt' does not exist in type '{ elapsedMs: number; submissionAttempts: number; invalidSubmissions: number; usage?: { input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | ... 1 more ... | "output")[] | undefined; } | undefined; }'.

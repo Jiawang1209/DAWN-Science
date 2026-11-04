@@ -1,3 +1,14 @@
+import {ScienceBatchRequestSchema,type ScienceBatchRequest} from '../protocol/science-batch.js'
+import {assertBatchOutputPaths} from './science-batch-paths.js'
+import {scienceTemplate} from './science-templates.js'
+import {startScienceBatch,resumeScienceBatch,cancelScienceBatch,publicScienceBatch} from './science-batch.js'
+import {taskToolDenial} from '../subagent/task-tools.js'
+import {captureFileVersions} from '../artifacts/task-versions.js'
+import {taskOutputReservation} from '../bot/output-locks.js'
+import {resolveTaskSettings} from '../subagent/task-tools.js'
+import {TaskContractSchema} from '../protocol/task-contract.js'
+import {assertPipelineVersions} from './science-pipeline-versions.js'
+import type {FileVersion} from '../protocol/file-versions.js'
 /** Model-facing bounded workflows over the existing Team coordinator. */
 import {recoverTeamExecution} from './recovery.js'
 import {botInstructions} from '../bot/runtime.js'
@@ -16,10 +27,11 @@ const teamId=z.string().regex(/^pipeline-[a-f0-9]{24}$/)
 const statusSchema=z.object({teamId:teamId.optional()}).strict()
 const resumeSchema=statusSchema.extend({stateRevision:z.number().int().positive(),acknowledgeInterrupted:z.boolean().default(false)})
 const cancelSchema=statusSchema.extend({stateRevision:z.number().int().positive()})
-interface Options extends 团队工具选项 {route:()=>AnalysisRoute|undefined;remote?:boolean;defaultModel?:{provider:string;model:string};freeze?:(member:成员,contract:TaskContract)=>TaskSettings}
+interface Options extends 团队工具选项 {route:()=>AnalysisRoute|undefined;remote?:boolean;defaultModel?:{provider:string;model:string};freeze?:(member:成员,contract:TaskContract)=>TaskSettings;recordInputs?:(inputs:FileVersion[])=>FileVersion[]}
 export function createSciencePipelineTools(opts:Options){
  const scheduler=opts.调度器
  const owned=(requested?:string)=>{const id=requested??opts.当前.get();if(!id||!teamId.safeParse(id).success)throw new 团队错误('请先启动科研流程，或提供有效 teamId');const t=scheduler.读(id);if(t.captainSessionId!==opts.sessionId||!t.pipeline)throw new 团队错误('流程不属于当前主会话');return t}
+ const status=(t:ReturnType<typeof owned>)=>({teamId:t.id,...pipelineStatus(t),...(t.scienceBatch?{batch:publicScienceBatch(t.scienceBatch)}:{})})
  const make=<S extends z.ZodType>(name:string,description:string,schema:S,action:(args:z.output<S>,callId:string,signal?:AbortSignal)=>unknown)=>({
   name,label:name,description,parameters:z.toJSONSchema(schema,{io:'input',unrepresentable:'any'}),
   async execute(callId:string,raw:unknown,signal?:AbortSignal){
@@ -29,22 +41,21 @@ export function createSciencePipelineTools(opts:Options){
    }catch(error){return{content:[{type:'text' as const,text:error instanceof Error?error.message:String(error)}],isError:true,details:undefined}}
   },
  })
- return[
-  make('start_science_pipeline','按当前已确认分析路线启动固定科研流程：只读核查→分析→独立只读审阅→有界修正/交付。须给出 routeId/revision/stepId、文件输入输出和执行者；未知失败不自动重试。',PipelineStartRequestSchema,async(args,callId,signal)=>{
+ const start=async(args:z.output<typeof PipelineStartRequestSchema>,callId:string,signal?:AbortSignal,batch?:ScienceBatchRequest)=>{
    if(opts.remote)throw new Error('远端严格科研流程尚不支持')
    const id='pipeline-'+createHash('sha256').update(JSON.stringify([opts.sessionId,callId])).digest('hex').slice(0,24)
-   const fingerprint=createHash('sha256').update(JSON.stringify(args)).digest('hex')
+   const fingerprint=createHash('sha256').update(JSON.stringify([args,batch])).digest('hex')
    const admission=()=>{
     if(signal?.aborted)throw new Error('调用已停止')
     const existing=读团队(scheduler.dir(id)),active=opts.当前.get()
     if(existing){
-     if(existing.captainSessionId!==opts.sessionId||existing.pipeline?.requestFingerprint!==fingerprint)throw new Error('请求身份冲突，未覆盖既有流程')
+     if(existing.captainSessionId!==opts.sessionId||(existing.scienceBatch?.requestFingerprint??existing.pipeline?.requestFingerprint)!==fingerprint)throw new Error('请求身份冲突，未覆盖既有流程')
      if(active!==id){
       if(active&&!scheduler.读(active).finishedAt)throw new Error('当前已有团队，不能覆盖当前指针')
       // A persisted record without its owner pointer is a crash window, never a replay request.
       recoverTeamExecution(existing);写团队(scheduler.dir(id),existing);opts.当前.set(id);scheduler.改(id,()=>{})
      }
-     return{teamId:id,...pipelineStatus(scheduler.读(id))}
+     return status(scheduler.读(id))
     }
     if(active&&!scheduler.读(active).finishedAt)throw new Error('当前已有团队，请先结束后再启动独立科研流程')
    }
@@ -58,11 +69,23 @@ export function createSciencePipelineTools(opts:Options){
     else{const def=opts.定义().find(d=>d.name===choice.agent&&!d.disabled);if(!def)throw new Error(`没有启用的子 agent：${choice.agent}`);const model=opts.defaultModel?{provider:opts.defaultModel.provider,model:def.model??opts.defaultModel.model}:undefined;if(model&&!catalog.some(m=>m.provider===model.provider&&m.model===model.model))throw new Error('子 agent 模型不在已知目录');加成员(team,{name:stage,agent:def.name,...(model?{provider:model.provider,model:model.model}:{})})}
     seen.set(key,stage);members[stage]=stage
    }
+   const release=await taskOutputReservation(scheduler.workspace,resolveTaskSettings(TaskContractSchema.parse({inputs:batch?[...new Set(batch.items.flatMap(i=>i.inputs))]:args.inputs,resultType:'data-summary'}),'deny-risky'),signal??new AbortController().signal)
+   let initialVersions:FileVersion[]
+   try{initialVersions=await captureFileVersions(scheduler.workspace,batch?[...new Set(batch.items.flatMap(i=>i.inputs))]:args.inputs,signal)}finally{release()}
    // Discovery was asynchronous: repeat dedup, ownership and cancellation checks before any write.
    const admitted=admission();if(admitted)return admitted
    const route=opts.route();if(!route||route.routeId!==args.routeId||route.revision!==args.revision)throw new Error('分析路线版本已变化，请重新核对后启动')
-   startPipeline(team,callId,{route,stepId:args.stepId,inputs:args.inputs,outputs:args.outputs,members,instructions:args.instructions,requireExecution:args.requireExecution,maxRevisions:args.maxRevisions},opts.freeze)
+   initialVersions=opts.recordInputs?.(initialVersions)??initialVersions
+   const definition={route,initialVersions,stepId:args.stepId,inputs:args.inputs,outputs:args.outputs,members,instructions:args.instructions,requireExecution:args.requireExecution,maxRevisions:args.maxRevisions}
+   if(batch){
+    const root=`${batch.outputRoot}/${id}`,items=batch.items.map(item=>{const recipe=scienceTemplate(batch.template,`${root}/${item.id}`,item.inputs);return{id:item.id,label:item.label,definition:{...definition,inputs:item.inputs,initialVersions:initialVersions.filter(v=>item.inputs.includes(v.path)),outputs:recipe.outputs,instructions:`${args.instructions}\n${recipe.instructions}`}}})
+    const outputs=[...items.flatMap(i=>i.definition.outputs),`${root}/summary.json`,`${root}/summary.md`],contract=TaskContractSchema.parse({inputs:initialVersions.map(v=>v.path),outputs,access:'workspace-write'})
+    assertBatchOutputPaths(scheduler.workspace,initialVersions.map(v=>v.path),outputs)
+    for(const path of outputs){const denial=taskToolDenial(resolveTaskSettings(contract,'allow-all').scope,scheduler.workspace,'write',{path});if(denial)throw new Error(denial)}
+    startScienceBatch(team,callId,batch.template,items,outputs.slice(-2),opts.freeze)
+   }else startPipeline(team,callId,definition,opts.freeze)
    team.pipeline!.requestFingerprint=fingerprint
+   if(team.scienceBatch)team.scienceBatch.requestFingerprint=fingerprint
    const interruptAdmission=()=>{
     const saved=读团队(scheduler.dir(id))
     if(saved?.pipeline?.requestFingerprint===fingerprint&&recoverTeamExecution(saved))写团队(scheduler.dir(id),saved)
@@ -75,16 +98,26 @@ export function createSciencePipelineTools(opts:Options){
      console.error('[science-pipeline]',error)
     })
    }catch(error){interruptAdmission();throw error}
-   return{teamId:id,...pipelineStatus(scheduler.读(id))}
-  }),
-  make('science_pipeline_status','读取科研流程检查点、阶段宿主回执、修正次数和轻量观测；不启动执行。',statusSchema,args=>{const t=owned(args.teamId);return{teamId:t.id,...pipelineStatus(t)}}),
-  make('resume_science_pipeline','显式恢复 interrupted 流程，已验收阶段不重跑；未知副作用必须核对后 acknowledgeInterrupted。blocked 不自动重试。',resumeSchema,async args=>{
+   return status(scheduler.读(id))
+  }
+ const batchStart=PipelineStartRequestSchema.omit({inputs:true,outputs:true}).extend(ScienceBatchRequestSchema.shape)
+ const tools=[
+  make('start_science_pipeline','按已确认路线启动版本绑定的核查→分析→独立审阅流程；未知失败不自动重试。',PipelineStartRequestSchema,start),
+  make('start_science_batch','用 tabular-ecology@1 或 figure-reproduction@1 模板逐项执行 1–8 项；同一团队有界串行、失败即停、固定宿主汇总已验收事实。',batchStart,(args,callId,signal)=>start({...args,inputs:args.items[0]!.inputs,outputs:scienceTemplate(args.template,`${args.outputRoot}/placeholder`,args.items[0]!.inputs).outputs},callId,signal,ScienceBatchRequestSchema.parse({template:args.template,items:args.items,outputRoot:args.outputRoot}))),
+  make('science_pipeline_status','读取科研流程检查点、阶段宿主回执、修正次数和轻量观测；不启动执行。',statusSchema,args=>{const t=owned(args.teamId);return status(t)}),
+  make('resume_science_pipeline','显式恢复 interrupted 流程，已验收阶段不重跑；未知副作用必须核对后 acknowledgeInterrupted。blocked 不自动重试。',resumeSchema,async(args,_callId,signal)=>{
    const team=owned(args.teamId),p=team.pipeline!,route=opts.route()
-   if(p.stateRevision!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
+   if(team.finishedAt)throw new Error('团队已归档，不能恢复')
+   if((team.scienceBatch?.stateRevision??p.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
    if(!route||route.routeId!==p.definition.route.routeId||route.revision!==p.definition.route.revision)throw new Error('分析路线已变化，不能沿用旧流程；请取消并按新路线建立流程')
+   await assertPipelineVersions(team,scheduler.workspace,signal)
+   if(signal?.aborted)throw new Error('调用已停止')
+   const verifiedRoute=opts.route()
+   if(!verifiedRoute||verifiedRoute.routeId!==p.definition.route.routeId||verifiedRoute.revision!==p.definition.route.revision)throw new Error('分析路线已变化，不能沿用旧流程；请取消并按新路线建立流程')
+   if((scheduler.读(team.id).scienceBatch?.stateRevision??scheduler.读(team.id).pipeline?.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
    let transitioned=false
    try{
-    scheduler.改(team.id,t=>{resumePipeline(t,args.acknowledgeInterrupted);transitioned=true});scheduler.resumeTeam(team.id);await scheduler.踢一下(team.id)
+    scheduler.改(team.id,t=>{if(t.scienceBatch)resumeScienceBatch(t,args.acknowledgeInterrupted);else resumePipeline(t,args.acknowledgeInterrupted);transitioned=true});scheduler.resumeTeam(team.id);await scheduler.踢一下(team.id)
    }catch(error){
     if(!transitioned)throw error // Rejected preconditions must not interrupt valid live work.
     // Pause live work first, even if a snapshot notification or disk write failed.
@@ -94,15 +127,21 @@ export function createSciencePipelineTools(opts:Options){
     if(!scheduler.hasActiveTeam(team.id)&&recoverTeamExecution(saved))写团队(scheduler.dir(team.id),saved)
     throw error
    }
-   return{teamId:team.id,...pipelineStatus(scheduler.读(team.id))}
+   return status(scheduler.读(team.id))
   }),
   make('cancel_science_pipeline','取消科研流程并停止当前尝试；保留检查点和产物，不采用迟到结果。停止请求不等于清理已完成。',cancelSchema,args=>{
    const team=owned(args.teamId),p=team.pipeline!
-   if(['completed','cancelled'].includes(p.status))return{teamId:team.id,...pipelineStatus(team)}
-   if(p.stateRevision!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
+   if(['completed','cancelled'].includes(team.scienceBatch?.status??p.status))return status(team)
+   if((team.scienceBatch?.stateRevision??p.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
    scheduler.中止全部(team.id)
-   scheduler.改(team.id,t=>{cancelPipeline(t);for(const task of t.tasks)if(!['completed','failed','cancelled'].includes(task.status))取消任务(t,task.id)})
-   return{teamId:team.id,...pipelineStatus(scheduler.读(team.id))}
+   scheduler.改(team.id,t=>{if(t.scienceBatch)cancelScienceBatch(t);else cancelPipeline(t);for(const task of t.tasks)if(!['completed','failed','cancelled'].includes(task.status))取消任务(t,task.id)})
+   return status(scheduler.读(team.id))
   }),
  ]
+ const controls=tools.filter(t=>['science_pipeline_status','resume_science_pipeline','cancel_science_pipeline'].includes(t.name))
+ const guarded=(tool:typeof tools[number],batch:boolean)=>({...tool,name:batch?tool.name.replace('science_pipeline','science_batch'):tool.name,async execute(callId:string,raw:unknown,signal?:AbortSignal){
+  try{const args=statusSchema.passthrough().parse(raw),team=owned(args.teamId);if(!!team.scienceBatch!==batch)throw new Error(batch?'当前不是批量任务':'批量任务请使用 science_batch 专用状态、恢复或取消入口')}catch(error){return{content:[{type:'text' as const,text:String(error)}],isError:true,details:undefined}}
+  return tool.execute(callId,raw,signal)
+ }})
+ return [...tools.filter(t=>!controls.includes(t)),...controls.map(t=>guarded(t,false)),...controls.map(t=>guarded(t,true))]
 }

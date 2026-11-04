@@ -41,3 +41,12 @@ it('declared missing inputs block a task before any subprocess is started',async
  const result=(await executor.run({mode:'single',agent:'a',task:'read'},definitions)).results[0]!
  expect(result.ok).toBe(false);expect(result.receipt?.state).toBe('blocked');expect(spawns).toBe(0)
 })
+it.each(['missing','changed','matching'] as const)('verifies sealed content proof in the parent for %s submission',async mode=>{
+ const {captureFileVersions}=await import('../../src/artifacts/task-versions.js')
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-parent-version-'));roots.push(cwd);writeFileSync(join(cwd,'in.csv'),'x\n1');writeFileSync(join(cwd,'out.txt'),'before')
+ const contract=TaskContractSchema.parse({submission:'tool',access:'workspace-write',inputs:['in.csv'],outputs:['out.txt']}),inputs=await captureFileVersions(cwd,contract.inputs),outputs=await captureFileVersions(cwd,contract.outputs)
+ const done={type:'done',ok:true,submitted:true,output:JSON.stringify(output),...(mode==='missing'?{}:{versions:{version:1,inputs,outputs}})}
+ const executor=new SubagentExecutor({context:{cwd,provider:'p',model:'m',agentDirOf:()=>join(cwd,'run')},prepareTask:()=>({...resolveTaskSettings(contract,'allow-all'),versions:{version:1,inputs}}),childOf:()=>({command:process.execPath,args:['-e',`process.stdin.resume();process.stdin.on('end',()=>{${mode==='changed'?`require('fs').writeFileSync(${JSON.stringify(join(cwd,'out.txt'))},'change')`:''};console.log(JSON.stringify(${JSON.stringify(done)}))})`]})})
+ const result=(await executor.run({mode:'single',agent:'a',task:'produce'},definitions)).results[0]!
+ expect(result.ok).toBe(mode==='matching');expect(result.receipt?.state).toBe(mode==='matching'?'accepted':'blocked')
+})

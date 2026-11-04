@@ -156,6 +156,7 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
     prompt: (text) => session.prompt(text),
     ...(taskTools?{evidence:taskTools.evidence}:{}),
     submitted:()=>taskTools?.submission?.result(),
+    submittedVersions:()=>taskTools?.submission?.receipt()?.versions,
     submissionObservation:()=>taskTools?.submission?.observation()??{submissionAttempts:0,invalidSubmissions:0},
     usage:()=>sessionUsage(session.sessionManager.getBranch().filter(entry=>!beforeIds.has(entry.id)),true),
     finalText:()=>{const last=[...session.messages].reverse().find(m=>m.role==='assistant');return last&&Array.isArray(last.content)?last.content.filter(c=>c.type==='text').map(c=>c.text).join('\n'):undefined},

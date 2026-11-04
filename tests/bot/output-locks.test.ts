@@ -26,3 +26,13 @@ it('scientific readonly validation reserves its inputs against other task writer
   await new Promise<void>(resolve=>setImmediate(resolve));expect(entered).toBe(false);release();await pending;expect(entered).toBe(true)
  }finally{rmSync(root,{recursive:true,force:true})}
 })
+it.each([['read','write'],['read']])('holds version-bound inputs with tool set %j and supports canceling a competing writer',async(...tools)=>{
+ const {mkdtempSync,writeFileSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path')
+ const {taskOutputReservation}=await import('../../src/bot/output-locks.js'),{resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/protocol/task-contract.js')
+ const root=mkdtempSync(join(tmpdir(),'version-bound-lock-'));let release=()=>{}
+ try{writeFileSync(join(root,'in.csv'),'x');const base=resolveTaskSettings(TaskContractSchema.parse({inputs:['in.csv'],outputs:['out.csv'],access:'workspace-write'}),'allow-all'),settings={...base,versions:{version:1 as const,inputs:[{path:'in.csv',sha256:'0'.repeat(64),bytes:1}]}}
+ settings.scope.tools=tools;release=await taskOutputReservation(root,settings,new AbortController().signal)
+ let entered=false;const ctrl=new AbortController(),pending=taskOutputReservation(root,resolveTaskSettings(TaskContractSchema.parse({outputs:['in.csv'],access:'workspace-write'}),'allow-all'),ctrl.signal).then(unlock=>{entered=true;unlock()})
+ await new Promise<void>(done=>setImmediate(done));expect(entered).toBe(false);ctrl.abort();await expect(pending).rejects.toThrow(/停止/)
+ }finally{release();rmSync(root,{recursive:true,force:true})}
+})

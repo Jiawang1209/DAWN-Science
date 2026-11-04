@@ -1,0 +1,6 @@
+npm notice run dawn-science@0.0.44 evaluate:science
+npm notice run tsx scripts/evaluate-science-pipeline.ts
+Error: 评测等待超时
+    at until (/Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science/scripts/evaluate-science-pipeline.ts:23:132)
+    at async run (/Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science/scripts/evaluate-science-pipeline.ts:55:4)
+    at async runScienceBaseline (/Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science/scripts/evaluate-science-pipeline.ts:29:103)

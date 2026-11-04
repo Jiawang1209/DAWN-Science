@@ -1,3 +1,5 @@
+import {TaskVersionsSchema,type TaskVersions} from '../protocol/file-versions.js'
+import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
 /**
  * 子 agent 执行器（①-B″ · S1）。
  *
@@ -80,6 +82,7 @@ export type SubagentRequest =
   | { mode: "chain"; chain: SubagentTask[] }
 
 export interface SubagentResult {
+  versions?:TaskVersions
   observation?:TaskObservation
   receipt?: TaskReceipt
   evidence?: RouteToolEvidence[]
@@ -159,6 +162,7 @@ export type ChildFactory = (spec: {
  * 而失败方式是「每个子 agent 都说模型不存在」——要跨进程才查得出来。
  */
 export interface SubagentContext {
+  recordReceipt?:(receipt:TaskReceipt)=>TaskReceipt
   authorize?: (name:string,params:Record<string,unknown>,signal?:AbortSignal)=>string|undefined|Promise<string|undefined>
   provider: string
   /** 默认模型。**定义里写了 `model` 的以定义为准** */
@@ -326,9 +330,12 @@ export class SubagentExecutor {
         if(runSignal.aborted)return fail(task,"已中止")
         const inputProblem=settings?.contract?taskInputReceipt(settings.contract,this.context.cwd):undefined
         if(inputProblem)return{...fail(task,inputProblem.reason??inputProblem.summary),receipt:inputProblem}
+        const versionProblem=await versionInputReceipt(settings,this.context.cwd,runSignal)
+        if(versionProblem)return{...fail(task,versionProblem.reason??versionProblem.summary),receipt:versionProblem}
         const result=await this.spawnOne(definition,task,index,runSignal,resume,settings)
         if(result.ok&&settings?.contract){
-          const receipt=acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd)
+          const verified=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd),this.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions})
+          const receipt=verified.versions&&this.context.recordReceipt?this.context.recordReceipt(verified):verified
           return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'任务未通过验收'}:{})}
         }
         return result
@@ -505,6 +512,8 @@ export class SubagentExecutor {
         const measured=report.observation===undefined?undefined:TaskObservationSchema.safeParse(report.observation)
         if(measured&&!measured.success)return done(fail(task,'子进程观测格式无效'))
         const observation=measured?.success?{observation:measured.data}:{}
+        const versions=report.versions===undefined?undefined:TaskVersionsSchema.safeParse(report.versions)
+        if(versions&&!versions.success)return done(fail(task,'子进程内容版本格式无效'))
         if (!report.ok) {
           return done({...fail(task, report.error ?? "子 agent 报告失败，但没有说原因"),...observation})
         }
@@ -519,7 +528,7 @@ export class SubagentExecutor {
           agent: task.agent,
           task: task.task,
           ...(evidence?{evidence}:{}),
-          ...observation,
+          ...observation,...(versions?.success?{versions:versions.data}:{}),
           ok: true,
           // 截断按字节算，但切在字符边界上——按字节切会把 UTF-8 切成半个汉字
           output: truncated ? 按字节截(full, this.limits.maxOutputBytes) : full,
@@ -575,6 +584,7 @@ function toTasks(req: SubagentRequest): SubagentTask[] {
 }
 
 interface DoneLine {
+  versions?:unknown
   submitted?:unknown
   observation?:unknown
   evidence?: unknown

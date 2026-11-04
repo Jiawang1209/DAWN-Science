@@ -1,3 +1,4 @@
+import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
 import { readAcpSkillHistory } from "../acp/skill-read-history.js"
 import { assertProjectInstallRoot } from "../skills/project-install-root.js"
 import { SkillDiscoveryService } from "../skills/discovery.js"
@@ -9,7 +10,7 @@ import { missingFile } from "../remote/transfer-io.js"
 import {DeliveryService, type DeliveryOptions} from '../delivery/service.js'
 import { withSessionContext } from './session-input-context.js'
 import {acceptTaskResult,taskInputReceipt} from "../orchestration/task-contract.js"
-import { sharedTaskOutputLocks, outputLockScope, taskOutputReservation, localOutputReservationPaths } from "../bot/output-locks.js"
+import { sharedTaskOutputLocks, taskOutputReservation, localTaskOutputReservation } from "../bot/output-locks.js"
 import { verifiedArtifacts } from "../bot/context.js"
 /**
  * Workbench 的真实后端（补 Part 1 的收口）。
@@ -2314,11 +2315,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const canonical = resolved.stdout.trim().split("\n")
         // Unknown canonicalization is exclusive, never a silent local fallback.
         if (resolved.code === 0 && canonical.length === declared.length && canonical.every(p => p.startsWith("/"))) outputs = canonical
-      } else if (!owner.connectionId) outputs = localOutputReservationPaths(declared, owner.workspace)
-      const release = !owner.connectionId&&request.settings?await taskOutputReservation(owner.workspace,request.settings,request.signal):await botOutputLocks.acquire(owner.connectionId?key:outputLockScope(owner.workspace),outputs,request.signal)
+      }
+      const release = !owner.connectionId&&request.settings?await taskOutputReservation(owner.workspace,request.settings,request.signal):owner.connectionId?await botOutputLocks.acquire(key,outputs,request.signal):await localTaskOutputReservation(owner.workspace,declared,request.signal)
       try {
       const inputProblem=request.settings?.contract?taskInputReceipt(request.settings.contract,owner.workspace):undefined
       if(inputProblem)return{ok:false,output:'',error:inputProblem.reason??inputProblem.summary,receipt:inputProblem}
+      const versionProblem=await versionInputReceipt(request.settings,owner.workspace,request.signal)
+      if(versionProblem)return{ok:false,output:'',error:versionProblem.reason??versionProblem.summary,receipt:versionProblem}
       // Active team members keep the configuration snapshot recorded at team creation.
       const frozen = {...profile, instructions: request.member.botInstructions ?? botInstructions(profile),
         ...(request.member.provider && request.member.model ? {model: {provider: request.member.provider, model: request.member.model}} : {})}
@@ -2339,7 +2342,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const result:import("../team/types.js").成员轮结果=request.settings&&!owner.connectionId?await botRuntime(sid).runWithTaskScope(sid,request.settings,run):await run()
       if(result.ok&&request.settings?.contract){
         const evidence=result.evidence??[]
-        const receipt=acceptTaskResult(request.settings.contract,result.output,evidence,owner.workspace,!!owner.connectionId)
+        const receipt=await finalizeTaskVersions(request.settings,acceptTaskResult(request.settings.contract,result.output,evidence,owner.workspace,!!owner.connectionId),owner.workspace,request.signal,{required:request.settings.contract.submission==='tool',submitted:result.versions})
         return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??'未通过契约验收'}:{})}
       }
       return result

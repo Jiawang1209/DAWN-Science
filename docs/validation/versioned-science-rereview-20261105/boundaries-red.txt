@@ -1,0 +1,106 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/bot/output-lock-identity.test.ts tests/team/science-pipeline-tools.test.ts tests/team/science-batch.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-versioned-science-20261105/dawn-science
+
+ ❯ |node| tests/bot/output-lock-identity.test.ts (3 tests | 2 failed) 16ms
+   × refreshes a queued reader after the prior owner atomically replaces an input and creates a new alias 9ms
+   × keeps both historical and current inode reservations while an active writer replaces a file (new alias) 3ms
+ ❯ |node| tests/team/science-batch.test.ts (3 tests | 2 failed) 148ms
+   × accepts a 27-character item ID throughout all three stages without oversized task IDs 43ms
+   × accepts a 32-character item ID throughout all three stages without oversized task IDs 42ms
+ ❯ |node| tests/team/science-pipeline-tools.test.ts (11 tests | 1 failed) 578ms
+   × rechecks the route after queued recovery verification without changing the interrupted checkpoint 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/bot/output-lock-identity.test.ts > refreshes a queued reader after the prior owner atomically replaces an input and creates a new alias
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/output-lock-identity.test.ts:16:61
+     14|  writeFileSync(join(root,'replacement'),'same');renameSync(join(root,'…
+     15|  let entered=false;const ctrl=new AbortController(),competitor=taskOut…
+     16|  await tick();ctrl.abort();await competitor;expect(entered).toBe(false)
+       |                                                             ^
+     17|  }finally{reader();owner();rmSync(root,{recursive:true,force:true})}
+     18| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/bot/output-lock-identity.test.ts > keeps both historical and current inode reservations while an active writer replaces a file (new alias)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/output-lock-identity.test.ts:25:61
+     23|  writeFileSync(join(root,'replacement'),'new');renameSync(join(root,'r…
+     24|  let entered=false;const ctrl=new AbortController(),competitor=taskOut…
+     25|  await tick();ctrl.abort();await competitor;expect(entered).toBe(false)
+       |                                                             ^
+     26|  }finally{release();rmSync(root,{recursive:true,force:true})}
+     27| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |node| tests/team/science-batch.test.ts > accepts a 27-character item ID throughout all three stages without oversized task IDs
+团队错误: 任务 id「p-aaaaaaaaaaaaaaaaaaaaaaaaaaa-analyze-0-1」不合规。
+ ❯ 加任务 src/team/state.ts:135:52
+    133|   let id = t.id?.trim()
+    134|   if (id) {
+    135|     if (!/^[\p{L}\p{N}_-]{1,40}$/u.test(id)) throw new 团队错误(`任务 id「${i…
+       |                                                    ^
+    136|     if (team.tasks.some((x) => x.id === id)) throw new 团队错误(`已经有一个 id …
+    137|   } else {
+ ❯ enqueueStage src/team/science-pipeline.ts:37:13
+ ❯ advancePipeline src/team/science-pipeline.ts:58:65
+ ❯ tests/team/science-batch.test.ts:21:211
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |node| tests/team/science-batch.test.ts > accepts a 32-character item ID throughout all three stages without oversized task IDs
+团队错误: 任务 id「p-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-check-0-0」不合规。
+ ❯ 加任务 src/team/state.ts:135:52
+    133|   let id = t.id?.trim()
+    134|   if (id) {
+    135|     if (!/^[\p{L}\p{N}_-]{1,40}$/u.test(id)) throw new 团队错误(`任务 id「${i…
+       |                                                    ^
+    136|     if (team.tasks.some((x) => x.id === id)) throw new 团队错误(`已经有一个 id …
+    137|   } else {
+ ❯ enqueueStage src/team/science-pipeline.ts:37:13
+ ❯ startPipeline src/team/science-pipeline.ts:20:18
+ ❯ startItem src/team/science-batch.ts:23:90
+ ❯ startScienceBatch src/team/science-batch.ts:21:2
+ ❯ tests/team/science-batch.test.ts:20:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |node| tests/team/science-pipeline-tools.test.ts > rechecks the route after queued recovery verification without changing the interrupted checkpoint
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/team/science-pipeline-tools.test.ts:124:254
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 12 passed (17)
+   Start at  07:33:16
+   Duration  1.32s (transform 292ms, setup 0ms, import 1.79s, tests 742ms, environment 0ms)
+

@@ -1,5 +1,6 @@
 /** Client-safe task contracts and host receipt vocabulary. No execution or filesystem imports. */
 import {z} from 'zod'
+import {TaskInputVersionsSchema,TaskVersionsSchema} from './file-versions.js'
 import {RouteExecutionSchema,RouteVerificationSchema,WorkspaceRelativePathSchema} from './analysis-route.js'
 const paths = z.array(WorkspaceRelativePathSchema).max(64)
 export const TaskAccessSchema = z.enum(['read-only','workspace-write','workspace-exec'])
@@ -28,6 +29,7 @@ export const TaskResultSchema=z.object({
 export type TaskResult=z.infer<typeof TaskResultSchema>
 export const TaskResultParameters=z.toJSONSchema(TaskResultSchema,{io:'input',unrepresentable:'any'})
 export const TaskReceiptSchema=z.object({
+  versions:TaskVersionsSchema.optional(),
   version:z.literal(1),state:z.enum(['accepted','blocked','invalid']),summary:z.string(),reason:z.string().optional(),
   result:TaskResultSchema.optional(),deliverables:z.array(z.object({stepId:z.string(),path:z.string(),state:z.enum(['exists','missing','unknown','observed'])}).strict()),
 }).strict()
@@ -35,7 +37,8 @@ export type TaskReceipt=z.infer<typeof TaskReceiptSchema>
 export const TaskScopeSchema=z.object({version:z.literal(1),tier:z.enum(['allow-all','ask-risky','deny-risky']),
   access:TaskAccessSchema,tools:z.array(z.string()).max(64),inputs:paths,outputs:paths}).strict()
 export type TaskScope=z.infer<typeof TaskScopeSchema>
-export const TaskSettingsSchema=z.object({contract:TaskContractSchema.optional(),scope:TaskScopeSchema}).strict().superRefine(({contract,scope},ctx)=>{
+export const TaskSettingsSchema=z.object({contract:TaskContractSchema.optional(),scope:TaskScopeSchema,versions:TaskInputVersionsSchema.optional()}).strict().superRefine(({contract,scope,versions},ctx)=>{
+  if(versions&&(!contract||versions.inputs.length!==contract.inputs.length||contract.inputs.some(p=>!versions.inputs.some(v=>v.path===p))||contract.inputs.length+contract.outputs.length>64))ctx.addIssue({code:'custom',message:'内容版本须覆盖全部契约输入，阶段文件总数不能超过 64'})
   if(contract&&(contract.access!==scope.access||JSON.stringify(contract.inputs)!==JSON.stringify(scope.inputs)||JSON.stringify(contract.outputs)!==JSON.stringify(scope.outputs)))ctx.addIssue({code:'custom',message:'Frozen scope contradicts task contract'})
   if(scope.access!=='workspace-exec'&&scope.tools.some(t=>!['read','ls','grep','find','resource_read','resource_search','team_status','bot_say',...(scope.access==='workspace-write'?['write','edit']:[])].includes(t)))ctx.addIssue({code:'custom',message:'Tools exceed frozen task access'})
 })

@@ -14,6 +14,7 @@
     "postinstall": "node scripts/fix-node-pty.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "evaluate:science": "npm run build:electron && tsx scripts/evaluate-science-pipeline.ts",
     "typecheck": "tsc --noEmit",
     "dawn": "tsx --env-file-if-exists=.env src/cli.ts",
     "smoke:native": "tsx --env-file-if-exists=.env scripts/smoke-native.ts",

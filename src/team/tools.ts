@@ -12,6 +12,7 @@ import type { SubagentDefinition } from "../subagent/definitions.js"
 import { 团队调度器, 状态文本 } from "./scheduler.js"
 import { 建团队, 加成员, 加任务, 转派, 取消任务, 发消息, 未送达的消息, 标记送达, 领取, 结算, 结束团队, 全部终态, 移除成员, 写团队, 读团队, 团队错误, 成员手上的任务 } from "./state.js"
 import { 团队上限, type 团队 } from "./types.js"
+import {cancelScienceBatch} from './science-batch.js'
 import {cancelPipeline} from './science-pipeline.js'
 
 interface ToolResult {
@@ -247,7 +248,7 @@ export function createTeamTools(opts: 团队工具选项) {
         return 跑(async () => {
           const id = 当前团队()
           调.中止全部(id)
-          调.改(id, (t) => {cancelPipeline(t);结束团队(t)})
+          调.改(id, (t) => {cancelScienceBatch(t);cancelPipeline(t);结束团队(t)})
           opts.当前.set(undefined)
           return `团队 ${id} 已结束并归档。`
         },true)

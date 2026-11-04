@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsc' --noEmit
+tests/workbench/bot-contract.test.ts(53,244): error TS2353: Object literal may only specify known properties, and 'sessionId' does not exist in type 'Pick<{ projectId: string; workspace: string; sessionId: string; }, "projectId" | "workspace">'.

@@ -92,6 +92,7 @@ export function 加成员(team: 团队, m: { name: string; agent: string; role?:
   if (m.botId && m.botScopeKey && !team.members.some(member => member.botId)) team.botOriginScopeKey = m.botScopeKey
   else if (origin) team.botOriginScopeKey = origin
   const 成员: 成员 = {
+    orchestrationId: randomUUID(),
     name,
     agent: m.agent.trim(),
     ...(m.botScopeKey ? {botScopeKey: m.botScopeKey} : {}),
@@ -255,13 +256,18 @@ export function 取消任务(team: 团队, taskId: string, now = Date.now()): �
   return t
 }
 
-export function 发消息(team: 团队, m: { from: string; to: string; content: string }, now = Date.now()) {
+export function 发消息(team: 团队, m: { id?: string; from: string; to: string; content: string }, now = Date.now()) {
   const to = m.to.trim()
   if (to !== "captain" && !找成员(team, to)) throw new 团队错误(`没有叫「${to}」的收件人（成员名或 captain）。`)
   if (m.from !== "captain" && !找成员(team, m.from)) throw new 团队错误(`「${m.from}」不是这支团队的人。`)
   const content = m.content.trim()
   if (!content) throw new 团队错误("消息是空的。")
-  const msg = { id: randomUUID(), from: m.from, to, content, ts: now }
+  const previous = m.id ? team.messages.find(message => message.id === m.id) : undefined
+  if (previous) {
+    if (previous.from !== m.from || previous.to !== to || previous.content !== content) throw new 团队错误("消息 requestId conflict")
+    return previous
+  }
+  const msg = { id: m.id ?? randomUUID(), from: m.from, to, content, ts: now }
   team.messages.push(msg)
   return msg
 }
@@ -318,4 +324,9 @@ export function 代入上游(team: 团队, 文: string): { text: string; missing
     return t.output
   })
   return { text, missing }
+}
+
+/** Old records retain their timestamp address; newly joined members use an explicit incarnation. */
+export function memberGeneration(member: Pick<成员, "joinedAt" | "orchestrationId">): string {
+  return member.orchestrationId ?? String(member.joinedAt)
 }

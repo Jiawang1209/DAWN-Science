@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/orchestration.spec.ts e2e/subagent-view.spec.ts -g background child|接着问：|关掉再开
+
+Running 3 tests using 1 worker
+
+(node:9036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「后台协作验收」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「后台协作验收」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63437/e3859433-a2cc-4f20-b934-9f35210dd30e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63487/2da4f2ac-8827-45fb-b920-93941bfe1791
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区 (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63577/1f6ef128-2abf-4e42-ba54-30af1f503030
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63933/27d3c246-c866-43db-a0d1-16c70affbd78
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子 (24.4s)
+
+  3 passed (38.7s)

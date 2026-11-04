@@ -214,3 +214,12 @@ it("已完成历史任务保留但不占活动任务额度",()=>{
  expect(()=>加任务(team,{subject:"活动超限"})).toThrow(/32/)
  expect(team.tasks).toHaveLength(64)
 })
+
+it('成员同名移除后即使同毫秒重加也拥有不同的编排身份', () => {
+  const team = 建团队({name: 't', goal: 'g', captainSessionId: 'p'})
+  const first = 加成员(team, {name: 'a', agent: 'analyst'}, 1000)
+  移除成员(team, 'a', 1000)
+  const second = 加成员(team, {name: 'a', agent: 'analyst'}, 1000)
+  expect(first.orchestrationId).toBeTypeOf('string')
+  expect(first.orchestrationId).not.toBe(second.orchestrationId)
+})

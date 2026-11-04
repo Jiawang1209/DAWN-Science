@@ -13,9 +13,9 @@ import { randomUUID } from "node:crypto"
 import type { SubagentDefinition } from "../subagent/definitions.js"
 import { 跑一轮, type 跑一轮选项 } from "./runner.js"
 import {
-  读团队, 写团队, 团队目录, 团队错误, 挑就绪任务, 领取, 开始做, 结算, 未送达的消息, 标记送达, 找成员, 发消息, 成员手上的任务, 统计, 未满足的依赖, 代入上游, 死掉的依赖, 取消任务,
+  memberGeneration, 读团队, 写团队, 团队目录, 团队错误, 挑就绪任务, 领取, 开始做, 结算, 未送达的消息, 标记送达, 找成员, 发消息, 成员手上的任务, 统计, 未满足的依赖, 代入上游, 死掉的依赖, 取消任务,
 } from "./state.js"
-import { 团队上限, type 团队, type 成员, type BotExchange, type BotTeamMessage } from "./types.js"
+import { 团队上限, type 团队, type 成员, type BotExchange, type BotTeamMessage, type 成员轮结果 } from "./types.js"
 import { enqueueBotExchange, reconcileBotExchanges, sourceIsCurrent, botRequestPrompt, botReplyPrompt, type BotRequestInput, type BotMessageInput, appendBotMessage, appendBotEvent, validateBotMessage, botRoomPrompt } from "../bot/collaboration.js"
 
 export interface BotMemberRun {
@@ -30,6 +30,7 @@ export interface BotMemberRun {
 }
 
 export interface 调度器选项 {
+  orchestration?: import("../orchestration/service.js").OrchestrationService | undefined
   memberRunner?: (request: BotMemberRun) => Promise<{ ok: boolean; output: string; error?: string }>
   onResult?: (event: { team: 团队; member: 成员; taskId: string; attemptId: string; result: { ok: boolean; output: string; error?: string } }) => void | Promise<void>
   sessionDir: string
@@ -320,21 +321,22 @@ export class 团队调度器 {
     const def = this.opts.定义().find((d) => d.name === m.agent)
     this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
     let 结果: { ok: boolean; output: string; error?: string }
+    const execute = async (runSignal: AbortSignal): Promise<成员轮结果> => {
     if (m.botId && this.opts.memberRunner) {
       try {
-        结果 = await this.opts.memberRunner({ team, member: m, taskId: 任务?.taskId, collaboration, conversation, prompt: prompt + botRoomPrompt(team), signal: ctrl.signal, onSession: (sessionId) => {
-          if (this.跑着.get(key) !== ctrl || ctrl.signal.aborted) return
+        return await this.opts.memberRunner({ team, member: m, taskId: 任务?.taskId, collaboration, conversation, prompt: prompt + botRoomPrompt(team), signal: runSignal, onSession: (sessionId) => {
+          if (this.跑着.get(key) !== ctrl || runSignal.aborted) return
           if (botTurn) botTurn.sessionId = sessionId
           this.改(teamId, t => { const member = 找成员(t, m.name); if (member) member.sessionId = sessionId })
         } })
       } catch (error) {
-        结果 = { ok: false, output: "", error: error instanceof Error ? error.message : String(error) }
+        return { ok: false, output: "", error: error instanceof Error ? error.message : String(error) }
       }
     } else if (!def || m.botId) {
-      结果 = { ok: false, output: "", error: `名册里没有叫「${m.agent}」的子 agent（成员「${member}」用的人设）。` }
+      return { ok: false, output: "", error: `名册里没有叫「${m.agent}」的子 agent（成员「${member}」用的人设）。` }
     } else {
       const 成员目录 = join(this.dir(teamId), m.sessionDir)
-      结果 = await 跑一轮(
+      return await 跑一轮(
         {
           definition: def,
           memberName: member,
@@ -349,11 +351,21 @@ export class 团队调度器 {
         {
           childOf: this.opts.跑.childOf,
           context: this.opts.跑.context,
-          signal: ctrl.signal,
+          signal: runSignal,
           timeoutMs: this.opts.turnTimeoutMs ?? 30 * 60_000,
           onCall: (name, params) => this.答成员(teamId, member, name, params),
         },
       )
+    }
+    }
+    try {
+      const coordinator = this.opts.orchestration
+      if (coordinator) {
+        const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
+        结果 = await coordinator.run(child.id, execute, ctrl.signal)
+      } else 结果 = await execute(ctrl.signal)
+    } catch (error) {
+      结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
     }
     if (m.botId) {
       const bytes = Buffer.byteLength(结果.output, "utf8")

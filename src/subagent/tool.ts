@@ -19,6 +19,7 @@
  * 换来的是「改完定义不用重启会话」。对手写 markdown 的东西，这个交换是划算的。
  */
 import { Type } from "typebox"
+import { 子目录段 } from "../protocol/subagent-id.js"
 import { loadSubagentsFrom, type DefinitionLoad, loadSubagentDefinitions } from "./definitions.js"
 import {
   SubagentExecutor,
@@ -32,6 +33,7 @@ import type { AgentEvent, SessionId } from "../runtime/types.js"
 import { 写元, 读元, type 子运行元 } from "./run-dir.js"
 
 export interface SubagentToolOptions {
+  orchestration?: import("../orchestration/service.js").OrchestrationService | undefined
   sessionId: SessionId
   /** 定义从这里找：`<projectRoot>/.dawn/agents/*.md` */
   projectRoot: string
@@ -152,6 +154,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       }
       const executor = new SubagentExecutor({
         childOf: opts.childOf,
+        ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
         // 运行目录按调用分（2026-09-27）：executor 只认 `agentDirOf(index)`，这里把 toolCallId 绑进去
         context: { ...opts.context, agentDirOf: 目录 },
         onProgress: (p) => {
@@ -224,6 +227,7 @@ export function createSubagentFollowUp(opts: SubagentToolOptions) {
   return async (toolCallId: string, index: number, agent: string, text: string, signal?: AbortSignal): Promise<SubagentResult> => {
     const executor = new SubagentExecutor({
       childOf: opts.childOf,
+      ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
       context: { ...opts.context, agentDirOf: 目录于(opts, toolCallId) },
       onProgress: (p) => {
         // 执行器的续问本来就不发 started / settled；这里再只认 event，两道门

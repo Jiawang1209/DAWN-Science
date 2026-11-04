@@ -59,6 +59,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
     let err = ""
     let 结果: 成员轮结果 | undefined
     let settled = false
+    let forced: 成员轮结果 | undefined
     const done = (r: 成员轮结果) => {
       if (settled) return
       settled = true
@@ -67,14 +68,14 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       resolve(r)
     }
     function onAbort() {
+      forced ??= { ok: false, output: "", error: "已中止" }
       杀掉后代(child) // 整组杀:成员起的孙进程(npm test/python)不成孤儿(H6)
-      done({ ok: false, output: "", error: "已中止" })
     }
     opts.signal?.addEventListener("abort", onAbort, { once: true })
     const timer = opts.timeoutMs
       ? setTimeout(() => {
+          forced ??= { ok: false, output: "", error: `这一轮超过 ${Math.round(opts.timeoutMs! / 60000)} 分钟没结束，已杀掉` }
           杀掉后代(child)
-          done({ ok: false, output: "", error: `这一轮超过 ${Math.round(opts.timeoutMs! / 60000)} 分钟没结束，已杀掉` })
         }, opts.timeoutMs)
       : undefined
 
@@ -87,6 +88,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       }
     }
     const 收一行 = (line: string) => {
+      if (forced || settled) return
       const t = line.trim()
       if (!t) return
       let m: SubagentChildMessage
@@ -126,6 +128,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
     child.stderr.on("data", (d: string) => (err += d))
     child.on("error", (e) => done({ ok: false, output: "", error: `子进程起不来：${e.message}` }))
     child.on("close", (code) => {
+      if (forced) return done(forced)
       if (缓冲.trim()) 收一行(缓冲)
       if (结果) return done(结果)
       const detail = err.trim() ? `：${err.trim().slice(-500)}` : ""

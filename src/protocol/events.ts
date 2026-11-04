@@ -480,6 +480,7 @@ export const TeamSnapshotSchema = z
           sessionDir: z.string(),
           turns: z.number(),
           joinedAt: z.number(),
+          orchestrationId: z.string().min(1).optional(),
         })
         .strict(),
     ),

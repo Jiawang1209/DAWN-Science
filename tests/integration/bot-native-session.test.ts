@@ -40,7 +40,7 @@ it("团队快照携带实时 owner 范围，迟到旧成员不能冒充新项目
   await vi.waitFor(()=>expect(finish).toBeTypeOf("function"))
   expect(events.filter(e=>e.kind==="team_changed").at(-1)).toMatchObject({team:{botOwnerContext:{key:"scope-a",workspace:dir}}})
   current={key:"scope-b",workspace:join(dir,"new")};finish({ok:true,output:"old result"})
-  await vi.waitFor(()=>expect(events.filter(e=>e.kind==="team_changed").at(-1)).toMatchObject({team:{botOriginScopeKey:"scope-a",members:[expect.objectContaining({botScopeKey:"scope-a"})]}}))
+  await vi.waitFor(()=>expect(events.filter(e=>e.kind==="team_changed").at(-1)).toMatchObject({team:{botOriginScopeKey:"scope-a",members:[expect.objectContaining({botScopeKey:"scope-a",status:"idle"})],tasks:[expect.objectContaining({status:"completed"})]}}))
   const changed=events.filter((e):e is Extract<AgentEvent,{kind:"team_changed"}>=>e.kind==="team_changed").at(-1)!
   expect(changed.team.botOwnerContext).toBeUndefined()
  }finally{await rt.stop("main")}

@@ -19,10 +19,9 @@ import type { TerminalMode } from '../protocol/terminal.js'
 import { 照这一档 } from '../policy/permissions.js'
 import { AnalysisRouteActionRequestSchema, parseRouteActionMessage, routeActionMessage, routeContinueBlockers, type AnalysisRoute, type AnalysisRouteDraft, type AnalysisRouteReadResult, type AnalysisRouteActionRequest, type AnalysisRouteActionResult } from '../protocol/analysis-route.js'
 import { routeDeliverableEvidence } from './analysis-route-files.js'
-import { recoverBotTeam } from "../bot/recovery.js"
 import { Type } from "typebox"
 import { botInstructions, type BotRuntimeBridge } from "../bot/runtime.js"
-import { 加成员, 加任务, 找成员, 取消任务, 发消息, botTeamOriginScope } from "../team/state.js"
+import { memberGeneration, 加成员, 加任务, 找成员, 取消任务, 发消息, botTeamOriginScope } from "../team/state.js"
 import { QuestionRequests } from "../questions/requests.js"
 import { createAskUserQuestionTool } from "../tools/ask-user-question.js"
 import { type QuestionAnswer } from "../protocol/questions.js"
@@ -98,6 +97,13 @@ export function 原文对得上(界面: string, pi那句: string, 名单: { 模�
 
 import { ProvenanceProbe, 套上溯源, 并进登记新建, isProducing, 只读工具的空事实 } from "./provenance.js"
 import { createSubagentTool, createSubagentFollowUp } from "../subagent/tool.js"
+import { recoverTeamExecution } from "../team/recovery.js"
+import { OrchestrationStore } from "../orchestration/store.js"
+import { OrchestrationService } from "../orchestration/service.js"
+import { OrchestrationDelivery } from "../orchestration/delivery.js"
+import { hasDurableOrchestrationReceipt } from "./orchestration-receipt.js"
+import { createOrchestrationTools } from "../orchestration/tools.js"
+import { createSubagentOrchestration } from "../subagent/orchestration.js"
 import { 子运行目录 } from "../subagent/run-dir.js"
 import { childResourceFactory } from "./child-resources.js"
 import { 子目录段 } from "../protocol/subagent-id.js"
@@ -324,6 +330,8 @@ export interface NativeRuntimeOptions {
    * 没有那个文件就没有子进程可起，注册一个必然失败的工具比不注册更坏。
    */
   subagentChildEntry?: string
+  /** Shared active child turns per parent session, across ordinary/Team/Bot backends. */
+  orchestrationMaxConcurrent?: number
   /**
    * 侧边对话读主对话（2026-09-24）。给了才装 `read_main_session`；**晚绑定**——
    * wiring 里转录表建在运行时之后，所以这里收的是回调，调用时才去找。
@@ -1423,6 +1431,8 @@ export class NativeRuntime implements AgentRuntime {
   /** 每段会话的团队调度器怎么收（`toolsFor` 里登记，`stop` 时调）：关会话不能让成员子进程继续跑 */
   private readonly 团队收尾 = new Map<SessionId, () => void>()
   /** 每段会话一份「接着问子 agent」（2026-09-27）：与 `subagent` 工具同一份 childOf / context，建会话时一起装 */
+  private readonly orchestrationControls = new Map<SessionId, {mailbox: import("../orchestration/mailbox.js").OrchestrationMailbox; delivery: OrchestrationDelivery; flush: () => void}>()
+  private readonly orchestrations = new Map<SessionId, OrchestrationService>()
   private readonly 子agent续问 = new Map<SessionId, ReturnType<typeof createSubagentFollowUp>>()
   /** 正在答的那几轮：关会话时整组杀（中止信号 → 执行器 `杀掉后代`，与主 agent 派的那一轮同一条收尾） */
   private readonly 续问中 = new Map<SessionId, Set<{ c: AbortController; toolCallId: string; index: number }>>()
@@ -1659,8 +1669,11 @@ export class NativeRuntime implements AgentRuntime {
       return [...(base ?? []), ...观察过的外部, ...memberTools]
     }
 
+    const orchestration = new OrchestrationService(new OrchestrationStore(spec.sessionDir, spec.sessionId), this.opts.orchestrationMaxConcurrent ?? 4)
+    this.orchestrations.set(spec.sessionId, orchestration)
     const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
+      orchestration,
       sessionId: spec.sessionId,
       projectRoot: spec.workspace,
       dirs: this.子agent层(spec.workspace),
@@ -1687,6 +1700,32 @@ export class NativeRuntime implements AgentRuntime {
       // 重开后补 chip 组（后端 `补子agent组`）与接着问都按这个找
       运行目录: (toolCallId: string, i: number) => 子运行目录(spec.sessionDir, toolCallId, i),
     }
+    const subagentControl = createSubagentOrchestration(子agent选项, orchestration,
+      () => this.orchestrationControls.get(spec.sessionId)?.flush(),
+      error => this.emit({kind: "notice", sessionId: spec.sessionId, text: `子 agent 协作记录失败：${error instanceof Error ? error.message : String(error)}`, failed: true}))
+    const delivery = new OrchestrationDelivery({
+      store: orchestration.store,
+      busy: () => !this.sessions.has(spec.sessionId) || this.terminalBusy(spec.sessionId),
+      hasReceipt: async messageId => {
+        const parent = this.sessions.get(spec.sessionId)
+        return parent ? hasDurableOrchestrationReceipt(parent.sessionManager, messageId) : false
+      },
+      send: async message => {
+        const parent = this.sessions.get(spec.sessionId)
+        if (!parent || orchestration.isClosed) throw new Error("父会话已关闭，结果保留待送")
+        const child = orchestration.store.get(message.childId)!
+        await parent.session.sendCustomMessage({customType: "dawn-subagent-result", display: false,
+          content: `子 agent「${child.label}」[${child.id}] 的协作结果（${message.status}）。执行成功不代表产物或科学结论已核验。\n${message.outcome?.output || message.outcome?.error || "没有可用文字结果"}`,
+          details: {messageId: message.id, childId: child.id, status: message.status}}, {triggerTurn: false})
+        this.emit({kind: "notice", sessionId: spec.sessionId, text: `子 agent「${child.label}」的结果已返回（${message.status}）。`})
+      },
+    })
+    const flush = () => {void delivery.flush().then(sent => {
+      if (sent && !orchestration.isClosed && this.sessions.has(spec.sessionId) && !this.terminalBusy(spec.sessionId)) {
+        this.送一轮(spec.sessionId, "子 agent 的新协作结果已写入上下文。请按实际状态继续原任务或汇总交付；失败、中断和未核验部分须如实说明。")
+      }
+    }).catch(error => this.emit({kind: "notice", sessionId: spec.sessionId, text: `子 agent 结果尚未确认送达：${error instanceof Error ? error.message : String(error)}`}))}
+    this.orchestrationControls.set(spec.sessionId, {mailbox: subagentControl.mailbox, delivery, flush})
     const tool = createSubagentTool(子agent选项)
     // 接着问（2026-09-27）：同一份选项——同一个模型、凭证、运行目录；答复不回主 agent，只进那段子转录
     this.子agent续问.set(spec.sessionId, createSubagentFollowUp(子agent选项))
@@ -1711,6 +1750,7 @@ export class NativeRuntime implements AgentRuntime {
     let 团队轮序 = 0
     const 团队轮标识 = new Map<string, number>()
     const 调度器 = new 团队调度器({
+      orchestration,
       sessionDir: spec.sessionDir,
       定义,
       跑: {
@@ -1729,6 +1769,7 @@ export class NativeRuntime implements AgentRuntime {
         onResult: (event: Parameters<BotRuntimeBridge["result"]>[1]) => this.botBridge!.result(spec.sessionId, event),
       } : {}),
       onChange: (team) => {
+        for (const member of team.members) if (!orchestration.isClosed && member.status !== "removed") orchestration.register(member.botId ? "bot" : "team", [team.id, member.name, memberGeneration(member)], member.agent)
         this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, team) as never })
         for (const task of team.tasks) if (task.status === "cancelled") {
           const member = team.members.find(m => m.botId && m.name === task.assignee)
@@ -1770,7 +1811,11 @@ export class NativeRuntime implements AgentRuntime {
     if (当前团队.id) {
       try {
         let t = 调度器.读(当前团队.id)
-        if (spec.resume && recoverBotTeam(t)) t = 调度器.改(当前团队.id, team => { recoverBotTeam(team) })
+        if (spec.resume && recoverTeamExecution(t)) t = 调度器.改(当前团队.id, team => { recoverTeamExecution(team) })
+        for (const member of t.members) if (member.status !== "removed") {
+          const child = orchestration.register(member.botId ? "bot" : "team", [t.id, member.name, memberGeneration(member)], member.agent)
+          if (child.state === "idle" && member.turns > 0) orchestration.store.update(child.id, {state: "idle", reason: "从既有团队恢复身份；任务结果以 team_status 为准"})
+        }
         queueMicrotask(() => {
           this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, t) as never })
           void Promise.resolve(this.botBridge?.recover?.(spec.sessionId, t)).catch(error => console.error("[Bot] 恢复结果失败", error))
@@ -1780,7 +1825,24 @@ export class NativeRuntime implements AgentRuntime {
       }
     }
 
-    return [...(base ?? []), ...观察过的外部, tool, ...团队工具, ...botListTool]
+    const memberFor = (child: import("../orchestration/store.js").ChildRecord) => {
+      const [teamId, name, joinedAt] = child.address
+      if (!teamId || !name || child.address.length !== 3) throw new Error("成员地址不完整")
+      const team = 调度器.读(teamId)
+      const member = team.members.find(item => item.name === name && item.status !== "removed" && memberGeneration(item) === joinedAt)
+      if (!member || team.finishedAt || team.captainSessionId !== spec.sessionId || !!member.botId !== (child.kind === "bot")) throw new Error("成员身份已失效或团队已结束")
+      return {team, member}
+    }
+    const controls = createOrchestrationTools({service: orchestration, mailbox: subagentControl.mailbox, start: subagentControl.start,
+      sendMember: async (child, text, requestId) => {
+        const {team, member} = memberFor(child)
+        调度器.改(team.id, current => 发消息(current, {id: requestId, from: "captain", to: member.name, content: text}))
+        await 调度器.踢一下(team.id)
+        return {childId: child.id, delivery: "queued"}
+      },
+      interruptMember: child => {const {team, member} = memberFor(child); 调度器.中止(team.id, member.name)},
+    })
+    return [...(base ?? []), ...观察过的外部, tool, ...controls, ...团队工具, ...botListTool]
   }
 
   /**
@@ -1805,6 +1867,14 @@ export class NativeRuntime implements AgentRuntime {
         throw new UserFacingError(`会话 "${id}" 在启动过程中被停止了`)
       }
       return handle
+    } catch (error) {
+      const control = this.orchestrationControls.get(id)
+      control?.delivery.close()
+      await control?.mailbox.close()
+      this.orchestrationControls.delete(id)
+      const coordinator = this.orchestrations.get(id)
+      if (coordinator) {await coordinator.close(); this.orchestrations.delete(id)}
+      throw error
     } finally {
       this.起中.delete(id)
     }
@@ -2300,6 +2370,8 @@ export class NativeRuntime implements AgentRuntime {
       if (已记过.ts !== undefined) 本段.usageTsReported = 已记过.ts
       本段.lastUsage = 已记过.usage
     }
+    this.orchestrationControls.get(spec.sessionId)?.mailbox.resume()
+    this.orchestrationControls.get(spec.sessionId)?.flush()
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     this.发会话开关(spec.sessionId)
     return { sessionId: spec.sessionId, pid }
@@ -2899,6 +2971,7 @@ ${描述}`
       throw Object.assign(new Error('会话正在运行、停止或回退，请稍后重新操作路线'), { routeCode: 'SESSION_BUSY' })
     }
     this.不许在回退(s)
+    this.orchestrationControls.get(sessionId)?.delivery.resume()
     s.skillResources?.prepareManual(data)
     const 图 =
       images && images.length > 0
@@ -3026,6 +3099,7 @@ ${描述}`
       // **一整轮真正结束。** 这是唯一可靠的边界——见 AgentEvent.idle 的说明
       this.interruptAnalysisRoute(sessionId, '本轮已结束，步骤仍未交付；请核对当前状态与阻塞原因')
       this.emit({ kind: "idle", sessionId })
+      this.orchestrationControls.get(sessionId)?.flush()
     }
     // 记下这一轮，供 `waitForIdle` 等待。catch 就地挂上，所以它永不 reject
     const run = s.session
@@ -3605,6 +3679,9 @@ ${描述}`
   }
 
   async abort(sessionId: SessionId): Promise<void> {
+    this.orchestrationControls.get(sessionId)?.delivery.suspend()
+    try {this.orchestrationControls.get(sessionId)?.mailbox.pauseAll()}
+    catch (error) {this.emit({kind: "notice", sessionId, text: `子任务已请求中止，但暂停状态未能保存：${String(error)}`, failed: true})}
     this.opts.terminals?.revokeOwner(sessionId)
     this.stopBotTeam(sessionId)
     /**
@@ -4103,6 +4180,9 @@ ${描述}`
     this.不许在跑(sessionId, s)
     // **从查完「不在跑」到留完话，整段立着**（Task 4 复审）：检查与置位之间没有 await，不会有第二个人插进来
     s.回退中 = true
+    this.orchestrationControls.get(sessionId)?.delivery.suspend()
+    try {this.orchestrationControls.get(sessionId)?.mailbox.pauseAll()}
+    catch (error) {this.emit({kind: "notice", sessionId, text: `子任务已请求暂停，但暂停状态未能保存：${String(error)}`, failed: true})}
     const 这次 = this.真回退(sessionId, s, 那句, 做法, 内核们)
     s.回退 = 这次
     try {
@@ -4436,6 +4516,11 @@ ${描述}`
     const 内核收尾 = this.opts.kernels?.收(sessionId).catch(() => {})
     this.opts.terminals?.revokeOwner(sessionId)
     this.stopBotTeam(sessionId)
+    const controls = this.orchestrationControls.get(sessionId)
+    controls?.delivery.close()
+    const coordinator = this.orchestrations.get(sessionId)
+    let coordinationError: unknown
+    const coordinationClosing = (controls ? controls.mailbox.close() : coordinator?.close())?.catch(error => {coordinationError = error})
     // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
     // 记一笔并等启动结束——start() 的收尾会据此把刚起来的立刻停掉。
     if (this.起中.has(sessionId) && !this.sessions.has(sessionId)) {
@@ -4444,7 +4529,7 @@ ${描述}`
       // 到这里 start() 的收尾要么已经把它停干净(下面 get 拿不到直接返回),要么启动失败了
     }
     const s = this.sessions.get(sessionId)
-    if (!s) { await 内核收尾; return }
+    if (!s) { await coordinationClosing; this.orchestrations.delete(sessionId); this.orchestrationControls.delete(sessionId); await 内核收尾; if (coordinationError) throw coordinationError; return }
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
     this.interruptAnalysisRoute(sessionId, '会话已停止')
@@ -4468,6 +4553,9 @@ ${描述}`
       clearTimeout(表)
     }
     s.收尾?.()
+    await coordinationClosing
+    this.orchestrations.delete(sessionId)
+    this.orchestrationControls.delete(sessionId)
     this.产物们.delete(sessionId)
     // 这一轮的方案底（先出方案）：会话都停了，这一轮不会再收尾核对；方案簿本身不摘（见 `方案簿们`）
     this.轮基线.delete(sessionId)
@@ -4486,6 +4574,7 @@ ${描述}`
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
     // 同 id 可以续接；上一段生命周期的观察者不能留下来重复记账和推送。
     this.sinks.delete(sessionId)
+    if (coordinationError) throw coordinationError
   }
 }
 

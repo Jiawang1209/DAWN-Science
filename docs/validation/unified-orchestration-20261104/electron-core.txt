@@ -1,0 +1,60 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/orchestration.spec.ts e2e/subagent.spec.ts e2e/team.spec.ts e2e/bot-collaboration.spec.ts
+
+Running 10 tests using 1 worker
+
+(node:6131) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:49827/0c9d4580-a0b8-43c8-8b84-c56d14c10d20
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (13.6s)
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:50154/7fa95126-03b5-4ae0-81dc-4968fca858bf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (8.9s)
+[主进程] [桌面通知·假] #0 「后台协作验收」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「后台协作验收」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50253/7f5dec24-4c65-4345-8890-1b842b942419
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (5.2s)
+[主进程] Debugger ending on ws://127.0.0.1:50382/1d160c26-174b-448c-a1cb-0badb93197c3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链 (18.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50571/206a4c7b-023e-4b13-bfe1-6ae45bb94ff9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因 (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50645/220189f7-67f0-4dd6-886e-4eef13bb8667
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下 (13.7s)
+[主进程] [桌面通知·假] #0 「派两个子 agent」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50757/92648c78-63ea-481c-866c-77cd6a54e948
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身 (6.9s)
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50793/6c457e90-4d08-422f-95e1-4dc45495a3a3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** (7.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50826/79601da0-9fb4-4d85-89f3-847f868164e0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50846/4224f294-2ea5-4fa4-be81-d0b5e7b25877
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/team.spec.ts:119:3 › 成员指了一个目录里没有的模型 › **建队时就拒**，并说清有哪些模型——不让它跑起来才报 (9.5s)
+
+  10 passed (1.6m)

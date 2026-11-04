@@ -36,6 +36,7 @@ import { join } from "node:path"
 import { 子事件Schema, type SubagentChildSpec, type 子事件 } from "./protocol.js"
 import { 按字节截 } from "./clip.js"
 import type { ResourceHost } from "./resources.js"
+import type { OrchestrationService } from "../orchestration/service.js"
 
 /**
  * 杀掉一个子 agent 进程**连同它派生的后代**（审查 debug H6）。
@@ -167,6 +168,7 @@ export interface SubagentContext {
 }
 
 export interface SubagentExecutorOptions {
+  orchestration?: { service: OrchestrationService; addressOf: (index: number) => string[] } | undefined
   childOf: ChildFactory
   context: SubagentContext
   limits?: Partial<SubagentLimits>
@@ -178,12 +180,14 @@ export interface SubagentExecutorOptions {
 const PREVIOUS = "{previous}"
 
 export class SubagentExecutor {
+  private readonly orchestration: SubagentExecutorOptions["orchestration"]
   private readonly childOf: ChildFactory
   private readonly context: SubagentContext
   private readonly limits: SubagentLimits
   private readonly onProgress: (p: SubagentProgress) => void
 
   constructor(opts: SubagentExecutorOptions) {
+    this.orchestration = opts.orchestration
     this.childOf = opts.childOf
     this.context = opts.context
     this.limits = { ...SUBAGENT_LIMITS, ...opts.limits }
@@ -275,7 +279,7 @@ export class SubagentExecutor {
   ): Promise<SubagentResult> {
     const definition = definitions.find((d) => d.name === agent)
     if (!definition) return fail({ agent, task: text }, `没有名为 "${agent}" 的子 agent 了（定义被删了或停用了），续不了`)
-    return this.spawnOne(definition, { agent, task: text }, index, signal, true)
+    return this.runChild(definition, { agent, task: text }, index, signal, true)
   }
 
   private async one(
@@ -296,9 +300,22 @@ export class SubagentExecutor {
     }
 
     this.onProgress({ type: "started", index, agent: task.agent, task: task.task })
-    const result = await this.spawnOne(definition, task, index, signal)
+    const result = await this.runChild(definition, task, index, signal)
     this.onProgress({ type: "settled", index, ok: result.ok })
     return result
+  }
+
+  private async runChild(definition: SubagentDefinition, task: SubagentTask, index: number, signal?: AbortSignal, resume = false): Promise<SubagentResult> {
+    if (!this.orchestration) return this.spawnOne(definition, task, index, signal, resume)
+    const {service, addressOf} = this.orchestration
+    if (signal?.aborted || service.isClosed) return fail(task, "父会话已停止，子任务未执行")
+    const child = service.register("subagent", addressOf(index), task.agent)
+    let result: SubagentResult | undefined
+    const outcome = await service.run(child.id, async childSignal => {
+      result = await this.spawnOne(definition, task, index, childSignal, resume)
+      return {ok: result.ok, output: result.output, ...(result.error ? {error: result.error} : {})}
+    }, signal)
+    return result && result.ok === outcome.ok ? result : fail(task, outcome.error ?? "子任务未执行")
   }
 
   private spawnOne(
@@ -343,7 +360,9 @@ export class SubagentExecutor {
        * 解析不了的行照旧跳过：那是子进程的噪声（某个库往 stdout 打日志），不该让整个任务失败。
        */
       let 最后done: DoneLine | undefined
+      let forced: SubagentResult | undefined
       const 收一行 = (line: string) => {
+        if (forced || settled) return
         const s = line.trim()
         if (!s.startsWith("{")) return
         let v: { type?: string; event?: 子事件; id?: string; name?: string; params?: unknown }
@@ -371,8 +390,8 @@ export class SubagentExecutor {
       let settled = false
       // 墙钟(H7):到点按中止同一条路杀干净、报超时
       const 墙钟 = setTimeout(() => {
+        forced ??= fail(task, `子 agent 超过 ${Math.round(this.limits.maxWallMs / 1000)} 秒还没结束，已中止`)
         if (child) 杀掉后代(child)
-        done(fail(task, `子 agent 超过 ${Math.round(this.limits.maxWallMs / 1000)} 秒还没结束，已中止`))
       }, this.limits.maxWallMs)
       墙钟.unref?.()
       const done = (r: SubagentResult) => {
@@ -385,8 +404,8 @@ export class SubagentExecutor {
 
       function onAbort() {
         // **真的杀掉它连同后代。** 父侧不看了而已的话，子进程会继续烧钱(H6)
+        forced ??= fail(task, "已中止")
         if (child) 杀掉后代(child)
-        done(fail(task, "已中止"))
       }
       signal?.addEventListener("abort", onAbort, { once: true })
 
@@ -428,6 +447,7 @@ export class SubagentExecutor {
       child.on("error", (e) => done(fail(task, `子进程起不来：${e.message}`)))
 
       child.on("close", (code) => {
+        if (forced) return done(forced)
         if (!丢弃中 && 行缓冲.trim()) 收一行(行缓冲)
         行缓冲 = ""
         const report = 最后done

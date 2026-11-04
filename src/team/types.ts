@@ -41,6 +41,8 @@ export interface 任务 {
 export type 成员状态 = "idle" | "working" | "removed"
 
 export interface 成员 {
+  /** Stable incarnation; reusing a display name never resumes a removed member. */
+  orchestrationId?: string
   botScopeKey?: string | undefined
   attention?: "question" | "permission" | undefined
   botId?: string

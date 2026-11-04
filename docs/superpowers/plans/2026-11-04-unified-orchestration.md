@@ -120,6 +120,10 @@ P0/P1/P2 的实现与验收已完成，代码位于隔离工作区，最终整�
 
 实现保留 Pi 主循环、独立子进程、原 Team/Bot 状态机、BotDelivery、产物锁和原始转录；新增协调/消息适配层及行为回归。已实现 next-turn Queue，未实现运行中 Steer、条件 pipeline 或外部 agent 后端。
 
-用户已明确选择“本地提交到专项分支”，满足长期路线图第 7 节的授权要求。仅在 codex/unified-orchestration 分支本地提交；不 merge、push 或发布。
+用户已明确选择“本地提交到专项分支”，满足长期路线图第 7 节的授权要求。首次交付仅在 codex/unified-orchestration 分支本地提交，未 merge、push 或发布。后续用户已明确授权二次审查后合并到本地 main，仍不推送或发布。
 
 最终证据：594 个文件 / 6034 项测试通过，11 项跳过；12 个独立 Electron 场景通过；typecheck、build、diff 检查通过。详情及原始日志见 [验收记录](../../reviews/2026-11-04-unified-orchestration-verification.md)。真实服务商、跨平台清理及科研准确性未验证。
+
+## 二次审查与本地集成
+
+2026-11-04，按用户要求复查并发、取消和恢复。发现并复现六处边界问题，修复并新增八个回归场景；验证与合并证据见 [第二轮审查](../../reviews/2026-11-04-unified-orchestration-second-review.md)。本轮仅授权本地合并，不推送、不发布。

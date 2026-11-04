@@ -661,13 +661,14 @@ export class NativeRuntime implements AgentRuntime {
   stopBotTeam(sessionId: string): void {
     const control = this.botTeams.get(sessionId)
     if (!control?.current.id) return
-    const id = control.current.id, original = control.scheduler.读(id)
+    const id = control.current.id
+    control.scheduler.中止全部(id)
+    const original = control.scheduler.读(id)
     // A shared task would otherwise be claimed during abort cleanup.
     if (original.members.some(m => m.botId) && original.members.filter(m => m.status !== "removed").every(m => m.botId)) {
       control.scheduler.改(id, team => {for (const task of team.tasks) if (!task.assignee && !["completed", "failed", "cancelled"].includes(task.status)) 取消任务(team, task.id)})
     }
     for (const task of original.tasks) if (!["completed", "failed", "cancelled"].includes(task.status) && original.members.some(m => m.botId && m.name === task.assignee)) this.stopBotTask(sessionId, id, task.id)
-    control.scheduler.中止全部(id)
   }
   stopBotTask(sessionId: string, teamId: string, taskId: string): void {
     const {control, team: original} = this.botTask(sessionId, teamId, taskId)
@@ -931,6 +932,8 @@ export class NativeRuntime implements AgentRuntime {
    * 并发第二次调用等同一个,而不是再起一段。
    */
   private readonly 起中 = new Map<SessionId, Promise<SessionHandle>>()
+  /** A closing generation owns all cleanup until it drains; reopening cannot overwrite its maps or files. */
+  private readonly 停中 = new Map<SessionId, Promise<void>>()
   /**
    * 启动还没完成时就有人请求停(审查 debug E5)。此前 `stop()` 里 `sessions.get` 拿不到
    * 尚未登记的会话就直接返回,可等 `start()` 跑完把会话登记上去,那一段就永远没人停了——
@@ -1721,7 +1724,7 @@ export class NativeRuntime implements AgentRuntime {
       },
     })
     const flush = () => {void delivery.flush().then(sent => {
-      if (sent && !orchestration.isClosed && this.sessions.has(spec.sessionId) && !this.terminalBusy(spec.sessionId)) {
+      if (sent && delivery.canWakeParent && !orchestration.isClosed && this.sessions.has(spec.sessionId) && !this.terminalBusy(spec.sessionId)) {
         this.送一轮(spec.sessionId, "子 agent 的新协作结果已写入上下文。请按实际状态继续原任务或汇总交付；失败、中断和未核验部分须如实说明。")
       }
     }).catch(error => this.emit({kind: "notice", sessionId: spec.sessionId, text: `子 agent 结果尚未确认送达：${error instanceof Error ? error.message : String(error)}`}))}
@@ -1850,6 +1853,7 @@ export class NativeRuntime implements AgentRuntime {
    */
   async start(spec: SessionSpec): Promise<SessionHandle> {
     const id = spec.sessionId
+    if (this.停中.has(id)) throw new UserFacingError(`会话 "${id}" 正在停止，请等待收尾完成后再开`)
     // 已经有活着的同 id 会话:重复开是调用方的 bug,响亮拒,别静默丢掉旧的(E4)
     if (this.sessions.has(id)) {
       throw new UserFacingError(`会话 "${id}" 已经在运行了，不能重复开(先停掉它再开)`)
@@ -2332,12 +2336,14 @@ export class NativeRuntime implements AgentRuntime {
       实际模型: `${native.provider}/${native.model}`,
       unsubscribe,
       收尾: () => {
-        this.团队收尾.get(spec.sessionId)?.()
-        this.团队收尾.delete(spec.sessionId)
-        // 正在答的接着问整组杀（2026-09-27）：会话都关了，旁边那一问没人看了，别让它继续烧钱
-        for (const x of this.续问中.get(spec.sessionId) ?? []) x.c.abort()
-        this.续问中.delete(spec.sessionId)
-        this.子agent续问.delete(spec.sessionId)
+        try {this.团队收尾.get(spec.sessionId)?.()}
+        finally {
+          this.团队收尾.delete(spec.sessionId)
+          // A failed team save cannot leave user-side followups running either.
+          for (const x of this.续问中.get(spec.sessionId) ?? []) x.c.abort()
+          this.续问中.delete(spec.sessionId)
+          this.子agent续问.delete(spec.sessionId)
+        }
       },
       pid,
       pending: undefined,
@@ -3683,7 +3689,8 @@ ${描述}`
     try {this.orchestrationControls.get(sessionId)?.mailbox.pauseAll()}
     catch (error) {this.emit({kind: "notice", sessionId, text: `子任务已请求中止，但暂停状态未能保存：${String(error)}`, failed: true})}
     this.opts.terminals?.revokeOwner(sessionId)
-    this.stopBotTeam(sessionId)
+    try {this.stopBotTeam(sessionId)}
+    catch (error) {this.emit({kind: "notice", sessionId, text: `团队已请求中止，但状态未能保存：${String(error)}`, failed: true})}
     /**
      * **先撤待发单，再中止**（2026-09-23）。反过来的话，中止与撤单之间 pi 可能把一条送进去、
      * 又开一段；而且 pi 中止之后不再续跑，排着的那几条就永远卡在它的队列里。
@@ -4511,16 +4518,26 @@ ${描述}`
     return 全部.flatMap((x) => (x.id ? [x.id] : []))
   }
 
-  async stop(sessionId: SessionId): Promise<void> {
+  stop(sessionId: SessionId): Promise<void> {
+    const closing = this.停中.get(sessionId)
+    if (closing) return closing
+    const work = this.停止一次(sessionId).finally(() => {
+      if (this.停中.get(sessionId) === work) this.停中.delete(sessionId)
+    })
+    this.停中.set(sessionId, work)
+    return work
+  }
+
+  private async 停止一次(sessionId: SessionId): Promise<void> {
     // 在第一个 await 前取消旧 Notebook 启动/执行；模型会话不在也要回收名下内核。
     const 内核收尾 = this.opts.kernels?.收(sessionId).catch(() => {})
     this.opts.terminals?.revokeOwner(sessionId)
-    this.stopBotTeam(sessionId)
+    let coordinationError: unknown
+    try {this.stopBotTeam(sessionId)} catch (error) {coordinationError = error}
     const controls = this.orchestrationControls.get(sessionId)
     controls?.delivery.close()
     const coordinator = this.orchestrations.get(sessionId)
-    let coordinationError: unknown
-    const coordinationClosing = (controls ? controls.mailbox.close() : coordinator?.close())?.catch(error => {coordinationError = error})
+    const coordinationClosing = (controls ? controls.mailbox.close() : coordinator?.close())?.catch(error => {coordinationError ??= error})
     // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
     // 记一笔并等启动结束——start() 的收尾会据此把刚起来的立刻停掉。
     if (this.起中.has(sessionId) && !this.sessions.has(sessionId)) {
@@ -4552,7 +4569,7 @@ ${描述}`
       await Promise.race([s.pending.catch(() => {}), new Promise<void>((r) => (表 = setTimeout(r, 10_000)))])
       clearTimeout(表)
     }
-    s.收尾?.()
+    try {s.收尾?.()} catch (error) {coordinationError ??= error}
     await coordinationClosing
     this.orchestrations.delete(sessionId)
     this.orchestrationControls.delete(sessionId)

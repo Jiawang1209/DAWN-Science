@@ -63,3 +63,7 @@ Electron 组合验收：orchestration / subagent / team / bot-collaboration 共 
 | 本地交付与保护范围 | 原 main 保持 43dd7bdc 且 clean；专项分支本地提交，不推送/合并/安装 |
 
 最终审查发现 Pi 会在首次 assistant 消息前延迟创建日志，也会在 append 失败时留下内存条目。因此仅检查内存分支会错误确认送达。新增两条真实 Pi 回归先复现失败，再加入只读磁盘日志核对；回执必须同时属于当前分支并已写入磁盘，不调用可能改写文件的 SessionManager.open。未确认的结果仍保留在 outbox。
+
+## 后续二次审查
+
+首次提交后的复核、补充修复及用户授权的本地 main 集成另记于 [第二轮审查](2026-11-04-unified-orchestration-second-review.md)；以上数量与 Git 状态保留为首次交付时点的记录。

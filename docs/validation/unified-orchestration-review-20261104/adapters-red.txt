@@ -1,0 +1,54 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/adapters.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/adapters.test.ts (4 tests | 2 failed) 168ms
+   × a removed member cannot increment or resume the replacement incarnation when its cancelled turn finishes 17ms
+   × a team persistence error still settles its turn event and does not reject an unobserved background run 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/adapters.test.ts > a removed member cannot increment or resume the replacement incarnation when its cancelled turn finishes
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/orchestration/adapters.test.ts:83:29
+     81|   release(); await until(() => ended)
+     82|   const replacement = scheduler.读(team.id).members.find(member => memb…
+     83|   expect(replacement.turns).toBe(0)
+       |                             ^
+     84|   expect(replacement.status).toBe('idle')
+     85| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/orchestration/adapters.test.ts > a team persistence error still settles its turn event and does not reject an unobserved background run
+AssertionError: promise rejected "SyntaxError: Expected property name or '}…" instead of resolving
+ ❯ tests/orchestration/adapters.test.ts:102:24
+    100|   writeFileSync(join(scheduler.dir(team.id), 'team.json'), '{corrupt')
+    101|   release()
+    102|   await expect(running).resolves.toBeUndefined()
+       |                        ^
+    103|   expect(ended).toBe(true)
+    104|   expect(scheduler.几个在跑()).toBe(0)
+
+Caused by: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+ ❯ 读团队 src/team/state.ts:40:21
+ ❯ 团队调度器.读 src/team/scheduler.ts:65:15
+ ❯ 团队调度器.改 src/team/scheduler.ts:72:23
+ ❯ 团队调度器.起一轮 src/team/scheduler.ts:383:17
+ ❯ tests/orchestration/adapters.test.ts:102:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:34:52
+   Duration  388ms (transform 81ms, setup 0ms, import 134ms, tests 168ms, environment 0ms)

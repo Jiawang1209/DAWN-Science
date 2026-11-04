@@ -1,0 +1,94 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/orchestration.spec.ts e2e/subagent.spec.ts e2e/team.spec.ts e2e/bot-collaboration.spec.ts e2e/subagent-view.spec.ts
+
+Running 16 tests using 1 worker
+
+(node:83254) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:56961/1d9035c9-feac-4f31-96c5-fa17bb7d5652
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (11.5s)
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:57111/89cef061-594f-4302-a7df-22b073d241ef
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (15.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「后台协作验收」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57293/46e1f915-cb64-4eea-a3f2-e15497b50145
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57318/6fb6bab2-4e6e-4cc0-903a-59e1a39b7dbb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/subagent-view.spec.ts:36:3 › 子 agent 看得见 › 点 chip → 坞里那一格有它的过程与交回的结果；主转录里没有那条 read (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57352/d6822e85-625c-49f0-ae0d-70bd4949a2b3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/subagent-view.spec.ts:53:3 › 子 agent 看得见 › 在跑时 chip 上有那一句、坞里那条 bash 在跑；跑完那一句消失 (19.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57447/f9ade7a6-60a4-4929-a434-26892467a70f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区 (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57492/750dddc7-9fe9-45e4-8302-fb8c0123deac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57514/48ed3a64-335f-40a2-bd3d-32c8207a8b94
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子 (7.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57530/27887559-7736-4247-aece-3b446af593a0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/subagent-view.spec.ts:124:3 › 子 agent 看得见 › 看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达 (4.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57604/4ddcfc71-f43f-4250-ad89-e9812c302d33
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/subagent-view.spec.ts:196:3 › 坞里那段对话派的子 agent：长长的一句不撑破坞 › chip 那一句很长：坞不出横向滚动，chip 不越过坞的右缘 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「找个子 agent 看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57717/1c7205d4-2af9-41a1-9e4f-52bde0a67a83
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链 (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57832/253934a6-6fe9-4518-9547-611ac428e24b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57896/039a75ac-81a3-4bc3-8bad-857a9b90a72e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派两个子 agent」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58000/4f6e22db-0854-4197-b25c-53633e38398e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58098/f7abce34-229d-4b15-83d1-4f4f24baef7b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58170/d01cf8ed-2954-4679-9576-fc7cb00ac72d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58209/7d610c25-a4fc-427e-843a-9846d5018230
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/team.spec.ts:119:3 › 成员指了一个目录里没有的模型 › **建队时就拒**，并说清有哪些模型——不让它跑起来才报 (1.8s)
+
+  16 passed (1.6m)

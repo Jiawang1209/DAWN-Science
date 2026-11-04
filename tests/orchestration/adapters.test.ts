@@ -6,7 +6,7 @@ import {SubagentExecutor} from '../../src/subagent/executor.js'
 import {OrchestrationStore} from '../../src/orchestration/store.js'
 import {OrchestrationService} from '../../src/orchestration/service.js'
 import {团队调度器} from '../../src/team/scheduler.js'
-import {建团队, 加成员, 加任务, 写团队} from '../../src/team/state.js'
+import {建团队, 加成员, 加任务, 写团队, 移除成员} from '../../src/team/state.js'
 
 const roots: string[] = []
 afterEach(() => {for (const dir of roots.splice(0)) rmSync(dir, {recursive: true, force: true})})
@@ -58,4 +58,48 @@ it('releases a subprocess execution slot only after its process has closed', asy
   let alive = true
   try {process.kill(pid, 0)} catch {alive = false}
   expect(alive).toBe(false)
+})
+
+it('a removed member cannot increment or resume the replacement incarnation when its cancelled turn finishes', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dawn-team-incarnation-')); roots.push(dir)
+  let release!: () => void, ended = false
+  const gate = new Promise<void>(resolve => {release = resolve})
+  const scheduler = new 团队调度器({sessionDir: dir, 定义: () => [],
+    跑: {childOf: () => ({command: 'unused', args: []}), context: {provider: 'p', model: 'm', cwd: dir}},
+    onChange: () => {}, onTurn: e => {if (e.phase === 'end') ended = true},
+    memberRunner: async () => {await gate; return {ok: true, output: 'old result'}}})
+  const team = 建团队({id: 't', name: 't', goal: 'g', captainSessionId: 'p'})
+  加成员(team, {name: 'bot', agent: 'bot', botId: 'b', botScopeKey: 'scope'})
+  加任务(team, {subject: 'task', assignee: 'bot'}); 写团队(scheduler.dir(team.id), team)
+  await scheduler.踢一下(team.id)
+  scheduler.中止(team.id, 'bot')
+  scheduler.改(team.id, t => {
+    移除成员(t, 'bot')
+    加成员(t, {name: 'bot', agent: 'bot', botId: 'b', botScopeKey: 'scope'})
+    t.finishedAt = Date.now()
+  })
+  release(); await until(() => ended)
+  const replacement = scheduler.读(team.id).members.find(member => member.status !== 'removed')!
+  expect(replacement.turns).toBe(0)
+  expect(replacement.status).toBe('idle')
+})
+
+it('a team persistence error still settles its turn event and does not reject an unobserved background run', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dawn-team-settle-failure-')); roots.push(dir)
+  let release!: () => void, ended = false, started!: () => void
+  const gate = new Promise<void>(resolve => {release = resolve}), entered = new Promise<void>(resolve => {started = resolve})
+  const scheduler = new 团队调度器({sessionDir: dir, 定义: () => [],
+    跑: {childOf: () => ({command: 'unused', args: []}), context: {provider: 'p', model: 'm', cwd: dir}},
+    onChange: () => {}, onTurn: e => {if (e.phase === 'end') ended = true},
+    memberRunner: async () => {started(); await gate; return {ok: true, output: 'result'}}})
+  const team = 建团队({id: 't', name: 't', goal: 'g', captainSessionId: 'p'})
+  加成员(team, {name: 'bot', agent: 'bot', botId: 'b', botScopeKey: 'scope'}); 写团队(scheduler.dir(team.id), team)
+  // Await the actual turn directly so the pre-fix rejection is captured, not an unhandled test error.
+  const running = (scheduler as unknown as {起一轮(id: string, member: string, task: undefined, prompt: string): Promise<void>}).起一轮(team.id, 'bot', undefined, 'message')
+  await entered
+  writeFileSync(join(scheduler.dir(team.id), 'team.json'), '{corrupt')
+  release()
+  await expect(running).resolves.toBeUndefined()
+  expect(ended).toBe(true)
+  expect(scheduler.几个在跑()).toBe(0)
 })

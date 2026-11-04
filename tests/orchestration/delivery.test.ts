@@ -61,3 +61,26 @@ it('drains results arriving during an in-flight flush instead of losing its wake
   expect(sent).toEqual([message.id, second.id])
   expect(store.message(second.id)?.deliveredAt).toBeDefined()
 })
+
+it.each(['suspend', 'suspend-resume', 'close'] as const)('does not request a parent turn after %s during an in-flight receipt check', async mode => {
+  const {store, message} = pending()
+  let release!: () => void, checking!: () => void
+  const gate = new Promise<void>(resolve => {release = resolve})
+  const entered = new Promise<void>(resolve => {checking = resolve})
+  let checks = 0
+  const delivery = new OrchestrationDelivery({store, busy: () => false, send: async () => {}, hasReceipt: async () => {
+    if (++checks === 1) return false
+    checking(); await gate; return true
+  }})
+  const flushing = delivery.flush()
+  await entered
+  if (mode === 'close') delivery.close()
+  else {delivery.suspend(); if (mode === 'suspend-resume') delivery.resume()}
+  release()
+  expect(await flushing).toBe(0)
+  expect(store.message(message.id)?.deliveredAt).toBeUndefined()
+  if (mode !== 'close') {
+    delivery.resume(); await delivery.flush()
+    expect(store.message(message.id)?.deliveredAt).toBeDefined()
+  }
+})

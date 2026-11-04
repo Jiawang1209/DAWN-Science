@@ -1,0 +1,78 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/delivery.test.ts tests/orchestration/mailbox.test.ts tests/runtime/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-orchestration-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/delivery.test.ts (6 tests | 1 failed) 27ms
+   × does not request a parent turn when suspended during an in-flight receipt check 6ms
+ ❯ |node| tests/orchestration/mailbox.test.ts (6 tests | 1 failed) 48ms
+   × a duplicate request cannot unpause a stopped inbox, including after reopen 11ms
+ ❯ |node| tests/runtime/orchestration.test.ts (6 tests | 1 failed) 118ms
+   × joins concurrent stop calls and rejects reopening until old backend cleanup has drained 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/delivery.test.ts > does not request a parent turn when suspended during an in-flight receipt check
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/orchestration/delivery.test.ts:78:26
+     76|   await entered
+     77|   delivery.suspend(); release()
+     78|   expect(await flushing).toBe(0)
+       |                          ^
+     79|   expect(store.message(message.id)?.deliveredAt).toBeUndefined()
+     80|   delivery.resume(); await delivery.flush()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/orchestration/mailbox.test.ts > a duplicate request cannot unpause a stopped inbox, including after reopen
+AssertionError: expected [ 'one', 'waiting' ] to deeply equal [ 'one' ]
+
+- Expected
++ Received
+
+  [
+    "one",
++   "waiting",
+  ]
+
+ ❯ tests/orchestration/mailbox.test.ts:110:16
+    108|   await mailbox.close(); await next.close()
+    109|   expect(retry.id).toBe(first.id)
+    110|   expect(seen).toEqual(['one'])
+       |                ^
+    111|   expect(remainedPaused).toBe(true)
+    112| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > joins concurrent stop calls and rejects reopening until old backend cleanup has drained
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/runtime/orchestration.test.ts:127:20
+    125|   release(); await Promise.all([first, second, run]); await runtime.st…
+    126|   expect(stoppedBeforeCleanup).toBe(false)
+    127|   expect(reopened).toBe(false)
+       |                    ^
+    128|   await runtime.start({...spec, resume: true})
+    129|   expect(internals.orchestrations.get('p')).toBeDefined()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  3 failed | 15 passed (18)
+   Start at  17:32:02
+   Duration  2.06s (transform 582ms, setup 0ms, import 2.08s, tests 193ms, environment 0ms)

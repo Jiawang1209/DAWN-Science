@@ -14,7 +14,10 @@ export class OrchestrationMailbox {
     if (this.closed || this.service.isClosed) throw new Error('Orchestration mailbox is closed')
     const child = this.service.store.get(childId)
     if (child?.kind !== 'subagent') throw new Error('Unknown or unsupported child in this parent session')
+    const duplicate = this.service.store.messages().some(message => message.childId === childId && message.requestId === requestId)
     const message = this.service.store.enqueue(childId, requestId, text, true, mode)
+    // Replayed tool calls acknowledge the original request; only a new instruction may undo a stop.
+    if (duplicate) return message
     this.service.store.update(childId, {paused: false})
     this.paused.delete(childId)
     this.pump(childId)

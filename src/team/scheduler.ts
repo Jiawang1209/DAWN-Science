@@ -203,13 +203,14 @@ export class 团队调度器 {
 
   中止全部(teamId: string): void {
     this.stoppedTeams.add(teamId)
+    // A corrupt/unwritable snapshot must not prevent live backend cancellation.
+    for (const [k, c] of this.跑着) if (k.startsWith(`${teamId}/`)) c.abort()
     const team = this.读(teamId)
     const bots = new Set(team.members.filter(member => member.botId).map(member => member.name))
     // A later intentional dispatch reopens the team, never these previously stopped attempts.
     for (const task of team.tasks) if (task.assignee && bots.has(task.assignee) && task.attemptId && ["claimed", "in_progress"].includes(task.status)) {
       this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     }
-    for (const [k, c] of this.跑着) if (k.startsWith(`${teamId}/`)) c.abort()
     this.改(teamId, team => {
       for (const turn of team.conversationTurns ?? []) if (["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
       for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted") {
@@ -304,133 +305,153 @@ export class 团队调度器 {
     const ctrl = new AbortController()
     const runId = randomUUID()
     this.跑着.set(key, ctrl)
-    let team = this.改(teamId, (t) => {
-      const m = 找成员(t, member)
-      if (m) m.status = "working"
-      if (任务) {
-        开始做(t, 任务.taskId, 任务.attemptId, this.now())
-        const assigned = t.tasks.find(task => task.id === 任务.taskId)!
-        if (m?.botId && !collaboration) appendBotEvent(t, {id: `assignment:${任务.taskId}:${任务.attemptId}`, role: "captain", from: "captain", toBotId: m.botId, content: `请负责：${assigned.subject}${assigned.description ? `\n${assigned.description}` : ""}`, createdAt: this.now(), kind: "request"})
-      }
-    })
-    const m = 找成员(team, member)!
-    const child = collaboration?.phase === "reply" ? team.collaboration?.find(x => x.id === collaboration.exchangeId) : undefined
-    const handlingExchangeId = collaboration?.phase === "request" ? collaboration.exchangeId : child?.parentExchangeId
-    const botTurn = m.botId ? { task: 任务, collaboration, conversation, handlingExchangeId, requested: new Set<string>(), botId: m.botId, scope: m.botScopeKey, sessionId: m.sessionId } : undefined
-    if (botTurn) this.botTurns.set(key, botTurn)
-    const def = this.opts.定义().find((d) => d.name === m.agent)
-    this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
-    let 结果: { ok: boolean; output: string; error?: string }
-    const execute = async (runSignal: AbortSignal): Promise<成员轮结果> => {
-    if (m.botId && this.opts.memberRunner) {
-      try {
-        return await this.opts.memberRunner({ team, member: m, taskId: 任务?.taskId, collaboration, conversation, prompt: prompt + botRoomPrompt(team), signal: runSignal, onSession: (sessionId) => {
-          if (this.跑着.get(key) !== ctrl || runSignal.aborted) return
-          if (botTurn) botTurn.sessionId = sessionId
-          this.改(teamId, t => { const member = 找成员(t, m.name); if (member) member.sessionId = sessionId })
-        } })
-      } catch (error) {
-        return { ok: false, output: "", error: error instanceof Error ? error.message : String(error) }
-      }
-    } else if (!def || m.botId) {
-      return { ok: false, output: "", error: `名册里没有叫「${m.agent}」的子 agent（成员「${member}」用的人设）。` }
-    } else {
-      const 成员目录 = join(this.dir(teamId), m.sessionDir)
-      return await 跑一轮(
-        {
-          definition: def,
-          memberName: member,
-          teamId,
-          prompt,
-          systemPrompt: 成员人设(def.systemPrompt, team, m),
-          sessionDir: 成员目录,
-          resume: m.turns > 0,
-          agentDir: join(成员目录, "agent", String(m.turns)),
-          ...(m.provider && m.model ? { provider: m.provider, model: m.model } : {}),
-        },
-        {
-          childOf: this.opts.跑.childOf,
-          context: this.opts.跑.context,
-          signal: runSignal,
-          timeoutMs: this.opts.turnTimeoutMs ?? 30 * 60_000,
-          onCall: (name, params) => this.答成员(teamId, member, name, params),
-        },
-      )
-    }
-    }
+    let snapshot: 团队 | undefined
+    let ended = false
     try {
-      const coordinator = this.opts.orchestration
-      if (coordinator) {
-        const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
-        结果 = await coordinator.run(child.id, execute, ctrl.signal)
-      } else 结果 = await execute(ctrl.signal)
-    } catch (error) {
-      结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
-    }
-    if (m.botId) {
-      const bytes = Buffer.byteLength(结果.output, "utf8")
-      const limit = handlingExchangeId || conversation ? 16 * 1024 : 团队上限.maxOutputBytes
-      if (bytes > limit) 结果 = {ok: false, output: "", error: `Bot 最终回复 ${bytes} 字节，超过 ${limit === 团队上限.maxOutputBytes ? "64 KiB" : "16 KiB"} 上限；省略全部 ${bytes} 字节，未接收截断的回复或产物列表。请提供更短摘要与完整产物列表。`}
-      if (结果.error && Buffer.byteLength(结果.error, "utf8") > 16 * 1024) 结果 = {ok: false, output: "", error: `Bot 错误报告 ${Buffer.byteLength(结果.error, "utf8")} 字节，超过 16 KiB 上限；省略全部错误原文，未接收截断的结果。`}
-    }
-    if (m.botId && ctrl.signal.aborted) 结果 = { ok: false, output: "", error: "Bot 执行已停止。" }
-    this.跑着.delete(key)
-    this.botTurns.delete(key)
-    // 结算：令牌对不上就丢掉并出声（转派 / 接管 / 取消都会让它对不上）
-    let 丢了: string | undefined
-    let yielded = false
-    team = this.改(teamId, (t) => {
-      const mm = 找成员(t, member)
-      if (mm && mm.status !== "removed") {
-        mm.status = "idle"
-        mm.turns += 1
+      let team = this.改(teamId, (t) => {
+        const m = 找成员(t, member)
+        if (m) m.status = "working"
+        if (任务) {
+          开始做(t, 任务.taskId, 任务.attemptId, this.now())
+          const assigned = t.tasks.find(task => task.id === 任务.taskId)!
+          if (m?.botId && !collaboration) appendBotEvent(t, {id: `assignment:${任务.taskId}:${任务.attemptId}`, role: "captain", from: "captain", toBotId: m.botId, content: `请负责：${assigned.subject}${assigned.description ? `\n${assigned.description}` : ""}`, createdAt: this.now(), kind: "request"})
+        }
+      })
+      snapshot = team
+      const m = 找成员(team, member)!
+      const child = collaboration?.phase === "reply" ? team.collaboration?.find(x => x.id === collaboration.exchangeId) : undefined
+      const handlingExchangeId = collaboration?.phase === "request" ? collaboration.exchangeId : child?.parentExchangeId
+      const botTurn = m.botId ? { task: 任务, collaboration, conversation, handlingExchangeId, requested: new Set<string>(), botId: m.botId, scope: m.botScopeKey, sessionId: m.sessionId } : undefined
+      if (botTurn) this.botTurns.set(key, botTurn)
+      const def = this.opts.定义().find((d) => d.name === m.agent)
+      this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
+      let 结果: { ok: boolean; output: string; error?: string }
+      const execute = async (runSignal: AbortSignal): Promise<成员轮结果> => {
+        if (m.botId && this.opts.memberRunner) {
+          try {
+            return await this.opts.memberRunner({ team, member: m, taskId: 任务?.taskId, collaboration, conversation, prompt: prompt + botRoomPrompt(team), signal: runSignal, onSession: (sessionId) => {
+              if (this.跑着.get(key) !== ctrl || runSignal.aborted) return
+              if (botTurn) botTurn.sessionId = sessionId
+              this.改(teamId, t => { const member = 找成员(t, m.name); if (member && memberGeneration(member) === memberGeneration(m)) member.sessionId = sessionId })
+            } })
+          } catch (error) {
+            return { ok: false, output: "", error: error instanceof Error ? error.message : String(error) }
+          }
+        } else if (!def || m.botId) {
+          return { ok: false, output: "", error: `名册里没有叫「${m.agent}」的子 agent（成员「${member}」用的人设）。` }
+        } else {
+          const 成员目录 = join(this.dir(teamId), m.sessionDir)
+          return await 跑一轮(
+            {
+              definition: def,
+              memberName: member,
+              teamId,
+              prompt,
+              systemPrompt: 成员人设(def.systemPrompt, team, m),
+              sessionDir: 成员目录,
+              resume: m.turns > 0,
+              agentDir: join(成员目录, "agent", String(m.turns)),
+              ...(m.provider && m.model ? { provider: m.provider, model: m.model } : {}),
+            },
+            {
+              childOf: this.opts.跑.childOf,
+              context: this.opts.跑.context,
+              signal: runSignal,
+              timeoutMs: this.opts.turnTimeoutMs ?? 30 * 60_000,
+              onCall: (name, params) => this.答成员(teamId, member, name, params),
+            },
+          )
+        }
       }
-      const outstanding = t.collaboration?.some(x => x.from === member && x.resumedAt === undefined && x.parentExchangeId === handlingExchangeId && (handlingExchangeId || (conversation ? x.rootMessageId === conversation.messageId : x.taskId === 任务?.taskId && x.attemptId === 任务?.attemptId)) && sourceIsCurrent(t, x))
-      if (handlingExchangeId) {
-        const exchange = t.collaboration?.find(x => x.id === handlingExchangeId)
-        yielded = !ctrl.signal.aborted && !!outstanding
-        if (exchange?.status === "working" && sourceIsCurrent(t, exchange) && mm?.status !== "removed" && !ctrl.signal.aborted && !yielded) {
-          exchange.status = 结果.ok ? "replied" : "failed"
-          exchange.reply = 结果.ok ? 结果.output : `协作失败：${结果.error ?? "没有说原因"}`
-          exchange.updatedAt = this.now()
-          if (结果.ok) appendBotEvent(t, {id: `reply:${exchange.id}`, role: "bot", from: member, botId: m.botId!, toBotId: exchange.fromBotId, content: exchange.reply, createdAt: this.now(), exchangeId: exchange.id, kind: "reply"})
-        }
-      } else if (conversation) {
-        const delivery = t.conversationTurns?.find(d => d.messageId === conversation.messageId && d.member === member && d.botId === m.botId)
-        yielded = !ctrl.signal.aborted && !!outstanding
-        if (delivery?.status === "working" && !ctrl.signal.aborted && !yielded && mm?.status !== "removed") {
-          delivery.status = 结果.ok ? "replied" : "failed"; delivery.reply = 结果.ok ? 结果.output : `回复失败：${结果.error ?? "没有说原因"}`; delivery.updatedAt = this.now()
-          if (结果.ok) appendBotEvent(t, {id: `answer:${conversation.messageId}:${m.botId}`, role: "bot", from: member, botId: m.botId!, content: delivery.reply, createdAt: this.now(), kind: "reply"})
-        }
-      } else if (任务) {
-        yielded = !ctrl.signal.aborted && !!outstanding
-        if (yielded) return
-        try {
-          结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因" }, this.now())
-          if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
-        } catch (e) {
-          丢了 = e instanceof Error ? e.message : String(e)
-        }
-      } else if (!结果.ok && mm && mm.status !== "removed") {
-        // 送信那一轮挂了：把原因寄给队长，别静默（成员已被移除就不寄——`发消息` 不认已移除的发件人）
-        发消息(t, { from: member, to: "captain", content: `（系统）这一轮处理消息时失败：${结果.error}` }, this.now())
-      }
-    })
-    if (丢了) {
-      // 系统消息用 `from: "captain"`（2026-08-23 审查抓的）：成员可能已经被移除 / 团队已结束，`发消息` 会因「不是这支团队的人」再抛一次——而这里是 void 调用，抛出去就是 unhandledRejection
       try {
-        this.改(teamId, (t) => 发消息(t, { from: "captain", to: "captain", content: `（系统）「${member}」迟到的结果被丢弃：${丢了}` }, this.now()))
-      } catch (e) {
-        console.error("[团队] 记不下迟到结果的说明：", e instanceof Error ? e.message : String(e))
+        const coordinator = this.opts.orchestration
+        if (coordinator) {
+          const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
+          结果 = await coordinator.run(child.id, execute, ctrl.signal)
+        } else 结果 = await execute(ctrl.signal)
+      } catch (error) {
+        结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
       }
+      if (m.botId) {
+        const bytes = Buffer.byteLength(结果.output, "utf8")
+        const limit = handlingExchangeId || conversation ? 16 * 1024 : 团队上限.maxOutputBytes
+        if (bytes > limit) 结果 = {ok: false, output: "", error: `Bot 最终回复 ${bytes} 字节，超过 ${limit === 团队上限.maxOutputBytes ? "64 KiB" : "16 KiB"} 上限；省略全部 ${bytes} 字节，未接收截断的回复或产物列表。请提供更短摘要与完整产物列表。`}
+        if (结果.error && Buffer.byteLength(结果.error, "utf8") > 16 * 1024) 结果 = {ok: false, output: "", error: `Bot 错误报告 ${Buffer.byteLength(结果.error, "utf8")} 字节，超过 16 KiB 上限；省略全部错误原文，未接收截断的结果。`}
+      }
+      if (m.botId && ctrl.signal.aborted) 结果 = { ok: false, output: "", error: "Bot 执行已停止。" }
+      this.跑着.delete(key)
+      this.botTurns.delete(key)
+      // 结算：令牌对不上就丢掉并出声（转派 / 接管 / 取消都会让它对不上）
+      let 丢了: string | undefined
+      let yielded = false
+      team = this.改(teamId, (t) => {
+        const mm = 找成员(t, member)
+        if (!mm || memberGeneration(mm) !== memberGeneration(m)) {
+          丢了 = "成员已移除或由新成员替代，旧轮次不能修改新身份"
+          return
+        }
+        if (mm && mm.status !== "removed") {
+          mm.status = "idle"
+          mm.turns += 1
+        }
+        const outstanding = t.collaboration?.some(x => x.from === member && x.resumedAt === undefined && x.parentExchangeId === handlingExchangeId && (handlingExchangeId || (conversation ? x.rootMessageId === conversation.messageId : x.taskId === 任务?.taskId && x.attemptId === 任务?.attemptId)) && sourceIsCurrent(t, x))
+        if (handlingExchangeId) {
+          const exchange = t.collaboration?.find(x => x.id === handlingExchangeId)
+          yielded = !ctrl.signal.aborted && !!outstanding
+          if (exchange?.status === "working" && sourceIsCurrent(t, exchange) && mm?.status !== "removed" && !ctrl.signal.aborted && !yielded) {
+            exchange.status = 结果.ok ? "replied" : "failed"
+            exchange.reply = 结果.ok ? 结果.output : `协作失败：${结果.error ?? "没有说原因"}`
+            exchange.updatedAt = this.now()
+            if (结果.ok) appendBotEvent(t, {id: `reply:${exchange.id}`, role: "bot", from: member, botId: m.botId!, toBotId: exchange.fromBotId, content: exchange.reply, createdAt: this.now(), exchangeId: exchange.id, kind: "reply"})
+          }
+        } else if (conversation) {
+          const delivery = t.conversationTurns?.find(d => d.messageId === conversation.messageId && d.member === member && d.botId === m.botId)
+          yielded = !ctrl.signal.aborted && !!outstanding
+          if (delivery?.status === "working" && !ctrl.signal.aborted && !yielded && mm?.status !== "removed") {
+            delivery.status = 结果.ok ? "replied" : "failed"; delivery.reply = 结果.ok ? 结果.output : `回复失败：${结果.error ?? "没有说原因"}`; delivery.updatedAt = this.now()
+            if (结果.ok) appendBotEvent(t, {id: `answer:${conversation.messageId}:${m.botId}`, role: "bot", from: member, botId: m.botId!, content: delivery.reply, createdAt: this.now(), kind: "reply"})
+          }
+        } else if (任务) {
+          yielded = !ctrl.signal.aborted && !!outstanding
+          if (yielded) return
+          try {
+            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因" }, this.now())
+            if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
+          } catch (e) {
+            丢了 = e instanceof Error ? e.message : String(e)
+          }
+        } else if (!结果.ok && mm && mm.status !== "removed") {
+          // 送信那一轮挂了：把原因寄给队长，别静默（成员已被移除就不寄——`发消息` 不认已移除的发件人）
+          发消息(t, { from: member, to: "captain", content: `（系统）这一轮处理消息时失败：${结果.error}` }, this.now())
+        }
+      })
+      if (丢了) {
+        // 系统消息用 `from: "captain"`（2026-08-23 审查抓的）：成员可能已经被移除 / 团队已结束，`发消息` 会因「不是这支团队的人」再抛一次——而这里是 void 调用，抛出去就是 unhandledRejection
+        try {
+          this.改(teamId, (t) => 发消息(t, { from: "captain", to: "captain", content: `（系统）「${member}」迟到的结果被丢弃：${丢了}` }, this.now()))
+        } catch (e) {
+          console.error("[团队] 记不下迟到结果的说明：", e instanceof Error ? e.message : String(e))
+        }
+      }
+      if (任务 && !丢了 && !yielded) {
+        try { await this.opts.onResult?.({ team, member: 找成员(team, member) ?? m, taskId: 任务.taskId, attemptId: 任务.attemptId, result: 结果 }) }
+        catch(error) { console.error("[Bot] 结果持久化失败", error); this.改(teamId, t => 发消息(t, {from: "captain", to: "captain", content: "成员结果已保存在任务中，但自动送达失败；请通过 team_status 读取结果。"})) }
+      }
+      this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "end", ok: 结果.ok, ...(结果.error ? { error: 结果.error } : {}) })
+      ended = true
+      // 它空闲了、任务图变了——再踢
+      await this.踢一下(teamId)
+    } catch (error) {
+      // Background turns are intentionally not awaited by dispatch. Persistence failure must be visible,
+      // settle the UI event and stop further admission instead of becoming an unhandled rejection.
+      this.stoppedTeams.add(teamId)
+      ctrl.abort()
+      const reason = `团队状态无法保存或读取，执行已暂停；请核对已有产物与记录后再继续：${error instanceof Error ? error.message : String(error)}`
+      console.error("[团队]", reason)
+      if (snapshot && !ended) this.opts.onTurn?.({runId, team: snapshot, member, taskId: 任务?.taskId, phase: "end", ok: false, error: reason})
+    } finally {
+      if (this.跑着.get(key) === ctrl) {this.跑着.delete(key); this.botTurns.delete(key)}
     }
-    if (任务 && !丢了 && !yielded) {
-      try { await this.opts.onResult?.({ team, member: 找成员(team, member) ?? m, taskId: 任务.taskId, attemptId: 任务.attemptId, result: 结果 }) }
-      catch(error) { console.error("[Bot] 结果持久化失败", error); this.改(teamId, t => 发消息(t, {from: "captain", to: "captain", content: "成员结果已保存在任务中，但自动送达失败；请通过 team_status 读取结果。"})) }
-    }
-    this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "end", ok: 结果.ok, ...(结果.error ? { error: 结果.error } : {}) })
-    // 它空闲了、任务图变了——再踢
-    await this.踢一下(teamId)
   }
 
   /** 成员的工具调用：`team_send` / `team_status`。成员不能冒名——`from` 永远是它自己 */

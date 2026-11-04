@@ -1,10 +1,11 @@
 import {afterEach, expect, it} from 'vitest'
-import {mkdtempSync, rmSync, mkdirSync, renameSync} from 'node:fs'
+import {mkdtempSync, rmSync, mkdirSync, renameSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {NativeRuntime} from '../../src/runtime/native.js'
 import type {CredentialStore} from '@earendil-works/pi-ai'
 import type {OrchestrationService} from '../../src/orchestration/service.js'
+import {建团队, 写团队} from '../../src/team/state.js'
 
 const roots: string[] = []
 afterEach(() => {for (const dir of roots.splice(0)) rmSync(dir, {recursive: true, force: true})})
@@ -101,4 +102,59 @@ it('a failed Pi append cannot become a delivered receipt merely because it remai
     await expect(delivery.flush()).rejects.toThrow()
     expect(store.message(message.id)?.deliveredAt).toBeUndefined()
   } finally {rmSync(file, {recursive: true, force: true}); renameSync(backup, file); await runtime.stop('p')}
+})
+
+it('joins concurrent stop calls and rejects reopening until old backend cleanup has drained', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-native-stop-reopen-')); roots.push(root)
+  const runtime = new NativeRuntime({credentials, subagentChildEntry: '/unused.js'})
+  const spec = {sessionId: 'p', workspace: root, sessionDir: join(root, 'session'), native: {provider: 'deepseek', model: 'deepseek-flash'}}
+  await runtime.start(spec)
+  const internals = runtime as unknown as {orchestrations: Map<string, OrchestrationService>}
+  const coordinator = internals.orchestrations.get('p')!, child = coordinator.register('subagent', ['c', '0'], 'a')
+  let release!: () => void
+  const gate = new Promise<void>(resolve => {release = resolve})
+  const run = coordinator.run(child.id, async signal => {
+    await new Promise<void>(resolve => signal.addEventListener('abort', () => resolve(), {once: true}))
+    await gate; return {ok: true, output: 'late'}
+  })
+  const first = runtime.stop('p')
+  let secondStopped = false
+  const second = runtime.stop('p').then(() => {secondStopped = true})
+  await new Promise<void>(resolve => setImmediate(resolve))
+  const stoppedBeforeCleanup = secondStopped
+  const reopened = await runtime.start({...spec, resume: true}).then(() => true, () => false)
+  release(); await Promise.all([first, second, run]); await runtime.stop('p')
+  expect(stoppedBeforeCleanup).toBe(false)
+  expect(reopened).toBe(false)
+  await runtime.start({...spec, resume: true})
+  expect(internals.orchestrations.get('p')).toBeDefined()
+  await runtime.stop('p')
+})
+
+it('a corrupt team snapshot cannot prevent stop from cancelling and disposing the parent', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dawn-native-stop-disk-')); roots.push(root)
+  const runtime = new NativeRuntime({credentials, subagentChildEntry: '/unused.js'})
+  const sessionDir = join(root, 'session')
+  await runtime.start({sessionId: 'p', workspace: root, sessionDir, native: {provider: 'deepseek', model: 'deepseek-flash'}})
+  const internal = runtime as unknown as {
+    orchestrations: Map<string, OrchestrationService>
+    botTeams: Map<string, {current: {id: string | undefined}}>
+    sessions: Map<string, unknown>
+  }
+  const team = 建团队({id: 't', name: 't', goal: 'g', captainSessionId: 'p'})
+  写团队(join(sessionDir, 'teams', 't'), team)
+  internal.botTeams.get('p')!.current.id = team.id
+  const coordinator = internal.orchestrations.get('p')!, child = coordinator.register('subagent', ['c', '0'], 'a')
+  let cancelled = false
+  const run = coordinator.run(child.id, async signal => {
+    await new Promise<void>(resolve => signal.addEventListener('abort', () => {cancelled = true; resolve()}, {once: true}))
+    return {ok: true, output: 'late'}
+  })
+  writeFileSync(join(sessionDir, 'teams', 't', 'team.json'), '{corrupt')
+  await expect(runtime.stop('p')).rejects.toThrow()
+  const cancelledBeforeRepair = cancelled, disposedBeforeRepair = !internal.sessions.has('p')
+  writeFileSync(join(sessionDir, 'teams', 't', 'team.json'), JSON.stringify(team))
+  await runtime.stop('p'); await run
+  expect(cancelledBeforeRepair).toBe(true)
+  expect(disposedBeforeRepair).toBe(true)
 })

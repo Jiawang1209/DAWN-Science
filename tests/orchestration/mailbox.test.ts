@@ -93,3 +93,20 @@ it('still aborts every live backend when close cannot persist queued cancellatio
   await expect(closing).rejects.toThrow()
   expect(aborted).toBe(true)
 })
+
+it('a duplicate request cannot unpause a stopped inbox, including after reopen', async () => {
+  const {dir, store, service} = setup(), seen: string[] = []
+  const child = store.register('subagent', ['c', '0'], 'a')
+  const mailbox = new OrchestrationMailbox(service, async (_child, message) => {seen.push(message.text); return {ok: true, output: message.text}})
+  const first = mailbox.send(child.id, 'one', 'r1'); await mailbox.settled()
+  store.enqueue(child.id, 'r2', 'waiting', true)
+  mailbox.interrupt(child.id)
+  const recovered = new OrchestrationStore(dir, 'p')
+  const next = new OrchestrationMailbox(new OrchestrationService(recovered), async (_child, message) => {seen.push(message.text); return {ok: true, output: message.text}})
+  const retry = next.send(child.id, 'one', 'r1'); await next.settled()
+  const remainedPaused = recovered.get(child.id)?.paused
+  await mailbox.close(); await next.close()
+  expect(retry.id).toBe(first.id)
+  expect(seen).toEqual(['one'])
+  expect(remainedPaused).toBe(true)
+})

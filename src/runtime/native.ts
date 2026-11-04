@@ -1046,6 +1046,17 @@ export class NativeRuntime implements AgentRuntime {
     await s.session.waitForIdle()
   }
 
+  /** Structured tasks consume only the last assistant answer in this user turn. */
+  taskFinalText(sessionId: SessionId): string | undefined {
+    const messages=this.sessions.get(sessionId)?.session.messages??[]
+    for(let i=messages.length-1;i>=0;i--){
+      const message=messages[i]!
+      if(message.role==='user')return undefined
+      if(message.role==='assistant')return message.content.filter(block=>block.type==='text').map(block=>block.text).join('\n')
+    }
+    return undefined
+  }
+
   /** Cumulative model receipts on the original branch; SDK zeroes remain unverified. */
   sessionUsage(sessionId: SessionId) {
     return sessionUsage(this.sessions.get(sessionId)?.sessionManager.getBranch() ?? [], true)

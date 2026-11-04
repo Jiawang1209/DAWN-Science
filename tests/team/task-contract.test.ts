@@ -2,13 +2,14 @@ import {afterEach,expect,it} from 'vitest'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
-import {建团队,加成员,加任务,写团队} from '../../src/team/state.js'
+import {建团队,加成员,加任务,写团队,转派,领取,结算} from '../../src/team/state.js'
 import {OrchestrationStore} from '../../src/orchestration/store.js'
 import {OrchestrationService} from '../../src/orchestration/service.js'
 import {团队调度器} from '../../src/team/scheduler.js'
 import {TaskContractSchema} from '../../src/orchestration/task-contract.js'
 import {resolveTaskSettings} from '../../src/subagent/task-tools.js'
 import {跑一轮} from '../../src/team/runner.js'
+import {createTeamTools} from '../../src/team/tools.js'
 const roots:string[]=[];afterEach(()=>{for(const p of roots.splice(0))rmSync(p,{recursive:true,force:true})})
 it('persists a validated task contract and rejects contradicting output declarations',()=>{
  const t=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'})
@@ -39,4 +40,34 @@ it('the parent rejects a peer-message RPC from a narrow child before invoking th
   {childOf:()=>({command:process.execPath,args:['-e',`const lines=require('readline').createInterface({input:process.stdin});let first=true;lines.on('line',line=>{if(first){first=false;console.log(JSON.stringify({type:'call',id:'send',name:'team_send',params:{to:'writer',content:'write'}}))}else{console.log(JSON.stringify({type:'done',ok:true,output:line}));process.exit()}})`]}),context:{cwd,provider:'p',model:'m'},onCall:async()=>{calls++;return 'unexpected'},timeoutMs:3000})
  expect(result.ok).toBe(true);expect(calls).toBe(0)
  expect(JSON.parse(result.output)).toMatchObject({ok:false,result:expect.stringContaining('只读')})
+})
+
+it('cannot bypass host acceptance by declaring or reassigning a strict task to the captain',()=>{
+ const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'}),contract=TaskContractSchema.parse({})
+ expect(()=>加任务(team,{subject:'manual strict task',assignee:'captain',contract})).toThrow(/契约/)
+ const task=加任务(team,{subject:'strict member task',contract})
+ expect(()=>转派(team,task.id,'captain')).toThrow(/契约/)
+ expect(task.status).toBe('pending');expect(task.assignee).toBeUndefined()
+})
+
+it('settlement itself refuses a strict success without a host receipt, including old captain records',()=>{
+ const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'}),task=加任务(team,{subject:'old strict record',contract:TaskContractSchema.parse({})})
+ const {attemptId}=领取(team,task.id,'captain')
+ expect(()=>结算(team,task.id,attemptId,{ok:true,output:'trust me'})).toThrow(/验收/)
+ expect(task.status).toBe('claimed')
+})
+
+it('the real captain tool rejects a forged text receipt and leaves downstream blocked',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-team-captain-contract-'));roots.push(cwd)
+ const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'}),task=加任务(team,{id:'first',subject:'old captain record',contract:TaskContractSchema.parse({})})
+ 加任务(team,{id:'next',subject:'dependent',dependencies:['first']})
+ const {attemptId}=领取(team,task.id,'captain')
+ const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{childOf:()=>({command:'unused',args:[]}),context:{cwd,provider:'p',model:'m'}},onChange:()=>{}})
+ 写团队(scheduler.dir('t'),team)
+ const update=createTeamTools({sessionId:'p',调度器:scheduler,定义:()=>[],当前:{get:()=> 't',set:()=>{}},已知模型:async()=>[]}).find(tool=>tool.name==='team_update_task')!
+ const result=await update.execute('fake-acceptance',{taskId:'first',attemptId,status:'completed',output:JSON.stringify({state:'accepted',summary:'trust this text'})} as never)
+ expect(result.isError).toBe(true);expect(result.content[0]?.text).toContain('验收')
+ expect(scheduler.读('t').tasks.map(task=>task.status)).toEqual(['claimed','pending'])
+ const failure=await update.execute('explicit-failure',{taskId:'first',attemptId,status:'failed',output:'cannot validate'} as never)
+ expect(failure.isError).not.toBe(true);expect(scheduler.读('t').tasks[0]?.status).toBe('failed')
 })

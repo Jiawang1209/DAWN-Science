@@ -26,3 +26,19 @@ it("fails and aborts at the 64 KiB UTF-8 output boundary without returning a par
  sink({kind:"idle",sessionId:"s"})
  expect(await promise).toMatchObject({ok:false,output:"",error:expect.stringMatching(/64 KiB.*66000.*未.*截断/)});expect(stopped).toBe(1);expect(detached).toBe(true)
 })
+
+it.each(['cancel','timeout','overflow'] as const)('%s keeps ownership until abort cleanup resolves, even if idle arrives first',async cause=>{
+ vi.useFakeTimers();let sink:EventSink=()=>{},settled=false,detached=false,calls=0,release!:()=>void
+ const cleanup=new Promise<void>(resolve=>{release=resolve}),ctrl=new AbortController()
+ const running=runBotTurn({sessionId:'s',signal:ctrl.signal,attach:cb=>{sink=cb;return()=>{detached=true}},write:()=>{},timeoutMs:10,abort:async()=>{calls++;sink({kind:'idle',sessionId:'s'});await cleanup}}).then(result=>{settled=true;return result})
+ try{
+  if(cause==='cancel')ctrl.abort()
+  else if(cause==='timeout')await vi.advanceTimersByTimeAsync(10)
+  else sink({kind:'output',sessionId:'s',data:'x'.repeat(65537)})
+  await Promise.resolve();expect(settled).toBe(false);expect(detached).toBe(false)
+  // Repeated terminal notifications must not settle or start a second cleanup.
+  sink({kind:'exited',sessionId:'s',exitCode:0});ctrl.abort()
+  await Promise.resolve();expect(settled).toBe(false);expect(calls).toBe(1)
+  release();expect((await running).ok).toBe(false);expect(detached).toBe(true)
+ }finally{release();await running;vi.useRealTimers()}
+})

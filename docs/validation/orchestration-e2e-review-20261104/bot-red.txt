@@ -1,0 +1,91 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/bot/team-runner.test.ts tests/workbench/bot-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-e2e-review-20261104/dawn-science
+
+ ❯ |node| tests/bot/team-runner.test.ts (7 tests | 3 failed) 10ms
+   × cancel keeps ownership until abort cleanup resolves, even if idle arrives first 3ms
+   × timeout keeps ownership until abort cleanup resolves, even if idle arrives first 1ms
+   × overflow keeps ownership until abort cleanup resolves, even if idle arrives first 0ms
+ ❯ |node| tests/workbench/bot-contract.test.ts (1 test | 1 failed) 254ms
+   × accepts only the final Bot JSON while retaining tool preamble in the real transcript 253ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/bot/team-runner.test.ts > cancel keeps ownership until abort cleanup resolves, even if idle arrives first
+ FAIL  |node| tests/bot/team-runner.test.ts > overflow keeps ownership until abort cleanup resolves, even if idle arrives first
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/team-runner.test.ts:38:43
+     36|   else if(cause==='timeout')await vi.advanceTimersByTimeAsync(10)
+     37|   else sink({kind:'output',sessionId:'s',data:'x'.repeat(65537)})
+     38|   await Promise.resolve();expect(settled).toBe(false);expect(detached)…
+       |                                           ^
+     39|   // Repeated terminal notifications must not settle or start a second…
+     40|   sink({kind:'exited',sessionId:'s',exitCode:0});ctrl.abort()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/bot/team-runner.test.ts > timeout keeps ownership until abort cleanup resolves, even if idle arrives first
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/bot/team-runner.test.ts:38:43
+     36|   else if(cause==='timeout')await vi.advanceTimersByTimeAsync(10)
+     37|   else sink({kind:'output',sessionId:'s',data:'x'.repeat(65537)})
+     38|   await Promise.resolve();expect(settled).toBe(false);expect(detached)…
+       |                                           ^
+     39|   // Repeated terminal notifications must not settle or start a second…
+     40|   sink({kind:'exited',sessionId:'s',exitCode:0});ctrl.abort()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/workbench/bot-contract.test.ts > accepts only the final Bot JSON while retaining tool preamble in the real transcript
+AssertionError: {"output":"Unexpected token '先', \"先写文件，再交最终回\"... is not valid JSON","receipt":{"version":1,"state":"invalid","summary":"子任务未通过契约验收","reason":"Unexpected token '先', \"先写文件，再交最终回\"... is not valid JSON","deliverables":[]}}: expected { …(15) } to match object { status: 'completed', …(1) }
+(24 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "receipt": {
+-     "deliverables": [
+-       {
+-         "path": "out.txt",
+-         "state": "observed",
+-       },
+-     ],
+-     "state": "accepted",
++     "deliverables": [],
++     "state": "invalid",
+    },
+-   "status": "completed",
++   "status": "failed",
+  }
+
+ ❯ tests/workbench/bot-contract.test.ts:42:74
+     40|   await vi.waitFor(()=>expect(['completed','failed']).toContain(contro…
+     41|   const task=control.scheduler.读(control.current.id).tasks[0]!
+     42|   expect(task,JSON.stringify({output:task.output,receipt:task.receipt}…
+       |                                                                          ^
+     43|   expect(task.output).toBe(reply);expect(readFileSync(join(root,'out.t…
+     44|   const member=control.scheduler.读(control.current.id).members[0]!
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 4 passed (8)
+   Start at  22:11:55
+   Duration  2.09s (transform 895ms, setup 0ms, import 1.79s, tests 264ms, environment 0ms)

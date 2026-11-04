@@ -7,7 +7,7 @@
  * - 终态不可覆盖；转派 / 接管先把旧 attempt 作废（令牌换掉），迟到的结果自然被拒；
  * - 结束团队是归档（`finishedAt`），不是删。
  */
-import {TaskContractSchema,type TaskContract} from "../orchestration/task-contract.js"
+import {TaskContractSchema,TaskReceiptSchema,type TaskContract,type TaskReceipt} from "../orchestration/task-contract.js"
 import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -141,6 +141,7 @@ export function 加任务(
   const assignee = t.assignee?.trim()
   if (assignee && assignee !== "captain" && !找成员(team, assignee)) throw new 团队错误(`任务「${id}」指派给了不存在的成员「${assignee}」。`)
   const contract=t.contract!==undefined?TaskContractSchema.parse(t.contract):undefined
+  if(contract&&assignee==='captain')throw new 团队错误('严格契约任务须由成员执行并经宿主验收；队长文本结算不支持此能力。')
   if(contract&&t.outputs&&JSON.stringify([...new Set(t.outputs)].sort())!==JSON.stringify([...contract.outputs].sort()))throw new 团队错误('任务 outputs 与契约不一致')
   const 任务: 任务 = {
     ...(contract?{contract}:{}),
@@ -213,10 +214,13 @@ export function 开始做(team: 团队, taskId: string, attemptId: string, now =
 }
 
 /** 结算：必须出示当前令牌；终态不可覆盖 */
-export function 结算(team: 团队, taskId: string, attemptId: string, 结果: { ok: boolean; output: string }, now = Date.now()): 任务 {
+export function 结算(team: 团队, taskId: string, attemptId: string, 结果: { ok: boolean; output: string; receipt?: TaskReceipt }, now = Date.now()): 任务 {
   const t = 验令牌(team, taskId, attemptId)
+  const receipt=结果.receipt?TaskReceiptSchema.parse(结果.receipt):undefined
+  if(t.contract&&结果.ok&&receipt?.state!=='accepted')throw new 团队错误('严格契约任务缺少宿主验收回执，不能凭文本标为完成；请交由成员执行并验收。')
   t.status = 结果.ok ? "completed" : "failed"
   t.output = 结果.output
+  if(receipt)t.receipt=receipt
   t.updatedAt = now
   return t
 }
@@ -240,6 +244,7 @@ export function 转派(team: 团队, taskId: string, to: string | undefined, now
   if (!t) throw new 团队错误(`没有任务「${taskId}」。`)
   if (终态.includes(t.status)) throw new 团队错误(`任务「${taskId}」已经是 ${t.status}，终态不能转派。`)
   const 新 = to?.trim()
+  if(t.contract&&新==='captain')throw new 团队错误('严格契约任务不能转为队长文本结算；请转派给可执行并验收的成员。')
   if (新 && 新 !== "captain" && !找成员(team, 新)) throw new 团队错误(`没有叫「${新}」的成员。`)
   if (新 && 新 !== "captain" && 成员手上的任务(team, 新)) throw new 团队错误(`「${新}」手上还有没做完的任务。`)
   t.status = "pending"

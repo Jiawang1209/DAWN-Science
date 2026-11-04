@@ -2331,7 +2331,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       request.onSession(session.sessionId)
       const sid = session.sessionId
-      const run=()=>runBotTurn({sessionId: sid, signal: request.signal, attach: sink => sessions.attach(sid, sink), abort: async () => {await sessions.abort(sid);await botRuntime(sid).waitForIdle(sid)}, write: () => {
+      const run=()=>runBotTurn({sessionId: sid, signal: request.signal, ...(request.settings?.contract?{finalText:()=>botRuntime(sid).taskFinalText(sid)}:{}), attach: sink => sessions.attach(sid, sink), abort: async () => {await sessions.abort(sid);await botRuntime(sid).waitForIdle(sid)}, write: () => {
         const holder = sessions.leases.current(sid)?.holder ?? "engine"
         if (!sessions.leases.current(sid)) sessions.leases.acquire(sid, holder)
         sessions.write(sid, request.prompt, holder)

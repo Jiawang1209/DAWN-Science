@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team tests/workbench/bot-contract.test.ts tests/bot/team-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-e2e-review-20261104/dawn-science
+
+
+ Test Files  10 passed (10)
+      Tests  83 passed (83)
+   Start at  22:18:03
+   Duration  3.26s (transform 1.95s, setup 0ms, import 7.62s, tests 2.94s, environment 1ms)

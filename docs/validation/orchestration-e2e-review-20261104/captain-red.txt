@@ -1,0 +1,54 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-e2e-review-20261104/dawn-science
+
+ ❯ |node| tests/team/task-contract.test.ts (5 tests | 2 failed) 66ms
+   × cannot bypass host acceptance by declaring or reassigning a strict task to the captain 3ms
+   × settlement itself refuses a strict success without a host receipt, including old captain records 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/task-contract.test.ts > cannot bypass host acceptance by declaring or reassigning a strict task to the captain
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/team/task-contract.test.ts:46:83
+     44| it('cannot bypass host acceptance by declaring or reassigning a strict…
+     45|  const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'}),contr…
+     46|  expect(()=>加任务(team,{subject:'manual strict task',assignee:'captain',…
+       |                                                                                   ^
+     47|  const task=加任务(team,{subject:'strict member task',contract})
+     48|  expect(()=>转派(team,task.id,'captain')).toThrow(/契约/)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/task-contract.test.ts > settlement itself refuses a strict success without a host receipt, including old captain records
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/team/task-contract.test.ts:55:69
+     53|  const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'}),task=…
+     54|  const {attemptId}=领取(team,task.id,'captain')
+     55|  expect(()=>结算(team,task.id,attemptId,{ok:true,output:'trust me'})).to…
+       |                                                                     ^
+     56|  expect(task.status).toBe('claimed')
+     57| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  22:17:35
+   Duration  777ms (transform 123ms, setup 0ms, import 618ms, tests 66ms, environment 0ms)

@@ -1,0 +1,10 @@
+{
+  "src/bot/team-runner.ts": "94cd94316e49601e95ef084c8bb7cde632d901da98356b9e4ce979b996bde4c6",
+  "src/runtime/native.ts": "11bd843fcd04988c7a4cad58b7c4802fb7862d591ce58b0bfa0258968685e395",
+  "src/team/scheduler.ts": "93205c7a529438a843a390c8247ce16079331c7d2da350f65d90af9f8da020b1",
+  "src/team/state.ts": "905d61a807c596c0fcffbcbf92e29577ae4da59aee9c1f2d7cab8c7c620ea09d",
+  "src/workbench/backend.ts": "388d52a064a88d7a65cfcf84a40dfd04ed6d15b94cd27b9bfd84a8087b560135",
+  "tests/bot/team-runner.test.ts": "3eb0300811114ba3796af2bab0b5c5e804ecb8fb2feb376cdbbda5c805444420",
+  "tests/team/task-contract.test.ts": "2ad3854698a7484631b58e91ed757192599db2d5460a8b9d1f0ece2e2074b2ee",
+  "tests/workbench/bot-contract.test.ts": "8779640e89f94bbdfa2f1809e6ba940044b1debe0dcafd9c870da1173b4d8a15"
+}

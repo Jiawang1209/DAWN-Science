@@ -435,8 +435,7 @@ export class 团队调度器 {
           yielded = !ctrl.signal.aborted && !!outstanding
           if (yielded) return
           try {
-            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因" }, this.now())
-            if(结果.receipt)t.tasks.find(x=>x.id===任务.taskId)!.receipt=结果.receipt
+            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因",...(结果.receipt?{receipt:结果.receipt}:{}) }, this.now())
           if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
           } catch (e) {
             丢了 = e instanceof Error ? e.message : String(e)

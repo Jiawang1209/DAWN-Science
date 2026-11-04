@@ -37,10 +37,14 @@
 
 构建保留既有 direct-eval、大 chunk 提示；单测保留 jsdom canvas 未实现提示。测试使用本地确定性模型替身和临时数据，真实走 Pi、文件、受控子进程和 Electron。
 
-证据目录：[二次审查日志](../validation/unified-orchestration-review-20261104/)。归档仅去除行尾空白及末尾多余空行。
+证据：[完整单测](../validation/unified-orchestration-review-20261104/unit-final.txt)、[Electron 16 项](../validation/unified-orchestration-review-20261104/electron-final.txt)、[合并后主目录回归](../validation/unified-orchestration-review-20261104/main-tests.txt)、[主目录类型检查](../validation/unified-orchestration-review-20261104/main-typecheck.txt)、[主目录构建](../validation/unified-orchestration-review-20261104/main-build.txt)。归档仅去除行尾空白及末尾多余空行。
 
 ## Git 交付
 
 先在 codex/unified-orchestration 提交审查修复，再以 --ff-only 合并到原本干净的本地 main。合并后验证目标提交与源码树一致并在 main 运行回归。保留专项分支及隔离工作区，便于追溯；不拉取、不推送、不发布、不替换已安装应用，不修改真实会话数据。
 
-代码与分支验证已通过，未发现尚未处理的合并阻塞问题。下一步执行本地快进集成并记录 main 的验证结果。
+代码与分支验证已通过，未发现尚未处理的合并阻塞问题。已提交修复 8dc48839，并将本地 main 从 43dd7bdc 快进至 8dc48839（同时包含首轮实现 e8a90d6f）。
+
+合并后在原主目录重新构建、类型检查均通过；25 文件 / 158 项并发、取消、恢复、Native、Team/Bot 及真实 Pi 集成回归通过。`git diff --exit-code codex/unified-orchestration HEAD -- src tests e2e` 确认主目录源码与完整回归及 Electron 验证过的专项分支一致。随后仅追加本节与合并后日志，文档提交不改变行为。
+
+原主目录与专项工作区均干净；专项分支及工作区保留。没有运行 pull、push、发布或安装替换。

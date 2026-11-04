@@ -1,0 +1,3 @@
+Verified main source commit: 6f80f389da2eced805525a7178167a8196c94904
+39 changed source/test SHA256 hashes match the tested manifest.
+No src/tests/e2e differences from codex/subagent-task-contracts.

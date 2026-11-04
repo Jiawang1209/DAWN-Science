@@ -31,6 +31,14 @@
 
 按用户授权本地提交至专项分支并快进集成；合并后的检查另在本文补记。专项分支和隔离工作区保留，不推送、不发布。
 
+### 本地 main 集成结果
+
+功能及审查修复已提交为 `6f80f389`（feat(subagents): add verified contracts and frozen execution scopes），本地 main 从 `d99d9e95` 快进到该提交，无合并冲突。主目录合并前干净，未拉取、推送、发布、替换已安装应用或清理其他工作区。
+
+main 上再次运行类型检查与完整构建通过，44 文件 / 298 项关键回归通过（8.30 秒）；重新核对 39 个源码/测试哈希无漂移，src/tests/e2e 与已完整验收的专项提交完全一致。本补记及 main 验证输出单独作本地文档提交，未改变运行代码。专项分支及隔离工作区保留。
+
+合并后证据：[类型检查](../validation/subagent-task-contracts-20261104/main-typecheck.txt) / [构建](../validation/subagent-task-contracts-20261104/main-build.txt) / [关键回归](../validation/subagent-task-contracts-20261104/main-targeted.txt) / [源码一致性](../validation/subagent-task-contracts-20261104/main-source-match.txt)。
+
 首次完整运行：601 文件，6077 通过、11 跳过，1 项失败发生于既有 remote-terminal 测试清理阶段等待 PTY 退出的 1 秒断言；该生产代码与测试未改变，单独重跑 19 项全部通过。降低并发后的中间运行恰遇审查中新加的部分索引红灯用例，已停止（exit 130），不作为最终验收；保留全部记录。最终运行固定源码与构建产物，不在运行中修改测试。
 
 证据：

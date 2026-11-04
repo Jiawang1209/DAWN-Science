@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent tests/orchestration tests/team tests/bot tests/runtime/orchestration.test.ts tests/workbench/bot-ops.test.ts tests/protocol/task-contract.test.ts tests/integration/subagent-child.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  44 passed (44)
+      Tests  298 passed (298)
+   Start at  20:29:15
+   Duration  8.30s (transform 5.87s, setup 0ms, import 35.43s, tests 14.47s, environment 3ms)

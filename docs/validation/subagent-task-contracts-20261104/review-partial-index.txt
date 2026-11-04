@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-recovery.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  20:23:26
+   Duration  1.00s (transform 249ms, setup 0ms, import 836ms, tests 39ms, environment 0ms)

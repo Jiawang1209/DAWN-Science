@@ -1,5 +1,5 @@
 import {posix,resolve,dirname,basename,join} from "node:path"
-import {realpathSync} from "node:fs"
+import {realpathSync,statSync} from "node:fs"
 /** Resolve existing ancestors too: not-yet-created files can still have symlink aliases. */
 export function canonicalOutputPaths(outputs:readonly string[]|undefined,workspace:string):string[]|undefined {
  return outputs?.map(output=>{
@@ -11,6 +11,15 @@ export function canonicalOutputPaths(outputs:readonly string[]|undefined,workspa
     tail.unshift(basename(current));current=parent
    }
   }
+ })
+}
+/** Local reservations include existing file identity: realpath cannot unify hard links.
+ * Keep this separate from canonical paths used for permission checks and remote paths. */
+export function localOutputReservationPaths(outputs:readonly string[]|undefined,workspace:string):string[]|undefined {
+ const paths=canonicalOutputPaths(outputs,workspace)
+ return paths?.flatMap(path=>{
+  if(path==='*')return[path]
+  try{const file=statSync(path);return file.isFile()?[path,`inode:${file.dev}:${file.ino}`]:[path]}catch{return[path]}
  })
 }
 interface Entry {scope:string;paths:string[];start():void;cancel():void}
@@ -36,4 +45,16 @@ export class BotOutputLocks {
    this.queue=this.queue.filter(e=>e!==entry);entry.start()
   }
  }
+}
+
+/** One writer reservation pool for all local execution adapters, including different parent chats. */
+export const sharedTaskOutputLocks = new BotOutputLocks()
+export function outputLockScope(workspace:string):string {
+ return `workspace:${realpathSync(workspace)}`
+}
+export async function taskOutputReservation(workspace:string,settings:import('../orchestration/task-contract.js').TaskSettings,signal:AbortSignal):Promise<()=>void> {
+ const {scope}=settings
+ if(scope.access==='read-only'||(!scope.tools.includes('*')&&scope.tools.every(name=>['read','ls','grep','find','resource_search','resource_read','team_send','team_status'].includes(name))))return()=>{}
+ const outputs=scope.access==='workspace-write'?localOutputReservationPaths(scope.outputs,workspace):undefined
+ return sharedTaskOutputLocks.acquire(outputLockScope(workspace),outputs,signal)
 }

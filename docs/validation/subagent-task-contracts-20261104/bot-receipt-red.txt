@@ -1,0 +1,31 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/workbench/bot-ops.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/workbench/bot-ops.test.ts (1 test | 1 failed) 155ms
+   × 真实后端创建、续聊、跨项目隔离并将 Bot 历史留在坞 154ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/bot-ops.test.ts > 真实后端创建、续聊、跨项目隔离并将 Bot 历史留在坞
+AssertionError: expected 'already executed' to contain 'host-accepted-contract'
+
+Expected: "host-accepted-contract"
+Received: "already executed"
+
+ ❯ tests/workbench/bot-ops.test.ts:64:89
+     62|   await sessions.stop(main.sessionId);await backend.subscribeSession({…
+     63|   await vi.waitFor(()=>expect(bots.pendingResults(main.sessionId)).toH…
+     64|   expect(bots.pendingResults(main.sessionId).find(r=>r.taskId===comple…
+       |                                                                                         ^
+     65|   await backend.unsubscribeSession({sessionId:main.sessionId});await b…
+     66|   expect(bots.pendingResults(main.sessionId)).toHaveLength(2)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:44:15
+   Duration  1.76s (transform 706ms, setup 0ms, import 1.52s, tests 155ms, environment 0ms)

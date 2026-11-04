@@ -3,17 +3,18 @@ import {createHash, randomUUID} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {z} from 'zod'
+import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-contract.js'
 
 export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
 export type ChildKind = z.infer<typeof ChildKindSchema>
 export const RunStateSchema = z.enum(['idle', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted'])
 export type RunState = z.infer<typeof RunStateSchema>
-export const OutcomeSchema = z.object({ok: z.boolean(), output: z.string(), error: z.string().optional()}).strict()
-export interface Outcome {ok: boolean; output: string; error?: string}
+export const OutcomeSchema = z.object({ok: z.boolean(), output: z.string(), error: z.string().optional(), receipt: TaskReceiptSchema.optional()}).strict()
+export interface Outcome {ok: boolean; output: string; error?: string; receipt?: import('./task-contract.js').TaskReceipt}
 const ChildSchema = z.object({
   id: z.string(), kind: ChildKindSchema, address: z.array(z.string().min(1)).min(1).max(8),
   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),
-  updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(),
+  updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
 }).strict()
 export type ChildRecord = z.infer<typeof ChildSchema>
 const MessageSchema = z.object({
@@ -91,6 +92,18 @@ export class OrchestrationStore {
     const child = ChildSchema.parse({id, kind, address: [...address], label, state: 'idle', epoch: 0, updatedAt: Date.now()})
     this.change(state => {state.children.push(child)})
     return structuredClone(child)
+  }
+
+  /** Bind once, before admission; neither retries nor followups may widen a persisted task. */
+  bindTask(id: string, settings: TaskSettings): TaskSettings {
+    const parsed=TaskSettingsSchema.parse(settings), child=this.get(id)
+    if(!child)throw new Error('Unknown child')
+    if(child.settings){
+      if(JSON.stringify(child.settings)!==JSON.stringify(parsed))throw new Error('任务设置已冻结，不能修改契约或权限')
+      return child.settings
+    }
+    this.change(state=>{state.children.find(item=>item.id===id)!.settings=parsed})
+    return structuredClone(parsed)
   }
 
   update(id: string, patch: Partial<Pick<ChildRecord, 'state' | 'epoch' | 'reason' | 'result' | 'paused'>>, expectedEpoch?: number): ChildRecord {

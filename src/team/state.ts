@@ -7,6 +7,7 @@
  * - 终态不可覆盖；转派 / 接管先把旧 attempt 作废（令牌换掉），迟到的结果自然被拒；
  * - 结束团队是归档（`finishedAt`），不是删。
  */
+import {TaskContractSchema,type TaskContract} from "../orchestration/task-contract.js"
 import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -115,7 +116,7 @@ export function 找成员(team: 团队, name: string): 成员 | undefined {
 
 export function 加任务(
   team: 团队,
-  t: { id?: string | undefined; subject: string; description?: string | undefined; assignee?: string | undefined; outputs?: readonly string[] | undefined; dependencies?: readonly string[] | undefined },
+  t: { contract?: TaskContract | undefined; id?: string | undefined; subject: string; description?: string | undefined; assignee?: string | undefined; outputs?: readonly string[] | undefined; dependencies?: readonly string[] | undefined },
   now = Date.now(),
 ): 任务 {
   if (team.tasks.filter(task => !终态.includes(task.status)).length >= 团队上限.maxTasks) throw new 团队错误(`一支团队最多 ${团队上限.maxTasks} 个活动任务。`)
@@ -139,14 +140,17 @@ export function 加任务(
   }
   const assignee = t.assignee?.trim()
   if (assignee && assignee !== "captain" && !找成员(team, assignee)) throw new 团队错误(`任务「${id}」指派给了不存在的成员「${assignee}」。`)
+  const contract=t.contract!==undefined?TaskContractSchema.parse(t.contract):undefined
+  if(contract&&t.outputs&&JSON.stringify([...new Set(t.outputs)].sort())!==JSON.stringify([...contract.outputs].sort()))throw new 团队错误('任务 outputs 与契约不一致')
   const 任务: 任务 = {
+    ...(contract?{contract}:{}),
     id,
     subject,
     ...(t.description?.trim() ? { description: t.description.trim() } : {}),
     status: "pending",
     ...(assignee ? { assignee } : {}),
     dependencies: deps,
-    ...(t.outputs ? {outputs: [...new Set(t.outputs)]} : {}),
+    ...(contract?{outputs:contract.outputs}:t.outputs ? {outputs: [...new Set(t.outputs)]} : {}),
     attempt: 0,
     createdAt: now,
     updatedAt: now,

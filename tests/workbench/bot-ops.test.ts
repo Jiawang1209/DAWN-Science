@@ -57,10 +57,11 @@ it("真实后端创建、续聊、跨项目隔离并将 Bot 历史留在坞",asy
   await bridge.result(main.sessionId,{team,member,taskId:task.id,attemptId:"a1",result:{ok:false,output:"",error:task.output}})
   expect(bots.getDispatch("preflight")?.status).toBe("failed");expect(bots.pendingResults(main.sessionId)[0]).toMatchObject({status:"failed",summary:"SSH disconnected"});expect(bots.pendingResults(main.sessionId)[0]?.memberSessionId).toBeUndefined()
   // A crash after task settlement but before outbox persistence recovers once, without rerunning it.
-  const completed=加任务(team,{subject:"settled before crash",assignee:"stat"});completed.status="completed";completed.attemptId="a2";completed.output="already executed"
+  const completed=加任务(team,{subject:"settled before crash",assignee:"stat"});completed.status="completed";completed.attemptId="a2";completed.output="already executed";completed.receipt={version:1,state:"accepted",summary:"host-accepted-contract",deliverables:[]}
   写团队(join(store.get(main.sessionId)!.sessionDir,"teams",team.id),team)
   await sessions.stop(main.sessionId);await backend.subscribeSession({sessionId:main.sessionId})
   await vi.waitFor(()=>expect(bots.pendingResults(main.sessionId)).toHaveLength(2))
+  expect(bots.pendingResults(main.sessionId).find(r=>r.taskId===completed.id)?.summary).toContain("host-accepted-contract")
   await backend.unsubscribeSession({sessionId:main.sessionId});await backend.subscribeSession({sessionId:main.sessionId})
   expect(bots.pendingResults(main.sessionId)).toHaveLength(2)
   // Runtime allocation has returned, but receipt persistence fails: never promise rejection.

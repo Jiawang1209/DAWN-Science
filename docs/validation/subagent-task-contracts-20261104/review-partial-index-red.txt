@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-recovery.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/subagent/task-recovery.test.ts (6 tests | 2 failed) 31ms
+   × restores a terminal 'accepted' receipt with partial index=true 7ms
+   × restores a terminal 'blocked' receipt with partial index=true 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/task-recovery.test.ts > restores a terminal 'accepted' receipt with partial index=true
+AssertionError: expected undefined to match object { ok: true, …(1) }
+
+- Expected:
+{
+  "ok": true,
+  "receipt": {
+    "deliverables": [],
+    "state": "accepted",
+    "summary": "host acceptance",
+    "version": 1,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/subagent/task-recovery.test.ts:39:43
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/subagent/task-recovery.test.ts > restores a terminal 'blocked' receipt with partial index=true
+AssertionError: expected undefined to match object { ok: false, …(2) }
+
+- Expected:
+{
+  "error": "input missing",
+  "ok": false,
+  "receipt": {
+    "deliverables": [],
+    "state": "blocked",
+    "summary": "host acceptance",
+    "version": 1,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/subagent/task-recovery.test.ts:39:43
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  20:23:12
+   Duration  916ms (transform 201ms, setup 0ms, import 781ms, tests 31ms, environment 0ms)

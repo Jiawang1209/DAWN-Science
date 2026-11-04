@@ -8,7 +8,8 @@ import { TransferBatches } from "../remote/transfer-batches.js"
 import { missingFile } from "../remote/transfer-io.js"
 import {DeliveryService, type DeliveryOptions} from '../delivery/service.js'
 import { withSessionContext } from './session-input-context.js'
-import { BotOutputLocks, canonicalOutputPaths } from "../bot/output-locks.js"
+import {acceptTaskResult,taskInputReceipt} from "../orchestration/task-contract.js"
+import { sharedTaskOutputLocks, outputLockScope, taskOutputReservation, localOutputReservationPaths } from "../bot/output-locks.js"
 import { verifiedArtifacts } from "../bot/context.js"
 /**
  * Workbench 的真实后端（补 Part 1 的收口）。
@@ -763,7 +764,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   })
   const 会话事件接线 = new Map<string, () => void>()
   const pausedBotOwners = new Set<string>()
-  const botOutputLocks = new BotOutputLocks()
+  const botOutputLocks = sharedTaskOutputLocks
   const directBotTurns = new Map<string, Set<AbortController>>()
 
   /** 创建、恢复与工作目录迁移共用；收摊等 exited 再退订，保留停止期间的最后一笔账。 */
@@ -2287,7 +2288,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const resultId = `${team.id}:${task.id}:${attemptId}`
         if (opts.bots?.getResult(resultId)) continue
         const output = task.output ?? "任务已中断，尚无可核验交付"
-        await botBridge.result(owner, {team, member, taskId: task.id, attemptId, result: {ok: task.status === "completed", output, ...(task.status === "failed" ? {error: output} : {})}})
+        await botBridge.result(owner, {team, member, taskId: task.id, attemptId, result: {ok: task.status === "completed", output, ...(task.receipt?{receipt:task.receipt}:{}), ...(task.status === "failed" ? {error: output} : {})}})
       }
     },
     cancel: async (owner, {team, member, taskId, attemptId}) => {
@@ -2301,6 +2302,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
     run: async (ownerId, request) => {
       const service = requireBots(), {owner, key} = service.scope(ownerId)
+      if(owner.connectionId&&request.settings?.contract)throw new Error("远端任务尚不支持严格子任务契约验收")
       if (request.member.botScopeKey && request.member.botScopeKey !== key) throw new Error("主会话的工作目录已变化，请在当前目录重新派单")
       const profile = service.profile(request.member.botId!)
       const declared = request.team.tasks.find(t => t.id === request.taskId)?.outputs
@@ -2312,9 +2314,11 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         const canonical = resolved.stdout.trim().split("\n")
         // Unknown canonicalization is exclusive, never a silent local fallback.
         if (resolved.code === 0 && canonical.length === declared.length && canonical.every(p => p.startsWith("/"))) outputs = canonical
-      } else if (!owner.connectionId) outputs = canonicalOutputPaths(declared, owner.workspace)
-      const release = await botOutputLocks.acquire(key, outputs, request.signal)
+      } else if (!owner.connectionId) outputs = localOutputReservationPaths(declared, owner.workspace)
+      const release = !owner.connectionId&&request.settings?await taskOutputReservation(owner.workspace,request.settings,request.signal):await botOutputLocks.acquire(owner.connectionId?key:outputLockScope(owner.workspace),outputs,request.signal)
       try {
+      const inputProblem=request.settings?.contract?taskInputReceipt(request.settings.contract,owner.workspace):undefined
+      if(inputProblem)return{ok:false,output:'',error:inputProblem.reason??inputProblem.summary,receipt:inputProblem}
       // Active team members keep the configuration snapshot recorded at team creation.
       const frozen = {...profile, instructions: request.member.botInstructions ?? botInstructions(profile),
         ...(request.member.provider && request.member.model ? {model: {provider: request.member.provider, model: request.member.model}} : {})}
@@ -2327,18 +2331,25 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       request.onSession(session.sessionId)
       const sid = session.sessionId
-      return await runBotTurn({sessionId: sid, signal: request.signal, attach: sink => sessions.attach(sid, sink), abort: async () => {await sessions.abort(sid);await botRuntime(sid).waitForIdle(sid)}, write: () => {
+      const run=()=>runBotTurn({sessionId: sid, signal: request.signal, attach: sink => sessions.attach(sid, sink), abort: async () => {await sessions.abort(sid);await botRuntime(sid).waitForIdle(sid)}, write: () => {
         const holder = sessions.leases.current(sid)?.holder ?? "engine"
         if (!sessions.leases.current(sid)) sessions.leases.acquire(sid, holder)
         sessions.write(sid, request.prompt, holder)
       }})
+      const result:import("../team/types.js").成员轮结果=request.settings&&!owner.connectionId?await botRuntime(sid).runWithTaskScope(sid,request.settings,run):await run()
+      if(result.ok&&request.settings?.contract){
+        const evidence=result.evidence??[]
+        const receipt=acceptTaskResult(request.settings.contract,result.output,evidence,owner.workspace,!!owner.connectionId)
+        return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??'未通过契约验收'}:{})}
+      }
+      return result
       } finally {release()}
     },
     result: async (owner, event) => {
       if (!event.member.botId || !opts.bots) return
       const dispatch = opts.bots.dispatchForTask(event.team.id, event.taskId)
       const record = event.member.sessionId ? sessions.get(event.member.sessionId) : undefined
-      const refs = record ? await verifiedArtifacts(event.result.output, record.remoteCwd ?? record.workspace, async path => {
+      const refs = record ? await verifiedArtifacts(event.result.output + (event.result.receipt?.state==='accepted'?"\n"+event.result.receipt.deliverables.map(d=>"`"+d.path+"`").join("\n"):""), record.remoteCwd ?? record.workspace, async path => {
         if (record.connectionId) {
           const quote = (value: string) => "'" + value.replace(/'/g, "'\\''") + "'"
           const checked = await 连着的(record.connectionId).exec(`realpath -- ${quote(record.remoteCwd!)} ${quote(path)}`, {cwd: record.remoteCwd!})
@@ -2353,7 +2364,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }, !!record.connectionId) : {artifacts: [], unverified: []}
       opts.bots.enqueueResult({resultId: `${event.team.id}:${event.taskId}:${event.attemptId}`, ...(dispatch ? {requestId: dispatch.requestId} : {}), ownerSessionId: owner,
         botId: event.member.botId, teamId: event.team.id, taskId: event.taskId, attemptId: event.attemptId, ...(event.member.sessionId ? {memberSessionId: event.member.sessionId} : {}),
-        status: event.result.ok ? "completed" : "failed", summary: (event.result.ok ? event.result.output : event.result.error ?? "任务失败") + (refs.unverified.length ? `\n未核验产物：${refs.unverified.join("、")}` : ""), artifacts: refs.artifacts})
+        status: event.result.ok ? "completed" : "failed", summary: (event.result.receipt?`宿主契约回执：${JSON.stringify(event.result.receipt)}`:event.result.ok ? event.result.output : event.result.error ?? "任务失败") + (refs.unverified.length ? `\n未核验产物：${refs.unverified.join("、")}` : ""), artifacts: refs.artifacts})
       ;(sessions.runtimeOf(owner) as NativeRuntime | undefined)?.botArtifacts?.(owner, event.team.id, event.taskId, event.attemptId, refs.artifacts)
       if (dispatch) opts.bots.updateDispatch(dispatch.requestId, {status: event.result.ok ? "completed" : "failed", ...(event.member.sessionId ? {memberSessionId: event.member.sessionId} : {})})
       void botDelivery?.flush(owner).catch(error => console.error("[Bot] 结果回传失败", error))

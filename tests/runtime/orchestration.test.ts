@@ -158,3 +158,20 @@ it('a corrupt team snapshot cannot prevent stop from cancelling and disposing th
   expect(cancelledBeforeRepair).toBe(true)
   expect(disposedBeforeRepair).toBe(true)
 })
+
+it('a scoped persistent Bot turn uses the same gate and cannot retain a wider scope after cleanup',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-task-scope-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'})
+ await runtime.start({sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
+ const {resolveTaskSettings}=await import('../../src/subagent/task-tools.js')
+ const {TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const tools=(runtime as unknown as{sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,params:unknown):Promise<{isError?:boolean}>}}}>}).sessions.get('p')!.session
+ try{
+  const result=await runtime.runWithTaskScope('p',resolveTaskSettings(TaskContractSchema.parse({}),'allow-all'),async()=>{
+   expect((await tools.getToolDefinition('write').execute('denied',{path:'out.txt',content:'wrong'})).isError).toBe(true)
+   return{ok:true,output:'finished'}
+  })
+  expect(result.evidence).toEqual([])
+  expect((await tools.getToolDefinition('write').execute('allowed',{path:'out.txt',content:'right'})).isError).not.toBe(true)
+ }finally{await runtime.stop('p')}
+})

@@ -1,3 +1,4 @@
+import {taskTeamSnapshot} from "../team/task-snapshot.js"
 import type { ResponseOf } from "../protocol/index.js"
 import { geoTools, sraTools, uniprotTools, type ScienceFlags } from "../science/tools.js"
 import type { ScienceClient } from "../science/model.js"
@@ -8,6 +9,8 @@ import { existsSync } from 'node:fs'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { TERMINAL_REPLY_STYLE } from './terminal-reply-style.js'
 import { getCurrentSystemMessage, getSystemMessageText } from '@earendil-works/pi-ai'
+import {resolveTaskSettings,taskToolDenial} from "../subagent/task-tools.js"
+import type {TaskSettings} from "../orchestration/task-contract.js"
 import { sessionUsage } from './session-usage.js'
 import { AnalysisRouteBook } from './analysis-route-book.js'
 import { validateRouteEvidence, latestRouteUserText, routeTurnDenial, collectRouteToolEvidence, type RouteToolEvidence } from './analysis-route-evidence.js'
@@ -610,6 +613,13 @@ function 最后一次真回复(messages: readonly unknown[]): number | undefined
 }
 
 export class NativeRuntime implements AgentRuntime {
+  private readonly taskScopes=new Map<string,{settings:TaskSettings;evidence:RouteToolEvidence[]}>()
+  async runWithTaskScope<T extends {ok:boolean;output:string}>(sessionId:string,settings:TaskSettings,work:()=>Promise<T>):Promise<T&{evidence:RouteToolEvidence[]}> {
+    if(this.taskScopes.has(sessionId))throw new Error('子任务会话已有冻结的执行范围')
+    const scope={settings,evidence:[] as RouteToolEvidence[]}
+    this.taskScopes.set(sessionId,scope)
+    try{return{...await work(),evidence:structuredClone(scope.evidence)}}finally{if(this.taskScopes.get(sessionId)===scope)this.taskScopes.delete(sessionId)}
+  }
   private botBridge: BotRuntimeBridge | undefined
   private readonly botTeams = new Map<string, { scheduler: 团队调度器; current: { id: string | undefined }; create: (botId: string) => Promise<void> }>()
   configureBots(bridge: BotRuntimeBridge): void { this.botBridge = bridge }
@@ -700,7 +710,7 @@ export class NativeRuntime implements AgentRuntime {
     const origin = botTeamOriginScope(team)
     // Never retain a stamped live owner identity from a historical or imported snapshot.
     const {botOwnerContext: _previous, ...stored} = team as typeof team & {botOwnerContext?: unknown}
-    const snapshot = {...stored, ...(origin ? {botOriginScopeKey: origin} : {})}
+    const snapshot = {...taskTeamSnapshot(stored), ...(origin ? {botOriginScopeKey: origin} : {})}
     try {
       const botOwnerContext = this.botBridge?.ownerContext?.(owner)
       return {...snapshot, ...(origin && botOwnerContext?.key === origin ? {botOwnerContext} : {})}
@@ -1677,6 +1687,8 @@ export class NativeRuntime implements AgentRuntime {
     const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       orchestration,
+      remote:Boolean(spec.remote),
+      taskPolicy:()=>this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??"ask-risky",
       sessionId: spec.sessionId,
       projectRoot: spec.workspace,
       dirs: this.子agent层(spec.workspace),
@@ -1696,6 +1708,10 @@ export class NativeRuntime implements AgentRuntime {
         ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
         // 每个子任务一个 agentDir，**关在这个会话的目录里**（不变式 #11）。2026-09-27 起实际用的是下面按调用分的 `运行目录`
         agentDirOf: (i) => join(spec.sessionDir, "subagents", String(i)),
+        authorize:(name,params)=>{
+          const decision=this.opts.gate?.(name,params,{workspace:spec.workspace,sessionId:spec.sessionId})
+          return decision&&decision.kind!=='allow'?`${decision.reason}（子任务不能新增批准，请交还主会话）`:undefined
+        },
         ...(子任务资源 ? {resources: 子任务资源} : {}),
         ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
       },
@@ -1718,7 +1734,7 @@ export class NativeRuntime implements AgentRuntime {
         if (!parent || orchestration.isClosed) throw new Error("父会话已关闭，结果保留待送")
         const child = orchestration.store.get(message.childId)!
         await parent.session.sendCustomMessage({customType: "dawn-subagent-result", display: false,
-          content: `子 agent「${child.label}」[${child.id}] 的协作结果（${message.status}）。执行成功不代表产物或科学结论已核验。\n${message.outcome?.output || message.outcome?.error || "没有可用文字结果"}`,
+          content: `子 agent「${child.label}」[${child.id}] 的协作结果（${message.status}）。执行成功不代表产物或科学结论已核验。\n${message.outcome?.receipt ? `宿主契约回执：${JSON.stringify(message.outcome.receipt)}\n` : ""}${message.outcome?.output || message.outcome?.error || "没有可用文字结果"}`,
           details: {messageId: message.id, childId: child.id, status: message.status}}, {triggerTurn: false})
         this.emit({kind: "notice", sessionId: spec.sessionId, text: `子 agent「${child.label}」的结果已返回（${message.status}）。`})
       },
@@ -1754,6 +1770,10 @@ export class NativeRuntime implements AgentRuntime {
     const 团队轮标识 = new Map<string, number>()
     const 调度器 = new 团队调度器({
       orchestration,
+      prepareTask:(member,task)=>{
+        if(spec.remote&&task?.contract)throw new Error('远端任务尚不支持严格子任务契约验收')
+        return resolveTaskSettings(task?.contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:定义().find(d=>d.name===member.agent)?.tools)
+      },
       sessionDir: spec.sessionDir,
       定义,
       跑: {
@@ -1762,6 +1782,7 @@ export class NativeRuntime implements AgentRuntime {
           provider: native.provider,
           model: native.model,
           cwd: spec.workspace,
+          authorize:(name,params)=>{const decision=this.opts.gate?.(name,params,{workspace:spec.workspace,sessionId:spec.sessionId});return decision&&decision.kind!=='allow'?decision.reason:undefined},
           ...(子任务资源 ? {resources: 子任务资源} : {}),
           ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
           ...(子进程凭证 ? { credentials: 子进程凭证 } : {}),
@@ -4345,6 +4366,9 @@ ${描述}`
     return {
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
+        const frozenTask=this.taskScopes.get(spec.sessionId)
+        const taskDenial=frozenTask?taskToolDenial(frozenTask.settings.scope,spec.workspace,name,params):undefined
+        if(taskDenial)return{content:[{type:'text',text:taskDenial}],isError:true,details:undefined}
         if (terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []) &&
             ['bash', 'run_code'].includes(name) && !本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? [])) {
           return { content: [{ type: 'text', text: '本轮从终端输入，请使用所选终端工具执行，不能改走其他执行入口。' }], isError: true, details: undefined }
@@ -4389,6 +4413,7 @@ ${描述}`
         tools?.set(toolCallId, {
           toolCallId, name, status: response.isError ? 'error' : 'done', result: output, input: params, ...observation,
         })
+        frozenTask?.evidence.push({toolCallId,name,status:response.isError?'error':'done',result:output,input:params,...observation})
         // Persist app observations in the actual tool result. Models cannot supply
         // these details; a denied outer gate returns before this point.
         return { ...response, details: { ...response.details, analysisRouteEvidence: observation } }
@@ -4573,6 +4598,7 @@ ${描述}`
     await coordinationClosing
     this.orchestrations.delete(sessionId)
     this.orchestrationControls.delete(sessionId)
+    this.taskScopes.delete(sessionId)
     this.产物们.delete(sessionId)
     // 这一轮的方案底（先出方案）：会话都停了，这一轮不会再收尾核对；方案簿本身不摘（见 `方案簿们`）
     this.轮基线.delete(sessionId)

@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/subagent/task-tools.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/subagent/task-tools.test.ts (6 tests | 1 failed) 17ms
+   × rejects writes through a hard-link alias of a declared input 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/task-tools.test.ts > rejects writes through a hard-link alias of a declared input
+AssertionError: expected undefined to be defined
+ ❯ tests/subagent/task-tools.test.ts:41:90
+     39|  const cwd=root();writeFileSync(join(cwd,'input.csv'),'original');link…
+     40|  const settings=resolveTaskSettings(TaskContractSchema.parse({access:'…
+     41|  expect(taskToolDenial(settings.scope,cwd,'write',{path:'out.csv',cont…
+       |                                                                                          ^
+     42| })
+     43| it('narrow scopes cannot delegate an effect through teammate messaging…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  19:22:55
+   Duration  661ms (transform 68ms, setup 0ms, import 555ms, tests 17ms, environment 0ms)

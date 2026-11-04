@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/task-contract.test.ts (5 tests | 1 failed) 60ms
+   × rejects persisted settings whose execution scope contradicts the frozen contract 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-contract.test.ts > rejects persisted settings whose execution scope contradicts the frozen contract
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/orchestration/task-contract.test.ts:40:151
+     38|  const {TaskSettingsSchema}=await import('../../src/orchestration/task…
+     39|  const contract=TaskContractSchema.parse({})
+     40|  expect(TaskSettingsSchema.safeParse({contract,scope:{version:1,tier:'…
+       |                                                                                                                                                       ^
+     41| })
+     42|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  19:21:52
+   Duration  678ms (transform 82ms, setup 0ms, import 444ms, tests 60ms, environment 0ms)

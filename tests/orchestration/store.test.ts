@@ -62,3 +62,13 @@ it('the same backend address in two parent chats cannot produce an interchangeab
   expect(first.id).not.toBe(second.id)
   expect(b.get(first.id)).toBeUndefined()
 })
+
+it('freezes task settings across reopen and refuses contract or permission widening', () => {
+  const dir=mkdtempSync(join(tmpdir(),'dawn-frozen-task-'));roots.push(dir)
+  const store=new OrchestrationStore(dir,'p'),child=store.register('subagent',['a'],'a')
+  const scope={version:1 as const,tier:'deny-risky' as const,access:'read-only' as const,tools:['read'],inputs:[],outputs:[]}
+  store.bindTask(child.id,{scope})
+  const recovered=new OrchestrationStore(dir,'p')
+  expect(recovered.get(child.id)?.settings?.scope).toEqual(scope)
+  expect(()=>recovered.bindTask(child.id,{scope:{...scope,tier:'allow-all'}})).toThrow(/frozen|冻结/)
+})

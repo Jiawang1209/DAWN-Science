@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/task-contract.test.ts (7 tests | 1 failed) 11ms
+   × enforces caller-required execution and review rather than accepting an unrun script as analysis 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-contract.test.ts > enforces caller-required execution and review rather than accepting an unrun script as analysis
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "requireExecution"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"requireExecution\""
+  }
+]
+ ❯ tests/orchestration/task-contract.test.ts:50:36
+     48|
+     49| it('enforces caller-required execution and review rather than acceptin…
+     50|  const needsRun=TaskContractSchema.parse({access:'workspace-exec',requ…
+       |                                    ^
+     51|  expect(acceptTaskResult(needsRun,result(),[],root()).state).toBe('blo…
+     52|  const needsReview=TaskContractSchema.parse({requireReview:true})
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  19:26:26
+   Duration  282ms (transform 52ms, setup 0ms, import 179ms, tests 11ms, environment 0ms)

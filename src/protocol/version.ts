@@ -598,7 +598,8 @@
 /** 8.33: remote terminals share the existing SSH connection and owning conversation. */
 /** 8.34: provider catalog exposes credential-free endpoint defaults for setup. */
 /** 8.35: endpoint defaults include per-model API and base URL metadata. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.39"
+/** 8.40：团队任务可选契约与宿主验收回执；执行权限快照不进入 UI。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.40"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

@@ -18,6 +18,8 @@
  * (allows editing mid-session)"*）。代价是每次多一次目录读取，
  * 换来的是「改完定义不用重启会话」。对手写 markdown 的东西，这个交换是划算的。
  */
+import {TaskContractSchema,TaskContractParameters,TaskSettingsSchema,type TaskContract,type TaskSettings} from "../orchestration/task-contract.js"
+import {resolveTaskSettings} from "./task-tools.js"
 import { Type } from "typebox"
 import { 子目录段 } from "../protocol/subagent-id.js"
 import { loadSubagentsFrom, type DefinitionLoad, loadSubagentDefinitions } from "./definitions.js"
@@ -33,6 +35,9 @@ import type { AgentEvent, SessionId } from "../runtime/types.js"
 import { 写元, 读元, type 子运行元 } from "./run-dir.js"
 
 export interface SubagentToolOptions {
+  remote?: boolean
+  taskPolicy?: ()=>import("../policy/permissions.js").权限档
+  taskStore?: import("../orchestration/store.js").OrchestrationStore
   orchestration?: import("../orchestration/service.js").OrchestrationService | undefined
   sessionId: SessionId
   /** 定义从这里找：`<projectRoot>/.dawn/agents/*.md` */
@@ -62,6 +67,7 @@ export interface SubagentToolOptions {
 }
 
 const TaskItem = Type.Object({
+  contract: Type.Optional(TaskContractParameters),
   agent: Type.String({ description: "子 agent 的名字" }),
   task: Type.String({ description: "交给它的任务" }),
 })
@@ -75,6 +81,7 @@ const TaskItem = Type.Object({
  * 且带自动重试，我们只需把这一层的规则说清楚）。
  */
 const parameters = Type.Object({
+  contract: Type.Optional(TaskContractParameters),
   agent: Type.Optional(Type.String({ description: "single 模式：用哪个子 agent" })),
   task: Type.Optional(Type.String({ description: "single 模式：任务内容" })),
   tasks: Type.Optional(
@@ -90,10 +97,11 @@ const parameters = Type.Object({
 })
 
 interface Params {
+  contract?: TaskContract
   agent?: string
   task?: string
-  tasks?: { agent: string; task: string }[]
-  chain?: { agent: string; task: string }[]
+  tasks?: { agent: string; task: string; contract?: TaskContract }[]
+  chain?: { agent: string; task: string; contract?: TaskContract }[]
 }
 
 /** pi 的工具结果形状。**不引 pi 的类型**——这一层只需要形状对 */
@@ -128,6 +136,24 @@ function 交回的(r: SubagentResult): NonNullable<子运行元["result"]> {
   }
 }
 
+/** Both foreground and mailbox adapters bind the same immutable settings before execution. */
+export function prepareSubagentTask(opts:SubagentToolOptions,callId:string,index:number,task:{agent:string;contract?:TaskContract},tools?:readonly string[]):TaskSettings|undefined {
+  if(opts.remote&&task.contract)throw new Error('远端任务尚不支持严格子任务契约验收')
+  const store=opts.taskStore??opts.orchestration?.store
+  if(!store&&!opts.taskPolicy&&!task.contract)return undefined
+  const child=store?.register('subagent',[子目录段(callId),String(index)],task.agent)
+  const dir=目录于(opts,callId)(index),meta=读元(dir)
+  const previous=child?.settings??(meta?.settings?TaskSettingsSchema.parse(meta.settings):undefined)
+  if(previous&&task.contract&&JSON.stringify(previous.contract)!==JSON.stringify(task.contract))throw new Error('任务契约已冻结，不可通过续问修改')
+  const settings=previous??resolveTaskSettings(task.contract,opts.taskPolicy?.()??'ask-risky',tools)
+  const bound=child?store!.bindTask(child.id,settings):settings
+  if(meta){
+    if(meta.settings&&JSON.stringify(TaskSettingsSchema.parse(meta.settings))!==JSON.stringify(bound))throw new Error('转录任务权限与编排状态冲突')
+    if(!meta.settings){const error=写元(dir,{...meta,settings:bound});if(error)throw new Error(`冻结任务权限未能保存：${error}`)}
+  }
+  return bound
+}
+
 export function createSubagentTool(opts: SubagentToolOptions) {
   const load = (): DefinitionLoad => 可用定义(opts)
 
@@ -138,7 +164,8 @@ export function createSubagentTool(opts: SubagentToolOptions) {
     parameters,
 
     async execute(toolCallId: string, params: Params, signal?: AbortSignal): Promise<ToolResult> {
-      const req = toRequest(params)
+      let req:ReturnType<typeof toRequest>
+      try {req=toRequest({...params,...(params.contract!==undefined?{contract:TaskContractSchema.parse(params.contract)}:{})})}catch(error){return text(String(error),true)}
       if ("error" in req) return text(req.error, true)
 
       const { agents, problems } = load()
@@ -153,6 +180,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
         }
       }
       const executor = new SubagentExecutor({
+        prepareTask:(i,task,definition)=>prepareSubagentTask(opts,toolCallId,i,{...task,...(task.contract!==undefined?{contract:TaskContractSchema.parse(task.contract)}:{})},definition.tools),
         childOf: opts.childOf,
         ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
         // 运行目录按调用分（2026-09-27）：executor 只认 `agentDirOf(index)`，这里把 toolCallId 绑进去
@@ -186,7 +214,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       summary.results.forEach((r, index) => {
         const 错 = r.error ?? "子 agent 失败，但没有给出原因"
         const 旧 = 读元(目录(index))
-        if (旧) 记(index, { ...旧, status: r.ok ? "ok" : "error", ...(r.ok ? { result: 交回的(r) } : { error: 错 }), endedAt: Date.now() })
+        if (旧) 记(index, { ...旧, status: r.ok ? "ok" : "error", ...(r.receipt?{receipt:r.receipt}:{}), ...(r.ok ? { result: 交回的(r) } : { error: 错 }), endedAt: Date.now() })
         // 先收子转录、再收 chip：界面看到 chip 变成完成时，点开那一格里结果已经在了
         opts.emit({
           kind: "subagent_event",
@@ -226,6 +254,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
 export function createSubagentFollowUp(opts: SubagentToolOptions) {
   return async (toolCallId: string, index: number, agent: string, text: string, signal?: AbortSignal): Promise<SubagentResult> => {
     const executor = new SubagentExecutor({
+      prepareTask:(i,task,definition)=>prepareSubagentTask(opts,toolCallId,i,task,definition.tools),
       childOf: opts.childOf,
       ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
       context: { ...opts.context, agentDirOf: 目录于(opts, toolCallId) },
@@ -250,6 +279,7 @@ export function createSubagentFollowUp(opts: SubagentToolOptions) {
 function describe(load: ReturnType<typeof loadSubagentDefinitions>): string {
   const lines = [
     "把一件事交给子 agent 去做。每个子 agent 在**独立进程**里跑，有自己的上下文窗口。",
+    "可选 contract 指定 inputs、outputs、access；给出后最终 JSON 回执由宿主按真实证据和文件验收，默认只读。未通过验收不会继续 chain。",
     "派单时必须在任务正文写清用户的执行范围、数据保护和交付要求。配有只读资源时子 agent 可按需查技能/相关记忆，但检索不能代替硬约束传递。",
     `三种模式：single（agent + task）、parallel（tasks，最多 ${SUBAGENT_LIMITS.maxTasks} 个，` +
       `${SUBAGENT_LIMITS.maxConcurrent} 并发）、chain（chain，可用 {previous} 引上一步结果）。` +
@@ -304,7 +334,7 @@ function toRequest(p: Params): { request: SubagentRequest } | { error: string } 
   if (p.tasks) return { request: { mode: "parallel", tasks: p.tasks } }
   if (p.chain) return { request: { mode: "chain", chain: p.chain } }
   if (!p.agent || !p.task) return { error: "single 模式要同时给 agent 和 task。" }
-  return { request: { mode: "single", agent: p.agent, task: p.task } }
+  return { request: { mode: "single", agent: p.agent, task: p.task, ...(p.contract?{contract:p.contract}:{}) } }
 }
 
 /** 结果 → 回给模型的文本 */
@@ -315,6 +345,7 @@ function render(
 ): string {
   const parts = results.map((r, i) => {
     const head = `## [${i + 1}] ${r.agent}：${r.ok ? "完成" : "失败"}`
+    if(r.receipt)return `${head}\n任务回执（格式/文件检查不等于科学验收）：${JSON.stringify(r.receipt)}`
     if (!r.ok) return `${head}\n${r.error ?? "（没有给出原因）"}`
     // 截断了就说清省了多少——真数，不是「已截断」四个字（规格 7.5）
     const note = r.outputTruncated

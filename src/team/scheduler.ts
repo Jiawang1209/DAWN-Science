@@ -8,6 +8,8 @@
  * 真相在磁盘：每次变更「读 → 变 → 写」，内存里不留一份会过期的副本。
  * 一个会话一个调度器。旧子 agent 使用独立子进程；托管 Bot 使用注入的 Native 执行器与各自持久会话。
  */
+import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
+import {taskOutputReservation} from "../bot/output-locks.js"
 import { join } from "node:path"
 import { randomUUID } from "node:crypto"
 import type { SubagentDefinition } from "../subagent/definitions.js"
@@ -19,6 +21,7 @@ import { 团队上限, type 团队, type 成员, type BotExchange, type BotTeamM
 import { enqueueBotExchange, reconcileBotExchanges, sourceIsCurrent, botRequestPrompt, botReplyPrompt, type BotRequestInput, type BotMessageInput, appendBotMessage, appendBotEvent, validateBotMessage, botRoomPrompt } from "../bot/collaboration.js"
 
 export interface BotMemberRun {
+  settings?: TaskSettings
   team: 团队
   member: 成员
   taskId?: string | undefined
@@ -30,9 +33,10 @@ export interface BotMemberRun {
 }
 
 export interface 调度器选项 {
+  prepareTask?: (member:成员,task:import("./types.js").任务|undefined)=>TaskSettings|undefined
   orchestration?: import("../orchestration/service.js").OrchestrationService | undefined
-  memberRunner?: (request: BotMemberRun) => Promise<{ ok: boolean; output: string; error?: string }>
-  onResult?: (event: { team: 团队; member: 成员; taskId: string; attemptId: string; result: { ok: boolean; output: string; error?: string } }) => void | Promise<void>
+  memberRunner?: (request: BotMemberRun) => Promise<成员轮结果>
+  onResult?: (event: { team: 团队; member: 成员; taskId: string; attemptId: string; result: 成员轮结果 }) => void | Promise<void>
   sessionDir: string
   /** 名册：按名字找定义（每轮重读，改了定义不用重启） */
   定义: () => readonly SubagentDefinition[]
@@ -319,17 +323,21 @@ export class 团队调度器 {
       })
       snapshot = team
       const m = 找成员(team, member)!
+      const assignment=任务?team.tasks.find(t=>t.id===任务.taskId):undefined
+      const candidate=assignment?.settings??(!任务?m.taskSettings:undefined)??this.opts.prepareTask?.(m,assignment)
+      const settings=candidate?TaskSettingsSchema.parse(candidate):undefined
+      if(settings)team=this.改(teamId,t=>{const active=找成员(t,member)!;active.taskSettings=settings;if(任务){const task=t.tasks.find(x=>x.id===任务.taskId)!;task.settings??=settings}})
       const child = collaboration?.phase === "reply" ? team.collaboration?.find(x => x.id === collaboration.exchangeId) : undefined
       const handlingExchangeId = collaboration?.phase === "request" ? collaboration.exchangeId : child?.parentExchangeId
       const botTurn = m.botId ? { task: 任务, collaboration, conversation, handlingExchangeId, requested: new Set<string>(), botId: m.botId, scope: m.botScopeKey, sessionId: m.sessionId } : undefined
       if (botTurn) this.botTurns.set(key, botTurn)
       const def = this.opts.定义().find((d) => d.name === m.agent)
       this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
-      let 结果: { ok: boolean; output: string; error?: string }
-      const execute = async (runSignal: AbortSignal): Promise<成员轮结果> => {
+      let 结果: 成员轮结果
+      const backend = async (runSignal: AbortSignal): Promise<成员轮结果> => {
         if (m.botId && this.opts.memberRunner) {
           try {
-            return await this.opts.memberRunner({ team, member: m, taskId: 任务?.taskId, collaboration, conversation, prompt: prompt + botRoomPrompt(team), signal: runSignal, onSession: (sessionId) => {
+            return await this.opts.memberRunner({ team, member: m, ...(settings?{settings}:{}), taskId: 任务?.taskId, collaboration, conversation, prompt: taskPrompt(prompt,settings?.contract) + botRoomPrompt(team), signal: runSignal, onSession: (sessionId) => {
               if (this.跑着.get(key) !== ctrl || runSignal.aborted) return
               if (botTurn) botTurn.sessionId = sessionId
               this.改(teamId, t => { const member = 找成员(t, m.name); if (member && memberGeneration(member) === memberGeneration(m)) member.sessionId = sessionId })
@@ -343,6 +351,7 @@ export class 团队调度器 {
           const 成员目录 = join(this.dir(teamId), m.sessionDir)
           return await 跑一轮(
             {
+              ...(settings?{settings}:{}),
               definition: def,
               memberName: member,
               teamId,
@@ -363,11 +372,22 @@ export class 团队调度器 {
           )
         }
       }
+      const execute=async(runSignal:AbortSignal):Promise<成员轮结果>=>{
+        const release=settings&&!m.botId?await taskOutputReservation(this.opts.跑.context.cwd,settings,runSignal):()=>{}
+        try {
+          if(runSignal.aborted)return{ok:false,output:'',error:'已中止'}
+          const inputProblem=settings?.contract?taskInputReceipt(settings.contract,this.opts.跑.context.cwd):undefined
+          if(inputProblem)return{ok:false,output:'',error:inputProblem.reason??inputProblem.summary,receipt:inputProblem}
+          const result=await backend(runSignal)
+          if(result.ok&&settings?.contract&&!result.receipt){const receipt=acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd);return{...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})}}
+          return result
+        }finally{release()}
+      }
       try {
         const coordinator = this.opts.orchestration
         if (coordinator) {
           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
-          结果 = await coordinator.run(child.id, execute, ctrl.signal)
+          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,...outcome}=await execute(signal);return outcome}, ctrl.signal)
         } else 结果 = await execute(ctrl.signal)
       } catch (error) {
         结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
@@ -416,7 +436,8 @@ export class 团队调度器 {
           if (yielded) return
           try {
             结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因" }, this.now())
-            if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
+            if(结果.receipt)t.tasks.find(x=>x.id===任务.taskId)!.receipt=结果.receipt
+          if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
           } catch (e) {
             丢了 = e instanceof Error ? e.message : String(e)
           }

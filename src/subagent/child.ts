@@ -33,6 +33,8 @@
  * - skills / prompts 的默认扫描关闭，保持上下文精简。2026-10-18 起，
  *   配有父侧资源访问器时只通过只读 RPC 按需查目录和正文，不自动加载扩展。
  */
+import {TaskSettingsSchema} from "../orchestration/task-contract.js"
+import {createTaskTools,taskToolDenial} from "./task-tools.js"
 import { mkdirSync } from "node:fs"
 import { 关掉pi自己下载 } from "../runtime/no-tool-download.js"
 import { 续接或新建 } from "../runtime/pi-resume.js"
@@ -125,8 +127,13 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
       : SessionManager.create(spec.cwd, 记录.dir)
     : undefined
 
+  const settings=spec.taskSettings?TaskSettingsSchema.parse(spec.taskSettings):undefined
+  const taskTools=settings?createTaskTools(spec.cwd,settings,spec.authorize?async(name,params)=>{
+    const response=await 调父进程('task_authorize',{name,params});return response||undefined
+  }:undefined):undefined
   const customTools = [
-    ...(spec.member ? 成员工具(spec.member.name) : []),
+    ...(taskTools?.tools??[]),
+    ...(spec.member ? 成员工具(spec.member.name).filter(tool=>!settings||!taskToolDenial(settings.scope,spec.cwd,tool.name,{})) : []),
     ...(spec.resources ? createResourceTools(调父进程) : []),
   ]
   const { session } = await createAgentSession({
@@ -138,12 +145,14 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
     ...(sessionManager ? { sessionManager } : {}),
     // 定义里没写 tools 就用 pi 的默认工具集——**缺省不等于「不给工具」**
     // pi 的 tools 同时是自定义工具白名单；只补本轮确实注册的只读资源/成员通信工具，不增加 bash 等执行工具。
-    ...(spec.tools ? {tools: [...new Set([...spec.tools, ...customTools.map(t => t.name)])]} : {}),
+    ...(taskTools ? {tools:customTools.map(t=>t.name)} : spec.tools ? {tools: [...new Set([...spec.tools, ...customTools.map(t => t.name)])]} : {}),
     ...(customTools.length ? {customTools: customTools as never} : {}),
   })
 
   return {
     prompt: (text) => session.prompt(text),
+    ...(taskTools?{evidence:taskTools.evidence}:{}),
+    finalText:()=>{const last=[...session.messages].reverse().find(m=>m.role==='assistant');return last&&Array.isArray(last.content)?last.content.filter(c=>c.type==='text').map(c=>c.text).join('\n'):undefined},
     subscribe: (cb) => session.subscribe(cb as never),
   }
 }

@@ -23,6 +23,9 @@ import { createRequire } from "node:module"
 // @ts-expect-error -- .mjs 脚本无类型声明；它同时服务于 dev:mock 与 e2e
 import { startMockInferenceServer, mockModelsJson, CANNED_REPLY } from "../../scripts/mock-inference-server.mjs"
 import { CHILD_ENTRY, RUN_AS_NODE, type SubagentChildSpec } from "../../src/subagent/protocol.js"
+import {跑一轮} from '../../src/team/runner.js'
+import {resolveTaskSettings} from '../../src/subagent/task-tools.js'
+import {TaskContractSchema} from '../../src/orchestration/task-contract.js'
 
 const ROOT = resolve(import.meta.dirname, "../..")
 const CHILD = join(ROOT, "dist", "electron", CHILD_ENTRY)
@@ -95,6 +98,21 @@ const lastDone = (out: string) =>
     .findLast((v) => v.type === "done")
 
 describe("真的起一个子 agent 进程", () => {
+  it.each(['read-only','workspace-write'] as const)('a real %s Team child cannot dispatch effects through peer messaging',async access=>{
+    const mock=await startMockInferenceServer({toolCall:(body:{messages?:{role:string}[]})=>body.messages?.at(-1)?.role==='user'?{toolName:'team_send',args:{to:'writer',content:'overwrite results'}}:undefined})
+    const spec=specFor();const modelsPath=join(spec.agentDir,'models.json');mkdirSync(spec.agentDir,{recursive:true});writeFileSync(modelsPath,JSON.stringify(mockModelsJson(mock.url)))
+    let calls=0
+    try{
+      const result=await 跑一轮({definition:{name:'scout',description:'scout',filePath:'/scout',systemPrompt:'read'},memberName:'scout',teamId:'t',prompt:'inspect without delegation',systemPrompt:'stay scoped',sessionDir:join(spec.agentDir,'member'),agentDir:spec.agentDir,resume:false,
+        settings:resolveTaskSettings(TaskContractSchema.parse({access,...(access==='workspace-write'?{outputs:['out.txt']}: {})}),'allow-all')},
+       {childOf:()=>({command:electronPath,args:[CHILD],env:{[RUN_AS_NODE]:'1'}}),context:{cwd:spec.cwd,provider:spec.provider,model:spec.model,modelsPath,...(spec.credentials?{credentials:spec.credentials}:{})},onCall:async()=>{calls++;return 'unexpected dispatch'},timeoutMs:10000})
+      expect(result.ok,result.error).toBe(true)
+      expect(calls).toBe(0)
+      const names=(mock.requests[0]?.body.tools??[]).map((t:{function:{name:string}})=>t.function.name)
+      expect(names).not.toContain('team_send');expect(names).toContain('team_status')
+    }finally{await mock.close()}
+  })
+
   it("**跑通整条**：构建产物 + Electron 当 node + 假模型 → 一条 done", async () => {
     const r = await runChild(specFor())
     const done = lastDone(r.out)

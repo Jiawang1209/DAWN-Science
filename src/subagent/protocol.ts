@@ -19,6 +19,8 @@ import { SkillReadSchema } from "../protocol/skill-reads.js"
 /** 父 → 子：一个任务的全部输入。**子进程不猜任何东西，父侧给全** */
 export interface SubagentChildSpec {
   agent: string
+  authorize?: true
+  taskSettings?: import("../orchestration/task-contract.js").TaskSettings
   /** 已经替换过 `{previous}` 的最终任务文本 */
   task: string
   /** 来自定义文件正文 */
@@ -66,7 +68,7 @@ export interface SubagentChildSpec {
  * 进度行 2026-09-27 起有了，见 `SubagentEventMessage`——加的是联合里一个成员，父侧的解析形状没改。
  */
 export type SubagentDoneMessage =
-  | { type: "done"; ok: true; output: string }
+  | { type: "done"; ok: true; output: string; evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[] }
   | { type: "done"; ok: false; error: string }
 
 /** 成员模式：一次工具调用，等父进程回一行 `reply` */

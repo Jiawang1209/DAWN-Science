@@ -1,0 +1,43 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/task-contract.test.ts tests/subagent/task-executor.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/task-contract.test.ts (8 tests | 1 failed) 13ms
+   × does not accept a task whose declared input file is unavailable 3ms
+ ❯ |node| tests/subagent/task-executor.test.ts (3 tests | 1 failed) 102ms
+   × declared missing inputs block a task before any subprocess is started 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-contract.test.ts > does not accept a task whose declared input file is unavailable
+AssertionError: expected 'accepted' not to be 'accepted' // Object.is equality
+ ❯ tests/orchestration/task-contract.test.ts:58:66
+     56| it('does not accept a task whose declared input file is unavailable',(…
+     57|  const contract=TaskContractSchema.parse({inputs:['missing.csv']})
+     58|  expect(acceptTaskResult(contract,result(),[],root()).state).not.toBe(…
+       |                                                                  ^
+     59| })
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/subagent/task-executor.test.ts > declared missing inputs block a task before any subprocess is started
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/subagent/task-executor.test.ts:36:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 9 passed (11)
+   Start at  19:40:38
+   Duration  659ms (transform 111ms, setup 0ms, import 626ms, tests 115ms, environment 0ms)

@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-recovery.test.ts tests/orchestration/task-locks.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/orchestration/task-locks.test.ts (4 tests | 1 failed) 60ms
+   × serializes scoped outputs that are hard-link aliases of the same file 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-locks.test.ts > serializes scoped outputs that are hard-link aliases of the same file
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/orchestration/task-locks.test.ts:38:20
+     36|  try{
+     37|   await new Promise<void>(resolve=>setImmediate(resolve))
+     38|   expect(acquired).toBe(false)
+       |                    ^
+     39|   first();const second=await waiting;second()
+     40|  }finally{controller.abort();first();await waiting.then(release=>relea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 6 passed (7)
+   Start at  20:14:45
+   Duration  1.12s (transform 284ms, setup 0ms, import 1.94s, tests 84ms, environment 0ms)

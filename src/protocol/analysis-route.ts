@@ -3,16 +3,16 @@ import { z } from "zod"
 
 const text = z.string().trim().min(1)
 const selection = z.object({ server: text, caseId: text }).strict()
-const execution = z.object({
+export const RouteExecutionSchema = z.object({
   state: z.enum(["not_run", "partial", "completed", "failed"]), note: text,
   toolCallIds: z.array(text).optional(),
 }).strict()
-const verification = z.object({
+export const RouteVerificationSchema = z.object({
   state: z.enum(["unreviewed", "reviewed", "issues"]), note: text,
   toolCallIds: z.array(text).optional(),
 }).strict()
 /** POSIX 工作区相对路径；不将引用存在性或符号链接安全性当作已核实。 */
-const relativePath = text.refine((path) => !path.startsWith("/") && !path.includes("\\") &&
+export const WorkspaceRelativePathSchema = text.refine((path) => !path.startsWith("/") && !path.includes("\\") &&
   !/^[a-z][a-z0-9+.-]*:/i.test(path) && !path.includes("\0") &&
   !path.split("/").some((part) => part === ".." || part === "." || part === ""), "交付路径必须是工作区内相对路径")
 
@@ -23,8 +23,8 @@ export const RouteStepSchema = z.object({
     server: text, caseId: text, title: text, language: text.optional(), coverage: text,
     evidence: z.enum(["metadata", "content_checked"]),
   }).strict()),
-  selectedCase: selection.optional(), deliverables: z.array(z.object({ path: relativePath, note: text.optional() }).strict()),
-  execution, verification, needsReview: z.boolean(), notes: z.array(text),
+  selectedCase: selection.optional(), deliverables: z.array(z.object({ path: WorkspaceRelativePathSchema, note: text.optional() }).strict()),
+  execution: RouteExecutionSchema, verification: RouteVerificationSchema, needsReview: z.boolean(), notes: z.array(text),
 }).strict()
 export type RouteStep = z.infer<typeof RouteStepSchema>
 export type RouteAction = "view" | "search" | "continue" | "select" | "skip" | "restore"

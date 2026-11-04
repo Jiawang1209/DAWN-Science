@@ -1,0 +1,100 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/task-contract.spec.ts e2e/orchestration.spec.ts e2e/subagent.spec.ts e2e/team.spec.ts e2e/bot-collaboration.spec.ts e2e/subagent-view.spec.ts
+
+Running 18 tests using 1 worker
+
+(node:88208) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60744/022cffdd-11ea-4480-adea-5d7e1c159ced
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (13.1s)
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:60954/f6f5048a-4f32-4e0b-ab9f-b4decbdc7b59
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (7.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61110/0ae9b74f-bfe5-484f-8928-296ce5914b4f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61163/0fa7f622-8601-46d2-b798-4fa9c7f03ea4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/subagent-view.spec.ts:36:3 › 子 agent 看得见 › 点 chip → 坞里那一格有它的过程与交回的结果；主转录里没有那条 read (4.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61204/0349ba13-60ec-42b2-a3c3-f7d1f77edac6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/subagent-view.spec.ts:53:3 › 子 agent 看得见 › 在跑时 chip 上有那一句、坞里那条 bash 在跑；跑完那一句消失 (19.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61394/a4bc0b75-e3b8-4daa-93f0-62363c4c8eed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区 (6.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61438/95a8e3ca-7c8d-4aa1-821f-ff67b7779c5b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] Debugger ending on ws://127.0.0.1:61467/4c4dc0be-5218-454a-b092-40f4fc46e77f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子 (7.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61494/8f080fe4-cdb5-4bd1-bbe3-775abf774c2e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/subagent-view.spec.ts:124:3 › 子 agent 看得见 › 看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达 (8.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61537/5af1e094-c2a0-4ff8-8265-885d7be1dc9f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/subagent-view.spec.ts:196:3 › 坞里那段对话派的子 agent：长长的一句不撑破坞 › chip 那一句很长：坞不出横向滚动，chip 不越过坞的右缘 (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「找个子 agent 看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61559/270c87c8-5fba-400c-b1ee-8abe2c6473cc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链 (11.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61640/dcc2329d-553c-4039-ad14-b0f5ee8276f4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因 (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61670/316297e2-3f44-4ab3-94f4-aa343433b6b4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下 (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派两个子 agent」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61715/ae73a1e4-bf89-4128-a8ba-9ed8c754002d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身 (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61856/1a34f076-828e-4569-84e7-318ec0aa0dca
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61950/703d5e22-17fa-480e-a17a-2060774ccb61
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/task-contract.spec.ts:33:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:62057/f80deac8-e82b-428f-ade0-9e485ad75eba
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62171/ca5cd9eb-a531-4d29-8958-ca66076d6b39
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62230/b3de098c-e6ab-4f6c-9bb6-bb21b793451c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/team.spec.ts:119:3 › 成员指了一个目录里没有的模型 › **建队时就拒**，并说清有哪些模型——不让它跑起来才报 (2.0s)
+
+  18 passed (2.0m)

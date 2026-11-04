@@ -6,6 +6,7 @@
  * `团队错误` 是模型的错（id 写错、依赖不存在、令牌对不上）：原样回给模型让它改，不崩。
  */
 import { botInstructions, type RuntimeBot } from "../bot/runtime.js"
+import {TaskContractParameters} from "../orchestration/task-contract.js"
 import { Type } from "typebox"
 import type { SubagentDefinition } from "../subagent/definitions.js"
 import { 团队调度器, 状态文本 } from "./scheduler.js"
@@ -42,6 +43,7 @@ const 任务项 = Type.Object({
   subject: Type.String({ description: "一句标题" }),
   description: Type.Optional(Type.String({ description: "要做什么、产物放哪。可以写 {t1} 引上游任务的结果" })),
   assignee: Type.Optional(Type.String({ description: "成员名；不给就进共享池，谁空闲谁领；\"captain\" = 队长自己做" })),
+  contract: Type.Optional(TaskContractParameters),
   outputs: Type.Optional(Type.Array(Type.String(), {description: "将写入的产物路径；共享路径按占用排队。未声明时保守地独占工作目录。"})),
   dependencies: Type.Optional(Type.Array(Type.String(), { description: "要先完成的任务 id（必须是前面已经建好的）" })),
 })

@@ -36,6 +36,9 @@ import { join } from "node:path"
 import { 子事件Schema, type SubagentChildSpec, type 子事件 } from "./protocol.js"
 import { 按字节截 } from "./clip.js"
 import type { ResourceHost } from "./resources.js"
+import {taskOutputReservation} from "../bot/output-locks.js"
+import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskEvidenceSchema,type TaskSettings,type TaskContract,type TaskReceipt} from "../orchestration/task-contract.js"
+import type {RouteToolEvidence} from "../runtime/analysis-route-evidence.js"
 import type { OrchestrationService } from "../orchestration/service.js"
 
 /**
@@ -65,16 +68,19 @@ export function 杀掉后代(child: ChildProcessWithoutNullStreams): void {
 }
 
 export interface SubagentTask {
+  contract?: TaskContract
   agent: string
   task: string
 }
 
 export type SubagentRequest =
-  | { mode: "single"; agent: string; task: string }
+  | { mode: "single"; agent: string; task: string; contract?: TaskContract }
   | { mode: "parallel"; tasks: SubagentTask[] }
   | { mode: "chain"; chain: SubagentTask[] }
 
 export interface SubagentResult {
+  receipt?: TaskReceipt
+  evidence?: RouteToolEvidence[]
   agent: string
   /** 实际交给子 agent 的任务文本（chain 模式下 `{previous}` 已经替换过） */
   task: string
@@ -151,6 +157,7 @@ export type ChildFactory = (spec: {
  * 而失败方式是「每个子 agent 都说模型不存在」——要跨进程才查得出来。
  */
 export interface SubagentContext {
+  authorize?: (name:string,params:Record<string,unknown>,signal?:AbortSignal)=>string|undefined|Promise<string|undefined>
   provider: string
   /** 默认模型。**定义里写了 `model` 的以定义为准** */
   model: string
@@ -168,6 +175,7 @@ export interface SubagentContext {
 }
 
 export interface SubagentExecutorOptions {
+  prepareTask?: (index:number,task:SubagentTask,definition:SubagentDefinition)=>TaskSettings|undefined
   orchestration?: { service: OrchestrationService; addressOf: (index: number) => string[] } | undefined
   childOf: ChildFactory
   context: SubagentContext
@@ -180,6 +188,7 @@ export interface SubagentExecutorOptions {
 const PREVIOUS = "{previous}"
 
 export class SubagentExecutor {
+  private readonly prepareTask: SubagentExecutorOptions["prepareTask"]
   private readonly orchestration: SubagentExecutorOptions["orchestration"]
   private readonly childOf: ChildFactory
   private readonly context: SubagentContext
@@ -187,6 +196,7 @@ export class SubagentExecutor {
   private readonly onProgress: (p: SubagentProgress) => void
 
   constructor(opts: SubagentExecutorOptions) {
+    this.prepareTask = opts.prepareTask
     this.orchestration = opts.orchestration
     this.childOf = opts.childOf
     this.context = opts.context
@@ -251,7 +261,7 @@ export class SubagentExecutor {
     for (const [i, step] of steps.entries()) {
       // **第一步也要替换**，替成空串——留着 `{previous}` 字面量传给模型更糟
       const task = step.task.split(PREVIOUS).join(previous)
-      const r = await this.one(i, { agent: step.agent, task }, definitions, signal)
+      const r = await this.one(i, { agent: step.agent, task, ...(step.contract?{contract:step.contract}:{}) }, definitions, signal)
       results.push(r)
       if (!r.ok) {
         // **停下。** 拿失败的结果当 `{previous}` 往下传就是编造——
@@ -306,16 +316,32 @@ export class SubagentExecutor {
   }
 
   private async runChild(definition: SubagentDefinition, task: SubagentTask, index: number, signal?: AbortSignal, resume = false): Promise<SubagentResult> {
-    if (!this.orchestration) return this.spawnOne(definition, task, index, signal, resume)
-    const {service, addressOf} = this.orchestration
-    if (signal?.aborted || service.isClosed) return fail(task, "父会话已停止，子任务未执行")
-    const child = service.register("subagent", addressOf(index), task.agent)
-    let result: SubagentResult | undefined
-    const outcome = await service.run(child.id, async childSignal => {
-      result = await this.spawnOne(definition, task, index, childSignal, resume)
-      return {ok: result.ok, output: result.output, ...(result.error ? {error: result.error} : {})}
-    }, signal)
-    return result && result.ok === outcome.ok ? result : fail(task, outcome.error ?? "子任务未执行")
+    let settings:TaskSettings|undefined
+    try {settings=this.prepareTask?.(index,task,definition)} catch(error){return fail(task,message(error))}
+    const execute=async (runSignal:AbortSignal):Promise<SubagentResult>=>{
+      const release=settings?await taskOutputReservation(this.context.cwd,settings,runSignal):()=>{}
+      try {
+        if(runSignal.aborted)return fail(task,"已中止")
+        const inputProblem=settings?.contract?taskInputReceipt(settings.contract,this.context.cwd):undefined
+        if(inputProblem)return{...fail(task,inputProblem.reason??inputProblem.summary),receipt:inputProblem}
+        const result=await this.spawnOne(definition,task,index,runSignal,resume,settings)
+        if(result.ok&&settings?.contract){
+          const receipt=acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd)
+          return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'任务未通过验收'}:{})}
+        }
+        return result
+      }finally{release()}
+    }
+    if(!this.orchestration)return execute(signal??new AbortController().signal).catch(error=>fail(task,message(error)))
+    const {service,addressOf}=this.orchestration
+    if(signal?.aborted||service.isClosed)return fail(task,"父会话已停止，子任务未执行")
+    const child=service.register("subagent",addressOf(index),task.agent)
+    let result:SubagentResult|undefined
+    const outcome=await service.run(child.id,async childSignal=>{
+      result=await execute(childSignal)
+      return{ok:result.ok,output:result.output,...(result.error?{error:result.error}:{}),...(result.receipt?{receipt:result.receipt}:{})}
+    },signal)
+    return result&&result.ok===outcome.ok?result:fail(task,outcome.error??"子任务未执行")
   }
 
   private spawnOne(
@@ -325,6 +351,7 @@ export class SubagentExecutor {
     signal?: AbortSignal,
     /** 续问（2026-09-27）：续这个运行目录里那份会话，而不是新开一份 */
     续 = false,
+    settings?: TaskSettings,
   ): Promise<SubagentResult> {
     const cmd = this.childOf({ definition, agent: task.agent, task: task.task })
 
@@ -372,14 +399,19 @@ export class SubagentExecutor {
           return
         }
         if (v.type === "done") 最后done = v as DoneLine
-        else if (v.type === "call" && resources && typeof v.id === "string" && !settled) {
+        else if (v.type === "call" && (resources || this.context.authorize) && typeof v.id === "string" && !settled) {
           const id = v.id
           const reply = (ok: boolean, result: string) => {
             if (settled) return
             try { child?.stdin.write(`${JSON.stringify({type: "reply", id, ok, result})}\n`) } catch { /* 子进程已退出，主失败由 close 报告 */ }
           }
-          if (v.name !== "resource_search" && v.name !== "resource_read") reply(false, "子任务只允许只读资源方法")
-          else void resources.call(v.name, v.params).then(result => reply(true, result), error => reply(false, message(error)))
+          if(v.name==='task_authorize'&&this.context.authorize&&v.params&&typeof v.params==='object'){
+            const request=v.params as {name?:unknown;params?:unknown}
+            if(typeof request.name!=='string'||!request.params||typeof request.params!=='object')reply(false,'Invalid authorization request')
+            else void Promise.resolve(this.context.authorize(request.name,request.params as Record<string,unknown>,signal)).then(reason=>reply(true,reason??''),error=>reply(false,message(error)))
+          }
+          else if (v.name !== "resource_search" && v.name !== "resource_read") reply(false, "子任务只允许只读资源方法")
+          else if(resources) void resources.call(v.name, v.params).then(result => reply(true, result), error => reply(false, message(error)))
         }
         // 已收尾（中止 / 超时）之后到的过程不再转：chip 已经 settled，再来一行只会让界面以为它还活着
         else if (v.type === "event" && v.event && !settled) {
@@ -472,12 +504,15 @@ export class SubagentExecutor {
           return done(fail(task, report.error ?? "子 agent 报告失败，但没有说原因"))
         }
 
+        let evidence:RouteToolEvidence[]|undefined
+        if(report.evidence!==undefined){const parsed=TaskEvidenceSchema.safeParse(report.evidence);if(!parsed.success)return done(fail(task,'子进程证据格式无效'));evidence=parsed.data.map(({filesWritten,stepId,execution,...rest})=>({...rest,...(filesWritten?{filesWritten}:{}),...(stepId?{stepId}:{}),...(execution?{execution}:{})}))}
         const full = report.output ?? ""
         const bytes = Buffer.byteLength(full, "utf8")
         const truncated = bytes > this.limits.maxOutputBytes
         done({
           agent: task.agent,
           task: task.task,
+          ...(evidence?{evidence}:{}),
           ok: true,
           // 截断按字节算，但切在字符边界上——按字节切会把 UTF-8 切成半个汉字
           output: truncated ? 按字节截(full, this.limits.maxOutputBytes) : full,
@@ -505,7 +540,9 @@ export class SubagentExecutor {
       const agentDir = ctx.agentDirOf(index)
       const spec: SubagentChildSpec = {
         agent: task.agent,
-        task: task.task,
+        task: taskPrompt(task.task,settings?.contract),
+        ...(settings?{taskSettings:settings}:{}),
+        ...(ctx.authorize?{authorize:true as const}:{}),
         systemPrompt: definition.systemPrompt,
         provider: ctx.provider,
         // **定义里写了 model 就以定义为准**——子 agent 挑一个便宜模型是常见用法
@@ -519,18 +556,19 @@ export class SubagentExecutor {
         ...(ctx.credentials ? { credentials: ctx.credentials } : {}),
         ...(resources ? {resources: true as const} : {}),
       }
-      if (resources) child.stdin.write(`${JSON.stringify(spec)}\n`)
+      if (resources || ctx.authorize) child.stdin.write(`${JSON.stringify(spec)}\n`)
       else child.stdin.end(JSON.stringify(spec))
     })
   }
 }
 
 function toTasks(req: SubagentRequest): SubagentTask[] {
-  if (req.mode === "single") return [{ agent: req.agent, task: req.task }]
+  if (req.mode === "single") return [{ agent: req.agent, task: req.task, ...(req.contract?{contract:req.contract}:{}) }]
   return req.mode === "parallel" ? [...req.tasks] : [...req.chain]
 }
 
 interface DoneLine {
+  evidence?: unknown
   type: "done"
   ok: boolean
   output?: string

@@ -1,0 +1,2986 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/task-contract.spec.ts e2e/orchestration.spec.ts e2e/subagent.spec.ts e2e/team.spec.ts e2e/bot-collaboration.spec.ts e2e/subagent-view.spec.ts
+
+Running 17 tests using 1 worker
+
+(node:54591) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 9 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [workbench] subscribeSession 失败: [ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "data",
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "data",
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 13 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 15 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 16 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 17 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 19 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 20 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 21 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 23 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 25 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 26 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 27 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 29 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 30 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 31 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 33 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 34 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 35 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 37 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 38 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 39 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 41 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 43 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 44 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 46 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 47 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 48 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 50 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 52 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 53 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 54 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 55 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 57 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 58 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 59 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 61 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 62 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 63 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 64 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 66 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 67 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 68 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 70 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 71 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 72 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 74 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 75 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 76 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 78 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 80 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 81 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 83 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 84 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 85 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 87 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 89 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 90 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 86a870c1-f997-4016-8690-a77c90e0c3b5 的一条更新不合协议，已丢弃（revision 96 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      2
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:57542/857f851a-ba07-4dc7-8714-3eb92cdef9b1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘   1 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (28.6s)
+(node:71455) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [中枢] 会话 68eaf9d6-6427-4b42-b75c-f79a2d6c3db0 的一条更新不合协议，已丢弃（revision 9 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [workbench] subscribeSession 失败: [ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "data",
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "data",
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]]
+[主进程] [中枢] 会话 68eaf9d6-6427-4b42-b75c-f79a2d6c3db0 的一条更新不合协议，已丢弃（revision 13 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 68eaf9d6-6427-4b42-b75c-f79a2d6c3db0 的一条更新不合协议，已丢弃（revision 15 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] Debugger ending on ws://127.0.0.1:57967/6eed0670-8b47-4187-a964-ba17ca01b7d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘   2 e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (29.9s)
+(node:74121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] Debugger ending on ws://127.0.0.1:58226/b18e3ee0-a214-4a3e-832a-00da16f958c5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (4.6s)
+[主进程] Debugger ending on ws://127.0.0.1:58251/2d5c7be8-cae2-45f6-94a4-936061f5bd6a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/subagent-view.spec.ts:36:3 › 子 agent 看得见 › 点 chip → 坞里那一格有它的过程与交回的结果；主转录里没有那条 read (5.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58289/4e70a2a2-eed5-43f4-9700-16d5c58117b8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/subagent-view.spec.ts:53:3 › 子 agent 看得见 › 在跑时 chip 上有那一句、坞里那条 bash 在跑；跑完那一句消失 (21.4s)
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58408/c807748c-5722-4a03-b1ba-24b9fa78ce18
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区 (6.9s)
+[主进程] Debugger ending on ws://127.0.0.1:58433/7134058f-7b4c-4ee9-b1f4-b994bf20fb68
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58460/533d53fc-5e17-4325-be2f-f46c0fecefdc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子 (11.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58517/f9c692bc-8f32-4d67-aa2f-c540f6caa8f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/subagent-view.spec.ts:124:3 › 子 agent 看得见 › 看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达 (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58629/218e46db-b55e-4778-90ac-ab3fc23461f9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/subagent-view.spec.ts:196:3 › 坞里那段对话派的子 agent：长长的一句不撑破坞 › chip 那一句很长：坞不出横向滚动，chip 不越过坞的右缘 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58741/075eb544-d6d2-44d9-b7f6-5a27cc486536
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58848/ae380101-bd9e-40e7-b9ba-71dce2c67125
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58920/264317d0-adf3-49ed-a781-0c1f3a93098c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派两个子 agent」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59028/74adaa50-9894-43c0-bbe2-8a568c9beb4e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身 (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59116/691e57f5-1b12-4a34-b7d5-1bda01aa7083
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] [中枢] 会话 3cd6bad1-9a19-4795-902b-831b83d27c47 的一条更新不合协议，已丢弃（revision 7 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [workbench] subscribeSession 失败: [ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "data",
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "data",
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]]
+[主进程] [中枢] 会话 3cd6bad1-9a19-4795-902b-831b83d27c47 的一条更新不合协议，已丢弃（revision 14 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 3cd6bad1-9a19-4795-902b-831b83d27c47 的一条更新不合协议，已丢弃（revision 16 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 3cd6bad1-9a19-4795-902b-831b83d27c47 的一条更新不合协议，已丢弃（revision 17 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 3cd6bad1-9a19-4795-902b-831b83d27c47 的一条更新不合协议，已丢弃（revision 18 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      1
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [中枢] 会话 3cd6bad1-9a19-4795-902b-831b83d27c47 的一条更新不合协议，已丢弃（revision 20 因此跳号）： [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      0
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "taskSettings"
+    ],
+    "path": [
+      "team",
+      "members",
+      1
+    ],
+    "message": "Unrecognized key: \"taskSettings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      0
+    ],
+    "message": "Unrecognized key: \"settings\""
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "settings"
+    ],
+    "path": [
+      "team",
+      "tasks",
+      1
+    ],
+    "message": "Unrecognized key: \"settings\""
+  }
+]
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59171/76f13f30-d9e9-4a2c-92a5-5b3e8758131e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  15 e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** (1.0m)
+(node:78762) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59817/818bacb1-5226-4722-ba25-95a7c1042189
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59849/ad9549a2-506d-4418-9a3b-344cfed060d1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/team.spec.ts:119:3 › 成员指了一个目录里没有的模型 › **建队时就拒**，并说清有哪些模型——不让它跑起来才报 (2.6s)
+
+
+  1) e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('aside.right-dock').locator('.bot-overview-member[data-state="waiting_peer"]')
+    Expected: visible
+    Timeout: 25000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 25000ms
+      - waiting for locator('aside.right-dock').locator('.bot-overview-member[data-state="waiting_peer"]')
+
+
+      20 |  await box.press("Enter")
+      21 |  await expect(dock.getByRole("tab",{name:"团队对话",exact:true})).toHaveAttribute("aria-selected","true",{timeout:15000})
+    > 22 |  await expect(dock.locator('.bot-overview-member[data-state="waiting_peer"]')).toBeVisible()
+         |                                                                                ^
+      23 |  await expect(main.locator('.bot-team-summary[data-returned="0"]')).toBeVisible()
+      24 |  // Post through the real dock while a peer is working. A fixed ID retry must not duplicate the intervention.
+      25 |  const roster=dock.getByRole("group",{name:"团队成员",exact:true})
+        at /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/e2e/bot-collaboration.spec.ts:22:80
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/bot-collaboration-Bot-Team-69a85-nd-queued-user-intervention/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/bot-collaboration-Bot-Team-69a85-nd-queued-user-intervention/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bot-collaboration-Bot-Team-69a85-nd-queued-user-intervention/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bot-collaboration-Bot-Team-69a85-nd-queued-user-intervention/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('aside.right-dock').locator('.bot-overview-member[data-state="question"]')
+    Expected substring: "统计助手"
+    Timeout: 25000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for locator('aside.right-dock').locator('.bot-overview-member[data-state="question"]')
+
+
+      198 |  await main.getByPlaceholder(/输入问题/).fill("Bot交流验收：请组队分析 input.csv，先确认缺失值策略，再核查、拟合和绘图。")
+      199 |  await main.getByPlaceholder(/输入问题/).press("Enter")
+    > 200 |  await expect(dock.locator('.bot-overview-member[data-state="question"]')).toContainText("统计助手")
+          |                                                                            ^
+      201 |  await expect(main.getByRole("region",{name:"Bot 团队进展"})).toContainText("待回答")
+      202 |  expect(existsSync(join(workspace,"results/model.json"))).toBe(false)
+      203 |  await dock.screenshot({path:testInfo.outputPath("bot-overview-pending-question.png")})
+        at /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/e2e/bot-collaboration.spec.ts:200:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/bot-collaboration-team-att-464af-es-into-verified-deliveries/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/bot-collaboration-team-att-464af-es-into-verified-deliveries/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bot-collaboration-team-att-464af-es-into-verified-deliveries/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bot-collaboration-team-att-464af-es-into-verified-deliveries/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** ──────────────────────────────
+
+    Test timeout of 60000ms exceeded.
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('.tool').filter({ hasText: 'team_create' }).first()
+    Expected: "ok"
+    Received: "running"
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 60000ms
+      - waiting for locator('.tool').filter({ hasText: 'team_create' }).first()
+        119 × locator resolved to <div class="tool running" data-status="running" data-item-id="call_mock_24" data-tool-name="team_create">…</div>
+            - unexpected value "running"
+      - Target page, context or browser has been closed
+
+
+      53 |     // 工具行：team_create 成功
+      54 |     const 工具 = page.locator(".tool").filter({ hasText: "team_create" }).first()
+    > 55 |     await expect(工具).toHaveAttribute("data-status", "ok", { timeout: 60_000 })
+         |                      ^
+      56 |
+      57 |     // 坞里「团队」那一格
+      58 |     await 进坞(page, "团队")
+        at /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science/e2e/team.spec.ts:55:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/team-组一支团队-任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见-/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/team-组一支团队-任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见-/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/team-组一支团队-任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见-/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/team-组一支团队-任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见-/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention
+    e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries
+    e2e/team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见** ───────────────────────────────
+  14 passed (3.4m)

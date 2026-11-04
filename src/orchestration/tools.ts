@@ -1,5 +1,6 @@
 /** Model-facing controls; all authority derives from this parent's service instance. */
 import {Type} from 'typebox'
+import {TaskContractSchema,TaskContractParameters,type TaskContract} from './task-contract.js'
 import {z} from 'zod'
 import type {OrchestrationService} from './service.js'
 import type {OrchestrationMailbox} from './mailbox.js'
@@ -8,7 +9,7 @@ import type {ChildMessage, ChildRecord} from './store.js'
 export interface OrchestrationToolOptions {
   service: OrchestrationService
   mailbox: OrchestrationMailbox
-  start: (agent: string, task: string, requestId: string) => {child: ChildRecord; message: ChildMessage}
+  start: (agent: string, task: string, requestId: string, contract?:TaskContract) => {child: ChildRecord; message: ChildMessage}
   sendMember?: (child: ChildRecord, text: string, requestId: string) => Promise<unknown>
   interruptMember?: (child: ChildRecord) => void
 }
@@ -35,8 +36,8 @@ export function createOrchestrationTools(opts: OrchestrationToolOptions) {
     },
   })
   return [
-    make('start_subagent', '后台启动一个名册中的子 agent，立即返回稳定 childId 和消息接收回执；完成结果会回主对话。写清执行范围、数据保护和交付要求。', Type.Object({agent: Type.String(), task: Type.String()}), z.object({agent: id, task: body}).strict(), (args, callId) => {
-      const {child, message} = opts.start(args.agent, args.task, callId)
+    make('start_subagent', '后台启动一个名册中的子 agent，立即返回稳定 childId 和消息接收回执；完成结果会回主对话。写清执行范围、数据保护和交付要求。', Type.Object({agent: Type.String(), task: Type.String(),contract:Type.Optional(TaskContractParameters)}), z.object({agent: id, task: body,contract:TaskContractSchema.optional()}).strict(), (args, callId) => {
+      const {child, message} = opts.start(args.agent, args.task, callId,args.contract)
       return {childId: child.id, messageId: message.id, delivery: 'queued', revision: service.revision}
     }),
     make('send_subagent_message', '向当前会话的子 agent 排队发送后续指令；当前轮结束后续同一份转录，不是实时 Steer。回执只表示接收，结果随后回送。中断后发送新指令可继续。', Type.Object({childId: Type.String(), message: Type.String()}), z.object({childId: id, message: body}).strict(), async (args, callId) => {

@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration tests/subagent tests/team tests/bot tests/runtime/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+
+ Test Files  35 passed (35)
+      Tests  252 passed (252)
+   Start at  19:10:22
+   Duration  2.74s (transform 2.29s, setup 0ms, import 11.65s, tests 6.22s, environment 2ms)

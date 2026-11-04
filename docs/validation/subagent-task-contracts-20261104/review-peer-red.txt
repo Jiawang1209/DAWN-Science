@@ -1,0 +1,31 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/integration/subagent-child.test.ts -t cannot dispatch effects
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/integration/subagent-child.test.ts (8 tests | 2 failed | 6 skipped) 1937ms
+     × a real read-only Team child cannot dispatch effects through peer messaging 1480ms
+     × a real workspace-write Team child cannot dispatch effects through peer messaging 449ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/integration/subagent-child.test.ts > 真的起一个子 agent 进程 > a real read-only Team child cannot dispatch effects through peer messaging
+ FAIL  |node| tests/integration/subagent-child.test.ts > 真的起一个子 agent 进程 > a real workspace-write Team child cannot dispatch effects through peer messaging
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/integration/subagent-child.test.ts:110:21
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+   Start at  20:17:04
+   Duration  2.95s (transform 150ms, setup 0ms, import 911ms, tests 1.94s, environment 0ms)

@@ -12,6 +12,8 @@ import { 翻成子事件 } from "./child-events.js"
 
 /** 本层需要 pi 会话的**全部**能力。窄到这个程度，假实现才写得出来 */
 export interface ChildPiSession {
+  finalText?: ()=>string|undefined
+  evidence?: ()=>import("../runtime/analysis-route-evidence.js").RouteToolEvidence[]
   /** 跑完一整轮才 resolve —— pi 的 `prompt()` 就是这个语义 */
   prompt(text: string): Promise<void>
   subscribe(cb: (e: unknown) => void): () => void
@@ -66,6 +68,8 @@ export async function runChildTask(
     unsubscribe()
   }
 
+  if(spec.taskSettings?.contract)text=session.finalText?.()??text
+
   if (streamError) return done(false, withPartial(`子 agent 报错：${streamError}`, text))
 
   /**
@@ -87,7 +91,7 @@ export async function runChildTask(
     return done(false, `子 agent "${spec.agent}" 跑完了，但没有产生任何输出`)
   }
 
-  return { type: "done", ok: true, output: text }
+  return { type: "done", ok: true, output: text, ...(spec.taskSettings?.contract?{evidence:session.evidence?.()??[]}:{}) }
 }
 
 /** 已经吐出来的半截要带上——排查时它常常是唯一的线索 */

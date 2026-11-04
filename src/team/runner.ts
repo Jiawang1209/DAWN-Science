@@ -7,6 +7,8 @@
  *
  * 这一层不认识团队状态——它只跑一轮、把 `call` 交给调用方给的 `onCall` 去答。状态机在 scheduler 里。
  */
+import {TaskEvidenceSchema,taskPrompt,type TaskSettings} from "../orchestration/task-contract.js"
+import {taskToolDenial} from '../subagent/task-tools.js'
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import { 杀掉后代 } from "../subagent/executor.js"
 import type { SubagentDefinition } from "../subagent/definitions.js"
@@ -16,6 +18,7 @@ import { 团队上限, type 成员轮结果 } from "./types.js"
 import type { ResourceHost } from "../subagent/resources.js"
 
 export interface 成员轮规格 {
+  settings?: TaskSettings
   definition: SubagentDefinition
   memberName: string
   teamId: string
@@ -35,7 +38,7 @@ export interface 成员轮规格 {
 
 export interface 跑一轮选项 {
   childOf: (spec: { definition: SubagentDefinition; agent: string; task: string }) => ChildCommand
-  context: Pick<SubagentContext, "provider" | "model" | "cwd" | "modelsPath" | "credentials" | "resources">
+  context: Pick<SubagentContext, "provider" | "model" | "cwd" | "modelsPath" | "credentials" | "resources" | "authorize">
   /** 子进程的工具调用：答一句（字符串）或抛错（错误文本回给子进程） */
   onCall: (name: string, params: unknown) => Promise<string>
   signal?: AbortSignal | undefined
@@ -99,9 +102,11 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       }
       if (m.type === "call") {
         const resource = m.name === "resource_search" || m.name === "resource_read"
-        const response = resource
+        // Communication is a separate RPC path, so enforce the frozen scope here too.
+        const denial=规格.settings && !resource && m.name!=='task_authorize'?taskToolDenial(规格.settings.scope,opts.context.cwd,m.name,(m.params??{}) as Record<string,unknown>):undefined
+        const response = denial ? Promise.reject(new Error(denial)) : resource
           ? resources ? resources.call(m.name, m.params) : Promise.reject(new Error("当前成员未启用资源查询"))
-          : m.name.startsWith("resource_") ? Promise.reject(new Error("团队资源只支持只读方法")) : opts.onCall(m.name, m.params)
+          : m.name.startsWith("resource_") ? Promise.reject(new Error("团队资源只支持只读方法")) : m.name==='task_authorize'?(()=>{const request=m.params as {name?:unknown;params?:unknown};if(!opts.context.authorize||typeof request?.name!=='string'||!request.params||typeof request.params!=='object')return Promise.reject(new Error('Invalid authorization request'));return Promise.resolve(opts.context.authorize(request.name,request.params as Record<string,unknown>,opts.signal)).then(reason=>reason??'')})(): opts.onCall(m.name, m.params)
         void response.then(
           (result) => 回({ type: "reply", id: m.id, ok: true, result }),
           (e: unknown) => 回({ type: "reply", id: m.id, ok: false, result: e instanceof Error ? e.message : String(e) }),
@@ -111,7 +116,10 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       if (m.type === "done") {
         if (m.ok) {
           const bytes = Buffer.byteLength(m.output, "utf8")
-          结果 = { ok: true, output: bytes > 团队上限.maxOutputBytes ? `${m.output.slice(0, 团队上限.maxOutputBytes)}\n…（输出超过 ${团队上限.maxOutputBytes} 字节，已截断）` : m.output }
+          const parsed=m.evidence===undefined?undefined:TaskEvidenceSchema.safeParse(m.evidence)
+          if(parsed&&!parsed.success){结果={ok:false,output:'',error:'子进程证据格式无效'};return}
+          const evidence=parsed?.success?parsed.data.map(({filesWritten,stepId,execution,...rest})=>({...rest,...(filesWritten?{filesWritten}:{}),...(stepId?{stepId}:{}),...(execution?{execution}:{})})):undefined
+          结果 = { ...(evidence?{evidence}:{}), ok: true, output: bytes > 团队上限.maxOutputBytes ? `${m.output.slice(0, 团队上限.maxOutputBytes)}\n…（输出超过 ${团队上限.maxOutputBytes} 字节，已截断）` : m.output }
         } else 结果 = { ok: false, output: "", error: m.error || "子 agent 报告失败，但没有说原因" }
       }
     }
@@ -139,7 +147,9 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
     const ctx = opts.context
     const spec: SubagentChildSpec = {
       agent: 规格.definition.name,
-      task: 规格.prompt,
+      task: taskPrompt(规格.prompt,规格.settings?.contract),
+      ...(规格.settings?{taskSettings:规格.settings}:{}),
+      ...(ctx.authorize?{authorize:true as const}:{}),
       systemPrompt: 规格.systemPrompt,
       // 优先级：成员自己的 → 子 agent 定义里的 → 队长当前的
       provider: 规格.provider && 规格.model ? 规格.provider : ctx.provider,

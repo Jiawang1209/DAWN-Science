@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/task-locks.test.ts tests/protocol/events.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Start at  19:38:21
+   Duration  689ms (transform 218ms, setup 0ms, import 763ms, tests 74ms, environment 0ms)

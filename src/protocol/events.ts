@@ -1,3 +1,4 @@
+import {TaskContractSchema,TaskReceiptSchema} from "./task-contract.js"
 import { SkillReadSchema } from "./skill-reads.js"
 import { AnalysisRouteSchema } from './analysis-route.js'
 /**
@@ -489,6 +490,8 @@ export const TeamSnapshotSchema = z
         .object({
           id: z.string(),
           subject: z.string(),
+          contract: TaskContractSchema.optional(),
+          receipt: TaskReceiptSchema.optional(),
           description: z.string().optional(),
           status: z.enum(["pending", "claimed", "in_progress", "completed", "failed", "cancelled"]),
           assignee: z.string().optional(),

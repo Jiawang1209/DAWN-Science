@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/task-contract.test.ts -t parent rejects
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-contracts-20261104/dawn-science
+
+ ❯ |node| tests/team/task-contract.test.ts (3 tests | 1 failed | 2 skipped) 41ms
+   × the parent rejects a peer-message RPC from a narrow child before invoking the scheduler 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/task-contract.test.ts > the parent rejects a peer-message RPC from a narrow child before invoking the scheduler
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/team/task-contract.test.ts:40:45
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  20:17:31
+   Duration  763ms (transform 125ms, setup 0ms, import 614ms, tests 41ms, environment 0ms)

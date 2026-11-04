@@ -464,8 +464,9 @@ describe("协议版本 · 5.5", () => {
    * 8.16（2026-10-14）：会话标题摘要完成后新增 title 元信息推送。
    * 8.9（2026-10-01）：会话更新新增 `append`，增量追加 agent turn 的 `text` / `thinking`。
    */
+  // 8.40：团队任务增加可选契约与宿主回执，内部权限快照不进入客户端。
   it("版本号与这份说明一致", () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.39")
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.40")
   })
 
   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {

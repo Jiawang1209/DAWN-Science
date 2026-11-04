@@ -13,6 +13,9 @@ export type 任务状态 = "pending" | "claimed" | "in_progress" | "completed" |
 export const 终态: readonly 任务状态[] = ["completed", "failed", "cancelled"]
 
 export interface 任务 {
+  contract?: import("../orchestration/task-contract.js").TaskContract
+  settings?: import("../orchestration/task-contract.js").TaskSettings
+  receipt?: import("../orchestration/task-contract.js").TaskReceipt
   /** `t1`、`t2`…… 在团队里稳定 */
   id: string
   subject: string
@@ -41,6 +44,7 @@ export interface 任务 {
 export type 成员状态 = "idle" | "working" | "removed"
 
 export interface 成员 {
+  taskSettings?: import("../orchestration/task-contract.js").TaskSettings
   /** Stable incarnation; reusing a display name never resumes a removed member. */
   orchestrationId?: string
   botScopeKey?: string | undefined
@@ -142,6 +146,8 @@ export interface 团队 {
 
 /** 一轮成员执行的结果（子进程回来的） */
 export interface 成员轮结果 {
+  receipt?: import("../orchestration/task-contract.js").TaskReceipt
+  evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[]
   ok: boolean
   output: string
   error?: string

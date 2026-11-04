@@ -156,3 +156,10 @@ describe("过程（2026-09-27，子 agent 看得见）", () => {
     expect(await runChildTask(SPEC, fakeSession({ deltas: ["x"] }))).toEqual({ type: "done", ok: true, output: "x" })
   })
 })
+
+it('structured tasks use the closing assistant text and host-collected evidence instead of concatenated narration', async () => {
+  const spec={agent:'a',task:'work',systemPrompt:'a',provider:'p',model:'m',cwd:'/tmp',agentDir:'/tmp/pi',taskSettings:{contract:{version:1 as const,inputs:[],outputs:[],access:'read-only' as const,requireExecution:false,requireReview:false},scope:{version:1 as const,tier:'allow-all' as const,access:'read-only' as const,tools:['read'],inputs:[],outputs:[]}}}
+  let sink:((e:unknown)=>void)|undefined
+  const done=await runChildTask(spec,async()=>({subscribe:cb=>{sink=cb;return()=>{}},prompt:async()=>{sink?.({type:'message_update',assistantMessageEvent:{type:'text_delta',delta:'interim narration'}})},finalText:()=>'{"summary":"closing"}',evidence:()=>[{toolCallId:'r1',name:'read',status:'done' as const,result:'actual file'}]}))
+  expect(done).toMatchObject({ok:true,output:'{"summary":"closing"}',evidence:[{toolCallId:'r1'}]})
+})

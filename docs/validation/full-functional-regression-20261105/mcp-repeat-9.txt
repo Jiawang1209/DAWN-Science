@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/mcp/http-recovery.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  17:09:31
+   Duration  2.18s (transform 77ms, setup 0ms, import 535ms, tests 1.55s, environment 0ms)

@@ -52,9 +52,19 @@
     "files": 637,
     "passed": 6311,
     "skipped": 10,
-    "total": 6321
+    "total": 6321,
+    "workers": 4,
+    "log": "bounded-full-unit.txt"
   },
   "installedAppReplaced": false,
   "pushed": false,
-  "released": false
+  "released": false,
+  "mcpCancellationObservation": {
+    "unexplainedDefaultParallelTimeouts": 1,
+    "isolatedPasses": 19,
+    "consecutiveGroupRuns": 10,
+    "consecutiveGroupPasses": 190,
+    "thresholdChanged": false,
+    "rootCauseResolved": false
+  }
 }

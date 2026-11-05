@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/mcp/http-recovery.test.ts (19 tests | 1 failed) 2641ms
+     × releases the cancelled HTTP response stream (headers flushed: true) 1114ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/mcp/http-recovery.test.ts > MCP remote transports > releases the cancelled HTTP response stream (headers flushed: true)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/mcp/http-recovery.test.ts:36:50
+     34|     controller.abort()
+     35|     await waiting
+     36|     await vi.waitFor(() => expect(f.closedWaits).toHaveLength(1))
+       |                                                  ^
+     37|     expect((await f.pool.调('remote', f.config, 'echo', {})).出错了).toBe(…
+     38|     expect(f.generations()).toBe(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 636 passed (637)
+      Tests  1 failed | 6310 passed | 10 skipped (6321)
+   Start at  17:03:43
+   Duration  161.03s (transform 20.55s, setup 69.74s, import 242.00s, tests 536.99s, environment 133.96s)

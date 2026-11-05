@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/remote-terminal.test.ts tests/runtime/pty-shutdown.test.ts tests/terminal/control.test.ts tests/electron/wiring.test.ts tests/ui/installed-skills.test.tsx tests/electron/onboarding-installation.test.ts tests/ui/setup-wizard.test.tsx tests/subagent/steering-policy.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+stderr | tests/runtime/remote-terminal.test.ts > runs DAWN presentation locally in sessionDir, keeps model observations remote, and restores the remote cursor without ending the terminal
+[presenter startup diagnostic] {"elapsedMs":1257,"presenting":true,"events":[{"kind":"output","sessionId":"t","data":"stty -echo; printf '\\033]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;boot\\007'\r\n\u001b[?1034hremote$ stty -echo; printf '\\033]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;boot\\007'\r\n\u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;boot\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;part\u0007remote$ \u001b[2J\u001b[H\u001b]7778;dawn;b8a4385a343e4ab3affd74952c0108b3;ready;0;/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-remote-pty-MwXvwJ\u0007remote$ "},{"kind":"output","sessionId":"t","data":"LOCAL_PRESENTATION_READY"}]}
+
+ ❯ |node| tests/runtime/remote-terminal.test.ts (25 tests | 1 failed) 7643ms
+   × runs DAWN presentation locally in sessionDir, keeps model observations remote, and restores the remote cursor without ending the terminal 1538ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > runs DAWN presentation locally in sessionDir, keeps model observations remote, and restores the remote cursor without ending the terminal
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/runtime/remote-terminal.test.ts:332:133
+    330|   await x.runtime.launchCli('t')
+    331|   try {
+    332|     await vi.waitFor(() => expect(events.some(event => event.kind === …
+       |                                                                                                                                     ^
+    333|   } catch (error) {
+    334|     try { await vi.waitFor(() => expect(events.some(event => event.kin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 136 passed | 1 skipped (138)
+   Start at  16:59:51
+   Duration  7.96s (transform 3.01s, setup 1.30s, import 4.43s, tests 11.61s, environment 1.02s)

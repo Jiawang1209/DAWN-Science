@@ -325,9 +325,27 @@ it('runs DAWN presentation locally in sessionDir, keeps model observations remot
   cleanup.push(async () => { rmSync(local, { recursive: true, force: true }) })
   const x = await setup({ environment: async () => ({ PATH: `${bin}:/usr/bin:/bin`, HOME: local, BASH_ENV: '/dev/null', ENV: '/dev/null', DAWN_TERMINAL_ID: 't', PRESENTATION_RESULT: join(local, 'result') }) })
   const events: AgentEvent[] = []
-  x.runtime.attach('t', event => events.push(event))
+  let output = ''
+  const waiting = new Set<() => void>()
+  x.runtime.attach('t', event => {
+    events.push(event)
+    if (event.kind === 'output') {
+      output += event.data
+      for (const check of [...waiting]) check()
+    }
+  })
+  // Process creation and application readiness are different events. Wait for the
+  // byte-stream marker for each launch under this test's existing overall timeout.
+  const nextReady = () => {
+    const offset = output.length
+    return new Promise<void>(resolve => {
+      const check = () => { if (output.slice(offset).includes('LOCAL_PRESENTATION_READY')) { waiting.delete(check); resolve() } }
+      waiting.add(check)
+    })
+  }
+  const firstReady = nextReady()
   await x.runtime.launchCli('t')
-  await vi.waitFor(() => expect(events.some(event => event.kind === 'output' && event.data.includes('LOCAL_PRESENTATION_READY'))).toBe(true))
+  await firstReady
   expect(readFileSync(join(local, 'result'), 'utf8')).toBe(`${x.dir}|t`)
   expect(x.runtime.isPresenting('t')).toBe(true)
   x.control.grant('chat', 't', 'shell')
@@ -341,7 +359,9 @@ it('runs DAWN presentation locally in sessionDir, keeps model observations remot
   await vi.waitFor(() => expect(events.slice(beforeReturn).some(event => event.kind === 'output' && /\x1b\[\d+;\d+H$/.test(event.data))).toBe(true))
   expect(events.filter(event => event.kind === 'exited')).toHaveLength(0)
   expect((await x.runtime.executeForOwner('chat', 'printf STILL_REMOTE', {}))?.stdout).toBe('STILL_REMOTE')
+  const secondReady = nextReady()
   x.write('dawn\r')
+  await secondReady
   await vi.waitFor(() => expect(x.runtime.isPresenting('t')).toBe(true))
   x.runtime.write('t', 'quit\r')
   await vi.waitFor(() => expect(x.runtime.isPresenting('t')).toBe(false))

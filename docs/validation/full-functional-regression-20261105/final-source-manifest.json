@@ -1092,7 +1092,7 @@
   "tests/runtime/pty-locale.test.ts": "005fa27eac30585781de0e7187aff6d80206a75a2ddcda51cfa7e71ef4677167",
   "tests/runtime/pty-shutdown.test.ts": "4d6a36396272fb36791ea1edab3e90c68cf6fcfb76cafea2673dd82e3e1543ed",
   "tests/runtime/queue-mirror.test.ts": "4d3f6c4c91f2c5e1d8fc6a07838ac15951c728c3747c3dfaae6e33a9e5ca74ec",
-  "tests/runtime/remote-terminal.test.ts": "d5fa3a8808545e8c3d7a9a270588b30a7e6785e8ddf71243820a5ca4349d38cc",
+  "tests/runtime/remote-terminal.test.ts": "246fb1d9df24f2a028d1de937bf6f9c7171e8e749ed1f446228874c670a15f3e",
   "tests/runtime/rewind-guards.test.ts": "7be4eaf034bba7576e508d316542c822d41fa3bd6b9547cbf9da9c72bdd2bccc",
   "tests/runtime/rewind-note.test.ts": "c84e9903c2ecdc48797c92cb5d6a140ebfe7149f5848e87aac1b38aaac6d64f6",
   "tests/runtime/science-pipeline-projection.test.ts": "f063ced96b689da767b5a30b903fa0cf2e51cb39fceae00ce259a5e45a282784",

@@ -4655,6 +4655,19 @@ export function ConversationView({
    * 就把 `scrollIntoView` 滚上去的视野又拽回底部：`data-search-hit` 在，人却看不见它。
    */
   const 贴底 = useRef<StickToBottomContext>(null)
+  // The scrolling layer reserves symmetric classic-scrollbar gutters. Match
+  // the main composer to its actual content width, including when the OS
+  // switches between overlay and classic scrollbars. No per-token rerender.
+  useLayoutEffect(() => {
+    const root = 对话根.current
+    const scroll = root?.querySelector<HTMLElement>(".turns > div")
+    if (!root || !scroll || 紧凑) return
+    const update = () => root.style.setProperty("--dawn-thread-scroll-gutter", `${(scroll.offsetWidth - scroll.clientWidth) / 2}px`)
+    const observer = new ResizeObserver(update)
+    observer.observe(scroll, { box: "content-box" })
+    update()
+    return () => { observer.disconnect(); root.style.removeProperty("--dawn-thread-scroll-gutter") }
+  }, [session.sessionId, 紧凑])
   const [搜索命中id, 设搜索命中id] = useState<string | undefined>(undefined)
   const 已跳 = useRef<number | undefined>(undefined)
   /** 读最新的：它变了不该让跳转那条 effect 重跑 */

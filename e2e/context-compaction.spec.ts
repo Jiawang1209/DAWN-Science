@@ -15,7 +15,7 @@ import { resolve } from "node:path"
 import { test, expect, CANNED_REPLY, 开一段临时会话, 等进了对话, 用某个agent开一段, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 const 主区 = (page: Page) => page.locator("main.main")
-const 框 = (区: Locator) => 区.getByPlaceholder(/输入问题/)
+const 框 = (区: Locator) => 区.locator('textarea.composer-field')
 const 仪表 = (区: Locator) => 区.locator(".ctx-meter-trigger")
 const 标记 = (区: Locator, status: string) => 区.locator(`.compaction-mark[data-status="${status}"]`)
 

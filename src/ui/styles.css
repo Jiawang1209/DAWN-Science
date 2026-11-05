@@ -965,6 +965,11 @@ pre {
   padding: var(--dawn-space-2) var(--dawn-space-8) var(--dawn-space-4);
   /* 与侧栏、顶栏同一条：**不划线，靠留白分** */
 }
+/* Match the real scrollable content on narrow main conversations; keep
+   welcome and compact side-chat spacing under their existing rules. */
+.main .conversation > .composer {
+  padding-inline: calc(var(--dawn-space-8) + var(--dawn-thread-scroll-gutter));
+}
 .composer > * {
   width: 100%;
   max-width: var(--dawn-thread-max-w);

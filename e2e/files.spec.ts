@@ -447,6 +447,9 @@ test("**树行的菜单：复制路径、插进输入框**", async ({ dawn }) =>
  */
 test("**悬停文件弹信息卡；拖窄了时间戳也不折行**", async ({ dawn }) => {
   const { page, workspace } = dawn
+  // This scenario explicitly exercises widening to two columns. Native window
+  // dimensions may be clamped by the current display; pin the CSS viewport.
+  await page.setViewportSize({ width: 1280, height: 840 })
   mkdirSync(join(workspace, "数据"), { recursive: true })
   writeFileSync(join(workspace, "数据", "一个名字很长很长很长很长的样本文件.csv"), "a,b\n1,2\n")
 

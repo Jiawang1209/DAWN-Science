@@ -36,6 +36,12 @@ test("内核设置只有两组路径，手填保存和清空可回写，最窄�
     await sash.press("ArrowRight")
     await expect(sash).toHaveAttribute("aria-valuenow", String(Math.max(min, width - 16)))
   }
+  // aria-valuenow commits before the 180ms grid-width transition completes.
+  // Observe the final layout without cancelling animations or changing tolerances.
+  await page.locator(".body").evaluate(async el => {
+    await Promise.all(el.getAnimations().map(animation => animation.finished))
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  })
   for (const group of [python, r]) {
     await expect(group.getByRole("textbox")).toBeVisible()
     await expect(group.getByRole("button", { name: "保存", exact: true })).toBeVisible()

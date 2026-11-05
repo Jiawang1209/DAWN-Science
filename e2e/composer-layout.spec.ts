@@ -284,6 +284,10 @@ test("终端跟随强调色，上下文平时透明悬停有反馈，菜单跟�
     await page.locator(".composer-environment .ws-chip").click()
     const directories = page.getByRole("dialog", { name: "工作目录", exact: true })
     await expect(directories).toBeVisible()
+    await directories.evaluate(async el => {
+      await Promise.all(el.getAnimations().map(animation => animation.finished))
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    })
     await expect.poll(async () => Math.round((await directories.boundingBox())!.width)).toBe(360)
     const search = directories.getByRole("searchbox")
     await expect(search).toBeFocused()

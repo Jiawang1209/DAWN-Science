@@ -423,6 +423,8 @@
    * 各自取百分比会差出十几像素、三条边就对不齐了；容器单位让它们量的是同一个宽度。
    */
   --dawn-thread-max-w: clamp(784px, 70cqi, 1200px);
+  /* Conversation measures classic-scrollbar gutters locally at runtime. */
+  --dawn-thread-scroll-gutter: 0px;
   /** 页边距与面板区宽度上限。之前只以回退值的形式存在 */
   --dawn-page-inset-x: clamp(1.25rem, 4vw, 4rem);
   --dawn-page-max-w: 75rem;

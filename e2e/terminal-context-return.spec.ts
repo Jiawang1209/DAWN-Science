@@ -3,6 +3,8 @@ import type { Page } from '@playwright/test'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { stripVTControlCharacters } from 'node:util'
+import { TerminalScreen } from '../src/terminal/screen.js'
+import { readyPrompt } from '../src/terminal/commands.js'
 
 async function open(page: Page) {
   await 在项目里开会话(page); await 等进了对话(page)
@@ -28,8 +30,25 @@ async function snapshot(page: Page, sessionId: string) {
   return page.evaluate(async id => (await window.dawn!.invoke('subscribeSession', { sessionId: id }) as any).data, sessionId)
 }
 async function enter(page: Page, terminalId: string) {
-  // Rendering xterm is earlier than the login Shell becoming ready under CPU load.
-  await expect.poll(async () => stripVTControlCharacters((await snapshot(page, terminalId)).terminal).trimEnd().endsWith('$')).toBe(true)
+  // Parse cursor state with the same model and prompt predicate as the host.
+  // Raw PTY bytes can end in repaint commands rather than the visible prompt.
+  const control = await page.evaluate(async id => (await window.dawn!.invoke('getTerminalControl', { terminalId: id }) as any).data, terminalId)
+  let screen = new TerminalScreen(control.cols, control.rows), consumed = '', reported = false
+  try {
+    await expect.poll(async () => {
+      const raw = (await snapshot(page, terminalId)).terminal as string
+      if (!raw.startsWith(consumed)) { screen.dispose(); screen = new TerminalScreen(control.cols, control.rows); consumed = '' }
+      screen.write(raw.slice(consumed.length)); consumed = raw
+      const parsed = await screen.snapshot()
+      const parsedReady = readyPrompt('shell', parsed.cursorPrefix, parsed.alternate)
+      const rawReady = stripVTControlCharacters(raw).trimEnd().endsWith('$')
+      if (parsedReady && !rawReady && !reported) {
+        reported = true
+        await test.info().attach('terminal-prompt-observation', { body: JSON.stringify({ rawReady, parsedReady, cursorPrefix: parsed.cursorPrefix, tailCodePoints: Array.from(raw.slice(-128)).map(c => c.codePointAt(0)) }), contentType: 'application/json' })
+      }
+      return parsedReady
+    }).toBe(true)
+  } finally { screen.dispose() }
   await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()
   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
 }

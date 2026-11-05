@@ -5,11 +5,14 @@ export const isMcpFetchCancellation = (error: Error): boolean => error.message.i
 
 /** Retain same-origin MCP redirects, never forward credentials or RPC bodies to another origin. */
 export const mcpSafeFetch: FetchLike = async (input, init) => {
+  // Forward the caller's signal directly. A temporary Request owns an intermediate
+  // abort controller which Node may collect after headers while its body is live.
+  const signal = init?.signal
   let request = new Request(input, init)
   for (let hop = 0; ; hop++) {
     // Keep a clone before fetch consumes the body, for a same-origin 307/308.
     const next = request.clone()
-    const response = await fetch(request, { redirect: 'manual' })
+    const response = await fetch(request, { redirect: 'manual', ...(signal !== undefined ? { signal } : {}) })
     const location = response.headers.get('location')
     if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response
     const url = new URL(location, request.url)

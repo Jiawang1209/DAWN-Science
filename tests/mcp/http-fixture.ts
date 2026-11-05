@@ -2,7 +2,7 @@ import { createServer, type ServerResponse } from 'node:http'
 import type { McpServer } from '../../src/config/schema.js'
 
 /** Stateful loopback fixture: no external services, and writes can lose their reply. */
-export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: boolean | string = false) {
+export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: boolean | string = false, options: { redirect?: boolean } = {}) {
   let generations = 0, expireNext = false, catalogChanged = false
   let events: ServerResponse | undefined
   let sharedPendingId: unknown
@@ -11,7 +11,11 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
   const resumable = new Map<string, unknown>()
   let resumed = 0
   const calls: string[] = [], cancelled: string[] = [], closedWaits: string[] = []
+  const startedAt = performance.now()
+  const timeline: { event: string; ms: number; id?: string }[] = []
+  const note = (event: string, id?: string) => timeline.push({ event, ms: performance.now() - startedAt, ...(id === undefined ? {} : { id }) })
   const server = createServer((req, res) => {
+    if (options.redirect && req.url === '/redirect') { res.writeHead(307, { location: '/mcp' }).end(); return }
     if (req.method === 'GET' && mode === 'http' && typeof streaming === 'string' && streaming.startsWith('shared')) {
       events = res
       res.writeHead(200, { 'content-type': 'text/event-stream' })
@@ -74,7 +78,8 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
         if (name === 'hold') {
           if (typeof streaming === 'string' && streaming.startsWith('shared')) { sharedPendingId = message.id; sharedPendingIds.push(message.id); res.writeHead(202).end(); return }
           pending.set(id, res)
-          res.on('close', () => { closedWaits.push(id); pending.delete(id) })
+          note('hold', id)
+          res.on('close', () => { note('response-close', id); closedWaits.push(id); pending.delete(id) })
           if (mode === 'sse') res.writeHead(202).end()
           else if (streaming) {
             res.writeHead(200, { 'content-type': typeof streaming === 'string' && !streaming.startsWith('resume') ? streaming : 'text/event-stream' })
@@ -91,16 +96,18 @@ export async function mcpHttpFixture(mode: 'http' | 'sse' = 'http', streaming: b
         }
         reply({ content: [{ type: 'text', text: name }], structuredContent: { generation: generations } })
       } else {
-        if (message.method === 'notifications/cancelled') cancelled.push(String(message.params.requestId))
+        if (message.method === 'notifications/cancelled') { cancelled.push(String(message.params.requestId)); note('cancel-notification', String(message.params.requestId)) }
         res.writeHead(202).end()
       }
     })
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   const port = (server.address() as { port: number }).port
-  const config = { type: mode, url: `http://127.0.0.1:${port}/${mode === 'sse' ? 'sse' : 'mcp'}` } satisfies McpServer
+  const config = { type: mode, url: `http://127.0.0.1:${port}/${options.redirect ? 'redirect' : mode === 'sse' ? 'sse' : 'mcp'}` } satisfies McpServer
   return {
     config, calls, cancelled, closedWaits,
+    note,
+    snapshot: () => ({ timeline: [...timeline], calls: [...calls], cancelled: [...cancelled], closedWaits: [...closedWaits], pending: [...pending].map(([id, res]) => ({ id, destroyed: res.destroyed, ended: res.writableEnded, socketDestroyed: res.socket?.destroyed })) }),
     generations: () => generations,
     resumed: () => resumed,
     expireNextWrite: () => { expireNext = true },

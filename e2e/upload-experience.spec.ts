@@ -59,6 +59,7 @@ async function expectAlignedColumns(job:import("@playwright/test").Locator) {
 }
 test("多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读",async({dawn},info)=>{
  const {page}=dawn
+ await page.setViewportSize({width:1280,height:840})
  const head=page.getByRole("button",{name:/^服务器/});if(await head.getAttribute("aria-expanded")!=="true")await head.click()
  await page.getByRole("button",{name:/添加服务器/}).click();await page.locator("#conn-host").fill("fake.example");await page.locator("#conn-user").fill("dawn");await page.locator("#conn-label").fill("上传体验演示");await page.locator("#conn-secret").fill("dawn");await page.getByRole("button",{name:"保存并连接",exact:true}).click()
  await expect(page.getByRole("dialog",{name:"添加服务器",exact:true})).toHaveCount(0)
@@ -88,18 +89,18 @@ test("多文件确认可取消，统一任务保留每个文件与源文件，�
  await expectAlignedColumns(job)
  await job.getByRole("button",{name:"仅异常",exact:true}).click();await expect(job).toContainText("没有需要处理的文件");await job.getByRole("button",{name:"完整列表",exact:true}).click()
  await page.screenshot({path:info.outputPath("upload-tasks-light.png")})
- const fullBounds=await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.getBounds())
- await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setSize(1100,720))
+ const fullViewport=page.viewportSize()!
+ await page.setViewportSize({width:1100,height:720})
  await page.locator(".files-view").evaluate(async()=>{await new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r())))})
  await expectTransferFooter(page)
- await dawn.app.evaluate(({BrowserWindow},bounds)=>BrowserWindow.getAllWindows()[0]!.setBounds(bounds),fullBounds)
+ await page.setViewportSize(fullViewport)
  await page.locator(".files-view").getByRole("button",{name:"加宽",exact:true}).click();await expect(page.locator(".files-view")).toHaveClass(/files-wide/)
  await expectTransferFooter(page,"wide")
  await page.locator(".file-preview").getByRole("button",{name:"展开阅读",exact:true}).click();await expect(page.locator(".file-tree-box")).toBeHidden();await expectTransferFooter(page,"reading")
  await page.locator(".file-preview").getByRole("button",{name:"收起预览",exact:true}).click();await expect(page.locator(".file-preview")).toHaveCount(0);await expectTransferFooter(page,"closed")
  await page.locator(".file-tree").getByRole("button",{name:/^生态样本.txt/}).click();await expect(page.locator(".file-preview")).toContainText("科研数据");await expectTransferFooter(page,"wide")
  await page.locator(".files-view").getByRole("button",{name:"收窄",exact:true}).click();await expect(page.locator(".files-view")).not.toHaveClass(/files-wide/);await expectTransferFooter(page)
- await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setSize(900,720));await page.evaluate(()=>{document.documentElement.classList.remove("dawn-light");document.documentElement.classList.add("dawn-dark")});await setTransferExpanded(page,false)
+ await page.setViewportSize({width:900,height:720});await page.evaluate(()=>{document.documentElement.classList.remove("dawn-light");document.documentElement.classList.add("dawn-dark")});await setTransferExpanded(page,false)
  await expect.poll(async()=>page.locator(".transfer-batches").evaluate(el=>el.scrollWidth<=el.clientWidth+2)).toBe(true)
  expect(await page.locator(".transfer-batches").evaluate(el=>el.getBoundingClientRect().height)).toBeLessThan(90)
  await expectTransferFooter(page)
@@ -116,7 +117,7 @@ test("多文件确认可取消，统一任务保留每个文件与源文件，�
  await page.getByRole("button",{name:"传输任务",exact:true}).click();await expect(job.locator(".transfer-entry-line")).toHaveCount(3)
  await expectAlignedColumns(job)
  await expectTransferFooter(page)
- await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setSize(1000,620))
+ await page.setViewportSize({width:1000,height:620})
  await expect.poll(async()=>page.locator(".files-view").evaluate(el=>{
   const footer=el.querySelector(".files-transfers")!.getBoundingClientRect(),preview=el.querySelector(".file-preview")!.getBoundingClientRect()
   return Math.abs(footer.bottom-el.getBoundingClientRect().bottom)<=1&&footer.height<=el.clientHeight/2+1&&preview.height>60

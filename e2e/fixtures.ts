@@ -1,3 +1,4 @@
+import { observeElectronExit } from "./electron-exit-diagnostics.js"
 import { startFakeScienceServer } from "../scripts/fake-science-server.mjs"
 /**
  * e2e 的启动夹具。
@@ -836,14 +837,21 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     })
 
     let app!: ElectronApplication
+    let appProcess!: ReturnType<ElectronApplication['process']>
+    let exitDiagnostics: Awaited<ReturnType<typeof observeElectronExit>> | undefined
     const 关掉并检查 = async () => {
-      const proc = app.process()
+      // Tests may close the application themselves; Playwright then disposes its
+      // process channel. Retain the original child for the same strict exit check.
+      const proc = appProcess
+      exitDiagnostics?.beginClose()
       await app.close()
       expect(proc.signalCode, "Electron 退出时收到信号；检查主进程日志和系统崩溃报告").toBeNull()
       expect(proc.exitCode, "Electron 必须正常退出，不能把原生崩溃记为通过").toBe(0)
     }
     try {
     app = await 起一次()
+    appProcess = app.process()
+    exitDiagnostics = await observeElectronExit(app)
     /**
      * 等第一个窗口。**30 秒是原值，2026-08-10 调回。**
      *
@@ -906,6 +914,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
 
     let page = 接线(await app.firstWindow())
     await 钉住中文(page)
+    await exitDiagnostics?.appReady()
 
     /**
      * **关掉再打开**（会话续接的 e2e 要用，2026-08-11）。
@@ -916,12 +925,15 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     const 重开 = async (): Promise<Page> => {
       await 关掉并检查()
       app = await 起一次()
+      appProcess = app.process()
+      exitDiagnostics = await observeElectronExit(app)
       app.process().stderr?.on("data", (b: Buffer) => {
         const 文本 = b.toString().trimEnd()
         if (文本) console.error("[主进程]", 文本)
       })
       page = 接线(await app.firstWindow())
       await 钉住中文(page)
+      await exitDiagnostics?.appReady()
       return page
     }
 

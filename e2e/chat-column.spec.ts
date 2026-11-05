@@ -23,6 +23,8 @@ import { test, expect, 开一段临时会话, 等进了对话 } from "./fixtures
 
 test("**正文、气泡、输入卡在同一条左右缘上**", async ({ dawn }) => {
   const { page } = dawn
+  // This case also asserts wide-window whitespace; pin that precondition.
+  await page.setViewportSize({ width: 1280, height: 840 })
   await 开一段临时会话(page)
 
   await page.getByPlaceholder(/输入问题/).fill("量一下这一栏")

@@ -1,0 +1,922 @@
+Listing tests:
+  accent.spec.ts:9:1 › **选一颗预置色，强调色与「活着」跟着变，「成功」仍是绿；重载还在**
+  accent.spec.ts:38:1 › **浅色主题色**：按钮上的字自动换成深色
+  accent.spec.ts:49:1 › **颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标复制，Shift 切格式
+  accent.spec.ts:82:1 › **取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift 切格式，点击定为主题色
+  accent.spec.ts:120:1 › **自绘色盘**：点方块定色、拖色相条变色，C 复制、Shift 切格式、Esc 关
+  accent.spec.ts:156:1 › **窗口矮时色盘往上翻**，整个面板都在视口里，不用滚动
+  accent.spec.ts:170:1 › **极矮窗口**（320 高）色盘也整块在视口里——弹出层是 fixed，不跟设置页滚动
+  acp-agent.spec.ts:54:3 › ACP › **一整段对话跑得通**，且模型旁边标着 ACP
+  acp-agent.spec.ts:91:5 › ACP › claude-acp 可以切回 API，旧对话仍保留
+  acp-agent.spec.ts:91:5 › ACP › codex-acp 可以切回 API，旧对话仍保留
+  acp-agent.spec.ts:113:3 › ACP › claude-acp 菜单按服务分组，点另一个适配器的模型即可切换
+  acp-agent.spec.ts:113:3 › ACP › API 菜单按服务分组，点另一个适配器的模型即可切换
+  acp-agent.spec.ts:134:3 › ACP › 侧边对话切换 ACP 与 API，主区保持原对话
+  acp-agent.spec.ts:160:3 › ACP › 空 ACP 对话切回 API 时顶替空会话
+  acp-agent.spec.ts:196:3 › ACP › **适配器起不来时，屏幕上有一句人话**
+  acp-agent.spec.ts:229:3 › ACP 权限卡 › **它问，卡出现；点一个，它就收到那一个**
+  acp-agent.spec.ts:262:3 › ACP 权限卡 › **取消与拒绝不是一回事**
+  acp-agent.spec.ts:300:3 › ACP 取消 › **跑起来能停**，停了就真的停了
+  acp-agent.spec.ts:344:3 › ACP 会话开关 › **它给什么就画什么**，选一个真的送过去
+  acp-agent.spec.ts:410:5 › ACP 会话开关 › 装成 claude 那台时 › **选择的地方只写具体模型，不显示角色或推荐说明**
+  acp-agent.spec.ts:435:7 › ACP 会话开关 › 不给开关时 › 那颗按钮不出现
+  acp-agent.spec.ts:457:3 › ACP 用量 › **跑一轮之后，饼图上分得出这台 ACP agent**
+  acp-agent.spec.ts:510:3 › ACP 用我们的工具 › **它真的连上了 DAWN，拿到工具并调得动**
+  acp-agent.spec.ts:553:3 › ACP 切换等待期间 › 原空对话在切换期间收到首句时，保留这段对话
+  acp-setup.spec.ts:60:1 › **加一个 ACP 适配器，然后真的用它聊一段**
+  acp-setup.spec.ts:117:1 › **接错了能删掉**，删完选择器里也没有了
+  add-service.spec.ts:22:1 › **填完就能用**：自定义端点 → 模型选择器 → 真的连上了
+  add-service.spec.ts:87:1 › **名字不合法当场就说** —— 而不是写进 yaml 之后炸
+  add-service.spec.ts:98:1 › **移除一个服务：配置里那一段真的没了**
+  agent-browser.spec.ts:11:1 › 网页格两个子页签；agent 旁观空态如实说；切回浏览面地址栏还在
+  agent-pill.spec.ts:25:1 › 模型 pill 在输入卡里，且**几何上确实靠右靠下**
+  agent-pill.spec.ts:67:1 › 用**服务名**称呼它，不是配置里那个键
+  agent-pill.spec.ts:85:1 › **输入卡这一行只有一颗 pill** —— 误按从形状上就不可能
+  agent-pill.spec.ts:94:1 › 菜单向上弹 —— pill 贴着窗口底部，向下会被切掉
+  agent-pill.spec.ts:103:1 › 侧栏那份真的没了
+  agent-pill.spec.ts:116:1 › **首页挑 LLM 那里，能直接跳到配模型**
+  agent-pill.spec.ts:160:1 › **挑 LLM 那张单子上，每一条都标着 API / CLI / ACP，且按类归拢、组内按字母**
+  analysis-delivery.spec.ts:18:1 › 科研交付：真实输出→选择→结果解读→独立重跑→保留记录和图片预览
+  analysis-delivery.spec.ts:144:3 › 交付核验拒绝 id 身份变化 001 / 1
+  analysis-delivery.spec.ts:144:3 › 交付核验拒绝 id 身份变化 9007199254740992 / 9007199254740993
+  analysis-delivery.spec.ts:144:3 › 交付核验拒绝 category 身份变化 10000000 / 10000001
+  analysis-delivery.spec.ts:181:1 › 整理并验证先等核对；缺少预期输出保持部分验证并保留新增图片报告
+  analysis-route-map.spec.ts:9:3 › route map shared viewer › PDF preserves usable height, map and draft while closing and reopening dock
+  analysis-route-map.spec.ts:49:3 › route map active turn › viewing another node does not move the active step and ends with the actual turn
+  analysis-route-map.spec.ts:76:3 › route map user confirmation › keeps confirmation in the main conversation and shows its actual location on the map
+  analysis-route.spec.ts:51:1 › 真实路线：摘要不自动开坞、选择不发模型、只读查看检索、单步交付预览、历史和重启
+  analysis-route.spec.ts:154:1 › 无路线入口只发送规划意图；步骤依赖阻塞且允许本地展开
+  app-statusbar.spec.ts:12:1 › 底部数量来自实际名册，模型切换同步，详情及设置入口可达
+  app-statusbar.spec.ts:60:1 › 窄窗口折叠扩展数量，版本留在末尾，状态栏与详情不溢出
+  artifact-preview-close.spec.ts:12:1 › 长Markdown产物只滚动正文，收起入口固定且返回原清单
+  artifact-retention.spec.ts:16:3 › automatic artifact sources and explicit result retention › saved output survives live overwrite and opens through the project retention panel
+  artifact-retention.spec.ts:86:3 › automatic artifact sources and explicit result retention › one-click retention and history stay usable in a narrow English dock
+  artifact-retention.spec.ts:152:3 › automatic artifact sources and explicit result retention › source query leaves old files untouched; preserving current content is explicitly late capture
+  artifact-retention.spec.ts:191:3 › automatic artifact sources and explicit result retention › actual interpreter snapshots belong to each Python/R notebook execution
+  artifacts.spec.ts:25:3 › 产物：对话里的 GENERATED 条与坞的「产物」格 › write 新建一个 csv → 产物条 → 点 chip 进坞预览 → 回到清单
+  artifacts.spec.ts:68:3 › 临时会话（非 git）：同样出 GENERATED 条 › 临时会话里 write 新建一个 csv → 产物条 → 点 chip 进坞预览
+  artifacts.spec.ts:102:3 › 只读的一轮：不画产物条，也不说「产出未知」 › read 一个文件 → 回复下面既没有 GENERATED 条，也没有「本轮产出未知」
+  artifacts.spec.ts:139:3 › 外部 CLI 会话：本轮产出未知，不列 agent 声称的文件 › cli 会话的 agent 轮画「本轮产出未知」
+  artifacts.spec.ts:155:3 › 页面迭代：长结果清单 › 完整清单可以滚到末尾，回到清单后仍可打开文件
+  at-file.spec.ts:14:3 › 对话里 › **打 `@` 弹菜单；挑一条；引用栏里有它；发出去模型收到 workspace-reference**
+  at-file.spec.ts:51:3 › 对话里 › **→ 钻进目录，菜单不关；回车引用目录是 `@路径/`；× 抠掉；不存在的 `@alice` 什么都不发生**
+  at-file.spec.ts:85:1 › 启动空态及普通会话：不泄漏项目文件
+  at-file.spec.ts:111:3 › 第二档 › **粘贴进来的 `@data/raw/a.csv` 真实存在也不算**：不开菜单、不进栏、模型收不到；设置里关掉之后就算
+  at-file.spec.ts:151:3 › 第二档 › **过滤规则**：全局加一条精确、工作区加一条正则，菜单里就不列它们；坏正则存不进去
+  attach.spec.ts:55:3 › 挑文件 › **添加菜单保留三个上传选项**
+  attach.spec.ts:102:3 › 挑文件 › **空态那一屏也给这颗按钮**
+  attach.spec.ts:130:5 › 三项都通 › **「上传文件」点下去，路径进了输入框**
+  attach.spec.ts:130:5 › 三项都通 › **「上传数据」点下去，路径进了输入框**
+  attach.spec.ts:163:3 › 图片真的送进模型 › **附一张图发出去，模型那边收到了**
+  attach.spec.ts:199:3 › 图片真的送进模型 › **挑错了能单独摘掉**
+  attach.spec.ts:233:5 › 提示不说谎 › **首页：那句提示在，而且 @ 与 / 都真的有反应**
+  attach.spec.ts:233:5 › 提示不说谎 › **对话：那句提示在，而且 @ 与 / 都真的有反应**
+  attach.spec.ts:304:3 › **首页：粘一张图进去，模型那边收到了**
+  attach.spec.ts:304:3 › **对话：粘一张图进去，模型那边收到了**
+  attach.spec.ts:363:1 › **粘一段文字，照常进输入框**
+  attach.spec.ts:425:3 › **首页：拖一张图进去，模型那边收到了**
+  attach.spec.ts:425:3 › **对话：拖一张图进去，模型那边收到了**
+  attach.spec.ts:452:1 › **拖在卡上时，卡自己会说「我接得住」**
+  attach.spec.ts:492:3 › **首页：只粘图不打字，回车也发得出去**
+  attach.spec.ts:492:3 › **对话：只粘图不打字，回车也发得出去**
+  attach.spec.ts:520:1 › **Esc 收掉「＋」的菜单**
+  attach.spec.ts:541:1 › **内置对话有「上传图片」，内核会话没有**
+  attach.spec.ts:575:1 › 输入卡：环境在顶部，添加与权限在左，模型发送在右，同排且不溢出
+  background.spec.ts:8:1 › 外层背景与主题色独立，内容工作面不变，重载记住且可恢复默认
+  background.spec.ts:49:1 › 同一背景色适配明暗与系统主题，原内容颜色跟随主题而非自选背景
+  background.spec.ts:72:1 › 背景颜色值支持RGB、错误纠正、复制及独立色盘与吸管
+  base-url.spec.ts:38:1 › **没填地址的那几个，摘要上就在催** —— 填了 key 也连不上，而没人知道为什么
+  base-url.spec.ts:52:1 › **自带地址的也能改** —— 「pi 自带地址」不等于「地址对你也对」
+  base-url.spec.ts:64:1 › 填进去**真的落到配置文件里**，而且原有内容没被动
+  boot.spec.ts:14:1 › 全新配置目录能起来，且落在对话首页
+  boot.spec.ts:30:1 › 默认工作区自动就绪，不要求先选文件夹
+  boot.spec.ts:40:1 › 配置文件被自动写出，且是一份带注释的模板
+  boot.spec.ts:48:1 › 没有全屏遮罩挡着 —— 连上之后就该让人干活
+  bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention
+  bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries
+  bot-direct-chat.spec.ts:3:1 › Bot direct chat retains draft and history independently of main and side chat
+  bot-direct-chat.spec.ts:32:1 › Bot management and direct preview stay within a narrow dock in both themes
+  bot-dispatch.spec.ts:3:1 › slash Bot target dispatches without a captain prompt and exposes its member conversation
+  bot-dispatch.spec.ts:32:1 › accepted dispatch with a lost response restores the draft and retries the same request
+  bot-dispatch.spec.ts:79:1 › Bot slash dispatch can start an empty native main without sending raw commands to the model
+  bot-team.spec.ts:11:1 › native captain selects configured Bots and delivers executed dependency results
+  brand-export-menu.spec.ts:5:1 › DAWN Science与折叠、快捷键按钮始终单行，展开侧栏加宽并对齐
+  brand-export-menu.spec.ts:47:1 › 查找与导出直接显示，键盘可选且真实保存完整对话
+  browser-plugin.spec.ts:8:1 › **浏览器卡**：四族 15 工具；关「操作」族要持久
+  browser-plugin.spec.ts:30:3 › 模型真的拿到了浏览器工具 › **假模型点名调 browser_status**，回执如实说「没开」
+  bulk-delete.spec.ts:26:1 › **选两条，删两条，第三条还在**
+  bulk-delete.spec.ts:56:1 › **全选是全选，再点一次是全不选**
+  bulk-delete.spec.ts:75:1 › **「完成」退出选择模式，什么都不删**
+  bulk-delete.spec.ts:100:1 › **指向不存在会话的任务，照样删得掉**
+  bulk-delete.spec.ts:149:1 › **「多选」比它头上的标题轻**
+  busy-gap.spec.ts:54:1 › **正在回的时候，回车是排队**：挂在待发条上、此刻不进转录；这一轮完了才送进去
+  busy-gap.spec.ts:75:1 › **取回**：从待发条拿下来、字回到输入框，这句话不会被送出去
+  busy-gap.spec.ts:91:1 › **有待发时按停止**：排着的话回到输入框，停下之后不会自己冒出来
+  busy-gap.spec.ts:106:1 › 待发条上的“新增会话”继承主会话上下文，原待发内容仍留在旧会话
+  busy-gap.spec.ts:134:1 › 忙着且框里有字时，屏幕上明写着这两条怎么用；待发条上的按钮常驻可见
+  case-cards.spec.ts:63:3 › 大结果标题案例卡片 › 超预算多内容块、只写标题：后续轮次复用案例，重启后封面与选择仍可用
+  case-cards.spec.ts:135:3 › 科研分析向导的路线与卡片接线 › 两步查询产生对应卡片，选择回传完整 ID，技能引用随构建发布
+  case-cards.spec.ts:197:3 › 案例卡片 › **工具查到的、正文提到的才出卡；封面真的显示；点卡片右侧开详情；「照这篇做」替你发出带 case_id 的话**
+  chat-column.spec.ts:24:1 › **正文、气泡、输入卡在同一条左右缘上**
+  chat-column.spec.ts:68:1 › **窗口放大时这一栏跟着放大，封顶，三条边仍对齐**
+  chat-column.spec.ts:108:1 › **用户气泡四角一样圆、底色不是侧栏灰**
+  chat-column.spec.ts:159:3 › 命令行的宽度 › **工具调用那一行不比回复更宽**
+  chat-size.spec.ts:3:1 › 对话字号按一根轴缩放，并在重载后保留
+  chat.spec.ts:24:1 › 说一句话 → 界面上出现回复 → 账本上留下记录
+  chat.spec.ts:46:1 › 回复是 markdown 而不是一坨纯文本
+  chat.spec.ts:68:1 › 空白内容不发送 —— 不往账本上记一条什么都没有的回合
+  child-resources.spec.ts:7:1 › 原失败长词组从真实主会话传入子进程，命中后读取记忆正文
+  child-resources.spec.ts:30:1 › 真实主会话派单 → 子资源查询可见 → 续问刷新 → 重启恢复
+  chunk-missing.spec.ts:56:1 › **分片取不到时，这一屏照常显示，内容一个字不少**
+  cli-agent-kind.spec.ts:32:3 › 配了一个认不出的 cli agent › **响亮失败并说清怎么办** —— 不是悄悄起一个终端
+  cli-agent-kind.spec.ts:45:3 › 配了一个认不出的 cli agent › 它仍然出现在可选列表里 —— 缺失不等于不支持
+  cli-agent.spec.ts:57:3 › CLI agent 在对话框里 › **打一句，它答一句** —— 判据 ①
+  cli-agent.spec.ts:70:3 › CLI agent 在对话框里 › **模型选择器真的出现** —— 上一轮就是漏了这一条，发了个哑的出去
+  cli-agent.spec.ts:86:3 › CLI agent 在对话框里 › **你自己说的话也要在对话里** —— 作者试用时报的那个
+  cli-agent.spec.ts:101:3 › CLI agent 在对话框里 › **agent 的气泡要收尾** —— 不收尾它永远显示成还在说
+  cli-agent.spec.ts:112:3 › CLI agent 在对话框里 › **工具调用落在账本上** —— 判据 ②，走 PTY 时这里只有一团字节
+  cli-agent.spec.ts:135:3 › CLI agent 在对话框里 › **工具调用在对话里看得见**
+  codex-agent.spec.ts:41:3 › codex：一轮一进程 + 续接 › **第二轮真的续接上了** —— 不续接的话它看起来也一切正常
+  codex-agent.spec.ts:53:3 › codex：一轮一进程 + 续接 › **thread_id 落库了** —— 重开应用后靠它接上
+  codex-agent.spec.ts:66:3 › codex：一轮一进程 + 续接 › **stderr 有噪声也不算失败** —— 实测 codex 每轮都打，而退出码是 0
+  codex-agent.spec.ts:75:3 › codex：一轮一进程 + 续接 › 工具调用落在账本上
+  codex-agent.spec.ts:101:3 › 在一个对话里换模型（作者试用后补） › **换完之后是同一个对话，且下一轮真的用了新模型**
+  codex-polish-2.spec.ts:9:1 › **⑥「最近」**：只有一个收纳时不出现；两个收纳时出现、默认收起、展开后是按时间的前几条
+  codex-polish-2.spec.ts:34:3 › ⑦ 输入卡上的权限档 › **菜单里选「拦下危险操作」，只对这一段生效**：危险命令被拒；设置里仍是全放行
+  codex-polish-2.spec.ts:62:1 › **⑧ 模型不支持推理强度时，「会话设置」那颗整个不画**（权限自 2026-08-23 起有自己那颗，剩下的菜单空了就不摆）
+  codex-polish-2.spec.ts:74:1 › **切到另一段会话时，会话设置那颗第一次就在**——快照不被别的请求作废
+  codex-polish.spec.ts:20:1 › **③ 统计条**：输入框下方写轮数；**④ 导出**：下载目录里多一个 .md，内容有每一轮
+  codex-polish.spec.ts:42:1 › **① 轮次导航**：三轮起出现，点第一格滚到第一轮
+  codex-polish.spec.ts:63:1 › **② 菜单五项**：复制三项走剪贴板并出声；「在新会话中继续」带着上一轮回复起新一段
+  codex-polish.spec.ts:92:1 › ⑤ 未读圆点 › **⑤ 未读圆点**：不在看的那段来了回复就亮，点开就灭
+  compact-conversation-header.spec.ts:5:1 › 会话标题与折叠按钮齐平，长标题在亮暗与收合布局内保持单行
+  compact-conversation-header.spec.ts:61:1 › 会话顶栏预览：正常标题、亮暗主题及侧边会话互不串台
+  compact-conversation-header.spec.ts:75:1 › 同项目多个会话各有概括标题，页签、侧栏和顶栏同步，重载后仍能正确切换
+  composer-config-layout.spec.ts:19:1 › 280px侧栏同时有模型、推理和适配器配置时，按钮不压扁且各菜单可用
+  composer-highlight.spec.ts:7:1 › 首页Markdown高亮保留原文，光标选区与撤销正常
+  composer-highlight.spec.ts:38:1 › 会话Markdown滚动对齐、组词原生绘制，发送内容不含额外标记
+  composer-highlight.spec.ts:72:1 › 主对话与窄坞输入共用高亮，亮暗主题切换保留草稿
+  composer-history-copy.spec.ts:15:1 › **↑ 翻回上一句，↓ 翻回没发出去的那半句**
+  composer-history-copy.spec.ts:40:1 › **多行草稿里按 ↑ 是上移一行，不是换掉整段**
+  composer-history-copy.spec.ts:58:1 › **一键复制**：复制的是原文，且看得见它复制成功了
+  composer-history-copy.spec.ts:85:1 › **修改 → 发送**：新说一句，原来那句留在原处
+  composer-history-copy.spec.ts:105:1 › **取消就是取消**：一个字都不发出去
+  composer-history-copy.spec.ts:121:1 › **操作在这一段下面**，不是浮在右上角
+  composer-history-copy.spec.ts:140:1 › **动作行靠右、不撑宽气泡**：一个字的气泡比它下面那行窄
+  composer-history-copy.spec.ts:176:1 › **七个字的问题占一行**，不被从中间折断
+  composer-history-copy.spec.ts:198:1 › **坞里那段的「回到这句之前」**：整颗看得见，不把对话区撑出横向滚动
+  composer-layout.spec.ts:47:1 › 首页添加菜单支持键盘，方案状态可见，草稿不丢失
+  composer-layout.spec.ts:112:1 › 项目目录、文件选择、方案提交、普通发送与亮暗主题
+  composer-layout.spec.ts:160:1 › 主侧对话输入区在窄栏可操作且不横向溢出
+  composer-layout.spec.ts:220:1 › 终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色
+  composer-meta.spec.ts:45:1 › 会话统计跟随输入框下方，主区和280px侧边对话分别累计
+  composer-meta.spec.ts:82:1 › 用户消息时间戳、复制、编辑和撤回同一行，短气泡不被操作行撑宽
+  composer-paste.spec.ts:4:3 › 文本粘贴遵守光标与选区 · welcome
+  composer-paste.spec.ts:4:3 › 文本粘贴遵守光标与选区 · conversation
+  composer-paste.spec.ts:30:1 › 延迟识别期间在重复字符前键入，粘贴锚点跟随真实编辑选区
+  composer-paste.spec.ts:49:1 › 侧边会话的选区替换独立于主会话草稿
+  composer-ready.spec.ts:17:1 › **终端**：直接入口打开整页终端，返回保留草稿，再打开复用原终端
+  composer-ready.spec.ts:41:1 › **先出方案**：菜单选中态与方案说明一起开关，选中背景遵循主题
+  composer-ready.spec.ts:71:1 › **选择工作目录**：项目会话在顶部环境行标明已选目录
+  composer-ready.spec.ts:79:1 › **上传文件**：带上一张图之后转黑色实心
+  composer-ready.spec.ts:107:3 › 走「上传文件」插路径也算带上了 › **上传文件（非图片）之后按钮转黑**，发送后回到淡的
+  composer-sizing.spec.ts:3:1 › 输入区随内容增高，达到上限才滚动，清空后收回
+  composer-sizing.spec.ts:29:1 › 换行在输入、发送请求和用户气泡里都保留
+  composer-sizing.spec.ts:49:1 › 主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内
+  content-background.spec.ts:14:1 › 欢迎与消息内容底色独立保存，输入卡不变，设置页可单独改色与恢复
+  content-background.spec.ts:52:1 › 内容背景跟随明暗及系统主题，输入工作面仍沿用原主题
+  content-background.spec.ts:80:1 › 新增两项保持RGB、错误纠正、复制与色盘交互，收回时色值仍紧凑
+  content-background.spec.ts:110:1 › 已有消息和侧边对话沿用内容底色，发送和输入卡不受影响
+  context-compaction.spec.ts:60:3 › 内置对话 › **仪表常驻**：说过一句之后写着比例（不是悬停才出现）；悬停看得到真数与自动压缩线，移开就收，点一下钉住
+  context-compaction.spec.ts:85:3 › 内置对话 › **/compact**：不当一句话发；先出「正在压缩」，再收成压完的标记，写「你让压的」，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来
+  context-compaction.spec.ts:109:3 › 内置对话 › **⌘K「压缩上下文」**：内置对话里可用，按下去同样出一条「你让压的」标记
+  context-compaction.spec.ts:124:3 › 内置对话 › **自动压缩出声**：「塞满上下文」那一轮收尾时 pi 自己压——标记写「自动：快到上限了」，不是失败
+  context-compaction.spec.ts:139:3 › 内置对话 › **`/` 菜单里有「压缩上下文」**，选中写 `/compact `、不替人发
+  context-compaction.spec.ts:156:3 › 窄附栏 › **坞里的输入卡**：仪表在右侧模型前可用，权限在左侧，弹层留在窗口内
+  context-compaction.spec.ts:194:3 › 窄附栏 › **主区（坞关着）也只写数**（2026-09-28 作者要的）：看得见「<1%」，名字仍是「上下文 <1%」
+  context-compaction.spec.ts:224:3 › 外部 agent › **ACP 会话的仪表写「读不到」**，弹层说为什么、没有「现在压缩」；`/` 菜单里没有那一条；⌘K 那条列着但灰着、说为什么
+  context-compaction.spec.ts:247:3 › 外部 agent › **ACP 会话里 `/compact` 原样发给 agent**（它自己认这个命令），不出压缩标记
+  context-usage.spec.ts:12:1 › 说过一句话之后，上下文面板给出真实的 token 数
+  context-usage.spec.ts:44:1 › **下表明写「按字节」** —— 不写清楚，人会把它当成 token 分解
+  conversation-find-shortcut.spec.ts:3:1 › 会话快捷键按焦点切换查找开关，Esc返回，顶栏只保留全局搜索
+  conversation-find-shortcut.spec.ts:64:1 › 顶栏导航右边界跟随侧栏，默认与拖宽后对齐，折叠后入口仍可用
+  conversation-search.spec.ts:7:1 › 会话内搜索：折叠工具参数与输出也能定位
+  conversation-search.spec.ts:42:1 › 会话内搜索：独立范围、导航与输入法，搜索不影响草稿
+  conversation-search.spec.ts:73:1 › 会话内搜索：预算之外仍能跳到，亮暗和窄窗口不溢出
+  conversation-search.spec.ts:111:1 › 提问时间：实时显示且重开后从历史恢复
+  cost.spec.ts:16:1 › native 会话：如实说「不可见」并给出原因，而不是停在「尚未记录」
+  cost.spec.ts:54:3 › claude 会话：金额是真数 › 成本栏显示 CLI 自己报的金额，不是我们乘出来的估算
+  cross-service-switch.spec.ts:27:1 › **换到另一家，对话不断**
+  cross-service-switch.spec.ts:96:1 › **一颗 pill 里两家都在**，厂家写在组头上
+  crossref-literature.spec.ts:20:1 › 默认开启 → 界面设置并持久化 → 真工具检索、DOI 核对、只保存所选记录
+  crossref-literature.spec.ts:58:12 › 限流明确提示，工作区没有文献清单
+  crossref-literature.spec.ts:58:12 › 无结果明确提示，工作区没有文献清单
+  crossref-literature.spec.ts:66:1 › 先出方案允许只读检索，不落盘
+  csp.spec.ts:29:1 › 四个屏走一遍，**一条 CSP 违规都没有**
+  csp.spec.ts:52:1 › **策略本身还在，而且没有被开成 `unsafe-inline` 脚本**
+  csv-preview.spec.ts:23:1 › 点开一个 csv → 出现一张表，而不是一坨逗号
+  csv-preview.spec.ts:58:1 › **原文不再当作表格的替代品** —— 打开 csv 不该看到一坨逗号
+  custom-provider.spec.ts:37:3 › 自己填地址的 provider › **pi 不认识它，但它真的能对话** —— baseUrl / api / models 三样都到位了
+  custom-provider.spec.ts:76:3 › 自己填地址的 provider › 模型选择器里是我们声明的那个
+  decision-card-polish.spec.ts:3:1 › RP 资产可用；提问选中文字在浅色强调色和亮暗主题下仍清晰
+  delete-project.spec.ts:16:1 › 每一行项目都有常驻操作菜单，删除不用先翻到项目概览
+  delete-project.spec.ts:33:1 › **确认框摆真数字**，并说清哪些东西不会动
+  delete-project.spec.ts:52:1 › 删掉之后，它的会话**一条都不剩**；工作区的文件一个都没少
+  delete.spec.ts:46:1 › 删除会话：确认框说清账本不动，删完列表里就没有了
+  delete.spec.ts:69:1 › **取消就是什么都不做**
+  delete.spec.ts:80:1 › 移除项目：确认框摆真数字，**且磁盘上的文件夹还在**
+  delivery-log-encoding.spec.ts:5:1 › 交付验证日志：跨块中文和表情在真实Python、落盘及预览中保持原文
+  delivery-table-parser.spec.ts:10:3 › 交付表格原始表头变化不会显示重跑通过
+  delivery-table-parser.spec.ts:10:3 › 交付表格带空格计数列不会显示重跑通过
+  delivery-table-parser.spec.ts:10:3 › 交付表格未闭合引号不会显示重跑通过
+  desktop-cli.spec.ts:7:1 › DAWN and Normal use the desktop model, preserve Shell state, and refuse pending input
+  desktop-cli.spec.ts:59:1 › return opens the same Agent conversation and continues it without creating or copying a task
+  desktop-notify.spec.ts:61:1 › **做完了**：窗口不在前台 → 弹一条，标题带会话名、正文是回复开头；Dock 角标 1
+  desktop-notify.spec.ts:77:1 › **正看着那段就不弹**；交还前台之后同一段再说一句 → 弹（证明管线是活的）
+  desktop-notify.spec.ts:93:1 › **前台、但人在看另一段** → 那段做完照弹（§0 第 2 条）
+  desktop-notify.spec.ts:114:1 › **「做完了」的正文只看这一轮**：第二轮换了回复，正文跟着换，不拿上一轮的顶
+  desktop-notify.spec.ts:129:1 › **点通知回到那段**：在别的段上点 → 主区切回去；人在前台看到了 → 角标清零
+  desktop-notify.spec.ts:150:1 › **点另一个项目里那段的通知** → 换到那个项目、主区切到那段
+  desktop-notify.spec.ts:185:1 › **点坞里那段的通知** → 坞打开到「对话」格，主区不动
+  desktop-notify.spec.ts:211:1 › **出错了**：「演一次失败」→ 弹「出错了」，正文带模型调用失败；这一轮不再另弹「做完了」
+  desktop-notify.spec.ts:227:1 › **等你点头**：「请求批准」档下「演一次权限」→ 卡弹出来的同时弹一条；人回来答掉 → 角标清零
+  desktop-notify.spec.ts:252:1 › **子 agent 那一轮只报一条**：主区那一轮收尾时一条「做完了」，子进程自己不弹
+  desktop-notify.spec.ts:269:3 › 压缩 › **/compact 不弹**；再说一句照弹（管线活着）
+  desktop-notify.spec.ts:290:3 › 回退 › **回退这一轮不弹**；再说一句照弹（管线活着）
+  desktop-notify.spec.ts:334:1 › **定时跑一次只报一条**「定时『X』跑完了」，不另弹「做完了」
+  desktop-notify.spec.ts:348:1 › **定时那段的权限卡照弹**（§8 第 2 条）；点它回到那段、答掉之后调度器那一条照常，仍不另弹「做完了」
+  desktop-notify.spec.ts:370:1 › **设置里关掉「一轮做完」**：存进后端、重开还关着
+  desktop-notify.spec.ts:390:1 › **发一条试试**：假出口记下一条 test；屏上说已发出
+  directory-transfer.spec.ts:17:1 › 文件夹通过真实界面往返，保留空目录和二进制，批次跨面板可见
+  directory-transfer.spec.ts:50:1 › 权限失败清单与手动重试可见，取消保留已完成文件
+  dock-responsive-tabs.spec.ts:4:1 › 标签随实际坞宽度展开收回，当前面板始终可见且菜单只含溢出项
+  dock-responsive-tabs.spec.ts:79:1 › 真实拖拽与英文深色下标签自适应，展开时菜单收起并保留当前面板
+  empty-repo.spec.ts:20:1 › **git init 未 commit：终端开得出，审阅列得出「新加」**
+  enhance.spec.ts:37:1 › 基础：空草稿档位禁用，改写与撤回保留原文
+  enhance.spec.ts:50:1 › 发出去之后，优化撤回随该草稿清空
+  enhance.spec.ts:63:1 › 标准：带上本会话相关轮次
+  enhance.spec.ts:75:1 › 专家：开发任务参考工作区文档代码，普通改写说明未带上下文
+  enhance.spec.ts:93:3 › 取消与发送隔离 › 增强中从二级菜单放弃，草稿不动，按钮恢复
+  enhance.spec.ts:100:3 › 取消与发送隔离 › 改写还在飞时发送，晚回结果不落进空草稿
+  enhance.spec.ts:115:1 › 空态借用模型时说明实际模型
+  enhance.spec.ts:122:1 › native会话改写不误报借用了其他模型
+  enhance.spec.ts:135:1 › 命令面板优化沿用最近档位，空草稿说明不可用
+  environment.spec.ts:21:1 › 普通对话也有环境 —— 机器本身就是环境
+  environment.spec.ts:52:1 › **机器那一支不画解释器** —— 两种快照不共用一个形状
+  execution-boundary.spec.ts:7:1 › 模型强行写文件：讨论门阻断，明确执行后连续任务无需逐步确认
+  execution-boundary.spec.ts:31:1 › 显式文献技能：正文不能解除讨论限制，用户明确保存后可执行
+  export-dir.spec.ts:18:1 › 项目会话「导出对话」→ 文件落在 <项目>/docs/，不在下载目录
+  external-link.spec.ts:31:1 › **点消息里的外链，不会多出一个 Electron 窗口**
+  feishu-assistant.spec.ts:12:1 › **设备流绑定 → 飞书说话 → 回答回到飞书 → 只认扫码人**
+  file-menu-bounds.spec.ts:5:1 › 文件菜单在右边缘完整显示，窄坞与暗色英文都不裁切
+  files.spec.ts:21:1 › 目录树能翻，图片直接显示在应用里
+  files.spec.ts:46:1 › markdown 走渲染，其它文本按原文
+  files.spec.ts:61:1 › **PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP 拦下
+  files.spec.ts:82:1 › **超上界的 PDF 说清多大**，而不是硬塞进内存
+  files.spec.ts:92:1 › **忽略掉的目录要出声**——不然人会以为它们不存在
+  files.spec.ts:128:1 › **大图：坞拉宽之后，预览挪到树旁边并且真的变大**
+  files.spec.ts:256:1 › **树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住**
+  files.spec.ts:312:1 › **切走再切回来，树还展开着、文件还选着**
+  files.spec.ts:357:1 › **按名字搜得到深处的文件，忽略掉的目录要出声**
+  files.spec.ts:391:1 › **命中到上限就停，并且说停在哪**
+  files.spec.ts:409:1 › **树行的菜单：复制路径、插进输入框**
+  files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行**
+  files.spec.ts:498:1 › **窄坞：顶行按钮都在、先缩时间戳、预览头不竖排**
+  files.spec.ts:564:1 › **坞宽过了窗口能给的：坞被压进窗口里，按钮都看得见，缝在坞的真实边上**
+  first-run-default.spec.ts:21:3 › 全新安装 › **默认配置里没有 deepseek**，也没有任何 native agent
+  first-run-default.spec.ts:38:3 › 全新安装 › **首屏不摆一个用不了的 agent**，直接进入四步引导
+  geo-datasets.spec.ts:7:1 › GEO 默认开启 → 真检索和 GSE 设计 → 清单预览；关闭持久化且新会话无工具
+  geo-datasets.spec.ts:31:33 › GEO 限流明确反馈且不保存
+  geo-datasets.spec.ts:31:33 › GEO 无结果明确反馈且不保存
+  geo-datasets.spec.ts:36:1 › GEO 先出方案可查询，不落盘
+  header-version.spec.ts:6:1 › 状态栏最右显示实际应用版本，窄窗不隐藏且品牌入口仍可点击
+  i18n.spec.ts:92:1 › **没选过语言时跟系统**（2026-08-28 作者定的：中文系统中文、其它英文）
+  i18n.spec.ts:109:1 › **英文界面上每一屏都没有汉字**
+  i18n.spec.ts:163:1 › **那颗按钮真的能切，而且记得住**
+  ime.spec.ts:13:1 › 组词没结束时按回车，不许发出去
+  ime.spec.ts:43:1 › 候选词上屏之后，回车照旧发得出去
+  ime.spec.ts:71:1 › 输入法把每一下都报成 229 时，回车照样发得出去
+  kernel-output-isolation.spec.ts:10:1 › 真实双内核连续重启 R 三次不重复转发、保留旧结果提示并正常退出
+  kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切
+  kernel-shortcuts.spec.ts:9:3 › @R 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @Py 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @Python 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @RPython 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @r 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @py 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @python 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:9:3 › @rpython 可从菜单选择，发送指令但不当文件
+  kernel-shortcuts.spec.ts:29:1 › 空态也能选择内核入口，键盘选择和删除有效
+  kernel-shortcuts.spec.ts:43:5 › 指定语言真正在工具入口检查 › @R 同句先不要运行时，模型强行请求仍被拒绝
+  kernel-shortcuts.spec.ts:43:5 › 指定语言真正在工具入口检查 › @Python 同句先不要运行时，模型强行请求仍被拒绝
+  kernel-shortcuts.spec.ts:43:5 › 指定语言真正在工具入口检查 › @RPython 同句先不要运行时，模型强行请求仍被拒绝
+  kernel-shortcuts.spec.ts:52:3 › 指定语言真正在工具入口检查 › @R 拒绝模型误调用 Python
+  kernel-shortcuts.spec.ts:64:1 › 内核入口与同名目录分别删除，不混淆
+  kernel-startup-cleanup.spec.ts:9:1 › 真实 Python 内核启动期间停止会话，晚到实例回收且旧代码不执行
+  kernels.spec.ts:15:1 › 设置里列出本机内核，**且每一条都带解释器路径**
+  key-is-enough.spec.ts:15:1 › **填完 key，对话的选择器里立刻就有它**
+  key-is-enough.spec.ts:53:1 › **不再有「建一个 agent」这种东西** —— 那是我们内部的概念漏了出来
+  late-endpoint.spec.ts:29:3 › 启动时一个 provider 覆盖都没有 › **中途加一个自定义端点，当场就能选到、能对话** —— 不用重启
+  lease-keepalive.spec.ts:28:1 › **租约过期之后，人照样能接着说**
+  lease-keepalive.spec.ts:50:1 › **开了新对话，回到旧的照样能说**
+  literature-review.spec.ts:38:1 › 默认可见且可展开；实际 PDF → 三表 Excel/总结 → 读回与产物预览
+  literature-review.spec.ts:85:1 › 只讨论不读取、导出或启动额外执行
+  literature-review.spec.ts:93:1 › PDF 族关闭时明确告知，保持关闭且不借其他工具执行
+  literature-review.spec.ts:107:1 › 实际 PDF 读取失败，停止且不生成看似完整的表格
+  literature.spec.ts:20:1 › 默认开启 → 界面设置并持久化 → 真工具检索、DOI 核对、只保存所选记录
+  literature.spec.ts:56:12 › 限流明确提示，工作区没有文献清单
+  literature.spec.ts:56:12 › 无结果明确提示，工作区没有文献清单
+  literature.spec.ts:64:1 › 先出方案允许只读检索，不落盘
+  markdown-math.spec.ts:24:1 › 用户与助手公式实际排版，字体本地可用，深浅主题和原文复制导出保持正确
+  markdown-math.spec.ts:68:1 › Markdown 文件在窄坞中渲染，长公式只在自身横向滚动
+  markdown-math.spec.ts:94:1 › 逐字流式输出的公式补齐后没有重复、残影或整段回退
+  markdown-project-delivery.spec.ts:23:1 › Markdown 相对图片实际解码，分步脚本链接进入只读预览
+  markdown-project-delivery.spec.ts:44:1 › 整理交付可选整个项目的已有分步脚本和图片，保持原文件字节
+  markdown-project-delivery.spec.ts:105:1 › 窄窗口英文项目文件选择可完整操作
+  markdown-render.spec.ts:29:1 › **代码块的每一行是一行** —— 塌成一行的代码没法读
+  markdown-render.spec.ts:44:1 › 代码块有头部：**语言在左、动作在右**
+  markdown-render.spec.ts:60:1 › 长代码滚动时**语言标题与复制操作仍钉在视口上沿**
+  markdown-render.spec.ts:92:1 › 表格的动作也收拾过 —— **不是三个裸按钮竖着堆在表格上面**
+  markdown-render.spec.ts:119:1 › 标题有层级 —— 二级和三级不该长得一样
+  mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable
+  mcp.spec.ts:45:1 › **配了的两台都列出来，还没试过就说还没试过**
+  mcp.spec.ts:80:1 › **屏上写清了怎么配（密钥不进文件）和怎么用（看工具行）**
+  mcp.spec.ts:108:1 › **粘一段 JSON 就加进来了，而且立刻能用**
+  mcp.spec.ts:144:1 › **按「试一次」，真的连上并列出它有哪些工具**
+  mcp.spec.ts:177:1 › 信任开关拨完留得住
+  mcp.spec.ts:241:3 › 模型真的调得动 › **一句话下去，MCP 工具真的被执行了**（有物证）
+  mcp.spec.ts:314:3 › MCP 写的文件进账本 › **MCP 服务器写进工作区的文件，变更 pane 上说得出是它写的**
+  mcp.spec.ts:348:1 › **远端 Authorization 那一行说清只填令牌就行**
+  memory.spec.ts:10:1 › 插件第三张卡三工具;记忆屏空态如实说
+  memory.spec.ts:33:3 › 提议 → 角标 → 采纳 → 新会话注入 › 整链路(判据走假服务器收到的 system,不走屏幕)
+  model-error.spec.ts:21:3 › key 不对的时候 › **说出来，并且把对方的原话带上**
+  model-error.spec.ts:36:3 › key 不对的时候 › **它不混进回复里** —— 那不是模型说的话
+  model-identity-in-prompt.spec.ts:16:1 › **提示词里写着当前模型**
+  model-identity-in-prompt.spec.ts:44:1 › **换模型之后，下一次请求里写的是新模型，并带着「换人了」那一句**
+  model-menu-shortcuts.spec.ts:28:1 › LLM名称不换行，超长名称省略，菜单和类型标记保持紧凑
+  model-menu-shortcuts.spec.ts:63:1 › 快捷键速查为独立键帽、清晰分组，窄窗可滚动且焦点保留
+  model-pill.spec.ts:19:1 › **输入卡右下角只有一颗 pill**
+  model-pill.spec.ts:33:1 › **点开是按服务分组的模型列表，当前那条打勾**
+  model-pill.spec.ts:55:1 › **「配置自定义模型」真的把人送到设置**
+  model-pill.spec.ts:76:1 › **不出现倍率与活动徽标** —— 那些数字我们没有
+  model-switch.spec.ts:47:1 › pill 显示当前模型，且能列出同 provider 的其它模型
+  model-switch.spec.ts:57:1 › **换完之后，下一次请求真的打到新模型**
+  model-switch.spec.ts:88:1 › **composer 上只有一个菜单，不会按错**
+  next-prompt.spec.ts:4:1 › 灰色建议不是草稿；Enter 不接受，Tab 接受后才可发送
+  next-prompt.spec.ts:33:1 › 侧边对话独立显示建议，接受不改变主区草稿
+  no-stale-model-env.spec.ts:25:3 › 命令环境 › **`env` 里没有 PI_MODEL / PI_PROVIDER** —— 没有快照可念
+  notebook.spec.ts:59:3 › 笔记本 · 真内核链路 › agent 跑的与人敲的落在同一台内核；下一条消息给模型带前缀、转录只显示人敲的
+  notebook.spec.ts:163:3 › 笔记本 · 非 native 会话 › cli 会话打开笔记本 → 明说没有内核，不画输入框
+  notify-cold-click.spec.ts:26:1 › **推送丢了也回得去**：页面在换的那一刻点通知 → 页面起来后拉到那段、切过去，不误报「不在了」
+  office-plugin.spec.ts:10:1 › **插件卡**：Office 文档四族齐全；关一族要持久、写明下一段生效
+  office-plugin.spec.ts:44:3 › 模型真的拿到了工具 › **假模型点名调 xlsx_write，工作区长出真 xlsx**
+  openers.spec.ts:14:1 › 点一张开场建议 → 建会话 → 那句话真的发了出去 → 有回复
+  openers.spec.ts:49:1 › 不点任何建议，直接打字也能开始
+  orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent
+  palette.spec.ts:51:1 › ⌘K 在真实窗口里能叫出面板
+  palette.spec.ts:58:1 › Esc 关得掉
+  palette.spec.ts:65:1 › 打字能过滤
+  palette.spec.ts:76:1 › **关键词也能搜到** —— 人记得的往往不是我们起的名字
+  palette.spec.ts:83:1 › **面板与按钮到达同一个状态** —— 一个动作一个家
+  palette.spec.ts:129:1 › 命令真的会执行 —— 主题命令改的是真的主题
+  palette.spec.ts:138:1 › **不可用的命令留在列表里并说明原因** —— 缺失不等于不支持
+  palette.spec.ts:150:1 › 搜不到时说明情况，不是留白
+  palette.spec.ts:157:1 › 顶部快捷键速查：分组、只读、退出与命令面板各自可用
+  panel-preview-layout.spec.ts:6:1 › 新建任务的产物是空态，切离已有会话不保留加载状态
+  panel-preview-layout.spec.ts:20:1 › 保存过高文件树后，PDF和图片仍优先完整预览，拖动及缩窗可用
+  panel-session-controls.spec.ts:3:1 › 面板与坞标签同尺寸，激活使用当前主题色，关闭恢复
+  panel-session-controls.spec.ts:22:1 › 查找导出直接属于主对话内容区，与面板分行，键盘返回正常且窄窗口不越界
+  paste-input.spec.ts:20:1 › **粘贴外部文件 = 替你敲一个 @**：草稿出 @令牌、引用栏出 chip；发送落盘、令牌换写成真实路径
+  paste-input.spec.ts:46:1 › **引用栏 ×掉 = 磁盘无痕**；上传键的黑色实心跟着熄灭
+  paste-input.spec.ts:60:1 › **拖拽外部文件也进 @**；概览里能看到用量并两步清理
+  paste-input.spec.ts:85:1 › **光标不在输入框也能粘**（页面级监听），照样进 @
+  paste-input.spec.ts:98:1 › **Finder 式复制（只有 file:// uri-list）**：草稿出 @、发送后换写真实路径
+  paste-input.spec.ts:124:1 › **空态也收**：粘一个文件 → @ 进草稿 → 第一句话建会话后落盘、令牌换写
+  paste-input.spec.ts:142:1 › **粘贴的图能点开看大图**（学 Codex）：点缩略图开层、Esc 关
+  paste-input.spec.ts:166:1 › **@ 在输入框里带灰底**（学 Codex）：手敲与粘贴同一份高亮；镜像层与输入框逐像素同框
+  paste-input.spec.ts:185:1 › **空态的高亮也不飘**：英雄区的 text-align 摸不进镜像层
+  pdf-preview-stability.spec.ts:6:1 › 合法 PDF 预览后主窗口仍存活，且可以切换文件
+  permission.spec.ts:21:1 › 输入卡上有「权限」那颗，三档都在，且说清了各自意味着什么
+  permission.spec.ts:34:1 › **默认是全放行** —— 不在毫无预兆的情况下让人开始撞墙
+  permission.spec.ts:42:1 › 空态屏上换一档，进会话再回来还是那一档 —— 存下去了，不是只在界面上动了动
+  permission.spec.ts:69:1 › **菜单不自称沙箱**，并写明了硬拒清单任何档都拒
+  permission.spec.ts:85:3 › 问一句 › **卡弹出来；允许 → 真删了；拒绝 → 没删、模型拿到理由**
+  permission.spec.ts:142:3 › 硬拒 › **全放行档也拒 sudo**，不弹卡
+  pick-workspace.spec.ts:47:1 › **选完文件夹，文件树立刻转到那个目录**
+  pick-workspace.spec.ts:94:1 › **选完文件夹：项目收纳立刻出现，但一段会话都没建**
+  pick-workspace.spec.ts:123:1 › **说了第一句话，那一段就挂在这个项目底下**
+  pick-workspace.spec.ts:157:1 › **在外面往目录里丢文件，切回窗口树就跟上**
+  pick-workspace.spec.ts:211:1 › **文件行写着修改时间与类型图标；按「刷新」不切窗口也能看见新文件**
+  plan-mode.spec.ts:140:3 › 先出方案 · 假模型 › **开关 → 方案卡 → 照这个做**：文件真存进 analysis/plans、开关关了、执行话进转录、对照 1 / 2
+  plan-mode.spec.ts:162:3 › 先出方案 · 假模型 › **方案期「偷跑」**：那次 write 被门拦下，磁盘上没有那个文件，理由说「先出方案」
+  plan-mode.spec.ts:178:3 › 先出方案 · 假模型 › **改一改**：批的是改过的正文，文件里是改过的，执行那句说以文件为准
+  plan-mode.spec.ts:194:3 › 先出方案 · 假模型 › **不做了**：什么都不存，开关关了，卡片写「没采用」
+  plan-mode.spec.ts:203:3 › 先出方案 · 假模型 › **`/plan 问题`**：不把 /plan 送给模型、开关打开、问题照发、方案卡出来
+  plan-mode.spec.ts:215:3 › 先出方案 · 假模型 › 方案菜单可操作，三颗方案按钮常驻看得见（opacity 1）
+  plan-mode.spec.ts:235:3 › 先出方案 · 假模型 › **人在两轮之间改了方案文件**：留着、卡片写「你改过」
+  plan-mode.spec.ts:267:3 › 先出方案 · agent 这一轮改了批准过的方案 › **恢复并出声**：文件回到批准时的样子，转录里一句「已从存档恢复」，卡片不写「你改过」
+  plan-mode.spec.ts:290:3 › 先出方案 · 坞里的对话 › **坞里方案菜单可操作、主侧隔离、方案卡与带子不撑破坞**
+  plan-mode.spec.ts:349:3 › 先出方案 · 不支持的会话 › **ACP 会话**：菜单开关禁用，同一项直接显示原因
+  preview-collapse.spec.ts:32:1 › 文件里的图片和脚本可收起，目录与分栏保留，同文件可重开
+  preview-collapse.spec.ts:147:1 › 目录靠底收起后立即重开，普通和展开阅读都恢复原位置
+  preview-collapse.spec.ts:175:3 › 产物收起 › 图片与展开脚本的 × 回清单，保留原返回与定位入口
+  project-bulk.spec.ts:68:1 › **选一个，删一个，另一个还在**
+  project-bulk.spec.ts:110:1 › **进项目多选，会话那边就退出去**
+  project-bulk.spec.ts:134:1 › **一个项目三段会话，勾两段删两段，项目还在**
+  project-bulk.spec.ts:164:1 › **项目头那颗勾选框 = 它名下全部**，删的仍是会话；多选时点项目那一行只展开收起
+  project-bulk.spec.ts:190:1 › **项目底下的会话行不参与「会话」多选**
+  project-bulk.spec.ts:217:1 › **项目行一行：名字在行上，路径与对话数在悬停卡上**
+  provider-test.spec.ts:21:1 › **测试连通**：坏 key 说 key 不对；改了 key 旧结论撤掉；好 key 说通了、带模型名；测试不落盘
+  provider-test.spec.ts:44:1 › **测试连通**：没填 key 就点，当场说缺什么，不发请求
+  provider-test.spec.ts:53:1 › **保存了一把坏 key：弹出来**，「知道了」关掉；那一行照旧留着红字
+  provider-test.spec.ts:67:1 › **保存了一把好 key：不弹**
+  provider-test.spec.ts:77:1 › **只填了 key 的那家，「移除这个服务」立刻从列表里下去**（不用重启）
+  provider-test.spec.ts:89:1 › **自定义端点也能测**：还没保存、不在运行时里，照表单现拼一个模型直接发
+  provider-test.spec.ts:116:1 › **只收 temperature 0.6 的模型（Kimi）**：测试连通照样通，不被参数挡住
+  providers.spec.ts:25:1 › **「我能配谁」远多于「我配过谁」**
+  providers.spec.ts:53:1 › **从窄栏进「添加模型服务」：配过一家时，可挑的仍是 pi 认识的其余那些**
+  providers.spec.ts:74:1 › 筛选能把要找的那个捞出来
+  providers.spec.ts:84:1 › **配过的在上面一行摘要**，不混在那一大堆里
+  providers.spec.ts:101:1 › **点开能改任何一项**，包括 pi 自带地址的那些的地址
+  providers.spec.ts:121:1 › **Anthropic 协议的地址带了 /v1，不点开就看得见**，并说清改成什么
+  pty-session.spec.ts:55:3 › PTY 会话：单一原生终端工作区 › **建完就能看见终端**，不用点任何东西
+  pty-session.spec.ts:73:3 › PTY 会话：单一原生终端工作区 › **打字加回车，命令真的被执行了**
+  question-card-layout.spec.ts:39:1 › 普通三选项完整显示；长正文滚动时回答区固定；切题复位
+  question-card-layout.spec.ts:66:1 › 小窗口暗色长内容：输入与提交始终可见，键盘选项可达
+  question-card-layout.spec.ts:82:1 › 窄侧边对话长内容：回答区不被正文挤出
+  redirect.spec.ts:51:3 › 调整方向 · 假模型 › **待发条上点「调整方向」**：那一步已中断、那句进转录、新的一轮开始、其余那条仍排队中
+  redirect.spec.ts:79:3 › 调整方向 · 假模型 › **忙着时 Cmd/Ctrl+回车 = 直接调整方向**：不上待发条，那一步已中断，这句开新一轮
+  redirect.spec.ts:94:3 › 调整方向 · 假模型 › **到坞里问**：坞打开到「对话」、新问题接在继承历史后；主区标题不变、待发单少一条、仍在跑
+  redirect.spec.ts:117:3 › 调整方向 · 假模型 › 三颗按钮常驻看得见（opacity 1）；坞里那段的待发条没有「到坞里问」；旧的「插队」不见了
+  redirect.spec.ts:174:3 › 停止 · 真内核 › **按停止时内核真的停了**：run_code 在跑 sleep(30)，停止后 10 秒内内核回到空闲、那格标已中断
+  remote-acp-pick.spec.ts:85:1 › **服务器上的新对话：模型选择器里有 claude-acp、没有 codex-acp，点了就换成它**
+  remote-acp-pick.spec.ts:118:3 › T3 之前接入的老条目 › **设置里说它没标，一键标上，远端会话就能选它**
+  remote-assistant.spec.ts:14:1 › **扫码绑定 → 微信说话 → 回答回到微信 → 失效要出声**
+  remote-assistant.spec.ts:71:1 › **斜杠命令**：/会话 /在哪 /帮助 有回音；解绑后卡回未绑定
+  remote-assistant.spec.ts:122:3 › 权限：微信里回同意 › 假 ACP 问 → 微信收到 → 回「同意」→ agent 拿到 allow_once
+  remote-connections.spec.ts:95:1 › **整条路**：加一台 → 连上 → 断开
+  remote-connections.spec.ts:127:1 › 连接失败的服务器行只显示未连接，不展示技术错误
+  remote-connections.spec.ts:143:1 › **口令不回显**，且改别的字段不会把它弄丢
+  remote-connections.spec.ts:169:1 › **入口看得见**：不是悬停才出现的 ＋
+  remote-connections.spec.ts:184:1 › 删掉一台：**先说会连带发生什么**，再删
+  remote-connections.spec.ts:206:1 › **在服务器上开一段对话**：起点是家目录，命令打到那台机器
+  remote-connections.spec.ts:231:1 › **命令跑在远端，`cd` 之后粘住**
+  remote-connections.spec.ts:270:1 › 断线重连 › **断开 → 连接 → 同一段会话里的命令仍然打到远端**
+  remote-connections.spec.ts:313:1 › **在服务器上开的对话，出现在侧栏的「服务器」收纳里**
+  remote-connections.spec.ts:342:1 › **同一台机器上的多段对话，收在同一台底下**
+  remote-connections.spec.ts:359:1 › 服务器名、连接状态与会话保持清楚的层级
+  remote-connections.spec.ts:374:1 › 连接状态随界面语言显示，连接身份与实际状态保持
+  remote-connections.spec.ts:401:1 › 最窄侧栏仍能打开服务器管理菜单，操作不被裁掉
+  remote-connections.spec.ts:422:1 › 远端新建入口固定为机器行图标，不额外占行
+  remote-connections.spec.ts:450:1 › **侧栏所有固定入口都不换行**：中英 × 最窄侧栏
+  remote-connections.spec.ts:513:1 › **远端会话的文件面板长在那台服务器上**，不是本机
+  remote-connections.spec.ts:540:1 › 远端树上，目录点得开，文件点了是预览
+  remote-connections.spec.ts:556:1 › 远端文件面板按名字搜，结果是那台机器上的
+  remote-connections.spec.ts:581:1 › **远端文件下得下来**，而且说得出落在哪儿
+  remote-connections.spec.ts:606:1 › 下载同一个文件两次，第二份另存，不覆盖第一份
+  remote-connections.spec.ts:641:3 › 下载落点 › **设置里改了下载目录，文件就落在那儿**
+  remote-connections.spec.ts:681:1 › 本地文件没有「下载」那颗按钮
+  remote-connections.spec.ts:703:3 › 上传 › **传上去、撞名问三选一、落一条账**
+  remote-connections.spec.ts:767:1 › 远端删除说「永久」，本地说「废纸篓」，且都落账
+  remote-connections.spec.ts:837:1 › 删目录：「⋯」常驻可见，确认框说得出有多少个文件
+  remote-connections.spec.ts:886:1 › 拖拽：落在哪一行就亮哪一行；拿不到本机路径要出声
+  remote-connections.spec.ts:949:1 › **服务器收纳里的会话，拖到哪就排到哪**
+  remote-connections.spec.ts:1013:1 › **隔了几天再看，那一行写的是「上次连上是多久前」**
+  remote-connections.spec.ts:1064:3 › 远端建会话的准入 › 第一位是不借手的 ACP：服务器上的「新对话」跳过它，用 API 那一路
+  remote-connections.spec.ts:1097:1 › **服务器收纳里的机器名（短的）贴着三角，不漂到中间**
+  remote-connections.spec.ts:1113:1 › **服务器收纳里的机器名：一行截断，悬停弹全名**
+  remote-connections.spec.ts:1139:1 › **机器行的批量勾选框在菜单旁保持可见**
+  remote-kernel.spec.ts:157:3 › 远程内核 · 真内核 + 假 SSH › 没配 → 笔记本格列出唯一候选 → 选 → agent 的 run_code 在「服务器」上算出 42，胶囊带服务器名
+  remote-kernel.spec.ts:191:3 › 远程内核 · 真内核 + 假 SSH › 断开服务器 → 转录说变量没了、胶囊退出；再连上再跑会起新的一台
+  remote-kernel.spec.ts:236:3 › 远程内核 · 真内核 + 假 SSH › 意外掉线 → 等接回；再连上 → 内核还活着，掐线前的变量还在
+  remote-kernel.spec.ts:272:3 › 远程内核 · 真内核 + 假 SSH › 内核在 DAWN 背后被杀 → 30 秒内出声；再跑起新的一台
+  remote-kernel.spec.ts:295:3 › 远程内核 · 真内核 + 假 SSH › 掐线后内核死了 → 再连上说没撑过；再跑起新的一台
+  remote-kernel.spec.ts:316:3 › 远程内核 · 真内核 + 假 SSH › 设置里那台服务器的对话框有两格，探测后能选；关掉再打开，选中的还是它
+  remote-kernel.spec.ts:374:3 › 远程内核 · 图从服务器回来 › agent 在服务器上画的图，落在笔记本里；给模型的那句话说清是一张 image/png
+  remote-kernel.spec.ts:437:3 › 远程内核 · R（IRkernel） › 选 R → agent 的 run_code 在「服务器」的 IRkernel 里算出 42、画出一张图，胶囊写 R
+  remote-session-titles.spec.ts:5:1 › 服务器内多会话分别概括、同名区分、切换正确；宽侧栏和远端信息不挤走标题
+  remote-terminal.spec.ts:17:1 › remote Normal and DAWN share the original chat, SSH connection, Chinese cwd and environment
+  remote-terminal.spec.ts:71:2 › detach an active shared remote Agent › returning directly from DAWN detaches presentation and lets the original server task finish
+  rewind.spec.ts:45:3 › git 仓库、out/ 被忽略 › 两句之后回到第二句之前：文件与对话一起退，那句回到输入框，out/ 里的也退了
+  rewind.spec.ts:73:3 › 非 git 工作区 › 只回退文件：回到第一句之前——新建的挪进 .dawn/trash，对话两句都在
+  rewind.spec.ts:91:3 › 非 git 工作区 › 你后来改过的不动：确认框列在「不动」，回退之后还是你改的样子
+  rewind.spec.ts:104:3 › 非 git 工作区 › 按钮常驻、带字：不悬停 opacity 也是 1
+  rewind.spec.ts:117:3 › 非 git 工作区 › 在跑时灰着，理由读得到；停下之后能点
+  rewind.spec.ts:134:3 › 非 git 工作区 › 命令面板「回到上一句之前」：与点按钮落到同一处——确认框、文件退回、那句回到输入框
+  rewind.spec.ts:157:3 › 非 git 工作区 › 坞里那段：一起回退之后文件回来、那句回到坞里的输入框
+  right-dock-navigation.spec.ts:3:1 › 常用面板、更多菜单与关闭重开保留当前面板
+  rounded-tabs.spec.ts:3:1 › 会话和坞页签的背景统一小圆角，亮暗与悬停保留同一外框
+  route-artifacts.spec.ts:18:3 › route outputs in the artifacts dock › captures ignored script outputs and includes route references without claiming they were generated
+  schedule.spec.ts:8:1 › **建一条、立即跑一次、记录成功、会话留在项目里；暂停与删除**
+  schedule.spec.ts:57:1 › **坏输入当场说**：没填说明、每周一天没选
+  schedule.spec.ts:96:3 › 对话里建 › **agent 调 dawn_schedule_create → 建成暂停的、回话说清 → 「定时」里按恢复**
+  schedule.spec.ts:122:1 › **第二档的计划与筛**：每月、每 N 天、权限档标签、记录按状态筛
+  schedule.spec.ts:170:5 › 完整回合结算 › 两次模型迭代后才报成功，摘要使用最终回复
+  schedule.spec.ts:170:5 › 完整回合结算 › 工具后的模型失败记为失败，中间回复不提前报成功
+  schedule.spec.ts:170:5 › 完整回合结算 › 在定时会话停止后记录取消，不能报成功
+  science-acceptance.spec.ts:6:2 › basic-error › shows actual host acceptance and saves inspectable demonstration evidence
+  science-acceptance.spec.ts:6:2 › numeric-error › shows actual host acceptance and saves inspectable demonstration evidence
+  science-batch.spec.ts:4:1 › batch versions, host summary and progress cross the actual strict desktop protocol
+  science-incremental.spec.ts:4:1 › visibly reuses accepted A and reruns failed B through actual parent tools and Pi
+  science-layout.spec.ts:14:1 › 文件那一屏能按下去，目录真的建出来，且它说了自己做了什么
+  science-parallel.spec.ts:5:1 › two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary
+  science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol
+  science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol
+  science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol
+  script-preview.spec.ts:9:5 › r脚本预览 › 文件与产物均高亮，亮暗切换保留原文与颜色
+  script-preview.spec.ts:9:5 › python脚本预览 › 文件与产物均高亮，亮暗切换保留原文与颜色
+  script-reading.spec.ts:25:5 › R 长脚本 › 文件和产物可完整阅读，边框与行距独立，展开还原保留位置
+  script-reading.spec.ts:25:5 › py 长脚本 › 文件和产物可完整阅读，边框与行距独立，展开还原保留位置
+  script-reading.spec.ts:176:3 › 长路径与受限预览高度 › 操作和代码均保持可达，文件名与完整可访问路径保留
+  send-failure.spec.ts:22:3 › 模型没声明收图 › **对话照样发生，而且说清了图可能没送到**
+  send-failure.spec.ts:94:3 › 第一句就失败 › **人留在原地，字还在，侧栏不多一条空壳**
+  server-navigation.spec.ts:20:1 › 本机空态、添加并连接、远端新会话三条路径互不混淆
+  server-navigation.spec.ts:61:1 › 保存后认证失败重试复用服务器ID；连接不会新建任务
+  server-navigation.spec.ts:78:1 › 取消失败弹窗保留连接与本机草稿，远端失败无本机回退
+  server-navigation.spec.ts:101:1 › 两台服务器的同名目录与草稿隔离；连续点击只建一段远端任务
+  server-navigation.spec.ts:138:1 › 项目、服务器、最近和会话的任务左缘一致，窄栏操作可达
+  server-status-alignment.spec.ts:17:3 › 仅有本机模型 › 已连接但模型不支持远端时，新建会话给出设置提示
+  server-status-alignment.spec.ts:35:1 › 服务器状态与名称同排，连接失败不展示技术错误，仍可重试
+  service-marks.spec.ts:5:1 › 本地品牌矢量均能绘制，主题色及亮暗背景下可辨认
+  sess-title.spec.ts:32:1 › **标题一行截断，不换行**
+  sess-title.spec.ts:55:1 › **悬停时跑起来**，而且只在真的溢出时跑
+  sess-title.spec.ts:86:1 › **跑马灯只在自己的框里跑，不压住图标**
+  sess-title.spec.ts:135:1 › **短标题：不跑马灯，也不弹卡**
+  sess-title.spec.ts:185:3 › 项目里的那条 › **项目里的会话：卡上给完整路径，不只是文件夹名**
+  sess-title.spec.ts:211:1 › **临时会话：卡上不给文件夹位置**
+  sess-title.spec.ts:222:1 › **悬停一会儿，旁边浮出全文**
+  sess-title.spec.ts:273:1 › **窗口矮的时候，靠下那行的悬停卡整张都在屏幕里**
+  session-archive.spec.ts:14:1 › **收进归档：侧栏那一行消失、「已归档」入口出现；放回去就回来**
+  session-archive.spec.ts:45:1 › **归档当前正在看的那段**：选中清掉、不留一个指向空的选中；点「已归档」里那一行 = 放回去并打开
+  session-archive.spec.ts:59:1 › **删会话把会话目录送进废纸篓**，侧栏与「已归档」里删都一样
+  session-archive.spec.ts:79:1 › **多选也能收进归档**；「清空归档」先问，问完把归档的全删了
+  session-organize.spec.ts:37:1 › **操作入口看得见** —— 不该先猜到有这个东西
+  session-organize.spec.ts:48:1 › 侧栏会话右键直接打开与“…”相同的操作菜单
+  session-organize.spec.ts:58:1 › 重命名：**就地改，不用 window.prompt**（Electron 里它直接抛错）
+  session-organize.spec.ts:73:1 › **Esc 是取消** —— 改到一半按 Esc 却被存下来最气人
+  session-organize.spec.ts:85:1 › 置顶：**排到最前面**，且标记看得出来
+  session-organize.spec.ts:100:1 › 挪顺序：上移一格就真的上去了
+  session-organize.spec.ts:114:1 › **到头了就什么都不做** —— 不报错，也不假装动了
+  session-organize.spec.ts:126:1 › 从菜单里删除，走的是同一个确认框
+  session-organize.spec.ts:138:1 › **拖拽排序**：拖到哪就排到哪
+  session-organize.spec.ts:151:1 › **不许跨越置顶分界** —— 拖过去等于偷偷改了置顶状态
+  session-recovery.spec.ts:37:1 › 同库第二实例被拒绝，正在聊的远端会话仍 alive 且可发送
+  session-recovery.spec.ts:59:1 › 远端恢复失败显示真原因，服务器 ready 后原对话自动恢复并保留草稿
+  session-resume.spec.ts:18:1 › **关掉再打开，那段对话还在，而且还能说**
+  session-search.spec.ts:50:1 › **搜到你说的与 agent 回的**：片段里有高亮，两颗切换看得见
+  session-search.spec.ts:74:1 › **搜工具参数**：「跑个 Cox」之后搜 coxph → 点「命令里」→ 那一行展开、在视野里、带高亮
+  session-search.spec.ts:97:1 › **预算之外也跳得到**：第一句带暗号、再说满一屏，搜 → 点 → 第一句出现且在视野里
+  session-search.spec.ts:111:1 › **关掉再打开仍搜得到、点得过去**（读的是 pi 的记录，不是内存）
+  session-search.spec.ts:122:1 › **命令面板直达按内容**；Esc 关掉回到按名字
+  session-search.spec.ts:137:1 › **两个字的中文也搜**：搜「回归」命中 agent 那句「我跑一个 Cox 回归。」
+  session-search.spec.ts:153:1 › **归档了的也搜得到**：卡上标「已归档」，点开 = 取消归档并跳过去
+  session-search.spec.ts:190:3 › 别的项目里的那段 › **点到别的项目里的一处**：先切项目、再打开、再跳过去
+  session-search.spec.ts:228:1 › **打字快时只留最后一次的结果**：先搜一个词、紧接着换词，屏上只有后一个词的高亮
+  session-search.spec.ts:255:1 › 搜索浮层：按钮入口、名称跳转、键盘关闭和折叠侧栏独立
+  session-switch.spec.ts:37:1 › 切会话不丢历史
+  session-switch.spec.ts:58:1 › **草稿不跟着切过去**，切回来又还在
+  session-switch.spec.ts:82:1 › 切会话不重启 shell —— 侧栏与顶栏一直在
+  session-tabs.spec.ts:7:1 › **同一个项目下的会话横着排；点了切过去；＋ 在同一处再开一段；散的会话没有这一条**
+  session-tabs.spec.ts:42:1 › 主区页签可拖动排序，顺序重启后仍由会话列表保存
+  session-tabs.spec.ts:67:1 › 项目文件夹内拖动会话，与顶部页签同步且重开后保留顺序
+  session-tabs.spec.ts:97:1 › **`@` 菜单与输入卡同宽**，不比它宽（2026-08-23 作者报的）
+  session-tabs.spec.ts:114:3 › 页签圆点状态 › 普通圆点常驻，后台运行与未读状态继续由真实会话驱动
+  session-title.spec.ts:15:1 › **两个会话按各自的第一句话区分开**，而不是两行一样的 agent 名
+  session-title.spec.ts:54:1 › **第二句话不改名字** —— 侧栏上的名字自己变，人会以为点错了会话
+  session-title.spec.ts:83:1 › 会话行右端那一格 —— 一眼看得出哪段是新的
+  session-when.spec.ts:76:1 › **刚建出来的写「刚刚」**，不是 `0m`，也不是 `alive`
+  session-when.spec.ts:92:1 › **账上多久之前，行上就写多久之前**
+  session-when.spec.ts:118:1 › **取最后一次动作，不是创建时刻**
+  session-when.spec.ts:152:1 › **没说过话的退回创建时刻**，不是留白
+  session-when.spec.ts:202:3 › 正在跑 › **跑起来那一格写「跑着」，跑完变回时间**
+  session-when.spec.ts:260:3 › 正在跑 › **切到别的会话，跑完了那一格也要变回去**
+  settings-about.spec.ts:5:1 › 关于页宽窄排版、主题色检查、失败恢复及自动检查可用
+  settings-column.spec.ts:79:1 › **点设置 → 右边出现一条栏，而对话还在**
+  settings-column.spec.ts:90:1 › **名单 → 点一项 → 换成那一项；返回键回名单**
+  settings-column.spec.ts:101:1 › **⤢ 展开 → 整页，选中项不变；⤡ 收起 → 回栏，仍是同一项**
+  settings-column.spec.ts:122:1 › **窄栏的头部不比坞的头高**——`h2` 的浏览器默认外距要被清掉
+  settings-column.spec.ts:153:1 › **十四行的 `›` 落在同一条右边缘**——有没有计数都一样
+  settings-column.spec.ts:197:1 › **坞开着 → 开设置 → 坞让位 → 关掉设置 → 坞自己回来**
+  settings-column.spec.ts:212:1 › **设置栏开着时点「面板」，设置让开、面板真的出来**
+  settings-column.spec.ts:224:1 › **来时右边空的，走时右边就空的**
+  settings-column.spec.ts:266:1 › **每一块在默认宽度下都不横向溢出**
+  settings-counts.spec.ts:39:1 › **MCP 服务器那一行，关掉一台数字就掉一个**
+  settings-counts.spec.ts:61:1 › **插件那一行也有一个同口径的数**
+  settings-path-layout.spec.ts:22:3 › 长下载目录保持标题说明和按钮可见 1280 亮色
+  settings-path-layout.spec.ts:22:3 › 长下载目录保持标题说明和按钮可见 1280 暗色
+  settings-path-layout.spec.ts:22:3 › 长下载目录保持标题说明和按钮可见 880 暗色
+  settings-transitions.spec.ts:21:1 › 设置侧滑进退、焦点返回、同分类草稿与整页切换，减少动态效果可立即操作
+  settings-transitions.spec.ts:70:1 › 最窄设置栏的侧滑中间帧与暗色内容完整，动态偏好可中途取消
+  setup-entry.spec.ts:15:3 › 无模型的首次引导入口 › 旧跳过标记不能掩盖新引导；新版主动跳过后不反复弹出，并可从首页重新进入
+  setup-entry.spec.ts:39:3 › 已有可用模型的兼容入口 › 旧跳过标记加可用模型时保留工作台，不强制重新引导
+  setup-wizard.spec.ts:40:3 › 首启向导 › 没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用
+  setup-wizard.spec.ts:78:3 › 首启向导 › 先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始
+  setup-wizard.spec.ts:97:3 › 首启向导 › 解释器路径保存失败在卡片内显示，未配置时仍可跳过
+  setup-wizard.spec.ts:112:3 › 首启向导 › 密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写
+  setup-wizard.spec.ts:131:3 › 首启向导 › 服务商切换自动填写目录默认地址，手动改址仍可检测
+  setup-wizard.spec.ts:154:3 › 首启向导 › 引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景
+  setup-wizard.spec.ts:176:3 › 首启向导 › 四步实机截图；语言选择立即传递到工作台；窄窗口可操作
+  setup-wizard.spec.ts:205:3 › 首启向导 › 自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话
+  setup-wizard.spec.ts:249:3 › 首启向导 · 产品原样的默认配置 › 明确模型和协议在检测、保存验证、首次对话中一致
+  setup-wizard.spec.ts:277:3 › 首启向导 · 产品原样的默认配置 › **填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在
+  setup-wizard.spec.ts:318:3 › 首启向导 · 混合协议目录 › 自动协议按所选目录模型检测、保存并对话
+  side-session.spec.ts:60:3 › 侧边对话 · native › **两段同时跑不串台**；坞里问进度真调到 read_main_session、读到的是主对话此刻的
+  side-session.spec.ts:97:3 › 侧边对话 · native › **坞里那段长得像主区**：输入卡看得出边、一行头（标题 + 用量 + 导出对话 + 换到主区 + ×）、刻度尺放得下才画
+  side-session.spec.ts:166:3 › 侧边对话 · native › **换到主区 / 从坞里拿下**，三颗按钮都看得见（opacity 1）
+  side-session.spec.ts:215:3 › 侧边对话 · 临时会话 › 主区是临时会话：坞里「另开一段」看得见、建出一段临时会话，主区不动
+  side-session.spec.ts:264:3 › 侧边对话 · ACP › **ACP 那段挂进坞，直说它看不见主对话**
+  side-session.spec.ts:309:3 › 侧边对话 · 团队 chip › **点坞里的团队 chip → 团队格是坞里那段的队，并写明来源；从标签栏进回到主区那段**
+  side-session.spec.ts:342:1 › **新建任务那一屏：坞里另开一段是普通对话，不带文件夹**
+  side-session.spec.ts:360:3 › **1280 宽：窄栏工具可分行，输入正文同高、底边对齐**
+  side-session.spec.ts:360:3 › **1920 宽：窄栏工具可分行，输入正文同高、底边对齐**
+  sidebar-collapse.spec.ts:20:1 › **收起的过程中，里面的内容不被压窄**
+  sidebar-collapse.spec.ts:55:6 › **展开的过程中同样不被压**（已按取舍放弃：见上）
+  sidebar-collapse.spec.ts:75:1 › 收完之后侧栏一点都不占地方
+  sidebar-collapse.spec.ts:94:1 › **侧栏有滚动条时，内容不许被横向裁掉**
+  sidebar-columns.spec.ts:10:1 › **收尾那一列与数字那一列，各自只有一条右缘**（含服务器收纳与已归档）
+  sidebar-folds-persist.spec.ts:13:1 › **收起装着当前会话的文件夹、再收起「项目」，重新加载之后都还收着**
+  sidebar-layout.spec.ts:33:1 › **只有「新建任务」一个入口**
+  sidebar-layout.spec.ts:50:1 › **点完回到初始画面，不建任何东西**
+  sidebar-layout.spec.ts:70:1 › **没给路径 → 会话那一栏，且只多一行**
+  sidebar-layout.spec.ts:90:1 › **同一个路径合并成一个项目**，底下挂两段
+  sidebar-layout.spec.ts:134:1 › **空着的时候不留白地**，加一条会话就正好多一行
+  sidebar-layout.spec.ts:164:1 › **下拉框没了** —— 它装不下「一列项目，每个里面还有会话」
+  sidebar-layout.spec.ts:180:1 › **菜单开在行的右侧，且没被列表裁掉**
+  sidebar-layout.spec.ts:225:1 › **新建按钮内容居中，底部固定操作保持共同左缘**
+  sidebar-layout.spec.ts:253:1 › 本机新建、项目、服务器、会话和底部工具按优先级排列
+  sidebar-layout.spec.ts:286:1 › **子 Agent 那一屏说得出「去哪写」**
+  sidebar-layout.spec.ts:306:1 › **一台都没配时，说清去哪儿加**
+  sidebar-put-in-dock.spec.ts:3:1 › 侧栏入坞保留唯一主区，支持非当前入坞及当前与坞对调
+  sidebar-put-in-dock.spec.ts:34:1 › 从项目右键另一组临时会话入坞，主区与坞都切到目标组
+  sidebar-size.spec.ts:42:1 › **折叠之后，那颗开关还在原地**
+  sidebar-size.spec.ts:69:1 › **往右拖变宽，往左拖变窄**
+  sidebar-size.spec.ts:98:1 › **一路往左拖，也停在下界上**
+  sidebar-size.spec.ts:118:1 › **方向键也能调宽度**
+  sidebar-size.spec.ts:135:1 › **重开之后，宽度与折叠都还是上次那样**
+  sidebar-size.spec.ts:173:1 › **顶栏标志 → 折叠 → 快捷键，搜索移至工作区**
+  sidebar-size.spec.ts:192:1 › **搜索筛掉不匹配的，且搜不到时说出来**
+  sidebar-size.spec.ts:226:1 › **收着时通过原命令面板搜索，独立浮层可用且焦点归还**
+  sidebar-size.spec.ts:254:1 › **项目那一列的高度由条数决定，不吃掉剩余空间**
+  sidebar-spacing.spec.ts:5:1 › 260px紧凑导航、分组字体与计数列、服务器多选顺序
+  sidebar-spacing.spec.ts:98:1 › 顶栏18px品牌保留28px按钮和32px标志
+  sidebar-states.spec.ts:20:1 › 一条都没有时不画空列表，且新建入口可点
+  sidebar-states.spec.ts:37:1 › 空对话区给的是**能直接打字的输入卡**，不是一句提示
+  sidebar-states.spec.ts:52:1 › 概览在坞里打开，侧栏底部没有那一行
+  sidebar-states.spec.ts:62:1 › 设置可达且可返回
+  sidebar-states.spec.ts:74:1 › 会话建好后出现在侧栏列表里
+  sidebar-states.spec.ts:104:3 › 「设置」再点一次就回到对话
+  sidebar-states.spec.ts:133:1 › 坞开得起来也收得回去，**对话全程都在**；那颗按钮两态两个名字
+  sidebar-states.spec.ts:177:1 › **会话塞满一屏之后，「设置」仍然钉在底部可见**
+  sidebar-task-menu.spec.ts:14:1 › 跨项目切换保持省略号入口，删除经菜单确认且只作用于目标会话
+  single-file-download.spec.ts:21:1 › 单文件下载统一任务，权限失败直接重试，同名明确另存
+  single-file-download.spec.ts:47:1 › 单文件进度可见，切换面板继续传，取消清理后可重传
+  skill-discovery.spec.ts:50:1 › Discover searches declared sources, previews full package, installs and retains offline origin after restart
+  skill-discovery.spec.ts:111:1 › GitHub file URL selects one package and refuses an existing name without changing its files
+  skill-discovery.spec.ts:145:1 › Discovery details remain usable in the compact Settings column
+  skill-retrieval.spec.ts:8:3 › Skill 检索与读取证据 › 检索后读取，折叠可见、展开指纹、重载恢复
+  skill-retrieval.spec.ts:33:1 › 实际手动展开写入读取记录并恢复
+  skills.spec.ts:20:1 › 已安装技能详情、标签批量管理与当前会话刷新接通真实应用
+  skills.spec.ts:77:3 › 自带技能 › 共用科研审查规范可显式展开，保留静态审查和独立验证边界
+  skills.spec.ts:91:3 › 自带技能 › 科研分析技能沿用原调用名，完整展开综合路线与执行边界
+  skills.spec.ts:104:3 › 自带技能 › 分析交付技能可以通过 /skill:analysis-delivery 展开正文
+  skills.spec.ts:121:3 › 自带技能 › **自带技能出现在发给模型的请求里**
+  skills.spec.ts:163:3 › 两屏 › **Agent Skills 那屏列出了自带的那几个，并说清它们从哪儿来**
+  skills.spec.ts:180:3 › 两屏 › **「往哪儿放」说清三个目录与优先级**
+  skills.spec.ts:189:3 › 两屏 › **子 Agent 是另一屏**，两者不再共用一个词
+  skills.spec.ts:217:3 › 管理 › **三档开关写进 SKILL.md 的 frontmatter，别的一字不动；自带的没有开关**
+  skills.spec.ts:271:3 › 导入 › **撞名先问，覆盖就换、不覆盖就跳过；说清导了几个**
+  skills.spec.ts:297:3 › 删除 › **删除：确认后整个目录进废纸篓，列表里没了**
+  sra-datasets.spec.ts:7:1 › SRA 默认开启 → 真检索和 Run 文库详情 → 清单预览；关闭持久化且新会话无工具
+  sra-datasets.spec.ts:31:33 › SRA 限流明确反馈且不保存
+  sra-datasets.spec.ts:31:33 › SRA 无结果明确反馈且不保存
+  sra-datasets.spec.ts:36:1 › SRA 先出方案可查询，不落盘
+  ssh-connect-cancellation.spec.ts:7:3 › 握手取消后保持未连接，原请求立即结束
+  ssh-connect-cancellation.spec.ts:7:3 › 握手取消后立即重连，旧结束不覆盖新连接
+  stick-to-bottom.spec.ts:63:3 › 贴底跟随 › 丢了一次 mouseup，新内容照样跟到底
+  stick-to-bottom.spec.ts:106:3 › 贴底跟随 › 人真的按着鼠标在划词时，不许把视线抢走
+  stick-to-bottom.spec.ts:155:3 › 回到底部浮标 › **贴着底时一个像素都不画**
+  stick-to-bottom.spec.ts:165:3 › 回到底部浮标 › **往上翻 → 浮标出现 → 点它 → 回到底且跟随恢复**
+  stick-to-bottom.spec.ts:192:3 › 回到底部浮标 › **翻上去之后新内容到达 → 浮标带上字**
+  stick-to-bottom.spec.ts:255:3 › 对话区只许有一层能滚的容器 › **转录末尾正在跑的那一行，撑不出第二条滚动条**
+  stick-to-bottom.spec.ts:293:3 › 对话区只许有一层能滚的容器 › **浮标永远贴着对话区的底，不许浮在半空中**
+  subagent-polish.spec.ts:14:1 › 280px 子面板保留失败详情、完整长参数与复制入口
+  subagent-roster.spec.ts:12:1 › 当前项目在后台移除后，子 Agent 名册自动恢复全局定义
+  subagent-roster.spec.ts:31:1 › 项目有效时保留项目定义，项目移除后已打开的名册切回全局
+  subagent-roster.spec.ts:53:1 › **名册：22 份自带、分组与搜索、停用写进文件**
+  subagent-roster.spec.ts:109:1 › **输入框按 `/`：只有技能与子 agent 的菜单，边打边筛；/skill:名 真把人设送进了模型**
+  subagent-steering-epoch.spec.ts:6:1 › expired correction draft cannot cross a real child epoch and can be explicitly rewritten
+  subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction
+  subagent-view.spec.ts:36:3 › 子 agent 看得见 › 点 chip → 坞里那一格有它的过程与交回的结果；主转录里没有那条 read
+  subagent-view.spec.ts:53:3 › 子 agent 看得见 › 在跑时 chip 上有那一句、坞里那条 bash 在跑；跑完那一句消失
+  subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区
+  subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子
+  subagent-view.spec.ts:124:3 › 子 agent 看得见 › 看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达
+  subagent-view.spec.ts:196:3 › 坞里那段对话派的子 agent：长长的一句不撑破坞 › chip 那一句很长：坞不出横向滚动，chip 不越过坞的右缘
+  subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链
+  subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因
+  subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下
+  subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身
+  task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI
+  task-contract.spec.ts:33:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol
+  task-contract.spec.ts:62:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs
+  task-workspace.spec.ts:44:1 › **没设的时候，入口就在输入卡下面那一行**
+  task-workspace.spec.ts:82:3 › 设完之后 › **归到项目栏，而且 agent 的手真的挪过去了**
+  task-workspace.spec.ts:165:3 › 空态就选好目录 › **选了目录再开口 → 直接进「项目」栏**
+  task-workspace.spec.ts:221:3 › 开场卡 › **选了目录再点开场卡 → 进「项目」栏，不是「会话」栏**
+  task-workspace.spec.ts:260:3 › 选好目录之后 › **对话里只剩「换一个目录」，没有「改回普通对话」**
+  task-workspace.spec.ts:297:3 › 选好目录之后 › **chip和菜单只写文件夹名，仍能另选正确目录**
+  task-workspace.spec.ts:350:3 › 普通对话聊了几句再选目录 › **并进项目，上下文接得上：选完再问，模型还记得之前说的**
+  task-workspace.spec.ts:379:3 › 已在项目里再选另一个目录 › **两个项目彼此独立：在新目录另起一段、不带上下文；原来那段留在原项目**
+  task.spec.ts:19:1 › **点「新建任务」回到初始画面，不建任何东西**
+  task.spec.ts:37:1 › **直接开口 → 归「会话」栏**
+  task.spec.ts:57:1 › **点应用名回初始画面**
+  team.spec.ts:42:3 › 组一支团队 › **任务按依赖跑完，结果落进任务；坞里那一格与对话流都看得见**
+  team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team
+  team.spec.ts:119:3 › 成员指了一个目录里没有的模型 › **建队时就拒**，并说清有哪些模型——不让它跑起来才报
+  terminal-assistance.spec.ts:34:1 › 整页原生终端调用真正 dawn，只有一个输入，退出回原 Shell 并保留桌面草稿
+  terminal-assistance.spec.ts:58:1 › 900×700 原生终端占满主区，真实行列尺寸同步，退出工作区不杀进程
+  terminal-cli-interaction.spec.ts:29:1 › top onboarding and ghost suggestions keep one input and require explicit adoption before sending
+  terminal-cli-interaction.spec.ts:51:1 › keeps shortcuts above the editor and cumulative statistics centered at the bottom
+  terminal-cli-interaction.spec.ts:84:1 › Shift-Enter edits multiple lines in one terminal input and sends one native user turn
+  terminal-cli-interaction.spec.ts:101:3 › formatted transcript › renders Markdown code and tables in a narrow window while keeping one editor
+  terminal-cli-interaction.spec.ts:127:3 › mixed-language table alignment › keeps Chinese punctuation and wrapped table borders on the same pixel columns
+  terminal-cli-interaction.spec.ts:164:3 › streamed scrolling › shows a partial answer before completion and does not steal scrolling until returning to the end
+  terminal-cli-interaction.spec.ts:185:3 › tool details › Tab reveals tool output details without introducing a second input
+  terminal-cli-interaction.spec.ts:203:1 › reopening a trimmed PTY snapshot restores the editor and bracketed multiline paste
+  terminal-context-return.spec.ts:37:1 › the selected terminal returns to its own Agent rather than another live terminal
+  terminal-context-return.spec.ts:58:1 › a removed Agent target leaves the terminal open and reports the missing conversation
+  terminal-context-return.spec.ts:75:3 › running task across directories › return follows the CLI workspace and lets the current tool finish
+  terminal-dock.spec.ts:25:1 › 掀开整页终端，对话隐藏并保留
+  terminal-dock.spec.ts:42:1 › **路径是项目文件夹** —— 摆在上面，也真的在那里
+  terminal-dock.spec.ts:66:1 › 再开一个，两个都在标签里
+  terminal-dock.spec.ts:76:1 › **终端不混进会话列表** —— 它有自己的地方了
+  terminal-dock.spec.ts:87:1 › **终端不在侧栏，在对话这一侧**
+  terminal-dock.spec.ts:118:1 › **没有项目时，终端开在家目录**
+  terminal-dock.spec.ts:157:1 › 收起之后 dock 就没了
+  terminal-dock.spec.ts:185:1 › **按 × 关掉终端：标签走、面板走、空态出来**
+  terminal-dock.spec.ts:219:1 › **敲 exit：标签留着，标成已结束**
+  terminal-dock.spec.ts:241:1 › **家目录的终端有标签；按 × 连记录一起删掉**
+  terminal-dock.spec.ts:263:1 › **每段对话各自的终端**：切换对话，dock 跟着换
+  terminal-empty-return.spec.ts:9:1 › closing the last terminal still allows returning to the original page and draft
+  terminal-empty-return.spec.ts:34:3 › without a configured terminal › returns to the page even when no terminal has ever been created
+  terminal-history-resume.spec.ts:47:1 › CLI resume restores the original conversation, original image and GUI continuation after closing its last terminal
+  terminal-history-resume.spec.ts:69:1 › dawn --resume picker cancels without a new task, then explicit CLI resume restores the original ID
+  terminal-history-resume.spec.ts:97:1 › restarting the desktop preserves the original image context and restores the same saved conversation
+  terminal-history-resume.spec.ts:113:1 › history follows a real Shell cd and does not offer conversations from the old directory
+  terminal-history-resume.spec.ts:134:1 › an unsupported old image preview warns while the same conversation and original model image context remain usable
+  terminal-history-resume.spec.ts:158:1 › the current owner can close its last resumed terminal, reopen directly and continue the original image without reconnecting the GUI
+  terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI
+  terminal-images.spec.ts:65:1 › dragged images can be removed, are not added to the hidden composer, and Normal does not attach
+  terminal-images.spec.ts:82:3 › output pictures › renders verified image files returned by the Agent and opens their full preview
+  terminal-images.spec.ts:99:3 › picture capability › rejects attachment explicitly when neither the selected model nor a visual service can read it
+  terminal-lifecycle-audit.spec.ts:44:3 › welcome: closing the final terminal, explicit new, and repeated reopen keep a usable page and draft
+  terminal-lifecycle-audit.spec.ts:44:3 › conversation: closing the final terminal, explicit new, and repeated reopen keep a usable page and draft
+  terminal-lifecycle-audit.spec.ts:78:1 › closing the last DAWN terminal preserves its conversation; a new Agent is separate and the original GUI can continue
+  terminal-lifecycle-audit.spec.ts:134:1 › closing the current terminal selects a live sibling and keeps receiving real output
+  terminal-lifecycle-audit.spec.ts:151:1 › an ended sibling remains selectable after closing the live terminal and can still be closed and replaced
+  terminal-navigation-recovery.spec.ts:41:1 › PTYs never appear in conversation tabs, including after returning from DAWN
+  terminal-navigation-recovery.spec.ts:53:1 › closing the final conversation with a live PTY returns to a usable welcome page
+  terminal-navigation-recovery.spec.ts:63:1 › closing a conversation picks a real sibling and preserves its draft, never a PTY
+  terminal-navigation-recovery.spec.ts:73:1 › an already selected legacy PTY reopens the same terminal and returns to its Normal owner
+  terminal-navigation-recovery.spec.ts:89:1 › the legacy page can return directly to its conversation without opening a terminal
+  terminal-navigation-recovery.spec.ts:96:1 › closing the selected legacy terminal leaves a real page instead of a deleted-session loader
+  terminal-navigation-recovery.spec.ts:106:1 › the legacy DAWN page returns directly to its own Agent conversation
+  terminal-navigation-recovery.spec.ts:114:1 › a legacy PTY whose original conversation was archived can still return to the welcome page
+  terminal-navigation-recovery.spec.ts:121:1 › reopening an exited legacy PTY shows that same ended record without creating a replacement
+  terminal-permissions.spec.ts:24:1 › permission switches share the same conversation and survive return, Normal, last close and history reopening
+  terminal-permissions.spec.ts:61:1 › default changes follow inheritance, explicit tiers stay isolated, and native permission commands are not model turns
+  terminal-plan-restore.spec.ts:21:1 › a pending plan survives closing the last terminal and history resume, then approves the same version once
+  terminal-plan.spec.ts:41:1 › terminal /plan uses the GUI plan book, requires approval, archives and executes the shared instruction
+  terminal-plan.spec.ts:73:1 › GUI toggle syncs to the same terminal; revised plans reject old IDs, discard and history preserve status
+  terminal-plan.spec.ts:103:1 › fully accessible terminal stays read-only during planning; GUI edited approval updates the terminal
+  terminal-questions.spec.ts:27:1 › terminal questions separate choices, retain selected answers, return to the same GUI record and restore after closing
+  terminal-questions.spec.ts:65:1 › a question cancelled in the conversation clears the terminal pending state without submitting a choice
+  terminal-search.spec.ts:18:1 › DAWN searches offscreen history and finds prior input without submitting or losing drafts
+  terminal-search.spec.ts:49:1 › Normal searches retained output with matches and no-results while preserving the Shell draft
+  terminal-search.spec.ts:69:1 › search state stays local when switching modes and closing the last terminal
+  terminal-shutdown.spec.ts:13:3 › quitting with two live Normal terminals exits cleanly and reopening retains the conversations
+  terminal-shutdown.spec.ts:13:3 › quitting with two live DAWN terminals exits cleanly and reopening retains the conversations
+  terminal-state-audit.spec.ts:28:1 › an Agent terminal can be collapsed from the schedule page without changing that page
+  terminal-state-audit.spec.ts:36:1 › returning across a changed CLI directory reopens the original PTY even after reloading the GUI
+  terminal-state-audit.spec.ts:60:1 › an exited terminal cannot restart Agent or accept input, and still returns to the conversation
+  terminal-state-audit.spec.ts:69:1 › an archived Agent target reports its absence without navigating to a different conversation
+  terminal-state-audit.spec.ts:82:1 › closing another tab preserves the selected terminal, and closing the final tab leaves a usable return
+  terminal-utf8.spec.ts:9:1 › Chinese paths and editing remain readable, and a Unicode right prompt allows DAWN mode
+  theme.spec.ts:76:1 › 首次使用默认亮色，应用底为浅色
+  theme.spec.ts:83:1 › **能强制暗色** —— 这是这个 Task 存在的全部理由
+  theme.spec.ts:96:1 › 暗色下内容区比侧栏更深 —— 层次靠的是这个，不是装饰
+  theme.spec.ts:111:1 › 选择被记住 —— 重载之后还是暗色
+  theme.spec.ts:120:1 › **userData 是隔离的** —— 上一个用例存的暗色不该漏过来
+  theme.spec.ts:127:3 › 亮色下实心主按钮的文字达到 WCAG AA（4.5:1）
+  theme.spec.ts:127:3 › 暗色下实心主按钮的文字达到 WCAG AA（4.5:1）
+  theme.spec.ts:155:1 › 主输入框的聚焦环用的是主题强调色，不是系统色
+  thinking-progress.spec.ts:8:3 › 思考按段落显示摘要 › 完成后显示末段首行、显示深度思考与可展开的原文
+  thinking-progress.spec.ts:24:3 › 思考按段落显示摘要 › 扫光遵守系统减弱动效偏好
+  thinking.spec.ts:17:3 › 思考 › **收起时只有一行，点开才是内容**
+  thinking.spec.ts:47:3 › 思考 › **没有正文的发言不画** —— 不在答案前面杵一个空壳
+  thinking.spec.ts:76:3 › 思考 › **只有思考、没有正文时，思考仍然看得见**
+  thinking.spec.ts:97:3 › 思考 › **对话头上是这一整段的累计**，不是某一轮的抄写
+  thinking.spec.ts:122:3 › 思考 › **每一轮只列三项，不给口径不明的合计**
+  thinking.spec.ts:143:3 › 思考 › **思考不混进回答里** —— 那是它对自己说的话，不是对我说的
+  tool-changes.spec.ts:38:3 › 拿得到 git 事实时 › 工具改的文件，名字真的出现在变更 pane 上
+  tool-changes.spec.ts:73:3 › 非 git 工作区 › **没有 git 也说得出改了哪个文件** —— 文件系统探针补上那一半
+  tool-changes.spec.ts:115:3 › 审阅 · 跟 git HEAD 比 › **仓库里的改动**与**账本记的产物**各占一栏，点开有逐行差异
+  tool-changes.spec.ts:207:3 › 审阅 · 表格文件在 diff 上方多一句结论 › 一列换了单位，摘要说「乘了 1000」，而不是「每一行都变了」
+  tool-collapse.spec.ts:23:3 › 成功的工具调用 › **默认折叠，且折叠时看得见它做了什么**
+  tool-collapse.spec.ts:42:3 › 成功的工具调用 › 点一下就展开，再点收起 —— **整行都可点**，不是那个小三角
+  tool-collapse.spec.ts:87:3 › 本机命令退出码非零 › **那一行是失败，默认展开，看得见退出码**
+  tool-elapsed.spec.ts:27:3 › 工具调用的秒表 › **跑的时候在走，跑完了停表**
+  tool-elapsed.spec.ts:74:3 › 执行中的记号 › **执行中有会动的记号，跑完就没了**
+  tool-group.spec.ts:28:3 › 连续三条命令 › **折成一行，失败数红字写在汇总里；点开是逐条**
+  tool-selection.spec.ts:7:1 › 轻量进度查询真实读取摘要，模型请求包含选择边界且没有内核调用
+  tool-selection.spec.ts:26:1 › 假模型仍强行调用时，明确内核禁令在执行前拦截，普通查询与讨论门分别保留
+  tool-selection.spec.ts:43:1 › 服务器会话请求明确远端位置，cd结果将新目录告知模型
+  tool-selection.spec.ts:72:3 › 格式化工具名的明确禁令 › @python 后明确禁用行内代码格式的 run_code，仍在起内核前拒绝
+  topbar-session-tabs.spec.ts:3:1 › 项目单会话和多会话都在顶栏并列，切换、关闭和最后一段清理保持正确
+  topbar-session-tabs.spec.ts:49:1 › 顶栏多页签横向收纳，切换与查找仍指向当前会话
+  topbar-session-tabs.spec.ts:69:1 › 顶部右键复用侧栏菜单，重命名和归档指向非当前会话
+  transcript-budget.spec.ts:17:1 › **超过预算的更早消息不进 DOM**，屏幕上说清并给得出来
+  transcript-budget.spec.ts:49:1 › **刻度尺点更早的那一轮不会点了没反应**：先放出来再滚
+  tray.spec.ts:4:1 › 关闭主窗口保留会话和窗口，应用退出仍可正常收摊
+  turn-closes-on-failure.spec.ts:40:3 › 一轮失败之后 › **「正在思考」会停，模型也还能换** —— 失败不该把这一段锁死
+  turn-closes-on-failure.spec.ts:80:3 › 失败提示与截断提示 › 失败固定显示在人能读懂的标题下，原始错误默认折叠
+  turn-closes-on-failure.spec.ts:97:3 › 失败提示与截断提示 › 模型因输出上限停止时明确提示可以继续
+  turn-usage.spec.ts:20:1 › **这一句花了多少 token 显示在回合下面**
+  turn-usage.spec.ts:35:1 › **回复到了，思考记号不能还在转**
+  ui-layout-final.spec.ts:38:1 › 确认稿：顶部环境与底部操作行在首页、主会话和窄侧边会话内完整可用
+  ui-layout-final.spec.ts:52:1 › 确认稿：品牌与折叠、快捷键按钮紧凑排列，收起后仍可展开，版本常驻全局右下角
+  ui-layout-final.spec.ts:81:1 › 确认稿：侧栏外壳、正文和右坞使用各自亮暗工作面
+  ui-refresh-preview.spec.ts:36:1 › 完整分析界面：多尺寸、暗色、自选强调色与真实图像预览
+  uniprot-proteins.spec.ts:7:1 › UniProt 默认开启 → 真检索、功能与 FASTA → 清单预览；关闭持久化且新会话无工具
+  uniprot-proteins.spec.ts:38:33 › UniProt 限流明确反馈且不保存
+  uniprot-proteins.spec.ts:38:33 › UniProt 无结果明确反馈且不保存
+  uniprot-proteins.spec.ts:43:1 › UniProt 先出方案可查询，不落盘
+  update.spec.ts:15:1 › 侧栏长出「有新版本」，点开能下、下完能装
+  update.spec.ts:64:1 › 说了「这一版不再提醒」之后那一行就没了，重开也不回来
+  upload-experience.spec.ts:60:1 › 多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读
+  usage.spec.ts:42:1 › **跑一轮之后，用量那一屏上有真数**
+  usage.spec.ts:77:1 › **日历铺满、带月份；饼图与日历都有悬停浮层**
+  usage.spec.ts:128:1 › **活动洞察数的是真事**
+  usage.spec.ts:153:1 › **饼图与图例左右并排、按项目在按模型下面、图例列对齐**（2026-08-23 作者定的版面）
+  usage.spec.ts:207:1 › **日历三视角：每日 / 每周 / 累计**
+  user-echo.spec.ts:34:3 › 用户气泡即时上屏 › **按下就有，真的来了顶掉它，始终只有一条**
+  user-echo.spec.ts:67:3 › 回显 · 空态第一句 › **进对话的第一帧就有这句，从不出现「还没有对话」，也从不两条**
+  user-echo.spec.ts:105:3 › 回显 · 发送失败 › **回显撤掉，屏幕上不留一条没发出去的话，字回到框里**
+  user-questions.spec.ts:5:1 › 结构化澄清：多题、单选、多选补充、跳过；模型收到答案继续；重载恢复只读
+  user-questions.spec.ts:63:1 › 停止等待使提问中断；取消提问返回取消结果
+  user-questions.spec.ts:83:1 › 切换会话保留草稿；侧边问答与主区隔离；调整方向撤销原提问
+  user-questions.spec.ts:117:1 › 先出方案阶段可澄清，回答后仍处于只读方案期
+  user-questions.spec.ts:150:1 › 暗色主题与窄窗：提问不横向溢出，正文可滚动，操作仍能点击
+  user-questions.spec.ts:171:1 › 同一模型消息问答后接写入：等待答案期间绝不提前执行后续工具
+  vision.spec.ts:21:3 › 视觉服务 › **设置卡配好、测一发；贴图之后对话里出现「已转述」**
+  visual-file-preview.spec.ts:19:3 › 参考图：图表预览 › PDF 真正绘制为简洁图表卡，支持翻页、放大及恢复焦点
+  visual-file-preview.spec.ts:69:1 › 损坏 PDF 明确报错，仍可切换到另一个文件
+  visual.spec.ts:289:5 › 空态 · 亮色
+  visual.spec.ts:289:5 › 对话 · 亮色
+  visual.spec.ts:289:5 › 设置 · 亮色
+  visual.spec.ts:289:5 › 命令面板 · 亮色
+  visual.spec.ts:289:5 › 概览 · 亮色
+  visual.spec.ts:289:5 › 设置栏 · 亮色
+  visual.spec.ts:289:5 › 坞里的对话 · 亮色
+  visual.spec.ts:289:5 › 空态 · 暗色
+  visual.spec.ts:289:5 › 对话 · 暗色
+  visual.spec.ts:289:5 › 设置 · 暗色
+  visual.spec.ts:289:5 › 命令面板 · 暗色
+  visual.spec.ts:289:5 › 概览 · 暗色
+  visual.spec.ts:289:5 › 设置栏 · 暗色
+  visual.spec.ts:289:5 › 坞里的对话 · 暗色
+  waiting.spec.ts:30:3 › 慢一点的模型 › **发出去之后有记号，回音一到就消失**
+  waiting.spec.ts:72:3 › 跑起来的时候 › **发送按钮变成停止，回音一到再变回来**
+  waiting.spec.ts:112:3 › 发失败 › **发送当场失败时，记号不会挂住**
+  waiting.spec.ts:140:3 › 中止 › **按下停止，记号跟着停**
+  waiting.spec.ts:190:3 › 会思考的模型 › **想完到开口那段真空里，记号不撤**
+  waiting.spec.ts:217:3 › 会思考的模型 › **记号自己会走秒**
+  waiting.spec.ts:254:3 › 第一句话 › **空态发出去的第一句也有记号，且发送按钮变成停止**
+  waiting.spec.ts:298:1 › **复制之后旁边弹出提示，而按钮宽度不变**
+  waiting.spec.ts:366:3 › Esc 中断 › **框里有字时按 Esc，照样停得下来**
+  web-link.spec.ts:56:3 › 本机链接 › **点消息里的本机链接，右边就渲染出来**
+  web-link.spec.ts:71:3 › 本机链接 › **那张卡在，「打开方式」两个去处都在**
+  web-preview.spec.ts:72:1 › **地址栏输一个本机地址，那个页面真的加载了**
+  web-preview.spec.ts:89:1 › **它的位置跟着坞走** —— 拖宽之后那块网页也得跟着宽
+  web-preview.spec.ts:120:1 › **有浮层挡着就藏起来** —— 它的 z-index 对命令面板无效
+  web-preview.spec.ts:139:1 › **切到「agent 旁观」时它也得藏** —— 切回来还在原页（2026-08-25 一格两面）
+  web-preview.spec.ts:167:1 › **外网现在开得了** —— 门放行了，view 真的建出来了
+  web-preview.spec.ts:181:1 › **工作目录外的 `file:` 仍然拦下** —— 放开的只有 http(s)
+  web-preview.spec.ts:214:1 › **一句话不是地址** —— 说它不像地址，不去把它当域名解析
+  web-preview.spec.ts:226:1 › **切到别的房客要藏起来，切回来还是那一页**（没被销毁）
+  web-preview.spec.ts:274:1 › **页面自己开新窗口时，就在这一栏里走** —— 不新开 Electron 窗口
+  web-preview.spec.ts:289:1 › **权限一律拒** —— 不摆一个假的授权流程
+  web-preview.spec.ts:303:1 › **下载落到设置里那个下载目录**，不另起一套
+  web-preview.spec.ts:329:1 › **下载在账本上留得下：URL、落点、字节数**
+  web-preview.spec.ts:349:1 › **没有项目就不记，也不报错** —— 不硬挂，把 A 的账算到 B 头上比不记更坏
+  who-answered.spec.ts:13:1 › **换服务之后，新答的那一行改名，旧的不动**
+  workspace-menu.spec.ts:28:3 › default working directory › 默认菜单与新建任务均使用设置目录，每段会话独立落盘，更新设置只影响新会话
+  workspace-menu.spec.ts:66:1 › 最近目录可搜索和选择，默认项始终在底部，首页切回默认保留草稿
+  workspace-menu.spec.ts:100:1 › 项目内选默认目录开启新的临时任务，原对话和文件保持原位
+  workspace-refresh.spec.ts:26:1 › 从应用外面改了文件，切回来就看得见
+  workspace-ui-polish.spec.ts:5:1 › 工作区加入已有或新目录，取消/重复不改变列表，重启保留，移除不删除磁盘
+  workspace-ui-polish.spec.ts:43:1 › 固定工作区搜索保留原弹层、Escape焦点和草稿，侧栏收窄后品牌完整
+  workspace-ui-polish.spec.ts:64:1 › 长待发正文省略，宽窄面板四个操作文字单行且不溢出（zh）
+  workspace-ui-polish.spec.ts:64:1 › 长待发正文省略，宽窄面板四个操作文字单行且不溢出（en）
+  超长不许撑破.spec.ts:27:1 › **对话很长时，整份文档仍然不高于窗口**
+Total: 920 tests in 239 files

@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/terminal-context-return.spec.ts --grep selected terminal returns --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output
+
+Running 1 test using 1 worker
+
+(node:25893) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57144/cc6391f2-822e-4339-9e94-288cc818bfa7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/terminal-context-return.spec.ts:56:1 › the selected terminal returns to its own Agent rather than another live terminal (26.3s)
+
+
+  1) e2e/terminal-context-return.spec.ts:56:1 › the selected terminal returns to its own Agent rather than another live terminal 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 25000ms exceeded while waiting on the predicate
+
+      48 |       }
+      49 |       return rawReady
+    > 50 |     }).toBe(true)
+         |        ^
+      51 |   } finally { screen.dispose() }
+      52 |   await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()
+      53 |   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })
+        at enter (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts:50:8)
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts:59:3
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/terminal-context-return.spec.ts:56:1 › the selected terminal returns to its own Agent rather than another live terminal 

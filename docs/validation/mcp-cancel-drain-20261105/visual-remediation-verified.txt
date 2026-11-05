@@ -1,0 +1,65 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/visual.spec.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/visual-remediation-verified-output
+
+Running 14 tests using 1 worker
+
+(node:12951) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49167/b9a742ee-9403-4467-ab34-409169f89974
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/visual.spec.ts:289:5 › 空态 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49182/8360bfd5-a166-4d95-8161-dbf870cac544
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/visual.spec.ts:289:5 › 对话 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49201/18bae906-e15c-4666-a440-bd22f3ec79ed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/visual.spec.ts:289:5 › 设置 · 亮色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49210/91585226-0474-44cd-bef6-7d6b0715becc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/visual.spec.ts:289:5 › 命令面板 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49219/bff8a029-c6f0-4db7-9c7b-cc7120d2de2d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/visual.spec.ts:289:5 › 概览 · 亮色 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49230/51f94392-a92a-4711-a0ad-cf1704402114
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/visual.spec.ts:289:5 › 设置栏 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49239/e2d9c3b7-3b47-4bc4-a62e-a5153f9e5000
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49252/4e1fd054-1f37-4dba-b08f-6ca6944de4e6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/visual.spec.ts:289:5 › 空态 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49264/7b602f6c-d61c-4d77-9dea-c955f900b23f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/visual.spec.ts:289:5 › 对话 · 暗色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49274/85514142-080c-4dc3-a5f1-084f58f200ef
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/visual.spec.ts:289:5 › 设置 · 暗色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49285/22ad083c-a88c-43c9-9798-ed8b018bfa20
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/visual.spec.ts:289:5 › 命令面板 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49294/3468615a-7da3-4aa3-b214-3953731be426
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/visual.spec.ts:289:5 › 概览 · 暗色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49305/693171bd-02ff-4f58-bd51-b2ad2c902d96
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/visual.spec.ts:289:5 › 设置栏 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49314/43418907-9e63-451b-ad90-db16af4b050e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 (2.9s)
+
+  14 passed (30.4s)

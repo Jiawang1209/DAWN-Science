@@ -1,0 +1,1532 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test --reporter=list,json --update-snapshots=none --output=docs/validation/mcp-cancel-drain-20261105/desktop-full-output
+
+Running 920 tests using 1 worker
+
+(node:70447) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54112/60a75cb1-8029-49d1-b057-3c6d51a858e5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    1 e2e/accent.spec.ts:9:1 › **选一颗预置色，强调色与「活着」跟着变，「成功」仍是绿；重载还在** (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54130/c8270bc0-234a-4e8b-a012-8be829fd7f5f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    2 e2e/accent.spec.ts:38:1 › **浅色主题色**：按钮上的字自动换成深色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54138/eaca3b4c-d5b0-42e0-9516-3b4d3b9026bb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    3 e2e/accent.spec.ts:49:1 › **颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标复制，Shift 切格式 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54149/a7e3cfbe-bb1e-4560-8d4f-da5171e3174c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    4 e2e/accent.spec.ts:82:1 › **取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift 切格式，点击定为主题色 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54168/525927c7-2aad-4734-a2d6-b1642131bf83
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    5 e2e/accent.spec.ts:120:1 › **自绘色盘**：点方块定色、拖色相条变色，C 复制、Shift 切格式、Esc 关 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54179/138626c8-acf3-471a-8a91-182868bf0162
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    6 e2e/accent.spec.ts:156:1 › **窗口矮时色盘往上翻**，整个面板都在视口里，不用滚动 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54188/883e9e9b-e554-40a7-8652-70ebd6331d19
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    7 e2e/accent.spec.ts:170:1 › **极矮窗口**（320 高）色盘也整块在视口里——弹出层是 fixed，不跟设置页滚动 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54199/b310d371-1076-4511-b715-e7653ccd3479
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    8 e2e/acp-agent.spec.ts:54:3 › ACP › **一整段对话跑得通**，且模型旁边标着 ACP (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54220/6ad5b5b6-f4ab-4202-8e3b-3406f35dde3f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓    9 e2e/acp-agent.spec.ts:91:5 › ACP › claude-acp 可以切回 API，旧对话仍保留 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54242/8a69c270-f4ab-4fd6-ae92-9020f4135325
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   10 e2e/acp-agent.spec.ts:91:5 › ACP › codex-acp 可以切回 API，旧对话仍保留 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54256/f9e79a30-f8cf-4ff8-a551-59891be8ed0b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   11 e2e/acp-agent.spec.ts:113:3 › ACP › claude-acp 菜单按服务分组，点另一个适配器的模型即可切换 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54266/01a4287f-4706-43a7-846f-79ac74d00920
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   12 e2e/acp-agent.spec.ts:113:3 › ACP › API 菜单按服务分组，点另一个适配器的模型即可切换 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「主区原对话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54286/dd3557cf-88ec-4def-b7b7-c4e7a12b2ecf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   13 e2e/acp-agent.spec.ts:134:3 › ACP › 侧边对话切换 ACP 与 API，主区保持原对话 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54309/242b3ed5-2690-4d10-aa39-81dd45895721
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   14 e2e/acp-agent.spec.ts:160:3 › ACP › 空 ACP 对话切回 API 时顶替空会话 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54318/27b6800e-ad33-4fc6-a3b2-96f5e0a34e58
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   15 e2e/acp-agent.spec.ts:196:3 › ACP › **适配器起不来时，屏幕上有一句人话** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「读一下那个 csv」在等你点头 — 读一下 data/raw/观测.csv
+[主进程] Debugger ending on ws://127.0.0.1:54329/ef2162c2-0dd9-4ab3-bc80-669cf5467ec3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   16 e2e/acp-agent.spec.ts:229:3 › ACP 权限卡 › **它问，卡出现；点一个，它就收到那一个** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「读一下」在等你点头 — 读一下 data/raw/观测.csv
+[主进程] Debugger ending on ws://127.0.0.1:54344/bca999f5-fc44-4b06-8501-445622cef968
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   17 e2e/acp-agent.spec.ts:262:3 › ACP 权限卡 › **取消与拒绝不是一回事** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54356/c7f16fb9-375f-4a3a-ab69-f848aec219ab
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   18 e2e/acp-agent.spec.ts:300:3 › ACP 取消 › **跑起来能停**，停了就真的停了 (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54389/673ece08-aa21-4e95-a6bc-5754567c7a97
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   19 e2e/acp-agent.spec.ts:344:3 › ACP 会话开关 › **它给什么就画什么**，选一个真的送过去 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54409/281a1b21-9d14-427a-b564-97f2c1a5f25b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   20 e2e/acp-agent.spec.ts:410:5 › ACP 会话开关 › 装成 claude 那台时 › **选择的地方只写具体模型，不显示角色或推荐说明** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54421/3935380d-e4b7-4c49-8e93-e6e588dc9f72
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   21 e2e/acp-agent.spec.ts:435:7 › ACP 会话开关 › 不给开关时 › 那颗按钮不出现 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54429/1faeff4b-321d-43ae-a300-248dce309c4d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   22 e2e/acp-agent.spec.ts:457:3 › ACP 用量 › **跑一轮之后，饼图上分得出这台 ACP agent** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54449/c10d00a7-6332-4fbb-94fc-acecf68ddd45
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   23 e2e/acp-agent.spec.ts:510:3 › ACP 用我们的工具 › **它真的连上了 DAWN，拿到工具并调得动** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「切换期间新发的首句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54468/6a970e97-e8d1-4aa6-9997-31266e19b178
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   24 e2e/acp-agent.spec.ts:553:3 › ACP 切换等待期间 › 原空对话在切换期间收到首句时，保留这段对话 (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54507/f9b39ce8-956a-40fd-bf96-362c9b663766
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   25 e2e/acp-setup.spec.ts:60:1 › **加一个 ACP 适配器，然后真的用它聊一段** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54520/a45bc197-fde6-4cc6-ba97-d3c569ef9df5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   26 e2e/acp-setup.spec.ts:117:1 › **接错了能删掉**，删完选择器里也没有了 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54529/6416216a-4cf5-4143-8a3f-bf4f769fe127
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   27 e2e/add-service.spec.ts:22:1 › **填完就能用**：自定义端点 → 模型选择器 → 真的连上了 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54543/6fc03ba3-0b87-4721-bc9d-bb59ab0b05e1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   28 e2e/add-service.spec.ts:87:1 › **名字不合法当场就说** —— 而不是写进 yaml 之后炸 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [凭证] tmp 的 key 验证没能判定：Connection error.
+[主进程] Debugger ending on ws://127.0.0.1:54552/d3946b38-c1ac-4220-a577-926a03506441
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   29 e2e/add-service.spec.ts:98:1 › **移除一个服务：配置里那一段真的没了** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54573/4bcb2bda-8d7e-4a7d-954a-ff316de3589e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   30 e2e/agent-browser.spec.ts:11:1 › 网页格两个子页签；agent 旁观空态如实说；切回浏览面地址栏还在 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54586/a124f516-acd7-40f6-a09c-e3d38d3a86e7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   31 e2e/agent-pill.spec.ts:25:1 › 模型 pill 在输入卡里，且**几何上确实靠右靠下** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54618/e5999c63-ab2a-4d32-a751-d92ee2089bc0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   32 e2e/agent-pill.spec.ts:67:1 › 用**服务名**称呼它，不是配置里那个键 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54643/474b2ba3-1709-466a-bdcd-8ad2599d6f77
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   33 e2e/agent-pill.spec.ts:85:1 › **输入卡这一行只有一颗 pill** —— 误按从形状上就不可能 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54665/a808b312-7423-420e-96d4-b4bb6864f722
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   34 e2e/agent-pill.spec.ts:94:1 › 菜单向上弹 —— pill 贴着窗口底部，向下会被切掉 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54696/7c68a107-56e1-4620-939f-8c5d8effa9e6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   35 e2e/agent-pill.spec.ts:103:1 › 侧栏那份真的没了 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54721/4f0fe925-dbac-4c9f-b0a2-6a5706854b94
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   36 e2e/agent-pill.spec.ts:116:1 › **首页挑 LLM 那里，能直接跳到配模型** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54746/3451e682-b132-4ae8-aaa9-28b02c02fb4d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   37 e2e/agent-pill.spec.ts:160:1 › **挑 LLM 那张单子上，每一条都标着 API / CLI / ACP，且按类归拢、组内按字母** (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：允许在当前工作区用合成」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:54772/4b42736c-4a9f-42b3-b566-9410c7e23438
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   38 e2e/analysis-delivery.spec.ts:18:1 › 科研交付：真实输出→选择→结果解读→独立重跑→保留记录和图片预览 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:54842/1d856af1-33dd-4ebf-84db-1e564555c3f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   39 e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 id 身份变化 001 / 1 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:54859/96cd6a69-ea86-4cd9-9d74-2cb7b25a8f2d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   40 e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 id 身份变化 9007199254740992 / 9007199254740993 (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:54879/850947f1-e642-40ce-8725-98418dd20d42
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   41 e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 category 身份变化 10000000 / 10000001 (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：允许本地合成数据分析，」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:54915/138c97ef-6e00-4294-9230-31f747be823d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   42 e2e/analysis-delivery.spec.ts:181:1 › 整理并验证先等核对；缺少预期输出保持部分验证并保留新增图片报告 (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「登记已有图表文件」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54944/ed23770f-1d91-416d-95a0-07c9aa558e61
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   43 e2e/analysis-route-map.spec.ts:9:3 › route map shared viewer › PDF preserves usable height, map and draft while closing and reopening dock (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54962/d900d3f9-639f-4da7-bbd6-80e3e1f35f30
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   44 e2e/analysis-route-map.spec.ts:49:3 › route map active turn › viewing another node does not move the active step and ends with the actual turn (6.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54992/4a2cc950-f8dc-499f-a160-d25520c02239
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   45 e2e/analysis-route-map.spec.ts:76:3 › route map user confirmation › keeps confirmation in the main conversation and shows its actual location on the map (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示分析路线：请先规划，不开始分析」做完了 — 三步路线已记录；真实候选为 `20251017-e2e-alpha-diversity` Alpha多样性分析测试案例。请选一步继续；这只验证工程接线。
+[主进程] [桌面通知·假] #1 「演示分析路线：请先规划，不开始分析」做完了 — 本步工程说明已处理；是否生成以真实写入结果为准。科研代码未运行，尚未独立审查。
+[主进程] Debugger ending on ws://127.0.0.1:55008/134122da-eb70-4957-bb8d-5079483ee6b2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55030/b961921e-3399-4071-8d64-dc09418afe22
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   46 e2e/analysis-route.spec.ts:51:1 › 真实路线：摘要不自动开坞、选择不发模型、只读查看检索、单步交付预览、历史和重启 (7.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55047/92e13f03-f306-47ad-bab8-1e0061c85d7b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   47 e2e/analysis-route.spec.ts:154:1 › 无路线入口只发送规划意图；步骤依赖阻塞且允许本地展开 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55072/d67c7299-a945-4878-99d5-f390ba1d3a16
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   48 e2e/app-statusbar.spec.ts:12:1 › 底部数量来自实际名册，模型切换同步，详情及设置入口可达 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55094/804a657c-0c74-4dae-b650-cca38c11223a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   49 e2e/app-statusbar.spec.ts:60:1 › 窄窗口折叠扩展数量，版本留在末尾，状态栏与详情不溢出 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「生成预览验收文本」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55102/acad1e2e-0489-4e98-8988-99aa8e4c6a8c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   50 e2e/artifact-preview-close.spec.ts:12:1 › 长Markdown产物只滚动正文，收起入口固定且返回原清单 (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「生成一份分析结果」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55125/137119eb-09cb-4fbe-a106-588a86513bd1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   51 e2e/artifact-retention.spec.ts:16:3 › automatic artifact sources and explicit result retention › saved output survives live overwrite and opens through the project retention panel (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 “Generate a sample re” is done — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55147/2592c17b-b865-45ef-a237-51fd030bf18e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   52 e2e/artifact-retention.spec.ts:86:3 › automatic artifact sources and explicit result retention › one-click retention and history stay usable in a narrow English dock (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55167/3e26f35b-5e5f-45b3-9fe7-9a95130d2906
+[主进程] For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   53 e2e/artifact-retention.spec.ts:152:3 › automatic artifact sources and explicit result retention › source query leaves old files untouched; preserving current content is explicitly late capture (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55179/dcd9f5f0-da75-4e2b-aac3-6b6f9de2de39
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   54 e2e/artifact-retention.spec.ts:191:3 › automatic artifact sources and explicit result retention › actual interpreter snapshots belong to each Python/R notebook execution (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「生成一份火山图数据」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55235/7c91ce62-18c3-44c3-8359-068a7c89f6d2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   55 e2e/artifacts.spec.ts:25:3 › 产物：对话里的 GENERATED 条与坞的「产物」格 › write 新建一个 csv → 产物条 → 点 chip 进坞预览 → 回到清单 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55249/073b23a6-07cf-4810-92dc-af810ddce9ff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   56 e2e/artifacts.spec.ts:68:3 › 临时会话（非 git）：同样出 GENERATED 条 › 临时会话里 write 新建一个 csv → 产物条 → 点 chip 进坞预览 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「看看 README 写了什么」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55262/2c39bb54-ce41-46bb-a357-d4d37357bcb7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   57 e2e/artifacts.spec.ts:102:3 › 只读的一轮：不画产物条，也不说「产出未知」 › read 一个文件 → 回复下面既没有 GENERATED 条，也没有「本轮产出未知」 (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55280/1cb19993-113d-42eb-9688-9e40bb07887c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   58 e2e/artifacts.spec.ts:139:3 › 外部 CLI 会话：本轮产出未知，不列 agent 声称的文件 › cli 会话的 agent 轮画「本轮产出未知」 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55295/4ed47ffc-1862-4d17-8ff8-074e12fa030f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   59 e2e/artifacts.spec.ts:155:3 › 页面迭代：长结果清单 › 完整清单可以滚到末尾，回到清单后仍可打开文件 (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55331/c973bb45-6834-4ea5-afad-1d9a329f22d8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   60 e2e/at-file.spec.ts:14:3 › 对话里 › **打 `@` 弹菜单；挑一条；引用栏里有它；发出去模型收到 workspace-reference** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55344/b8773bd8-1a02-4bb2-a33c-89e4f8772d73
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   61 e2e/at-file.spec.ts:51:3 › 对话里 › **→ 钻进目录，菜单不关；回车引用目录是 `@路径/`；× 抠掉；不存在的 `@alice` 什么都不发生** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55360/b381e231-234e-4705-9b7a-4afcb8b4f943
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   62 e2e/at-file.spec.ts:85:1 › 启动空态及普通会话：不泄漏项目文件 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55380/c8837f55-e647-4251-8f7b-0085ab28191f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   63 e2e/at-file.spec.ts:111:3 › 第二档 › **粘贴进来的 `@data/raw/a.csv` 真实存在也不算**：不开菜单、不进栏、模型收不到；设置里关掉之后就算 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55393/0ca013ea-514f-4ee7-b0aa-0b37b27c80f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   64 e2e/at-file.spec.ts:151:3 › 第二档 › **过滤规则**：全局加一条精确、工作区加一条正则，菜单里就不列它们；坏正则存不进去 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55406/002f4040-8592-4eef-a880-8f9eafc50148
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   65 e2e/attach.spec.ts:55:3 › 挑文件 › **添加菜单保留三个上传选项** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55414/fe1eab71-45aa-46f1-9ceb-395beafda64a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   66 e2e/attach.spec.ts:102:3 › 挑文件 › **空态那一屏也给这颗按钮** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55432/1f277d6c-993c-4d72-9081-e4fc9d5c47d6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   67 e2e/attach.spec.ts:130:5 › 三项都通 › **「上传文件」点下去，路径进了输入框** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55447/176afcac-a3a7-45ce-ab40-eb876fcdc185
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   68 e2e/attach.spec.ts:130:5 › 三项都通 › **「上传数据」点下去，路径进了输入框** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55455/04e4ac04-92eb-4345-9b70-a66842f9dce9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   69 e2e/attach.spec.ts:163:3 › 图片真的送进模型 › **附一张图发出去，模型那边收到了** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55469/07b4e0ce-e40b-44c1-8590-78767b491d9c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   70 e2e/attach.spec.ts:199:3 › 图片真的送进模型 › **挑错了能单独摘掉** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55481/2342df35-a058-42c4-9067-fff23a259232
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   71 e2e/attach.spec.ts:233:5 › 提示不说谎 › **首页：那句提示在，而且 @ 与 / 都真的有反应** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55494/9b35e87e-24a0-44ca-85cd-8c61031af2b2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   72 e2e/attach.spec.ts:233:5 › 提示不说谎 › **对话：那句提示在，而且 @ 与 / 都真的有反应** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55514/91c0a727-5f00-4012-b8fd-7eca579c064a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   73 e2e/attach.spec.ts:304:3 › **首页：粘一张图进去，模型那边收到了** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55524/e1df2791-b06b-458a-9d17-76879911cf20
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   74 e2e/attach.spec.ts:304:3 › **对话：粘一张图进去，模型那边收到了** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55538/0fcafb7d-0873-4b18-8f8a-72ed2229cb24
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   75 e2e/attach.spec.ts:363:1 › **粘一段文字，照常进输入框** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55546/19c52efe-60d8-44e4-84db-5fa59459e825
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   76 e2e/attach.spec.ts:425:3 › **首页：拖一张图进去，模型那边收到了** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55565/b5a33dad-ffe3-46a0-8730-372446fbc2b9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   77 e2e/attach.spec.ts:425:3 › **对话：拖一张图进去，模型那边收到了** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55579/909b968e-1ab2-4987-93d5-1ca3bfc969fc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   78 e2e/attach.spec.ts:452:1 › **拖在卡上时，卡自己会说「我接得住」** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55587/f14d522a-5283-4c4f-9c5b-f84abfc0c562
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   79 e2e/attach.spec.ts:492:3 › **首页：只粘图不打字，回车也发得出去** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55596/98151131-85e6-4612-8524-fcb4513ff1c4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   80 e2e/attach.spec.ts:492:3 › **对话：只粘图不打字，回车也发得出去** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55609/b25ed7bd-0059-4458-aa42-f7168e2e2c71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   81 e2e/attach.spec.ts:520:1 › **Esc 收掉「＋」的菜单** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55617/6db80d5c-5c53-4751-86cb-e6c380caa0b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   82 e2e/attach.spec.ts:541:1 › **内置对话有「上传图片」，内核会话没有** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55625/a2bf0909-85eb-4170-91da-e523e1d70580
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   83 e2e/attach.spec.ts:575:1 › 输入卡：环境在顶部，添加与权限在左，模型发送在右，同排且不溢出 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55640/fb71a772-b0bc-441b-bcf2-ca2bc966a5fa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   84 e2e/background.spec.ts:8:1 › 外层背景与主题色独立，内容工作面不变，重载记住且可恢复默认 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55648/628b1a07-6e8e-4a96-a9d5-d43bcb5c1adb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   85 e2e/background.spec.ts:49:1 › 同一背景色适配明暗与系统主题，原内容颜色跟随主题而非自选背景 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55664/014ecd9b-5f57-4059-8715-98da9b420acf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   86 e2e/background.spec.ts:72:1 › 背景颜色值支持RGB、错误纠正、复制及独立色盘与吸管 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55673/a3560f11-1cd4-48f3-a3d0-428afb8ed7b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   87 e2e/base-url.spec.ts:38:1 › **没填地址的那几个，摘要上就在催** —— 填了 key 也连不上，而没人知道为什么 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55684/5ab71f4f-1fde-4d34-a880-0af4bdd72ffa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   88 e2e/base-url.spec.ts:52:1 › **自带地址的也能改** —— 「pi 自带地址」不等于「地址对你也对」 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55700/6067c279-a228-4f75-a05c-89412f18dbb6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   89 e2e/base-url.spec.ts:64:1 › 填进去**真的落到配置文件里**，而且原有内容没被动 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55708/7e98532a-4d50-4053-b693-df1efe3a2c98
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   90 e2e/boot.spec.ts:14:1 › 全新配置目录能起来，且落在对话首页 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55716/23499cbe-84bf-4e71-aed0-17d5773d8184
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   91 e2e/boot.spec.ts:30:1 › 默认工作区自动就绪，不要求先选文件夹 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55732/d7e6f7bf-c851-4899-916f-e908716513dc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   92 e2e/boot.spec.ts:40:1 › 配置文件被自动写出，且是一份带注释的模板 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55743/e52ca014-4496-4aae-b9a8-767146d55b4f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   93 e2e/boot.spec.ts:48:1 › 没有全屏遮罩挡着 —— 连上之后就该让人干活 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:55760/c48b51b5-0e02-4517-b79b-9c7d2823a00a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   94 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (8.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:55797/c4d9db91-c302-4d31-8db6-11b9b6d1052f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   95 e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:55823/3114256f-37ba-4325-9204-0ddd2f3795db
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   96 e2e/bot-direct-chat.spec.ts:3:1 › Bot direct chat retains draft and history independently of main and side chat (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「请说明检查步骤」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55845/589f115d-6e75-481d-b677-914136e02704
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   97 e2e/bot-direct-chat.spec.ts:32:1 › Bot management and direct preview stay within a narrow dock in both themes (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55866/e94668aa-4b24-4c37-8674-496da2c38ef1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   98 e2e/bot-dispatch.spec.ts:3:1 › slash Bot target dispatches without a captain prompt and exposes its member conversation (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Error occurred in handler for 'dawn:workbench:invoke': Error: 模拟派单响应丢失
+    at eval (eval at evaluate (:311:30), <anonymous>:18:17)
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:119555)
+[主进程] Debugger ending on ws://127.0.0.1:55886/b5edd699-d01b-4410-8827-2acb64767aeb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   99 e2e/bot-dispatch.spec.ts:32:1 › accepted dispatch with a lost response restores the draft and retries the same request (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55899/635ff520-7eb3-431c-a418-b212fabe2fa1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  100 e2e/bot-dispatch.spec.ts:79:1 › Bot slash dispatch can start an empty native main without sending raw commands to the model (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已检查数据：[质量报告](results/quality.json) [检查说明](notes/data.md)
+[主进程] Debugger ending on ws://127.0.0.1:55917/b2b5ae8a-661a-4d44-b0a1-656130603387
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  101 e2e/bot-team.spec.ts:11:1 › native captain selects configured Bots and delivers executed dependency results (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55931/0dcb0abb-979a-42a9-a238-4c6e584adb8d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  102 e2e/brand-export-menu.spec.ts:5:1 › DAWN Science与折叠、快捷键按钮始终单行，展开侧栏加宽并对齐 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55950/a0219164-95f8-4777-abf2-96e035e9a6a0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  103 e2e/brand-export-menu.spec.ts:47:1 › 查找与导出直接显示，键盘可选且真实保存完整对话 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55962/cc247791-82ae-4f92-8591-6f75f40a3cd8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  104 e2e/browser-plugin.spec.ts:8:1 › **浏览器卡**：四族 15 工具；关「操作」族要持久 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55978/492ca2e1-288e-4c49-b9d6-457271094177
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  105 e2e/browser-plugin.spec.ts:30:3 › 模型真的拿到了浏览器工具 › **假模型点名调 browser_status**，回执如实说「没开」 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55996/327ad96b-4a41-416d-a205-90efa6447056
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  106 e2e/bulk-delete.spec.ts:26:1 › **选两条，删两条，第三条还在** (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56012/d5dcd8df-6cb3-44cf-861a-c6454e698b0f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  107 e2e/bulk-delete.spec.ts:56:1 › **全选是全选，再点一次是全不选** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56031/0c646405-0adc-4ef8-b7c9-55ebc9d99f93
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  108 e2e/bulk-delete.spec.ts:75:1 › **「完成」退出选择模式，什么都不删** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56048/dd4d92da-8481-4334-8496-f8a5a353b541
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  109 e2e/bulk-delete.spec.ts:100:1 › **指向不存在会话的任务，照样删得掉** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56060/f97815e2-e3e4-4d9b-a08b-958f4effdcfc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  110 e2e/bulk-delete.spec.ts:149:1 › **「多选」比它头上的标题轻** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56073/4eb50143-95e0-409c-99e5-3bfe9e42140f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  111 e2e/busy-gap.spec.ts:54:1 › **正在回的时候，回车是排队**：挂在待发条上、此刻不进转录；这一轮完了才送进去 (7.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56109/de7c8952-f4f1-4ed7-a751-b0e4ae9fb999
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  112 e2e/busy-gap.spec.ts:75:1 › **取回**：从待发条拿下来、字回到输入框，这句话不会被送出去 (7.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56146/a9c043f8-394d-48c9-97b1-c74eff3af1b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  113 e2e/busy-gap.spec.ts:91:1 › **有待发时按停止**：排着的话回到输入框，停下之后不会自己冒出来 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56159/69492b73-0271-4c0d-b0dc-e1c559352566
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  114 e2e/busy-gap.spec.ts:106:1 › 待发条上的“新增会话”继承主会话上下文，原待发内容仍留在旧会话 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56173/edc7540a-2cf5-4df7-9b67-3596d93913b4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  115 e2e/busy-gap.spec.ts:134:1 › 忙着且框里有字时，屏幕上明写着这两条怎么用；待发条上的按钮常驻可见 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「大结果标题案例卡片」做完了 — 推荐先看网络布局浅览（20251016），再看无缝对接 WGCNA（20250825）。请选择要学习的案例。
+[主进程] Debugger ending on ws://127.0.0.1:56190/98999d5e-8b34-43e1-a1c3-daad57cdc835
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56215/1e6fb52c-c666-4c62-b078-4e6b0b176840
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  116 e2e/case-cards.spec.ts:63:3 › 大结果标题案例卡片 › 超预算多内容块、只写标题：后续轮次复用案例，重启后封面与选择仍可用 (8.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「/skill:analyze-like-」做完了 — 这是隔离接线验收。S1 查看 Alpha 多样性，S2 查看 Beta 多样性；输入仍需核对，当前仅讨论。 | 步骤 | 候选 | 核对程度 | | --- | --- | --- | | S1 | C1：`20251017-e2e-alp…
+[主进程] Debugger ending on ws://127.0.0.1:56240/98fb8182-e3a9-403f-9072-e66483dc7b04
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  117 e2e/case-cards.spec.ts:135:3 › 科研分析向导的路线与卡片接线 › 两步查询产生对应卡片，选择回传完整 ID，技能引用随构建发布 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「给我几个案例卡片」做完了 — 库里找到两篇：`e2e-deseq2-full-id` 做差异表达；`20251019-xacaaee` 画 Mantel 热图。你想照哪一篇做？
+[主进程] Debugger ending on ws://127.0.0.1:56259/6287e59d-d82f-4ffb-b235-4de7d81b33c1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  118 e2e/case-cards.spec.ts:197:3 › 案例卡片 › **工具查到的、正文提到的才出卡；封面真的显示；点卡片右侧开详情；「照这篇做」替你发出带 case_id 的话** (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56280/a0e56830-31e6-42a8-9570-70ece39ade2a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  119 e2e/chat-column.spec.ts:24:1 › **正文、气泡、输入卡在同一条左右缘上** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「量一下宽窗口」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56296/432b820c-0fb9-456f-a790-91c3ca6477fd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  120 e2e/chat-column.spec.ts:68:1 › **窗口放大时这一栏跟着放大，封顶，三条边仍对齐** (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56326/2a65abb0-9f5a-4dea-b6ae-1a2ee5116063
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  121 e2e/chat-column.spec.ts:108:1 › **用户气泡四角一样圆、底色不是侧栏灰** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56342/0c5b508a-40aa-4fc1-b1cb-448595560d5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  122 e2e/chat-column.spec.ts:159:3 › 命令行的宽度 › **工具调用那一行不比回复更宽** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56352/a40e3945-6ba9-4292-ba56-1c98f42d9a64
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  123 e2e/chat-size.spec.ts:3:1 › 对话字号按一根轴缩放，并在重载后保留 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56372/e5239d18-79aa-4a4a-99dc-2b621828a338
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  124 e2e/chat.spec.ts:24:1 › 说一句话 → 界面上出现回复 → 账本上留下记录 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56385/9c9880c8-36a2-472b-8730-7374660d6ea0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  125 e2e/chat.spec.ts:46:1 › 回复是 markdown 而不是一坨纯文本 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56399/88ad8c9f-7b8c-4a8e-ab7d-44992c18235a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  126 e2e/chat.spec.ts:68:1 › 空白内容不发送 —— 不往账本上记一条什么都没有的回合 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent查资源：长词组」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56416/e6a319bd-7bff-4a35-808f-40d6bd731842
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  127 e2e/child-resources.spec.ts:7:1 › 原失败长词组从真实主会话传入子进程，命中后读取记忆正文 (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent查资源」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56443/2bf3480c-dc39-4957-8f8f-ae113c00b246
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56471/59fe1cfa-7dc3-4554-86d7-d8ad3d1d7d54
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  128 e2e/child-resources.spec.ts:30:1 › 真实主会话派单 → 子资源查询可见 → 续问刷新 → 重启恢复 (8.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56496/7b16f525-8351-4c65-9be0-1c815260d2c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  129 e2e/chunk-missing.spec.ts:56:1 › **分片取不到时，这一屏照常显示，内容一个字不少** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56510/fd7cef67-cd7f-4d7a-a62c-332a5aa401ec
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  130 e2e/cli-agent-kind.spec.ts:32:3 › 配了一个认不出的 cli agent › **响亮失败并说清怎么办** —— 不是悄悄起一个终端 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56521/27127dc5-5a2f-4a0f-beff-734e7bea333b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  131 e2e/cli-agent-kind.spec.ts:45:3 › 配了一个认不出的 cli agent › 它仍然出现在可选列表里 —— 缺失不等于不支持 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56533/e7e06b3c-1486-4e64-b651-320e4a5092af
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  132 e2e/cli-agent.spec.ts:57:3 › CLI agent 在对话框里 › **打一句，它答一句** —— 判据 ① (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56544/3a5e07cb-1bfd-4aca-beb2-8f19e50f7210
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  133 e2e/cli-agent.spec.ts:70:3 › CLI agent 在对话框里 › **模型选择器真的出现** —— 上一轮就是漏了这一条，发了个哑的出去 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56554/ab956937-91cd-483b-86c5-89e3e14876f6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  134 e2e/cli-agent.spec.ts:86:3 › CLI agent 在对话框里 › **你自己说的话也要在对话里** —— 作者试用时报的那个 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56568/df7946cf-ffaa-4c9f-a5f0-a1cea0bfec07
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  135 e2e/cli-agent.spec.ts:101:3 › CLI agent 在对话框里 › **agent 的气泡要收尾** —— 不收尾它永远显示成还在说 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56576/0a7491e4-bf7f-4e31-beaf-569ffdcf197a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  136 e2e/cli-agent.spec.ts:112:3 › CLI agent 在对话框里 › **工具调用落在账本上** —— 判据 ②，走 PTY 时这里只有一团字节 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56594/8b63cae9-1d65-4aee-b274-1364f3ac5627
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  137 e2e/cli-agent.spec.ts:135:3 › CLI agent 在对话框里 › **工具调用在对话里看得见** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56603/3c271ad7-0de7-4f19-986d-ca2651fd6f56
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  138 e2e/codex-agent.spec.ts:41:3 › codex：一轮一进程 + 续接 › **第二轮真的续接上了** —— 不续接的话它看起来也一切正常 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56622/443da272-6e8c-4821-bd6b-baa4655e4d08
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  139 e2e/codex-agent.spec.ts:53:3 › codex：一轮一进程 + 续接 › **thread_id 落库了** —— 重开应用后靠它接上 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56630/dceb2ad9-05ac-427d-8a3b-cd4eee5bc370
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  140 e2e/codex-agent.spec.ts:66:3 › codex：一轮一进程 + 续接 › **stderr 有噪声也不算失败** —— 实测 codex 每轮都打，而退出码是 0 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56642/0c48ce4a-e374-44fc-a8e8-c0789990ae48
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  141 e2e/codex-agent.spec.ts:75:3 › codex：一轮一进程 + 续接 › 工具调用落在账本上 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56652/69e7012e-c1ce-4904-8e22-afecea127282
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  142 e2e/codex-agent.spec.ts:101:3 › 在一个对话里换模型（作者试用后补） › **换完之后是同一个对话，且下一轮真的用了新模型** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56663/748cebd8-b0d3-4b93-a2e3-e0e576ec0b05
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  143 e2e/codex-polish-2.spec.ts:9:1 › **⑥「最近」**：只有一个收纳时不出现；两个收纳时出现、默认收起、展开后是按时间的前几条 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56686/e73273e8-926b-4df3-8d3c-4fbba53239e5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  144 e2e/codex-polish-2.spec.ts:34:3 › ⑦ 输入卡上的权限档 › **菜单里选「拦下危险操作」，只对这一段生效**：危险命令被拒；设置里仍是全放行 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56704/0a5406ab-fd96-4878-9ee2-96ed55ef1a4b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  145 e2e/codex-polish-2.spec.ts:62:1 › **⑧ 模型不支持推理强度时，「会话设置」那颗整个不画**（权限自 2026-08-23 起有自己那颗，剩下的菜单空了就不摆） (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56721/03970f45-5618-4dfb-8169-0d401ff02400
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  146 e2e/codex-polish-2.spec.ts:74:1 › **切到另一段会话时，会话设置那颗第一次就在**——快照不被别的请求作废 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「第一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56736/c7f65c83-716c-4508-b2ac-7ae8021456a0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  147 e2e/codex-polish.spec.ts:20:1 › **③ 统计条**：输入框下方写轮数；**④ 导出**：下载目录里多一个 .md，内容有每一轮 (6.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56779/5ccd9335-409f-43d6-a4b9-80a7f3ce2971
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  148 e2e/codex-polish.spec.ts:42:1 › **① 轮次导航**：三轮起出现，点第一格滚到第一轮 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56792/0e5d6e50-75ff-4822-bd44-773c7b3057a9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  149 e2e/codex-polish.spec.ts:63:1 › **② 菜单五项**：复制三项走剪贴板并出声；「在新会话中继续」带着上一轮回复起新一段 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「甲段」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56808/5a40c3ee-a016-4e32-92c0-6eb5f5b8940e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  150 e2e/codex-polish.spec.ts:92:1 › ⑤ 未读圆点 › **⑤ 未读圆点**：不在看的那段来了回复就亮，点开就灭 (7.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56843/0fe81a83-e818-4683-b6b2-038baf1a99c1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  151 e2e/compact-conversation-header.spec.ts:5:1 › 会话标题与折叠按钮齐平，长标题在亮暗与收合布局内保持单行 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56857/1c3331ad-940d-4a7b-b808-92fea00399df
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  152 e2e/compact-conversation-header.spec.ts:61:1 › 会话顶栏预览：正常标题、亮暗主题及侧边会话互不串台 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56874/e5a4bb3d-c364-4f93-819d-7db7cebf0855
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  153 e2e/compact-conversation-header.spec.ts:75:1 › 同项目多个会话各有概括标题，页签、侧栏和顶栏同步，重载后仍能正确切换 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56887/f3bef97f-ef33-4fe3-9998-74928d30ce49
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  154 e2e/composer-config-layout.spec.ts:19:1 › 280px侧栏同时有模型、推理和适配器配置时，按钮不压扁且各菜单可用 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56899/3591899b-4d7f-4c39-81ed-edeb60a851bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  155 e2e/composer-highlight.spec.ts:7:1 › 首页Markdown高亮保留原文，光标选区与撤销正常 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56911/eb6f5600-dd9d-4bd8-8e31-f672dd2e5482
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  156 e2e/composer-highlight.spec.ts:38:1 › 会话Markdown滚动对齐、组词原生绘制，发送内容不含额外标记 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56924/09b58f3a-5806-41f1-9924-ec93738762f0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  157 e2e/composer-highlight.spec.ts:72:1 › 主对话与窄坞输入共用高亮，亮暗主题切换保留草稿 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56936/a13c8813-a8b4-48ec-a6d2-f804d0bd28a7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  158 e2e/composer-history-copy.spec.ts:15:1 › **↑ 翻回上一句，↓ 翻回没发出去的那半句** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56950/fe734cba-0912-4aee-b39b-8130a390846d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  159 e2e/composer-history-copy.spec.ts:40:1 › **多行草稿里按 ↑ 是上移一行，不是换掉整段** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56961/faff8f63-ebb0-4862-9190-53c7fc479bfa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  160 e2e/composer-history-copy.spec.ts:58:1 › **一键复制**：复制的是原文，且看得见它复制成功了 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56974/d0306ad0-f9e3-4b2e-b778-7efec9abecac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  161 e2e/composer-history-copy.spec.ts:85:1 › **修改 → 发送**：新说一句，原来那句留在原处 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56994/16aff60a-6000-4819-8b4c-0648fe745782
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  162 e2e/composer-history-copy.spec.ts:105:1 › **取消就是取消**：一个字都不发出去 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57008/6f84a1a2-d090-400d-8200-eb6181be2a72
+[主进程] For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  163 e2e/composer-history-copy.spec.ts:121:1 › **操作在这一段下面**，不是浮在右上角 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57024/f3700a3c-3067-4159-9895-229667e08f58
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  164 e2e/composer-history-copy.spec.ts:140:1 › **动作行靠右、不撑宽气泡**：一个字的气泡比它下面那行窄 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57043/a65f993a-783a-45cb-8baa-50a6fa0a524b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  165 e2e/composer-history-copy.spec.ts:176:1 › **七个字的问题占一行**，不被从中间折断 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:57055/ec09c674-37f8-4f7e-b02b-3f8bb1fc797b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  166 e2e/composer-history-copy.spec.ts:198:1 › **坞里那段的「回到这句之前」**：整颗看得见，不把对话区撑出横向滚动 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57068/03f7385a-8968-47ec-a11d-007c049a6fb5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  167 e2e/composer-layout.spec.ts:47:1 › 首页添加菜单支持键盘，方案状态可见，草稿不丢失 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57093/383afc52-422e-4d9e-bb81-0d8c82315f03
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  168 e2e/composer-layout.spec.ts:112:1 › 项目目录、文件选择、方案提交、普通发送与亮暗主题 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57110/fe8e6665-d9e1-4848-b6f1-e6ff6ba25b4c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  169 e2e/composer-layout.spec.ts:160:1 › 主侧对话输入区在窄栏可操作且不横向溢出 (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「上下文配色检查」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57128/289d48a9-e65f-41a6-967a-a6f769f4542f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  170 e2e/composer-layout.spec.ts:220:1 › 终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色 (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「核查500米监测数据」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57159/c955b676-f8be-44ed-aee0-7d39dc51441e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  171 e2e/composer-meta.spec.ts:45:1 › 会话统计跟随输入框下方，主区和280px侧边对话分别累计 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57174/a1a32302-6f93-47ce-8afc-b247c9ec1f32
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  172 e2e/composer-meta.spec.ts:82:1 › 用户消息时间戳、复制、编辑和撤回同一行，短气泡不被操作行撑宽 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57186/992c3d73-894e-4dfc-842b-84b051e35574
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  173 e2e/composer-paste.spec.ts:4:3 › 文本粘贴遵守光标与选区 · welcome (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57195/46fbe5b4-e6d4-425a-974f-ef9ef08b1c09
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  174 e2e/composer-paste.spec.ts:4:3 › 文本粘贴遵守光标与选区 · conversation (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57209/c6e0613b-a658-4d4b-8572-6372dc4a96d2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  175 e2e/composer-paste.spec.ts:30:1 › 延迟识别期间在重复字符前键入，粘贴锚点跟随真实编辑选区 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57220/6c216e2e-1183-4db3-87cc-0a4b40d05acd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  176 e2e/composer-paste.spec.ts:49:1 › 侧边会话的选区替换独立于主会话草稿 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57230/59193c35-1791-4de8-a278-bc23e1e691cd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  177 e2e/composer-ready.spec.ts:17:1 › **终端**：直接入口打开整页终端，返回保留草稿，再打开复用原终端 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57247/55ed9840-4922-4776-9b62-7d3f9d291236
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  178 e2e/composer-ready.spec.ts:41:1 › **先出方案**：菜单选中态与方案说明一起开关，选中背景遵循主题 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57265/2eacbf66-009a-440d-85ac-e5a13cd6ad10
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  179 e2e/composer-ready.spec.ts:71:1 › **选择工作目录**：项目会话在顶部环境行标明已选目录 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57276/3ce59d45-7cab-4e46-8d43-7e2de6e5f2b8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  180 e2e/composer-ready.spec.ts:79:1 › **上传文件**：带上一张图之后转黑色实心 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57288/55e1cd9b-905f-48df-8b24-8a9087ab57e1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  181 e2e/composer-ready.spec.ts:107:3 › 走「上传文件」插路径也算带上了 › **上传文件（非图片）之后按钮转黑**，发送后回到淡的 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57303/6fa14893-8a45-47ba-af95-e4d81dd55c60
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  182 e2e/composer-sizing.spec.ts:3:1 › 输入区随内容增高，达到上限才滚动，清空后收回 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57314/b363e91c-1366-4ba0-af6f-d86d0f710695
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  183 e2e/composer-sizing.spec.ts:29:1 › 换行在输入、发送请求和用户气泡里都保留 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57324/587d93a3-95a5-419e-858c-4d75a18f4966
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  184 e2e/composer-sizing.spec.ts:49:1 › 主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57336/b0d9be75-bc17-4b8e-ad87-46f06d77bbfd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  185 e2e/content-background.spec.ts:14:1 › 欢迎与消息内容底色独立保存，输入卡不变，设置页可单独改色与恢复 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57354/b8723148-adcf-424a-b74e-0f6771975b2f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  186 e2e/content-background.spec.ts:52:1 › 内容背景跟随明暗及系统主题，输入工作面仍沿用原主题 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57368/e57fc644-535c-4344-ab38-b14362a101a7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  187 e2e/content-background.spec.ts:80:1 › 新增两项保持RGB、错误纠正、复制与色盘交互，收回时色值仍紧凑 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57385/452e7f6c-4848-41d5-9f7c-1481e2f90f53
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  188 e2e/content-background.spec.ts:110:1 › 已有消息和侧边对话沿用内容底色，发送和输入卡不受影响 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57402/344b5132-8717-4075-8ac2-faef63e6411d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  189 e2e/context-compaction.spec.ts:60:3 › 内置对话 › **仪表常驻**：说过一句之后写着比例（不是悬停才出现）；悬停看得到真数与自动压缩线，移开就收，点一下钉住 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「第一句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57415/c1d4e36f-a2a8-40f8-ac14-e9030aa25b8a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  190 e2e/context-compaction.spec.ts:85:3 › 内置对话 › **/compact**：不当一句话发；先出「正在压缩」，再收成压完的标记，写「你让压的」，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来 (32.7s)
+(node:96216) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57564/741e403a-542b-4892-8ad2-26ba0fdf78ac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  191 e2e/context-compaction.spec.ts:109:3 › 内置对话 › **⌘K「压缩上下文」**：内置对话里可用，按下去同样出一条「你让压的」标记 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57583/1140d4c7-e728-4606-b364-db96929fb24d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  192 e2e/context-compaction.spec.ts:124:3 › 内置对话 › **自动压缩出声**：「塞满上下文」那一轮收尾时 pi 自己压——标记写「自动：快到上限了」，不是失败 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57597/af5693ec-8335-4a13-b9a8-410348f52171
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  193 e2e/context-compaction.spec.ts:139:3 › 内置对话 › **`/` 菜单里有「压缩上下文」**，选中写 `/compact `、不替人发 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57610/4fb0a75b-048f-4dfe-99b3-329637b39061
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  194 e2e/context-compaction.spec.ts:156:3 › 窄附栏 › **坞里的输入卡**：仪表在右侧模型前可用，权限在左侧，弹层留在窗口内 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57624/4b509a45-dfdc-438f-81ea-0c4aa76ceedd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  195 e2e/context-compaction.spec.ts:194:3 › 窄附栏 › **主区（坞关着）也只写数**（2026-09-28 作者要的）：看得见「<1%」，名字仍是「上下文 <1%」 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57635/e4e0a0e5-c035-4f11-b61a-997b2edea11d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  196 e2e/context-compaction.spec.ts:224:3 › 外部 agent › **ACP 会话的仪表写「读不到」**，弹层说为什么、没有「现在压缩」；`/` 菜单里没有那一条；⌘K 那条列着但灰着、说为什么 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57659/7cb11283-9ddb-45a6-8a12-1d81936f8b20
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  197 e2e/context-compaction.spec.ts:247:3 › 外部 agent › **ACP 会话里 `/compact` 原样发给 agent**（它自己认这个命令），不出压缩标记 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57690/afd85d9e-3d4e-4d13-a215-616d8fbbc495
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  198 e2e/context-usage.spec.ts:12:1 › 说过一句话之后，上下文面板给出真实的 token 数 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57724/1b861cb3-8f09-40a2-becd-3d189fdec332
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  199 e2e/context-usage.spec.ts:44:1 › **下表明写「按字节」** —— 不写清楚，人会把它当成 token 分解 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57752/81ab4697-09ee-48cf-84fa-e6354d3f1940
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  200 e2e/conversation-find-shortcut.spec.ts:3:1 › 会话快捷键按焦点切换查找开关，Esc返回，顶栏只保留全局搜索 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57790/c0bbd67d-6d25-4a44-b47f-cb4d4f4581bf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  201 e2e/conversation-find-shortcut.spec.ts:64:1 › 顶栏导航右边界跟随侧栏，默认与拖宽后对齐，折叠后入口仍可用 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「跑个 Cox 看看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57822/1a21f657-6e88-43d1-b3f9-db53923580dd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  202 e2e/conversation-search.spec.ts:7:1 › 会话内搜索：折叠工具参数与输出也能定位 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57874/37df484d-1ef6-40ac-925d-e6043d33b0b1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  203 e2e/conversation-search.spec.ts:42:1 › 会话内搜索：独立范围、导航与输入法，搜索不影响草稿 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57892/65bb88a4-f960-41d5-be88-947b7901a877
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  204 e2e/conversation-search.spec.ts:73:1 › 会话内搜索：预算之外仍能跳到，亮暗和窄窗口不溢出 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57908/127ef10d-d05c-4a27-b9e1-d8a729c27bcb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57925/6d2e91f3-30d8-43ca-81cf-996bddf969f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  205 e2e/conversation-search.spec.ts:111:1 › 提问时间：实时显示且重开后从历史恢复 (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57935/03da6bd2-0c7e-48ee-b1ba-68762e19f6ff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  206 e2e/cost.spec.ts:16:1 › native 会话：如实说「不可见」并给出原因，而不是停在「尚未记录」 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57949/f0151c34-1c15-4403-ad68-e28a869b3458
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  207 e2e/cost.spec.ts:54:3 › claude 会话：金额是真数 › 成本栏显示 CLI 自己报的金额，不是我们乘出来的估算 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57960/ca16f558-fe30-42c8-8192-3bc4e5b09039
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  208 e2e/cross-service-switch.spec.ts:27:1 › **换到另一家，对话不断** (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57977/cb7a366d-b4a4-409a-8b95-b08166d57237
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  209 e2e/cross-service-switch.spec.ts:96:1 › **一颗 pill 里两家都在**，厂家写在组头上 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「Crossref文献检索验收，请检索并核」做完了 — 文献清单已保存： - [outputs/literature/references-jZAOxR/references.json](outputs/literature/references-jZAOxR/references.json) …
+[主进程] Debugger ending on ws://127.0.0.1:57990/f0d6f815-2bc7-4f1a-8139-8eeeecd5c5ba
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  210 e2e/crossref-literature.spec.ts:20:1 › 默认开启 → 界面设置并持久化 → 真工具检索、DOI 核对、只保存所选记录 (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58018/05aa00c9-8024-4d05-b8d2-ccf915886368
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  211 e2e/crossref-literature.spec.ts:58:12 › 限流明确提示，工作区没有文献清单 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58034/1d07c70e-dc3f-427b-8804-17cd303a99c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  212 e2e/crossref-literature.spec.ts:58:12 › 无结果明确提示，工作区没有文献清单 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58052/10d65037-ee6f-4c2a-b2df-00e86e905140
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  213 e2e/crossref-literature.spec.ts:66:1 › 先出方案允许只读检索，不落盘 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58066/cc0f6d91-6812-4d3b-b6ad-4ec21e1b2834
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  214 e2e/csp.spec.ts:29:1 › 四个屏走一遍，**一条 CSP 违规都没有** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58079/bace266f-17c6-4243-b566-bae972c76680
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  215 e2e/csp.spec.ts:52:1 › **策略本身还在，而且没有被开成 `unsafe-inline` 脚本** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58087/7db8e06e-c40b-4929-9e22-21acf9840531
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  216 e2e/csv-preview.spec.ts:23:1 › 点开一个 csv → 出现一张表，而不是一坨逗号 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58102/2ebfd8c6-fa41-42e9-a3dc-88bb257c44e8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  217 e2e/csv-preview.spec.ts:58:1 › **原文不再当作表格的替代品** —— 打开 csv 不该看到一坨逗号 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58112/d73a401e-d2a5-43cf-a9d9-fc34e66e2325
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  218 e2e/custom-provider.spec.ts:37:3 › 自己填地址的 provider › **pi 不认识它，但它真的能对话** —— baseUrl / api / models 三样都到位了 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58126/e3c59afe-c336-4ee1-badd-bfa18b650687
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  219 e2e/custom-provider.spec.ts:76:3 › 自己填地址的 provider › 模型选择器里是我们声明的那个 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] :16 Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently
+[主进程] Debugger ending on ws://127.0.0.1:58141/b346af1b-0ba7-4a8f-bff8-a99337956854
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  220 e2e/decision-card-polish.spec.ts:3:1 › RP 资产可用；提问选中文字在浅色强调色和亮暗主题下仍清晰 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58157/d9bad4db-4751-4a13-bd14-aac76056c8e7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  221 e2e/delete-project.spec.ts:16:1 › 每一行项目都有常驻操作菜单，删除不用先翻到项目概览 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58169/77ce9f4e-4af9-4c33-84f4-744e27b44efe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  222 e2e/delete-project.spec.ts:33:1 › **确认框摆真数字**，并说清哪些东西不会动 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58179/010b1ff3-e16a-4e87-b7e1-000088ff6ac0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  223 e2e/delete-project.spec.ts:52:1 › 删掉之后，它的会话**一条都不剩**；工作区的文件一个都没少 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58197/821cca66-86f8-4d1b-88d3-11f54e5fbec2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  224 e2e/delete.spec.ts:46:1 › 删除会话：确认框说清账本不动，删完列表里就没有了 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58213/f2f2da36-3075-411d-88c9-5352ab2e5f78
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  225 e2e/delete.spec.ts:69:1 › **取消就是什么都不做** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58236/c227c860-afad-4202-b476-0ff1728394e9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  226 e2e/delete.spec.ts:80:1 › 移除项目：确认框摆真数字，**且磁盘上的文件夹还在** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:58249/848388d8-d037-4d1b-9994-5c817185be92
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  227 e2e/delivery-log-encoding.spec.ts:5:1 › 交付验证日志：跨块中文和表情在真实Python、落盘及预览中保持原文 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:58266/ea7f7fd7-de58-4eb8-85c7-76c602dfdda4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  228 e2e/delivery-table-parser.spec.ts:10:3 › 交付表格原始表头变化不会显示重跑通过 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] Debugger ending on ws://127.0.0.1:58283/3005aff5-faec-49a2-8548-ee3d584a89fb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  229 e2e/delivery-table-parser.spec.ts:10:3 › 交付表格带空格计数列不会显示重跑通过 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58308/f01ab5d7-32d1-4886-a576-156d2a8d257a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  230 e2e/delivery-table-parser.spec.ts:10:3 › 交付表格未闭合引号不会显示重跑通过 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「这是桌面 CLI 连接验收，请简短回答。」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58328/a6505f89-43a2-4779-8684-6b5cdf8b9eb0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  231 e2e/desktop-cli.spec.ts:7:1 › DAWN and Normal use the desktop model, preserve Shell state, and refuse pending input (8.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58377/f5523bb4-1580-40a5-acaa-fe5b6684d61b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  232 e2e/desktop-cli.spec.ts:59:1 › return opens the same Agent conversation and continues it without creating or copying a task (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知一」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知一」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58400/8668b014-1b47-46ba-95ce-994f66e75242
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  233 e2e/desktop-notify.spec.ts:61:1 › **做完了**：窗口不在前台 → 弹一条，标题带会话名、正文是回复开头；Dock 角标 1 (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知二」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知二」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58420/6c2f9187-8c25-4b14-a3ee-abc499c13dbe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  234 e2e/desktop-notify.spec.ts:77:1 › **正看着那段就不弹**；交还前台之后同一段再说一句 → 弹（证明管线是活的） (8.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知前台甲」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知前台甲」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58463/f7e1a0a3-0151-4da5-b17f-0fbf013c2590
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  235 e2e/desktop-notify.spec.ts:93:1 › **前台、但人在看另一段** → 那段做完照弹（§0 第 2 条） (27.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知正文」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知正文」做完了 — # 第 1 节 这是一段正文，里面有 `行内代码`、**加粗**、*斜体* 和[一个链接](https://example.com)。 ## 二级标题 1. 有序的第一项 2. 有序的第二项 - 嵌套的无序项 - 又一项 ### 三级标题 …
+[主进程] Debugger ending on ws://127.0.0.1:58580/7f8461a0-06f6-4a8f-825c-bf9f63cd0f9a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  236 e2e/desktop-notify.spec.ts:114:1 › **「做完了」的正文只看这一轮**：第二轮换了回复，正文跟着换，不拿上一轮的顶 (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知三甲」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知三乙」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58609/1b64099e-f9d0-48cc-8901-1832b8e98844
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  237 e2e/desktop-notify.spec.ts:129:1 › **点通知回到那段**：在别的段上点 → 主区切回去；人在前台看到了 → 角标清零 (5.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「甲项目里的一句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58637/fbb117d6-26a0-4559-a377-f3dc7cf8fa6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  238 e2e/desktop-notify.spec.ts:150:1 › **点另一个项目里那段的通知** → 换到那个项目、主区切到那段 (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「坞里说的一句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58664/a90f5526-1954-4c09-927f-db4359d06997
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  239 e2e/desktop-notify.spec.ts:185:1 › **点坞里那段的通知** → 坞打开到「对话」格，主区不动 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知四」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知四」出错了 — 模型调用失败：401: {"message":"mock：演一次失败","type":"invalid_request_error"}
+[主进程] Debugger ending on ws://127.0.0.1:58683/224c7eea-f370-4b33-b14a-a1452bba41ae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  240 e2e/desktop-notify.spec.ts:211:1 › **出错了**：「演一次失败」→ 弹「出错了」，正文带模型调用失败；这一轮不再另弹「做完了」 (6.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知五」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知五」在等你点头 — bash：curl -s --max-time 1 http://127.0.0.1:9/ || true
+[主进程] Debugger ending on ws://127.0.0.1:58719/fbde6ec6-3b8b-4d1a-8bf1-662d49752fc7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  241 e2e/desktop-notify.spec.ts:227:1 › **等你点头**：「请求批准」档下「演一次权限」→ 卡弹出来的同时弹一条；人回来答掉 → 角标清零 (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58744/b2a63282-fff5-4d07-98d7-b12538c7d1a6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  242 e2e/desktop-notify.spec.ts:252:1 › **子 agent 那一轮只报一条**：主区那一轮收尾时一条「做完了」，子进程自己不弹 (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知压缩」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「通知压缩」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #2 「通知压缩」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58765/4afe0a82-05ac-4a9a-af8e-1e67af34f255
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  243 e2e/desktop-notify.spec.ts:269:3 › 压缩 › **/compact 不弹**；再说一句照弹（管线活着） (10.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「改两个文件」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「改两个文件」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #2 「改两个文件」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58817/7ac14342-93a6-448b-800b-31c9b599726c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  244 e2e/desktop-notify.spec.ts:290:3 › 回退 › **回退这一轮不弹**；再说一句照弹（管线活着） (10.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「通知早报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58876/b9da44ed-70b3-4886-a6c1-42e9e76039b3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  245 e2e/desktop-notify.spec.ts:334:1 › **定时跑一次只报一条**「定时『X』跑完了」，不另弹「做完了」 (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「通知夜巡 · 2026/11/5 22:37:36」在等你点头 — bash：curl -s --max-time 1 http://127.0.0.1:9/ || true
+[主进程] [桌面通知·假] #1 定时「通知夜巡」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58902/aa6ee6f8-eeae-4288-adae-5f3ae818dfd2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  246 e2e/desktop-notify.spec.ts:348:1 › **定时那段的权限卡照弹**（§8 第 2 条）；点它回到那段、答掉之后调度器那一条照常，仍不另弹「做完了」 (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58921/f979edfa-6454-455f-8295-1b83f5331bbd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58940/2e2ffc29-fe7c-4823-a4f0-5a26758d08e0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  247 e2e/desktop-notify.spec.ts:370:1 › **设置里关掉「一轮做完」**：存进后端、重开还关着 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 桌面通知是通的 — 点这一条会回到 DAWN。
+[主进程] Debugger ending on ws://127.0.0.1:58951/9d5f000a-ede2-4e04-a840-c22bb6d07a58
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  248 e2e/desktop-notify.spec.ts:390:1 › **发一条试试**：假出口记下一条 test；屏上说已发出 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58964/2bc98f7a-b415-4ddd-9e78-359e1dd26767
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  249 e2e/directory-transfer.spec.ts:17:1 › 文件夹通过真实界面往返，保留空目录和二进制，批次跨面板可见 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58975/d72ed084-670b-486e-a3e2-7b54ed481688
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  250 e2e/directory-transfer.spec.ts:50:1 › 权限失败清单与手动重试可见，取消保留已完成文件 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58991/2fa9d062-c02f-4819-9ae3-72e0c843bb9d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  251 e2e/dock-responsive-tabs.spec.ts:4:1 › 标签随实际坞宽度展开收回，当前面板始终可见且菜单只含溢出项 (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59021/ae4900c2-a992-4b65-80d9-a60dd19ce84b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  252 e2e/dock-responsive-tabs.spec.ts:79:1 › 真实拖拽与英文深色下标签自适应，展开时菜单收起并保留当前面板 (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59036/4d95af9b-5acf-4526-9d45-e3405d09ef5b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  253 e2e/empty-repo.spec.ts:20:1 › **git init 未 commit：终端开得出，审阅列得出「新加」** (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59064/1a4b9087-e7dc-4908-8ce4-65388943458b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  254 e2e/enhance.spec.ts:37:1 › 基础：空草稿档位禁用，改写与撤回保留原文 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59077/4afd639b-27a7-4047-bf8b-5d997929d0f6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  255 e2e/enhance.spec.ts:50:1 › 发出去之后，优化撤回随该草稿清空 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59096/22693ef4-be27-4603-9a0e-b2705abe3087
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  256 e2e/enhance.spec.ts:63:1 › 标准：带上本会话相关轮次 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59107/af9e403e-7c6d-42b3-8125-294dae36a24c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  257 e2e/enhance.spec.ts:75:1 › 专家：开发任务参考工作区文档代码，普通改写说明未带上下文 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59120/58409b75-54e5-42d8-90de-4dc4e64d3383
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  258 e2e/enhance.spec.ts:93:3 › 取消与发送隔离 › 增强中从二级菜单放弃，草稿不动，按钮恢复 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59139/c021ff9a-decf-410b-8b6d-21d09feb8041
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  259 e2e/enhance.spec.ts:100:3 › 取消与发送隔离 › 改写还在飞时发送，晚回结果不落进空草稿 (10.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59199/eb2e629a-f6f7-40df-9250-87148a396f81
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  260 e2e/enhance.spec.ts:115:1 › 空态借用模型时说明实际模型 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59208/98d0cf13-94ea-43f7-aef5-21ae21538492
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  261 e2e/enhance.spec.ts:122:1 › native会话改写不误报借用了其他模型 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59230/b98a308f-0530-4c7b-b99c-2c6f278d96c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  262 e2e/enhance.spec.ts:135:1 › 命令面板优化沿用最近档位，空草稿说明不可用 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59246/55d9fbef-8376-4f54-84c2-d6935422ba3d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  263 e2e/environment.spec.ts:21:1 › 普通对话也有环境 —— 机器本身就是环境 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59261/d59c72d0-918c-4948-85a1-5294f893a388
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  264 e2e/environment.spec.ts:52:1 › **机器那一支不画解释器** —— 两种快照不共用一个形状 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59270/622a50e5-f0b4-4c1d-bae7-09adc296224d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  265 e2e/execution-boundary.spec.ts:7:1 › 模型强行写文件：讨论门阻断，明确执行后连续任务无需逐步确认 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59284/123b2773-8d38-4eb8-9606-77a46a1ad32d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  266 e2e/execution-boundary.spec.ts:31:1 › 显式文献技能：正文不能解除讨论限制，用户明确保存后可执行 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59297/d69702ed-f728-4739-b476-617e5853d346
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  267 e2e/export-dir.spec.ts:18:1 › 项目会话「导出对话」→ 文件落在 <项目>/docs/，不在下载目录 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「给我个链接」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] (node:6734) electron: Failed to load URL: http://127.0.0.1:59999/ with error: ERR_CONNECTION_REFUSED
+[主进程] Debugger ending on ws://127.0.0.1:59317/e9bf2974-e8bc-4f08-99cc-e7b32fdec6a2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  268 e2e/external-link.spec.ts:31:1 › **点消息里的外链，不会多出一个 Electron 窗口** (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [飞书] 绑定成功 app=cli_fake_app user=fak***-id
+[主进程] [飞书] 拒绝来自 str***-id 的消息:不是绑定的那个人
+[主进程] [桌面通知·假] #0 「飞书里问一句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59352/7594f1f5-26bd-4e52-b047-36e6c8930b43
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  269 e2e/feishu-assistant.spec.ts:12:1 › **设备流绑定 → 飞书说话 → 回答回到飞书 → 只认扫码人** (19.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59435/05f5fbd1-25ed-4dbf-b12b-fa9761353e6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  270 e2e/file-menu-bounds.spec.ts:5:1 › 文件菜单在右边缘完整显示，窄坞与暗色英文都不裁切 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59450/687a2b88-647f-4d9d-a471-b0b3c5044198
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  271 e2e/files.spec.ts:21:1 › 目录树能翻，图片直接显示在应用里 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59460/7add319f-5d08-4733-87f1-d589350e98cc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  272 e2e/files.spec.ts:46:1 › markdown 走渲染，其它文本按原文 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59473/aef8fe24-623c-40bc-b035-15517cbafaf3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  273 e2e/files.spec.ts:61:1 › **PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP 拦下 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59481/437e5015-5e7b-48da-bc35-e19c585ce3ea
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  274 e2e/files.spec.ts:82:1 › **超上界的 PDF 说清多大**，而不是硬塞进内存 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59490/504cd1f7-5a7c-465b-8370-a4417c9a1468
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  275 e2e/files.spec.ts:92:1 › **忽略掉的目录要出声**——不然人会以为它们不存在 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59498/0f241948-2837-47e8-b15b-4d66d91df765
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  276 e2e/files.spec.ts:128:1 › **大图：坞拉宽之后，预览挪到树旁边并且真的变大** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59515/7f19d855-8464-41c0-ad13-62198aaed3cd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  277 e2e/files.spec.ts:256:1 › **树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59527/54e7aeda-0801-4aff-81be-c159b7b19017
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  278 e2e/files.spec.ts:312:1 › **切走再切回来，树还展开着、文件还选着** (12.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59582/b93b7f37-ce1a-4597-86d8-7754bb818ebe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  279 e2e/files.spec.ts:357:1 › **按名字搜得到深处的文件，忽略掉的目录要出声** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59602/ea30200a-fb86-4156-ad5c-5adb1e329098
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  280 e2e/files.spec.ts:391:1 › **命中到上限就停，并且说停在哪** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59613/ed3d9f63-f2b7-4adb-a118-9ee6e7bc9257
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  281 e2e/files.spec.ts:409:1 › **树行的菜单：复制路径、插进输入框** (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59635/55144d2e-9361-403c-8714-7446369ecde7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  282 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59649/57ee93e8-dd0a-42ec-b357-4d92b25aa470
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  283 e2e/files.spec.ts:498:1 › **窄坞：顶行按钮都在、先缩时间戳、预览头不竖排** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59664/256875c9-59b1-454e-883a-e4dff1e61074
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  284 e2e/files.spec.ts:564:1 › **坞宽过了窗口能给的：坞被压进窗口里，按钮都看得见，缝在坞的真实边上** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59684/5888bf95-c159-45a2-8034-dc384d11167b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  285 e2e/first-run-default.spec.ts:21:3 › 全新安装 › **默认配置里没有 deepseek**，也没有任何 native agent (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59692/16b4e65a-0891-48e8-94b4-195c795d97b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  286 e2e/first-run-default.spec.ts:38:3 › 全新安装 › **首屏不摆一个用不了的 agent**，直接进入四步引导 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研数据验收 GEO，请查询详情并保存。」做完了 — 科研数据清单已保存： - [outputs/datasets/records-3C1cqr/records.json](outputs/datasets/records-3C1cqr/records.json) - [outputs/dat…
+[主进程] Debugger ending on ws://127.0.0.1:59702/ff976059-b2ac-45e0-a164-4a9d3f50d704
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59726/6bed23d7-8049-459c-abf3-1f121ed8b6d2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  287 e2e/geo-datasets.spec.ts:7:1 › GEO 默认开启 → 真检索和 GSE 设计 → 清单预览；关闭持久化且新会话无工具 (8.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59735/43e4012e-048c-465c-b582-bdf4529a6e5f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  288 e2e/geo-datasets.spec.ts:31:33 › GEO 限流明确反馈且不保存 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59748/769f6166-1bb9-4e3a-946f-617ddaf71ce3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  289 e2e/geo-datasets.spec.ts:31:33 › GEO 无结果明确反馈且不保存 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59764/cbd52e2a-a79c-4c6e-8b2e-c333792f7653
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  290 e2e/geo-datasets.spec.ts:36:1 › GEO 先出方案可查询，不落盘 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59779/50c5a172-c4d0-41ac-85f5-03f3b464a934
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  291 e2e/header-version.spec.ts:6:1 › 状态栏最右显示实际应用版本，窄窗不隐藏且品牌入口仍可点击 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59787/9d5b4055-011c-4187-b5d5-352d4c62aed5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  292 e2e/i18n.spec.ts:92:1 › **没选过语言时跟系统**（2026-08-28 作者定的：中文系统中文、其它英文） (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59801/5a9716cb-a720-48d6-b33c-566144167471
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  293 e2e/i18n.spec.ts:109:1 › **英文界面上每一屏都没有汉字** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59810/d1e9cb95-37d3-45b3-b96d-a99588c356ac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59823/f650719d-32e7-4b61-a074-f63541cc8ee9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  294 e2e/i18n.spec.ts:163:1 › **那颗按钮真的能切，而且记得住** (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59831/d3c9cc5f-f3a2-42c7-98d7-df0d367c0b52
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  295 e2e/ime.spec.ts:13:1 › 组词没结束时按回车，不许发出去 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59843/5357f2de-4ffe-4447-b37e-8726371fbfe9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  296 e2e/ime.spec.ts:43:1 › 候选词上屏之后，回车照旧发得出去 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59856/0872d19a-a07d-4039-9b75-c907410e4971
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  297 e2e/ime.spec.ts:71:1 › 输入法把每一下都报成 229 时，回车照样发得出去 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59866/2cc94159-c8d9-452c-b701-6696531aebe8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  298 e2e/kernel-output-isolation.spec.ts:10:1 › 真实双内核连续重启 R 三次不重复转发、保留旧结果提示并正常退出 (7.1s)
+(node:9384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59966/c3ba8784-a607-4ce3-84a1-c930cb111b6a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  299 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59974/1333f3c3-54fd-4917-af57-25b314115fb4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  300 e2e/kernel-shortcuts.spec.ts:9:3 › @R 可从菜单选择，发送指令但不当文件 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59988/cd4e39f5-ac49-49f8-b885-59677b57777d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  301 e2e/kernel-shortcuts.spec.ts:9:3 › @Py 可从菜单选择，发送指令但不当文件 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60002/fda8b57d-80b0-4ba0-b01d-b7449e788947
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  302 e2e/kernel-shortcuts.spec.ts:9:3 › @Python 可从菜单选择，发送指令但不当文件 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60025/e1ac9996-d1e1-46e0-aa03-3838f3b24a21
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  303 e2e/kernel-shortcuts.spec.ts:9:3 › @RPython 可从菜单选择，发送指令但不当文件 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60038/c5ac44e6-2827-4825-abfa-ebbea3f9a013
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  304 e2e/kernel-shortcuts.spec.ts:9:3 › @r 可从菜单选择，发送指令但不当文件 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60051/aefa909b-28d7-4d5c-a57c-ef71be5d6448
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  305 e2e/kernel-shortcuts.spec.ts:9:3 › @py 可从菜单选择，发送指令但不当文件 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60065/7589b1b9-99d0-4a3d-b60f-aea8afd71892
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  306 e2e/kernel-shortcuts.spec.ts:9:3 › @python 可从菜单选择，发送指令但不当文件 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60081/3f5aec58-5b33-4308-a602-de41fc42c01e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  307 e2e/kernel-shortcuts.spec.ts:9:3 › @rpython 可从菜单选择，发送指令但不当文件 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60107/08c5ccc1-ed3c-468e-bd6c-d59f3944c684
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  308 e2e/kernel-shortcuts.spec.ts:29:1 › 空态也能选择内核入口，键盘选择和删除有效 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60117/07c0aab9-64e4-4aea-8bbf-15e21eaad6f4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  309 e2e/kernel-shortcuts.spec.ts:43:5 › 指定语言真正在工具入口检查 › @R 同句先不要运行时，模型强行请求仍被拒绝 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60138/6ab3f79f-ed33-48b9-930d-585632541829
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  310 e2e/kernel-shortcuts.spec.ts:43:5 › 指定语言真正在工具入口检查 › @Python 同句先不要运行时，模型强行请求仍被拒绝 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60149/0cbf4e88-fea7-439f-a639-c73f4f74e31d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  311 e2e/kernel-shortcuts.spec.ts:43:5 › 指定语言真正在工具入口检查 › @RPython 同句先不要运行时，模型强行请求仍被拒绝 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60168/22177b6a-3c42-4709-87ba-7e1d29b6e57d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  312 e2e/kernel-shortcuts.spec.ts:52:3 › 指定语言真正在工具入口检查 › @R 拒绝模型误调用 Python (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60184/7ac107ed-d07f-44e1-9901-92a1d673940f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  313 e2e/kernel-shortcuts.spec.ts:64:1 › 内核入口与同名目录分别删除，不混淆 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60195/db0711c0-ea5e-4bdb-b36f-9220985846c5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  314 e2e/kernel-startup-cleanup.spec.ts:9:1 › 真实 Python 内核启动期间停止会话，晚到实例回收且旧代码不执行 (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60294/47d5f317-c876-4d3c-b8d2-778280cd7be0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  315 e2e/kernels.spec.ts:15:1 › 设置里列出本机内核，**且每一条都带解释器路径** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60309/50196df3-d7f3-4b35-9d3d-5942fe39b814
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  316 e2e/key-is-enough.spec.ts:15:1 › **填完 key，对话的选择器里立刻就有它** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60321/b552db9f-c9ec-4443-b43e-16daaf13ebe0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  317 e2e/key-is-enough.spec.ts:53:1 › **不再有「建一个 agent」这种东西** —— 那是我们内部的概念漏了出来 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60336/eb24cc14-4186-486e-a02e-39e7d8547821
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  318 e2e/late-endpoint.spec.ts:29:3 › 启动时一个 provider 覆盖都没有 › **中途加一个自定义端点，当场就能选到、能对话** —— 不用重启 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「第一句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60349/661a39e1-855e-4690-b740-4e1544b09097
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  319 e2e/lease-keepalive.spec.ts:28:1 › **租约过期之后，人照样能接着说** (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「旧对话的第一句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60372/d3398e60-0988-424e-9dac-7baa3461f533
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  320 e2e/lease-keepalive.spec.ts:50:1 › **开了新对话，回到旧的照样能说** (4.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「/skill:literature-re」做完了 — 文献对照验收完成：3 份材料，P3 文本不可提取，P2 生物重复未提供。 - outputs/literature-review/acceptance/论文对照.xlsx - outputs/literature-review/accept…
+[主进程] Debugger ending on ws://127.0.0.1:60393/cdf0ff4b-d7f0-41a6-b411-0ebe7c6d6984
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  321 e2e/literature-review.spec.ts:38:1 › 默认可见且可展开；实际 PDF → 三表 Excel/总结 → 读回与产物预览 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60411/d21ef20e-f914-43bf-aaa9-c93a4de130f2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  322 e2e/literature-review.spec.ts:85:1 › 只讨论不读取、导出或启动额外执行 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60426/d78cd561-ea02-4eb8-9f19-633eaacd8666
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  323 e2e/literature-review.spec.ts:93:1 › PDF 族关闭时明确告知，保持关闭且不借其他工具执行 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60443/f100320a-b36f-4d8d-a9c8-24a2a8db7d2b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  324 e2e/literature-review.spec.ts:107:1 › 实际 PDF 读取失败，停止且不生成看似完整的表格 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「文献检索验收，请检索并核对 DOI，保存」做完了 — 文献清单已保存： - [outputs/literature/references-85XaAq/references.json](outputs/literature/references-85XaAq/references.json) …
+[主进程] Debugger ending on ws://127.0.0.1:60457/25bea6f5-6935-43a3-b4de-b2fc15751713
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  325 e2e/literature.spec.ts:20:1 › 默认开启 → 界面设置并持久化 → 真工具检索、DOI 核对、只保存所选记录 (4.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60490/a44b7655-b18d-4844-9304-aa74ff126845
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  326 e2e/literature.spec.ts:56:12 › 限流明确提示，工作区没有文献清单 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60511/930c06b0-4de0-4327-bd87-c8c6d1e71bf8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  327 e2e/literature.spec.ts:56:12 › 无结果明确提示，工作区没有文献清单 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60524/df3f1716-3f5f-4972-a62b-ec5bffc5ce37
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  328 e2e/literature.spec.ts:64:1 › 先出方案允许只读检索，不落盘 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「数学公式排版验收：请解释 $x^2$。」做完了 — # 数学公式排版验收 中文回归模型：$y = \beta_0 + \beta_1 x^2 + \varepsilon$。行内公式跟随正文。 ## 均值与标准误 $$ \bar{x}=\frac{1}{n}\sum_{i=1}^{n}x_i,…
+[主进程] Debugger ending on ws://127.0.0.1:60545/bcdc1792-bd7a-43ca-91fb-5f3e4aaa6e63
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  329 e2e/markdown-math.spec.ts:24:1 › 用户与助手公式实际排版，字体本地可用，深浅主题和原文复制导出保持正确 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60569/fc585035-a974-4110-863c-8ab8b57effcb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  330 e2e/markdown-math.spec.ts:68:1 › Markdown 文件在窄坞中渲染，长公式只在自身横向滚动 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60587/5938a0fc-5f67-49e3-b92c-c68151efd012
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  331 e2e/markdown-math.spec.ts:94:1 › 逐字流式输出的公式补齐后没有重复、残影或整段回退 (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60616/219c0f2d-a9de-457f-8fe7-ad1a4c928185
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  332 e2e/markdown-project-delivery.spec.ts:23:1 › Markdown 相对图片实际解码，分步脚本链接进入只读预览 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60631/78944797-c9cc-4172-a596-4d2a8fbaa68e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  333 e2e/markdown-project-delivery.spec.ts:44:1 › 整理交付可选整个项目的已有分步脚本和图片，保持原文件字节 (3.2s)
+  ✘  334 e2e/markdown-project-delivery.spec.ts:105:1 › 窄窗口英文项目文件选择可完整操作 (582ms)
+
+
+  1) e2e/context-compaction.spec.ts:85:3 › 内置对话 › **/compact**：不当一句话发；先出「正在压缩」，再收成压完的标记，写「你让压的」，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来 
+
+    TimeoutError: locator.fill: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for locator('main.main').getByPlaceholder(/输入问题/)
+
+
+      21 |
+      22 | async function 说(区: Locator, 话: string) {
+    > 23 |   await 框(区).fill(话)
+         |              ^
+      24 |   await 框(区).press("Enter")
+      25 | }
+      26 | /** 说一句并等假模型答完（数回复条数，不数「任何一处出现暗号」——前面几轮早就出现过了） */
+        at 说 (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/context-compaction.spec.ts:23:14)
+        at 说完 (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/context-compaction.spec.ts:29:9)
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/context-compaction.spec.ts:104:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/desktop-full-output/context-compaction-内置对话-co-493af-，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/desktop-full-output/context-compaction-内置对话-co-493af-，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/desktop-full-output/context-compaction-内置对话-co-493af-，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/desktop-full-output/context-compaction-内置对话-co-493af-，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/kernel-output-isolation.spec.ts:10:1 › 真实双内核连续重启 R 三次不重复转发、保留旧结果提示并正常退出 ───────────────────
+
+    TypeError: Cannot read properties of undefined (reading '_object')
+
+       at fixtures.ts:840
+
+      838 |     let app!: ElectronApplication
+      839 |     const 关掉并检查 = async () => {
+    > 840 |       const proc = app.process()
+          |                        ^
+      841 |       await app.close()
+      842 |       expect(proc.signalCode, "Electron 退出时收到信号；检查主进程日志和系统崩溃报告").toBeNull()
+      843 |       expect(proc.exitCode, "Electron 必须正常退出，不能把原生崩溃记为通过").toBe(0)
+        at 关掉并检查 (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/fixtures.ts:840:24)
+        at Object.dawn (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/fixtures.ts:948:28)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/desktop-full-output/kernel-output-isolation-真实双内核连续重启-R-三次不重复转发、保留旧结果提示并正常退出/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/desktop-full-output/kernel-output-isolation-真实双内核连续重启-R-三次不重复转发、保留旧结果提示并正常退出/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/desktop-full-output/kernel-output-isolation-真实双内核连续重启-R-三次不重复转发、保留旧结果提示并正常退出/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/desktop-full-output/kernel-output-isolation-真实双内核连续重启-R-三次不重复转发、保留旧结果提示并正常退出/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e/context-compaction.spec.ts:85:3 › 内置对话 › **/compact**：不当一句话发；先出「正在压缩」，再收成压完的标记，写「你让压的」，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来 
+    e2e/kernel-output-isolation.spec.ts:10:1 › 真实双内核连续重启 R 三次不重复转发、保留旧结果提示并正常退出 ────────────────────
+  1 interrupted
+    e2e/markdown-project-delivery.spec.ts:105:1 › 窄窗口英文项目文件选择可完整操作 ─────────────────────────────────
+  586 did not run
+  331 passed (16.8m)

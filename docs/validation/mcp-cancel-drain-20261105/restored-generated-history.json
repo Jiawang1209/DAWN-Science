@@ -1,0 +1,100 @@
+{
+  "scope": "Fresh clean isolated worktree. Full E2E rewrote older tracked demo exports; restored only these exact paths to their committed bytes. Current run raw reports and failure evidence retained separately.",
+  "files": [
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/01-basic-only.png",
+      "committedSha256": "4befb59abf651e5fdd86778f7c6f67d1145d4068db1978f8b3f203a3b7d936a0",
+      "rerunSha256": "05a79e759f40e8f0c43496610ccedebb46953286c15d56c7815d1a3545cb8f85"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/02-numeric-blocked.png",
+      "committedSha256": "0559fdcba22c3ffef0da63a3f96cce2a70baaccacb2e03b3d523555c0280241f",
+      "rerunSha256": "5fa111a313e55df87fed831746dbad0374a2405b718765232b87703186ab06a8"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/03-source-blocked.png",
+      "committedSha256": "c5bc60336ce4bfde625c46220ef196725832d59cdc31e1a4ae78f550e91daec4",
+      "rerunSha256": "5c194271fdeab59370720d32b0440b79d8c394acd93ca5412ac9e2ccaf4b3f2a"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/04-derived-decisions.png",
+      "committedSha256": "a8ae4ac7a911b0dee3a3f460e57f78e2281896eae92ded82247a6eb84a3e3506",
+      "rerunSha256": "5b7250192e562cf5a4dc68d8d00de160184faeb856b65c6b8c26d411105dbac0"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/04-derived-full.png",
+      "committedSha256": "d426799edfda865e8f2de05758521a81a29aec191cc104ad7d3b54bd3dda5ba7",
+      "rerunSha256": "7da7eacdfd62f46d3bd76500f6c3112467c3404e73b49c3335c94e77204302ec"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/basic-error-receipt.json",
+      "committedSha256": "271cfd65a2c3c8dca53dabd43d7a033fbcb5ee3cd83409e2e3eeaefe119df1e8",
+      "rerunSha256": "10977a1fbdc4f9e22f1f7d3abad576876016d9472a338d565758e7128689a5b2"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/derived-summary.json",
+      "committedSha256": "6a422ae3b91bde23fc7866853815b4068082b31db778d6d81319e3c8466aa13d",
+      "rerunSha256": "770138158846694ddf0bf8c697f32349e3a2846b30b35daea60dc40e11d1a06e"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/incremental-electron.json",
+      "committedSha256": "dc2b8c63200fb80f76c1eb67cfd4ee0e60e46e98fe5ba77e0faa901cb759eac0",
+      "rerunSha256": "8c65a0578ca98f4611c80eba7e69dda3d275aa3bfbeaccaa9035c4f3432dabf4"
+    },
+    {
+      "path": "docs/validation/incremental-science-20261105/demo/numeric-error-receipt.json",
+      "committedSha256": "b8231dc4bfdbd322a2d37c057bbc0ce1964881cb1f6901727f5fb89d091aa0b2",
+      "rerunSha256": "a9a047d9f368675c0533a93bdb376205a1b311287500911e83b069e71d9ce275"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-a/desktop-accepted.png",
+      "committedSha256": "0e5c796ec4ad78d6fe27cbd0f325736a3d8af65370bd9e3861a7163aefe173a3",
+      "rerunSha256": "e0a3517379f1f932a6fbbc0cf9d5134441ed9d26bccdaded7002c92ad246debc"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-a/desktop-applied.png",
+      "committedSha256": "cb33074f8c97c44705768b09b282596bb231a4f27d027f267b7dcd5ad4b0fe7b",
+      "rerunSha256": "ebfdf5ccb50fab1a1cf4cf506e3b516faa99736f3c8e64c76eada99695eafe24"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-a/desktop-cancelled.png",
+      "committedSha256": "38d41c851113ceef69b53d2a517d01a5a7c67d640c0012cbffb0cedff1e6481b",
+      "rerunSha256": "972d1f5f0b7238d0aa80427b668e7ec6fcfc6ebe5331bd4c6ce12c2812e4f652"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/desktop-team.json",
+      "committedSha256": "02ed6b15f3acd9c9e36cc64185c5a7ffa51a962447cf6a74dd8a1890bf6d9bca",
+      "rerunSha256": "0242a9ae32a65e55ac3f1ca578e6440b08e0f921757e302ec8f5a5e37d07c05b"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/parallel-completed.png",
+      "committedSha256": "62d112a56b717befdb15da3b4b65bb7a9da64e745d873244cb9eeb17741a822b",
+      "rerunSha256": "ea5b1ab28774454f9f30a8250c0c041e7730b9f9c219bf2aca781f51bd4d35e9"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/summary.json",
+      "committedSha256": "9287b6ac6ebb40c353580a807239d1de24ee46ea1687aa1cb4cfe0a362e04056",
+      "rerunSha256": "80c48208a796173d5f860145438dc117c7dccd7e00c65190698875f43a2b07be"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/summary.md",
+      "committedSha256": "346afc612f895241c777cf43e65097f39566439103bcc57587ada1483631d9b9",
+      "rerunSha256": "76fb2a1917fbf0f9f266aa20829017a5138dd9abb4b2d1e5c5f328c61accac76"
+    },
+    {
+      "path": "docs/validation/live-parallel-rereview-20261105/desktop/epoch-applied.png",
+      "committedSha256": "51ed32c801c217e5cd7e2ff677534ad92cc1d99cdb51ae4161b022bab92137e5",
+      "rerunSha256": "af0b8132a3aa2daa168ddfed88cc3403080e5aa57f9a28816b8a3320dc54bcda"
+    },
+    {
+      "path": "docs/validation/live-parallel-rereview-20261105/desktop/epoch-demo.json",
+      "committedSha256": "37cf1ba95cce4346b3218747b17c22c82a3e1542759bd33fce3f0648f8f7a627",
+      "rerunSha256": "83fc6e2628ed4abea556a0c1e5b94f57056d0745eea05cf0169515078753880c"
+    },
+    {
+      "path": "docs/validation/live-parallel-rereview-20261105/desktop/epoch-expired.png",
+      "committedSha256": "29d9f1e0b2c8abcee5181d6acd8de544a55bda4948b62e3e0b141cd475d7aede",
+      "rerunSha256": "7cb2c5e4fb0f2447636eb4539367e4d3b8ad9f96e878c3551f0c4925c8d53f89"
+    }
+  ]
+}

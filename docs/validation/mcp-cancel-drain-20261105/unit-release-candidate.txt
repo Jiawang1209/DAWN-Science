@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 813ms
+     × **`var()` 不许带回退值** —— 回退值是同一个数的第二个家，而且是悄悄生效的那个 11ms
+     × styles.css 里每个 --dawn-* 都在 tokens.css 里定义过 3ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > **`var()` 不许带回退值** —— 回退值是同一个数的第二个家，而且是悄悄生效的那个
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "styles.css 971: padding-inline: calc(var(--dawn-space-8) + var(--dawn-thread-scroll-gutter, 0px));",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:512:23
+    510|       findLines(read(f), (l) => /var\(\s*--[a-z0-9-]+\s*,/.test(l)).ma…
+    511|     )
+    512|     expect(offenders).toEqual([])
+       |                       ^
+    513|   })
+    514|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 引用的令牌必须真的存在 > styles.css 里每个 --dawn-* 都在 tokens.css 里定义过
+AssertionError: styles.css 引用了 tokens.css 里没有的令牌：--dawn-thread-scroll-gutter: expected [ '--dawn-thread-scroll-gutter' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "--dawn-thread-scroll-gutter",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1247:78
+    1245|     const used = new Set(styles.match(/var\(\s*(--dawn-[a-z0-9-]+)/g)?…
+    1246|     const missing = [...used].filter((t) => !defined.has(t))
+    1247|     expect(missing, `styles.css 引用了 tokens.css 里没有的令牌：${missing.join("…
+       |                                                                              ^
+    1248|   })
+    1249| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 637 passed (638)
+      Tests  2 failed | 6311 passed | 10 skipped (6323)
+   Start at  01:03:39
+   Duration  151.79s (transform 19.10s, setup 66.52s, import 223.12s, tests 488.40s, environment 127.40s)
+

@@ -1,0 +1,377 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/chat-column-narrow.spec.ts",
+      "e2e/mcp-cancellation.spec.ts",
+      "--repeat-each=3",
+      "--workers=1",
+      "--update-snapshots=none",
+      "--reporter=list,json",
+      "--output=docs/validation/mcp-cancel-drain-20261105/gutter-lifecycle-and-mcp-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/gutter-lifecycle-and-mcp-output",
+        "repeatEach": 3,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "chat-column-narrow.spec.ts",
+      "file": "chat-column-narrow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "narrow and regular conversation columns keep the agent, user and composer edges aligned",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2257,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "THREAD_COLUMN_GEOMETRY [{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1280,\"agent\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":375,\"right\":1157,\"width\":782,\"offsetWidth\":782,\"clientWidth\":782,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":782,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1264,\"width\":996,\"offsetWidth\":996,\"clientWidth\":996,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1232,\"width\":932,\"offsetWidth\":932,\"clientWidth\":910,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":301,\"right\":1031,\"width\":730,\"offsetWidth\":730,\"clientWidth\":730,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":730,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}}]\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:64037/b169dabc-4f54-4db7-a484-824b22f7d3e6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:10:55.910Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "column-geometry",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0sCiAgewogICAgInZpZXdwb3J0IjogMTI4MCwKICAgICJhZ2VudCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidXNlciI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY29tcG9zZXIiOiB7CiAgICAgICJsZWZ0IjogMzc1LAogICAgICAicmlnaHQiOiAxMTU3LAogICAgICAid2lkdGgiOiA3ODIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4MiwKICAgICAgImNsaWVudFdpZHRoIjogNzgyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMTJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMTJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY2FyZCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidHVybnMiOiB7CiAgICAgICJsZWZ0IjogMjY4LAogICAgICAicmlnaHQiOiAxMjY0LAogICAgICAid2lkdGgiOiA5OTYsCiAgICAgICJvZmZzZXRXaWR0aCI6IDk5NiwKICAgICAgImNsaWVudFdpZHRoIjogOTk2LAogICAgICAicGFkZGluZ0xlZnQiOiAiMzJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMzJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAiY2xpcCIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAic2Nyb2xsIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTIzMiwKICAgICAgIndpZHRoIjogOTMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA5MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDkxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJzdGFibGUgYm90aC1lZGdlcyIsCiAgICAgICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiaW5uZXIiOiB7CiAgICAgICJsZWZ0IjogMzc0LAogICAgICAicmlnaHQiOiAxMTU4LAogICAgICAid2lkdGgiOiA3ODQsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4NCwKICAgICAgImNsaWVudFdpZHRoIjogNzg0LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9CiAgfSwKICB7CiAgICAidmlld3BvcnQiOiAxMDgwLAogICAgImFnZW50IjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ1c2VyIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjb21wb3NlciI6IHsKICAgICAgImxlZnQiOiAzMDEsCiAgICAgICJyaWdodCI6IDEwMzEsCiAgICAgICJ3aWR0aCI6IDczMCwKICAgICAgIm9mZnNldFdpZHRoIjogNzMwLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIxMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIxMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjYXJkIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ0dXJucyI6IHsKICAgICAgImxlZnQiOiAyNjgsCiAgICAgICJyaWdodCI6IDEwNjQsCiAgICAgICJ3aWR0aCI6IDc5NiwKICAgICAgIm9mZnNldFdpZHRoIjogNzk2LAogICAgICAiY2xpZW50V2lkdGgiOiA3OTYsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIzMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIzMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJjbGlwIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJzY3JvbGwiOiB7CiAgICAgICJsZWZ0IjogMzAwLAogICAgICAicmlnaHQiOiAxMDMyLAogICAgICAid2lkdGgiOiA3MzIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDczMiwKICAgICAgImNsaWVudFdpZHRoIjogNzMyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogInN0YWJsZSBib3RoLWVkZ2VzIiwKICAgICAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJpbm5lciI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0KICB9LAogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0KXQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c83a9b236b3c975a1ce8-b0b44a724d413513e9fa",
+          "file": "chat-column-narrow.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "narrow and regular conversation columns keep the agent, user and composer edges aligned",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2251,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "THREAD_COLUMN_GEOMETRY [{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1280,\"agent\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":375,\"right\":1157,\"width\":782,\"offsetWidth\":782,\"clientWidth\":782,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":782,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1264,\"width\":996,\"offsetWidth\":996,\"clientWidth\":996,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1232,\"width\":932,\"offsetWidth\":932,\"clientWidth\":910,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":301,\"right\":1031,\"width\":730,\"offsetWidth\":730,\"clientWidth\":730,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":730,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}}]\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:64081/1488bd98-3050-41bf-ba9b-54238d886948\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:11:01.082Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "column-geometry",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0sCiAgewogICAgInZpZXdwb3J0IjogMTI4MCwKICAgICJhZ2VudCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidXNlciI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY29tcG9zZXIiOiB7CiAgICAgICJsZWZ0IjogMzc1LAogICAgICAicmlnaHQiOiAxMTU3LAogICAgICAid2lkdGgiOiA3ODIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4MiwKICAgICAgImNsaWVudFdpZHRoIjogNzgyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMTJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMTJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY2FyZCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidHVybnMiOiB7CiAgICAgICJsZWZ0IjogMjY4LAogICAgICAicmlnaHQiOiAxMjY0LAogICAgICAid2lkdGgiOiA5OTYsCiAgICAgICJvZmZzZXRXaWR0aCI6IDk5NiwKICAgICAgImNsaWVudFdpZHRoIjogOTk2LAogICAgICAicGFkZGluZ0xlZnQiOiAiMzJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMzJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAiY2xpcCIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAic2Nyb2xsIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTIzMiwKICAgICAgIndpZHRoIjogOTMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA5MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDkxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJzdGFibGUgYm90aC1lZGdlcyIsCiAgICAgICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiaW5uZXIiOiB7CiAgICAgICJsZWZ0IjogMzc0LAogICAgICAicmlnaHQiOiAxMTU4LAogICAgICAid2lkdGgiOiA3ODQsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4NCwKICAgICAgImNsaWVudFdpZHRoIjogNzg0LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9CiAgfSwKICB7CiAgICAidmlld3BvcnQiOiAxMDgwLAogICAgImFnZW50IjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ1c2VyIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjb21wb3NlciI6IHsKICAgICAgImxlZnQiOiAzMDEsCiAgICAgICJyaWdodCI6IDEwMzEsCiAgICAgICJ3aWR0aCI6IDczMCwKICAgICAgIm9mZnNldFdpZHRoIjogNzMwLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIxMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIxMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjYXJkIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ0dXJucyI6IHsKICAgICAgImxlZnQiOiAyNjgsCiAgICAgICJyaWdodCI6IDEwNjQsCiAgICAgICJ3aWR0aCI6IDc5NiwKICAgICAgIm9mZnNldFdpZHRoIjogNzk2LAogICAgICAiY2xpZW50V2lkdGgiOiA3OTYsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIzMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIzMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJjbGlwIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJzY3JvbGwiOiB7CiAgICAgICJsZWZ0IjogMzAwLAogICAgICAicmlnaHQiOiAxMDMyLAogICAgICAid2lkdGgiOiA3MzIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDczMiwKICAgICAgImNsaWVudFdpZHRoIjogNzMyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogInN0YWJsZSBib3RoLWVkZ2VzIiwKICAgICAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJpbm5lciI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0KICB9LAogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0KXQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c83a9b236b3c975a1ce8-3108b3c986a18a99c00c",
+          "file": "chat-column-narrow.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "narrow and regular conversation columns keep the agent, user and composer edges aligned",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2265,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "THREAD_COLUMN_GEOMETRY [{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1280,\"agent\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":375,\"right\":1157,\"width\":782,\"offsetWidth\":782,\"clientWidth\":782,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":782,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1264,\"width\":996,\"offsetWidth\":996,\"clientWidth\":996,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1232,\"width\":932,\"offsetWidth\":932,\"clientWidth\":910,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":301,\"right\":1031,\"width\":730,\"offsetWidth\":730,\"clientWidth\":730,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":730,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}}]\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:64119/4e2e5f95-7b3a-4707-bc45-3e2d7db77780\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:11:06.918Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "column-geometry",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0sCiAgewogICAgInZpZXdwb3J0IjogMTI4MCwKICAgICJhZ2VudCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidXNlciI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY29tcG9zZXIiOiB7CiAgICAgICJsZWZ0IjogMzc1LAogICAgICAicmlnaHQiOiAxMTU3LAogICAgICAid2lkdGgiOiA3ODIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4MiwKICAgICAgImNsaWVudFdpZHRoIjogNzgyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMTJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMTJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY2FyZCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidHVybnMiOiB7CiAgICAgICJsZWZ0IjogMjY4LAogICAgICAicmlnaHQiOiAxMjY0LAogICAgICAid2lkdGgiOiA5OTYsCiAgICAgICJvZmZzZXRXaWR0aCI6IDk5NiwKICAgICAgImNsaWVudFdpZHRoIjogOTk2LAogICAgICAicGFkZGluZ0xlZnQiOiAiMzJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMzJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAiY2xpcCIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAic2Nyb2xsIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTIzMiwKICAgICAgIndpZHRoIjogOTMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA5MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDkxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJzdGFibGUgYm90aC1lZGdlcyIsCiAgICAgICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiaW5uZXIiOiB7CiAgICAgICJsZWZ0IjogMzc0LAogICAgICAicmlnaHQiOiAxMTU4LAogICAgICAid2lkdGgiOiA3ODQsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4NCwKICAgICAgImNsaWVudFdpZHRoIjogNzg0LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9CiAgfSwKICB7CiAgICAidmlld3BvcnQiOiAxMDgwLAogICAgImFnZW50IjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ1c2VyIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjb21wb3NlciI6IHsKICAgICAgImxlZnQiOiAzMDEsCiAgICAgICJyaWdodCI6IDEwMzEsCiAgICAgICJ3aWR0aCI6IDczMCwKICAgICAgIm9mZnNldFdpZHRoIjogNzMwLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIxMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIxMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjYXJkIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ0dXJucyI6IHsKICAgICAgImxlZnQiOiAyNjgsCiAgICAgICJyaWdodCI6IDEwNjQsCiAgICAgICJ3aWR0aCI6IDc5NiwKICAgICAgIm9mZnNldFdpZHRoIjogNzk2LAogICAgICAiY2xpZW50V2lkdGgiOiA3OTYsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIzMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIzMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJjbGlwIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJzY3JvbGwiOiB7CiAgICAgICJsZWZ0IjogMzAwLAogICAgICAicmlnaHQiOiAxMDMyLAogICAgICAid2lkdGgiOiA3MzIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDczMiwKICAgICAgImNsaWVudFdpZHRoIjogNzMyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogInN0YWJsZSBib3RoLWVkZ2VzIiwKICAgICAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJpbm5lciI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0KICB9LAogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0KXQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c83a9b236b3c975a1ce8-81e5e699b211427774bf",
+          "file": "chat-column-narrow.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mcp-cancellation.spec.ts",
+      "file": "mcp-cancellation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2580,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:64056/3387f287-c88c-4701-b776-d00b7e291d5e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:10:58.189Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-2419e540dabf7edf1d66",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        },
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3241,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「MCP取消探针：等待响应后停止」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:64094/051ac70c-bc26-4f65-a352-70f52e48d41c\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:11:03.355Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-8a95e3c11c1a84e1847c",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        },
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2748,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:64135/cd0aed18-6836-45e8-ac14-c46357a2e9f7\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:11:09.207Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-561d25d0642f8f69acf4",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T17:10:55.442Z",
+    "duration": 16526.049000000003,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

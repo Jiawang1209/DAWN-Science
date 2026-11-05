@@ -1,0 +1,869 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/chat-column-narrow.spec.ts e2e/chat-column.spec.ts e2e/composer-layout.spec.ts e2e/mcp-cancellation.spec.ts e2e/terminal-context-return.spec.ts e2e/terminal-images.spec.ts e2e/upload-experience.spec.ts e2e/files.spec.ts e2e/kernel-settings.spec.ts e2e/terminal-shutdown.spec.ts e2e/remote-kernel.spec.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/final-remediation-focused-output
+
+Running 43 tests using 1 worker
+
+(node:26654) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+THREAD_COLUMN_GEOMETRY [{"viewport":1080,"agent":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":312,"right":1020,"width":708,"offsetWidth":708,"clientWidth":708,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":708,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1064,"width":796,"offsetWidth":796,"clientWidth":796,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}},{"viewport":1280,"agent":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":375,"right":1157,"width":782,"offsetWidth":782,"clientWidth":782,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":782,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1264,"width":996,"offsetWidth":996,"clientWidth":996,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1232,"width":932,"offsetWidth":932,"clientWidth":910,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}}]
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57380/0c6dac22-17d6-4e4d-b221-c1676fc0f336
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   1 e2e/chat-column-narrow.spec.ts:3:1 › narrow and regular conversation columns keep the agent, user and composer edges aligned (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57396/efdea7c6-fade-40d3-9091-191118b69688
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   2 e2e/chat-column.spec.ts:24:1 › **正文、气泡、输入卡在同一条左右缘上** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「量一下宽窗口」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57410/ea643b13-5aed-4d40-befd-ae90aae5d559
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   3 e2e/chat-column.spec.ts:70:1 › **窗口放大时这一栏跟着放大，封顶，三条边仍对齐** (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57423/75340955-6981-4a9d-bdea-eaf11a265339
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   4 e2e/chat-column.spec.ts:110:1 › **用户气泡四角一样圆、底色不是侧栏灰** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57434/0b9454a6-30cf-4775-8b57-0d7b869612e7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   5 e2e/chat-column.spec.ts:161:3 › 命令行的宽度 › **工具调用那一行不比回复更宽** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57444/47b5ac55-d616-4644-9d71-7d528ac43753
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   6 e2e/composer-layout.spec.ts:47:1 › 首页添加菜单支持键盘，方案状态可见，草稿不丢失 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57467/0821a39a-9169-4a18-ba98-a4f47ea82146
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   7 e2e/composer-layout.spec.ts:112:1 › 项目目录、文件选择、方案提交、普通发送与亮暗主题 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57486/280abad3-337c-4bff-b8e9-b5efe80a447b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   8 e2e/composer-layout.spec.ts:160:1 › 主侧对话输入区在窄栏可操作且不横向溢出 (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「上下文配色检查」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57507/557bcd5e-ef76-47f2-a5f1-fa805896faa5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   9 e2e/composer-layout.spec.ts:220:1 › 终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色 (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57540/f8a6005a-e56b-4474-b94c-6085088eb1b4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  10 e2e/files.spec.ts:21:1 › 目录树能翻，图片直接显示在应用里 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57552/0c1dc221-a319-4337-be30-c50e8e126193
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  11 e2e/files.spec.ts:46:1 › markdown 走渲染，其它文本按原文 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57560/5eb44902-77da-4223-a428-aa5c03b3e99d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  12 e2e/files.spec.ts:61:1 › **PDF 在应用里就能看**（②-A′ · F5），而且没有被 CSP 拦下 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57568/d888b60f-26b1-47b5-aed5-dab42b3d1f06
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  13 e2e/files.spec.ts:82:1 › **超上界的 PDF 说清多大**，而不是硬塞进内存 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57583/e7f3a6fd-7f56-4430-adb1-ce81eaa915ed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  14 e2e/files.spec.ts:92:1 › **忽略掉的目录要出声**——不然人会以为它们不存在 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57597/24629405-e21b-4b8f-8cd3-aff1e8d1c94a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  15 e2e/files.spec.ts:128:1 › **大图：坞拉宽之后，预览挪到树旁边并且真的变大** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57609/a4b12459-7d01-4b51-960d-fee5fc34652a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  16 e2e/files.spec.ts:256:1 › **树 ↔ 预览的缝：窄坞上下拖、宽坞左右拖，都记得住** (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57621/8bfb45ed-2b40-4dc2-9308-85d87e6684f5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  17 e2e/files.spec.ts:312:1 › **切走再切回来，树还展开着、文件还选着** (12.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57663/cfff3bb0-5552-4382-bd2b-e921addcb130
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  18 e2e/files.spec.ts:357:1 › **按名字搜得到深处的文件，忽略掉的目录要出声** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57676/65f5fd65-17ea-479b-b527-4958f1bff1ed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  19 e2e/files.spec.ts:391:1 › **命中到上限就停，并且说停在哪** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57692/2d720765-21ad-49ae-9667-1bbf2081c17b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  20 e2e/files.spec.ts:409:1 › **树行的菜单：复制路径、插进输入框** (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57704/749113fd-196c-4a60-b439-7aa34919de77
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  21 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57720/1423512a-7540-4fcb-a20e-1b246649d277
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  22 e2e/files.spec.ts:501:1 › **窄坞：顶行按钮都在、先缩时间戳、预览头不竖排** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57731/26cb6742-90db-4a77-9659-a684d5b7315b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  23 e2e/files.spec.ts:567:1 › **坞宽过了窗口能给的：坞被压进窗口里，按钮都看得见，缝在坞的真实边上** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57742/951423e7-b19d-4db8-82c9-8850505ffe96
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  24 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「MCP取消探针：等待响应后停止」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:57754/70bc3b0e-74d6-470f-afa8-6fdc44659dbb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  25 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57776/f85279e0-68d8-4c09-98d0-6faf05022462
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  26 e2e/remote-kernel.spec.ts:157:3 › 远程内核 · 真内核 + 假 SSH › 没配 → 笔记本格列出唯一候选 → 选 → agent 的 run_code 在「服务器」上算出 42，胶囊带服务器名 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [桌面通知·假] #0 「算一下」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57812/262fbf58-eef3-45cd-a19f-6bb60995b9d6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  27 e2e/remote-kernel.spec.ts:191:3 › 远程内核 · 真内核 + 假 SSH › 断开服务器 → 转录说变量没了、胶囊退出；再连上再跑会起新的一台 (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57885/be4b8ff3-133a-4d56-8af9-3cb6262279ed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  28 e2e/remote-kernel.spec.ts:236:3 › 远程内核 · 真内核 + 假 SSH › 意外掉线 → 等接回；再连上 → 内核还活着，掐线前的变量还在 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [桌面通知·假] #0 「算一下」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [隧道] 远端端口 57966 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57966
+[主进程] [隧道] 远端端口 57968 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57968
+[主进程] [隧道] 远端端口 57965 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57965
+[主进程] [隧道] 远端端口 57964 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57964
+[主进程] [隧道] 远端端口 57970 的 forwardOut 被拒：connect ECONNREFUSED 127.0.0.1:57970
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:57945/c4352063-c51f-40b4-8e09-e09d493790a9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  29 e2e/remote-kernel.spec.ts:272:3 › 远程内核 · 真内核 + 假 SSH › 内核在 DAWN 背后被杀 → 30 秒内出声；再跑起新的一台 (19.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [远端内核] 假机器 上的 python 内核没接回来：进程或文件不在了
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59035/c1179909-f398-42fd-9e21-563da5cd3812
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  30 e2e/remote-kernel.spec.ts:295:3 › 远程内核 · 真内核 + 假 SSH › 掐线后内核死了 → 再连上说没撑过；再跑起新的一台 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59096/ac77c349-2c78-4e75-afd0-f561658ea51f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+  ✓  31 e2e/remote-kernel.spec.ts:316:3 › 远程内核 · 真内核 + 假 SSH › 设置里那台服务器的对话框有两格，探测后能选；关掉再打开，选中的还是它 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [桌面通知·假] #0 「画一张图」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59108/b5f3f908-4e41-45c6-b8ad-110c66fdb016
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  32 e2e/remote-kernel.spec.ts:374:3 › 远程内核 · 图从服务器回来 › agent 在服务器上画的图，落在笔记本里；给模型的那句话说清是一张 image/png (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [远端内核] 这台机器没有 setsid，内核与启动 shell 同一进程组——执行器超时/中止会连内核一起杀
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59147/c7a1e76c-f318-430f-85f0-1793c62efb4b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","TCPServerWrap","Timeout"]}
+  ✓  33 e2e/remote-kernel.spec.ts:437:3 › 远程内核 · R（IRkernel） › 选 R → agent 的 run_code 在「服务器」的 IRkernel 里算出 42、画出一张图，胶囊写 R (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「FIRST_TERMINAL_CONTE」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","TTYWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59182/2183bf36-3f2e-4041-996c-7bdd2e315ff0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  34 e2e/terminal-context-return.spec.ts:56:1 › the selected terminal returns to its own Agent rather than another live terminal (7.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59219/4b3b905f-a222-4d92-8d27-e285fc650a5a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  35 e2e/terminal-context-return.spec.ts:77:1 › a removed Agent target leaves the terminal open and reports the missing conversation (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59237/5d375a58-2123-4847-b301-7ba7340ede35
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  36 e2e/terminal-context-return.spec.ts:94:3 › running task across directories › return follows the CLI workspace and lets the current tool finish (8.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59272/0ebfbb54-d285-4c86-a11b-7db67e4e06f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  37 e2e/terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (5.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59304/b2fac8fc-db71-49b6-8aa3-c4bb0f8e65e8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  38 e2e/terminal-images.spec.ts:65:1 › dragged images can be removed, are not added to the hidden composer, and Normal does not attach (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:59321/ccaa47f4-2c57-4a7c-9b03-0188c2fd3605
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  39 e2e/terminal-images.spec.ts:82:3 › output pictures › renders verified image files returned by the Agent and opens their full preview (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59347/778487ab-77e9-4310-862a-54766e8d34dc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  40 e2e/terminal-images.spec.ts:99:3 › picture capability › rejects attachment explicitly when neither the selected model nor a visual service can read it (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","TTYWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59375/9a405b23-3dcf-49c1-8bdc-0e2727084b2e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","TTYWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59423/8a75ebc9-2bd5-4d79-bf40-73350e77007a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  41 e2e/terminal-shutdown.spec.ts:13:3 › quitting with two live Normal terminals exits cleanly and reopening retains the conversations (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["GetAddrInfoReqWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","TTYWrap","PipeWrap","TCPSocketWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59431/876a835f-2127-44e7-b54b-6ba888febb71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["GetAddrInfoReqWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","TTYWrap","PipeWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPSocketWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPSocketWrap"]}
+[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59473/bd5561b0-0a6b-490f-bd17-cde863113242
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  42 e2e/terminal-shutdown.spec.ts:13:3 › quitting with two live DAWN terminals exits cleanly and reopening retains the conversations (7.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:59482/9a51b331-692c-487a-8169-df548ec5ccb4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+  ✓  43 e2e/upload-experience.spec.ts:60:1 › 多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读 (10.3s)
+
+  43 passed (3.1m)

@@ -1,0 +1,1 @@
+{"node":"22.23.0","undici":"6.27.0","rounds":100,"concurrency":8,"forceGc":true,"redirect":true,"failures":0,"stillOpenBeforeCleanup":0,"maxReleaseMs":60.351125000000025}

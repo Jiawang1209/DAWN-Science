@@ -1,0 +1,3939 @@
+{
+  "node": "22.23.0",
+  "undici": "6.27.0",
+  "rounds": 100,
+  "concurrency": 8,
+  "forceGc": true,
+  "redirect": true,
+  "failures": 0,
+  "stillOpenBeforeCleanup": 0,
+  "maxReleaseMs": 60.351125000000025,
+  "results": [
+    {
+      "iteration": 0,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 58.58462500000002,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.71608399999997,
+            "id": "dawn-call-c3a10c1e-ce47-4740-9862-bc023df63b79-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 98.96312499999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 101.82162499999998
+          },
+          {
+            "event": "response-close",
+            "ms": 157.51220899999998,
+            "id": "dawn-call-c3a10c1e-ce47-4740-9862-bc023df63b79-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-c3a10c1e-ce47-4740-9862-bc023df63b79-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 1,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 42.34337499999998,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 74.660458,
+            "id": "dawn-call-70c1fd01-c4fd-401d-b75c-ccb155b7c147-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 127.582833
+          },
+          {
+            "event": "caller-settled",
+            "ms": 128.139792
+          },
+          {
+            "event": "response-close",
+            "ms": 169.767333,
+            "id": "dawn-call-70c1fd01-c4fd-401d-b75c-ccb155b7c147-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-70c1fd01-c4fd-401d-b75c-ccb155b7c147-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 2,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 39.080291999999986,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.84920799999998,
+            "id": "dawn-call-249a08fa-5000-4be6-8591-266b527f508d-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 132.213708
+          },
+          {
+            "event": "caller-settled",
+            "ms": 132.83925
+          },
+          {
+            "event": "response-close",
+            "ms": 169.636458,
+            "id": "dawn-call-249a08fa-5000-4be6-8591-266b527f508d-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-249a08fa-5000-4be6-8591-266b527f508d-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 3,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 35.07529199999999,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.882541,
+            "id": "dawn-call-af42cf97-b105-4b8d-a167-09f9caafe0ba-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 136.88408300000003
+          },
+          {
+            "event": "caller-settled",
+            "ms": 137.52941600000003
+          },
+          {
+            "event": "response-close",
+            "ms": 169.60312500000003,
+            "id": "dawn-call-af42cf97-b105-4b8d-a167-09f9caafe0ba-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-af42cf97-b105-4b8d-a167-09f9caafe0ba-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 4,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 30.849541999999985,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.73754100000002,
+            "id": "dawn-call-3708b7aa-f638-4078-a7e9-de86cda02ba9-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 141.84133300000002
+          },
+          {
+            "event": "caller-settled",
+            "ms": 142.484083
+          },
+          {
+            "event": "response-close",
+            "ms": 169.57608300000004,
+            "id": "dawn-call-3708b7aa-f638-4078-a7e9-de86cda02ba9-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-3708b7aa-f638-4078-a7e9-de86cda02ba9-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 5,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 26.851249999999993,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 76.04412500000001,
+            "id": "dawn-call-532f3a66-f163-4f18-9bed-9015e1f3c66e-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 146.44045799999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 147.04108299999996
+          },
+          {
+            "event": "response-close",
+            "ms": 169.554417,
+            "id": "dawn-call-532f3a66-f163-4f18-9bed-9015e1f3c66e-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-532f3a66-f163-4f18-9bed-9015e1f3c66e-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 6,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 15.584375000000023,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 76.38074999999998,
+            "id": "dawn-call-2b7b197b-e906-449d-8d28-76fa257be861-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 164.09754099999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 164.64566599999995
+          },
+          {
+            "event": "response-close",
+            "ms": 175.59949999999998,
+            "id": "dawn-call-2b7b197b-e906-449d-8d28-76fa257be861-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 178.462041,
+            "id": "dawn-call-2b7b197b-e906-449d-8d28-76fa257be861-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-2b7b197b-e906-449d-8d28-76fa257be861-1"
+        ],
+        "closedWaits": [
+          "dawn-call-2b7b197b-e906-449d-8d28-76fa257be861-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 7,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 7.344666000000018,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 76.36116700000002,
+            "id": "dawn-call-1e697128-70fb-478f-9051-7a68adb74be4-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 168.527375
+          },
+          {
+            "event": "caller-settled",
+            "ms": 169.084875
+          },
+          {
+            "event": "response-close",
+            "ms": 175.51225,
+            "id": "dawn-call-1e697128-70fb-478f-9051-7a68adb74be4-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-1e697128-70fb-478f-9051-7a68adb74be4-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 8,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.909999999999968,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 45.88529199999999,
+            "id": "dawn-call-1ebe0b1f-9c86-4d8d-be0b-baff3d6ff622-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 122.058042
+          },
+          {
+            "event": "caller-settled",
+            "ms": 122.52154199999995
+          },
+          {
+            "event": "response-close",
+            "ms": 137.708083,
+            "id": "dawn-call-1ebe0b1f-9c86-4d8d-be0b-baff3d6ff622-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-1ebe0b1f-9c86-4d8d-be0b-baff3d6ff622-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 9,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.570249999999987,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 32.86775,
+            "id": "dawn-call-3f9e77e2-30dc-497c-b5e6-a500313d0ac0-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 123.11708400000003
+          },
+          {
+            "event": "caller-settled",
+            "ms": 123.79454200000004
+          },
+          {
+            "event": "response-close",
+            "ms": 128.16175000000004,
+            "id": "dawn-call-3f9e77e2-30dc-497c-b5e6-a500313d0ac0-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-3f9e77e2-30dc-497c-b5e6-a500313d0ac0-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 10,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 53.035499999999956,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 32.29079200000001,
+            "id": "dawn-call-e73eafd2-70cc-43b9-8717-c131fcda9975-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 59.463374999999985
+          },
+          {
+            "event": "caller-settled",
+            "ms": 60.05212499999999
+          },
+          {
+            "event": "response-close",
+            "ms": 112.483792,
+            "id": "dawn-call-e73eafd2-70cc-43b9-8717-c131fcda9975-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-e73eafd2-70cc-43b9-8717-c131fcda9975-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 11,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 49.53579099999996,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 31.661374999999964,
+            "id": "dawn-call-72ec9268-adf1-46cf-870c-162c038fe2ee-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 63.805916999999965
+          },
+          {
+            "event": "caller-settled",
+            "ms": 64.32891699999999
+          },
+          {
+            "event": "response-close",
+            "ms": 111.79224999999997,
+            "id": "dawn-call-72ec9268-adf1-46cf-870c-162c038fe2ee-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-72ec9268-adf1-46cf-870c-162c038fe2ee-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 12,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 45.29508299999998,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 30.94912499999998,
+            "id": "dawn-call-4742588f-a993-4ca0-bf6b-c7d07ddeee04-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 67.98754200000002
+          },
+          {
+            "event": "caller-settled",
+            "ms": 68.49725000000001
+          },
+          {
+            "event": "response-close",
+            "ms": 110.96062499999994,
+            "id": "dawn-call-4742588f-a993-4ca0-bf6b-c7d07ddeee04-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-4742588f-a993-4ca0-bf6b-c7d07ddeee04-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 13,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 29.85566700000004,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 30.41550000000001,
+            "id": "dawn-call-fbdb0f87-5a7e-49f7-a6df-0311067d1003-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 91.31716700000004
+          },
+          {
+            "event": "caller-settled",
+            "ms": 91.794667
+          },
+          {
+            "event": "response-close",
+            "ms": 120.96629200000007,
+            "id": "dawn-call-fbdb0f87-5a7e-49f7-a6df-0311067d1003-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-fbdb0f87-5a7e-49f7-a6df-0311067d1003-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 14,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 22.09775000000002,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 30.402874999999995,
+            "id": "dawn-call-4bfd8860-f5d5-4197-82f3-594fa69f7c52-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 97.83662500000003
+          },
+          {
+            "event": "caller-settled",
+            "ms": 98.31633299999999
+          },
+          {
+            "event": "response-close",
+            "ms": 118.24037499999997,
+            "id": "dawn-call-4bfd8860-f5d5-4197-82f3-594fa69f7c52-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-4bfd8860-f5d5-4197-82f3-594fa69f7c52-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 15,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 26.067874999999958,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 26.676125000000013,
+            "id": "dawn-call-50b89243-266f-4045-a44f-dfe25ad79592-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 89.50916699999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 89.95499999999998
+          },
+          {
+            "event": "response-close",
+            "ms": 114.460625,
+            "id": "dawn-call-50b89243-266f-4045-a44f-dfe25ad79592-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-50b89243-266f-4045-a44f-dfe25ad79592-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 16,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 54.94612500000005,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 40.56883400000004,
+            "id": "dawn-call-cf7f4e79-3f4c-4608-9a65-349f661380f9-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 76.98800000000006
+          },
+          {
+            "event": "caller-settled",
+            "ms": 78.201459
+          },
+          {
+            "event": "response-close",
+            "ms": 130.70741699999996,
+            "id": "dawn-call-cf7f4e79-3f4c-4608-9a65-349f661380f9-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-cf7f4e79-3f4c-4608-9a65-349f661380f9-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 17,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 48.326082999999926,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 40.969834000000105,
+            "id": "dawn-call-b59f4a20-2be9-4c33-bb0d-30facd071d2a-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 83.23691700000006
+          },
+          {
+            "event": "caller-settled",
+            "ms": 83.8425420000001
+          },
+          {
+            "event": "response-close",
+            "ms": 129.61354200000005,
+            "id": "dawn-call-b59f4a20-2be9-4c33-bb0d-30facd071d2a-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-b59f4a20-2be9-4c33-bb0d-30facd071d2a-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 18,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 30.864082999999937,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 40.74258299999997,
+            "id": "dawn-call-38ef861a-53a4-4cf6-bfca-ca1ff7814eeb-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 108.85454100000004
+          },
+          {
+            "event": "caller-settled",
+            "ms": 109.48183300000005
+          },
+          {
+            "event": "response-close",
+            "ms": 138.61112500000002,
+            "id": "dawn-call-38ef861a-53a4-4cf6-bfca-ca1ff7814eeb-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-38ef861a-53a4-4cf6-bfca-ca1ff7814eeb-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 19,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 27.535750000000007,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 31.61912499999994,
+            "id": "dawn-call-a44e003e-cdf6-48bc-aded-86df7a9d0079-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 105.28545799999995
+          },
+          {
+            "event": "caller-settled",
+            "ms": 105.840375
+          },
+          {
+            "event": "response-close",
+            "ms": 130.04158299999995,
+            "id": "dawn-call-a44e003e-cdf6-48bc-aded-86df7a9d0079-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-a44e003e-cdf6-48bc-aded-86df7a9d0079-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 20,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 24.02966600000002,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 31.540040999999974,
+            "id": "dawn-call-03098347-1e9c-4977-8c87-aafa09742bdc-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 109.36283300000002
+          },
+          {
+            "event": "caller-settled",
+            "ms": 109.86616600000002
+          },
+          {
+            "event": "response-close",
+            "ms": 129.218208,
+            "id": "dawn-call-03098347-1e9c-4977-8c87-aafa09742bdc-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-03098347-1e9c-4977-8c87-aafa09742bdc-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 21,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 20.63579100000004,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 31.921499999999924,
+            "id": "dawn-call-77537245-e9fc-4e9a-bf98-352e254abbfb-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 113.6389999999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 114.11420899999996
+          },
+          {
+            "event": "response-close",
+            "ms": 128.650125,
+            "id": "dawn-call-77537245-e9fc-4e9a-bf98-352e254abbfb-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-77537245-e9fc-4e9a-bf98-352e254abbfb-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 22,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 11.410499999999956,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 30.685375000000022,
+            "id": "dawn-call-b4547f61-14b0-4a92-b38c-d0bb51a75275-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 126.70308299999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 127.206458
+          },
+          {
+            "event": "response-close",
+            "ms": 136.51329199999998,
+            "id": "dawn-call-b4547f61-14b0-4a92-b38c-d0bb51a75275-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-b4547f61-14b0-4a92-b38c-d0bb51a75275-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 23,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 60.351125000000025,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 28.088040999999976,
+            "id": "dawn-call-b46e44b2-e8fa-425b-94eb-198c39f94495-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 54.855999999999995
+          },
+          {
+            "event": "caller-settled",
+            "ms": 55.563833000000045
+          },
+          {
+            "event": "response-close",
+            "ms": 115.19712500000003,
+            "id": "dawn-call-b46e44b2-e8fa-425b-94eb-198c39f94495-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-b46e44b2-e8fa-425b-94eb-198c39f94495-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 24,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 28.02004199999999,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 48.968083999999976,
+            "id": "dawn-call-4607cbf0-04a8-4a52-b115-34e74924be8e-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 77.74520899999993
+          },
+          {
+            "event": "caller-settled",
+            "ms": 78.30158399999993
+          },
+          {
+            "event": "response-close",
+            "ms": 105.75408399999992,
+            "id": "dawn-call-4607cbf0-04a8-4a52-b115-34e74924be8e-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-4607cbf0-04a8-4a52-b115-34e74924be8e-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 25,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 24.682500000000005,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 49.242166,
+            "id": "dawn-call-097bc1f9-b26f-4f27-920c-d4bed302fc91-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 81.66716599999995
+          },
+          {
+            "event": "caller-settled",
+            "ms": 82.13225
+          },
+          {
+            "event": "response-close",
+            "ms": 104.65837499999998,
+            "id": "dawn-call-097bc1f9-b26f-4f27-920c-d4bed302fc91-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-097bc1f9-b26f-4f27-920c-d4bed302fc91-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 26,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 21.06087500000001,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 48.75833299999999,
+            "id": "dawn-call-e968fc42-cf59-448b-861f-ee220f4c2913-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 85.78333299999997
+          },
+          {
+            "event": "caller-settled",
+            "ms": 86.28983300000004
+          },
+          {
+            "event": "response-close",
+            "ms": 103.92195800000002,
+            "id": "dawn-call-e968fc42-cf59-448b-861f-ee220f4c2913-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-e968fc42-cf59-448b-861f-ee220f4c2913-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 27,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.795417000000043,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 40.33158300000002,
+            "id": "dawn-call-0e2f5b66-653b-473c-aa51-1fdd4e6c898c-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 89.31858299999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 89.86737500000004
+          },
+          {
+            "event": "response-close",
+            "ms": 105.79491700000005,
+            "id": "dawn-call-0e2f5b66-653b-473c-aa51-1fdd4e6c898c-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-0e2f5b66-653b-473c-aa51-1fdd4e6c898c-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 28,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 11.57041700000002,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 38.819999999999936,
+            "id": "dawn-call-a277c183-ef14-43bc-a1de-cf5424193f25-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 102.6819579999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 103.25699999999995
+          },
+          {
+            "event": "response-close",
+            "ms": 113.50783299999989,
+            "id": "dawn-call-a277c183-ef14-43bc-a1de-cf5424193f25-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-a277c183-ef14-43bc-a1de-cf5424193f25-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 29,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.451999999999998,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 39.10783300000003,
+            "id": "dawn-call-37e2688e-6487-4a23-82cb-6cc49ceb0c0a-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 145.232083
+          },
+          {
+            "event": "caller-settled",
+            "ms": 145.71749999999997
+          },
+          {
+            "event": "response-close",
+            "ms": 147.81179099999997,
+            "id": "dawn-call-37e2688e-6487-4a23-82cb-6cc49ceb0c0a-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 150.87966600000004,
+            "id": "dawn-call-37e2688e-6487-4a23-82cb-6cc49ceb0c0a-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-37e2688e-6487-4a23-82cb-6cc49ceb0c0a-1"
+        ],
+        "closedWaits": [
+          "dawn-call-37e2688e-6487-4a23-82cb-6cc49ceb0c0a-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 30,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 11.971457999999984,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 37.68120800000008,
+            "id": "dawn-call-d42bc7b0-aa54-47a6-bcd9-945dc1c07fa4-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 119.3358330000001
+          },
+          {
+            "event": "caller-settled",
+            "ms": 119.94508300000007
+          },
+          {
+            "event": "response-close",
+            "ms": 121.5188750000001,
+            "id": "dawn-call-d42bc7b0-aa54-47a6-bcd9-945dc1c07fa4-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-d42bc7b0-aa54-47a6-bcd9-945dc1c07fa4-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 31,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 12.206125000000043,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 34.54141599999991,
+            "id": "dawn-call-b9847f79-edc1-4882-b32d-147fb383b72c-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 134.480958
+          },
+          {
+            "event": "caller-settled",
+            "ms": 134.96183299999996
+          },
+          {
+            "event": "response-close",
+            "ms": 141.99916599999995,
+            "id": "dawn-call-b9847f79-edc1-4882-b32d-147fb383b72c-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 143.5682079999999,
+            "id": "dawn-call-b9847f79-edc1-4882-b32d-147fb383b72c-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-b9847f79-edc1-4882-b32d-147fb383b72c-1"
+        ],
+        "closedWaits": [
+          "dawn-call-b9847f79-edc1-4882-b32d-147fb383b72c-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 32,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.518790999999965,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.42525,
+            "id": "dawn-call-0db7dc9b-8474-4a7b-b4ee-ea775da3e24d-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 92.80370900000003
+          },
+          {
+            "event": "caller-settled",
+            "ms": 93.33070900000007
+          },
+          {
+            "event": "response-close",
+            "ms": 95.72641700000008,
+            "id": "dawn-call-0db7dc9b-8474-4a7b-b4ee-ea775da3e24d-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-0db7dc9b-8474-4a7b-b4ee-ea775da3e24d-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 33,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 29.20083299999999,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 74.37099999999998,
+            "id": "dawn-call-328c7f74-a754-43b3-b26c-2666450ba77f-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 109.49433299999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 109.939708
+          },
+          {
+            "event": "response-close",
+            "ms": 138.67891599999996,
+            "id": "dawn-call-328c7f74-a754-43b3-b26c-2666450ba77f-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-328c7f74-a754-43b3-b26c-2666450ba77f-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 34,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 32.18012500000009,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.92908299999999,
+            "id": "dawn-call-1470e3c1-06ad-44c1-a00a-dfedaa0b9627-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 119.88675
+          },
+          {
+            "event": "caller-settled",
+            "ms": 120.43545799999993
+          },
+          {
+            "event": "response-close",
+            "ms": 151.767875,
+            "id": "dawn-call-1470e3c1-06ad-44c1-a00a-dfedaa0b9627-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-1470e3c1-06ad-44c1-a00a-dfedaa0b9627-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 35,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 15.706625000000031,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 69.779042,
+            "id": "dawn-call-c8819d13-c372-44ca-9693-216d2851b0e8-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 136.31658400000003
+          },
+          {
+            "event": "caller-settled",
+            "ms": 136.784084
+          },
+          {
+            "event": "response-close",
+            "ms": 144.91170899999997,
+            "id": "dawn-call-c8819d13-c372-44ca-9693-216d2851b0e8-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-c8819d13-c372-44ca-9693-216d2851b0e8-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 36,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 8.981209000000035,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 67.62037500000008,
+            "id": "dawn-call-1bf5d882-a0c5-47dd-b965-52264556222c-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 132.7242500000001
+          },
+          {
+            "event": "caller-settled",
+            "ms": 133.22783400000003
+          },
+          {
+            "event": "response-close",
+            "ms": 136.15829200000007,
+            "id": "dawn-call-1bf5d882-a0c5-47dd-b965-52264556222c-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-1bf5d882-a0c5-47dd-b965-52264556222c-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 37,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.408416999999986,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 55.816666000000055,
+            "id": "dawn-call-cb2fe8ec-39ad-496d-a176-c0b720e42f3f-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 129.43279100000007
+          },
+          {
+            "event": "caller-settled",
+            "ms": 129.91137500000002
+          },
+          {
+            "event": "response-close",
+            "ms": 132.03300000000002,
+            "id": "dawn-call-cb2fe8ec-39ad-496d-a176-c0b720e42f3f-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-cb2fe8ec-39ad-496d-a176-c0b720e42f3f-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 38,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 12.803541999999993,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 96.33212500000002,
+            "id": "dawn-call-96f33a67-0798-4ffd-92b3-baee362d1006-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 129.19354199999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 129.69787500000007
+          },
+          {
+            "event": "response-close",
+            "ms": 141.75454200000001,
+            "id": "dawn-call-96f33a67-0798-4ffd-92b3-baee362d1006-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-96f33a67-0798-4ffd-92b3-baee362d1006-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 39,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.02695899999992,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 95.73245799999995,
+            "id": "dawn-call-4fc408ce-fb99-485e-835f-85d59fe43cd5-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 140.279083
+          },
+          {
+            "event": "caller-settled",
+            "ms": 140.74958299999992
+          },
+          {
+            "event": "response-close",
+            "ms": 143.45049999999992,
+            "id": "dawn-call-4fc408ce-fb99-485e-835f-85d59fe43cd5-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-4fc408ce-fb99-485e-835f-85d59fe43cd5-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 40,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 7.6849580000000515,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 110.22091699999999,
+            "id": "dawn-call-41377b5d-c101-4106-b65d-ec6660dc085b-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 140.06124999999997
+          },
+          {
+            "event": "caller-settled",
+            "ms": 140.52637499999992
+          },
+          {
+            "event": "response-close",
+            "ms": 147.40683400000012,
+            "id": "dawn-call-41377b5d-c101-4106-b65d-ec6660dc085b-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-41377b5d-c101-4106-b65d-ec6660dc085b-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 41,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 13.791124999999852,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 76.18462499999998,
+            "id": "dawn-call-4d21488f-ef82-44a1-b540-672b5285b87b-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 98.14479200000005
+          },
+          {
+            "event": "caller-settled",
+            "ms": 98.641208
+          },
+          {
+            "event": "response-close",
+            "ms": 110.46495799999991,
+            "id": "dawn-call-4d21488f-ef82-44a1-b540-672b5285b87b-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-4d21488f-ef82-44a1-b540-672b5285b87b-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 42,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 12.211583000000019,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 61.871041000000105,
+            "id": "dawn-call-a94ce75a-53d4-4cc3-9dc9-a9c4ae2d6a38-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 103.97358299999996
+          },
+          {
+            "event": "caller-settled",
+            "ms": 104.54729100000009
+          },
+          {
+            "event": "response-close",
+            "ms": 115.85050000000001,
+            "id": "dawn-call-a94ce75a-53d4-4cc3-9dc9-a9c4ae2d6a38-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-a94ce75a-53d4-4cc3-9dc9-a9c4ae2d6a38-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 43,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 15.32770800000003,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 55.91729200000009,
+            "id": "dawn-call-edda1fcf-29a8-44ef-b63e-558168557a7f-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 115.47375
+          },
+          {
+            "event": "caller-settled",
+            "ms": 115.90808300000015
+          },
+          {
+            "event": "response-close",
+            "ms": 129.38045799999998,
+            "id": "dawn-call-edda1fcf-29a8-44ef-b63e-558168557a7f-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-edda1fcf-29a8-44ef-b63e-558168557a7f-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 44,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 9.245833999999832,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 55.612959000000046,
+            "id": "dawn-call-848ce628-47b9-4399-9576-622beb5a3308-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 118.98599999999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 119.47891700000002
+          },
+          {
+            "event": "response-close",
+            "ms": 127.93170900000007,
+            "id": "dawn-call-848ce628-47b9-4399-9576-622beb5a3308-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-848ce628-47b9-4399-9576-622beb5a3308-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 45,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 8.964042000000063,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 58.82862499999999,
+            "id": "dawn-call-91c7c403-4b82-4c1a-9f49-05b771cbf2d9-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 123.59454199999993
+          },
+          {
+            "event": "caller-settled",
+            "ms": 124.05179199999986
+          },
+          {
+            "event": "response-close",
+            "ms": 126.23566700000003,
+            "id": "dawn-call-91c7c403-4b82-4c1a-9f49-05b771cbf2d9-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-91c7c403-4b82-4c1a-9f49-05b771cbf2d9-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 46,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.000790999999936,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 71.99099999999999,
+            "id": "dawn-call-3e7517fa-ca46-4b9b-b9f5-7c4cdcd6c43a-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 126.58404199999995
+          },
+          {
+            "event": "caller-settled",
+            "ms": 127.07141699999988
+          },
+          {
+            "event": "response-close",
+            "ms": 129.69412499999999,
+            "id": "dawn-call-3e7517fa-ca46-4b9b-b9f5-7c4cdcd6c43a-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-3e7517fa-ca46-4b9b-b9f5-7c4cdcd6c43a-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 47,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 14.086042000000134,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 67.99208299999998,
+            "id": "dawn-call-a22bcfcf-d275-4c09-9ace-ca5b84bd706a-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 109.59366599999987
+          },
+          {
+            "event": "caller-settled",
+            "ms": 110.04775000000006
+          },
+          {
+            "event": "response-close",
+            "ms": 123.43625000000009,
+            "id": "dawn-call-a22bcfcf-d275-4c09-9ace-ca5b84bd706a-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-a22bcfcf-d275-4c09-9ace-ca5b84bd706a-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 48,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 14.370499999999993,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 98.03745900000013,
+            "id": "dawn-call-cef6dee5-e657-4f06-b563-1ba2951cdf0f-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 128.225459
+          },
+          {
+            "event": "caller-settled",
+            "ms": 128.72199999999998
+          },
+          {
+            "event": "response-close",
+            "ms": 141.68929200000002,
+            "id": "dawn-call-cef6dee5-e657-4f06-b563-1ba2951cdf0f-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-cef6dee5-e657-4f06-b563-1ba2951cdf0f-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 49,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 16.18775000000005,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 97.19116700000018,
+            "id": "dawn-call-6daccf56-b19b-4eaa-8b30-a94d51b515b4-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 139.94262500000013
+          },
+          {
+            "event": "caller-settled",
+            "ms": 140.39325000000008
+          },
+          {
+            "event": "response-close",
+            "ms": 143.3487090000001,
+            "id": "dawn-call-6daccf56-b19b-4eaa-8b30-a94d51b515b4-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-6daccf56-b19b-4eaa-8b30-a94d51b515b4-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 50,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 16.282500000000027,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 79.88374999999996,
+            "id": "dawn-call-fb318853-41b4-441b-9d18-0ed41a2b5adb-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 97.38687499999992
+          },
+          {
+            "event": "caller-settled",
+            "ms": 97.97120900000004
+          },
+          {
+            "event": "response-close",
+            "ms": 113.65816700000005,
+            "id": "dawn-call-fb318853-41b4-441b-9d18-0ed41a2b5adb-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-fb318853-41b4-441b-9d18-0ed41a2b5adb-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 51,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.887833,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 62.54233399999998,
+            "id": "dawn-call-77a937d5-ce2e-4595-a8db-2f03d61a0bed-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 123.09574999999995
+          },
+          {
+            "event": "caller-settled",
+            "ms": 123.579792
+          },
+          {
+            "event": "response-close",
+            "ms": 131.83845899999983,
+            "id": "dawn-call-77a937d5-ce2e-4595-a8db-2f03d61a0bed-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 133.55404199999998,
+            "id": "dawn-call-77a937d5-ce2e-4595-a8db-2f03d61a0bed-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-77a937d5-ce2e-4595-a8db-2f03d61a0bed-1"
+        ],
+        "closedWaits": [
+          "dawn-call-77a937d5-ce2e-4595-a8db-2f03d61a0bed-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 52,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.362667000000101,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 61.582083999999895,
+            "id": "dawn-call-8fc06926-f9ea-4e36-9aaa-c89b6b425a2c-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 128.2495839999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 128.82108399999993
+          },
+          {
+            "event": "response-close",
+            "ms": 130.845417,
+            "id": "dawn-call-8fc06926-f9ea-4e36-9aaa-c89b6b425a2c-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 133.46187499999996,
+            "id": "dawn-call-8fc06926-f9ea-4e36-9aaa-c89b6b425a2c-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-8fc06926-f9ea-4e36-9aaa-c89b6b425a2c-1"
+        ],
+        "closedWaits": [
+          "dawn-call-8fc06926-f9ea-4e36-9aaa-c89b6b425a2c-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 53,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 12.414833999999928,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 79.27904199999989,
+            "id": "dawn-call-a11fe9f4-33f0-4293-b5ad-76bdf3ad41a7-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 132.21749999999997
+          },
+          {
+            "event": "caller-settled",
+            "ms": 132.7182089999999
+          },
+          {
+            "event": "response-close",
+            "ms": 144.43962499999998,
+            "id": "dawn-call-a11fe9f4-33f0-4293-b5ad-76bdf3ad41a7-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-a11fe9f4-33f0-4293-b5ad-76bdf3ad41a7-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 54,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.336540999999897,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 65.8749580000001,
+            "id": "dawn-call-3fc80d61-a1a4-4b50-bf8f-13581a4d4f69-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 122.65075000000002
+          },
+          {
+            "event": "caller-settled",
+            "ms": 123.22129200000018
+          },
+          {
+            "event": "response-close",
+            "ms": 126.41875000000005,
+            "id": "dawn-call-3fc80d61-a1a4-4b50-bf8f-13581a4d4f69-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-3fc80d61-a1a4-4b50-bf8f-13581a4d4f69-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 55,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 4.932667000000038,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 88.84108300000003,
+            "id": "dawn-call-0dc3b66b-079d-490f-a948-1546e686130b-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 138.80012499999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 139.344333
+          },
+          {
+            "event": "response-close",
+            "ms": 143.31329200000005,
+            "id": "dawn-call-0dc3b66b-079d-490f-a948-1546e686130b-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-0dc3b66b-079d-490f-a948-1546e686130b-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 56,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 14.404541999999992,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 107.30549999999994,
+            "id": "dawn-call-ab607cb4-6b93-49ae-b1bc-688e9de85a16-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 127.40162499999997
+          },
+          {
+            "event": "caller-settled",
+            "ms": 128.010542
+          },
+          {
+            "event": "response-close",
+            "ms": 141.47495800000002,
+            "id": "dawn-call-ab607cb4-6b93-49ae-b1bc-688e9de85a16-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-ab607cb4-6b93-49ae-b1bc-688e9de85a16-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 57,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 26.633041999999932,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 99.88754099999983,
+            "id": "dawn-call-7f877c58-c890-4a00-97aa-f1db0e17150c-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 145.93554099999983
+          },
+          {
+            "event": "caller-settled",
+            "ms": 146.39795800000002
+          },
+          {
+            "event": "response-close",
+            "ms": 157.32604100000003,
+            "id": "dawn-call-7f877c58-c890-4a00-97aa-f1db0e17150c-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 159.28499999999985,
+            "id": "dawn-call-7f877c58-c890-4a00-97aa-f1db0e17150c-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-7f877c58-c890-4a00-97aa-f1db0e17150c-1"
+        ],
+        "closedWaits": [
+          "dawn-call-7f877c58-c890-4a00-97aa-f1db0e17150c-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 58,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 31.06812500000001,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 85.94845800000007,
+            "id": "dawn-call-a750322d-25c5-4e95-808f-fb40c7ef51d5-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 125.79612500000007
+          },
+          {
+            "event": "caller-settled",
+            "ms": 126.38525000000004
+          },
+          {
+            "event": "response-close",
+            "ms": 142.705291,
+            "id": "dawn-call-a750322d-25c5-4e95-808f-fb40c7ef51d5-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 144.5625,
+            "id": "dawn-call-a750322d-25c5-4e95-808f-fb40c7ef51d5-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-a750322d-25c5-4e95-808f-fb40c7ef51d5-1"
+        ],
+        "closedWaits": [
+          "dawn-call-a750322d-25c5-4e95-808f-fb40c7ef51d5-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 59,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 15.015959000000066,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 75.29941700000018,
+            "id": "dawn-call-420f3d0b-f2c7-45a0-a1c3-0253d54ca2b4-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 141.3001670000001
+          },
+          {
+            "event": "caller-settled",
+            "ms": 141.792459
+          },
+          {
+            "event": "response-close",
+            "ms": 149.11370899999997,
+            "id": "dawn-call-420f3d0b-f2c7-45a0-a1c3-0253d54ca2b4-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 154.13291700000013,
+            "id": "dawn-call-420f3d0b-f2c7-45a0-a1c3-0253d54ca2b4-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-420f3d0b-f2c7-45a0-a1c3-0253d54ca2b4-1"
+        ],
+        "closedWaits": [
+          "dawn-call-420f3d0b-f2c7-45a0-a1c3-0253d54ca2b4-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 60,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.2872500000000855,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 74.26462500000002,
+            "id": "dawn-call-ec033d9a-ef87-4413-ba94-2a3aeed09e45-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 145.47016700000017
+          },
+          {
+            "event": "caller-settled",
+            "ms": 146.04325000000017
+          },
+          {
+            "event": "response-close",
+            "ms": 147.99691700000017,
+            "id": "dawn-call-ec033d9a-ef87-4413-ba94-2a3aeed09e45-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-ec033d9a-ef87-4413-ba94-2a3aeed09e45-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 61,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 19.500541999999996,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 99.97949999999992,
+            "id": "dawn-call-5d22043d-eaf3-403c-9532-70368467597b-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 161.18279200000006
+          },
+          {
+            "event": "caller-settled",
+            "ms": 163.94466699999998
+          },
+          {
+            "event": "response-close",
+            "ms": 175.14304199999992,
+            "id": "dawn-call-5d22043d-eaf3-403c-9532-70368467597b-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-5d22043d-eaf3-403c-9532-70368467597b-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 62,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.5033330000001115,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 96.83391700000016,
+            "id": "dawn-call-fb2ae590-b2db-4c6d-bfb4-97ec12e49988-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 165.915209
+          },
+          {
+            "event": "caller-settled",
+            "ms": 166.62229200000002
+          },
+          {
+            "event": "response-close",
+            "ms": 170.987167,
+            "id": "dawn-call-fb2ae590-b2db-4c6d-bfb4-97ec12e49988-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-fb2ae590-b2db-4c6d-bfb4-97ec12e49988-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 63,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.144249999999829,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 105.8248329999999,
+            "id": "dawn-call-56c0c6eb-9525-436e-9517-2b3ae2d8d4df-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 175.316333
+          },
+          {
+            "event": "caller-settled",
+            "ms": 175.93783299999996
+          },
+          {
+            "event": "response-close",
+            "ms": 178.82124999999996,
+            "id": "dawn-call-56c0c6eb-9525-436e-9517-2b3ae2d8d4df-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-56c0c6eb-9525-436e-9517-2b3ae2d8d4df-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 64,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.3347499999999854,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 141.38658299999997,
+            "id": "dawn-call-766700e0-0f2a-46c9-bee7-82dc50adb246-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 162.7182909999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 163.35837500000002
+          },
+          {
+            "event": "response-close",
+            "ms": 165.298041,
+            "id": "dawn-call-766700e0-0f2a-46c9-bee7-82dc50adb246-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 167.57808299999988,
+            "id": "dawn-call-766700e0-0f2a-46c9-bee7-82dc50adb246-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-766700e0-0f2a-46c9-bee7-82dc50adb246-1"
+        ],
+        "closedWaits": [
+          "dawn-call-766700e0-0f2a-46c9-bee7-82dc50adb246-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 65,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 23.036415999999917,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 107.99916600000006,
+            "id": "dawn-call-d8f68581-f4a6-4b2a-9bce-1cd4b229c7d6-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 156.15616599999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 156.82783300000006
+          },
+          {
+            "event": "response-close",
+            "ms": 177.2962910000001,
+            "id": "dawn-call-d8f68581-f4a6-4b2a-9bce-1cd4b229c7d6-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-d8f68581-f4a6-4b2a-9bce-1cd4b229c7d6-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 66,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 21.30304100000012,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 109.38824999999997,
+            "id": "dawn-call-01893b36-f63c-40bf-859c-9039da2f0665-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 169.52712499999984
+          },
+          {
+            "event": "caller-settled",
+            "ms": 170.300708
+          },
+          {
+            "event": "response-close",
+            "ms": 189.8700409999999,
+            "id": "dawn-call-01893b36-f63c-40bf-859c-9039da2f0665-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-01893b36-f63c-40bf-859c-9039da2f0665-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 67,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 27.24200000000019,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 92.27154200000018,
+            "id": "dawn-call-bb3b01e9-60a7-4d6d-8050-82c33677fa40-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 131.65308300000015
+          },
+          {
+            "event": "caller-settled",
+            "ms": 132.203708
+          },
+          {
+            "event": "response-close",
+            "ms": 158.8777500000001,
+            "id": "dawn-call-bb3b01e9-60a7-4d6d-8050-82c33677fa40-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-bb3b01e9-60a7-4d6d-8050-82c33677fa40-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 68,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.373999999999796,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 96.02616700000021,
+            "id": "dawn-call-cf1ce9ee-364a-4275-a171-103cdb04ff03-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 166.5377500000002
+          },
+          {
+            "event": "caller-settled",
+            "ms": 167.31650000000013
+          },
+          {
+            "event": "response-close",
+            "ms": 172.64541700000018,
+            "id": "dawn-call-cf1ce9ee-364a-4275-a171-103cdb04ff03-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-cf1ce9ee-364a-4275-a171-103cdb04ff03-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 69,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.966957999999977,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 66.45779200000015,
+            "id": "dawn-call-7fad2964-aa0b-4ba3-b06a-7d287cce78bb-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 153.56850000000009
+          },
+          {
+            "event": "caller-settled",
+            "ms": 154.14612499999998
+          },
+          {
+            "event": "response-close",
+            "ms": 162.17666700000018,
+            "id": "dawn-call-7fad2964-aa0b-4ba3-b06a-7d287cce78bb-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 164.30837500000007,
+            "id": "dawn-call-7fad2964-aa0b-4ba3-b06a-7d287cce78bb-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-7fad2964-aa0b-4ba3-b06a-7d287cce78bb-1"
+        ],
+        "closedWaits": [
+          "dawn-call-7fad2964-aa0b-4ba3-b06a-7d287cce78bb-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 70,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.357666000000108,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 62.48620800000003,
+            "id": "dawn-call-ca3dde94-fe80-4e5b-b25a-6d71750ed3be-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 155.51291600000013
+          },
+          {
+            "event": "caller-settled",
+            "ms": 156.15195800000015
+          },
+          {
+            "event": "response-close",
+            "ms": 158.1722910000001,
+            "id": "dawn-call-ca3dde94-fe80-4e5b-b25a-6d71750ed3be-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 160.35808300000008,
+            "id": "dawn-call-ca3dde94-fe80-4e5b-b25a-6d71750ed3be-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-ca3dde94-fe80-4e5b-b25a-6d71750ed3be-1"
+        ],
+        "closedWaits": [
+          "dawn-call-ca3dde94-fe80-4e5b-b25a-6d71750ed3be-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 71,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.341750000000047,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 104.3064159999999,
+            "id": "dawn-call-55f4d34a-345e-40c3-80f9-01cecd1f5694-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 148.4124159999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 148.89320799999996
+          },
+          {
+            "event": "response-close",
+            "ms": 150.84058299999992,
+            "id": "dawn-call-55f4d34a-345e-40c3-80f9-01cecd1f5694-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-55f4d34a-345e-40c3-80f9-01cecd1f5694-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 72,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.82145800000012,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 126.74025000000006,
+            "id": "dawn-call-b5885948-de5a-40b1-a6d7-23fdcae151dd-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 153.7573749999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 154.376084
+          },
+          {
+            "event": "response-close",
+            "ms": 161.63816700000007,
+            "id": "dawn-call-b5885948-de5a-40b1-a6d7-23fdcae151dd-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 163.096,
+            "id": "dawn-call-b5885948-de5a-40b1-a6d7-23fdcae151dd-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-b5885948-de5a-40b1-a6d7-23fdcae151dd-1"
+        ],
+        "closedWaits": [
+          "dawn-call-b5885948-de5a-40b1-a6d7-23fdcae151dd-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 73,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.167083000000048,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 81.73950000000013,
+            "id": "dawn-call-0a8b04ba-4cd2-425b-8bdf-f2c859d51be3-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 111.32641699999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 111.8532090000001
+          },
+          {
+            "event": "response-close",
+            "ms": 113.59687499999995,
+            "id": "dawn-call-0a8b04ba-4cd2-425b-8bdf-f2c859d51be3-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 115.10754199999997,
+            "id": "dawn-call-0a8b04ba-4cd2-425b-8bdf-f2c859d51be3-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-0a8b04ba-4cd2-425b-8bdf-f2c859d51be3-1"
+        ],
+        "closedWaits": [
+          "dawn-call-0a8b04ba-4cd2-425b-8bdf-f2c859d51be3-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 74,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 23.7025000000001,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 81.1942919999999,
+            "id": "dawn-call-e9baac24-d550-416a-af65-e6fafe52e913-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 141.95958399999995
+          },
+          {
+            "event": "caller-settled",
+            "ms": 142.51887499999998
+          },
+          {
+            "event": "response-close",
+            "ms": 165.41154200000005,
+            "id": "dawn-call-e9baac24-d550-416a-af65-e6fafe52e913-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-e9baac24-d550-416a-af65-e6fafe52e913-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 75,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 8.87608299999988,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 68.69012500000008,
+            "id": "dawn-call-b960e705-f571-4aa7-96d9-ff3cb7032fdb-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 148.92845899999998
+          },
+          {
+            "event": "caller-settled",
+            "ms": 151.9672089999999
+          },
+          {
+            "event": "response-close",
+            "ms": 156.9230419999999,
+            "id": "dawn-call-b960e705-f571-4aa7-96d9-ff3cb7032fdb-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-b960e705-f571-4aa7-96d9-ff3cb7032fdb-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 76,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 20.17908299999999,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 66.74133299999994,
+            "id": "dawn-call-1406b920-f925-40ce-a2f0-536d128dec76-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 112.63912500000015
+          },
+          {
+            "event": "caller-settled",
+            "ms": 113.20079099999998
+          },
+          {
+            "event": "response-close",
+            "ms": 132.79762500000015,
+            "id": "dawn-call-1406b920-f925-40ce-a2f0-536d128dec76-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-1406b920-f925-40ce-a2f0-536d128dec76-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 77,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.921207999999979,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 61.68049999999994,
+            "id": "dawn-call-fc8c0a1e-18c3-42f9-a146-4b9159fb6c05-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 155.9519580000001
+          },
+          {
+            "event": "caller-settled",
+            "ms": 156.55837500000007
+          },
+          {
+            "event": "response-close",
+            "ms": 158.34437500000013,
+            "id": "dawn-call-fc8c0a1e-18c3-42f9-a146-4b9159fb6c05-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-fc8c0a1e-18c3-42f9-a146-4b9159fb6c05-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 78,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 14.465750000000071,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 56.88212500000009,
+            "id": "dawn-call-99bc5552-ca08-4339-90bd-746d4a7f1bfa-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 142.21675000000005
+          },
+          {
+            "event": "caller-settled",
+            "ms": 143.18329200000016
+          },
+          {
+            "event": "response-close",
+            "ms": 151.8235000000002,
+            "id": "dawn-call-99bc5552-ca08-4339-90bd-746d4a7f1bfa-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 154.4899170000001,
+            "id": "dawn-call-99bc5552-ca08-4339-90bd-746d4a7f1bfa-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-99bc5552-ca08-4339-90bd-746d4a7f1bfa-1"
+        ],
+        "closedWaits": [
+          "dawn-call-99bc5552-ca08-4339-90bd-746d4a7f1bfa-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 79,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.454917000000023,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 103.80487500000004,
+            "id": "dawn-call-c2911285-60a8-4cba-be1b-a22719d8cd5f-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 171.107125
+          },
+          {
+            "event": "caller-settled",
+            "ms": 171.75191599999994
+          },
+          {
+            "event": "response-close",
+            "ms": 174.48433299999988,
+            "id": "dawn-call-c2911285-60a8-4cba-be1b-a22719d8cd5f-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-c2911285-60a8-4cba-be1b-a22719d8cd5f-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 80,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 24.030457999999953,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 159.58579199999986,
+            "id": "dawn-call-7a4924f6-a14a-46e6-a4c1-100a2552a3f9-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 195.25966700000004
+          },
+          {
+            "event": "caller-settled",
+            "ms": 196.06058299999995
+          },
+          {
+            "event": "response-close",
+            "ms": 214.46745799999985,
+            "id": "dawn-call-7a4924f6-a14a-46e6-a4c1-100a2552a3f9-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 218.441417,
+            "id": "dawn-call-7a4924f6-a14a-46e6-a4c1-100a2552a3f9-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-7a4924f6-a14a-46e6-a4c1-100a2552a3f9-1"
+        ],
+        "closedWaits": [
+          "dawn-call-7a4924f6-a14a-46e6-a4c1-100a2552a3f9-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 81,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.889499999999998,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 159.517875,
+            "id": "dawn-call-29fcabae-870b-4ade-9b46-c2ac6213bddb-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 208.33041700000012
+          },
+          {
+            "event": "caller-settled",
+            "ms": 209.04862500000013
+          },
+          {
+            "event": "response-close",
+            "ms": 212.53654200000005,
+            "id": "dawn-call-29fcabae-870b-4ade-9b46-c2ac6213bddb-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-29fcabae-870b-4ade-9b46-c2ac6213bddb-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 82,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 20.751500000000078,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 134.31829099999982,
+            "id": "dawn-call-26964d0b-f296-4740-bc3c-5307de2d0893-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 223.39766599999984
+          },
+          {
+            "event": "caller-settled",
+            "ms": 223.98349999999982
+          },
+          {
+            "event": "response-close",
+            "ms": 243.2183329999998,
+            "id": "dawn-call-26964d0b-f296-4740-bc3c-5307de2d0893-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-26964d0b-f296-4740-bc3c-5307de2d0893-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 83,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 15.331166000000167,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 118.11583300000007,
+            "id": "dawn-call-717e09d1-1558-4351-8fac-8e81e1f02f50-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 213.0970830000001
+          },
+          {
+            "event": "caller-settled",
+            "ms": 213.754958
+          },
+          {
+            "event": "response-close",
+            "ms": 226.90325000000007,
+            "id": "dawn-call-717e09d1-1558-4351-8fac-8e81e1f02f50-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-717e09d1-1558-4351-8fac-8e81e1f02f50-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 84,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 26.83445800000004,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 113.59145899999999,
+            "id": "dawn-call-1a1b6a64-32d8-4d36-bf8d-0bc02a1891e1-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 195.57770900000014
+          },
+          {
+            "event": "caller-settled",
+            "ms": 196.76904200000013
+          },
+          {
+            "event": "response-close",
+            "ms": 222.37070900000003,
+            "id": "dawn-call-1a1b6a64-32d8-4d36-bf8d-0bc02a1891e1-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-1a1b6a64-32d8-4d36-bf8d-0bc02a1891e1-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 85,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.901000000000067,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 97.47612500000014,
+            "id": "dawn-call-e1d57f80-dc79-4a09-806f-0c22ca4fe4c4-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 180.11787500000014
+          },
+          {
+            "event": "caller-settled",
+            "ms": 180.66883300000018
+          },
+          {
+            "event": "response-close",
+            "ms": 190.43666600000006,
+            "id": "dawn-call-e1d57f80-dc79-4a09-806f-0c22ca4fe4c4-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-e1d57f80-dc79-4a09-806f-0c22ca4fe4c4-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 86,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.172917000000098,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 125.01241600000003,
+            "id": "dawn-call-201e86c6-2fd3-4f42-a35e-1884ec23d914-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 197.1011249999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 197.69650000000001
+          },
+          {
+            "event": "response-close",
+            "ms": 207.04308300000002,
+            "id": "dawn-call-201e86c6-2fd3-4f42-a35e-1884ec23d914-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-201e86c6-2fd3-4f42-a35e-1884ec23d914-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 87,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 6.011291000000028,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 98.62820800000009,
+            "id": "dawn-call-25ec29a9-3928-4971-bda9-61b924eb994e-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 183.1417080000001
+          },
+          {
+            "event": "caller-settled",
+            "ms": 183.74108300000012
+          },
+          {
+            "event": "response-close",
+            "ms": 185.654583,
+            "id": "dawn-call-25ec29a9-3928-4971-bda9-61b924eb994e-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 187.20466699999997,
+            "id": "dawn-call-25ec29a9-3928-4971-bda9-61b924eb994e-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-25ec29a9-3928-4971-bda9-61b924eb994e-1"
+        ],
+        "closedWaits": [
+          "dawn-call-25ec29a9-3928-4971-bda9-61b924eb994e-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 88,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 16.290542000000187,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 108.89454099999989,
+            "id": "dawn-call-d791b0ba-53d0-4547-8240-903f170c280e-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 128.422916
+          },
+          {
+            "event": "caller-settled",
+            "ms": 129.09445800000003
+          },
+          {
+            "event": "response-close",
+            "ms": 131.8114579999999,
+            "id": "dawn-call-d791b0ba-53d0-4547-8240-903f170c280e-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-d791b0ba-53d0-4547-8240-903f170c280e-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 89,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.530124999999998,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 107.80270799999994,
+            "id": "dawn-call-10e565d9-7f6f-4404-ab44-1b10bf00765d-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 149.7992079999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 150.31041699999992
+          },
+          {
+            "event": "response-close",
+            "ms": 165.20641699999987,
+            "id": "dawn-call-10e565d9-7f6f-4404-ab44-1b10bf00765d-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-10e565d9-7f6f-4404-ab44-1b10bf00765d-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 90,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.192125000000033,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 57.2153330000001,
+            "id": "dawn-call-a4b66afa-79cc-49b2-b4d1-7d2d5980a814-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 101.45924999999988
+          },
+          {
+            "event": "caller-settled",
+            "ms": 101.98858300000006
+          },
+          {
+            "event": "response-close",
+            "ms": 111.32999999999993,
+            "id": "dawn-call-a4b66afa-79cc-49b2-b4d1-7d2d5980a814-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-a4b66afa-79cc-49b2-b4d1-7d2d5980a814-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 91,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 10.036833999999999,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 58.40054199999986,
+            "id": "dawn-call-9e1feb8f-9bb4-4bd2-aefb-d2e0028150d3-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 120.41966699999989
+          },
+          {
+            "event": "caller-settled",
+            "ms": 121.01587499999982
+          },
+          {
+            "event": "response-close",
+            "ms": 130.19720899999993,
+            "id": "dawn-call-9e1feb8f-9bb4-4bd2-aefb-d2e0028150d3-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-9e1feb8f-9bb4-4bd2-aefb-d2e0028150d3-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 92,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 20.14108299999998,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 65.22916699999996,
+            "id": "dawn-call-e4985990-3c93-4920-b604-70c91a81da42-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 139.9937080000002
+          },
+          {
+            "event": "caller-settled",
+            "ms": 140.95558300000016
+          },
+          {
+            "event": "response-close",
+            "ms": 159.93541699999992,
+            "id": "dawn-call-e4985990-3c93-4920-b604-70c91a81da42-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-e4985990-3c93-4920-b604-70c91a81da42-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 93,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 12.591082999999799,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 64.51174999999989,
+            "id": "dawn-call-f0344c28-f1e6-409a-9bc7-1de283c416f6-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 145.64766699999973
+          },
+          {
+            "event": "caller-settled",
+            "ms": 146.23587499999985
+          },
+          {
+            "event": "response-close",
+            "ms": 157.96233299999994,
+            "id": "dawn-call-f0344c28-f1e6-409a-9bc7-1de283c416f6-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-f0344c28-f1e6-409a-9bc7-1de283c416f6-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 94,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 7.9376250000000255,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 63.17537500000003,
+            "id": "dawn-call-ff18cc6a-64c3-405e-b7e7-d0a4d188d9ac-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 139.681333
+          },
+          {
+            "event": "caller-settled",
+            "ms": 140.15137499999992
+          },
+          {
+            "event": "response-close",
+            "ms": 147.188666,
+            "id": "dawn-call-ff18cc6a-64c3-405e-b7e7-d0a4d188d9ac-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-ff18cc6a-64c3-405e-b7e7-d0a4d188d9ac-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 95,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.591917000000194,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 74.46349999999984,
+            "id": "dawn-call-029ecb14-824f-429e-b649-ebc65e86e58e-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 140.4972499999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 141.00599999999986
+          },
+          {
+            "event": "response-close",
+            "ms": 142.431959,
+            "id": "dawn-call-029ecb14-824f-429e-b649-ebc65e86e58e-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 145.7306249999997,
+            "id": "dawn-call-029ecb14-824f-429e-b649-ebc65e86e58e-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-029ecb14-824f-429e-b649-ebc65e86e58e-1"
+        ],
+        "closedWaits": [
+          "dawn-call-029ecb14-824f-429e-b649-ebc65e86e58e-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 96,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 11.71158400000013,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 105.5200420000001,
+            "id": "dawn-call-cdd284a4-6a79-4ed6-85b9-23c484bf6615-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 145.56395900000007
+          },
+          {
+            "event": "caller-settled",
+            "ms": 146.0799589999997
+          },
+          {
+            "event": "response-close",
+            "ms": 157.25337499999978,
+            "id": "dawn-call-cdd284a4-6a79-4ed6-85b9-23c484bf6615-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-cdd284a4-6a79-4ed6-85b9-23c484bf6615-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 97,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 17.2686249999997,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 82.25587499999983,
+            "id": "dawn-call-2a0ca94e-e49b-436e-bf44-f69a936a243d-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 116.49362500000007
+          },
+          {
+            "event": "caller-settled",
+            "ms": 116.96662500000002
+          },
+          {
+            "event": "response-close",
+            "ms": 133.44562499999984,
+            "id": "dawn-call-2a0ca94e-e49b-436e-bf44-f69a936a243d-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-2a0ca94e-e49b-436e-bf44-f69a936a243d-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 98,
+      "streaming": true,
+      "releasedWithin1000ms": true,
+      "releaseMs": 5.482124999999996,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 82.42329199999995,
+            "id": "dawn-call-d6900316-c280-4a4f-909e-fa872d6d54be-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 130.33149999999978
+          },
+          {
+            "event": "caller-settled",
+            "ms": 130.93112500000007
+          },
+          {
+            "event": "response-close",
+            "ms": 132.93766700000015,
+            "id": "dawn-call-d6900316-c280-4a4f-909e-fa872d6d54be-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 134.42141700000002,
+            "id": "dawn-call-d6900316-c280-4a4f-909e-fa872d6d54be-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-d6900316-c280-4a4f-909e-fa872d6d54be-1"
+        ],
+        "closedWaits": [
+          "dawn-call-d6900316-c280-4a4f-909e-fa872d6d54be-1"
+        ],
+        "pending": []
+      }
+    },
+    {
+      "iteration": 99,
+      "streaming": false,
+      "releasedWithin1000ms": true,
+      "releaseMs": 12.087833000000046,
+      "observedClosed": true,
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 64.48987500000021,
+            "id": "dawn-call-49fb6b37-ec1f-4f1f-baeb-54dee3006aae-1"
+          },
+          {
+            "event": "caller-abort",
+            "ms": 79.63162499999999
+          },
+          {
+            "event": "caller-settled",
+            "ms": 80.59579100000019
+          },
+          {
+            "event": "response-close",
+            "ms": 91.51920800000016,
+            "id": "dawn-call-49fb6b37-ec1f-4f1f-baeb-54dee3006aae-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [],
+        "closedWaits": [
+          "dawn-call-49fb6b37-ec1f-4f1f-baeb-54dee3006aae-1"
+        ],
+        "pending": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/visual.spec.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/visual-remediation-output
+
+Running 14 tests using 1 worker
+
+(node:12095) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65006/51793c82-8b07-40f0-8d78-d0481dd7d54b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/visual.spec.ts:289:5 › 空态 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65020/6b3e0191-383e-4b6d-a64d-76daf7b309ff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/visual.spec.ts:289:5 › 对话 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65030/187bb2bd-261c-48da-af34-0c91570d05a7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/visual.spec.ts:289:5 › 设置 · 亮色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65042/251fa168-66d0-42f0-9543-a18fce44e810
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/visual.spec.ts:289:5 › 命令面板 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65050/e20c1f81-2620-45fe-a22b-39355aae3246
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/visual.spec.ts:289:5 › 概览 · 亮色 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65070/cbcfa179-4014-4f46-8762-e5a6871805ac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/visual.spec.ts:289:5 › 设置栏 · 亮色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65078/b4bcf52e-25b9-4802-84ee-657b25ead3f3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘   7 e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 (3.3s)
+(node:12422) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65100/4c81d06c-7ec8-4ee6-9d8a-adb85fda8326
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/visual.spec.ts:289:5 › 空态 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65114/437c3fde-c95d-4aa6-bab8-d0f1c5d3be70
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/visual.spec.ts:289:5 › 对话 · 暗色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65127/f7d4c30b-c6f8-4297-bb42-b8fed0a8760a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/visual.spec.ts:289:5 › 设置 · 暗色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65136/e2851edb-2e4b-46dc-860c-f7c1edbc49fd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/visual.spec.ts:289:5 › 命令面板 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65147/520056eb-8492-47e3-9385-68ccec74fed4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/visual.spec.ts:289:5 › 概览 · 暗色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65159/d3da99a8-ee58-409d-8599-53900d301110
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/visual.spec.ts:289:5 › 设置栏 · 暗色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65168/40cd24ea-184b-4a3c-93a4-f3d56985844b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  14 e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 (3.3s)
+
+
+  1) e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 ─────────────────────────────────────────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      17773 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: 坞里的对话-亮色.png
+
+    Call log:
+      - Expect "toHaveScreenshot(坞里的对话-亮色.png)" with timeout 25000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 17773 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 17773 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      345 |       await page.mouse.move(0, 0)
+      346 |
+    > 347 |       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {
+          |                          ^
+      348 |         animations: "disabled",
+      349 |         caret: "hide",
+      350 |         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts:347:26
+
+    attachment #1: 坞里的对话-亮色 (image/png) ────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/坞里的对话-亮色-darwin.png
+    Received: docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/坞里的对话-亮色-actual.png
+    Diff:     docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/坞里的对话-亮色-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 ─────────────────────────────────────────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      18411 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: 坞里的对话-暗色.png
+
+    Call log:
+      - Expect "toHaveScreenshot(坞里的对话-暗色.png)" with timeout 25000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 18411 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 18411 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      345 |       await page.mouse.move(0, 0)
+      346 |
+    > 347 |       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {
+          |                          ^
+      348 |         animations: "disabled",
+      349 |         caret: "hide",
+      350 |         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts:347:26
+
+    attachment #1: 坞里的对话-暗色 (image/png) ────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/坞里的对话-暗色-darwin.png
+    Received: docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/坞里的对话-暗色-actual.png
+    Diff:     docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/坞里的对话-暗色-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 ──────────────────────────────────────────────────────────
+    e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 ──────────────────────────────────────────────────────────
+  12 passed (31.8s)

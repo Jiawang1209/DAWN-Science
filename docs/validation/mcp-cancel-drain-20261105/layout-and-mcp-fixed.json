@@ -1,0 +1,1009 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/chat-column-narrow.spec.ts",
+      "e2e/chat-column.spec.ts",
+      "e2e/composer-layout.spec.ts",
+      "e2e/mcp-cancellation.spec.ts",
+      "e2e/terminal-images.spec.ts",
+      "e2e/upload-experience.spec.ts",
+      "--workers=1",
+      "--update-snapshots=none",
+      "--reporter=list,json",
+      "--output=docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "chat-column-narrow.spec.ts",
+      "file": "chat-column-narrow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "narrow and regular conversation columns keep the agent, user and composer edges aligned",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2111,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "THREAD_COLUMN_GEOMETRY [{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1280,\"agent\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":375,\"right\":1157,\"width\":782,\"offsetWidth\":782,\"clientWidth\":782,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":782,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1264,\"width\":996,\"offsetWidth\":996,\"clientWidth\":996,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1232,\"width\":932,\"offsetWidth\":932,\"clientWidth\":910,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}}]\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56657/d5184d85-6c7d-445f-98c1-f5aca1398c5e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:24.406Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "column-geometry",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0sCiAgewogICAgInZpZXdwb3J0IjogMTI4MCwKICAgICJhZ2VudCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidXNlciI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY29tcG9zZXIiOiB7CiAgICAgICJsZWZ0IjogMzc1LAogICAgICAicmlnaHQiOiAxMTU3LAogICAgICAid2lkdGgiOiA3ODIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4MiwKICAgICAgImNsaWVudFdpZHRoIjogNzgyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMTJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMTJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY2FyZCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidHVybnMiOiB7CiAgICAgICJsZWZ0IjogMjY4LAogICAgICAicmlnaHQiOiAxMjY0LAogICAgICAid2lkdGgiOiA5OTYsCiAgICAgICJvZmZzZXRXaWR0aCI6IDk5NiwKICAgICAgImNsaWVudFdpZHRoIjogOTk2LAogICAgICAicGFkZGluZ0xlZnQiOiAiMzJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMzJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAiY2xpcCIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAic2Nyb2xsIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTIzMiwKICAgICAgIndpZHRoIjogOTMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA5MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDkxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJzdGFibGUgYm90aC1lZGdlcyIsCiAgICAgICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiaW5uZXIiOiB7CiAgICAgICJsZWZ0IjogMzc0LAogICAgICAicmlnaHQiOiAxMTU4LAogICAgICAid2lkdGgiOiA3ODQsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4NCwKICAgICAgImNsaWVudFdpZHRoIjogNzg0LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9CiAgfQpd"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c83a9b236b3c975a1ce8-b0b44a724d413513e9fa",
+          "file": "chat-column-narrow.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "chat-column.spec.ts",
+      "file": "chat-column.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "**正文、气泡、输入卡在同一条左右缘上**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1685,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56680/02f1fed8-fd4a-4f96-ab24-0c80748b59e4\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:26.541Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3fd0c06692ac60418806-421c54286cbd8ca285af",
+          "file": "chat-column.spec.ts",
+          "line": 24,
+          "column": 1
+        },
+        {
+          "title": "**窗口放大时这一栏跟着放大，封顶，三条边仍对齐**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3265,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「量一下宽窗口」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56690/a63e2314-5b5c-45fb-b4cc-a8cd7840e4a1\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:28.231Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3fd0c06692ac60418806-4fadef5848a3d75203f0",
+          "file": "chat-column.spec.ts",
+          "line": 70,
+          "column": 1
+        },
+        {
+          "title": "**用户气泡四角一样圆、底色不是侧栏灰**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1643,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56707/9130dcee-473b-4034-bbdf-1e2e20930b39\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:31.501Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3fd0c06692ac60418806-a34619b22577732c6713",
+          "file": "chat-column.spec.ts",
+          "line": 110,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "命令行的宽度",
+          "file": "chat-column.spec.ts",
+          "line": 147,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**工具调用那一行不比回复更宽**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1644,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:56718/059ccddf-0051-481b-82e1-9e53bf588a9a\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T16:56:33.149Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "3fd0c06692ac60418806-75b754c425375d636f9f",
+              "file": "chat-column.spec.ts",
+              "line": 161,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "composer-layout.spec.ts",
+      "file": "composer-layout.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "首页添加菜单支持键盘，方案状态可见，草稿不丢失",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2506,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56734/61153f7b-25c2-46eb-afe9-08330d61c98b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:34.807Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "90b240e6087589279978-bbf18175e0c2e54d7638",
+          "file": "composer-layout.spec.ts",
+          "line": 47,
+          "column": 1
+        },
+        {
+          "title": "项目目录、文件选择、方案提交、普通发送与亮暗主题",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3230,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56750/e9939a7a-7501-4628-b615-6228d553ceff\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:37.318Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "90b240e6087589279978-1f28201e0240bbcfff93",
+          "file": "composer-layout.spec.ts",
+          "line": 112,
+          "column": 1
+        },
+        {
+          "title": "主侧对话输入区在窄栏可操作且不横向溢出",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3841,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56763/7843f804-344a-427c-9e41-ddbd7c68e5ca\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:40.553Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "90b240e6087589279978-4a4307c44cfff71a4099",
+          "file": "composer-layout.spec.ts",
+          "line": 160,
+          "column": 1
+        },
+        {
+          "title": "终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6385,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「上下文配色检查」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TCPSocketWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56788/bfc265a9-8889-4ac8-9b6a-20807eaff830\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TCPSocketWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TCPSocketWrap\"]}\n[DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TCPSocketWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:44.399Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "90b240e6087589279978-4387d28f0111c60e2f29",
+          "file": "composer-layout.spec.ts",
+          "line": 220,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mcp-cancellation.spec.ts",
+      "file": "mcp-cancellation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 1472,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('details.mcp-how')\nExpected: \u001b[32m\"\"\u001b[39m\nError: strict mode violation: locator('details.mcp-how') resolved to 2 elements:\n    1) <details open=\"\" class=\"mcp-how\">…</details> aka getByText('加一台 MCP 服务器粘贴服务器文档中的 JSON')\n    2) <details class=\"mcp-how\">…</details> aka getByText('配好之后怎么用？回到对话里说人话就行，不用记工具名。比如：查一下近五年「土地利用变化对土壤微生物多样性的影响」的综述， 挑三篇最相关的给我摘要，再按 APA')\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" with timeout 25000ms\u001b[22m\n\u001b[2m  - waiting for locator('details.mcp-how')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('details.mcp-how')\nExpected: \u001b[32m\"\"\u001b[39m\nError: strict mode violation: locator('details.mcp-how') resolved to 2 elements:\n    1) <details open=\"\" class=\"mcp-how\">…</details> aka getByText('加一台 MCP 服务器粘贴服务器文档中的 JSON')\n    2) <details class=\"mcp-how\">…</details> aka getByText('配好之后怎么用？回到对话里说人话就行，不用记工具名。比如：查一下近五年「土地利用变化对土壤微生物多样性的影响」的综述， 挑三篇最相关的给我摘要，再按 APA')\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" with timeout 25000ms\u001b[22m\n\u001b[2m  - waiting for locator('details.mcp-how')\u001b[22m\n\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts:29:51",
+                    "location": {
+                      "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts",
+                      "column": 51,
+                      "line": 29
+                    },
+                    "snippet": "  27 |     // This fixture has no servers, so the native details starts open. Wait\n  28 |     // for the MCP page commit instead of toggling it based on an early query.\n> 29 |     await expect(page.locator('details.mcp-how')).toHaveAttribute('open', '')\n     |                                                   ^\n  30 |     const config = page.getByRole('textbox', { name: 'MCP 服务器的 JSON 配置' })\n  31 |     await expect(config).toBeVisible()\n  32 |     await config.fill(JSON.stringify({ mcpServers: { cancelprobe: f.config } }))"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts",
+                        "column": 51,
+                        "line": 29
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('details.mcp-how')\nExpected: \u001b[32m\"\"\u001b[39m\nError: strict mode violation: locator('details.mcp-how') resolved to 2 elements:\n    1) <details open=\"\" class=\"mcp-how\">…</details> aka getByText('加一台 MCP 服务器粘贴服务器文档中的 JSON')\n    2) <details class=\"mcp-how\">…</details> aka getByText('配好之后怎么用？回到对话里说人话就行，不用记工具名。比如：查一下近五年「土地利用变化对土壤微生物多样性的影响」的综述， 挑三篇最相关的给我摘要，再按 APA')\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" with timeout 25000ms\u001b[22m\n\u001b[2m  - waiting for locator('details.mcp-how')\u001b[22m\n\n\n  27 |     // This fixture has no servers, so the native details starts open. Wait\n  28 |     // for the MCP page commit instead of toggling it based on an early query.\n> 29 |     await expect(page.locator('details.mcp-how')).toHaveAttribute('open', '')\n     |                                                   ^\n  30 |     const config = page.getByRole('textbox', { name: 'MCP 服务器的 JSON 配置' })\n  31 |     await expect(config).toBeVisible()\n  32 |     await config.fill(JSON.stringify({ mcpServers: { cancelprobe: f.config } }))\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts:29:51"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56815/716ff03d-7735-497f-8a78-4bebd84dc51f\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:50.794Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts",
+                    "column": 51,
+                    "line": 29
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-2419e540dabf7edf1d66",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "terminal-images.spec.ts",
+      "file": "terminal-images.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7637,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"PipeWrap\",\"TCPSocketWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56834/610ed88b-d372-4e6b-bf21-dfb96d69037a\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"PipeWrap\",\"TCPSocketWrap\",\"Timeout\",\"Timeout\",\"Timeout\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:56:52.588Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fc156dce60c10bef0155-5377f3d90d9de190cd90",
+          "file": "terminal-images.spec.ts",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "dragged images can be removed, are not added to the hidden composer, and Normal does not attach",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5548,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56867/e7e1f979-bfa3-48e8-a682-7c88710e5e90\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"Timeout\",\"Timeout\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:57:00.243Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fc156dce60c10bef0155-990ec50e3c529eacad6b",
+          "file": "terminal-images.spec.ts",
+          "line": 65,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "output pictures",
+          "file": "terminal-images.spec.ts",
+          "line": 80,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders verified image files returned by the Agent and opens their full preview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4541,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:56910/b22526e9-ec8b-4f32-b04a-9c5008c8a8e0\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"PipeWrap\",\"Timeout\",\"Timeout\",\"Timeout\",\"Timeout\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T16:57:05.796Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc156dce60c10bef0155-6aaf2970839c76450d8b",
+              "file": "terminal-images.spec.ts",
+              "line": 82,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "picture capability",
+          "file": "terminal-images.spec.ts",
+          "line": 97,
+          "column": 6,
+          "specs": [
+            {
+              "title": "rejects attachment explicitly when neither the selected model nor a visual service can read it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4291,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"PipeWrap\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:56936/42cabb72-907e-4aff-a2b6-929d9a99be2a\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"TTYWrap\",\"PipeWrap\",\"Timeout\",\"Timeout\",\"Timeout\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                        },
+                        {
+                          "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T16:57:10.342Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc156dce60c10bef0155-396f7bd756c2779f47ee",
+              "file": "terminal-images.spec.ts",
+              "line": 99,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "upload-experience.spec.ts",
+      "file": "upload-experience.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10411,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"before-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:56955/643c40bb-f2e6-4da3-983a-facb2e5a887c\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"will-quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"process-exit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    },
+                    {
+                      "text": "[主进程] [DAWN_EXIT_DIAG] {\"event\":\"quit\",\"resources\":[\"PipeWrap\",\"PipeWrap\",\"PipeWrap\",\"Timeout\"]}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:57:14.646Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4a26a44ed8fa386c4a60-3bb958ff1cc2a5831c15",
+          "file": "upload-experience.spec.ts",
+          "line": 60,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T16:56:23.809Z",
+    "duration": 61276.955,
+    "expected": 14,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

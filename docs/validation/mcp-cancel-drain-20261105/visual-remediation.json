@@ -1,0 +1,778 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/visual.spec.ts",
+      "--workers=1",
+      "--update-snapshots=none",
+      "--reporter=list,json",
+      "--output=docs/validation/mcp-cancel-drain-20261105/visual-remediation-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "visual.spec.ts",
+      "file": "visual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "空态 · 亮色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1935,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65006/51793c82-8b07-40f0-8d78-d0481dd7d54b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:45.704Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-8ffaccb0cefcd4fb3a8c",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "对话 · 亮色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2228,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65020/6b3e0191-383e-4b6d-a64d-76daf7b309ff\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:47.657Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-80a45f589c451fc4abb9",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "设置 · 亮色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1993,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65030/187bb2bd-261c-48da-af34-0c91570d05a7\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:49.890Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-a5808a3e99ef99eab48d",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "命令面板 · 亮色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1879,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65042/251fa168-66d0-42f0-9543-a18fce44e810\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:51.887Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-cb821b9139e047d096b9",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "概览 · 亮色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2138,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65050/e20c1f81-2620-45fe-a22b-39355aae3246\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:53.771Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-c77a0d8a3f02d7f1bce9",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "设置栏 · 亮色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1969,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65070/cbcfa179-4014-4f46-8762-e5a6871805ac\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:55.914Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-fa1adc6d2e48cc142d8d",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "坞里的对话 · 亮色",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3291,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  17773 pixels (ratio 0.02 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 17773 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 17773 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  17773 pixels (ratio 0.02 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 17773 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 17773 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts:347:26",
+                    "location": {
+                      "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts",
+                      "column": 26,
+                      "line": 347
+                    },
+                    "snippet": "  345 |       await page.mouse.move(0, 0)\n  346 |\n> 347 |       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {\n      |                          ^\n  348 |         animations: \"disabled\",\n  349 |         caret: \"hide\",\n  350 |         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts",
+                        "column": 26,
+                        "line": 347
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  17773 pixels (ratio 0.02 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 17773 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 17773 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\n\n  345 |       await page.mouse.move(0, 0)\n  346 |\n> 347 |       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {\n      |                          ^\n  348 |         animations: \"disabled\",\n  349 |         caret: \"hide\",\n  350 |         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts:347:26"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65078/b4bcf52e-25b9-4802-84ee-657b25ead3f3\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:13:57.888Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "坞里的对话-亮色-expected.png",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/__screenshots__/坞里的对话-亮色-darwin.png"
+                    },
+                    {
+                      "name": "坞里的对话-亮色-actual.png",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/坞里的对话-亮色-actual.png"
+                    },
+                    {
+                      "name": "坞里的对话-亮色-diff.png",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/坞里的对话-亮色-diff.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-亮色/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts",
+                    "column": 26,
+                    "line": 347
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-f3e56f4b42cf9d9339a1",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "空态 · 暗色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1939,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65100/4c81d06c-7ec8-4ee6-9d8a-adb85fda8326\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:01.504Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-67a6817891bd0ef999eb",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "对话 · 暗色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2241,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65114/437c3fde-c95d-4aa6-bab8-d0f1c5d3be70\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:03.463Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-5b001c49baf965f2c5ff",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "设置 · 暗色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2046,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65127/f7d4c30b-c6f8-4297-bb42-b8fed0a8760a\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:05.709Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-a2a5ccafea7d12f7ceaa",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "命令面板 · 暗色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1886,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65136/e2851edb-2e4b-46dc-860c-f7c1edbc49fd\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:07.760Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-38c7d5fbc3f8c8eff266",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "概览 · 暗色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2168,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65147/520056eb-8492-47e3-9385-68ccec74fed4\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:09.650Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-456f78709db1061a7be5",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "设置栏 · 暗色",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1963,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65159/d3da99a8-ee58-409d-8599-53900d301110\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:11.823Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-952a8ae472b6017ca876",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        },
+        {
+          "title": "坞里的对话 · 暗色",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3281,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  18411 pixels (ratio 0.02 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 18411 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 18411 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  18411 pixels (ratio 0.02 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 18411 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 18411 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts:347:26",
+                    "location": {
+                      "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts",
+                      "column": 26,
+                      "line": 347
+                    },
+                    "snippet": "  345 |       await page.mouse.move(0, 0)\n  346 |\n> 347 |       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {\n      |                          ^\n  348 |         animations: \"disabled\",\n  349 |         caret: \"hide\",\n  350 |         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts",
+                        "column": 26,
+                        "line": 347
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  18411 pixels (ratio 0.02 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 18411 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 18411 pixels (ratio 0.02 of all image pixels) are different.\u001b[22m\n\n\n  345 |       await page.mouse.move(0, 0)\n  346 |\n> 347 |       await expect(page).toHaveScreenshot(`${screen.name}-${theme}.png`, {\n      |                          ^\n  348 |         animations: \"disabled\",\n  349 |         caret: \"hide\",\n  350 |         // **唯一跟墙上时钟走的东西。** 遮掉它，也就等于声明这一小块不在覆盖范围内\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts:347:26"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:65168/40cd24ea-184b-4a3c-93a4-f3d56985844b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T17:14:13.790Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "坞里的对话-暗色-expected.png",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/__screenshots__/坞里的对话-暗色-darwin.png"
+                    },
+                    {
+                      "name": "坞里的对话-暗色-actual.png",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/坞里的对话-暗色-actual.png"
+                    },
+                    {
+                      "name": "坞里的对话-暗色-diff.png",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/坞里的对话-暗色-diff.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/visual-remediation-output/visual-坞里的对话-·-暗色/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/visual.spec.ts",
+                    "column": 26,
+                    "line": 347
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-9a73aab590ecadc7cfa4",
+          "file": "visual.spec.ts",
+          "line": 289,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T17:13:45.288Z",
+    "duration": 31806.975000000002,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

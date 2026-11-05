@@ -1,0 +1,142 @@
+{
+  "exit-diagnostics-focused": {
+    "events": {
+      "attached": 5,
+      "close-requested": 5,
+      "app-event": 20,
+      "stderr-end": 5,
+      "stdout-end": 5,
+      "stdout-close": 5,
+      "stderr-close": 5,
+      "child-exit": 5,
+      "child-close": 5
+    },
+    "exitCodes": {
+      "0": 5
+    },
+    "signals": {
+      "None": 5
+    },
+    "maxCloseMs": 452.96470899999986
+  },
+  "exit-diagnostics-focused-final": {
+    "events": {
+      "attached": 45,
+      "close-requested": 45,
+      "app-event": 180,
+      "stderr-end": 45,
+      "stdout-end": 45,
+      "child-exit": 45,
+      "stdout-close": 45,
+      "stderr-close": 45,
+      "child-close": 45
+    },
+    "exitCodes": {
+      "0": 45
+    },
+    "signals": {
+      "None": 45
+    },
+    "maxCloseMs": 488.5998330000002
+  },
+  "exit-diagnostics-full": {
+    "events": {
+      "attached": 370,
+      "close-requested": 370,
+      "app-event": 1480,
+      "stderr-end": 370,
+      "stdout-end": 370,
+      "child-exit": 370,
+      "stdout-close": 370,
+      "stderr-close": 370,
+      "child-close": 370
+    },
+    "exitCodes": {
+      "0": 370
+    },
+    "signals": {
+      "None": 370
+    },
+    "maxCloseMs": 422.34458299999824
+  },
+  "exit-diagnostics-release-final": {
+    "events": {
+      "attached": 40,
+      "close-requested": 40,
+      "app-event": 160,
+      "stderr-end": 40,
+      "stdout-end": 40,
+      "child-exit": 40,
+      "stdout-close": 40,
+      "stderr-close": 40,
+      "child-close": 40
+    },
+    "exitCodes": {
+      "0": 40
+    },
+    "signals": {
+      "None": 40
+    },
+    "maxCloseMs": 190.70837500000016
+  },
+  "exit-diagnostics-remediation": {
+    "events": {
+      "attached": 15,
+      "close-requested": 15,
+      "app-event": 60,
+      "stderr-end": 15,
+      "stdout-end": 15,
+      "child-exit": 15,
+      "stdout-close": 15,
+      "stderr-close": 15,
+      "child-close": 15
+    },
+    "exitCodes": {
+      "0": 15
+    },
+    "signals": {
+      "None": 15
+    },
+    "maxCloseMs": 391.7407089999997
+  },
+  "exit-diagnostics-verified-all": {
+    "events": {
+      "attached": 941,
+      "close-requested": 941,
+      "app-event": 3764,
+      "stderr-end": 941,
+      "stdout-end": 941,
+      "child-exit": 941,
+      "stdout-close": 941,
+      "stderr-close": 941,
+      "child-close": 941
+    },
+    "exitCodes": {
+      "0": 941
+    },
+    "signals": {
+      "None": 941
+    },
+    "maxCloseMs": 488.53095800004667
+  },
+  "exit-diagnostics-accepted-final": {
+    "events": {
+      "attached": 942,
+      "close-requested": 942,
+      "app-event": 3768,
+      "stderr-end": 942,
+      "stdout-end": 942,
+      "child-exit": 942,
+      "stdout-close": 942,
+      "stderr-close": 942,
+      "child-close": 942
+    },
+    "exitCodes": {
+      "0": 942
+    },
+    "signals": {
+      "None": 942
+    },
+    "maxCloseMs": 495.41016700002365
+  }
+}

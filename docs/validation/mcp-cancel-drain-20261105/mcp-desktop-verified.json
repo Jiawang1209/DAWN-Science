@@ -1,0 +1,167 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/mcp-cancellation.spec.ts",
+      "--reporter=list,json",
+      "--update-snapshots=none",
+      "--output=docs/validation/mcp-cancel-drain-20261105/mcp-desktop-verified-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/mcp-desktop-verified-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "mcp-cancellation.spec.ts",
+      "file": "mcp-cancellation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3211,
+                  "error": {
+                    "message": "Error: electronApplication.evaluate: TypeError: A dynamic import callback was not specified.\n    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:18)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+                    "stack": "Error: electronApplication.evaluate: TypeError: A dynamic import callback was not specified.\n    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:18)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:18)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts:31:31",
+                    "location": {
+                      "file": "eval at evaluate (:311:30), <anonymous>",
+                      "column": 18,
+                      "line": 2
+                    }
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "eval at evaluate (:311:30), <anonymous>",
+                        "column": 18,
+                        "line": 2
+                      },
+                      "message": "Error: electronApplication.evaluate: TypeError: A dynamic import callback was not specified.\n    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:280:9)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:18)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:18)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts:31:31"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:60283/8fffcc76-5a97-4e0e-92c8-cdef44b66943\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T14:14:58.442Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/mcp-desktop-verified-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/mcp-desktop-verified-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/mcp-desktop-verified-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "eval at evaluate (:311:30), <anonymous>",
+                    "column": 18,
+                    "line": 2
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-2419e540dabf7edf1d66",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T14:14:57.945Z",
+    "duration": 3748.2019999999998,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

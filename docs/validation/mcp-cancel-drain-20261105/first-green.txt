@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/mcp/fetch-signal-lifetime.test.ts tests/mcp/http-recovery.test.ts tests/mcp/redirect.test.ts tests/mcp/requests.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science
+
+
+ Test Files  4 passed (4)
+      Tests  28 passed (28)
+   Start at  22:08:27
+   Duration  2.20s (transform 159ms, setup 0ms, import 756ms, tests 2.04s, environment 0ms)
+

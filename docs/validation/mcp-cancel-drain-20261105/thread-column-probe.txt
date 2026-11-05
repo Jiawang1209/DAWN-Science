@@ -1,0 +1,48 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/chat-column-narrow.spec.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/thread-column-probe-output
+
+Running 1 test using 1 worker
+
+(node:21909) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+THREAD_COLUMN_GEOMETRY [{"viewport":1080,"agent":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":301,"right":1031,"width":730,"offsetWidth":730,"clientWidth":730,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":730,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1064,"width":796,"offsetWidth":796,"clientWidth":796,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}},{"viewport":1280,"agent":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":375,"right":1157,"width":782,"offsetWidth":782,"clientWidth":782,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":782,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1264,"width":996,"offsetWidth":996,"clientWidth":996,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1232,"width":932,"offsetWidth":932,"clientWidth":910,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}}]
+[主进程] Debugger ending on ws://127.0.0.1:56120/bc9c7ee8-c6e2-4a6d-9eeb-af2a7a15abe0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/chat-column-narrow.spec.ts:3:1 › narrow and regular conversation columns keep the agent, user and composer edges aligned (2.1s)
+
+
+  1) e2e/chat-column-narrow.spec.ts:3:1 › narrow and regular conversation columns keep the agent, user and composer edges aligned 
+
+    Error: viewport 1080: left
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 2
+    Received:    10
+
+      26 |   console.log('THREAD_COLUMN_GEOMETRY', JSON.stringify(results))
+      27 |   for (const m of results) {
+    > 28 |     expect(Math.abs(m.agent.left - m.composer.left), `viewport ${m.viewport}: left`).toBeLessThanOrEqual(2)
+         |                                                                                      ^
+      29 |     expect(Math.abs(m.agent.right - m.composer.right), `viewport ${m.viewport}: right`).toBeLessThanOrEqual(2)
+      30 |     expect(Math.abs(m.user.right - m.composer.right), `viewport ${m.viewport}: user right`).toBeLessThanOrEqual(2)
+      31 |   }
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/chat-column-narrow.spec.ts:28:86
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/thread-column-probe-output/chat-column-narrow-narrow--ba908--and-composer-edges-aligned/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/thread-column-probe-output/chat-column-narrow-narrow--ba908--and-composer-edges-aligned/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/thread-column-probe-output/chat-column-narrow-narrow--ba908--and-composer-edges-aligned/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/thread-column-probe-output/chat-column-narrow-narrow--ba908--and-composer-edges-aligned/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/chat-column-narrow.spec.ts:3:1 › narrow and regular conversation columns keep the agent, user and composer edges aligned 

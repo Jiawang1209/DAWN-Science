@@ -1,0 +1,33 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test -c playwright.kernel.config.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/kernel-release-final-output
+
+Running 6 tests using 1 worker
+
+(node:3678) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63880/b1b80e16-f778-475d-9350-01a44d3c93f4
+[主进程] For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/kernel-session.spec.ts:43:3 › 内核会话 › 执行一段代码 → **结构化输出**出现在对话里 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63907/08c8ff80-66ba-4df7-8c08-5d0775c44139
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/kernel-session.spec.ts:156:3 › 内核执行的账本 › **跑挂的代码在账本上是 failed，且带着原因** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63929/78cfa4eb-fcca-4ea5-8422-e9837a703f5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/kernel-session.spec.ts:192:3 › 内核执行的账本 › **跑得通的代码是 completed** —— 不能一律记成失败 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63949/14b710a7-9862-4814-b4c5-ee3a7a1905aa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/kernel-session.spec.ts:226:3 › R 内核会话 › **同一条代码路径**：执行、报错、活会话、变量面板 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63982/d0e4f32a-3df1-4a9f-b304-3e5aa58a7406
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/kernel-session.spec.ts:282:3 › 由配置的解释器路径起内核 › **没配就明说没配，配完就能跑** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64011/c16376dd-0cfd-4f58-9072-5af65c223c29
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/kernel-session.spec.ts:377:3 › 内核会话 · ACP 借我们的内核 › **它跑的是我们的内核，账本上记的是「执行了一段代码」** (3.2s)
+
+  6 passed (15.8s)

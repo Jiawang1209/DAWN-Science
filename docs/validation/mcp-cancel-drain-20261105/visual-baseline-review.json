@@ -1,0 +1,16 @@
+[
+  {
+    "baseline": "e2e/__screenshots__/坞里的对话-亮色-darwin.png",
+    "beforeSha256": "a1dd2e26a68838146e812a99c62308a490c59ccafa05efe29aab7c60c2a2ee7f",
+    "afterSha256": "ef9e88f764afaa4935c34f4d7e6195b2eeb2bac04956b121f27fd8b3400a0ec1",
+    "changedPixels": 20861,
+    "outsideComposerAndExistingVersionRegion": 0
+  },
+  {
+    "baseline": "e2e/__screenshots__/坞里的对话-暗色-darwin.png",
+    "beforeSha256": "00aa8c1a115965648c34a729b4c682904afcfb318317f989e7e2bcf8c1df96b6",
+    "afterSha256": "81ef41b07ee42888b09846d5e552cfa9dbfc06654a05c58a245ee7b54e73b5c0",
+    "changedPixels": 21136,
+    "outsideComposerAndExistingVersionRegion": 0
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "path": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-frabFN",
+  "ownership": "Second complete run remote-kernel failure 491, recorded fixture profile",
+  "activeOwnedProcessMatches": [],
+  "openFiles": false,
+  "files": 56,
+  "bytes": 2174488,
+  "startupLogs": [
+    {
+      "source": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-frabFN/electron-user-data/startup.log",
+      "saved": "docs/validation/mcp-cancel-drain-20261105/failed-remote-startup.log",
+      "sha256": "32bb5b5b0540a2e4fd8601c9c93e0e390549e465b09e996f778cac54b8813bb2"
+    }
+  ],
+  "removedAtUtc": "2026-11-05T17:18:49.067797+00:00",
+  "removed": true
+}

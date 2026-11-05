@@ -1,0 +1,10 @@
+[
+  {
+    "name": "native",
+    "closedBeforeCleanup": false
+  },
+  {
+    "name": "safe",
+    "closedBeforeCleanup": false
+  }
+]

@@ -1,0 +1,510 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/files.spec.ts",
+      "e2e/kernel-settings.spec.ts",
+      "--grep",
+      "悬停文件弹信息卡|内核设置只有两组路径",
+      "--repeat-each=5",
+      "--workers=1",
+      "--update-snapshots=none",
+      "--reporter=list,json",
+      "--output=docs/validation/mcp-cancel-drain-20261105/layout-stable-recheck-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/layout-stable-recheck-output",
+        "repeatEach": 5,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "files.spec.ts",
+      "file": "files.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "**悬停文件弹信息卡；拖窄了时间戳也不折行**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3630,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50371/f7f2b771-0fa1-4dd1-bbb1-b142c9a231e3\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:23.193Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de639fdc719e2321283-8ebd2f6522fc0980dd53",
+          "file": "files.spec.ts",
+          "line": 448,
+          "column": 1
+        },
+        {
+          "title": "**悬停文件弹信息卡；拖窄了时间戳也不折行**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3593,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50403/0623520f-239d-44a7-b1a4-cb9a954659ab\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:29.697Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de639fdc719e2321283-63eadee2a13517a5c675",
+          "file": "files.spec.ts",
+          "line": 448,
+          "column": 1
+        },
+        {
+          "title": "**悬停文件弹信息卡；拖窄了时间戳也不折行**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3599,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50435/93e983b6-b82b-4c8f-8d09-7c57d03d1828\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:36.163Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de639fdc719e2321283-1dc30e860c9718f88d1d",
+          "file": "files.spec.ts",
+          "line": 448,
+          "column": 1
+        },
+        {
+          "title": "**悬停文件弹信息卡；拖窄了时间戳也不折行**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3848,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50468/0094ada9-becc-49d9-93da-e46571bc40c2\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:42.660Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de639fdc719e2321283-253c60e428c825d0d200",
+          "file": "files.spec.ts",
+          "line": 448,
+          "column": 1
+        },
+        {
+          "title": "**悬停文件弹信息卡；拖窄了时间戳也不折行**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3584,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50497/8442775a-2c60-4f55-8e6e-c31db8ef8fba\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:49.420Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de639fdc719e2321283-c27a9e35817445fefca4",
+          "file": "files.spec.ts",
+          "line": 448,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "kernel-settings.spec.ts",
+      "file": "kernel-settings.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2442,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50389/dd0c53cb-1262-425e-b006-6d921138de40\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:26.846Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d937b3dd9b73b9dc2618-d98b819927962226c287",
+          "file": "kernel-settings.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2438,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50415/485b59dc-530a-4d59-a23f-7f25e91e40cf\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:33.312Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d937b3dd9b73b9dc2618-55dd36de5408f885a299",
+          "file": "kernel-settings.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2437,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50450/58d9b546-271f-4965-93cf-01d592f39a80\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:39.784Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d937b3dd9b73b9dc2618-27d53a33a440723dc3c8",
+          "file": "kernel-settings.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2479,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50485/66445aa5-d186-4b3a-b75d-d22e29ff5063\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:46.531Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d937b3dd9b73b9dc2618-a5b9bc8a875e340d0523",
+          "file": "kernel-settings.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2457,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:50512/214b2415-dc1f-4adf-b121-c4d6a8bdd4a6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:02:53.027Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d937b3dd9b73b9dc2618-10204396478bd1e2a367",
+          "file": "kernel-settings.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T16:02:22.534Z",
+    "duration": 32962.491,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

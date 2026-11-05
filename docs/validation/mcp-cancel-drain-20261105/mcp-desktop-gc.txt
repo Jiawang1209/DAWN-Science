@@ -1,0 +1,48 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/mcp-cancellation.spec.ts --reporter=list,json --update-snapshots=none --output=docs/validation/mcp-cancel-drain-20261105/mcp-desktop-gc-output
+
+Running 1 test using 1 worker
+
+(node:34626) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60673/e900ed92-1b9f-42b3-8ef4-3f945e42994c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (26.0s)
+
+
+  1) e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 3
+
+    Call Log:
+    - Timeout 25000ms exceeded while waiting on the predicate
+
+      38 |     await page.getByRole('button', { name: '发送', exact: true }).click()
+      39 |     await expect.poll(() => f.calls).toContain('hold')
+    > 40 |     await expect.poll(() => app.evaluate(() => (globalThis as typeof globalThis & { __dawnMcpHeaderProbe?: { headers: number } }).__dawnMcpHeaderProbe?.headers)).toBe(1)
+         |                                                                                                                                                                   ^
+      41 |     const runtime = await app.evaluate(async () => {
+      42 |       const v8 = process.getBuiltinModule('node:v8'), vm = process.getBuiltinModule('node:vm')
+      43 |       v8.setFlagsFromString('--expose_gc')
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts:40:163
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/mcp-desktop-gc-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/mcp-desktop-gc-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/mcp-desktop-gc-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/mcp-desktop-gc-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable 

@@ -1,0 +1,69 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/context-compaction.spec.ts e2e/kernel-output-isolation.spec.ts e2e/mcp-cancellation.spec.ts e2e/terminal-shutdown.spec.ts --reporter=list,json --update-snapshots=none --output=docs/validation/mcp-cancel-drain-20261105/fixture-recheck-output
+
+Running 13 tests using 1 worker
+
+(node:15464) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61050/f2f6b6e6-ccf9-402e-8228-c1f68aad1f51
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/context-compaction.spec.ts:60:3 › 内置对话 › **仪表常驻**：说过一句之后写着比例（不是悬停才出现）；悬停看得到真数与自动压缩线，移开就收，点一下钉住 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61063/c69acfc0-249a-4f8a-b784-6490f21e08bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/context-compaction.spec.ts:85:3 › 内置对话 › **/compact**：不当一句话发；先出「正在压缩」，再收成压完的标记，写「你让压的」，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61077/07390240-3db6-41fc-92e7-8a63315157a0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/context-compaction.spec.ts:109:3 › 内置对话 › **⌘K「压缩上下文」**：内置对话里可用，按下去同样出一条「你让压的」标记 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61093/f83d7b1b-0a5c-4898-9b5f-72cc3f1372bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/context-compaction.spec.ts:124:3 › 内置对话 › **自动压缩出声**：「塞满上下文」那一轮收尾时 pi 自己压——标记写「自动：快到上限了」，不是失败 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61115/35459516-876f-4da1-93e4-6357cbe7348f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/context-compaction.spec.ts:139:3 › 内置对话 › **`/` 菜单里有「压缩上下文」**，选中写 `/compact `、不替人发 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61124/3c3bf533-52a3-4faa-ae4e-bf3377beba52
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/context-compaction.spec.ts:156:3 › 窄附栏 › **坞里的输入卡**：仪表在右侧模型前可用，权限在左侧，弹层留在窗口内 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61137/1ae2383f-80e4-4167-b2d8-1e2b09b75f6e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/context-compaction.spec.ts:194:3 › 窄附栏 › **主区（坞关着）也只写数**（2026-09-28 作者要的）：看得见「<1%」，名字仍是「上下文 <1%」 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61154/683c8208-687d-4236-8630-a5a619456014
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/context-compaction.spec.ts:224:3 › 外部 agent › **ACP 会话的仪表写「读不到」**，弹层说为什么、没有「现在压缩」；`/` 菜单里没有那一条；⌘K 那条列着但灰着、说为什么 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61164/7dbca907-54f2-4133-9491-fd965c5deed8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/context-compaction.spec.ts:247:3 › 外部 agent › **ACP 会话里 `/compact` 原样发给 agent**（它自己认这个命令），不出压缩标记 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61184/92c276aa-a68d-4f45-821a-70a34b78979f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/kernel-output-isolation.spec.ts:10:1 › 真实双内核连续重启 R 三次不重复转发、保留旧结果提示并正常退出 (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61278/3e367cca-1f4f-4001-9eb2-aaf74e96d7e6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61305/a5da34b1-9646-4912-b8eb-f514859ab617
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61331/d79c3f18-49f1-4cd5-93df-92281e9df1be
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/terminal-shutdown.spec.ts:13:3 › quitting with two live Normal terminals exits cleanly and reopening retains the conversations (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61340/6f8dfa31-8e80-496c-a6bc-5ed62aae0ef1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61386/5cb45464-b563-492e-b98c-0e94fd032098
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/terminal-shutdown.spec.ts:13:3 › quitting with two live DAWN terminals exits cleanly and reopening retains the conversations (10.6s)
+
+  13 passed (47.6s)

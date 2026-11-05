@@ -1,0 +1,57 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/files.spec.ts e2e/kernel-settings.spec.ts --grep 悬停文件弹信息卡|内核设置只有两组路径 --repeat-each=5 --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/layout-recheck-output
+
+Running 10 tests using 1 worker
+
+(node:29781) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50120/ecca2b83-1ae6-4d31-9555-1bc8ec5a71dd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50147/c36bc369-93ad-4233-89d3-c436ba57b64f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.3s)
+(node:30116) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50158/99d83ab0-22e6-49c8-861a-15bdae23d920
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50179/6df4cbc6-1a40-456b-936b-834798ef3d04
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.3s)
+(node:30365) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50196/3653e5cc-634d-43f4-ab84-000bf5cbe812
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50215/d489b43c-b5ac-4092-be04-d6299eeb1e4c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.3s)
+(node:30524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50226/48499f8b-346c-4d9d-a89b-a2039fff4c78
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50244/b55c0ca3-e6ca-4568-a94d-b972c871d16d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.3s)
+(node:30691) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50266/4797c2f6-3aaf-471a-b76b-dc29cad26022
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/files.spec.ts:448:1 › **悬停文件弹信息卡；拖窄了时间戳也不折行** (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50281/f7976a8e-7b71-47db-8c46-7d9778d9f21e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/kernel-settings.spec.ts:5:1 › 内核设置只有两组路径，手填保存和清空可回写，最窄栏无裁切 (2.3s)
+
+  10 passed (32.1s)

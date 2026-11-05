@@ -1,0 +1,175 @@
+{
+  "baseline-probe": {
+    "node": "22.23.0",
+    "undici": "6.27.0",
+    "rounds": 200,
+    "concurrency": 16,
+    "failures": 1,
+    "stillOpenBeforeCleanup": 1,
+    "maxReleaseMs": 6003.114208
+  },
+  "gc-probe": {
+    "node": "22.23.0",
+    "undici": "6.27.0",
+    "rounds": 30,
+    "concurrency": 8,
+    "forceGc": true,
+    "failures": 15,
+    "stillOpenBeforeCleanup": 15,
+    "maxReleaseMs": 6010.342874999999
+  },
+  "gc-fixed-probe": {
+    "node": "22.23.0",
+    "undici": "6.27.0",
+    "rounds": 30,
+    "concurrency": 8,
+    "forceGc": true,
+    "failures": 0,
+    "stillOpenBeforeCleanup": 0,
+    "maxReleaseMs": 47.852292000000034
+  },
+  "gc-stress-fixed": {
+    "node": "22.23.0",
+    "undici": "6.27.0",
+    "rounds": 200,
+    "concurrency": 16,
+    "forceGc": true,
+    "redirect": false,
+    "failures": 0,
+    "stillOpenBeforeCleanup": 0,
+    "maxReleaseMs": 232.87725
+  },
+  "redirect-gc-stress-fixed": {
+    "node": "22.23.0",
+    "undici": "6.27.0",
+    "rounds": 100,
+    "concurrency": 8,
+    "forceGc": true,
+    "redirect": true,
+    "failures": 0,
+    "stillOpenBeforeCleanup": 0,
+    "maxReleaseMs": 60.351125000000025
+  },
+  "normal-stress-fixed": {
+    "node": "22.23.0",
+    "undici": "6.27.0",
+    "rounds": 500,
+    "concurrency": 16,
+    "forceGc": false,
+    "redirect": false,
+    "failures": 0,
+    "stillOpenBeforeCleanup": 0,
+    "maxReleaseMs": 70.72720800000025
+  },
+  "desktopDemo": {
+    "runtime": {
+      "node": "24.22.1",
+      "electron": "43.8.4"
+    },
+    "forcedGc": true,
+    "releaseMs": 36.621374999999716,
+    "serverStreamClosed": true,
+    "sameSessionGeneration": 1,
+    "calls": [
+      "hold",
+      "echo"
+    ],
+    "snapshot": {
+      "timeline": [
+        {
+          "event": "hold",
+          "ms": 833.68975,
+          "id": "dawn-call-69558854-a1dc-42a1-9f15-a9f874d94fde-1"
+        },
+        {
+          "event": "response-close",
+          "ms": 970.4465,
+          "id": "dawn-call-69558854-a1dc-42a1-9f15-a9f874d94fde-1"
+        },
+        {
+          "event": "cancel-notification",
+          "ms": 979.1988340000003,
+          "id": "dawn-call-69558854-a1dc-42a1-9f15-a9f874d94fde-1"
+        }
+      ],
+      "calls": [
+        "hold",
+        "echo"
+      ],
+      "cancelled": [
+        "dawn-call-69558854-a1dc-42a1-9f15-a9f874d94fde-1"
+      ],
+      "closedWaits": [
+        "dawn-call-69558854-a1dc-42a1-9f15-a9f874d94fde-1"
+      ],
+      "pending": []
+    },
+    "boundary": "Real Electron and loopback HTTP; deterministic model, no external MCP or paid inference."
+  },
+  "pressureBoundary": "Each concurrent worker owns its own MCP pool/server; shared-session behavior remains covered by existing HTTP/SSE recovery tests.",
+  "finalDesktop": {
+    "startTime": "2026-11-05T17:17:13.599Z",
+    "duration": 2770683.182,
+    "expected": 920,
+    "skipped": 1,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "finalUnit": {
+    "filesPassed": 638,
+    "passed": 6313,
+    "skipped": 10
+  },
+  "separateKernel": {
+    "passed": 6
+  },
+  "finalDesktopDemo": {
+    "runtime": {
+      "node": "24.22.1",
+      "electron": "43.8.4"
+    },
+    "forcedGc": true,
+    "releaseMs": 56.15416599996388,
+    "serverStreamClosed": true,
+    "sameSessionGeneration": 1,
+    "calls": [
+      "hold",
+      "echo"
+    ],
+    "snapshot": {
+      "timeline": [
+        {
+          "event": "hold",
+          "ms": 812.2277079999913,
+          "id": "dawn-call-97452d5d-c352-4649-afbf-bcd1cf77df2c-1"
+        },
+        {
+          "event": "response-close",
+          "ms": 962.1980420000618,
+          "id": "dawn-call-97452d5d-c352-4649-afbf-bcd1cf77df2c-1"
+        },
+        {
+          "event": "cancel-notification",
+          "ms": 970.4927080000052,
+          "id": "dawn-call-97452d5d-c352-4649-afbf-bcd1cf77df2c-1"
+        }
+      ],
+      "calls": [
+        "hold",
+        "echo"
+      ],
+      "cancelled": [
+        "dawn-call-97452d5d-c352-4649-afbf-bcd1cf77df2c-1"
+      ],
+      "closedWaits": [
+        "dawn-call-97452d5d-c352-4649-afbf-bcd1cf77df2c-1"
+      ],
+      "pending": []
+    },
+    "boundary": "Real Electron and loopback HTTP; deterministic model, no external MCP or paid inference."
+  },
+  "sourceEntries": 1482,
+  "visualBaselineEntries": 14,
+  "sourceChanges": [],
+  "visualBaselineChanges": []
+}

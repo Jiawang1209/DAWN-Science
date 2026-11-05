@@ -1,0 +1,5 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+e2e/chat-column-narrow.spec.ts(9,9): error TS7034: Variable 'results' implicitly has type 'any[]' in some locations where its type cannot be determined.
+e2e/chat-column-narrow.spec.ts(27,37): error TS7005: Variable 'results' implicitly has an 'any[]' type.
+e2e/chat-column-narrow.spec.ts(27,74): error TS7005: Variable 'results' implicitly has an 'any[]' type.

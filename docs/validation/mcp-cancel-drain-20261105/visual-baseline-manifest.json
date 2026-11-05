@@ -1,0 +1,16 @@
+{
+  "e2e/__screenshots__/命令面板-亮色-darwin.png": "1936b370213d19979bf006264d91e61433f36a356e79c8985f220657a09ddf98",
+  "e2e/__screenshots__/命令面板-暗色-darwin.png": "a56dc1c5e22a739fb2470444cabb78c6abac19a1508245e22ca3fd9a74b2f5f3",
+  "e2e/__screenshots__/坞里的对话-亮色-darwin.png": "ef9e88f764afaa4935c34f4d7e6195b2eeb2bac04956b121f27fd8b3400a0ec1",
+  "e2e/__screenshots__/坞里的对话-暗色-darwin.png": "81ef41b07ee42888b09846d5e552cfa9dbfc06654a05c58a245ee7b54e73b5c0",
+  "e2e/__screenshots__/对话-亮色-darwin.png": "5c4b4ca2edf018a76809d97d8ac3f7e152dd8caf19b0093d54f76f82e4ffda08",
+  "e2e/__screenshots__/对话-暗色-darwin.png": "b58ff6bf833c5656cea5b3216edc5bb1b7aef7a177f20eafa74f36f14611c43b",
+  "e2e/__screenshots__/概览-亮色-darwin.png": "e4b8d3c6ec0397c3dc3b8d8f6f9167dcbaa9f7078e6cec7635b5528811075ffc",
+  "e2e/__screenshots__/概览-暗色-darwin.png": "65c7eb43dc6f773daf19df4e0266942c39ac3ab010dc2673cacdbd9b61ae130b",
+  "e2e/__screenshots__/空态-亮色-darwin.png": "dfd0be3ae3dc63b4cac26395a50f9cf559e7f21094d248b082b5814ab7c77c08",
+  "e2e/__screenshots__/空态-暗色-darwin.png": "1fad687526177eaec6fd33632f545218673d9d147835e7a4abcce1008f8b2b4b",
+  "e2e/__screenshots__/设置-亮色-darwin.png": "012753f6df7b4175de102e470f7498841d5bc14cb8700041badb2d7b5e7d8a25",
+  "e2e/__screenshots__/设置-暗色-darwin.png": "cc64118c8529b349f5539af4b1c036a550d5962f08c21cfccffa066409e45705",
+  "e2e/__screenshots__/设置栏-亮色-darwin.png": "9298212817c8a4c87aa75914b847877c44655e0b7b02e07659f29c238a3f24b9",
+  "e2e/__screenshots__/设置栏-暗色-darwin.png": "3ccded700f80dfd2c3b954fd42b97e2b060390ccf37b8157334083b89fc49cd3"
+}

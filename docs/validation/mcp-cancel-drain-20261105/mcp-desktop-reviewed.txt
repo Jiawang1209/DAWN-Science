@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/mcp-cancellation.spec.ts --reporter=list,json --update-snapshots=none --output=docs/validation/mcp-cancel-drain-20261105/mcp-desktop-reviewed-output
+
+Running 1 test using 1 worker
+
+(node:69868) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53877/9b5c76cb-c912-41f8-832a-20ef9fd805a8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (3.4s)
+
+  1 passed (4.0s)

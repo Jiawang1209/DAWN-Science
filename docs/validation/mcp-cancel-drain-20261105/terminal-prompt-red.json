@@ -1,0 +1,176 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/terminal-context-return.spec.ts",
+      "--grep",
+      "selected terminal returns",
+      "--workers=1",
+      "--update-snapshots=none",
+      "--reporter=list,json",
+      "--output=docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "terminal-context-return.spec.ts",
+      "file": "terminal-context-return.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "the selected terminal returns to its own Agent rather than another live terminal",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 26284,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 25000ms exceeded while waiting on the predicate",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 25000ms exceeded while waiting on the predicate\n    at enter (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts:50:8)\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts:59:3",
+                    "location": {
+                      "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts",
+                      "column": 8,
+                      "line": 50
+                    },
+                    "snippet": "  48 |       }\n  49 |       return rawReady\n> 50 |     }).toBe(true)\n     |        ^\n  51 |   } finally { screen.dispose() }\n  52 |   await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()\n  53 |   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts",
+                        "column": 8,
+                        "line": 50
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 25000ms exceeded while waiting on the predicate\n\n  48 |       }\n  49 |       return rawReady\n> 50 |     }).toBe(true)\n     |        ^\n  51 |   } finally { screen.dispose() }\n  52 |   await page.getByRole('button', { name: 'DAWN 模式', exact: true }).click()\n  53 |   await expect(page.getByRole('button', { name: 'DAWN 模式', exact: true })).toHaveAttribute('aria-pressed', 'true', { timeout: 15000 })\n    at enter (/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts:50:8)\n    at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts:59:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:57144/cc6391f2-822e-4339-9e94-288cc818bfa7\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T16:58:01.288Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "terminal-prompt-observation",
+                      "contentType": "application/json",
+                      "body": "eyJyYXdSZWFkeSI6ZmFsc2UsInBhcnNlZFJlYWR5Ijp0cnVlLCJjdXJzb3JQcmVmaXgiOiJsaXV5dWVATWFjQm9va1BybyAvdmFyL2ZvbGRlcnMvMnQveTBxY2w5cjUwY3Y0MjcxODlsN3B4MTAwMDAwMGduL1QvZGF3bi1lMmUtbDI5QldwL3dvcmtzcGFjZSQgIiwidGFpbENvZGVQb2ludHMiOlsxMDksMzIsMjcsOTEsNTEsNTIsMTA5LDQ3LDExOCw5NywxMTQsNDcsMTAyLDExMSwxMDgsMTAwLDEwMSwxMTQsMTE1LDQ3LDUwLDExNiw0NywxMjEsNDgsMTEzLDk5LDEwOCw1NywxMTQsNTMsNDgsOTksMTE4LDUyLDUwLDU1LDQ5LDU2LDU3LDEwOCw1NSwxMTIsMTIwLDQ5LDQ4LDQ4LDQ4LDQ4LDQ4LDQ4LDEwMywxMTAsNDcsODQsNDcsMTAwLDk3LDExOSwxMTAsNDUsMTAxLDUwLDEwMSw0NSwxMDgsNTAsNTcsNjYsODcsMTEyLDQ3LDExOSwxMTEsMTE0LDEwNywxMTUsMTEyLDk3LDk5LDEwMSwyNyw5MSw0OCw0OCwxMDksMzYsMzIsMjcsOTEsNzUsMjcsOTEsNTIsNjcsMzIsMjcsOTEsNDgsNDgsMTA5LDI3LDkxLDQ4LDQ4LDEwOSwzMiw4LDgsOCw4LDgsOCwyNyw5MSw2Myw0OSwxMDQsMjcsNjEsMjcsOTEsNjMsNTAsNDgsNDgsNTIsMTA0XX0="
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/terminal-prompt-red-output/terminal-context-return-th-e7ec7--than-another-live-terminal/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/terminal-context-return.spec.ts",
+                    "column": 8,
+                    "line": 50
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "60f1d84437c9552e8a93-e8dd3ee3fbb90a1dc693",
+          "file": "terminal-context-return.spec.ts",
+          "line": 56,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T16:58:00.733Z",
+    "duration": 26875.45,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

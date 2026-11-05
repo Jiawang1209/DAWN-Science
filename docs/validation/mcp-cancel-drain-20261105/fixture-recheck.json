@@ -1,0 +1,690 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/context-compaction.spec.ts",
+      "e2e/kernel-output-isolation.spec.ts",
+      "e2e/mcp-cancellation.spec.ts",
+      "e2e/terminal-shutdown.spec.ts",
+      "--reporter=list,json",
+      "--update-snapshots=none",
+      "--output=docs/validation/mcp-cancel-drain-20261105/fixture-recheck-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/docs/validation/mcp-cancel-drain-20261105/fixture-recheck-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "context-compaction.spec.ts",
+      "file": "context-compaction.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "内置对话",
+          "file": "context-compaction.spec.ts",
+          "line": 57,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**仪表常驻**：说过一句之后写着比例（不是悬停才出现）；悬停看得到真数与自动压缩线，移开就收，点一下钉住",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2244,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61050/f2f6b6e6-ccf9-402e-8228-c1f68aad1f51\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:17.484Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-074c83d20abe6db8e6a7",
+              "file": "context-compaction.spec.ts",
+              "line": 60,
+              "column": 3
+            },
+            {
+              "title": "**/compact**：不当一句话发；先出「正在压缩」，再收成压完的标记，写「你让压的」，点开看得到假模型写的摘要；仪表说刚压过，再说一句回来",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2744,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61063/c69acfc0-249a-4f8a-b784-6490f21e08bc\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:19.747Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-85ca4fed2386aad46d8e",
+              "file": "context-compaction.spec.ts",
+              "line": 85,
+              "column": 3
+            },
+            {
+              "title": "**⌘K「压缩上下文」**：内置对话里可用，按下去同样出一条「你让压的」标记",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1910,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61077/07390240-3db6-41fc-92e7-8a63315157a0\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:22.496Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-d2b28615f9dbfb62e8aa",
+              "file": "context-compaction.spec.ts",
+              "line": 109,
+              "column": 3
+            },
+            {
+              "title": "**自动压缩出声**：「塞满上下文」那一轮收尾时 pi 自己压——标记写「自动：快到上限了」，不是失败",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1963,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61093/f83d7b1b-0a5c-4898-9b5f-72cc3f1372bc\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:24.411Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-ea92b50c3fbfe4c4f0c6",
+              "file": "context-compaction.spec.ts",
+              "line": 124,
+              "column": 3
+            },
+            {
+              "title": "**`/` 菜单里有「压缩上下文」**，选中写 `/compact `、不替人发",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1989,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61115/35459516-876f-4da1-93e4-6357cbe7348f\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:26.379Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-f09e2ac80677d5fc83e4",
+              "file": "context-compaction.spec.ts",
+              "line": 139,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "窄附栏",
+          "file": "context-compaction.spec.ts",
+          "line": 151,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**坞里的输入卡**：仪表在右侧模型前可用，权限在左侧，弹层留在窗口内",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2598,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61124/3c3bf533-52a3-4faa-ae4e-bf3377beba52\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:28.374Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-e895d3a1c3701b4d9b78",
+              "file": "context-compaction.spec.ts",
+              "line": 156,
+              "column": 3
+            },
+            {
+              "title": "**主区（坞关着）也只写数**（2026-09-28 作者要的）：看得见「<1%」，名字仍是「上下文 <1%」",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1915,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61137/1ae2383f-80e4-4167-b2d8-1e2b09b75f6e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:30.979Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-2668b8853e55ca7ff26e",
+              "file": "context-compaction.spec.ts",
+              "line": 194,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "外部 agent",
+          "file": "context-compaction.spec.ts",
+          "line": 221,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**ACP 会话的仪表写「读不到」**，弹层说为什么、没有「现在压缩」；`/` 菜单里没有那一条；⌘K 那条列着但灰着、说为什么",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2037,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61154/683c8208-687d-4236-8630-a5a619456014\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:32.899Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-103eb0a1ece10c664686",
+              "file": "context-compaction.spec.ts",
+              "line": 224,
+              "column": 3
+            },
+            {
+              "title": "**ACP 会话里 `/compact` 原样发给 agent**（它自己认这个命令），不出压缩标记",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2052,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:61164/7dbca907-54f2-4133-9491-fd965c5deed8\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T14:43:34.942Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8d5c2fc863d68dc7ef71-25d6c401ba1a704786bf",
+              "file": "context-compaction.spec.ts",
+              "line": 247,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "kernel-output-isolation.spec.ts",
+      "file": "kernel-output-isolation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "真实双内核连续重启 R 三次不重复转发、保留旧结果提示并正常退出",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6762,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:61184/92c276aa-a68d-4f45-821a-70a34b78979f\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T14:43:37.008Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d67c78fdf2f85fe8d7ab-4886fcb67d01d3f07330",
+          "file": "kernel-output-isolation.spec.ts",
+          "line": 10,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mcp-cancellation.spec.ts",
+      "file": "mcp-cancellation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2527,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:61278/3e367cca-1f4f-4001-9eb2-aaf74e96d7e6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T14:43:43.780Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-2419e540dabf7edf1d66",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "terminal-shutdown.spec.ts",
+      "file": "terminal-shutdown.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "quitting with two live Normal terminals exits cleanly and reopening retains the conversations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7554,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:61305/a5da34b1-9646-4912-b8eb-f514859ab617\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）\n"
+                    },
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:61331/d79c3f18-49f1-4cd5-93df-92281e9df1be\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T14:43:46.315Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7d840afc4fd5d387bc1b-2a792cc7fdc86ec525b6",
+          "file": "terminal-shutdown.spec.ts",
+          "line": 13,
+          "column": 3
+        },
+        {
+          "title": "quitting with two live DAWN terminals exits cleanly and reopening retains the conversations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10603,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:61340/6f8dfa31-8e80-496c-a6bc-5ed62aae0ef1\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）\n"
+                    },
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:61386/5cb45464-b563-492e-b98c-0e94fd032098\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T14:43:53.875Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7d840afc4fd5d387bc1b-53608ccaa41d80f4b3e7",
+          "file": "terminal-shutdown.spec.ts",
+          "line": 13,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T14:43:16.852Z",
+    "duration": 47642.423,
+    "expected": 13,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

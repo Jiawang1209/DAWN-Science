@@ -1,0 +1,175 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/chat-column-narrow.spec.ts e2e/chat-column.spec.ts e2e/composer-layout.spec.ts e2e/mcp-cancellation.spec.ts e2e/terminal-images.spec.ts e2e/upload-experience.spec.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output
+
+Running 15 tests using 1 worker
+
+(node:22325) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+THREAD_COLUMN_GEOMETRY [{"viewport":1080,"agent":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":312,"right":1020,"width":708,"offsetWidth":708,"clientWidth":708,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":708,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1064,"width":796,"offsetWidth":796,"clientWidth":796,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}},{"viewport":1280,"agent":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":375,"right":1157,"width":782,"offsetWidth":782,"clientWidth":782,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":782,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1264,"width":996,"offsetWidth":996,"clientWidth":996,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1232,"width":932,"offsetWidth":932,"clientWidth":910,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}}]
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56657/d5184d85-6c7d-445f-98c1-f5aca1398c5e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   1 e2e/chat-column-narrow.spec.ts:3:1 › narrow and regular conversation columns keep the agent, user and composer edges aligned (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56680/02f1fed8-fd4a-4f96-ab24-0c80748b59e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   2 e2e/chat-column.spec.ts:24:1 › **正文、气泡、输入卡在同一条左右缘上** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「量一下宽窗口」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56690/a63e2314-5b5c-45fb-b4cc-a8cd7840e4a1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   3 e2e/chat-column.spec.ts:70:1 › **窗口放大时这一栏跟着放大，封顶，三条边仍对齐** (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56707/9130dcee-473b-4034-bbdf-1e2e20930b39
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   4 e2e/chat-column.spec.ts:110:1 › **用户气泡四角一样圆、底色不是侧栏灰** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56718/059ccddf-0051-481b-82e1-9e53bf588a9a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   5 e2e/chat-column.spec.ts:161:3 › 命令行的宽度 › **工具调用那一行不比回复更宽** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56734/61153f7b-25c2-46eb-afe9-08330d61c98b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   6 e2e/composer-layout.spec.ts:47:1 › 首页添加菜单支持键盘，方案状态可见，草稿不丢失 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56750/e9939a7a-7501-4628-b615-6228d553ceff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   7 e2e/composer-layout.spec.ts:112:1 › 项目目录、文件选择、方案提交、普通发送与亮暗主题 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56763/7843f804-344a-427c-9e41-ddbd7c68e5ca
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   8 e2e/composer-layout.spec.ts:160:1 › 主侧对话输入区在窄栏可操作且不横向溢出 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「上下文配色检查」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPSocketWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56788/bfc265a9-8889-4ac8-9b6a-20807eaff830
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPSocketWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPSocketWrap"]}
+[DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","TCPSocketWrap"]}
+  ✓   9 e2e/composer-layout.spec.ts:220:1 › 终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色 (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56815/716ff03d-7735-497f-8a78-4bebd84dc51f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✘  10 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (1.5s)
+(node:23258) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","TCPSocketWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56834/610ed88b-d372-4e6b-bf21-dfb96d69037a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","TCPSocketWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  11 e2e/terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56867/e7e1f979-bfa3-48e8-a682-7c88710e5e90
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  12 e2e/terminal-images.spec.ts:65:1 › dragged images can be removed, are not added to the hidden composer, and Normal does not attach (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:56910/b22526e9-ec8b-4f32-b04a-9c5008c8a8e0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  13 e2e/terminal-images.spec.ts:82:3 › output pictures › renders verified image files returned by the Agent and opens their full preview (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56936/42cabb72-907e-4aff-a2b6-929d9a99be2a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","TTYWrap","PipeWrap","Timeout","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓  14 e2e/terminal-images.spec.ts:99:3 › picture capability › rejects attachment explicitly when neither the selected model nor a visual service can read it (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:56955/643c40bb-f2e6-4da3-983a-facb2e5a887c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+  ✓  15 e2e/upload-experience.spec.ts:60:1 › 多文件确认可取消，统一任务保留每个文件与源文件，窄窗亮暗可读 (10.4s)
+
+
+  1) e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('details.mcp-how')
+    Expected: ""
+    Error: strict mode violation: locator('details.mcp-how') resolved to 2 elements:
+        1) <details open="" class="mcp-how">…</details> aka getByText('加一台 MCP 服务器粘贴服务器文档中的 JSON')
+        2) <details class="mcp-how">…</details> aka getByText('配好之后怎么用？回到对话里说人话就行，不用记工具名。比如：查一下近五年「土地利用变化对土壤微生物多样性的影响」的综述， 挑三篇最相关的给我摘要，再按 APA')
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 25000ms
+      - waiting for locator('details.mcp-how')
+
+
+      27 |     // This fixture has no servers, so the native details starts open. Wait
+      28 |     // for the MCP page commit instead of toggling it based on an early query.
+    > 29 |     await expect(page.locator('details.mcp-how')).toHaveAttribute('open', '')
+         |                                                   ^
+      30 |     const config = page.getByRole('textbox', { name: 'MCP 服务器的 JSON 配置' })
+      31 |     await expect(config).toBeVisible()
+      32 |     await config.fill(JSON.stringify({ mcpServers: { cancelprobe: f.config } }))
+        at /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/e2e/mcp-cancellation.spec.ts:29:51
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/mcp-cancel-drain-20261105/layout-and-mcp-fixed-output/mcp-cancellation-stopping--6ab59-same-session-remains-usable/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable 
+  14 passed (1.0m)

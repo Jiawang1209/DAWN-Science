@@ -1,0 +1,341 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/desktop-release-final-output
+
+Running 921 tests using 1 worker
+
+(node:4839) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64414/61d60ae7-31f0-4945-9b6e-b942ba67cf6f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    1 e2e/accent.spec.ts:9:1 › **选一颗预置色，强调色与「活着」跟着变，「成功」仍是绿；重载还在** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64431/b0f802cb-70cc-4e6d-a8d6-220857e4b611
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    2 e2e/accent.spec.ts:38:1 › **浅色主题色**：按钮上的字自动换成深色 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64439/74bfd303-9f00-4032-862e-bb15e3fdbfa0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    3 e2e/accent.spec.ts:49:1 › **颜色值只有一格**：能输 HEX 或 RGB，悬停冒提示，图标复制，Shift 切格式 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64451/6851154f-1a82-414e-94a8-66815a7b0f36
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    4 e2e/accent.spec.ts:82:1 › **取色器**：放大镜跟着鼠标，值实时变，C 复制，Shift 切格式，点击定为主题色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64462/ed68d674-a5df-4d15-80c3-e431a6acdeb7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    5 e2e/accent.spec.ts:120:1 › **自绘色盘**：点方块定色、拖色相条变色，C 复制、Shift 切格式、Esc 关 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64477/11d86525-b62d-40f3-b404-7e382503f137
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    6 e2e/accent.spec.ts:156:1 › **窗口矮时色盘往上翻**，整个面板都在视口里，不用滚动 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64494/1615c6f0-633f-451d-97a4-b6175e50c869
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓    7 e2e/accent.spec.ts:170:1 › **极矮窗口**（320 高）色盘也整块在视口里——弹出层是 fixed，不跟设置页滚动 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64505/294c82a0-e514-4edf-8c72-4a4b428c36dd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓    8 e2e/acp-agent.spec.ts:54:3 › ACP › **一整段对话跑得通**，且模型旁边标着 ACP (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64514/156d5fd0-db66-4131-9476-1742420d1a17
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓    9 e2e/acp-agent.spec.ts:91:5 › ACP › claude-acp 可以切回 API，旧对话仍保留 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64535/00f1d30e-893c-4e93-8666-75959cd5c1b9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   10 e2e/acp-agent.spec.ts:91:5 › ACP › codex-acp 可以切回 API，旧对话仍保留 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64549/66320da2-f03b-4624-b714-06812d312f25
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   11 e2e/acp-agent.spec.ts:113:3 › ACP › claude-acp 菜单按服务分组，点另一个适配器的模型即可切换 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64568/60ff44eb-460c-411d-beae-c5a65b978f2a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   12 e2e/acp-agent.spec.ts:113:3 › ACP › API 菜单按服务分组，点另一个适配器的模型即可切换 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「主区原对话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64587/2580154a-8b5c-45a2-bd83-1a8bdfa41f0c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   13 e2e/acp-agent.spec.ts:134:3 › ACP › 侧边对话切换 ACP 与 API，主区保持原对话 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64615/28ae466a-75e6-44f2-86e6-49652bff3463
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   14 e2e/acp-agent.spec.ts:160:3 › ACP › 空 ACP 对话切回 API 时顶替空会话 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64627/4e17ac17-b71d-4c90-b037-d9de9da304f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+  ✓   15 e2e/acp-agent.spec.ts:196:3 › ACP › **适配器起不来时，屏幕上有一句人话** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「读一下那个 csv」在等你点头 — 读一下 data/raw/观测.csv
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64647/720cda3d-4984-4fb5-bbde-1482b4c730c1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   16 e2e/acp-agent.spec.ts:229:3 › ACP 权限卡 › **它问，卡出现；点一个，它就收到那一个** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「读一下」在等你点头 — 读一下 data/raw/观测.csv
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64656/946c4ece-3eb2-4798-a269-e265754fc3b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   17 e2e/acp-agent.spec.ts:262:3 › ACP 权限卡 › **取消与拒绝不是一回事** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64667/79002286-010f-459c-8b78-25d794773a8b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   18 e2e/acp-agent.spec.ts:300:3 › ACP 取消 › **跑起来能停**，停了就真的停了 (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64703/99a4e902-7bfe-4221-9fff-0773d6ae9bae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   19 e2e/acp-agent.spec.ts:344:3 › ACP 会话开关 › **它给什么就画什么**，选一个真的送过去 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64711/2b9fcd31-bb6f-4df6-82e2-e56845f7275e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   20 e2e/acp-agent.spec.ts:410:5 › ACP 会话开关 › 装成 claude 那台时 › **选择的地方只写具体模型，不显示角色或推荐说明** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64738/871e5b8f-39eb-4f77-8581-5b32fea31cda
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   21 e2e/acp-agent.spec.ts:435:7 › ACP 会话开关 › 不给开关时 › 那颗按钮不出现 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64746/8f171f79-351a-468c-be2e-c1a2b8bb6adc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   22 e2e/acp-agent.spec.ts:457:3 › ACP 用量 › **跑一轮之后，饼图上分得出这台 ACP agent** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64758/184b1758-4580-43e4-be95-02be2a49ac18
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   23 e2e/acp-agent.spec.ts:510:3 › ACP 用我们的工具 › **它真的连上了 DAWN，拿到工具并调得动** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「切换期间新发的首句」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64769/e45a1409-6212-4132-b727-b6d11e672f67
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   24 e2e/acp-agent.spec.ts:553:3 › ACP 切换等待期间 › 原空对话在切换期间收到首句时，保留这段对话 (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64802/73af303a-8869-465b-977d-ce91e462ea89
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","PipeWrap","ProcessWrap"]}
+  ✓   25 e2e/acp-setup.spec.ts:60:1 › **加一个 ACP 适配器，然后真的用它聊一段** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64817/a4663906-4b87-4249-9c0b-2bacb63281d9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   26 e2e/acp-setup.spec.ts:117:1 › **接错了能删掉**，删完选择器里也没有了 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] Debugger ending on ws://127.0.0.1:64832/684bc172-462e-4a44-87cb-c14cf1e5a452
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap","Timeout"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   27 e2e/add-service.spec.ts:22:1 › **填完就能用**：自定义端点 → 模型选择器 → 真的连上了 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64848/19c95416-4409-4411-aa1e-8b6abb50c174
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   28 e2e/add-service.spec.ts:87:1 › **名字不合法当场就说** —— 而不是写进 yaml 之后炸 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [凭证] tmp 的 key 验证没能判定：Connection error.
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64859/6f5594e2-b712-4e63-8604-6ca2329ce2e8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   29 e2e/add-service.spec.ts:98:1 › **移除一个服务：配置里那一段真的没了** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64868/356e0739-dedd-4507-827c-ef57e53b9fc7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   30 e2e/agent-browser.spec.ts:11:1 › 网页格两个子页签；agent 旁观空态如实说；切回浏览面地址栏还在 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64876/9f426656-d4e4-427c-8203-d36b42c0263d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   31 e2e/agent-pill.spec.ts:25:1 › 模型 pill 在输入卡里，且**几何上确实靠右靠下** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64884/9b35916c-a8c7-4f82-a942-7e1f70ef21f9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   32 e2e/agent-pill.spec.ts:67:1 › 用**服务名**称呼它，不是配置里那个键 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64896/088f1a4b-51e6-42cc-a330-edb45f219775
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   33 e2e/agent-pill.spec.ts:85:1 › **输入卡这一行只有一颗 pill** —— 误按从形状上就不可能 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64904/e492fa9f-a0c8-4028-9621-bbfee8541f1d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   34 e2e/agent-pill.spec.ts:94:1 › 菜单向上弹 —— pill 贴着窗口底部，向下会被切掉 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64912/276fcc0b-d914-4736-9043-5db5d0d6c608
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   35 e2e/agent-pill.spec.ts:103:1 › 侧栏那份真的没了 (1.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64921/a542f58b-4708-4dba-8ac7-257c09fdcdea
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   36 e2e/agent-pill.spec.ts:116:1 › **首页挑 LLM 那里，能直接跳到配模型** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64932/d3d1529c-2833-4c5e-9f2b-7c39242216f2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   37 e2e/agent-pill.spec.ts:160:1 › **挑 LLM 那张单子上，每一条都标着 API / CLI / ACP，且按类归拢、组内按字母** (1.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：允许在当前工作区用合成」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64943/6e53bdd5-9a6f-40e2-8466-6cb7a48ad604
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   38 e2e/analysis-delivery.spec.ts:18:1 › 科研交付：真实输出→选择→结果解读→独立重跑→保留记录和图片预览 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64964/3dbf0fc1-dfd9-424e-8d3b-f150c795ea8d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   39 e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 id 身份变化 001 / 1 (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示科研分析交付：本地合成数据，不联网、」做完了 — 合成草地分析案例已运行。请在产物中选择 analysis/run_analysis.py、results/model.csv、results/summary.json、results/analysis_report.md 与 results…
+[主进程] [DAWN_EXIT_DIAG] {"event":"before-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] Debugger ending on ws://127.0.0.1:64981/eabfa3d1-bdeb-4b6f-a0f0-2cacb89e6d3c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [DAWN_EXIT_DIAG] {"event":"will-quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"process-exit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+[主进程] [DAWN_EXIT_DIAG] {"event":"quit","resources":["PipeWrap","PipeWrap","PipeWrap"]}
+  ✓   40 e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 id 身份变化 9007199254740992 / 9007199254740993 (3.7s)
+  ✘   41 e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 category 身份变化 10000000 / 10000001 (108ms)
+
+  1 interrupted
+    e2e/analysis-delivery.spec.ts:144:3 › 交付核验拒绝 category 身份变化 10000000 / 10000001 ─────────────────
+  880 did not run
+  40 passed (1.5m)

@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/mcp/redirect.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mcp-cancel-20261105/dawn-science
+
+ ❯ |node| tests/mcp/redirect.test.ts (3 tests | 1 failed) 32ms
+   × an explicit null signal does not inherit an input Request cancellation 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/mcp/redirect.test.ts > an explicit null signal does not inherit an input Request cancellation
+AbortError: This operation was aborted
+ ❯ mcpSafeFetch src/mcp/request-fetch.ts:15:22
+     13|     // Keep a clone before fetch consumes the body, for a same-origin …
+     14|     const next = request.clone()
+     15|     const response = await fetch(request, { redirect: 'manual', ...(si…
+       |                      ^
+     16|     const location = response.headers.get('location')
+     17|     if (![301, 302, 303, 307, 308].includes(response.status) || !locat…
+ ❯ tests/mcp/redirect.test.ts:16:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  22:09:56
+   Duration  154ms (transform 19ms, setup 0ms, import 36ms, tests 32ms, environment 0ms)
+

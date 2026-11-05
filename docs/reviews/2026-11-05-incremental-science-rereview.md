@@ -36,4 +36,6 @@ Windows进程入口按 [CPython官方审计事件表](https://docs.python.org/3/
 
 ## 本地集成
 
-合并前类型检查、完整构建、全量630文件/6246项（11跳过）、7个Electron场景、原5对及10条增量评测均通过；1469个源码/脚本/测试/配置清单复核无漂移。用户已授权，下一步本地提交并快进合并main；合并后证据单独追加。无推送、发布、标签或安装应用替换。
+合并前类型检查、完整构建、全量630文件/6246项（11跳过）、7个Electron场景、原5对及10条增量评测均通过；1469个源码/脚本/测试/配置清单复核无漂移。功能及复审修复已提交为 `0f8daea2`，从 `ce5ae5dd` 无冲突快进合并本地main。main上1469个源码/脚本/测试/配置与冻结清单一致；类型检查、完整构建、15文件104项重点回归及3个Electron实际演示均通过。合并后记录见 [main-integration.json](../validation/incremental-science-rereview-20261105/main-integration.json)、[main-tests.txt](../validation/incremental-science-rereview-20261105/main-tests.txt)、[main-electron.txt](../validation/incremental-science-rereview-20261105/main-electron.txt)。保留专项分支与工作区。无推送、发布、标签或安装应用替换。
+
+main实际效果：[错误数字拦截](../validation/incremental-science-rereview-20261105/main-demo/02-numeric-blocked.png)、[A复用/B重跑](../validation/incremental-science-rereview-20261105/main-demo/04-derived-decisions.png)、[实际汇总](../validation/incremental-science-rereview-20261105/main-demo/derived-summary.json)。推理为localhost夹具，宿主文件/执行真实；不外推真实模型收益。

@@ -1,0 +1,25 @@
+{
+  "codeCommit": "0f8daea2449b341c85b757f168c50d21f3dc56c1",
+  "base": "ce5ae5dd035f6eff82d159150a44086be63423d6",
+  "merge": "local fast-forward",
+  "sourceFiles": 1469,
+  "sourceDrift": [],
+  "branchValidation": {
+    "files": 630,
+    "passed": 6246,
+    "skipped": 11,
+    "electron": 7,
+    "incrementalRows": 10
+  },
+  "mainValidation": {
+    "typecheck": "passed",
+    "fullBuild": "passed",
+    "testFiles": 15,
+    "tests": 104,
+    "electron": 3
+  },
+  "push": false,
+  "release": false,
+  "installedAppChanged": false,
+  "worktreePreserved": true
+}

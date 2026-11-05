@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-reuse.test.ts tests/team/science-execution-rereview.test.ts tests/team/science-execution.test.ts tests/team/science-acceptance.test.ts tests/team/science-batch-derivation.test.ts tests/team/science-batch-recovery.test.ts tests/orchestration/task-submission.test.ts tests/workbench/bot-science-acceptance.test.ts tests/integration/science-incremental.test.ts tests/runtime/analysis-route.test.ts tests/bot/output-lock-identity.test.ts tests/runtime/science-pipeline-projection.test.ts tests/runtime/science-pipeline-route.test.ts tests/ui/science-acceptance-status.test.tsx tests/ui/science-reuse-status.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  15 passed (15)
+      Tests  104 passed (104)
+   Start at  11:47:21
+   Duration  21.60s (transform 5.03s, setup 1.14s, import 15.98s, tests 75.33s, environment 1.32s)
+

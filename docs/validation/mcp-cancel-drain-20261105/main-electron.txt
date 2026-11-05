@@ -1,0 +1,65 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/mcp-cancellation.spec.ts e2e/chat-column-narrow.spec.ts e2e/setup-wizard.spec.ts --workers=1 --update-snapshots=none --reporter=list,json --output=docs/validation/mcp-cancel-drain-20261105/main-electron-output
+
+Running 13 tests using 1 worker
+
+(node:70182) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+THREAD_COLUMN_GEOMETRY [{"viewport":1080,"agent":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":312,"right":1020,"width":708,"offsetWidth":708,"clientWidth":708,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":708,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1064,"width":796,"offsetWidth":796,"clientWidth":796,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}},{"viewport":1280,"agent":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":375,"right":1157,"width":782,"offsetWidth":782,"clientWidth":782,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":782,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1264,"width":996,"offsetWidth":996,"clientWidth":996,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1232,"width":932,"offsetWidth":932,"clientWidth":910,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":374,"right":1158,"width":784,"offsetWidth":784,"clientWidth":784,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}},{"viewport":1080,"agent":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":732,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":732,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":301,"right":1031,"width":730,"offsetWidth":730,"clientWidth":730,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":730,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1064,"width":796,"offsetWidth":796,"clientWidth":796,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":732,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":732,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}},{"viewport":1080,"agent":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"user":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"composer":{"left":312,"right":1020,"width":708,"offsetWidth":708,"clientWidth":708,"paddingLeft":"12px","paddingRight":"12px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"card":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":708,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"},"turns":{"left":268,"right":1064,"width":796,"offsetWidth":796,"clientWidth":796,"paddingLeft":"32px","paddingRight":"32px","scrollbarGutter":"auto","overflowY":"clip","transform":"none"},"scroll":{"left":300,"right":1032,"width":732,"offsetWidth":732,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"stable both-edges","overflowY":"auto","transform":"none"},"inner":{"left":311,"right":1021,"width":710,"offsetWidth":710,"clientWidth":710,"paddingLeft":"0px","paddingRight":"0px","scrollbarGutter":"auto","overflowY":"visible","transform":"none"}}]
+[主进程] Debugger ending on ws://127.0.0.1:55528/811a6321-02b9-4b6e-8ac9-bb2ef70c3b52
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/chat-column-narrow.spec.ts:3:1 › narrow and regular conversation columns keep the agent, user and composer edges aligned (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55544/09d652b2-6658-47ca-b582-78f7d315f42b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55576/e9d0828e-fc4f-4fd3-b886-51a068d530bd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/setup-wizard.spec.ts:40:3 › 首启向导 › 没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55597/04617630-4a84-4154-81e8-683a391e38fb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55604/23bf4242-91db-4d7c-9b37-09b987dc5ea1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/setup-wizard.spec.ts:78:3 › 首启向导 › 先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55613/b0719eb2-5e6a-4590-88ba-f36ba55de4c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/setup-wizard.spec.ts:97:3 › 首启向导 › 解释器路径保存失败在卡片内显示，未配置时仍可跳过 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55621/1a0a6d50-ae2a-4f8d-9550-53e01dada665
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/setup-wizard.spec.ts:112:3 › 首启向导 › 密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写 (1.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55629/89ae4028-28ae-4a55-8899-5ae59f0bceb1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/setup-wizard.spec.ts:131:3 › 首启向导 › 服务商切换自动填写目录默认地址，手动改址仍可检测 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55645/ed411462-2175-4d88-94e7-aa7baf3fa16f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/setup-wizard.spec.ts:154:3 › 首启向导 › 引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景 (1.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55659/9174629c-5e27-473f-b257-a92de91adc71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/setup-wizard.spec.ts:176:3 › 首启向导 › 四步实机截图；语言选择立即传递到工作台；窄窗口可操作 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55676/baeb2ca8-8801-4349-8f37-bd318a1d1d6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/setup-wizard.spec.ts:205:3 › 首启向导 › 自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55696/64b6e381-8108-4b22-b0bb-9f7a063d1ac4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/setup-wizard.spec.ts:249:3 › 首启向导 · 产品原样的默认配置 › 明确模型和协议在检测、保存验证、首次对话中一致 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55718/b72b53ec-6979-418a-b9d1-4753157d331c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/setup-wizard.spec.ts:277:3 › 首启向导 · 产品原样的默认配置 › **填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55734/95914f54-9480-4ec5-b446-5545db3ca4de
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/setup-wizard.spec.ts:318:3 › 首启向导 · 混合协议目录 › 自动协议按所选目录模型检测、保存并对话 (1.8s)
+
+  13 passed (26.0s)

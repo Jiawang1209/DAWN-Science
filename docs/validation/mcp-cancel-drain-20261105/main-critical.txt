@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/mcp tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  10 passed (10)
+      Tests  208 passed (208)
+   Start at  02:08:41
+   Duration  5.32s (transform 967ms, setup 549ms, import 2.41s, tests 13.01s, environment 532ms)
+

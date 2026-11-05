@@ -1,0 +1,680 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/mcp-cancellation.spec.ts",
+      "e2e/chat-column-narrow.spec.ts",
+      "e2e/setup-wizard.spec.ts",
+      "--workers=1",
+      "--update-snapshots=none",
+      "--reporter=list,json",
+      "--output=docs/validation/mcp-cancel-drain-20261105/main-electron-output"
+    ],
+    "configFile": "/Users/liuyue/Desktop/Github_repos/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/Desktop/Github_repos/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/Desktop/Github_repos/dawn-science/docs/validation/mcp-cancel-drain-20261105/main-electron-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/Desktop/Github_repos/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "chat-column-narrow.spec.ts",
+      "file": "chat-column-narrow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "narrow and regular conversation columns keep the agent, user and composer edges aligned",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2275,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "THREAD_COLUMN_GEOMETRY [{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1280,\"agent\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":375,\"right\":1157,\"width\":782,\"offsetWidth\":782,\"clientWidth\":782,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":782,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1264,\"width\":996,\"offsetWidth\":996,\"clientWidth\":996,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1232,\"width\":932,\"offsetWidth\":932,\"clientWidth\":910,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":374,\"right\":1158,\"width\":784,\"offsetWidth\":784,\"clientWidth\":784,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":301,\"right\":1031,\"width\":730,\"offsetWidth\":730,\"clientWidth\":730,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":730,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":732,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}},{\"viewport\":1080,\"agent\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"user\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"composer\":{\"left\":312,\"right\":1020,\"width\":708,\"offsetWidth\":708,\"clientWidth\":708,\"paddingLeft\":\"12px\",\"paddingRight\":\"12px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"card\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":708,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"},\"turns\":{\"left\":268,\"right\":1064,\"width\":796,\"offsetWidth\":796,\"clientWidth\":796,\"paddingLeft\":\"32px\",\"paddingRight\":\"32px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"clip\",\"transform\":\"none\"},\"scroll\":{\"left\":300,\"right\":1032,\"width\":732,\"offsetWidth\":732,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"stable both-edges\",\"overflowY\":\"auto\",\"transform\":\"none\"},\"inner\":{\"left\":311,\"right\":1021,\"width\":710,\"offsetWidth\":710,\"clientWidth\":710,\"paddingLeft\":\"0px\",\"paddingRight\":\"0px\",\"scrollbarGutter\":\"auto\",\"overflowY\":\"visible\",\"transform\":\"none\"}}]\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:55528/811a6321-02b9-4b6e-8ac9-bb2ef70c3b52\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T18:08:48.025Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "column-geometry",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0sCiAgewogICAgInZpZXdwb3J0IjogMTI4MCwKICAgICJhZ2VudCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidXNlciI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODQsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY29tcG9zZXIiOiB7CiAgICAgICJsZWZ0IjogMzc1LAogICAgICAicmlnaHQiOiAxMTU3LAogICAgICAid2lkdGgiOiA3ODIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4MiwKICAgICAgImNsaWVudFdpZHRoIjogNzgyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMTJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMTJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiY2FyZCI6IHsKICAgICAgImxlZnQiOiAzNzQsCiAgICAgICJyaWdodCI6IDExNTgsCiAgICAgICJ3aWR0aCI6IDc4NCwKICAgICAgIm9mZnNldFdpZHRoIjogNzg0LAogICAgICAiY2xpZW50V2lkdGgiOiA3ODIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAidHVybnMiOiB7CiAgICAgICJsZWZ0IjogMjY4LAogICAgICAicmlnaHQiOiAxMjY0LAogICAgICAid2lkdGgiOiA5OTYsCiAgICAgICJvZmZzZXRXaWR0aCI6IDk5NiwKICAgICAgImNsaWVudFdpZHRoIjogOTk2LAogICAgICAicGFkZGluZ0xlZnQiOiAiMzJweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMzJweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAiY2xpcCIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAic2Nyb2xsIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTIzMiwKICAgICAgIndpZHRoIjogOTMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA5MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDkxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJzdGFibGUgYm90aC1lZGdlcyIsCiAgICAgICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0sCiAgICAiaW5uZXIiOiB7CiAgICAgICJsZWZ0IjogMzc0LAogICAgICAicmlnaHQiOiAxMTU4LAogICAgICAid2lkdGgiOiA3ODQsCiAgICAgICJvZmZzZXRXaWR0aCI6IDc4NCwKICAgICAgImNsaWVudFdpZHRoIjogNzg0LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9CiAgfSwKICB7CiAgICAidmlld3BvcnQiOiAxMDgwLAogICAgImFnZW50IjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ1c2VyIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjb21wb3NlciI6IHsKICAgICAgImxlZnQiOiAzMDEsCiAgICAgICJyaWdodCI6IDEwMzEsCiAgICAgICJ3aWR0aCI6IDczMCwKICAgICAgIm9mZnNldFdpZHRoIjogNzMwLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIxMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIxMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJjYXJkIjogewogICAgICAibGVmdCI6IDMwMCwKICAgICAgInJpZ2h0IjogMTAzMiwKICAgICAgIndpZHRoIjogNzMyLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MzIsCiAgICAgICJjbGllbnRXaWR0aCI6IDczMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJ0dXJucyI6IHsKICAgICAgImxlZnQiOiAyNjgsCiAgICAgICJyaWdodCI6IDEwNjQsCiAgICAgICJ3aWR0aCI6IDc5NiwKICAgICAgIm9mZnNldFdpZHRoIjogNzk2LAogICAgICAiY2xpZW50V2lkdGgiOiA3OTYsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIzMnB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIzMnB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJjbGlwIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJzY3JvbGwiOiB7CiAgICAgICJsZWZ0IjogMzAwLAogICAgICAicmlnaHQiOiAxMDMyLAogICAgICAid2lkdGgiOiA3MzIsCiAgICAgICJvZmZzZXRXaWR0aCI6IDczMiwKICAgICAgImNsaWVudFdpZHRoIjogNzMyLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogInN0YWJsZSBib3RoLWVkZ2VzIiwKICAgICAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfSwKICAgICJpbm5lciI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MzIsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAiYXV0byIsCiAgICAgICJvdmVyZmxvd1kiOiAidmlzaWJsZSIsCiAgICAgICJ0cmFuc2Zvcm0iOiAibm9uZSIKICAgIH0KICB9LAogIHsKICAgICJ2aWV3cG9ydCI6IDEwODAsCiAgICAiYWdlbnQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInVzZXIiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzEwLAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNvbXBvc2VyIjogewogICAgICAibGVmdCI6IDMxMiwKICAgICAgInJpZ2h0IjogMTAyMCwKICAgICAgIndpZHRoIjogNzA4LAogICAgICAib2Zmc2V0V2lkdGgiOiA3MDgsCiAgICAgICJjbGllbnRXaWR0aCI6IDcwOCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjEycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjEycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImNhcmQiOiB7CiAgICAgICJsZWZ0IjogMzExLAogICAgICAicmlnaHQiOiAxMDIxLAogICAgICAid2lkdGgiOiA3MTAsCiAgICAgICJvZmZzZXRXaWR0aCI6IDcxMCwKICAgICAgImNsaWVudFdpZHRoIjogNzA4LAogICAgICAicGFkZGluZ0xlZnQiOiAiMHB4IiwKICAgICAgInBhZGRpbmdSaWdodCI6ICIwcHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogInZpc2libGUiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInR1cm5zIjogewogICAgICAibGVmdCI6IDI2OCwKICAgICAgInJpZ2h0IjogMTA2NCwKICAgICAgIndpZHRoIjogNzk2LAogICAgICAib2Zmc2V0V2lkdGgiOiA3OTYsCiAgICAgICJjbGllbnRXaWR0aCI6IDc5NiwKICAgICAgInBhZGRpbmdMZWZ0IjogIjMycHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjMycHgiLAogICAgICAic2Nyb2xsYmFyR3V0dGVyIjogImF1dG8iLAogICAgICAib3ZlcmZsb3dZIjogImNsaXAiLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgInNjcm9sbCI6IHsKICAgICAgImxlZnQiOiAzMDAsCiAgICAgICJyaWdodCI6IDEwMzIsCiAgICAgICJ3aWR0aCI6IDczMiwKICAgICAgIm9mZnNldFdpZHRoIjogNzMyLAogICAgICAiY2xpZW50V2lkdGgiOiA3MTAsCiAgICAgICJwYWRkaW5nTGVmdCI6ICIwcHgiLAogICAgICAicGFkZGluZ1JpZ2h0IjogIjBweCIsCiAgICAgICJzY3JvbGxiYXJHdXR0ZXIiOiAic3RhYmxlIGJvdGgtZWRnZXMiLAogICAgICAib3ZlcmZsb3dZIjogImF1dG8iLAogICAgICAidHJhbnNmb3JtIjogIm5vbmUiCiAgICB9LAogICAgImlubmVyIjogewogICAgICAibGVmdCI6IDMxMSwKICAgICAgInJpZ2h0IjogMTAyMSwKICAgICAgIndpZHRoIjogNzEwLAogICAgICAib2Zmc2V0V2lkdGgiOiA3MTAsCiAgICAgICJjbGllbnRXaWR0aCI6IDcxMCwKICAgICAgInBhZGRpbmdMZWZ0IjogIjBweCIsCiAgICAgICJwYWRkaW5nUmlnaHQiOiAiMHB4IiwKICAgICAgInNjcm9sbGJhckd1dHRlciI6ICJhdXRvIiwKICAgICAgIm92ZXJmbG93WSI6ICJ2aXNpYmxlIiwKICAgICAgInRyYW5zZm9ybSI6ICJub25lIgogICAgfQogIH0KXQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c83a9b236b3c975a1ce8-b0b44a724d413513e9fa",
+          "file": "chat-column-narrow.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mcp-cancellation.spec.ts",
+      "file": "mcp-cancellation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "stopping an HTTP MCP stream after GC closes its response and the same session remains usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2673,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:55544/09d652b2-6658-47ca-b582-78f7d315f42b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T18:08:50.325Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "973c7d2743d141b1bec3-2419e540dabf7edf1d66",
+          "file": "mcp-cancellation.spec.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "setup-wizard.spec.ts",
+      "file": "setup-wizard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "首启向导",
+          "file": "setup-wizard.spec.ts",
+          "line": 37,
+          "column": 6,
+          "specs": [
+            {
+              "title": "没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2445,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55576/e9d0828e-fc4f-4fd3-b886-51a068d530bd\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:08:53.010Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-7f4c94ad538cccfebd52",
+              "file": "setup-wizard.spec.ts",
+              "line": 40,
+              "column": 3
+            },
+            {
+              "title": "先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2847,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55597/04617630-4a84-4154-81e8-683a391e38fb\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        },
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55604/23bf4242-91db-4d7c-9b37-09b987dc5ea1\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:08:55.459Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-5ebbcc8e8b2bb23ad590",
+              "file": "setup-wizard.spec.ts",
+              "line": 78,
+              "column": 3
+            },
+            {
+              "title": "解释器路径保存失败在卡片内显示，未配置时仍可跳过",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1472,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55613/b0719eb2-5e6a-4590-88ba-f36ba55de4c6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:08:58.311Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-02c917a436ddc26049d3",
+              "file": "setup-wizard.spec.ts",
+              "line": 97,
+              "column": 3
+            },
+            {
+              "title": "密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1323,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55621/1a0a6d50-ae2a-4f8d-9550-53e01dada665\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:08:59.788Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-a62fe1a32c6f9d890d09",
+              "file": "setup-wizard.spec.ts",
+              "line": 112,
+              "column": 3
+            },
+            {
+              "title": "服务商切换自动填写目录默认地址，手动改址仍可检测",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1429,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55629/89ae4028-28ae-4a55-8899-5ae59f0bceb1\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:01.116Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-4244992060a576d8b6e5",
+              "file": "setup-wizard.spec.ts",
+              "line": 131,
+              "column": 3
+            },
+            {
+              "title": "引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1314,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55645/ed411462-2175-4d88-94e7-aa7baf3fa16f\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:02.550Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-6927cfd675d3c205447b",
+              "file": "setup-wizard.spec.ts",
+              "line": 154,
+              "column": 3
+            },
+            {
+              "title": "四步实机截图；语言选择立即传递到工作台；窄窗口可操作",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2022,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55659/9174629c-5e27-473f-b257-a92de91adc71\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:03.868Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-d4f745b5b615696c0ae5",
+              "file": "setup-wizard.spec.ts",
+              "line": 176,
+              "column": 3
+            },
+            {
+              "title": "自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1884,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55676/baeb2ca8-8801-4349-8f37-bd318a1d1d6b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:05.895Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-47be545fa61337636028",
+              "file": "setup-wizard.spec.ts",
+              "line": 205,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "首启向导 · 产品原样的默认配置",
+          "file": "setup-wizard.spec.ts",
+          "line": 246,
+          "column": 6,
+          "specs": [
+            {
+              "title": "明确模型和协议在检测、保存验证、首次对话中一致",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1866,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55696/64b6e381-8108-4b22-b0bb-9f7a063d1ac4\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:07.785Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-0878573f5deb75c3ba38",
+              "file": "setup-wizard.spec.ts",
+              "line": 249,
+              "column": 3
+            },
+            {
+              "title": "**填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1955,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55718/b72b53ec-6979-418a-b9d1-4753157d331c\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:09.655Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-70a23f3e335a50813206",
+              "file": "setup-wizard.spec.ts",
+              "line": 277,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "首启向导 · 混合协议目录",
+          "file": "setup-wizard.spec.ts",
+          "line": 315,
+          "column": 6,
+          "specs": [
+            {
+              "title": "自动协议按所选目录模型检测、保存并对话",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1831,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:55734/95914f54-9480-4ec5-b446-5545db3ca4de\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T18:09:11.614Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d205078bbfe872050406-0bbcde44a01346be95c5",
+              "file": "setup-wizard.spec.ts",
+              "line": 318,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T18:08:47.468Z",
+    "duration": 25989.917,
+    "expected": 13,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

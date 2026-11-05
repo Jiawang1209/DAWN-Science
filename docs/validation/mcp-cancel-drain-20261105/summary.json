@@ -171,5 +171,67 @@
   "sourceEntries": 1482,
   "visualBaselineEntries": 14,
   "sourceChanges": [],
-  "visualBaselineChanges": []
+  "visualBaselineChanges": [],
+  "mainProof": {
+    "testedHead": "171537db74c56d245e3d5fb4ee3976a3dab71e64",
+    "criticalFiles": 10,
+    "criticalPassed": 208,
+    "electron": {
+      "startTime": "2026-11-05T18:08:47.468Z",
+      "duration": 25989.917,
+      "expected": 13,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "demo": {
+      "runtime": {
+        "node": "24.22.1",
+        "electron": "43.8.4"
+      },
+      "forcedGc": true,
+      "releaseMs": 35.67920800000047,
+      "serverStreamClosed": true,
+      "sameSessionGeneration": 1,
+      "calls": [
+        "hold",
+        "echo"
+      ],
+      "snapshot": {
+        "timeline": [
+          {
+            "event": "hold",
+            "ms": 859.0941250000001,
+            "id": "dawn-call-1f6b35a3-c0f4-4765-899d-c8ad3678bee9-1"
+          },
+          {
+            "event": "response-close",
+            "ms": 990.464708,
+            "id": "dawn-call-1f6b35a3-c0f4-4765-899d-c8ad3678bee9-1"
+          },
+          {
+            "event": "cancel-notification",
+            "ms": 998.089958,
+            "id": "dawn-call-1f6b35a3-c0f4-4765-899d-c8ad3678bee9-1"
+          }
+        ],
+        "calls": [
+          "hold",
+          "echo"
+        ],
+        "cancelled": [
+          "dawn-call-1f6b35a3-c0f4-4765-899d-c8ad3678bee9-1"
+        ],
+        "closedWaits": [
+          "dawn-call-1f6b35a3-c0f4-4765-899d-c8ad3678bee9-1"
+        ],
+        "pending": []
+      },
+      "boundary": "Real Electron and loopback HTTP; deterministic model, no external MCP or paid inference."
+    },
+    "installedAppVersionReadOnly": "0.0.44",
+    "pushed": false,
+    "published": false,
+    "installedAppReplaced": false
+  }
 }

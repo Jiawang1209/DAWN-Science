@@ -1,0 +1,57 @@
+{
+  "conditions": "localhost deterministic inference; actual Electron/Pi/Python/files; synthetic inputs",
+  "initialRequests": 20,
+  "recoveryRequestsIncludingCaptain": 14,
+  "source": {
+    "teamId": "pipeline-f9d235526427db34c1beb460",
+    "status": "blocked",
+    "items": [
+      {
+        "id": "a",
+        "status": "completed"
+      },
+      {
+        "id": "b",
+        "status": "blocked"
+      }
+    ]
+  },
+  "derived": {
+    "teamId": "pipeline-cf5ce03311ae19df402acb48",
+    "status": "completed",
+    "items": [
+      {
+        "id": "a",
+        "reuse": {
+          "mode": "reused",
+          "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+          "source": {
+            "teamId": "pipeline-f9d235526427db34c1beb460",
+            "stateRevision": 3,
+            "itemId": "a"
+          }
+        },
+        "outputs": [
+          "results/pipeline-f9d235526427db34c1beb460/a/analysis.py",
+          "results/pipeline-f9d235526427db34c1beb460/a/result.json",
+          "results/pipeline-f9d235526427db34c1beb460/a/report.md"
+        ]
+      },
+      {
+        "id": "b",
+        "reuse": {
+          "mode": "rerun",
+          "reason": "历史项未完成完整验收；重新执行"
+        },
+        "outputs": [
+          "results/pipeline-cf5ce03311ae19df402acb48/b/analysis.py",
+          "results/pipeline-cf5ce03311ae19df402acb48/b/result.json",
+          "results/pipeline-cf5ce03311ae19df402acb48/b/report.md"
+        ]
+      }
+    ],
+    "executedAnalysisTasks": 1,
+    "historicalTasks": 3
+  },
+  "sourcePreserved": true
+}

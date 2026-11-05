@@ -37,6 +37,7 @@ import { 写元, 读元, type 子运行元 } from "./run-dir.js"
 export interface SubagentToolOptions {
   remote?: boolean
   taskPolicy?: ()=>import("../policy/permissions.js").权限档
+  controlService?: import("../orchestration/service.js").OrchestrationService | undefined
   taskStore?: import("../orchestration/store.js").OrchestrationStore
   orchestration?: import("../orchestration/service.js").OrchestrationService | undefined
   sessionId: SessionId
@@ -182,6 +183,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       const executor = new SubagentExecutor({
         prepareTask:(i,task,definition)=>prepareSubagentTask(opts,toolCallId,i,{...task,...(task.contract!==undefined?{contract:TaskContractSchema.parse(task.contract)}:{})},definition.tools),
         childOf: opts.childOf,
+      control: !opts.remote&&(opts.controlService??opts.orchestration) ? {service:(opts.controlService??opts.orchestration)!,addressOf:(i:number)=>[子目录段(toolCallId),String(i)]}:undefined,
         ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
         // 运行目录按调用分（2026-09-27）：executor 只认 `agentDirOf(index)`，这里把 toolCallId 绑进去
         context: { ...opts.context, agentDirOf: 目录 },
@@ -256,6 +258,7 @@ export function createSubagentFollowUp(opts: SubagentToolOptions) {
     const executor = new SubagentExecutor({
       prepareTask:(i,task,definition)=>prepareSubagentTask(opts,toolCallId,i,task,definition.tools),
       childOf: opts.childOf,
+      control: !opts.remote&&(opts.controlService??opts.orchestration) ? {service:(opts.controlService??opts.orchestration)!,addressOf:(i:number)=>[子目录段(toolCallId),String(i)]}:undefined,
       ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
       context: { ...opts.context, agentDirOf: 目录于(opts, toolCallId) },
       onProgress: (p) => {

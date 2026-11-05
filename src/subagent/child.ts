@@ -33,6 +33,7 @@
  * - skills / prompts 的默认扫描关闭，保持上下文精简。2026-10-18 起，
  *   配有父侧资源访问器时只通过只读 RPC 按需查目录和正文，不自动加载扩展。
  */
+import {createChildSteering,SteeringBindingSchema} from "./steering.js"
 import {TaskSettingsSchema} from "../orchestration/task-contract.js"
 import {createTaskTools,taskToolDenial} from "./task-tools.js"
 import {sessionUsage} from '../runtime/session-usage.js'
@@ -152,6 +153,11 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   if(taskTools?.submission){const before=session.agent.shouldStopAfterTurn;session.agent.shouldStopAfterTurn=async(...args)=>Boolean(taskTools.submission?.result())||Boolean(await before?.(...args))}
   const beforeIds=new Set(session.sessionManager.getBranch().map(entry=>entry.id))
 
+  if(spec.steering&&!settings?.contract){
+    const binding=SteeringBindingSchema.parse(spec.steering)
+    liveSteering=createChildSteering(session,binding,emit)
+    emit({...binding,type:'steer_ready'})
+  }
   return {
     prompt: (text) => session.prompt(text),
     ...(taskTools?{evidence:taskTools.evidence}:{}),
@@ -169,6 +175,7 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
  * 老的写法是读到 EOF——成员模式下父进程要一直开着 stdin 回话，读到 EOF 就永远等不到规格。
  * JSON.stringify 不会产生裸换行，所以「一行」对规格是安全的；父进程不写换行就关掉的老情形也兼容。
  */
+let liveSteering:ReturnType<typeof createChildSteering>|undefined
 const 等回应 = new Map<string, (r: SubagentParentReply) => void>()
 let 行缓冲 = ""
 let 规格就绪: ((s: string) => void) | undefined
@@ -184,6 +191,7 @@ function 收一行(line: string): void {
   }
   try {
     const r = JSON.parse(t) as SubagentParentReply
+    if((r as {type:string}).type==='steer'){void liveSteering?.receive(r);return}
     if (r && r.type === "reply") 等回应.get(r.id)?.(r)
   } catch {
     // 不是一行合法的回应：忽略，父侧自己会超时报错
@@ -280,6 +288,7 @@ async function main(): Promise<void> {
   }
 
   emit(await runChildTask(spec, realSession, (e) => emit({ type: "event", event: e })))
+  liveSteering?.close()
 }
 
 void main().then(

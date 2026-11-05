@@ -4,6 +4,8 @@ import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from 'no
 import {join} from 'node:path'
 import {z} from 'zod'
 import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-contract.js'
+import {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
+export {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
 import {TaskObservationSchema} from '../protocol/task-observation.js'
 
 export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
@@ -26,7 +28,7 @@ const MessageSchema = z.object({
 }).strict()
 export type ChildMessage = z.infer<typeof MessageSchema>
 const StateSchema = z.object({
-  version: z.literal(1), ownerSessionId: z.string().min(1), children: z.array(ChildSchema), messages: z.array(MessageSchema).default([]),
+  version: z.literal(1), ownerSessionId: z.string().min(1), children: z.array(ChildSchema), messages: z.array(MessageSchema).default([]), steering:z.array(SteeringReceiptSchema).default([]),
 }).strict()
 type State = z.infer<typeof StateSchema>
 
@@ -62,8 +64,16 @@ export class OrchestrationStore {
       if (!this.get(message.childId) || messageIds.has(message.id) || expected !== message.id) throw new Error('Cannot open orchestration state: invalid message identity')
       messageIds.add(message.id)
     }
-    if (this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
+    const steeringIds=new Set<string>(),steeringCounts=new Map<string,number>()
+    for(const receipt of this.state.steering){
+      const child=this.get(receipt.childId),expected=this.steeringIdentity(receipt.childId,receipt.requestId)
+      const count=(steeringCounts.get(receipt.childId)??0)+1
+      if(!child||receipt.epoch>child.epoch||steeringIds.has(receipt.id)||receipt.id!==expected||count>128)throw new Error('Cannot open orchestration state: invalid steering identity')
+      steeringIds.add(receipt.id);steeringCounts.set(receipt.childId,count)
+    }
+    if (this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
       this.change(state => {
+        for (const receipt of state.steering) if(receipt.status==='accepted'){receipt.status='interrupted';receipt.reason='宿主重启，是否进入模型上下文未确认；未自动重放';receipt.updatedAt=Date.now()}
         for (const message of state.messages) if (message.status === 'running') {
           const owner = state.children.find(child => child.id === message.childId)
           if (owner) owner.paused = true
@@ -139,6 +149,29 @@ export class OrchestrationStore {
     const next = MessageSchema.parse({...previous, ...patch, updatedAt: Date.now()})
     this.change(state => {state.messages[state.messages.findIndex(message => message.id === id)] = next})
     return next
+  }
+
+  steeringReceipts(childId?:string):SteeringReceipt[]{return structuredClone(this.state.steering.filter(receipt=>!childId||receipt.childId===childId))}
+
+  acceptSteering(childId:string, epoch:number, requestId:string, text:string):SteeringReceipt {
+    const child=this.get(childId);if(!child||child.epoch!==epoch||child.state!=='running')throw new Error('Inactive or stale steering target')
+    const existing=this.steeringReceipts(childId).find(receipt=>receipt.requestId===requestId)
+    if(existing){if(existing.text!==text)throw new Error('Steering requestId conflict');return existing}
+    if(this.steeringReceipts(childId).length>=128)throw new Error('Steering receipt history limit reached; start a new child')
+    const now=Date.now(),receipt=SteeringReceiptSchema.parse({id:this.steeringIdentity(childId,requestId),childId,epoch,requestId,text,status:'accepted',createdAt:now,updatedAt:now})
+    this.change(state=>{state.steering.push(receipt)})
+    return receipt
+  }
+
+  settleSteering(childId:string,epoch:number,id:string|undefined,status:'applied'|'interrupted',reason?:string):boolean {
+    const receipts=this.state.steering.filter(receipt=>receipt.childId===childId&&receipt.epoch===epoch&&(!id||receipt.id===id)&&receipt.status==='accepted')
+    if(!receipts.length)return false
+    this.change(state=>{for(const receipt of state.steering)if(receipts.some(item=>item.id===receipt.id)){receipt.status=status;receipt.updatedAt=Date.now();if(reason)receipt.reason=reason}})
+    return true
+  }
+
+  private steeringIdentity(childId:string,requestId:string):string {
+    return `steer-${createHash('sha256').update(JSON.stringify([childId,requestId])).digest('hex').slice(0,32)}`
   }
 
   private messageIdentity(childId: string, requestId: string): string {

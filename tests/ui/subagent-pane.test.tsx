@@ -1,5 +1,5 @@
 /** 坞里「子 agent」那一格（2026-09-27，spec §2.2 草图 A） */
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { render, screen, fireEvent, cleanup, act } from "@testing-library/react"
 import { receipt } from "../fixtures/skill-read.js"
 import { SubagentPane } from "../../src/ui/subagent-pane.js"
@@ -149,4 +149,37 @@ describe("子 agent 那一格", () => {
     看()
     expect(screen.getByText("原始 90000 字节，主 agent 只拿到前 65536 字节")).toBeDefined()
   })
+})
+it('offers capable realtime correction and displays accepted separately from applied',async()=>{
+ $子转录id.set('s#sub:c1:0');$子agent信息.set({agent:'reader',task:'t',status:'running',canAsk:false,askWhy:'running'})
+ const calls:unknown[]=[]
+ render(<SubagentPane groups={[组]} onPick={()=>{}} onBack={()=>{}} onAsk={async()=>{}} onControl={async request=>{
+  calls.push(request);return{childId:'child',epoch:1,canSteer:true,canInterrupt:true,receipts:request.action==='steer'?[{id:'r',childId:'child',requestId:'request',epoch:1,text:'correct',status:'accepted',createdAt:1,updatedAt:1}]:[]}
+ }}/>)
+ await act(async()=>{});const input=screen.getByRole('textbox',{name:'实时纠偏'});fireEvent.change(input,{target:{value:'correct'}})
+ await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'纠偏提交'}))})
+ expect(calls.some((request:any)=>request.action==='steer'&&request.text==='correct')).toBe(true)
+ expect(screen.getByText(/已接收，等待进入上下文/)).toBeTruthy();expect(screen.queryByText(/已进入模型上下文/)).toBeNull()
+})
+it('keeps an expired draft bound to its old epoch and offers an explicit reset for the current turn',async()=>{
+ vi.useFakeTimers()
+ $子转录id.set('s#sub:c1:0');$子agent信息.set({agent:'reader',task:'t',status:'running',canAsk:false,askWhy:'running'})
+ let epoch=1;const calls:any[]=[]
+ const view=render(<SubagentPane groups={[组]} onPick={()=>{}} onBack={()=>{}} onAsk={async()=>{}} onControl={async request=>{
+  calls.push(request);return{childId:'child',epoch,canSteer:true,canInterrupt:true,receipts:[]}
+ }}/>)
+ try{
+  await act(async()=>{});const input=screen.getByRole('textbox',{name:'实时纠偏'}) as HTMLTextAreaElement
+  fireEvent.change(input,{target:{value:'old turn correction'}})
+  epoch=2;await act(async()=>{await vi.advanceTimersByTimeAsync(750)})
+  fireEvent.change(input,{target:{value:'replacing text must not silently change the execution epoch'}})
+  expect(screen.getByText('纠偏草稿属于上一轮，请重新撰写当前轮次的指令')).toBeDefined()
+  expect(screen.getByRole('button',{name:'纠偏提交'}).hasAttribute('disabled')).toBe(true)
+  await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'纠偏提交'}))})
+  expect(calls.filter(request=>request.action==='steer')).toEqual([])
+  fireEvent.click(screen.getByRole('button',{name:'重写本轮纠偏'}));expect(input.value).toBe('')
+  fireEvent.change(input,{target:{value:'explicit new instruction for turn two'}})
+  await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'纠偏提交'}))})
+  expect(calls.filter(request=>request.action==='steer')).toMatchObject([{expectedEpoch:2,text:'explicit new instruction for turn two'}])
+ }finally{view.unmount();vi.useRealTimers()}
 })

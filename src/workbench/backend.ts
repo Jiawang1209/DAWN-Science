@@ -2888,6 +2888,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **从查到标 `asking` 全是同步的**（中间没有 await）：两句并发的续问只有一句过得去，另一句 `conflict`。
      * 运行时起不来 → 在那一格里记一条失败（与答到一半失败同一条路），不另抛：那一格就是人正看着的地方。
      */
+    controlSubagent:async({transcriptId,control})=>{
+      const target=拆子转录id(transcriptId)
+      if(!target)throw fault("invalid_request","这不是一个子 agent 的 id")
+      if(!sessions.get(target.会话))throw fault("not_found","主对话没在运行，先在主区打开它")
+      return sessions.controlSubagent(target.会话,target.toolCallId,target.序号,control)
+    },
+
     askSubagent: async ({ transcriptId: 原样, text }) => {
       const 拆 = 拆子转录id(原样)
       if (!拆) throw fault("invalid_request", "这不是一个子 agent 的 id")

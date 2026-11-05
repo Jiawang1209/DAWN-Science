@@ -1,0 +1,12 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  635 passed (635)
+      Tests  6289 passed | 11 skipped (6300)
+   Start at  13:26:18
+   Duration  178.50s (transform 28.70s, setup 81.44s, import 300.00s, tests 599.07s, environment 153.03s)

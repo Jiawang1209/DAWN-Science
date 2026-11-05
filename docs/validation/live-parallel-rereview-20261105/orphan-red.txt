@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-parallel.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/team/science-batch-parallel.test.ts (10 tests | 1 failed) 872ms
+   × a persistence failure aborts every sibling and leaves no ownerless attempt after drain 174ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-batch-parallel.test.ts > a persistence failure aborts every sibling and leaves no ownerless attempt after drain
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/team/science-batch-parallel.test.ts:35:85
+     33|   const drained=scheduler.读(team.id)
+     34|   expect(drained.tasks[1]?.receipt?.state).not.toBe('accepted')
+     35|   expect(drained.tasks.some(task=>['claimed','in_progress'].includes(t…
+       |                                                                                     ^
+     36|   expect(()=>resumeScienceBatch(drained,true)).not.toThrow()
+     37|  }finally{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  13:11:41
+   Duration  1.64s (transform 196ms, setup 0ms, import 690ms, tests 872ms, environment 0ms)

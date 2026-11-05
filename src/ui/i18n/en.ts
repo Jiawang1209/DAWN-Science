@@ -16,6 +16,19 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "停止中，等待工具排空": "Stopping; waiting for tools to drain",
+  "子任务已结束并排空": "Child task finished and drained",
+  "子任务实时控制": "Live child controls",
+  "实时纠偏": "Realtime correction",
+  "当前工具执行结束后才可能生效": "May apply after the current tool finishes",
+  "纠偏提交": "Guide child",
+  "纠偏草稿属于上一轮，请重新撰写当前轮次的指令": "This draft belongs to an earlier turn. Compose a new correction for the current turn.",
+  "重写本轮纠偏": "Compose for current turn",
+  "中止子任务": "Halt child",
+  "已进入模型上下文": "Applied to model context",
+  "已接收，等待进入上下文": "Accepted; waiting for model context",
+  "已中断，是否生效未确认": "Interrupted; application unconfirmed",
+
   "已读取技能 {0}": "Read Skill {0}",
   "项目技能": "Project Skill",
   "内置技能": "Built-in Skill",

@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-acceptance.spec.ts e2e/science-batch.spec.ts e2e/science-incremental.spec.ts e2e/science-parallel.spec.ts e2e/subagent-steering.spec.ts
+
+Running 6 tests using 1 worker
+
+(node:49240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认的均值方法处理合成」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:54496/2cefe867-c34d-4619-86f8-a4ccd16283ee
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-acceptance.spec.ts:6:2 › basic-error › shows actual host acceptance and saves inspectable demonstration evidence (13.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认的均值方法处理合成」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:54660/0d37fa74-b5df-48a2-aa2f-8cac01825396
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-acceptance.spec.ts:6:2 › numeric-error › shows actual host acceptance and saves inspectable demonstration evidence (6.8s)
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认方法分别核查、分析」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:54751/f5d38c2c-719e-43e3-8f79-5f8d5e1d5fb1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/science-batch.spec.ts:4:1 › batch versions, host summary and progress cross the actual strict desktop protocol (14.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] [桌面通知·假] #1 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:55731/a9e6da5e-f37e-4f6a-911c-2261355489d5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/science-incremental.spec.ts:4:1 › visibly reuses accepted A and reruns failed B through actual parent tools and Pi (21.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：两个独立 CSV，以并发上」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:55968/e75d15ca-3741-4b85-87f6-975b41c164f3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/science-parallel.spec.ts:5:1 › two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary (12.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56082/d342930f-d2e9-4a4a-bc42-fdd6272c2d8c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction (21.5s)
+
+  6 passed (1.5m)

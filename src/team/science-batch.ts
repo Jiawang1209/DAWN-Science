@@ -3,14 +3,35 @@ import type {团队,成员,任务} from './types.js'
 import type {PipelineDefinition} from '../protocol/science-pipeline.js'
 import {ScienceBatchSchema,publicScienceBatch,type ScienceBatch} from '../protocol/science-batch.js'
 import type {ScienceTemplate} from './science-templates.js'
-import {startPipeline,resumePipeline,recoverPipeline,cancelPipeline} from './science-pipeline.js'
+import {startPipeline,advancePipeline,resumePipeline,recoverPipeline,cancelPipeline} from './science-pipeline.js'
 import {TaskContractSchema,TaskSettingsSchema,type TaskContract,type TaskSettings} from '../protocol/task-contract.js'
 import {resolveTaskSettings} from '../subagent/task-tools.js'
-import {加成员,加任务,团队错误} from './state.js'
-export function startScienceBatch(team:团队,requestId:string,template:ScienceTemplate,items:{id:string;label:string;definition:PipelineDefinition}[],summaryOutputs:string[],freeze?:(member:成员,contract:TaskContract)=>TaskSettings,now=Date.now()):void {
+import {加成员,加任务,取消任务,团队错误} from './state.js'
+export function startScienceBatch(team:团队,requestId:string,template:ScienceTemplate,items:{id:string;label:string;definition:PipelineDefinition}[],summaryOutputs:string[],freeze?:(member:成员,contract:TaskContract)=>TaskSettings,now=Date.now(),concurrency:1|2=1):void {
  if(team.pipeline||team.scienceBatch||team.tasks.length)throw new 团队错误('批量任务须使用独立团队')
+ // Independent readonly sessions permit real overlap without relaxing workspace-exec locks.
+ // Persistent Bots keep their original member: a Bot session may never receive two turns.
+ if(concurrency===2){
+  const lanes=new Map<string,string>()
+  items=items.map((item,index)=>{
+   if(index%2===0)return item
+   const members={...item.definition.members}
+   for(const stage of ['check','review'] as const){
+    const member=team.members.find(m=>m.name===members[stage])
+    if(!member||member.botId)continue
+    let lane=lanes.get(member.name)
+    if(!lane){
+     lane=`batch-${stage}-2`;const copy=加成员(team,{...member,name:lane},now)
+     if(member.frozenAgentDefinition)copy.frozenAgentDefinition=structuredClone(member.frozenAgentDefinition)
+     lanes.set(member.name,lane)
+    }
+    members[stage]=lane
+   }
+   return{...item,definition:{...item.definition,members}}
+  })
+ }
  const planned=items.map(item=>{const scratch:团队={...structuredClone(team),tasks:[]};startPipeline(scratch,requestId+':'+item.id,item.definition,freeze,now);return{...item,settingsByStage:scratch.pipeline!.settingsByStage}})
- const b=ScienceBatchSchema.parse({version:1,requestId,template,items:planned,index:0,status:'running',stateRevision:1,aggregateTaskIds:[],summaryOutputs,startedAt:now})
+ const b=ScienceBatchSchema.parse({version:1,requestId,concurrency,template,items:planned,index:0,status:'running',stateRevision:1,aggregateTaskIds:[],summaryOutputs,startedAt:now})
  // Input/output union is also the final delivery verification envelope.
  const allPaths=new Set([...b.items.flatMap(i=>[...i.definition.inputs,...i.definition.outputs]),...b.summaryOutputs])
  if(allPaths.size>64)throw new 团队错误('批量总文件数超过 64')
@@ -18,7 +39,7 @@ export function startScienceBatch(team:团队,requestId:string,template:ScienceT
  if(new Set(outputs).size!==outputs.length||outputs.some(p=>inputs.has(p)))throw new 团队错误('批量输出不能重叠或覆盖输入')
  team.scienceBatch=b
  加成员(team,{name:'aggregate',agent:'science-host-summary',role:'固定宿主汇总；无模型执行'})
- startItem(team,now)
+ if(concurrency===2)fillParallelSlots(team,now);else startItem(team,now)
 }
 function startItem(team:团队,now:number){const b=team.scienceBatch!;while(b.items[b.index]!.completed){const item=b.items[b.index]!;team.pipeline={...structuredClone(item.completed!),definition:structuredClone(item.definition),requestId:b.requestId+':'+item.id,routeSync:'pending'};if(b.index+1>=b.items.length){aggregate(team,now);return}b.index++}const item=b.items[b.index]!;startPipeline(team,b.requestId+':'+item.id,item.definition,(_m,c)=>{const stage=c.resultType==='data-summary'?'check':c.resultType==='review'?'review':'analyze';return structuredClone(item.settingsByStage[stage])},now,item.id);if(b.requestFingerprint)team.pipeline!.requestFingerprint=b.requestFingerprint}
 function terminal(b:ScienceBatch,status:'completed'|'blocked'|'cancelled',reason:string,now:number){b.status=status;b.reason=reason.slice(0,7900);b.endedAt=now;b.stateRevision++}
@@ -34,6 +55,7 @@ function aggregate(team:团队,now:number){
 }
 export function advanceScienceBatch(team:团队,now=Date.now()):void {
  const b=team.scienceBatch,p=team.pipeline;if(!b||!p||!['running','aggregating'].includes(b.status))return
+ if(b.concurrency===2&&b.status==='running'){advanceParallelBatch(team,now);return}
  if(b.status==='aggregating'){
   const task=team.tasks.find(t=>t.id===b.aggregateTaskId)
   if(!task){terminal(b,'blocked','汇总任务丢失，未重放',now);return}
@@ -48,10 +70,11 @@ export function advanceScienceBatch(team:团队,now=Date.now()):void {
 }
 export function recoverScienceBatch(team:团队,now=Date.now()):boolean {
  const b=team.scienceBatch;if(!b||!['running','aggregating'].includes(b.status))return false
- recoverPipeline(team,now);b.status='interrupted';b.stateRevision++;b.reason='批量执行已暂停；已完成项保留，未知副作用须核对后显式恢复';return true
+ if(b.concurrency===2){for(const item of b.items)if(item.checkpoint)withItem(team,item,()=>recoverPipeline(team,now));projectParallel(team)}else recoverPipeline(team,now);b.status='interrupted';b.stateRevision++;b.reason='批量执行已暂停；已完成项保留，未知副作用须核对后显式恢复';return true
 }
 export function resumeScienceBatch(team:团队,ack=false,now=Date.now()):void {
  const b=team.scienceBatch;if(!b||b.status!=='interrupted')throw new 团队错误('只有 interrupted 批量可恢复')
+ if(b.concurrency===2&&!b.aggregateTaskId){resumeParallelBatch(team,ack,now);return}
  if(team.pipeline?.status==='completed'){
   const task=team.tasks.find(t=>t.id===b.aggregateTaskId)
   if(task&&['claimed','in_progress'].includes(task.status))throw new 团队错误('旧汇总尝试仍未排空')
@@ -60,8 +83,68 @@ export function resumeScienceBatch(team:团队,ack=false,now=Date.now()):void {
   if(!task||!['pending','completed'].includes(task.status))aggregate(team,now);else advanceScienceBatch(team,now)
  }else{resumePipeline(team,ack,now);b.status='running';b.stateRevision++;delete b.reason;advanceScienceBatch(team,now)}
 }
-export function cancelScienceBatch(team:团队,now=Date.now()):void {const b=team.scienceBatch;if(b&&!['completed','cancelled'].includes(b.status)){cancelPipeline(team,now);terminal(b,'cancelled','用户取消批量；保留已有检查点及产物',now)}}
+export function cancelScienceBatch(team:团队,now=Date.now()):void {const b=team.scienceBatch;if(b&&!['completed','cancelled'].includes(b.status)){if(b.concurrency===2){for(const item of b.items)if(item.checkpoint)withItem(team,item,()=>cancelPipeline(team,now));closeOpenTasks(team);projectParallel(team)}else cancelPipeline(team,now);terminal(b,'cancelled','用户取消批量；保留已有检查点及产物',now)}}
 export {publicScienceBatch}
 
+type BatchItem=ScienceBatch['items'][number]
+/** The original reducer sees one item at a time; only the display projection is shared. */
+function withItem<T>(team:团队,item:BatchItem,work:()=>T):T {
+ const b=team.scienceBatch!,previous=team.pipeline,index=b.index
+ b.index=b.items.indexOf(item);if(item.checkpoint)team.pipeline=item.checkpoint;else delete team.pipeline
+ try{return work()}finally{item.checkpoint=team.pipeline;if(previous)team.pipeline=previous;else delete team.pipeline;b.index=index}
+}
+function projectParallel(team:团队){
+ const b=team.scienceBatch!,index=b.items.findIndex(i=>i.checkpoint&&!i.completed)
+ b.index=index>=0?index:b.items.length-1
+ const item=b.items[b.index]!
+ // Historical reuse carries its old route revision. Rebind the public/CAS projection
+ // to this batch's frozen definition, exactly as the serial startItem path does.
+ const projection=item.completed?{...structuredClone(item.completed),definition:structuredClone(item.definition),requestId:b.requestId+':'+item.id,routeSync:'pending' as const}:item.checkpoint
+ if(projection)team.pipeline=projection;else delete team.pipeline
+}
+function fillParallelSlots(team:团队,now:number){
+ const b=team.scienceBatch!
+ let active=b.items.filter(i=>i.checkpoint&&!i.completed).length
+ for(const item of b.items){
+  if(active>=2)break
+  if(item.completed||item.checkpoint)continue
+  withItem(team,item,()=>{
+   startPipeline(team,b.requestId+':'+item.id,item.definition,(_m,c)=>structuredClone(item.settingsByStage[c.resultType==='data-summary'?'check':c.resultType==='review'?'review':'analyze']),now,item.id)
+   if(b.requestFingerprint)team.pipeline!.requestFingerprint=b.requestFingerprint
+  });active++;b.stateRevision++
+ }
+ projectParallel(team)
+ if(b.items.every(i=>i.completed?.status==='completed'))aggregate(team,now)
+}
+function closeOpenTasks(team:团队){for(const task of team.tasks)if(['pending','claimed','in_progress'].includes(task.status))取消任务(team,task.id)}
+function advanceParallelBatch(team:团队,now:number){
+ const b=team.scienceBatch!
+ for(const item of b.items){
+  if(!item.checkpoint||item.completed)continue
+  const before=JSON.stringify(item.checkpoint)
+  withItem(team,item,()=>advancePipeline(team,now))
+  if(JSON.stringify(item.checkpoint)!==before)b.stateRevision++
+  if(item.checkpoint.status==='completed')item.completed=structuredClone(item.checkpoint)
+ }
+ const failed=b.items.find(i=>i.checkpoint&&['blocked','cancelled'].includes(i.checkpoint.status))
+ if(failed){
+  for(const item of b.items)if(item!==failed&&item.checkpoint&&!item.completed)withItem(team,item,()=>recoverPipeline(team,now,'另一批量项失败，停止并保留检查点'))
+  closeOpenTasks(team);projectParallel(team)
+  terminal(b,failed.checkpoint!.status==='cancelled'?'cancelled':'blocked',`${failed.label}：${failed.checkpoint!.reason??'阶段未通过'}；其他活动项停止，未生成汇总`,now);return
+ }
+ if(b.items.some(i=>i.checkpoint?.status==='interrupted')){recoverScienceBatch(team,now);return}
+ fillParallelSlots(team,now)
+}
+function resumeParallelBatch(team:团队,ack:boolean,now:number){
+ const b=team.scienceBatch!
+ // Validate every lane before modifying any checkpoint. Resume is an atomic persisted transition.
+ for(const item of b.items){if(!item.checkpoint||item.completed)continue
+  const scratch=structuredClone(team),copy=scratch.scienceBatch!.items[b.items.indexOf(item)]!
+  withItem(scratch,copy,()=>resumePipeline(scratch,ack,now))
+ }
+ for(const item of b.items)if(item.checkpoint&&!item.completed)withItem(team,item,()=>resumePipeline(team,ack,now))
+ b.status='running';b.stateRevision++;delete b.reason;projectParallel(team);advanceParallelBatch(team,now)
+}
+
 /** Only used on the unpublished derived Team, before scheduler admission. */
-export function activateDerivedBatch(team:团队,history:任务[] ,now=Date.now()):void {if(!team.scienceBatch||team.tasks.some(t=>t.status!=='pending'))throw new 团队错误('派生批次已开始执行');team.tasks=structuredClone(history);delete team.pipeline;team.scienceBatch.index=0;startItem(team,now);ScienceBatchSchema.parse(team.scienceBatch)}
+export function activateDerivedBatch(team:团队,history:任务[] ,now=Date.now()):void {if(!team.scienceBatch||team.tasks.some(t=>t.status!=='pending'))throw new 团队错误('派生批次已开始执行');team.tasks=structuredClone(history);delete team.pipeline;team.scienceBatch.index=0;for(const item of team.scienceBatch.items)delete item.checkpoint;if(team.scienceBatch.concurrency===2)fillParallelSlots(team,now);else startItem(team,now);ScienceBatchSchema.parse(team.scienceBatch)}

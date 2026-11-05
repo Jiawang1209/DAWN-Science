@@ -108,6 +108,7 @@ function backend(): WorkbenchBackend {
       sessionId: "s1#sub:c1:0", kind: "native" as const, revision: 0, items: [],
       terminal: "", terminalTrimmed: false, state: "alive" as const,
     }),
+    controlSubagent:async()=>({canSteer:false,canInterrupt:false,receipts:[]}),
     askSubagent: async () => ({}),
     abortSession: async () => ({}),
     setSessionModel: async () => ({}),

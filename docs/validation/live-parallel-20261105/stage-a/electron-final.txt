@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/subagent-steering.spec.ts
+
+Running 1 test using 1 worker
+
+(node:37147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52311/8f2d0819-69f6-4af0-b7b6-7527a52ff3f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction (26.3s)
+
+  1 passed (27.2s)

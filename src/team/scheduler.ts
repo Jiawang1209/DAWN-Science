@@ -87,10 +87,14 @@ export class 团队调度器 {
   改(teamId: string, f: (team: 团队) => void): 团队 {
     const team = this.读(teamId)
     f(team)
-    advancePipeline(team,this.now())
+    if(!team.scienceBatch||team.scienceBatch.concurrency!==2)advancePipeline(team,this.now())
     advanceScienceBatch(team,this.now())
     reconcileBotExchanges(team, this.now())
     写团队(this.dir(teamId), team)
+    // Persist the batch stop before aborting any backend, including hidden parallel items.
+    if(team.scienceBatch&&!['running','aggregating'].includes(team.scienceBatch.status)) {
+      for(const [key,ctrl] of this.跑着)if(key.startsWith(`${teamId}/`))ctrl.abort()
+    }
     // Persist invalidation before aborting delegated tools; their late completion cannot publish a reply.
     for (const [key, turn] of this.botTurns) {
       if (!key.startsWith(`${teamId}/`)) continue
@@ -212,7 +216,7 @@ export class 团队调度器 {
     this.跑着.get(`${teamId}/${member}`)?.abort()
     for (const task of this.读(teamId).tasks) if (task.assignee === member && task.attemptId) this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     this.改(teamId, team => {
-      if(team.scienceBatch&&(team.tasks.find(t=>t.id===team.pipeline?.currentTaskId)?.assignee===member||member==='aggregate'))recoverScienceBatch(team,this.now())
+      if(team.scienceBatch&&(team.tasks.some(t=>t.assignee===member&&[team.pipeline?.currentTaskId,...team.scienceBatch!.items.map(i=>i.checkpoint?.currentTaskId)].includes(t.id))||member==='aggregate'))recoverScienceBatch(team,this.now())
       if(team.pipeline&&team.tasks.find(t=>t.id===team.pipeline!.currentTaskId)?.assignee===member)recoverPipeline(team,this.now(),'执行已停止，流程已暂停；核对产物后显式恢复，未自动重放')
       for (const turn of team.conversationTurns ?? []) if (turn.member === member && ["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
       for (const exchange of team.collaboration ?? []) if (exchange.resumedAt === undefined && exchange.status !== "interrupted" && (exchange.from === member || exchange.to === member || exchange.rootOwner === member)) {
@@ -315,15 +319,33 @@ export class 团队调度器 {
           this.改(teamId, (t) => {
             attemptId = 领取(t, 任务.id, m.name, this.now()).attemptId
           })
+          const 最新 = this.读(teamId)
+          const 派单 = 派单文本(最新, 任务.id)
+          void this.起一轮(teamId, m.name, { taskId: 任务.id, attemptId }, 派单)
         } catch (e) {
+          if(team.pipeline&&attemptId){
+            // A claim can be durable even though its observer/read failed before admission.
+            // No backend owns this token yet; keep all real siblings fenced until they drain.
+            this.stoppedTeams.add(teamId)
+            for(const [key,controller] of this.跑着)if(key.startsWith(`${teamId}/`))controller.abort()
+            const reason=`阶段领取未能完整发布，流程已暂停；核对后恢复：${e instanceof Error?e.message:String(e)}`
+            try{
+              const paused=this.读(teamId),claim=paused.tasks.find(task=>task.id===任务.id)
+              if(claim?.status==='claimed'&&claim.attemptId===attemptId){
+                结算(paused,任务.id,attemptId,{ok:false,output:reason},this.now());delete claim.attemptId
+              }
+              recoverScienceBatch(paused,this.now());recoverPipeline(paused,this.now(),reason)
+              if(!this.hasActiveTeam(teamId))recoverTeamExecution(paused)
+              写团队(this.dir(teamId),paused)
+              try{this.opts.onChange(paused)}catch(notification){console.error('[团队] 暂停通知失败',notification)}
+            }catch(pauseError){console.error('[团队] 领取失败检查点无法保存，核对记录后需重开恢复',pauseError)}
+            throw e // Preserve the caller's failed-admission signal after safe cleanup.
+          }
           // 领不了（磁盘上刚被别人改过）：**跳过这一项，别让整轮派活中断**——2026-08-22 一个重名 id 曾把调度器绊倒，
           // 队长收一条系统消息，人在坞里看得到
           this.改(teamId, (t) => 发消息(t, { from: m.name, to: "captain", content: `（系统）没能领下 ${任务.id}：${e instanceof Error ? e.message : String(e)}` }, this.now()))
           continue
         }
-        const 最新 = this.读(teamId)
-        const 派单 = 派单文本(最新, 任务.id)
-        void this.起一轮(teamId, m.name, { taskId: 任务.id, attemptId }, 派单)
       }
     }
   }
@@ -427,7 +449,7 @@ export class 团队调度器 {
         if (bytes > limit) 结果 = {ok: false, output: "", error: `Bot 最终回复 ${bytes} 字节，超过 ${limit === 团队上限.maxOutputBytes ? "64 KiB" : "16 KiB"} 上限；省略全部 ${bytes} 字节，未接收截断的回复或产物列表。请提供更短摘要与完整产物列表。`}
         if (结果.error && Buffer.byteLength(结果.error, "utf8") > 16 * 1024) 结果 = {ok: false, output: "", error: `Bot 错误报告 ${Buffer.byteLength(结果.error, "utf8")} 字节，超过 16 KiB 上限；省略全部错误原文，未接收截断的结果。`}
       }
-      if (m.botId && ctrl.signal.aborted) 结果 = { ok: false, output: "", error: "Bot 执行已停止。" }
+      if (ctrl.signal.aborted) 结果 = { ok: false, output: "", error: m.botId ? "Bot 执行已停止。" : "已中止，未采用迟到结果。" }
       this.跑着.delete(key)
       this.botTurns.delete(key)
       // 结算：令牌对不上就丢掉并出声（转派 / 接管 / 取消都会让它对不上）
@@ -494,6 +516,9 @@ export class 团队调度器 {
       // Background turns are intentionally not awaited by dispatch. Persistence failure must be visible,
       // settle the UI event and stop further admission instead of becoming an unhandled rejection.
       this.stoppedTeams.add(teamId)
+      // Cancellation must not depend on the snapshot or observer being writable.
+      // A parallel sibling may still own tools and locks after this turn has settled.
+      for(const [activeKey,controller] of this.跑着)if(activeKey.startsWith(`${teamId}/`))controller.abort()
       ctrl.abort()
       const reason = `团队状态无法保存或读取，执行已暂停；请核对已有产物与记录后再继续：${error instanceof Error ? error.message : String(error)}`
       console.error("[团队]", reason)
@@ -502,6 +527,12 @@ export class 团队调度器 {
       try{
         const paused=this.读(teamId)
         if(paused.pipeline){
+          // This turn has drained, but its settlement may be the write that failed.
+          // Close only its own still-current attempt; siblings stay live until they drain.
+          const orphan=任务?paused.tasks.find(task=>task.id===任务.taskId):undefined
+          if(orphan&&任务&&orphan.attemptId===任务.attemptId&&['claimed','in_progress'].includes(orphan.status)){
+            结算(paused,任务.taskId,任务.attemptId,{ok:false,output:reason},this.now());delete orphan.attemptId
+          }
           recoverScienceBatch(paused,this.now())
           recoverPipeline(paused,this.now(),'阶段保存或通知失败，流程已暂停；核对检查点后显式恢复')
           if(!this.hasActiveTeam(teamId))recoverTeamExecution(paused)

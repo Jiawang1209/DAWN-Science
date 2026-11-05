@@ -1,0 +1,81 @@
+{
+  "title": "parallel fixture",
+  "goal": "approved mean",
+  "dataContext": [
+    "synthetic deterministic software fixture"
+  ],
+  "steps": [
+    {
+      "id": "s",
+      "title": "mean",
+      "purpose": "approved mean",
+      "inputs": [
+        "a.csv",
+        "b.csv"
+      ],
+      "outputs": [],
+      "dependencies": [],
+      "status": "delivered",
+      "blockers": [],
+      "cases": [],
+      "deliverables": [
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/a/analysis.py",
+          "note": "sha256:1e2f7d9cb256189d3f40bf3c3813142f1f938b6fbf6f96fcb4892506c6f451d2 bytes:472"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/a/result.json",
+          "note": "sha256:f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6 bytes:34"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/a/report.md",
+          "note": "sha256:4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0 bytes:57"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/b/analysis.py",
+          "note": "sha256:c747e14e03a2ae601404adf3ffd001530536cdef6d5dca4baec1bfbf28dc63ab bytes:472"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/b/result.json",
+          "note": "sha256:f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6 bytes:34"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/b/report.md",
+          "note": "sha256:4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0 bytes:57"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/summary.json",
+          "note": "sha256:6a74a12ce782524fdb84995e2c4515bbf5fce1b96b18a15c2ddbd64079120728 bytes:4974"
+        },
+        {
+          "path": "results/pipeline-134271a914eb3e64406b53e1/summary.md",
+          "note": "sha256:dbe3421058b54da9210f574b0f9b70c37f10b634fb6ab8bafa9d56e5dfbeaac9 bytes:1414"
+        }
+      ],
+      "execution": {
+        "state": "completed",
+        "note": "[science-pipeline:pipeline-134271a914eb3e64406b53e1:p-1-b-analyze-0-1:p-1-b-review-0-2] actual Python fixture",
+        "toolCallIds": [
+          "call_mock_221"
+        ]
+      },
+      "verification": {
+        "state": "reviewed",
+        "note": "[science-pipeline:pipeline-134271a914eb3e64406b53e1:p-1-b-analyze-0-1:p-1-b-review-0-2] actual reads",
+        "toolCallIds": [
+          "call_mock_223",
+          "call_mock_224",
+          "call_mock_225"
+        ]
+      },
+      "needsReview": false,
+      "notes": [
+        "[science-pipeline:pipeline-134271a914eb3e64406b53e1:p-1-b-analyze-0-1:p-1-b-review-0-2]",
+        "交付事实来自子任务宿主回执；工具与格式验收不等于科学认证。"
+      ]
+    }
+  ],
+  "routeId": "0750ad98-a709-48c2-948b-5946e3e94db5",
+  "revision": 2,
+  "updatedAt": 1793856300913
+}

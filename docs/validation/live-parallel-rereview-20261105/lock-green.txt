@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/science-parallel.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  13:16:15
+   Duration  1.50s (transform 601ms, setup 0ms, import 1.41s, tests 4ms, environment 0ms)

@@ -19,6 +19,7 @@ import { SkillReadSchema } from "../protocol/skill-reads.js"
 /** 父 → 子：一个任务的全部输入。**子进程不猜任何东西，父侧给全** */
 export interface SubagentChildSpec {
   agent: string
+  steering?: import("./steering.js").SteeringBinding
   authorize?: true
   taskSettings?: import("../orchestration/task-contract.js").TaskSettings
   /** 已经替换过 `{previous}` 的最终任务文本 */
@@ -114,7 +115,7 @@ export type 子转录事件 =
       followUp?: true
     }
 
-export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage | SubagentEventMessage
+export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage | SubagentEventMessage | import("./steering.js").SteeringEvent
 
 /** 父 → 子（成员通信或只读资源）：工具调用的回应，一行一条 */
 export interface SubagentParentReply {

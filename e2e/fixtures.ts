@@ -351,7 +351,7 @@ export interface MockToolCallSpec {
 }
 
 export interface DawnOptions {
-  scienceBatch?:boolean|'numeric-error'|'basic-error'|'incremental'
+  scienceBatch?:boolean|'numeric-error'|'basic-error'|'incremental'|'parallel'
   sciencePipeline?: 'pass'|'revise'|'blocked'|'interrupt'
 
   /**

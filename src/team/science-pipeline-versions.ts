@@ -14,8 +14,9 @@ export function pipelineCheckpointVersions(team:团队):FileVersion[]|undefined 
   if(b.status==='completed'){const summary=team.tasks.find(t=>t.id===b.aggregateTaskId);if(!summary?.receipt?.versions)throw new Error('已验收汇总缺少版本');files.push(...summary.receipt.versions.outputs)}
  }
  // An analysis retry may replace its own unaccepted outputs. Review/delivery must match accepted analysis.
- if(p.stage==='review'&&!b?.items[b.index]?.completed){
-  const analysis=[...p.taskIds].reverse().map(id=>team.tasks.find(t=>t.id===id)).find(t=>t?.contract?.resultType==='model-metrics'&&t.receipt?.state==='accepted')
+ const reviewing=b?.concurrency===2?b.items.filter(i=>!i.completed&&i.checkpoint?.stage==='review').map(i=>i.checkpoint!):p.stage==='review'&&!b?.items[b.index]?.completed?[p]:[]
+ for(const checkpoint of reviewing){
+  const analysis=[...checkpoint.taskIds].reverse().map(id=>team.tasks.find(t=>t.id===id)).find(t=>t?.contract?.resultType==='model-metrics'&&t.receipt?.state==='accepted')
   if(!analysis?.receipt?.versions)throw new Error('已验收分析缺少内容版本，不能恢复或交付')
   files.push(...analysis.receipt.versions.outputs)
  }

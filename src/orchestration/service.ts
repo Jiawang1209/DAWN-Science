@@ -1,6 +1,8 @@
 /** Shared admission and cleanup ownership for existing DAWN child backends. */
 import {OrchestrationStore, type Outcome, type ChildKind, type ChildRecord} from './store.js'
 
+import type {SteeringReceipt} from './store.js'
+
 type Work = (signal: AbortSignal) => Promise<Outcome>
 interface Entry {
   id: string
@@ -15,6 +17,8 @@ interface Entry {
 const cancelled = (): Outcome => ({ok: false, output: '', error: '执行已中止'})
 
 export class OrchestrationService {
+  private readonly controlErrors:unknown[]=[]
+  private steering = new Map<string,{epoch:number; send:(receipt:SteeringReceipt)=>void|Promise<void>}>()
   private queue: Entry[] = []
   private active = new Map<string, Entry>()
   private closing: Promise<void> | undefined
@@ -48,6 +52,7 @@ export class OrchestrationService {
       const finished = new Promise<void>(done => {finish = done})
       const entry: Entry = {id, work, controller, resolve, reject, finished, finish, detach: () => {}}
       const abort = () => {
+        if(this.active.get(id)===entry)this.interruptSteering(id)
         controller.abort(signal?.reason)
         const index = this.queue.indexOf(entry)
         if (index < 0) return
@@ -69,11 +74,65 @@ export class OrchestrationService {
     })
   }
 
+  controlPhase(id:string):'idle'|'queued'|'running'|'stopping'|'drained'{
+    const entry=this.active.get(id)
+    if(entry)return entry.controller.signal.aborted?'stopping':'running'
+    if(this.queue.some(entry=>entry.id===id))return'queued'
+    const state=this.store.get(id)?.state
+    return state&&['completed','failed','cancelled','interrupted'].includes(state)?'drained':'idle'
+  }
+
+  canSteer(id:string):boolean {
+    const adapter=this.steering.get(id),entry=this.active.get(id),child=this.store.get(id)
+    return !this.closed&&!!adapter&&!!entry&&!entry.controller.signal.aborted&&child?.epoch===adapter.epoch&&!child.settings?.contract
+  }
+
+  attachSteering(id:string,epoch:number,send:(receipt:SteeringReceipt)=>void|Promise<void>):()=>void {
+    if(this.closed||!this.active.has(id)||this.active.get(id)!.controller.signal.aborted||this.store.get(id)?.epoch!==epoch||this.steering.has(id))throw new Error('Inactive or stale steering generation')
+    const adapter={epoch,send};this.steering.set(id,adapter);this.changed()
+    return()=>{if(this.steering.get(id)===adapter){this.interruptSteering(id);this.changed()}}
+  }
+
+  async steer(id:string,requestId:string,text:string,expectedEpoch:number):Promise<SteeringReceipt> {
+    if(this.closed)throw new Error('Orchestration service is closed')
+    const child=this.store.get(id)
+    if(!child)throw new Error('Unknown child in this parent session')
+    if(child.settings?.contract)throw new Error('科研任务契约已冻结；请先停止，再派生新批次')
+    text=text.trim()
+    if(!requestId||requestId.length>512||!text.trim()||Buffer.byteLength(text,'utf8')>16*1024)throw new Error('Invalid steering request size')
+    const existing=this.store.steeringReceipts(id).find(receipt=>receipt.requestId===requestId)
+    if(existing){if(existing.text!==text||existing.epoch!==expectedEpoch)throw new Error('Steering requestId/epoch conflict');return existing}
+    if(!Number.isSafeInteger(expectedEpoch)||expectedEpoch<1||child.epoch!==expectedEpoch)throw new Error('Stale steering epoch; inspect the active execution again')
+    if(!this.canSteer(id))throw new Error('当前后端或执行代次不支持实时纠偏 (steering capability unavailable)')
+    if(this.store.steeringReceipts(id).filter(receipt=>receipt.status==='accepted').length>=8)throw new Error('Steering pending limit reached')
+    const adapter=this.steering.get(id)!,receipt=this.store.acceptSteering(id,adapter.epoch,requestId,text)
+    this.changed()
+    try{await adapter.send(receipt)}catch(error){this.store.settleSteering(id,adapter.epoch,receipt.id,'interrupted','控制发送失败，未确认生效；未自动重放');this.changed();throw error}
+    return this.store.steeringReceipts(id).find(item=>item.id===receipt.id)!
+  }
+
+  applySteering(id:string,epoch:number,receiptId:string):boolean {
+    if(!this.canSteer(id)||this.steering.get(id)?.epoch!==epoch)return false
+    const changed=this.store.settleSteering(id,epoch,receiptId,'applied');if(changed)this.changed();return changed
+  }
+
+  failSteering(id:string,epoch:number,receiptId:string,reason:string):boolean {
+    if(!this.canSteer(id)||this.steering.get(id)?.epoch!==epoch)return false
+    const changed=this.store.settleSteering(id,epoch,receiptId,'interrupted',reason);if(changed)this.changed();return changed
+  }
+
+  private interruptSteering(id:string):void {
+    const adapter=this.steering.get(id);if(!adapter)return
+    this.steering.delete(id)
+    try{this.store.settleSteering(id,adapter.epoch,undefined,'interrupted','执行结束或已停止，是否进入模型上下文未确认；未自动重放')}catch(error){this.controlErrors.push(error)}
+  }
+
   /** Interrupt only the active turn; later queued work remains explicitly queued. */
   interrupt(id: string): boolean {
     if (!this.store.get(id)) throw new Error(`Unknown child in this parent session: ${id}`)
     const entry = this.active.get(id)
     if (!entry) return false
+    this.interruptSteering(id)
     entry.controller.abort()
     this.changed()
     return true
@@ -84,7 +143,7 @@ export class OrchestrationService {
     if (this.closing) return this.closing
     this.closed = true
     const active = [...this.active.values()]
-    for (const entry of active) entry.controller.abort()
+    for (const entry of active) {this.interruptSteering(entry.id);entry.controller.abort()}
     const queued = this.queue.splice(0)
     const errors: unknown[] = []
     for (const entry of queued) {
@@ -97,6 +156,7 @@ export class OrchestrationService {
     }
     this.changed()
     this.closing = Promise.all(active.map(entry => entry.finished)).then(() => {
+      errors.push(...this.controlErrors)
       if (errors.length) throw new AggregateError(errors, 'Orchestration close persistence failed')
     })
     return this.closing
@@ -145,7 +205,7 @@ export class OrchestrationService {
       entry.resolve(outcome)
     } catch (error) {entry.reject(error)}
     finally {
-      entry.detach(); this.active.delete(entry.id); entry.finish(); this.changed(); this.drain()
+      this.interruptSteering(entry.id);entry.detach(); this.active.delete(entry.id); entry.finish(); this.changed(); this.drain()
     }
   }
 }

@@ -39,7 +39,7 @@ export function createSubagentOrchestration(opts: SubagentToolOptions, service: 
       }
     }
   }
-  const raw = {...opts, orchestration: undefined, taskStore:service.store}
+  const raw = {...opts, orchestration: undefined, taskStore:service.store,controlService:opts.remote?undefined:service}
   const startTool = createSubagentTool(raw)
   const followUp = createSubagentFollowUp(raw)
   const mailbox = new OrchestrationMailbox(service, async (child, message, signal) => {

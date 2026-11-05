@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-parallel.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/team/science-batch-parallel.test.ts (12 tests | 2 failed) 2155ms
+   × a notification failure before backend admission closes only the owned claim and pauses the batch 1120ms
+   × a read-after-claim failure before backend admission closes only the owned claim and pauses the batch 107ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-batch-parallel.test.ts > a notification failure before backend admission closes only the owned claim and pauses the batch
+AssertionError: expected 'running' to be 'interrupted' // Object.is equality
+
+Expected: "interrupted"
+Received: "running"
+
+ ❯ tests/team/science-batch-parallel.test.ts:57:103
+     55|  const errors=vi.spyOn(console,'error').mockImplementation(()=>{})
+     56|  try{
+     57|   await scheduler.踢一下(team.id);await vi.waitFor(()=>expect(scheduler.读…
+       |                                                                                                       ^
+     58|   expect(signals).toHaveLength(1);expect(signals[0]?.aborted).toBe(tru…
+     59|   expect(scheduler.读(team.id).tasks[1]?.status).toBe('failed');expect(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-batch-parallel.test.ts > a read-after-claim failure before backend admission closes only the owned claim and pauses the batch
+Error: injected claimed read failure
+ ❯ 团队调度器.<anonymous> tests/team/science-batch-parallel.test.ts:54:146
+
+ ❯ 团队调度器.派一轮 src/team/scheduler.ts:328:25
+ ❯ 团队调度器.踢一下 src/team/scheduler.ts:266:14
+ ❯ tests/team/science-batch-parallel.test.ts:57:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  13:20:04
+   Duration  2.98s (transform 243ms, setup 0ms, import 726ms, tests 2.15s, environment 0ms)

@@ -1,3 +1,4 @@
+import {SteeringEventSchema} from "./steering.js"
 import {TaskVersionsSchema,type TaskVersions} from '../protocol/file-versions.js'
 import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
 /**
@@ -122,6 +123,8 @@ export type SubagentLimits = typeof SUBAGENT_LIMITS
 
 /** 起一个子 agent 进程要用的命令。**由调用方决定**，本模块不假设是哪个可执行文件 */
 export interface ChildCommand {
+  /** Only the installed Pi child entry implements the live stdin control protocol. */
+  supportsSteering?:true
   command: string
   args: string[]
   env?: Record<string, string>
@@ -159,6 +162,7 @@ export interface SubagentContext {
 }
 
 export interface SubagentExecutorOptions {
+  control?: {service:OrchestrationService;addressOf:(index:number)=>string[]}|undefined
   prepareTask?: (index:number,task:SubagentTask,definition:SubagentDefinition)=>TaskSettings|undefined
   orchestration?: { service: OrchestrationService; addressOf: (index: number) => string[] } | undefined
   childOf: ChildFactory
@@ -172,6 +176,7 @@ export interface SubagentExecutorOptions {
 const PREVIOUS = "{previous}"
 
 export class SubagentExecutor {
+  private readonly control:SubagentExecutorOptions["control"]
   private readonly prepareTask: SubagentExecutorOptions["prepareTask"]
   private readonly orchestration: SubagentExecutorOptions["orchestration"]
   private readonly childOf: ChildFactory
@@ -180,6 +185,7 @@ export class SubagentExecutor {
   private readonly onProgress: (p: SubagentProgress) => void
 
   constructor(opts: SubagentExecutorOptions) {
+    this.control=opts.control??opts.orchestration
     this.prepareTask = opts.prepareTask
     this.orchestration = opts.orchestration
     this.childOf = opts.childOf
@@ -362,6 +368,10 @@ export class SubagentExecutor {
         return resolve(fail(task, `子进程起不来：${message(err)}`))
       }
 
+      const control=this.control
+      const owner=control?.service.store.list().find(record=>record.kind==='subagent'&&JSON.stringify(record.address)===JSON.stringify(control.addressOf(index)))
+      const binding=cmd.supportsSteering&&owner&&owner.state==='running'?{childId:owner.id,epoch:owner.epoch}:undefined
+      let detachSteering:(()=>void)|undefined
       let 行缓冲 = ""
       /** 正在丢一行超长的（还没等到它的换行） */
       let 丢弃中 = false
@@ -383,6 +393,29 @@ export class SubagentExecutor {
         try {
           v = JSON.parse(s) as typeof v
         } catch {
+          return
+        }
+        if(binding&&control&&typeof v.type==='string'&&v.type.startsWith('steer_')){
+          try{
+            const parsed=SteeringEventSchema.safeParse(v)
+            if(!parsed.success)throw new Error('子进程纠偏回执格式无效或超出大小上限')
+            const response=parsed.data
+            if(response.childId!==binding.childId||response.epoch!==binding.epoch)return
+            if(response.type==='steer_ready'&&!detachSteering&&!settings?.contract){
+              if(!signal?.aborted&&control.service.store.get(binding.childId)?.epoch===binding.epoch){
+                detachSteering=control.service.attachSteering(binding.childId,binding.epoch,receipt=>new Promise<void>((resolve,reject)=>{
+                  if(settled||forced||signal?.aborted){reject(new Error('Child stopped'));return}
+                  child!.stdin.write(`${JSON.stringify({type:'steer',...binding,id:receipt.id,text:receipt.text})}\n`,error=>error?reject(error):resolve())
+                }))
+              }
+            }else if(response.type==='steer_applied')control.service.applySteering(binding.childId,binding.epoch,response.id)
+            else if(response.type==='steer_failed')control.service.failSteering(binding.childId,binding.epoch,response.id,response.error)
+          }catch(error){
+            // EventEmitter callbacks must never throw on malformed or unpersistable receipts.
+            forced??=fail(task,`纠偏回执处理失败：${message(error).slice(0,2048)}`)
+            try{control.service.interrupt(binding.childId)}catch{/* drain the owned process even if storage failed */}
+            if(child)杀掉后代(child)
+          }
           return
         }
         if (v.type === "done") 最后done = v as DoneLine
@@ -416,6 +449,7 @@ export class SubagentExecutor {
       const done = (r: SubagentResult) => {
         if (settled) return
         settled = true
+        detachSteering?.()
         clearTimeout(墙钟)
         signal?.removeEventListener("abort", onAbort)
         resolve(r)
@@ -534,6 +568,7 @@ export class SubagentExecutor {
       const agentDir = ctx.agentDirOf(index)
       const spec: SubagentChildSpec = {
         agent: task.agent,
+        ...(binding?{steering:binding}:{}),
         task: taskPrompt(task.task,settings?.contract),
         ...(settings?{taskSettings:settings}:{}),
         ...(ctx.authorize?{authorize:true as const}:{}),
@@ -550,7 +585,7 @@ export class SubagentExecutor {
         ...(ctx.credentials ? { credentials: ctx.credentials } : {}),
         ...(resources ? {resources: true as const} : {}),
       }
-      if (resources || ctx.authorize) child.stdin.write(`${JSON.stringify(spec)}\n`)
+      if (resources || ctx.authorize || binding) child.stdin.write(`${JSON.stringify(spec)}\n`)
       else child.stdin.end(JSON.stringify(spec))
     })
   }

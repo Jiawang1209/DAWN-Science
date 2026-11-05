@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/science-parallel.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/evaluation/science-parallel.test.ts (6 tests | 2 failed) 6ms
+   × rejects an actual whole-workspace reservation overlapping any readonly holder, even with zero analysis-analysis overlap 4ms
+   × permits disjoint readonly overlap, sequential workspace grants and cancelled waiters 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/science-parallel.test.ts > rejects an actual whole-workspace reservation overlapping any readonly holder, even with zero analysis-analysis overlap
+AssertionError: expected [Function] to throw error matching /workspace.*overlap/ but got '(0 , __vite_ssr_import_1__.assertWork…'
+
+- Expected:
+/workspace.*overlap/
+
++ Received:
+"(0 , __vite_ssr_import_1__.assertWorkspaceLockExclusion) is not a function"
+
+ ❯ tests/evaluation/science-parallel.test.ts:5:136
+      3|
+      4| it('rejects an actual whole-workspace reservation overlapping any read…
+      5|  expect(()=>assertWorkspaceLockExclusion([{paths:['*'],grantedAt:10,re…
+       |                                                                                                                                        ^
+      6|  expect(()=>assertWorkspaceLockExclusion([{paths:['*'],grantedAt:10}])…
+      7| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/science-parallel.test.ts > permits disjoint readonly overlap, sequential workspace grants and cancelled waiters
+TypeError: assertWorkspaceLockExclusion is not a function
+ ❯ tests/evaluation/science-parallel.test.ts:9:9
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  13:16:13
+   Duration  1.55s (transform 625ms, setup 0ms, import 1.46s, tests 6ms, environment 0ms)

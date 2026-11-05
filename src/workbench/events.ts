@@ -1159,6 +1159,10 @@ export class SessionTranscripts {
   }
 
   private 子agent收尾(id: SessionId, ce: Entry, ev: Extract<子转录事件, { kind: "settled" }>, toolCallId: string): void {
+    // Only actual backend settlement ends orphaned running tool rows. Preserve every prior success/failure receipt.
+    for(const item of [...ce.items])if(item.type==='tool'&&item.status==='running'){
+      this.putItem(id,ce,{...item,status:'error',interrupted:true,endedAt:this.now(),result:ev.error??'子任务已结束，工具完成状态未确认'})
+    }
     // 还开着的那段发言收口：子进程被杀时没有 turn_end，不收的话那条永远「还在说」
     this.ingest(id, { kind: "turn_end", sessionId: id })
     const 旧 = ce.子agent

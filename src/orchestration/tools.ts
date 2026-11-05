@@ -49,9 +49,10 @@ export function createOrchestrationTools(opts: OrchestrationToolOptions) {
       const message = mailbox.send(child.id, args.message, callId)
       return {childId: child.id, messageId: message.id, delivery: 'queued'}
     }),
+    make('steer_subagent', '向正在运行且支持 Pi Steer 的普通子 agent 实时纠偏。accepted 仅代表宿主接收；applied 仅在真实用户消息进入模型上下文后出现。当前工具执行结束后才可能生效。冻结科研任务须先停止并派生新批次。',Type.Object({childId:Type.String(),message:Type.String(),expectedEpoch:Type.Integer({minimum:1}),requestId:Type.Optional(Type.String())}),z.object({childId:id,message:body,expectedEpoch:z.number().int().positive(),requestId:id.optional()}).strict(),(args,callId)=>service.steer(resolve(args.childId).id,args.requestId??callId,args.message,args.expectedEpoch)),
     make('list_subagents', '列出当前父会话的普通子任务、团队成员和 Bot 的执行状态、最后结果及控制能力。completed 只表示后端返回成功，不能代替产物核验。', Type.Object({}), z.object({}).strict(), () => ({
       revision: service.revision,
-      children: service.store.list().map(child => ({...child, capabilities: {queue: child.kind === 'subagent' || !!opts.sendMember, steer: false, interrupt: child.kind === 'subagent' || !!opts.interruptMember}})),
+      children: service.store.list().map(child => ({...child, phase:service.controlPhase(child.id),steeringReceipts: service.store.steeringReceipts(child.id), capabilities: {queue: child.kind === 'subagent' || !!opts.sendMember, steer: service.canSteer(child.id), interrupt: child.kind === 'subagent' || !!opts.interruptMember}})),
     })),
     make('interrupt_subagent', '中断点名子 agent 当前执行，保留转录与身份；普通子 agent 的剩余消息暂停，新的发送可继续。', Type.Object({childId: Type.String()}), z.object({childId: id}).strict(), args => {
       const child = resolve(args.childId)

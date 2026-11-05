@@ -64,6 +64,7 @@ describe("操作注册表", () => {
         "rewindTurn",
         "openSubagent",
         "askSubagent",
+        "controlSubagent",
         "acquireLease",
         "listArtifacts",
         "runInKernel",
@@ -742,4 +743,11 @@ describe("8.6 · 先出方案（2026-09-27）", () => {
     expect(OPERATIONS.answerPlan.response.parse({ savedPath: "analysis/plans/x.md" })).toEqual({ savedPath: "analysis/plans/x.md" })
     expect(OPERATIONS.answerPlan.response.parse({})).toEqual({})
   })
+})
+it('subagent realtime controls require explicit action and bounded idempotent requests',()=>{
+ expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'steer',requestId:'fixed',text:'correct'}}).success).toBe(false)
+ expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'steer',expectedEpoch:1,requestId:'fixed',text:'correct'}}).success).toBe(true)
+ expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'steer',expectedEpoch:1,text:'correct'}}).success).toBe(false)
+ expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'steer',expectedEpoch:1,requestId:'fixed',text:'x'.repeat(17000)}}).success).toBe(false)
+ expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'inspect',text:'injected'}}).success).toBe(false)
 })

@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-11-05",
+  "sourceFingerprints": [
+    {
+      "report": "baseline",
+      "sourceFingerprintMatches": true
+    },
+    {
+      "report": "incremental",
+      "sourceFingerprintMatches": true
+    },
+    {
+      "report": "parallel",
+      "sourceFingerprintMatches": true
+    }
+  ],
+  "childBuildFingerprintMatchesAllThreeReports": true,
+  "retainedArtifactFilesChecked": 40,
+  "artifactBytesAndSha256AllMatch": true,
+  "wholeWorkspaceReservationsExclusiveAcrossAllFourPairsAndResumedRun": true
+}

@@ -1,11 +1,11 @@
 import {scienceTemplateScenario} from './mock-science-template.mjs'
 /** Desktop fixture wrapper: creates route/batch via real model-facing tools. */
 export function scienceBatchScenario(mode='pass'){
- const incremental=mode==='incremental',wrong=incremental?['other.csv']:[]
- const numeric=mode==='numeric-error'||incremental,basicWrong=mode==='basic-error'
+ const incremental=mode==='incremental',parallel=mode==='parallel',independent=incremental||parallel,wrong=incremental?['other.csv']:[]
+ const numeric=mode==='numeric-error'||independent,basicWrong=mode==='basic-error'
  const validation={version:1,column:'x',metric:'mean',unit:'m',missing:'block',absoluteTolerance:1e-9}
  const child=scienceTemplateScenario({mode:mode==='numeric-error'||basicWrong?'wrong-numeric':'pass',wrongInputs:wrong}),text=v=>typeof v==='string'?v:Array.isArray(v)?v.map(x=>x.text??'').join(''):JSON.stringify(v??'')
- const startArgs=route=>({routeId:route.routeId,revision:route.revision,stepId:'s',executors:{check:{agent:'pipeline-check'},analyze:{agent:'pipeline-analyze'},review:{agent:'pipeline-review'}},instructions:'approved mean',template:{id:'tabular-ecology',version:1,language:'python',method:'mean',units:'m',missingValues:'block',...(numeric?{validation}:{})},items:[{id:'a',label:'样地 A',inputs:['in.csv'],...(numeric?{dataPath:'in.csv'}:{})},{id:'b',label:'样地 B',inputs:[incremental?'other.csv':'in.csv'],...(numeric?{dataPath:incremental?'other.csv':'in.csv'}:{})}],outputRoot:'results',maxRevisions:1})
+ const startArgs=route=>({routeId:route.routeId,revision:route.revision,stepId:'s',executors:{check:{agent:'pipeline-check'},analyze:{agent:'pipeline-analyze'},review:{agent:'pipeline-review'}},instructions:'approved mean',template:{id:'tabular-ecology',version:1,language:'python',method:'mean',units:'m',missingValues:'block',...(numeric?{validation}:{})},items:[{id:'a',label:'样地 A',inputs:['in.csv'],...(numeric?{dataPath:'in.csv'}:{})},{id:'b',label:'样地 B',inputs:[independent?'other.csv':'in.csv'],...(numeric?{dataPath:independent?'other.csv':'in.csv'}:{})}],outputRoot:'results',maxRevisions:1,...(parallel?{concurrency:2}:{})})
  return{toolCall(body){const delegated=child.toolCall(body);if(delegated)return delegated
  const ms=body.messages??[],user=ms.findLastIndex(m=>m.role==='user'),prompt=text(ms[user]?.content),calls=ms.slice(user+1).flatMap(m=>m.role==='assistant'?m.tool_calls??[]:[]),last=calls.at(-1)
  if(incremental&&prompt.includes('局部重跑')){wrong.splice(0);if(!calls.length)return{toolName:'science_batch_status',args:{}};if(last?.function?.name==='science_batch_status'){let source;try{source=JSON.parse(text(ms.findLast(m=>m.role==='tool')?.content))}catch{return undefined};return{toolName:'start_science_batch',args:{...startArgs(source.route),reuseFrom:{teamId:source.teamId,stateRevision:source.batch.stateRevision}}}};return undefined}

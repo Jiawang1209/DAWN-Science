@@ -1,0 +1,15 @@
+{
+  "concurrency": 2,
+  "elapsedMs": 9570,
+  "modelRequests": 20,
+  "status": "completed",
+  "reusedItems": [
+    "rerun",
+    "rerun"
+  ],
+  "aggregateAttempts": 1,
+  "routeProjected": true,
+  "routeRevision": 3,
+  "frozenRouteRevision": 2,
+  "sourcePreserved": true
+}

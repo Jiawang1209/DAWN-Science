@@ -16,6 +16,6 @@ it('rejects raw/aliased output roots, freezes every future item, and preserves r
  expect((await start.execute('req',{...args,items:[args.items[0],args.items[0]]})).isError).toBe(true)
  expect((await start.execute('req',args)).isError).not.toBe(true);const before=scheduler.读(current!);expect(before.scienceBatch?.items.every(i=>i.settingsByStage.check.versions?.inputs.length===1)).toBe(true)
  expect((await start.execute('req',{...args,template:{...args.template,method:'different'}})).isError).toBe(true);expect(scheduler.读(current!)).toEqual(before)
- const publicTeam=taskTeamSnapshot(before);expect(JSON.stringify(publicTeam.scienceBatch)).not.toContain('settingsByStage');expect(publicTeam.scienceBatch?.total).toBe(2)
+ const publicTeam=taskTeamSnapshot(before);expect(JSON.stringify(publicTeam.scienceBatch)).not.toContain('settingsByStage');expect(publicTeam.scienceBatch?.total).toBe(2);expect(publicTeam.scienceBatch?.active).toBe(1)
  }finally{rmSync(root,{recursive:true,force:true})}
 })

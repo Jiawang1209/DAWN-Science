@@ -256,3 +256,19 @@ it('a scoped Native tool cancelled while awaiting its checkpoint never enters th
   expect(executed).toBe(false);expect(result.evidence).toEqual([])
  }finally{release();await runtime.stop('p')}
 })
+it('Native control resolves canonical ordinary child identity and shares durable steer/stop receipts',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-steer-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'})
+ await runtime.start({sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
+ const service=(runtime as unknown as {orchestrations:Map<string,OrchestrationService>}).orchestrations.get('p')!
+ const child=service.register('subagent',['call_1','0'],'reader');let finish!:()=>void
+ const run=service.run(child.id,async()=>{await new Promise<void>(done=>finish=done);return{ok:true,output:''}})
+ service.attachSteering(child.id,1,()=>{})
+ try{
+  expect(await runtime.controlSubagent('p','call.1',0,{action:'inspect'})).toMatchObject({childId:child.id,canSteer:true,receipts:[]})
+  const accepted=await runtime.controlSubagent('p','call_1',0,{action:'steer',expectedEpoch:1,requestId:'correct',text:'correct'})
+  expect(accepted.receipts[0]?.status).toBe('accepted')
+  const stopped=await runtime.controlSubagent('p','call.1',0,{action:'interrupt'});expect(stopped.canSteer).toBe(false);expect(stopped.receipts[0]?.status).toBe('interrupted')
+  await expect(runtime.controlSubagent('p','unknown',0,{action:'steer',expectedEpoch:1,requestId:'other',text:'x'})).rejects.toThrow()
+ }finally{finish();await run;await runtime.stop('p')}
+})

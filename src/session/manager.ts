@@ -762,6 +762,12 @@ export class SessionManager {
   }
 
   /** 接着问一个子 agent（2026-09-27）。**不要求租约**，理由见协议 `askSubagent`。没有这件能力的运行时直接抛 */
+  controlSubagent(sessionId:SessionId,toolCallId:string,index:number,action:import('../protocol/subagent-control.js').SubagentControlAction):Promise<import('../protocol/subagent-control.js').SubagentControlState>{
+    const runtime=this.runtimeForSession(sessionId)
+    if(!runtime?.controlSubagent){if(action.action==='inspect')return Promise.resolve({canSteer:false,canInterrupt:false,reason:'当前后端不支持实时纠偏',receipts:[]});throw new Error('当前后端不支持子任务控制')}
+    return runtime.controlSubagent(sessionId,toolCallId,index,action)
+  }
+
   askSubagent(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void> {
     const rt = this.runtimeForSession(sessionId)
     if (!rt?.askSubagent) throw new Error("这类会话没有子 agent，不能接着问")

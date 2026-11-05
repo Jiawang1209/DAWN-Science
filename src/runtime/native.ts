@@ -1731,6 +1731,7 @@ export class NativeRuntime implements AgentRuntime {
         // Spike F：**不能写死 `"node"`**——打包之后用户机器上不一定有它
         command: process.execPath,
         args: [entry],
+        supportsSteering:true as const,
         env: { [RUN_AS_NODE]: "1" },
       }),
       context: {
@@ -4064,6 +4065,15 @@ ${描述}`
    * 与主 agent 派的那一轮同一条路。答复不回主 agent。「一次一句」由中枢的 `asking` 管（后端在调这里之前就标上了）。
    * 那一轮若没走到 `settled` 就抛了，这里补一条失败的 settled——不补的话那一格永远「正在答」、再也问不了。
    */
+  async controlSubagent(sessionId:SessionId,toolCallId:string,index:number,action:import('../protocol/subagent-control.js').SubagentControlAction):Promise<import('../protocol/subagent-control.js').SubagentControlState>{
+    const service=this.orchestrations.get(sessionId)
+    const child=service?.store.list().find(child=>child.kind==='subagent'&&child.address.length===2&&child.address[0]===子目录段(toolCallId)&&child.address[1]===String(index))
+    if(!service||!child){if(action.action==='inspect')return{canSteer:false,canInterrupt:false,reason:'当前子任务没有实时控制能力',receipts:[]};throw new UserFacingError('当前子任务没有实时控制能力')}
+    if(action.action==='steer')await service.steer(child.id,action.requestId,action.text,action.expectedEpoch)
+    if(action.action==='interrupt')this.orchestrationControls.get(sessionId)?.mailbox.interrupt(child.id)
+    return{childId:child.id,epoch:service.store.get(child.id)!.epoch,phase:service.controlPhase(child.id),canSteer:service.canSteer(child.id),canInterrupt:!service.isClosed&&service.controlPhase(child.id)==='running',receipts:service.store.steeringReceipts(child.id),...(child.settings?.contract?{reason:'科研任务契约已冻结；请先停止，再派生新批次'}:{})}
+  }
+
   async askSubagent(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void> {
     const 续 = this.子agent续问.get(sessionId)
     if (!续) throw new UserFacingError("这段对话没有装子 agent（没有子进程入口），不能接着问")

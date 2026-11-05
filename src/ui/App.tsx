@@ -6129,6 +6129,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   if (父) 看子agent(子转录id(父, toolCallId, index))
                 }}
                 onBack={() => 看子agent(undefined)}
+                onControl={async control=>{
+                  const transcriptId=$子转录id.get()
+                  if(!transcriptId)return{canSteer:false,canInterrupt:false,receipts:[]}
+                  return client.get("controlSubagent",{transcriptId,control})
+                }}
                 onAsk={async (text) => {
                   const id = $子转录id.get()
                   if (!id) return

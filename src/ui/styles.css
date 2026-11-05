@@ -7978,6 +7978,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .subagent-composer-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-2); padding: 0 var(--dawn-space-3) var(--dawn-space-3); }
 .subagent-composer-footer > .hint { flex: 1 1 120px; margin: 0; font-size: var(--dawn-fs-meta); line-height: 1.5; }
 .subagent-ask-send { margin-left: auto; }
+.subagent-live-control { border-top: 1px solid var(--dawn-stroke-3); max-height: 40vh; overflow-y: auto; }
+.subagent-live-control [data-steering-status] { overflow-wrap: anywhere; font-size: var(--dawn-fs-meta); }
 .subagent-ask-why { padding: 0 var(--dawn-space-4) var(--dawn-space-3); }
 
 /* ── 上下文仪表（2026-09-27）：附栏右侧，常驻。三档颜色只从令牌来 ───────────── */

@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/subagent-transcript.test.ts tests/workbench/subagent-view-backend.test.ts tests/workbench/subagent-restore.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  12:23:10
+   Duration  4.64s (transform 4.15s, setup 0ms, import 8.29s, tests 779ms, environment 0ms)

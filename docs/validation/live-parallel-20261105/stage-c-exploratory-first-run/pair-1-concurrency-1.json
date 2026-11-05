@@ -1,0 +1,416 @@
+{
+  "repeat": 1,
+  "concurrency": 1,
+  "comparisonFingerprint": "7cb5aa22b5334fae28ad4217f35e4d6f61800a856681615bb87f6f6dbf4cf720",
+  "elapsedMs": 16596,
+  "modelRequests": 20,
+  "status": "completed",
+  "groundTruthPassed": true,
+  "accepted": true,
+  "numericOutputs": [
+    {
+      "n": 5,
+      "mean": 3,
+      "unit": "m"
+    },
+    {
+      "n": 5,
+      "mean": 3,
+      "unit": "m"
+    }
+  ],
+  "inputPreserved": true,
+  "reviewedVersions": true,
+  "routeProjected": true,
+  "aggregateAttempts": 1,
+  "visibleTokens": 400,
+  "unknownUsageTasks": 1,
+  "partialUsage": true,
+  "maxBackendConcurrent": 1,
+  "actualOverlapMs": 0,
+  "analysisOverlapMs": 0,
+  "overlaps": [],
+  "intervals": [
+    {
+      "taskId": "p-0-a-check-0-0",
+      "member": "check",
+      "stage": "check",
+      "queuedAt": 963,
+      "backendStartedAt": 2145,
+      "lastRequestAt": 2346,
+      "endedAt": 2629,
+      "ok": true
+    },
+    {
+      "taskId": "p-0-a-analyze-0-1",
+      "member": "analyze",
+      "stage": "analyze",
+      "queuedAt": 2639,
+      "backendStartedAt": 3921,
+      "lastRequestAt": 4969,
+      "endedAt": 6216,
+      "ok": true
+    },
+    {
+      "taskId": "p-0-a-review-0-2",
+      "member": "review",
+      "stage": "review",
+      "queuedAt": 6227,
+      "backendStartedAt": 7442,
+      "lastRequestAt": 8056,
+      "endedAt": 8426,
+      "ok": true
+    },
+    {
+      "taskId": "p-1-b-check-0-0",
+      "member": "check",
+      "stage": "check",
+      "queuedAt": 8439,
+      "backendStartedAt": 9570,
+      "lastRequestAt": 9782,
+      "endedAt": 10065,
+      "ok": true
+    },
+    {
+      "taskId": "p-1-b-analyze-0-1",
+      "member": "analyze",
+      "stage": "analyze",
+      "queuedAt": 10080,
+      "backendStartedAt": 11292,
+      "lastRequestAt": 12687,
+      "endedAt": 13889,
+      "ok": true
+    },
+    {
+      "taskId": "p-1-b-review-0-2",
+      "member": "review",
+      "stage": "review",
+      "queuedAt": 13915,
+      "backendStartedAt": 15027,
+      "lastRequestAt": 15595,
+      "endedAt": 15915,
+      "ok": true
+    },
+    {
+      "taskId": "batch-summary-0",
+      "member": "aggregate",
+      "stage": "aggregate",
+      "queuedAt": 15936,
+      "endedAt": 16511,
+      "ok": true
+    }
+  ],
+  "requests": [
+    {
+      "at": 2145,
+      "taskId": "p-0-a-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 2346,
+      "taskId": "p-0-a-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 3921,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 4135,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 4339,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 4969,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 7442,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/a/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/a/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/a/report.md"
+      ]
+    },
+    {
+      "at": 7657,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/a/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/a/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/a/report.md"
+      ]
+    },
+    {
+      "at": 7855,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/a/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/a/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/a/report.md"
+      ]
+    },
+    {
+      "at": 8056,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/a/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/a/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/a/report.md"
+      ]
+    },
+    {
+      "at": 9570,
+      "taskId": "p-1-b-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 9782,
+      "taskId": "p-1-b-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 11292,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 11493,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 11691,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 12687,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 15027,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/b/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/b/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/b/report.md"
+      ]
+    },
+    {
+      "at": 15221,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/b/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/b/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/b/report.md"
+      ]
+    },
+    {
+      "at": 15409,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/b/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/b/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/b/report.md"
+      ]
+    },
+    {
+      "at": 15595,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-134271a914eb3e64406b53e1/b/analysis.py",
+        "results/pipeline-134271a914eb3e64406b53e1/b/result.json",
+        "results/pipeline-134271a914eb3e64406b53e1/b/report.md"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "at": 963,
+      "kind": "subagent_start",
+      "index": 0,
+      "taskId": "p-0-a-check-0-0"
+    },
+    {
+      "at": 2629,
+      "kind": "subagent_end",
+      "index": 0,
+      "taskId": "p-0-a-check-0-0",
+      "ok": true
+    },
+    {
+      "at": 2639,
+      "kind": "subagent_start",
+      "index": 1,
+      "taskId": "p-0-a-analyze-0-1"
+    },
+    {
+      "at": 6216,
+      "kind": "subagent_end",
+      "index": 1,
+      "taskId": "p-0-a-analyze-0-1",
+      "ok": true
+    },
+    {
+      "at": 6227,
+      "kind": "subagent_start",
+      "index": 2,
+      "taskId": "p-0-a-review-0-2"
+    },
+    {
+      "at": 8426,
+      "kind": "subagent_end",
+      "index": 2,
+      "taskId": "p-0-a-review-0-2",
+      "ok": true
+    },
+    {
+      "at": 8439,
+      "kind": "subagent_start",
+      "index": 3,
+      "taskId": "p-1-b-check-0-0"
+    },
+    {
+      "at": 10065,
+      "kind": "subagent_end",
+      "index": 3,
+      "taskId": "p-1-b-check-0-0",
+      "ok": true
+    },
+    {
+      "at": 10080,
+      "kind": "subagent_start",
+      "index": 4,
+      "taskId": "p-1-b-analyze-0-1"
+    },
+    {
+      "at": 13889,
+      "kind": "subagent_end",
+      "index": 4,
+      "taskId": "p-1-b-analyze-0-1",
+      "ok": true
+    },
+    {
+      "at": 13915,
+      "kind": "subagent_start",
+      "index": 5,
+      "taskId": "p-1-b-review-0-2"
+    },
+    {
+      "at": 15915,
+      "kind": "subagent_end",
+      "index": 5,
+      "taskId": "p-1-b-review-0-2",
+      "ok": true
+    },
+    {
+      "at": 15936,
+      "kind": "subagent_start",
+      "index": 6,
+      "taskId": "batch-summary-0"
+    },
+    {
+      "at": 16511,
+      "kind": "subagent_end",
+      "index": 6,
+      "taskId": "batch-summary-0",
+      "ok": true
+    }
+  ],
+  "outputFiles": [
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/a/analysis.py",
+      "bytes": 472,
+      "sha256": "ac135b2a59b71d506df8c7902c8f5ba7e9717e3a0660db3ddef87ac00b9c6584"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/a/result.json",
+      "bytes": 34,
+      "sha256": "cdf050fc3c7a7a29d0b20ca88a5916f08af1d442cff2a907201bd902368d594d"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/a/report.md",
+      "bytes": 57,
+      "sha256": "5a60282e6d2b5af8f1a69513c44bd2c14ecbddd56143cd23200189537478e44d"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/b/analysis.py",
+      "bytes": 472,
+      "sha256": "c9c5dcb505c6a1700f3fd9edf591104d26b487c926f9415740504eed84b19d52"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/b/result.json",
+      "bytes": 34,
+      "sha256": "cdf050fc3c7a7a29d0b20ca88a5916f08af1d442cff2a907201bd902368d594d"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/b/report.md",
+      "bytes": 57,
+      "sha256": "5a60282e6d2b5af8f1a69513c44bd2c14ecbddd56143cd23200189537478e44d"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/summary.json",
+      "bytes": 4962,
+      "sha256": "2315a8ce3a061d26e1eecb0768bc7ddf3a36a4f23f225db6c947b760bfb51afe"
+    },
+    {
+      "path": "results/pipeline-134271a914eb3e64406b53e1/summary.md",
+      "bytes": 1414,
+      "sha256": "5410020b77fc8be5ea64bc55a29cdb0b18af404af1f2fa38fd3c5d698b7c7860"
+    }
+  ]
+}

@@ -19,6 +19,34 @@ import { 子槽, $子agent信息, $子转录id } from "./state/subagent-view.js"
 import { 主槽 } from "./state/transcript.js"
 import { $侧边会话id, 侧槽 } from "./state/side-chat.js"
 
+import type {SubagentControlAction,SubagentControlState} from '../protocol/subagent-control.js'
+type Control=(action:SubagentControlAction)=>Promise<SubagentControlState>
+function SubagentLiveControl({invoke}:{invoke:Control}){
+  const[state,setState]=useState<SubagentControlState>(),[text,setText]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
+  const request=useRef<{id:string;text:string;epoch:number}|undefined>(undefined)
+  const expired=!!request.current&&state?.epoch!==undefined&&request.current.epoch!==state.epoch
+  const invokeRef=useRef(invoke);invokeRef.current=invoke
+  useEffect(()=>{
+    let alive=true,polling=false
+    const poll=async()=>{if(polling)return;polling=true;try{const next=await invokeRef.current({action:'inspect'});if(alive)setState(next)}catch(e){if(alive)setError(e instanceof Error?e.message:String(e))}finally{polling=false}}
+    void poll();const timer=setInterval(()=>{void poll()},750)
+    return()=>{alive=false;clearInterval(timer)}
+  },[])
+  const act=async(action:SubagentControlAction)=>{setBusy(true);setError('');try{setState(await invokeRef.current(action));if(action.action==='steer'){setText('');request.current=undefined}}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}
+  return <section className="subagent-ask subagent-live-control" aria-label={t("子任务实时控制")}>
+    {state?.canSteer&&state.epoch?<form onSubmit={event=>{event.preventDefault();const value=text.trim();if(!value||busy||expired)return;if(!request.current||request.current.text!==value)request.current={id:crypto.randomUUID(),text:value,epoch:state.epoch!};void act({action:'steer',requestId:request.current.id,text:value,expectedEpoch:request.current.epoch})}}>
+      <div className="subagent-composer">
+      <textarea className="control subagent-ask-text" aria-label={t("实时纠偏")} value={text} maxLength={16*1024} rows={2} disabled={busy} onChange={event=>{const value=event.target.value;setText(value);if(value.trim()){request.current={id:crypto.randomUUID(),text:value.trim(),epoch:request.current?.epoch??state.epoch!}}else request.current=undefined}}/>
+      <div className="subagent-composer-footer"><p className="hint">{t("当前工具执行结束后才可能生效")}</p><Button type="submit" size="sm" disabled={busy||!text.trim()||expired}>{t("纠偏提交")}</Button></div></div>
+      {expired?<div aria-live="polite"><p className="hint">{t("纠偏草稿属于上一轮，请重新撰写当前轮次的指令")}</p><Button type="button" size="sm" disabled={busy} onClick={()=>{setText('');request.current=undefined;setError('')}}>{t("重写本轮纠偏")}</Button></div>:null}
+    </form>:state?.reason?<p className="hint">{state.reason}</p>:null}
+    {state?.canInterrupt?<Button size="sm" disabled={busy} onClick={()=>{void act({action:'interrupt'})}}>{t("中止子任务")}</Button>:null}
+    {state?.phase==='stopping'?<p className="hint" role="status">{t("停止中，等待工具排空")}</p>:state?.phase==='drained'?<p className="hint" role="status">{t("子任务已结束并排空")}</p>:null}
+    {state?.receipts.length?<div aria-live="polite">{state.receipts.slice(-8).map(receipt=><p key={receipt.id} className="hint" data-steering-status={receipt.status}>{receipt.text} · {receipt.status==='applied'?t("已进入模型上下文"):receipt.status==='accepted'?t("已接收，等待进入上下文"):t("已中断，是否生效未确认")} {receipt.reason??''}</p>)}</div>:null}
+    {error?<p className="caveat" role="alert">{error}</p>:null}
+  </section>
+}
+
 type 组 = Extract<TranscriptItem, { type: "subagents" }>
 const 记号 = { running: "⏳", ok: "✓", error: "✗" } as const
 type 状态 = keyof typeof 记号
@@ -60,6 +88,7 @@ export function SubagentPane(p: {
   agentNames?: Readonly<Record<string, string>> | undefined
   onPick: (toolCallId: string, index: number) => void
   onBack: () => void
+  onControl?:Control|undefined
   onAsk: (text: string) => Promise<void>
 }) {
   const id = useStore($子转录id)
@@ -162,6 +191,7 @@ export function SubagentPane(p: {
       ) : null}
         </StickToBottom.Content>
       </StickToBottom>
+      {p.onControl?<SubagentLiveControl key={id} invoke={p.onControl}/>:null}
       {信息 ? (
         信息.canAsk ? (
           <form
@@ -242,5 +272,5 @@ export function SubagentDock(p: Omit<Parameters<typeof SubagentPane>[0], "groups
     上次.current = 新
     return 新
   }, [条目])
-  return <SubagentPane groups={groups} agentNames={!id || 父 === p.mainSessionId ? p.agentNames : undefined} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} />
+  return <SubagentPane groups={groups} agentNames={!id || 父 === p.mainSessionId ? p.agentNames : undefined} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} onControl={p.onControl} />
 }

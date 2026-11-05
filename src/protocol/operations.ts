@@ -1,3 +1,4 @@
+import {SubagentControlActionSchema,SubagentControlStateSchema} from './subagent-control.js'
 import { skillDiscoveryOperations } from "./skill-discovery.js"
 import { skillManagementOperations } from "./skill-management.js"
 import { FileContentSchema } from "./file-content.js"
@@ -2057,6 +2058,11 @@ export const OPERATIONS = {
    * 团队成员、还在跑的、没有会话文件的都不行（`conflict`，文案说清为什么）。要先 `openSubagent`（没打开过是 `not_found`）。
    * **不要求租约**：写的不是那段会话，是它旁边的一段——与 `setSideSession` 同理。起一轮就回，过程经那段子转录推出来。
    */
+  controlSubagent:{
+    request:z.object({transcriptId:z.string().min(1),control:SubagentControlActionSchema}).strict(),
+    response:SubagentControlStateSchema,
+    mutating:true,
+  },
   askSubagent: {
     request: z.object({ transcriptId: z.string().min(1), text: z.string().min(1) }).strict(),
     response: Empty,

@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-parallel.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/team/science-batch-parallel.test.ts (10 tests | 2 failed) 875ms
+   × a observer failure aborts every sibling and leaves no ownerless attempt after drain 191ms
+   × a persistence failure aborts every sibling and leaves no ownerless attempt after drain 165ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-batch-parallel.test.ts > a observer failure aborts every sibling and leaves no ownerless attempt after drain
+ FAIL  |node| tests/team/science-batch-parallel.test.ts > a persistence failure aborts every sibling and leaves no ownerless attempt after drain
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/team/science-batch-parallel.test.ts:29:31
+     27|   finishFirst({ok:true,output:'trusted fixture',receipt:receipts[0]})
+     28|   await vi.waitFor(()=>expect(scheduler.读(team.id).scienceBatch?.statu…
+     29|   expect(signals[1]?.aborted).toBe(true);expect(scheduler.hasActiveTea…
+       |                               ^
+     30|   expect(()=>resumeScienceBatch(scheduler.读(team.id),true)).toThrow(/排…
+     31|   finishSibling({ok:true,output:'late success must not publish',receip…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  13:11:25
+   Duration  1.82s (transform 199ms, setup 0ms, import 859ms, tests 875ms, environment 0ms)

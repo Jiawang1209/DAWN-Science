@@ -1,0 +1,20 @@
+{
+  "base": "ce5ae5dd035f6eff82d159150a44086be63423d6",
+  "branch": "codex/incremental-science-acceptance",
+  "sourceFiles": 1469,
+  "sourceDrift": false,
+  "typecheck": "passed",
+  "build": "passed",
+  "unit": {
+    "files": 630,
+    "passed": 6246,
+    "skipped": 11
+  },
+  "electron": 7,
+  "incrementalRows": 10,
+  "independentReview": "no remaining important blockers in scope",
+  "commitAuthorized": true,
+  "localMergeAuthorized": true,
+  "pushAuthorized": false,
+  "releaseAuthorized": false
+}

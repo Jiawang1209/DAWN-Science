@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-derivation.test.ts -t dispatches the admitted actor
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 18 skipped (19)
+   Start at  10:55:29
+   Duration  2.17s (transform 208ms, setup 0ms, import 658ms, tests 1.43s, environment 0ms)
+

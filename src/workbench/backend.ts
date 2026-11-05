@@ -2282,6 +2282,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
     recover: async (owner, team) => {
       for (const task of team.tasks) {
+        if(task.reusedFrom)continue // Historical adoption is not a new Bot delivery.
         const member = team.members.find(m => m.name === task.assignee && m.botId)
         if (!member || !["completed", "failed", "cancelled"].includes(task.status)) continue
         if (task.status === "cancelled") {await botBridge.cancel?.(owner, {team, member, taskId: task.id, attemptId: `cancelled-${task.attempt}`});continue}
@@ -2342,7 +2343,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const result:import("../team/types.js").成员轮结果=request.settings&&!owner.connectionId?await botRuntime(sid).runWithTaskScope(sid,request.settings,run):await run()
       if(result.ok&&request.settings?.contract){
         const evidence=result.evidence??[]
-        const receipt=await finalizeTaskVersions(request.settings,acceptTaskResult(request.settings.contract,result.output,evidence,owner.workspace,!!owner.connectionId),owner.workspace,request.signal,{required:request.settings.contract.submission==='tool',submitted:result.versions})
+        const receipt=await finalizeTaskVersions(request.settings,acceptTaskResult(request.settings.contract,result.output,evidence,owner.workspace,!!owner.connectionId),owner.workspace,request.signal,{required:request.settings.contract.submission==='tool',submitted:result.versions,evidence:evidence})
         return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??'未通过契约验收'}:{})}
       }
       return result

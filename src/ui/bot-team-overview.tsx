@@ -1,5 +1,7 @@
+import {ScienceReuseStatus} from './science-reuse-status.js'
 import {useLayoutEffect,useRef} from "react"
 import type {TeamSnapshot} from "../protocol/index.js"
+import {ScienceAcceptanceStatus} from './science-acceptance-status.js'
 import {SciencePipelineStatus} from './science-pipeline-status.js'
 import {BotAvatar} from "./bot-avatar.js"
 import {BotArtifactPreview,type ReadBotArtifact} from "./bot-artifact-preview.js"
@@ -53,6 +55,8 @@ export function BotTeamOverview(p:{team:TeamSnapshot;room:BotRoomState;roomKey:s
     <div className="bot-overview-title"><strong>{p.team.name}</strong><span className="hint">{tf("{0} 位成员",String(summary.members.length))}</span></div>
     <p>{p.team.goal}</p>
     <SciencePipelineStatus batch={p.team.scienceBatch} pipeline={p.team.pipeline} tasks={p.team.tasks}/>
+    <ScienceReuseStatus batch={p.team.scienceBatch}/>
+    <ScienceAcceptanceStatus tasks={p.team.tasks}/>
     <div className="bot-overview-summary-footer"><div className="bot-overview-metrics"><span>{tf("任务已返回 {0}/{1}",String(summary.returned),String(summary.total))}</span><span>{tf("处理中 {0}",String(summary.working))}</span><span>{tf("等待 {0}",String(summary.waiting))}</span></div>
     <Button variant="outline" size="sm" onClick={()=>navigate({page:"files",memberId:undefined,file:undefined})}>{tf("查看交付 · {0} 个文件",String(summary.files.length))}</Button></div>
    </section>

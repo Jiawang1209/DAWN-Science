@@ -1,12 +1,13 @@
 /** Shared bounded workflow vocabulary. No executor or filesystem imports. */
 import {z} from 'zod'
+import {ScienceAcceptanceSchema} from './science-acceptance.js'
 import {FileVersionsSchema,sameFileVersions} from './file-versions.js'
 import {AnalysisRouteSchema,WorkspaceRelativePathSchema} from './analysis-route.js'
 import {TaskSettingsSchema,TaskContractSchema} from './task-contract.js'
 const text=z.string().trim().min(1).max(8000),paths=z.array(WorkspaceRelativePathSchema).min(1).max(64)
 export const PipelineStageSchema=z.enum(['check','analyze','review'])
 export type PipelineStage=z.infer<typeof PipelineStageSchema>
-export const PipelineDefinitionSchema=z.object({route:AnalysisRouteSchema,stepId:text,inputs:paths,outputs:paths,initialVersions:FileVersionsSchema.optional(),members:z.object({check:text,analyze:text,review:text}).strict(),instructions:text,requireExecution:z.boolean(),maxRevisions:z.number().int().min(0).max(2)}).strict().superRefine((v,ctx)=>{
+export const PipelineDefinitionSchema=z.object({route:AnalysisRouteSchema,stepId:text,inputs:paths,outputs:paths,initialVersions:FileVersionsSchema.optional(),acceptance:ScienceAcceptanceSchema.optional(),members:z.object({check:text,analyze:text,review:text}).strict(),instructions:text,requireExecution:z.boolean(),maxRevisions:z.number().int().min(0).max(2)}).strict().superRefine((v,ctx)=>{
  if(v.initialVersions&&(v.initialVersions.length!==v.inputs.length||v.inputs.some(path=>!v.initialVersions!.some(f=>f.path===path))))ctx.addIssue({code:'custom',message:'冻结版本必须覆盖全部输入'})
  if(!v.route.steps.some(step=>step.id===v.stepId&&step.status!=='skipped'))ctx.addIssue({code:'custom',message:'路线步骤不存在或已跳过'})
  if(v.members.analyze===v.members.review)ctx.addIssue({code:'custom',message:'分析与审阅必须由不同成员承担'})
@@ -14,7 +15,7 @@ export const PipelineDefinitionSchema=z.object({route:AnalysisRouteSchema,stepId
  if(JSON.stringify(v).length>64*1024)ctx.addIssue({code:'custom',message:'流程定义超过 64 KiB'})
 })
 export type PipelineDefinition=z.infer<typeof PipelineDefinitionSchema>
-export function stageContract(def:PipelineDefinition,stage:PipelineStage){return TaskContractSchema.parse({submission:'tool',resultType:stage==='check'?'data-summary':stage==='analyze'?'model-metrics':'review',inputs:stage==='review'?def.outputs:def.inputs,outputs:stage==='analyze'?def.outputs:[],access:stage==='analyze'?(def.requireExecution?'workspace-exec':'workspace-write'):'read-only',requireExecution:stage==='analyze'&&def.requireExecution,requireReview:stage!=='analyze'})}
+export function stageContract(def:PipelineDefinition,stage:PipelineStage){return TaskContractSchema.parse({...(stage==='analyze'&&def.acceptance?{acceptance:def.acceptance}:{}),submission:'tool',resultType:stage==='check'?'data-summary':stage==='analyze'?'model-metrics':'review',inputs:stage==='review'?def.outputs:def.inputs,outputs:stage==='analyze'?def.outputs:[],access:stage==='analyze'?(def.requireExecution?'workspace-exec':'workspace-write'):'read-only',requireExecution:stage==='analyze'&&def.requireExecution,requireReview:stage!=='analyze'})}
 const pipelineShape={namespace:z.string().regex(/^[a-zA-Z0-9_-]{1,32}$/).optional(),version:z.literal(1),requestId:z.string().min(1).max(512),requestFingerprint:z.string().min(1).max(100).optional(),definition:PipelineDefinitionSchema,settingsByStage:z.object({check:TaskSettingsSchema,analyze:TaskSettingsSchema,review:TaskSettingsSchema}).strict(),status:z.enum(['running','blocked','interrupted','completed','cancelled']),stage:PipelineStageSchema,round:z.number().int().min(0).max(2),currentTaskId:text,taskIds:z.array(text).min(1).max(16),acknowledgedTaskIds:z.array(text).max(16).optional(),stateRevision:z.number().int().positive(),startedAt:z.number().finite(),updatedAt:z.number().finite(),endedAt:z.number().finite().optional(),reason:text.optional(),routeSync:z.enum(['pending','applied','conflict'])}
 const PipelineObject=z.object(pipelineShape).strict()
 export const SciencePipelineSchema=PipelineObject.superRefine((p,ctx)=>{

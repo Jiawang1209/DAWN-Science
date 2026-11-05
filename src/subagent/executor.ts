@@ -44,31 +44,9 @@ import type {RouteToolEvidence} from "../runtime/analysis-route-evidence.js"
 import {TaskObservationSchema,type TaskObservation} from '../protocol/task-observation.js'
 import type { OrchestrationService } from "../orchestration/service.js"
 
-/**
- * 杀掉一个子 agent 进程**连同它派生的后代**（审查 debug H6）。
- *
- * 子 agent 起的是一个 pi 进程,它自己会再 spawn（工具调用、`npm test`、`python`…）。
- * 只 `child.kill()` 的话,那些孙进程会被 reparent 到 init(1) 变成孤儿,继续烧 CPU/显存——
- * 与 pty.ts 早年那处「后台任务成孤儿」是同一个坑。子进程用 `detached` 起,自成进程组,
- * 于是 `process.kill(-pid)` 一次覆盖整组。
- *
- * **Windows 无进程组语义**:退回只杀直接子进程(与 pty.ts 同一条 BACKLOG)。
- */
-export function 杀掉后代(child: ChildProcessWithoutNullStreams): void {
-  const pid = child.pid
-  if (pid === undefined) return
-  try {
-    if (process.platform !== "win32") process.kill(-pid, "SIGKILL")
-    else child.kill("SIGKILL")
-  } catch {
-    // ESRCH:进程组已消失。补一发直接杀,失败也吞——它本来就是要没的
-    try {
-      child.kill("SIGKILL")
-    } catch {
-      /* 已经死了 */
-    }
-  }
-}
+/** Shared owned-process tree cleanup also used by controlled scientific execution. */
+export {killOwnedProcessTree as 杀掉后代} from '../runtime/process-tree.js'
+import {killOwnedProcessTree as 杀掉后代} from '../runtime/process-tree.js'
 
 export interface SubagentTask {
   contract?: TaskContract
@@ -334,7 +312,7 @@ export class SubagentExecutor {
         if(versionProblem)return{...fail(task,versionProblem.reason??versionProblem.summary),receipt:versionProblem}
         const result=await this.spawnOne(definition,task,index,runSignal,resume,settings)
         if(result.ok&&settings?.contract){
-          const verified=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd),this.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions})
+          const verified=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd),this.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]})
           const receipt=verified.versions&&this.context.recordReceipt?this.context.recordReceipt(verified):verified
           return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'任务未通过验收'}:{})}
         }

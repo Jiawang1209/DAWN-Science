@@ -351,7 +351,7 @@ export interface MockToolCallSpec {
 }
 
 export interface DawnOptions {
-  scienceBatch?:boolean
+  scienceBatch?:boolean|'numeric-error'|'basic-error'|'incremental'
   sciencePipeline?: 'pass'|'revise'|'blocked'|'interrupt'
 
   /**
@@ -618,7 +618,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     await 发布源?.已就绪
     const server = await startMockInferenceServer({
       toolCall: toolCallHook(dawnOptions.toolCall),
-      ...(dawnOptions.scienceBatch?{scenario:scienceBatchScenario()}:{}),
+      ...(dawnOptions.scienceBatch?{scenario:scienceBatchScenario(typeof dawnOptions.scienceBatch==='string'?dawnOptions.scienceBatch:'pass')}:{}),
       ...(dawnOptions.sciencePipeline ? {scenario:sciencePipelineScenario(dawnOptions.sciencePipeline)} : {}),
       ...(dawnOptions.reply !== undefined ? { reply: dawnOptions.reply } : {}),
       ...(dawnOptions.thinking ? { thinking: dawnOptions.thinking } : {}),

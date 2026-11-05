@@ -1,3 +1,4 @@
+import {runScienceIncremental} from './evaluate-science-incremental.js'
 /** Offline actual-Pi baseline. Never loads credentials or calls a remote inference provider. */
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,existsSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os';import {join,resolve} from 'node:path'
@@ -84,6 +85,6 @@ async function run(scenario:ScienceBaselineCase,mode:'single'|'multi',entry:stri
  }finally{if(scheduler&&teamId)scheduler.中止全部(teamId);await service?.close();await server.close();rmSync(root,{recursive:true,force:true})}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const destination=resolve(process.argv[2]??'docs/validation/versioned-science-20261105/evaluation')
- runScienceBaseline(destination).then(r=>console.log(JSON.stringify({destination,byMode:r.byMode}))).catch(error=>{console.error(error);process.exitCode=1})
+ const destination=resolve(process.argv[2]??'docs/validation/incremental-science-20261105/evaluation')
+ runScienceBaseline(destination).then(async r=>{const incremental=await runScienceIncremental(destination);console.log(JSON.stringify({destination,byMode:r.byMode,incrementalRows:incremental.rows.length}))}).catch(error=>{console.error(error);process.exitCode=1})
 }

@@ -1,0 +1,15 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-incremental.spec.ts
+
+Running 1 test using 1 worker
+
+(node:82817) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] [桌面通知·假] #1 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:58665/20eab2b0-a907-4cdd-ad12-35bbba62a706
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-incremental.spec.ts:4:1 › visibly reuses accepted A and reruns failed B through actual parent tools and Pi (12.3s)
+
+  1 passed (12.9s)

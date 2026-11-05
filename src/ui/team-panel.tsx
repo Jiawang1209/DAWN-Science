@@ -1,3 +1,4 @@
+import {ScienceReuseStatus} from './science-reuse-status.js'
 /**
  * 坞里的「团队」格（team-board，2026-08-22；**2026-08-23 照 dsh-agent-teams 的活动面板重画**——作者拿着它的截图说「我也要有这个类似的 team 页面」）。
  *
@@ -20,6 +21,7 @@ import { t, tf } from "./i18n/index.js"
 import { Button } from "./primitives.js"
 import { 三角图标 } from "./icons.js"
 import type { TeamSnapshot } from "../protocol/index.js"
+import {ScienceAcceptanceStatus} from './science-acceptance-status.js'
 import {SciencePipelineStatus} from './science-pipeline-status.js'
 import { 任务的态, 分列布局, 相关任务, 短标题, 色号, 首字, 节点宽, 节点高, type 任务, type 任务态 } from "./team-dag.js"
 
@@ -228,7 +230,7 @@ export function TeamPanel() {
   const tasks = team.tasks
   const 完成 = tasks.filter((x) => x.status === "completed").length
   const 在跑的成员 = team.members.filter((m) => m.status === "working").length
-  const 派了 = tasks.filter((x) => x.assignee && x.assignee !== "captain").length
+  const 派了 = tasks.filter((x) => !x.reusedFrom && x.assignee && x.assignee !== "captain").length
   const 全交 = tasks.length > 0 && 完成 === tasks.length
   // 成员默认收起（它那张图就是这样：一行 + 派发芯片已经够看），点开才是任务 + 消息 + 输出；队长自己的 / 共享池默认开着
   const 切 = (k: string) => {
@@ -320,6 +322,8 @@ export function TeamPanel() {
         </span>
       </header>
       <SciencePipelineStatus batch={team.scienceBatch} pipeline={team.pipeline} tasks={team.tasks}/>
+      <ScienceReuseStatus batch={team.scienceBatch}/>
+      <ScienceAcceptanceStatus tasks={team.tasks}/>
       {team.finishedAt ? null : <p className="team-goal" data-authored="1">{team.goal}</p>}
 
       {/* ② 队长卡 */}

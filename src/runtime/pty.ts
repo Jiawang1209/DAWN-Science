@@ -4,7 +4,7 @@
  * Spike B 已验证这条路可行：claude 在 PTY 中 TUI 完整渲染、键盘输入生效、
  * 注入的 MCP 工具被调用、Stop hook 触发、用户全局配置未被修改。
  */
-import { execFileSync } from "node:child_process"
+import {collectTree} from "./process-tree.js"
 import * as pty from "node-pty"
 import { ptyEnvironment } from "./pty-environment.js"
 import type {
@@ -17,58 +17,6 @@ import type {
 } from "./types.js"
 import { materializeSessionDir } from "./session-dir.js"
 import type { TerminalControl } from "../terminal/control.js"
-
-interface ProcRow {
-  pid: number
-  ppid: number
-  pgid: number
-}
-
-/** 快照当前进程表。失败返回空表——拿不到就退回只杀进程组，不让 stop 整体失败。 */
-function processTable(): ProcRow[] {
-  try {
-    return execFileSync("ps", ["-A", "-o", "pid=,ppid=,pgid="], { encoding: "utf8" })
-      .trim()
-      .split("\n")
-      .map((line) => line.trim().split(/\s+/).map(Number))
-      .filter((n) => n.length >= 3 && n.every(Number.isFinite))
-      .map(([pid, ppid, pgid]) => ({ pid: pid!, ppid: ppid!, pgid: pgid! }))
-  } catch {
-    return []
-  }
-}
-
-/**
- * 收集 root 及其全部后代的 pid 与它们所属的进程组。
- *
- * **必须在杀之前快照**——进程一死，它的孩子会被 reparent 到 init(1)，
- * 那时再遍历就找不到亲子关系了。
- */
-function collectTree(rootPid: number): { pids: number[]; pgids: number[] } {
-  const table = processTable()
-  const childrenOf = new Map<number, ProcRow[]>()
-  for (const row of table) {
-    const list = childrenOf.get(row.ppid) ?? []
-    list.push(row)
-    childrenOf.set(row.ppid, list)
-  }
-
-  const pids = new Set<number>([rootPid])
-  const pgids = new Set<number>()
-  const self = table.find((r) => r.pid === rootPid)
-  if (self) pgids.add(self.pgid)
-
-  const queue = [rootPid]
-  while (queue.length > 0) {
-    for (const child of childrenOf.get(queue.shift()!) ?? []) {
-      if (pids.has(child.pid)) continue
-      pids.add(child.pid)
-      pgids.add(child.pgid)
-      queue.push(child.pid)
-    }
-  }
-  return { pids: [...pids], pgids: [...pgids] }
-}
 
 export interface PtyRuntimeOptions {
   onExit?: (sessionId: string) => void

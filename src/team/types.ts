@@ -13,6 +13,7 @@ export type 任务状态 = "pending" | "claimed" | "in_progress" | "completed" |
 export const 终态: readonly 任务状态[] = ["completed", "failed", "cancelled"]
 
 export interface 任务 {
+  reusedFrom?:import('../protocol/science-reuse.js').ScienceReuseDecision['source']
   observation?:import('../protocol/task-observation.js').TaskObservation
   contract?: import("../orchestration/task-contract.js").TaskContract
   settings?: import("../orchestration/task-contract.js").TaskSettings
@@ -45,6 +46,8 @@ export interface 任务 {
 export type 成员状态 = "idle" | "working" | "removed"
 
 export interface 成员 {
+  /** Internal admission snapshot for strict scientific workflows; not a client prompt export. */
+  frozenAgentDefinition?:import('../subagent/definitions.js').SubagentDefinition
   taskSettings?: import("../orchestration/task-contract.js").TaskSettings
   /** Stable incarnation; reusing a display name never resumes a removed member. */
   orchestrationId?: string

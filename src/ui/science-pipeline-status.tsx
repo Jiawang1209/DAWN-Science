@@ -3,7 +3,7 @@ const states={running:'进行中',blocked:'受阻',interrupted:'已中断，待�
 const stages={check:'数据核查',analyze:'分析执行',review:'审阅'} as const
 export function SciencePipelineStatus({pipeline:p,tasks=[],batch:b}:{pipeline?:TeamSnapshot['pipeline'];tasks?:TeamSnapshot['tasks'];batch?:TeamSnapshot['scienceBatch']}){
  if(!p)return null
- const observations=tasks.filter(t=>(b||p.taskIds.includes(t.id))).flatMap(t=>t.observation?[t.observation]:[])
+ const observations=tasks.filter(t=>!t.reusedFrom&&(b||p.taskIds.includes(t.id))).flatMap(t=>t.observation?[t.observation]:[])
  const attempts=observations.reduce((n,o)=>n+o.submissionAttempts,0),invalid=observations.reduce((n,o)=>n+o.invalidSubmissions,0)
  const tokens=observations.reduce((n,o)=>n+(o.usage?.input??0)+(o.usage?.output??0),0)
  const hasUsage=observations.some(o=>o.usage?.input!==undefined||o.usage?.output!==undefined)

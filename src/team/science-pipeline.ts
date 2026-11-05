@@ -1,3 +1,4 @@
+import {scienceStepContext} from '../protocol/science-route-context.js'
 /** Fixed scientific reducer over existing Team tasks; no second execution loop. */
 import {PipelineDefinitionSchema,SciencePipelineSchema,publicPipeline,stageContract,type PipelineDefinition,type PipelineStage,type SciencePipeline} from '../protocol/science-pipeline.js'
 import {TaskContractSchema,TaskSettingsSchema,type TaskContract,type TaskSettings} from '../orchestration/task-contract.js'
@@ -29,14 +30,14 @@ function enqueueStage(team:团队,now:number){
  const check=[...p.taskIds].reverse().map(id=>team.tasks.find(t=>t.id===id)!).find(t=>t.contract?.resultType==='data-summary'&&t.status==='completed'&&t.receipt?.state==='accepted')
  const lastAnalysis=[...p.taskIds].reverse().map(id=>team.tasks.find(t=>t.id===id)!).find(t=>t.contract?.resultType==='model-metrics'&&t.status==='completed')
  const previous=p.taskIds.at(-1)?team.tasks.find(t=>t.id===p.taskIds.at(-1)):undefined
- const description=[`科研流程 ${team.id}，阶段 ${p.stage}，修正轮次 ${p.round}/${def.maxRevisions}。`,def.instructions,`用户已确认路线：${JSON.stringify({goal:def.route.goal,dataContext:def.route.dataContext,step})}`,previous?.receipt?`上一阶段宿主回执：${JSON.stringify(previous.receipt)}`:'',p.stage==='analyze'&&check?.receipt?`核查回执：${JSON.stringify(check.receipt)}`:'',p.stage==='review'?'只读审阅声明产物，逐个真实 read 并引用 callId；明确 pass/revise/blocked。不能写入或让分析者代审。':'使用冻结契约；完成时调用 submit_task_result。'].filter(Boolean).join('\n\n')
+ const description=[`科研流程 ${team.id}，阶段 ${p.stage}，修正轮次 ${p.round}/${def.maxRevisions}。`,def.instructions,`用户已确认路线：${JSON.stringify({title:def.route.title,goal:def.route.goal,dataContext:def.route.dataContext,step:scienceStepContext(step)})}`,previous?.receipt?`上一阶段宿主回执：${JSON.stringify(previous.receipt)}`:'',p.stage==='analyze'&&check?.receipt?`核查回执：${JSON.stringify(check.receipt)}`:'',p.stage==='review'?'只读审阅声明产物，逐个真实 read 并引用 callId；明确 pass/revise/blocked。不能写入或让分析者代审。':'使用冻结契约；完成时调用 submit_task_result。'].filter(Boolean).join('\n\n')
  const dependencies=p.stage==='review'&&lastAnalysis?[lastAnalysis.id]:p.stage==='analyze'&&check?[check.id]:[]
  const settings=structuredClone(p.settingsByStage[p.stage])
  if(def.initialVersions&&p.stage==='review'){
   if(!lastAnalysis?.receipt?.versions){finish(p,'blocked','分析阶段缺少内容版本，未放行审阅',now);return}
   settings.versions={version:1,inputs:structuredClone(lastAnalysis.receipt.versions.outputs)}
  }
- const task=加任务(team,{id,subject:`${p.stage} · 修正 ${p.round}`,description,assignee:def.members[p.stage],contract:settings.contract!,dependencies},now)
+ const task=加任务(team,{id,subject:`${p.namespace?team.scienceBatch!.items[team.scienceBatch!.index]!.label+' · ':''}${({check:'数据核查',analyze:'分析执行',review:'独立审阅'})[p.stage]} · 修正 ${p.round}`,description,assignee:def.members[p.stage],contract:settings.contract!,dependencies},now)
  task.settings=structuredClone(settings);p.currentTaskId=id;p.taskIds.push(id);p.updatedAt=now
 }
 const finish=(p:SciencePipeline,status:'blocked'|'completed'|'cancelled',reason:string,now:number)=>{p.status=status;p.reason=reason.length>7900?reason.slice(0,7900)+'…（原因过长，完整内容见阶段记录）':reason;p.updatedAt=now;p.endedAt=now;p.stateRevision++}
@@ -78,7 +79,7 @@ export function cancelPipeline(team:团队,now=Date.now()):void {
 }
 export function pipelineStatus(team:团队){
  const p=team.pipeline;if(!p)throw new 团队错误('当前团队不是科研流程')
- const tasks=p.taskIds.map(id=>team.tasks.find(t=>t.id===id)!).filter(Boolean)
+ const tasks=p.taskIds.map(id=>team.tasks.find(t=>t.id===id)!).filter(Boolean).filter(t=>!t.reusedFrom)
  const observations=tasks.filter(t=>['completed','failed','cancelled'].includes(t.status)).map(t=>t.observation)
  const usage:Record<string,number>={},partial=new Set<string>();let unknownUsageTasks=0
  for(const o of observations){if(!o?.usage){unknownUsageTasks++;for(const k of ['input','output','cacheRead'])partial.add(k);continue}for(const k of ['input','output','cacheRead'] as const){if(o.usage[k]!==undefined)usage[k]=(usage[k]??0)+o.usage[k]!;else partial.add(k)}for(const k of o.usage.partial??[])partial.add(k)}

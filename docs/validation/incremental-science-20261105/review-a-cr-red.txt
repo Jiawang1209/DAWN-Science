@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-acceptance.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-acceptance.test.ts (20 tests | 1 failed) 2310ms
+   × bounds physical lines for every supported newline "\r" 305ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-acceptance.test.ts > bounds physical lines for every supported newline "\r"
+AssertionError: expected '宿主可执行验收未通过：numeric.sample-count 期望 1，…' to contain '物理行数预算'
+
+Expected: "物理行数预算"
+Received: "宿主可执行验收未通过：numeric.sample-count 期望 1，实际 5"
+
+ ❯ tests/team/science-acceptance.test.ts:24:354
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  10:29:19
+   Duration  2.55s (transform 68ms, setup 0ms, import 142ms, tests 2.31s, environment 0ms)
+

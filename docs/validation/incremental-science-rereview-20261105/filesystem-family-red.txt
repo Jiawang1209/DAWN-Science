@@ -1,0 +1,103 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-execution-rereview.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-execution-rereview.test.ts (16 tests | 6 failed) 15027ms
+   × withholds proof when os.rename consumes an unlisted file without opening it 796ms
+   × withholds proof when os.replace consumes an unlisted file without opening it 783ms
+   × treats declared-file timestamps as unbound metadata, since content hashes do not freeze mtime 817ms
+   × rejects standard cross-platform process-start audit event os.spawn 797ms
+   × rejects standard cross-platform process-start audit event os.startfile 791ms
+   × rejects standard cross-platform process-start audit event os.startfile/2 788ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > withholds proof when os.rename consumes an unlisted file without opening it
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 51,
+    "path": "analysis.py",
+    "sha256": "3e7497dd9a6c9281935e8b8899b14db4bb233d4e97d665e8fdb13f156c433f2f",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:14:417
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > withholds proof when os.replace consumes an unlisted file without opening it
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 52,
+    "path": "analysis.py",
+    "sha256": "199b53728bcbed6b031b4c80cd742c6d74814881345500bb9b8159fa03696728",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:14:417
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > treats declared-file timestamps as unbound metadata, since content hashes do not freeze mtime
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 64,
+    "path": "analysis.py",
+    "sha256": "ee2b8406c77c83384e2dee285a7e374157379c3e500ed6ba70eadb981e58251d",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:15:345
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > rejects standard cross-platform process-start audit event os.spawn
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > rejects standard cross-platform process-start audit event os.startfile
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > rejects standard cross-platform process-start audit event os.startfile/2
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/team/science-execution-rereview.test.ts:16:233
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 10 passed (16)
+   Start at  11:37:34
+   Duration  15.20s (transform 44ms, setup 0ms, import 89ms, tests 15.03s, environment 0ms)
+

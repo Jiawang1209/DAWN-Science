@@ -1,5 +1,5 @@
 /** Bounded batch transitions over the original Team reducer, attempts and frozen settings. */
-import type {团队,成员} from './types.js'
+import type {团队,成员,任务} from './types.js'
 import type {PipelineDefinition} from '../protocol/science-pipeline.js'
 import {ScienceBatchSchema,publicScienceBatch,type ScienceBatch} from '../protocol/science-batch.js'
 import type {ScienceTemplate} from './science-templates.js'
@@ -20,7 +20,7 @@ export function startScienceBatch(team:团队,requestId:string,template:ScienceT
  加成员(team,{name:'aggregate',agent:'science-host-summary',role:'固定宿主汇总；无模型执行'})
  startItem(team,now)
 }
-function startItem(team:团队,now:number){const b=team.scienceBatch!,item=b.items[b.index]!;startPipeline(team,b.requestId+':'+item.id,item.definition,(_m,c)=>{const stage=c.resultType==='data-summary'?'check':c.resultType==='review'?'review':'analyze';return structuredClone(item.settingsByStage[stage])},now,item.id);if(b.requestFingerprint)team.pipeline!.requestFingerprint=b.requestFingerprint}
+function startItem(team:团队,now:number){const b=team.scienceBatch!;while(b.items[b.index]!.completed){const item=b.items[b.index]!;team.pipeline={...structuredClone(item.completed!),definition:structuredClone(item.definition),requestId:b.requestId+':'+item.id,routeSync:'pending'};if(b.index+1>=b.items.length){aggregate(team,now);return}b.index++}const item=b.items[b.index]!;startPipeline(team,b.requestId+':'+item.id,item.definition,(_m,c)=>{const stage=c.resultType==='data-summary'?'check':c.resultType==='review'?'review':'analyze';return structuredClone(item.settingsByStage[stage])},now,item.id);if(b.requestFingerprint)team.pipeline!.requestFingerprint=b.requestFingerprint}
 function terminal(b:ScienceBatch,status:'completed'|'blocked'|'cancelled',reason:string,now:number){b.status=status;b.reason=reason.slice(0,7900);b.endedAt=now;b.stateRevision++}
 function aggregate(team:团队,now:number){
  const b=team.scienceBatch!
@@ -62,3 +62,6 @@ export function resumeScienceBatch(team:团队,ack=false,now=Date.now()):void {
 }
 export function cancelScienceBatch(team:团队,now=Date.now()):void {const b=team.scienceBatch;if(b&&!['completed','cancelled'].includes(b.status)){cancelPipeline(team,now);terminal(b,'cancelled','用户取消批量；保留已有检查点及产物',now)}}
 export {publicScienceBatch}
+
+/** Only used on the unpublished derived Team, before scheduler admission. */
+export function activateDerivedBatch(team:团队,history:任务[] ,now=Date.now()):void {if(!team.scienceBatch||team.tasks.some(t=>t.status!=='pending'))throw new 团队错误('派生批次已开始执行');team.tasks=structuredClone(history);delete team.pipeline;team.scienceBatch.index=0;startItem(team,now);ScienceBatchSchema.parse(team.scienceBatch)}

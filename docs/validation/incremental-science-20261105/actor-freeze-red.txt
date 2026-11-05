@@ -1,0 +1,41 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-derivation.test.ts -t dispatches the admitted actor
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-batch-derivation.test.ts (19 tests | 1 failed | 18 skipped) 1630ms
+   × dispatches the admitted actor definition even if the live catalog changes before the next stage starts 1629ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-batch-derivation.test.ts > dispatches the admitted actor definition even if the live catalog changes before the next stage starts
+AssertionError: expected 'ACTOR_CHANGED_AFTER_ADMISSION\n\n---\…' to contain 'fixture'
+
+- Expected
++ Received
+
+- fixture
++ ACTOR_CHANGED_AFTER_ADMISSION
++
++ ---
++ 你现在是团队「科研流程」的成员，名字叫 check。团队目标：approved mean
++ 队长（captain）带队；你是干活的成员。每条派单或消息都是新的一轮：照着做，做完用最后一条回复报告结果。
++
++ 工作规则：
++ 1. 派给你的任务做完之后，最后一条回复就是任务的结果（会原样记录，下游任务靠它）——写清做了什么、关键结论、产物在哪。**哪怕全文已经写进了文件，最后也必须回一段要点**：文件路径 + 三五条结论；什么都不说会被记成「没有文字结果」。
++ 2. 卡住了或发现问题，用 team_send 发给 captain；要问队友就 team_send 发给队友（to 填名字），不用经过队长。
++ 3. team_status 能看团队现状。
++ 4. 你是成员：不建团队、不建任务、不转派、不加减人——那是队长的事。
++ 5. 一次只做手上这一项；别抢别人的活。
+
+ ❯ tests/team/science-batch-derivation.test.ts:35:1090
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  10:54:52
+   Duration  2.64s (transform 321ms, setup 0ms, import 897ms, tests 1.63s, environment 0ms)
+

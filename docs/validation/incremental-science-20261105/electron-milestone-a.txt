@@ -1,0 +1,19 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-acceptance.spec.ts --workers=1
+
+Running 2 tests using 1 worker
+
+(node:72980) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认的均值方法处理合成」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:51169/fc443bcf-4535-49cd-8435-161b9abceb6a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-acceptance.spec.ts:6:2 › basic-error › shows actual host acceptance and saves inspectable demonstration evidence (10.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认的均值方法处理合成」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:51211/bf41406f-d248-4c73-be9c-9e26b245f227
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-acceptance.spec.ts:6:2 › numeric-error › shows actual host acceptance and saves inspectable demonstration evidence (4.1s)
+
+  2 passed (15.4s)

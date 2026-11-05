@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-acceptance.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-acceptance.test.ts (12 tests | 2 failed) 1334ms
+   × checks file versus declared metrics even without a numeric reference profile 56ms
+   × accepts inert SVG styles/local paint references but rejects animated active content 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-acceptance.test.ts > checks file versus declared metrics even without a numeric reference profile
+AssertionError: expected 'accepted' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "accepted"
+
+ ❯ tests/team/science-acceptance.test.ts:19:308
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-acceptance.test.ts > accepts inert SVG styles/local paint references but rejects animated active content
+AssertionError: expected 'blocked' to be 'accepted' // Object.is equality
+
+Expected: "accepted"
+Received: "blocked"
+
+ ❯ tests/team/science-acceptance.test.ts:20:830
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  10:10:36
+   Duration  1.53s (transform 58ms, setup 0ms, import 115ms, tests 1.33s, environment 0ms)
+

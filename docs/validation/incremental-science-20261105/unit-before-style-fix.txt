@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 816ms
+     × **JSX 里的类名，styles.css 里都定义过** 23ms
+     × styles.css 里每个 --dawn-* 都在 tokens.css 里定义过 3ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **JSX 里的类名，styles.css 里都定义过**
+AssertionError: 这些类名只存在于 JSX 里——写它的人以为自己配了样式: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "science-reuse-status.tsx：.science-reuse-status",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1151:7
+    1149|       [...缺的].filter((x) => !欠账.has(x)).sort(),
+    1150|       "这些类名只存在于 JSX 里——写它的人以为自己配了样式",
+    1151|     ).toEqual([])
+       |       ^
+    1152|   })
+    1153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 引用的令牌必须真的存在 > styles.css 里每个 --dawn-* 都在 tokens.css 里定义过
+AssertionError: styles.css 引用了 tokens.css 里没有的令牌：--dawn-border: expected [ '--dawn-border' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "--dawn-border",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1247:78
+    1245|     const used = new Set(styles.match(/var\(\s*(--dawn-[a-z0-9-]+)/g)?…
+    1246|     const missing = [...used].filter((t) => !defined.has(t))
+    1247|     expect(missing, `styles.css 引用了 tokens.css 里没有的令牌：${missing.join("…
+       |                                                                              ^
+    1248|   })
+    1249| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 627 passed (628)
+      Tests  2 failed | 6220 passed | 11 skipped (6233)
+   Start at  10:48:31
+   Duration  219.98s (transform 9.88s, setup 43.40s, import 148.94s, tests 396.93s, environment 89.03s)
+

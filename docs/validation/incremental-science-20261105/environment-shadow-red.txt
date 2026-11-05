@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-environment.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-environment.test.ts (3 tests | 1 failed) 257ms
+   × does not import workspace Python modules during admission metadata reads 110ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-environment.test.ts > does not import workspace Python modules during admission metadata reads
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/team/science-environment.test.ts:5:520
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  10:36:51
+   Duration  368ms (transform 23ms, setup 0ms, import 32ms, tests 257ms, environment 0ms)
+

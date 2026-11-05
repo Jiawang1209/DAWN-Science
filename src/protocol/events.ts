@@ -1,3 +1,4 @@
+import {ScienceReuseSourceSchema} from './science-reuse.js'
 import {TaskContractSchema,TaskReceiptSchema} from "./task-contract.js"
 import {TaskObservationSchema} from './task-observation.js'
 import {ScienceBatchSummarySchema} from './science-batch.js'
@@ -495,6 +496,7 @@ export const TeamSnapshotSchema = z
         .object({
           id: z.string(),
           subject: z.string(),
+          reusedFrom:ScienceReuseSourceSchema.optional(),
           contract: TaskContractSchema.optional(),
           receipt: TaskReceiptSchema.optional(),
           observation:TaskObservationSchema.optional(),

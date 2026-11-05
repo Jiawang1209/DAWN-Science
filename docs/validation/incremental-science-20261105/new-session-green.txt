@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-execution.test.ts tests/workbench/bot-science-acceptance.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/workbench/bot-science-acceptance.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/bot-science-acceptance.test.ts [ tests/workbench/bot-science-acceptance.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] [0mIdentifier `readFileSync` has already been declared
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/runtime/native.ts:10:21 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m10 │[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249m{[0m[38;5;249m [0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mi[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249ms[0m[38;5;249mS[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m,[0mreadFileSync[38;5;249m [0m[38;5;249m}[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m [0m[38;5;249m'[0m[38;5;249mn[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m:[0m[38;5;249mf[0m[38;5;249ms[0m[38;5;249m'[0m
+ [38;5;240m   │[0m                     ──────┬─────  
+ [38;5;240m   │[0m                           ╰─────── `readFileSync` has already been declared here
+ [38;5;240m   │[0m 
+ [38;5;246m63 │[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249m{[0m[38;5;249m [0m[38;5;249mm[0m[38;5;249mk[0m[38;5;249md[0m[38;5;249mi[0m[38;5;249mr[0m[38;5;249mS[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m,[0m[38;5;249m [0mreadFileSync[38;5;249m,[0m[38;5;249m [0m[38;5;249mw[0m[38;5;249mr[0m[38;5;249mi[0m[38;5;249mt[0m[38;5;249me[0m[38;5;249mF[0m[38;5;249mi[0m[38;5;249ml[0m[38;5;249me[0m[38;5;249mS[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249mr[0m[38;5;249me[0m[38;5;249mn[0m[38;5;249ma[0m[38;5;249mm[0m[38;5;249me[0m[38;5;249mS[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249mr[0m[38;5;249mm[0m[38;5;249mS[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m [0m[38;5;249m}[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249mn[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m:[0m[38;5;249mf[0m[38;5;249ms[0m[38;5;249m"[0m
+ [38;5;240m   │[0m                     ──────┬─────  
+ [38;5;240m   │[0m                           ╰─────── It can not be redeclared here
+[38;5;246m────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/src/runtime/native.ts
+ ❯ transformWithOxc ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:7618:19
+ ❯ TransformPluginContext.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:7690:26
+ ❯ EnvironmentPluginContainer.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8582:51
+ ❯ loadAndTransform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:20155:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  6 passed (6)
+   Start at  10:47:50
+   Duration  14.73s (transform 791ms, setup 0ms, import 572ms, tests 14.06s, environment 0ms)
+

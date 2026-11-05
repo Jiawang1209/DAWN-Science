@@ -1,6 +1,7 @@
 /** Client-safe task contracts and host receipt vocabulary. No execution or filesystem imports. */
 import {z} from 'zod'
-import {TaskInputVersionsSchema,TaskVersionsSchema} from './file-versions.js'
+import {ScienceAcceptanceSchema,ScienceAcceptanceReceiptSchema} from './science-acceptance.js'
+import {FileVersionSchema,TaskInputVersionsSchema,TaskVersionsSchema} from './file-versions.js'
 import {RouteExecutionSchema,RouteVerificationSchema,WorkspaceRelativePathSchema} from './analysis-route.js'
 const paths = z.array(WorkspaceRelativePathSchema).max(64)
 export const TaskAccessSchema = z.enum(['read-only','workspace-write','workspace-exec'])
@@ -10,9 +11,11 @@ export const TaskDataSchema=z.discriminatedUnion('kind',[
  z.object({kind:z.literal('review'),verdict:z.enum(['pass','revise','blocked']),findings:z.array(z.string().min(1).max(2000)).max(64),reviewedPaths:paths,revisionInstructions:z.string().min(1).max(8000).optional()}).strict().refine(v=>v.verdict==='pass'||v.findings.length>0,'Review issues need concrete findings'),
 ])
 export const TaskContractSchema = z.object({
+  acceptance:ScienceAcceptanceSchema.optional(),
   submission:z.literal('tool').optional(),resultType:z.enum(['data-summary','model-metrics','review']).optional(),
   version:z.literal(1).default(1), inputs:paths.default([]), outputs:paths.default([]), access:TaskAccessSchema.default('read-only'),requireExecution:z.boolean().default(false),requireReview:z.boolean().default(false),
 }).strict().superRefine((c,ctx) => {
+  if(c.acceptance){const a=c.acceptance;if([a.scriptPath,a.reportPath,a.resultPath].some(p=>!c.outputs.includes(p))||a.numeric&&!c.inputs.includes(a.numeric.dataPath)||a.evidencePath&&!c.inputs.includes(a.evidencePath))ctx.addIssue({code:'custom',message:'宿主验收只能读取本契约声明的输入和产物'})}
   if (new Set(c.inputs).size!==c.inputs.length || new Set(c.outputs).size!==c.outputs.length) ctx.addIssue({code:'custom',message:'Duplicate task paths'})
   if(c.requireExecution&&c.access!=='workspace-exec')ctx.addIssue({code:'custom',message:'Required execution needs workspace-exec capability'})
   if (c.access==='read-only' && c.outputs.length) ctx.addIssue({code:'custom',message:'Read-only tasks cannot declare writes'})
@@ -29,6 +32,7 @@ export const TaskResultSchema=z.object({
 export type TaskResult=z.infer<typeof TaskResultSchema>
 export const TaskResultParameters=z.toJSONSchema(TaskResultSchema,{io:'input',unrepresentable:'any'})
 export const TaskReceiptSchema=z.object({
+  acceptance:ScienceAcceptanceReceiptSchema.optional(),
   versions:TaskVersionsSchema.optional(),
   version:z.literal(1),state:z.enum(['accepted','blocked','invalid']),summary:z.string(),reason:z.string().optional(),
   result:TaskResultSchema.optional(),deliverables:z.array(z.object({stepId:z.string(),path:z.string(),state:z.enum(['exists','missing','unknown','observed'])}).strict()),
@@ -44,5 +48,5 @@ export const TaskSettingsSchema=z.object({contract:TaskContractSchema.optional()
 })
 export type TaskSettings=z.infer<typeof TaskSettingsSchema>
 export const TaskEvidenceSchema=z.array(z.object({toolCallId:z.string(),name:z.string(),status:z.enum(['done','error']),result:z.string(),
-  input:z.unknown().optional(),filesWritten:z.array(z.string()).optional(),stepId:z.string().optional(),execution:z.enum(['ran','failed','not_observed']).optional(),
+  scienceExecution:z.object({script:FileVersionSchema,dependencyBound:z.literal(true).optional(),environmentFingerprint:z.string().regex(/^[a-f0-9]{64}$/)}).strict().optional(),input:z.unknown().optional(),filesWritten:z.array(z.string()).optional(),stepId:z.string().optional(),execution:z.enum(['ran','failed','not_observed']).optional(),
 }).strict()).max(1024)

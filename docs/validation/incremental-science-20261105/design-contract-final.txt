@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  103 passed (103)
+   Start at  10:52:14
+   Duration  1.62s (transform 325ms, setup 455ms, import 43ms, tests 715ms, environment 328ms)
+

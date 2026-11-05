@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-execution-rereview.test.ts tests/team/science-execution.test.ts tests/team/science-reuse.test.ts tests/runtime/analysis-route.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-execution-rereview.test.ts (16 tests | 1 failed) 15206ms
+   × does not attest unlisted local code dependencies, but permits a declared frozen helper 1709ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > does not attest unlisted local code dependencies, but permits a declared frozen helper
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/team/science-execution-rereview.test.ts:7:423
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 34 passed (35)
+   Start at  11:38:30
+   Duration  15.47s (transform 822ms, setup 0ms, import 3.04s, tests 25.72s, environment 0ms)
+

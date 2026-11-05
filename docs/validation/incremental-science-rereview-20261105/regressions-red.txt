@@ -1,0 +1,100 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-execution-rereview.test.ts tests/team/science-acceptance.test.ts tests/team/science-reuse.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-reuse.test.ts (1 test | 1 failed) 56ms
+   × normalizes only output locations and observed IDs, while binding every scientific and authority input 55ms
+ ❯ |node| tests/team/science-acceptance.test.ts (23 tests | 3 failed) 2310ms
+   × blocks balanced but malformed CSV quoting instead of silently deleting quotes: "x\n1\"2\"\n" 76ms
+   × blocks balanced but malformed CSV quoting instead of silently deleting quotes: "x\n\"1\"2\n" 72ms
+   × blocks balanced but malformed CSV quoting instead of silently deleting quotes: "x\n \"12\"\n" 75ms
+ ❯ |node| tests/team/science-execution-rereview.test.ts (5 tests | 5 failed) 4819ms
+   × does not attest unlisted local code dependencies, but permits a declared frozen helper 830ms
+   × finishes normal Python atexit outputs before attestation 822ms
+   × finishes normal Python thread outputs before attestation 814ms
+   × refuses process creation before a short-lived intermediary can orphan writers 1644ms
+   × does not intercept R until its dependency and lifetime boundary can be attested 709ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-acceptance.test.ts > blocks balanced but malformed CSV quoting instead of silently deleting quotes: "x\n1\"2\"\n"
+ FAIL  |node| tests/team/science-acceptance.test.ts > blocks balanced but malformed CSV quoting instead of silently deleting quotes: "x\n\"1\"2\n"
+ FAIL  |node| tests/team/science-acceptance.test.ts > blocks balanced but malformed CSV quoting instead of silently deleting quotes: "x\n \"12\"\n"
+AssertionError: expected 'accepted' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "accepted"
+
+ ❯ tests/team/science-acceptance.test.ts:25:476
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > does not attest unlisted local code dependencies, but permits a declared frozen helper
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/team/science-execution-rereview.test.ts:7:423
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > finishes normal Python atexit outputs before attestation
+Error: ENOENT: no such file or directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/science-rereview-MpauHA/result.json'
+ ❯ tests/team/science-execution-rereview.test.ts:8:460
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > finishes normal Python thread outputs before attestation
+Error: ENOENT: no such file or directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/science-rereview-ftWhyn/result.json'
+ ❯ tests/team/science-execution-rereview.test.ts:8:460
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > refuses process creation before a short-lived intermediary can orphan writers
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/team/science-execution-rereview.test.ts:9:598
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > does not intercept R until its dependency and lifetime boundary can be attested
+UserFacingError: ENOENT: no such file or directory, lstat '/Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/analysis.R'
+ ❯ Worker.<anonymous> src/artifacts/blobs.ts:103:29
+    101|         r.error
+    102|           ? finish(
+    103|               Object.assign(new UserFacingError(r.error), {
+       |                             ^
+    104|                 code: r.code,
+    105|                 fileBytes: r.fileBytes,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |node| tests/team/science-reuse.test.ts > normalizes only output locations and observed IDs, while binding every scientific and authority input
+AssertionError: expected 'b36a3fbe9e027be636170063fb7fdecb54b06…' not to be 'b36a3fbe9e027be636170063fb7fdecb54b06…' // Object.is equality
+ ❯ tests/team/science-reuse.test.ts:5:1590
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  9 failed | 20 passed (29)
+   Start at  11:26:43
+   Duration  5.00s (transform 226ms, setup 0ms, import 775ms, tests 7.18s, environment 0ms)
+

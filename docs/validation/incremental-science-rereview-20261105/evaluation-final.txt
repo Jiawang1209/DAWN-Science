@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' scripts/evaluate-science-pipeline.ts docs/validation/incremental-science-rereview-20261105/evaluation
+{"destination":"/Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/docs/validation/incremental-science-rereview-20261105/evaluation","byMode":[{"mode":"single","cases":5,"successes":5,"falseAcceptances":0,"inputPreserved":5,"modelRequests":21,"visibleTokens":360,"partialUsage":true,"unknownUsageTasks":2},{"mode":"multi","cases":5,"successes":5,"falseAcceptances":0,"inputPreserved":5,"modelRequests":43,"visibleTokens":800,"partialUsage":true,"unknownUsageTasks":2}],"incrementalRows":10}

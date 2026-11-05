@@ -1,0 +1,163 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-execution-rereview.test.ts tests/runtime/analysis-route.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/runtime/analysis-route.test.ts (13 tests | 2 failed) 164ms
+     × distinguishes a denied shell call from actual execution failure and persists observed tool types 12ms
+     × does not reuse prior execution evidence when a repeated toolCallId is later denied 7ms
+ ❯ |node| tests/team/science-execution-rereview.test.ts (10 tests | 5 failed) 9990ms
+   × withholds proof for unlisted directory or metadata dependencies: import os;print(os.path.exists('switch')) 758ms
+   × withholds proof for unlisted directory or metadata dependencies: import os;print(os.listdir('samples')) 758ms
+   × withholds proof for unlisted directory or metadata dependencies: import pathlib;print(pathlib.Path('switch').is_file()) 765ms
+   × withholds proof for unlisted directory or metadata dependencies: import os;print(os.access('switch',os.R_OK)) 750ms
+   × refuses exec replacement before it can shed the foreground runner and orphan writers 1613ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/analysis-route.test.ts > native analysis route > distinguishes a denied shell call from actual execution failure and persists observed tool types
+AssertionError: expected true to be falsy
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/runtime/analysis-route.test.ts:106:140
+    104|    expect((await x.call('update_analysis_route',{expectedRevision:0,ro…
+    105|    x.say('开始执行分析数据。');expect((await x.call('bash',{command:'exit 7'},'…
+    106|    d.steps[0]!.execution.toolCallIds=['actual-shell'];expect((await x.…
+       |                                                                                                                                            ^
+    107|    expect(x.rt.getAnalysisRoute('route',x.spec.sessionDir).evidence?.t…
+    108|   }finally{await x.rt.stop('route');rmSync(x.dir,{recursive:true,force…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |node| tests/runtime/analysis-route.test.ts > native analysis route > does not reuse prior execution evidence when a repeated toolCallId is later denied
+AssertionError: expected true to be falsy
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/runtime/analysis-route.test.ts:121:87
+    119|  it('does not reuse prior execution evidence when a repeated toolCallI…
+    120|   const x=await setup();try{
+    121|    x.say('开始执行。');expect((await x.call('bash',{command:'true'},'reused…
+       |                                                                                       ^
+    122|    x.say('先不要运行。');expect((await x.call('bash',{command:'true'},'reuse…
+    123|    const d=draft();d.steps[0]!.execution={state:'failed',note:'被拒绝不是运行…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > withholds proof for unlisted directory or metadata dependencies: import os;print(os.path.exists('switch'))
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 41,
+    "path": "analysis.py",
+    "sha256": "2c4c207375ca593bef0633cd10788bfa06fef01cc3eea4e5dff510e772e9099f",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:11:464
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > withholds proof for unlisted directory or metadata dependencies: import os;print(os.listdir('samples'))
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 38,
+    "path": "analysis.py",
+    "sha256": "1ca18901b97182ad95f09e681a5dd01acff124eb0cfd8016a5d7493e6e53525d",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:11:464
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > withholds proof for unlisted directory or metadata dependencies: import pathlib;print(pathlib.Path('switch').is_file())
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 54,
+    "path": "analysis.py",
+    "sha256": "e08e2edc4f108ef04d55fe3f9de5b793f40a6285fb3cd87913c345991bd15825",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:11:464
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > withholds proof for unlisted directory or metadata dependencies: import os;print(os.access('switch',os.R_OK))
+AssertionError: expected { script: { …(3) }, …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "dependencyBound": true,
+  "environmentFingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+  "script": {
+    "bytes": 44,
+    "path": "analysis.py",
+    "sha256": "8710c3612afd4f2691361d4e85aab65d20173a648855cb2f6e16f9db63f9c346",
+  },
+}
+
+ ❯ tests/team/science-execution-rereview.test.ts:11:464
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |node| tests/team/science-execution-rereview.test.ts > refuses exec replacement before it can shed the foreground runner and orphan writers
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/team/science-execution-rereview.test.ts:13:549
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 16 passed (23)
+   Start at  11:32:46
+   Duration  10.22s (transform 660ms, setup 0ms, import 1.50s, tests 10.15s, environment 0ms)
+

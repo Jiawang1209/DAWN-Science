@@ -1,0 +1,4 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsc' --noEmit
+src/runtime/native.ts(10,21): error TS2300: Duplicate identifier 'readFileSync'.
+src/runtime/native.ts(63,21): error TS2300: Duplicate identifier 'readFileSync'.

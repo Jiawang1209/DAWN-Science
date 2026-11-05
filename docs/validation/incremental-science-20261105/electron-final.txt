@@ -1,0 +1,44 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-acceptance.spec.ts e2e/science-incremental.spec.ts e2e/science-batch.spec.ts e2e/science-pipeline.spec.ts
+
+Running 7 tests using 1 worker
+
+(node:98218) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认的均值方法处理合成」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:57726/7f21c621-cf77-45d2-ac4a-d637fd1966f6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-acceptance.spec.ts:6:2 › basic-error › shows actual host acceptance and saves inspectable demonstration evidence (13.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认的均值方法处理合成」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:57968/871a21e4-b918-4f11-b228-b731fde7a8b5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-acceptance.spec.ts:6:2 › numeric-error › shows actual host acceptance and saves inspectable demonstration evidence (6.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认方法分别核查、分析」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:58029/e63d568a-4c55-41cf-9c64-d049106d3ff9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/science-batch.spec.ts:4:1 › batch versions, host summary and progress cross the actual strict desktop protocol (11.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] [桌面通知·假] #1 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:58167/7d3263b5-2f07-4a88-a77d-2b4644078f29
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/science-incremental.spec.ts:4:1 › visibly reuses accepted A and reruns failed B through actual parent tools and Pi (18.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:58407/42f18f29-000f-47cd-bf91-178f184216b8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (5.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58463/6a11cca8-7ca9-47cb-9421-92882602eb66
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:58515/e7753a0d-689c-4a76-8061-e41d0f63f609
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.3s)
+
+  7 passed (1.1m)

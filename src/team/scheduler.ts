@@ -355,7 +355,7 @@ export class 团队调度器 {
       const handlingExchangeId = collaboration?.phase === "request" ? collaboration.exchangeId : child?.parentExchangeId
       const botTurn = m.botId ? { task: 任务, collaboration, conversation, handlingExchangeId, requested: new Set<string>(), botId: m.botId, scope: m.botScopeKey, sessionId: m.sessionId } : undefined
       if (botTurn) this.botTurns.set(key, botTurn)
-      const def = this.opts.定义().find((d) => d.name === m.agent)
+      const def = m.frozenAgentDefinition??this.opts.定义().find((d) => d.name === m.agent)
       this.opts.onTurn?.({ runId, team, member, taskId: 任务?.taskId, phase: "start" })
       let 结果: 成员轮结果
       const backend = async (runSignal: AbortSignal): Promise<成员轮结果> => {
@@ -407,8 +407,8 @@ export class 团队调度器 {
           const versionProblem=!m.botId?await versionInputReceipt(settings,this.opts.跑.context.cwd,runSignal):undefined
           if(versionProblem)return{ok:false,output:'',error:versionProblem.reason??versionProblem.summary,receipt:versionProblem}
           const result=await backend(runSignal)
-          if(result.ok&&settings?.contract&&!result.receipt){const receipt=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd),this.opts.跑.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions});return record({...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})})}
-          if(result.receipt&&settings?.versions){const receipt=validateVersionReceipt(settings,result.receipt);return record({...result,receipt,ok:result.ok&&receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.summary}:{})})}
+          if(result.ok&&settings?.contract&&!result.receipt){const receipt=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd),this.opts.跑.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]});return record({...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})})}
+          if(result.receipt&&settings&&(settings.versions||settings.contract?.acceptance)){const receipt=validateVersionReceipt(settings,result.receipt);return record({...result,receipt,ok:result.ok&&receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.summary}:{})})}
           return record(result)
         }finally{release()}
       }

@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-reuse.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:31:46
+   Duration  997ms (transform 131ms, setup 0ms, import 855ms, tests 55ms, environment 0ms)
+

@@ -1,3 +1,5 @@
+import {createHash} from 'node:crypto'
+import {runControlledScience} from '../team/science-execution.js'
 import {taskTeamSnapshot} from "../team/task-snapshot.js"
 import type { ResponseOf } from "../protocol/index.js"
 import { geoTools, sraTools, uniprotTools, type ScienceFlags } from "../science/tools.js"
@@ -1807,7 +1809,7 @@ export class NativeRuntime implements AgentRuntime {
       recordReceipt:receipt=>receipt.versions&&this.opts.artifactCapture?{...receipt,versions:this.opts.artifactCapture.recordTaskVersions(spec.sessionId,receipt.versions)}:receipt,
       prepareTask:(member,task)=>{
         if(spec.remote&&task?.contract)throw new Error('远端任务尚不支持严格子任务契约验收')
-        return resolveTaskSettings(task?.contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:定义().find(d=>d.name===member.agent)?.tools)
+        return resolveTaskSettings(task?.contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:(member.frozenAgentDefinition??定义().find(d=>d.name===member.agent))?.tools)
       },
       sessionDir: spec.sessionDir,
       定义,
@@ -1872,12 +1874,13 @@ export class NativeRuntime implements AgentRuntime {
       if (result.isError) throw new UserFacingError(result.content.map(c => c.text).join("\n"))
     } })
     const 流程工具=createSciencePipelineTools({sessionId:spec.sessionId,调度器,定义,
+      executorBuild:()=>{try{return createHash('sha256').update(readFileSync(entry)).digest('hex')}catch{return 'executor-unavailable'}},
       resolveBot:id=>{const bot=this.botBridge?.list().find(b=>b.id===id);return bot?{...bot,scopeKey:this.botBridge?.scopeKey?.(spec.sessionId),model:bot.model??this.botModel(spec.sessionId)??{provider:native.provider,model:native.model}}:undefined},
       当前:{get:()=>当前团队.id,set:id=>{记当前团队(spec.sessionDir,id);当前团队.id=id}},
       已知模型:async()=>(await this.runtime()).getModels().map(m=>({provider:m.provider,model:m.id})),
       recordInputs:inputs=>this.opts.artifactCapture?.recordTaskVersions(spec.sessionId,{version:1,inputs,outputs:[]}).inputs??inputs,
       route:()=>this.routeBooks.get(spec.sessionId)?.book?.read(),remote:Boolean(spec.remote),defaultModel:{provider:native.provider,model:native.model},
-      freeze:(member,contract)=>resolveTaskSettings(contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:定义().find(d=>d.name===member.agent)?.tools),
+      freeze:(member,contract)=>resolveTaskSettings(contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:(member.frozenAgentDefinition??定义().find(d=>d.name===member.agent))?.tools),
     })
     const botListTool = this.botBridge ? [{ name: "bot_list", label: "bot_list", description: "列出用户配置的专业 Bot。用户要求组建 Bot Team 时，先查名册，按职责自动选择成员，用 team_create 的 botId 分工；依赖按顺序，最后汇总真实脚本、图表与说明。", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text" as const, text: JSON.stringify(this.botBridge!.list().filter(b => b.enabled && !b.archivedAt).map(({id,name,role,model}) => ({id,name,role,model}))) }], details: undefined }) }] : []
     this.团队收尾.set(spec.sessionId, () => {
@@ -4462,8 +4465,10 @@ ${描述}`
         if(signal?.aborted)return{content:[{type:'text',text:'调用已中止，未进入工具执行'}],isError:true,details:{analysisRouteEvidence:{execution:'not_observed'}}}
         const currentStep = parseRouteActionMessage(latestRouteUserText(branch))?.stepId
         let result: unknown
+        let controlled:Awaited<ReturnType<typeof runControlledScience>>
         try {
-          result = await original(toolCallId, params, signal, onUpdate, ctx)
+          controlled=name==='bash'?await runControlledScience(frozenTask?.settings.contract?.acceptance,spec.workspace,params??{},signal,frozenTask?[...frozenTask.settings.scope.inputs,...frozenTask.settings.scope.outputs]:[]):undefined
+          result = controlled??await original(toolCallId, params, signal, onUpdate, ctx)
         } catch (error) {
           result = { content: [{ type: 'text', text: error instanceof Error ? error.message : String(error) }], isError: true }
         }
@@ -4472,9 +4477,9 @@ ${描述}`
         const old = tools?.get(toolCallId)
         const output = (response.content ?? []).map(block => block.text ?? '').join('')
         const failed = response.isError || /内核]（代码报错）|内核]（已中断）/.test(output)
-        const execution = old?.execution ? (failed ? 'failed' as const : 'ran' as const) : 'not_observed' as const
+        const execution = controlled||old?.execution ? (failed ? 'failed' as const : 'ran' as const) : 'not_observed' as const
         const observation = {
-          execution,
+          execution,...(controlled?.scienceExecution?{scienceExecution:controlled.scienceExecution}:{}),
           ...(currentStep ? { stepId: currentStep } : {}),
           ...(old?.filesWritten ? { filesWritten: old.filesWritten } : {}),
         }

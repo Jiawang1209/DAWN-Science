@@ -4,6 +4,7 @@ import { 从工具结果收案例 } from '../cases/results.js'
 import { parseRouteActionMessage, type AnalysisRoute, type AnalysisRouteDraft } from '../protocol/analysis-route.js'
 
 export interface RouteToolEvidence {
+  scienceExecution?:{script:import('../protocol/file-versions.js').FileVersion;environmentFingerprint:string;dependencyBound?:boolean|undefined}|undefined
   toolCallId: string
   name: string
   status: 'done' | 'error'

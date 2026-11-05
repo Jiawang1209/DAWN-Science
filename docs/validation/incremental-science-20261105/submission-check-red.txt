@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-submission.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/orchestration/task-submission.test.ts (6 tests | 1 failed) 141ms
+   × seals a host-blocked numeric receipt and never accepts model text as the executable check 93ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-submission.test.ts > seals a host-blocked numeric receipt and never accepts model text as the executable check
+AssertionError: expected 'accepted' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "accepted"
+
+ ❯ tests/orchestration/task-submission.test.ts:52:103
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  10:11:40
+   Duration  489ms (transform 70ms, setup 0ms, import 257ms, tests 141ms, environment 0ms)
+

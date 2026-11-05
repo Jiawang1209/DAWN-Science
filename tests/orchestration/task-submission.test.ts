@@ -43,3 +43,11 @@ it('blocks new effects while version capture is pending and abort never seals a 
  controller.abort();expect((await pending).isError).toBe(true);expect(submission.result()).toBeUndefined()
  expect((await submission.submit(result())).isError).not.toBe(true);expect(submission.receipt()?.versions?.inputs).toEqual(inputs)
 })
+it('seals a host-blocked numeric receipt and never accepts model text as the executable check',async()=>{
+ const {captureFileVersions}=await import('../../src/artifacts/task-versions.js')
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-submit-numeric-'));roots.push(cwd);for(const [path,content] of Object.entries({'in.csv':'x\n1\n2\n3\n','analysis.py':'print("analysis")','report.md':'mean=3 m','result.json':JSON.stringify({n:3,mean:999,unit:'m'})}))writeFileSync(join(cwd,path),content)
+ const c=TaskContractSchema.parse({submission:'tool',access:'workspace-write',inputs:['in.csv'],outputs:['analysis.py','result.json','report.md'],resultType:'model-metrics',acceptance:{version:1,kind:'tabular-ecology',scriptPath:'analysis.py',reportPath:'report.md',resultPath:'result.json',numeric:{version:1,dataPath:'in.csv',column:'x',metric:'mean',unit:'m',missing:'block',absoluteTolerance:1e-9}}})
+ const submission=new TaskSubmission(c,cwd,()=>[],{version:1,inputs:await captureFileVersions(cwd,['in.csv'])})
+ const answer={summary:'model says passed',blockers:[],deliverables:c.outputs.map(path=>({path})),execution:{state:'not_run',note:'fixture'},verification:{state:'unreviewed',note:'fixture'},data:{kind:'model-metrics',method:'mean',metrics:{n:3,mean:999},sampleCount:3,caveats:[]}}
+ expect((await submission.submit(answer)).isError).not.toBe(true);expect(submission.receipt()?.state).toBe('blocked');expect(submission.receipt()?.acceptance?.checks.find(c=>c.id==='numeric.mean')).toMatchObject({state:'blocked',expected:'2',actual:'999'});expect(()=>submission.enter()).toThrow('结果已经提交')
+})

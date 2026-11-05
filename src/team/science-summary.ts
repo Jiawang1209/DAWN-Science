@@ -6,12 +6,12 @@ import {createTaskTools} from '../subagent/task-tools.js'
 export function scienceSummary(team:团队){
  const b=team.scienceBatch;if(!b||b.items.some(i=>i.completed?.status!=='completed'))throw new Error('批量项尚未全部验收，不能汇总')
  const items=acceptedBatchFacts(team).map(({item,analysis,review})=>{
-  return{id:item.id,label:item.label,analysisTaskId:analysis.id,reviewTaskId:review.id,data:analysis.receipt!.result!.data,deliverables:analysis.receipt!.result!.deliverables,versions:analysis.receipt!.versions!,review:review.receipt!.result?.data,execution:analysis.receipt!.result!.execution,verification:review.receipt!.result?.verification}
+  return{id:item.id,label:item.label,...(item.reuse?{reuse:item.reuse}:{}),analysisTaskId:analysis.id,reviewTaskId:review.id,data:analysis.receipt!.result!.data,deliverables:analysis.receipt!.result!.deliverables,versions:analysis.receipt!.versions!,review:review.receipt!.result?.data,execution:analysis.receipt!.result!.execution,verification:review.receipt!.result?.verification}
  })
  const report={version:1,kind:'host-accepted-facts',template:{id:b.template.id,version:b.template.version},items,limitations:['宿主仅汇集已验收事实；未重新计算统计量，也不代表独立科学认证。']}
  // Render untrusted labels/paths as escaped plain text, never executable Markdown links/HTML.
  const plain=(s:string)=>s.replace(/[\r\n]/g,' ').replace(/[<>&`*_\[\]\\]/g,c=>'\\'+c)
- const markdown=['# 批量科研结果',report.limitations[0]!,...items.flatMap(i=>[`\n## ${plain(i.label)} (${plain(i.id)})`,`分析任务：${plain(i.analysisTaskId)}；审阅任务：${plain(i.reviewTaskId)}`,`结果：${plain(JSON.stringify(i.data))}`,...i.versions.outputs.map(v=>`${plain(v.path)} — sha256:${v.sha256}；${v.bytes} bytes`)])].join('\n\n')
+ const markdown=['# 批量科研结果',report.limitations[0]!,...items.flatMap(i=>[`\n## ${plain(i.label)} (${plain(i.id)})`,`分析任务：${plain(i.analysisTaskId)}；审阅任务：${plain(i.reviewTaskId)}`,...(i.reuse?[`本次：${i.reuse.mode==='reused'?'复用历史结果（未重新执行）':'重跑'}；${plain(i.reuse.reason)}`]:[]),`结果：${plain(JSON.stringify(i.data))}`,...i.versions.outputs.map(v=>`${plain(v.path)} — sha256:${v.sha256}；${v.bytes} bytes`)])].join('\n\n')
  return{json:JSON.stringify(report,null,2)+'\n',markdown:markdown+'\n'}
 }
 export async function runScienceSummary(team:团队,settings:TaskSettings,workspace:string,signal:AbortSignal):Promise<成员轮结果>{

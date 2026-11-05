@@ -9418,3 +9418,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 /* Scientific workflow facts share the existing Team layout. */
 .science-pipeline-status { white-space: normal; overflow-wrap: anywhere; }
+/* Scientific host acceptance stays beside the existing Team status. */
+.science-acceptance-status { padding: var(--dawn-space-3); border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); overflow-wrap: anywhere; }
+.science-acceptance-status > .hint { margin: 0 0 var(--dawn-space-2); }
+.science-acceptance-item { padding: var(--dawn-space-2) 0; }
+.science-acceptance-item summary { cursor: pointer; line-height: 1.6; }
+.science-acceptance-item[data-state="blocked"] summary { color: var(--dawn-danger); }
+.science-acceptance-item ul { margin: var(--dawn-space-2) 0; padding-left: 1.25rem; line-height: 1.7; }
+
+.science-reuse-status > ul { padding-left: var(--dawn-space-4); margin: var(--dawn-space-2) 0; }
+.science-reuse-status li > p { margin: var(--dawn-space-1) 0; }

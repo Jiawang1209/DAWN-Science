@@ -1,3 +1,4 @@
+import {runControlledScience} from '../team/science-execution.js'
 /** Frozen child capabilities around existing Pi tools. Arbitrary shell is never a path sandbox. */
 import {realpathSync,statSync} from 'node:fs'
 import {resolve,relative,isAbsolute,sep} from 'node:path'
@@ -62,9 +63,11 @@ export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(nam
    return result
   }}}) as TaskTool:def
   try{
-   const result=await actual.execute(id,params,signal,onUpdate,ctx)
+   const controlled=def.name==='bash'?await runControlledScience(settings.contract?.acceptance,cwd,params,signal,[...settings.scope.inputs,...settings.scope.outputs]):undefined
+   if(controlled)observed=true
+   const result=controlled??await actual.execute(id,params,signal,onUpdate,ctx)
    if(observe)records.push({toolCallId:id,name:def.name,status:result.isError?'error':'done',input:params,result:result.content.map(c=>c.text??'').join('\n'),
-    execution:def.name==='bash'&&observed?(result.isError?'failed':'ran'):'not_observed',
+    ...(controlled?.scienceExecution?{scienceExecution:controlled.scienceExecution}:{}),execution:def.name==='bash'&&observed?(result.isError?'failed':'ran'):'not_observed',
     ...(!result.isError&&['write','edit'].includes(def.name)&&typeof params.path==='string'?{filesWritten:[resolve(cwd,params.path)]}:{})})
    if(!observe)return result
    const observedRecord=records[records.length-1]!

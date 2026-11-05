@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-acceptance.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+ ❯ |node| tests/team/science-acceptance.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-acceptance.test.ts [ tests/team/science-acceptance.test.ts ]
+Error: Cannot find module '../../src/protocol/science-acceptance.js' imported from /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science/tests/team/science-acceptance.test.ts
+ ❯ tests/team/science-acceptance.test.ts:3:1
+      1| import {afterEach,expect,it} from 'vitest'
+      2| import {mkdtempSync,writeFileSync,rmSync,symlinkSync} from 'node:fs';i…
+      3| import {ScienceAcceptanceSchema} from '../../src/protocol/science-acce…
+       | ^
+      4| import {validateScienceAcceptance} from '../../src/team/science-accept…
+      5| import {TaskContractSchema,type TaskReceipt} from '../../src/protocol/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  10:07:55
+   Duration  121ms (transform 18ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

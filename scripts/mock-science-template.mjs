@@ -1,5 +1,5 @@
 /** Deterministic fixture provider for software-path testing, not an LLM benchmark. */
-export function scienceTemplateScenario({mode='pass',delayMs=0}={}){
+export function scienceTemplateScenario({mode='pass',delayMs=0,wrongInputs=[]}={}){
  let delayed=false,executionRequested=false
  const text=v=>typeof v==='string'?v:Array.isArray(v)?v.map(x=>x.text??'').join(''):JSON.stringify(v??'')
  return{
@@ -22,12 +22,14 @@ export function scienceTemplateScenario({mode='pass',delayMs=0}={}){
    if(mode==='missing-units')return tool('submit_task_result',{...base,blockers:['缺少单位，必须先确认'],data:{kind:'model-metrics',method:'mean',metrics:{},caveats:['units unknown']}})
    const script=contract.outputs.find(p=>/\.(py|R)$/.test(p)),result=contract.outputs.find(p=>/\.json$/.test(p)),figure=contract.outputs.find(p=>/\.svg$/.test(p)),report=contract.outputs.find(p=>/\.md$/.test(p))
    const source=contract.inputs.find(p=>/\.csv$/.test(p))
-   const defective=mode==='revise'&&!/修正轮次 [1-9]/.test(prompt)
-   const code=`import csv,json,pathlib\nxs=[float(r['x']) for r in csv.DictReader(open(${JSON.stringify(source)}))]\nn=len(xs); mean=sum(xs)/n\n${result?`pathlib.Path(${JSON.stringify(result)}).write_text(json.dumps({'n':n,'mean':mean,'unit':${JSON.stringify(defective?'':'m')}}))`:''}\n${figure?`pathlib.Path(${JSON.stringify(figure)}).write_text('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><text x="5" y="30">mean='+str(mean)+'</text></svg>')`:''}\npathlib.Path(${JSON.stringify(report)}).write_text('Synthetic fixture; n='+str(n)+' mean='+str(mean)+' m; not scientific validation.')\n`
+   const defective=mode==='revise'&&!/修正轮次 [1-9]/.test(prompt)&&!contract.acceptance
+   const metric=contract.acceptance?.numeric?.metric??'mean',wrong=mode==='wrong-numeric'||wrongInputs.includes(source),unit=contract.acceptance?.numeric?.unit??'m'
+   const citation=contract.acceptance?.kind==='figure-reproduction'?` ${contract.acceptance.citation} ${contract.acceptance.page} ${contract.acceptance.targetFigure}`:''
+   const code=`import csv,json,pathlib\nxs=[float(r['x']) for r in csv.DictReader(open(${JSON.stringify(source)}))]\nn=len(xs); mean=sum(xs)/n\nstats={'mean':mean,'sum':sum(xs),'min':min(xs),'max':max(xs)}\nvalue=${wrong?'999':`stats[${JSON.stringify(metric)}]`}\n${result?`pathlib.Path(${JSON.stringify(result)}).write_text(json.dumps({'n':n,${JSON.stringify(metric)}:value,'unit':${JSON.stringify(defective?'':unit)}}))`:''}\n${figure?`pathlib.Path(${JSON.stringify(figure)}).write_text('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><text x="5" y="30">mean='+str(mean)+'</text></svg>')`:''}\npathlib.Path(${JSON.stringify(report)}).write_text(${JSON.stringify('Synthetic fixture; '+metric+'=')}+str(value)+${JSON.stringify(' '+unit+'; not scientific validation.'+citation)})\n`
    if(!history.some(c=>name(c)==='write'))return tool('write',{path:script,content:code})
    const execution=history.find(c=>name(c)==='bash')
-   if(!execution){executionRequested=true;const wait=!delayed&&delayMs?`sleep ${delayMs/1000}; `:'';delayed=true;return tool('bash',{command:wait+`python3 '${script.replace(/'/g,"'\\''")}'`})}
-   return tool('submit_task_result',{...base,deliverables:contract.outputs.map(path=>({path})),execution:{state:'completed',note:'actual Python fixture',toolCallIds:[execution.id]},verification:{state:'unreviewed',note:'review pending'},data:{kind:'model-metrics',method:'mean',metrics:{n:5,mean:3},sampleCount:5,caveats:['synthetic software test only']}})
+   if(!execution){executionRequested=true;const wait=!delayed&&delayMs?`sleep ${delayMs/1000}; `:'';delayed=true;return tool('bash',{command:wait+`python3 ${contract.acceptance?.environment?'-I ':''}'${script.replace(/'/g,"'\\''")}'`})}
+   return tool('submit_task_result',{...base,deliverables:contract.outputs.map(path=>({path})),execution:{state:'completed',note:'actual Python fixture',toolCallIds:[execution.id]},verification:{state:'unreviewed',note:'review pending'},data:{kind:'model-metrics',method:'mean',metrics:{n:5,[metric]:wrong?999:({mean:3,sum:15,min:1,max:5})[metric]},sampleCount:5,caveats:['synthetic software test only']}})
   },reply(){return 'deterministic software-path fixture complete'},
  }
 }

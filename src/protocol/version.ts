@@ -601,7 +601,8 @@
 /** 8.40：团队任务可选契约与宿主验收回执；执行权限快照不进入 UI。 */
 /** 8.41：可选科学结果载荷、流程检查点摘要和宿主观测；内部冻结设置不进入 UI。 */
 /** 8.42：可选内容版本回执、绑定状态及有界科研批量摘要；冻结模板设置留在宿主。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.42"
+/** 8.43：宿主可执行验收及可见的增量批次来源。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.43"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

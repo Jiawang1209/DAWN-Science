@@ -1,0 +1,23 @@
+{
+  "sourceFiles": 1466,
+  "sourceDrift": [],
+  "base": "ce5ae5dd035f6eff82d159150a44086be63423d6",
+  "branch": "codex/incremental-science-acceptance",
+  "mainHead": "ce5ae5dd035f6eff82d159150a44086be63423d6",
+  "mainClean": true,
+  "tests": {
+    "files": 629,
+    "passed": 6227,
+    "skipped": 11,
+    "electron": 7
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "review": "no remaining important blockers within scope",
+  "gitDiffCheck": "passed",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "published": false,
+  "installedAppChanged": false
+}

@@ -88,17 +88,15 @@ export function 认分隔符(正文: string | readonly string[]): "," | "\t" | "
 /** 一行里引号数是奇数 = 记录没完，下一物理行接上（用 `\n` 接，字段里保留换行） */
 export function 接回引号里的换行(行们: readonly string[]): string[] {
   const 出: string[] = []
-  let 攒: string | undefined
+  let 攒: string[] = []
+  let 奇数 = false
   for (const 行 of 行们) {
-    const 候 = 攒 === undefined ? 行 : `${攒}\n${行}`
-    const 引号数 = (候.match(/"/g) ?? []).length
-    if (引号数 % 2 === 1) 攒 = 候
-    else {
-      出.push(候)
-      攒 = undefined
-    }
+    攒.push(行)
+    // Count each physical line once; rescanning the growing quoted record was quadratic.
+    for (let i = 0; i < 行.length; i++) if (行[i] === '"') 奇数 = !奇数
+    if (!奇数) { 出.push(攒.join("\n")); 攒 = [] }
   }
-  if (攒 !== undefined) 出.push(攒)
+  if (攒.length) 出.push(攒.join("\n"))
   return 出
 }
 

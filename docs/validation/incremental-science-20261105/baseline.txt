@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch.test.ts tests/team/science-batch-recovery.test.ts tests/team/science-batch-tools.test.ts tests/artifacts/task-versions.test.ts tests/orchestration/task-submission.test.ts tests/runtime/science-pipeline-projection.test.ts tests/evaluation/science-pipeline.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-incremental-science-20261105/dawn-science
+
+
+ Test Files  7 passed (7)
+      Tests  24 passed (24)
+   Start at  10:04:10
+   Duration  2.04s (transform 814ms, setup 0ms, import 5.49s, tests 2.04s, environment 0ms)
+

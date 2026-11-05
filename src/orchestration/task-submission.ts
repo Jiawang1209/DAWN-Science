@@ -28,9 +28,9 @@ export class TaskSubmission {
    if(Buffer.byteLength(JSON.stringify(result),'utf8')>64*1024)throw new Error('提交结果超过 64 KiB，请缩短摘要和数据')
    let receipt=acceptTaskResult(this.contract,JSON.stringify(result),this.evidence(),this.workspace)
    if(receipt.state==='invalid')throw new Error(receipt.reason??'未通过验收')
-   if(this.versions){
+   if(this.versions||this.contract.acceptance){
     this.validating=true
-    try{receipt=await finalizeTaskVersions({contract:this.contract,scope:{version:1,tier:'deny-risky',access:this.contract.access,tools:[],inputs:this.contract.inputs,outputs:this.contract.outputs},versions:this.versions},receipt,this.workspace,signal)}finally{this.validating=false}
+    try{receipt=await finalizeTaskVersions({contract:this.contract,scope:{version:1,tier:'deny-risky',access:this.contract.access,tools:[],inputs:this.contract.inputs,outputs:this.contract.outputs},versions:this.versions},receipt,this.workspace,signal,{evidence:this.evidence()})}finally{this.validating=false}
    }
    if(signal?.aborted)throw new Error('本轮已停止，不能提交')
    this.committed=structuredClone({result,receipt})

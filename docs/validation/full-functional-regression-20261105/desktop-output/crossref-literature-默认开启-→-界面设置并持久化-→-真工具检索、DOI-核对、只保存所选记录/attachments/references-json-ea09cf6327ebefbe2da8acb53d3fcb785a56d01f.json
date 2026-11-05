@@ -1,0 +1,38 @@
+{
+  "format": "dawn-literature-v1",
+  "savedAt": "2026-11-05T07:23:00.412Z",
+  "records": [
+    {
+      "recordId": "c3644f6a-8c64-4d6e-9478-d957520de1a0",
+      "record": {
+        "id": "https://doi.org/10.1234/example",
+        "title": "Warming and soil diversity",
+        "doi": "https://doi.org/10.1234/example",
+        "authors": [
+          "A. Researcher",
+          "Soil Research Group"
+        ],
+        "authorsTruncated": false,
+        "year": 2024,
+        "date": "2024-05-10",
+        "journal": "Ecology Example",
+        "abstract": "Soil & microbial diversity changes.",
+        "abstractStatus": "available",
+        "sourceUrl": "https://api.crossref.org/works/10.1234%2Fexample",
+        "landingPageUrl": "https://doi.org/10.1234/example"
+      },
+      "origin": {
+        "source": "Crossref",
+        "retrievedAt": "2026-11-05T07:22:59.386Z",
+        "requestUrl": "https://api.crossref.org/works?query.bibliographic=soil+warming&rows=5&select=DOI%2Ctitle%2Cauthor%2Cpublished%2Cissued%2Ccontainer-title%2CURL%2Cabstract&filter=type%3Ajournal-article%2Cfrom-pub-date%3A2020-01-01%2Cuntil-pub-date%3A2025-12-31",
+        "query": {
+          "kind": "search",
+          "value": "soil warming",
+          "limit": 5,
+          "fromYear": 2020,
+          "toYear": 2025
+        }
+      }
+    }
+  ]
+}

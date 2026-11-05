@@ -3,7 +3,7 @@
  * 「把 store / manager / server 拼起来」是纯逻辑，应当能单独验证。
  * 这与 Task 2.3 让服务端不认识 Electron 是同一个手法。
  */
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -21,6 +21,7 @@ import { 对话内核, type 内核状态变化 } from "../../src/kernel/挂载.j
 import { SettingsStore } from "../../src/store/settings.js"
 import { 造门 } from "../../src/policy/permissions.js"
 import { 假口令 } from "../../src/remote/fake-ssh.js"
+import { RemoteTerminalRuntime } from "../../src/runtime/remote-terminal.js"
 
 const cleanups: (() => void)[] = []
 afterEach(() => {
@@ -75,6 +76,35 @@ function newDbPath(): string {
 }
 
 describe("createWorkbench", () => {
+  it("一个资源收尾失败时仍等待其他会话，随后正常关闭", async () => {
+    const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
+    let release!: () => void
+    const pending = new Promise<void>(resolve => { release = resolve })
+    const stops = vi.spyOn(wb.sessions, 'stopAll').mockReturnValue(pending)
+    const failed = vi.spyOn(RemoteTerminalRuntime.prototype, 'closeLocalPresentations').mockRejectedValue(new Error('drain fixture failure'))
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      let settled = false
+      const closing = wb.closeAsync().then(() => { settled = true; return undefined }, error => { settled = true; return error })
+      await new Promise<void>(resolve => setImmediate(resolve))
+      expect(settled).toBe(false)
+      release(); expect(await closing).toBeUndefined()
+      expect(log).toHaveBeenCalled()
+    } finally { release(); stops.mockRestore(); failed.mockRestore(); log.mockRestore(); wb.close() }
+  })
+  it("活跃本地终端触发优雅退出，真实退出回调完成后才释放资源", async () => {
+    const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
+    try {
+      expect(wb.needsGracefulShutdown()).toBe(false)
+      const started = await wb.server.handle("createTask", { agentId: "shell", workspace: newRepo() })
+      expect(started.ok).toBe(true)
+      expect(wb.needsGracefulShutdown()).toBe(true)
+      await wb.closeAsync()
+      // close() also schedules the pre-existing empty-kernel cleanup microtask.
+      await new Promise<void>(resolve => setImmediate(resolve))
+      expect(wb.needsGracefulShutdown()).toBe(false)
+    } finally { await wb.closeAsync() }
+  })
   it("装配出可用的服务端，握手能通", async () => {
     const wb = createWorkbench({
       configPath: configFile(),

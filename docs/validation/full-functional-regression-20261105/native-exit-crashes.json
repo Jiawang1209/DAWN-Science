@@ -1,0 +1,134 @@
+[
+  {
+    "report": "Electron-2026-11-05-155117.ips",
+    "sha256": "d305cef7a7c721d237a1daa417ab101daaa2d343fa6136ffc020f76c70bbd28d",
+    "captureTime": "2026-11-05 15:51:13.3083 +0800",
+    "exception": {
+      "codes": "0x0000000000000000, 0x0000000000000000",
+      "rawCodes": [
+        0,
+        0
+      ],
+      "type": "EXC_CRASH",
+      "signal": "SIGABRT"
+    },
+    "termination": {
+      "flags": 0,
+      "code": 6,
+      "namespace": "SIGNAL",
+      "indicator": "Abort trap: 6",
+      "byProc": "Electron",
+      "byPid": 4792
+    },
+    "symbols": [
+      "__pthread_kill",
+      "pthread_kill",
+      "abort",
+      "__abort_message",
+      "demangling_terminate_handler()",
+      "_objc_terminate()",
+      "std::__terminate(void (*)())",
+      "__cxxabiv1::failed_throw(__cxxabiv1::__cxa_exception*)",
+      "__cxa_throw",
+      "Napi::Error::ThrowAsJavaScriptException() const",
+      "void Napi::details::WrapVoidCallback<Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)::'lambda'()>(Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)::'lambda'())",
+      "Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)",
+      "napi_async_cleanup_hook_handle__::Hook(void*, void (*)(void*), void*)",
+      "uv__async_io",
+      "uv__io_poll",
+      "uv_run",
+      "node::Environment::CleanupHandles()",
+      "node::Environment::RunCleanup()",
+      "node::FreeEnvironment(node::Environment*)",
+      "v8::ValueSerializer::WriteRawBytes(void const*, unsigned long)"
+    ]
+  },
+  {
+    "report": "Electron-2026-11-05-155734.ips",
+    "sha256": "72af557e3b674484f48193e32e1bc3ddcce7a23f25a7be0bfc875ef604d7221b",
+    "captureTime": "2026-11-05 15:57:30.4563 +0800",
+    "exception": {
+      "codes": "0x0000000000000000, 0x0000000000000000",
+      "rawCodes": [
+        0,
+        0
+      ],
+      "type": "EXC_CRASH",
+      "signal": "SIGABRT"
+    },
+    "termination": {
+      "flags": 0,
+      "code": 6,
+      "namespace": "SIGNAL",
+      "indicator": "Abort trap: 6",
+      "byProc": "Electron",
+      "byPid": 38934
+    },
+    "symbols": [
+      "__pthread_kill",
+      "pthread_kill",
+      "abort",
+      "__abort_message",
+      "demangling_terminate_handler()",
+      "_objc_terminate()",
+      "std::__terminate(void (*)())",
+      "__cxxabiv1::failed_throw(__cxxabiv1::__cxa_exception*)",
+      "__cxa_throw",
+      "Napi::Error::ThrowAsJavaScriptException() const",
+      "void Napi::details::WrapVoidCallback<Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)::'lambda'()>(Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)::'lambda'())",
+      "Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)",
+      "napi_async_cleanup_hook_handle__::Hook(void*, void (*)(void*), void*)",
+      "uv__async_io",
+      "uv__io_poll",
+      "uv_run",
+      "node::Environment::CleanupHandles()",
+      "node::Environment::RunCleanup()",
+      "node::FreeEnvironment(node::Environment*)",
+      "v8::ValueSerializer::WriteRawBytes(void const*, unsigned long)"
+    ]
+  },
+  {
+    "report": "Electron-2026-11-05-155426.ips",
+    "sha256": "9fde4035930b3b942303b8d53280c10876f88e70f725fab1635e85ed07edaf10",
+    "captureTime": "2026-11-05 15:54:23.7665 +0800",
+    "exception": {
+      "codes": "0x0000000000000000, 0x0000000000000000",
+      "rawCodes": [
+        0,
+        0
+      ],
+      "type": "EXC_CRASH",
+      "signal": "SIGABRT"
+    },
+    "termination": {
+      "flags": 0,
+      "code": 6,
+      "namespace": "SIGNAL",
+      "indicator": "Abort trap: 6",
+      "byProc": "Electron",
+      "byPid": 24969
+    },
+    "symbols": [
+      "__pthread_kill",
+      "pthread_kill",
+      "abort",
+      "__abort_message",
+      "demangling_terminate_handler()",
+      "_objc_terminate()",
+      "std::__terminate(void (*)())",
+      "__cxxabiv1::failed_throw(__cxxabiv1::__cxa_exception*)",
+      "__cxa_throw",
+      "Napi::Error::ThrowAsJavaScriptException() const",
+      "void Napi::details::WrapVoidCallback<Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)::'lambda'()>(Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)::'lambda'())",
+      "Napi::ThreadSafeFunction::CallJS(napi_env__*, napi_value__*, void*, void*)",
+      "napi_async_cleanup_hook_handle__::Hook(void*, void (*)(void*), void*)",
+      "uv__async_io",
+      "uv__io_poll",
+      "uv_run",
+      "node::Environment::CleanupHandles()",
+      "node::Environment::RunCleanup()",
+      "node::FreeEnvironment(node::Environment*)",
+      "v8::ValueSerializer::WriteRawBytes(void const*, unsigned long)"
+    ]
+  }
+]

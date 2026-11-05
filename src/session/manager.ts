@@ -559,9 +559,8 @@ export class SessionManager {
   /**
    * 本进程里有没有**内核**会话（2026-08-11）。
    *
-   * 退出时只有它需要「等一等」——**zeromq 的 socket 不关就会让进程 SIGABRT**。
-   * native / cli / pty 没有这个问题，它们不该为此每次退出都多等一会儿：
-   * e2e 那边一次退出多等 1 秒，155 条用例就是两分半。
+   * zeromq 的 socket 必须在退出前关闭；本地 PTY 的原生回调由
+   * workbench 通过 TerminalControl 注册表另行判断，不按可变 agent 配置猜测。
    */
   hasLiveKernelSessions(): boolean {
     const kernel = this.runtimes.kernel

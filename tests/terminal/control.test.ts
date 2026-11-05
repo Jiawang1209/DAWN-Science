@@ -11,6 +11,19 @@ function setup(process?: () => string) {
 }
 
 describe('terminal control ownership and execution', () => {
+  it('counts only live local PTYs for native shutdown draining', () => {
+    const control = new TerminalControl()
+    const port = { id: 'local', pid: 42, cwd: '/work', command: 'bash', cols: 80, rows: 24, write: vi.fn(), resize: vi.fn() }
+    try {
+      expect(control.hasLiveLocalTerminals()).toBe(false)
+      control.register({ ...port, id: 'remote', connectionId: 'server' })
+      expect(control.hasLiveLocalTerminals()).toBe(false)
+      control.register(port)
+      expect(control.hasLiveLocalTerminals()).toBe(true)
+      control.exited('local')
+      expect(control.hasLiveLocalTerminals()).toBe(false)
+    } finally { control.dispose() }
+  })
   it('identifies a standard interpreter prompt for explicit natural-language submissions', async () => {
     let program = 'bash'
     const { control, write } = setup(() => program)

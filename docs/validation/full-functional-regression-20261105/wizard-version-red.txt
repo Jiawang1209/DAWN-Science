@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/electron/onboarding-installation.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/electron/onboarding-installation.test.ts (9 tests | 2 failed) 25ms
+     × 旧版更新器接续安装世代后，新版本仍使用独立向导状态，普通重启保持稳定 6ms
+     × 自动升级保留安装身份，但不同版本不继承已跳过的向导；失败未换版本不重置 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/onboarding-installation.test.ts > 引导安装世代，不修改业务数据 > 旧版更新器接续安装世代后，新版本仍使用独立向导状态，普通重启保持稳定
+AssertionError: expected 'a3723285-7b19-42f8-9ee5-949a2920e2dd' not to be 'a3723285-7b19-42f8-9ee5-949a2920e2dd' // Object.is equality
+ ❯ tests/electron/onboarding-installation.test.ts:37:28
+     35|     f.replace();old.adoptAutomaticUpdate()
+     36|     const current = createOnboardingInstallation({...f.options,appVers…
+     37|     expect(current.id).not.toBe(old.id)
+       |                            ^
+     38|     expect(createOnboardingInstallation({...f.options,appVersion:"0.0.…
+     39|     expect(createOnboardingInstallation({...f.options,appVersion:"0.0.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/electron/onboarding-installation.test.ts > 引导安装世代，不修改业务数据 > 自动升级保留安装身份，但不同版本不继承已跳过的向导；失败未换版本不重置
+AssertionError: expected 'd9b434d9-58f4-455b-b66d-78f3179e572a' not to be 'd9b434d9-58f4-455b-b66d-78f3179e572a' // Object.is equality
+ ❯ tests/electron/onboarding-installation.test.ts:48:25
+     46|     f.replace();first.adoptAutomaticUpdate()
+     47|     const next=createOnboardingInstallation({...f.options,appVersion:"…
+     48|     expect(next.id).not.toBe(first.id)
+       |                         ^
+     49|     expect(createOnboardingInstallation({...f.options,appVersion:"0.0.…
+     50|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  15:01:22
+   Duration  161ms (transform 37ms, setup 0ms, import 52ms, tests 25ms, environment 0ms)

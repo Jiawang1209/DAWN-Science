@@ -1,0 +1,373 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "-c",
+      "playwright.kernel.config.ts",
+      "--reporter=list,json",
+      "--update-snapshots=none",
+      "--output=docs/validation/full-functional-regression-20261105/kernel-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/playwright.kernel.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/docs/validation/full-functional-regression-20261105/kernel-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/kernel-session.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "kernel-session.spec.ts",
+      "file": "kernel-session.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "内核会话",
+          "file": "kernel-session.spec.ts",
+          "line": 38,
+          "column": 6,
+          "specs": [
+            {
+              "title": "执行一段代码 → **结构化输出**出现在对话里",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2886,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:53085/da312f79-a530-4a28-bf01-f8880c745b50\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:28:36.281Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d62e193ce656f2bf1b90-17e0b8490b92831dc5bf",
+              "file": "kernel-session.spec.ts",
+              "line": 43,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "内核执行的账本",
+          "file": "kernel-session.spec.ts",
+          "line": 152,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**跑挂的代码在账本上是 failed，且带着原因**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2050,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:53113/2f9b3028-0ae4-42e1-9d56-d4ca9457828e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:28:39.187Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d62e193ce656f2bf1b90-f6f3cd2a805baa6e5d86",
+              "file": "kernel-session.spec.ts",
+              "line": 156,
+              "column": 3
+            },
+            {
+              "title": "**跑得通的代码是 completed** —— 不能一律记成失败",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2101,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:53133/79bec142-bc30-4dcf-996f-b05130fdf6a0\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:28:41.242Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d62e193ce656f2bf1b90-2acc584358d53250cca6",
+              "file": "kernel-session.spec.ts",
+              "line": 192,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "R 内核会话",
+          "file": "kernel-session.spec.ts",
+          "line": 216,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**同一条代码路径**：执行、报错、活会话、变量面板",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3795,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:53156/26af783d-803c-4d4f-be03-c7ba45e0dc9d\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:28:43.349Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d62e193ce656f2bf1b90-5089327c81cc2902c45c",
+              "file": "kernel-session.spec.ts",
+              "line": 226,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "由配置的解释器路径起内核",
+          "file": "kernel-session.spec.ts",
+          "line": 272,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**没配就明说没配，配完就能跑**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2478,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:53189/e239ecc8-40c5-4a2c-8d82-f2ecee368df2\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:28:47.149Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d62e193ce656f2bf1b90-8459339f13f937fcbb01",
+              "file": "kernel-session.spec.ts",
+              "line": 282,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "内核会话 · ACP 借我们的内核",
+          "file": "kernel-session.spec.ts",
+          "line": 357,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**它跑的是我们的内核，账本上记的是「执行了一段代码」**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3249,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:53216/b13f8958-c8f0-43de-a7a0-6736a7125e26\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:28:49.633Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d62e193ce656f2bf1b90-2978f294118fa635cc02",
+              "file": "kernel-session.spec.ts",
+              "line": 377,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T08:28:35.809Z",
+    "duration": 17088.017,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * 引导的安装世代，与数据库里的远端内核 install.id 无关。
- * 同版本复制安装也要重置；成功的应用内换包显式接续原世代。
+ * 同版本复制安装也要重置；应用内换包接续安装身份，向导状态按版本独立记录。
  * 只读安装文件身份，不向签名 .app 写文件，也不碰凭证/会话。
  */
 import { createHash, randomUUID } from "node:crypto"
@@ -9,6 +9,8 @@ import { dirname } from "node:path"
 
 interface InstallationRecord { v: 1; fingerprint: string; id: string }
 export interface OnboardingInstallationOptions {
+  /** Each installed version gets its own welcome state, including updates applied by older updaters. */
+  appVersion?: string
   stateFile: string
   identityPaths: readonly string[]
   /** NSIS 每次手动安装生成，应用内 --updated 沿用。便携版不用。 */
@@ -63,7 +65,7 @@ export function createOnboardingInstallation(o: OnboardingInstallationOptions) {
     o.log(`安装世代不可持久化，本次使用临时引导状态：${String(e)}`)
   }
   return {
-    id,
+    id: o.appVersion ? `${id}@${o.appVersion}` : id,
     /** 只在实际换包成功后调用；写当前新文件身份，不留下可误用的待升级标记。 */
     adoptAutomaticUpdate() {
       try { save({ v: 1, fingerprint: fingerprint(), id }) }

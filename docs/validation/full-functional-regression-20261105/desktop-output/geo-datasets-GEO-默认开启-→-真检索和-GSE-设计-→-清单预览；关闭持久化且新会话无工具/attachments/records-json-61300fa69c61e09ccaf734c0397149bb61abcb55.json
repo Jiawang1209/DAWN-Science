@@ -1,0 +1,51 @@
+{
+  "format": "dawn-science-records-v1",
+  "savedAt": "2026-11-05T07:28:01.056Z",
+  "records": [
+    {
+      "recordId": "d5a88e7f-248d-4e39-84c5-b0d925ab1034",
+      "record": {
+        "accession": "GSE123",
+        "title": "Synthetic drought experiment",
+        "sourceUrl": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123",
+        "fields": {
+          "organism": "Arabidopsis thaliana",
+          "experimentType": "Expression profiling by high throughput sequencing",
+          "summary": "Synthetic transcriptome comparison.",
+          "overallDesign": "Two conditions with biological replicates.",
+          "sampleCount": 2,
+          "platforms": [
+            "GPL1234"
+          ],
+          "sampleAccessions": [
+            "GSM1",
+            "GSM2"
+          ],
+          "sampleTitles": [
+            "Control",
+            "Drought"
+          ],
+          "pubmedIds": [
+            "123"
+          ],
+          "bioProject": "PRJNA123"
+        }
+      },
+      "origin": {
+        "source": "GEO",
+        "retrievedAt": "2026-11-05T07:28:01.040Z",
+        "requestUrls": [
+          "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gds&retmode=json&tool=DAWN-Science&term=GSE123%5BACCN%5D+AND+gse%5BETYP%5D&retmax=1",
+          "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=gds&retmode=json&tool=DAWN-Science&id=200000123",
+          "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123&targ=self&form=text&view=brief"
+        ],
+        "query": {
+          "kind": "accession",
+          "value": "GSE123",
+          "limit": 1
+        },
+        "warnings": []
+      }
+    }
+  ]
+}

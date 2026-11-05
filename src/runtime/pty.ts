@@ -34,6 +34,7 @@ export interface PtyRuntimeOptions {
 export class PtyRuntime implements AgentRuntime {
   private readonly procs = new Map<SessionId, pty.IPty>()
   private readonly sinks = new Map<SessionId, Set<EventSink>>()
+  private readonly exits = new WeakMap<pty.IPty, { done: Promise<void>; stop?: Promise<void> }>()
 
   constructor(private readonly opts: PtyRuntimeOptions) {}
 
@@ -67,6 +68,9 @@ export class PtyRuntime implements AgentRuntime {
       env: ptyEnvironment({ ...process.env, ...extraEnv, ...environment }) as Record<string, string>,
     })
 
+    let finishExit!: () => void
+    const lifecycle = { done: new Promise<void>(resolve => { finishExit = resolve }) }
+    this.exits.set(proc, lifecycle)
     this.procs.set(spec.sessionId, proc)
     this.opts.terminalControl?.register({
       id: spec.sessionId, pid: proc.pid, cwd: spec.workspace, command: this.opts.command,
@@ -79,13 +83,18 @@ export class PtyRuntime implements AgentRuntime {
       this.emit({ kind: "output", sessionId: spec.sessionId, data })
     })
     proc.onExit(({ exitCode }) => {
-      this.opts.terminalControl?.exited(spec.sessionId)
-      this.opts.onExit?.(spec.sessionId)
-      this.procs.delete(spec.sessionId)
-      this.emit({ kind: "exited", sessionId: spec.sessionId, exitCode })
-      // 清掉这段会话的订阅表(审查 debug H11):否则每开一段终端就多一个永不回收的 Set,
-      // 长时间跑一堆终端后 sinks 只增不减。**在 emit 之后清**——exited 这条还要送到当前订阅者手里。
-      this.sinks.delete(spec.sessionId)
+      try {
+        // A late exit belongs only to the process which registered this callback.
+        if (this.procs.get(spec.sessionId) !== proc) return
+        this.opts.terminalControl?.exited(spec.sessionId)
+        this.opts.onExit?.(spec.sessionId)
+        this.procs.delete(spec.sessionId)
+        this.emit({ kind: "exited", sessionId: spec.sessionId, exitCode })
+      } finally {
+        if (this.procs.get(spec.sessionId) === proc) this.procs.delete(spec.sessionId)
+        if (!this.procs.has(spec.sessionId)) this.sinks.delete(spec.sessionId)
+        finishExit()
+      }
     })
 
     this.emit({ kind: "started", sessionId: spec.sessionId, pid: proc.pid })
@@ -140,9 +149,14 @@ export class PtyRuntime implements AgentRuntime {
    * 会让 native 层抛 `Napi::Error`——那是异步异常，`try/catch` 拦不住，进程直接
    * SIGABRT。`process.kill` 是纯 POSIX 调用，失败只会同步抛 ESRCH。
    */
-  async stop(sessionId: SessionId, opts: { graceMs?: number } = {}): Promise<void> {
+  stop(sessionId: SessionId, opts: { graceMs?: number } = {}): Promise<void> {
     const proc = this.procs.get(sessionId)
-    if (!proc) return // 幂等：已退出的会话直接返回
+    if (!proc) return Promise.resolve() // 幂等：已退出的会话直接返回
+    const lifecycle = this.exits.get(proc)!
+    return lifecycle.stop ??= this.stopProcess(proc, lifecycle.done, opts)
+  }
+
+  private async stopProcess(proc: pty.IPty, exited: Promise<void>, opts: { graceMs?: number }): Promise<void> {
     const graceMs = opts.graceMs ?? 200
 
     // 必须在杀之前快照：进程一死，子进程会被 reparent 到 init(1)
@@ -164,8 +178,15 @@ export class PtyRuntime implements AgentRuntime {
     sweep("SIGTERM")
     await new Promise((resolve) => setTimeout(resolve, graceMs))
     // 信号 0 只做存在性探测，不实际发送——全走干净就不必补刀
-    if (!pids.some((pid) => send(pid, 0))) return
-    sweep("SIGKILL")
+    if (pids.some((pid) => send(pid, 0))) sweep("SIGKILL")
+    // PID disappearance is earlier than node-pty's ThreadSafeFunction callback.
+    // Keep the default 200ms grace + 1000ms drain within closeAsync's 1500ms budget.
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`PTY ${proc.pid} 退出回调未在限时内完成`)), 1000)
+      void exited.then(() => { clearTimeout(timer); resolve() })
+    })
+    // Let the native callback unwind before the caller can tear down Node.
+    await new Promise<void>(resolve => setImmediate(resolve))
   }
 }
 

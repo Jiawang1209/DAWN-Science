@@ -1,0 +1,44 @@
+{
+  "format": "dawn-science-records-v1",
+  "savedAt": "2026-11-05T08:03:34.895Z",
+  "records": [
+    {
+      "recordId": "fcc8997e-807e-4c4e-88c7-5057f9852d8b",
+      "record": {
+        "accession": "P04637",
+        "title": "Synthetic p53 protein fixture",
+        "sourceUrl": "https://www.uniprot.org/uniprotkb/P04637/entry",
+        "fields": {
+          "proteinName": "Synthetic p53 protein fixture",
+          "entryId": "P53_HUMAN",
+          "geneNames": [
+            "TP53"
+          ],
+          "organism": "Homo sapiens",
+          "taxonId": 9606,
+          "reviewStatus": "reviewed",
+          "functionAnnotation": "Synthetic function annotation, not a biological claim.",
+          "functionReferences": [
+            "PubMed:123"
+          ],
+          "sequenceLength": 6,
+          "sequenceStatus": "available"
+        },
+        "sequence": "ACDEFG"
+      },
+      "origin": {
+        "source": "UniProt",
+        "retrievedAt": "2026-11-05T08:03:34.885Z",
+        "requestUrls": [
+          "https://rest.uniprot.org/uniprotkb/search?query=accession%3AP04637&format=json&size=1&fields=accession%2Cid%2Creviewed%2Cprotein_name%2Cgene_names%2Corganism_name%2Corganism_id%2Clength%2Ccc_function%2Csequence"
+        ],
+        "query": {
+          "kind": "accession",
+          "value": "P04637",
+          "limit": 1
+        },
+        "warnings": []
+      }
+    }
+  ]
+}

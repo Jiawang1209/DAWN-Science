@@ -1,0 +1,15 @@
+{
+  "actualPackagedStartup": true,
+  "isolatedTemporaryBundle": true,
+  "installedAppUntouched": true,
+  "oldUpdaterStateSimulated": true,
+  "firstId": "7bc7b6fa-da5f-4e1c-b524-9b15389eabab@0.0.44",
+  "sameVersionRestartStable": true,
+  "nextId": "7bc7b6fa-da5f-4e1c-b524-9b15389eabab@0.0.45",
+  "oldFlagsRetained": true,
+  "existingProviderConfigPreserved": true,
+  "configHash": "3583f46c690043706705419cebf319855f159a245e1d826394885ea88672949b",
+  "limitations": [
+    "Uses current source overlaid into an isolated copy of the installed macOS bundle; does not certify release signing or perform a real updater download/swap."
+  ]
+}

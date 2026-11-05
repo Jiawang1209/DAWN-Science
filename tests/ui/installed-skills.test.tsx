@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { AgentSkillsView, type SkillActions } from '../../src/ui/skills.js'
 import type { InstalledSkillFile } from '../../src/protocol/skill-management.js'
+import { $lang } from '../../src/ui/i18n/index.js'
 
 const row = (name: string, tags: string[] = []) => ({ name, tags, tagsOverridden: false, description: `About ${name}`, filePath: `/skills/${name}/SKILL.md`, from: 'global' as const, manualOnly: false, invocation: 'model' as const, mutable: true })
 function fixture() {
@@ -17,6 +18,27 @@ function fixture() {
   }
   return { load, actions }
 }
+it('preserves authored Chinese tag facets and their filters while fixed controls remain English', async () => {
+  const previous = $lang.get()
+  $lang.set('en')
+  try {
+    const load = async () => ({ skills: [row('custom', ['技能']), { ...row('bundled', ['科研']), from: 'builtin' as const, mutable: false }], dirs: {}, problems: [] })
+    render(<AgentSkillsView load={load} />)
+    const group = await screen.findByRole('group', { name: 'Filter by tag' })
+    const custom = within(group).getByRole('button', { name: '技能' })
+    const bundled = within(group).getByRole('button', { name: '科研' })
+    expect(custom.hasAttribute('data-authored')).toBe(true)
+    expect(bundled.hasAttribute('data-authored')).toBe(true)
+    expect(group.closest('[data-authored]')).toBeNull()
+    expect(within(group).getByRole('button', { name: 'Any tag' }).closest('[data-authored]')).toBeNull()
+    fireEvent.click(custom)
+    expect(screen.getByText('About custom')).toBeTruthy()
+    expect(screen.queryByText('About bundled')).toBeNull()
+    fireEvent.click(bundled)
+    expect(screen.queryByText('About custom')).toBeNull()
+    expect(screen.getByText('About bundled')).toBeTruthy()
+  } finally { act(() => $lang.set(previous)) }
+})
 it('opens disabled/bundled-capable package detail, browses resources and safely renders Markdown/source', async () => {
   const { load, actions } = fixture(); const { container } = render(<AgentSkillsView load={load} actions={actions} />)
   fireEvent.click(await screen.findByRole('button', { name: '查看技能 alpha' }))

@@ -638,7 +638,7 @@ export function AgentSkillsView({ load, actions }: { load?: (() => Promise<Agent
           </div>
           {tags.length ? <div className="skills-tag-filters" role="group" aria-label={t("按标签筛选")}>
             <Button size="sm" variant={!tag ? 'primary' : 'secondary'} aria-pressed={!tag} onClick={() => setTag('')}>{t("所有标签")}</Button>
-            {tags.map(value => <Button key={value} size="sm" variant={tag === value ? 'primary' : 'secondary'} aria-pressed={tag === value} onClick={() => setTag(old => old === value ? '' : value)}>{value}</Button>)}
+            {tags.map(value => <Button key={value} data-authored="" size="sm" variant={tag === value ? 'primary' : 'secondary'} aria-pressed={tag === value} onClick={() => setTag(old => old === value ? '' : value)}>{value}</Button>)}
           </div> : null}
           {actions?.setBulkInvocation ? <div className="skills-bulk" role="group" aria-label={t("批量管理技能")}>
             <Button size="sm" variant="secondary" disabled={!筛出来.length || !!忙} onClick={() => setSelected(old => new Set([...old, ...筛出来.map(s => s.filePath)]))}>{t("选择筛选结果")}</Button>

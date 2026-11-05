@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/artifact-retention.spec.ts --grep actual interpreter snapshots --reporter=list,json --update-snapshots=none --output=docs/validation/full-functional-regression-20261105/interpreter-output
+
+Running 1 test using 1 worker
+
+(node:16292) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53253/26bf0ca5-a5a0-4122-9138-c324918651fb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/artifact-retention.spec.ts:191:3 › automatic artifact sources and explicit result retention › actual interpreter snapshots belong to each Python/R notebook execution (3.4s)
+
+  1 passed (3.8s)

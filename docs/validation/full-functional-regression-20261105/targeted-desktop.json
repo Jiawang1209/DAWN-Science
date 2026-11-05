@@ -1,0 +1,2166 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/i18n.spec.ts",
+      "e2e/skills.spec.ts",
+      "e2e/terminal-cli-interaction.spec.ts",
+      "e2e/terminal-images.spec.ts",
+      "e2e/terminal-navigation-recovery.spec.ts",
+      "e2e/terminal-lifecycle-audit.spec.ts",
+      "e2e/terminal-history-resume.spec.ts",
+      "--reporter=list,json",
+      "--update-snapshots=none",
+      "--output=docs/validation/full-functional-regression-20261105/targeted-output"
+    ],
+    "configFile": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/docs/validation/full-functional-regression-20261105/targeted-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "i18n.spec.ts",
+      "file": "i18n.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "**没选过语言时跟系统**（2026-08-28 作者定的：中文系统中文、其它英文）",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1921,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51026/5727b381-4760-43ac-be50-5e76893e13d9\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:21:54.790Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1c708d8d2348e8ed7c9f-6dd908c40fb1e0d64a04",
+          "file": "i18n.spec.ts",
+          "line": 92,
+          "column": 1
+        },
+        {
+          "title": "**英文界面上每一屏都没有汉字**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1799,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51042/662e065c-c338-45a9-be12-ea6daeba8e65\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:21:56.729Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1c708d8d2348e8ed7c9f-7cf1e1b125394a7c46d5",
+          "file": "i18n.spec.ts",
+          "line": 109,
+          "column": 1
+        },
+        {
+          "title": "**那颗按钮真的能切，而且记得住**",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3131,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51058/191d5450-c31d-4572-89b9-5390226bb8d8\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51077/4150ac62-f25f-427e-8b4e-faeeace18277\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:21:58.534Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1c708d8d2348e8ed7c9f-0753c1fcf9ce3e1b6589",
+          "file": "i18n.spec.ts",
+          "line": 163,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "skills.spec.ts",
+      "file": "skills.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "已安装技能详情、标签批量管理与当前会话刷新接通真实应用",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2916,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51089/9683f6e8-4469-4f4c-b203-753dbc65905f\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:22:01.677Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "024b5a36f2868d8a0332-d87920977bddec48f842",
+          "file": "skills.spec.ts",
+          "line": 20,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "自带技能",
+          "file": "skills.spec.ts",
+          "line": 76,
+          "column": 6,
+          "specs": [
+            {
+              "title": "共用科研审查规范可显式展开，保留静态审查和独立验证边界",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1657,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51112/bd38c975-62c6-4d34-b8f9-ec735a232268\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:04.598Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-29fb73514aa01c1a0d37",
+              "file": "skills.spec.ts",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "科研分析技能沿用原调用名，完整展开综合路线与执行边界",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1646,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51123/bf1c49d3-ad2a-44ad-b26b-491a79436357\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:06.260Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-68e33c07926366ab07e6",
+              "file": "skills.spec.ts",
+              "line": 91,
+              "column": 3
+            },
+            {
+              "title": "分析交付技能可以通过 /skill:analysis-delivery 展开正文",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1687,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51136/f676f09d-a2b1-42e5-bac0-56986c2647af\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:07.910Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-0dfc3f2b5b1237394ff5",
+              "file": "skills.spec.ts",
+              "line": 104,
+              "column": 3
+            },
+            {
+              "title": "**自带技能出现在发给模型的请求里**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1699,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51146/726e05c7-00a8-409a-86de-9b6409170adc\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:09.603Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-5aa9871a7ba487b6ac2d",
+              "file": "skills.spec.ts",
+              "line": 121,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "两屏",
+          "file": "skills.spec.ts",
+          "line": 162,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**Agent Skills 那屏列出了自带的那几个，并说清它们从哪儿来**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1437,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51158/f30d99c1-8c22-47d9-91bf-6c42166a513d\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:11.309Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-07c5a8c28266e545ba83",
+              "file": "skills.spec.ts",
+              "line": 163,
+              "column": 3
+            },
+            {
+              "title": "**「往哪儿放」说清三个目录与优先级**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1491,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51169/86a28860-9a6c-436c-a985-96dd92f9780e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:12.753Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-e58825a31a3ef9265e6f",
+              "file": "skills.spec.ts",
+              "line": 180,
+              "column": 3
+            },
+            {
+              "title": "**子 Agent 是另一屏**，两者不再共用一个词",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1469,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51177/4021de4a-1703-475f-abd7-41f52f604e29\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:14.249Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-129a21c66de066758059",
+              "file": "skills.spec.ts",
+              "line": 189,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "管理",
+          "file": "skills.spec.ts",
+          "line": 216,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**三档开关写进 SKILL.md 的 frontmatter，别的一字不动；自带的没有开关**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2554,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51188/e8cc7d5c-6942-4cbf-bad7-f4229e8f3323\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:15.723Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-6017e966c58b497d91fe",
+              "file": "skills.spec.ts",
+              "line": 217,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "导入",
+          "file": "skills.spec.ts",
+          "line": 268,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**撞名先问，覆盖就换、不覆盖就跳过；说清导了几个**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1653,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51201/cfdb159c-4ec0-4475-b881-920d0f4eea87\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:18.282Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-83c3a4544bf4a083ef1f",
+              "file": "skills.spec.ts",
+              "line": 271,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "删除",
+          "file": "skills.spec.ts",
+          "line": 296,
+          "column": 6,
+          "specs": [
+            {
+              "title": "**删除：确认后整个目录进废纸篓，列表里没了**",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1725,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51233/d1761911-161f-42c0-95fc-b5e9a2bf8006\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:19.939Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "024b5a36f2868d8a0332-339c7184687c9205a20f",
+              "file": "skills.spec.ts",
+              "line": 297,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "terminal-cli-interaction.spec.ts",
+      "file": "terminal-cli-interaction.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "top onboarding and ghost suggestions keep one input and require explicit adoption before sending",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8042,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51245/55f532f3-d5e8-4a7c-8e25-5b6f0034e80a\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:22:21.678Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "27755b91c88cb554a292-b8e5d1b29cf65a0361b0",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 29,
+          "column": 1
+        },
+        {
+          "title": "keeps shortcuts above the editor and cumulative statistics centered at the bottom",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6107,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51277/7042651f-b8db-4933-8938-d6fc80e0daab\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:22:29.727Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "27755b91c88cb554a292-0a638061a9ba0abb33db",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 51,
+          "column": 1
+        },
+        {
+          "title": "Shift-Enter edits multiple lines in one terminal input and sends one native user turn",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6049,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51329/bf2af4a0-702a-4885-9566-db93d93a97df\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:22:35.840Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "27755b91c88cb554a292-0326648715903c9c769d",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 84,
+          "column": 1
+        },
+        {
+          "title": "reopening a trimmed PTY snapshot restores the editor and bracketed multiline paste",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7219,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51559/26528088-461a-40c3-b092-e3d4f42ec879\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:23:14.755Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "27755b91c88cb554a292-02c9762be7b7e15102cf",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 203,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "formatted transcript",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 99,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders Markdown code and tables in a narrow window while keeping one editor",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9384,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51377/727734f2-0b32-40f6-82e5-be04779dbeed\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:41.894Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "27755b91c88cb554a292-5013a49fde3265244b73",
+              "file": "terminal-cli-interaction.spec.ts",
+              "line": 101,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "mixed-language table alignment",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 125,
+          "column": 6,
+          "specs": [
+            {
+              "title": "keeps Chinese punctuation and wrapped table borders on the same pixel columns",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5606,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51435/3a85c317-3136-4487-872a-daf281b71867\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:51.284Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "27755b91c88cb554a292-aa66d57be83d7d51758a",
+              "file": "terminal-cli-interaction.spec.ts",
+              "line": 127,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "streamed scrolling",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 162,
+          "column": 6,
+          "specs": [
+            {
+              "title": "shows a partial answer before completion and does not steal scrolling until returning to the end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11779,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51477/e9a9d4bd-f5be-49c3-96e7-d8af49252134\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:22:56.896Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "27755b91c88cb554a292-af0f545e5cea9ba27f21",
+              "file": "terminal-cli-interaction.spec.ts",
+              "line": 164,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "tool details",
+          "file": "terminal-cli-interaction.spec.ts",
+          "line": 183,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Tab reveals tool output details without introducing a second input",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6070,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:51527/845e3c8a-9ebd-4c37-9ca9-b9cfe0b18f9c\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:23:08.680Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "27755b91c88cb554a292-21d9ccae27dba83d6475",
+              "file": "terminal-cli-interaction.spec.ts",
+              "line": 185,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "terminal-history-resume.spec.ts",
+      "file": "terminal-history-resume.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "CLI resume restores the original conversation, original image and GUI continuation after closing its last terminal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11120,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51594/3990a91b-46c2-4094-9667-ab971d2a5e09\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:23:21.987Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dd3230aa28d09e374159-ab4af4e51b53e0ceb380",
+          "file": "terminal-history-resume.spec.ts",
+          "line": 47,
+          "column": 1
+        },
+        {
+          "title": "dawn --resume picker cancels without a new task, then explicit CLI resume restores the original ID",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13866,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #1 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51644/4bdce51e-f64d-47cc-8ef0-c7d13ec57dee\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:23:33.112Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dd3230aa28d09e374159-c857cc6df0f407fd8a14",
+          "file": "terminal-history-resume.spec.ts",
+          "line": 69,
+          "column": 1
+        },
+        {
+          "title": "restarting the desktop preserves the original image context and restores the same saved conversation",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15193,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51701/09634f64-ea92-421b-8e23-008fda607284\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    },
+                    {
+                      "text": "[主进程] [store] 已把 1 段会话迁成任务（老记录一条都没动）\n"
+                    },
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51743/8dfa8adb-48d7-44d7-b60a-ae661f29d5dd\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:23:46.985Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dd3230aa28d09e374159-9c212a4244f8ed2c43ce",
+          "file": "terminal-history-resume.spec.ts",
+          "line": 97,
+          "column": 1
+        },
+        {
+          "title": "history follows a real Shell cd and does not offer conversations from the old directory",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9975,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51777/e77b331f-07d3-4500-8076-f881e7c563c6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:24:02.183Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dd3230aa28d09e374159-7315db58638f191c86af",
+          "file": "terminal-history-resume.spec.ts",
+          "line": 113,
+          "column": 1
+        },
+        {
+          "title": "an unsupported old image preview warns while the same conversation and original model image context remain usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9318,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51833/276a4f1c-889a-4824-9770-b03bc3b0aa57\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:24:12.163Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dd3230aa28d09e374159-989455eb99925ad6b27e",
+          "file": "terminal-history-resume.spec.ts",
+          "line": 134,
+          "column": 1
+        },
+        {
+          "title": "the current owner can close its last resumed terminal, reopen directly and continue the original image without reconnecting the GUI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16089,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「CURRENT_OWNER_HISTORY」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #1 「CURRENT_OWNER_HISTORY」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #2 「CURRENT_OWNER_HISTORY」做完了 — 假模型已应答：我收到了 1 张图。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51893/2dc189d6-03d4-4df9-87f2-bd72cb66540b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:24:21.486Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "dd3230aa28d09e374159-1012b78dbf1fe023f449",
+          "file": "terminal-history-resume.spec.ts",
+          "line": 158,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "terminal-images.spec.ts",
+      "file": "terminal-images.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7862,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:51971/99fd2485-b696-47b3-a131-9698ec897bce\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:24:37.585Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fc156dce60c10bef0155-5377f3d90d9de190cd90",
+          "file": "terminal-images.spec.ts",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "dragged images can be removed, are not added to the hidden composer, and Normal does not attach",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5535,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52008/e17989f9-4d92-4c48-99a7-b94bd093949c\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:24:45.452Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fc156dce60c10bef0155-990ec50e3c529eacad6b",
+          "file": "terminal-images.spec.ts",
+          "line": 65,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "output pictures",
+          "file": "terminal-images.spec.ts",
+          "line": 80,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders verified image files returned by the Agent and opens their full preview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8111,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:52040/14ceb0b2-2a66-496b-a569-30d0aee390d0\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:24:50.992Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc156dce60c10bef0155-6aaf2970839c76450d8b",
+              "file": "terminal-images.spec.ts",
+              "line": 82,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "picture capability",
+          "file": "terminal-images.spec.ts",
+          "line": 97,
+          "column": 6,
+          "specs": [
+            {
+              "title": "rejects attachment explicitly when neither the selected model nor a visual service can read it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6474,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                        },
+                        {
+                          "text": "[主进程] Debugger ending on ws://127.0.0.1:52096/787fb19d-5360-481b-b7e8-358f17cdf783\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-11-05T08:24:59.108Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc156dce60c10bef0155-396f7bd756c2779f47ee",
+              "file": "terminal-images.spec.ts",
+              "line": 99,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "terminal-lifecycle-audit.spec.ts",
+      "file": "terminal-lifecycle-audit.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "welcome: closing the final terminal, explicit new, and repeated reopen keep a usable page and draft",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9655,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52145/fc68338a-e415-4182-a050-d92bbc6108c1\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:05.594Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c20782c09a3e94680944-8be9499240478c0360d7",
+          "file": "terminal-lifecycle-audit.spec.ts",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "conversation: closing the final terminal, explicit new, and repeated reopen keep a usable page and draft",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9974,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52192/3ddd6fe3-d87d-496a-8075-f19d4bd65fa5\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:15.256Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c20782c09a3e94680944-8493b5c7a970907d27c9",
+          "file": "terminal-lifecycle-audit.spec.ts",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "closing the last DAWN terminal preserves its conversation; a new Agent is separate and the original GUI can continue",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10402,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「LIFECYCLE_AGENT_REOPEN」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52243/3e58dac6-2c54-4e9b-8ded-97bd812924b6\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:25.240Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c20782c09a3e94680944-339de7b68e49eb65a2cd",
+          "file": "terminal-lifecycle-audit.spec.ts",
+          "line": 78,
+          "column": 1
+        },
+        {
+          "title": "closing the current terminal selects a live sibling and keeps receiving real output",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4902,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52286/ee1fb277-e7f9-4cbe-b77a-bd8fc0bc1391\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:35.647Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c20782c09a3e94680944-bfb70319a4a14e4825df",
+          "file": "terminal-lifecycle-audit.spec.ts",
+          "line": 134,
+          "column": 1
+        },
+        {
+          "title": "an ended sibling remains selectable after closing the live terminal and can still be closed and replaced",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8201,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52312/04edbd4c-b13b-4460-a463-5a803b73b317\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:40.554Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c20782c09a3e94680944-d06753859393485e1e28",
+          "file": "terminal-lifecycle-audit.spec.ts",
+          "line": 151,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "terminal-navigation-recovery.spec.ts",
+      "file": "terminal-navigation-recovery.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "PTYs never appear in conversation tabs, including after returning from DAWN",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6397,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52356/2c01d026-7e2f-43da-94f0-d2b79ef8d860\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:48.766Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-eb012c6ac8a75fc26d3e",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 41,
+          "column": 1
+        },
+        {
+          "title": "closing the final conversation with a live PTY returns to a usable welcome page",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4224,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52392/48e3fa25-7ad5-447c-ba6e-3359069ad099\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:55.168Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-2912d5d58e1fe17986f1",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 53,
+          "column": 1
+        },
+        {
+          "title": "closing a conversation picks a real sibling and preserves its draft, never a PTY",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4216,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52413/e8f61c3e-dd52-47c5-ab87-9cf2a2bbfdfc\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:25:59.397Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-5b8827b25302d16b15c9",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 63,
+          "column": 1
+        },
+        {
+          "title": "an already selected legacy PTY reopens the same terminal and returns to its Normal owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4232,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52439/dc0be8de-1e7e-48c7-b99d-60335fe2a25d\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:26:03.617Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-a93e7098886c720e3930",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 73,
+          "column": 1
+        },
+        {
+          "title": "the legacy page can return directly to its conversation without opening a terminal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4142,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52458/3a9c2d7a-f912-40e9-afd5-64cde62d4aec\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:26:07.854Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-a263c49d348970c409f9",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 89,
+          "column": 1
+        },
+        {
+          "title": "closing the selected legacy terminal leaves a real page instead of a deleted-session loader",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4105,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52477/10d33570-6d20-4a6b-896d-d08ec201de5b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:26:12.001Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-bbff71ea007cf9110f41",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 96,
+          "column": 1
+        },
+        {
+          "title": "the legacy DAWN page returns directly to its own Agent conversation",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6030,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52499/ed67d6e6-7f91-4cdb-8897-4ac5f2e1dc46\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:26:16.113Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-d35a0ff456e666dd2900",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 106,
+          "column": 1
+        },
+        {
+          "title": "a legacy PTY whose original conversation was archived can still return to the welcome page",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4107,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52528/8af75fe9-7e19-4b87-92a6-bea0364f377b\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:26:22.149Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-82cf2a000de1bf29d2a3",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 114,
+          "column": 1
+        },
+        {
+          "title": "reopening an exited legacy PTY shows that same ended record without creating a replacement",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3967,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:52550/4cd9b5fb-ef5f-48c1-937b-8d6c439a3adb\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T08:26:26.260Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "247b2948e6d039f151c4-dba1dc06185e3120c0c9",
+          "file": "terminal-navigation-recovery.spec.ts",
+          "line": 121,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T08:21:54.218Z",
+    "duration": 276023.142,
+    "expected": 46,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -15,6 +15,21 @@ const 基本 = {
 
 describe("SetupWizard", () => {
   beforeEach(() => localStorage.clear())
+  it("同一安装的新版本显示未完成向导，但保留旧引导、模型和会话偏好", () => {
+    const previous=Object.getOwnPropertyDescriptor(window,"dawn")
+    const bridge=(id:string)=>Object.defineProperty(window,"dawn",{configurable:true,value:{onboardingInstallationId:id}})
+    try{
+      bridge("installation@0.0.43");记跳过(true);记引导完成()
+      localStorage.setItem("saved-model-preference","existing-model")
+      localStorage.setItem("saved-session-preference","existing-session")
+      bridge("installation@0.0.44");expect(读跳过()).toBe(false);expect(读引导完成()).toBe(false)
+      记跳过(true);记引导完成();bridge("installation@0.0.44")
+      expect(读跳过()).toBe(true);expect(读引导完成()).toBe(true)
+      expect(localStorage.getItem("saved-model-preference")).toBe("existing-model")
+      expect(localStorage.getItem("saved-session-preference")).toBe("existing-session")
+      bridge("installation@0.0.43");expect(读引导完成()).toBe(true)
+    }finally{if(previous)Object.defineProperty(window,"dawn",previous);else Reflect.deleteProperty(window,"dawn")}
+  })
 
   it("首次按欢迎、功能、密钥、可选环境四步进入；环境配置可跳过", () => {
     const onStart = vi.fn()

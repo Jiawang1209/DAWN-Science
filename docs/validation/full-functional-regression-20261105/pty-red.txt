@@ -1,0 +1,94 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/pty-shutdown.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/runtime/pty-shutdown.test.ts (6 tests | 5 failed) 13ms
+   × waits for native onExit even after the OS process has disappeared 6ms
+   × waits after SIGKILL and shares the entire stop across concurrent callers 1ms
+   × reports a bounded drain timeout without pretending the callback arrived 1ms
+   × does not let an old native exit clear a replacement process with the same session ID 1ms
+   × settles native completion even when an exit observer throws 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > waits for native onExit even after the OS process has disappeared
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/runtime/pty-shutdown.test.ts:33:19
+     31|   const stopped = runtime.stop('t').then(() => { settled = true })
+     32|   await vi.advanceTimersByTimeAsync(200)
+     33|   expect(settled).toBe(false)
+       |                   ^
+     34|   exits[0]!(); await vi.advanceTimersByTimeAsync(1); await stopped
+     35|   expect(settled).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > waits after SIGKILL and shares the entire stop across concurrent callers
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ tests/runtime/pty-shutdown.test.ts:43:25
+     41|   await vi.advanceTimersByTimeAsync(200)
+     42|   expect(process.kill).toHaveBeenCalledWith(-43210, 'SIGKILL')
+     43|   expect(mocks.collect).toHaveBeenCalledTimes(1)
+       |                         ^
+     44|   expect(settled).toBe(false)
+     45|   exits[0]!(); await vi.advanceTimersByTimeAsync(1); await Promise.all…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > reports a bounded drain timeout without pretending the callback arrived
+AssertionError: expected undefined to be an instance of Error
+ ❯ tests/runtime/pty-shutdown.test.ts:51:33
+     49|   const stopped = runtime.stop('t').then(() => ({ error: undefined }),…
+     50|   await vi.advanceTimersByTimeAsync(1200)
+     51|   expect((await stopped).error).toBeInstanceOf(Error)
+       |                                 ^
+     52|   expect(String((await stopped).error)).toMatch(/退出/)
+     53|   expect(vi.getTimerCount()).toBe(0)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > does not let an old native exit clear a replacement process with the same session ID
+Error: 会话 "t" 无活动 PTY 进程
+ ❯ PtyRuntime.write src/runtime/pty.ts:110:22
+    108|   write(sessionId: SessionId, data: string): void {
+    109|     const proc = this.procs.get(sessionId)
+    110|     if (!proc) throw new Error(`会话 "${sessionId}" 无活动 PTY 进程`)
+       |                      ^
+    111|     proc.write(data)
+    112|   }
+ ❯ tests/runtime/pty-shutdown.test.ts:60:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > settles native completion even when an exit observer throws
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/runtime/pty-shutdown.test.ts:76:45
+     74|   expect(() => exits[0]!()).toThrow('observer')
+     75|   await vi.advanceTimersByTimeAsync(1); await stopped
+     76|   expect(() => runtime.write('t', 'stale')).toThrow(/无活动/)
+       |                                             ^
+     77|   expect(vi.getTimerCount()).toBe(0)
+     78| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  16:11:23
+   Duration  150ms (transform 32ms, setup 0ms, import 44ms, tests 13ms, environment 0ms)

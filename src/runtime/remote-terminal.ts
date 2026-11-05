@@ -15,7 +15,7 @@ interface Task {
   resolve: (result: ExecuteResult) => void; reject: (error: Error) => void
   cancelled: boolean; truncated: boolean; cleanup: () => void
 }
-interface Presentation { runtime: PtyRuntime; detach: () => void; ready: boolean; replay: string }
+interface Presentation { id: string; runtime: PtyRuntime; started: Promise<unknown> | undefined; detach: () => void; ready: boolean; replay: string }
 interface ClosedEntry { owner?: string; cwd: string; connectionId?: string }
 interface Entry {
   spec: SessionSpec; sourceCwd: RemoteCwd; cwd: string; owner?: string; shell?: RemoteShell
@@ -39,6 +39,11 @@ export class RemoteTerminalRuntime implements AgentRuntime {
   private readonly selectedClosed = new Map<string, ClosedEntry>()
   private readonly selected = new Map<string, string>()
   private readonly sinks = new Map<string, Set<EventSink>>()
+  // These local native resources outlive remote entries when a connection drops.
+  private readonly localPresentations = new Set<Presentation>()
+  private readonly presentationLaunches = new Set<Promise<void>>()
+  private readonly presentationDrains = new Map<Presentation, Promise<void>>()
+  private presentationsClosing = false
 
   constructor(private readonly opts: {
     terminalControl: TerminalControl
@@ -306,7 +311,49 @@ export class RemoteTerminalRuntime implements AgentRuntime {
     e.presentation?.runtime.resize(id, cols, rows)
   }
 
-  async launchCli(id: string): Promise<void> {
+  hasLocalPresentationWork(): boolean {
+    return this.localPresentations.size > 0 || this.presentationLaunches.size > 0 || this.presentationDrains.size > 0
+  }
+
+  async closeLocalPresentations(): Promise<void> {
+    this.presentationsClosing = true
+    // In-flight launches must settle before taking the final resource snapshot.
+    await Promise.allSettled([...this.presentationLaunches])
+    await this.settlePresentations([...this.localPresentations], true)
+  }
+
+  private async settlePresentations(presentations: Presentation[], includeDrains = false): Promise<void> {
+    const pending = new Set(presentations.map(p => this.drainPresentation(p)))
+    if (includeDrains) for (const drain of this.presentationDrains.values()) pending.add(drain)
+    const results = await Promise.allSettled([...pending])
+    const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected').map(r => r.reason)
+    if (errors.length) throw new AggregateError(errors, '本地 DAWN 呈现器退出未完成')
+  }
+
+  private drainPresentation(p: Presentation): Promise<void> {
+    const existing = this.presentationDrains.get(p)
+    if (existing) return existing
+    const done = Promise.resolve().then(async () => {
+      // A disconnect can request stop while start is still preparing the local PTY.
+      await p.started?.catch(() => undefined)
+      await p.runtime.stop(p.id)
+      await new Promise<void>(resolve => setImmediate(resolve))
+      this.localPresentations.delete(p)
+    })
+    this.presentationDrains.set(p, done)
+    void done.then(() => this.presentationDrains.delete(p), () => this.presentationDrains.delete(p))
+    return done
+  }
+
+  launchCli(id: string): Promise<void> {
+    const done = this.launchPresentation(id)
+    this.presentationLaunches.add(done)
+    void done.then(() => this.presentationLaunches.delete(done), () => this.presentationLaunches.delete(done))
+    return done
+  }
+
+  private async launchPresentation(id: string): Promise<void> {
+    if (this.presentationsClosing) throw new Error('本地 DAWN 呈现器正在关闭')
     const e = this.entry(id)
     if (!this.isReady(id) || e.launching || e.presentation) throw new Error('请先回到空闲远端 Shell，取消未提交输入后再进入 DAWN')
     if (!this.opts.environment) throw new Error('本地 DAWN 呈现环境尚未配置')
@@ -314,27 +361,33 @@ export class RemoteTerminalRuntime implements AgentRuntime {
     try {
       const environment = await this.opts.environment(e.spec)
       await mkdir(e.spec.sessionDir, { recursive: true })
+      if (this.presentationsClosing) throw new Error('本地 DAWN 呈现器正在关闭')
       if (!e.alive) throw new Error('远端终端已经结束或断开')
       if (!this.isReady(id)) throw new Error('远端 Shell 已发生变化，请等待就绪后重试')
       const runtime = new PtyRuntime({ command: 'dawn', cols: e.cols, rows: e.rows, environment: async () => environment })
-      const presentation: Presentation = { runtime, detach: () => {}, ready: false, replay: '' }
+      const presentation: Presentation = { id, runtime, started: undefined, detach: () => {}, ready: false, replay: '' }
+      this.localPresentations.add(presentation)
       e.presentation = presentation
       presentation.detach = runtime.attach(id, event => {
         if (event.kind === 'output') {
           presentation.replay = bounded(presentation.replay, event.data)
           this.emit({ ...event, sessionId: id })
         } else if (event.kind === 'exited') {
+          setImmediate(() => this.localPresentations.delete(presentation))
           presentation.detach()
           if (e.presentation === presentation) e.presentation = undefined
           if (e.alive) void this.redraw(e)
         }
       })
       // Local cwd is deliberately the isolated session directory, never a remote path.
-      await runtime.start({ ...e.spec, workspace: e.spec.sessionDir })
-      if (!e.alive) { await runtime.stop(id); throw new Error('远端终端已经结束或断开') }
+      presentation.started = runtime.start({ ...e.spec, workspace: e.spec.sessionDir })
+      await presentation.started
+      if (!e.alive || this.presentationsClosing) { await this.drainPresentation(presentation); throw new Error('本地 DAWN 呈现器已关闭或远端终端断开') }
       presentation.ready = true
     } catch (error) {
-      e.presentation?.detach(); e.presentation = undefined
+      const presentation = e.presentation
+      presentation?.detach(); e.presentation = undefined
+      if (presentation) await this.drainPresentation(presentation).catch(error => console.error('[远端终端] 本地呈现器退出未完成：', error))
       if (e.alive) await this.redraw(e)
       throw error
     } finally { e.launching = false }
@@ -352,11 +405,14 @@ export class RemoteTerminalRuntime implements AgentRuntime {
 
   async stop(id: string): Promise<void> {
     const e = this.entries.get(id)
-    if (!e || e.exited) return
+    if (!e || e.exited) {
+      await this.settlePresentations([...this.localPresentations].filter(p => p.id === id))
+      return
+    }
     const presentation = e.presentation
     if (presentation) { presentation.detach(); e.presentation = undefined }
     try { e.shell?.close() } finally { this.finish(e, { reason: '远端终端已关闭' }) }
-    if (presentation) await presentation.runtime.stop(id)
+    if (presentation) await this.drainPresentation(presentation)
   }
 
   private finish(e: Entry, event: RemoteShellExit): void {
@@ -381,7 +437,11 @@ export class RemoteTerminalRuntime implements AgentRuntime {
     if (e.task) { e.task.cleanup(); if (!e.task.cancelled) e.task.reject(error); e.task = undefined }
     e.startup = undefined
     for (const detach of e.detach.splice(0)) { try { detach() } catch {} }
-    if (e.presentation) { e.presentation.detach(); void e.presentation.runtime.stop(e.spec.sessionId); e.presentation = undefined }
+    if (e.presentation) {
+      const presentation = e.presentation
+      presentation.detach(); e.presentation = undefined
+      void this.drainPresentation(presentation).catch(error => console.error('[远端终端] 本地呈现器退出未完成：', error))
+    }
     this.opts.terminalControl.exited(e.spec.sessionId)
     e.screen.dispose()
     try { this.opts.onExit?.(id) } catch { /* Resource release cannot depend on observers. */ }

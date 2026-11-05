@@ -77,6 +77,10 @@ export class TerminalControl {
 
   output(id: string, data: string): void { this.entries.get(id)?.screen.write(data) }
   has(id: string): boolean { return Boolean(this.entries.get(id)?.alive) }
+  /** Local PTYs own native callbacks which must drain before Electron exits. */
+  hasLiveLocalTerminals(): boolean {
+    return [...this.entries.values()].some(e => e.alive && !e.port.connectionId)
+  }
   state(id: string): TerminalControlState {
     const e = this.entry(id)
     return {

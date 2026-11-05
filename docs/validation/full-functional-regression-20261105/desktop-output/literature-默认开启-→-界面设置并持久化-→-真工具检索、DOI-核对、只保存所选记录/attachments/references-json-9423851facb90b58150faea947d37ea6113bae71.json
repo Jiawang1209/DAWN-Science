@@ -1,0 +1,38 @@
+{
+  "format": "dawn-literature-v1",
+  "savedAt": "2026-11-05T07:29:38.219Z",
+  "records": [
+    {
+      "recordId": "c2a20f40-bf5d-4ddd-84e0-0ba47aec2ce9",
+      "record": {
+        "id": "https://openalex.org/W12345",
+        "title": "Warming and soil diversity",
+        "authors": [
+          "A. Researcher",
+          "B. Scientist"
+        ],
+        "authorsTruncated": false,
+        "year": 2024,
+        "date": "2024-05-01",
+        "journal": "Ecology Example",
+        "doi": "https://doi.org/10.1234/example",
+        "abstract": "Soil diversity changes",
+        "abstractStatus": "available",
+        "sourceUrl": "https://openalex.org/W12345",
+        "landingPageUrl": "https://doi.org/10.1234/example"
+      },
+      "origin": {
+        "source": "OpenAlex",
+        "retrievedAt": "2026-11-05T07:29:38.195Z",
+        "requestUrl": "https://api.openalex.org/works?search=soil+warming&per_page=5&select=id%2Cdoi%2Ctitle%2Cpublication_year%2Cpublication_date%2Cauthorships%2Cprimary_location%2Cabstract_inverted_index&filter=from_publication_date%3A2020-01-01%2Cto_publication_date%3A2025-12-31",
+        "query": {
+          "kind": "search",
+          "value": "soil warming",
+          "limit": 5,
+          "fromYear": 2020,
+          "toYear": 2025
+        }
+      }
+    }
+  ]
+}

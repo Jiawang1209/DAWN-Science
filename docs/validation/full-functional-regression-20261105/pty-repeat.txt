@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/terminal-cli-interaction.spec.ts e2e/terminal-images.spec.ts e2e/terminal-navigation-recovery.spec.ts --grep top onboarding|pastes a real clipboard|legacy DAWN page returns --repeat-each=3 --reporter=list,json --update-snapshots=none --output=docs/validation/full-functional-regression-20261105/pty-repeat-output
+
+Running 9 tests using 1 worker
+
+(node:10462) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52757/94b2c415-9bbb-40fd-b250-cc742c7aab55
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/terminal-cli-interaction.spec.ts:29:1 › top onboarding and ghost suggestions keep one input and require explicit adoption before sending (8.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52801/1c1a36f8-6307-42f6-8e1f-c5b86ea30094
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (7.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52836/d51aaa3b-fcb4-4181-b254-a4f3ffee80d0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/terminal-navigation-recovery.spec.ts:106:1 › the legacy DAWN page returns directly to its own Agent conversation (5.6s)
+(node:12290) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52864/de444a74-d3c1-4992-8516-0938ecdf8822
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/terminal-cli-interaction.spec.ts:29:1 › top onboarding and ghost suggestions keep one input and require explicit adoption before sending (12.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52917/cda85596-c5ec-46a5-bec5-d5bd618bec34
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (5.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52944/da81aa05-14aa-4bcf-9d4f-23ede4d7fc80
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/terminal-navigation-recovery.spec.ts:106:1 › the legacy DAWN page returns directly to its own Agent conversation (8.6s)
+(node:14114) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52989/e2ed73aa-a03f-4aa6-97f3-b3dd7bd0a63e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/terminal-cli-interaction.spec.ts:29:1 › top onboarding and ghost suggestions keep one input and require explicit adoption before sending (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53013/e08b552b-a630-4155-9325-2a22c2f36fa4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  8 e2e/terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53058/1dcc59fd-6df1-449c-99af-47d3da458ed6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  9 e2e/terminal-navigation-recovery.spec.ts:106:1 › the legacy DAWN page returns directly to its own Agent conversation (6.1s)
+
+  9 passed (1.1m)

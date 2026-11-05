@@ -162,6 +162,8 @@ export interface SubagentContext {
 }
 
 export interface SubagentExecutorOptions {
+  /** A backend policy may disable realtime control without disabling ordinary orchestration. */
+  allowSteering?: boolean
   control?: {service:OrchestrationService;addressOf:(index:number)=>string[]}|undefined
   prepareTask?: (index:number,task:SubagentTask,definition:SubagentDefinition)=>TaskSettings|undefined
   orchestration?: { service: OrchestrationService; addressOf: (index: number) => string[] } | undefined
@@ -185,7 +187,7 @@ export class SubagentExecutor {
   private readonly onProgress: (p: SubagentProgress) => void
 
   constructor(opts: SubagentExecutorOptions) {
-    this.control=opts.control??opts.orchestration
+    this.control=opts.allowSteering===false?undefined:opts.control??opts.orchestration
     this.prepareTask = opts.prepareTask
     this.orchestration = opts.orchestration
     this.childOf = opts.childOf

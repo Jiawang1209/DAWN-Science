@@ -612,6 +612,7 @@ app.whenReady().then(() => {
     const exe = portable ?? image ?? app.getPath("exe")
     const bundle = process.platform === "darwin" ? mac的app路径() : undefined
     onboardingInstallation = createOnboardingInstallation({
+      appVersion: app.getVersion(),
       stateFile: join(app.getPath("userData"), "onboarding-installation.json"),
       identityPaths: portable || image ? [exe] : [...(bundle ? [bundle] : []), exe, join(app.getAppPath(), "package.json")],
       installMarkerFile: process.platform === "win32" && !portable ? join(dirname(exe), ".dawn-onboarding-install-id") : undefined,
@@ -1101,7 +1102,7 @@ let 正在收摊 = false
 app.on("will-quit", (e) => {
   if (正在收摊 || !workbench) return
   /**
-   * **内核会话和活跃目录传输需要等待收尾。**
+   * **本地 PTY、内核会话和活跃目录传输需要等待收尾。**
    *
    * 第一版无条件走异步收摊，结果每一次退出都多花上一秒——
    * e2e 那边 155 条用例一下子从 5 分钟变成 22 分钟，

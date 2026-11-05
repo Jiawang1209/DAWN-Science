@@ -4,7 +4,7 @@ import {resolve,join} from 'node:path'
 import {test,expect,在项目里开会话} from './fixtures.js'
 test.use({dawnOptions:{gitInit:true}})
 test('live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction',async({dawn})=>{
- const{page,requests}=dawn,out=resolve('docs/validation/live-parallel-20261105/stage-a');mkdirSync(out,{recursive:true})
+ const{page,requests}=dawn,out=resolve(process.env.DAWN_SCIENCE_DEMO_DIR??'docs/validation/live-parallel-20261105/stage-a');mkdirSync(out,{recursive:true})
  await 在项目里开会话(page)
  const send=async()=>{await page.locator('main.main .composer textarea').fill('派子agent慢慢看');await page.getByRole('button',{name:'发送',exact:true}).click()}
  await send();let chip=page.locator('main.main .chip-group .chip').last();await expect(chip.locator('.chip-activity')).toContainText('sleep 15');await chip.click()

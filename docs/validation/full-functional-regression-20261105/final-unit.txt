@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/runtime/remote-terminal.test.ts (19 tests | 1 failed) 6380ms
+   × runs DAWN presentation locally in sessionDir, keeps model observations remote, and restores the remote cursor without ending the terminal 1280ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > runs DAWN presentation locally in sessionDir, keeps model observations remote, and restores the remote cursor without ending the terminal
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/runtime/remote-terminal.test.ts:233:131
+    231|   x.runtime.attach('t', event => events.push(event))
+    232|   await x.runtime.launchCli('t')
+    233|   await vi.waitFor(() => expect(events.some(event => event.kind === 'o…
+       |                                                                                                                                   ^
+    234|   expect(readFileSync(join(local, 'result'), 'utf8')).toBe(`${x.dir}|t…
+    235|   expect(x.runtime.isPresenting('t')).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 636 passed (637)
+      Tests  1 failed | 6303 passed | 10 skipped (6314)
+   Start at  16:29:40
+   Duration  164.72s (transform 21.29s, setup 70.15s, import 262.59s, tests 535.82s, environment 143.10s)

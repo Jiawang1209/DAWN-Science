@@ -1,0 +1,72 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/setup-wizard.spec.ts e2e/setup-entry.spec.ts e2e/first-run-default.spec.ts
+
+Running 15 tests using 1 worker
+
+(node:73444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52821/49312d4c-3b33-4963-8047-9c478a8c7f74
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/first-run-default.spec.ts:21:3 › 全新安装 › **默认配置里没有 deepseek**，也没有任何 native agent (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52853/07a63d79-6160-4cd7-bc6f-cbbdab7b80ce
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/first-run-default.spec.ts:38:3 › 全新安装 › **首屏不摆一个用不了的 agent**，直接进入四步引导 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52862/560ba1ea-9dc0-4bc3-b465-8f308ec53c9e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/setup-entry.spec.ts:15:3 › 无模型的首次引导入口 › 旧跳过标记不能掩盖新引导；新版主动跳过后不反复弹出，并可从首页重新进入 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52874/22439aac-709d-417d-b0be-dbb3c477a966
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/setup-entry.spec.ts:39:3 › 已有可用模型的兼容入口 › 旧跳过标记加可用模型时保留工作台，不强制重新引导 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52887/dcb3ac1a-dc0d-4b33-9ebd-c731a1fee1a4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/setup-wizard.spec.ts:40:3 › 首启向导 › 没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用 (5.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52919/e202a980-24fc-4806-976d-c9b86e03c9d4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52938/a449eb9a-bc88-464e-b5e4-b40939c3abe7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/setup-wizard.spec.ts:78:3 › 首启向导 › 先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52954/b0719b56-7633-4eb0-8bc2-6f1245d054bf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/setup-wizard.spec.ts:97:3 › 首启向导 › 解释器路径保存失败在卡片内显示，未配置时仍可跳过 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52974/a214634f-1588-42e4-a841-bdbe90c5d465
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/setup-wizard.spec.ts:112:3 › 首启向导 › 密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52985/31e6bf21-3c2b-49d1-b1a8-563de89f22de
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/setup-wizard.spec.ts:131:3 › 首启向导 › 服务商切换自动填写目录默认地址，手动改址仍可检测 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52996/3bb8d7c7-805d-4bdf-9d20-46505cc8fa7c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/setup-wizard.spec.ts:154:3 › 首启向导 › 引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53009/ae5a571f-4408-4191-9402-db2ae3fe74ab
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/setup-wizard.spec.ts:176:3 › 首启向导 › 四步实机截图；语言选择立即传递到工作台；窄窗口可操作 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53022/a322c5aa-c75c-473b-8024-ab6ef9c86ef4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/setup-wizard.spec.ts:205:3 › 首启向导 › 自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53037/b20a204e-d4a3-46b5-8a6d-e0a055e4768f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/setup-wizard.spec.ts:249:3 › 首启向导 · 产品原样的默认配置 › 明确模型和协议在检测、保存验证、首次对话中一致 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53048/fed127f3-501d-4123-9f89-2113f6b85154
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/setup-wizard.spec.ts:277:3 › 首启向导 · 产品原样的默认配置 › **填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53066/6c27b272-1e1e-4cb2-87cc-f991673c347d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/setup-wizard.spec.ts:318:3 › 首启向导 · 混合协议目录 › 自动协议按所选目录模型检测、保存并对话 (2.1s)
+
+  15 passed (35.0s)

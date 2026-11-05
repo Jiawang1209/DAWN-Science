@@ -1,0 +1,46 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/remote-terminal.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/runtime/remote-terminal.test.ts (23 tests | 2 failed) 7307ms
+     × retains a disconnected entry local PTY drain independently of remote history 88ms
+     × observes background drain failures and reports them to shutdown without an unhandled rejection 83ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > local presenter shutdown > retains a disconnected entry local PTY drain independently of remote history
+Error: 会话 "t" 无活动 PTY 进程
+ ❯ PtyRuntime.write src/runtime/pty.ts:119:22
+    117|   write(sessionId: SessionId, data: string): void {
+    118|     const proc = this.procs.get(sessionId)
+    119|     if (!proc) throw new Error(`会话 "${sessionId}" 无活动 PTY 进程`)
+       |                      ^
+    120|     proc.write(data)
+    121|   }
+ ❯ RemoteTerminalRuntime.write src/runtime/remote-terminal.ts:280:30
+ ❯ Object.write tests/runtime/remote-terminal.test.ts:52:70
+ ❯ tests/runtime/remote-terminal.test.ts:95:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > local presenter shutdown > observes background drain failures and reports them to shutdown without an unhandled rejection
+Error: 会话 "t" 无活动 PTY 进程
+ ❯ PtyRuntime.write src/runtime/pty.ts:119:22
+    117|   write(sessionId: SessionId, data: string): void {
+    118|     const proc = this.procs.get(sessionId)
+    119|     if (!proc) throw new Error(`会话 "${sessionId}" 无活动 PTY 进程`)
+       |                      ^
+    120|     proc.write(data)
+    121|   }
+ ❯ RemoteTerminalRuntime.write src/runtime/remote-terminal.ts:280:30
+ ❯ Object.write tests/runtime/remote-terminal.test.ts:52:70
+ ❯ tests/runtime/remote-terminal.test.ts:110:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 passed (23)
+   Start at  16:37:03
+   Duration  7.51s (transform 71ms, setup 0ms, import 115ms, tests 7.31s, environment 0ms)

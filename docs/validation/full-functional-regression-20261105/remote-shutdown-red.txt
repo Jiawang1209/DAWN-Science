@@ -1,0 +1,69 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/remote-terminal.test.ts -t local presenter shutdown
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/runtime/remote-terminal.test.ts (23 tests | 4 failed | 19 skipped) 348ms
+     × keeps active local presentation resources visible until the drain completes 89ms
+     × closes launch admission before a deferred environment can create a local process 85ms
+     × retains a disconnected entry local PTY drain independently of remote history 88ms
+     × observes background drain failures and reports them to shutdown without an unhandled rejection 85ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > local presenter shutdown > keeps active local presentation resources visible until the drain completes
+TypeError: x.runtime.hasLocalPresentationWork is not a function
+ ❯ tests/runtime/remote-terminal.test.ts:65:24
+     63|     try {
+     64|       await x.runtime.launchCli('t')
+     65|       expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+       |                        ^
+     66|       let closed = false
+     67|       const closing = x.runtime.closeLocalPresentations().then(() => {…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > local presenter shutdown > closes launch admission before a deferred environment can create a local process
+TypeError: x.runtime.hasLocalPresentationWork is not a function
+ ❯ tests/runtime/remote-terminal.test.ts:81:24
+     79|     try {
+     80|       const launch = x.runtime.launchCli('t').then(() => undefined, er…
+     81|       expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+       |                        ^
+     82|       const closing = x.runtime.closeLocalPresentations()
+     83|       release({}); expect(await launch).toBeInstanceOf(Error); await c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > local presenter shutdown > retains a disconnected entry local PTY drain independently of remote history
+Error: 会话 "t" 无活动 PTY 进程
+ ❯ PtyRuntime.write src/runtime/pty.ts:119:22
+    117|   write(sessionId: SessionId, data: string): void {
+    118|     const proc = this.procs.get(sessionId)
+    119|     if (!proc) throw new Error(`会话 "${sessionId}" 无活动 PTY 进程`)
+       |                      ^
+    120|     proc.write(data)
+    121|   }
+ ❯ RemoteTerminalRuntime.write src/runtime/remote-terminal.ts:275:30
+ ❯ Object.write tests/runtime/remote-terminal.test.ts:52:70
+ ❯ tests/runtime/remote-terminal.test.ts:95:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > local presenter shutdown > observes background drain failures and reports them to shutdown without an unhandled rejection
+TypeError: x.runtime.closeLocalPresentations is not a function
+ ❯ tests/runtime/remote-terminal.test.ts:114:59
+    112|       expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+    113|       await expect(x.runtime.closeLocalPresentations()).rejects.toThro…
+    114|     } finally { stop.mockResolvedValue(); await x.runtime.closeLocalPr…
+       |                                                           ^
+    115|   })
+    116| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 19 skipped (23)
+   Start at  16:36:28
+   Duration  572ms (transform 89ms, setup 0ms, import 137ms, tests 348ms, environment 0ms)

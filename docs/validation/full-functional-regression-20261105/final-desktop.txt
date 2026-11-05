@@ -1,0 +1,90 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/remote-terminal.spec.ts e2e/terminal-images.spec.ts e2e/setup-wizard.spec.ts e2e/subagent-steering-epoch.spec.ts e2e/science-parallel.spec.ts --reporter=list,json --update-snapshots=none --output=docs/validation/full-functional-regression-20261105/final-output
+
+Running 19 tests using 1 worker
+
+(node:95972) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「REMOTE_ORIGINAL_HIST」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60524/3a23fd0a-3f8b-452f-a7c9-f070ca804e84
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/remote-terminal.spec.ts:17:1 › remote Normal and DAWN share the original chat, SSH connection, Chinese cwd and environment (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60582/a09c6f4b-7edb-4ced-b217-277baffbb5c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/remote-terminal.spec.ts:71:2 › detach an active shared remote Agent › returning directly from DAWN detaches presentation and lets the original server task finish (9.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：两个独立 CSV，以并发上」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:60646/20cc3477-91a6-433c-96b0-7493efbd2fce
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/science-parallel.spec.ts:5:1 › two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary (9.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60705/129815a3-9108-47f4-a1ce-22cebb8e8771
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/setup-wizard.spec.ts:40:3 › 首启向导 › 没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60721/201e5990-4f4e-44a2-8997-bc9d16576a26
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60732/c8e7caf7-8601-400a-8460-c01c29b22a2c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/setup-wizard.spec.ts:78:3 › 首启向导 › 先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60753/817678f8-fe5a-4d65-bab8-27da5b99a80f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/setup-wizard.spec.ts:97:3 › 首启向导 › 解释器路径保存失败在卡片内显示，未配置时仍可跳过 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60762/7ff84372-c27d-40b3-8afd-9765b89bed74
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/setup-wizard.spec.ts:112:3 › 首启向导 › 密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60774/280b980a-5fef-4f15-a466-a6f16df6023a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/setup-wizard.spec.ts:131:3 › 首启向导 › 服务商切换自动填写目录默认地址，手动改址仍可检测 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60785/fe7e1eb3-5288-46d9-b294-1c263732103f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/setup-wizard.spec.ts:154:3 › 首启向导 › 引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60800/b5367f13-848d-46f4-8a46-fa1754aa16f4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/setup-wizard.spec.ts:176:3 › 首启向导 › 四步实机截图；语言选择立即传递到工作台；窄窗口可操作 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60821/ff3d8154-e053-48ac-b36a-184283532efb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/setup-wizard.spec.ts:205:3 › 首启向导 › 自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60837/36332e26-aeab-4734-a95b-72ad53f22aa7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/setup-wizard.spec.ts:249:3 › 首启向导 · 产品原样的默认配置 › 明确模型和协议在检测、保存验证、首次对话中一致 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60849/48286550-9192-4401-9bf2-d6d9a638c88b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/setup-wizard.spec.ts:277:3 › 首启向导 · 产品原样的默认配置 › **填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60862/d5e50a60-38c4-4773-a32d-99c51d7d81ef
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/setup-wizard.spec.ts:318:3 › 首启向导 · 混合协议目录 › 自动协议按所选目录模型检测、保存并对话 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60877/5cf05b13-e85c-41a2-b8f0-93277d064408
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/subagent-steering-epoch.spec.ts:6:1 › expired correction draft cannot cross a real child epoch and can be explicitly rewritten (20.5s)
+[主进程] Debugger ending on ws://127.0.0.1:60964/a77f8b7f-0bd2-45e1-b8f5-fbc43e2187cf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/terminal-images.spec.ts:38:1 › pastes a real clipboard image, previews inline, and continues the same image conversation in the GUI (13.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61039/3c6711e5-8795-411a-bd0b-fdd6aaa9147a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/terminal-images.spec.ts:65:1 › dragged images can be removed, are not added to the hidden composer, and Normal does not attach (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61083/6651943f-84a8-4138-aa8f-529a798ade1b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/terminal-images.spec.ts:82:3 › output pictures › renders verified image files returned by the Agent and opens their full preview (5.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61131/c4ba58de-43ea-4125-ad52-5dde3e97252c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/terminal-images.spec.ts:99:3 › picture capability › rejects attachment explicitly when neither the selected model nor a visual service can read it (5.4s)
+
+  19 passed (1.7m)

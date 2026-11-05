@@ -1,0 +1,64 @@
+{
+  "format": "dawn-science-records-v1",
+  "savedAt": "2026-11-05T07:46:25.743Z",
+  "records": [
+    {
+      "recordId": "ad7b7232-39d8-40d2-b3d6-03c0ed9c4946",
+      "record": {
+        "accession": "SRX123",
+        "title": "Synthetic soil RNA experiment",
+        "sourceUrl": "https://www.ncbi.nlm.nih.gov/sra/SRX123",
+        "fields": {
+          "studyAccession": "SRP123",
+          "studyTitle": "Synthetic soil study",
+          "sampleAccession": "SRS123",
+          "organism": "Homo sapiens",
+          "taxonId": "9606",
+          "platform": "ILLUMINA",
+          "instrument": "NovaSeq",
+          "libraryStrategy": "RNA-Seq",
+          "librarySource": "TRANSCRIPTOMIC",
+          "librarySelection": "cDNA",
+          "libraryLayout": "PAIRED",
+          "bioProject": "PRJNA123",
+          "bioSample": null,
+          "runCount": 2,
+          "totalSpots": "10",
+          "totalBases": "50",
+          "archiveSizeBytes": "30"
+        },
+        "runs": [
+          {
+            "accession": "SRR123",
+            "spots": "4",
+            "bases": "20",
+            "public": true
+          },
+          {
+            "accession": "SRR124",
+            "spots": "6",
+            "bases": "30",
+            "public": false
+          }
+        ]
+      },
+      "origin": {
+        "source": "NCBI SRA",
+        "retrievedAt": "2026-11-05T07:46:25.730Z",
+        "requestUrls": [
+          "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&retmode=json&tool=DAWN-Science&term=SRR123%5BACCN%5D&retmax=1",
+          "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=sra&retmode=json&tool=DAWN-Science&id=123"
+        ],
+        "query": {
+          "kind": "accession",
+          "value": "SRR123",
+          "limit": 1
+        },
+        "warnings": [
+          "SRA 检索数量以实验（Experiment）为单位；Run 数量不等于生物学样本量",
+          "SRX123 包含受限 Run；元数据可见不表示已获数据访问权限"
+        ]
+      }
+    }
+  ]
+}

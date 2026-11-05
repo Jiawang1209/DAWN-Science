@@ -181,6 +181,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
         }
       }
       const executor = new SubagentExecutor({
+        allowSteering:!opts.remote,
         prepareTask:(i,task,definition)=>prepareSubagentTask(opts,toolCallId,i,{...task,...(task.contract!==undefined?{contract:TaskContractSchema.parse(task.contract)}:{})},definition.tools),
         childOf: opts.childOf,
       control: !opts.remote&&(opts.controlService??opts.orchestration) ? {service:(opts.controlService??opts.orchestration)!,addressOf:(i:number)=>[子目录段(toolCallId),String(i)]}:undefined,
@@ -256,6 +257,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
 export function createSubagentFollowUp(opts: SubagentToolOptions) {
   return async (toolCallId: string, index: number, agent: string, text: string, signal?: AbortSignal): Promise<SubagentResult> => {
     const executor = new SubagentExecutor({
+      allowSteering:!opts.remote,
       prepareTask:(i,task,definition)=>prepareSubagentTask(opts,toolCallId,i,task,definition.tools),
       childOf: opts.childOf,
       control: !opts.remote&&(opts.controlService??opts.orchestration) ? {service:(opts.controlService??opts.orchestration)!,addressOf:(i:number)=>[子目录段(toolCallId),String(i)]}:undefined,

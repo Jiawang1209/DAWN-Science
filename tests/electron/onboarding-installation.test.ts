@@ -28,6 +28,26 @@ function fixture() {
 }
 
 describe("引导安装世代，不修改业务数据", () => {
+  it("旧版更新器接续安装世代后，新版本仍使用独立向导状态，普通重启保持稳定", () => {
+    const f = fixture(),old = f.open()
+    const business = join(f.root,"profile","sessions.json")
+    writeFileSync(business,"existing sessions and configuration")
+    f.replace();old.adoptAutomaticUpdate()
+    const current = createOnboardingInstallation({...f.options,appVersion:"0.0.44"})
+    expect(current.id).not.toBe(old.id)
+    expect(createOnboardingInstallation({...f.options,appVersion:"0.0.44"}).id).toBe(current.id)
+    expect(createOnboardingInstallation({...f.options,appVersion:"0.0.45"}).id).not.toBe(current.id)
+    expect(JSON.parse(readFileSync(f.stateFile,"utf8")).id).toBe(old.id)
+    expect(readFileSync(business,"utf8")).toBe("existing sessions and configuration")
+  })
+  it("自动升级保留安装身份，但不同版本不继承已跳过的向导；失败未换版本不重置", () => {
+    const f=fixture(),first=createOnboardingInstallation({...f.options,appVersion:"0.0.44"})
+    expect(createOnboardingInstallation({...f.options,appVersion:"0.0.44"}).id).toBe(first.id)
+    f.replace();first.adoptAutomaticUpdate()
+    const next=createOnboardingInstallation({...f.options,appVersion:"0.0.45"})
+    expect(next.id).not.toBe(first.id)
+    expect(createOnboardingInstallation({...f.options,appVersion:"0.0.45"}).id).toBe(next.id)
+  })
   it("普通重启和改动不相关文件保持同一世代", () => {
     const f = fixture()
     const first = f.open()

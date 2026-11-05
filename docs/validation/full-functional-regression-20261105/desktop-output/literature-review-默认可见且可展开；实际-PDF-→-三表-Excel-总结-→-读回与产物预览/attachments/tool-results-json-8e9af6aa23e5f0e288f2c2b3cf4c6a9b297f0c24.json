@@ -1,0 +1,52 @@
+[
+  {
+    "role": "tool",
+    "content": "--- Page 1 ---\nTitle: Synthetic study A Design: Controlled plant experiment.\n\n--- Page 2 ---\nBiological replicates: 8 per group. Technical repeats: 3. Method: Linear model. Outcome: Increased. Limitations: One study site.",
+    "tool_call_id": "call_mock_5"
+  },
+  {
+    "role": "tool",
+    "content": "--- Page 1 ---\nTitle: Synthetic study B Design: Controlled plant experiment.\n\n--- Page 2 ---\nMethod: Linear model. Outcome: Decreased. Limitations: One study site.",
+    "tool_call_id": "call_mock_6"
+  },
+  {
+    "role": "tool",
+    "content": "--- Page 1 ---\n(empty)",
+    "tool_call_id": "call_mock_7"
+  },
+  {
+    "role": "tool",
+    "content": "Successfully wrote to outputs/literature-review/acceptance/文献总结.md",
+    "tool_call_id": "call_mock_8"
+  },
+  {
+    "role": "tool",
+    "content": "Written 4 rows × 11 cols to /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-kvLri2/workspace/outputs/literature-review/acceptance/论文对照.xlsx (sheet: \"文献清单\")",
+    "tool_call_id": "call_mock_9"
+  },
+  {
+    "role": "tool",
+    "content": "Edited /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-kvLri2/workspace/outputs/literature-review/acceptance/论文对照.xlsx\n  - added sheet \"逐项证据\"\n  - appended 13 row(s) to \"逐项证据\"\n  - added sheet \"差异对照\"\n  - appended 2 row(s) to \"差异对照\"\n  - applied styles to \"逐项证据\"",
+    "tool_call_id": "call_mock_10"
+  },
+  {
+    "role": "tool",
+    "content": "Sheet \"文献清单\" (4 rows × 11 cols):\n\n| 文献 ID | 原文件                   | 题名                        | 材料状态   | 已读范围 | 设计                                   | 生物重复                 | 技术重复          | 方法                    | 主要结果               | 局限                      |\n|-------|-----------------------|---------------------------|--------|------|--------------------------------------|----------------------|---------------|-----------------------|--------------------|-------------------------|\n| P1    | papers/study-a.pdf    | Synthetic study A [P1-E1] | 全文可读   | 1, 2 | Controlled plant experiment. [P1-E2] | 8 per group. [P1-E3] | 3. [P1-E4]    | Linear model. [P1-E5] | Increased. [P1-E6] | One study site. [P1-E7] |\n| P2    | papers/study-b.pdf    | Synthetic study B [P2-E1] | 全文可读   | 1, 2 | Controlled plant experiment. [P2-E2] | 未提供（未在已读范围找到）        | 未提供（未在已读范围找到） | Linear model. [P2-E5] | Decreased. [P2-E6] | One study site. [P2-E7] |\n| P3    | papers/study-scan.pdf | 文本不可提取                    | 文本不可提取 | 1    | 文本不可提取                               | 文本不可提取               | 文本不可提取        | 文本不可提取                | 文本不可提取             | 文本不可提取                  |",
+    "tool_call_id": "call_mock_11"
+  },
+  {
+    "role": "tool",
+    "content": "Sheet \"逐项证据\" (13 rows × 8 cols):\n\n| 证据 ID | 文献 ID | 字段                    | 原文信息                         | 原文件                | PDF 物理页 | 原文短摘                                 | 状态  |\n|-------|-------|-----------------------|------------------------------|--------------------|---------|--------------------------------------|-----|\n| P1-E1 | P1    | Title                 | Synthetic study A            | papers/study-a.pdf | 1       | Title: Synthetic study A             | 已定位 |\n| P1-E2 | P1    | Design                | Controlled plant experiment. | papers/study-a.pdf | 1       | Design: Controlled plant experiment. | 已定位 |\n| P1-E3 | P1    | Biological replicates | 8 per group.                 | papers/study-a.pdf | 2       | Biological replicates: 8 per group.  | 已定位 |\n| P1-E4 | P1    | Technical repeats     | 3.                           | papers/study-a.pdf | 2       | Technical repeats: 3.                | 已定位 |\n| P1-E5 | P1    | Method                | Linear model.                | papers/study-a.pdf | 2       | Method: Linear model.                | 已定位 |\n| P1-E6 | P1    | Outcome               | Increased.                   | papers/study-a.pdf | 2       | Outcome: Increased.                  | 已定位 |\n| P1-E7 | P1    | Limitations           | One study site.              | papers/study-a.pdf | 2       | Limitations: One study site.         | 已定位 |\n| P2-E1 | P2    | Title                 | Synthetic study B            | papers/study-b.pdf | 1       | Title: Synthetic study B             | 已定位 |\n| P2-E2 | P2    | Design                | Controlled plant experiment. | papers/study-b.pdf | 1       | Design: Controlled plant experiment. | 已定位 |\n| P2-E5 | P2    | Method                | Linear model.                | papers/study-b.pdf | 2       | Method: Linear model.                | 已定位 |\n| P2-E6 | P2    | Outcome               | Decreased.                   | papers/study-b.pdf | 2       | Outcome: Decreased.                  | 已定位 |\n| P2-E7 | P2    | Limitations           | One study site.              | papers/study-b.pdf | 2       | Limitations: One study site.         | 已定位 |",
+    "tool_call_id": "call_mock_12"
+  },
+  {
+    "role": "tool",
+    "content": "Sheet \"差异对照\" (2 rows × 4 cols):\n\n| 比较项  | 涉及证据          | 判断          | 待核对                          |\n|------|---------------|-------------|------------------------------|\n| 结果方向 | P1-E6 / P2-E6 | 方向不同，可比性待核对 | 模型归纳：核对设计、终点及独立样本单位，不据此称相互推翻 |",
+    "tool_call_id": "call_mock_13"
+  },
+  {
+    "role": "tool",
+    "content": "# 合成论文对照\n\n本次为确定性工程验收，不是实际文献综述。\n\n## 材料与覆盖范围\n\n- P1：papers/study-a.pdf；全文可读；已读 PDF 物理页 1, 2。\n- P2：papers/study-b.pdf；全文可读；已读 PDF 物理页 1, 2。\n- P3：papers/study-scan.pdf；文本不可提取；已读 PDF 物理页 1。\n\n## 逐项证据\n\n- P1-E1：papers/study-a.pdf，PDF 物理页 1，“Title: Synthetic study A”。\n- P1-E2：papers/study-a.pdf，PDF 物理页 1，“Design: Controlled plant experiment.”。\n- P1-E3：papers/study-a.pdf，PDF 物理页 2，“Biological replicates: 8 per group.”。\n- P1-E4：papers/study-a.pdf，PDF 物理页 2，“Technical repeats: 3.”。\n- P1-E5：papers/study-a.pdf，PDF 物理页 2，“Method: Linear model.”。\n- P1-E6：papers/study-a.pdf，PDF 物理页 2，“Outcome: Increased.”。\n- P1-E7：papers/study-a.pdf，PDF 物理页 2，“Limitations: One study site.”。\n- P2-E1：papers/study-b.pdf，PDF 物理页 1，“Title: Synthetic study B”。\n- P2-E2：papers/study-b.pdf，PDF 物理页 1，“Design: Controlled plant experiment.”。\n- P2-E5：papers/study-b.pdf，PDF 物理页 2，“Method: Linear model.”。\n- P2-E6：papers/study-b.pdf，PDF 物理页 2，“Outcome: Decreased.”。\n- P2-E7：papers/study-b.pdf，PDF 物理页 2，“Limitations: One study site.”。\n\n## 缺口与解释\n\nP1：Controlled plant experiment. [P1-E2]；8 per group. [P1-E3]；3. [P1-E4]；Linear model. [P1-E5]；Increased. [P1-E6]；One study site. [P1-E7]\n\nP2：Controlled plant experiment. [P2-E2]；未提供（未在已读范围找到）；未提供（未在已读范围找到）；Linear model. [P2-E5]；Decreased. [P2-E6]；One study site. [P2-E7]\n\nP3：文本不可提取；文本不可提取；文本不可提取；文本不可提取；文本不可提取；文本不可提取\n\n方向不同，可比性待核对；模型归纳不能替代原文结论。文本不可提取的文件未作全文判断，没有生成缺失 n。\n\nExcel 包含文献清单、逐项证据、差异对照。读回只证明工程链路，科学核验仍需研究者复核。\n",
+    "tool_call_id": "call_mock_14"
+  }
+]

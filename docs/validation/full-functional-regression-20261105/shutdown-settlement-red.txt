@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/electron/wiring.test.ts -t 一个资源收尾失败
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+ ❯ |node| tests/electron/wiring.test.ts (45 tests | 1 failed | 44 skipped) 28ms
+     × 一个资源收尾失败时仍等待其他会话，随后正常关闭 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 一个资源收尾失败时仍等待其他会话，随后正常关闭
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/electron/wiring.test.ts:90:23
+     88|       const closing = wb.closeAsync().then(() => { settled = true }, (…
+     89|       await new Promise<void>(resolve => setImmediate(resolve))
+     90|       expect(settled).toBe(false)
+       |                       ^
+     91|       release(); await closing
+     92|       expect(log).toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 44 skipped (45)
+   Start at  16:38:38
+   Duration  2.23s (transform 1.14s, setup 0ms, import 2.11s, tests 28ms, environment 0ms)

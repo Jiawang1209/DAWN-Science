@@ -835,7 +835,15 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       },
     })
 
-    let app = await 起一次()
+    let app!: ElectronApplication
+    const 关掉并检查 = async () => {
+      const proc = app.process()
+      await app.close()
+      expect(proc.signalCode, "Electron 退出时收到信号；检查主进程日志和系统崩溃报告").toBeNull()
+      expect(proc.exitCode, "Electron 必须正常退出，不能把原生崩溃记为通过").toBe(0)
+    }
+    try {
+    app = await 起一次()
     /**
      * 等第一个窗口。**30 秒是原值，2026-08-10 调回。**
      *
@@ -906,7 +914,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
      * 在同一个进程里点来点去，永远碰不到「agent 没了、对话只在内存里」那一刻。
      */
     const 重开 = async (): Promise<Page> => {
-      await app.close().catch(() => {})
+      await 关掉并检查()
       app = await 起一次()
       app.process().stderr?.on("data", (b: Buffer) => {
         const 文本 = b.toString().trimEnd()
@@ -935,23 +943,14 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       重开,
     })
 
-    /**
-     * **关不掉要出声。** 上一版是 `.catch(() => {})`——静默吞掉。
-     * 2026-08-10 追一个「下一条用例启动挂住」的 bug 时才发现：
-     * 真出问题时这里一个字都不说，线索直接没了。
-     * 吞掉异常仍然是对的（一条用例的收尾失败不该让它变红），**但不能不吭声**。
-     */
-    await app.close().catch((err: unknown) => {
-      console.error("[e2e] Electron 关不掉：", err instanceof Error ? err.message : String(err))
-    })
-    await server.close()
-    await openalex?.close()
-    await science?.close()
-    await crossref?.close()
-    await weixin?.close()
-    await feishu?.close()
-    await 发布源?.close()
-    rmSync(dir, { recursive: true, force: true })
+    } finally {
+      // Setup failures (including firstWindow) must also close the application and servers.
+      try { if (app) await 关掉并检查() }
+      finally {
+        try { await Promise.all([server.close(), openalex?.close(), science?.close(), crossref?.close(), weixin?.close(), feishu?.close(), 发布源?.close()]) }
+        finally { rmSync(dir, { recursive: true, force: true }) }
+      }
+    }
   },
 })
 

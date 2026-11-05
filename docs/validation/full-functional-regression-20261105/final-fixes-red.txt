@@ -1,0 +1,161 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/pty-shutdown.test.ts tests/terminal/control.test.ts tests/electron/wiring.test.ts tests/ui/installed-skills.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-live-steering-parallel-20261105/dawn-science
+
+(node:75845) PromiseRejectionHandledWarning: Promise rejection was handled asynchronously (rejection id: 4)
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |node| tests/runtime/pty-shutdown.test.ts (6 tests | 4 failed) 15ms
+   × waits for native onExit even after the OS process has disappeared 6ms
+   × waits after SIGKILL and shares the entire stop across concurrent callers 2ms
+   × reports a bounded drain timeout without pretending the callback arrived 2ms
+   × does not let an old native exit clear a replacement process with the same session ID 2ms
+ ❯ |node| tests/terminal/control.test.ts (20 tests | 1 failed) 365ms
+     × counts only live local PTYs for native shutdown draining 3ms
+ ❯ |ui| tests/ui/installed-skills.test.tsx (6 tests | 1 failed) 397ms
+   × preserves authored Chinese tag facets and their filters while fixed controls remain English 96ms
+ ❯ |node| tests/electron/wiring.test.ts (44 tests | 1 failed | 1 skipped) 2095ms
+     × 活跃本地终端触发优雅退出，真实退出回调完成后才释放资源 517ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/installed-skills.test.tsx > preserves authored Chinese tag facets and their filters while fixed controls remain English
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/installed-skills.test.tsx:30:50
+     28|     const custom = within(group).getByRole('button', { name: '技能', exa…
+     29|     const bundled = within(group).getByRole('button', { name: '科研', ex…
+     30|     expect(custom.hasAttribute('data-authored')).toBe(true)
+       |                                                  ^
+     31|     expect(bundled.hasAttribute('data-authored')).toBe(true)
+     32|     expect(group.closest('[data-authored]')).toBeNull()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 活跃本地终端触发优雅退出，真实退出回调完成后才释放资源
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/electron/wiring.test.ts:84:42
+     82|       const started = await wb.server.handle("createTask", { agentId: …
+     83|       expect(started.ok).toBe(true)
+     84|       expect(wb.needsGracefulShutdown()).toBe(true)
+       |                                          ^
+     85|       await wb.closeAsync()
+     86|       expect(wb.needsGracefulShutdown()).toBe(false)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > waits for native onExit even after the OS process has disappeared
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/runtime/pty-shutdown.test.ts:33:19
+     31|   const stopped = runtime.stop('t').then(() => { settled = true })
+     32|   await vi.advanceTimersByTimeAsync(200)
+     33|   expect(settled).toBe(false)
+       |                   ^
+     34|   exits[0]!(); await vi.advanceTimersByTimeAsync(1); await stopped
+     35|   expect(settled).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > waits after SIGKILL and shares the entire stop across concurrent callers
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ tests/runtime/pty-shutdown.test.ts:43:25
+     41|   await vi.advanceTimersByTimeAsync(200)
+     42|   expect(process.kill).toHaveBeenCalledWith(-43210, 'SIGKILL')
+     43|   expect(mocks.collect).toHaveBeenCalledTimes(1)
+       |                         ^
+     44|   expect(settled).toBe(false)
+     45|   exits[0]!(); await vi.advanceTimersByTimeAsync(1); await Promise.all…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > reports a bounded drain timeout without pretending the callback arrived
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ tests/runtime/pty-shutdown.test.ts:49:44
+     47| it('reports a bounded drain timeout without pretending the callback ar…
+     48|   const runtime = await start()
+     49|   const stopped = expect(runtime.stop('t')).rejects.toThrow(/退出/)
+       |                                            ^
+     50|   await vi.advanceTimersByTimeAsync(1200); await stopped
+     51|   expect(vi.getTimerCount()).toBe(0)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |node| tests/runtime/pty-shutdown.test.ts > does not let an old native exit clear a replacement process with the same session ID
+Error: 会话 "t" 无活动 PTY 进程
+ ❯ PtyRuntime.write src/runtime/pty.ts:110:22
+    108|   write(sessionId: SessionId, data: string): void {
+    109|     const proc = this.procs.get(sessionId)
+    110|     if (!proc) throw new Error(`会话 "${sessionId}" 无活动 PTY 进程`)
+       |                      ^
+    111|     proc.write(data)
+    112|   }
+ ❯ tests/runtime/pty-shutdown.test.ts:58:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |node| tests/terminal/control.test.ts > terminal control ownership and execution > counts only live local PTYs for native shutdown draining
+TypeError: control.hasLiveLocalTerminals is not a function
+ ❯ tests/terminal/control.test.ts:18:22
+     16|     const port = { id: 'local', pid: 42, cwd: '/work', command: 'bash'…
+     17|     try {
+     18|       expect(control.hasLiveLocalTerminals()).toBe(false)
+       |                      ^
+     19|       control.register({ ...port, id: 'remote', connectionId: 'server'…
+     20|       expect(control.hasLiveLocalTerminals()).toBe(false)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+AssertionError: promise resolved "undefined" instead of rejecting
+ ❯ _Assertion.__VITEST_REJECTS__ ../../../../Desktop/Github_repos/dawn-science/node_modules/@vitest/expect/dist/index.js:1747:17
+ ❯ _Assertion.propertyGetter ../../../../Desktop/Github_repos/dawn-science/node_modules/chai/index.js:1607:27
+ ❯ Object.proxyGetter [as get] ../../../../Desktop/Github_repos/dawn-science/node_modules/chai/index.js:1696:22
+ ❯ tests/runtime/pty-shutdown.test.ts:49:44
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+This error originated in "tests/runtime/pty-shutdown.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "reports a bounded drain timeout without pretending the callback arrived". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  4 failed (4)
+      Tests  7 failed | 68 passed | 1 skipped (76)
+     Errors  1 error
+   Start at  16:10:05
+   Duration  4.55s (transform 1.85s, setup 557ms, import 2.97s, tests 2.87s, environment 591ms)

@@ -1278,8 +1278,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   let 网关: import("../acp/gateway.js").网关句柄 | undefined
 
   /** 退出时要收的：定时调度器、微信轮询（backend 登记进来） */
-  const 收摊们: Array<() => Promise<void> | void> = []
-  const 退出等待们: Array<() => boolean> = []
+  const 收摊们: Array<() => Promise<void> | void> = [() => remoteTerminals.closeLocalPresentations()]
+  const 退出等待们: Array<() => boolean> = [() => remoteTerminals.hasLocalPresentationWork()]
   /**
    * 更新那一套（2026-09-06）。**假 feed 与真 GitHub 只差一个端点**：
    * `DAWN_UPDATE_FEED` 一给，`dev:mock` 与 e2e 走的就是同一份解析器（准入规则 1）。
@@ -1983,22 +1983,25 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      *
      * **有上限**：一个停不下来的内核不该让「关掉应用」变成「关不掉」。
      */
-    /** 内核或目录传输仍活跃时，有界等待收尾；空闲退出不增加等待。 */
+    /** 本地 PTY、内核或目录传输仍活跃时，有界等待收尾；空闲退出不增加等待。 */
     needsGracefulShutdown() {
-      return sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
+      return terminalControl.hasLiveLocalTerminals() || sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
     },
 
     async closeAsync(timeoutMs = 1500) {
       if (closed) return
-      await Promise.race([
+      let timeout: ReturnType<typeof setTimeout> | undefined
+      try { await Promise.race([
         /**
          * **MCP 的那些进程也要收**（2026-08-15）。
          * 不收就是一堆孤儿进程——而它们多半连着数据库。
          * 与会话一起进同一个超时竞赛：**收摊不能因为一台服务器不肯退而卡住**。
          */
-        Promise.all([sessions.stopAll(), 对话的内核.收全部(), mcp池.全关(), ...收摊们.map((f) => Promise.resolve().then(f))]),
-        new Promise<void>((r) => setTimeout(r, timeoutMs)),
-      ])
+        Promise.allSettled([sessions.stopAll(), 对话的内核.收全部(), mcp池.全关(), ...收摊们.map((f) => Promise.resolve().then(f))]).then(results => {
+          for (const result of results) if (result.status === 'rejected') console.error('[退出] 资源收尾失败：', result.reason)
+        }),
+        new Promise<void>((r) => { timeout = setTimeout(r, timeoutMs) }),
+      ]) } finally { if (timeout !== undefined) clearTimeout(timeout) }
       this.close()
     },
   }

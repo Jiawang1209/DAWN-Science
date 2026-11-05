@@ -4,12 +4,13 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import * as pty from 'node-pty'
 import { RemoteTerminalRuntime } from '../../src/runtime/remote-terminal.js'
+import { PtyRuntime } from '../../src/runtime/pty.js'
 import { TerminalControl } from '../../src/terminal/control.js'
 import type { RemoteShell } from '../../src/remote/ssh.js'
 import type { AgentEvent, RemoteCwd, SessionSpec } from '../../src/runtime/types.js'
 
 const cleanup: (() => Promise<void>)[] = []
-afterEach(async () => { for (const f of cleanup.splice(0).reverse()) await f() })
+afterEach(async () => { try { for (const f of cleanup.splice(0).reverse()) await f() } finally { vi.restoreAllMocks() } })
 async function setup(options: {
   id?: string; control?: TerminalControl; runtime?: RemoteTerminalRuntime; canonical?: RemoteCwd
   environment?: (spec: SessionSpec) => Promise<Record<string, string>>; zsh?: boolean; lang?: string; noUtf8?: boolean
@@ -47,10 +48,106 @@ async function setup(options: {
     remote: { connectionId: 'server-a', label: 'server-a', cwd: canonical, executor: { exec: vi.fn(), readFile: vi.fn(), writeFile: vi.fn(), openShell } } }
   await runtime.start(spec)
   control.bind('chat', id); runtime.bindOwner(id, 'chat')
-  return { id, dir, control, runtime, openShell, canonical, spec, writes, cwd: () => canonical.get(),
+  return { id, dir, control, runtime, openShell, canonical, spec, writes, disconnect: close, cwd: () => canonical.get(),
     write: (data: string) => { control.humanInput(id, data); runtime.write(id, data) } }
 }
 const ready = async (runtime: RemoteTerminalRuntime, id = 't') => { await vi.waitFor(() => expect(runtime.isReady(id)).toBe(true), { timeout: 3000 }) }
+
+describe('local presenter shutdown', () => {
+  const fakeStart = () => vi.spyOn(PtyRuntime.prototype, 'start').mockResolvedValue({ sessionId: 't', pid: 42 })
+  it('keeps active local presentation resources visible until the drain completes', async () => {
+    const x = await setup({ environment: async () => ({}) }); fakeStart()
+    let release!: () => void
+    const pending = new Promise<void>(resolve => { release = resolve })
+    vi.spyOn(PtyRuntime.prototype, 'stop').mockReturnValue(pending)
+    try {
+      await x.runtime.launchCli('t')
+      expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+      let closed = false
+      const closing = x.runtime.closeLocalPresentations().then(() => { closed = true })
+      await Promise.resolve(); expect(closed).toBe(false)
+      release(); await closing
+      expect(x.runtime.hasLocalPresentationWork()).toBe(false)
+      await expect(x.runtime.launchCli('t')).rejects.toThrow(/关闭/)
+    } finally { release() }
+  })
+  it('closes launch admission before a deferred environment can create a local process', async () => {
+    let release!: (env: Record<string, string>) => void
+    const environment = new Promise<Record<string, string>>(resolve => { release = resolve })
+    const x = await setup({ environment: () => environment }), start = fakeStart()
+    vi.spyOn(PtyRuntime.prototype, 'stop').mockResolvedValue()
+    try {
+      const launch = x.runtime.launchCli('t').then(() => undefined, error => error)
+      expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+      const closing = x.runtime.closeLocalPresentations()
+      release({}); expect(await launch).toBeInstanceOf(Error); await closing
+      expect(start).not.toHaveBeenCalled()
+      expect(x.runtime.hasLocalPresentationWork()).toBe(false)
+    } finally { release({}) }
+  })
+  it('retains a disconnected entry local PTY drain independently of remote history', async () => {
+    const x = await setup({ environment: async () => ({}) }); fakeStart()
+    let release!: () => void
+    const pending = new Promise<void>(resolve => { release = resolve })
+    const stop = vi.spyOn(PtyRuntime.prototype, 'stop').mockReturnValue(pending)
+    try {
+      await x.runtime.launchCli('t')
+      x.disconnect()
+      await vi.waitFor(() => expect(stop).toHaveBeenCalled())
+      expect(x.control.state('t').alive).toBe(false)
+      expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+      const closing = x.runtime.closeLocalPresentations()
+      release(); await closing
+      expect(x.runtime.hasLocalPresentationWork()).toBe(false)
+    } finally { release() }
+  })
+  it('observes background drain failures and reports them to shutdown without an unhandled rejection', async () => {
+    const x = await setup({ environment: async () => ({}) }); fakeStart()
+    const error = new Error('native drain timeout')
+    const stop = vi.spyOn(PtyRuntime.prototype, 'stop').mockRejectedValue(error)
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      await x.runtime.launchCli('t'); x.disconnect()
+      await vi.waitFor(() => expect(log).toHaveBeenCalled())
+      expect(x.runtime.hasLocalPresentationWork()).toBe(true)
+      await expect(x.runtime.closeLocalPresentations()).rejects.toMatchObject({ errors: [error] })
+    } finally { stop.mockResolvedValue(); await x.runtime.closeLocalPresentations() }
+  })
+  it('waits for sibling drains before reporting one presenter failure', async () => {
+    const a = await setup({ environment: async () => ({}) })
+    await setup({ id: 'second', runtime: a.runtime, control: a.control, canonical: a.canonical }); fakeStart()
+    let release!: () => void
+    const pending = new Promise<void>(resolve => { release = resolve })
+    const failure = new Error('first presenter failed')
+    const stop = vi.spyOn(PtyRuntime.prototype, 'stop').mockImplementation(id => id === 't' ? Promise.reject(failure) : pending)
+    try {
+      await a.runtime.launchCli('t'); await a.runtime.launchCli('second')
+      let settled = false
+      const closing = a.runtime.closeLocalPresentations().then(() => { settled = true; return undefined }, error => { settled = true; return error })
+      await new Promise<void>(resolve => setImmediate(resolve))
+      expect(settled).toBe(false)
+      release(); expect(await closing).toBeInstanceOf(AggregateError)
+    } finally { release(); stop.mockResolvedValue(); await a.runtime.closeLocalPresentations() }
+  })
+  it('waits for an in-flight local start before stopping a disconnected presenter', async () => {
+    const x = await setup({ environment: async () => ({}) })
+    let release!: (handle: { sessionId: string; pid: number }) => void
+    const pending = new Promise<{ sessionId: string; pid: number }>(resolve => { release = resolve })
+    const start = vi.spyOn(PtyRuntime.prototype, 'start').mockReturnValue(pending)
+    const stop = vi.spyOn(PtyRuntime.prototype, 'stop').mockResolvedValue()
+    try {
+      const launch = x.runtime.launchCli('t').then(() => undefined, error => error)
+      await vi.waitFor(() => expect(start).toHaveBeenCalled())
+      x.disconnect(); await vi.waitFor(() => expect(x.control.state('t').alive).toBe(false))
+      expect(stop).not.toHaveBeenCalled()
+      const closing = x.runtime.closeLocalPresentations()
+      release({ sessionId: 't', pid: 42 })
+      expect(await launch).toBeInstanceOf(Error); await closing
+      expect(stop).toHaveBeenCalledTimes(1)
+      expect(x.runtime.hasLocalPresentationWork()).toBe(false)
+    } finally { release({ sessionId: 't', pid: 42 }) }
+  })
+})
 
 describe('persistent remote terminal runtime', () => {
   it('uses the same remote shell for human and Agent commands and synchronizes cwd', async () => {

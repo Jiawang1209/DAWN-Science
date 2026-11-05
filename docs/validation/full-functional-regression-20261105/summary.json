@@ -1,0 +1,60 @@
+{
+  "desktop": {
+    "startTime": "2026-11-05T07:14:17.757Z",
+    "duration": 3150645.388,
+    "expected": 914,
+    "skipped": 2,
+    "unexpected": 3,
+    "flaky": 0
+  },
+  "targeted-desktop": {
+    "startTime": "2026-11-05T08:21:54.218Z",
+    "duration": 276023.142,
+    "expected": 46,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "pty-repeat": {
+    "startTime": "2026-11-05T08:27:27.297Z",
+    "duration": 67944.137,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "final-desktop": {
+    "startTime": "2026-11-05T08:48:18.787Z",
+    "duration": 100082.451,
+    "expected": 19,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "final-kernel": {
+    "startTime": "2026-11-05T08:53:20.291Z",
+    "duration": 16944.85,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "final-interpreters": {
+    "startTime": "2026-11-05T08:53:37.772Z",
+    "duration": 3837.4010000000003,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "sourceFiles": 1477,
+  "finalUnit": {
+    "files": 637,
+    "passed": 6311,
+    "skipped": 10,
+    "total": 6321
+  },
+  "installedAppReplaced": false,
+  "pushed": false,
+  "released": false
+}

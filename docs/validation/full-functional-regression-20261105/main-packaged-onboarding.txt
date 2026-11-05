@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' scripts/verify-packaged-onboarding.ts docs/validation/full-functional-regression-20261105/main-packaged-onboarding
+Packaged onboarding: legacy flags preserved, first version welcomed, same-version restart skipped, next version welcomed.

@@ -66,5 +66,34 @@
     "consecutiveGroupPasses": 190,
     "thresholdChanged": false,
     "rootCauseResolved": false
+  },
+  "mainVerifiedCommit": "640c7aaddd8fc2e0d079fcde60a9e1d24fedd5b1",
+  "mainCritical": {
+    "files": 8,
+    "passed": 137,
+    "skipped": 1
+  },
+  "mainDesktop": {
+    "startTime": "2026-11-05T09:15:21.999Z",
+    "duration": 29564.161,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "mainPackagedOnboarding": {
+    "actualPackagedStartup": true,
+    "isolatedTemporaryBundle": true,
+    "installedAppUntouched": true,
+    "oldUpdaterStateSimulated": true,
+    "firstId": "1d83db37-c207-45e3-b300-e468c1f80c41@0.0.44",
+    "sameVersionRestartStable": true,
+    "nextId": "1d83db37-c207-45e3-b300-e468c1f80c41@0.0.45",
+    "oldFlagsRetained": true,
+    "existingProviderConfigPreserved": true,
+    "configHash": "3583f46c690043706705419cebf319855f159a245e1d826394885ea88672949b",
+    "limitations": [
+      "Uses current source overlaid into an isolated copy of the installed macOS bundle; does not certify release signing or perform a real updater download/swap."
+    ]
   }
 }

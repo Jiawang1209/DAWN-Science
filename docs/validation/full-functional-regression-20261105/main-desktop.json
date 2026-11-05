@@ -1,0 +1,184 @@
+{
+  "config": {
+    "argv": [
+      "/Users/liuyue/.hermes/node/bin/node",
+      "/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/.bin/playwright",
+      "test",
+      "e2e/science-parallel.spec.ts",
+      "e2e/subagent-steering-epoch.spec.ts",
+      "--reporter=list,json",
+      "--update-snapshots=none",
+      "--output=docs/validation/full-functional-regression-20261105/main-output"
+    ],
+    "configFile": "/Users/liuyue/Desktop/Github_repos/dawn-science/playwright.config.ts",
+    "rootDir": "/Users/liuyue/Desktop/Github_repos/dawn-science/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/liuyue/Desktop/Github_repos/dawn-science/docs/validation/full-functional-regression-20261105/main-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/liuyue/Desktop/Github_repos/dawn-science/e2e",
+        "testIgnore": [
+          "**/kernel-session.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "science-parallel.spec.ts",
+      "file": "science-parallel.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8824,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「科研批量验收：两个独立 CSV，以并发上」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:54894/36f4beb2-4163-4bd5-9753-502020089218\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T09:15:22.554Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d95105f3e4ecfd0ea5a2-03f73149546cb8a2c069",
+          "file": "science-parallel.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "subagent-steering-epoch.spec.ts",
+      "file": "subagent-steering-epoch.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "expired correction draft cannot cross a real child epoch and can be explicitly rewritten",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 20145,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html\n"
+                    },
+                    {
+                      "text": "[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。\n"
+                    },
+                    {
+                      "text": "[主进程] Debugger ending on ws://127.0.0.1:54942/ddd49948-734f-43a2-ae9a-f2bca3fdeb4d\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-05T09:15:31.405Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0bf96ab52b4da4c04414-021072b3e023c95e8e8b",
+          "file": "subagent-steering-epoch.spec.ts",
+          "line": 6,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-05T09:15:21.999Z",
+    "duration": 29564.161,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

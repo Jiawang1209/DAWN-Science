@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/remote-terminal.test.ts tests/runtime/pty-shutdown.test.ts tests/terminal/control.test.ts tests/electron/wiring.test.ts tests/ui/installed-skills.test.tsx tests/electron/onboarding-installation.test.ts tests/ui/setup-wizard.test.tsx tests/subagent/steering-policy.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  8 passed (8)
+      Tests  137 passed | 1 skipped (138)
+   Start at  17:15:14
+   Duration  7.16s (transform 2.84s, setup 1.18s, import 4.72s, tests 10.93s, environment 1.37s)

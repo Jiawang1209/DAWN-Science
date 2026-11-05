@@ -1,0 +1,19 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/science-parallel.spec.ts e2e/subagent-steering-epoch.spec.ts --reporter=list,json --update-snapshots=none --output=docs/validation/full-functional-regression-20261105/main-output
+
+Running 2 tests using 1 worker
+
+(node:85069) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：两个独立 CSV，以并发上」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:54894/36f4beb2-4163-4bd5-9753-502020089218
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-parallel.spec.ts:5:1 › two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary (8.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54942/ddd49948-734f-43a2-ae9a-f2bca3fdeb4d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/subagent-steering-epoch.spec.ts:6:1 › expired correction draft cannot cross a real child epoch and can be explicitly rewritten (20.1s)
+
+  2 passed (29.6s)

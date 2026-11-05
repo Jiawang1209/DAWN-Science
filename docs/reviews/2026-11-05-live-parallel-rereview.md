@@ -24,7 +24,7 @@
 - 最终统一入口退出 0：原 5 对基线无错误放行、10 条增量记录、2 对并行、取消／恢复、完整复用及真实纠偏演示均通过，实际锁授予／释放窗口互斥断言通过。最终记录仅使用 merge-evaluation/；evaluation/ 与 final-evaluation/ 为修复过程中的中间验收快照。
 - 1474 个源码条目无漂移；独立核对 baseline／incremental／parallel 三份源文件和子进程构建签名、40 份实际产物的字节数与 SHA-256，全部一致。
 
-本地提交与 main 合并后验收将追加到此报告。
+实现已提交为 `732bd513` 并本地 fast-forward 到 main。后续全功能回归修复 `1e4ab252` 与测试同步 `640c7aad` 也已合入，未推送、未发布。主分支最新复验再次实际跑通并行科研与纠偏代次两项（29.6 秒），1477 条源码指纹一致；完整记录见 [全功能复核](2026-11-05-full-functional-regression.md)。原 main-demo/ 产物保留，本次最新截图与回执在 full-functional-regression-20261105/main-proof/，两组证据不互相覆盖。
 
 真实 Electron 跨轮操作已通过：第 1 轮留下未提交草稿并取消；同一子任务开启第 2 轮后显示草稿过期；显式重写后只有新指令进入 epoch2，持久化唯一回执为 epoch2/applied。见 [过期草稿截图](../validation/live-parallel-rereview-20261105/desktop/epoch-expired.png) 和 [实际代次回执](../validation/live-parallel-rereview-20261105/desktop/epoch-demo.json)。
 

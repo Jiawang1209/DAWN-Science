@@ -18,6 +18,7 @@ const ChildSchema = z.object({
   id: z.string(), kind: ChildKindSchema, address: z.array(z.string().min(1)).min(1).max(8),
   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),
   updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
+  handoffSha256:z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
 }).strict()
 export type ChildRecord = z.infer<typeof ChildSchema>
 const MessageSchema = z.object({
@@ -27,9 +28,10 @@ const MessageSchema = z.object({
   outcome: OutcomeSchema.optional(), deliveredAt: z.number().finite().optional(),
 }).strict()
 export type ChildMessage = z.infer<typeof MessageSchema>
-const StateSchema = z.object({
+export const OrchestrationStateSchema = z.object({
   version: z.literal(1), ownerSessionId: z.string().min(1), children: z.array(ChildSchema), messages: z.array(MessageSchema).default([]), steering:z.array(SteeringReceiptSchema).default([]),
 }).strict()
+const StateSchema = OrchestrationStateSchema
 type State = z.infer<typeof StateSchema>
 
 /** Backend addresses are data, never filesystem paths supplied by a model. */
@@ -115,6 +117,18 @@ export class OrchestrationStore {
     }
     this.change(state=>{state.children.find(item=>item.id===id)!.settings=parsed})
     return structuredClone(parsed)
+  }
+
+  /** null freezes deliberate absence; undefined is an older, unbound record. */
+  bindHandoff(id:string,sha256:string|null):void {
+    const child=this.get(id)
+    if(!child)throw new Error('Unknown child')
+    const parsed=z.string().regex(/^[a-f0-9]{64}$/).nullable().parse(sha256)
+    if(child.handoffSha256!==undefined){
+      if(child.handoffSha256!==parsed)throw new Error('上下文交接已冻结，不可修改')
+      return
+    }
+    this.change(state=>{state.children.find(item=>item.id===id)!.handoffSha256=parsed})
   }
 
   update(id: string, patch: Partial<Pick<ChildRecord, 'state' | 'epoch' | 'reason' | 'result' | 'paused'>>, expectedEpoch?: number): ChildRecord {

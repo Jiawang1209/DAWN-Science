@@ -32,6 +32,7 @@ export class OrchestrationService {
 
   get revision(): number {return this.generation}
   get isClosed(): boolean {return this.closed}
+  get hasPendingWork():boolean {return this.active.size>0||this.queue.length>0}
 
   register(kind: ChildKind, address: readonly string[], label: string): ChildRecord {
     if (this.closed) throw new Error('Orchestration service is closed')

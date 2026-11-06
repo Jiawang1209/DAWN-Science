@@ -76,6 +76,29 @@ function newDbPath(): string {
 }
 
 describe("createWorkbench", () => {
+  it('活跃的普通子任务及停止排空期间都触发优雅退出',async()=>{
+    const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'}),subagentChildEntry:'/unused.js'})
+    let release!:()=>void
+    const gate=new Promise<void>(r=>release=r)
+    try{
+      const result=await wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})
+      expect(result.ok).toBe(true)
+      const owner=(result as {ok:true;data:{sessionId:string}}).data.sessionId
+      const internals=wb.nativeRuntime as unknown as {orchestrations:Map<string,import('../../src/orchestration/service.js').OrchestrationService>}
+      const service=internals.orchestrations.get(owner)!,child=service.register('subagent',['shutdown','0'],'reader')
+      const run=service.run(child.id,async()=>{await gate;return{ok:true,output:''}})
+      try{
+        expect(wb.needsGracefulShutdown()).toBe(true)
+        const close=wb.closeAsync();await new Promise<void>(r=>setImmediate(r))
+        expect(service.controlPhase(child.id)).toBe('stopping')
+        expect(wb.needsGracefulShutdown()).toBe(true)
+        release();await run;await close
+        expect(wb.nativeRuntime.hasActiveChildren()).toBe(false)
+        await new Promise<void>(r=>setImmediate(r))
+        expect(wb.needsGracefulShutdown()).toBe(false)
+      }finally{release();await run}
+    }finally{release();await wb.closeAsync()}
+  })
   it("一个资源收尾失败时仍等待其他会话，随后正常关闭", async () => {
     const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
     let release!: () => void

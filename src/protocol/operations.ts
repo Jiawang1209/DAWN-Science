@@ -1,3 +1,4 @@
+import {RunOverviewSchema} from './run-overview.js'
 import {SubagentControlActionSchema,SubagentControlStateSchema} from './subagent-control.js'
 import { skillDiscoveryOperations } from "./skill-discovery.js"
 import { skillManagementOperations } from "./skill-management.js"
@@ -578,6 +579,11 @@ export const OPERATIONS = {
    * （`<会话目录>/subagents/<调用>/<序号>/`：`meta.json` + `transcript/` 里的 pi 会话文件）。退订复用 `unsubscribeSession`。
    * 找不到是 `not_found`——不回一份空快照：空的会被读成「它什么都没做」。
    */
+  getRunOverview: {
+    request: z.object({sessionId:z.string().min(1)}).strict(),
+    response: RunOverviewSchema,
+    mutating:false,
+  },
   openSubagent: {
     request: z.object({ transcriptId: z.string().min(1) }).strict(),
     response: SessionSnapshotSchema,

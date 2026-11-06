@@ -1,3 +1,5 @@
+import {handoffPrompt} from './context-handoff.js'
+import type {HandoffSelection,ContextHandoff} from '../protocol/context-handoff.js'
 import {SteeringEventSchema} from "./steering.js"
 import {TaskVersionsSchema,type TaskVersions} from '../protocol/file-versions.js'
 import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
@@ -50,13 +52,15 @@ export {killOwnedProcessTree as 杀掉后代} from '../runtime/process-tree.js'
 import {killOwnedProcessTree as 杀掉后代} from '../runtime/process-tree.js'
 
 export interface SubagentTask {
+  handoff?:HandoffSelection
+
   contract?: TaskContract
   agent: string
   task: string
 }
 
 export type SubagentRequest =
-  | { mode: "single"; agent: string; task: string; contract?: TaskContract }
+  | { mode: "single"; agent: string; task: string; contract?: TaskContract;handoff?:HandoffSelection }
   | { mode: "parallel"; tasks: SubagentTask[] }
   | { mode: "chain"; chain: SubagentTask[] }
 
@@ -143,6 +147,8 @@ export type ChildFactory = (spec: {
  * 而失败方式是「每个子 agent 都说模型不存在」——要跨进程才查得出来。
  */
 export interface SubagentContext {
+  handoffOf?:(index:number)=>ContextHandoff|undefined
+
   recordReceipt?:(receipt:TaskReceipt)=>TaskReceipt
   authorize?: (name:string,params:Record<string,unknown>,signal?:AbortSignal)=>string|undefined|Promise<string|undefined>
   provider: string
@@ -253,7 +259,7 @@ export class SubagentExecutor {
     for (const [i, step] of steps.entries()) {
       // **第一步也要替换**，替成空串——留着 `{previous}` 字面量传给模型更糟
       const task = step.task.split(PREVIOUS).join(previous)
-      const r = await this.one(i, { agent: step.agent, task, ...(step.contract?{contract:step.contract}:{}) }, definitions, signal)
+      const r = await this.one(i, { agent: step.agent, task, ...(step.contract?{contract:step.contract}:{}),...(step.handoff?{handoff:step.handoff}:{}) }, definitions, signal)
       results.push(r)
       if (!r.ok) {
         // **停下。** 拿失败的结果当 `{previous}` 往下传就是编造——
@@ -309,7 +315,8 @@ export class SubagentExecutor {
 
   private async runChild(definition: SubagentDefinition, task: SubagentTask, index: number, signal?: AbortSignal, resume = false): Promise<SubagentResult> {
     let settings:TaskSettings|undefined
-    try {settings=this.prepareTask?.(index,task,definition)} catch(error){return fail(task,message(error))}
+    let preparedHandoff:ContextHandoff|undefined
+    try {settings=this.prepareTask?.(index,task,definition);preparedHandoff=this.context.handoffOf?.(index)} catch(error){return fail(task,message(error))}
     const execute=async (runSignal:AbortSignal):Promise<SubagentResult>=>{
       const release=settings?await taskOutputReservation(this.context.cwd,settings,runSignal):()=>{}
       try {
@@ -318,7 +325,9 @@ export class SubagentExecutor {
         if(inputProblem)return{...fail(task,inputProblem.reason??inputProblem.summary),receipt:inputProblem}
         const versionProblem=await versionInputReceipt(settings,this.context.cwd,runSignal)
         if(versionProblem)return{...fail(task,versionProblem.reason??versionProblem.summary),receipt:versionProblem}
-        const result=await this.spawnOne(definition,task,index,runSignal,resume,settings)
+        const handoff=this.context.handoffOf?.(index)
+        if(handoff?.sha256!==preparedHandoff?.sha256)throw new Error('排队期间冻结交接快照发生变化；子进程未启动')
+        const result=await this.spawnOne(definition,task,index,runSignal,resume,settings,handoff)
         if(result.ok&&settings?.contract){
           const verified=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd),this.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]})
           const receipt=verified.versions&&this.context.recordReceipt?this.context.recordReceipt(verified):verified
@@ -347,6 +356,7 @@ export class SubagentExecutor {
     /** 续问（2026-09-27）：续这个运行目录里那份会话，而不是新开一份 */
     续 = false,
     settings?: TaskSettings,
+    handoff?:ContextHandoff,
   ): Promise<SubagentResult> {
     const cmd = this.childOf({ definition, agent: task.agent, task: task.task })
 
@@ -571,7 +581,7 @@ export class SubagentExecutor {
       const spec: SubagentChildSpec = {
         agent: task.agent,
         ...(binding?{steering:binding}:{}),
-        task: taskPrompt(task.task,settings?.contract),
+        task: taskPrompt(!续&&handoff?handoffPrompt(task.task,handoff):task.task,settings?.contract),
         ...(settings?{taskSettings:settings}:{}),
         ...(ctx.authorize?{authorize:true as const}:{}),
         systemPrompt: definition.systemPrompt,
@@ -594,7 +604,7 @@ export class SubagentExecutor {
 }
 
 function toTasks(req: SubagentRequest): SubagentTask[] {
-  if (req.mode === "single") return [{ agent: req.agent, task: req.task, ...(req.contract?{contract:req.contract}:{}) }]
+  if (req.mode === "single") return [{ agent: req.agent, task: req.task, ...(req.contract?{contract:req.contract}:{}),...(req.handoff?{handoff:req.handoff}:{}) }]
   return req.mode === "parallel" ? [...req.tasks] : [...req.chain]
 }
 

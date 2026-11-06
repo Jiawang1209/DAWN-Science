@@ -62,6 +62,7 @@ describe("操作注册表", () => {
         "compactSession",
         "previewRewind",
         "rewindTurn",
+        "getRunOverview",
         "openSubagent",
         "askSubagent",
         "controlSubagent",

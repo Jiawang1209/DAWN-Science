@@ -179,13 +179,13 @@ function 造一台() {
  * 准入规则 ① 那句话（*「两套 mock 会各自漂移」*）对这里同样成立。
  */
 const 端口 = Number(process.env.DAWN_MCP_HTTP_PORT ?? "")
-if (Number.isFinite(端口) && 端口 > 0) {
+if (process.env.DAWN_MCP_HTTP_PORT?.trim() && Number.isFinite(端口) && 端口 >= 0) {
   /**
    * **无状态模式**（`sessionIdGenerator: undefined`）：测试里每次请求都可以独立处理，
    * 不必维护会话。真服务器多半有状态，但那是**它那一侧**的事——
    * 我们要验的是我们这个客户端说不说得对。
    */
-  http
+  const server = http
     .createServer((req, res) => {
       /**
        * **假 MLAI 图廊**（2026-09-15，案例卡片）：MCP 地址去掉 `/mcp` 就是图廊根——与真 MLAI 同一台服务。
@@ -230,7 +230,7 @@ if (Number.isFinite(端口) && 端口 > 0) {
         })()
       })
     })
-    .listen(端口, () => process.stderr.write(`[假 MCP] streamable HTTP 起在 ${端口}\n`))
+    .listen(端口, () => process.stderr.write(`[假 MCP] streamable HTTP 起在 ${server.address().port}\n`))
 } else {
   const startupDelay = Number(process.argv.find(arg => arg.startsWith('--startup-delay='))?.split('=')[1] ?? 0)
   if (startupDelay) {

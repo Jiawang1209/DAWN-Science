@@ -23,6 +23,8 @@ import { memoryCredentials } from "../helpers/credentials.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
 import { 子转录id } from "../../src/protocol/subagent-id.js"
 import { 子运行目录, 写元 } from "../../src/subagent/run-dir.js"
+import {OrchestrationStore} from '../../src/orchestration/store.js'
+import {captureHandoff,freezeHandoff} from '../../src/subagent/context-handoff.js'
 
 class 会续问的 extends FakeRuntime {
   readonly 问过: string[] = []
@@ -96,6 +98,27 @@ function 摆一个(sessionDir: string, toolCallId: string, 带会话文件 = tru
 }
 
 describe("openSubagent", () => {
+  it('运行总览只读冷状态，按父会话隔离，并显示可追溯交接',async()=>{
+    const ctx=make(),s=await ctx.开一段(),other=await ctx.开一段(),dir=ctx.sessions.get(s)!.sessionDir
+    const store=new OrchestrationStore(dir,s),child=store.register('subagent',['call','0'],'reader')
+    store.update(child.id,{state:'running',epoch:2})
+    const capsule=captureHandoff(s,[{type:'message',id:'u',message:{role:'user',content:'only this parent'}}],1)
+    freezeHandoff(子运行目录(dir,'call',0),capsule)
+    const file=join(dir,'orchestration/state.json'),before=readFileSync(file,'utf8')
+    const result=await ctx.backend.getRunOverview({sessionId:s}) as {source:string;runs:{phase:string;handoff:{sha256:string}}[]}
+    expect(result.source).toBe('disk');expect(result.runs[0]?.phase).toBe('unknown');expect(result.runs[0]?.handoff.sha256).toBe(capsule.sha256)
+    expect(readFileSync(file,'utf8')).toBe(before)
+    expect(await ctx.backend.getRunOverview({sessionId:other})).toMatchObject({ownerSessionId:other,runs:[]})
+    await expect(ctx.backend.getRunOverview({sessionId:'missing'})).rejects.toMatchObject({workbenchCode:'not_found'})
+  })
+  it('冷状态从编排绑定发现丢失的后台交接，不需要 meta.json',async()=>{
+    const ctx=make(),s=await ctx.开一段(),dir=ctx.sessions.get(s)!.sessionDir
+    const store=new OrchestrationStore(dir,s),child=store.register('subagent',['queued','0'],'reader')
+    store.bindHandoff(child.id,'a'.repeat(64))
+    const snapshot=await ctx.backend.getRunOverview({sessionId:s}) as {runs:{handoff?:unknown;handoffIssue?:string}[]}
+    expect(snapshot.runs[0]?.handoff).toBeUndefined()
+    expect(snapshot.runs[0]?.handoffIssue).toContain('缺失')
+  })
   it("内存里没有：读盘建起来——过程是会话文件里那几句，头信息来自 meta，可以接着问", async () => {
     const ctx = make()
     const s = await ctx.开一段()

@@ -1,3 +1,5 @@
+import {captureHandoff} from '../subagent/context-handoff.js'
+import {liveRunOverview} from '../orchestration/run-overview.js'
 import {createHash} from 'node:crypto'
 import {runControlledScience} from '../team/science-execution.js'
 import {taskTeamSnapshot} from "../team/task-snapshot.js"
@@ -1720,6 +1722,7 @@ export class NativeRuntime implements AgentRuntime {
     const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       orchestration,
+      captureHandoff:selection=>captureHandoff(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],selection.recentMessages),
       remote:Boolean(spec.remote),
       taskPolicy:()=>this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??"ask-risky",
       sessionId: spec.sessionId,
@@ -4065,6 +4068,15 @@ ${描述}`
    * 与主 agent 派的那一轮同一条路。答复不回主 agent。「一次一句」由中枢的 `asking` 管（后端在调这里之前就标上了）。
    * 那一轮若没走到 `settled` 就抛了，这里补一条失败的 settled——不补的话那一格永远「正在答」、再也问不了。
    */
+  runOverview(sessionId:SessionId){
+    const service=this.orchestrations.get(sessionId)
+    return service?liveRunOverview(service):undefined
+  }
+
+  hasActiveChildren():boolean {
+    return [...this.orchestrations.values()].some(service=>service.hasPendingWork)
+  }
+
   async controlSubagent(sessionId:SessionId,toolCallId:string,index:number,action:import('../protocol/subagent-control.js').SubagentControlAction):Promise<import('../protocol/subagent-control.js').SubagentControlState>{
     const service=this.orchestrations.get(sessionId)
     const child=service?.store.list().find(child=>child.kind==='subagent'&&child.address.length===2&&child.address[0]===子目录段(toolCallId)&&child.address[1]===String(index))

@@ -713,6 +713,13 @@ pre {
   flex: none;
 }
 .panel { min-width: 0; }
+.run-overview { padding: var(--dawn-space-2); }
+.run-overview .panel-title { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-2); }
+.run-overview .panel-title h3 { margin: 0; font: inherit; }
+.run-overview-row { padding: var(--dawn-space-2) 0; border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); overflow-wrap: anywhere; }
+.run-handoff pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.run-handoff code { display: block; white-space: normal; overflow-wrap: anywhere; }
+.run-handoff summary { cursor: pointer; }
 .panel-title {
   margin: 0 0 8px;
   padding-bottom: 6px;

@@ -12,6 +12,7 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    getRunOverview:async({sessionId})=>({ownerSessionId:sessionId,source:"disk",runs:[]}),
     ...createArtifactOperations({session:()=>undefined}),
     getTerminalAgentAttachments: async () => ({ revision: 0, pending: [] }),
     updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },

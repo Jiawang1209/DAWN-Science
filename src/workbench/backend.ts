@@ -1,3 +1,5 @@
+import {readHandoff} from '../subagent/context-handoff.js'
+import {readRunOverview} from '../orchestration/run-overview.js'
 import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
 import { readAcpSkillHistory } from "../acp/skill-read-history.js"
 import { assertProjectInstallRoot } from "../skills/project-install-root.js"
@@ -2824,6 +2826,23 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * 打开一段子 agent 的转录（2026-09-27，spec §2.2 / §2.4）。本次运行里跑过的，中枢里已经有，直接订阅；
      * 没有就读盘：`meta.json` 给头信息与交回的结果，`transcript/` 里的会话文件给过程（与主对话续接同一套翻法）。
      */
+    getRunOverview: async ({sessionId}) => {
+      const record=sessions.get(sessionId)
+      if(!record)throw fault("not_found","会话不存在：{0}",sessionId)
+      const snapshot=sessions.runtimeOf(sessionId)?.runOverview?.(sessionId)??readRunOverview(record.sessionDir,sessionId)
+      if(snapshot.ownerSessionId!==sessionId)throw fault("internal_error","运行记录的会话不匹配")
+      for(const run of snapshot.runs)if(run.kind==='subagent'&&run.address.length===2&&/^\d+$/.test(run.address[1]!)){
+        const dir=子运行目录(record.sessionDir,run.address[0]!,Number(run.address[1]))
+        try{
+          const handoff=readHandoff(dir,sessionId),meta=读元(dir)
+          const binding=run.handoffSha256!==undefined?run.handoffSha256:meta?.handoffSha256
+          if(run.handoffSha256!==undefined&&meta?.handoffSha256!==undefined&&run.handoffSha256!==meta.handoffSha256)throw new Error('交接绑定与运行记录冲突')
+          if(binding!==undefined&&binding!==(handoff?.sha256??null))throw new Error('冻结交接快照缺失或指纹冲突')
+          if(handoff)run.handoff=handoff
+        }catch(error){run.handoffIssue=error instanceof Error?error.message:String(error)}
+      }
+      return snapshot
+    },
     openSubagent: async ({ transcriptId }) => {
       const 拆 = 拆子转录id(transcriptId)
       if (!拆) throw fault("invalid_request", "这不是一个子 agent 的 id")

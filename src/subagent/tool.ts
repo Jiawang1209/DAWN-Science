@@ -1,3 +1,6 @@
+import {freezeHandoff,readHandoff} from './context-handoff.js'
+import {childIdentity} from '../orchestration/store.js'
+import {HandoffSelectionSchema,type HandoffSelection,type ContextHandoff} from '../protocol/context-handoff.js'
 /**
  * `subagent` 工具定义（①-B″ · S1）。
  *
@@ -35,6 +38,8 @@ import type { AgentEvent, SessionId } from "../runtime/types.js"
 import { 写元, 读元, type 子运行元 } from "./run-dir.js"
 
 export interface SubagentToolOptions {
+  captureHandoff?:(selection:HandoffSelection)=>ContextHandoff
+
   remote?: boolean
   taskPolicy?: ()=>import("../policy/permissions.js").权限档
   controlService?: import("../orchestration/service.js").OrchestrationService | undefined
@@ -67,7 +72,9 @@ export interface SubagentToolOptions {
   emit: (event: AgentEvent) => void
 }
 
+const HandoffParameters=Type.Object({recentMessages:Type.Integer({minimum:1,maximum:8,description:"从当前父会话选取最近 N 条已完成正文；最多 16 KiB，不含工具结果或思考，不扩大权限"})},{additionalProperties:false})
 const TaskItem = Type.Object({
+  handoff:Type.Optional(HandoffParameters),
   contract: Type.Optional(TaskContractParameters),
   agent: Type.String({ description: "子 agent 的名字" }),
   task: Type.String({ description: "交给它的任务" }),
@@ -82,6 +89,7 @@ const TaskItem = Type.Object({
  * 且带自动重试，我们只需把这一层的规则说清楚）。
  */
 const parameters = Type.Object({
+  handoff:Type.Optional(HandoffParameters),
   contract: Type.Optional(TaskContractParameters),
   agent: Type.Optional(Type.String({ description: "single 模式：用哪个子 agent" })),
   task: Type.Optional(Type.String({ description: "single 模式：任务内容" })),
@@ -98,11 +106,13 @@ const parameters = Type.Object({
 })
 
 interface Params {
+  handoff?:HandoffSelection
+
   contract?: TaskContract
   agent?: string
   task?: string
-  tasks?: { agent: string; task: string; contract?: TaskContract }[]
-  chain?: { agent: string; task: string; contract?: TaskContract }[]
+  tasks?: { agent: string; task: string; contract?: TaskContract;handoff?:HandoffSelection }[]
+  chain?: { agent: string; task: string; contract?: TaskContract;handoff?:HandoffSelection }[]
 }
 
 /** pi 的工具结果形状。**不引 pi 的类型**——这一层只需要形状对 */
@@ -138,12 +148,37 @@ function 交回的(r: SubagentResult): NonNullable<子运行元["result"]> {
 }
 
 /** Both foreground and mailbox adapters bind the same immutable settings before execution. */
-export function prepareSubagentTask(opts:SubagentToolOptions,callId:string,index:number,task:{agent:string;contract?:TaskContract},tools?:readonly string[]):TaskSettings|undefined {
+export function prepareSubagentTask(opts:SubagentToolOptions,callId:string,index:number,task:{agent:string;contract?:TaskContract;handoff?:HandoffSelection},tools?:readonly string[]):TaskSettings|undefined {
   if(opts.remote&&task.contract)throw new Error('远端任务尚不支持严格子任务契约验收')
   const store=opts.taskStore??opts.orchestration?.store
-  if(!store&&!opts.taskPolicy&&!task.contract)return undefined
   const child=store?.register('subagent',[子目录段(callId),String(index)],task.agent)
-  const dir=目录于(opts,callId)(index),meta=读元(dir)
+  const dir=目录于(opts,callId)(index)
+  const existingHandoff=readHandoff(dir,opts.sessionId),existingMeta=读元(dir)
+  const legacyStarted=child&&(child.epoch>0||child.state!=='idle'||child.settings)
+  const recorded=child?.handoffSha256!==undefined?child.handoffSha256:existingMeta?.handoffSha256!==undefined?existingMeta.handoffSha256:legacyStarted?null:undefined
+  if(child?.handoffSha256!==undefined&&existingMeta?.handoffSha256!==undefined&&child.handoffSha256!==existingMeta.handoffSha256)throw new Error('交接绑定与运行记录冲突')
+  if(recorded!==undefined&&recorded!==(existingHandoff?.sha256??null))throw new Error('冻结交接快照缺失或与运行记录不匹配')
+  if(existingHandoff&&recorded===undefined)throw new Error('交接快照缺少子任务绑定；请核对旧记录后新建任务，不会隐式继承')
+  if((task.contract||child?.settings?.contract||existingMeta?.settings?.contract)&&existingHandoff)throw new Error('普通上下文快照不能用于冻结科研契约')
+  if(task.handoff){
+    const selection=HandoffSelectionSchema.parse(task.handoff)
+    if(recorded===null)throw new Error('任务已冻结为不继承父上下文，不能在重试时追加交接')
+    if(task.contract||existingMeta?.settings?.contract||child?.settings?.contract)throw new Error('科研任务使用冻结路线与契约，不接受普通对话快照')
+    if(existingHandoff){
+      if(existingHandoff.requestedMessages!==selection.recentMessages)throw new Error('交接选择已冻结，不可修改')
+    }else{
+      if(!opts.captureHandoff)throw new Error('当前后端不支持父上下文交接')
+      const captured=opts.captureHandoff(selection)
+      if(captured.sourceSessionId!==opts.sessionId)throw new Error('不能交接其他父会话的上下文')
+      freezeHandoff(dir,captured)
+    }
+  }
+  const handoff=readHandoff(dir,opts.sessionId)
+  const binding=handoff?.sha256??null
+  if(child)store!.bindHandoff(child.id,binding)
+  if(existingMeta&&existingMeta.handoffSha256===undefined){const error=写元(dir,{...existingMeta,handoffSha256:binding});if(error)throw new Error(error)}
+  if(!store&&!opts.taskPolicy&&!task.contract)return undefined
+  const meta=读元(dir)
   const previous=child?.settings??(meta?.settings?TaskSettingsSchema.parse(meta.settings):undefined)
   if(previous&&task.contract&&JSON.stringify(previous.contract)!==JSON.stringify(task.contract))throw new Error('任务契约已冻结，不可通过续问修改')
   const settings=previous??resolveTaskSettings(task.contract,opts.taskPolicy?.()??'ask-risky',tools)
@@ -161,7 +196,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
   return {
     name: "subagent",
     label: "subagent",
-    description: describe(load()),
+    description: describe(load())+'\n可选 handoff:{recentMessages:1..8}：宿主选取当前父会话最近的已完成正文，最多 16 KiB；保存来源和指纹，不复制工具结果、思考或权限。single 放顶层，parallel/chain 放在各项中。科研契约任务仍使用冻结路线，不接受此快照。',
     parameters,
 
     async execute(toolCallId: string, params: Params, signal?: AbortSignal): Promise<ToolResult> {
@@ -187,11 +222,15 @@ export function createSubagentTool(opts: SubagentToolOptions) {
       control: !opts.remote&&(opts.controlService??opts.orchestration) ? {service:(opts.controlService??opts.orchestration)!,addressOf:(i:number)=>[子目录段(toolCallId),String(i)]}:undefined,
         ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
         // 运行目录按调用分（2026-09-27）：executor 只认 `agentDirOf(index)`，这里把 toolCallId 绑进去
-        context: { ...opts.context, agentDirOf: 目录 },
+        context: { ...opts.context, agentDirOf: 目录,handoffOf:i=>readHandoff(目录(i),opts.sessionId) },
         onProgress: (p) => {
           // **账本靠这两条**。`toolCallId` 让它挂到发起它的那次工具调用下面
           if (p.type === "started") {
-            记(p.index, { agent: p.agent, task: p.task, status: "running", startedAt: Date.now() })
+            const previous=读元(目录(p.index))
+            const persisted=(opts.taskStore??opts.orchestration?.store)?.get(childIdentity('subagent',[子目录段(toolCallId),String(p.index)],opts.sessionId))?.handoffSha256
+            const marker=previous?.handoffSha256!==undefined?previous.handoffSha256:persisted!==undefined?persisted:previous?null:undefined
+            记(p.index, { agent: p.agent, task: p.task, status: "running", startedAt: Date.now(),
+              ...(previous?.settings?{settings:previous.settings}:{}),...(marker!==undefined?{handoffSha256:marker}:{}) })
             opts.emit({
               kind: "subagent_start",
               sessionId: opts.sessionId,
@@ -262,7 +301,7 @@ export function createSubagentFollowUp(opts: SubagentToolOptions) {
       childOf: opts.childOf,
       control: !opts.remote&&(opts.controlService??opts.orchestration) ? {service:(opts.controlService??opts.orchestration)!,addressOf:(i:number)=>[子目录段(toolCallId),String(i)]}:undefined,
       ...(opts.orchestration ? {orchestration: {service: opts.orchestration, addressOf: (i: number) => [子目录段(toolCallId), String(i)]}} : {}),
-      context: { ...opts.context, agentDirOf: 目录于(opts, toolCallId) },
+      context: { ...opts.context, agentDirOf: 目录于(opts, toolCallId),handoffOf:i=>readHandoff(目录于(opts,toolCallId)(i),opts.sessionId) },
       onProgress: (p) => {
         // 执行器的续问本来就不发 started / settled；这里再只认 event，两道门
         if (p.type === "event") opts.emit({ kind: "subagent_event", sessionId: opts.sessionId, toolCallId, index, event: p.event })
@@ -322,6 +361,7 @@ function describe(load: ReturnType<typeof loadSubagentDefinitions>): string {
 
 /** 参数 → 请求。**恰好一组，多了少了都报错** */
 function toRequest(p: Params): { request: SubagentRequest } | { error: string } {
+  if(p.handoff&&(p.tasks||p.chain))return{error:'parallel/chain 的 handoff 请放在各项任务中，不能放在顶层'}
   const modes = [
     p.agent !== undefined || p.task !== undefined ? "single" : undefined,
     p.tasks !== undefined ? "parallel" : undefined,
@@ -339,7 +379,7 @@ function toRequest(p: Params): { request: SubagentRequest } | { error: string } 
   if (p.tasks) return { request: { mode: "parallel", tasks: p.tasks } }
   if (p.chain) return { request: { mode: "chain", chain: p.chain } }
   if (!p.agent || !p.task) return { error: "single 模式要同时给 agent 和 task。" }
-  return { request: { mode: "single", agent: p.agent, task: p.task, ...(p.contract?{contract:p.contract}:{}) } }
+  return { request: { mode: "single", agent: p.agent, task: p.task, ...(p.contract?{contract:p.contract}:{}),...(p.handoff?{handoff:p.handoff}:{}) } }
 }
 
 /** 结果 → 回给模型的文本 */

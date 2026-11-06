@@ -6167,7 +6167,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }} />
             ) : rightDockTenant === "team" ? (
               /** 按它画的那一段重挂（2026-09-29）：展开 / 收起的是那一段的成员与任务，换段不带过去 */
-              <TeamPanel key={团队格会话 ?? sessionId} />
+              <TeamPanel key={团队格会话 ?? sessionId} client={client} onView={id=>{$rightDockTenant.set("subagent");$rightDockOpen.set(true);看子agent(id)}} />
             ) : rightDockTenant === "route" ? (
               !session ? <EmptyState title={t("开始任务后查看路线")} description={t("每段会话保留自己的分析步骤和产物记录。")} /> : <AnalysisRoutePanel
                 onPrepareDelivery={prepareAnalysisDelivery}

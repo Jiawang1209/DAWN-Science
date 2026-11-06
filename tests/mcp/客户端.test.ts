@@ -287,28 +287,32 @@ describe("远端那种：streamable HTTP", () => {
 
   beforeEach(async () => {
     const { spawn } = await import("node:child_process")
-    const net = await import("node:net")
-    // **要一个空闲端口**：写死端口的用例在并行跑的时候会互相踩
-    端口 = await new Promise<number>((res) => {
-      const s = net.createServer()
-      s.listen(0, () => {
-        const p = (s.address() as { port: number }).port
-        s.close(() => res(p))
-      })
-    })
+    // 直接由子服务器绑定动态端口；不预留再释放，避免启动前被其他用例抢占。
     子进程 = spawn(process.execPath, [服务器脚本], {
-      env: { ...process.env, DAWN_MCP_HTTP_PORT: String(端口) },
+      env: { ...process.env, DAWN_MCP_HTTP_PORT: "0" },
       stdio: ["ignore", "ignore", "pipe"],
     })
-    // 等它真的听上了再往下走——**不等的话这一组会变成一条抖动的用例**
     await new Promise<void>((res, rej) => {
-      const 超时 = setTimeout(() => rej(new Error("假 MCP 服务器 5 秒内没起来")), 5000)
-      子进程!.stderr?.on("data", (b) => {
-        if (String(b).includes("streamable HTTP 起在")) {
-          clearTimeout(超时)
-          res()
-        }
-      })
+      let stderr = ""
+      const finish = (error?: Error) => {
+        clearTimeout(超时)
+        子进程!.off("error", failed)
+        子进程!.off("exit", exited)
+        子进程!.stderr?.off("data", data)
+        if (error) rej(error); else res()
+      }
+      const failed = (error: Error) => finish(error)
+      const exited = (code: number | null) => finish(new Error(`假 MCP 服务器就绪前退出（${code}）：${stderr}`))
+      const data = (chunk: Buffer) => {
+        stderr = (stderr + String(chunk)).slice(-8192)
+        const match = /streamable HTTP 起在 (\d+)/.exec(stderr)
+        if (match && Number(match[1]) > 0) { 端口 = Number(match[1]); finish() }
+      }
+      const 超时 = setTimeout(() => finish(new Error(`假 MCP 服务器 5 秒内没起来：${stderr}`)), 5000)
+      子进程!.once("error", failed)
+      子进程!.once("exit", exited)
+      子进程!.stderr?.setEncoding("utf8")
+      子进程!.stderr?.on("data", data)
     })
   })
   afterEach(() => 子进程?.kill())

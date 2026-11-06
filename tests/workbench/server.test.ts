@@ -151,6 +151,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
       terminal: "", terminalTrimmed: false, state: "alive" as const,
     }),
     unsubscribeSession: async () => ({}),
+    getRunOverview: async ({sessionId}) => ({ownerSessionId:sessionId,source:'disk',runs:[]}),
     openSubagent: async () => ({
       sessionId: "s1#sub:c1:0", kind: "native" as const, revision: 0, items: [],
       terminal: "", terminalTrimmed: false, state: "alive" as const,

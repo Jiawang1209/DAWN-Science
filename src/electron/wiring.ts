@@ -1983,9 +1983,9 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      *
      * **有上限**：一个停不下来的内核不该让「关掉应用」变成「关不掉」。
      */
-    /** 本地 PTY、内核或目录传输仍活跃时，有界等待收尾；空闲退出不增加等待。 */
+    /** 子任务（含停止排空）、本地 PTY、内核或目录传输活跃时，有界等待；空闲退出不增加等待。 */
     needsGracefulShutdown() {
-      return terminalControl.hasLiveLocalTerminals() || sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
+      return nativeRuntime.hasActiveChildren() || terminalControl.hasLiveLocalTerminals() || sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
     },
 
     async closeAsync(timeoutMs = 1500) {

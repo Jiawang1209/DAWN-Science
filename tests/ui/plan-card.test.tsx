@@ -44,13 +44,18 @@ describe("方案卡", () => {
   })
 
   it("改一改 → 编辑框是原文；照改过的做 → approve 带改过的正文；没改就不带", async () => {
-    const onAnswer = vi.fn(async () => {})
+    let completeFirst!:()=>void
+    const pendingFirst=new Promise<void>(resolve=>{completeFirst=resolve})
+    const onAnswer = vi.fn().mockImplementationOnce(()=>pendingFirst).mockResolvedValue(undefined)
     render(<方案卡 item={卡} 能答 onAnswer={onAnswer} />)
     fireEvent.click(screen.getByRole("button", { name: "改一改" }))
     const 框 = screen.getByRole("textbox", { name: "方案原文" }) as HTMLTextAreaElement
     expect(框.value).toBe(假方案.plan)
     fireEvent.click(screen.getByRole("button", { name: "照改过的做" }))
     await waitFor(() => expect(onAnswer).toHaveBeenLastCalledWith("approve", undefined))
+    expect((screen.getByRole("button", {name:"照改过的做"}) as HTMLButtonElement).disabled).toBe(true)
+    await act(async()=>completeFirst())
+    await waitFor(()=>expect((screen.getByRole("button", {name:"改一改"}) as HTMLButtonElement).disabled).toBe(false))
     fireEvent.click(screen.getByRole("button", { name: "改一改" }))
     fireEvent.change(screen.getByRole("textbox", { name: "方案原文" }), { target: { value: `${假方案.plan}\n补一句` } })
     fireEvent.click(screen.getByRole("button", { name: "照改过的做" }))

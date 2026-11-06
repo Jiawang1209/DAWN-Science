@@ -64,14 +64,14 @@ export function createSubagentOrchestration(opts: SubagentToolOptions, service: 
   }, onResult, onError)
   return {
     mailbox,
-    start(agent: string, task: string, requestId: string, contract?:import("../orchestration/task-contract.js").TaskContract) {
+    start(agent: string, task: string, requestId: string, contract?:import("../orchestration/task-contract.js").TaskContract,handoff?:import("../protocol/context-handoff.js").HandoffSelection) {
       const definitions = opts.dirs ? loadSubagentsFrom(opts.dirs, {自带停用: opts.自带停用}) : loadSubagentDefinitions(opts.projectRoot)
       if (!definitions.agents.some(definition => definition.name === agent && !definition.disabled)) throw new Error(`没有启用的子 agent：${agent}`)
       const call = 子目录段(requestId)
       const previous = service.store.list().find(child => child.kind === 'subagent' && child.address[0] === call && child.address[1] === '0')
       if (previous && !service.store.messages().some(message => message.childId === previous.id && message.requestId === requestId && message.mode === 'start')) throw new Error('子任务运行地址已存在，不能覆盖旧会话')
       const child = service.register('subagent', [call, '0'], agent)
-      prepareSubagentTask({...raw},call,0,{agent,...(contract?{contract}:{})},definitions.agents.find(d=>d.name===agent)?.tools)
+      prepareSubagentTask({...raw},call,0,{agent,...(contract?{contract}:{}),...(handoff?{handoff}:{})},definitions.agents.find(d=>d.name===agent)?.tools)
       return {child, message: mailbox.send(child.id, task, requestId, 'start')}
     },
   }

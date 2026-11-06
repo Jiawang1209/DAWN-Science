@@ -601,7 +601,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
   // 这是现有 10 个 spec 一行都不用改的原因
   dawnOptions: [{}, { option: true }],
 
-  dawn: async ({ dawnOptions }, use) => {
+  dawn: async ({ dawnOptions }, use, testInfo) => {
     const science = dawnOptions.fakeScience ? await startFakeScienceServer() : undefined
     const crossref = dawnOptions.fakeCrossref ? await startFakeCrossrefServer() : undefined
     const openalex = dawnOptions.fakeOpenAlex ? await startFakeOpenAlexServer() : undefined
@@ -851,7 +851,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
     try {
     app = await 起一次()
     appProcess = app.process()
-    exitDiagnostics = await observeElectronExit(app)
+    exitDiagnostics = await observeElectronExit(app,testInfo.outputPath('electron-exit'))
     /**
      * 等第一个窗口。**30 秒是原值，2026-08-10 调回。**
      *
@@ -926,7 +926,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       await 关掉并检查()
       app = await 起一次()
       appProcess = app.process()
-      exitDiagnostics = await observeElectronExit(app)
+      exitDiagnostics = await observeElectronExit(app,testInfo.outputPath('electron-exit'))
       app.process().stderr?.on("data", (b: Buffer) => {
         const 文本 = b.toString().trimEnd()
         if (文本) console.error("[主进程]", 文本)

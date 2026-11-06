@@ -1,3 +1,4 @@
+import {runContextHandoffEvaluation} from './evaluate-context-handoff.js'
 import {runSubagentSteeringDemo} from './demo-subagent-steering.js'
 import {runScienceParallel} from './evaluate-science-parallel.js'
 import {runScienceIncremental} from './evaluate-science-incremental.js'
@@ -88,5 +89,5 @@ async function run(scenario:ScienceBaselineCase,mode:'single'|'multi',entry:stri
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const destination=resolve(process.argv[2]??'docs/validation/incremental-science-20261105/evaluation')
- runScienceBaseline(destination).then(async r=>{const incremental=await runScienceIncremental(destination);const parallel=await runScienceParallel(join(destination,'parallel'));const steering=await runSubagentSteeringDemo(join(destination,'steering'));console.log(JSON.stringify({destination,byMode:r.byMode,incrementalRows:incremental.rows.length,parallelRows:parallel.rows.length,parallelPairs:parallel.pairs,steeringModelRequests:steering.modelRequests}))}).catch(error=>{console.error(error);process.exitCode=1})
+ runScienceBaseline(destination).then(async r=>{const incremental=await runScienceIncremental(destination);const parallel=await runScienceParallel(join(destination,'parallel'));const handoff=await runContextHandoffEvaluation(join(destination,"handoff"));const steering=await runSubagentSteeringDemo(join(destination,'steering'));console.log(JSON.stringify({destination,byMode:r.byMode,incrementalRows:incremental.rows.length,parallelRows:parallel.rows.length,parallelPairs:parallel.pairs,steeringModelRequests:steering.modelRequests,handoffObserved:handoff.observed}))}).catch(error=>{console.error(error);process.exitCode=1})
 }

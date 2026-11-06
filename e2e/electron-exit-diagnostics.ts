@@ -1,12 +1,13 @@
-/** Opt-in observation only: never closes a pipe, kills a process or changes exit budgets. */
+/** Passive default close watchdog; app-level injection remains opt-in. No kill or budget changes. */
 import type { ElectronApplication } from '@playwright/test'
 import { execFile } from 'node:child_process'
 import { appendFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { collectTree } from '../src/runtime/process-tree.js'
 
-export async function observeElectronExit(app: ElectronApplication) {
-  const dir = process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR
+export async function observeElectronExit(app: ElectronApplication, defaultDir?:string) {
+  const explicitDir=process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR
+  const dir = explicitDir || defaultDir
   if (!dir) return { beginClose() {}, async appReady() {} }
   mkdirSync(dir, { recursive: true })
   const child = app.process()
@@ -28,11 +29,13 @@ export async function observeElectronExit(app: ElectronApplication) {
   const beginClose = () => {
     if (closing || closed) return
     closing = true
-    const owned = child.pid && child.exitCode === null ? collectTree(child.pid).pids : []
+    // Keep normal fixture shutdown passive: inspect processes only if it stalls.
+    const owned = explicitDir && child.pid && child.exitCode === null ? collectTree(child.pid).pids : []
     record('close-requested', { ...snapshot(), owned })
     timer = setTimeout(() => {
       record('still-waiting-5s', snapshot())
-      if (owned.length) execFile('ps', ['-p', owned.join(','), '-o', 'pid=,ppid=,state=,comm='], (error, stdout) => {
+      const waiting=owned.length?owned:child.pid&&child.exitCode===null?collectTree(child.pid).pids:[]
+      if (waiting.length) execFile('ps', ['-p', waiting.join(','), '-o', 'pid=,ppid=,state=,comm='], (error, stdout) => {
         record('owned-processes', { error: error?.message, stdout })
       })
       if (process.platform === 'darwin' && child.pid && child.exitCode === null && child.signalCode === null) {
@@ -69,6 +72,7 @@ export async function observeElectronExit(app: ElectronApplication) {
   })
   record('attached', snapshot())
   const appReady = async () => {
+    if(!explicitDir)return
     try {
       await app.evaluate(({ app }) => {
         const log = (event: string) => {

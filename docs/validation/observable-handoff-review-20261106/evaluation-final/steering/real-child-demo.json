@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "provider": "localhost deterministic OpenAI-compatible fixture",
+  "scope": "actual installed Pi AgentSession.steer, child stdin/stdout, real bash tools; does not measure model quality",
+  "toolBoundaryVerified": true,
+  "duplicateNotRedelivered": true,
+  "cancellationDrained": true,
+  "modelRequests": 3,
+  "correctedResult": "真实慢工具开始已按纠偏改为 corrected-blue。",
+  "receipts": [
+    {
+      "id": "steer-f2de3d842e5fcfe1cfd78ac57f7e485a",
+      "childId": "child-131ffd54fb0d5727f3fee4d1558893ca",
+      "requestId": "correction-1",
+      "epoch": 1,
+      "text": "Change the answer to corrected-blue.",
+      "status": "applied",
+      "createdAt": 1793946428495,
+      "updatedAt": 1793946430006
+    },
+    {
+      "id": "steer-324b444ab1b0d6f80d51b56b1f10c884",
+      "childId": "child-4337dc0cfa25f2e1104a906d4b66d6c3",
+      "requestId": "cancel-correction",
+      "epoch": 1,
+      "text": "Should remain unconfirmed.",
+      "status": "interrupted",
+      "createdAt": 1793946430588,
+      "updatedAt": 1793946430589,
+      "reason": "执行结束或已停止，是否进入模型上下文未确认；未自动重放"
+    }
+  ],
+  "timeline": [
+    {
+      "ms": 504,
+      "kind": "output",
+      "call": "first"
+    },
+    {
+      "ms": 505,
+      "kind": "tool_start",
+      "call": "first",
+      "tool": "bash"
+    },
+    {
+      "ms": 511,
+      "kind": "accepted",
+      "receipt": {
+        "id": "steer-f2de3d842e5fcfe1cfd78ac57f7e485a",
+        "childId": "child-131ffd54fb0d5727f3fee4d1558893ca",
+        "requestId": "correction-1",
+        "epoch": 1,
+        "text": "Change the answer to corrected-blue.",
+        "status": "accepted",
+        "createdAt": 1793946428495,
+        "updatedAt": 1793946428495
+      }
+    },
+    {
+      "ms": 2019,
+      "kind": "tool_end",
+      "call": "first"
+    },
+    {
+      "ms": 2019,
+      "kind": "turn_end",
+      "call": "first"
+    },
+    {
+      "ms": 2024,
+      "kind": "output",
+      "call": "first"
+    },
+    {
+      "ms": 2024,
+      "kind": "output",
+      "call": "first"
+    },
+    {
+      "ms": 2024,
+      "kind": "output",
+      "call": "first"
+    },
+    {
+      "ms": 2024,
+      "kind": "turn_end",
+      "call": "first"
+    },
+    {
+      "ms": 2027,
+      "kind": "applied",
+      "receipt": {
+        "id": "steer-f2de3d842e5fcfe1cfd78ac57f7e485a",
+        "childId": "child-131ffd54fb0d5727f3fee4d1558893ca",
+        "requestId": "correction-1",
+        "epoch": 1,
+        "text": "Change the answer to corrected-blue.",
+        "status": "applied",
+        "createdAt": 1793946428495,
+        "updatedAt": 1793946430006
+      }
+    },
+    {
+      "ms": 2590,
+      "kind": "output",
+      "call": "cancel"
+    },
+    {
+      "ms": 2591,
+      "kind": "tool_start",
+      "call": "cancel",
+      "tool": "bash"
+    },
+    {
+      "ms": 2603,
+      "kind": "cancel-accepted",
+      "receipt": {
+        "id": "steer-324b444ab1b0d6f80d51b56b1f10c884",
+        "childId": "child-4337dc0cfa25f2e1104a906d4b66d6c3",
+        "requestId": "cancel-correction",
+        "epoch": 1,
+        "text": "Should remain unconfirmed.",
+        "status": "accepted",
+        "createdAt": 1793946430588,
+        "updatedAt": 1793946430588
+      }
+    },
+    {
+      "ms": 2629,
+      "kind": "cancel-drained",
+      "receipt": {
+        "id": "steer-324b444ab1b0d6f80d51b56b1f10c884",
+        "childId": "child-4337dc0cfa25f2e1104a906d4b66d6c3",
+        "requestId": "cancel-correction",
+        "epoch": 1,
+        "text": "Should remain unconfirmed.",
+        "status": "interrupted",
+        "createdAt": 1793946430588,
+        "updatedAt": 1793946430589,
+        "reason": "执行结束或已停止，是否进入模型上下文未确认；未自动重放"
+      },
+      "toolPidDead": true
+    }
+  ]
+}

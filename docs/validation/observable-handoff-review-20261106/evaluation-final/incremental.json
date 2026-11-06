@@ -1,0 +1,409 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    "src/team/science-reuse.ts",
+    "src/team/science-python-bootstrap.ts",
+    "src/protocol/science-route-context.ts",
+    "src/team/science-environment.ts",
+    "src/team/science-execution.ts",
+    "src/team/science-acceptance.ts",
+    "src/team/science-pipeline-tools.ts",
+    "src/team/science-batch.ts",
+    "src/runtime/process-tree.ts",
+    "src/runtime/native.ts",
+    "src/subagent/task-tools.ts",
+    "src/orchestration/task-submission.ts",
+    "src/artifacts/task-versions.ts",
+    "src/files/table.ts",
+    "src/protocol/science-acceptance.ts",
+    "src/protocol/science-reuse.ts",
+    "scripts/evaluate-science-incremental.ts",
+    "scripts/mock-science-template.mjs"
+  ],
+  "sourceFingerprint": "073ce47f02f4ea5f24844bcd809a7931655c75bc6025cf3448b46ec566919be0",
+  "childBuildFingerprint": "43745fa5842cf39b7d8f207d8c330d1df8a366b55fc977c166445b9b35929537",
+  "generatedAt": "2026-11-06T06:26:12.065Z",
+  "configuration": {
+    "provider": "localhost deterministic fixture",
+    "actualPiPythonFiles": true,
+    "fixture": "two separate CSVs: x=1..5 m",
+    "fault": "B writes and declares 999 while host expects 3",
+    "maxRevisions": 1,
+    "parallelism": 1,
+    "hostRules": "n, mean, unit, JSON/receipt consistency; isolated environment and script binding",
+    "comparisonFingerprint": "093c31d8f5675f6104b7baace4013480edffe7a47fe2de661d017d54c65e887b"
+  },
+  "rows": [
+    {
+      "mode": "full-rerun",
+      "scenario": "fault",
+      "phase": "commonSetup",
+      "status": "blocked",
+      "modelRequests": 16,
+      "executedItems": 2,
+      "reusedItems": 0,
+      "hostValidationReceipts": 2,
+      "groundTruthPassed": false,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 9095,
+      "visibleTokens": 320,
+      "unknownUsageTasks": 0,
+      "partialUsage": false,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "共同故障前置执行"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "共同故障前置执行"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "full-rerun",
+      "scenario": "recovery",
+      "phase": "recoveryIncrement",
+      "status": "completed",
+      "modelRequests": 20,
+      "executedItems": 2,
+      "reusedItems": 0,
+      "hostValidationReceipts": 2,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 14549,
+      "visibleTokens": 400,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "用户明确要求重跑此项"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "用户明确要求重跑此项"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "fault",
+      "phase": "commonSetup",
+      "status": "blocked",
+      "modelRequests": 16,
+      "executedItems": 2,
+      "reusedItems": 0,
+      "hostValidationReceipts": 2,
+      "groundTruthPassed": false,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 14853,
+      "visibleTokens": 320,
+      "unknownUsageTasks": 0,
+      "partialUsage": false,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "共同故障前置执行"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "共同故障前置执行"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "recovery",
+      "phase": "recoveryIncrement",
+      "status": "completed",
+      "modelRequests": 10,
+      "executedItems": 1,
+      "reusedItems": 1,
+      "hostValidationReceipts": 1,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 9775,
+      "visibleTokens": 200,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "reused",
+            "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+            "source": {
+              "teamId": "pipeline-3fe742e9146e04848deec79a",
+              "stateRevision": 3,
+              "itemId": "a"
+            }
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "历史项未完成完整验收；重新执行"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "identical-repeat",
+      "phase": "increment",
+      "status": "completed",
+      "modelRequests": 0,
+      "executedItems": 0,
+      "reusedItems": 2,
+      "hostValidationReceipts": 0,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 2771,
+      "visibleTokens": 0,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "reused",
+            "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+            "source": {
+              "teamId": "pipeline-abb138f76c92c8f9971e28e2",
+              "stateRevision": 4,
+              "itemId": "a"
+            }
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "reused",
+            "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+            "source": {
+              "teamId": "pipeline-abb138f76c92c8f9971e28e2",
+              "stateRevision": 4,
+              "itemId": "b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "input-changed",
+      "phase": "increment",
+      "status": "completed",
+      "modelRequests": 10,
+      "executedItems": 1,
+      "reusedItems": 1,
+      "hostValidationReceipts": 1,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 9543,
+      "visibleTokens": 200,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "reused",
+            "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+            "source": {
+              "teamId": "pipeline-6bfca80a67c55cab2049064c",
+              "stateRevision": 3,
+              "itemId": "b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "method-changed",
+      "phase": "increment",
+      "status": "completed",
+      "modelRequests": 20,
+      "executedItems": 2,
+      "reusedItems": 0,
+      "hostValidationReceipts": 2,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 14599,
+      "visibleTokens": 400,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "artifact-tampered",
+      "phase": "increment",
+      "status": "completed",
+      "modelRequests": 10,
+      "executedItems": 1,
+      "reusedItems": 1,
+      "hostValidationReceipts": 1,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 7412,
+      "visibleTokens": 200,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "文件内容版本已变化，不能沿用原核查、审阅或恢复检查点"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "reused",
+            "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+            "source": {
+              "teamId": "pipeline-fd4f76de2bf9b6b870ab7bd3",
+              "stateRevision": 5,
+              "itemId": "b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "route-notes-changed",
+      "phase": "increment",
+      "status": "completed",
+      "modelRequests": 20,
+      "executedItems": 2,
+      "reusedItems": 0,
+      "hostValidationReceipts": 2,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 13222,
+      "visibleTokens": 400,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "derived-rerun",
+      "scenario": "temporary-environment-changed",
+      "phase": "increment",
+      "status": "completed",
+      "modelRequests": 20,
+      "executedItems": 2,
+      "reusedItems": 0,
+      "hostValidationReceipts": 2,
+      "groundTruthPassed": true,
+      "expectedBehavior": true,
+      "sourcePreserved": true,
+      "inputPreserved": true,
+      "elapsedMs": 12607,
+      "visibleTokens": 400,
+      "unknownUsageTasks": 1,
+      "partialUsage": true,
+      "items": [
+        {
+          "id": "a",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        },
+        {
+          "id": "b",
+          "decision": {
+            "mode": "rerun",
+            "reason": "输入、方法、规则、执行者、权限或环境已变化"
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "本地确定性夹具的工程路径对照，不是真实模型能力、质量或费用评测。",
+    "commonSetup 是共同故障前置成本；recoveryIncrement 仅含修正之后的新请求/执行/宿主开销。",
+    "复用历史回执不计为本次新执行或零费用；未上报用量保留 unknown/partial。",
+    "实际文件独立验收；复用仅承认历史产物与审阅，不证明科学结论普遍有效。"
+  ]
+}

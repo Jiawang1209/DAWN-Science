@@ -1,0 +1,97 @@
+[
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/01-basic-only.png",
+    "currentEvidenceSha256": "0cceb8a8956e340bf3442ae5b1c315a905f485f31b12585d7d9eb17a3acab872",
+    "restoredBaselineSha256": "4befb59abf651e5fdd86778f7c6f67d1145d4068db1978f8b3f203a3b7d936a0"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/02-numeric-blocked.png",
+    "currentEvidenceSha256": "fc927faed7e6633cb91a2c55c6526b4be9f639769fa455fa9afaf7acdf89565f",
+    "restoredBaselineSha256": "0559fdcba22c3ffef0da63a3f96cce2a70baaccacb2e03b3d523555c0280241f"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/03-source-blocked.png",
+    "currentEvidenceSha256": "ceee4dea6fda7cc5a6b0b25000efcfbf4cecde824f7d393dafed0b554ac78d0e",
+    "restoredBaselineSha256": "c5bc60336ce4bfde625c46220ef196725832d59cdc31e1a4ae78f550e91daec4"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/04-derived-decisions.png",
+    "currentEvidenceSha256": "d1e61e6a60b1439262d4cd534dbcfad654a1deea8bbd8506447ef0b6344dc76b",
+    "restoredBaselineSha256": "a8ae4ac7a911b0dee3a3f460e57f78e2281896eae92ded82247a6eb84a3e3506"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/04-derived-full.png",
+    "currentEvidenceSha256": "ab69a3267efa75bacb1a0636dbe3aaa0a61baf34c35cb9ac685d8796d857368a",
+    "restoredBaselineSha256": "d426799edfda865e8f2de05758521a81a29aec191cc104ad7d3b54bd3dda5ba7"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/basic-error-receipt.json",
+    "currentEvidenceSha256": "085f2c77c01c079cb904f072a0d028e3aa2d09e92848741178c1e1be966fac58",
+    "restoredBaselineSha256": "271cfd65a2c3c8dca53dabd43d7a033fbcb5ee3cd83409e2e3eeaefe119df1e8"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/derived-summary.json",
+    "currentEvidenceSha256": "5fd7042b5d392277f59c5b2bb5f6483729c431cc2ad1e6d0c7abda5713218ea0",
+    "restoredBaselineSha256": "6a422ae3b91bde23fc7866853815b4068082b31db778d6d81319e3c8466aa13d"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/incremental-electron.json",
+    "currentEvidenceSha256": "70288d197a5c581fea900a7f088ffc41a40c61c3f24d27a19ce4919663461ffa",
+    "restoredBaselineSha256": "dc2b8c63200fb80f76c1eb67cfd4ee0e60e46e98fe5ba77e0faa901cb759eac0"
+  },
+  {
+    "path": "docs/validation/incremental-science-20261105/demo/numeric-error-receipt.json",
+    "currentEvidenceSha256": "26270677f4cad9657c026610eea68ac6147345e0ac43a7aaf1efc455a424a842",
+    "restoredBaselineSha256": "b8231dc4bfdbd322a2d37c057bbc0ce1964881cb1f6901727f5fb89d091aa0b2"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-a/desktop-accepted.png",
+    "currentEvidenceSha256": "fbe2cab79c9a875591d823bfe0b32c19c9ecec73f744569ea1a0b5fec63353a7",
+    "restoredBaselineSha256": "0e5c796ec4ad78d6fe27cbd0f325736a3d8af65370bd9e3861a7163aefe173a3"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-a/desktop-applied.png",
+    "currentEvidenceSha256": "2f7a137a3784637a16d4872a1db23d2f8cf4f51e38b802b4b4938595496de53e",
+    "restoredBaselineSha256": "cb33074f8c97c44705768b09b282596bb231a4f27d027f267b7dcd5ad4b0fe7b"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-a/desktop-cancelled.png",
+    "currentEvidenceSha256": "d63b614a0609615d493763963905757d9886b4989348cac4f547a177a1b33b43",
+    "restoredBaselineSha256": "38d41c851113ceef69b53d2a517d01a5a7c67d640c0012cbffb0cedff1e6481b"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-b/desktop-team.json",
+    "currentEvidenceSha256": "1c1ef93e4066e28fadeafbdc9654f47d002d014efb3a4bb8d556dca28b0873c6",
+    "restoredBaselineSha256": "02ed6b15f3acd9c9e36cc64185c5a7ffa51a962447cf6a74dd8a1890bf6d9bca"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-b/parallel-completed.png",
+    "currentEvidenceSha256": "900f5f745dca651521ced0d0033fd42ca1604566ab55e025cc239957b348c58f",
+    "restoredBaselineSha256": "62d112a56b717befdb15da3b4b65bb7a9da64e745d873244cb9eeb17741a822b"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-b/summary.json",
+    "currentEvidenceSha256": "47be7d1f77371646ab19ec80e80c9dc5fa13e1bd4c2994982ab866f43a854462",
+    "restoredBaselineSha256": "9287b6ac6ebb40c353580a807239d1de24ee46ea1687aa1cb4cfe0a362e04056"
+  },
+  {
+    "path": "docs/validation/live-parallel-20261105/stage-b/summary.md",
+    "currentEvidenceSha256": "4abac503307fbb52526ac7bf74b813bfb484bc840cd8dcc4063728325d2322e6",
+    "restoredBaselineSha256": "346afc612f895241c777cf43e65097f39566439103bcc57587ada1483631d9b9"
+  },
+  {
+    "path": "docs/validation/live-parallel-rereview-20261105/desktop/epoch-applied.png",
+    "currentEvidenceSha256": "a529ded7323a2c2f2e9d4bf562dbafab951692780bcebb9ff8ee128f9594d73a",
+    "restoredBaselineSha256": "51ed32c801c217e5cd7e2ff677534ad92cc1d99cdb51ae4161b022bab92137e5"
+  },
+  {
+    "path": "docs/validation/live-parallel-rereview-20261105/desktop/epoch-demo.json",
+    "currentEvidenceSha256": "1a02bce3c52d45dd123c012a7a6da70bccfa6f0a53089c9d2d57400891a9fbc2",
+    "restoredBaselineSha256": "37cf1ba95cce4346b3218747b17c22c82a3e1542759bd33fce3f0648f8f7a627"
+  },
+  {
+    "path": "docs/validation/live-parallel-rereview-20261105/desktop/epoch-expired.png",
+    "currentEvidenceSha256": "d82f6deb9b3028348b144a72c215961d86ec01f7716425b0726802cc71da976c",
+    "restoredBaselineSha256": "29d9f1e0b2c8abcee5181d6acd8de544a55bda4948b62e3e0b141cd475d7aede"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "concurrency": 2,
+  "reuseBuildBefore": "24470a6d0ebfce9204d2ba677c9b430ee0fe8c117991d2c2fc42927dc56548fa",
+  "reuseBuildAfter": "24470a6d0ebfce9204d2ba677c9b430ee0fe8c117991d2c2fc42927dc56548fa",
+  "sourceBuildStable": true,
+  "elapsedMs": 2081,
+  "modelRequests": 0,
+  "status": "completed",
+  "reusedItems": [
+    "reused",
+    "reused"
+  ],
+  "aggregateAttempts": 1,
+  "routeProjected": true,
+  "routeRevision": 3,
+  "frozenRouteRevision": 2,
+  "sourcePreserved": true
+}

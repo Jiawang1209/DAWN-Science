@@ -1,0 +1,23 @@
+[
+  {
+    "path": "docs/validation/observable-handoff-20261106/repeat-test-results/observable-handoff-observa-1fc48-the-actual-child-transcript/error-context.md",
+    "originalSha256": "8655a60df44d01076d866a437c10a3ff579c9281352d7fc8c1ffa474522f9ce4",
+    "normalizedSha256": "c29bb54ad63eb6f93188f2925b97877c4ee85920d30f959ad45209c3a3e1973f",
+    "rawCopy": "docs/validation/observable-handoff-20261106/repeat-test-results/observable-handoff-observa-1fc48-the-actual-child-transcript/error-context.original.md.gz",
+    "reason": "Normalize trailing Markdown code-frame whitespace for git; original preserved byte-for-byte in gzip and trace."
+  },
+  {
+    "path": "docs/validation/observable-handoff-20261106/repeat-test-results/observable-handoff-observa-1fc48-the-actual-child-transcript-repeat1/error-context.md",
+    "originalSha256": "8655a60df44d01076d866a437c10a3ff579c9281352d7fc8c1ffa474522f9ce4",
+    "normalizedSha256": "c29bb54ad63eb6f93188f2925b97877c4ee85920d30f959ad45209c3a3e1973f",
+    "rawCopy": "docs/validation/observable-handoff-20261106/repeat-test-results/observable-handoff-observa-1fc48-the-actual-child-transcript-repeat1/error-context.original.md.gz",
+    "reason": "Normalize trailing Markdown code-frame whitespace for git; original preserved byte-for-byte in gzip and trace."
+  },
+  {
+    "path": "docs/validation/observable-handoff-20261106/repeat-test-results/observable-handoff-observa-1fc48-the-actual-child-transcript-repeat2/error-context.md",
+    "originalSha256": "8655a60df44d01076d866a437c10a3ff579c9281352d7fc8c1ffa474522f9ce4",
+    "normalizedSha256": "c29bb54ad63eb6f93188f2925b97877c4ee85920d30f959ad45209c3a3e1973f",
+    "rawCopy": "docs/validation/observable-handoff-20261106/repeat-test-results/observable-handoff-observa-1fc48-the-actual-child-transcript-repeat2/error-context.original.md.gz",
+    "reason": "Normalize trailing Markdown code-frame whitespace for git; original preserved byte-for-byte in gzip and trace."
+  }
+]

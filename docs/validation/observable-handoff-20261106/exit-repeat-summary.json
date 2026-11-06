@@ -1,0 +1,122 @@
+[
+  {
+    "file": "exit-diagnostics/exit-6772.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 140.8,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-5330.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 137.2,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-7200.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 172.1,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-8579.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 132.1,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-10060.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 151.6,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-8297.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 137.7,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-5488.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 111.7,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-7506.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 110.6,
+    "waited5s": false
+  },
+  {
+    "file": "exit-diagnostics/exit-8737.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 109.3,
+    "waited5s": false
+  },
+  {
+    "file": "recovery-exit-diagnostics/exit-11946.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 140.1,
+    "waited5s": false
+  },
+  {
+    "file": "recovery-exit-diagnostics/exit-12465.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 159.1,
+    "waited5s": false
+  },
+  {
+    "file": "recovery-exit-diagnostics/exit-11765.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 157.8,
+    "waited5s": false
+  },
+  {
+    "file": "recovery-exit-diagnostics/exit-12278.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 133.0,
+    "waited5s": false
+  },
+  {
+    "file": "recovery-exit-diagnostics/exit-11539.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 130.2,
+    "waited5s": false
+  },
+  {
+    "file": "recovery-exit-diagnostics/exit-12121.jsonl",
+    "closed": true,
+    "exitCode": 0,
+    "signalCode": null,
+    "closeMs": 166.3,
+    "waited5s": false
+  }
+]

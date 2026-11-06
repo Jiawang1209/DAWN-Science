@@ -1,0 +1,67 @@
+{
+  "owned": [
+    70861,
+    70870,
+    70871,
+    70883,
+    71048,
+    71090
+  ],
+  "allExited": true,
+  "meta": {
+    "agent": "scout",
+    "task": "子任务慢：运行慢工具后回报。",
+    "status": "error",
+    "startedAt": 1793945932268,
+    "handoffSha256": "906fc2dd7393926db622960fdb8468df493950214cfb26b1967ac230fed228a9",
+    "settings": {
+      "scope": {
+        "version": 1,
+        "tier": "allow-all",
+        "access": "workspace-exec",
+        "tools": [
+          "read",
+          "bash"
+        ],
+        "inputs": [],
+        "outputs": []
+      }
+    },
+    "error": "已中止",
+    "endedAt": 1793945933868
+  },
+  "children": [
+    {
+      "id": "child-b8d650f5f4548aff409c1d05971f4aa4",
+      "kind": "subagent",
+      "address": [
+        "call_mock_162",
+        "0"
+      ],
+      "label": "scout",
+      "state": "cancelled",
+      "epoch": 1,
+      "updatedAt": 1793945933867,
+      "reason": "执行已中止",
+      "result": {
+        "ok": false,
+        "output": "",
+        "error": "执行已中止"
+      },
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": "906fc2dd7393926db622960fdb8468df493950214cfb26b1967ac230fed228a9"
+    }
+  ]
+}

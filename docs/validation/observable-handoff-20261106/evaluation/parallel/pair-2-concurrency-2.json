@@ -1,0 +1,553 @@
+{
+  "repeat": 2,
+  "concurrency": 2,
+  "comparisonFingerprint": "f00442812385e480add1d0f72fadc04e1b07d6e156fffc0cb9aa3b2996792644",
+  "elapsedMs": 9772,
+  "modelRequests": 20,
+  "status": "completed",
+  "groundTruthPassed": true,
+  "accepted": true,
+  "numericOutputs": [
+    {
+      "n": 5,
+      "mean": 3,
+      "unit": "m"
+    },
+    {
+      "n": 5,
+      "mean": 3,
+      "unit": "m"
+    }
+  ],
+  "inputPreserved": true,
+  "reviewedVersions": true,
+  "routeProjected": true,
+  "aggregateAttempts": 1,
+  "visibleTokens": 400,
+  "unknownUsageTasks": 1,
+  "partialUsage": true,
+  "maxBackendConcurrent": 2,
+  "actualOverlapMs": 1352,
+  "analysisOverlapMs": 0,
+  "overlaps": [
+    {
+      "left": "p-0-a-check-0-0",
+      "right": "p-1-b-check-0-0",
+      "elapsedMs": 456
+    },
+    {
+      "left": "p-0-a-review-0-2",
+      "right": "p-1-b-review-0-2",
+      "elapsedMs": 896
+    }
+  ],
+  "intervals": [
+    {
+      "taskId": "p-0-a-check-0-0",
+      "member": "check",
+      "stage": "check",
+      "queuedAt": 489,
+      "backendStartedAt": 1186,
+      "lastRequestAt": 1382,
+      "endedAt": 1657,
+      "ok": true
+    },
+    {
+      "taskId": "p-1-b-check-0-0",
+      "member": "batch-check-2",
+      "stage": "check",
+      "queuedAt": 500,
+      "backendStartedAt": 1201,
+      "lastRequestAt": 1395,
+      "endedAt": 1681,
+      "ok": true
+    },
+    {
+      "taskId": "p-0-a-analyze-0-1",
+      "member": "analyze",
+      "stage": "analyze",
+      "queuedAt": 1672,
+      "backendStartedAt": 2260,
+      "lastRequestAt": 3457,
+      "endedAt": 4403,
+      "ok": true
+    },
+    {
+      "taskId": "p-1-b-analyze-0-1",
+      "member": "analyze",
+      "stage": "analyze",
+      "queuedAt": 4419,
+      "backendStartedAt": 5039,
+      "lastRequestAt": 6267,
+      "endedAt": 7221,
+      "ok": true
+    },
+    {
+      "taskId": "p-0-a-review-0-2",
+      "member": "review",
+      "stage": "review",
+      "queuedAt": 4436,
+      "backendStartedAt": 7898,
+      "lastRequestAt": 8470,
+      "endedAt": 8808,
+      "ok": true
+    },
+    {
+      "taskId": "p-1-b-review-0-2",
+      "member": "batch-review-2",
+      "stage": "review",
+      "queuedAt": 7243,
+      "backendStartedAt": 7912,
+      "lastRequestAt": 8482,
+      "endedAt": 8826,
+      "ok": true
+    },
+    {
+      "taskId": "batch-summary-0",
+      "member": "aggregate",
+      "stage": "aggregate",
+      "queuedAt": 8859,
+      "endedAt": 9545,
+      "ok": true
+    }
+  ],
+  "requests": [
+    {
+      "at": 1186,
+      "taskId": "p-0-a-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 1201,
+      "taskId": "p-1-b-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 1382,
+      "taskId": "p-0-a-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 1395,
+      "taskId": "p-1-b-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 2260,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 2456,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 2646,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 3457,
+      "taskId": "p-0-a-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "a.csv"
+      ]
+    },
+    {
+      "at": 5039,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 5232,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 5422,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 6267,
+      "taskId": "p-1-b-analyze-0-1",
+      "resultType": "model-metrics",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 7898,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "results/pipeline-12ef300706107e53416f0505/a/report.md"
+      ]
+    },
+    {
+      "at": 7912,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "results/pipeline-12ef300706107e53416f0505/b/report.md"
+      ]
+    },
+    {
+      "at": 8094,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "results/pipeline-12ef300706107e53416f0505/a/report.md"
+      ]
+    },
+    {
+      "at": 8108,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "results/pipeline-12ef300706107e53416f0505/b/report.md"
+      ]
+    },
+    {
+      "at": 8283,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "results/pipeline-12ef300706107e53416f0505/a/report.md"
+      ]
+    },
+    {
+      "at": 8296,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "results/pipeline-12ef300706107e53416f0505/b/report.md"
+      ]
+    },
+    {
+      "at": 8470,
+      "taskId": "p-0-a-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "results/pipeline-12ef300706107e53416f0505/a/report.md"
+      ]
+    },
+    {
+      "at": 8482,
+      "taskId": "p-1-b-review-0-2",
+      "resultType": "review",
+      "inputs": [
+        "results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "results/pipeline-12ef300706107e53416f0505/b/report.md"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "at": 489,
+      "kind": "subagent_start",
+      "index": 0,
+      "taskId": "p-0-a-check-0-0"
+    },
+    {
+      "at": 500,
+      "kind": "subagent_start",
+      "index": 1,
+      "taskId": "p-1-b-check-0-0"
+    },
+    {
+      "at": 1657,
+      "kind": "subagent_end",
+      "index": 0,
+      "taskId": "p-0-a-check-0-0",
+      "ok": true
+    },
+    {
+      "at": 1672,
+      "kind": "subagent_start",
+      "index": 2,
+      "taskId": "p-0-a-analyze-0-1"
+    },
+    {
+      "at": 1681,
+      "kind": "subagent_end",
+      "index": 1,
+      "taskId": "p-1-b-check-0-0",
+      "ok": true
+    },
+    {
+      "at": 4403,
+      "kind": "subagent_end",
+      "index": 2,
+      "taskId": "p-0-a-analyze-0-1",
+      "ok": true
+    },
+    {
+      "at": 4419,
+      "kind": "subagent_start",
+      "index": 3,
+      "taskId": "p-1-b-analyze-0-1"
+    },
+    {
+      "at": 4436,
+      "kind": "subagent_start",
+      "index": 4,
+      "taskId": "p-0-a-review-0-2"
+    },
+    {
+      "at": 7221,
+      "kind": "subagent_end",
+      "index": 3,
+      "taskId": "p-1-b-analyze-0-1",
+      "ok": true
+    },
+    {
+      "at": 7243,
+      "kind": "subagent_start",
+      "index": 5,
+      "taskId": "p-1-b-review-0-2"
+    },
+    {
+      "at": 8808,
+      "kind": "subagent_end",
+      "index": 4,
+      "taskId": "p-0-a-review-0-2",
+      "ok": true
+    },
+    {
+      "at": 8826,
+      "kind": "subagent_end",
+      "index": 5,
+      "taskId": "p-1-b-review-0-2",
+      "ok": true
+    },
+    {
+      "at": 8859,
+      "kind": "subagent_start",
+      "index": 6,
+      "taskId": "batch-summary-0"
+    },
+    {
+      "at": 9545,
+      "kind": "subagent_end",
+      "index": 6,
+      "taskId": "batch-summary-0",
+      "ok": true
+    }
+  ],
+  "lockReservations": [
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/a.csv",
+        "inode:16777234:438911838",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/b.csv",
+        "inode:16777234:438911839"
+      ],
+      "queuedAt": 18,
+      "grantedAt": 18,
+      "releasedAt": 504
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/a.csv",
+        "inode:16777234:438911838"
+      ],
+      "queuedAt": 490,
+      "grantedAt": 504,
+      "releasedAt": 1653
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/b.csv",
+        "inode:16777234:438911839"
+      ],
+      "queuedAt": 501,
+      "grantedAt": 504,
+      "releasedAt": 1677
+    },
+    {
+      "paths": [
+        "*"
+      ],
+      "queuedAt": 1673,
+      "grantedAt": 1677,
+      "releasedAt": 4398
+    },
+    {
+      "paths": [
+        "*"
+      ],
+      "queuedAt": 4422,
+      "grantedAt": 4442,
+      "releasedAt": 7216
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "inode:16777234:438913001",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "inode:16777234:438913282",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/report.md",
+        "inode:16777234:438913283"
+      ],
+      "queuedAt": 4438,
+      "grantedAt": 7216,
+      "releasedAt": 8803
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "inode:16777234:438914621",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "inode:16777234:438914946",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/report.md",
+        "inode:16777234:438914947"
+      ],
+      "queuedAt": 7245,
+      "grantedAt": 7247,
+      "releasedAt": 8821
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/a.csv",
+        "inode:16777234:438911838",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/b.csv",
+        "inode:16777234:438911839",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "inode:16777234:438913001",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "inode:16777234:438913282",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/report.md",
+        "inode:16777234:438913283",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "inode:16777234:438914621",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "inode:16777234:438914946",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/report.md",
+        "inode:16777234:438914947",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/summary.json",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/summary.md"
+      ],
+      "queuedAt": 8862,
+      "grantedAt": 8863,
+      "releasedAt": 9536
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/a.csv",
+        "inode:16777234:438911838",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/b.csv",
+        "inode:16777234:438911839",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+        "inode:16777234:438913001",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/result.json",
+        "inode:16777234:438913282",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/a/report.md",
+        "inode:16777234:438913283",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+        "inode:16777234:438914621",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/result.json",
+        "inode:16777234:438914946",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/b/report.md",
+        "inode:16777234:438914947",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/summary.json",
+        "inode:16777234:438915952",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-TxUMeE/results/pipeline-12ef300706107e53416f0505/summary.md",
+        "inode:16777234:438915953"
+      ],
+      "queuedAt": 9545,
+      "grantedAt": 9548,
+      "releasedAt": 9779
+    }
+  ],
+  "lockWaitMs": 2825,
+  "outputFiles": [
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/a/analysis.py",
+      "bytes": 472,
+      "sha256": "318044552cab88285aedc294a69ca277a359242751d54ea68f81befac3a7679a"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/a/result.json",
+      "bytes": 34,
+      "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/a/report.md",
+      "bytes": 57,
+      "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/b/analysis.py",
+      "bytes": 472,
+      "sha256": "7c15ae2972019aa2aa9ed5e809d7d9410ad638e18f823db98b2eefe2aa8e7e3f"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/b/result.json",
+      "bytes": 34,
+      "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/b/report.md",
+      "bytes": 57,
+      "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/summary.json",
+      "bytes": 4974,
+      "sha256": "2a0dd6b3da71c1dd2d1d64a308df74faa54d7eb4496966d803ab4f79b277a343"
+    },
+    {
+      "path": "results/pipeline-12ef300706107e53416f0505/summary.md",
+      "bytes": 1414,
+      "sha256": "29b180bf80b3cb4c647c4a213b7d0a352df22b52b16e7e2ccd7775ed01636089"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "actualElectron": true,
+  "sameChildEpoch": 2,
+  "oldDraftNotDelivered": true,
+  "explicitReset": true,
+  "receipts": [
+    {
+      "id": "steer-e4ac95ce59d2fa4ca4b693b9ad7c9262",
+      "childId": "child-69e4a7cf04687d086224d8bb79c9ccb7",
+      "requestId": "804516a7-e364-4ae5-b610-8a54bedf17f8",
+      "epoch": 2,
+      "text": "新轮次纠偏：请确认收到本轮指令",
+      "status": "applied",
+      "createdAt": 1793945942524,
+      "updatedAt": 1793945957089
+    }
+  ]
+}

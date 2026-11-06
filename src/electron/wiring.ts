@@ -1944,7 +1944,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // 而 exited 的 attach 回调要写库。此前 `db.close()` 紧跟在 fire-and-forget 的 stopAll 后同步执行,
       // stopAll 稍后发的 exited 撞上已关的库 → 「database not open」在一个没人接的异步回调里抛 → 主进程崩。
       // 把关库延到这些收尾都 settle 之后;远端连接/网关是同步的,照旧立刻断。
-      const 会话done = sessions.stopAll().catch(() => undefined)
+      const 会话done = sessions.stopAll({closeAdmission:true}).catch(() => undefined)
       void 会话done.finally(() => terminalControl.dispose())
       // 对话内核也要收（审查 debug H1）：run_code 用过的内核不在 SessionManager 里,
       // 同步 close 分支此前完全漏掉它——zeromq socket 不关会 SIGABRT
@@ -1998,7 +1998,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
          * 不收就是一堆孤儿进程——而它们多半连着数据库。
          * 与会话一起进同一个超时竞赛：**收摊不能因为一台服务器不肯退而卡住**。
          */
-        Promise.allSettled([sessions.stopAll({reportErrors:true}), 对话的内核.收全部({reportErrors:true}), mcp池.全关({reportErrors:true}), ...收摊们.map((f) => Promise.resolve().then(f))]).then(results => {
+        Promise.allSettled([sessions.stopAll({reportErrors:true,closeAdmission:true}), 对话的内核.收全部({reportErrors:true}), mcp池.全关({reportErrors:true}), ...收摊们.map((f) => Promise.resolve().then(f))]).then(results => {
           for (const result of results) if (result.status === 'rejected') console.error('[退出] 资源收尾失败：', result.reason)
           return results.some(result=>result.status==='rejected')?'failed' as const:'drained' as const
         }),

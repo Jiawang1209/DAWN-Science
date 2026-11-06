@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/wiring.test.ts -t 关闭新会话准入
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/wiring.test.ts (51 tests | 1 failed | 50 skipped) 605ms
+     × 等待主任务收尾时关闭新会话准入，不能在批量停止快照之后再启动父会话 604ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 等待主任务收尾时关闭新会话准入，不能在批量停止快照之后再启动父会话
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/electron/wiring.test.ts:92:23
+     90|       start=vi.spyOn(wb.nativeRuntime,'start')
+     91|       const late=await wb.server.handle('createTask',{agentId:'ds-chat…
+     92|       expect(late.ok).toBe(false);expect(start).not.toHaveBeenCalled()
+       |                       ^
+     93|     }finally{release();await closing;start?.mockRestore();prompt.mockR…
+     94|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 50 skipped (51)
+   Start at  00:58:11
+   Duration  2.79s (transform 1.17s, setup 0ms, import 2.11s, tests 605ms, environment 0ms)
+

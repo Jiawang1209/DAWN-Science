@@ -195,6 +195,11 @@ export class SessionManager {
   /** Fresh and resumed starts stay visible until their runtime binding settles. */
   private readonly resuming = new Map<SessionId, Promise<SessionRecord>>()
   private readonly exitListeners = new Map<SessionId, () => void>()
+  private admissionClosed=false
+
+  private assertAdmission():void {
+    if(this.admissionClosed)throw new UserFacingError('应用正在关闭，不能启动或发送新任务')
+  }
 
   constructor(opts: SessionManagerOptions) {
     this.store = opts.store
@@ -229,6 +234,7 @@ export class SessionManager {
       remote?: { connectionId: string } & NonNullable<SessionSpec["remote"]>
     } = {},
   ): Promise<SessionRecord> {
+    this.assertAdmission()
     const def = this.registry.agents[agentId]
     // 无静默回退：未知 agent 立即失败，且在落库之前失败——不留半截记录
     if (!def) throw new UserFacingError(`未知的 agent "${agentId}"，请检查 providers.yaml 的 agents 段`)
@@ -442,6 +448,7 @@ export class SessionManager {
     sessionId: SessionId,
     remote?: NonNullable<Parameters<SessionManager["create"]>[2]>["remote"],
   ): Promise<SessionRecord> {
+    this.assertAdmission()
     const pending = this.resuming.get(sessionId)
     if (pending) return pending
     const p = this.resumeOnce(sessionId, remote)
@@ -519,6 +526,7 @@ export class SessionManager {
     /** 进待发单时的 id（2026-09-23）。只在 `supportsQueue` 为真时给 */
     queueId?: string,
   ): void {
+    this.assertAdmission()
     const lease = this.leases.current(sessionId)
     if (!lease || lease.holder !== as) {
       throw new Error(
@@ -576,7 +584,8 @@ export class SessionManager {
 
   hasPendingStarts():boolean {return this.resuming.size>0}
 
-  async stopAll(options?:{reportErrors?:boolean}): Promise<void> {
+  async stopAll(options?:{reportErrors?:boolean;closeAdmission?:boolean}): Promise<void> {
+    if(options?.closeAdmission)this.admissionClosed=true
     const ids=new Set([...this.bound.keys(),...this.resuming.keys()])
     const results=await Promise.allSettled([...ids].map(id=>this.stop(id)))
     // Keep best-effort callers compatible; shutdown must not report failures as drained.

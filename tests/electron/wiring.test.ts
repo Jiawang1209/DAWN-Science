@@ -76,6 +76,22 @@ function newDbPath(): string {
 }
 
 describe("createWorkbench", () => {
+  it('等待主任务收尾时关闭新会话准入，不能在批量停止快照之后再启动父会话',async()=>{
+    const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'})})
+    const first=await wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})
+    const owner=(first as {ok:true;data:{sessionId:string}}).data.sessionId
+    const session=(wb.nativeRuntime as unknown as {sessions:Map<string,{session:{prompt:()=>Promise<void>;abort:()=>Promise<void>}}>}).sessions.get(owner)!.session
+    let release!:()=>void;const gate=new Promise<void>(resolve=>release=resolve)
+    const prompt=vi.spyOn(session,'prompt').mockImplementation(async()=>{await gate}),abort=vi.spyOn(session,'abort').mockResolvedValue(undefined)
+    let closing:Promise<void>|undefined,restoreStart=()=>{}
+    try{
+      wb.nativeRuntime.write(owner,'shutdown admission fixture');await vi.waitFor(()=>expect(prompt).toHaveBeenCalled())
+      closing=wb.closeAsync();await vi.waitFor(()=>expect(abort).toHaveBeenCalled())
+      const start=vi.spyOn(wb.nativeRuntime,'start');restoreStart=()=>{start.mockRestore()}
+      const late=await wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})
+      expect(late.ok).toBe(false);expect(start).not.toHaveBeenCalled()
+    }finally{release();await closing;restoreStart();prompt.mockRestore();abort.mockRestore();await wb.closeAsync()}
+  })
   it('主任务启动预备期也需要等待，不能在运行时尚未绑定时误报 drained',async()=>{
     const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'})})
     let release!:()=>void,settled=false

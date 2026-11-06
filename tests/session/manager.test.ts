@@ -48,6 +48,18 @@ function stubRuntime(over: Partial<AgentRuntime> = {}): AgentRuntime {
 }
 
 describe("SessionManager · 创建与销毁", () => {
+  it('普通批量停止允许再用；应用关闭则在落库前冻结创建、恢复和发送',async()=>{
+    const{mgr,store,db}=makeManager()
+    try{
+      await mgr.create('ds-agent','/tmp/w');await mgr.stopAll()
+      const second=await mgr.create('ds-agent','/tmp/w')
+      await mgr.stopAll({closeAdmission:true});const count=store.list().length
+      await expect(mgr.create('ds-agent','/tmp/w')).rejects.toThrow(/正在关闭/)
+      await expect(mgr.resume(second.id)).rejects.toThrow(/正在关闭/)
+      expect(()=>mgr.write(second.id,'late message','user')).toThrow(/正在关闭/)
+      expect(store.list()).toHaveLength(count)
+    }finally{await mgr.stopAll();db.close()}
+  })
   for(const resume of [false,true])it(`批量停止等待${resume?'恢复':'新建'}中的会话，不能在启动完成后留下活跃绑定`,async()=>{
     const{mgr,store,db}=makeManager()
     const original=resume?await mgr.create('ds-agent','/tmp/w'):undefined

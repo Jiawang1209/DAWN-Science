@@ -1,0 +1,19 @@
+Updating 18b7181e..facafae8
+Fast-forward
+ docs/DEVELOPMENT_HISTORY.md                        |  1 +
+ .../reviews/2026-11-07-exit-budget-merge-review.md |  6 ++
+ .../plans/2026-11-07-exit-budget-merge-review.md   |  1 +
+ .../admission-green-final.log                      | 11 ++++
+ .../candidate-initial-main.json                    | 67 ++++++++++++++++++++++
+ .../candidate-manifest.json                        | 14 +++--
+ .../late-parent-admission-red.log                  | 35 +++++++++++
+ .../typecheck-admission.log                        |  2 +
+ src/electron/wiring.ts                             |  4 +-
+ src/session/manager.ts                             | 11 +++-
+ tests/electron/wiring.test.ts                      | 16 ++++++
+ tests/session/manager.test.ts                      | 12 ++++
+ 12 files changed, 173 insertions(+), 7 deletions(-)
+ create mode 100644 docs/validation/exit-budget-merge-review-20261107/admission-green-final.log
+ create mode 100644 docs/validation/exit-budget-merge-review-20261107/candidate-initial-main.json
+ create mode 100644 docs/validation/exit-budget-merge-review-20261107/late-parent-admission-red.log
+ create mode 100644 docs/validation/exit-budget-merge-review-20261107/typecheck-admission.log

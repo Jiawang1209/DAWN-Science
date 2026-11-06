@@ -1,0 +1,26 @@
+{
+  "codeCommits": [
+    "18b7181e65c2da71888ec90eb206a5abbd8258e5",
+    "facafae864829fd69a38f80e52cd101c0eaa24d0"
+  ],
+  "mainSourceCommit": "facafae864829fd69a38f80e52cd101c0eaa24d0",
+  "sourceFiles": 57,
+  "sourceDrift": [],
+  "mainNodeUiPassed": 6351,
+  "existingSkips": 10,
+  "kernelPassed": 50,
+  "kernelConditionalSkip": 1,
+  "mainClean": true,
+  "historicalTimeoutRootCauseResolved": false,
+  "pushOrReleasePerformed": false,
+  "branchDesktopScenarios": 33,
+  "branchVerifiedExits": 38,
+  "mainDesktopScenarios": 21,
+  "mainVerifiedExits": 26,
+  "shutdownProblems": 0,
+  "unexpectedWatchdogs": 0,
+  "mainRootForcedCleanup": [],
+  "baselineCopiesUnchanged": 14,
+  "review": "self-review",
+  "worktreeRetained": true
+}

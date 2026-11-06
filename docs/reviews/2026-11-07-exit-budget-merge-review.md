@@ -38,4 +38,20 @@ main 起点为干净的 `9dd59f4f`。本轮仅在用户授权后进行本地提�
 
 初次代码提交 `18b7181e` 已快进 main，main 类型/构建、639 文件 6349 项完整 Node/UI 通过（10 既有跳过）。追加退出临界区门闩时，`late-parent-admission-red.log` 进一步复现：旧父任务仍在收尾，新 `createTask` 竟返回成功，形成批量停止快照之后的新准入。
 
-补修仅在应用关闭时同步冻结 SessionManager 的创建、恢复和发送入口，在落库/启动之前拒绝；普通 stopAll 保持可重用。关闭当前任务和已有启动 Promise 仍可完成收尾，不增加等待上限。两文件 88 项通过、1 既有条件跳过及类型检查通过（`admission-green-final.log`、`typecheck-admission.log`）；将该小修复另行本地提交并快进 main 后，再执行最后候选的主分支完整回归和真实桌面。不能用前一轮 main 的通过结果冒称已覆盖这次补修。
+补修仅在应用关闭时同步冻结 SessionManager 的创建、恢复和发送入口，在落库/启动之前拒绝；普通 stopAll 保持可重用。关闭当前任务和已有启动 Promise 仍可完成收尾，不增加等待上限。两文件 88 项通过、1 既有条件跳过及类型检查通过（`admission-green-final.log`、`typecheck-admission.log`）。补修已本地提交为 `facafae8` 并再次快进 main，以下为覆盖最后候选的实际验收，前轮结果仅作历史保留。
+
+### 最终本地主分支验收
+
+| 项目 | 结果 |
+|---|---|
+| 代码集成 | `9dd59f4f` → `18b7181e` → `facafae8`，均快进、无冲突；没有 pull/push/release |
+| main 源码 | 57 源/测试文件逐字节匹配最后候选；`main-source-verification.json`、`final-audit.json` |
+| main 类型/构建 | 通过；`main-typecheck-final.log`、`main-build-final.log`，既有构建提示保留 |
+| main 完整 Node/UI | 639 文件，6351 通过、10 既有跳过，185.12 秒；`main-full-unit-final.log` |
+| 独立内核 | 50 通过、1 环境条件跳过；`kernel.log`；内核代码与 main 一致，R 明确为 `/usr/local/bin/R` |
+| main 实际桌面 | 21 场景通过，1.7 分钟；`main-desktop.log`，覆盖主任务单次/重复退出、活跃子任务关闭/恢复、纠偏取消、后台回送、Bot、MCP、预算拒绝及重启保留 |
+| main 退出事实 | 26 次原生退出与管道关闭均正常；无内层到期、清理失败、外层兜底、意外 watchdog 或缺失结果；`exit-summary.json`、`timelines.md` |
+| 场景效果 | `main-demo/root/single/root-recovered.png`：退出取消 sleep 15，重启保留 Command aborted；单次/重复退出的 forcedCleanup 均为空，没有借测试 finally 强杀换取通过 |
+| 视觉与工作区 | 14 张既有 ignored 基线与 main 副本逐字节相同；main 干净，保留专项 worktree，正式 App 与用户数据未操作 |
+
+本轮源码自审及相关验收没有剩余已复现阻塞项，已按用户授权完成本地集成。最后仅将本记录与验证素材另作文档/证据提交同步 main，源代码保持上述已验内容不变。历史偶发超时仍为未定位项；没有完整桌面全量、真实付费模型质量、发布包或跨平台验收结论。

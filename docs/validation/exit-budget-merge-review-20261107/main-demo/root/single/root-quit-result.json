@@ -1,0 +1,23 @@
+{
+  "pid": 32029,
+  "owned": [
+    32220
+  ],
+  "aliveAfterRestart": [],
+  "events": [
+    "diagnostics-attached",
+    "contents-created",
+    "window-created",
+    "before-quit",
+    "window-close",
+    "contents-destroyed",
+    "window-closed",
+    "will-quit",
+    "shutdown-check",
+    "shutdown-async-start",
+    "shutdown-drained",
+    "shutdown-async-complete",
+    "process-exit",
+    "quit"
+  ]
+}

@@ -1,0 +1,123 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts e2e/run-explanation-budget.spec.ts e2e/mcp-cancellation.spec.ts e2e/mcp.spec.ts e2e/orchestration.spec.ts e2e/bot-dispatch.spec.ts e2e/subagent-shutdown.spec.ts e2e/subagent-steering.spec.ts --output=/Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/docs/validation/exit-budget-merge-review-20261107/main-desktop-results
+
+Running 21 tests using 1 worker
+
+(node:31210) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58541/2f3dde6f-8bb3-42bd-a06a-eeefad41c689
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-dispatch.spec.ts:3:1 › slash Bot target dispatches without a captain prompt and exposes its member conversation (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Error occurred in handler for 'dawn:workbench:invoke': Error: 模拟派单响应丢失
+    at eval (eval at evaluate (:311:30), <anonymous>:18:17)
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:119555)
+[主进程] Debugger ending on ws://127.0.0.1:58558/b62599dd-c8fb-4cca-8435-583dd636c261
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/bot-dispatch.spec.ts:32:1 › accepted dispatch with a lost response restores the draft and retries the same request (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58577/85e62502-023b-415c-8e93-86e9cf468b92
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/bot-dispatch.spec.ts:79:1 › Bot slash dispatch can start an empty native main without sending raw commands to the model (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58594/9b824fb1-82c9-48a3-8ea6-664ff5543d56
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58606/f12e6e1e-9a77-4941-a740-9ed8513044ae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › single quit during a root bash task drains its owned process before restart (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58614/d9170e0c-52ae-4f88-9592-301a6069c210
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58627/ba7de0e9-376e-476b-953e-1653fee4620b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › repeated quit during a root bash task drains its owned process before restart (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58636/fc5726b6-a12b-4e20-b536-6c703ae17c70
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58665/4ff3d05f-661f-411c-8539-78dba699ef1a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/exit-lifecycle.spec.ts:47:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58673/2be91b22-bc9a-4774-9436-14204d40cf1f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58693/e3f904e6-8f4b-4b71-935c-a2691fbe490f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/mcp.spec.ts:45:1 › **配了的两台都列出来，还没试过就说还没试过** (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58701/7f66d745-9bdd-4c98-a93f-77b2c5d78573
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/mcp.spec.ts:80:1 › **屏上写清了怎么配（密钥不进文件）和怎么用（看工具行）** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58709/5e38c419-6a2e-47f1-b1c0-fb01c7dc6834
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/mcp.spec.ts:108:1 › **粘一段 JSON 就加进来了，而且立刻能用** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58720/da5c48f6-949d-4408-850c-e50da642868f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/mcp.spec.ts:144:1 › **按「试一次」，真的连上并列出它有哪些工具** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58729/a21d8cf1-351a-4e1d-bc87-f4a8d49b4496
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/mcp.spec.ts:177:1 › 信任开关拨完留得住 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58737/03d18e65-7f8e-4ce3-9f30-dfc3a1d56a14
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/mcp.spec.ts:241:3 › 模型真的调得动 › **一句话下去，MCP 工具真的被执行了**（有物证） (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58756/8e369d7a-103b-4f45-8e9f-5b87968f33d8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [workbench] reviewChanges 失败: TypeError: The database connection is not open
+    at Database.prepare (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at RunStore.writtenFilesOf (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:196426:26)
+    at Object.reviewChanges (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:234584:61)
+    at async WorkbenchServer.handle (file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/electron/main.js:230364:69)
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:119555)
+  ✓  14 e2e/mcp.spec.ts:314:3 › MCP 写的文件进账本 › **MCP 服务器写进工作区的文件，变更 pane 上说得出是它写的** (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58774/368643ac-d435-40e8-a3d9-847eb8a8a5e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/mcp.spec.ts:348:1 › **远端 Authorization 那一行说清只填令牌就行** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「后台协作验收」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58790/b73f84e5-e9e6-4a24-b4dc-13e1a6e31a9c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58814/f21c2e9f-937a-471f-9648-d21544aae1f7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (12.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58863/59f9817a-db88-4517-a746-03f997588abb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/run-explanation-budget.spec.ts:38:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (10.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58911/13b9bb60-8522-4a64-bf36-4eb04d65c84a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58940/03b2d8c0-be30-44c3-bed7-037a4819f1b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/run-explanation-budget.spec.ts:61:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (8.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58956/e60ca0eb-8bbc-4f6b-b526-bfcaaa3507ff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58973/f8a6f129-08dd-4da4-891e-2215ec6e5f5e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/subagent-shutdown.spec.ts:7:1 › app quit drains an active delegated process before restart and retains the frozen context (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58981/c1522b40-104f-4258-a370-f20d17793f75
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction (19.9s)
+
+  21 passed (1.7m)

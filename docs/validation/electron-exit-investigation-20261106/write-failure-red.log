@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/exit-diagnostics.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/exit-diagnostics.test.ts (5 tests | 1 failed) 16ms
+   × cannot break fixture shutdown when the diagnostic directory is unwritable 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > cannot break fixture shutdown when the diagnostic directory is unwritable
+AssertionError: promise rejected "Error: EEXIST: file already exists, mkdir… { …(4) }" instead of resolving
+ ❯ tests/electron/exit-diagnostics.test.ts:55:45
+     53| it('cannot break fixture shutdown when the diagnostic directory is unw…
+     54|  const{dir,app}=setup(),file=join(dir,'file');writeFileSync(file,'fixt…
+     55|  await expect(observeElectronExit(app,file)).resolves.toHaveProperty('…
+       |                                             ^
+     56| })
+     57|
+
+Caused by: Error: EEXIST: file already exists, mkdir '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-exit-observer-IQijqi/file'
+ ❯ observeElectronExit e2e/electron-exit-diagnostics.ts:12:3
+ ❯ tests/electron/exit-diagnostics.test.ts:55:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -17, code: 'EEXIST', syscall: 'mkdir', path: '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-exit-observer-IQijqi/file' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  23:51:24
+   Duration  145ms (transform 25ms, setup 0ms, import 34ms, tests 16ms, environment 0ms)
+

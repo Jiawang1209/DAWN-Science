@@ -1,0 +1,71 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/kernel/挂载.test.ts tests/mcp/recovery.test.ts -t 并发的退出调用|reports SDK close|shutdown waits for an explicit
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/kernel/挂载.test.ts (29 tests | 1 failed | 28 skipped) 6ms
+     × 并发的退出调用能看到尽力收尾中的内核失败，并等待其他内核结束 5ms
+ ❯ |node| tests/mcp/recovery.test.ts (16 tests | 2 failed | 13 skipped) 441ms
+     × reports SDK close errors only for shutdown acceptance (strict=true) 153ms
+     × shutdown waits for an explicit close already removed from the connection table 144ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/mcp/recovery.test.ts > MCP connection recovery with a real stdio server > reports SDK close errors only for shutdown acceptance (strict=true)
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ tests/mcp/recovery.test.ts:24:43
+     22|     try{
+     23|       const result=pool.全关({reportErrors})
+     24|       if(reportErrors)await expect(result).rejects.toBeInstanceOf(Aggr…
+       |                                           ^
+     25|       else await expect(result).resolves.toBeUndefined()
+     26|     }finally{close.mockRestore()}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/mcp/recovery.test.ts > MCP connection recovery with a real stdio server > shutdown waits for an explicit close already removed from the connection table
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/mcp/recovery.test.ts:35:79
+     33|     const ordinary=pool.关('fixture'),strict=pool.全关({reportErrors:true…
+     34|     try{
+     35|       await new Promise<void>(resolve=>setImmediate(resolve));expect(s…
+       |                                                                               ^
+     36|       expect(pool.hasPendingWork()).toBe(true)
+     37|       release();await Promise.all([ordinary,strict]);expect(pool.hasPe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/kernel/挂载.test.ts > 收内核 > 并发的退出调用能看到尽力收尾中的内核失败，并等待其他内核结束
+AssertionError: expected undefined to be an instance of AggregateError
+ ❯ tests/kernel/挂载.test.ts:185:53
+    183|     try{
+    184|       await new Promise<void>(resolve=>setImmediate(resolve));expect(s…
+    185|       release();await ordinary;expect(await strict).toBeInstanceOf(Agg…
+       |                                                     ^
+    186|     }finally{release();await Promise.allSettled([ordinary,strict])}
+    187|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 1 passed | 41 skipped (45)
+   Start at  00:36:16
+   Duration  720ms (transform 129ms, setup 0ms, import 258ms, tests 447ms, environment 0ms)
+

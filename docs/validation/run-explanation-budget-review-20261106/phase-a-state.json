@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "ownerSessionId": "1271cdde-e3c9-43aa-994b-0049c0679a54",
+  "children": [
+    {
+      "id": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "kind": "subagent",
+      "address": [
+        "call_mock_1",
+        "0"
+      ],
+      "label": "lockwriter",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1793972720361,
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": null,
+      "reason": "",
+      "timing": {
+        "executionMs": 8523,
+        "preflightMs": 6
+      },
+      "result": {
+        "ok": true,
+        "output": "假模型已应答：DAWN 的整条链路是通的。",
+        "observation": {
+          "elapsedMs": 8092,
+          "submissionAttempts": 0,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 12,
+            "output": 8,
+            "cacheRead": 0,
+            "partial": [
+              "input",
+              "output",
+              "cacheRead"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "child-365f65acbece8301342e652190df7dd0",
+      "kind": "subagent",
+      "address": [
+        "call_mock_1",
+        "1"
+      ],
+      "label": "lockwriter",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1793972720863,
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": null,
+      "reason": "",
+      "timing": {
+        "executionMs": 501,
+        "lockWaitMs": 8522,
+        "preflightMs": 2
+      },
+      "result": {
+        "ok": true,
+        "output": "假模型已应答：DAWN 的整条链路是通的。",
+        "observation": {
+          "elapsedMs": 66,
+          "submissionAttempts": 0,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 12,
+            "output": 8,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 15,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1793972711826,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1793972711830,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1793972711831,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 1,
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1793972711832,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1793972711833,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1793972711835,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 7,
+      "at": 1793972711837,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 8,
+      "at": 1793972711838,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 1,
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 9,
+      "at": 1793972711838,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 10,
+      "at": 1793972711838,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "lock-wait",
+      "blockers": [
+        {
+          "ownerSessionId": "1271cdde-e3c9-43aa-994b-0049c0679a54",
+          "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+          "label": "lockwriter",
+          "epoch": 1
+        }
+      ],
+      "resources": [
+        "*"
+      ]
+    },
+    {
+      "seq": 11,
+      "at": 1793972711839,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 12,
+      "at": 1793972720360,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 13,
+      "at": 1793972720361,
+      "childId": "child-fd6bc1693da8ff9be8b34c59ee4e1228",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed"
+    },
+    {
+      "seq": 14,
+      "at": 1793972720362,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 15,
+      "at": 1793972720863,
+      "childId": "child-365f65acbece8301342e652190df7dd0",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed"
+    }
+  ],
+  "budget": {
+    "revision": 4,
+    "limits": {},
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 40,
+    "unknownRuns": 2,
+    "active": [],
+    "startedAt": 1793972711831
+  }
+}

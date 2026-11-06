@@ -603,7 +603,8 @@
 /** 8.42：可选内容版本回执、绑定状态及有界科研批量摘要；冻结模板设置留在宿主。 */
 /** 8.44：运行中纠偏回执与可恢复的有界科研批量。 */
 /** 8.45：会话隔离的只读运行总览。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.45"
+/** 8.46：宿主阶段/锁等待历史与可显式设置的持久会话委派预算。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.46"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

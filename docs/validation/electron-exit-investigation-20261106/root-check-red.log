@@ -1,0 +1,52 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts --grep root bash --output=docs/validation/electron-exit-investigation-20261106/root-check-red-results
+
+Running 1 test using 1 worker
+
+(node:38943) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] Debugger ending on ws://127.0.0.1:60913/a211d798-7447-40be-aacb-2396acda06a2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [启动对账] 修正了 1 条残留会话记录
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60948/efd9f6c7-750b-4cce-8585-6063883ee8b5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart (3.9s)
+
+
+  1) e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart 
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected value: "shutdown-async-complete"
+    Received array: ["diagnostics-attached", "contents-created", "window-created", "before-quit", "window-close", "contents-destroyed", "window-closed", "will-quit", "shutdown-check", "shutdown-sync-start", …]
+
+      29 |    const facts=readFacts(testInfo.outputPath('electron-exit',`app-${pid}.jsonl`))
+      30 |    writeFileSync(join(evidence,'root-quit-result.json'),JSON.stringify({pid,owned,aliveAfterRestart:owned.filter(alive),events:facts.map(row=>row.event)},null,2)+'\n')
+    > 31 |    expect(facts.map(row=>row.event)).toContain('shutdown-async-complete')
+         |                                      ^
+      32 |    await expect.poll(()=>owned.filter(alive),{timeout:1000}).toEqual([])
+      33 |    await restarted.getByRole('button',{name:/^主任务退出探针/}).click()
+      34 |    await expect(restarted.getByRole('button',{name:'停止',exact:true})).toHaveCount(0)
+        at /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/e2e/exit-lifecycle.spec.ts:31:38
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/electron-exit-investigation-20261106/root-check-red-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/electron-exit-investigation-20261106/root-check-red-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/electron-exit-investigation-20261106/root-check-red-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/electron-exit-investigation-20261106/root-check-red-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/electron-exit-investigation-20261106/root-check-red-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart 

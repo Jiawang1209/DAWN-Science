@@ -1,0 +1,43 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/run-budget-error.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/workbench/run-budget-error.test.ts (1 test | 1 failed) 13ms
+   × the real protocol exposes revision conflicts as user errors while unexpected storage failures stay private 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/run-budget-error.test.ts > the real protocol exposes revision conflicts as user errors while unexpected storage failures stay private
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, error: { …(2) } }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+-     "code": "invalid_request",
+-     "message": StringContaining "版本",
++     "code": "internal_error",
++     "message": "操作 \"setRunBudget\" 执行失败——原因记在 startup.log 里",
+    },
+    "ok": false,
+  }
+
+ ❯ tests/workbench/run-budget-error.test.ts:15:20
+     13|   await server.handle('setRunBudget',{sessionId:'p',expectedRevision:0…
+     14|   const conflict=await server.handle('setRunBudget',{sessionId:'p',exp…
+     15|   expect(conflict).toMatchObject({ok:false,error:{code:'invalid_reques…
+       |                    ^
+     16|   expect(internal).not.toHaveBeenCalled()
+     17|   vi.spyOn(store,'configureBudget').mockImplementation(()=>{throw new …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:57:08
+   Duration  482ms (transform 203ms, setup 0ms, import 378ms, tests 13ms, environment 0ms)
+

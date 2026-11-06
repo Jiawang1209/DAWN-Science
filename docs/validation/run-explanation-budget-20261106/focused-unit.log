@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/run-budget-evaluation.test.ts tests/evaluation/run-budget-mock.test.ts tests/orchestration tests/ui/run-budget.test.tsx tests/ui/run-overview.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts tests/workbench/subagent-view-backend.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+
+ Test Files  20 passed (20)
+      Tests  215 passed (215)
+   Start at  16:38:58
+   Duration  5.60s (transform 4.54s, setup 2.13s, import 9.45s, tests 4.34s, environment 2.27s)
+

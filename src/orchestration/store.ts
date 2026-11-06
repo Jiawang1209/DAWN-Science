@@ -7,6 +7,9 @@ import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-c
 import {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
 export {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
 import {TaskObservationSchema} from '../protocol/task-observation.js'
+import {RunActivitySchema,RunTimingSchema,RunEventSchema,stageTimingKey,type ExecutionStage,type LockOwner,type RunEvent} from '../protocol/run-explanation.js'
+import {BudgetRecordSchema,initialBudget,budgetView,chargeObservation,setBudgetLimits} from './budget.js'
+import type {RunBudgetLimits} from '../protocol/run-budget.js'
 
 export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
 export type ChildKind = z.infer<typeof ChildKindSchema>
@@ -19,6 +22,7 @@ const ChildSchema = z.object({
   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),
   updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
   handoffSha256:z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
+  activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),
 }).strict()
 export type ChildRecord = z.infer<typeof ChildSchema>
 const MessageSchema = z.object({
@@ -30,13 +34,43 @@ const MessageSchema = z.object({
 export type ChildMessage = z.infer<typeof MessageSchema>
 export const OrchestrationStateSchema = z.object({
   version: z.literal(1), ownerSessionId: z.string().min(1), children: z.array(ChildSchema), messages: z.array(MessageSchema).default([]), steering:z.array(SteeringReceiptSchema).default([]),
+  events:z.array(RunEventSchema).max(256).optional(),eventSequence:z.number().int().nonnegative().optional(),historyTruncated:z.boolean().optional(),
+  budget:BudgetRecordSchema.optional(),
 }).strict()
 const StateSchema = OrchestrationStateSchema
 type State = z.infer<typeof StateSchema>
+function appendEvent(state:State,event:Omit<RunEvent,'seq'|'at'>):void{
+ const seq=(state.eventSequence??0)+1
+ state.eventSequence=seq
+ const events=state.events??=[]
+ events.push(RunEventSchema.parse({...event,seq,at:Date.now()}))
+ if(events.length>256){events.splice(0,events.length-256);state.historyTruncated=true}
+}
+function finishActivity(child:ChildRecord):void{
+ if(!child.activity)return
+ const key=stageTimingKey(child.activity.stage),timing=child.timing??={}
+ timing[key]=(timing[key]??0)+Math.max(0,Date.now()-child.activity.since)
+ delete child.activity
+}
 
 /** Backend addresses are data, never filesystem paths supplied by a model. */
 export function childIdentity(kind: ChildKind, address: readonly string[], ownerSessionId: string): string {
   return `child-${createHash('sha256').update(JSON.stringify([ownerSessionId, kind, address])).digest('hex').slice(0, 32)}`
+}
+/** Shared by live restoration and read-only inspection. No side effects. */
+export function validateOrchestrationIdentity(state:State,ownerSessionId:string):void{
+ if(state.ownerSessionId!==ownerSessionId)throw new Error('owner mismatch')
+ const children=new Map<string,ChildRecord>()
+ for(const child of state.children){if(child.id!==childIdentity(child.kind,child.address,ownerSessionId)||children.has(child.id))throw new Error('invalid or duplicate child identity');children.set(child.id,child)}
+ let sequence=0
+ for(const event of state.events??[]){
+  const child=event.childId?children.get(event.childId):undefined
+  if(event.seq<=sequence||event.seq>(state.eventSequence??0)||event.childId&&!child||event.epoch!==undefined&&(!child||event.epoch>child.epoch))throw new Error('invalid event identity or order')
+  sequence=event.seq
+ }
+ const activeIds=new Set<string>()
+ for(const active of state.budget?.active??[]){const child=children.get(active.childId);if(!child||child.epoch!==active.epoch||activeIds.has(active.childId))throw new Error('invalid budget execution identity');activeIds.add(active.childId)}
+ if(state.budget&&(state.budget.active.length>state.budget.consumedRuns||state.budget.legacyRuns>state.budget.consumedRuns||state.budget.unknownRuns>state.budget.consumedRuns))throw new Error('invalid budget accounting')
 }
 
 export class OrchestrationStore {
@@ -51,12 +85,7 @@ export class OrchestrationStore {
       this.state = existsSync(this.file)
         ? StateSchema.parse(JSON.parse(readFileSync(this.file, 'utf8')))
         : StateSchema.parse({version: 1, ownerSessionId, children: []})
-      if (this.state.ownerSessionId !== ownerSessionId) throw new Error('owner mismatch')
-      const ids = new Set<string>()
-      for (const child of this.state.children) {
-        if (child.id !== childIdentity(child.kind, child.address, ownerSessionId) || ids.has(child.id)) throw new Error('invalid or duplicate child identity')
-        ids.add(child.id)
-      }
+      validateOrchestrationIdentity(this.state,ownerSessionId)
     } catch (error) {
       throw new Error(`Cannot open orchestration state: ${error instanceof Error ? error.message : String(error)}`, {cause: error})
     }
@@ -73,8 +102,9 @@ export class OrchestrationStore {
       if(!child||receipt.epoch>child.epoch||steeringIds.has(receipt.id)||receipt.id!==expected||count>128)throw new Error('Cannot open orchestration state: invalid steering identity')
       steeringIds.add(receipt.id);steeringCounts.set(receipt.childId,count)
     }
-    if (this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
+    if (this.state.budget?.active.length || this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
       this.change(state => {
+        if(state.budget?.active.length){state.budget.unknownRuns+=state.budget.active.length;state.budget.active=[];state.budget.revision++}
         for (const receipt of state.steering) if(receipt.status==='accepted'){receipt.status='interrupted';receipt.reason='宿主重启，是否进入模型上下文未确认；未自动重放';receipt.updatedAt=Date.now()}
         for (const message of state.messages) if (message.status === 'running') {
           const owner = state.children.find(child => child.id === message.childId)
@@ -87,6 +117,8 @@ export class OrchestrationStore {
           child.state = 'interrupted'
           child.reason = '宿主已重启，执行状态 interrupted；请核对已有产物后再继续，未自动重放。'
           child.updatedAt = Date.now()
+          delete child.activity
+          appendEvent(state,{type:'recovered',childId:child.id,epoch:child.epoch,state:'interrupted'})
         }
       })
     }
@@ -94,6 +126,49 @@ export class OrchestrationStore {
 
   list(): ChildRecord[] {return structuredClone(this.state.children)}
   get(id: string): ChildRecord | undefined {return this.list().find(child => child.id === id)}
+  history(){return{events:structuredClone(this.state.events??[]),truncated:this.state.historyTruncated??false}}
+  budget(){return budgetView(this.state.budget??initialBudget(this.state.children))}
+  configureBudget(limits:RunBudgetLimits,expectedRevision:number){
+    this.change(state=>{const budget=state.budget??=initialBudget(state.children);setBudgetLimits(budget,limits,expectedRevision);appendEvent(state,{type:'budget-configured'})})
+    return this.budget()
+  }
+  /** The epoch and its charge are one atomic write before dispatch. */
+  beginRun(id:string):number{
+    let epoch=0
+    this.change(state=>{
+      const child=state.children.find(c=>c.id===id);if(!child)throw new Error('Unknown child')
+      const budget=state.budget??=initialBudget(state.children)
+      if(budget.active.some(active=>active.childId===id))throw new Error('Child is already budgeted in flight')
+      epoch=++child.epoch;child.state='running';child.reason='';child.updatedAt=Date.now()
+      budget.consumedRuns++;budget.startedAt??=Date.now();budget.active.push({childId:id,epoch});budget.revision++
+      appendEvent(state,{type:'started',childId:id,epoch,state:'running'})
+    })
+    return epoch
+  }
+  /** A settled epoch can charge only once; late or duplicate settlement is rejected. */
+  settleRun(id:string,epoch:number,outcome:Outcome,cancelled:boolean):void{
+    this.change(state=>{
+      const child=state.children.find(c=>c.id===id),budget=state.budget,index=budget?.active.findIndex(active=>active.childId===id&&active.epoch===epoch)??-1
+      if(!child||child.epoch!==epoch||!budget||index<0)throw new Error('Stale or already settled budget epoch')
+      budget.active.splice(index,1);chargeObservation(budget,outcome.observation)
+      finishActivity(child);child.state=cancelled?'cancelled':outcome.ok?'completed':'failed';child.result=outcome;child.reason=outcome.error??'';child.updatedAt=Date.now()
+      appendEvent(state,{type:'settled',childId:id,epoch,state:child.state,...(outcome.receipt?{receipt:outcome.receipt.state}:{})})
+    })
+  }
+
+  observeStage(id:string,epoch:number,stage:ExecutionStage,blockers?:LockOwner[],unknownBlockers?:boolean,resources?:string[]):boolean{
+    const child=this.get(id)
+    if(!child||child.epoch!==epoch||child.state!=='running')return false
+    const detail={stage,...(blockers?.length?{blockers}:{}),...(unknownBlockers?{unknownBlockers:true}:{}),...(resources?.length?{resources}:{})}
+    if(child.activity&&JSON.stringify({...child.activity,since:undefined})===JSON.stringify(detail))return false
+    this.change(state=>{const current=state.children.find(c=>c.id===id)!;finishActivity(current);current.activity={...detail,since:Date.now()};appendEvent(state,{type:'stage',childId:id,epoch,...detail})})
+    return true
+  }
+
+  recordEvent(event:Omit<RunEvent,'seq'|'at'>):void{
+    if(event.childId){const child=this.get(event.childId);if(!child||event.epoch!==undefined&&event.epoch!==child.epoch)return}
+    this.change(state=>appendEvent(state,event))
+  }
 
   register(kind: ChildKind, address: readonly string[], label: string): ChildRecord {
     const id = childIdentity(kind, address, this.ownerSessionId)
@@ -103,7 +178,7 @@ export class OrchestrationStore {
       return existing
     }
     const child = ChildSchema.parse({id, kind, address: [...address], label, state: 'idle', epoch: 0, updatedAt: Date.now()})
-    this.change(state => {state.children.push(child)})
+    this.change(state => {state.children.push(child);appendEvent(state,{type:'registered',childId:child.id,epoch:0})})
     return structuredClone(child)
   }
 
@@ -136,7 +211,14 @@ export class OrchestrationStore {
     if (!child) throw new Error(`Unknown child in this parent session: ${id}`)
     if (expectedEpoch !== undefined && child.epoch !== expectedEpoch) throw new Error(`Stale child epoch: ${id}`)
     const next = ChildSchema.parse({...child, ...patch, updatedAt: Date.now()})
-    this.change(state => {state.children[state.children.findIndex(item => item.id === id)] = next})
+    this.change(state => {
+      if(patch.state&&patch.state!==child.state||patch.epoch!==undefined&&patch.epoch!==child.epoch){
+        if(patch.state!=='running')finishActivity(next)
+        const type=patch.state==='running'?'started':patch.state==='queued'?'queued':'settled'
+        appendEvent(state,{type,childId:id,epoch:next.epoch,state:next.state,...(patch.result?.receipt?{receipt:patch.result.receipt.state}:{})})
+      }
+      state.children[state.children.findIndex(item => item.id === id)] = next
+    })
     return next
   }
 

@@ -1,0 +1,9 @@
+{
+  "candidateFiles": 51,
+  "mainClean": true,
+  "mainHead": "9dd59f4f49309c0be60c6070bdef6ac5ccf5d74c",
+  "visualBaselines": 14,
+  "changedBaselines": [],
+  "noCommitMergePushRelease": true,
+  "visualComparison": "Byte comparison against main filesystem copies; these baseline PNGs are Git-ignored, not tracked in HEAD."
+}

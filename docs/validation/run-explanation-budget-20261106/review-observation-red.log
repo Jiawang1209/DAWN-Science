@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/explanation.test.ts tests/orchestration/run-overview.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/orchestration/run-overview.test.ts (4 tests | 1 failed) 25ms
+   × cold reads reject foreign event and budget identities rather than displaying another execution 6ms
+ ❯ |node| tests/orchestration/explanation.test.ts (3 tests | 1 failed) 229ms
+   × explains real cross-parent output contention without releasing a cancelled holder early 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/explanation.test.ts > explains real cross-parent output contention without releasing a cancelled holder early
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/orchestration/explanation.test.ts:26:81
+     24|   ctrl.abort();await tick();expect(secondStarted).toBe(false)
+     25|   expect(liveRunOverview(a.service).runs[0]?.phase).toBe('stopping')
+     26|   expect(a.store.history().events.some(event=>event.type==='cancel-req…
+       |                                                                                 ^
+     27|  }finally{drain.release();await Promise.all([one,two]);await Promise.a…
+     28|  expect(secondStarted).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > cold reads reject foreign event and budget identities rather than displaying another execution
+AssertionError: expected [Function] to throw an error
+ ❯ tests/orchestration/run-overview.test.ts:45:40
+     43|  const file=join(root,'orchestration/state.json'),original=readFileSyn…
+     44|  state.events[0].childId='foreign-child';writeFileSync(file,JSON.strin…
+     45|  expect(()=>readRunOverview(root,'p')).toThrow()
+       |                                        ^
+     46|  const other=JSON.parse(original);other.budget.active[0].childId='fore…
+     47|  expect(()=>readRunOverview(root,'p')).toThrow()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed (7)
+   Start at  16:40:58
+   Duration  536ms (transform 158ms, setup 0ms, import 439ms, tests 254ms, environment 0ms)
+

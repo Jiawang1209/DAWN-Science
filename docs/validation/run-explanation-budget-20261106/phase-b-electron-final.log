@@ -1,0 +1,18 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/run-explanation-budget.spec.ts -g sets real limits
+
+Running 1 test using 1 worker
+
+(node:56536) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:62326/6a91b086-1205-4248-83b2-54dac9a2d7aa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62368/f8c0cc9e-1b00-4ddf-9ee3-42a373f51361
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (8.8s)
+
+  1 passed (9.4s)

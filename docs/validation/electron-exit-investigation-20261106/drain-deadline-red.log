@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/wiring.test.ts -t 退出诊断区分
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/wiring.test.ts (48 tests | 1 failed | 47 skipped) 33ms
+     × 退出诊断区分正常排空和原有等待上限，观察失败不改变退出 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 退出诊断区分正常排空和原有等待上限，观察失败不改变退出
+AssertionError: expected [] to deeply equal [ 'deadline' ]
+
+- Expected
++ Received
+
+- [
+-   "deadline",
+- ]
++ []
+
+ ❯ tests/electron/wiring.test.ts:135:22
+    133|       await vi.advanceTimersByTimeAsync(24);expect(states).toEqual([])
+    134|       await vi.advanceTimersByTimeAsync(1);await expect(closing).resol…
+    135|       expect(states).toEqual(['deadline'])
+       |                      ^
+    136|     }finally{release();stop.mockRestore();vi.useRealTimers();wb.close(…
+    137|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 47 skipped (48)
+   Start at  23:58:25
+   Duration  2.69s (transform 1.31s, setup 0ms, import 2.56s, tests 33ms, environment 0ms)
+

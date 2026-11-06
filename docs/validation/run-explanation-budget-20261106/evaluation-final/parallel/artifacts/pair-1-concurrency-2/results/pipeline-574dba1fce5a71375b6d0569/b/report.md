@@ -1,0 +1,1 @@
+Synthetic fixture; mean=3.0 m; not scientific validation.

@@ -42,6 +42,7 @@ import { 子事件Schema, type SubagentChildSpec, type 子事件 } from "./proto
 import { 按字节截 } from "./clip.js"
 import type { ResourceHost } from "./resources.js"
 import {taskOutputReservation} from "../bot/output-locks.js"
+import {reportExecutionStage} from '../orchestration/execution-context.js'
 import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskEvidenceSchema,type TaskSettings,type TaskContract,type TaskReceipt} from "../orchestration/task-contract.js"
 import type {RouteToolEvidence} from "../runtime/analysis-route-evidence.js"
 import {TaskObservationSchema,type TaskObservation} from '../protocol/task-observation.js'
@@ -320,6 +321,7 @@ export class SubagentExecutor {
     const execute=async (runSignal:AbortSignal):Promise<SubagentResult>=>{
       const release=settings?await taskOutputReservation(this.context.cwd,settings,runSignal):()=>{}
       try {
+        reportExecutionStage('preflight')
         if(runSignal.aborted)return fail(task,"已中止")
         const inputProblem=settings?.contract?taskInputReceipt(settings.contract,this.context.cwd):undefined
         if(inputProblem)return{...fail(task,inputProblem.reason??inputProblem.summary),receipt:inputProblem}
@@ -327,8 +329,10 @@ export class SubagentExecutor {
         if(versionProblem)return{...fail(task,versionProblem.reason??versionProblem.summary),receipt:versionProblem}
         const handoff=this.context.handoffOf?.(index)
         if(handoff?.sha256!==preparedHandoff?.sha256)throw new Error('排队期间冻结交接快照发生变化；子进程未启动')
+        reportExecutionStage('execution')
         const result=await this.spawnOne(definition,task,index,runSignal,resume,settings,handoff)
         if(result.ok&&settings?.contract){
+          reportExecutionStage('acceptance')
           const verified=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd),this.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]})
           const receipt=verified.versions&&this.context.recordReceipt?this.context.recordReceipt(verified):verified
           return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'任务未通过验收'}:{})}

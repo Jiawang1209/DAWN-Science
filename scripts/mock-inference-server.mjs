@@ -7,6 +7,7 @@ import {toolSelectionDemoTool, toolSelectionDemoReply} from './mock-tool-selecti
 import { terminalAssistanceTool, terminalAssistanceReply } from './mock-terminal-assistance.mjs'
 import { literatureMockTool, literatureMockReply } from './mock-literature.mjs'
 import { reviewMockTool, reviewMockReply } from './mock-literature-review.mjs'
+import {budgetDelegationTool} from './mock-run-budget.mjs'
 /**
  * 本地 OpenAI 兼容的假推理服务器。
  *
@@ -630,7 +631,7 @@ export function startMockInferenceServer(opts = {}) {
                 ? 案例卡片回复
                 : 默认回复)
 
-      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? scienceMockTool(body) ?? reviewMockTool(body) ?? literatureMockTool(body) ?? terminalAssistanceTool(body) ?? toolSelectionDemoTool(body) ?? deliveryDemoTool(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? budgetDelegationTool(body) ?? scienceMockTool(body) ?? reviewMockTool(body) ?? literatureMockTool(body) ?? terminalAssistanceTool(body) ?? toolSelectionDemoTool(body) ?? deliveryDemoTool(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
       const 用量 = !摘要 && !是标题 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
       const stream = body.stream !== false
       const finishReason = !摘要 && !是标题 && 最后一句.includes("演一次截断") ? "length" : "stop"

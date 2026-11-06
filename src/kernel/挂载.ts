@@ -196,7 +196,7 @@ export class 对话内核 {
   private readonly 起中 = new Map<string, { 对话: SessionId; 语言: 内核语言; promise: Promise<一台> }>()
   private readonly 清理代 = new Map<SessionId, number>()
   private readonly 收中 = new Map<SessionId, Promise<收核结果>>()
-  private 全收中: Promise<void> | undefined
+  private 全收中: Promise<PromiseSettledResult<收核结果>[]> | undefined
 
   constructor(private readonly opts: 挂载选项) {}
 
@@ -808,16 +808,20 @@ export class 对话内核 {
 
   /**
    * 收掉所有对话的内核（审查 debug H1）。退出收摊调它——否则 python/R 进程与
-   * 每台 5 个 ZMQ 端口一直留到进程被杀。逐台收,收不掉的吞掉(退出路径不该因一台卡住)。
+   * 每台 5 个 ZMQ 端口一直留到进程被杀。逐台尽力收；退出验收可要求报告失败。
+   * 共享原始结果，不能让先来的尽力调用吞掉后来的退出诊断。
    */
-  async 收全部(): Promise<void> {
-    if (this.全收中) return this.全收中
-    const 对话们 = new Set([...this.表.values(), ...this.起中.values()].map(k => k.对话))
-    for (const 对话 of this.收中.keys()) 对话们.add(对话)
-    const p = Promise.resolve().then(async () => {
-      await Promise.all([...对话们].map(对话 => this.收(对话).catch(() => {})))
-    }).finally(() => { if (this.全收中 === p) this.全收中 = undefined })
-    this.全收中 = p
-    return p
+  async 收全部(options?:{reportErrors?:boolean}): Promise<void> {
+    let pending=this.全收中
+    if(!pending){
+      const 对话们 = new Set([...this.表.values(), ...this.起中.values()].map(k => k.对话))
+      for (const 对话 of this.收中.keys()) 对话们.add(对话)
+      const p=Promise.resolve().then(()=>Promise.allSettled([...对话们].map(对话=>this.收(对话))))
+        .finally(()=>{if(this.全收中===p)this.全收中=undefined})
+      this.全收中=p;pending=p
+    }
+    const results=await pending
+    const errors=results.flatMap(result=>result.status==='rejected'?[result.reason]:result.value.没收掉.map(failed=>new Error(`${failed.语言}: ${failed.原因}`)))
+    if(options?.reportErrors&&errors.length)throw new AggregateError(errors,'Kernel shutdown failed')
   }
 }

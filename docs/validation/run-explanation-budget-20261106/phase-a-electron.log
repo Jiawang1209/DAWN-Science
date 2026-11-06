@@ -1,0 +1,14 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/run-explanation-budget.spec.ts
+
+Running 1 test using 1 worker
+
+(node:48837) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52398/6b3de769-d66d-4ada-90fb-ea195ecad281
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/run-explanation-budget.spec.ts:10:2 › run explanation › explains actual shared lock waiting and retained host history (15.5s)
+
+  1 passed (16.3s)

@@ -1,0 +1,343 @@
+{
+  "runs": [
+    {
+      "file": "desktop-results/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-12377.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 12377,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 12377,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-12617.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 12617,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 12617,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/run-explanation-budget-ela-60dc3-ns-ownership-until-it-exits/electron-exit/exit-11698.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 11698,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 11698,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/run-explanation-budget-run-efec7-g-and-retained-host-history/electron-exit/exit-11220.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 11220,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 11220,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/subagent-steering-live-chi-89a3d-p-drains-pending-correction/electron-exit/exit-12746.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 12746,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 12746,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/task-contract-input-readin-735c0-he-child-or-writing-outputs/electron-exit/exit-13781.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 13781,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 13781,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/task-contract-legacy-Team--03baf--the-strict-client-protocol/electron-exit/exit-13675.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 13675,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 13675,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    },
+    {
+      "file": "desktop-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/electron-exit/exit-13566.jsonl",
+      "exits": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 13566,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "closes": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 13566,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "stalled": false
+    }
+  ],
+  "observedExits": 8,
+  "allExitedNormally": true,
+  "stallObservations": 0
+}

@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/run-budget-evaluation.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/evaluation/run-budget-evaluation.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/run-budget-evaluation.test.ts [ tests/evaluation/run-budget-evaluation.test.ts ]
+Error: Cannot find module '../../src/evaluation/run-budget.js' imported from /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/evaluation/run-budget-evaluation.test.ts
+ ❯ tests/evaluation/run-budget-evaluation.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {summarizeRunBudget} from '../../src/evaluation/run-budget.js'
+       | ^
+      3| const baseline={mode:'unlimited' as const,inputHash:'input',inputPrese…
+      4| const limited={...baseline,mode:'limited' as const,started:2,accepted:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:37:41
+   Duration  100ms (transform 10ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

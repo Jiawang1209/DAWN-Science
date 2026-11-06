@@ -831,6 +831,7 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
          * 假出口把每一条记进主进程 `globalThis.__dawn桌面通知`，用例用下面的 `读桌面通知` / `点桌面通知` 读、点。
          */
         DAWN_FAKE_NOTIFY: "1",
+        DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR: process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR || testInfo.outputPath('electron-exit'),
         ...(dawnOptions.pickDirectory ? { DAWN_PICK_DIRECTORY: dawnOptions.pickDirectory } : {}),
         ...(dawnOptions.pickFiles ? { DAWN_PICK_FILES: dawnOptions.pickFiles.join(",") } : {}),
       },
@@ -844,9 +845,11 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       // process channel. Retain the original child for the same strict exit check.
       const proc = appProcess
       exitDiagnostics?.beginClose()
-      await app.close()
+      try{await app.close();exitDiagnostics?.closeReturned()}
+      catch(error){exitDiagnostics?.closeFailed();throw error}
       expect(proc.signalCode, "Electron 退出时收到信号；检查主进程日志和系统崩溃报告").toBeNull()
       expect(proc.exitCode, "Electron 必须正常退出，不能把原生崩溃记为通过").toBe(0)
+      expect(exitDiagnostics?.shutdownProblems()??[],"退出码为零仍需检查收尾到期、失败、兜底或诊断缺失，不能把它们算成正常排空").toEqual([])
     }
     try {
     app = await 起一次()

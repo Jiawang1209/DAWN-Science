@@ -1,4 +1,4 @@
-import {afterEach,expect,it} from 'vitest'
+import {afterEach,expect,it,vi} from 'vitest'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
@@ -24,7 +24,8 @@ it('a Bot contract failure blocks dependent tasks and retains the host receipt',
  const contract=TaskContractSchema.parse({access:'workspace-write',outputs:['missing.csv']})
  加任务(team,{id:'first',subject:'write',assignee:'b',contract});加任务(team,{id:'second',subject:'downstream',dependencies:['first'],assignee:'b'})
  let runs=0
- const scheduler=new 团队调度器({orchestration:new OrchestrationService(new OrchestrationStore(cwd,'p')),sessionDir:cwd,定义:()=>[],跑:{childOf:()=>({command:'unused',args:[]}),context:{provider:'p',model:'m',cwd}},onChange:()=>{},
+ const store=new OrchestrationStore(cwd,'p'),orchestration=new OrchestrationService(store)
+ const scheduler=new 团队调度器({orchestration,sessionDir:cwd,定义:()=>[],跑:{childOf:()=>({command:'unused',args:[]}),context:{provider:'p',model:'m',cwd}},onChange:()=>{},
  prepareTask:(_member,task)=>resolveTaskSettings(task?.contract,'allow-all'),memberRunner:async request=>{
   runs++;expect(request.settings?.contract).toEqual(contract)
   return{ok:true,evidence:[],output:JSON.stringify({summary:'done',blockers:[],deliverables:[{path:'missing.csv'}],execution:{state:'not_run',note:'no computation'},verification:{state:'unreviewed',note:'not reviewed'}})}
@@ -32,6 +33,24 @@ it('a Bot contract failure blocks dependent tasks and retains the host receipt',
  写团队(scheduler.dir('t'),team);await scheduler.踢一下('t')
  const end=Date.now()+2000;while(scheduler.读('t').tasks[0]?.status==='in_progress'&&Date.now()<end)await new Promise(resolve=>setTimeout(resolve,10))
  expect(scheduler.读('t').tasks[0]).toMatchObject({status:'failed',receipt:{state:'invalid'}});expect(runs).toBe(1)
+ expect(store.history().events.some(event=>event.type==='stage'&&event.stage==='acceptance')).toBe(true)
+ await orchestration.close()
+})
+
+it('does not claim host acceptance ran when the contracted backend failed before returning a result',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-team-failed-stage-'));roots.push(cwd)
+ const store=new OrchestrationStore(cwd,'p'),orchestration=new OrchestrationService(store)
+ const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'});加成员(team,{name:'b',agent:'b',botId:'b',botScopeKey:'scope'})
+ 加任务(team,{id:'first',subject:'check',assignee:'b',contract:TaskContractSchema.parse({})})
+ const scheduler=new 团队调度器({orchestration,sessionDir:cwd,定义:()=>[],跑:{childOf:()=>({command:'unused',args:[]}),context:{provider:'p',model:'m',cwd}},onChange:()=>{},
+  prepareTask:(_member,task)=>resolveTaskSettings(task?.contract,'allow-all'),memberRunner:async()=>({ok:false,output:'',error:'provider unavailable'})})
+ try{
+  写团队(scheduler.dir('t'),team);await scheduler.踢一下('t')
+  await vi.waitFor(()=>expect(scheduler.读('t').tasks[0]?.status).toBe('failed'))
+  await vi.waitFor(()=>expect(orchestration.hasPendingWork).toBe(false))
+  const stages=store.history().events.filter(event=>event.type==='stage').map(event=>event.stage)
+  expect(stages).toContain('execution');expect(stages).not.toContain('acceptance')
+ }finally{await orchestration.close()}
 })
 
 it('the parent rejects a peer-message RPC from a narrow child before invoking the scheduler',async()=>{

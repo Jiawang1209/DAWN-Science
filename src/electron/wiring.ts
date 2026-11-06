@@ -288,8 +288,8 @@ export interface Workbench {
   reconciled: number
   close(): void
   /** 退出前的收摊：**先停会话再关库**（否则 zeromq 的析构会让进程 SIGABRT） */
-  closeAsync(timeoutMs?: number): Promise<void>
-  /** 活跃内核或目录传输需要有界等待收尾。 */
+  closeAsync(timeoutMs?: number,observe?:(state:'drained'|'deadline'|'failed')=>void): Promise<void>
+  /** 主任务、启动/停止、MCP、PTY、内核或传输活跃时，需要有界等待收尾。 */
   needsGracefulShutdown(): boolean
 }
 
@@ -1983,25 +1983,28 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
      *
      * **有上限**：一个停不下来的内核不该让「关掉应用」变成「关不掉」。
      */
-    /** 子任务（含停止排空）、本地 PTY、内核或目录传输活跃时，有界等待；空闲退出不增加等待。 */
+    /** 启动/停止、主任务/子任务、MCP、PTY、内核或传输活跃时有界等待；空闲退出不增加等待。 */
     needsGracefulShutdown() {
-      return nativeRuntime.hasActiveChildren() || terminalControl.hasLiveLocalTerminals() || sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
+      return sessions.hasPendingStarts() || nativeRuntime.hasPendingWork() || mcp池.hasPendingWork() || terminalControl.hasLiveLocalTerminals() || sessions.hasLiveKernelSessions() || 对话的内核.有活内核() || 退出等待们.some(check => check())
     },
 
-    async closeAsync(timeoutMs = 1500) {
+    async closeAsync(timeoutMs = 1500,observe?:(state:'drained'|'deadline'|'failed')=>void) {
       if (closed) return
       let timeout: ReturnType<typeof setTimeout> | undefined
-      try { await Promise.race([
+      let state:'drained'|'deadline'|'failed'='deadline'
+      try { state=await Promise.race([
         /**
          * **MCP 的那些进程也要收**（2026-08-15）。
          * 不收就是一堆孤儿进程——而它们多半连着数据库。
          * 与会话一起进同一个超时竞赛：**收摊不能因为一台服务器不肯退而卡住**。
          */
-        Promise.allSettled([sessions.stopAll(), 对话的内核.收全部(), mcp池.全关(), ...收摊们.map((f) => Promise.resolve().then(f))]).then(results => {
+        Promise.allSettled([sessions.stopAll({reportErrors:true}), 对话的内核.收全部({reportErrors:true}), mcp池.全关({reportErrors:true}), ...收摊们.map((f) => Promise.resolve().then(f))]).then(results => {
           for (const result of results) if (result.status === 'rejected') console.error('[退出] 资源收尾失败：', result.reason)
+          return results.some(result=>result.status==='rejected')?'failed' as const:'drained' as const
         }),
-        new Promise<void>((r) => { timeout = setTimeout(r, timeoutMs) }),
+        new Promise<'deadline'>((r) => { timeout = setTimeout(()=>r('deadline'), timeoutMs) }),
       ]) } finally { if (timeout !== undefined) clearTimeout(timeout) }
+      try{observe?.(state)}catch{/* Diagnostics cannot change shutdown. */}
       this.close()
     },
   }

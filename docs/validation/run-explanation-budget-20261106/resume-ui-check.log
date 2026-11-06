@@ -1,0 +1,12 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/composer-layout.test.tsx tests/ui/connection-dialog.test.tsx tests/ui/right-dock-render.test.tsx tests/ui/setup-wizard.test.tsx tests/ui/terminal-mode-state.test.tsx tests/ui/terminal-persistence.test.tsx --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  6 passed (6)
+      Tests  51 passed (51)
+   Start at  21:04:29
+   Duration  4.78s (transform 2.61s, setup 2.72s, import 1.37s, tests 4.09s, environment 3.02s)
+

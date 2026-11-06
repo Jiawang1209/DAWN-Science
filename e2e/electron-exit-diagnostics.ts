@@ -1,26 +1,29 @@
-/** Passive default close watchdog; app-level injection remains opt-in. No kill or budget changes. */
+/** Passive process/protocol observer. Native app facts are written independently. */
 import type { ElectronApplication } from '@playwright/test'
 import { execFile } from 'node:child_process'
-import { appendFileSync, mkdirSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync,readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { collectTree } from '../src/runtime/process-tree.js'
 
 export async function observeElectronExit(app: ElectronApplication, defaultDir?:string) {
   const explicitDir=process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR
   const dir = explicitDir || defaultDir
-  if (!dir) return { beginClose() {}, async appReady() {} }
-  mkdirSync(dir, { recursive: true })
+  const disabled={ beginClose() {}, closeReturned() {}, closeFailed() {}, shutdownProblems:()=>['shutdown-diagnostics-unavailable'],async appReady() {} }
+  if (!dir) return disabled
+  try{mkdirSync(dir, { recursive: true,mode:0o700 })}catch{return disabled}
   const child = app.process()
   const file = join(dir, `exit-${child.pid}.jsonl`)
   const started = performance.now()
   const record = (event: string, detail: unknown = {}) => {
-    appendFileSync(file, JSON.stringify({ event, at: new Date().toISOString(), ms: performance.now() - started, detail }) + '\n')
+    try{appendFileSync(file, JSON.stringify({ event, at: new Date().toISOString(), ms: performance.now() - started, detail }) + '\n',{mode:0o600})}catch{/* Passive diagnostics cannot break control flow. */}
   }
+  let appClosed=false,contextClosed=false
   const streamState = (stream: typeof child.stdout) => stream && ({
     destroyed: stream.destroyed, readableEnded: stream.readableEnded, closed: stream.closed,
   })
   const snapshot = () => ({
     pid: child.pid, exitCode: child.exitCode, signalCode: child.signalCode,
+    appClosed,contextClosed,
     stdout: streamState(child.stdout), stderr: streamState(child.stderr),
   })
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -30,7 +33,7 @@ export async function observeElectronExit(app: ElectronApplication, defaultDir?:
     if (closing || closed) return
     closing = true
     // Keep normal fixture shutdown passive: inspect processes only if it stalls.
-    const owned = explicitDir && child.pid && child.exitCode === null ? collectTree(child.pid).pids : []
+    const owned = child.pid && child.exitCode === null ? collectTree(child.pid).pids : []
     record('close-requested', { ...snapshot(), owned })
     timer = setTimeout(() => {
       record('still-waiting-5s', snapshot())
@@ -52,43 +55,52 @@ export async function observeElectronExit(app: ElectronApplication, defaultDir?:
     if (timer) clearTimeout(timer)
     record('child-close', { code, signal, ...snapshot() })
   })
+  app.once('close',()=>{appClosed=true;record('app-protocol-close',snapshot())})
+  const context=app.context()
+  context.once('close',()=>{contextClosed=true;record('context-close',snapshot())})
+  const pages=new WeakSet<object>();let pageCount=0
+  const observePage=(page:ReturnType<ElectronApplication['windows']>[number])=>{
+    if(pages.has(page))return
+    pages.add(page);const id=++pageCount
+    page.once('crash',()=>record('page-crash',{id,...snapshot()}))
+    page.once('close',()=>record('page-close',{id,...snapshot()}))
+  }
+  app.on('window',observePage);context.on('page',observePage)
+  for(const page of app.windows())observePage(page)
   for (const [name, stream] of [['stdout', child.stdout], ['stderr', child.stderr]] as const) {
     stream?.once('end', () => record(`${name}-end`, snapshot()))
     stream?.once('close', () => record(`${name}-close`, snapshot()))
   }
-  // Read only our own marker, never persist general stderr or request/config data.
+  // Only classify fixed inspector markers; never retain stderr or websocket URLs.
   let pending = ''
   child.stderr?.on('data', (chunk: Buffer) => {
     pending += chunk.toString()
     const lines = pending.split('\n')
     pending = lines.pop()!.slice(-4096)
-    for (const line of lines) {
-      const marker = '[DAWN_EXIT_DIAG] '
-      const index = line.indexOf(marker)
-      if (index < 0) continue
-      record('app-event', line.slice(index + marker.length))
-      if (line.includes('before-quit')) beginClose()
+    for (const raw of lines) {
+      const line=raw.replace(/\r$/,'')
+      if(line.startsWith('Debugger ending on '))record('inspector-ending',snapshot())
+      if(line==='Waiting for the debugger to disconnect...')record('inspector-waiting-disconnect',snapshot())
     }
   })
   record('attached', snapshot())
   const appReady = async () => {
-    if(!explicitDir)return
-    try {
-      await app.evaluate(({ app }) => {
-        const log = (event: string) => {
-          const resources = process.getActiveResourcesInfo()
-          console.error('[DAWN_EXIT_DIAG] ' + JSON.stringify({ event, resources }))
-        }
-        app.on('before-quit', () => log('before-quit'))
-        app.on('will-quit', () => log('will-quit'))
-        app.on('quit', () => log('quit'))
-        process.once('exit', () => log('process-exit'))
-      })
-    } catch (error) {
-      // Optional observation failures are recorded separately. Product launch,
-      // app.close and the strict child exit assertions remain mandatory.
-      record("app-observation-unavailable", { message: error instanceof Error ? error.message : String(error) })
-    }
+    record('observer-ready',snapshot())
   }
-  return { beginClose, appReady }
+  const shutdownProblems=():string[]=>{
+    const nativeFile=join(dir,`app-${child.pid}.jsonl`)
+    if(!existsSync(nativeFile))return['shutdown-diagnostics-unavailable']
+    try{
+      const events=readFileSync(nativeFile,'utf8').split('\n').filter(Boolean).map(line=>JSON.parse(line).event as string)
+      // Explicit shared diagnostic directories may contain a previous use of this PID.
+      const attached=events.lastIndexOf('diagnostics-attached'),current=events.slice(Math.max(0,attached))
+      const bad=new Set(['shutdown-drain-timeout','shutdown-drain-failed','shutdown-async-failed','shutdown-fallback-fired'])
+      const problems=[...new Set(current.filter(event=>bad.has(event)))]
+      if(problems.length)return problems
+      if(attached<0)return['shutdown-diagnostics-unavailable']
+      if(current.includes('shutdown-async-start')&&!current.includes('shutdown-drained'))return['shutdown-outcome-unobserved']
+      return[]
+    }catch{return['shutdown-diagnostics-unreadable']}
+  }
+  return { beginClose, appReady,shutdownProblems,closeReturned:()=>record('close-call-returned',snapshot()),closeFailed:()=>record('close-call-failed',snapshot()) }
 }

@@ -4072,9 +4072,19 @@ ${描述}`
     const service=this.orchestrations.get(sessionId)
     return service?liveRunOverview(service):undefined
   }
+  configureRunBudget(sessionId:SessionId,limits:import('../protocol/run-budget.js').RunBudgetLimits,expectedRevision:number){
+    const service=this.orchestrations.get(sessionId)
+    if(!service)throw new UserFacingError('当前会话尚无在线统一编排，无法修改委派预算')
+    return service.configureBudget(limits,expectedRevision)
+  }
 
   hasActiveChildren():boolean {
     return [...this.orchestrations.values()].some(service=>service.hasPendingWork)
+  }
+
+  /** Includes root turns and disposal after their session was removed from the live map. */
+  hasPendingWork():boolean {
+    return this.hasActiveChildren() || this.起中.size>0 || this.停中.size>0 || [...this.sessions.keys()].some(id=>this.terminalBusy(id))
   }
 
   async controlSubagent(sessionId:SessionId,toolCallId:string,index:number,action:import('../protocol/subagent-control.js').SubagentControlAction):Promise<import('../protocol/subagent-control.js').SubagentControlState>{

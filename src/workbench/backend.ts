@@ -13,6 +13,7 @@ import {DeliveryService, type DeliveryOptions} from '../delivery/service.js'
 import { withSessionContext } from './session-input-context.js'
 import {acceptTaskResult,taskInputReceipt} from "../orchestration/task-contract.js"
 import { sharedTaskOutputLocks, taskOutputReservation, localTaskOutputReservation } from "../bot/output-locks.js"
+import {reportExecutionStage} from '../orchestration/execution-context.js'
 import { verifiedArtifacts } from "../bot/context.js"
 /**
  * Workbench 的真实后端（补 Part 1 的收口）。
@@ -2321,6 +2322,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       }
       const release = !owner.connectionId&&request.settings?await taskOutputReservation(owner.workspace,request.settings,request.signal):owner.connectionId?await botOutputLocks.acquire(key,outputs,request.signal):await localTaskOutputReservation(owner.workspace,declared,request.signal)
       try {
+      reportExecutionStage('preflight')
       const inputProblem=request.settings?.contract?taskInputReceipt(request.settings.contract,owner.workspace):undefined
       if(inputProblem)return{ok:false,output:'',error:inputProblem.reason??inputProblem.summary,receipt:inputProblem}
       const versionProblem=await versionInputReceipt(request.settings,owner.workspace,request.signal)
@@ -2342,8 +2344,10 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         if (!sessions.leases.current(sid)) sessions.leases.acquire(sid, holder)
         sessions.write(sid, request.prompt, holder)
       }})
+      reportExecutionStage('execution')
       const result:import("../team/types.js").成员轮结果=request.settings&&!owner.connectionId?await botRuntime(sid).runWithTaskScope(sid,request.settings,run):await run()
       if(result.ok&&request.settings?.contract){
+        reportExecutionStage('acceptance')
         const evidence=result.evidence??[]
         const receipt=await finalizeTaskVersions(request.settings,acceptTaskResult(request.settings.contract,result.output,evidence,owner.workspace,!!owner.connectionId),owner.workspace,request.signal,{required:request.settings.contract.submission==='tool',submitted:result.versions,evidence:evidence})
         return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??'未通过契约验收'}:{})}
@@ -2842,6 +2846,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         }catch(error){run.handoffIssue=error instanceof Error?error.message:String(error)}
       }
       return snapshot
+    },
+    setRunBudget:async({sessionId,limits,expectedRevision})=>{
+      if(!sessions.get(sessionId))throw fault("not_found","会话不存在：{0}",sessionId)
+      const runtime=sessions.runtimeOf(sessionId)
+      if(!runtime?.configureRunBudget)throw fault("invalid_request","当前运行时不支持修改会话委派预算；离线记录仅可查看")
+      return runtime.configureRunBudget(sessionId,limits,expectedRevision)
     },
     openSubagent: async ({ transcriptId }) => {
       const 拆 = 拆子转录id(transcriptId)

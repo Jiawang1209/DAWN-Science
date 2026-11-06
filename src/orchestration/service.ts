@@ -2,6 +2,8 @@
 import {OrchestrationStore, type Outcome, type ChildKind, type ChildRecord} from './store.js'
 
 import type {SteeringReceipt} from './store.js'
+import {withExecutionContext,reportExecutionStage} from './execution-context.js'
+import type {RunBudgetLimits} from '../protocol/run-budget.js'
 
 type Work = (signal: AbortSignal) => Promise<Outcome>
 interface Entry {
@@ -17,6 +19,7 @@ interface Entry {
 const cancelled = (): Outcome => ({ok: false, output: '', error: '执行已中止'})
 
 export class OrchestrationService {
+  observationIssue:string|undefined
   private readonly controlErrors:unknown[]=[]
   private steering = new Map<string,{epoch:number; send:(receipt:SteeringReceipt)=>void|Promise<void>}>()
   private queue: Entry[] = []
@@ -25,6 +28,7 @@ export class OrchestrationService {
   private closed = false
   private readonly listeners = new Set<() => void>()
   private generation = 0
+  private budgetTimer:ReturnType<typeof setTimeout>|undefined
 
   constructor(readonly store: OrchestrationStore, readonly capacity = 4) {
     if (!Number.isSafeInteger(capacity) || capacity < 1) throw new Error('Invalid orchestration capacity')
@@ -33,6 +37,13 @@ export class OrchestrationService {
   get revision(): number {return this.generation}
   get isClosed(): boolean {return this.closed}
   get hasPendingWork():boolean {return this.active.size>0||this.queue.length>0}
+  budgetSnapshot(){return this.store.budget()}
+  configureBudget(limits:RunBudgetLimits,expectedRevision:number){
+    if(this.closed)throw new Error('Orchestration service is closed')
+    const result=this.store.configureBudget(limits,expectedRevision)
+    this.enforceBudget();this.refreshBudgetTimer();this.changed();this.drain()
+    return result
+  }
 
   register(kind: ChildKind, address: readonly string[], label: string): ChildRecord {
     if (this.closed) throw new Error('Orchestration service is closed')
@@ -47,6 +58,8 @@ export class OrchestrationService {
     const child = this.store.get(id)
     if (!child) return Promise.reject(new Error(`Unknown child in this parent session: ${id}`))
     if (signal?.aborted) return Promise.resolve(cancelled())
+    const blocked=this.budgetSnapshot().blocked
+    if(blocked){this.store.recordEvent({type:'budget-blocked',childId:id,epoch:child.epoch});this.changed();return Promise.resolve({ok:false,output:'',error:blocked.message})}
     return new Promise<Outcome>((resolve, reject) => {
       const controller = new AbortController()
       let finish!: () => void
@@ -54,6 +67,7 @@ export class OrchestrationService {
       const entry: Entry = {id, work, controller, resolve, reject, finished, finish, detach: () => {}}
       const abort = () => {
         if(this.active.get(id)===entry)this.interruptSteering(id)
+        this.observeCancellation(entry)
         controller.abort(signal?.reason)
         const index = this.queue.indexOf(entry)
         if (index < 0) return
@@ -134,6 +148,7 @@ export class OrchestrationService {
     const entry = this.active.get(id)
     if (!entry) return false
     this.interruptSteering(id)
+    this.observeCancellation(entry)
     entry.controller.abort()
     this.changed()
     return true
@@ -143,8 +158,9 @@ export class OrchestrationService {
   close(): Promise<void> {
     if (this.closing) return this.closing
     this.closed = true
+    clearTimeout(this.budgetTimer)
     const active = [...this.active.values()]
-    for (const entry of active) {this.interruptSteering(entry.id);entry.controller.abort()}
+    for (const entry of active) {this.interruptSteering(entry.id);this.observeCancellation(entry);entry.controller.abort()}
     const queued = this.queue.splice(0)
     const errors: unknown[] = []
     for (const entry of queued) {
@@ -181,7 +197,9 @@ export class OrchestrationService {
 
   private drain(): void {
     if (this.closed) return
+    this.enforceBudget()
     while (this.active.size < this.capacity) {
+      if(this.budgetSnapshot().blocked){this.enforceBudget();return}
       const index = this.queue.findIndex(entry => !this.active.has(entry.id))
       if (index < 0) return
       const entry = this.queue.splice(index, 1)[0]!
@@ -192,21 +210,57 @@ export class OrchestrationService {
 
   private async execute(entry: Entry): Promise<void> {
     try {
-      const epoch = this.store.get(entry.id)!.epoch + 1
-      this.store.update(entry.id, {state: 'running', epoch, reason: ''})
+      const epoch = this.store.beginRun(entry.id)
+      this.refreshBudgetTimer()
       this.changed()
       let outcome: Outcome
-      try {outcome = await entry.work(entry.controller.signal)}
+      try {outcome = await withExecutionContext({ownerSessionId:this.store.ownerSessionId,childId:entry.id,label:this.store.get(entry.id)!.label,epoch,
+        report:(stage,blockers,unknown,resources)=>{if(this.store.observeStage(entry.id,epoch,stage,blockers,unknown,resources))this.changed()},
+        observationFailed:()=>{this.observationIssue='部分运行观察未能保存；不影响既有锁和排空规则'},
+      },()=>{reportExecutionStage('execution');return entry.work(entry.controller.signal)})}
       catch (error) {outcome = {ok: false, output: '', error: error instanceof Error ? error.message : String(error)}}
       if (entry.controller.signal.aborted) outcome = {...cancelled(),...(outcome.observation?{observation:outcome.observation}:{})}
-      this.store.update(entry.id, {
-        state: entry.controller.signal.aborted ? 'cancelled' : outcome.ok ? 'completed' : 'failed',
-        result: outcome, reason: outcome.error ?? '',
-      }, epoch)
+      this.store.settleRun(entry.id,epoch,outcome,entry.controller.signal.aborted)
+      this.enforceBudget()
       entry.resolve(outcome)
     } catch (error) {entry.reject(error)}
     finally {
-      this.interruptSteering(entry.id);entry.detach(); this.active.delete(entry.id); entry.finish(); this.changed(); this.drain()
+      this.interruptSteering(entry.id);entry.detach(); this.active.delete(entry.id); entry.finish(); this.changed(); this.drain();this.refreshBudgetTimer()
     }
+  }
+
+  private enforceBudget():void{
+    const budget=this.budgetSnapshot(),blocked=budget.blocked
+    if(!blocked)return
+    // Run-count admission limits allow the final legally admitted turn to settle.
+    if(blocked.code!=='runs')for(const entry of this.active.values())if(!entry.controller.signal.aborted&&this.store.get(entry.id)?.state==='running'){
+      this.interruptSteering(entry.id);this.observeCancellation(entry);entry.controller.abort(blocked.message)
+    }
+    for(const entry of this.queue.splice(0)){
+      try{
+        if(!this.active.has(entry.id))this.store.update(entry.id,{state:'cancelled',reason:blocked.message})
+        this.store.recordEvent({type:'budget-blocked',childId:entry.id,epoch:this.store.get(entry.id)!.epoch})
+        entry.resolve({ok:false,output:'',error:blocked.message})
+      }catch(error){entry.reject(error)}finally{entry.detach();entry.finish()}
+    }
+    this.changed()
+  }
+
+  private observeCancellation(entry:Entry):void{
+    if(this.active.get(entry.id)!==entry||entry.controller.signal.aborted)return
+    try{this.store.recordEvent({type:'cancel-requested',childId:entry.id,epoch:this.store.get(entry.id)!.epoch})}catch{this.observationIssue='部分运行观察未能保存；不影响既有锁和排空规则'}
+  }
+
+  private refreshBudgetTimer():void{
+    clearTimeout(this.budgetTimer);this.budgetTimer=undefined
+    if(this.closed||!this.hasPendingWork)return
+    const budget=this.budgetSnapshot(),limit=budget.limits.maxElapsedMs
+    if(limit===undefined||budget.startedAt===undefined)return
+    const remaining=limit-(Date.now()-budget.startedAt)
+    if(remaining<=0){this.enforceBudget();return}
+    // Sleep or a clock correction can advance wall time while a long timer
+    // still has monotonic time remaining. Recheck without writing periodic state.
+    this.budgetTimer=setTimeout(()=>{this.budgetTimer=undefined;this.enforceBudget();this.refreshBudgetTimer()},Math.min(remaining,1000))
+    this.budgetTimer.unref?.()
   }
 }

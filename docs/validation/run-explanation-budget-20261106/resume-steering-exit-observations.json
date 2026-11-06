@@ -1,0 +1,172 @@
+[
+  {
+    "path": "test-results/subagent-steering-live-chi-89a3d-p-drains-pending-correction/electron-exit/exit-18515.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:04:32.865Z",
+        "ms": 0.20416599999998652,
+        "detail": {
+          "pid": 18515,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:04:53.186Z",
+        "ms": 20321.297375,
+        "detail": {
+          "pid": 18515,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:04:53.296Z",
+        "ms": 20431.367666,
+        "detail": {
+          "pid": 18515,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:04:53.296Z",
+        "ms": 20431.571791,
+        "detail": {
+          "pid": 18515,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:04:53.297Z",
+        "ms": 20431.682915999998,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 18515,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:04:53.297Z",
+        "ms": 20431.983416,
+        "detail": {
+          "pid": 18515,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:04:53.297Z",
+        "ms": 20432.033457999998,
+        "detail": {
+          "pid": 18515,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:04:53.297Z",
+        "ms": 20432.238916,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 18515,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  }
+]

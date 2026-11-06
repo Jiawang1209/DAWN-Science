@@ -1,0 +1,44 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/run-explanation-budget.spec.ts e2e/task-contract.spec.ts e2e/subagent-steering.spec.ts --output=docs/validation/run-explanation-budget-review-20261106/desktop-results
+
+Running 7 tests using 1 worker
+
+(node:11116) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63918/0e79bce7-476a-4b17-8ac4-c259bb7327dc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (12.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:64014/c6cc3d41-5d5b-4394-97b7-fc8c9cdfb45a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/run-explanation-budget.spec.ts:38:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (10.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:64071/3856583f-c33e-46c1-bd5f-d615832f9bec
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64113/7440726d-35b2-413d-b38b-1325aab27fc7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/run-explanation-budget.spec.ts:61:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64127/ac2c0de2-ace5-47e1-ab76-04015d100e8f
+[主进程] For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction (20.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64250/a6d5618b-ab0e-4605-be0c-06abdb3539bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64270/e7258632-a3cc-46bb-8f43-a87fc278dabf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/task-contract.spec.ts:33:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64296/8556b2a6-610b-4e2d-8525-1a6d40b97b1a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/task-contract.spec.ts:62:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (1.8s)
+
+  7 passed (59.9s)

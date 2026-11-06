@@ -1,0 +1,24 @@
+{
+  "sourceSessionId": "01a1a57c-3199-7503-8a76-1c8498cefc7f",
+  "events": [
+    {
+      "at": "2026-11-06T08:59:58.502Z",
+      "event": "goal-paused"
+    },
+    {
+      "at": "2026-11-06T09:00:13.119Z",
+      "event": "fixture-close-requested",
+      "pid": 9393
+    },
+    {
+      "at": "2026-11-06T09:00:18.121Z",
+      "event": "native-process-still-running",
+      "pid": 9393
+    },
+    {
+      "at": "2026-11-06T09:00:31.892Z",
+      "event": "pause-cleanup-script-started-after-the-failure"
+    }
+  ],
+  "interpretation": "Temporal correlation only. No proof that goal pause caused protocol loss. The later cleanup script failed parsing the ps header before sending a signal."
+}

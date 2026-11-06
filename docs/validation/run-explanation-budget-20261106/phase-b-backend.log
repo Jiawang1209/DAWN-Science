@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/subagent-view-backend.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/workbench/subagent-view-backend.test.ts (19 tests | 1 failed) 497ms
+   × budget mutation targets the bound runtime and cannot rewrite cold or missing session records 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/subagent-view-backend.test.ts > budget mutation targets the bound runtime and cannot rewrite cold or missing session records
+Error: ENOENT: no such file or directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-subview-xObMcB/.dawn/sessions/76e1f6bc-7769-4c9f-a863-db9126a10880/meta.json'
+ ❯ tests/workbench/subagent-view-backend.test.ts:91:15
+     89| it('budget mutation targets the bound runtime and cannot rewrite cold …
+     90|  const ctx=make0(),sid=await ctx.开一段(),record=ctx.sessions.get(sid)!
+     91|  const before=readFileSync(join(record.sessionDir,'meta.json'),'utf8')
+       |               ^
+     92|  await expect(ctx.backend.setRunBudget({sessionId:sid,expectedRevision…
+     93|  expect(readFileSync(join(record.sessionDir,'meta.json'),'utf8')).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  16:34:45
+   Duration  2.14s (transform 729ms, setup 0ms, import 1.56s, tests 497ms, environment 0ms)
+

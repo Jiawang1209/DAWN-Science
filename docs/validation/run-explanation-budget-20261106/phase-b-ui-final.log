@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-budget.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts tests/evaluation/run-budget-mock.test.ts tests/workbench/subagent-view-backend.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 777ms
+     × 组件里的 textarea / input / select 都带 control 类 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: run-budget.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "28: <label htmlFor={`${id}-runs`}>{t(\"累计执行轮次上限\")}</label><input className=\"control\" id={`${id}-runs`} type=\"number\" min=\"1\" max=\"10000\" step=\"1\" value={runs} disabled={busy} onChange={e=>edit(setRuns,e.target.value)}/>",
++   "29: <label htmlFor={`${id}-time`}>{t(\"总历时上限（分钟）\")}</label><input className=\"control\" id={`${id}-time`} type=\"number\" min=\"0.001\" max=\"10080\" step=\"any\" value={minutes} disabled={busy} onChange={e=>edit(setMinutes,e.target.value)}/>",
++   "30: <label htmlFor={`${id}-tokens`}>{t(\"可核验 token 上限\")}</label><input className=\"control\" id={`${id}-tokens`} type=\"number\" min=\"1\" max=\"1000000000\" step=\"1\" value={tokens} disabled={busy} onChange={e=>edit(setTokens,e.target.value)}/>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 132 passed (133)
+   Start at  16:36:01
+   Duration  2.69s (transform 2.82s, setup 2.34s, import 2.26s, tests 1.53s, environment 1.48s)
+

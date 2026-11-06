@@ -1,0 +1,8 @@
+{
+  "scope": "14-case resumed group, 6-case final group, 3-case final UI recheck; 17 distinct scenarios",
+  "executions": 23,
+  "distinctScenarios": 17,
+  "observedExits": 28,
+  "allExit0NoSignal": true,
+  "otherEventNames": []
+}

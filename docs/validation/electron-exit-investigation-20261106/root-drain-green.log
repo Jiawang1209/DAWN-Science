@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/wiring.test.ts tests/electron/exit-diagnostics.test.ts tests/electron/app-exit-diagnostics.test.ts tests/runtime/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/wiring.test.ts (47 tests | 1 failed | 1 skipped) 2809ms
+     × 普通主任务及其停止收尾期间也必须等待优雅退出 407ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 普通主任务及其停止收尾期间也必须等待优雅退出
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/electron/wiring.test.ts:99:42
+     97|       expect(wb.needsGracefulShutdown()).toBe(true)
+     98|       release();await closing
+     99|       expect(wb.needsGracefulShutdown()).toBe(false)
+       |                                          ^
+    100|     }finally{release();await wb.closeAsync();prompt.mockRestore();abor…
+    101|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 65 passed | 1 skipped (67)
+   Start at  23:50:52
+   Duration  5.48s (transform 1.97s, setup 0ms, import 4.57s, tests 3.27s, environment 0ms)
+

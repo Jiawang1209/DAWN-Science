@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/budget.test.ts -t forward wall-clock --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/orchestration/budget.test.ts (13 tests | 1 failed | 12 skipped) 19ms
+   × checks a forward wall-clock jump promptly instead of waiting out the old long timer 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > checks a forward wall-clock jump promptly instead of waiting out the old long timer
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/orchestration/budget.test.ts:104:99
+    102|  let release!:()=>void,aborted=false;const gate=new Promise<void>(r=>r…
+    103|  const run=service.run(child.id,async signal=>{signal.addEventListener…
+    104|  try{vi.setSystemTime(Date.now()+120_000);await vi.advanceTimersByTime…
+       |                                                                                                   ^
+    105|  finally{release();await run;await service.close()}
+    106| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  21:08:27
+   Duration  435ms (transform 142ms, setup 0ms, import 303ms, tests 19ms, environment 0ms)
+

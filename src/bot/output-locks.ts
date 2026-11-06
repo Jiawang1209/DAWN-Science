@@ -1,5 +1,6 @@
 import {posix,resolve,dirname,basename,join} from "node:path"
 import {realpathSync,statSync} from "node:fs"
+import {currentExecutionContext,reportExecutionStage,type ExecutionContext} from '../orchestration/execution-context.js'
 /** Resolve existing ancestors too: not-yet-created files can still have symlink aliases. */
 export function canonicalOutputPaths(outputs:readonly string[]|undefined,workspace:string):string[]|undefined {
  return outputs?.map(output=>{
@@ -26,7 +27,10 @@ export function localOutputReservationPaths(outputs:readonly string[]|undefined,
  * Future names may alias on case/normalization-insensitive filesystems. */
 export const outputReservationKey=(path:string)=>posix.normalize(path.replace(/\\/g,'/')).normalize('NFD').toLowerCase()
 const reservationKeys=(paths:readonly string[]|undefined)=>paths?.length?[...new Set(paths.map(outputReservationKey))]:['*']
-interface Entry {scope:string;paths:string[];resolvePaths:(()=>readonly string[]|undefined)|undefined;start():void;cancel():void}
+// Keep the actual canonical spelling for observations; reservation keys deliberately
+// fold case and Unicode and must never be presented as filesystem paths.
+const resourcePaths=(paths:readonly string[]|undefined)=>paths?.length?[...new Set(paths.filter(path=>!path.startsWith('inode:')))]:['*']
+interface Entry {scope:string;paths:string[];resources:string[];context:ExecutionContext|undefined;resolvePaths:(()=>readonly string[]|undefined)|undefined;start():void;cancel():void}
 const overlaps=(a:string[],b:string[])=>a.some(x=>b.some(y=>x==="*"||y==="*"||x===y||x.startsWith(y+"/")||y.startsWith(x+"/")))
 /** Declared output reservations; unknown output sets take the whole scope. */
 export class BotOutputLocks {
@@ -35,8 +39,9 @@ export class BotOutputLocks {
   return new Promise((resolve,reject)=>{
    if(signal.aborted){reject(new Error("任务已停止"));return}
    const paths=reservationKeys(outputs)
-   const entry:Entry={scope,paths,resolvePaths,start:()=>{
+   const entry:Entry={scope,paths,resources:resourcePaths(outputs),context:currentExecutionContext(),resolvePaths,start:()=>{
     signal.removeEventListener("abort",entry.cancel);this.active.add(entry);let released=false
+    reportExecutionStage('preflight',undefined,undefined,entry.context)
     resolve(()=>{if(released)return;released=true;this.active.delete(entry);this.drain()})
    },cancel:()=>{this.queue=this.queue.filter(e=>e!==entry);reject(new Error("任务已停止"));this.drain()}}
    signal.addEventListener("abort",entry.cancel,{once:true});this.queue.push(entry);this.drain()
@@ -47,14 +52,20 @@ export class BotOutputLocks {
   // Active owners retain old inode keys too: an open descriptor/old hard link may still use them.
   const refresh=(entry:Entry,active:boolean)=>{
    if(!entry.resolvePaths)return
-   let current:string[];try{current=reservationKeys(entry.resolvePaths())}catch{current=['*']}
+   let resolved:readonly string[]|undefined;try{resolved=entry.resolvePaths()}catch{resolved=['*']}
+   const current=reservationKeys(resolved);entry.resources=resourcePaths(resolved)
    entry.paths=active?[...new Set([...entry.paths,...current])]:current
   }
   for(const entry of this.active)refresh(entry,true)
   for(const entry of this.queue)refresh(entry,false)
   const blocked:Entry[]=[]
   for(const entry of [...this.queue]){
-   if([...this.active,...blocked].some(e=>e.scope===entry.scope&&overlaps(e.paths,entry.paths))){blocked.push(entry);continue}
+   const blockers=[...this.active,...blocked].filter(e=>e.scope===entry.scope&&overlaps(e.paths,entry.paths))
+   if(blockers.length){
+    const owners=blockers.flatMap(e=>e.context?[{ownerSessionId:e.context.ownerSessionId,childId:e.context.childId,label:e.context.label,epoch:e.context.epoch}]:[])
+    reportExecutionStage('lock-wait',owners.slice(0,64),owners.length!==blockers.length||owners.length>64,entry.context,entry.resources.slice(0,64))
+    blocked.push(entry);continue
+   }
    this.queue=this.queue.filter(e=>e!==entry);entry.start()
   }
  }

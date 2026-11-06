@@ -86,6 +86,15 @@ function make0() {
   return { backend, events, runtime, sessions, 开一段 }
 }
 
+it('budget mutation targets the bound runtime and cannot rewrite cold or missing session records',async()=>{
+ const ctx=make0(),sid=await ctx.开一段(),record=ctx.sessions.get(sid)!
+ new OrchestrationStore(record.sessionDir,sid).register('subagent',['c','0'],'reader')
+ const file=join(record.sessionDir,'orchestration/state.json'),before=readFileSync(file,'utf8')
+ await expect(ctx.backend.setRunBudget({sessionId:sid,expectedRevision:0,limits:{maxRuns:2}})).rejects.toMatchObject({workbenchCode:'invalid_request'})
+ expect(readFileSync(file,'utf8')).toBe(before)
+ await expect(ctx.backend.setRunBudget({sessionId:'missing',expectedRevision:0,limits:{}})).rejects.toMatchObject({workbenchCode:'not_found'})
+})
+
 /** 在那段会话的目录里摆一个跑完的子 agent：meta + 一份 pi 会话文件 */
 function 摆一个(sessionDir: string, toolCallId: string, 带会话文件 = true, status: "ok" | "running" = "ok") {
   const dir = 子运行目录(sessionDir, toolCallId, 0)

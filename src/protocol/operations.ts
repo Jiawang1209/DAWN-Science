@@ -1,5 +1,6 @@
 import {RunOverviewSchema} from './run-overview.js'
 import {SubagentControlActionSchema,SubagentControlStateSchema} from './subagent-control.js'
+import {RunBudgetLimitsSchema,RunBudgetSchema} from './run-budget.js'
 import { skillDiscoveryOperations } from "./skill-discovery.js"
 import { skillManagementOperations } from "./skill-management.js"
 import { FileContentSchema } from "./file-content.js"
@@ -583,6 +584,11 @@ export const OPERATIONS = {
     request: z.object({sessionId:z.string().min(1)}).strict(),
     response: RunOverviewSchema,
     mutating:false,
+  },
+  setRunBudget:{
+    request:z.object({sessionId:z.string().min(1),expectedRevision:z.number().int().nonnegative(),limits:RunBudgetLimitsSchema}).strict(),
+    response:RunBudgetSchema,
+    mutating:true,
   },
   openSubagent: {
     request: z.object({ transcriptId: z.string().min(1) }).strict(),

@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/wiring.test.ts -t 主任务启动预备期
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/wiring.test.ts (50 tests | 1 failed | 49 skipped) 347ms
+     × 主任务启动预备期也需要等待，不能在运行时尚未绑定时误报 drained 346ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 主任务启动预备期也需要等待，不能在运行时尚未绑定时误报 drained
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/electron/wiring.test.ts:89:42
+     87|       await vi.waitFor(()=>expect(start).toHaveBeenCalled())
+     88|       expect(wb.nativeRuntime.hasPendingWork()).toBe(false)
+     89|       expect(wb.needsGracefulShutdown()).toBe(true)
+       |                                          ^
+     90|       closing=wb.closeAsync().then(()=>{settled=true})
+     91|       await new Promise<void>(resolve=>setImmediate(resolve));expect(s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 49 skipped (50)
+   Start at  00:21:59
+   Duration  2.90s (transform 1.34s, setup 0ms, import 2.46s, tests 347ms, environment 0ms)
+

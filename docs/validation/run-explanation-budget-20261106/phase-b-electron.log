@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/run-explanation-budget.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:54826) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61150/8d97233a-b0c5-4a78-8693-627973bffa6d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/run-explanation-budget.spec.ts:10:2 › run explanation › explains actual shared lock waiting and retained host history (14.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61238/b562aa8e-3ccb-4fdb-b998-b6935338ea21
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  2 e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (27.2s)
+
+
+  1) e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('region', { name: '运行总览', exact: true })
+    Expected substring: "已准入 1 轮"
+    Received string:    "运行总览刷新运行记录来自当前会话的统一编排；每两秒刷新会话委派预算已准入 0 轮 · 可核验 token 0 · 未知用量 0 轮 · 在途 0 轮当前限制：轮次 2 · 总历时 不限 分钟 · token 不限仅统计本会话统一编排的子任务、团队和 Bot；总历时包含暂停与离线。token 在结算后核验，在途请求可能超额，未知用量不计为零。调整预算限制累计执行轮次上限总历时上限（分钟）可核验 token 上限留空表示不设该限制；保存只改变限额，已用记录保留，不会自动重跑任务。委派限额生效重新读取预算这段会话暂无子任务运行记录关键执行历史16:37:09 · 预算限制已调整"
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for getByRole('region', { name: '运行总览', exact: true })
+        53 × locator resolved to <section aria-label="运行总览" class="run-overview panel">…</section>
+           - unexpected value "运行总览刷新运行记录来自当前会话的统一编排；每两秒刷新会话委派预算已准入 0 轮 · 可核验 token 0 · 未知用量 0 轮 · 在途 0 轮当前限制：轮次 2 · 总历时 不限 分钟 · token 不限仅统计本会话统一编排的子任务、团队和 Bot；总历时包含暂停与离线。token 在结算后核验，在途请求可能超额，未知用量不计为零。调整预算限制累计执行轮次上限总历时上限（分钟）可核验 token 上限留空表示不设该限制；保存只改变限额，已用记录保留，不会自动重跑任务。委派限额生效重新读取预算这段会话暂无子任务运行记录关键执行历史16:37:09 · 预算限制已调整"
+
+
+      45 |   await expect(overview).toContainText('当前限制：轮次 2')
+      46 |   const send=async()=>{await page.getByPlaceholder(/输入问题/).fill('演示委派预算');await page.getByRole('button',{name:'发送',exact:true}).click();await expect(page.locator('main.main').getByRole('button',{name:'停止',exact:true})).toHaveCount(0)}
+    > 47 |   await send();await expect(overview).toContainText('已准入 1 轮')
+         |                                       ^
+      48 |   await send();await expect(overview).toContainText('已准入 2 轮')
+      49 |   await send();await expect(page.locator('.tool').filter({hasText:'subagent'}).last()).toHaveAttribute('data-status','error')
+      50 |   await expect(overview).toContainText('已准入 2 轮')
+        at /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/e2e/run-explanation-budget.spec.ts:47:39
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart 
+  1 passed (42.6s)

@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration tests/ui/run-overview.test.tsx tests/ui/i18n.test.ts tests/bot/output-locks.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+
+ Test Files  15 passed (15)
+      Tests  79 passed (79)
+   Start at  16:29:05
+   Duration  2.45s (transform 980ms, setup 826ms, import 2.89s, tests 2.13s, environment 741ms)
+

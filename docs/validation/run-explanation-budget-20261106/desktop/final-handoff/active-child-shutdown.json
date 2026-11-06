@@ -1,0 +1,71 @@
+{
+  "owned": [
+    66416,
+    66725,
+    66726,
+    66764,
+    67223,
+    67432
+  ],
+  "allExited": true,
+  "meta": {
+    "agent": "scout",
+    "task": "子任务慢：运行慢工具后回报。",
+    "status": "error",
+    "startedAt": 1793970657853,
+    "handoffSha256": "bc60e59651d98ad9a87395b2c6a6e717da7b3d6b0113b7d22b03f860026ca3dc",
+    "settings": {
+      "scope": {
+        "version": 1,
+        "tier": "allow-all",
+        "access": "workspace-exec",
+        "tools": [
+          "read",
+          "bash"
+        ],
+        "inputs": [],
+        "outputs": []
+      }
+    },
+    "error": "已中止",
+    "endedAt": 1793970658904
+  },
+  "children": [
+    {
+      "id": "child-3ad13369b5414ce4ca820985f0c0dd18",
+      "kind": "subagent",
+      "address": [
+        "call_mock_10",
+        "0"
+      ],
+      "label": "scout",
+      "state": "cancelled",
+      "epoch": 1,
+      "updatedAt": 1793970658903,
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": "bc60e59651d98ad9a87395b2c6a6e717da7b3d6b0113b7d22b03f860026ca3dc",
+      "reason": "执行已中止",
+      "timing": {
+        "executionMs": 1037,
+        "preflightMs": 1
+      },
+      "result": {
+        "ok": false,
+        "output": "",
+        "error": "执行已中止"
+      }
+    }
+  ]
+}

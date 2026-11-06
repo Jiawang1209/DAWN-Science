@@ -48,6 +48,36 @@ function stubRuntime(over: Partial<AgentRuntime> = {}): AgentRuntime {
 }
 
 describe("SessionManager · 创建与销毁", () => {
+  for(const resume of [false,true])it(`批量停止等待${resume?'恢复':'新建'}中的会话，不能在启动完成后留下活跃绑定`,async()=>{
+    const{mgr,store,db}=makeManager()
+    const original=resume?await mgr.create('ds-agent','/tmp/w'):undefined
+    if(original)await mgr.stop(original.id)
+    let release!:()=>void,stops=0,settled=false
+    const runtime=stubRuntime({start:async spec=>{await new Promise<void>(resolve=>release=resolve);return{sessionId:spec.sessionId,pid:1}},stop:async()=>{stops++}})
+    const manager=new SessionManager({store,registry,runtimes:{native:runtime,pty:runtime},workspaceRoot:'/tmp/dawn-test'})
+    const opening=original?manager.resume(original.id):manager.create('ds-agent','/tmp/w')
+    const id=original?.id??store.list()[0]!.id
+    const closing=manager.stopAll().then(()=>{settled=true})
+    try{
+      await new Promise<void>(resolve=>setImmediate(resolve));expect(settled).toBe(false)
+      release();await Promise.all([opening,closing])
+      expect(stops).toBe(1);expect(manager.isLive(id)).toBe(false);expect(store.get(id)?.state).toBe('exited')
+    }finally{release();await Promise.allSettled([opening,closing]);await manager.stop(id);db.close()}
+  })
+  it('退出收尾模式保留逐会话失败，同时等待其他会话停止；普通批量停止仍兼容尽力收尾',async()=>{
+    const{store,db}=makeManager();let failedId='',release!:()=>void,fail=true,settled=false
+    const gate=new Promise<void>(resolve=>release=resolve)
+    const runtime=stubRuntime({stop:async id=>{if(id===failedId&&fail)throw new Error('owned stop failed');await gate}})
+    const manager=new SessionManager({store,registry,runtimes:{native:runtime,pty:runtime},workspaceRoot:'/tmp/dawn-test'})
+    const first=await manager.create('ds-agent','/tmp/w'),second=await manager.create('ds-agent','/tmp/w');failedId=first.id
+    const result=manager.stopAll({reportErrors:true}).then(()=>{settled=true;return undefined},error=>{settled=true;return error})
+    try{
+      await new Promise<void>(resolve=>setImmediate(resolve));expect(settled).toBe(false)
+      release();expect(await result).toBeInstanceOf(AggregateError)
+      expect(manager.isLive(second.id)).toBe(false);expect(manager.isLive(first.id)).toBe(true)
+      await expect(manager.stopAll()).resolves.toBeUndefined()
+    }finally{release();fail=false;await result;await manager.stopAll();db.close()}
+  })
   it("恢复还未完成时删除：先等启动清理完成，不能留下孤儿运行时", async () => {
     const {mgr,store,db} = makeManager()
     const original = await mgr.create("ds-agent", "/tmp/w")

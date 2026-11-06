@@ -1,0 +1,47 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/run-explanation-budget.spec.ts e2e/observable-handoff.spec.ts e2e/orchestration.spec.ts e2e/subagent-shutdown.spec.ts
+
+Running 6 tests using 1 worker
+
+(node:93163) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「保留原始样本，单位为 m；仅汇总均值，不」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65518/6ad67816-613d-4d80-9f50-e4ddbe3c4135
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49176/82d5a975-6a90-46b2-802a-37721f562016
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/observable-handoff.spec.ts:7:2 › observable delegation › shows real orchestration and immutable parent handoff; opens the actual child transcript (7.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49198/af563d85-9143-4bd1-a12f-4171eede67b9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49232/69e9a5a6-53dc-414c-8763-c20346bc5928
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (12.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49341/457f7146-7824-4d1d-9ee7-f473eff473e8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/run-explanation-budget.spec.ts:38:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (10.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49413/455ced21-459f-4735-be8c-de57d90b325d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49484/c2fb0579-f96e-449d-9d95-9a800fa75dc1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/run-explanation-budget.spec.ts:59:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (9.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49520/541eb9ca-73d6-4c7b-a1b8-e7cbddda4da4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49558/5e38cfc6-6637-42e2-81b3-1fd8c93084dd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/subagent-shutdown.spec.ts:7:1 › app quit drains an active delegated process before restart and retains the frozen context (5.3s)
+
+  6 passed (50.1s)

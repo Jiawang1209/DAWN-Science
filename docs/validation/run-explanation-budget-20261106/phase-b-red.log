@@ -1,0 +1,105 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/budget.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/orchestration/budget.test.ts (9 tests | 9 failed) 19ms
+   × limits actual admissions across continuations and restarts without resetting consumption 7ms
+   × concurrent admissions cannot exceed the last remaining run 1ms
+   × elapsed budget aborts then retains stopping ownership until cleanup and never starts the queue 2ms
+   × counts known token fields once and stops new admissions at the observed boundary 1ms
+   × missing or partial usage is unknown, not zero 2ms
+   × missing or partial usage is unknown, not zero 1ms
+   × missing or partial usage is unknown, not zero 1ms
+   × interrupted in-flight accounting is recovered once and cold reading does not write 1ms
+   × older epochs count as legacy runs with unknown usage and do not invent a start time 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > limits actual admissions across continuations and restarts without resetting consumption
+TypeError: service.configureBudget is not a function
+ ❯ tests/orchestration/budget.test.ts:14:10
+     12| it('limits actual admissions across continuations and restarts without…
+     13|  const {root,store,service,child}=setup();let dispatched=0
+     14|  service.configureBudget({maxRuns:2},0)
+       |          ^
+     15|  const work=async()=>{dispatched++;return{ok:true,output:'kept result'…
+     16|  expect((await service.run(child.id,work)).ok).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > concurrent admissions cannot exceed the last remaining run
+TypeError: service.configureBudget is not a function
+ ❯ tests/orchestration/budget.test.ts:30:41
+     28| })
+     29| it('concurrent admissions cannot exceed the last remaining run',async(…
+     30|  const {service,child}=setup(4);service.configureBudget({maxRuns:1},0)…
+       |                                         ^
+     31|  const results=await Promise.all([1,2,3].map(()=>service.run(child.id,…
+     32|  expect(calls).toBe(1);expect(results.filter(r=>r.ok)).toHaveLength(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > elapsed budget aborts then retains stopping ownership until cleanup and never starts the queue
+TypeError: service.configureBudget is not a function
+ ❯ tests/orchestration/budget.test.ts:36:59
+     34| })
+     35| it('elapsed budget aborts then retains stopping ownership until cleanu…
+     36|  vi.useFakeTimers();const{service,child}=setup(1);service.configureBud…
+       |                                                           ^
+     37|  const sibling=service.register('team',['t','m','1'],'sibling');let re…
+     38|  const gate=new Promise<void>(r=>release=r)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > counts known token fields once and stops new admissions at the observed boundary
+TypeError: service.configureBudget is not a function
+ ❯ tests/orchestration/budget.test.ts:46:39
+     44| })
+     45| it('counts known token fields once and stops new admissions at the obs…
+     46|  const{service,child}=setup();service.configureBudget({maxTokens:17},0)
+       |                                       ^
+     47|  await service.run(child.id,async()=>({ok:true,output:'accepted',obser…
+     48|  expect(service.budgetSnapshot()).toMatchObject({knownTokens:17,unknow…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > missing or partial usage is unknown, not zero
+ FAIL  |node| tests/orchestration/budget.test.ts > missing or partial usage is unknown, not zero
+ FAIL  |node| tests/orchestration/budget.test.ts > missing or partial usage is unknown, not zero
+TypeError: service.configureBudget is not a function
+ ❯ tests/orchestration/budget.test.ts:53:39
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > interrupted in-flight accounting is recovered once and cold reading does not write
+TypeError: service.configureBudget is not a function
+ ❯ tests/orchestration/budget.test.ts:59:50
+     57| })
+     58| it('interrupted in-flight accounting is recovered once and cold readin…
+     59|  const{root,store,service,child}=setup();service.configureBudget({maxR…
+       |                                                  ^
+     60|  store.beginRun(child.id)
+     61|  const file=join(root,'orchestration/state.json'),before=readFileSync(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > older epochs count as legacy runs with unknown usage and do not invent a start time
+TypeError: restored.budgetSnapshot is not a function
+ ❯ tests/orchestration/budget.test.ts:74:18
+     72|  const file=join(root,'orchestration/state.json'),old=JSON.parse(readF…
+     73|  const restored=new OrchestrationService(new OrchestrationStore(root,'…
+     74|  expect(restored.budgetSnapshot()).toMatchObject({legacyRuns:4,consume…
+       |                  ^
+     75|  expect(restored.budgetSnapshot().startedAt).toBeUndefined()
+     76|  const rev=restored.budgetSnapshot().revision;restored.configureBudget…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  16:29:42
+   Duration  297ms (transform 75ms, setup 0ms, import 182ms, tests 19ms, environment 0ms)
+

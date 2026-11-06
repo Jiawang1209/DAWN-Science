@@ -1,0 +1,4 @@
+{
+  "credentialFormatMatches": [],
+  "note": "Boundary-aware scan of review artifact text; initial unbounded sk pattern matched task-name slugs, not credential values. No claim of exhaustive secret detection."
+}

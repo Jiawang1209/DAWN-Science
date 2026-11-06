@@ -1,0 +1,163 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-budget.test.tsx --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/run-budget.test.tsx (3 tests | 3 failed) 33ms
+   × edits limits using their observed revision and keeps visible consumed work 24ms
+   × cold snapshots show the persisted budget without offering a write 5ms
+   × does not paint an old-session save response into a new chat 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/run-budget.test.tsx > edits limits using their observed revision and keeps visible consumed work
+TestingLibraryElementError: Unable to find an element with the text: /已准入 2 轮/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"panel-title"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0m运行总览[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m这段会话暂无子任务运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-budget.test.tsx:10:16
+      8|  const get=vi.fn().mockImplementation(async operation=>operation==='ge…
+      9|  render(<RunOverview client={{get} as unknown as WorkbenchClient} sess…
+     10|  expect(screen.getByText(/已准入 2 轮/)).toBeTruthy()
+       |                ^
+     11|  fireEvent.click(screen.getByText('调整预算限制'))
+     12|  fireEvent.change(screen.getByLabelText('累计执行轮次上限'),{target:{value:'3'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/run-budget.test.tsx > cold snapshots show the persisted budget without offering a write
+TestingLibraryElementError: Unable to find an element with the text: /已准入 2 轮/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"panel-title"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0m运行总览[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m磁盘记录只读；查看不会启动或恢复任务[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m这段会话暂无子任务运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-budget.test.tsx:19:16
+     17|  const get=vi.fn().mockResolvedValue({ownerSessionId:'p',source:'disk'…
+     18|  render(<RunOverview client={{get} as unknown as WorkbenchClient} sess…
+     19|  expect(screen.getByText(/已准入 2 轮/)).toBeTruthy()
+       |                ^
+     20|  expect(screen.queryByRole('button',{name:'保存预算限制'})).toBeNull()
+     21|  expect(get).toHaveBeenCalledTimes(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/run-budget.test.tsx > does not paint an old-session save response into a new chat
+TestingLibraryElementError: Unable to find an element with the text: 调整预算限制. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"panel-title"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0m运行总览[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m这段会话暂无子任务运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-budget.test.tsx:27:25
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  16:32:26
+   Duration  1.19s (transform 329ms, setup 532ms, import 12ms, tests 33ms, environment 529ms)
+

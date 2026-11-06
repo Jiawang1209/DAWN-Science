@@ -1,0 +1,13 @@
+{"seq":1,"event":"diagnostics-attached","pid":32476,"at":"2026-11-06T15:43:49.481Z","ms":0.16012499999999363,"resources":{"PipeWrap":2},"detail":{}}
+{"seq":2,"event":"contents-created","pid":32476,"at":"2026-11-06T15:43:49.625Z","ms":144.29145800000003,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":32476,"at":"2026-11-06T15:43:49.625Z","ms":144.58945800000004,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"detail":{"id":1}}
+{"seq":4,"event":"before-quit","pid":32476,"at":"2026-11-06T15:43:51.377Z","ms":1896.0535830000001,"resources":{"PipeWrap":6,"ProcessWrap":1},"detail":{}}
+{"seq":5,"event":"window-close","pid":32476,"at":"2026-11-06T15:43:51.377Z","ms":1896.7272500000001,"resources":{"PipeWrap":6,"ProcessWrap":1},"detail":{"id":1}}
+{"seq":6,"event":"contents-destroyed","pid":32476,"at":"2026-11-06T15:43:51.379Z","ms":1897.926791,"resources":{"PipeWrap":6,"ProcessWrap":1,"Timeout":1},"detail":{"id":1}}
+{"seq":7,"event":"window-closed","pid":32476,"at":"2026-11-06T15:43:51.379Z","ms":1898.2000409999998,"resources":{"PipeWrap":6,"ProcessWrap":1},"detail":{"id":1}}
+{"seq":8,"event":"will-quit","pid":32476,"at":"2026-11-06T15:43:51.379Z","ms":1898.3119159999999,"resources":{"PipeWrap":6,"ProcessWrap":1},"detail":{}}
+{"seq":9,"event":"shutdown-check","pid":32476,"at":"2026-11-06T15:43:51.379Z","ms":1898.410458,"resources":{"PipeWrap":6,"ProcessWrap":1},"detail":{}}
+{"seq":10,"event":"shutdown-async-start","pid":32476,"at":"2026-11-06T15:43:51.379Z","ms":1898.4918329999998,"resources":{"PipeWrap":6,"ProcessWrap":1},"detail":{}}
+{"seq":11,"event":"shutdown-async-complete","pid":32476,"at":"2026-11-06T15:43:51.417Z","ms":1936.343208,"resources":{"PipeWrap":4,"ProcessWrap":1,"Timeout":1},"detail":{}}
+{"seq":12,"event":"process-exit","pid":32476,"at":"2026-11-06T15:43:51.417Z","ms":1936.5023749999998,"resources":{"PipeWrap":4,"ProcessWrap":1},"detail":{"exitCode":0}}
+{"seq":13,"event":"quit","pid":32476,"at":"2026-11-06T15:43:51.417Z","ms":1936.5903329999999,"resources":{"PipeWrap":4,"ProcessWrap":1},"detail":{"exitCode":0}}

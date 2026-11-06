@@ -1,0 +1,22 @@
+{
+  "pid": 79587,
+  "owned": [
+    79763
+  ],
+  "aliveAfterRestart": [],
+  "events": [
+    "diagnostics-attached",
+    "contents-created",
+    "window-created",
+    "before-quit",
+    "window-close",
+    "contents-destroyed",
+    "window-closed",
+    "will-quit",
+    "shutdown-check",
+    "shutdown-async-start",
+    "shutdown-async-complete",
+    "process-exit",
+    "quit"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "note": "Prior repeated desktop runs regenerated legacy demo screenshots. Preserve those outputs here and restore the three committed originals before integration; new runs use dedicated paths.",
+  "files": [
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-a/desktop-accepted.png",
+      "preservedSha256": "7538fb9506d6cafee893bd4012a0bb44bdd3f7052c805ba4e778c2b1dc897532",
+      "restoredGitSha256": "0e5c796ec4ad78d6fe27cbd0f325736a3d8af65370bd9e3861a7163aefe173a3"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-a/desktop-applied.png",
+      "preservedSha256": "541f7373b5f6919caa266ab281470e8c88d6fdfea670a36412b7070e8a2b62e5",
+      "restoredGitSha256": "cb33074f8c97c44705768b09b282596bb231a4f27d027f267b7dcd5ad4b0fe7b"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-a/desktop-cancelled.png",
+      "preservedSha256": "58f78ae23299d4bdfa69e1b53882853c697807f008b206249fc2dd84209e2f18",
+      "restoredGitSha256": "38d41c851113ceef69b53d2a517d01a5a7c67d640c0012cbffb0cedff1e6481b"
+    }
+  ]
+}

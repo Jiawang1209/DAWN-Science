@@ -717,6 +717,11 @@ pre {
 .run-overview .panel-title { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-2); }
 .run-overview .panel-title h3 { margin: 0; font: inherit; }
 .run-overview-row { padding: var(--dawn-space-2) 0; border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); overflow-wrap: anywhere; }
+.run-budget { padding: var(--dawn-space-2) 0; border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); overflow-wrap: anywhere; }
+.run-budget form { display: grid; gap: var(--dawn-space-2); }
+.run-budget input { min-width: 0; width: 100%; box-sizing: border-box; }
+.run-history { padding: var(--dawn-space-2) 0; overflow-wrap: anywhere; }
+.run-activity { padding-left: var(--dawn-space-2); border-left: var(--dawn-hairline) solid var(--dawn-stroke-4); }
 .run-handoff pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
 .run-handoff code { display: block; white-space: normal; overflow-wrap: anywhere; }
 .run-handoff summary { cursor: pointer; }

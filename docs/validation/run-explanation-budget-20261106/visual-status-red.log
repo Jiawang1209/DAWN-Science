@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/budget.test.ts -t elapsed budget aborts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/orchestration/budget.test.ts (13 tests | 1 failed | 12 skipped) 22ms
+   × elapsed budget aborts then retains stopping ownership until cleanup and never starts the queue 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > elapsed budget aborts then retains stopping ownership until cleanup and never starts the queue
+AssertionError: expected '委派预算总历时已到；新任务未启动，正在排空已有执行' not to contain '正在排空'
+
+Expected: "正在排空"
+Received: "委派预算总历时已到；新任务未启动，正在排空已有执行"
+
+ ❯ tests/orchestration/budget.test.ts:44:56
+     42|  finally{release();await one;await two;await service.close()}
+     43|  expect(service.hasPendingWork).toBe(false)
+     44|  expect(service.budgetSnapshot().blocked?.message).not.toContain('正在排空…
+       |                                                        ^
+     45| })
+     46| it('counts known token fields once and stops new admissions at the obs…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  21:15:42
+   Duration  314ms (transform 88ms, setup 0ms, import 207ms, tests 22ms, environment 0ms)
+

@@ -1,0 +1,157 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-budget.test.tsx -t edits limits --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/run-budget.test.tsx (4 tests | 1 failed | 3 skipped) 36ms
+   × edits limits using their observed revision and keeps visible consumed work 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/run-budget.test.tsx > edits limits using their observed revision and keeps visible consumed work
+TestingLibraryElementError: Unable to find an element with the text: /已历时 0.03 分钟/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"panel-title"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0m运行总览[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"会话委派预算"[39m
+        [33mclass[39m=[32m"run-budget"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m会话委派预算[0m
+        [36m</strong>[39m
+        [36m<p>[39m
+          [0m已准入 2 轮 · 可核验 token 20 · 未知用量 0 轮 · 在途 0 轮[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m当前限制：轮次 2 · 总历时 不限 分钟 · token 不限[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mdata-authored[39m=[32m"1"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m委派预算执行轮次已用完[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m仅统计本会话统一编排的子任务、团队和 Bot；总历时包含暂停与离线。token 在结算后核验，在途请求可能超额，未知用量不计为零。[0m
+        [36m</p>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m调整预算限制[0m
+          [36m</summary>[39m
+          [36m<form>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"_r_0_-runs"[39m
+            [36m>[39m
+              [0m累计执行轮次上限[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mid[39m=[32m"_r_0_-runs"[39m
+              [33mmax[39m=[32m"10000"[39m
+              [33mmin[39m=[32m"1"[39m
+              [33mstep[39m=[32m"1"[39m
+              [33mtype[39m=[32m"number"[39m
+              [33mvalue[39m=[32m"2"[39m
+            [36m/>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"_r_0_-time"[39m
+            [36m>[39m
+              [0m总历时上限（分钟）[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mid[39m=[32m"_r_0_-time"[39m
+              [33mmax[39m=[32m"10080"[39m
+              [33mmin[39m=[32m"0.001"[39m
+              [33mstep[39m=[32m"any"[39m
+              [33mtype[39m=[32m"number"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"_r_0_-tokens"[39m
+            [36m>[39m
+              [0m可核验 token 上限[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mid[39m=[32m"_r_0_-tokens"[39m
+              [33mmax[39m=[32m"1000000000"[39m
+              [33mmin[39m=[32m"1"[39m
+              [33mstep[39m=[32m"1"[39m
+              [33mtype[39m=[32m"number"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"hint"[39m
+            [36m>[39m
+              [0m留空表示不设该限制；保存只改变限额，已用记录保留，不会自动重跑任务。[0m
+            [36m</p>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0m委派限额生效[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m重新读取预算[0m
+            [36m</button>[39m
+          [36m</form>[39m
+        [36m</details>[39m
+      [36m</section>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m这段会话暂无子任务运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-budget.test.tsx:11:16
+      9|  render(<RunOverview client={{get} as unknown as WorkbenchClient} sess…
+     10|  expect(screen.getByText(/已准入 2 轮/)).toBeTruthy()
+     11|  expect(screen.getByText(/已历时 0.03 分钟/)).toBeTruthy()
+       |                ^
+     12|  fireEvent.click(screen.getByText('调整预算限制'))
+     13|  fireEvent.change(screen.getByLabelText('累计执行轮次上限'),{target:{value:'3'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  16:45:46
+   Duration  1.52s (transform 696ms, setup 914ms, import 43ms, tests 36ms, environment 427ms)
+

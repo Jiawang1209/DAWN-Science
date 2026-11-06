@@ -1,0 +1,16 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts --grep repeated quit --output=docs/validation/electron-exit-investigation-20261106/reentrant-red-results
+
+Running 1 test using 1 worker
+
+(node:94080) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65022/079e90ca-27ac-4e5c-9901-01804d7119d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65049/ffefb22a-17e6-4bdf-8ca1-6d942d69ffc4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › repeated quit during a root bash task drains its owned process before restart (5.0s)
+
+  1 passed (5.7s)

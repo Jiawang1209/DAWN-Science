@@ -1,0 +1,664 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node --project ui --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/terminal-mode-state.test.tsx (6 tests | 1 failed) 150967ms
+   × clears an old start error after dawn is successfully entered by typing the command 149309ms
+ ❯ |ui| tests/ui/setup-wizard.test.tsx (25 tests | 1 failed) 1014868ms
+     × 回退保留密钥草稿、服务商和检测结果；页面标题接收焦点 1014064ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/composer-layout.test.tsx (9 tests | 1 failed) 996368ms
+   × 终端直接可见，添加菜单保留方案，Escape返回且不提交草稿 995975ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/terminal-persistence.test.tsx (4 tests | 1 failed) 924173ms
+     × 给了字节就挂宿主 —— 不需要先点开任何东西 924084ms
+ ❯ |ui| tests/ui/connection-dialog.test.tsx (5 tests | 1 failed) 650201ms
+   × 认证切换清除旧模式凭证，不复用私钥口令作密码 650026ms
+ ❯ |ui| tests/ui/right-dock-render.test.tsx (2 tests | 1 failed) 655326ms
+   × 三个常用面板直接可见，其他六项通过更多切换且不关闭 655317ms
+[vitest-pool]: Timeout terminating forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/files-memory.test.ts.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/composer-layout.test.tsx > 终端直接可见，添加菜单保留方案，Escape返回且不提交草稿
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/ui/composer-layout.test.tsx:50:1
+     48| })
+     49|
+     50| it("终端直接可见，添加菜单保留方案，Escape返回且不提交草稿", () => {
+       | ^
+     51|   const onSetPlan = vi.fn(async (_on: boolean) => {})
+     52|   const onSend = vi.fn()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |ui| tests/ui/connection-dialog.test.tsx > 认证切换清除旧模式凭证，不复用私钥口令作密码
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/ui/setup.ts:93:1
+     91|   记引导完成()
+     92| })
+     93| afterEach(cleanup)
+       | ^
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |ui| tests/ui/right-dock-render.test.tsx > 三个常用面板直接可见，其他六项通过更多切换且不关闭
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/ui/right-dock-render.test.tsx:4:1
+      2| import { fireEvent, render, screen } from "@testing-library/react"
+      3| import { RightDock } from "../../src/ui/views.js"
+      4| it("三个常用面板直接可见，其他六项通过更多切换且不关闭", () => {
+       | ^
+      5|   const onPick = vi.fn(), onClose = vi.fn()
+      6|   render(<RightDock tenant="files" width={380} onWidth={vi.fn()} onPic…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |ui| tests/ui/setup-wizard.test.tsx > SetupWizard > 回退保留密钥草稿、服务商和检测结果；页面标题接收焦点
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/ui/setup-wizard.test.tsx:62:3
+     60|   })
+     61|
+     62|   it("回退保留密钥草稿、服务商和检测结果；页面标题接收焦点", async () => {
+       |   ^
+     63|     const onProbe = vi.fn(async () => ({ python: [], r: [] }))
+     64|     render(<SetupWizard initialStep="key" {...基本} configured={[]} onSa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |ui| tests/ui/terminal-mode-state.test.tsx > clears an old start error after dawn is successfully entered by typing the command
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"终端"[39m
+        [33mclass[39m=[32m"dock terminal-workspace"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dock-tabs"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dock-title"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M2.6 2.2h10.8c.9 0 1.6.7 1.6 1.6v8.4c0 .9-.7 1.6-1.6 1.6H2.6c-.9 0-1.6-.7-1.6-1.6V3.8c0-.9.7-1.6 1.6-1.6Zm1.6 3.2a.8.8 0 0 0-.5 1.4L5 8l-1.3 1.2a.8.8 0 1 0 1.1 1.2l1.9-1.8a.8.8 0 0 0 0-1.2L4.8 5.6a.8.8 0 0 0-.6-.2Zm4.3 4.4a.8.8 0 0 0 0 1.6h3a.8.8 0 0 0 0-1.6h-3Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m终端[0m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dock-terminal-tabs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dock-tab current"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-current[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn btn-ghost btn-inline"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m终端 1[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"关闭终端 1"[39m
+                [33mclass[39m=[32m"btn btn-ghost btn-icon"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0m×[0m
+              [36m</button>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"＋ 新开一个"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7.2 3.2a.8.8 0 0 1 1.6 0v4h4a.8.8 0 0 1 0 1.6h-4v4a.8.8 0 0 1-1.6 0v-4h-4a.8.8 0 0 1 0-1.6h4v-4Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"export-anchor terminal-conversation-actions"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-label[39m=[32m"终端会话操作"[39m
+              [33mclass[39m=[32m"conv-actions"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"conv-action-tip-wrap"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-describedby[39m=[32m"_r_4_"[39m
+                  [33maria-keyshortcuts[39m=[32m"Meta+f Control+f"[39m
+                  [33maria-label[39m=[32m"搜索历史"[39m
+                  [33mclass[39m=[32m"btn btn-secondary btn-icon"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"icon"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mviewBox[39m=[32m"0 0 16 16"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M7.1 1.4a5.7 5.7 0 0 1 4.5 9.2l3 3a.95.95 0 0 1-1.34 1.34l-3-3A5.7 5.7 0 1 1 7.1 1.4Zm0 1.9a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"conv-action-tip"[39m
+                  [33mid[39m=[32m"_r_4_"[39m
+                  [33mrole[39m=[32m"tooltip"[39m
+                [36m>[39m
+                  [0m搜索当前终端历史内容[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"conv-action-tip-wrap"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-busy[39m=[32m"false"[39m
+                  [33maria-describedby[39m=[32m"_r_5_"[39m
+                  [33maria-label[39m=[32m"导出会话"[39m
+                  [33mclass[39m=[32m"btn btn-secondary btn-icon conv-export"[39m
+                  [33mdisabled[39m=[32m""[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"icon"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mviewBox[39m=[32m"0 0 16 16"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 1.6a.8.8 0 0 1 .8.8v6.3l2.1-2.1a.8.8 0 1 1 1.1 1.1l-3.4 3.4a.8.8 0 0 1-1.2 0L4 7.7a.8.8 0 1 1 1.1-1.1l2.1 2.1V2.4a.8.8 0 0 1 .8-.8ZM3 12.6a.8.8 0 0 1 .8-.8h8.4a.8.8 0 0 1 0 1.6H3.8a.8.8 0 0 1-.8-.8Z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"conv-action-tip"[39m
+                  [33mid[39m=[32m"_r_5_"[39m
+                  [33mrole[39m=[32m"tooltip"[39m
+                [36m>[39m
+                  [0m进入 DAWN 模式后可导出会话[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"terminal-mode-switch"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"终端模式"[39m
+              [33mclass[39m=[32m"terminal-mode-options"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mDAWN 模式[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mNormal 模式[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"terminal-switch-error"[39m
+              [33mrole[39m=[32m"alert"[39m
+            [36m>[39m
+              [0mnot at a ready prompt[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"conv-action-tip-wrap terminal-return"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-busy[39m=[32m"false"[39m
+              [33maria-describedby[39m=[32m"_r_3_"[39m
+              [33maria-label[39m=[32m"返回会话"[39m
+              [33mclass[39m=[32m"btn btn-outline btn-icon terminal-return-button"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"currentColor"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3.6 6.1a.7.7 0 0 1 1.2-.5L8 8.8l3.2-3.2a.7.7 0 0 1 1 1l-3.7 3.7a.7.7 0 0 1-1 0L3.8 6.6a.7.7 0 0 1-.2-.5Z"[39m
+                  [33mtransform[39m=[32m"rotate(90 8 8)"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"conv-action-tip"[39m
+              [33mid[39m=[32m"_r_3_"[39m
+              [33mrole[39m=[32m"tooltip"[39m
+            [36m>[39m
+              [0m返回会话[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dock-content"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dock-shell"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"terminal-image-shell"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"terminal-image-screen"[39m
+              [36m>[39m
+                [36m<textarea[39m
+                  [33maria-label[39m=[32m"terminal input"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+Expected: "true"
+Received: "false"
+
+ ❯ waitFor.timeout tests/ui/terminal-mode-state.test.tsx:24:108
+     22|   await screen.findByText('not at a ready prompt')
+     23|   mode = 'dawn'
+     24|   await waitFor(() => expect(screen.getByRole('button', { name: 'DAWN …
+       |                                                                                                            ^
+     25|   expect(screen.queryByText('not at a ready prompt')).toBeNull()
+     26| })
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |ui| tests/ui/terminal-persistence.test.tsx > 终端窗格自己 > 给了字节就挂宿主 —— 不需要先点开任何东西
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/ui/terminal-persistence.test.tsx:49:3
+     47|
+     48| describe("终端窗格自己", () => {
+     49|   it("给了字节就挂宿主 —— 不需要先点开任何东西", async () => {
+       |   ^
+     50|     const { TerminalView } = await import("../../src/ui/views.js")
+     51|     const { container } = render(<TerminalView chunks={["hi"]} />)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 23 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/science/uniprot.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/runtime/kernel-remote.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/memory/snapshot.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/runtime/session-dir.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/store/connections.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/skills/analysis-guide.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/search-jump.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/rewind-button.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/analysis-route-map.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/interpreter-picker.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/search-panel.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/service-mark.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/kernel-error.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/team-view-state.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/composer-field.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/thinking-progress.test.tsx.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/state/ask-in-dock.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/settings-column.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/at-file.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/footer-rows.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/draft-carry.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/workspace-folders.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ listOnTimeout node:internal/timers:547:9
+ ❯ process.processTimers node:internal/timers:521:7
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/ui/enhance-note.test.ts.
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:94
+ ❯ runNextTicks node:internal/process/task_queues:64:5
+ ❯ process.processTimers node:internal/timers:518:9
+ ❯ Pool.schedule ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3532:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../../../Desktop/Github_repos/dawn-science/node_modules/vitest/dist/chunks/cli-api.B0Pz1_R7.js:3108:58
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  6 failed | 609 passed (615)
+      Tests  6 failed | 6091 passed | 10 skipped (6107)
+     Errors  23 errors
+   Start at  16:58:15
+   Duration  7380.48s (transform 15.37s, setup 4561.20s, import 4547.76s, tests 4866.83s, environment 1117.39s)
+

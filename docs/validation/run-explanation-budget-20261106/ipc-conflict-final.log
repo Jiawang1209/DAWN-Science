@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/run-budget-error.test.ts tests/orchestration/budget.test.ts tests/ui/run-budget.test.tsx --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+   Start at  16:57:29
+   Duration  2.49s (transform 2.10s, setup 1.35s, import 1.71s, tests 332ms, environment 636ms)
+

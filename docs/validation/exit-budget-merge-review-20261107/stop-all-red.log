@@ -1,0 +1,73 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/session/manager.test.ts tests/electron/wiring.test.ts -t 批量停止等待|退出收尾模式|会话停止本身失败
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/session/manager.test.ts (37 tests | 3 failed | 34 skipped) 32ms
+     × 批量停止等待新建中的会话，不能在启动完成后留下活跃绑定 18ms
+     × 批量停止等待恢复中的会话，不能在启动完成后留下活跃绑定 7ms
+     × 退出收尾模式保留逐会话失败，同时等待其他会话停止；普通批量停止仍兼容尽力收尾 7ms
+ ❯ |node| tests/electron/wiring.test.ts (49 tests | 1 failed | 48 skipped) 1495ms
+     × 会话停止本身失败也必须记为 failed，不能被批量停止吞成 drained 1494ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 会话停止本身失败也必须记为 failed，不能被批量停止吞成 drained
+AssertionError: expected [ 'drained' ] to deeply equal [ 'failed' ]
+
+- Expected
++ Received
+
+  [
+-   "failed",
++   "drained",
+  ]
+
+ ❯ tests/electron/wiring.test.ts:86:22
+     84|     try{
+     85|       await wb.closeAsync(undefined,state=>states.push(state))
+     86|       expect(states).toEqual(['failed']);expect(log).toHaveBeenCalled()
+       |                      ^
+     87|     }finally{stop.mockRestore();log.mockRestore();await wb.closeAsync(…
+     88|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/session/manager.test.ts > SessionManager · 创建与销毁 > 批量停止等待新建中的会话，不能在启动完成后留下活跃绑定
+ FAIL  |node| tests/session/manager.test.ts > SessionManager · 创建与销毁 > 批量停止等待恢复中的会话，不能在启动完成后留下活跃绑定
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session/manager.test.ts:62:79
+     60|     const closing=manager.stopAll().then(()=>{settled=true})
+     61|     try{
+     62|       await new Promise<void>(resolve=>setImmediate(resolve));expect(s…
+       |                                                                               ^
+     63|       release();await Promise.all([opening,closing])
+     64|       expect(stops).toBe(1);expect(manager.isLive(id)).toBe(false);exp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/session/manager.test.ts > SessionManager · 创建与销毁 > 退出收尾模式保留逐会话失败，同时等待其他会话停止；普通批量停止仍兼容尽力收尾
+AssertionError: expected undefined to be an instance of AggregateError
+ ❯ tests/session/manager.test.ts:76:38
+     74|     try{
+     75|       await new Promise<void>(resolve=>setImmediate(resolve));expect(s…
+     76|       release();expect(await result).toBeInstanceOf(AggregateError)
+       |                                      ^
+     77|       expect(manager.isLive(second.id)).toBe(false);expect(manager.isL…
+     78|       await expect(manager.stopAll()).resolves.toBeUndefined()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 82 skipped (86)
+   Start at  00:21:36
+   Duration  4.65s (transform 1.42s, setup 0ms, import 3.97s, tests 1.53s, environment 0ms)
+

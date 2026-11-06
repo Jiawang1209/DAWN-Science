@@ -1,0 +1,68 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/exit-diagnostics.test.ts tests/electron/app-exit-diagnostics.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/app-exit-diagnostics.test.ts (0 test)
+ ❯ |node| tests/electron/exit-diagnostics.test.ts (4 tests | 2 failed) 14ms
+   × distinguishes a closed protocol/page from a still-live native process and records close returning 2ms
+   × keeps only safe inspector lifecycle markers from stderr 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/app-exit-diagnostics.test.ts [ tests/electron/app-exit-diagnostics.test.ts ]
+Error: Cannot find module '../../src/electron/exit-diagnostics.js' imported from /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/electron/app-exit-diagnostics.test.ts
+ ❯ tests/electron/app-exit-diagnostics.test.ts:6:1
+      4| import {join} from 'node:path'
+      5| import {tmpdir} from 'node:os'
+      6| import {installAppExitDiagnostics} from '../../src/electron/exit-diagn…
+       | ^
+      7| const roots:string[]=[]
+      8| afterEach(()=>{for(const root of roots.splice(0))rmSync(root,{recursiv…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > distinguishes a closed protocol/page from a still-live native process and records close returning
+TypeError: observation.closeReturned is not a function
+ ❯ tests/electron/exit-diagnostics.test.ts:40:39
+     38|  const observation=await observeElectronExit(app,dir)
+     39|  page.emit('crash');page.emit('close');context.emit('close');app.emit(…
+     40|  observation.beginClose();observation.closeReturned()
+       |                                       ^
+     41|  expect(child.exitCode).toBeNull()
+     42|  expect(records().map(r=>r.event)).toEqual(expect.arrayContaining(['pa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > keeps only safe inspector lifecycle markers from stderr
+AssertionError: expected [ 'attached' ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "inspector-ending",
+-   "inspector-waiting-disconnect",
++ [
++   "attached",
+  ]
+
+ ❯ tests/electron/exit-diagnostics.test.ts:49:36
+     47|  const{dir,app,child,records}=setup();await observeElectronExit(app,di…
+     48|  child.stderr.write('SECRET normal stderr body\nDebugger ending on ws:…
+     49|  expect(records().map(r=>r.event)).toEqual(expect.arrayContaining(['in…
+       |                                    ^
+     50|  expect(JSON.stringify(records())).not.toContain('SECRET');expect(JSON…
+     51|  child.exitCode=0;child.emit('exit',0,null);child.emit('close',0,null)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 2 passed (4)
+   Start at  23:41:09
+   Duration  134ms (transform 46ms, setup 0ms, import 39ms, tests 14ms, environment 0ms)
+

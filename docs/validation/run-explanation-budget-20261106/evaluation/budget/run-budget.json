@@ -1,0 +1,896 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-06T08:39:05.291Z",
+  "sourceFingerprint": "70afee05b037b147a88291ac48e88d43ce767dc30abfb5c86b3ed471d91cfb47",
+  "childBuildFingerprint": "00430319f49765cd38d6f07bae21ad27ed4ddc407dc67f4c523a16893805ebca",
+  "rows": [
+    {
+      "mode": "unlimited",
+      "inputHash": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+      "inputPreserved": true,
+      "started": 3,
+      "accepted": 3,
+      "rejected": 0,
+      "modelRequests": 12,
+      "preservedHashes": [
+        "fbd737dcfd032cc4c14c0c5fa7586b40d5a781c0e9c41880e25a59fcd4944f62",
+        "aeb29dfa031b2aa920a515d83484e8e1116bd78bf63c34f86d8422faf33c71af"
+      ],
+      "recoveryConsumed": 3,
+      "elapsedMs": 3815,
+      "budgetBefore": {
+        "revision": 6,
+        "limits": {},
+        "consumedRuns": 3,
+        "legacyRuns": 0,
+        "knownTokens": 240,
+        "unknownRuns": 3,
+        "inFlight": 0,
+        "startedAt": 1793954339901,
+        "elapsedMs": 3491
+      },
+      "budgetAfter": {
+        "revision": 6,
+        "limits": {},
+        "consumedRuns": 3,
+        "legacyRuns": 0,
+        "knownTokens": 240,
+        "unknownRuns": 3,
+        "inFlight": 0,
+        "startedAt": 1793954339901,
+        "elapsedMs": 3673
+      },
+      "receipts": [
+        {
+          "version": 1,
+          "state": "accepted",
+          "summary": "deterministic fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "mean",
+              "metrics": {
+                "n": 5,
+                "mean": 3
+              },
+              "sampleCount": 5,
+              "caveats": [
+                "synthetic software test only"
+              ]
+            },
+            "summary": "deterministic fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "run-1.py"
+              },
+              {
+                "path": "run-1.json"
+              },
+              {
+                "path": "run-1.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python fixture",
+              "toolCallIds": [
+                "call_mock_3"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "run-1.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "run-1.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "run-1.md",
+              "state": "exists"
+            }
+          ],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12
+              }
+            ],
+            "outputs": [
+              {
+                "path": "run-1.py",
+                "sha256": "a1d16f7ae490b13ac662f5a13964371ac1acba614b5e7df6a57f11a066d23a51",
+                "bytes": 383
+              },
+              {
+                "path": "run-1.json",
+                "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+                "bytes": 34
+              },
+              {
+                "path": "run-1.md",
+                "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+                "bytes": 57
+              }
+            ]
+          }
+        },
+        {
+          "version": 1,
+          "state": "accepted",
+          "summary": "deterministic fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "mean",
+              "metrics": {
+                "n": 5,
+                "mean": 3
+              },
+              "sampleCount": 5,
+              "caveats": [
+                "synthetic software test only"
+              ]
+            },
+            "summary": "deterministic fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "run-2.py"
+              },
+              {
+                "path": "run-2.json"
+              },
+              {
+                "path": "run-2.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python fixture",
+              "toolCallIds": [
+                "call_mock_7"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "run-2.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "run-2.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "run-2.md",
+              "state": "exists"
+            }
+          ],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12
+              }
+            ],
+            "outputs": [
+              {
+                "path": "run-2.py",
+                "sha256": "670c454a5a1a269763df52a5874ca311e35439adf5a17eebfeeea0b8bcdd9ee8",
+                "bytes": 383
+              },
+              {
+                "path": "run-2.json",
+                "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+                "bytes": 34
+              },
+              {
+                "path": "run-2.md",
+                "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+                "bytes": 57
+              }
+            ]
+          }
+        },
+        {
+          "version": 1,
+          "state": "accepted",
+          "summary": "deterministic fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "mean",
+              "metrics": {
+                "n": 5,
+                "mean": 3
+              },
+              "sampleCount": 5,
+              "caveats": [
+                "synthetic software test only"
+              ]
+            },
+            "summary": "deterministic fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "run-3.py"
+              },
+              {
+                "path": "run-3.json"
+              },
+              {
+                "path": "run-3.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python fixture",
+              "toolCallIds": [
+                "call_mock_11"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "run-3.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "run-3.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "run-3.md",
+              "state": "exists"
+            }
+          ],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12
+              }
+            ],
+            "outputs": [
+              {
+                "path": "run-3.py",
+                "sha256": "03c3e743385e36ffb3aac6191be7276d51ae888530a56564b4eb6aca247578d6",
+                "bytes": 383
+              },
+              {
+                "path": "run-3.json",
+                "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+                "bytes": 34
+              },
+              {
+                "path": "run-3.md",
+                "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+                "bytes": 57
+              }
+            ]
+          }
+        }
+      ],
+      "history": {
+        "events": [
+          {
+            "seq": 1,
+            "at": 1793954339892,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 2,
+            "at": 1793954339900,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 3,
+            "at": 1793954339901,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 4,
+            "at": 1793954339903,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 5,
+            "at": 1793954339905,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "preflight"
+          },
+          {
+            "seq": 6,
+            "at": 1793954339931,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 7,
+            "at": 1793954341131,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "acceptance"
+          },
+          {
+            "seq": 8,
+            "at": 1793954341263,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed",
+            "receipt": "accepted"
+          },
+          {
+            "seq": 9,
+            "at": 1793954341337,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 10,
+            "at": 1793954341345,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 11,
+            "at": 1793954341346,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 12,
+            "at": 1793954341347,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 13,
+            "at": 1793954341348,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "preflight"
+          },
+          {
+            "seq": 14,
+            "at": 1793954341375,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 15,
+            "at": 1793954342263,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "acceptance"
+          },
+          {
+            "seq": 16,
+            "at": 1793954342374,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed",
+            "receipt": "accepted"
+          },
+          {
+            "seq": 17,
+            "at": 1793954342447,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 18,
+            "at": 1793954342451,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 19,
+            "at": 1793954342452,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 1,
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 20,
+            "at": 1793954342453,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 21,
+            "at": 1793954342454,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "preflight"
+          },
+          {
+            "seq": 22,
+            "at": 1793954342481,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 23,
+            "at": 1793954343246,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "acceptance"
+          },
+          {
+            "seq": 24,
+            "at": 1793954343330,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed",
+            "receipt": "accepted"
+          }
+        ],
+        "truncated": false
+      }
+    },
+    {
+      "mode": "limited",
+      "inputHash": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+      "inputPreserved": true,
+      "started": 2,
+      "accepted": 2,
+      "rejected": 1,
+      "modelRequests": 8,
+      "preservedHashes": [
+        "fbd737dcfd032cc4c14c0c5fa7586b40d5a781c0e9c41880e25a59fcd4944f62",
+        "aeb29dfa031b2aa920a515d83484e8e1116bd78bf63c34f86d8422faf33c71af"
+      ],
+      "recoveryConsumed": 2,
+      "elapsedMs": 1708,
+      "budgetBefore": {
+        "revision": 5,
+        "limits": {
+          "maxRuns": 2
+        },
+        "consumedRuns": 2,
+        "legacyRuns": 0,
+        "knownTokens": 160,
+        "unknownRuns": 2,
+        "inFlight": 0,
+        "startedAt": 1793954343605,
+        "elapsedMs": 1570,
+        "blocked": {
+          "code": "runs",
+          "message": "委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动"
+        }
+      },
+      "budgetAfter": {
+        "revision": 5,
+        "limits": {
+          "maxRuns": 2
+        },
+        "consumedRuns": 2,
+        "legacyRuns": 0,
+        "knownTokens": 160,
+        "unknownRuns": 2,
+        "inFlight": 0,
+        "startedAt": 1793954343605,
+        "elapsedMs": 1682,
+        "blocked": {
+          "code": "runs",
+          "message": "委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动"
+        }
+      },
+      "receipts": [
+        {
+          "version": 1,
+          "state": "accepted",
+          "summary": "deterministic fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "mean",
+              "metrics": {
+                "n": 5,
+                "mean": 3
+              },
+              "sampleCount": 5,
+              "caveats": [
+                "synthetic software test only"
+              ]
+            },
+            "summary": "deterministic fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "run-1.py"
+              },
+              {
+                "path": "run-1.json"
+              },
+              {
+                "path": "run-1.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python fixture",
+              "toolCallIds": [
+                "call_mock_15"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "run-1.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "run-1.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "run-1.md",
+              "state": "exists"
+            }
+          ],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12
+              }
+            ],
+            "outputs": [
+              {
+                "path": "run-1.py",
+                "sha256": "a1d16f7ae490b13ac662f5a13964371ac1acba614b5e7df6a57f11a066d23a51",
+                "bytes": 383
+              },
+              {
+                "path": "run-1.json",
+                "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+                "bytes": 34
+              },
+              {
+                "path": "run-1.md",
+                "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+                "bytes": 57
+              }
+            ]
+          }
+        },
+        {
+          "version": 1,
+          "state": "accepted",
+          "summary": "deterministic fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "mean",
+              "metrics": {
+                "n": 5,
+                "mean": 3
+              },
+              "sampleCount": 5,
+              "caveats": [
+                "synthetic software test only"
+              ]
+            },
+            "summary": "deterministic fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "run-2.py"
+              },
+              {
+                "path": "run-2.json"
+              },
+              {
+                "path": "run-2.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python fixture",
+              "toolCallIds": [
+                "call_mock_19"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "run-2.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "run-2.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "run-2.md",
+              "state": "exists"
+            }
+          ],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12
+              }
+            ],
+            "outputs": [
+              {
+                "path": "run-2.py",
+                "sha256": "670c454a5a1a269763df52a5874ca311e35439adf5a17eebfeeea0b8bcdd9ee8",
+                "bytes": 383
+              },
+              {
+                "path": "run-2.json",
+                "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+                "bytes": 34
+              },
+              {
+                "path": "run-2.md",
+                "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+                "bytes": 57
+              }
+            ]
+          }
+        }
+      ],
+      "history": {
+        "events": [
+          {
+            "seq": 1,
+            "at": 1793954343601,
+            "type": "budget-configured"
+          },
+          {
+            "seq": 2,
+            "at": 1793954343602,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 3,
+            "at": 1793954343605,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 4,
+            "at": 1793954343605,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 5,
+            "at": 1793954343605,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 6,
+            "at": 1793954343606,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "preflight"
+          },
+          {
+            "seq": 7,
+            "at": 1793954343626,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 8,
+            "at": 1793954344254,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "acceptance"
+          },
+          {
+            "seq": 9,
+            "at": 1793954344328,
+            "childId": "child-b22492e0ed9e53c73ec7c9994252c8c3",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed",
+            "receipt": "accepted"
+          },
+          {
+            "seq": 10,
+            "at": 1793954344385,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 11,
+            "at": 1793954344389,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 12,
+            "at": 1793954344389,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 13,
+            "at": 1793954344390,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 14,
+            "at": 1793954344390,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "preflight"
+          },
+          {
+            "seq": 15,
+            "at": 1793954344409,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 16,
+            "at": 1793954345036,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "acceptance"
+          },
+          {
+            "seq": 17,
+            "at": 1793954345112,
+            "childId": "child-966c95987b31c51f4234435b4d214d89",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed",
+            "receipt": "accepted"
+          },
+          {
+            "seq": 18,
+            "at": 1793954345170,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 19,
+            "at": 1793954345174,
+            "childId": "child-5f84316fa791d50ecedece07fde9d2dd",
+            "epoch": 0,
+            "type": "budget-blocked"
+          }
+        ],
+        "truncated": false
+      }
+    }
+  ],
+  "observed": {
+    "preventedStarts": 1,
+    "localModelRequestsAvoided": 4,
+    "acceptedArtifactsPreserved": true,
+    "requestedWorkCompleted": {
+      "unlimited": 3,
+      "limited": 2
+    },
+    "limitations": [
+      "确定性 localhost 推理、真实 Pi/进程/脚本/文件与宿主验收；不是实际付费模型收益。",
+      "预算组有意少完成一项请求；减少请求次数不代表科研质量提升。",
+      "时长仅记录；未知 token 不按零消耗解释。"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "note": "First repeat command omitted the shutdown demo override; default demo paths were regenerated. Repeated results and committed original bytes retained separately; default paths restored to committed baseline. Subsequent runs explicitly isolate all demo directories.",
+  "files": {
+    "active-child-shutdown.json": {
+      "repeatedResultSha256": "a40f52c38589e91c9ff54f6bb5fb71f674180cd1f71bc466c69a3f89827dfb95",
+      "gitBaselineSha256": "f079467cee0b33bd958c849e9a660ac05d52da592081725e7911b32c0b81a50a"
+    },
+    "active-child-recovered.png": {
+      "repeatedResultSha256": "ee8c87777ab79a4efa0611542c79e6db67a81e2644f8bba1d1c220770ed35dd3",
+      "gitBaselineSha256": "2c2bc2e6fe171c474f86c4a2479a974dabd957a465f7079530e4079dbb66fd2e"
+    }
+  }
+}

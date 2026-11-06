@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/budget.test.ts -t legacy result without --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/orchestration/budget.test.ts (12 tests | 1 failed | 11 skipped) 13ms
+   × a legacy result without an epoch still proves at least one unknown-usage turn 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > a legacy result without an epoch still proves at least one unknown-usage turn
+AssertionError: expected { revision: +0, limits: {}, …(6) } to match object { Object (legacyRuns, consumedRuns, ...) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "consumedRuns": 1,
+-   "legacyRuns": 1,
+-   "unknownRuns": 1,
++   "consumedRuns": 0,
++   "legacyRuns": 0,
++   "unknownRuns": 0,
+  }
+
+ ❯ tests/orchestration/budget.test.ts:84:36
+     82|  old.children[0].state='completed';old.children[0].result={ok:true,out…
+     83|  const restored=new OrchestrationService(new OrchestrationStore(root,'…
+     84|  expect(restored.budgetSnapshot()).toMatchObject({legacyRuns:1,consume…
+       |                                    ^
+     85|  expect(restored.budgetSnapshot().startedAt).toBeUndefined()
+     86|  await service.close();await restored.close()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  16:51:46
+   Duration  330ms (transform 87ms, setup 0ms, import 219ms, tests 13ms, environment 0ms)
+

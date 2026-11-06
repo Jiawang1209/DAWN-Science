@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/exit-diagnostics.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/exit-diagnostics.test.ts (13 tests | 2 failed) 27ms
+   × missing native facts are unknown, not proof of a clean shutdown 4ms
+   × an asynchronous shutdown without a reported drain outcome is incomplete 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > missing native facts are unknown, not proof of a clean shutdown
+AssertionError: expected [] to deeply equal [ 'shutdown-diagnostics-unavailable' ]
+
+- Expected
++ Received
+
+- [
+-   "shutdown-diagnostics-unavailable",
+- ]
++ []
+
+ ❯ tests/electron/exit-diagnostics.test.ts:79:41
+     77|  const{dir,app,child}=setup(),observation=await observeElectronExit(ap…
+     78|  child.exitCode=0;child.emit('exit',0,null);child.emit('close',0,null)
+     79|  expect(observation.shutdownProblems()).toEqual(['shutdown-diagnostics…
+       |                                         ^
+     80| })
+     81| it('an asynchronous shutdown without a reported drain outcome is incom…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > an asynchronous shutdown without a reported drain outcome is incomplete
+AssertionError: expected [] to deeply equal [ 'shutdown-outcome-unobserved' ]
+
+- Expected
++ Received
+
+- [
+-   "shutdown-outcome-unobserved",
+- ]
++ []
+
+ ❯ tests/electron/exit-diagnostics.test.ts:84:41
+     82|  const{dir,app,child}=setup(),observation=await observeElectronExit(ap…
+     83|  writeFileSync(join(dir,`app-${child.pid}.jsonl`),['diagnostics-attach…
+     84|  expect(observation.shutdownProblems()).toEqual(['shutdown-outcome-uno…
+       |                                         ^
+     85|  child.exitCode=0;child.emit('exit',0,null);child.emit('close',0,null)
+     86| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  00:43:15
+   Duration  175ms (transform 29ms, setup 0ms, import 41ms, tests 27ms, environment 0ms)
+

@@ -2,8 +2,12 @@
 import {z} from 'zod'
 import {ContextHandoffSchema} from './context-handoff.js'
 import {TaskObservationSchema} from './task-observation.js'
+import {RunActivitySchema,RunTimingSchema,RunHistorySchema} from './run-explanation.js'
+import {RunBudgetSchema} from './run-budget.js'
 export const RunOverviewSchema=z.object({
  ownerSessionId:z.string().min(1),source:z.enum(['live','disk','unsupported']),
+ history:RunHistorySchema.optional(),observationIssue:z.string().optional(),
+ budget:RunBudgetSchema.optional(),
  runs:z.array(z.object({
   id:z.string(),kind:z.enum(['subagent','team','bot']),label:z.string(),address:z.array(z.string()),
   state:z.enum(['idle','queued','running','completed','failed','cancelled','interrupted']),
@@ -13,6 +17,7 @@ export const RunOverviewSchema=z.object({
   receipt:z.enum(['accepted','blocked','invalid']).optional(),
   inputVersions:z.number().int().nonnegative(),outputVersions:z.number().int().nonnegative(),
   observation:TaskObservationSchema.optional(),
+  activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),
  }).strict()),
 }).strict()
 export type RunOverview= z.infer<typeof RunOverviewSchema>

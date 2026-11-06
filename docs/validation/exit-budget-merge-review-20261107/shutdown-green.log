@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/session/manager.test.ts tests/electron/wiring.test.ts tests/electron/exit-diagnostics.test.ts tests/electron/app-exit-diagnostics.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/wiring.test.ts (50 tests | 1 failed | 1 skipped) 3803ms
+     × 主任务启动预备期也需要等待，不能在运行时尚未绑定时误报 drained 265ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/wiring.test.ts > createWorkbench > 主任务启动预备期也需要等待，不能在运行时尚未绑定时误报 drained
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/electron/wiring.test.ts:93:26
+     91|       await new Promise<void>(resolve=>setImmediate(resolve));expect(s…
+     92|       release();const created=await opening;await closing
+     93|       expect(created.ok).toBe(true)
+       |                          ^
+     94|       expect(wb.sessions.isLive((created as {ok:true;data:{sessionId:s…
+     95|     }finally{release();await opening;await closing;start.mockRestore()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 93 passed | 1 skipped (95)
+   Start at  00:22:36
+   Duration  6.74s (transform 1.51s, setup 0ms, import 3.77s, tests 4.16s, environment 0ms)
+

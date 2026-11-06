@@ -1,0 +1,1532 @@
+[
+  {
+    "path": "test-results/subagent-shutdown-app-quit-71e78--retains-the-frozen-context/electron-exit/exit-66416.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:56.901Z",
+        "ms": 0.029083999994327314,
+        "detail": {
+          "pid": 66416,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:58.774Z",
+        "ms": 1873.1625419999982,
+        "detail": {
+          "pid": 66416,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:58.971Z",
+        "ms": 2070.3145839999997,
+        "detail": {
+          "pid": 66416,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:58.971Z",
+        "ms": 2070.5603749999937,
+        "detail": {
+          "pid": 66416,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:58.972Z",
+        "ms": 2070.751624999997,
+        "detail": {
+          "pid": 66416,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:58.972Z",
+        "ms": 2070.816208999997,
+        "detail": {
+          "pid": 66416,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:58.972Z",
+        "ms": 2071.2135419999977,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 66416,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:58.972Z",
+        "ms": 2071.417916999999,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 66416,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/subagent-shutdown-app-quit-71e78--retains-the-frozen-context/electron-exit/exit-67619.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:59.931Z",
+        "ms": 0.020167000002402347,
+        "detail": {
+          "pid": 67619,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:11:00.572Z",
+        "ms": 640.5121670000008,
+        "detail": {
+          "pid": 67619,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:11:00.673Z",
+        "ms": 742.2929169999989,
+        "detail": {
+          "pid": 67619,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:11:00.674Z",
+        "ms": 742.4954579999976,
+        "detail": {
+          "pid": 67619,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:11:00.674Z",
+        "ms": 742.6541670000006,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 67619,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:11:00.674Z",
+        "ms": 742.8267500000002,
+        "detail": {
+          "pid": 67619,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:11:00.674Z",
+        "ms": 742.8745419999977,
+        "detail": {
+          "pid": 67619,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:11:00.674Z",
+        "ms": 742.9995419999977,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 67619,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-65950.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:54.602Z",
+        "ms": 0.02629200000228593,
+        "detail": {
+          "pid": 65950,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:55.654Z",
+        "ms": 1051.9278750000012,
+        "detail": {
+          "pid": 65950,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:55.795Z",
+        "ms": 1192.4025000000038,
+        "detail": {
+          "pid": 65950,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:55.795Z",
+        "ms": 1192.9119589999973,
+        "detail": {
+          "pid": 65950,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:55.795Z",
+        "ms": 1193.0184169999993,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 65950,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:55.796Z",
+        "ms": 1193.177042000003,
+        "detail": {
+          "pid": 65950,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:55.796Z",
+        "ms": 1193.2232500000027,
+        "detail": {
+          "pid": 65950,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:55.796Z",
+        "ms": 1193.3843750000015,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 65950,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-64769.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:47.691Z",
+        "ms": 0.07783299999573501,
+        "detail": {
+          "pid": 64769,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:53.486Z",
+        "ms": 5795.154665999995,
+        "detail": {
+          "pid": 64769,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:53.633Z",
+        "ms": 5941.543874999996,
+        "detail": {
+          "pid": 64769,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:53.633Z",
+        "ms": 5941.764790999994,
+        "detail": {
+          "pid": 64769,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:53.633Z",
+        "ms": 5941.843915999998,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 64769,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:53.633Z",
+        "ms": 5942.020665999997,
+        "detail": {
+          "pid": 64769,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:53.633Z",
+        "ms": 5942.072666,
+        "detail": {
+          "pid": 64769,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:53.633Z",
+        "ms": 5942.219290999994,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 64769,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/run-explanation-budget-ela-60dc3-ns-ownership-until-it-exits/electron-exit/exit-62733.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:36.763Z",
+        "ms": 0.025916999999026302,
+        "detail": {
+          "pid": 62733,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:46.467Z",
+        "ms": 9703.464416999996,
+        "detail": {
+          "pid": 62733,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:46.633Z",
+        "ms": 9869.478334,
+        "detail": {
+          "pid": 62733,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:46.633Z",
+        "ms": 9869.670417000001,
+        "detail": {
+          "pid": 62733,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:46.633Z",
+        "ms": 9869.744833999997,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 62733,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:46.633Z",
+        "ms": 9869.910417,
+        "detail": {
+          "pid": 62733,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:46.633Z",
+        "ms": 9869.956874999996,
+        "detail": {
+          "pid": 62733,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:46.633Z",
+        "ms": 9870.110874999998,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 62733,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/orchestration-background-c-e2186-rably-reports-to-its-parent/electron-exit/exit-59538.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:19.209Z",
+        "ms": 0.026874999999563443,
+        "detail": {
+          "pid": 59538,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:22.300Z",
+        "ms": 3091.028708,
+        "detail": {
+          "pid": 59538,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:22.486Z",
+        "ms": 3276.933000000001,
+        "detail": {
+          "pid": 59538,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:22.486Z",
+        "ms": 3277.1320410000008,
+        "detail": {
+          "pid": 59538,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:22.487Z",
+        "ms": 3277.2090000000007,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 59538,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:22.487Z",
+        "ms": 3277.36225,
+        "detail": {
+          "pid": 59538,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:22.487Z",
+        "ms": 3277.4131660000003,
+        "detail": {
+          "pid": 59538,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:22.487Z",
+        "ms": 3277.5748750000002,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 59538,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/observable-handoff-observa-1fc48-the-actual-child-transcript/electron-exit/exit-58985.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:16.831Z",
+        "ms": 0.09445800000048621,
+        "detail": {
+          "pid": 58985,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:17.860Z",
+        "ms": 1029.7082499999997,
+        "detail": {
+          "pid": 58985,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:18.013Z",
+        "ms": 1182.6957499999999,
+        "detail": {
+          "pid": 58985,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:18.014Z",
+        "ms": 1182.9260000000004,
+        "detail": {
+          "pid": 58985,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:18.014Z",
+        "ms": 1182.9997080000003,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 58985,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:18.014Z",
+        "ms": 1183.1398749999998,
+        "detail": {
+          "pid": 58985,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:18.014Z",
+        "ms": 1183.244541,
+        "detail": {
+          "pid": 58985,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:18.014Z",
+        "ms": 1183.3828750000002,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 58985,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/observable-handoff-observa-1fc48-the-actual-child-transcript/electron-exit/exit-58318.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:12.386Z",
+        "ms": 0.41124999999988177,
+        "detail": {
+          "pid": 58318,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:15.728Z",
+        "ms": 3342.2016249999997,
+        "detail": {
+          "pid": 58318,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:15.861Z",
+        "ms": 3474.7029169999996,
+        "detail": {
+          "pid": 58318,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:15.861Z",
+        "ms": 3474.950208,
+        "detail": {
+          "pid": 58318,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:15.861Z",
+        "ms": 3475.0801250000004,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 58318,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:15.862Z",
+        "ms": 3475.4699170000004,
+        "detail": {
+          "pid": 58318,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:15.862Z",
+        "ms": 3475.5348750000003,
+        "detail": {
+          "pid": 58318,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:15.862Z",
+        "ms": 3475.7760420000004,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 58318,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "test-results/run-explanation-budget-run-efec7-g-and-retained-host-history/electron-exit/exit-60409.jsonl",
+    "events": [
+      {
+        "event": "attached",
+        "at": "2026-11-06T13:10:23.770Z",
+        "ms": 0.05858299999999872,
+        "detail": {
+          "pid": 60409,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "close-requested",
+        "at": "2026-11-06T13:10:35.532Z",
+        "ms": 11761.751332999998,
+        "detail": {
+          "pid": 60409,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "owned": []
+        }
+      },
+      {
+        "event": "stderr-end",
+        "at": "2026-11-06T13:10:35.681Z",
+        "ms": 11910.897374999999,
+        "detail": {
+          "pid": 60409,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": false,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-end",
+        "at": "2026-11-06T13:10:35.681Z",
+        "ms": 11911.099916000001,
+        "detail": {
+          "pid": 60409,
+          "exitCode": null,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "child-exit",
+        "at": "2026-11-06T13:10:35.681Z",
+        "ms": 11911.170124999999,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 60409,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      },
+      {
+        "event": "stdout-close",
+        "at": "2026-11-06T13:10:35.681Z",
+        "ms": 11911.3235,
+        "detail": {
+          "pid": 60409,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "stderr-close",
+        "at": "2026-11-06T13:10:35.681Z",
+        "ms": 11911.366625,
+        "detail": {
+          "pid": 60409,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      },
+      {
+        "event": "child-close",
+        "at": "2026-11-06T13:10:35.682Z",
+        "ms": 11911.509583000001,
+        "detail": {
+          "code": 0,
+          "signal": null,
+          "pid": 60409,
+          "exitCode": 0,
+          "signalCode": null,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      }
+    ]
+  }
+]

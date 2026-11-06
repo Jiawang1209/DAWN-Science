@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/electron/exit-diagnostics.test.ts tests/electron/app-exit-diagnostics.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/electron/app-exit-diagnostics.test.ts (4 tests | 1 failed) 13ms
+   × preserves lifecycle facts when resource inspection is unavailable 5ms
+ ❯ |node| tests/electron/exit-diagnostics.test.ts (9 tests | 4 failed) 22ms
+   × exit code zero cannot conceal shutdown-drain-timeout in desktop acceptance 3ms
+   × exit code zero cannot conceal shutdown-drain-failed in desktop acceptance 1ms
+   × exit code zero cannot conceal shutdown-async-failed in desktop acceptance 1ms
+   × exit code zero cannot conceal shutdown-fallback-fired in desktop acceptance 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/electron/app-exit-diagnostics.test.ts > preserves lifecycle facts when resource inspection is unavailable
+AssertionError: expected [] to deeply equal [ 'diagnostics-attached', …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "diagnostics-attached",
+-   "before-quit",
+-   "process-exit",
+- ]
++ []
+
+ ❯ tests/electron/app-exit-diagnostics.test.ts:45:40
+     43|  const{dir,app,host,records}=setup();host.getActiveResourcesInfo=()=>{…
+     44|  installAppExitDiagnostics(app,dir,host);app.emit('before-quit',{});ho…
+     45|  expect(records().map(row=>row.event)).toEqual(['diagnostics-attached'…
+       |                                        ^
+     46|  expect(records().every(row=>row.resourceSnapshotAvailable===false)).t…
+     47| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > exit code zero cannot conceal shutdown-drain-timeout in desktop acceptance
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > exit code zero cannot conceal shutdown-drain-failed in desktop acceptance
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > exit code zero cannot conceal shutdown-async-failed in desktop acceptance
+ FAIL  |node| tests/electron/exit-diagnostics.test.ts > exit code zero cannot conceal shutdown-fallback-fired in desktop acceptance
+TypeError: observation.shutdownProblems is not a function
+ ❯ tests/electron/exit-diagnostics.test.ts:61:21
+     59|  writeFileSync(join(dir,`app-${child.pid}.jsonl`),JSON.stringify({even…
+     60|  child.exitCode=0;child.emit('exit',0,null);child.emit('close',0,null)
+     61|  expect(observation.shutdownProblems()).toEqual([event])
+       |                     ^
+     62| })
+     63|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 8 passed (13)
+   Start at  00:26:13
+   Duration  165ms (transform 57ms, setup 0ms, import 78ms, tests 36ms, environment 0ms)
+

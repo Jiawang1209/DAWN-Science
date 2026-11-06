@@ -1,0 +1,65 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts e2e/orchestration.spec.ts e2e/subagent-shutdown.spec.ts e2e/subagent-steering.spec.ts e2e/subagent-steering-epoch.spec.ts e2e/run-explanation-budget.spec.ts e2e/mcp-cancellation.spec.ts --output=docs/validation/electron-exit-investigation-20261106/final-desktop-results
+
+Running 10 tests using 1 worker
+
+(node:79466) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] Debugger ending on ws://127.0.0.1:63541/df566501-f90a-458d-9ecc-75b3d0be5928
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63566/584ff1eb-5358-40a2-bdbd-9460becbc02d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/exit-lifecycle.spec.ts:12:2 › root task shutdown › quitting during a root bash task drains its owned process before restart (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63580/22c30d46-bd1f-4730-93bf-28b25bdb8a0d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63608/b197d51e-8cb3-46ef-814a-1a6e208d905e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/exit-lifecycle.spec.ts:43:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63617/199cb427-b289-4045-9bb6-03664e68a0a8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63648/85941aa0-642f-44d5-ac59-727f6c414dac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63672/b4c6debd-4b8b-43af-85b1-60a674654cad
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (13.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63739/32172ab1-a248-4823-915c-2d72e3a598b3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/run-explanation-budget.spec.ts:38:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (10.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63799/c21e1369-39b1-43eb-a17b-884b96d7475b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63835/ead37ee3-78ac-4ce9-8eb2-3521b21144e7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/run-explanation-budget.spec.ts:61:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (8.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63851/c8234209-08c4-4742-bd2c-4e950efc8a2b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63878/29a435d2-ae42-46d5-8241-d0205374a784
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/subagent-shutdown.spec.ts:7:1 › app quit drains an active delegated process before restart and retains the frozen context (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:63889/4d127540-3e79-4388-bc09-a1199c4d4783
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/subagent-steering-epoch.spec.ts:6:1 › expired correction draft cannot cross a real child epoch and can be explicitly rewritten (20.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64001/8364e7e3-9790-4fa7-99b1-a05f768db9fb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction (20.5s)
+
+  10 passed (1.6m)

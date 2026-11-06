@@ -15,6 +15,28 @@ beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'dawn-mcp-recovery-')); log 
 afterEach(async () => { await pool.全关(); rmSync(dir, { recursive: true, force: true }) })
 
 describe('MCP connection recovery with a real stdio server', () => {
+  it.each([true,false])('reports SDK close errors only for shutdown acceptance (strict=%s)',async reportErrors=>{
+    await pool.备好('fixture',config())
+    const client=[...(pool as any).连着.values()][0].client,original=client.close.bind(client)
+    const close=vi.spyOn(client,'close').mockImplementation(async()=>{await original();throw new Error('SDK close failed after cleanup')})
+    try{
+      const result=pool.全关({reportErrors})
+      if(reportErrors)await expect(result).rejects.toBeInstanceOf(AggregateError)
+      else await expect(result).resolves.toBeUndefined()
+    }finally{close.mockRestore()}
+  })
+  it('shutdown waits for an explicit close already removed from the connection table',async()=>{
+    await pool.备好('fixture',config())
+    const client=[...(pool as any).连着.values()][0].client,original=client.close.bind(client)
+    let release!:()=>void,settled=false;const gate=new Promise<void>(resolve=>release=resolve)
+    const close=vi.spyOn(client,'close').mockImplementation(async()=>{await gate;await original()})
+    const ordinary=pool.关('fixture'),strict=pool.全关({reportErrors:true}).then(()=>{settled=true})
+    try{
+      await new Promise<void>(resolve=>setImmediate(resolve));expect(settled).toBe(false)
+      expect(pool.hasPendingWork()).toBe(true)
+      release();await Promise.all([ordinary,strict]);expect(pool.hasPendingWork()).toBe(false)
+    }finally{release();await Promise.allSettled([ordinary,strict]);close.mockRestore()}
+  })
   it('preserves the original rich response for deliberate model projection', async () => {
     const result = await pool.调('fixture', config(), 'rich', {})
     expect(result.出错了).toBe(true)

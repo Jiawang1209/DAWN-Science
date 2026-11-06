@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/team/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/team/task-contract.test.ts (7 tests | 1 failed) 126ms
+   × does not claim host acceptance ran when the contracted backend failed before returning a result 60ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/task-contract.test.ts > does not claim host acceptance ran when the contracted backend failed before returning a result
+AssertionError: expected [ 'execution', 'preflight', …(2) ] to not include 'acceptance'
+ ❯ tests/team/task-contract.test.ts:49:60
+     47|   await vi.waitFor(()=>expect(orchestration.hasPendingWork).toBe(false…
+     48|   const stages=store.history().events.filter(event=>event.type==='stag…
+     49|   expect(stages).toContain('execution');expect(stages).not.toContain('…
+       |                                                            ^
+     50|  }finally{await orchestration.close()}
+     51| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  21:43:02
+   Duration  855ms (transform 211ms, setup 0ms, import 651ms, tests 126ms, environment 0ms)
+

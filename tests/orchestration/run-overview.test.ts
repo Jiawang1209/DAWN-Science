@@ -37,3 +37,12 @@ it('missing state is empty while corrupt state is reported',()=>{
  writeFileSync(join(bad,'orchestration/state.json'),'{broken')
  expect(()=>readRunOverview(bad,'p')).toThrow()
 })
+it('cold reads reject foreign event and budget identities rather than displaying another execution',()=>{
+ const {root,service,store}=setup(),child=service.register('subagent',['call','0'],'reader')
+ store.configureBudget({maxRuns:2},0);store.beginRun(child.id)
+ const file=join(root,'orchestration/state.json'),original=readFileSync(file,'utf8'),state=JSON.parse(original)
+ state.events[0].childId='foreign-child';writeFileSync(file,JSON.stringify(state))
+ expect(()=>readRunOverview(root,'p')).toThrow()
+ const other=JSON.parse(original);other.budget.active[0].childId='foreign-child';writeFileSync(file,JSON.stringify(other))
+ expect(()=>readRunOverview(root,'p')).toThrow()
+})

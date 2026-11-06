@@ -13,6 +13,7 @@ function backend(): WorkbenchBackend {
   }
   return {
     getRunOverview:async({sessionId})=>({ownerSessionId:sessionId,source:"disk",runs:[]}),
+    setRunBudget:async()=>{throw new Error('Budget unavailable in this fixture')},
     ...createArtifactOperations({session:()=>undefined}),
     getTerminalAgentAttachments: async () => ({ revision: 0, pending: [] }),
     updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },

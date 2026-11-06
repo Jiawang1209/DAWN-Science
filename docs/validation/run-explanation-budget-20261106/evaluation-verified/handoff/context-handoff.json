@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-06T13:12:46.729Z",
+  "scope": "paired localhost deterministic inference; actual Pi, child processes, files, tools, scope and coordinator",
+  "limitations": [
+    "固定 fixture 的请求/工具调用变化，不代表真实模型质量或费用收益。",
+    "不度量人的排查时间；耗时只记录，不作速度结论。",
+    "快照是正文引用，不是文件版本证明；科研任务继续使用原冻结契约。"
+  ],
+  "sourceFiles": [
+    "scripts/evaluate-context-handoff.ts",
+    "scripts/mock-context-handoff.mjs",
+    "src/subagent/context-handoff.ts",
+    "src/subagent/tool.ts",
+    "src/subagent/executor.ts",
+    "src/orchestration/run-overview.ts"
+  ],
+  "sourceFingerprint": "c69bb3e599a74f71b82c1d7e064a5782f5253f4b1d59fc3d972ebfebe9f88e77",
+  "childBuildFingerprint": "00430319f49765cd38d6f07bae21ad27ed4ddc407dc67f4c523a16893805ebca",
+  "rows": [
+    {
+      "mode": "task-only",
+      "success": true,
+      "inputPreserved": true,
+      "output": {
+        "n": 5,
+        "mean": 3,
+        "unit": "m",
+        "method": "arithmetic mean",
+        "preserveInput": true
+      },
+      "modelRequests": 3,
+      "contextReads": 1,
+      "inputReads": 1,
+      "handoffBytes": 0,
+      "handoffEnvelopeBytes": 0,
+      "handoffSourceVerified": true,
+      "elapsedMs": 647,
+      "overviewFacts": {
+        "executor": true,
+        "epoch": true,
+        "completed": true,
+        "drained": true,
+        "contractNotInvented": true,
+        "acceptanceNotInvented": true
+      },
+      "permissions": {
+        "version": 1,
+        "tier": "deny-risky",
+        "access": "workspace-exec",
+        "tools": [
+          "read"
+        ],
+        "inputs": [],
+        "outputs": []
+      }
+    },
+    {
+      "mode": "handoff",
+      "success": true,
+      "inputPreserved": true,
+      "output": {
+        "n": 5,
+        "mean": 3,
+        "unit": "m",
+        "method": "arithmetic mean",
+        "preserveInput": true
+      },
+      "modelRequests": 2,
+      "contextReads": 0,
+      "inputReads": 1,
+      "handoffBytes": 47,
+      "handoffEnvelopeBytes": 288,
+      "handoffSourceVerified": true,
+      "elapsedMs": 673,
+      "overviewFacts": {
+        "executor": true,
+        "epoch": true,
+        "completed": true,
+        "drained": true,
+        "contractNotInvented": true,
+        "acceptanceNotInvented": true
+      },
+      "permissions": {
+        "version": 1,
+        "tier": "deny-risky",
+        "access": "workspace-exec",
+        "tools": [
+          "read"
+        ],
+        "inputs": [],
+        "outputs": []
+      }
+    }
+  ],
+  "observed": {
+    "contextReadsSaved": 1,
+    "modelRequestsSaved": 1,
+    "addedHandoffBytes": 288,
+    "allOutputsEqual": true,
+    "permissionsEqual": true
+  }
+}

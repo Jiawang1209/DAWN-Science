@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node tests/kernel/挂载.test.ts tests/mcp/recovery.test.ts tests/mcp/客户端.test.ts tests/electron/wiring.test.ts tests/session/manager.test.ts tests/electron/exit-diagnostics.test.ts tests/electron/app-exit-diagnostics.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+
+ Test Files  7 passed (7)
+      Tests  178 passed | 1 skipped (179)
+   Start at  00:37:10
+   Duration  8.16s (transform 3.10s, setup 0ms, import 5.81s, tests 16.26s, environment 0ms)
+

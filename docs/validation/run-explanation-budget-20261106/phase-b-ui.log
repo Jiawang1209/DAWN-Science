@@ -1,0 +1,106 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-budget.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 77ms
+     × 按钮文案之间没有子串关系 25ms
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 3 failed) 807ms
+     × 组件里的 textarea / input / select 都带 control 类 17ms
+     × **`aria-label` 与按钮文案之间也没有子串关系** 15ms
+     × **JSX 里的类名，styles.css 里都定义过** 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: run-budget.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "28: <label htmlFor={`${id}-runs`}>{t(\"累计执行轮次上限\")}</label><input id={`${id}-runs`} type=\"number\" min=\"1\" max=\"10000\" step=\"1\" value={runs} disabled={busy} onChange={e=>edit(setRuns,e.target.value)}/>",
++   "29: <label htmlFor={`${id}-time`}>{t(\"总历时上限（分钟）\")}</label><input id={`${id}-time`} type=\"number\" min=\"0.001\" max=\"10080\" step=\"any\" value={minutes} disabled={busy} onChange={e=>edit(setMinutes,e.target.value)}/>",
++   "30: <label htmlFor={`${id}-tokens`}>{t(\"可核验 token 上限\")}</label><input id={`${id}-tokens`} type=\"number\" min=\"1\" max=\"1000000000\" step=\"1\" value={tokens} disabled={busy} onChange={e=>edit(setTokens,e.target.value)}/>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **`aria-label` 与按钮文案之间也没有子串关系**
+AssertionError: 按名字找元素时子串会指向两个东西——换一个说法: expected [ '「保存」是「保存预算限制」的一部分' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "「保存」是「保存预算限制」的一部分",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:994:43
+    992|       }
+    993|     }
+    994|     expect(撞的, "按名字找元素时子串会指向两个东西——换一个说法").toEqual([])
+       |                                           ^
+    995|   })
+    996|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **JSX 里的类名，styles.css 里都定义过**
+AssertionError: 这些类名只存在于 JSX 里——写它的人以为自己配了样式: expected [ 'run-explanation.tsx：.run-activity' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "run-explanation.tsx：.run-activity",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1151:7
+    1149|       [...缺的].filter((x) => !欠账.has(x)).sort(),
+    1150|       "这些类名只存在于 JSX 里——写它的人以为自己配了样式",
+    1151|     ).toEqual([])
+       |       ^
+    1152|   })
+    1153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 英文那一面也要守中文那边的规矩 > 按钮文案之间没有子串关系
+AssertionError: 按名字找就找不准了——换一个说法: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"Reload\" ⊂ \"Reload delegation limits\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:207:51
+    205|       }
+    206|     }
+    207|     expect([...new Set(撞上的)], "按名字找就找不准了——换一个说法").toEqual([])
+       |                                                   ^
+    208|   })
+    209|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 109 passed (113)
+   Start at  16:35:03
+   Duration  2.57s (transform 2.09s, setup 2.92s, import 269ms, tests 1.07s, environment 1.84s)
+

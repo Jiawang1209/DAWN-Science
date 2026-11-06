@@ -1,0 +1,47 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/run-explanation-budget.spec.ts -g sets real limits
+
+Running 1 test using 1 worker
+
+(node:55676) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61801/e65839cd-2692-4b14-a0b0-758e33b76347
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (35.7s)
+
+
+  1) e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart 
+
+    TimeoutError: locator.fill: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for getByPlaceholder(/输入问题/)
+
+
+      44 |   await overview.getByRole('button',{name:'委派限额生效',exact:true}).click()
+      45 |   await expect(overview).toContainText('当前限制：轮次 2')
+    > 46 |   const send=async()=>{await page.getByPlaceholder(/输入问题/).fill('演示委派预算');await page.getByRole('button',{name:'发送',exact:true}).click();await expect(page.locator('main.main').getByRole('button',{name:'停止',exact:true})).toHaveCount(0)}
+         |                                                            ^
+      47 |   await send();await expect(overview).toContainText('已准入 1 轮')
+      48 |   await send();await expect(overview).toContainText('已准入 2 轮')
+      49 |   await send();await expect(page.locator('.tool').filter({hasText:'subagent'}).last()).toHaveAttribute('data-status','error')
+        at send (/Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/e2e/run-explanation-budget.spec.ts:46:60)
+        at /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/e2e/run-explanation-budget.spec.ts:48:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/run-explanation-budget.spec.ts:37:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart 

@@ -1,0 +1,15 @@
+{
+  "candidateFiles": 51,
+  "drift": [],
+  "fullNodeUiPassed": 6331,
+  "existingSkips": 10,
+  "desktopScenarios": 11,
+  "normalNativeAndStdioExits": 16,
+  "unexpectedWatchdogs": 0,
+  "innerDeadlineOrFailureOrOuterFallback": false,
+  "historicalRootCauseResolved": false,
+  "confirmedRootShutdownOmissionFixed": true,
+  "review": "self-review",
+  "mainClean": true,
+  "noCommitMergePushRelease": true
+}

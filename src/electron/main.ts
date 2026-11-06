@@ -28,6 +28,9 @@ import { 本机机器id } from "../update/机器id.js"
 import { 托盘图标 } from "./tray-icon.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
 import { acquireDatabaseInstance } from "./single-instance.js"
+import { installAppExitDiagnostics } from "./exit-diagnostics.js"
+
+const exitDiagnostic=installAppExitDiagnostics(app,process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR)
 
 let onboardingInstallation: ReturnType<typeof createOnboardingInstallation> | undefined
 
@@ -1100,6 +1103,7 @@ app.on("window-all-closed", () => {
  */
 let 正在收摊 = false
 app.on("will-quit", (e) => {
+  exitDiagnostic('shutdown-check')
   if (正在收摊 || !workbench) return
   /**
    * **活跃子任务、本地 PTY、内核会话和目录传输需要等待收尾。**
@@ -1110,7 +1114,9 @@ app.on("will-quit", (e) => {
    * 仅有活跃资源时等待，空闲退出仍走同步路径。
    */
   if (!workbench.needsGracefulShutdown()) {
+    exitDiagnostic('shutdown-sync-start')
     workbench.close()
+    exitDiagnostic('shutdown-sync-complete')
     return
   }
   正在收摊 = true
@@ -1119,10 +1125,12 @@ app.on("will-quit", (e) => {
    * **硬兜底**：收摊本身也可能卡住（一个不肯死的内核）。
    * 那时也要退——「关不掉的应用」比「退出时少关一个 socket」严重得多。
    */
-  const 兜底 = setTimeout(() => app.exit(0), 4000)
+  exitDiagnostic('shutdown-async-start')
+  const 兜底 = setTimeout(() => {exitDiagnostic('shutdown-fallback-fired');app.exit(0)}, 4000)
   void workbench
-    .closeAsync()
-    .catch((err: unknown) => console.error("[退出] 收摊时出错：", err))
+    .closeAsync(undefined,state=>exitDiagnostic(state==='drained'?'shutdown-drained':state==='deadline'?'shutdown-drain-timeout':'shutdown-drain-failed'))
+    .then(()=>exitDiagnostic('shutdown-async-complete'))
+    .catch((err: unknown) => {exitDiagnostic('shutdown-async-failed');console.error("[退出] 收摊时出错：", err)})
     .finally(() => {
       clearTimeout(兜底)
       app.exit(0)

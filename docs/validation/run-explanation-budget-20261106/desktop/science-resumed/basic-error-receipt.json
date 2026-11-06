@@ -1,0 +1,747 @@
+{
+  "conditions": "deterministic-local inference, actual Pi/Python/files/Electron; synthetic data only",
+  "batchStatus": "completed",
+  "tasks": [
+    {
+      "id": "p-0-a-check-0-0",
+      "status": "completed",
+      "resultType": "data-summary",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "in.csv",
+              "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+              "bytes": 12,
+              "observationId": "55bca349-85a5-41cf-ae4f-e9a527e1a63e",
+              "versionId": "8c3ef1af11603bb8f60008f4c9cd7a81f5e088aaf154598b388c8ee553c086bf:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "deterministic fixture",
+        "result": {
+          "data": {
+            "kind": "data-summary",
+            "rows": 5,
+            "columns": [
+              {
+                "name": "x",
+                "unit": "m"
+              }
+            ],
+            "issues": []
+          },
+          "summary": "deterministic fixture",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "fixture read"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "actual reads",
+            "toolCallIds": [
+              "call_mock_19"
+            ]
+          }
+        },
+        "deliverables": []
+      }
+    },
+    {
+      "id": "p-0-a-analyze-0-1",
+      "status": "completed",
+      "resultType": "model-metrics",
+      "receipt": {
+        "acceptance": {
+          "version": 1,
+          "ruleVersion": 1,
+          "specHash": "0d25c7170bb9dba7d077901c021d42b7bbf770831dc5238473d4c4cc23fed773",
+          "state": "passed",
+          "environment": {
+            "state": "known",
+            "language": "python",
+            "fingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+            "executable": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "executionBound": true
+          },
+          "numericChecked": false,
+          "checks": [
+            {
+              "id": "environment.stable",
+              "state": "passed",
+              "expected": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+              "actual": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b"
+            },
+            {
+              "id": "script.nonempty",
+              "state": "passed",
+              "expected": "非空脚本",
+              "actual": "非空"
+            },
+            {
+              "id": "report.nonempty",
+              "state": "passed",
+              "expected": "非空报告",
+              "actual": "非空"
+            },
+            {
+              "id": "result.sample-count",
+              "state": "passed",
+              "expected": "正整数 n",
+              "actual": "5"
+            },
+            {
+              "id": "result.unit",
+              "state": "passed",
+              "expected": "非空单位（无量纲可写 1）",
+              "actual": "m"
+            },
+            {
+              "id": "result.declared-metric.n",
+              "state": "passed",
+              "expected": "5",
+              "actual": "5"
+            },
+            {
+              "id": "result.declared-metric.mean",
+              "state": "passed",
+              "expected": "999",
+              "actual": "999"
+            },
+            {
+              "id": "result.declared-sample-count",
+              "state": "passed",
+              "expected": "5",
+              "actual": "5"
+            },
+            {
+              "id": "result.declared-n",
+              "state": "passed",
+              "expected": "5",
+              "actual": "5"
+            },
+            {
+              "id": "result.finite.mean",
+              "state": "passed",
+              "expected": "有限数值",
+              "actual": "999"
+            },
+            {
+              "id": "numeric",
+              "state": "not_configured",
+              "reason": "数值核验未配置；基础结构验收不证明统计值正确"
+            }
+          ],
+          "files": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py",
+              "sha256": "f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d",
+              "bytes": 463
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34
+            }
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "in.csv",
+              "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+              "bytes": 12,
+              "observationId": "fcc69a1a-dc28-4e47-a17f-255b34d47b42",
+              "versionId": "8c3ef1af11603bb8f60008f4c9cd7a81f5e088aaf154598b388c8ee553c086bf:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+            }
+          ],
+          "outputs": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py",
+              "sha256": "f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d",
+              "bytes": 463,
+              "observationId": "7c730933-d84b-459d-954f-083e661f2211",
+              "versionId": "6e6e99c53231283db4b7f940ee23e3390642a5520f8f80d1461634dbfb57d9e5:f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34,
+              "observationId": "627d3bb6-231e-4476-b5f4-32e2d2b26a17",
+              "versionId": "52df93619d2af1d56f482e83d592e921662f9b07ce3d6973462b53dec87b3bb1:3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57,
+              "observationId": "361aad9d-11ea-4e53-bd37-aaab156f1b66",
+              "versionId": "e1089ee5ce901cd382ad4ee53fb36ad29d123100c73e9342914071c6c1e657e6:f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8"
+            }
+          ]
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "deterministic fixture",
+        "result": {
+          "data": {
+            "kind": "model-metrics",
+            "method": "mean",
+            "metrics": {
+              "n": 5,
+              "mean": 999
+            },
+            "sampleCount": 5,
+            "caveats": [
+              "synthetic software test only"
+            ]
+          },
+          "summary": "deterministic fixture",
+          "blockers": [],
+          "deliverables": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md"
+            }
+          ],
+          "execution": {
+            "state": "completed",
+            "note": "actual Python fixture",
+            "toolCallIds": [
+              "call_mock_23"
+            ]
+          },
+          "verification": {
+            "state": "unreviewed",
+            "note": "review pending"
+          }
+        },
+        "deliverables": [
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py",
+            "state": "observed"
+          },
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json",
+            "state": "exists"
+          },
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md",
+            "state": "exists"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p-0-a-review-0-2",
+      "status": "completed",
+      "resultType": "review",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py",
+              "sha256": "f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d",
+              "bytes": 463,
+              "observationId": "afe09429-ca2c-4a03-881a-81ee1fc152bb",
+              "versionId": "6e6e99c53231283db4b7f940ee23e3390642a5520f8f80d1461634dbfb57d9e5:f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34,
+              "observationId": "e011c3d9-342d-480b-9833-1c698409a9f3",
+              "versionId": "52df93619d2af1d56f482e83d592e921662f9b07ce3d6973462b53dec87b3bb1:3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57,
+              "observationId": "4cc6bb3e-f014-4a0f-9cfb-03439a5aa050",
+              "versionId": "e1089ee5ce901cd382ad4ee53fb36ad29d123100c73e9342914071c6c1e657e6:f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8"
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "deterministic fixture",
+        "result": {
+          "data": {
+            "kind": "review",
+            "verdict": "pass",
+            "findings": [],
+            "reviewedPaths": [
+              "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py",
+              "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json",
+              "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md"
+            ]
+          },
+          "summary": "deterministic fixture",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "fixture read"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "actual reads",
+            "toolCallIds": [
+              "call_mock_25",
+              "call_mock_26",
+              "call_mock_27"
+            ]
+          }
+        },
+        "deliverables": []
+      }
+    },
+    {
+      "id": "p-1-b-check-0-0",
+      "status": "completed",
+      "resultType": "data-summary",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "in.csv",
+              "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+              "bytes": 12,
+              "observationId": "abe27553-036b-4b57-8573-fdf6426b4264",
+              "versionId": "8c3ef1af11603bb8f60008f4c9cd7a81f5e088aaf154598b388c8ee553c086bf:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "deterministic fixture",
+        "result": {
+          "data": {
+            "kind": "data-summary",
+            "rows": 5,
+            "columns": [
+              {
+                "name": "x",
+                "unit": "m"
+              }
+            ],
+            "issues": []
+          },
+          "summary": "deterministic fixture",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "fixture read"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "actual reads",
+            "toolCallIds": [
+              "call_mock_29"
+            ]
+          }
+        },
+        "deliverables": []
+      }
+    },
+    {
+      "id": "p-1-b-analyze-0-1",
+      "status": "completed",
+      "resultType": "model-metrics",
+      "receipt": {
+        "acceptance": {
+          "version": 1,
+          "ruleVersion": 1,
+          "specHash": "410c616ee709ab4dc8449e2cc79fddecb5d23756f644e1c9ee89205cd6665dfa",
+          "state": "passed",
+          "environment": {
+            "state": "known",
+            "language": "python",
+            "fingerprint": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+            "executable": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "executionBound": true
+          },
+          "numericChecked": false,
+          "checks": [
+            {
+              "id": "environment.stable",
+              "state": "passed",
+              "expected": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b",
+              "actual": "2e7b87851f5fb73f7afd3f62228f5aedc551199ccd13f447f050665f9739b82b"
+            },
+            {
+              "id": "script.nonempty",
+              "state": "passed",
+              "expected": "非空脚本",
+              "actual": "非空"
+            },
+            {
+              "id": "report.nonempty",
+              "state": "passed",
+              "expected": "非空报告",
+              "actual": "非空"
+            },
+            {
+              "id": "result.sample-count",
+              "state": "passed",
+              "expected": "正整数 n",
+              "actual": "5"
+            },
+            {
+              "id": "result.unit",
+              "state": "passed",
+              "expected": "非空单位（无量纲可写 1）",
+              "actual": "m"
+            },
+            {
+              "id": "result.declared-metric.n",
+              "state": "passed",
+              "expected": "5",
+              "actual": "5"
+            },
+            {
+              "id": "result.declared-metric.mean",
+              "state": "passed",
+              "expected": "999",
+              "actual": "999"
+            },
+            {
+              "id": "result.declared-sample-count",
+              "state": "passed",
+              "expected": "5",
+              "actual": "5"
+            },
+            {
+              "id": "result.declared-n",
+              "state": "passed",
+              "expected": "5",
+              "actual": "5"
+            },
+            {
+              "id": "result.finite.mean",
+              "state": "passed",
+              "expected": "有限数值",
+              "actual": "999"
+            },
+            {
+              "id": "numeric",
+              "state": "not_configured",
+              "reason": "数值核验未配置；基础结构验收不证明统计值正确"
+            }
+          ],
+          "files": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py",
+              "sha256": "5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9",
+              "bytes": 463
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34
+            }
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "in.csv",
+              "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+              "bytes": 12,
+              "observationId": "9a3bc388-dda6-44c2-a9a2-062749559fd7",
+              "versionId": "8c3ef1af11603bb8f60008f4c9cd7a81f5e088aaf154598b388c8ee553c086bf:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+            }
+          ],
+          "outputs": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py",
+              "sha256": "5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9",
+              "bytes": 463,
+              "observationId": "3f68cbb9-1336-4da8-893c-c43d7cabddd9",
+              "versionId": "dcc47bb5a0d377e581e71d6587bf6ac782ff9bf2763784db4f3d151de42ace0e:5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34,
+              "observationId": "78a0e519-52e7-4e4e-b016-7cf9b9032d45",
+              "versionId": "4a4d1dd1ed2dc22faf51f363d6af532b57c774f649c4fc9f79a3bf984d008e06:3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57,
+              "observationId": "db0ba5e0-26b1-4c98-8ff2-bee7dafedfed",
+              "versionId": "12ea73e5653b1b9920e6598bd14baa41aefc0d2285b873777d409f702b417f7a:f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8"
+            }
+          ]
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "deterministic fixture",
+        "result": {
+          "data": {
+            "kind": "model-metrics",
+            "method": "mean",
+            "metrics": {
+              "n": 5,
+              "mean": 999
+            },
+            "sampleCount": 5,
+            "caveats": [
+              "synthetic software test only"
+            ]
+          },
+          "summary": "deterministic fixture",
+          "blockers": [],
+          "deliverables": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md"
+            }
+          ],
+          "execution": {
+            "state": "completed",
+            "note": "actual Python fixture",
+            "toolCallIds": [
+              "call_mock_33"
+            ]
+          },
+          "verification": {
+            "state": "unreviewed",
+            "note": "review pending"
+          }
+        },
+        "deliverables": [
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py",
+            "state": "observed"
+          },
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json",
+            "state": "exists"
+          },
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md",
+            "state": "exists"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p-1-b-review-0-2",
+      "status": "completed",
+      "resultType": "review",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py",
+              "sha256": "5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9",
+              "bytes": 463,
+              "observationId": "39e872fb-4720-4ced-8f01-1ce88903942b",
+              "versionId": "dcc47bb5a0d377e581e71d6587bf6ac782ff9bf2763784db4f3d151de42ace0e:5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34,
+              "observationId": "ccedacf9-0bfd-4aed-a3b1-210dfde3bae2",
+              "versionId": "4a4d1dd1ed2dc22faf51f363d6af532b57c774f649c4fc9f79a3bf984d008e06:3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57,
+              "observationId": "3c67ccf7-9561-4037-b363-408f1bb0690d",
+              "versionId": "12ea73e5653b1b9920e6598bd14baa41aefc0d2285b873777d409f702b417f7a:f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8"
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "deterministic fixture",
+        "result": {
+          "data": {
+            "kind": "review",
+            "verdict": "pass",
+            "findings": [],
+            "reviewedPaths": [
+              "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py",
+              "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json",
+              "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md"
+            ]
+          },
+          "summary": "deterministic fixture",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "fixture read"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "actual reads",
+            "toolCallIds": [
+              "call_mock_35",
+              "call_mock_36",
+              "call_mock_37"
+            ]
+          }
+        },
+        "deliverables": []
+      }
+    },
+    {
+      "id": "batch-summary-0",
+      "status": "completed",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "in.csv",
+              "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+              "bytes": 12,
+              "observationId": "e123aca2-4837-4416-b6cc-1dfc2bcf6de7",
+              "versionId": "8c3ef1af11603bb8f60008f4c9cd7a81f5e088aaf154598b388c8ee553c086bf:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/analysis.py",
+              "sha256": "f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d",
+              "bytes": 463,
+              "observationId": "67f99afd-4b19-4e31-9703-cbf7001f9844",
+              "versionId": "6e6e99c53231283db4b7f940ee23e3390642a5520f8f80d1461634dbfb57d9e5:f37af802da704b0fe4f9f39e05bf811daec9057c8ebcaa392c3b6c4ecdb4662d"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34,
+              "observationId": "88881602-318a-4ac4-89a9-2c41aa684795",
+              "versionId": "52df93619d2af1d56f482e83d592e921662f9b07ce3d6973462b53dec87b3bb1:3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/a/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57,
+              "observationId": "e013f458-b927-44a2-9f35-1447312b8b57",
+              "versionId": "e1089ee5ce901cd382ad4ee53fb36ad29d123100c73e9342914071c6c1e657e6:f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/analysis.py",
+              "sha256": "5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9",
+              "bytes": 463,
+              "observationId": "9102d624-dd06-4f21-b046-63054ab8ef19",
+              "versionId": "dcc47bb5a0d377e581e71d6587bf6ac782ff9bf2763784db4f3d151de42ace0e:5cf68018bea702b452540c89e2e9bb8c47d6971902c206eb635fa233cd59eee9"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/result.json",
+              "sha256": "3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72",
+              "bytes": 34,
+              "observationId": "1903d9a7-17f5-4ca2-b9d2-d7d45636a1f9",
+              "versionId": "4a4d1dd1ed2dc22faf51f363d6af532b57c774f649c4fc9f79a3bf984d008e06:3747caa9a96f1586df18bdd424ae8b7febe5a858a6eb87a5ed22b7f7190eeb72"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/b/report.md",
+              "sha256": "f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8",
+              "bytes": 57,
+              "observationId": "2e9ada25-7598-439a-9fa4-a7fca73e45a7",
+              "versionId": "12ea73e5653b1b9920e6598bd14baa41aefc0d2285b873777d409f702b417f7a:f334f8a89023123171663aede9bb3885b8770e4c2ab4793142d3555ac52ae9e8"
+            }
+          ],
+          "outputs": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/summary.json",
+              "sha256": "8223d36a76f1106d364458f35be37ac8299ccfbe4ae87ceed0343931a0110353",
+              "bytes": 6802,
+              "observationId": "acd4e90c-a5a3-41c2-b0c4-1efa3f4e173e",
+              "versionId": "2e0e9a222d4b8e0972db7589d767a418aa0f55b7e17e5ac9f2028e9f49f41913:8223d36a76f1106d364458f35be37ac8299ccfbe4ae87ceed0343931a0110353"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/summary.md",
+              "sha256": "f791d4cc7188a71e4d57ac68de4d2dac5fa77fed8267907ed1a2a292996dde6b",
+              "bytes": 1432,
+              "observationId": "f21f68a0-e0de-4cfd-9e31-094652759c24",
+              "versionId": "f26d366c37bf7330c70260f3d8d981f2cc18686035654ca06582ac1e13f4a4f2:f791d4cc7188a71e4d57ac68de4d2dac5fa77fed8267907ed1a2a292996dde6b"
+            }
+          ]
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "固定宿主汇总已验收项；未生成新科学结论",
+        "result": {
+          "summary": "固定宿主汇总已验收项；未生成新科学结论",
+          "blockers": [],
+          "deliverables": [
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/summary.json"
+            },
+            {
+              "path": "results/pipeline-8f47b699d1083986a36d1bf9/summary.md"
+            }
+          ],
+          "execution": {
+            "state": "not_run",
+            "note": "固定宿主复制已验收事实，无模型及分析执行"
+          },
+          "verification": {
+            "state": "unreviewed",
+            "note": "逐项审阅见原阶段回执；汇总仅复制事实"
+          }
+        },
+        "deliverables": [
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/summary.json",
+            "state": "observed"
+          },
+          {
+            "stepId": "task",
+            "path": "results/pipeline-8f47b699d1083986a36d1bf9/summary.md",
+            "state": "observed"
+          }
+        ]
+      }
+    }
+  ]
+}

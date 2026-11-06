@@ -192,6 +192,7 @@ export class SessionManager {
   private readonly hasCredential: ((providerId: string) => boolean) | undefined
   /** 本进程内活动的会话 → 它绑定的 runtime。重启后为空，靠 reconcileOnStartup 对账。 */
   private readonly bound = new Map<SessionId, AgentRuntime>()
+  /** Fresh and resumed starts stay visible until their runtime binding settles. */
   private readonly resuming = new Map<SessionId, Promise<SessionRecord>>()
   private readonly exitListeners = new Map<SessionId, () => void>()
 
@@ -376,23 +377,27 @@ export class SessionManager {
     } else {
       runtime = opts.remote ? this.remotePtyRuntime! : this.ptyRuntimeFor?.(agentId, def) ?? this.runtimes.pty
     }
-    try {
-      const handle = await runtime.start(spec)
-      this.bound.set(id, runtime)
-      this.store.updateState(id, "alive", { pid: handle.pid })
-      // 进程自行退出时把退出码回写入库——否则库里会永远停在 alive
-      this.watchExit(id, runtime)
-      /**
-       * **从库里读回来**，不拿内存里那份拼一个。
-       * `sortOrder` 是入库那一刻由数据库定的（`MAX + 1`）。
-       */
-      const saved = this.store.get(id)
-      if (!saved) throw new Error(`会话 ${id} 刚入库就读不到了`)
-      return saved
-    } catch (err) {
-      this.store.updateState(id, "exited", { exitCode: -1 })
-      throw err
-    }
+    const opening=(async()=>{
+      try {
+        const handle = await runtime.start(spec)
+        this.bound.set(id, runtime)
+        this.store.updateState(id, "alive", { pid: handle.pid })
+        // 进程自行退出时把退出码回写入库——否则库里会永远停在 alive
+        this.watchExit(id, runtime)
+        /**
+         * **从库里读回来**，不拿内存里那份拼一个。
+         * `sortOrder` 是入库那一刻由数据库定的（`MAX + 1`）。
+         */
+        const saved = this.store.get(id)
+        if (!saved) throw new Error(`会话 ${id} 刚入库就读不到了`)
+        return saved
+      } catch (err) {
+        this.store.updateState(id, "exited", { exitCode: -1 })
+        throw err
+      }
+    })()
+    this.resuming.set(id,opening)
+    try{return await opening}finally{this.resuming.delete(id)}
   }
 
   private watchExit(id: SessionId, runtime: AgentRuntime): void {
@@ -569,14 +574,14 @@ export class SessionManager {
     return false
   }
 
-  async stopAll(): Promise<void> {
-    await Promise.all(
-      [...this.bound.keys()].map((id) =>
-        this.stop(id).catch(() => {
-          // 退出路上，停不掉的那个交给 OS。**但不能因此不停别的**
-        }),
-      ),
-    )
+  hasPendingStarts():boolean {return this.resuming.size>0}
+
+  async stopAll(options?:{reportErrors?:boolean}): Promise<void> {
+    const ids=new Set([...this.bound.keys(),...this.resuming.keys()])
+    const results=await Promise.allSettled([...ids].map(id=>this.stop(id)))
+    // Keep best-effort callers compatible; shutdown must not report failures as drained.
+    const errors=results.flatMap(result=>result.status==='rejected'?[result.reason]:[])
+    if(options?.reportErrors&&errors.length)throw new AggregateError(errors,'Session shutdown failed')
   }
 
   /** 本进程内该会话绑定的 runtime。调用方需要区分 runtime 类型时用它。 */

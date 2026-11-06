@@ -114,7 +114,18 @@ export class MCP池 {
   /** 正在起的那些。**同一台被两段会话同时要到时，只起一次** */
   private readonly 起着 = new Map<string, 正在连接>()
   private readonly 失败过 = new Map<string, string>()
+  private readonly closing = new Set<Promise<void>>()
   private closed = false
+
+  /** Observe the original close promise before best-effort callers consume its error. */
+  private closeClient(client:{close():Promise<void>}):Promise<void>{
+    const work=限时(Promise.resolve().then(()=>client.close()),5000,'MCP 关闭超时')
+      .finally(()=>{this.closing.delete(work)})
+    this.closing.add(work)
+    return work
+  }
+
+  hasPendingWork():boolean{return this.连着.size>0||this.起着.size>0||this.closing.size>0}
 
   /**
    * @param opts.起动上限毫秒 **可注入只为可测**——按默认值验一次超时要等一分钟，
@@ -166,7 +177,7 @@ export class MCP池 {
     在起?.controller.abort()
     pending.promise = (async () => {
       await Promise.all([
-        ...(有 ? [限时(有.client.close(), 5000, 'MCP 关闭超时').catch(() => {})] : []),
+        ...(有 ? [this.closeClient(有.client).catch(() => {})] : []),
         ...(在起 ? [在起.promise] : []),
       ])
       if (this.closed || pending.controller.signal.aborted || this.起着.get(k) !== pending) return { 服务器名: 名, 工具: [], 失败: 'MCP 初始化已取消，连接未启用。' }
@@ -409,7 +420,7 @@ export class MCP池 {
     this.失败过.delete(k)
     pending?.controller.abort()
     await Promise.all([
-      ...(连 ? [限时(连.client.close(), 5000, 'MCP 关闭超时').catch(() => {})] : []),
+      ...(连 ? [this.closeClient(连.client).catch(() => {})] : []),
       ...(pending ? [pending.promise] : []),
     ])
   }
@@ -421,10 +432,16 @@ export class MCP池 {
   }
 
   /** 全关掉（退出时）。**每个单独兜底**：一个关不掉不该拖住其余的 */
-  async 全关(): Promise<void> {
+  async 全关(options?:{reportErrors?:boolean}): Promise<void> {
     this.closed = true
     const keys = new Set([...this.连着.keys(), ...this.起着.keys()])
-    await Promise.all([...keys].map(key => this.关(key.split('\x00')[0]!, key.split('\x00')[1] || undefined)))
+    const stops=[...keys].map(key=>this.关(key.split('\x00')[0]!,key.split('\x00')[1]||undefined))
+    // Includes close/replacement work whose entry was already removed from the live maps.
+    const results=await Promise.allSettled([...stops,...this.closing])
+    const errors=results.flatMap(result=>result.status==='rejected'?[result.reason]:[])
+    if(options?.reportErrors&&errors.length)throw new AggregateError(errors,'MCP shutdown failed')
+    // Preserve the original best-effort close behavior and startup-error propagation.
+    if(!options?.reportErrors){const failed=results.slice(0,stops.length).find(result=>result.status==='rejected');if(failed?.status==='rejected')throw failed.reason}
   }
 
   /**

@@ -1,0 +1,53 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts --output=docs/validation/electron-exit-investigation-20261106/boundary-results
+
+Running 2 tests using 1 worker
+
+(node:37618) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60338/980ac3f0-f16d-440f-8951-4de2896d9664
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart (1.9s)
+(node:37889) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60357/2daeabc1-492e-4d04-b3ea-791bc73dc4ae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60400/f606f53a-a360-4050-a5e6-c4fcdf1129fb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/exit-lifecycle.spec.ts:39:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.0s)
+
+
+  1) e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart 
+
+    Error: Command failed: ps -p 37827 -o pid=,comm=
+
+      19 |     const candidates=collectTree(pid).pids.filter(id=>!baseline.has(id))
+      20 |     if(!candidates.length)return 0
+    > 21 |     const rows=execFileSync('ps',['-p',candidates.join(','),'-o','pid=,comm='],{encoding:'utf8'}).trim().split('\n')
+         |                ^
+      22 |     owned=rows.filter(row=>/(?:^|\/)sleep$/.test(row.trim())).map(row=>Number(row.trim().split(/\s+/)[0]))
+      23 |     return owned.length
+      24 |    }).toBeGreaterThan(0)
+        at /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/e2e/exit-lifecycle.spec.ts:21:16
+        at /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/e2e/exit-lifecycle.spec.ts:18:4
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/electron-exit-investigation-20261106/boundary-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/electron-exit-investigation-20261106/boundary-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/electron-exit-investigation-20261106/boundary-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/electron-exit-investigation-20261106/boundary-results/exit-lifecycle-root-task-s-f75d2-wned-process-before-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart 
+  1 passed (11.8s)

@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/run-budget-mock.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/evaluation/run-budget-mock.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/run-budget-mock.test.ts [ tests/evaluation/run-budget-mock.test.ts ]
+Error: Cannot find module '../../scripts/mock-run-budget.mjs' imported from /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/tests/evaluation/run-budget-mock.test.ts
+ ❯ tests/evaluation/run-budget-mock.test.ts:3:1
+      1| import {expect,it} from 'vitest'
+      2| // @ts-expect-error shared mock fixture
+      3| import {budgetDelegationTool} from '../../scripts/mock-run-budget.mjs'
+       | ^
+      4| it('uses the real delegation tool for the explicit demo and never chan…
+      5|  const tools=[{function:{name:'subagent'}}]
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:35:28
+   Duration  100ms (transform 10ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

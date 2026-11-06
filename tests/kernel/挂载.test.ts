@@ -174,6 +174,17 @@ describe("收内核", () => {
     expect(挂.列("c1" as SessionId)).toEqual([])
     expect(挂.列("c2" as SessionId)).toEqual([])
   })
+  it('并发的退出调用能看到尽力收尾中的内核失败，并等待其他内核结束',async()=>{
+    const{runtime,挂}=造();await 挂.拿('c1' as SessionId,'python');await 挂.拿('c2' as SessionId,'R')
+    const original=runtime.stop.bind(runtime);let release!:()=>void,settled=false
+    const gate=new Promise<void>(resolve=>release=resolve)
+    runtime.stop=async id=>{if(id.endsWith('::python'))throw new Error('kernel stop failed');await gate;await original(id)}
+    const ordinary=挂.收全部(),strict=挂.收全部({reportErrors:true}).then(()=>{settled=true;return undefined},error=>{settled=true;return error})
+    try{
+      await new Promise<void>(resolve=>setImmediate(resolve));expect(settled).toBe(false)
+      release();await ordinary;expect(await strict).toBeInstanceOf(AggregateError)
+    }finally{release();await Promise.allSettled([ordinary,strict])}
+  })
 
   /**
    * **一台收不掉不该拦住其余的。**

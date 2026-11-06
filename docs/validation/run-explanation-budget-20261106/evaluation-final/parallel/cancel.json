@@ -1,0 +1,134 @@
+{
+  "repeat": 0,
+  "concurrency": 2,
+  "intervention": "cancel",
+  "elapsedMs": 1040,
+  "modelRequests": 2,
+  "stopEvidence": {
+    "intervention": "cancel",
+    "activeTasks": [
+      "p-0-a-check-0-0",
+      "p-1-b-check-0-0"
+    ],
+    "stopAt": 981,
+    "drainedAt": 1055,
+    "drainMs": 74,
+    "status": "cancelled",
+    "aggregateAttempts": 0,
+    "completedBefore": []
+  },
+  "intervals": [
+    {
+      "taskId": "p-0-a-check-0-0",
+      "member": "check",
+      "stage": "check",
+      "queuedAt": 343,
+      "backendStartedAt": 977,
+      "lastRequestAt": 977,
+      "endedAt": 1054,
+      "ok": false
+    },
+    {
+      "taskId": "p-1-b-check-0-0",
+      "member": "batch-check-2",
+      "stage": "check",
+      "queuedAt": 355,
+      "backendStartedAt": 976,
+      "lastRequestAt": 976,
+      "endedAt": 1048,
+      "ok": false
+    }
+  ],
+  "requests": [
+    {
+      "at": 976,
+      "taskId": "p-1-b-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "b.csv"
+      ]
+    },
+    {
+      "at": 977,
+      "taskId": "p-0-a-check-0-0",
+      "resultType": "data-summary",
+      "inputs": [
+        "a.csv"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "at": 343,
+      "kind": "subagent_start",
+      "index": 0,
+      "taskId": "p-0-a-check-0-0"
+    },
+    {
+      "at": 355,
+      "kind": "subagent_start",
+      "index": 1,
+      "taskId": "p-1-b-check-0-0"
+    },
+    {
+      "at": 1048,
+      "kind": "subagent_end",
+      "index": 1,
+      "taskId": "p-1-b-check-0-0",
+      "ok": false
+    },
+    {
+      "at": 1054,
+      "kind": "subagent_end",
+      "index": 0,
+      "taskId": "p-0-a-check-0-0",
+      "ok": false
+    }
+  ],
+  "lockReservations": [
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-oAADdo/a.csv",
+        "inode:16777234:440114904",
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-oAADdo/b.csv",
+        "inode:16777234:440114905"
+      ],
+      "queuedAt": 19,
+      "grantedAt": 19,
+      "releasedAt": 360
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-oAADdo/a.csv",
+        "inode:16777234:440114904"
+      ],
+      "queuedAt": 344,
+      "grantedAt": 360,
+      "releasedAt": 1049
+    },
+    {
+      "paths": [
+        "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-science-parallel-oAADdo/b.csv",
+        "inode:16777234:440114905"
+      ],
+      "queuedAt": 356,
+      "grantedAt": 360,
+      "releasedAt": 1044
+    }
+  ],
+  "maxBackendConcurrent": 2,
+  "actualOverlapMs": 71,
+  "analysisOverlapMs": 0,
+  "overlaps": [
+    {
+      "left": "p-0-a-check-0-0",
+      "right": "p-1-b-check-0-0",
+      "elapsedMs": 71
+    }
+  ],
+  "visibleTokens": 0,
+  "unknownUsageTasks": 2,
+  "partialUsage": true,
+  "status": "cancelled",
+  "summaryAbsent": true
+}

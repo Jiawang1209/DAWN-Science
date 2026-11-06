@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "kind": "host-accepted-facts",
+  "template": {
+    "id": "tabular-ecology",
+    "version": 1
+  },
+  "items": [
+    {
+      "id": "a",
+      "label": "样地 A",
+      "reuse": {
+        "mode": "reused",
+        "reason": "内容、规则、环境与独立审阅均复核通过；沿用历史产物，未重新执行",
+        "source": {
+          "teamId": "pipeline-852b0153e85e9ecc3a37788b",
+          "stateRevision": 3,
+          "itemId": "a"
+        }
+      },
+      "analysisTaskId": "p-0-a-analyze-0-1",
+      "reviewTaskId": "p-0-a-review-0-2",
+      "data": {
+        "kind": "model-metrics",
+        "method": "mean",
+        "metrics": {
+          "n": 5,
+          "mean": 3
+        },
+        "sampleCount": 5,
+        "caveats": [
+          "synthetic software test only"
+        ]
+      },
+      "deliverables": [
+        {
+          "path": "results/pipeline-852b0153e85e9ecc3a37788b/a/analysis.py"
+        },
+        {
+          "path": "results/pipeline-852b0153e85e9ecc3a37788b/a/result.json"
+        },
+        {
+          "path": "results/pipeline-852b0153e85e9ecc3a37788b/a/report.md"
+        }
+      ],
+      "versions": {
+        "version": 1,
+        "inputs": [
+          {
+            "path": "in.csv",
+            "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+            "bytes": 12,
+            "observationId": "36e3011d-b4f9-497d-a5eb-a74040207261",
+            "versionId": "d4c7de7f4b883e84307a9af3ce75993e9155d31327fb0947b369d4c1f7edd665:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+          }
+        ],
+        "outputs": [
+          {
+            "path": "results/pipeline-852b0153e85e9ecc3a37788b/a/analysis.py",
+            "sha256": "7bd73891fe50941630c5678ac3e28c082c3291f6c41c2561bd7f5ad41387d42a",
+            "bytes": 473,
+            "observationId": "8e953b66-bc5d-40e9-945f-df618b643ee7",
+            "versionId": "0d2695482c7e79cf59d5419905d7fb827527195d267f294c61c1fec73a122e93:7bd73891fe50941630c5678ac3e28c082c3291f6c41c2561bd7f5ad41387d42a"
+          },
+          {
+            "path": "results/pipeline-852b0153e85e9ecc3a37788b/a/result.json",
+            "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+            "bytes": 34,
+            "observationId": "2b711afa-6317-4db6-a8ae-fabbedf568f3",
+            "versionId": "e6ad9b92cae0b1c5d644737333afb615919abc38d6bd27d9f4f337e01e41267c:f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6"
+          },
+          {
+            "path": "results/pipeline-852b0153e85e9ecc3a37788b/a/report.md",
+            "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+            "bytes": 57,
+            "observationId": "5d99b6c8-e278-422e-9940-485f93809dcb",
+            "versionId": "da0753de8d609f3f2bdade0c42b6f1dd6b48d4484b1dd03c2cda6a6bfc764b0d:4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0"
+          }
+        ]
+      },
+      "review": {
+        "kind": "review",
+        "verdict": "pass",
+        "findings": [],
+        "reviewedPaths": [
+          "results/pipeline-852b0153e85e9ecc3a37788b/a/analysis.py",
+          "results/pipeline-852b0153e85e9ecc3a37788b/a/result.json",
+          "results/pipeline-852b0153e85e9ecc3a37788b/a/report.md"
+        ]
+      },
+      "execution": {
+        "state": "completed",
+        "note": "actual Python fixture",
+        "toolCallIds": [
+          "call_mock_72"
+        ]
+      },
+      "verification": {
+        "state": "reviewed",
+        "note": "actual reads",
+        "toolCallIds": [
+          "call_mock_74",
+          "call_mock_75",
+          "call_mock_76"
+        ]
+      }
+    },
+    {
+      "id": "b",
+      "label": "样地 B",
+      "reuse": {
+        "mode": "rerun",
+        "reason": "历史项未完成完整验收；重新执行"
+      },
+      "analysisTaskId": "p-1-b-analyze-0-1",
+      "reviewTaskId": "p-1-b-review-0-2",
+      "data": {
+        "kind": "model-metrics",
+        "method": "mean",
+        "metrics": {
+          "n": 5,
+          "mean": 3
+        },
+        "sampleCount": 5,
+        "caveats": [
+          "synthetic software test only"
+        ]
+      },
+      "deliverables": [
+        {
+          "path": "results/pipeline-89aef6d299a260dcbfb09d0b/b/analysis.py"
+        },
+        {
+          "path": "results/pipeline-89aef6d299a260dcbfb09d0b/b/result.json"
+        },
+        {
+          "path": "results/pipeline-89aef6d299a260dcbfb09d0b/b/report.md"
+        }
+      ],
+      "versions": {
+        "version": 1,
+        "inputs": [
+          {
+            "path": "other.csv",
+            "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+            "bytes": 12,
+            "observationId": "240740ba-c65f-438e-abbb-acb22e7ba0b8",
+            "versionId": "16068b2de682eccdab9d80da54c456b635c1c8f826fa953e980ba35e0112cdce:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+          }
+        ],
+        "outputs": [
+          {
+            "path": "results/pipeline-89aef6d299a260dcbfb09d0b/b/analysis.py",
+            "sha256": "dbde015b9957dd74d3ac5bfb5326a9d1763f14e871a099cb55af954cd21af6ac",
+            "bytes": 476,
+            "observationId": "2a5ef8f7-8e6a-45df-a56c-ead5bad0240d",
+            "versionId": "8284bc3e3c1aba421b32f23862b2014571edbf70c2b7bbb0c8dc7d5ed61d498b:dbde015b9957dd74d3ac5bfb5326a9d1763f14e871a099cb55af954cd21af6ac"
+          },
+          {
+            "path": "results/pipeline-89aef6d299a260dcbfb09d0b/b/result.json",
+            "sha256": "f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6",
+            "bytes": 34,
+            "observationId": "80d4d274-81a9-4e80-94b1-f0cdf57dc869",
+            "versionId": "bbf04925bd7f37c3a8aa6f6ea5105794b6178fb92126970d1ea4b7977a2f58d0:f40d66efb43b7d49541a0b6da32168471ac40e575b2df513160055e7ddb005d6"
+          },
+          {
+            "path": "results/pipeline-89aef6d299a260dcbfb09d0b/b/report.md",
+            "sha256": "4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0",
+            "bytes": 57,
+            "observationId": "fa5e260d-fc45-4323-abd9-c2090054fe97",
+            "versionId": "8ca513d2ae61d620b5bf4e136c4d7afdd5a8cd97e90bcb03837b0cc79e974725:4968d9fd8dea70bb8a30c37a6612299c35844e0cd8620acd8f2fcd70af4cf6f0"
+          }
+        ]
+      },
+      "review": {
+        "kind": "review",
+        "verdict": "pass",
+        "findings": [],
+        "reviewedPaths": [
+          "results/pipeline-89aef6d299a260dcbfb09d0b/b/analysis.py",
+          "results/pipeline-89aef6d299a260dcbfb09d0b/b/result.json",
+          "results/pipeline-89aef6d299a260dcbfb09d0b/b/report.md"
+        ]
+      },
+      "execution": {
+        "state": "completed",
+        "note": "actual Python fixture",
+        "toolCallIds": [
+          "call_mock_91"
+        ]
+      },
+      "verification": {
+        "state": "reviewed",
+        "note": "actual reads",
+        "toolCallIds": [
+          "call_mock_93",
+          "call_mock_94",
+          "call_mock_95"
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "宿主仅汇集已验收事实；未重新计算统计量，也不代表独立科学认证。"
+  ]
+}

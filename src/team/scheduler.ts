@@ -11,6 +11,7 @@ import {versionInputReceipt,finalizeTaskVersions,validateVersionReceipt} from '.
  */
 import {acceptTaskResult,taskInputReceipt,taskPrompt,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
 import {taskOutputReservation} from "../bot/output-locks.js"
+import {reportExecutionStage} from '../orchestration/execution-context.js'
 import {advanceScienceBatch,recoverScienceBatch} from './science-batch.js'
 import {runScienceSummary} from './science-summary.js'
 import {advancePipeline,recoverPipeline} from './science-pipeline.js'
@@ -423,14 +424,22 @@ export class 团队调度器 {
         const record=(result:成员轮结果):成员轮结果=>result.receipt?.versions&&this.opts.recordReceipt?{...result,receipt:this.opts.recordReceipt(result.receipt)}:result
         const release=settings&&!m.botId?await taskOutputReservation(this.opts.跑.context.cwd,settings,runSignal):()=>{}
         try {
+          reportExecutionStage('preflight')
           if(runSignal.aborted)return{ok:false,output:'',error:'已中止'}
           const inputProblem=settings?.contract?taskInputReceipt(settings.contract,this.opts.跑.context.cwd):undefined
           if(inputProblem)return{ok:false,output:'',error:inputProblem.reason??inputProblem.summary,receipt:inputProblem}
           const versionProblem=!m.botId?await versionInputReceipt(settings,this.opts.跑.context.cwd,runSignal):undefined
           if(versionProblem)return{ok:false,output:'',error:versionProblem.reason??versionProblem.summary,receipt:versionProblem}
+          reportExecutionStage('execution')
           const result=await backend(runSignal)
-          if(result.ok&&settings?.contract&&!result.receipt){const receipt=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd),this.opts.跑.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]});return record({...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})})}
-          if(result.receipt&&settings&&(settings.versions||settings.contract?.acceptance)){const receipt=validateVersionReceipt(settings,result.receipt);return record({...result,receipt,ok:result.ok&&receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.summary}:{})})}
+          if(result.ok&&settings?.contract&&!result.receipt){
+            reportExecutionStage('acceptance')
+            const receipt=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd),this.opts.跑.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]});return record({...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})})
+          }
+          if(result.receipt&&settings&&(settings.versions||settings.contract?.acceptance)){
+            reportExecutionStage('acceptance')
+            const receipt=validateVersionReceipt(settings,result.receipt);return record({...result,receipt,ok:result.ok&&receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.summary}:{})})
+          }
           return record(result)
         }finally{release()}
       }

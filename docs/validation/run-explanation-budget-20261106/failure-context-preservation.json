@@ -1,0 +1,16 @@
+[
+  {
+    "path": "initial-electron-failure/error-context.md",
+    "original": "initial-electron-failure/error-context.md.original.gz",
+    "sha256Original": "99b1cd94a19b749723ab5193c542375ad4058bce3dee67e43b27b3cac9dfc761",
+    "sha256Normalized": "11c872efc28ddc9e4086bfe993c95717a363786063a0da234de98b605dbd186e",
+    "change": "Trailing whitespace only; byte-exact original retained in gzip"
+  },
+  {
+    "path": "second-electron-failure/error-context.md",
+    "original": "second-electron-failure/error-context.md.original.gz",
+    "sha256Original": "0c965b7cb4c80080ab19b094e66057ef43ebb77bf87780dc254124242a4d367f",
+    "sha256Normalized": "481926d66cf51e567870e9957559f3d48896b63c2835dab0d125f7417efadc41",
+    "change": "Trailing whitespace only; byte-exact original retained in gzip"
+  }
+]

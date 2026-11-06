@@ -1,0 +1,10 @@
+{
+  "actualElectron": true,
+  "actualPiChild": true,
+  "deterministicLocalhostProvider": true,
+  "acceptedDuringTool": true,
+  "appliedAfterTool": true,
+  "namedStop": true,
+  "requestWithSteerMarker": true,
+  "requestCount": 9
+}

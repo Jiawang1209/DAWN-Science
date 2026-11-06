@@ -1,0 +1,22 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts --output=docs/validation/electron-exit-investigation-20261106/fixed-boundary-results
+
+Running 2 tests using 1 worker
+
+(node:43218) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61718/295a9a33-4180-4fee-8d60-eb92ccaadc2d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Waiting for the debugger to disconnect...
+  ✓  1 e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61756/94f30db1-7ccd-4e55-8976-796032c7bc78
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61798/f95ac3b0-ee69-465c-8818-9d09a2270ba5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/exit-lifecycle.spec.ts:42:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.2s)
+
+  2 passed (14.7s)

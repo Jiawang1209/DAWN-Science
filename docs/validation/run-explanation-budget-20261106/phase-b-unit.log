@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration tests/ui/run-overview.test.tsx tests/ui/run-budget.test.tsx tests/ui/i18n.test.ts tests/protocol tests/workbench/subagent-view-backend.test.ts tests/bot/output-locks.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 57ms
+     × 按钮文案之间没有子串关系 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 英文那一面也要守中文那边的规矩 > 按钮文案之间没有子串关系
+AssertionError: 按名字找就找不准了——换一个说法: expected [ '"Save" ⊂ "Save budget limits"' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"Save\" ⊂ \"Save budget limits\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:207:51
+    205|       }
+    206|     }
+    207|     expect([...new Set(撞上的)], "按名字找就找不准了——换一个说法").toEqual([])
+       |                                                   ^
+    208|   })
+    209|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 33 passed (34)
+      Tests  1 failed | 316 passed (317)
+   Start at  16:33:46
+   Duration  5.02s (transform 3.55s, setup 1.53s, import 8.74s, tests 3.89s, environment 1.68s)
+

@@ -25,3 +25,18 @@ it('reports read failures instead of keeping a stale success',async()=>{
  await act(async()=>{})
  expect(screen.getByRole('alert').textContent).toBe('corrupt record')
 })
+it('shows lock blockers and bounded host history without calling a historical holder live',async()=>{
+ const data=snapshot('p');data.runs[0]!.phase='running';data.runs[0]!.activity={stage:'lock-wait',since:1,blockers:[{ownerSessionId:'other',childId:'holder',label:'writer',epoch:2}]}
+ data.history={events:[{seq:4,at:1,type:'stage',childId:'child',epoch:3,stage:'lock-wait'}],truncated:true}
+ const client={get:vi.fn().mockResolvedValue(data)} as unknown as WorkbenchClient
+ const view=render(<RunOverview client={client} sessionId="p"/>)
+ await act(async()=>{})
+ expect(view.container.querySelector('.run-activity')?.textContent).toContain('等待产物锁')
+ expect(screen.getByText(/writer.*代次 2/)).toBeTruthy()
+ fireEvent.click(screen.getByText('关键执行历史'))
+ expect(screen.getByText(/较早历史已省略/)).toBeTruthy()
+ view.unmount();data.source='disk'
+ render(<RunOverview client={client} sessionId="p"/>);await act(async()=>{})
+ expect(screen.getByText(/历史阶段.*等待产物锁/)).toBeTruthy()
+ expect(screen.queryByText(/^等待者当前被/)).toBeNull()
+})

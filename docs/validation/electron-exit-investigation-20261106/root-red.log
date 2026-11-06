@@ -1,0 +1,17 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/exit-lifecycle.spec.ts --grep root bash --output=docs/validation/electron-exit-investigation-20261106/root-red-results
+
+Running 1 test using 1 worker
+
+(node:38314) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60583/8809ba44-982e-4579-b182-1bc687139ac3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [启动对账] 修正了 1 条残留会话记录
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60604/2447238a-6b3f-4e8a-a8b5-e6c3f6876f1c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/exit-lifecycle.spec.ts:11:2 › root task shutdown › quitting during a root bash task drains its owned process before restart (3.5s)
+
+  1 passed (4.1s)

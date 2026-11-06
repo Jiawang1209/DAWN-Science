@@ -1,0 +1,301 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-budget.test.tsx --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |ui| tests/ui/run-budget.test.tsx (4 tests | 1 failed) 157ms
+   × lets a conflicted draft reload the newest revision without resetting consumption 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/run-budget.test.tsx > lets a conflicted draft reload the newest revision without resetting consumption
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "重新读取预算"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "运行总览":
+  [36m<section[39m
+    [33maria-label[39m=[32m"运行总览"[39m
+    [33mclass[39m=[32m"run-overview panel"[39m
+  [36m/>[39m
+
+  Name "会话委派预算":
+  [36m<section[39m
+    [33maria-label[39m=[32m"会话委派预算"[39m
+    [33mclass[39m=[32m"run-budget"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"panel-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "运行总览":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "刷新运行记录":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "保存预算限制":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+    [33mtype[39m=[32m"submit"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "累计执行轮次上限":
+  [36m<input[39m
+    [33mid[39m=[32m"_r_2_-runs"[39m
+    [33mmax[39m=[32m"10000"[39m
+    [33mmin[39m=[32m"1"[39m
+    [33mstep[39m=[32m"1"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"3"[39m
+  [36m/>[39m
+
+  Name "总历时上限（分钟）":
+  [36m<input[39m
+    [33mid[39m=[32m"_r_2_-time"[39m
+    [33mmax[39m=[32m"10080"[39m
+    [33mmin[39m=[32m"0.001"[39m
+    [33mstep[39m=[32m"any"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "可核验 token 上限":
+  [36m<input[39m
+    [33mid[39m=[32m"_r_2_-tokens"[39m
+    [33mmax[39m=[32m"1000000000"[39m
+    [33mmin[39m=[32m"1"[39m
+    [33mstep[39m=[32m"1"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"panel-title"[39m
+      [36m>[39m
+        [36m<h3>[39m
+          [0m运行总览[0m
+        [36m</h3>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"会话委派预算"[39m
+        [33mclass[39m=[32m"run-budget"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m会话委派预算[0m
+        [36m</strong>[39m
+        [36m<p>[39m
+          [0m已准入 2 轮 · 可核验 token 20 · 未知用量 0 轮 · 在途 0 轮[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m当前限制：轮次 2 · 总历时 不限 分钟 · token 不限[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mdata-authored[39m=[32m"1"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m委派预算执行轮次已用完[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m仅统计本会话统一编排的子任务、团队和 Bot；总历时包含暂停与离线。token 在结算后核验，在途请求可能超额，未知用量不计为零。[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary>[39m
+            [0m调整预算限制[0m
+          [36m</summary>[39m
+          [36m<form>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"_r_2_-runs"[39m
+            [36m>[39m
+              [0m累计执行轮次上限[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mid[39m=[32m"_r_2_-runs"[39m
+              [33mmax[39m=[32m"10000"[39m
+              [33mmin[39m=[32m"1"[39m
+              [33mstep[39m=[32m"1"[39m
+              [33mtype[39m=[32m"number"[39m
+              [33mvalue[39m=[32m"3"[39m
+            [36m/>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"_r_2_-time"[39m
+            [36m>[39m
+              [0m总历时上限（分钟）[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mid[39m=[32m"_r_2_-time"[39m
+              [33mmax[39m=[32m"10080"[39m
+              [33mmin[39m=[32m"0.001"[39m
+              [33mstep[39m=[32m"any"[39m
+              [33mtype[39m=[32m"number"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<label[39m
+              [33mfor[39m=[32m"_r_2_-tokens"[39m
+            [36m>[39m
+              [0m可核验 token 上限[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33mid[39m=[32m"_r_2_-tokens"[39m
+              [33mmax[39m=[32m"1000000000"[39m
+              [33mmin[39m=[32m"1"[39m
+              [33mstep[39m=[32m"1"[39m
+              [33mtype[39m=[32m"number"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"hint"[39m
+            [36m>[39m
+              [0m留空表示不设该限制；保存只改变限额，已用记录保留，不会自动重跑任务。[0m
+            [36m</p>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-secondary btn-default"[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0m保存预算限制[0m
+            [36m</button>[39m
+            [36m<p[39m
+              [33mdata-authored[39m=[32m"1"[39m
+              [33mrole[39m=[32m"alert"[39m
+            [36m>[39m
+              [0m预算版本已变化[0m
+            [36m</p>[39m
+          [36m</form>[39m
+        [36m</details>[39m
+      [36m</section>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m这段会话暂无子任务运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-budget.test.tsx:23:55
+     21|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'保…
+     22|  expect(screen.getByRole('alert').textContent).toContain('版本')
+     23|  revision=9;await act(async()=>fireEvent.click(screen.getByRole('butto…
+       |                                                       ^
+     24|  expect(screen.getByLabelText<HTMLInputElement>('累计执行轮次上限').value).toB…
+     25|  expect(screen.queryByRole('alert')).toBeNull()
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../../../Desktop/Github_repos/dawn-science/node_modules/react/cjs/react.development.js:814:22
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ tests/ui/run-budget.test.tsx:23:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  16:34:34
+   Duration  1.07s (transform 321ms, setup 476ms, import 17ms, tests 157ms, environment 335ms)
+

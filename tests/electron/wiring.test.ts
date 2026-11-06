@@ -76,6 +76,59 @@ function newDbPath(): string {
 }
 
 describe("createWorkbench", () => {
+  it('主任务启动预备期也需要等待，不能在运行时尚未绑定时误报 drained',async()=>{
+    const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'})})
+    let release!:()=>void,settled=false
+    const gate=new Promise<void>(resolve=>release=resolve),original=wb.nativeRuntime.start.bind(wb.nativeRuntime)
+    const start=vi.spyOn(wb.nativeRuntime,'start').mockImplementation(async spec=>{await gate;return original(spec)})
+    const opening=wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})
+    let closing:Promise<void>|undefined
+    try{
+      await vi.waitFor(()=>expect(start).toHaveBeenCalled())
+      expect(wb.nativeRuntime.hasPendingWork()).toBe(false)
+      expect(wb.needsGracefulShutdown()).toBe(true)
+      closing=wb.closeAsync().then(()=>{settled=true})
+      await new Promise<void>(resolve=>setImmediate(resolve));expect(settled).toBe(false)
+      const owner=start.mock.calls[0]![0].sessionId
+      // Shutdown may cancel creation; neither success nor cancellation may leave a live binding.
+      release();await opening;await closing
+      expect(wb.sessions.isLive(owner)).toBe(false)
+    }finally{release();await opening;await closing;start.mockRestore();await wb.closeAsync()}
+  })
+  it('会话停止本身失败也必须记为 failed，不能被批量停止吞成 drained',async()=>{
+    const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'})})
+    await wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})
+    const stop=vi.spyOn(wb.nativeRuntime,'stop').mockRejectedValueOnce(new Error('owned session stop failed'))
+    const log=vi.spyOn(console,'error').mockImplementation(()=>{}),states:string[]=[]
+    try{
+      await wb.closeAsync(undefined,state=>states.push(state))
+      expect(states).toEqual(['failed']);expect(log).toHaveBeenCalled()
+    }finally{stop.mockRestore();log.mockRestore();await wb.closeAsync()}
+  })
+  it('普通主任务及其停止收尾期间也必须等待优雅退出',async()=>{
+    const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'})})
+    let release!:()=>void
+    const gate=new Promise<void>(resolve=>release=resolve),states:string[]=[]
+    const original=await wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})
+    expect(original.ok).toBe(true)
+    const owner=(original as {ok:true;data:{sessionId:string}}).data.sessionId
+    const sessions=(wb.nativeRuntime as unknown as {sessions:Map<string,{session:{prompt:(...args:unknown[])=>Promise<void>;abort:()=>Promise<void>}}>}).sessions
+    const session=sessions.get(owner)!.session
+    const prompt=vi.spyOn(session,'prompt').mockImplementation(async()=>{await gate}),abort=vi.spyOn(session,'abort').mockResolvedValue(undefined)
+    try{
+      wb.nativeRuntime.write(owner,'ordinary pending shutdown fixture')
+      await vi.waitFor(()=>expect(prompt).toHaveBeenCalled())
+      expect(wb.nativeRuntime.hasActiveChildren()).toBe(false)
+      expect(wb.nativeRuntime.terminalBusy(owner)).toBe(true)
+      expect(wb.needsGracefulShutdown()).toBe(true)
+      const closing=wb.closeAsync(undefined,state=>states.push(state))
+      await vi.waitFor(()=>expect(abort).toHaveBeenCalled())
+      expect(wb.needsGracefulShutdown()).toBe(true)
+      release();await closing
+      expect(states).toEqual(['drained'])
+      await vi.waitFor(()=>expect(wb.needsGracefulShutdown()).toBe(false))
+    }finally{release();await wb.closeAsync();prompt.mockRestore();abort.mockRestore()}
+  })
   it('活跃的普通子任务及停止排空期间都触发优雅退出',async()=>{
     const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'}),subagentChildEntry:'/unused.js'})
     let release!:()=>void
@@ -99,6 +152,19 @@ describe("createWorkbench", () => {
       }finally{release();await run}
     }finally{release();await wb.closeAsync()}
   })
+  it('退出诊断区分正常排空和原有等待上限，观察失败不改变退出',async()=>{
+    const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials()})
+    let release!:()=>void
+    const pending=new Promise<void>(resolve=>release=resolve),states:string[]=[]
+    const stop=vi.spyOn(wb.sessions,'stopAll').mockReturnValue(pending)
+    vi.useFakeTimers()
+    try{
+      const closing=wb.closeAsync(25,state=>{states.push(state);throw new Error('diagnostic fixture failure')})
+      await vi.advanceTimersByTimeAsync(24);expect(states).toEqual([])
+      await vi.advanceTimersByTimeAsync(1);await expect(closing).resolves.toBeUndefined()
+      expect(states).toEqual(['deadline'])
+    }finally{release();stop.mockRestore();vi.useRealTimers();wb.close()}
+  })
   it("一个资源收尾失败时仍等待其他会话，随后正常关闭", async () => {
     const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
     let release!: () => void
@@ -106,13 +172,15 @@ describe("createWorkbench", () => {
     const stops = vi.spyOn(wb.sessions, 'stopAll').mockReturnValue(pending)
     const failed = vi.spyOn(RemoteTerminalRuntime.prototype, 'closeLocalPresentations').mockRejectedValue(new Error('drain fixture failure'))
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const states:string[]=[]
     try {
       let settled = false
-      const closing = wb.closeAsync().then(() => { settled = true; return undefined }, error => { settled = true; return error })
+      const closing = wb.closeAsync(undefined,state=>states.push(state)).then(() => { settled = true; return undefined }, error => { settled = true; return error })
       await new Promise<void>(resolve => setImmediate(resolve))
       expect(settled).toBe(false)
       release(); expect(await closing).toBeUndefined()
       expect(log).toHaveBeenCalled()
+      expect(states).toEqual(['failed'])
     } finally { release(); stops.mockRestore(); failed.mockRestore(); log.mockRestore(); wb.close() }
   })
   it("活跃本地终端触发优雅退出，真实退出回调完成后才释放资源", async () => {

@@ -1,0 +1,18 @@
+{
+  "candidateFiles": 42,
+  "drift": [],
+  "mainHead": "9dd59f4f49309c0be60c6070bdef6ac5ccf5d74c",
+  "mainClean": true,
+  "worktreeBranch": "codex/run-explanation-budget",
+  "sourceTouchedThisReview": [
+    "src/bot/output-locks.ts",
+    "src/team/scheduler.ts",
+    "tests/orchestration/budget.test.ts",
+    "tests/orchestration/explanation.test.ts",
+    "tests/team/task-contract.test.ts"
+  ],
+  "actualDesktopScenarios": 7,
+  "normalExits": 8,
+  "sourceReview": "self-review",
+  "noCommitMergePushRelease": true
+}

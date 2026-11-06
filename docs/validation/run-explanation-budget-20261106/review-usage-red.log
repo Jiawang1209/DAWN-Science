@@ -1,0 +1,41 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/budget.test.ts -t non-integral --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-run-explanation-budget-20261106/dawn-science
+
+ ❯ |node| tests/orchestration/budget.test.ts (10 tests | 1 failed | 9 skipped) 15ms
+   × non-integral or unsafe provider usage stays unknown without preventing terminal settlement 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/budget.test.ts > non-integral or unsafe provider usage stays unknown without preventing terminal settlement
+ZodError: [
+  {
+    "expected": "int",
+    "format": "safeint",
+    "code": "invalid_type",
+    "path": [
+      "budget",
+      "knownTokens"
+    ],
+    "message": "Invalid input: expected int, received number"
+  }
+]
+ ❯ OrchestrationStore.change src/orchestration/store.ts:274:17
+    272|     const next = structuredClone(this.state)
+    273|     mutate(next)
+    274|     StateSchema.parse(next)
+       |                 ^
+    275|     mkdirSync(this.directory, {recursive: true})
+    276|     const temporary = join(this.directory, `.state-${process.pid}-${ra…
+ ❯ OrchestrationStore.settleRun src/orchestration/store.ts:144:10
+ ❯ OrchestrationService.execute src/orchestration/service.ts:222:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  16:40:32
+   Duration  321ms (transform 92ms, setup 0ms, import 211ms, tests 15ms, environment 0ms)
+

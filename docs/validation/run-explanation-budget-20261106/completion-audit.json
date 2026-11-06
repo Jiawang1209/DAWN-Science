@@ -1,0 +1,23 @@
+{
+  "sourceFiles": 41,
+  "sourceDrift": [],
+  "checks": {
+    "final-budget-source-fingerprint": true,
+    "stage-facts": true,
+    "full-node-ui": true,
+    "final-adjustment-focused": true,
+    "kernel": true,
+    "desktop-resumed": true,
+    "desktop-final": true,
+    "desktop-final-ui": true,
+    "typecheck": true,
+    "build": true,
+    "baseline-images": true,
+    "all-source-checks-completed": true
+  },
+  "knownLimits": [
+    "No paid-model, cross-platform, installed-package or complete desktop-suite claim",
+    "Original Close context timeout and one pre-sleep page-closure incident remain unlocalized; failures and reruns preserved"
+  ],
+  "scope": "uncommitted isolated branch; no merge/push/publish/installed-app replacement"
+}

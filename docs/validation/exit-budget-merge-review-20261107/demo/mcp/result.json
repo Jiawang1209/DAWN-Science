@@ -1,0 +1,45 @@
+{
+  "runtime": {
+    "node": "24.22.1",
+    "electron": "43.8.4"
+  },
+  "forcedGc": true,
+  "releaseMs": 39.96308299999873,
+  "serverStreamClosed": true,
+  "sameSessionGeneration": 1,
+  "calls": [
+    "hold",
+    "echo"
+  ],
+  "snapshot": {
+    "timeline": [
+      {
+        "event": "hold",
+        "ms": 686.171333000002,
+        "id": "dawn-call-908726a8-7540-469b-a334-08a22b3834d8-1"
+      },
+      {
+        "event": "response-close",
+        "ms": 839.7056660000017,
+        "id": "dawn-call-908726a8-7540-469b-a334-08a22b3834d8-1"
+      },
+      {
+        "event": "cancel-notification",
+        "ms": 848.0877079999991,
+        "id": "dawn-call-908726a8-7540-469b-a334-08a22b3834d8-1"
+      }
+    ],
+    "calls": [
+      "hold",
+      "echo"
+    ],
+    "cancelled": [
+      "dawn-call-908726a8-7540-469b-a334-08a22b3834d8-1"
+    ],
+    "closedWaits": [
+      "dawn-call-908726a8-7540-469b-a334-08a22b3834d8-1"
+    ],
+    "pending": []
+  },
+  "boundary": "Real Electron and loopback HTTP; deterministic model, no external MCP or paid inference."
+}

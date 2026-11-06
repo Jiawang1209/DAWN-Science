@@ -650,6 +650,7 @@ export interface AgentRuntime {
    * @throws 这段会话没装子 agent（没有子进程入口）
    */
   runOverview?(sessionId:SessionId):import('../protocol/run-overview.js').RunOverview|undefined
+  configureRunBudget?(sessionId:SessionId,limits:import('../protocol/run-budget.js').RunBudgetLimits,expectedRevision:number):import('../protocol/run-budget.js').RunBudget
   controlSubagent?(sessionId:SessionId,toolCallId:string,index:number,action:import("../protocol/subagent-control.js").SubagentControlAction):Promise<import("../protocol/subagent-control.js").SubagentControlState>
   askSubagent?(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void>
   /** 停掉正在答的那一问（回退撤掉了它的 chip，2026-09-27 审查）。停到了回 true。**只有 native 有** */

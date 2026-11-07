@@ -752,10 +752,23 @@
     ]
   },
   "main-results": {
-    "exits": 0,
-    "allVerified": false,
+    "exits": 1,
+    "allVerified": true,
     "problemCount": 0,
     "unexpectedWatchdogs": 0,
-    "runs": []
+    "runs": [
+      {
+        "pid": 65815,
+        "case": "collaboration-network-rend-05ccc-inked-selection-and-filters",
+        "branch": "sync",
+        "cleanupMs": 0.876,
+        "normalNativeAndPipes": true,
+        "verified": true,
+        "problems": [],
+        "unexpectedWatchdog": false,
+        "deliberateVeto": false,
+        "host": "main-results/collaboration-network-rend-05ccc-inked-selection-and-filters/electron-exit/exit-65815.jsonl"
+      }
+    ]
   }
 }

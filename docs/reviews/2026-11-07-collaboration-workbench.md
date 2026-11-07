@@ -56,3 +56,8 @@ requesting-code-review 技能要求的独立只读审查发现三项 P2，全部
 - main仍为f685a56122ee6238affa55d8bd9ba6f9b604a6c7，干净未改。未提交、未合并、未推送、未发布、未替换正式App。
 - 正式providers.yaml/credentials.json/dawn.db指纹与本轮首次检查及上一轮审计相同；只保存指纹，不保存凭证内容。
 - 最终组合候选54个源/测试文件指纹见candidate-manifest.json（包含上一轮30个，不能误读为本轮新增54个）。审计结果见final-audit.json。
+
+
+## 后续授权集成更新
+
+2026-11-07用户另行明确授权复审、修复补测后本地提交合并main。组合代码已提交2885470a并快进main；main类型/构建、191定向及实际Electron通过。此处先前“未提交/合并”是首次实现时状态，最终结果见[复审与集成记录](2026-11-07-collaboration-merge-review.md)。未推送发布、不替换正式App；历史超时及真实模型收益边界继续保留。

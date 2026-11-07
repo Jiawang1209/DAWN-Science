@@ -1,0 +1,18 @@
+{
+  "codeCommit": "2885470a5ad3bbec43356178d6ef536b625dcac9",
+  "mainFastForwarded": true,
+  "mainCleanAfterRuntimeVerification": true,
+  "sourceFiles": 57,
+  "sourceDrift": [],
+  "mainTypecheckPassed": true,
+  "mainBuildPassed": true,
+  "mainTargetedTests": 191,
+  "mainElectronScenarios": 1,
+  "screenshotsBuiltFrom": "/Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui",
+  "formalFilesUnchanged": true,
+  "newLiveModelRequests": 0,
+  "pushed": false,
+  "published": false,
+  "installedAppReplaced": false,
+  "historicalTimeoutResolved": false
+}

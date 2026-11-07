@@ -42,3 +42,14 @@
 ## 本地集成
 
 已通过无阻塞验收，准备按本轮授权本地提交并快进main；随后追加main构建/定向测试/真实界面及指纹核对结果。不推送、不发布、不替换正式App，保留隔离分支与工作区。先前报告中的“未提交/合并”是当时状态，本次授权以此记录及最后集成附记为准。
+
+
+## 本地集成附记
+
+代码提交 **2885470a5ad3bbec43356178d6ef536b625dcac9** 已从f685a56122ee快进本地main，无冲突。main重新执行类型检查、Electron/CLI/UI全构建、12文件191项定向测试及1个真实Electron完整网络/旧子转录往返/IME/快捷键场景，均通过。main源与已验收候选57文件逐字节相同，正式三文件指纹仍相同。
+
+main实际界面见[展开工作台](../validation/collaboration-rereview-20261107/desktop-main/phase-b-network-dark-completed.png)和[日常对话](../validation/collaboration-rereview-20261107/desktop-main/phase-b-conversation-dark.png)，由主仓库dist/ui真实运行截取，不是设计稿或安装版替换。main证明见main-integration.json、main-typecheck.log、main-build.log、main-targeted.log、main-desktop.log；原生退出累计最终冻结62次+main1次=63次全部核验正常。
+
+后续仅提交验收资料并快进main，不再改源码。保留专项分支/工作区，不推送、不发布、不替换正式App。历史偶发超时继续开放跟踪；不因本轮未复现而关闭风险。
+
+原始日志和baseline.patch按原字节保留，其中工具生成的行尾空格/空行不被整理。源码和非原始证据文档的git diff --check通过；没有为消除日志格式提示改写失败证据。

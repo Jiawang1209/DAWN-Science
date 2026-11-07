@@ -1,0 +1,17 @@
+{
+  "featureCommit": "6906b62216878d20e6072423102137bccfd0ecae",
+  "mainAtFastForward": "6906b62216878d20e6072423102137bccfd0ecae",
+  "fastForward": true,
+  "reviewedSourceFiles": 634,
+  "sourceIdentityMatches": true,
+  "existingIgnoredFinderMetadataPreserved": [
+    "src/.DS_Store",
+    "src/channels/.DS_Store",
+    "src/runtime/.DS_Store",
+    "src/tools/.DS_Store",
+    "src/ui/.DS_Store"
+  ],
+  "mainCleanAfterFastForward": true,
+  "push": false,
+  "release": false
+}

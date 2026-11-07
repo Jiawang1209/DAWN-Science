@@ -1,0 +1,15 @@
+
+Running 1 test using 1 worker
+
+(node:49879) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：演示审阅执行轮次预留，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:51534/2357258f-eafa-44c4-8c3e-8d56d7be7f92
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51607/7e338fb9-30c0-4314-9588-aa69b9421c1b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/run-explanation-budget.spec.ts:23:2 › scientific review reservation › reserves independent review under three actual runs and preserves consumption after restart (21.4s)
+
+  1 passed (21.9s)

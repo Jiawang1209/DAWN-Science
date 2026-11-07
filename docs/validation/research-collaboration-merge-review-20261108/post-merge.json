@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-08",
+  "verifiedAt": "2026-11-07T17:43:35.593254+00:00",
+  "featureCommit": "6906b62216878d20e6072423102137bccfd0ecae",
+  "mainCommitAtRuntimeVerification": "6906b62216878d20e6072423102137bccfd0ecae",
+  "integration": "local fast-forward",
+  "sourceFiles": 634,
+  "allReviewedSourceHashesMatch": true,
+  "appBuildFiles": 624,
+  "byteIdenticalAppBuildFiles": 622,
+  "dependencyPathLabelOnlyDifferences": [
+    {
+      "file": "dist/electron/main.js",
+      "onlySharedDependencyPathLabelsDiffer": true,
+      "remainingDiffLines": 0,
+      "preview": []
+    },
+    {
+      "file": "dist/electron/subagent-child.js",
+      "onlySharedDependencyPathLabelsDiffer": true,
+      "remainingDiffLines": 0,
+      "preview": []
+    }
+  ],
+  "buildExitCode": 0,
+  "typecheckExitCode": 0,
+  "mainElectron": {
+    "observations": {
+      "passed": 1,
+      "exitCode": 0,
+      "seconds": 25.0
+    },
+    "reviewReservation": {
+      "passed": 1,
+      "exitCode": 0,
+      "seconds": 21.9
+    }
+  },
+  "premergeValidation": {
+    "nodeUiPassed": 6816,
+    "nodeUiSkipped": 10,
+    "kernelPassed": 50,
+    "kernelSkipped": 1,
+    "relatedElectronPassed": 15
+  },
+  "budgetFormulaUnchanged": true,
+  "originalFinding": "P2 cancellation during acceptance discarded received usage",
+  "findingResolved": true,
+  "effect": {
+    "beforeKnownTokens": 0,
+    "afterKnownTokens": 13,
+    "cancelledOutput": "",
+    "acceptedReceipt": false,
+    "artifactVersionsAdopted": false
+  },
+  "historicalShutdownStatus": "OPEN",
+  "historicalOpenMs": [
+    7350,
+    20690
+  ],
+  "shutdownBudgetsUnchangedMs": [
+    1500,
+    4000
+  ],
+  "externalApiCallsThisReview": 0,
+  "push": false,
+  "release": false,
+  "installedAppReplacement": false,
+  "pendingRequiredWork": "none; documentation-only verification record committed next",
+  "scopeLimits": [
+    "Not the entire desktop suite or cross-platform testing",
+    "Long Bot/MCP stopping not actually reproduced",
+    "Original raw evidence whitespace retained; product source/tests/authored docs checked separately"
+  ]
+}

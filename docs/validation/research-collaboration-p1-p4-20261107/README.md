@@ -29,3 +29,7 @@
 [当前与历史状态的实际 Electron 窗口](p4/evidence/d3/final-electron/evidence/members/expanded-current-1440-dark.png)；[两轮累计与历史读数详情](p4/evidence/d3/final-electron/evidence/members/settled-two-epochs-partial-1440-dark.png)；[停止后磁盘历史](p4/evidence/d3/disk-ui-electron/evidence/members/retired-disk-history-1440-dark.png)。截图为 localhost 模型夹具，真实模型结果另见 A3。
 
 保留一项非阻塞 P3 文案建议：卡片短标签“已结算累计”，input+output 和 cache 单列口径在详情明确。历史退出延迟仍 OPEN；长 Bot/MCP stopping、跨平台、全 kernel 和完整桌面全功能未在本轮重新实测。source/build 后验及 main 保护状态见 [最终审计](final-audit.json)。专项工作区保留，本轮没有提交、合并、推送、发布或替换正式 App。
+
+## 2026-11-08 本地整合更新
+
+以上是上一轮交付时的历史快照。随后再次复审修复了“验收期间取消丢失已知用量”的P2，新增回归并完成6816 Node/UI、50内核与15相关桌面验证，功能提交6906b622已快进合并本地main；main重新构建、类型检查和两条实机验收通过。完整记录见[本地复审与整合](../research-collaboration-merge-review-20261108/README.md)。原索引字节副本保留为该目录prior-goal-index.md，旧final-audit哈希仍可核对。不推送、不发布，历史退出仍OPEN。

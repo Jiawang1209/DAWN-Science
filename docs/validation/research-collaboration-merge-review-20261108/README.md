@@ -43,3 +43,11 @@
 原始 diff、Playwright错误上下文、测试stdout以及故意追加空白的settings-drift夹具包含上下文空格/末尾空行，完整提交的git whitespace检查会报告这些原始证据。全部产品源码、测试实现、脚本、规划与文档正文另行检查通过。为保持原始字节和已记录SHA，不清洗证据、不修改gitattributes或阈值。暂存阶段初次命令未在原始证据格式提示后停下，创建了尚未合并的本地提交；已明确核查范围并保留记录后再继续整合。
 
 仓库默认忽略*.log，本次仅对两个本批验证目录中的313份原始日志显式纳入Git，无凭证样式命中，确保main可读取这些证据。详情见raw-evidence-whitespace-review.json及raw-log-preservation.json。
+
+## 本地 main 整合完成
+
+功能提交 `6906b622` 已快进合并到 main。main重新构建与typecheck通过，634个受审源码哈希全部匹配；624个App产物中622个字节一致，两个Electron bundle仅因专项工作区共享node_modules的相对路径标签不同，明确替换该唯一前缀后逐字一致，原始哈希和比对记录均保留，不修改真实构建。main原有5个忽略的Finder .DS_Store元数据保留，未清理或改动。
+
+main实机：成员观测/隔离/两轮累计/重启 1passed（25.0秒），三轮审阅预留及重启账本 1passed（21.9秒）；为两个独立命令，均exit0。initial grep包含多余the而只运行观测案例，随后用精确标题单独补跑预算案例，没有把未运行案例算成通过。合并前6816 Node/UI、50内核和15桌面结果对应同一源码，未将这些称为main新跑的完整套件。
+
+main新4次OS关闭无超限，历史OPEN继续。当前截图与宿主数字在main-desktop/和main-budget/；数值来源是localhost模型夹具，不是新联网试验。post-merge.json记录功能提交及实际运行时main身份；随后只提交本地整合验证文档，不改源码。不推送、不发布、不替换正式App。

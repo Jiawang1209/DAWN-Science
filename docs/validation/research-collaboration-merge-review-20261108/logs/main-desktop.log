@@ -1,0 +1,14 @@
+
+Running 1 test using 1 worker
+
+(node:49036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51236/98caf0c0-b623-4614-a001-7b0d07a55762
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51327/725af2af-2480-4a67-b917-5f4ffd71e718
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/agent-observation.spec.ts:16:2 › member observation › keeps current SDK context separate from two settled epochs, history, owner switches and restart (24.3s)
+
+  1 passed (25.0s)

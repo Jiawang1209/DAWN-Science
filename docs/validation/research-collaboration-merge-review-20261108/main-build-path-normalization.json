@@ -1,0 +1,14 @@
+[
+  {
+    "file": "dist/electron/main.js",
+    "onlySharedDependencyPathLabelsDiffer": true,
+    "remainingDiffLines": 0,
+    "preview": []
+  },
+  {
+    "file": "dist/electron/subagent-child.js",
+    "onlySharedDependencyPathLabelsDiffer": true,
+    "remainingDiffLines": 0,
+    "preview": []
+  }
+]

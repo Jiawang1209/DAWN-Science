@@ -1,0 +1,1401 @@
+{
+  "actualElectron": true,
+  "inference": "localhost-fixture",
+  "scientificValidation": false,
+  "viewport": {
+    "width": 1440,
+    "height": 960
+  },
+  "hostOverview": {
+    "ownerSessionId": "2e4643e7-a383-4e39-a3c6-46a4aa9afdc6",
+    "source": "disk",
+    "team": {
+      "pipeline": {
+        "version": 1,
+        "requestId": "call_mock_2",
+        "status": "completed",
+        "stage": "review",
+        "round": 1,
+        "currentTaskId": "p-review-1-4",
+        "taskIds": [
+          "p-check-0-0",
+          "p-analyze-0-1",
+          "p-review-0-2",
+          "p-analyze-1-3",
+          "p-review-1-4"
+        ],
+        "stateRevision": 6,
+        "startedAt": 1794073269732,
+        "updatedAt": 1794073284153,
+        "endedAt": 1794073284153,
+        "reason": "各阶段契约与审阅通过；不代表独立科学认证",
+        "routeSync": "applied",
+        "contentVersionBound": true,
+        "maxRevisions": 1,
+        "route": {
+          "routeId": "814ad633-d5ac-4c24-8bb8-f6008c63a1a2",
+          "revision": 1,
+          "stepId": "analysis"
+        }
+      },
+      "id": "pipeline-82a17e24902971db208f63f9",
+      "name": "科研流程",
+      "goal": "按已确认方法执行合成数据流程，保留输入并交付文件",
+      "captainSessionId": "2e4643e7-a383-4e39-a3c6-46a4aa9afdc6",
+      "createdAt": 1794073269697,
+      "members": [
+        {
+          "name": "check",
+          "agent": "pipeline-check",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "status": "idle",
+          "sessionDir": "members/check",
+          "turns": 1,
+          "joinedAt": 1794073269701,
+          "orchestrationId": "9743679a-880f-4521-a1ac-3593b924a2bf"
+        },
+        {
+          "name": "analyze",
+          "agent": "pipeline-analyze",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "status": "idle",
+          "sessionDir": "members/analyze",
+          "turns": 2,
+          "joinedAt": 1794073269704,
+          "orchestrationId": "30be6e3d-c349-4f88-a832-3723bf069f43"
+        },
+        {
+          "name": "review",
+          "agent": "pipeline-review",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "status": "idle",
+          "sessionDir": "members/review",
+          "turns": 2,
+          "joinedAt": 1794073269707,
+          "orchestrationId": "10381604-54f4-4473-99bb-7f2d5e6f0d75"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "p-check-0-0",
+          "subject": "数据核查 · 修正 0",
+          "contract": {
+            "submission": "tool",
+            "resultType": "data-summary",
+            "version": 1,
+            "inputs": [
+              "in.csv"
+            ],
+            "outputs": [],
+            "access": "read-only",
+            "requireExecution": false,
+            "requireReview": true
+          },
+          "receipt": {
+            "versions": {
+              "version": 1,
+              "inputs": [
+                {
+                  "path": "in.csv",
+                  "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                  "bytes": 12,
+                  "observationId": "7fb4f148-3a73-4027-979b-12d0aafb88c9",
+                  "versionId": "544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+                }
+              ],
+              "outputs": []
+            },
+            "version": 1,
+            "state": "accepted",
+            "summary": "已核查合成数据",
+            "result": {
+              "data": {
+                "kind": "data-summary",
+                "rows": 5,
+                "columns": [
+                  {
+                    "name": "x",
+                    "type": "number"
+                  }
+                ],
+                "issues": []
+              },
+              "summary": "已核查合成数据",
+              "blockers": [],
+              "deliverables": [],
+              "execution": {
+                "state": "not_run",
+                "note": "只读检查"
+              },
+              "verification": {
+                "state": "reviewed",
+                "note": "实际读取声明文件，仅作为软件验收",
+                "toolCallIds": [
+                  "call_mock_4"
+                ]
+              }
+            },
+            "deliverables": []
+          },
+          "observation": {
+            "elapsedMs": 2827,
+            "submissionAttempts": 2,
+            "invalidSubmissions": 1,
+            "usage": {
+              "input": 36,
+              "output": 24,
+              "cacheRead": 0,
+              "partial": [
+                "cacheRead"
+              ]
+            }
+          },
+          "trace": {
+            "records": [
+              {
+                "toolCallId": "call_mock_4",
+                "name": "read",
+                "status": "done",
+                "execution": "not_observed",
+                "path": "in.csv"
+              }
+            ],
+            "omitted": 0
+          },
+          "description": "科研流程 pipeline-82a17e24902971db208f63f9，阶段 check，修正轮次 0/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n使用冻结契约；完成时调用 submit_task_result。",
+          "status": "completed",
+          "assignee": "check",
+          "outputs": [],
+          "dependencies": [],
+          "output": "{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}}",
+          "attempt": 1,
+          "attemptId": "45000f0e-4b5b-452c-8497-c75565f31484",
+          "createdAt": 1794073269732,
+          "updatedAt": 1794073273076
+        },
+        {
+          "id": "p-analyze-0-1",
+          "subject": "分析执行 · 修正 0",
+          "contract": {
+            "submission": "tool",
+            "resultType": "model-metrics",
+            "version": 1,
+            "inputs": [
+              "in.csv"
+            ],
+            "outputs": [
+              "results/pipeline.csv"
+            ],
+            "access": "workspace-exec",
+            "requireExecution": true,
+            "requireReview": false
+          },
+          "receipt": {
+            "versions": {
+              "version": 1,
+              "inputs": [
+                {
+                  "path": "in.csv",
+                  "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                  "bytes": 12,
+                  "observationId": "102b030a-3c81-458d-89c6-e99e25790322",
+                  "versionId": "544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+                }
+              ],
+              "outputs": [
+                {
+                  "path": "results/pipeline.csv",
+                  "sha256": "68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da",
+                  "bytes": 32,
+                  "observationId": "550498a2-9c44-4b1a-a047-0d44e7947343",
+                  "versionId": "e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da"
+                }
+              ]
+            },
+            "version": 1,
+            "state": "accepted",
+            "summary": "已执行并交付合成结果",
+            "result": {
+              "data": {
+                "kind": "model-metrics",
+                "method": "用户确认的合成统计示例",
+                "metrics": {
+                  "n": 5
+                },
+                "sampleCount": 5,
+                "caveats": [
+                  "仅验证软件流程，不构成科研结论"
+                ]
+              },
+              "summary": "已执行并交付合成结果",
+              "blockers": [],
+              "deliverables": [
+                {
+                  "path": "results/pipeline.csv"
+                }
+              ],
+              "execution": {
+                "state": "completed",
+                "note": "实际命令已退出",
+                "toolCallIds": [
+                  "call_mock_9"
+                ]
+              },
+              "verification": {
+                "state": "unreviewed",
+                "note": "等待独立审阅"
+              }
+            },
+            "deliverables": [
+              {
+                "stepId": "task",
+                "path": "results/pipeline.csv",
+                "state": "exists"
+              }
+            ]
+          },
+          "observation": {
+            "elapsedMs": 3387,
+            "submissionAttempts": 1,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 24,
+              "output": 16,
+              "cacheRead": 0,
+              "partial": [
+                "cacheRead"
+              ]
+            }
+          },
+          "trace": {
+            "records": [
+              {
+                "toolCallId": "call_mock_9",
+                "name": "bash",
+                "status": "done",
+                "execution": "ran"
+              }
+            ],
+            "omitted": 0
+          },
+          "description": "科研流程 pipeline-82a17e24902971db208f63f9，阶段 analyze，修正轮次 0/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n上一阶段宿主回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"7fb4f148-3a73-4027-979b-12d0aafb88c9\",\"versionId\":\"544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已核查合成数据\",\"result\":{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}},\"deliverables\":[]}\n\n核查回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"7fb4f148-3a73-4027-979b-12d0aafb88c9\",\"versionId\":\"544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已核查合成数据\",\"result\":{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}},\"deliverables\":[]}\n\n使用冻结契约；完成时调用 submit_task_result。",
+          "status": "completed",
+          "assignee": "analyze",
+          "outputs": [
+            "results/pipeline.csv"
+          ],
+          "dependencies": [
+            "p-check-0-0"
+          ],
+          "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"用户确认的合成统计示例\",\"metrics\":{\"n\":5},\"sampleCount\":5,\"caveats\":[\"仅验证软件流程，不构成科研结论\"]},\"summary\":\"已执行并交付合成结果\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/pipeline.csv\"}],\"execution\":{\"state\":\"completed\",\"note\":\"实际命令已退出\",\"toolCallIds\":[\"call_mock_9\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"等待独立审阅\"}}",
+          "attempt": 1,
+          "attemptId": "f82d7432-0dc1-418e-9f24-0768abd4f613",
+          "createdAt": 1794073273076,
+          "updatedAt": 1794073276961
+        },
+        {
+          "id": "p-review-0-2",
+          "subject": "独立审阅 · 修正 0",
+          "contract": {
+            "submission": "tool",
+            "resultType": "review",
+            "version": 1,
+            "inputs": [
+              "results/pipeline.csv"
+            ],
+            "outputs": [],
+            "access": "read-only",
+            "requireExecution": false,
+            "requireReview": true
+          },
+          "receipt": {
+            "versions": {
+              "version": 1,
+              "inputs": [
+                {
+                  "path": "results/pipeline.csv",
+                  "sha256": "68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da",
+                  "bytes": 32,
+                  "observationId": "77f0ec6a-eb63-4353-94a1-92f3419f2292",
+                  "versionId": "e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da"
+                }
+              ],
+              "outputs": []
+            },
+            "version": 1,
+            "state": "blocked",
+            "summary": "已审阅合成交付",
+            "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+            "result": {
+              "data": {
+                "kind": "review",
+                "verdict": "revise",
+                "findings": [
+                  "请补齐合成交付中的单位说明"
+                ],
+                "reviewedPaths": [
+                  "results/pipeline.csv"
+                ],
+                "revisionInstructions": "补充单位说明后再提交审阅"
+              },
+              "summary": "已审阅合成交付",
+              "blockers": [],
+              "deliverables": [],
+              "execution": {
+                "state": "not_run",
+                "note": "只读检查"
+              },
+              "verification": {
+                "state": "issues",
+                "note": "实际读取声明文件，仅作为软件验收",
+                "toolCallIds": [
+                  "call_mock_13"
+                ]
+              }
+            },
+            "deliverables": []
+          },
+          "observation": {
+            "elapsedMs": 1902,
+            "submissionAttempts": 1,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 24,
+              "output": 16,
+              "cacheRead": 0,
+              "partial": [
+                "cacheRead"
+              ]
+            }
+          },
+          "trace": {
+            "records": [
+              {
+                "toolCallId": "call_mock_13",
+                "name": "read",
+                "status": "done",
+                "execution": "not_observed",
+                "path": "results/pipeline.csv"
+              }
+            ],
+            "omitted": 0
+          },
+          "description": "科研流程 pipeline-82a17e24902971db208f63f9，阶段 review，修正轮次 0/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n上一阶段宿主回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"102b030a-3c81-458d-89c6-e99e25790322\",\"versionId\":\"544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[{\"path\":\"results/pipeline.csv\",\"sha256\":\"68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da\",\"bytes\":32,\"observationId\":\"550498a2-9c44-4b1a-a047-0d44e7947343\",\"versionId\":\"e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da\"}]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已执行并交付合成结果\",\"result\":{\"data\":{\"kind\":\"model-metrics\",\"method\":\"用户确认的合成统计示例\",\"metrics\":{\"n\":5},\"sampleCount\":5,\"caveats\":[\"仅验证软件流程，不构成科研结论\"]},\"summary\":\"已执行并交付合成结果\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/pipeline.csv\"}],\"execution\":{\"state\":\"completed\",\"note\":\"实际命令已退出\",\"toolCallIds\":[\"call_mock_9\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"等待独立审阅\"}},\"deliverables\":[{\"stepId\":\"task\",\"path\":\"results/pipeline.csv\",\"state\":\"exists\"}]}\n\n只读审阅声明产物，逐个真实 read 并引用 callId；明确 pass/revise/blocked。不能写入或让分析者代审。",
+          "status": "failed",
+          "assignee": "review",
+          "outputs": [],
+          "dependencies": [
+            "p-analyze-0-1"
+          ],
+          "output": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+          "attempt": 1,
+          "attemptId": "6e321aa0-fbb0-4600-b3a5-cc6c140692cd",
+          "createdAt": 1794073276961,
+          "updatedAt": 1794073279349
+        },
+        {
+          "id": "p-analyze-1-3",
+          "subject": "分析执行 · 修正 1",
+          "contract": {
+            "submission": "tool",
+            "resultType": "model-metrics",
+            "version": 1,
+            "inputs": [
+              "in.csv"
+            ],
+            "outputs": [
+              "results/pipeline.csv"
+            ],
+            "access": "workspace-exec",
+            "requireExecution": true,
+            "requireReview": false
+          },
+          "receipt": {
+            "versions": {
+              "version": 1,
+              "inputs": [
+                {
+                  "path": "in.csv",
+                  "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                  "bytes": 12,
+                  "observationId": "b321b456-db76-4a2b-b976-b9ca2f836911",
+                  "versionId": "544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+                }
+              ],
+              "outputs": [
+                {
+                  "path": "results/pipeline.csv",
+                  "sha256": "68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da",
+                  "bytes": 32,
+                  "observationId": "055f8149-e0d5-49fd-8b7d-d1bea834d5c3",
+                  "versionId": "e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da"
+                }
+              ]
+            },
+            "version": 1,
+            "state": "accepted",
+            "summary": "已执行并交付合成结果",
+            "result": {
+              "data": {
+                "kind": "model-metrics",
+                "method": "用户确认的合成统计示例",
+                "metrics": {
+                  "n": 5
+                },
+                "sampleCount": 5,
+                "caveats": [
+                  "仅验证软件流程，不构成科研结论"
+                ]
+              },
+              "summary": "已执行并交付合成结果",
+              "blockers": [],
+              "deliverables": [
+                {
+                  "path": "results/pipeline.csv"
+                }
+              ],
+              "execution": {
+                "state": "completed",
+                "note": "实际命令已退出",
+                "toolCallIds": [
+                  "call_mock_17"
+                ]
+              },
+              "verification": {
+                "state": "unreviewed",
+                "note": "等待独立审阅"
+              }
+            },
+            "deliverables": [
+              {
+                "stepId": "task",
+                "path": "results/pipeline.csv",
+                "state": "exists"
+              }
+            ]
+          },
+          "observation": {
+            "elapsedMs": 1927,
+            "submissionAttempts": 1,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 24,
+              "output": 16,
+              "cacheRead": 0,
+              "partial": [
+                "cacheRead"
+              ]
+            }
+          },
+          "trace": {
+            "records": [
+              {
+                "toolCallId": "call_mock_17",
+                "name": "bash",
+                "status": "done",
+                "execution": "ran"
+              }
+            ],
+            "omitted": 0
+          },
+          "description": "科研流程 pipeline-82a17e24902971db208f63f9，阶段 analyze，修正轮次 1/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n上一阶段宿主回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"results/pipeline.csv\",\"sha256\":\"68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da\",\"bytes\":32,\"observationId\":\"77f0ec6a-eb63-4353-94a1-92f3419f2292\",\"versionId\":\"e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da\"}],\"outputs\":[]},\"version\":1,\"state\":\"blocked\",\"summary\":\"已审阅合成交付\",\"reason\":\"存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游\",\"result\":{\"data\":{\"kind\":\"review\",\"verdict\":\"revise\",\"findings\":[\"请补齐合成交付中的单位说明\"],\"reviewedPaths\":[\"results/pipeline.csv\"],\"revisionInstructions\":\"补充单位说明后再提交审阅\"},\"summary\":\"已审阅合成交付\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"issues\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_13\"]}},\"deliverables\":[]}\n\n核查回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"7fb4f148-3a73-4027-979b-12d0aafb88c9\",\"versionId\":\"544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已核查合成数据\",\"result\":{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}},\"deliverables\":[]}\n\n使用冻结契约；完成时调用 submit_task_result。",
+          "status": "completed",
+          "assignee": "analyze",
+          "outputs": [
+            "results/pipeline.csv"
+          ],
+          "dependencies": [
+            "p-check-0-0"
+          ],
+          "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"用户确认的合成统计示例\",\"metrics\":{\"n\":5},\"sampleCount\":5,\"caveats\":[\"仅验证软件流程，不构成科研结论\"]},\"summary\":\"已执行并交付合成结果\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/pipeline.csv\"}],\"execution\":{\"state\":\"completed\",\"note\":\"实际命令已退出\",\"toolCallIds\":[\"call_mock_17\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"等待独立审阅\"}}",
+          "attempt": 1,
+          "attemptId": "15b5a1c9-35a5-4062-8c7c-4d49949092d5",
+          "createdAt": 1794073279349,
+          "updatedAt": 1794073281780
+        },
+        {
+          "id": "p-review-1-4",
+          "subject": "独立审阅 · 修正 1",
+          "contract": {
+            "submission": "tool",
+            "resultType": "review",
+            "version": 1,
+            "inputs": [
+              "results/pipeline.csv"
+            ],
+            "outputs": [],
+            "access": "read-only",
+            "requireExecution": false,
+            "requireReview": true
+          },
+          "receipt": {
+            "versions": {
+              "version": 1,
+              "inputs": [
+                {
+                  "path": "results/pipeline.csv",
+                  "sha256": "68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da",
+                  "bytes": 32,
+                  "observationId": "7e9d617c-f82c-48b7-ac7b-f34b54624741",
+                  "versionId": "e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da"
+                }
+              ],
+              "outputs": []
+            },
+            "version": 1,
+            "state": "accepted",
+            "summary": "已审阅合成交付",
+            "result": {
+              "data": {
+                "kind": "review",
+                "verdict": "pass",
+                "findings": [],
+                "reviewedPaths": [
+                  "results/pipeline.csv"
+                ]
+              },
+              "summary": "已审阅合成交付",
+              "blockers": [],
+              "deliverables": [],
+              "execution": {
+                "state": "not_run",
+                "note": "只读检查"
+              },
+              "verification": {
+                "state": "reviewed",
+                "note": "实际读取声明文件，仅作为软件验收",
+                "toolCallIds": [
+                  "call_mock_21"
+                ]
+              }
+            },
+            "deliverables": []
+          },
+          "observation": {
+            "elapsedMs": 1904,
+            "submissionAttempts": 1,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 24,
+              "output": 16,
+              "cacheRead": 0,
+              "partial": [
+                "cacheRead"
+              ]
+            }
+          },
+          "trace": {
+            "records": [
+              {
+                "toolCallId": "call_mock_21",
+                "name": "read",
+                "status": "done",
+                "execution": "not_observed",
+                "path": "results/pipeline.csv"
+              }
+            ],
+            "omitted": 0
+          },
+          "description": "科研流程 pipeline-82a17e24902971db208f63f9，阶段 review，修正轮次 1/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n上一阶段宿主回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"b321b456-db76-4a2b-b976-b9ca2f836911\",\"versionId\":\"544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[{\"path\":\"results/pipeline.csv\",\"sha256\":\"68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da\",\"bytes\":32,\"observationId\":\"055f8149-e0d5-49fd-8b7d-d1bea834d5c3\",\"versionId\":\"e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da\"}]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已执行并交付合成结果\",\"result\":{\"data\":{\"kind\":\"model-metrics\",\"method\":\"用户确认的合成统计示例\",\"metrics\":{\"n\":5},\"sampleCount\":5,\"caveats\":[\"仅验证软件流程，不构成科研结论\"]},\"summary\":\"已执行并交付合成结果\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/pipeline.csv\"}],\"execution\":{\"state\":\"completed\",\"note\":\"实际命令已退出\",\"toolCallIds\":[\"call_mock_17\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"等待独立审阅\"}},\"deliverables\":[{\"stepId\":\"task\",\"path\":\"results/pipeline.csv\",\"state\":\"exists\"}]}\n\n只读审阅声明产物，逐个真实 read 并引用 callId；明确 pass/revise/blocked。不能写入或让分析者代审。",
+          "status": "completed",
+          "assignee": "review",
+          "outputs": [],
+          "dependencies": [
+            "p-analyze-1-3"
+          ],
+          "output": "{\"data\":{\"kind\":\"review\",\"verdict\":\"pass\",\"findings\":[],\"reviewedPaths\":[\"results/pipeline.csv\"]},\"summary\":\"已审阅合成交付\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_21\"]}}",
+          "attempt": 1,
+          "attemptId": "cd8a5ef1-a5be-4ca7-b30f-c045b3b3b372",
+          "createdAt": 1794073281780,
+          "updatedAt": 1794073284153
+        }
+      ],
+      "messages": [],
+      "taskSeq": 0
+    },
+    "observation": {
+      "observerId": "disk",
+      "revision": 0
+    },
+    "history": {
+      "events": [
+        {
+          "seq": 1,
+          "at": 1794073269758,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 2,
+          "at": 1794073269759,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 3,
+          "at": 1794073269760,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 4,
+          "at": 1794073269775,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 5,
+          "at": 1794073269776,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "taskAttempt": {
+            "teamId": "pipeline-82a17e24902971db208f63f9",
+            "taskId": "p-check-0-0",
+            "attemptId": "45000f0e-4b5b-452c-8497-c75565f31484",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 6,
+          "at": 1794073269777,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 7,
+          "at": 1794073269778,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "lock-wait",
+          "unknownBlockers": true,
+          "resources": [
+            "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-V4NhTt/workspace/in.csv"
+          ]
+        },
+        {
+          "seq": 8,
+          "at": 1794073269781,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 9,
+          "at": 1794073269798,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 10,
+          "at": 1794073273052,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "acceptance"
+        },
+        {
+          "seq": 11,
+          "at": 1794073273074,
+          "childId": "child-abeac4217e65ab4c5459249726fef507",
+          "epoch": 1,
+          "type": "settled",
+          "state": "completed",
+          "receipt": "accepted"
+        },
+        {
+          "seq": 12,
+          "at": 1794073273085,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 13,
+          "at": 1794073273086,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "taskAttempt": {
+            "teamId": "pipeline-82a17e24902971db208f63f9",
+            "taskId": "p-analyze-0-1",
+            "attemptId": "f82d7432-0dc1-418e-9f24-0768abd4f613",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 14,
+          "at": 1794073273087,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 15,
+          "at": 1794073273087,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 16,
+          "at": 1794073273104,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 17,
+          "at": 1794073276928,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "acceptance"
+        },
+        {
+          "seq": 18,
+          "at": 1794073276960,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "type": "settled",
+          "state": "completed",
+          "receipt": "accepted"
+        },
+        {
+          "seq": 19,
+          "at": 1794073276971,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 20,
+          "at": 1794073276972,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "taskAttempt": {
+            "teamId": "pipeline-82a17e24902971db208f63f9",
+            "taskId": "p-review-0-2",
+            "attemptId": "6e321aa0-fbb0-4600-b3a5-cc6c140692cd",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 21,
+          "at": 1794073276973,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 22,
+          "at": 1794073276973,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 23,
+          "at": 1794073276990,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 24,
+          "at": 1794073279331,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "acceptance"
+        },
+        {
+          "seq": 25,
+          "at": 1794073279348,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "type": "settled",
+          "state": "failed",
+          "receipt": "blocked"
+        },
+        {
+          "seq": 26,
+          "at": 1794073279360,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 1,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 27,
+          "at": 1794073279361,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 2,
+          "taskAttempt": {
+            "teamId": "pipeline-82a17e24902971db208f63f9",
+            "taskId": "p-analyze-1-3",
+            "attemptId": "15b5a1c9-35a5-4062-8c7c-4d49949092d5",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 28,
+          "at": 1794073279363,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 29,
+          "at": 1794073279364,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 30,
+          "at": 1794073279390,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 31,
+          "at": 1794073281747,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "acceptance"
+        },
+        {
+          "seq": 32,
+          "at": 1794073281779,
+          "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+          "epoch": 2,
+          "type": "settled",
+          "state": "completed",
+          "receipt": "accepted"
+        },
+        {
+          "seq": 33,
+          "at": 1794073281791,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 1,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 34,
+          "at": 1794073281793,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 2,
+          "taskAttempt": {
+            "teamId": "pipeline-82a17e24902971db208f63f9",
+            "taskId": "p-review-1-4",
+            "attemptId": "cd8a5ef1-a5be-4ca7-b30f-c045b3b3b372",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 35,
+          "at": 1794073281793,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 36,
+          "at": 1794073281795,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 37,
+          "at": 1794073281811,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 38,
+          "at": 1794073284135,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 2,
+          "type": "stage",
+          "stage": "acceptance"
+        },
+        {
+          "seq": 39,
+          "at": 1794073284152,
+          "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+          "epoch": 2,
+          "type": "settled",
+          "state": "completed",
+          "receipt": "accepted"
+        }
+      ],
+      "truncated": false
+    },
+    "budget": {
+      "revision": 10,
+      "limits": {},
+      "consumedRuns": 5,
+      "legacyRuns": 0,
+      "knownTokens": 220,
+      "unknownRuns": 5,
+      "inFlight": 0,
+      "startedAt": 1794073269776,
+      "elapsedMs": 18399
+    },
+    "runs": [
+      {
+        "id": "child-abeac4217e65ab4c5459249726fef507",
+        "kind": "team",
+        "label": "pipeline-check",
+        "address": [
+          "pipeline-82a17e24902971db208f63f9",
+          "check",
+          "9743679a-880f-4521-a1ac-3593b924a2bf"
+        ],
+        "state": "completed",
+        "epoch": 1,
+        "resultEpoch": 1,
+        "updatedAt": 1794073273074,
+        "phase": "unknown",
+        "contract": false,
+        "receipt": "accepted",
+        "inputVersions": 1,
+        "outputVersions": 0,
+        "contextObservation": {
+          "current": false,
+          "reason": "historical",
+          "sample": {
+            "ownerSessionId": "2e4643e7-a383-4e39-a3c6-46a4aa9afdc6",
+            "childId": "child-abeac4217e65ab4c5459249726fef507",
+            "epoch": 1,
+            "sample": {
+              "version": 1,
+              "observedAt": 1794073273043,
+              "provider": "deepseek",
+              "model": "deepseek-flash",
+              "contextWindow": 128000,
+              "contextWindowSource": "model-config",
+              "composition": {
+                "systemBytes": 1531,
+                "toolBytes": 3777,
+                "messageBytes": 5423,
+                "source": "retained-bytes-estimate"
+              },
+              "availability": "available",
+              "source": "sdk-estimate",
+              "usedTokens": 29
+            }
+          }
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "input": 36,
+          "output": 24,
+          "partial": [
+            "cacheRead"
+          ],
+          "settledEpochs": 1,
+          "unknownEpochs": 1,
+          "lastSettledEpoch": 1
+        },
+        "observation": {
+          "elapsedMs": 2827,
+          "submissionAttempts": 2,
+          "invalidSubmissions": 1,
+          "usage": {
+            "input": 36,
+            "output": 24,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "taskReceipt": {
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12,
+                "observationId": "7fb4f148-3a73-4027-979b-12d0aafb88c9",
+                "versionId": "544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+              }
+            ],
+            "outputs": []
+          },
+          "version": 1,
+          "state": "accepted",
+          "summary": "已核查合成数据",
+          "result": {
+            "data": {
+              "kind": "data-summary",
+              "rows": 5,
+              "columns": [
+                {
+                  "name": "x",
+                  "type": "number"
+                }
+              ],
+              "issues": []
+            },
+            "summary": "已核查合成数据",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "只读检查"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "实际读取声明文件，仅作为软件验收",
+              "toolCallIds": [
+                "call_mock_4"
+              ]
+            }
+          },
+          "deliverables": []
+        },
+        "trace": {
+          "records": [
+            {
+              "toolCallId": "call_mock_4",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "in.csv"
+            }
+          ],
+          "omitted": 0
+        },
+        "timing": {
+          "lockWaitMs": 3,
+          "preflightMs": 17,
+          "executionMs": 3255,
+          "acceptanceMs": 22
+        }
+      },
+      {
+        "id": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+        "kind": "team",
+        "label": "pipeline-analyze",
+        "address": [
+          "pipeline-82a17e24902971db208f63f9",
+          "analyze",
+          "30be6e3d-c349-4f88-a832-3723bf069f43"
+        ],
+        "state": "completed",
+        "epoch": 2,
+        "resultEpoch": 2,
+        "updatedAt": 1794073281779,
+        "phase": "unknown",
+        "contract": false,
+        "receipt": "accepted",
+        "inputVersions": 1,
+        "outputVersions": 1,
+        "contextObservation": {
+          "current": false,
+          "reason": "historical",
+          "sample": {
+            "ownerSessionId": "2e4643e7-a383-4e39-a3c6-46a4aa9afdc6",
+            "childId": "child-5665e4e1ca8c496ca8e58a6299c39df9",
+            "epoch": 2,
+            "sample": {
+              "version": 1,
+              "observedAt": 1794073281740,
+              "provider": "deepseek",
+              "model": "deepseek-flash",
+              "contextWindow": 128000,
+              "contextWindowSource": "model-config",
+              "composition": {
+                "systemBytes": 1533,
+                "toolBytes": 4613,
+                "messageBytes": 12757,
+                "source": "retained-bytes-estimate"
+              },
+              "availability": "available",
+              "source": "sdk-estimate",
+              "usedTokens": 29
+            }
+          }
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "input": 48,
+          "output": 32,
+          "partial": [
+            "cacheRead"
+          ],
+          "settledEpochs": 2,
+          "unknownEpochs": 2,
+          "lastSettledEpoch": 2
+        },
+        "observation": {
+          "elapsedMs": 1927,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 24,
+            "output": 16,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "taskReceipt": {
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12,
+                "observationId": "b321b456-db76-4a2b-b976-b9ca2f836911",
+                "versionId": "544556d725009596bf53955852d0d3bc47b650d1cef14d456c069b394a996a28:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+              }
+            ],
+            "outputs": [
+              {
+                "path": "results/pipeline.csv",
+                "sha256": "68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da",
+                "bytes": 32,
+                "observationId": "055f8149-e0d5-49fd-8b7d-d1bea834d5c3",
+                "versionId": "e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da"
+              }
+            ]
+          },
+          "version": 1,
+          "state": "accepted",
+          "summary": "已执行并交付合成结果",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "用户确认的合成统计示例",
+              "metrics": {
+                "n": 5
+              },
+              "sampleCount": 5,
+              "caveats": [
+                "仅验证软件流程，不构成科研结论"
+              ]
+            },
+            "summary": "已执行并交付合成结果",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "results/pipeline.csv"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "实际命令已退出",
+              "toolCallIds": [
+                "call_mock_17"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "等待独立审阅"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "results/pipeline.csv",
+              "state": "exists"
+            }
+          ]
+        },
+        "trace": {
+          "records": [
+            {
+              "toolCallId": "call_mock_17",
+              "name": "bash",
+              "status": "done",
+              "execution": "ran"
+            }
+          ],
+          "omitted": 0
+        },
+        "timing": {
+          "preflightMs": 43,
+          "executionMs": 6182,
+          "acceptanceMs": 64
+        }
+      },
+      {
+        "id": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+        "kind": "team",
+        "label": "pipeline-review",
+        "address": [
+          "pipeline-82a17e24902971db208f63f9",
+          "review",
+          "10381604-54f4-4473-99bb-7f2d5e6f0d75"
+        ],
+        "state": "completed",
+        "epoch": 2,
+        "resultEpoch": 2,
+        "updatedAt": 1794073284152,
+        "phase": "unknown",
+        "contract": false,
+        "receipt": "accepted",
+        "inputVersions": 1,
+        "outputVersions": 0,
+        "contextObservation": {
+          "current": false,
+          "reason": "historical",
+          "sample": {
+            "ownerSessionId": "2e4643e7-a383-4e39-a3c6-46a4aa9afdc6",
+            "childId": "child-8c01b41aa78047d3e24f9ea6bebdd282",
+            "epoch": 2,
+            "sample": {
+              "version": 1,
+              "observedAt": 1794073284128,
+              "provider": "deepseek",
+              "model": "deepseek-flash",
+              "contextWindow": 128000,
+              "contextWindowSource": "model-config",
+              "composition": {
+                "systemBytes": 1532,
+                "toolBytes": 3763,
+                "messageBytes": 11814,
+                "source": "retained-bytes-estimate"
+              },
+              "availability": "available",
+              "source": "sdk-estimate",
+              "usedTokens": 29
+            }
+          }
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "input": 48,
+          "output": 32,
+          "partial": [
+            "cacheRead"
+          ],
+          "settledEpochs": 2,
+          "unknownEpochs": 2,
+          "lastSettledEpoch": 2
+        },
+        "observation": {
+          "elapsedMs": 1904,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 24,
+            "output": 16,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "taskReceipt": {
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "results/pipeline.csv",
+                "sha256": "68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da",
+                "bytes": 32,
+                "observationId": "7e9d617c-f82c-48b7-ac7b-f34b54624741",
+                "versionId": "e642d6be22f0e15e71baec9f3127ec82789bc5c5e53725f0c29395460f8be5a5:68ab344ca956ae1f3b061e6fec17b8097884ce6113ac3d8f9df164b27e8d98da"
+              }
+            ],
+            "outputs": []
+          },
+          "version": 1,
+          "state": "accepted",
+          "summary": "已审阅合成交付",
+          "result": {
+            "data": {
+              "kind": "review",
+              "verdict": "pass",
+              "findings": [],
+              "reviewedPaths": [
+                "results/pipeline.csv"
+              ]
+            },
+            "summary": "已审阅合成交付",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "只读检查"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "实际读取声明文件，仅作为软件验收",
+              "toolCallIds": [
+                "call_mock_21"
+              ]
+            }
+          },
+          "deliverables": []
+        },
+        "trace": {
+          "records": [
+            {
+              "toolCallId": "call_mock_21",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/pipeline.csv"
+            }
+          ],
+          "omitted": 0
+        },
+        "timing": {
+          "preflightMs": 33,
+          "executionMs": 4667,
+          "acceptanceMs": 34
+        }
+      }
+    ]
+  }
+}

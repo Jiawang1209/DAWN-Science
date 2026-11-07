@@ -1,0 +1,49 @@
+{
+  "scope": "merged-main-budget",
+  "runs": 2,
+  "maxMs": {
+    "appCloseReturnedMs": 170.121,
+    "osProcessExitMs": 169.081,
+    "osProcessCloseMs": 169.826
+  },
+  "over4000Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "over1500Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "rows": [
+    {
+      "file": "exit-49952.jsonl",
+      "appCloseReturnedMs": 170.121,
+      "osProcessExitMs": 169.081,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 169.826,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-50155.jsonl",
+      "appCloseReturnedMs": 142.644,
+      "osProcessExitMs": 142.036,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 142.452,
+      "observerProblems": [],
+      "nativeProblems": []
+    }
+  ],
+  "historicalOpenMs": [
+    7350,
+    20690
+  ],
+  "historicalBudgetsUnchanged": [
+    1500,
+    4000
+  ]
+}

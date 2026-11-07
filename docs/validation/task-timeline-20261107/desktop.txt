@@ -1,0 +1,68 @@
+
+Running 11 tests using 1 worker
+
+(node:23979) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56951/1089a58f-8ed4-40aa-bb6e-be5ba8d23fea
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57113/0d273e60-068f-4fa6-9082-4d7f1e8f869e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (18.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57154/d5d2a266-f909-4e63-a13b-b3a930a2d141
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57189/9c131c2e-0c0b-4f62-961b-2afa409b46c2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › single quit during a root bash task drains its owned process before restart (4.7s)
+[主进程] Debugger ending on ws://127.0.0.1:57208/efa52616-864b-49d9-8297-19676dfc97b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57236/6d77b9c5-46d9-48b8-b714-63fe4413acec
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › repeated quit during a root bash task drains its owned process before restart (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57271/1b480b67-198c-4dcb-a60d-01dd8c3dda48
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57359/49770f38-1a09-4bfa-acf7-08ab097c6cb5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/exit-lifecycle.spec.ts:47:1 › diagnoses a deliberately vetoed quit while the native process is still alive (11.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57453/2a5483f4-7907-4cc3-b03a-e7af928fb394
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (12.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57682/7226bd67-ab63-4d08-8c35-b91d2b8e43a1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/run-explanation-budget.spec.ts:39:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (11.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57811/91451b09-4f54-4ebf-b8a6-a289b618bf91
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] Waiting for the debugger to disconnect...
+  ✓   7 e2e/run-explanation-budget.spec.ts:63:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (10.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:57944/7020dff2-8595-4c9e-a597-ab1273a155fa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (7.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57979/06b1952d-0038-4615-bd9b-efcbb6cc9b99
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (7.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:58034/e6ee4f15-2a15-470b-8216-7a86d04e4beb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (4.9s)
+[主进程] [桌面通知·假] #0 「审查报告预览链路」做完了 — {"summary":"report delivered","blockers":[],"deliverables":[{"path":"reports/report.md"}],"execution":{"state":"not_run"…
+[主进程] Debugger ending on ws://127.0.0.1:58055/ea7660dd-f500-485f-89b4-c25855c90b34
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/submission-evidence-review.spec.ts:12:1 › opens report images and scripts in the same owner, closes previews, and returns from expansion (6.3s)
+
+  11 passed (1.7m)

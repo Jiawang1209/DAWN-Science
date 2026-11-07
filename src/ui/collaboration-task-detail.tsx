@@ -2,13 +2,27 @@ import {CollaborationEvidence} from './collaboration-evidence.js'
 import type {WorkbenchClient} from './client.js'
 import type {TeamSnapshot} from '../protocol/index.js'
 import {ScienceAcceptanceStatus} from './science-acceptance-status.js'
+import {TaskTimeline,type TimelineDestination,type TimelineRun} from './task-timeline.js'
+import {runStatus} from './collaboration-model.js'
 import {t,tf} from './i18n/index.js'
 type Task=TeamSnapshot['tasks'][number]
-export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspectToolRecord}:{inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
+export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspectToolRecord,timeline,pendingDependencies,live,onInspect}:{timeline?:TimelineRun;pendingDependencies?:string[];live?:boolean;onInspect?:(destination:TimelineDestination)=>void;inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
  const settled=task.status==='completed'||task.status==='failed'
  const receipt=settled?task.receipt:undefined
+ const current=timeline?.current
+ const active=task.status==='claimed'||task.status==='in_progress'
+ const liveActivity=!!(live&&active&&current&&(current.phase==='running'||current.phase==='stopping'||current.phase==='queued'))
+ const status=receipt?.state==='blocked'?t("宿主验收阻塞"):liveActivity?runStatus(current!,true):
+  task.status==='completed'?t("执行完成"):task.status==='failed'?t("执行失败"):task.status==='cancelled'?t("已取消"):
+  pendingDependencies?.length&&task.status==='pending'?t("等待前置"):tf("任务状态：{0}",task.status)
+ const reason=receipt?.reason||(receipt?.result?.blockers.length?receipt.result.blockers.join('；'):undefined)||(task.status==='failed'?task.output:undefined)||(task.status==='pending'&&pendingDependencies?.length?tf("等待前置：{0}",pendingDependencies.join(' · ')):undefined)
  return <div className="collaboration-team-task" data-task-detail={task.id}>
-  {tab==='process'?<><p data-authored="1">{task.description??task.subject}</p><p>{tf("任务状态：{0}",task.status)}</p><p>{tf("依赖：{0}",task.dependencies.join(' · ')||t("没有前置"))}</p>{task.output?<pre data-authored="1">{task.output}</pre>:<p className="hint">{t("还没有结果")}</p>}</>:null}
+  {tab==='process'?<>
+   {onInspect?<TaskTimeline events={timeline?.events??[]} truncated={timeline?.truncated} historical={timeline?.historical} current={active?current:undefined} live={liveActivity}
+    status={status} reason={reason} toolCount={settled&&!timeline?.historical?task.trace?.records.length??0:0} versionCount={timeline?.historical?0:receipt?.versions?.outputs.length??0} onInspect={onInspect}/>:null}
+   <details className="task-timeline-context"><summary>{t("任务说明与回报")}</summary><p data-authored="1">{task.description??task.subject}</p>
+    <p>{tf("依赖：{0}",task.dependencies.join(' · ')||t("没有前置"))}</p>{task.output?<pre data-authored="1">{task.output}</pre>:<p className="hint">{t("还没有结果")}</p>}
+   </details></>:null}
   {tab==='handoff'?<><p>{task.contract?t("已冻结任务契约"):t("普通委派任务")}</p>{task.contract?<><p data-authored="1">{tf("契约输入 {0} 项 · 声明输出 {1} 项",task.contract.inputs.length,task.contract.outputs.length)}</p><p className="hint">{t("冻结契约决定执行边界；查看不会批准、改写或重启任务。")}</p></>:null}</>:null}
   {tab==='artifacts'?<><p>{receipt?.state==='accepted'?t("宿主验收通过"):receipt?.state==='blocked'?t("宿主验收阻塞"):receipt?.state==='invalid'?t("宿主验收未通过"):t("暂无宿主验收回执")}</p>
    <p className="hint">{t("声明产物与验收版本分别列出；历史版本不代表当前文件仍有效。")}</p>

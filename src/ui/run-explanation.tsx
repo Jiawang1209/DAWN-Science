@@ -4,7 +4,7 @@ import {t,tf} from './i18n/index.js'
 export function stageLabel(stage:ExecutionStage){
  switch(stage){case 'lock-wait':return t("等待产物锁");case 'preflight':return t("核验冻结输入");case 'execution':return t("后端执行");case 'acceptance':return t("宿主验收")}
 }
-function eventLabel(event:RunEvent){
+export function eventLabel(event:RunEvent){
  switch(event.type){
  case 'registered':return t("建立子任务");case 'queued':return t("进入调度队列");case 'started':return t("开始执行");
  case 'stage':return event.stage?stageLabel(event.stage):t("阶段更新");case 'cancel-requested':return t("已请求停止");

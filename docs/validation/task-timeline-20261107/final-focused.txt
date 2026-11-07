@@ -1,0 +1,8 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science
+
+
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  12:59:19
+   Duration  1.83s (transform 1.38s, setup 1.57s, import 1.04s, tests 723ms, environment 1.43s)

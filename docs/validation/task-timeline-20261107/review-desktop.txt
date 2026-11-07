@@ -1,0 +1,46 @@
+
+Running 7 tests using 1 worker
+
+(node:84303) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56081/241ad4d1-185c-4ac6-9562-440529394164
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56243/d6482163-c523-4f37-8a7c-ef8643d74c63
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (19.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56287/3702b68d-4d99-4626-a47d-556505fedbbe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (13.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56531/d02561b4-3a66-418a-926a-e7ebed13c485
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/run-explanation-budget.spec.ts:39:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (11.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56623/5a7d0698-8e39-402f-b7d6-4f5aa8032600
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56740/075be89b-bb7f-4cb1-8692-e8e5bca5d530
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/run-explanation-budget.spec.ts:63:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (9.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:56760/683e1d32-bf58-4ccc-817c-60d0694ca6ae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (7.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56845/3b890afc-d017-40a7-b6f7-dc74e17c4737
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (8.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:56890/15780584-2474-445b-9284-1b39e5e744bb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (4.7s)
+
+  7 passed (1.3m)

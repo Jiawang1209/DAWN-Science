@@ -1,0 +1,15 @@
+{
+  "observedHosts": 16,
+  "exitCodes": {
+    "0": 16
+  },
+  "delays": [
+    {
+      "test": "exit-lifecycle-diagnoses-a-31316-tive-process-is-still-alive",
+      "exitCode": 0,
+      "alerts": [
+        "still-waiting-5s"
+      ]
+    }
+  ]
+}

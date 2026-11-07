@@ -6,7 +6,7 @@ import {t,tf} from './i18n/index.js'
 import {Button} from './primitives.js'
 import {关闭图标} from './icons.js'
 import {子转录id} from '../protocol/subagent-id.js'
-import {RunActivity,RunHistory} from './run-explanation.js'
+import {RunHistory} from './run-explanation.js'
 import {RunBudgetPanel} from './run-budget.js'
 import {CollaborationHandoff} from './collaboration-handoff.js'
 import {useRunOverview} from './use-run-overview.js'
@@ -15,14 +15,20 @@ import type {TeamSnapshot} from '../protocol/index.js'
 import {CollaborationExpanded} from './collaboration-expanded.js'
 import {CollaborationWorkflow} from './collaboration-workflow.js'
 import {CollaborationTaskDetail} from './collaboration-task-detail.js'
+import {TaskTimeline,directTaskTimeline,teamTaskTimeline,type TimelineDestination} from './task-timeline.js'
 import {useCollaborationView} from './state/collaboration-view.js'
 export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|undefined;client:WorkbenchClient;sessionId?:string|undefined;onView?:((id:string)=>void)|undefined}){
- const tabId=useId(),expandTrigger=useRef<HTMLButtonElement>(null)
+ const tabId=useId(),tabsRef=useRef<HTMLElement>(null),expandTrigger=useRef<HTMLButtonElement>(null)
  const[inspection,setInspection]=useState<{owner:string|undefined;key:string;trigger:HTMLButtonElement}>()
  const detailClose=useRef<HTMLButtonElement>(null)
  const{snapshot:current,error,refresh}=useRunOverview(client,sessionId)
  const{selection,tab,expanded,update}=useCollaborationView(sessionId)
  const setTab=(tab:import('./state/collaboration-view.js').CollaborationTab)=>update({tab})
+ const inspect=(destination:TimelineDestination)=>{
+  setTab(destination)
+  const target=tabsRef.current?.querySelector<HTMLButtonElement>(`[data-collaboration-tab="${destination}"]`)
+  target?.focus()
+ }
  const runs=current?.runs??[],run=runs.find(r=>selection===`run:${r.id}`)??runs.find(r=>r.phase==='running'||r.phase==='stopping')??runs[0]
  const ownedTeam=team?.captainSessionId===sessionId?team:undefined
  const task=ownedTeam?.tasks.find(task=>selection===collaborationTaskKey(ownedTeam!.id,task.id))
@@ -32,6 +38,8 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
   if(inspecting){detailClose.current?.focus();return}
   if(inspection){setInspection(undefined);if(expanded&&document.activeElement===document.body)expandTrigger.current?.focus()}
  },[expanded,inspection,inspecting])
+ const attempt=task&&task.attempt>0&&sessionId&&ownedTeam&&current?teamTaskTimeline(current,sessionId,{teamId:ownedTeam.id,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt}):{events:[]}
+ const dependencies=task&&ownedTeam?task.dependencies.filter(id=>ownedTeam.tasks.find(t=>t.id===id)?.status!=='completed').map(id=>ownedTeam.tasks.find(t=>t.id===id)?.subject??id):[]
  const live=current?.source==='live'
  const count=current?collaborationCounts(current):undefined
  const content=<section className="run-overview collaboration-panel" data-expanded={expanded} data-inspecting={inspecting} aria-label={t("运行总览")}>
@@ -62,19 +70,22 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
        target?.focus({preventScroll:true});setInspection(undefined)
       }}><关闭图标/></Button>:null}
      </header>
-     <nav className="collaboration-tabs" role="tablist" aria-label={t("任务详情")} onKeyDown={event=>{const tabs=[...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];const at=tabs.indexOf(document.activeElement as HTMLButtonElement);const next=event.key==='ArrowRight'?(at+1)%tabs.length:event.key==='ArrowLeft'?(at+tabs.length-1)%tabs.length:event.key==='Home'?0:event.key==='End'?tabs.length-1:-1;if(next>=0){event.preventDefault();tabs[next]?.focus();tabs[next]?.click()}}}>
+     <nav ref={tabsRef} className="collaboration-tabs" role="tablist" aria-label={t("任务详情")} onKeyDown={event=>{const tabs=[...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];const at=tabs.indexOf(document.activeElement as HTMLButtonElement);const next=event.key==='ArrowRight'?(at+1)%tabs.length:event.key==='ArrowLeft'?(at+tabs.length-1)%tabs.length:event.key==='Home'?0:event.key==='End'?tabs.length-1:-1;if(next>=0){event.preventDefault();tabs[next]?.focus();tabs[next]?.click()}}}>
       <Button variant="ghost" size="sm" role="tab" id={`${tabId}-process`} aria-controls={`${tabId}-panel`} aria-selected={tab==='process'} tabIndex={tab==='process'?0:-1} onClick={()=>setTab('process')}>{t("过程")}</Button>
       <Button variant="ghost" size="sm" role="tab" id={`${tabId}-handoff`} aria-controls={`${tabId}-panel`} aria-selected={tab==='handoff'} tabIndex={tab==='handoff'?0:-1} onClick={()=>setTab('handoff')}>{t("交接")}</Button>
-      <Button variant="ghost" size="sm" role="tab" id={`${tabId}-artifacts`} aria-controls={`${tabId}-panel`} aria-selected={tab==='artifacts'} tabIndex={tab==='artifacts'?0:-1} onClick={()=>setTab('artifacts')}>{t("产物")}</Button>
-      <Button variant="ghost" size="sm" role="tab" id={`${tabId}-records`} aria-controls={`${tabId}-panel`} aria-selected={tab==='records'} tabIndex={tab==='records'?0:-1} onClick={()=>setTab('records')}>{t("记录")}</Button>
+      <Button variant="ghost" size="sm" role="tab" data-collaboration-tab="artifacts" id={`${tabId}-artifacts`} aria-controls={`${tabId}-panel`} aria-selected={tab==='artifacts'} tabIndex={tab==='artifacts'?0:-1} onClick={()=>setTab('artifacts')}>{t("产物")}</Button>
+      <Button variant="ghost" size="sm" role="tab" data-collaboration-tab="records" id={`${tabId}-records`} aria-controls={`${tabId}-panel`} aria-selected={tab==='records'} tabIndex={tab==='records'?0:-1} onClick={()=>setTab('records')}>{t("记录")}</Button>
      </nav>
      <div role="tabpanel" id={`${tabId}-panel`} aria-labelledby={`${tabId}-${tab}`}>
-     {task?<CollaborationTaskDetail key={`${task.id}:${task.attemptId}`} task={task} teamId={ownedTeam?.id} inspectToolRecord={!!ownedTeam?.members.some(m=>m.name===task.assignee&&!m.botId)} tab={tab} client={client} sessionId={sessionId!}/>:run?<>
+     {task?<CollaborationTaskDetail key={`${task.id}:${task.attemptId}`} task={task} timeline={attempt} pendingDependencies={dependencies} live={live} onInspect={inspect} teamId={ownedTeam?.id} inspectToolRecord={!!ownedTeam?.members.some(m=>m.name===task.assignee&&!m.botId)} tab={tab} client={client} sessionId={sessionId!}/>:run?<>
      {tab==='process'?<>
-      <p className="collaboration-current">{runStatus(run,live)}</p>{run.reason?<p data-authored="1">{run.reason}</p>:null}
-      <RunActivity run={run} live={live&&run.phase!=='unknown'} compact/>
+      <TaskTimeline key={JSON.stringify([sessionId,run.id,run.epoch])}
+       events={directTaskTimeline(current.history,run)} truncated={current.history?.truncated}
+       current={run} live={live} status={runStatus(run,live)}
+       reason={(hasCurrentSettlement(run)?run.taskReceipt?.reason:undefined)||(run.phase!=='queued'&&run.state!=='queued'?run.reason:undefined)}
+       toolCount={run.trace?.records.length??0}
+       versionCount={hasCurrentSettlement(run)?run.taskReceipt?.versions?.outputs.length??0:0} onInspect={inspect}/>
       <p>{run.contract?t("已冻结任务契约"):t("普通委派任务")}</p><p className="hint">{acceptance(run)}</p>
-      {current.history?<RunHistory snapshot={{...current,history:{...current.history,events:current.history.events.filter(e=>e.childId===run.id&&e.epoch===run.epoch)}}}/>:null}
      </>:null}
      {tab==='handoff'?<CollaborationHandoff key={`${run.id}:${run.epoch}`} run={run}/>:null}
      {tab==='artifacts'?<><p>{acceptance(run)}</p>{hasCurrentSettlement(run)?<p>{tf("输入版本 {0} · 产物版本 {1}",run.inputVersions,run.outputVersions)}</p>:<p className="hint">{t("本轮产物尚未结算；保留的上次结果不作为本轮验收")}</p>}<p className="hint">{t("版本数量来自宿主回执；不代表文件当前内容已重新核验。")}</p></>:null}

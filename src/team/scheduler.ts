@@ -448,7 +448,7 @@ export class 团队调度器 {
         const coordinator = this.opts.orchestration
         if (coordinator) {
           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
-          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal)
+          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal,任务&&assignment?.attemptId===任务.attemptId?{teamId,taskId:任务.taskId,attemptId:任务.attemptId,attempt:assignment.attempt}:undefined)
         } else 结果 = await execute(ctrl.signal)
       } catch (error) {
         结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}

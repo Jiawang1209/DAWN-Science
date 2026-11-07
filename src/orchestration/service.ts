@@ -3,6 +3,7 @@ import {OrchestrationStore, type Outcome, type ChildKind, type ChildRecord} from
 
 import type {SteeringReceipt} from './store.js'
 import {withExecutionContext,reportExecutionStage} from './execution-context.js'
+import {TaskAttemptBindingSchema,type TaskAttemptBinding} from '../protocol/run-explanation.js'
 import type {RunBudgetLimits} from '../protocol/run-budget.js'
 
 type Work = (signal: AbortSignal) => Promise<Outcome>
@@ -10,6 +11,7 @@ interface Entry {
   id: string
   controller: AbortController
   work: Work
+  taskAttempt?:TaskAttemptBinding
   resolve: (outcome: Outcome) => void
   reject: (error: unknown) => void
   detach: () => void
@@ -53,7 +55,7 @@ export class OrchestrationService {
     return child
   }
 
-  run(id: string, work: Work, signal?: AbortSignal): Promise<Outcome> {
+  run(id: string, work: Work, signal?: AbortSignal,taskAttempt?:TaskAttemptBinding): Promise<Outcome> {
     if (this.closed) return Promise.reject(new Error('Orchestration service is closed'))
     const child = this.store.get(id)
     if (!child) return Promise.reject(new Error(`Unknown child in this parent session: ${id}`))
@@ -64,7 +66,9 @@ export class OrchestrationService {
       const controller = new AbortController()
       let finish!: () => void
       const finished = new Promise<void>(done => {finish = done})
-      const entry: Entry = {id, work, controller, resolve, reject, finished, finish, detach: () => {}}
+      const binding=taskAttempt?TaskAttemptBindingSchema.safeParse(taskAttempt):undefined
+      if(binding&&!binding.success)this.observationIssue='部分任务阶段无法关联；既有执行和验收继续生效'
+      const entry: Entry = {id, work, ...(binding?.success?{taskAttempt:binding.data}:{}),controller, resolve, reject, finished, finish, detach: () => {}}
       const abort = () => {
         if(this.active.get(id)===entry)this.interruptSteering(id)
         this.observeCancellation(entry)
@@ -210,7 +214,7 @@ export class OrchestrationService {
 
   private async execute(entry: Entry): Promise<void> {
     try {
-      const epoch = this.store.beginRun(entry.id)
+      const epoch = this.store.beginRun(entry.id,entry.taskAttempt)
       this.refreshBudgetTimer()
       this.changed()
       let outcome: Outcome

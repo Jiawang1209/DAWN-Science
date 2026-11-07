@@ -71,3 +71,15 @@ it('cold cancellation diagnostics need a matching settled epoch and never recove
  const bad=JSON.parse(readFileSync(file,'utf8'));bad.children[0].resultEpoch=3;writeFileSync(file,JSON.stringify(bad))
  expect(()=>readRunOverview(root,'p')).toThrow()
 })
+it('records the exact Team attempt atomically at admission and leaves aborted queued attempts unbound',async()=>{
+ const {root,service}=setup(),child=service.register('team',['team-a','reader','generation'],'reader')
+ const a={teamId:'team-a',taskId:'task-a',attemptId:'attempt-a',attempt:1},b={teamId:'team-a',taskId:'task-b',attemptId:'attempt-b',attempt:1}
+ let release!:()=>void;const hold=new Promise<void>(resolve=>{release=resolve}),controller=new AbortController()
+ const first=service.run(child.id,async()=>{await hold;return{ok:true,output:''}},undefined,a)
+ const queued=service.run(child.id,async()=>{throw Error('must not run')},controller.signal,b)
+ controller.abort();await queued;release();await first
+ await service.run(child.id,async()=>({ok:true,output:''}),undefined,{...a,attemptId:'resumed',attempt:2})
+ const snapshot=readRunOverview(root,'p')
+ expect(snapshot.history?.events.filter(event=>event.taskAttempt).map(event=>[event.type,event.epoch,event.taskAttempt?.attemptId])).toEqual([['started',1,'attempt-a'],['started',2,'resumed']])
+ await service.close()
+})

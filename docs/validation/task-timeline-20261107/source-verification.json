@@ -1,0 +1,18 @@
+{
+  "e2e/run-explanation-budget.spec.ts": "2d545ed1780ff41b722342007a08fbb8101fa2a224e22c320da5cc892f397d57",
+  "e2e/science-pipeline.spec.ts": "6a082f8298a8c72102bbb2175067740ba446faa18b602f49ff6b8b2539021f48",
+  "src/orchestration/service.ts": "f70b67583130c3578ccab67774cf88f44d0355434295ccc195a0ba683a428e44",
+  "src/orchestration/store.ts": "ff5decf6d91068363b6c49bfc419ec4af161de61227a7842a8112ec585183428",
+  "src/protocol/run-explanation.ts": "9bd516310c6828c1b0a532c2757f5550aa952c16ab4e7878e2912de431e3f306",
+  "src/protocol/version.ts": "d3a66a974df7ca46782162604dd6fad8e50aa9ec150f2dcffd5b5371510ea5b7",
+  "src/team/scheduler.ts": "ba2fcc7326672d05db737acd5e2b7119a9e4998e5e3fcce967f8fc571a259334",
+  "src/ui/collaboration-task-detail.tsx": "14bb52401878462569acd092d7767f3947c95079a0d884cb05b5b7c68fbc11d2",
+  "src/ui/i18n/en.ts": "cffd2e334301c0a41a1f8383ec99f50031ff21e0f758219df818de372a0ecf59",
+  "src/ui/run-explanation.tsx": "95e1cf1378d9ab0eaaa41884936adfc3bd2e92603138796b53b4dd6e24c53965",
+  "src/ui/run-overview.tsx": "0c712f04c945b4144d22bf64701482769cc69acde1fdcbe2ac1cd16732427dde",
+  "src/ui/styles.css": "ba8083ddbe587eaa1d7b284fee6a989004ebbc57d5a80d5151108a53fdb44084",
+  "src/ui/task-timeline.tsx": "a10506ffacbfdec88e93cd47cab455555b40e706b41d5c0bfdb9ae13e5e91ab4",
+  "tests/orchestration/run-overview.test.ts": "40b8971ce41946e14f6fada23729f9e955e54dc7ee8201b44e06844bffb10a13",
+  "tests/protocol/events.test.ts": "bdfc4ee22349ac572e66f3a93ded895d2d41e518aee40f7d922e4bb839d22aaa",
+  "tests/ui/task-timeline.test.tsx": "afb2ddcb1d140b5766d795fbf70991d330a8f54f7db14159108ecca830d5edf8"
+}

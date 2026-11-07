@@ -606,7 +606,8 @@
 /** 8.46：宿主阶段/锁等待历史与可显式设置的持久会话委派预算。 */
 /** 8.47：有界证据交接 v2，正文选择、路线记录与历史验收版本投影。 */
 /** 8.48: on-demand, execution-bound original tool record inspection. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.48"
+/** 8.49: bind existing run history to the corresponding Team task attempt. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.49"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

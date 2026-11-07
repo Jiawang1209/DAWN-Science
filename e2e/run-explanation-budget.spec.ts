@@ -24,9 +24,9 @@ test.describe('run explanation',()=>{
   await overview.locator('.run-activity').filter({hasText:'等待产物锁'}).scrollIntoViewIfNeeded()
   mkdirSync(evidence,{recursive:true});await page.screenshot({path:join(evidence,'phase-a-lock-wait.png')})
   await expect(overview.locator('.run-overview-row').filter({hasText:'执行完成'})).toHaveCount(2)
-  await overview.locator('.collaboration-detail').getByText('关键执行历史',{exact:true}).click()
-  await expect(overview.locator('.collaboration-detail .run-history')).toContainText('等待产物锁')
-  await expect(overview.locator('.collaboration-detail .run-history')).toContainText('执行已结算')
+  const timeline=overview.getByRole('region',{name:'任务轨迹',exact:true})
+  await expect(timeline.locator('ol')).toContainText('等待产物锁')
+  await expect(timeline.locator('ol')).toContainText('执行已结算')
   await page.screenshot({path:join(evidence,'phase-a-history.png')})
   const sessions=join(workspace,'.dawn/sessions'),sid=readdirSync(sessions)[0]!
   const state=JSON.parse(readFileSync(join(sessions,sid,'orchestration/state.json'),'utf8'))

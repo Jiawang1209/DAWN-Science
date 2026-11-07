@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-07T05:02:07.740Z",
+  "inference": "live",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestLimit": 30,
+  "requestAllocation": {
+    "perArmLimit": 15,
+    "repeats": 1,
+    "enforced": true,
+    "plannedArms": 2
+  },
+  "sourceFiles": [
+    "scripts/evaluate-research.ts",
+    "src/evaluation/research-tasks.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/child.ts",
+    "src/team/science-pipeline.ts",
+    "src/team/science-acceptance.ts",
+    "src/orchestration/task-submission.ts",
+    "src/orchestration/task-contract.ts",
+    "src/protocol/task-contract.ts",
+    "src/team/science-templates.ts",
+    "src/protocol/science-pipeline.ts",
+    "src/subagent/task-tools.ts",
+    "src/runtime/native.ts",
+    "src/runtime/pi-tool-status.ts",
+    "scripts/evaluation-request-gate.ts",
+    "src/bot/output-locks.ts"
+  ],
+  "sourceFingerprint": "2c51d279a324e985ef2647a19b941b2e654f5f4256b97a93385234e155fbe5d5",
+  "childBuildFingerprint": "b94b856c28294c016c0591b161f87c88f891086e5728c54536739d3ed4ee7e00",
+  "tasks": [
+    {
+      "id": "carbon-missing",
+      "csv": "site,carbon_mg_g,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "drop",
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568"
+    }
+  ],
+  "delivery": {
+    "single": {
+      "qualifiedDeliveries": 1,
+      "correctBlocks": 0,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 10,
+      "elapsedMs": 50185,
+      "requestsPerDelivery": 10,
+      "msPerDelivery": 50185
+    },
+    "multi": {
+      "qualifiedDeliveries": 0,
+      "correctBlocks": 0,
+      "falseAcceptances": 0,
+      "exhausted": 1,
+      "requests": 15,
+      "elapsedMs": 99294,
+      "requestsPerDelivery": null,
+      "msPerDelivery": null
+    }
+  },
+  "kind": "representative-research-pilot",
+  "completePairs": 0,
+  "incompletePairs": 1,
+  "qualifiedPairs": 0,
+  "rows": [
+    {
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "54c2011404d2efdd686045d2197f2209baff15e8be359c71f1cdbada4c721163",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 10,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 10,
+        "forwarded": 10,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 15
+      },
+      "elapsedMs": 50185,
+      "usage": {
+        "visibleTokens": 20221,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "928d0ce2e8f30634adc30f219d26808253df9db7907021c20f5363e1f0b280ac",
+          "bytes": 3827
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+          "bytes": 62
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "e239bc4259414da0b55933a852f5d6b0c2431f3b2317d8011f50152122530200",
+          "bytes": 5403
+        }
+      ]
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "54c2011404d2efdd686045d2197f2209baff15e8be359c71f1cdbada4c721163",
+      "terminal": "failed",
+      "success": false,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 15,
+      "submissionAttempts": 4,
+      "invalidSubmissions": 2,
+      "requestBudget": {
+        "reserved": 15,
+        "forwarded": 15,
+        "denied": 4,
+        "inFlight": 0,
+        "limit": 15
+      },
+      "elapsedMs": 99294,
+      "usage": {
+        "visibleTokens": 32781,
+        "unknownUsageTasks": 1,
+        "partialUsage": true
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "ece0719836a8ced364de034e7f831b569a7ef8bef117f3766fd6774c045f2e0e",
+          "bytes": 3758
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+          "bytes": 62
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "831a77994eebb42fa0f2fa3c30f36cfe143a70d768f88a6c9b4dc697c44c97d7",
+          "bytes": 5347
+        }
+      ],
+      "reason": "流程未完成；查看隔离阶段记录"
+    }
+  ],
+  "limitations": [
+    "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
+    "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
+    "各组独立等额请求上限，未用额度不借给另一组；额度用尽与科学错误分开，不完整配对不形成质量或费用收益结论。",
+    "缺失或部分用量不作零费用；无价格换算；未运行的输入核验和用量不适用。"
+  ]
+}

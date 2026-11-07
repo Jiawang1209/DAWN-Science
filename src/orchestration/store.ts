@@ -1,4 +1,5 @@
 /** Durable, parent-scoped identities and execution facts. Pi remains the transcript owner. */
+import type {TaskAttemptBinding} from '../protocol/run-explanation.js'
 import {createHash, randomUUID} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
@@ -67,12 +68,15 @@ export function validateOrchestrationIdentity(state:State,ownerSessionId:string)
  for(const event of state.events??[]){
   const child=event.childId?children.get(event.childId):undefined
   if(event.seq<=sequence||event.seq>(state.eventSequence??0)||event.childId&&!child||event.epoch!==undefined&&(!child||event.epoch>child.epoch))throw new Error('invalid event identity or order')
+  if(event.taskAttempt&&(event.type!=='started'||!event.epoch||!child||!matchesAttemptOwner(child,event.taskAttempt)))throw new Error('invalid team attempt binding')
   sequence=event.seq
  }
  const activeIds=new Set<string>()
  for(const active of state.budget?.active??[]){const child=children.get(active.childId);if(!child||child.epoch!==active.epoch||activeIds.has(active.childId))throw new Error('invalid budget execution identity');activeIds.add(active.childId)}
  if(state.budget&&(state.budget.active.length>state.budget.consumedRuns||state.budget.legacyRuns>state.budget.consumedRuns||state.budget.unknownRuns>state.budget.consumedRuns))throw new Error('invalid budget accounting')
 }
+
+const matchesAttemptOwner=(child:ChildRecord,binding:TaskAttemptBinding)=>(child.kind==='team'||child.kind==='bot')&&child.address.length===3&&child.address[0]===binding.teamId
 
 export class OrchestrationStore {
   private state: State
@@ -134,7 +138,7 @@ export class OrchestrationStore {
     return this.budget()
   }
   /** The epoch and its charge are one atomic write before dispatch. */
-  beginRun(id:string):number{
+  beginRun(id:string,taskAttempt?:TaskAttemptBinding):number{
     let epoch=0
     this.change(state=>{
       const child=state.children.find(c=>c.id===id);if(!child)throw new Error('Unknown child')
@@ -142,7 +146,7 @@ export class OrchestrationStore {
       if(budget.active.some(active=>active.childId===id))throw new Error('Child is already budgeted in flight')
       epoch=++child.epoch;child.state='running';child.reason='';child.updatedAt=Date.now()
       budget.consumedRuns++;budget.startedAt??=Date.now();budget.active.push({childId:id,epoch});budget.revision++
-      appendEvent(state,{type:'started',childId:id,epoch,state:'running'})
+      appendEvent(state,{type:'started',childId:id,epoch,state:'running',...(taskAttempt&&matchesAttemptOwner(child,taskAttempt)?{taskAttempt}:{})})
     })
     return epoch
   }

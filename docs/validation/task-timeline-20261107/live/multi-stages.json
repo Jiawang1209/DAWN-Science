@@ -1,0 +1,29 @@
+{
+  "status": "blocked",
+  "stages": [
+    {
+      "taskId": "p-check-0-0",
+      "resultType": "data-summary",
+      "status": "completed",
+      "receipt": "accepted",
+      "submissionAttempts": 2,
+      "invalidSubmissions": 1
+    },
+    {
+      "taskId": "p-analyze-0-1",
+      "resultType": "model-metrics",
+      "status": "completed",
+      "receipt": "accepted",
+      "submissionAttempts": 2,
+      "invalidSubmissions": 1
+    },
+    {
+      "taskId": "p-review-0-2",
+      "resultType": "review",
+      "status": "failed",
+      "receipt": null,
+      "submissionAttempts": 0,
+      "invalidSubmissions": 0
+    }
+  ]
+}

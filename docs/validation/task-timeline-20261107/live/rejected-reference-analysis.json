@@ -1,0 +1,70 @@
+[
+  {
+    "stage": "check",
+    "error": "审查记录必须引用实际且类型相符的工具结果 toolCallIds；工具成功不代表科学结论正确",
+    "executionReferences": [
+      {
+        "toolCallId": "call_00_gjYP382hkO3DZOWhOFgf3135",
+        "tool": "read"
+      }
+    ],
+    "verificationReferences": [
+      {
+        "toolCallId": "call_00_gjYP382hkO3DZOWhOFgf3135",
+        "tool": "read"
+      },
+      {
+        "toolCallId": "call_01_r9YkS7nmaedxuwI3WKzQ4560",
+        "tool": "read"
+      }
+    ]
+  },
+  {
+    "stage": "analyze",
+    "error": "执行记录必须引用实际且类型相符的工具结果 toolCallIds；工具成功不代表科学结论正确",
+    "executionReferences": [
+      {
+        "toolCallId": "call_00_ET_As2LD9YxyLmnvFcoZrNf3170",
+        "tool": "bash"
+      },
+      {
+        "toolCallId": "call_00_4XaAMxzzlMyMR5gIVoYv7536",
+        "tool": "write"
+      },
+      {
+        "toolCallId": "call_00_u9gv6kg3K1WiY6KKb4S15321",
+        "tool": "bash"
+      },
+      {
+        "toolCallId": "call_00_nCPEdunK1FdbMBZ5CP546160",
+        "tool": "bash"
+      },
+      {
+        "toolCallId": "call_00_x6RQkW3b6h8JhWIqfmDR2230",
+        "tool": "write"
+      }
+    ],
+    "verificationReferences": [
+      {
+        "toolCallId": "call_00_ET_As2LD9YxyLmnvFcoZrNf3170",
+        "tool": "bash"
+      },
+      {
+        "toolCallId": "call_00_rt03cc5vFbpHBkhWU9xK4556",
+        "tool": "bash"
+      },
+      {
+        "toolCallId": "call_00_nCPEdunK1FdbMBZ5CP546160",
+        "tool": "bash"
+      },
+      {
+        "toolCallId": "call_00_nXwSlBWuK422XNPC8Ydd8685",
+        "tool": "read"
+      },
+      {
+        "toolCallId": "call_00_ET_QGqqdWElha7x0kdh0nVD3249",
+        "tool": "read"
+      }
+    ]
+  }
+]

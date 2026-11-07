@@ -1,0 +1,26 @@
+
+Running 4 tests using 1 worker
+
+(node:57667) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58192/4fed2a15-6017-4c8d-aca8-ccf0ee933ec9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (12.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:58258/18a58f4d-229a-4ef2-98f7-73637b4d2658
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58291/779295fe-6f34-4992-bcec-501348768abb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-task-timeline-check-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:58335/bd1797c0-89b7-482e-92d9-5be797c16c70
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (4.0s)
+
+  4 passed (27.9s)

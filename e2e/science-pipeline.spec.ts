@@ -28,6 +28,17 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
   // A malformed public snapshot would be rejected before this live status banner could render.
   await 进坞(page,'团队')
   await expect(page.locator('.science-pipeline-status').first()).toContainText(mode==='blocked'?'受阻':'交付检查通过',{timeout:15000})
+  if(mode==='blocked'){
+   await page.getByRole('button',{name:'展开流程工作台',exact:true}).click()
+   const dialog=page.getByRole('dialog',{name:'流程工作台',exact:true})
+   await dialog.getByRole('button',{name:team.tasks[0].subject,exact:true}).click()
+   const timeline=dialog.getByRole('region',{name:'任务轨迹',exact:true})
+   await expect(timeline).toContainText('宿主验收阻塞')
+   await expect(timeline.locator('ol')).toContainText('核验冻结输入')
+   await expect(timeline.getByRole('button',{name:/个产物版本/})).toHaveCount(0)
+   const evidence=process.env.DAWN_COLLABORATION_EVIDENCE_DIR
+   if(evidence){mkdirSync(evidence,{recursive:true});await page.screenshot({path:join(evidence,'task-timeline-blocked.png')})}
+  }
   if(mode==='pass'){
    const evidence=resolve(process.env.DAWN_COLLABORATION_EVIDENCE_DIR??'docs/validation/collaboration-workbench-20261107/desktop');mkdirSync(evidence,{recursive:true})
    await page.getByRole('button',{name:'展开流程工作台',exact:true}).click()
@@ -40,6 +51,15 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
    const analysis=team.tasks.find((task:any)=>task.contract?.resultType==='model-metrics')
    expect(analysis.receipt.versions.outputs.length).toBeGreaterThan(0)
    await dialog.getByRole('button',{name:analysis.subject,exact:true}).click()
+   await page.setViewportSize({width:1440,height:960})
+   await dialog.getByRole('tab',{name:'过程',exact:true}).click()
+   const timeline=dialog.getByRole('region',{name:'任务轨迹',exact:true})
+   await expect(timeline.locator('ol')).toContainText('核验冻结输入')
+   await expect(timeline.locator('ol')).toContainText('宿主验收')
+   await expect(timeline.getByRole('button',{name:/条工具记录/})).toBeVisible()
+   if(process.env.DAWN_COLLABORATION_EVIDENCE_DIR)await page.screenshot({path:join(evidence,'task-timeline-accepted.png')})
+   await timeline.getByRole('button',{name:/个产物版本/}).click()
+   await expect(dialog.getByRole('tab',{name:'产物',exact:true})).toBeFocused()
    const version=analysis.receipt.versions.outputs[0]
    await expect(dialog.locator('.collaboration-evidence')).toContainText(version.sha256)
    await dialog.getByRole('button',{name:`预览当前文件：${version.path}`,exact:true}).click()
@@ -47,7 +67,9 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
    await page.screenshot({path:join(evidence,'phase-b-bound-version-workbench.png')})
    await page.setViewportSize({width:1440,height:960})
    await dialog.getByRole('button',{name:team.tasks[0].subject,exact:true}).click()
-   await dialog.getByRole('tab',{name:'记录',exact:true}).click()
+   await dialog.getByRole('tab',{name:'过程',exact:true}).click()
+   await dialog.getByRole('region',{name:'任务轨迹',exact:true}).getByRole('button',{name:/条工具记录/}).click()
+   await expect(dialog.getByRole('tab',{name:'记录',exact:true})).toBeFocused()
    const call=team.tasks[0].trace.records.find((record:any)=>record.name==='read')
    expect(call.transcriptRef).toBeTruthy()
    await dialog.getByRole('button',{name:`查看原始工具记录：${call.toolCallId}`,exact:true}).click()

@@ -953,6 +953,8 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     const 标签 = /aria-label=\{?t?\(?"((?:[^"\\]|\\.)*)"\)?\}?/
     for (const f of tsxFiles()) {
       for (const 块 of read(f).match(块正则) ?? []) {
+        // Proper ARIA tabs are queried as tabs, not buttons. Short tab labels do not collide with toolbar actions.
+        if (/^<(?:Button|Row)\b[^>]*\brole="tab"/.test(块)) continue
         for (const re of [可见, 包着的, 标签]) {
           const m = 块.match(re)
           const t = m?.[1]?.trim()

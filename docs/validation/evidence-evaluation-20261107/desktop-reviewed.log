@@ -1,0 +1,41 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/evidence-handoff.spec.ts e2e/observable-handoff.spec.ts e2e/subagent-shutdown.spec.ts e2e/subagent-steering.spec.ts e2e/orchestration.spec.ts --output=docs/validation/evidence-evaluation-20261107/desktop-reviewed-results
+
+Running 5 tests using 1 worker
+
+(node:89277) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「早期约束：carbon 单位 mg/g；」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56133/b99e4fd6-34bc-41f9-932f-fb186964989e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56219/930ee7c3-1439-4b9b-87f8-c919ec2cc8d0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/evidence-handoff.spec.ts:5:1 › selects early context by host ID, shows provenance and preserves it across continuation and restart (7.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「保留原始样本，单位为 m；仅汇总均值，不」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56255/e565c2d5-d09d-4d1c-8949-0fbef71ba068
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56338/f6dff1d7-fa52-43b8-abfa-45bffe3fabeb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/observable-handoff.spec.ts:7:2 › observable delegation › shows real orchestration and immutable parent handoff; opens the actual child transcript (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56378/bccf9b10-9d2c-4ca7-afce-05129f870654
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/orchestration.spec.ts:8:1 › background child returns a stable receipt, appears in the existing dock and durably reports to its parent (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56415/2a8f72a9-d68f-4c4e-a2c2-c3a138f7ec94
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56439/394783c8-eec9-44b8-a13b-a03234e461e5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/subagent-shutdown.spec.ts:7:1 › app quit drains an active delegated process before restart and retains the frozen context (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56461/8311159e-4eed-4488-aad6-2f7f87dc68ff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/subagent-steering.spec.ts:6:1 › live child correction shows accepted then applied at a real tool boundary, and named stop drains pending correction (20.3s)
+
+  5 passed (43.2s)

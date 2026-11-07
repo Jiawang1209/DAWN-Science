@@ -1,0 +1,13 @@
+{"seq":1,"event":"diagnostics-attached","pid":9491,"at":"2026-11-07T00:36:59.834Z","ms":0.17670799999996234,"resources":{"PipeWrap":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":2,"event":"contents-created","pid":9491,"at":"2026-11-07T00:36:59.984Z","ms":150.161791,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":9491,"at":"2026-11-07T00:36:59.985Z","ms":150.44433300000003,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":4,"event":"before-quit","pid":9491,"at":"2026-11-07T00:37:05.760Z","ms":5925.994583000001,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":5,"event":"window-close","pid":9491,"at":"2026-11-07T00:37:05.761Z","ms":5926.677791,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":6,"event":"contents-destroyed","pid":9491,"at":"2026-11-07T00:37:05.762Z","ms":5927.761958,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":7,"event":"window-closed","pid":9491,"at":"2026-11-07T00:37:05.764Z","ms":5929.414958,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":8,"event":"will-quit","pid":9491,"at":"2026-11-07T00:37:05.764Z","ms":5929.523166,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":9,"event":"shutdown-check","pid":9491,"at":"2026-11-07T00:37:05.764Z","ms":5929.617583,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":10,"event":"shutdown-sync-start","pid":9491,"at":"2026-11-07T00:37:05.764Z","ms":5929.803,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":11,"event":"shutdown-sync-complete","pid":9491,"at":"2026-11-07T00:37:05.765Z","ms":5930.656875000001,"resources":{"PipeWrap":3,"TCPSocketWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":12,"event":"process-exit","pid":9491,"at":"2026-11-07T00:37:05.767Z","ms":5932.73625,"resources":{"PipeWrap":3,"TCPSocketWrap":1},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}
+{"seq":13,"event":"quit","pid":9491,"at":"2026-11-07T00:37:05.767Z","ms":5932.844958000001,"resources":{"PipeWrap":3,"TCPSocketWrap":1},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}

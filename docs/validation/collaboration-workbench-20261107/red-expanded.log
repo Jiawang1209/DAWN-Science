@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workflow.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workflow.test.tsx (3 tests | 1 failed) 98ms
+   × links the owning coordinator to direct delegates, provides search and status filters without inventing token totals 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workflow.test.tsx > links the owning coordinator to direct delegates, provides search and status filters without inventing token totals
+AssertionError: expected  to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ tests/ui/collaboration-workflow.test.tsx:26:65
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:56:40
+   Duration  1.73s (transform 481ms, setup 765ms, import 17ms, tests 98ms, environment 753ms)
+

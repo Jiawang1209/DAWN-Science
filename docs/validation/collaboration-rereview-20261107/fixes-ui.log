@@ -1,0 +1,244 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx tests/ui/collaboration-workflow.test.tsx tests/ui/collaboration-model.test.ts tests/ui/run-overview.test.tsx tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/run-overview.test.tsx (5 tests | 1 failed) 142ms
+   × shows real drain and acceptance facts, routes transcript selection, and drops stale owner replies 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > shows real drain and acceptance facts, routes transcript selection, and drops stale owner replies
+TestingLibraryElementError: Unable to find an element with the text: /宿主验收阻塞/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+      [33mdata-expanded[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-heading-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m刷新运行记录[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m展开流程工作台[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m1 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m0 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m1 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"协作任务"[39m
+        [33mclass[39m=[32m"collaboration-roster"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+          [33mdata-phase[39m=[32m"stopping"[39m
+          [33mdata-run[39m=[32m"child"[39m
+          [33mdata-selected[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"b reader"[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"collaboration-avatar"[39m
+            [36m>[39m
+              [0mB[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-copy"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mb reader[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m停止中，等待进程排空[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-meta"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-state"[39m
+                [33mdata-phase[39m=[32m"stopping"[39m
+              [36m>[39m
+                [0m子任务[0m
+              [36m</span>[39m
+              [36m<small>[39m
+                [0m耗时未知[0m
+              [36m</small>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-detail"[39m
+        [33mdata-selected-run[39m=[32m"child"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mb reader[0m
+          [36m</strong>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m类型 subagent · 执行代次 3[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"任务详情"[39m
+          [33mclass[39m=[32m"collaboration-tabs"[39m
+          [33mrole[39m=[32m"tablist"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_1_-panel"[39m
+            [33maria-selected[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mid[39m=[32m"_r_1_-process"[39m
+            [33mrole[39m=[32m"tab"[39m
+            [33mtabindex[39m=[32m"0"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m过程[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_1_-panel"[39m
+            [33maria-selected[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mid[39m=[32m"_r_1_-handoff"[39m
+            [33mrole[39m=[32m"tab"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m交接[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_1_-panel"[39m
+            [33maria-selected[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mid[39m=[32m"_r_1_-artifacts"[39m
+            [33mrole[39m=[32m"tab"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m产物[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_1_-panel"[39m
+            [33maria-selected[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mid[39m=[32m"_r_1_-records"[39m
+            [33mrole[39m=[32m"tab"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m记录[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<div[39m
+          [33maria-labelledby[39m=[32m"_r_1_-process"[39m
+          [33mid[39m=[32m"_r_1_-panel"[39m
+          [33mrole[39m=[32m"tabpanel"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"collaboration-current"[39m
+          [36m>[39m
+            [0m停止中，等待进程排空[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0m已冻结任务契约[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m暂无宿主验收回执[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m查看子任务过程[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-overview.test.tsx:34:16
+     32|  await act(async()=>b.resolve(snapshot('b')))
+     33|  expect(screen.getAllByText('停止中，等待进程排空')[0]).toBeTruthy()
+     34|  expect(screen.getByText(/宿主验收阻塞/)).toBeTruthy()
+       |                ^
+     35|  fireEvent.click(screen.getByRole('button',{name:'查看子任务过程'}))
+     36|  expect(view).toHaveBeenCalledWith('b#sub:call:0')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 127 passed (128)
+   Start at  08:30:22
+   Duration  2.14s (transform 2.69s, setup 3.93s, import 617ms, tests 1.41s, environment 3.18s)
+

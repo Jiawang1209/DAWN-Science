@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-tasks.test.ts tests/evaluation/request-gate.test.ts tests/evaluation/research-runner.test.ts tests/subagent/evidence-handoff.test.ts tests/policy/plan-mode.test.ts --maxWorkers=3
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  61 passed (61)
+   Start at  01:48:45
+   Duration  7.89s (transform 921ms, setup 0ms, import 2.45s, tests 6.61s, environment 0ms)
+

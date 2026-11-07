@@ -1,0 +1,17 @@
+npm notice run dawn-science@0.0.44 evaluate:science
+npm notice run npm run build:electron && tsx scripts/evaluate-science-pipeline.ts --research-current-api /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/docs/validation/evidence-evaluation-20261107/live /Users/liuyue/Library/Application Support/dawn-science deepseek deepseek-flash
+npm notice run dawn-science@0.0.44 build:electron
+npm notice run node scripts/build-electron.mjs
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:338:17:
+      338 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval
+
+build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/
+build-electron: 自带技能已拷进 dist/skills
+build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成
+Downloading Electron binary...
+真实科研评测入口未完成；请检查隔离报告与参数，不会自动重试。

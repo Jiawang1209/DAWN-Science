@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-tasks.test.ts tests/evaluation/request-gate.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-tasks.test.ts (0 test)
+ ❯ |node| tests/evaluation/request-gate.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts [ tests/evaluation/request-gate.test.ts ]
+Error: Cannot find module '../../scripts/evaluation-request-gate.js' imported from /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/tests/evaluation/request-gate.test.ts
+ ❯ tests/evaluation/request-gate.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {startEvaluationGate} from '../../scripts/evaluation-request-ga…
+       | ^
+      3| it('counts concurrent attempts atomically and never forwards beyond th…
+      4|  let received=0
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/research-tasks.test.ts [ tests/evaluation/research-tasks.test.ts ]
+Error: Cannot find module '../../src/evaluation/research-tasks.js' imported from /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/tests/evaluation/research-tasks.test.ts
+ ❯ tests/evaluation/research-tasks.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {researchTasks,judgeResearch,summarizeResearch,type ResearchRow…
+       | ^
+      3| it('judges actual data independently of accepted claims and protects t…
+      4|  const task=researchTasks()[0]!
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  01:30:42
+   Duration  115ms (transform 27ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

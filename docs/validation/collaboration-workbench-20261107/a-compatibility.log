@@ -1,0 +1,71 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-overview.test.tsx tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 728ms
+     × **装饰位不许出现 emoji** —— 它吃不到 currentColor，永远脱离那四档层次 11ms
+     × **`aria-label` 与按钮文案之间也没有子串关系** 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **装饰位不许出现 emoji** —— 它吃不到 currentColor，永远脱离那四档层次
+AssertionError: run-overview.tsx 的装饰位用了 emoji 当图标。图标一律走 src/ui/icons.tsx: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "{[...r.label][0]?.toUpperCase()??'◈'}",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:819:68
+    817|         .map((m) => m[1]!.trim())
+    818|         .filter((t) => emoji.test(t))
+    819|       expect(hits, `${f} 的装饰位用了 emoji 当图标。图标一律走 src/ui/icons.tsx`).toE…
+       |                                                                    ^
+    820|     }
+    821|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **`aria-label` 与按钮文案之间也没有子串关系**
+AssertionError: 按名字找元素时子串会指向两个东西——换一个说法: expected [ '「过程」是「协作过程页签」的一部分', …(12) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "「过程」是「协作过程页签」的一部分",
++   "「过程」是「查看子任务过程」的一部分",
++   "「交接」是「冻结交接页签」的一部分",
++   "「产物」是「刷新产物」的一部分",
++   "「产物」是「回到产物」的一部分",
++   "「产物」是「查看产物」的一部分",
++   "「产物」是「任务产物页签」的一部分",
++   "「记录」是「刷新记录」的一部分",
++   "「记录」是「定位工具记录」的一部分",
++   "「记录」是「收起记录」的一部分",
++   "「记录」是「刷新运行记录」的一部分",
++   "「记录」是「技术记录页签」的一部分",
++   "「记录」是「看它的记录」的一部分",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:994:43
+    992|       }
+    993|     }
+    994|     expect(撞的, "按名字找元素时子串会指向两个东西——换一个说法").toEqual([])
+       |                                           ^
+    995|   })
+    996|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 112 passed (114)
+   Start at  07:53:34
+   Duration  1.79s (transform 1.15s, setup 1.55s, import 267ms, tests 920ms, environment 1.22s)
+

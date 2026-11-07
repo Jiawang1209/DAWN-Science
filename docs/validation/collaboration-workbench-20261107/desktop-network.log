@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/collaboration-network.spec.ts --workers=1
+
+Running 1 test using 1 worker
+
+(node:77463) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65508/f91aea13-680f-49db-ba12-29e7c7670acb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (41.6s)
+
+
+  1) e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters 
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator:  getByRole('button', { name: '展开流程工作台', exact: true })
+    Expected: focused
+    Received: inactive
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toBeFocused" with timeout 25000ms
+      - waiting for getByRole('button', { name: '展开流程工作台', exact: true })
+        53 × locator resolved to <button type="button" aria-expanded="false" class="btn btn-outline btn-sm">展开流程工作台</button>
+           - unexpected value "inactive"
+
+
+      32 |  await dialog.getByRole('button',{name:'显示全部成员'}).click();await expect(dialog.locator('[data-member-card]')).toHaveCount(8)
+      33 |  await page.screenshot({path:join(evidence,'phase-b-network-dark-completed.png')})
+    > 34 |  await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(page.getByRole('button',{name:'展开流程工作台',exact:true})).toBeFocused()
+         |                                                                                                                                                ^
+      35 |  await page.screenshot({path:join(evidence,'phase-b-conversation-dark.png')})
+      36 | })
+      37 |
+        at /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/e2e/collaboration-network.spec.ts:34:144
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters 

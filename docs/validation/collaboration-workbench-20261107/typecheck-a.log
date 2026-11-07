@@ -1,0 +1,15 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/ui/collaboration-model.ts(23,51): error TS18048: 'a' is possibly 'undefined'.
+src/ui/collaboration-model.ts(23,53): error TS18048: 'b' is possibly 'undefined'.
+src/ui/collaboration-model.ts(24,25): error TS18048: 'ms' is possibly 'undefined'.
+src/ui/run-overview.tsx(16,78): error TS18048: 'selection' is possibly 'undefined'.
+tests/ui/collaboration-workbench.test.tsx(16,55): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/ui/collaboration-workbench.test.tsx(20,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/ui/run-overview.test.tsx(19,55): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.

@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node --project=ui
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/runtime/remote-terminal.test.ts (25 tests | 1 failed) 8217ms
+     × rejects human edits and selection while an Agent command owns the shell 1071ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/remote-terminal.test.ts > persistent remote terminal runtime > rejects human edits and selection while an Agent command owns the shell
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/runtime/remote-terminal.test.ts:37:43
+     35|   cleanup.push(async () => {
+     36|     await runtime.stop(id); close()
+     37|     await vi.waitFor(() => expect(exited).toBe(true))
+       |                                           ^
+     38|     if (!options.control) control.dispose()
+     39|     rmSync(dir, { force: true, recursive: true })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 645 passed (646)
+      Tests  1 failed | 6376 passed | 10 skipped (6387)
+   Start at  08:04:10
+   Duration  134.66s (transform 26.85s, setup 95.33s, import 284.71s, tests 589.96s, environment 151.02s)
+

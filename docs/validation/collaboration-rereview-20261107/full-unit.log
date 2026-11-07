@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project=node --project=ui --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  646 passed (646)
+      Tests  6384 passed | 10 skipped (6394)
+   Start at  08:33:05
+   Duration  200.76s (transform 12.50s, setup 51.39s, import 166.49s, tests 430.17s, environment 91.55s)
+

@@ -1,0 +1,13 @@
+{"seq":1,"event":"diagnostics-attached","pid":5215,"at":"2026-11-07T00:35:08.210Z","ms":0.22166700000002493,"resources":{"PipeWrap":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":2,"event":"contents-created","pid":5215,"at":"2026-11-07T00:35:08.394Z","ms":184.18883400000004,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":5215,"at":"2026-11-07T00:35:08.395Z","ms":184.5467920000001,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":4,"event":"before-quit","pid":5215,"at":"2026-11-07T00:35:10.446Z","ms":2236.2230419999996,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":5,"event":"window-close","pid":5215,"at":"2026-11-07T00:35:10.447Z","ms":2236.923917,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":6,"event":"contents-destroyed","pid":5215,"at":"2026-11-07T00:35:10.448Z","ms":2238.252375,"resources":{"PipeWrap":3,"Timeout":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":7,"event":"window-closed","pid":5215,"at":"2026-11-07T00:35:10.449Z","ms":2238.6296250000005,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":8,"event":"will-quit","pid":5215,"at":"2026-11-07T00:35:10.449Z","ms":2238.7905,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":9,"event":"shutdown-check","pid":5215,"at":"2026-11-07T00:35:10.449Z","ms":2238.906459,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":10,"event":"shutdown-sync-start","pid":5215,"at":"2026-11-07T00:35:10.449Z","ms":2239.1266670000005,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":11,"event":"shutdown-sync-complete","pid":5215,"at":"2026-11-07T00:35:10.452Z","ms":2242.318625,"resources":{"PipeWrap":3,"Timeout":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":12,"event":"process-exit","pid":5215,"at":"2026-11-07T00:35:10.456Z","ms":2246.2815,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}
+{"seq":13,"event":"quit","pid":5215,"at":"2026-11-07T00:35:10.456Z","ms":2246.4867919999997,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}

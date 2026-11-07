@@ -1,0 +1,14 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/collaboration-network.spec.ts e2e/science-pipeline.spec.ts --grep renders a complete|pass › --workers=1
+
+Running 1 test using 1 worker
+
+(node:24021) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52754/818fe078-5c8f-4940-9a60-5a64b46f6d5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (17.1s)
+
+  1 passed (17.7s)

@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx [ tests/ui/collaboration-workbench.test.tsx ]
+Error: Failed to resolve import "../../src/ui/collaboration-summary.js" from "tests/ui/collaboration-workbench.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/tests/ui/collaboration-workbench.test.tsx:4:35
+  2  |  import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+  3  |  import { RunOverview } from "../../src/ui/run-overview.js";
+  4  |  import { CollaborationSummary } from "../../src/ui/collaboration-summary.js";
+     |                                        ^
+  5  |  var _jsxFileName = "/Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/tests/ui/collaborat...
+  6  |  import { jsxDEV as _jsxDEV, Fragment as _Fragment } from "react/jsx-dev-runtime";
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:8803:39
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:8800:14
+ ❯ resolveId node_modules/vite/dist/node/chunks/node.js:26594:18
+ ❯ node_modules/vite/dist/node/chunks/node.js:26693:23
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:26666:4
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:8582:14
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/node.js:20155:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  07:50:49
+   Duration  1.39s (transform 320ms, setup 584ms, import 0ms, tests 0ms, environment 684ms)
+

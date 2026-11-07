@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (10 tests | 1 failed) 316ms
+   × does not open a background command palette from an IME-owned shortcut inside the modal 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > does not open a background command palette from an IME-owned shortcut inside the modal
+AssertionError: expected <div class="palette-backdrop" …(3)>…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  aria-label="命令面板"
+  aria-modal="true"
+  class="palette-backdrop"
+  role="dialog"
+>
+  <div
+    class="palette"
+  >
+    <input
+      aria-controls="palette-list"
+      aria-expanded="true"
+      aria-label="搜索命令"
+      class="control palette-input"
+      placeholder="输入命令名或关键词"
+      role="combobox"
+      value=""
+    />
+    <p
+      class="empty"
+    >
+      没有匹配的命令
+    </p>
+  </div>
+</div>
+
+ ❯ tests/ui/collaboration-workbench.test.tsx:92:53
+     90|  fireEvent.keyDown(screen.getByRole('dialog',{name:'流程工作台'}),{key:'k',…
+     91|  expect(screen.getByRole('dialog',{name:'流程工作台'})).toBeTruthy()
+     92|  expect(screen.queryByRole('dialog',{name:'命令面板'})).toBeNull()
+       |                                                     ^
+     93| })
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  08:33:37
+   Duration  1.43s (transform 439ms, setup 569ms, import 82ms, tests 316ms, environment 378ms)
+

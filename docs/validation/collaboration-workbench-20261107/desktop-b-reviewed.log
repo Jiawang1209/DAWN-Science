@@ -1,0 +1,22 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/collaboration-workbench.spec.ts e2e/collaboration-network.spec.ts --workers=1
+
+Running 2 tests using 1 worker
+
+(node:78558) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49723/62948bba-c74c-4710-b330-789be95f7e5e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (17.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49836/cd239926-fb9c-43d5-9417-46c9e48f0c57
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49927/438d8dea-ce20-40bd-8917-e423216eefcf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (14.3s)
+
+  2 passed (32.4s)

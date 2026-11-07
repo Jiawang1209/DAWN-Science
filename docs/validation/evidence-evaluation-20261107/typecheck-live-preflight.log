@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+scripts/research-cli.ts(13,76): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'typeof CrossProcessExports' is not assignable to parameter of type 'string'.
+scripts/research-cli.ts(13,178): error TS2339: Property 'once' does not exist on type 'never'.
+  The intersection 'ChildProcessWithoutNullStreams & ChildProcessByStdio<Writable, Readable, Readable> & ... 7 more ... & ChildProcess' was reduced to 'never' because property 'stdin' has conflicting types in some constituents.
+scripts/research-cli.ts(13,205): error TS2339: Property 'once' does not exist on type 'never'.
+  The intersection 'ChildProcessWithoutNullStreams & ChildProcessByStdio<Writable, Readable, Readable> & ... 7 more ... & ChildProcess' was reduced to 'never' because property 'stdin' has conflicting types in some constituents.
+scripts/research-cli.ts(13,219): error TS7006: Parameter 'code' implicitly has an 'any' type.

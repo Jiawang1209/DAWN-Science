@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-06T17:45:57.018Z",
+  "inference": "live",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestLimit": 30,
+  "sourceFiles": [
+    "scripts/evaluate-research.ts",
+    "src/evaluation/research-tasks.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/child.ts",
+    "src/team/science-pipeline.ts",
+    "src/team/science-acceptance.ts",
+    "src/orchestration/task-submission.ts",
+    "src/bot/output-locks.ts"
+  ],
+  "sourceFingerprint": "4645d0175caeed47eafac14505f0fc2a14f1b11a35b4c842fe6e44ca50b9ee13",
+  "childBuildFingerprint": "0ada99b5cc03c4ebc90ea5b221d2b4a36d1a345e5fda98edb0892d391dab298e",
+  "tasks": [
+    {
+      "id": "carbon-missing",
+      "csv": "site,carbon_mg_g,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "drop",
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568"
+    },
+    {
+      "id": "unknown-unit",
+      "csv": "site,carbon,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon",
+      "missing": "drop",
+      "instructions": "请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be"
+    }
+  ],
+  "kind": "representative-research-pilot",
+  "completePairs": 0,
+  "incompletePairs": 2,
+  "rows": [
+    {
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "54c2011404d2efdd686045d2197f2209baff15e8be359c71f1cdbada4c721163",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 19,
+      "elapsedMs": 101878,
+      "usage": {
+        "visibleTokens": 36242,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "d8f5fb1c447954b311813c1b42fe666729748164a998521309fa82c0a4a89b86",
+          "bytes": 4523
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+          "bytes": 62
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "4e7c3fa09be4d6b761569a841b2846f1bb1e3a6583eedfcf81c912408679e9db",
+          "bytes": 6195
+        }
+      ]
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "54c2011404d2efdd686045d2197f2209baff15e8be359c71f1cdbada4c721163",
+      "terminal": "failed",
+      "success": false,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 11,
+      "elapsedMs": 102499,
+      "usage": {
+        "visibleTokens": 27263,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [],
+      "reason": "流程未完成；查看隔离阶段记录"
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "04fcdbdbae066ba7cebd5851016290379529a1976da7970009dd061f4857ec44",
+      "terminal": "not-run",
+      "success": false,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 0,
+      "elapsedMs": 0,
+      "usage": {
+        "visibleTokens": 0,
+        "unknownUsageTasks": 1,
+        "partialUsage": true
+      },
+      "versions": [],
+      "reason": "整轮请求上限或取消，未启动"
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "04fcdbdbae066ba7cebd5851016290379529a1976da7970009dd061f4857ec44",
+      "terminal": "not-run",
+      "success": false,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 0,
+      "elapsedMs": 0,
+      "usage": {
+        "visibleTokens": 0,
+        "unknownUsageTasks": 1,
+        "partialUsage": true
+      },
+      "versions": [],
+      "reason": "整轮请求上限或取消，未启动"
+    }
+  ],
+  "limitations": [
+    "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
+    "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
+    "缺失或部分用量不作零费用；无价格换算；不完整配对不形成收益结论。"
+  ]
+}

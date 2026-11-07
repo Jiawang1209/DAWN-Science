@@ -28,7 +28,7 @@ describe('明确限制与解除，不猜普通对话的意图', () => {
   it('未知工具、代码探查、委派、写入一律拒；明确只读工具可用', () => {
     const branch = [user('先只讨论')]
     for (const name of ['run_code', 'bash', 'powershell', 'inspect_data', 'edit', 'write', 'xlsx_write', 'subagent', 'subagent_follow_up', 'team_create', 'bot_message', 'unknown']) expect(讨论拒绝理由(name, branch), name).toContain('讨论')
-    for (const name of ['read', 'ls', 'grep', 'find', 'ask_user_question', 'look_at_image', 'propose_plan', 'read_main_session']) expect(讨论拒绝理由(name, branch), name).toBeUndefined()
+    for (const name of ['subagent_context_sources', 'read', 'ls', 'grep', 'find', 'ask_user_question', 'look_at_image', 'propose_plan', 'read_main_session']) expect(讨论拒绝理由(name, branch), name).toBeUndefined()
     expect(讨论拒绝理由('mcp_search', branch, true)).toBeUndefined()
     expect(讨论拒绝理由('run_code', [user('开始执行')])).toBeUndefined()
   })

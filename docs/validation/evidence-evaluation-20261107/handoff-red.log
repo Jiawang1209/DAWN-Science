@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/evidence-handoff.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/subagent/evidence-handoff.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/evidence-handoff.test.ts [ tests/subagent/evidence-handoff.test.ts ]
+Error: Cannot find module '../../src/subagent/handoff-sources.js' imported from /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/tests/subagent/evidence-handoff.test.ts
+ ❯ tests/subagent/evidence-handoff.test.ts:5:1
+      3| import {tmpdir} from 'node:os'
+      4| import {join} from 'node:path'
+      5| import {captureEvidenceHandoff,handoffSources} from '../../src/subagen…
+       | ^
+      6| import {freezeHandoff,readHandoff} from '../../src/subagent/context-ha…
+      7| const roots:string[]=[]
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  01:31:40
+   Duration  116ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

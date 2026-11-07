@@ -6,9 +6,25 @@ import {ContextHandoffSchema,HandoffSelectionSchema,type ContextHandoff} from '.
 const fingerprint=(sourceSessionId:string,entries:ContextHandoff['entries'],requestedMessages:number)=>createHash('sha256').update(JSON.stringify([1,sourceSessionId,entries,requestedMessages])).digest('hex')
 function validate(value:unknown,owner:string):ContextHandoff{
  const snapshot=ContextHandoffSchema.parse(value)
- if(snapshot.sourceSessionId!==owner||snapshot.bytes!==Buffer.byteLength(snapshot.entries.map(e=>e.text).join(''),'utf8')||snapshot.sha256!==fingerprint(owner,snapshot.entries,snapshot.requestedMessages)||new Set(snapshot.entries.map(e=>e.id)).size!==snapshot.entries.length)throw new Error('交接快照来源或指纹不匹配')
+ const expected=snapshot.version===1?fingerprint(owner,snapshot.entries,snapshot.requestedMessages):evidenceFingerprint(snapshot)
+ if(snapshot.sourceSessionId!==owner||snapshot.bytes!==Buffer.byteLength(snapshot.entries.map(e=>e.text).join(''),'utf8')||snapshot.sha256!==expected||new Set(snapshot.entries.map(e=>e.id)).size!==snapshot.entries.length||snapshot.version===2&&snapshot.envelopeBytes!==Buffer.byteLength(JSON.stringify(snapshot),'utf8'))throw new Error('交接快照来源或指纹不匹配')
  return snapshot
 }
+/** Both hash and size use canonical schema field order, independent of incoming JSON key order. */
+export function evidenceFingerprint(value:Extract<ContextHandoff,{version:2}>):string{
+ return createHash('sha256').update(JSON.stringify({...value,sha256:''})).digest('hex')
+}
+export function visibleHandoffEntries(branch:readonly unknown[]):ContextHandoff['entries']{
+ const entries:ContextHandoff['entries']=[]
+ for(const raw of branch){
+  const e=raw as {type?:string;id?:string;message?:{role?:string;stopReason?:string;content?:unknown}},m=e.message
+  if(e.type!=='message'||!e.id||!m||m.role!=='user'&&!(m.role==='assistant'&&m.stopReason==='stop'))continue
+  const text=typeof m.content==='string'?m.content:Array.isArray(m.content)?m.content.filter((b):b is {type:'text';text:string}=>!!b&&b.type==='text'&&typeof b.text==='string').map(b=>b.text).join('\n'):''
+  if(text.trim())entries.push({id:e.id,role:m.role as 'user'|'assistant',text})
+ }
+ return entries
+}
+export const handoffSelection=(capsule:ContextHandoff)=>capsule.version===1?{recentMessages:capsule.requestedMessages}:capsule.selection
 export function captureHandoff(sourceSessionId:string,branch:readonly unknown[],recentMessages:number):ContextHandoff{
  HandoffSelectionSchema.parse({recentMessages})
  const entries:ContextHandoff['entries']=[]

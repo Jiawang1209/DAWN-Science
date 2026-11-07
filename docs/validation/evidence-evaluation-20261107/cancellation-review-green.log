@@ -1,0 +1,44 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts tests/evaluation/request-gate.test.ts tests/evaluation/research-tasks.test.ts tests/subagent/evidence-handoff.test.ts --maxWorkers=3
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/subagent/evidence-handoff.test.ts (5 tests | 1 failed) 23ms
+   × counts UTF-8 bytes exactly and refuses oversized text or envelopes without truncating evidence 5ms
+ ❯ |node| tests/evaluation/research-runner.test.ts (3 tests | 1 failed) 7066ms
+   × retains settled check-stage usage when the analysis stage is cancelled and drained 2107ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > retains settled check-stage usage when the analysis stage is cancelled and drained
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/evaluation/research-runner.test.ts:47:78
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/subagent/evidence-handoff.test.ts > counts UTF-8 bytes exactly and refuses oversized text or envelopes without truncating evidence
+ZodError: [
+  {
+    "origin": "number",
+    "code": "too_big",
+    "maximum": 65536,
+    "inclusive": true,
+    "path": [
+      "envelopeBytes"
+    ],
+    "message": "Too big: expected number to be <=65536"
+  }
+]
+ ❯ captureEvidenceHandoff src/subagent/handoff-sources.ts:38:31
+
+ ❯ tests/subagent/evidence-handoff.test.ts:61:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  2 failed | 12 passed (14)
+   Start at  01:55:29
+   Duration  8.01s (transform 742ms, setup 0ms, import 1.80s, tests 7.18s, environment 0ms)
+

@@ -1,0 +1,37 @@
+/** Loopback-only whole-experiment cap. No request/response bodies or credentials are logged. */
+import {createServer} from 'node:http'
+import {randomBytes} from 'node:crypto'
+export async function startEvaluationGate(opts:{limit:number;timeoutMs?:number;forward:(body:Buffer,path:string,signal:AbortSignal)=>Promise<Response>}){
+ if(!Number.isSafeInteger(opts.limit)||opts.limit<1||opts.limit>30)throw new Error('评测请求上限须为 1..30')
+ const timeoutMs=opts.timeoutMs??90000
+ if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>90000)throw new Error('评测请求超时须为 1..90000 毫秒')
+ const token=randomBytes(24).toString('hex'),active=new Set<AbortController>()
+ const drained:(()=>void)[]=[]
+ let reserved=0,forwarded=0,denied=0,closed=false
+ const server=createServer(async(req,res)=>{
+  if(closed||req.method!=='POST'||req.headers.authorization!==`Bearer ${token}`||!['/chat/completions','/responses','/messages'].includes(req.url??'')){res.writeHead(403).end('evaluation request refused');return}
+  if(reserved>=opts.limit){denied++;res.writeHead(429).end('evaluation request limit reached');return}
+  // Reserve before the first await, including body receipt: parallel starts/retries cannot overspend.
+  reserved++
+  const controller=new AbortController();active.add(controller)
+  const deadline=setTimeout(()=>{controller.abort();req.destroy()},timeoutMs);deadline.unref()
+  res.on('close',()=>controller.abort())
+  try{
+   const chunks:Buffer[]=[];let bytes=0
+   for await(const chunk of req){bytes+=chunk.length;if(bytes>4*1024*1024)throw new Error('oversized');chunks.push(Buffer.from(chunk))}
+   if(controller.signal.aborted||closed)throw new Error('stopped')
+   forwarded++
+   const response=await opts.forward(Buffer.concat(chunks),req.url!,controller.signal)
+   res.writeHead(response.status,{'content-type':response.headers.get('content-type')??'application/json'})
+   if(response.body)for await(const chunk of response.body){if(controller.signal.aborted)break;if(!res.write(chunk))await new Promise<void>(resolve=>{const done=()=>{res.off('drain',done);res.off('close',done);resolve()};res.once('drain',done);res.once('close',done)})}
+   res.end()
+  }catch{if(!res.headersSent)res.writeHead(controller.signal.aborted?503:502);res.end('evaluation upstream unavailable')}
+  finally{clearTimeout(deadline);controller.abort();active.delete(controller);if(!active.size)for(const resolve of drained.splice(0))resolve()}
+ })
+ await new Promise<void>((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)})
+ const address=server.address();if(!address||typeof address==='string')throw new Error('评测监听失败')
+ return{url:`http://127.0.0.1:${address.port}`,token,stats:()=>({reserved,forwarded,denied,inFlight:active.size,limit:opts.limit}),close:async()=>{
+  closed=true;for(const c of active)c.abort();server.closeAllConnections();await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()))
+  if(active.size)await new Promise<void>(resolve=>drained.push(resolve))
+ }}
+}

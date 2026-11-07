@@ -1,0 +1,22 @@
+{
+  "base": "f685a56122ee6238affa55d8bd9ba6f9b604a6c7",
+  "sourceFiles": 30,
+  "sourceDrift": [],
+  "mainCleanUnchanged": true,
+  "formalFilesUnchanged": true,
+  "nodeUiPassed": 6367,
+  "nodeUiSkipped": 10,
+  "kernelPassed": 50,
+  "kernelConditionalSkip": 1,
+  "desktopScenarios": 20,
+  "verifiedExits": 27,
+  "shutdownProblems": 0,
+  "unexpectedWatchdogs": 0,
+  "realModelRequests": 30,
+  "extraRequestsDenied": 4,
+  "completeLivePairs": 0,
+  "historicalTimeoutResolved": false,
+  "committedOrMerged": false,
+  "pushedOrPublished": false,
+  "review": "self-review plus independent read-only agent review"
+}

@@ -77,7 +77,7 @@ export function 重置组词旗子(): void {
   组着 = false
 }
 
-export function 在组词(e: KeyboardEvent): boolean {
+export function 在组词(e: Pick<KeyboardEvent, "nativeEvent">): boolean {
   if (e.nativeEvent.isComposing) return true
   // 229 只在组词确实开着的时候算数——见文件头「第二道」那一段
   return 组着 && e.nativeEvent.keyCode === 229

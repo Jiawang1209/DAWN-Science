@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (5 tests | 1 failed) 188ms
+   × reports an unstarted task blocked by budget instead of claiming execution settled 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > reports an unstarted task blocked by budget instead of claiming execution settled
+AssertionError: expected '协作执行已结算1 项任务 · 0 项验收通过›' to contain '额度阻止继续执行'
+
+Expected: "额度阻止继续执行"
+Received: "协作执行已结算1 项任务 · 0 项验收通过›"
+
+ ❯ tests/ui/collaboration-workbench.test.tsx:42:49
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  08:03:07
+   Duration  1.25s (transform 409ms, setup 547ms, import 70ms, tests 188ms, environment 362ms)
+

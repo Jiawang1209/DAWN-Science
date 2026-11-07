@@ -1,0 +1,7 @@
+{
+  "reserved": 30,
+  "forwarded": 30,
+  "denied": 4,
+  "inFlight": 0,
+  "limit": 30
+}

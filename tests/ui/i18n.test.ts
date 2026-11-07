@@ -167,6 +167,8 @@ describe("双语 · 英文那一面也要守中文那边的规矩", () => {
     const out: string[] = []
     for (const m of src.matchAll(/<Button\b[\s\S]*?<\/Button>/g)) {
       const 块 = m[0]
+      // ARIA tabs have a different role from buttons; preserve concise translated tab labels.
+      if (/^<Button\b[^>]*\brole="tab"/.test(块)) continue
       const 名 = 块.match(/aria-label=(?:\{[^{}]*\}|"[^"]*")/)
       // 嵌套大括号会让上面这条漏掉整个 aria-label，那时它会退回「收全部」——
       // **退回的方向是多报，不是漏报**，所以不会把真撞车放过去

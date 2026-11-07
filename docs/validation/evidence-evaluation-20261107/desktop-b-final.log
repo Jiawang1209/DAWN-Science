@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/evidence-handoff.spec.ts --output=docs/validation/evidence-evaluation-20261107/desktop-b-final
+
+Running 1 test using 1 worker
+
+(node:54266) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「早期约束：carbon 单位 mg/g；」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52981/5b5dd368-3c89-4dfc-847f-aa140e5f5992
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/evidence-handoff.spec.ts:5:1 › selects early context by host ID, shows provenance and preserves it across continuation and restart (1.0m)
+
+
+  1) e2e/evidence-handoff.spec.ts:5:1 › selects early context by host ID, shows provenance and preserves it across continuation and restart 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('.tool').filter({ hasText: 'subagent_context_sources' }).first()
+    Expected: "ok"
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 60000ms
+      - waiting for locator('.tool').filter({ hasText: 'subagent_context_sources' }).first()
+      - Target page, context or browser has been closed
+
+
+      17 |  await composer.fill('开始执行演示证据交接：把早期约束交给只读 scout。')
+      18 |  await page.getByRole('button',{name:'发送',exact:true}).click()
+    > 19 |  await expect(page.getByRole('button',{name:/scout 完成/})).toBeVisible({timeout:60000})
+         |                                                                                       ^
+      20 |  await 进坞(page,'团队')
+      21 |  const overview=page.getByRole('region',{name:'运行总览',exact:true})
+      22 |  await expect(overview).toContainText('已冻结交接')
+        at /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/e2e/evidence-handoff.spec.ts:19:91
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/evidence-evaluation-20261107/desktop-b-final/evidence-handoff-selects-e-c2f22-ss-continuation-and-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/evidence-evaluation-20261107/desktop-b-final/evidence-handoff-selects-e-c2f22-ss-continuation-and-restart/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/evidence-evaluation-20261107/desktop-b-final/evidence-handoff-selects-e-c2f22-ss-continuation-and-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/evidence-evaluation-20261107/desktop-b-final/evidence-handoff-selects-e-c2f22-ss-continuation-and-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/evidence-handoff.spec.ts:5:1 › selects early context by host ID, shows provenance and preserves it across continuation and restart 

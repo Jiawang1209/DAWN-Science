@@ -115,6 +115,7 @@ import { ConfirmDialog, NoticeDialog, type ConfirmRequest } from "./confirm.js"
 import { ConnectionDialog, type ConnectionDraft } from "./remote.js"
 import { ConnectionSurface } from "./connection.js"
 import { CommandPalette } from "./palette.js"
+import {CollaborationSummary} from './collaboration-summary.js'
 import { TeamPanel } from "./team-panel.js"
 import { WebPanel } from "./web.js"
 import { loadArtifacts, resyncSide, resyncSubagent } from "./state/sync.js"
@@ -5722,6 +5723,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   updateBotRoom(botRoomKey(session.sessionId,botOwnerScope,botTeam.id),{page,memberId:undefined,file:undefined,openRequest:crypto.randomUUID()})
                   坞上位();setRightDockTenant("bot");setRightDockOpen(true)
                 }}/>
+              <CollaborationSummary key={session.sessionId} client={client} sessionId={session.sessionId} onOpen={()=>{看团队(session.sessionId);坞上位();setRightDockTenant("team");setRightDockOpen(true)}}/>
               <ConversationView
                 headerTarget={conversationHeaderTarget}
                 headerHasTabs={Boolean(会话页签)}

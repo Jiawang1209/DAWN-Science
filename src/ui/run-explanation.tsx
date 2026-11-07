@@ -11,18 +11,18 @@ function eventLabel(event:RunEvent){
  case 'settled':return t("执行已结算");case 'recovered':return t("重启后暂停，等待核对");case 'budget-configured':return t("预算限制已调整");case 'budget-blocked':return t("预算阻止继续执行")
  }
 }
-export function RunActivity({run,live}:{run:RunOverview['runs'][number];live:boolean}){
+export function RunActivity({run,live,compact=false}:{run:RunOverview['runs'][number];live:boolean;compact?:boolean}){
  const activity=run.activity
  return <>
   {activity?<div className="run-activity">
    <p>{live?stageLabel(activity.stage):tf("历史阶段：{0}；当前占用未知",stageLabel(activity.stage))}</p>
    {activity.stage==='lock-wait'?<>
     {activity.resources?.map(path=><p data-authored="1" key={path}>{path==='*'?t("等待工作区独占执行"):path}</p>)}
-    {activity.blockers?.map(owner=><p data-authored="1" key={`${owner.ownerSessionId}:${owner.childId}:${owner.epoch}`}>{tf("{0} · 代次 {1} · 会话 {2}",owner.label,owner.epoch,owner.ownerSessionId)}</p>)}
+    {activity.blockers?.map(owner=><p data-authored="1" key={`${owner.ownerSessionId}:${owner.childId}:${owner.epoch}`}>{compact?tf("{0} · 代次 {1}",owner.label,owner.epoch):tf("{0} · 代次 {1} · 会话 {2}",owner.label,owner.epoch,owner.ownerSessionId)}</p>)}
     {activity.unknownBlockers?<p>{t("部分占用者身份未知")}</p>:null}
    </>:null}
   </div>:null}
-  {run.timing?<p>{tf("已结算耗时：锁等待 {0} 秒 · 输入核验 {1} 秒 · 执行 {2} 秒 · 验收 {3} 秒",...(['lockWaitMs','preflightMs','executionMs','acceptanceMs'] as const).map(key=>((run.timing?.[key]??0)/1000).toFixed(2)))}</p>:null}
+  {run.timing&&!compact?<p>{tf("已结算耗时：锁等待 {0} 秒 · 输入核验 {1} 秒 · 执行 {2} 秒 · 验收 {3} 秒",...(['lockWaitMs','preflightMs','executionMs','acceptanceMs'] as const).map(key=>((run.timing?.[key]??0)/1000).toFixed(2)))}</p>:null}
  </>
 }
 export function RunHistory({snapshot}:{snapshot:RunOverview}){

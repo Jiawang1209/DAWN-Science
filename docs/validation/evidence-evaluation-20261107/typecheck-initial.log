@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/subagent/handoff-sources.ts(10,64): error TS2339: Property 'ownerSessionId' does not exist on type '{ id: string; kind: "bot" | "subagent" | "team"; address: string[]; label: string; paused?: boolean | undefined; state: "cancelled" | "completed" | "failed" | "idle" | "interrupted" | "queued" | "running"; ... 7 more ...; timing?: { ...; } | undefined; }'.

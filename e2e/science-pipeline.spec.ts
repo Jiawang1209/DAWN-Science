@@ -1,6 +1,6 @@
 /** Built Electron + real Pi children; only inference is a deterministic localhost fixture. */
 import {existsSync,mkdirSync,writeFileSync,readFileSync,readdirSync} from 'node:fs'
-import {join} from 'node:path'
+import {join,resolve} from 'node:path'
 import {test,expect,在项目里开会话,进坞} from './fixtures.js'
 for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
  test.use({dawnOptions:{sciencePipeline:mode}})
@@ -27,5 +27,15 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
   // A malformed public snapshot would be rejected before this live status banner could render.
   await 进坞(page,'团队')
   await expect(page.locator('.science-pipeline-status').first()).toContainText(mode==='blocked'?'受阻':'交付检查通过',{timeout:15000})
+  if(mode==='pass'){
+   const evidence=resolve(process.env.DAWN_COLLABORATION_EVIDENCE_DIR??'docs/validation/collaboration-workbench-20261107/desktop');mkdirSync(evidence,{recursive:true})
+   await page.getByRole('button',{name:'展开流程工作台',exact:true}).click()
+   const dialog=page.getByRole('dialog',{name:'流程工作台',exact:true})
+   await expect(dialog.locator('[data-workflow-edge]')).toHaveCount(2)
+   await dialog.getByRole('button',{name:team.tasks[0].subject,exact:true}).click()
+   await dialog.getByRole('tab',{name:'产物',exact:true}).click()
+   await expect(dialog.locator('.collaboration-detail')).toContainText('宿主验收通过')
+   await page.screenshot({path:join(evidence,'phase-c-pipeline-accepted.png')})
+  }
  })
 })

@@ -89,6 +89,10 @@ async function run(scenario:ScienceBaselineCase,mode:'single'|'multi',entry:stri
  }finally{if(scheduler&&teamId)scheduler.中止全部(teamId);await service?.close();await server.close();rmSync(root,{recursive:true,force:true})}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ if(process.argv[2]==='--research-current-api'){
+  import('./research-cli.js').then(m=>m.runCurrentApiResearch(process.argv.slice(3))).catch(()=>{console.error('真实科研评测入口未完成；请检查隔离报告与参数，不会自动重试。');process.exitCode=1})
+ }else{
  const destination=resolve(process.argv[2]??'docs/validation/incremental-science-20261105/evaluation')
  runScienceBaseline(destination).then(async r=>{const incremental=await runScienceIncremental(destination);const parallel=await runScienceParallel(join(destination,'parallel'));const budget=await runRunBudgetEvaluation(join(destination,'budget'));const handoff=await runContextHandoffEvaluation(join(destination,"handoff"));const steering=await runSubagentSteeringDemo(join(destination,'steering'));console.log(JSON.stringify({destination,byMode:r.byMode,incrementalRows:incremental.rows.length,parallelRows:parallel.rows.length,parallelPairs:parallel.pairs,steeringModelRequests:steering.modelRequests,handoffObserved:handoff.observed,budgetObserved:budget.observed}))}).catch(error=>{console.error(error);process.exitCode=1})
+ }
 }

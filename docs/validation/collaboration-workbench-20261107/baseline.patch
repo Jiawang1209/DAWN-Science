@@ -1,0 +1,420 @@
+diff --git a/docs/DEVELOPMENT_HISTORY.md b/docs/DEVELOPMENT_HISTORY.md
+index 246f480c..8ffbe0d9 100644
+--- a/docs/DEVELOPMENT_HISTORY.md
++++ b/docs/DEVELOPMENT_HISTORY.md
+@@ -8,6 +8,15 @@
+ 
+ **每完成一次开发变更（feat / fix / refactor / docs / data / perf / chore），都要在下方变更日志的最顶部追加一条。**
+ 
++### 2026-11-07 — 代表性任务实测与证据交接（专项待验收）
++
++- **Problem**: 确定性软件回归不能证明真实模型收益，普通交接只能取最近正文，早期方法与单位不便引用核对。
++- **Change**: 复用 evaluate:science、Pi/Team、冻结契约及内容版本，增加显式真实 API pilot 和独立真值；整轮最多 30 次转发、重试计入。交接 v2 可指定早期已完成正文、路线记录和历史 accepted 版本，沿原 SHA/null 冻结及恢复；界面可读展示并保留原文。
++- **Observed**: 真实 deepseek/deepseek-flash 单组 19 次正确交付，多组用剩余 11 次后未完成，单位缺失两组未运行；完整配对为零，不宣称多 agent 收益。正式提交的无效工具引用是已观测的纠错成本。
++- **Review**: 独立只读审查发现单组取消误标、多组取消漏记前驱用量，已修正补测；部分正文超时及中文/信封边界同时验证。原科研验收、权限、锁和退出上限未放宽。
++- **Verification**: 最终类型/构建与 643 文件 6367 项 Node/UI 通过（10 既有跳过）；独立内核 50 通过/1 条件跳过；原默认评测入口完整通过；20 桌面场景/27 次退出严格核验，30 源/测试文件零漂移。截图及具体边界见[专项报告](reviews/2026-11-07-evidence-evaluation.md)。
++- **Scope**: 专项分支未提交、未合并，不推送、不发布、不替换正式应用。正式配置/凭证/DB 前后 SHA-256 一致；历史偶发退出超时仍未定位，继续跟踪。
++
+ ### 2026-11-07 — 预算与退出专项合并前复审
+ 
+ - **Type**: fix
+diff --git "a/docs/superpowers/plans/2026-10-04-\351\225\277\346\234\237\345\274\200\345\217\221\350\267\257\347\272\277\345\233\276.md" "b/docs/superpowers/plans/2026-10-04-\351\225\277\346\234\237\345\274\200\345\217\221\350\267\257\347\272\277\345\233\276.md"
+index 46bebc62..dcc700b7 100644
+--- "a/docs/superpowers/plans/2026-10-04-\351\225\277\346\234\237\345\274\200\345\217\221\350\267\257\347\272\277\345\233\276.md"
++++ "b/docs/superpowers/plans/2026-10-04-\351\225\277\346\234\237\345\274\200\345\217\221\350\267\257\347\272\277\345\233\276.md"
+@@ -254,3 +254,7 @@
+ ### 2026-11-07 预算与退出专项的本地集成
+ 
+ 用户本轮明确授权修复补测后本地提交并合并 main，不推送、不发布，历史偶发超时继续跟踪。补齐启动中新建/恢复、下层会话/内核/MCP 清理错误汇总、MCP 在途关闭、诊断缺席验收及退出准入冻结；普通停止仍可重用，等待上限不变。代码 `18b7181e`、`facafae8` 已快进 main；最后 main 类型/构建、6351 Node/UI（10 既有跳过）、21 桌面场景及 26 次退出通过，57 源/测试无漂移，独立内核 50 通过/1 条件跳过。详见[本轮复审与集成记录](../../reviews/2026-11-07-exit-budget-merge-review.md)。局部交付待用户验收；历史根因仍进行中，不将长期其他阶段标为完成。保留 worktree、不操作正式 App/数据；先前“未提交/未合并”是首次实现时状态，不覆盖本轮集成结果。
++
++### 2026-11-07 代表性任务实测与证据交接
++
++按用户本轮授权创建 /goal 并直接执行第 1、2 项；保持单实现主线，按审查技能独立只读复核。新增显式真实模型科研 pilot、30 次请求硬上限及失败/未运行报告，复用原评测/契约/版本/Team；交接 v2 可引用早期正文、路线记录和历史验收版本，来源/指纹冻结，不授予权限或替代独立审阅。真实 API 30 次用尽，尚无完整配对，不宣称收益；最终 Node/UI 6367、内核 50/1 通过，默认旧评测完整保留，桌面及最终指纹见[专项报告](../../reviews/2026-11-07-evidence-evaluation.md)。当前专项待用户验收，工作区 `codex/evidence-evaluation-20261107` 未提交/合并，无推送/发布，main 不改。历史偶发退出超时继续未定位跟踪；不将长期全产品阶段标成完成。
+diff --git "a/docs/\347\247\221\347\240\224\347\274\226\346\216\222\350\257\204\346\265\213-\346\200\216\344\271\210\347\224\250.md" "b/docs/\347\247\221\347\240\224\347\274\226\346\216\222\350\257\204\346\265\213-\346\200\216\344\271\210\347\224\250.md"
+index da962282..1d094e4c 100644
+--- "a/docs/\347\247\221\347\240\224\347\274\226\346\216\222\350\257\204\346\265\213-\346\200\216\344\271\210\347\224\250.md"
++++ "b/docs/\347\247\221\347\240\224\347\274\226\346\216\222\350\257\204\346\265\213-\346\200\216\344\271\210\347\224\250.md"
+@@ -18,6 +18,24 @@ JSON/Markdown 记录最终验收、独立真值、正确交付或阻塞、错误
+ 
+ 当前这组数据规模很小，只用来固定可复现回归条件。后续若评估真实收益，应另建有授权的真实模型数据集，统一交付质量与人工干预标准，重复运行并保留失败样本，不能用此处十条确定性记录外推。
+ 
++## 代表性任务与真实模型小样本试验
++
++2026-11-07 新增显式入口，默认 `evaluate:science` 仍只使用本地确定性推理，不读取真实凭证。任务是可分享的自制科研代表性数据，尚不是用户私有项目：48 个样地、多字段 CSV，目标列有 NA；一项按批准的缺失规则计算带单位均值，另一项要求单位未知时明确阻塞。独立答案留在宿主，不注入模型。
++
++联网试验必须显式给出隔离输出目录、现有 DAWN 配置目录、provider 和精确 model：
++
++```sh
++npm run evaluate:science -- --research-current-api /absolute/new-trial-directory '/absolute/DAWN-profile' deepseek deepseek-flash
++```
++
++仅支持当前已验的 OpenAI completions API 路线，不自动替换模型；凭证通过现有 CredentialStore 只读获取，配置、凭证及正式 DB 不写入。每次完整试验最多 30 次转发，重试也计入；loopback 计数器达到上限拒绝后续转发。输出目录的 live-attempt.json 用排他创建防止误重跑同一次试验，不会删除旧试验后自动续费。取消继续沿 Pi/Team 和原编排收尾。输入、脚本、产物及隔离转录保留在指定输出目录，不使用正式项目目录。
++
++报告保留 accepted / blocked / failed / cancelled / not-run；accepted 仍需实际 result.json 独立真值通过。未知单位任务必须实际读取输入、明确因单位缺失阻塞，任意失败不算正确阻塞。未运行行的输入核验为不适用，不虚构一个已执行但用量未知的任务。缺失用量不按零费用；不换算付费费用。
++
++**共享上限的先后顺序会影响剩余额度。** 小样本若未形成完整配对，不能推断质量/费用优劣。首次真实试验单 agent 正确交付用 19 次，多 agent 用剩余 11 次后未完成，另外两行未启动；实际转发恰好 30 次，额度外 4 次拒绝。完整配对为零，因此尚无多 agent 收益结论。后续试验应独立安排相同的每组预算和重复次数，另行授权联网；不能拿本次不同可用额度作公平比较。
++
++原始报告与失败样本保留于 `validation/evidence-evaluation-20261107/live/`。首次报告的未启动行有元数据展示问题，审阅后的 research-reviewed.json 只纠正“不适用”和未知任务计数，不修改执行结果，不重新联网；原始 research.json 没有覆盖。
++
+ 
+ ## 增量对照
+ 
+diff --git a/scripts/evaluate-science-pipeline.ts b/scripts/evaluate-science-pipeline.ts
+index 10961491..f4813a42 100644
+--- a/scripts/evaluate-science-pipeline.ts
++++ b/scripts/evaluate-science-pipeline.ts
+@@ -89,6 +89,10 @@ async function run(scenario:ScienceBaselineCase,mode:'single'|'multi',entry:stri
+  }finally{if(scheduler&&teamId)scheduler.中止全部(teamId);await service?.close();await server.close();rmSync(root,{recursive:true,force:true})}
+ }
+ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
++ if(process.argv[2]==='--research-current-api'){
++  import('./research-cli.js').then(m=>m.runCurrentApiResearch(process.argv.slice(3))).catch(()=>{console.error('真实科研评测入口未完成；请检查隔离报告与参数，不会自动重试。');process.exitCode=1})
++ }else{
+  const destination=resolve(process.argv[2]??'docs/validation/incremental-science-20261105/evaluation')
+  runScienceBaseline(destination).then(async r=>{const incremental=await runScienceIncremental(destination);const parallel=await runScienceParallel(join(destination,'parallel'));const budget=await runRunBudgetEvaluation(join(destination,'budget'));const handoff=await runContextHandoffEvaluation(join(destination,"handoff"));const steering=await runSubagentSteeringDemo(join(destination,'steering'));console.log(JSON.stringify({destination,byMode:r.byMode,incrementalRows:incremental.rows.length,parallelRows:parallel.rows.length,parallelPairs:parallel.pairs,steeringModelRequests:steering.modelRequests,handoffObserved:handoff.observed,budgetObserved:budget.observed}))}).catch(error=>{console.error(error);process.exitCode=1})
++ }
+ }
+diff --git a/scripts/mock-inference-server.mjs b/scripts/mock-inference-server.mjs
+index ad261444..59a13c1d 100644
+--- a/scripts/mock-inference-server.mjs
++++ b/scripts/mock-inference-server.mjs
+@@ -8,6 +8,7 @@ import { terminalAssistanceTool, terminalAssistanceReply } from './mock-terminal
+ import { literatureMockTool, literatureMockReply } from './mock-literature.mjs'
+ import { reviewMockTool, reviewMockReply } from './mock-literature-review.mjs'
+ import {budgetDelegationTool} from './mock-run-budget.mjs'
++import {evidenceHandoffTool} from './mock-evidence-handoff.mjs'
+ /**
+  * 本地 OpenAI 兼容的假推理服务器。
+  *
+@@ -631,7 +632,7 @@ export function startMockInferenceServer(opts = {}) {
+                 ? 案例卡片回复
+                 : 默认回复)
+ 
+-      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? budgetDelegationTool(body) ?? scienceMockTool(body) ?? reviewMockTool(body) ?? literatureMockTool(body) ?? terminalAssistanceTool(body) ?? toolSelectionDemoTool(body) ?? deliveryDemoTool(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
++      const tool = 摘要 || 是标题 ? undefined : opts.scenario ? opts.scenario.toolCall(body) : (opts.toolCall?.(body) ?? evidenceHandoffTool(body) ?? budgetDelegationTool(body) ?? scienceMockTool(body) ?? reviewMockTool(body) ?? literatureMockTool(body) ?? terminalAssistanceTool(body) ?? toolSelectionDemoTool(body) ?? deliveryDemoTool(body) ?? analysisRouteMockTool(body) ?? childResourceTool(body) ?? botCollaborationTool(body) ?? botAcceptanceTool(body) ?? 澄清工具(body) ?? 慢跑工具(body) ?? 改文件工具(body) ?? 子agent工具(body) ?? 演示工具(body) ?? 跑Cox工具(body) ?? 方案工具(body))
+       const 用量 = !摘要 && !是标题 && 最后一句.includes("塞满上下文") ? 塞满用量 : 默认用量
+       const stream = body.stream !== false
+       const finishReason = !摘要 && !是标题 && 最后一句.includes("演一次截断") ? "length" : "stop"
+diff --git a/src/orchestration/tools.ts b/src/orchestration/tools.ts
+index b0727899..56cf00e0 100644
+--- a/src/orchestration/tools.ts
++++ b/src/orchestration/tools.ts
+@@ -1,4 +1,5 @@
+ import {HandoffSelectionSchema,type HandoffSelection} from '../protocol/context-handoff.js'
++import {HandoffParameters} from '../subagent/tool.js'
+ /** Model-facing controls; all authority derives from this parent's service instance. */
+ import {Type} from 'typebox'
+ import {TaskContractSchema,TaskContractParameters,type TaskContract} from './task-contract.js'
+@@ -10,6 +11,7 @@ import type {ChildMessage, ChildRecord} from './store.js'
+ export interface OrchestrationToolOptions {
+   service: OrchestrationService
+   mailbox: OrchestrationMailbox
++  contextSources?:()=>unknown
+   start: (agent: string, task: string, requestId: string, contract?:TaskContract,handoff?:HandoffSelection) => {child: ChildRecord; message: ChildMessage}
+   sendMember?: (child: ChildRecord, text: string, requestId: string) => Promise<unknown>
+   interruptMember?: (child: ChildRecord) => void
+@@ -37,7 +39,8 @@ export function createOrchestrationTools(opts: OrchestrationToolOptions) {
+     },
+   })
+   return [
+-    make('start_subagent', '后台启动一个名册中的子 agent，立即返回稳定 childId 和消息接收回执；完成结果会回主对话。写清执行范围、数据保护和交付要求。', Type.Object({agent: Type.String(), task: Type.String(),contract:Type.Optional(TaskContractParameters),handoff:Type.Optional(Type.Object({recentMessages:Type.Integer({minimum:1,maximum:8})},{additionalProperties:false}))}), z.object({agent: id, task: body,contract:TaskContractSchema.optional(),handoff:HandoffSelectionSchema.optional()}).strict(), (args, callId) => {
++    ...(opts.contextSources?[make('subagent_context_sources','只读查看当前父会话的可交接正文 ID、路线记录与已结束的历史验收版本。不会启动任务，不含思考或工具原文；引用不证明当前文件有效，也不授予权限。',Type.Object({}),z.object({}).strict(),()=>opts.contextSources!())]:[]),
++    make('start_subagent', '后台启动一个名册中的子 agent，立即返回稳定 childId 和消息接收回执；完成结果会回主对话。写清执行范围、数据保护和交付要求。可选 handoff 引用 subagent_context_sources 的正文与历史证据 ID；冻结科研契约不接受此普通快照。', Type.Object({agent: Type.String(), task: Type.String(),contract:Type.Optional(TaskContractParameters),handoff:Type.Optional(HandoffParameters)}), z.object({agent: id, task: body,contract:TaskContractSchema.optional(),handoff:HandoffSelectionSchema.optional()}).strict(), (args, callId) => {
+       const {child, message} = opts.start(args.agent, args.task, callId,args.contract,args.handoff)
+       return {childId: child.id, messageId: message.id, delivery: 'queued', revision: service.revision}
+     }),
+diff --git a/src/policy/execution-boundary.ts b/src/policy/execution-boundary.ts
+index 66f62857..3e69618f 100644
+--- a/src/policy/execution-boundary.ts
++++ b/src/policy/execution-boundary.ts
+@@ -18,7 +18,7 @@ export const 讨论执行指引 =
+   '提供未执行的代码时如实说明未运行。已有方案审批与权限要求继续生效。'
+ 
+ /** 类型明确的读取工具；inspect_data 会起内核，因此不属于纯讨论的只读入口。 */
+-const 讨论只读 = new Set(["list_subagents", "wait_subagents", "science_pipeline_status", 'terminal_list', 'terminal_snapshot', 'terminal_wait', 'read', 'ls', 'grep', 'find', 'look_at_image', 'read_main_session', 'openalex_search', 'openalex_lookup_doi', 'crossref_search', 'crossref_lookup_doi', 'geo_search', 'geo_get_series', 'sra_search', 'sra_get_accession', 'uniprot_search', 'uniprot_get_accession', 'ask_user_question', 'propose_plan', 'get_analysis_route', 'update_analysis_route'])
++const 讨论只读 = new Set(["subagent_context_sources", "list_subagents", "wait_subagents", "science_pipeline_status", 'terminal_list', 'terminal_snapshot', 'terminal_wait', 'read', 'ls', 'grep', 'find', 'look_at_image', 'read_main_session', 'openalex_search', 'openalex_lookup_doi', 'crossref_search', 'crossref_lookup_doi', 'geo_search', 'geo_get_series', 'sra_search', 'sra_get_accession', 'uniprot_search', 'uniprot_get_accession', 'ask_user_question', 'propose_plan', 'get_analysis_route', 'update_analysis_route'])
+ 
+ type Entry = { type?: string; message?: { role?: string; content?: unknown } }
+ 
+diff --git a/src/policy/plan-mode.ts b/src/policy/plan-mode.ts
+index 7b209d3e..dec2ae49 100644
+--- a/src/policy/plan-mode.ts
++++ b/src/policy/plan-mode.ts
+@@ -38,7 +38,7 @@ import { 出方案工具名, 看数据工具名 } from "../protocol/plan.js"
+  * `ls` / `grep` / `find` 是 pi 的类型化工具（`@earendil-works/pi-coding-agent` `core/tools/{ls,grep,find}.js`），不过 shell。
+  * **运行时得真把这三件交给模型**（计划 Task 5 的注），不然方案期就只剩 `read`。
+  */
+-export const 方案期放行: ReadonlySet<string> = new Set(["list_subagents", "wait_subagents", "science_pipeline_status",
++export const 方案期放行: ReadonlySet<string> = new Set(["subagent_context_sources", "list_subagents", "wait_subagents", "science_pipeline_status",
+   "terminal_list", "terminal_snapshot", "terminal_wait",
+   "get_analysis_route", "update_analysis_route",
+   "ask_user_question",
+@@ -73,7 +73,7 @@ export interface 方案期语境 {
+ // ── 路径：已批准的方案文件 ──
+ 
+ /** 读路径的工具：参数里的路径是读，不算碰（`read` 读方案文件天经地义） */
+-const 只读取工具 = new Set(["list_subagents", "wait_subagents", "science_pipeline_status", "terminal_list", "terminal_snapshot", "terminal_wait", "get_analysis_route", "update_analysis_route", "ask_user_question", "read", "ls", "grep", "find", "look_at_image", "read_main_session", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", "sra_search", "sra_get_accession", "uniprot_search", "uniprot_get_accession", 看数据工具名, 出方案工具名])
++const 只读取工具 = new Set(["subagent_context_sources", "list_subagents", "wait_subagents", "science_pipeline_status", "terminal_list", "terminal_snapshot", "terminal_wait", "get_analysis_route", "update_analysis_route", "ask_user_question", "read", "ls", "grep", "find", "look_at_image", "read_main_session", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", "sra_search", "sra_get_accession", "uniprot_search", "uniprot_get_accession", 看数据工具名, 出方案工具名])
+ /** 写类工具里哪些参数名是路径：pi 的 `path`，插件的 `output` / `file_path` / `dest`…… */
+ const 路径参数名 = /path|file|output|dest|target/i
+ 
+diff --git a/src/protocol/context-handoff.ts b/src/protocol/context-handoff.ts
+index 2b04a642..112b335e 100644
+--- a/src/protocol/context-handoff.ts
++++ b/src/protocol/context-handoff.ts
+@@ -1,9 +1,18 @@
+ import {z} from 'zod'
+-export const HandoffSelectionSchema=z.object({recentMessages:z.number().int().min(1).max(8)}).strict()
++import {TaskVersionsSchema} from './file-versions.js'
++const id=z.string().min(1).max(512)
++export const HandoffSelectionSchema=z.object({recentMessages:z.number().int().min(1).max(8),messageIds:z.array(id).min(1).max(8).optional(),routeStepId:id.optional(),acceptedChildIds:z.array(id).min(1).max(4).optional()}).strict().superRefine((v,c)=>{
++ if(v.messageIds&&(v.messageIds.length!==v.recentMessages||new Set(v.messageIds).size!==v.messageIds.length)||v.acceptedChildIds&&new Set(v.acceptedChildIds).size!==v.acceptedChildIds.length)c.addIssue({code:'custom',message:'交接消息数量或引用身份重复'})
++})
+ export type HandoffSelection=z.infer<typeof HandoffSelectionSchema>
+-export const ContextHandoffSchema=z.object({
++const original=z.object({
+  version:z.literal(1),sourceSessionId:z.string().min(1).max(512),createdAt:z.number().finite(),requestedMessages:z.number().int().min(1).max(8),
+  entries:z.array(z.object({id:z.string().min(1).max(512),role:z.enum(['user','assistant']),text:z.string().min(1).max(16384)}).strict()).min(1).max(8),
+  bytes:z.number().int().min(1).max(16384),sha256:z.string().regex(/^[a-f0-9]{64}$/),
+ }).strict()
++export const HandoffReferenceSchema=z.discriminatedUnion('kind',[
++ z.object({kind:z.literal('route'),routeId:id,revision:z.number().int().positive(),stepId:id,text:z.string().min(1).max(32768),state:z.literal('record-not-approval')}).strict(),
++ z.object({kind:z.literal('receipt'),childId:id,epoch:z.number().int().positive(),receiptSha256:z.string().regex(/^[a-f0-9]{64}$/),versions:TaskVersionsSchema,state:z.literal('historical-current-unverified')}).strict(),
++])
++export const ContextHandoffSchema=z.union([original,original.extend({version:z.literal(2),selection:HandoffSelectionSchema,references:z.array(HandoffReferenceSchema).max(5),envelopeBytes:z.number().int().positive().max(65536)}).strict()])
+ export type ContextHandoff=z.infer<typeof ContextHandoffSchema>
+diff --git a/src/protocol/version.ts b/src/protocol/version.ts
+index c45fbf06..ec8fbfd8 100644
+--- a/src/protocol/version.ts
++++ b/src/protocol/version.ts
+@@ -604,7 +604,8 @@
+ /** 8.44：运行中纠偏回执与可恢复的有界科研批量。 */
+ /** 8.45：会话隔离的只读运行总览。 */
+ /** 8.46：宿主阶段/锁等待历史与可显式设置的持久会话委派预算。 */
+-export const WORKBENCH_PROTOCOL_VERSION = "8.46"
++/** 8.47：有界证据交接 v2，正文选择、路线记录与历史验收版本投影。 */
++export const WORKBENCH_PROTOCOL_VERSION = "8.47"
+ 
+ const VERSION_RE = /^(\d+)\.(\d+)$/
+ 
+diff --git a/src/runtime/native.ts b/src/runtime/native.ts
+index 276fb420..8c0574bf 100644
+--- a/src/runtime/native.ts
++++ b/src/runtime/native.ts
+@@ -1,4 +1,4 @@
+-import {captureHandoff} from '../subagent/context-handoff.js'
++import {captureEvidenceHandoff,handoffSources} from '../subagent/handoff-sources.js'
+ import {liveRunOverview} from '../orchestration/run-overview.js'
+ import {createHash} from 'node:crypto'
+ import {runControlledScience} from '../team/science-execution.js'
+@@ -1722,7 +1722,7 @@ export class NativeRuntime implements AgentRuntime {
+     const 子任务资源 = childResourceFactory(this.opts, spec)
+     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
+       orchestration,
+-      captureHandoff:selection=>captureHandoff(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],selection.recentMessages),
++      captureHandoff:selection=>captureEvidenceHandoff(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],selection,{route:this.routeBooks.get(spec.sessionId)?.book?.read(),children:orchestration.store.list()}),
+       remote:Boolean(spec.remote),
+       taskPolicy:()=>this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??"ask-risky",
+       sessionId: spec.sessionId,
+@@ -1918,6 +1918,7 @@ export class NativeRuntime implements AgentRuntime {
+       return {team, member}
+     }
+     const controls = createOrchestrationTools({service: orchestration, mailbox: subagentControl.mailbox, start: subagentControl.start,
++      contextSources:()=>handoffSources(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],{route:this.routeBooks.get(spec.sessionId)?.book?.read(),children:orchestration.store.list()}),
+       sendMember: async (child, text, requestId) => {
+         const {team, member} = memberFor(child)
+         调度器.assertExternalMutation(team.id)
+diff --git a/src/subagent/context-handoff.ts b/src/subagent/context-handoff.ts
+index c310d8a7..dc7f7942 100644
+--- a/src/subagent/context-handoff.ts
++++ b/src/subagent/context-handoff.ts
+@@ -6,9 +6,25 @@ import {ContextHandoffSchema,HandoffSelectionSchema,type ContextHandoff} from '.
+ const fingerprint=(sourceSessionId:string,entries:ContextHandoff['entries'],requestedMessages:number)=>createHash('sha256').update(JSON.stringify([1,sourceSessionId,entries,requestedMessages])).digest('hex')
+ function validate(value:unknown,owner:string):ContextHandoff{
+  const snapshot=ContextHandoffSchema.parse(value)
+- if(snapshot.sourceSessionId!==owner||snapshot.bytes!==Buffer.byteLength(snapshot.entries.map(e=>e.text).join(''),'utf8')||snapshot.sha256!==fingerprint(owner,snapshot.entries,snapshot.requestedMessages)||new Set(snapshot.entries.map(e=>e.id)).size!==snapshot.entries.length)throw new Error('交接快照来源或指纹不匹配')
++ const expected=snapshot.version===1?fingerprint(owner,snapshot.entries,snapshot.requestedMessages):evidenceFingerprint(snapshot)
++ if(snapshot.sourceSessionId!==owner||snapshot.bytes!==Buffer.byteLength(snapshot.entries.map(e=>e.text).join(''),'utf8')||snapshot.sha256!==expected||new Set(snapshot.entries.map(e=>e.id)).size!==snapshot.entries.length||snapshot.version===2&&snapshot.envelopeBytes!==Buffer.byteLength(JSON.stringify(snapshot),'utf8'))throw new Error('交接快照来源或指纹不匹配')
+  return snapshot
+ }
++/** Both hash and size use canonical schema field order, independent of incoming JSON key order. */
++export function evidenceFingerprint(value:Extract<ContextHandoff,{version:2}>):string{
++ return createHash('sha256').update(JSON.stringify({...value,sha256:''})).digest('hex')
++}
++export function visibleHandoffEntries(branch:readonly unknown[]):ContextHandoff['entries']{
++ const entries:ContextHandoff['entries']=[]
++ for(const raw of branch){
++  const e=raw as {type?:string;id?:string;message?:{role?:string;stopReason?:string;content?:unknown}},m=e.message
++  if(e.type!=='message'||!e.id||!m||m.role!=='user'&&!(m.role==='assistant'&&m.stopReason==='stop'))continue
++  const text=typeof m.content==='string'?m.content:Array.isArray(m.content)?m.content.filter((b):b is {type:'text';text:string}=>!!b&&b.type==='text'&&typeof b.text==='string').map(b=>b.text).join('\n'):''
++  if(text.trim())entries.push({id:e.id,role:m.role as 'user'|'assistant',text})
++ }
++ return entries
++}
++export const handoffSelection=(capsule:ContextHandoff)=>capsule.version===1?{recentMessages:capsule.requestedMessages}:capsule.selection
+ export function captureHandoff(sourceSessionId:string,branch:readonly unknown[],recentMessages:number):ContextHandoff{
+  HandoffSelectionSchema.parse({recentMessages})
+  const entries:ContextHandoff['entries']=[]
+diff --git a/src/subagent/tool.ts b/src/subagent/tool.ts
+index 1d8db67f..fc7ed432 100644
+--- a/src/subagent/tool.ts
++++ b/src/subagent/tool.ts
+@@ -1,4 +1,4 @@
+-import {freezeHandoff,readHandoff} from './context-handoff.js'
++import {freezeHandoff,readHandoff,handoffSelection} from './context-handoff.js'
+ import {childIdentity} from '../orchestration/store.js'
+ import {HandoffSelectionSchema,type HandoffSelection,type ContextHandoff} from '../protocol/context-handoff.js'
+ /**
+@@ -72,7 +72,7 @@ export interface SubagentToolOptions {
+   emit: (event: AgentEvent) => void
+ }
+ 
+-const HandoffParameters=Type.Object({recentMessages:Type.Integer({minimum:1,maximum:8,description:"从当前父会话选取最近 N 条已完成正文；最多 16 KiB，不含工具结果或思考，不扩大权限"})},{additionalProperties:false})
++export const HandoffParameters=Type.Object({recentMessages:Type.Integer({minimum:1,maximum:8,description:"选取 N 条已完成正文；最多 16 KiB，不含思考、不扩大权限"}),messageIds:Type.Optional(Type.Array(Type.String(),{minItems:1,maxItems:8,description:'指定当前分支的正文 ID；数量须等于 recentMessages。不指定时取最近正文。'})),routeStepId:Type.Optional(Type.String()),acceptedChildIds:Type.Optional(Type.Array(Type.String(),{minItems:1,maxItems:4}))},{additionalProperties:false})
+ const TaskItem = Type.Object({
+   handoff:Type.Optional(HandoffParameters),
+   contract: Type.Optional(TaskContractParameters),
+@@ -165,7 +165,7 @@ export function prepareSubagentTask(opts:SubagentToolOptions,callId:string,index
+     if(recorded===null)throw new Error('任务已冻结为不继承父上下文，不能在重试时追加交接')
+     if(task.contract||existingMeta?.settings?.contract||child?.settings?.contract)throw new Error('科研任务使用冻结路线与契约，不接受普通对话快照')
+     if(existingHandoff){
+-      if(existingHandoff.requestedMessages!==selection.recentMessages)throw new Error('交接选择已冻结，不可修改')
++      if(JSON.stringify(handoffSelection(existingHandoff))!==JSON.stringify(selection))throw new Error('交接选择已冻结，不可修改')
+     }else{
+       if(!opts.captureHandoff)throw new Error('当前后端不支持父上下文交接')
+       const captured=opts.captureHandoff(selection)
+@@ -196,7 +196,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
+   return {
+     name: "subagent",
+     label: "subagent",
+-    description: describe(load())+'\n可选 handoff:{recentMessages:1..8}：宿主选取当前父会话最近的已完成正文，最多 16 KiB；保存来源和指纹，不复制工具结果、思考或权限。single 放顶层，parallel/chain 放在各项中。科研契约任务仍使用冻结路线，不接受此快照。',
++    description: describe(load())+'\n可选 handoff:{recentMessages:1..8,messageIds?,routeStepId?,acceptedChildIds?}：先用 subagent_context_sources 查正文及历史引用 ID；不指定 messageIds 时取最近正文，最多 16 KiB。宿主冻结来源与指纹，不复制工具原文、思考或权限。历史产物版本未再次核验，路线记录不代表批准。single 放顶层，parallel/chain 放各项。科研契约和独立审阅不接受此快照。',
+     parameters,
+ 
+     async execute(toolCallId: string, params: Params, signal?: AbortSignal): Promise<ToolResult> {
+diff --git a/src/ui/i18n/en.ts b/src/ui/i18n/en.ts
+index 0ca5e34a..e421aa28 100644
+--- a/src/ui/i18n/en.ts
++++ b/src/ui/i18n/en.ts
+@@ -44,6 +44,18 @@ export const EN: Readonly<Record<string, string>> = {
+   "查看子任务过程": "View child transcript",
+   "已冻结交接：{0} 条正文 · {1} 字节": "Frozen handoff: {0} messages \u00b7 {1} bytes",
+   "来源会话：{0}": "Source session: {0}",
++  "路线标题：{0}": "Route title: {0}",
++  "目标：{0}": "Goal: {0}",
++  "步骤：{0}": "Step: {0}",
++  "步骤目的：{0}": "Step purpose: {0}",
++  "输入：{0}": "Inputs: {0}",
++  "输出：{0}": "Outputs: {0}",
++  "历史路线内容无法呈现，请核对引用原文": "Historical route cannot be displayed; inspect the original reference",
++  "查看引用原文": "Inspect original reference",
++  "路线仅是记录，不代表批准；历史版本尚未重新核验，不授予额外权限": "Route records are not approval; historical versions have not been rechecked and grant no additional permissions",
++  "历史证据引用 {0} 项 · 交接总计 {1} 字节": "Historical references: {0} · Total handoff: {1} bytes",
++  "路线 {0} · 修订 {1} · 步骤 {2}": "Route {0} · Revision {1} · Step {2}",
++  "历史验收任务 {0} · 执行代次 {1}": "Historical accepted task {0} · Execution {1}",
+   "仅包含选中的正文；不含工具结果、思考、图片或额外权限": "Selected text only; excludes tool results, thoughts, images and additional permissions",
+ 
+   "停止中，等待工具排空": "Stopping; waiting for tools to drain",
+diff --git a/src/ui/run-overview.tsx b/src/ui/run-overview.tsx
+index 31c4459f..d5951ef4 100644
+--- a/src/ui/run-overview.tsx
++++ b/src/ui/run-overview.tsx
+@@ -6,6 +6,7 @@ import {Button} from './primitives.js'
+ import {子转录id} from '../protocol/subagent-id.js'
+ import {RunActivity,RunHistory} from './run-explanation.js'
+ import {RunBudgetPanel} from './run-budget.js'
++import {handoffRouteLines} from './handoff-route.js'
+ 
+ function status(run:Snapshot['runs'][number]){
+  if(run.phase==='stopping')return t("停止中，等待进程排空")
+@@ -49,6 +50,18 @@ export function RunOverview({client,sessionId,onView}:{client:WorkbenchClient;se
+       <p>{tf("来源会话：{0}",run.handoff.sourceSessionId)}</p><code>{run.handoff.sha256}</code>
+       <p className="hint">{t("仅包含选中的正文；不含工具结果、思考、图片或额外权限")}</p>
+       {run.handoff.entries.map(entry=><div key={entry.id}><small>{entry.role} · {entry.id}</small><pre data-authored="1">{entry.text}</pre></div>)}
++      {run.handoff.version===2?<>
++       <p className="hint">{t("路线仅是记录，不代表批准；历史版本尚未重新核验，不授予额外权限")}</p>
++       <p>{tf("历史证据引用 {0} 项 · 交接总计 {1} 字节",run.handoff.references.length,run.handoff.envelopeBytes)}</p>
++       {run.handoff.references.map((ref,i)=><div key={i}>{ref.kind==='route'?<>
++        <small>{tf("路线 {0} · 修订 {1} · 步骤 {2}",ref.routeId,ref.revision,ref.stepId)}</small>
++        {handoffRouteLines(ref.text).map((line,n)=><p key={n} data-authored="1">{line}</p>)}
++        <details><summary>{t("查看引用原文")}</summary><pre data-authored="1">{ref.text}</pre></details>
++       </>:<>
++        <small>{tf("历史验收任务 {0} · 执行代次 {1}",ref.childId,ref.epoch)}</small>
++        {ref.versions.outputs.map(file=><p key={file.path} data-authored="1">{file.path} · {file.sha256}</p>)}
++       </>}</div>)}
++      </>:null}
+     </details>:run.handoffIssue?<p role="alert" data-authored="1">{run.handoffIssue}</p>:null}
+     {run.kind==='subagent'&&run.address.length===2&&/^\d+$/.test(run.address[1]!)&&onView?<Button onClick={()=>onView(子转录id(sessionId!,run.address[0]!,Number(run.address[1])))}>{t("查看子任务过程")}</Button>:null}
+    </article>)}
+diff --git a/tests/policy/execution-boundary.test.ts b/tests/policy/execution-boundary.test.ts
+index 08a3f06a..242ea8c2 100644
+--- a/tests/policy/execution-boundary.test.ts
++++ b/tests/policy/execution-boundary.test.ts
+@@ -28,7 +28,7 @@ describe('明确限制与解除，不猜普通对话的意图', () => {
+   it('未知工具、代码探查、委派、写入一律拒；明确只读工具可用', () => {
+     const branch = [user('先只讨论')]
+     for (const name of ['run_code', 'bash', 'powershell', 'inspect_data', 'edit', 'write', 'xlsx_write', 'subagent', 'subagent_follow_up', 'team_create', 'bot_message', 'unknown']) expect(讨论拒绝理由(name, branch), name).toContain('讨论')
+-    for (const name of ['read', 'ls', 'grep', 'find', 'ask_user_question', 'look_at_image', 'propose_plan', 'read_main_session']) expect(讨论拒绝理由(name, branch), name).toBeUndefined()
++    for (const name of ['subagent_context_sources', 'read', 'ls', 'grep', 'find', 'ask_user_question', 'look_at_image', 'propose_plan', 'read_main_session']) expect(讨论拒绝理由(name, branch), name).toBeUndefined()
+     expect(讨论拒绝理由('mcp_search', branch, true)).toBeUndefined()
+     expect(讨论拒绝理由('run_code', [user('开始执行')])).toBeUndefined()
+   })
+diff --git a/tests/policy/plan-mode.test.ts b/tests/policy/plan-mode.test.ts
+index 56814787..e5cb9250 100644
+--- a/tests/policy/plan-mode.test.ts
++++ b/tests/policy/plan-mode.test.ts
+@@ -31,11 +31,11 @@ const 放 = { kind: "allow" }
+ 
+ describe("方案期：名单", () => {
+   it("只读的几件放（含 pi 的 ls / grep / find：不过 shell）", () => {
+-    for (const n of ["science_pipeline_status", "list_subagents", "wait_subagents", "read", "look_at_image", "read_main_session", "propose_plan", "inspect_data", "ls", "grep", "find", "get_analysis_route", "update_analysis_route"]) {
++    for (const n of ["subagent_context_sources", "science_pipeline_status", "list_subagents", "wait_subagents", "read", "look_at_image", "read_main_session", "propose_plan", "inspect_data", "ls", "grep", "find", "get_analysis_route", "update_analysis_route"]) {
+       expect(方案期判(n, {}, 语境()), n).toEqual(放)
+     }
+     expect([...方案期放行].sort()).toEqual(
+-      ["science_pipeline_status", "list_subagents", "wait_subagents", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", "sra_search", "sra_get_accession", "uniprot_search", "uniprot_get_accession", "terminal_list", "terminal_snapshot", "terminal_wait", "ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
++      ["subagent_context_sources", "science_pipeline_status", "list_subagents", "wait_subagents", "openalex_search", "openalex_lookup_doi", "crossref_search", "crossref_lookup_doi", "geo_search", "geo_get_series", "sra_search", "sra_get_accession", "uniprot_search", "uniprot_get_accession", "terminal_list", "terminal_snapshot", "terminal_wait", "ask_user_question", "find", "grep", "inspect_data", "look_at_image", "ls", "propose_plan", "read", "read_main_session", "get_analysis_route", "update_analysis_route"].sort(),
+     )
+   })
+ 
+diff --git a/tests/protocol/events.test.ts b/tests/protocol/events.test.ts
+index e2ec3ab6..668d2ab9 100644
+--- a/tests/protocol/events.test.ts
++++ b/tests/protocol/events.test.ts
+@@ -466,7 +466,7 @@ describe("协议版本 · 5.5", () => {
+    */
+   // 8.40：团队任务增加可选契约与宿主回执，内部权限快照不进入客户端。
+   it("版本号与这份说明一致", () => {
+-    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.46")
++    expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.47")
+   })
+ 
+   it("major 不同即不兼容，1.x 的界面连不上 2.0 的服务端", () => {
+diff --git a/tests/ui/run-overview.test.tsx b/tests/ui/run-overview.test.tsx
+index 1559b168..b7bd1963 100644
+--- a/tests/ui/run-overview.test.tsx
++++ b/tests/ui/run-overview.test.tsx
+@@ -3,7 +3,23 @@ import {cleanup,render,screen,act,fireEvent} from '@testing-library/react'
+ import {RunOverview} from '../../src/ui/run-overview.js'
+ import type {WorkbenchClient} from '../../src/ui/client.js'
+ import type {RunOverview as Snapshot} from '../../src/protocol/run-overview.js'
++import {captureEvidenceHandoff} from '../../src/subagent/handoff-sources.js'
++import {handoffRouteLines} from '../../src/ui/handoff-route.js'
+ afterEach(cleanup)
++it('presents route evidence as readable fields rather than raw implementation JSON',()=>{
++ const lines=handoffRouteLines(JSON.stringify({title:'碳分析',goal:'按约定方法统计',step:{title:'统计',purpose:'保留单位',inputs:['in.csv'],outputs:['result.json']}}))
++ expect(lines.join('\n')).toContain('步骤目的：保留单位')
++ expect(lines.join('\n')).toContain('输入：in.csv')
++ expect(lines.join('\n')).not.toContain('"step"')
++ expect(handoffRouteLines('invalid')).toEqual(['历史路线内容无法呈现，请核对引用原文'])
++})
++it('labels evidence handoff as historical references without implying approval or live file validity',async()=>{
++ const data=snapshot('p');data.runs[0]!.handoff=captureEvidenceHandoff('p',[{type:'message',id:'early',message:{role:'user',content:'早期批准方法与单位'}}],{recentMessages:1,messageIds:['early']},{})
++ render(<RunOverview client={{get:vi.fn().mockResolvedValue(data)} as unknown as WorkbenchClient} sessionId="p"/>);await act(async()=>{})
++ expect(screen.getByText(/历史版本尚未重新核验/)).toBeTruthy()
++ expect(screen.getByText('早期批准方法与单位')).toBeTruthy()
++ expect(screen.getByText(/交接总计/)).toBeTruthy()
++})
+ function deferred(){let resolve!:(s:Snapshot)=>void;const promise=new Promise<Snapshot>(r=>resolve=r);return{promise,resolve}}
+ const snapshot=(ownerSessionId:string):Snapshot=>({ownerSessionId,source:'live',runs:[{id:'child',kind:'subagent',label:ownerSessionId+' reader',address:['call','0'],state:'running',phase:'stopping',epoch:3,updatedAt:1,contract:true,receipt:'blocked',inputVersions:1,outputVersions:0}]})
+ it('shows real drain and acceptance facts, routes transcript selection, and drops stale owner replies',async()=>{

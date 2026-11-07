@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-model.test.ts tests/ui/collaboration-workbench.test.tsx tests/ui/collaboration-workflow.test.tsx tests/ui/run-overview.test.tsx tests/ui/run-budget.test.tsx tests/ui/team-view-state.test.tsx tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 75ms
+     × 按钮文案之间没有子串关系 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 英文那一面也要守中文那边的规矩 > 按钮文案之间没有子串关系
+AssertionError: 按名字找就找不准了——换一个说法: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"All\" ⊂ \"Allowance blocks further execution\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:209:51
+    207|       }
+    208|     }
+    209|     expect([...new Set(撞上的)], "按名字找就找不准了——换一个说法").toEqual([])
+       |                                                   ^
+    210|   })
+    211|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 147 passed (148)
+   Start at  08:03:31
+   Duration  2.46s (transform 3.47s, setup 5.44s, import 949ms, tests 1.73s, environment 5.57s)
+

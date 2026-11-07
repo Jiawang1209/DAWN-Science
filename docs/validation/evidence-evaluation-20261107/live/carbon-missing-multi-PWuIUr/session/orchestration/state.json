@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "ownerSessionId": "research",
+  "children": [
+    {
+      "id": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "kind": "team",
+      "address": [
+        "research",
+        "check",
+        "19f6691e-2a35-4d2d-85c1-8fa6a2afab3f"
+      ],
+      "label": "check",
+      "state": "failed",
+      "epoch": 1,
+      "updatedAt": 1793987156967,
+      "reason": "任务要求 submit_task_result，未收到宿主接受的提交",
+      "timing": {
+        "executionMs": 102431,
+        "preflightMs": 17
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 102008,
+          "submissionAttempts": 4,
+          "invalidSubmissions": 4,
+          "usage": {
+            "input": 13284,
+            "output": 13979,
+            "cacheRead": 160000,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": false,
+        "output": "",
+        "error": "任务要求 submit_task_result，未收到宿主接受的提交"
+      }
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 7,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1793987054517,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1793987054518,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1793987054518,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 1,
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1793987054519,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1793987054520,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1793987054537,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 7,
+      "at": 1793987156967,
+      "childId": "child-43dbd096cdcd101f7b9b547745c2b6e1",
+      "epoch": 1,
+      "type": "settled",
+      "state": "failed"
+    }
+  ],
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 187263,
+    "unknownRuns": 1,
+    "active": [],
+    "startedAt": 1793987054518
+  }
+}

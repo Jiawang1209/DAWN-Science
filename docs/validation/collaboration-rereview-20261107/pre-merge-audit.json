@@ -1,0 +1,20 @@
+{
+  "base": "f685a56122ee6238affa55d8bd9ba6f9b604a6c7",
+  "sourceFiles": 57,
+  "sourceDrift": [],
+  "nodeUiPassed": 6386,
+  "nodeUiSkipped": 10,
+  "kernelPassed": 50,
+  "kernelConditionalSkipped": 1,
+  "desktopPassed": 53,
+  "nativeExits": 62,
+  "nativeProblems": 0,
+  "unexpectedWatchdogs": 0,
+  "formalFilesUnchanged": true,
+  "newLiveModelRequests": 0,
+  "historicalTimeoutResolved": false,
+  "independentReview": "No remaining P1/P2 after fixes; final targeted 16 passed and Chromium component checks passed",
+  "initialDesktop": "52 passed, one old legacy-entry assertion failed; corrected explicit entry, then frozen full 53 passed",
+  "additionalFailure": "Expanded old transcript roundtrip exposed body-focus shortcut escape; captured, fixed, and frozen test passed",
+  "integration": "Awaiting authorized local commit/fast-forward and main verification; no push or release"
+}

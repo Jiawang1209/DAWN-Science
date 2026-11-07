@@ -1,0 +1,56 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts tests/evaluation/request-gate.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/request-gate.test.ts (3 tests | 1 failed) 258ms
+   × ends an owned incomplete request body at the deadline without forwarding it 207ms
+ ❯ |node| tests/evaluation/research-runner.test.ts (3 tests | 2 failed) 6998ms
+   × records cancellation during a live single child as cancelled, not a failed scientific result 590ms
+   × retains settled check-stage usage when the analysis stage is cancelled and drained 2057ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > ends an owned incomplete request body at the deadline without forwarding it
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/evaluation/request-gate.test.ts:33:19
+     31|   })
+     32|   const outcome=await Promise.race([closed.then(()=>true),new Promise<…
+     33|   expect(outcome).toBe(true);expect(received).toBe(0)
+       |                   ^
+     34|  }finally{await gate.close()}
+     35| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > records cancellation during a live single child as cancelled, not a failed scientific result
+AssertionError: expected 'failed' to be 'cancelled' // Object.is equality
+
+Expected: "cancelled"
+Received: "failed"
+
+ ❯ tests/evaluation/research-runner.test.ts:32:36
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > retains settled check-stage usage when the analysis stage is cancelled and drained
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/evaluation/research-runner.test.ts:47:78
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 3 passed (6)
+   Start at  01:54:33
+   Duration  7.80s (transform 282ms, setup 0ms, import 763ms, tests 7.26s, environment 0ms)
+

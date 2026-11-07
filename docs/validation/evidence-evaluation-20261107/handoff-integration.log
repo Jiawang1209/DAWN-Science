@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/evidence-handoff.test.ts tests/subagent/context-handoff.test.ts tests/subagent/context-handoff-tool.test.ts tests/orchestration/tools.test.ts tests/ui/run-overview.test.tsx --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  24 passed (24)
+   Start at  01:34:05
+   Duration  1.63s (transform 885ms, setup 557ms, import 2.20s, tests 687ms, environment 613ms)
+

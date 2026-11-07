@@ -1,0 +1,23 @@
+[
+  {
+    "transcript": "carbon-missing-multi-PWuIUr/session/teams/research/members/check/2026-11-06T17-44-14-962Z_01a1b1f6-0d71-746c-9214-6102a8eacf65.jsonl",
+    "submissionResponses": 5,
+    "invalidSubmissionResponses": 4,
+    "reasons": [
+      "提交未接受，可修正后再次调用：数据核查缺少声明输入的真实 read 证据",
+      "提交未接受，可修正后再次调用：数据核查缺少声明输入的真实 read 证据",
+      "提交未接受，可修正后再次调用：数据核查缺少声明输入的真实 read 证据",
+      "提交未接受，可修正后再次调用：数据核查缺少声明输入的真实 read 证据"
+    ]
+  },
+  {
+    "transcript": "carbon-missing-single-hYqqfd/single/transcript/2026-11-06T17-42-33-108Z_01a1b1f4-7f94-7308-ae1a-bb649f5a2f15.jsonl",
+    "submissionResponses": 4,
+    "invalidSubmissionResponses": 3,
+    "reasons": [
+      "提交未接受，可修正后再次调用：产物未在契约 outputs 声明",
+      "提交未接受，可修正后再次调用：执行记录必须引用实际且类型相符的工具结果 toolCallIds；工具成功不代表科学结论正确",
+      "提交未接受，可修正后再次调用：执行记录必须引用实际且类型相符的工具结果 toolCallIds；工具成功不代表科学结论正确"
+    ]
+  }
+]

@@ -1,0 +1,6 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' scripts/evaluate-science-pipeline.ts --research-current-api /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/docs/validation/evidence-evaluation-20261107/live /Users/liuyue/Library/Application Support/dawn-science deepseek deepseek-flash
+research-host-ready
+真实 API 试验未完成（credential-read）；未输出凭证、端点或请求正文。查看隔离报告；不会自动重新联网。
+[52804:1107/014137.420666:ERROR:content/browser/network_service_instance_impl.cc:721] Network service crashed or was terminated, restarting service.
+真实科研评测入口未完成；请检查隔离报告与参数，不会自动重试。

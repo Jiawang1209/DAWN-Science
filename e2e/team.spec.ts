@@ -56,6 +56,7 @@ test.describe("组一支团队", () => {
 
     // 坞里「团队」那一格
     await 进坞(page, "团队")
+    await page.getByText("团队管理与原始记录",{exact:true}).click()
     const 格 = page.locator(".team-panel")
     await expect(格).toBeVisible()
     await expect(格.locator(".team-name")).toHaveText("审稿小队")

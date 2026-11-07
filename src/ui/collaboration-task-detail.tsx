@@ -1,0 +1,17 @@
+import type {TeamSnapshot} from '../protocol/index.js'
+import {ScienceAcceptanceStatus} from './science-acceptance-status.js'
+import {t,tf} from './i18n/index.js'
+type Task=TeamSnapshot['tasks'][number]
+export function CollaborationTaskDetail({task,tab}:{task:Task;tab:string}){
+ return <div className="collaboration-team-task" data-task-detail={task.id}>
+  {tab==='process'?<><p data-authored="1">{task.description??task.subject}</p><p>{tf("任务状态：{0}",task.status)}</p><p>{tf("依赖：{0}",task.dependencies.join(' · ')||t("没有前置"))}</p>{task.output?<pre data-authored="1">{task.output}</pre>:<p className="hint">{t("还没有结果")}</p>}</>:null}
+  {tab==='handoff'?<><p>{task.contract?t("已冻结任务契约"):t("普通委派任务")}</p>{task.contract?<><p data-authored="1">{tf("契约输入 {0} 项 · 声明输出 {1} 项",task.contract.inputs.length,task.contract.outputs.length)}</p><p className="hint">{t("冻结契约决定执行边界；查看不会批准、改写或重启任务。")}</p></>:null}</>:null}
+  {tab==='artifacts'?<><p>{task.receipt?.state==='accepted'?t("宿主验收通过"):task.receipt?.state==='blocked'?t("宿主验收阻塞"):task.receipt?.state==='invalid'?t("宿主验收未通过"):t("暂无宿主验收回执")}</p>
+   <p className="hint">{t("声明产物与验收版本分别列出；历史版本不代表当前文件仍有效。")}</p>
+   {task.artifacts?.length?<ul>{task.artifacts.map(file=><li key={file} data-authored="1">{file} · {t("声明产物")}</li>)}</ul>:null}
+   {task.receipt?.versions?.outputs.length?<ul>{task.receipt.versions.outputs.map(file=><li key={file.path} data-authored="1">{file.path}<details><summary>{t("内容版本")}</summary><code>{file.sha256}</code></details></li>)}</ul>:null}
+   <ScienceAcceptanceStatus tasks={[task]}/>
+  </>:null}
+  {tab==='records'?<><p data-authored="1">{task.id} · {task.attemptId??t("无代次标识")}</p><p>{tf("第 {0} 次",task.attempt)}</p>{task.receipt?.reason?<p data-authored="1">{task.receipt.reason}</p>:null}</>:null}
+ </div>
+}

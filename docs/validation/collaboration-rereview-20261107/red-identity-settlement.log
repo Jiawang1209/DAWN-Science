@@ -1,0 +1,48 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx tests/ui/collaboration-model.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-model.test.ts (3 tests | 1 failed) 18ms
+   × does not reuse an earlier receipt or usage as the result of a new or queued-cancelled execution 3ms
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (7 tests | 1 failed) 233ms
+   × binds task selection to the team identity and does not select a new team task with the same ID 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-model.test.ts > does not reuse an earlier receipt or usage as the result of a new or queued-cancelled execution
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/ui/collaboration-model.test.ts:22:89
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > binds task selection to the team identity and does not select a new team task with the same ID
+AssertionError: expected 'true' to be 'false' // Object.is equality
+
+Expected: "false"
+Received: "true"
+
+ ❯ tests/ui/collaboration-workbench.test.tsx:65:84
+     63|  fireEvent.click(screen.getByRole('button',{name:'old task'}));fireEve…
+     64|  view.rerender(<RunOverview client={c} sessionId="p" team={next}/>);aw…
+     65|  expect(screen.getByRole('button',{name:'new task'}).getAttribute('ari…
+       |                                                                                    ^
+     66|  expect(view.container.querySelector('[data-task-detail="t1"]')).toBeN…
+     67|  expect(collaborationTaskKey('old','t1')).not.toBe(collaborationTaskKe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 8 passed (10)
+   Start at  08:28:38
+   Duration  1.31s (transform 752ms, setup 1.08s, import 87ms, tests 251ms, environment 770ms)
+

@@ -604,7 +604,8 @@
 /** 8.44：运行中纠偏回执与可恢复的有界科研批量。 */
 /** 8.45：会话隔离的只读运行总览。 */
 /** 8.46：宿主阶段/锁等待历史与可显式设置的持久会话委派预算。 */
-export const WORKBENCH_PROTOCOL_VERSION = "8.46"
+/** 8.47：有界证据交接 v2，正文选择、路线记录与历史验收版本投影。 */
+export const WORKBENCH_PROTOCOL_VERSION = "8.47"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

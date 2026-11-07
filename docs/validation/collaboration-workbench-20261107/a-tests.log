@@ -1,0 +1,1113 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx tests/ui/run-overview.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (4 tests | 2 failed) 163ms
+   × counts only accepted receipts and shares one polling source with the conversation summary 151ms
+   × stops polling after the last subscriber leaves and does not start overlapping requests on refresh 5ms
+ ❯ |ui| tests/ui/run-overview.test.tsx (5 tests | 3 failed) 115ms
+   × labels evidence handoff as historical references without implying approval or live file validity 35ms
+   × shows real drain and acceptance facts, routes transcript selection, and drops stale owner replies 8ms
+   × shows lock blockers and bounded host history without calling a historical holder live 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > counts only accepted receipts and shares one polling source with the conversation summary
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "展开流程工作台"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "打开协作：2 项任务 · 1 项验收通过":
+  [36m<button[39m
+    [33maria-label[39m=[32m"打开协作：2 项任务 · 1 项验收通过"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "刷新运行记录":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "one":
+  [36m<button[39m
+    [33maria-label[39m=[32m"one"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "two":
+  [36m<button[39m
+    [33maria-label[39m=[32m"two"[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "过程":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "交接":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "产物":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "记录":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "运行总览":
+  [36m<section[39m
+    [33maria-label[39m=[32m"运行总览"[39m
+    [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"collaboration-heading"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header />[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "协作":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint collaboration-source"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  navigation:
+
+  Name "任务详情":
+  [36m<nav[39m
+    [33maria-label[39m=[32m"任务详情"[39m
+    [33mclass[39m=[32m"collaboration-tabs"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  contentinfo:
+
+  Name "":
+  [36m<footer[39m
+    [33mclass[39m=[32m"collaboration-footer"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"collaboration-summary"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"打开协作：2 项任务 · 1 项验收通过"[39m
+        [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"collaboration-mark"[39m
+        [36m>[39m
+          [0m◈[0m
+        [36m</span>[39m
+        [36m<strong>[39m
+          [0m协作[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m执行已结算[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"collaboration-summary-count"[39m
+        [36m>[39m
+          [0m2 项任务 · 1 项验收通过[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0m›[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m2 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m1 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m0 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"协作任务"[39m
+        [33mclass[39m=[32m"collaboration-roster"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+          [33mdata-phase[39m=[32m"drained"[39m
+          [33mdata-run[39m=[32m"one"[39m
+          [33mdata-selected[39m=[32m"false"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"one"[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"collaboration-avatar"[39m
+            [36m>[39m
+              [0mO[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-copy"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mone[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m执行完成[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-meta"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-state"[39m
+                [33mdata-phase[39m=[32m"drained"[39m
+              [36m>[39m
+                [0m子任务[0m
+              [36m</span>[39m
+              [36m<small>[39m
+                [0m耗时未知[0m
+              [36m</small>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+          [33mdata-phase[39m=[32m"drained"[39m
+          [33mdata-run[39m=[32m"two"[39m
+          [33mdata-selected[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"two"[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"collaboration-avatar"[39m
+            [36m>[39m
+              [0mT[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-copy"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mtwo[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m执行完成[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-meta"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-state"[39m
+                [33mdata-phase[39m=[32m"drained"[39m
+              [36m>[39m
+                [0m子任务[0m
+              [36m</span>[39m
+              [36m<small>[39m
+                [0m耗时未知[0m
+              [36m</small>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-detail"[39m
+        [33mdata-selected-run[39m=[32m"two"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mtwo[0m
+          [36m</strong>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m类型 subagent · 执行代次 1[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"任务详情"[39m
+          [33mclass[39m=[32m"collaboration-tabs"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m过程[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m交接[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m产物[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m记录[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<p>[39m
+          [0m宿主验收通过[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m输入版本 1 · 产物版本 1[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m版本数量来自宿主回执；不代表文件当前内容已重新核验。具体文件请在原任务或产物入口查看。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/collaboration-workbench.test.tsx:19:25
+     17|  fireEvent.click(screen.getByRole('button',{name:'two'}));expect(scree…
+     18|  expect(screen.queryByText('宿主验收阻塞')).toBeNull()
+     19|  fireEvent.click(screen.getByRole('button',{name:'展开流程工作台'}));expect(s…
+       |                         ^
+     20|  expect(screen.getByRole('button',{name:'产物',exact:true}).getAttribute…
+     21|  fireEvent.click(screen.getByRole('button',{name:'返回对话协作台'}));expect(s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > stops polling after the last subscriber leaves and does not start overlapping requests on refresh
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ tests/ui/collaboration-workbench.test.tsx:34:133
+     32| it('stops polling after the last subscriber leaves and does not start …
+     33|  vi.useFakeTimers();let resolve!:(s:Snapshot)=>void;const get=vi.fn().…
+     34|  const view=render(<RunOverview client={c} sessionId="p"/>);fireEvent.…
+       |                                                                                                                                     ^
+     35|  view.unmount();await act(async()=>{resolve(data());await vi.advanceTi…
+     36| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > labels evidence handoff as historical references without implying approval or live file validity
+TestingLibraryElementError: Unable to find an element with the text: /历史版本尚未重新核验/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m1 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m0 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m1 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"协作任务"[39m
+        [33mclass[39m=[32m"collaboration-roster"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+          [33mdata-phase[39m=[32m"stopping"[39m
+          [33mdata-run[39m=[32m"child"[39m
+          [33mdata-selected[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"p reader"[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"collaboration-avatar"[39m
+            [36m>[39m
+              [0mP[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-copy"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mp reader[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m停止中，等待进程排空[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-meta"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-state"[39m
+                [33mdata-phase[39m=[32m"stopping"[39m
+              [36m>[39m
+                [0m子任务[0m
+              [36m</span>[39m
+              [36m<small>[39m
+                [0m耗时未知[0m
+              [36m</small>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-detail"[39m
+        [33mdata-selected-run[39m=[32m"child"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mp reader[0m
+          [36m</strong>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m类型 subagent · 执行代次 3[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"任务详情"[39m
+          [33mclass[39m=[32m"collaboration-tabs"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m过程[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m交接[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m产物[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m记录[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"collaboration-current"[39m
+        [36m>[39m
+          [0m停止中，等待进程排空[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m已冻结任务契约[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m宿主验收阻塞[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-overview.test.tsx:19:16
+     17|  const data=snapshot('p');data.runs[0]!.handoff=captureEvidenceHandoff…
+     18|  render(<RunOverview client={{get:vi.fn().mockResolvedValue(data)} as …
+     19|  expect(screen.getByText(/历史版本尚未重新核验/)).toBeTruthy()
+       |                ^
+     20|  expect(screen.getByText('早期批准方法与单位')).toBeTruthy()
+     21|  expect(screen.getByText(/交接总计/)).toBeTruthy()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > shows real drain and acceptance facts, routes transcript selection, and drops stale owner replies
+TestingLibraryElementError: Found multiple elements with the text: 停止中，等待进程排空
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<small>[39m
+  [0m停止中，等待进程排空[0m
+[36m</small>[39m
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"collaboration-current"[39m
+[36m>[39m
+  [0m停止中，等待进程排空[0m
+[36m</p>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m1 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m0 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m1 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"协作任务"[39m
+        [33mclass[39m=[32m"collaboration-roster"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+          [33mdata-phase[39m=[32m"stopping"[39m
+          [33mdata-run[39m=[32m"child"[39m
+          [33mdata-selected[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"b reader"[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"collaboration-avatar"[39m
+            [36m>[39m
+              [0mB[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-copy"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mb reader[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m停止中，等待进程排空[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-meta"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-state"[39m
+                [33mdata-phase[39m=[32m"stopping"[39m
+              [36m>[39m
+                [0m子任务[0m
+              [36m</span>[39m
+              [36m<small>[39m
+                [0m耗时未知[0m
+              [36m</small>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-detail"[39m
+        [33mdata-selected-run[39m=[32m"child"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mb reader[0m
+          [36m</strong>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m类型 subagent · 执行代次 3[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"任务详情"[39m
+          [33mclass[39m=[32m"collaboration-tabs"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m过程[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m交接[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m产物[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m记录[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"collaboration-current"[39m
+        [36m>[39m
+          [0m停止中，等待进程排空[0m
+        [36m</p>[39m
+        [36m<p>[39m
+          [0m已冻结任务契约[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m宿主验收阻塞[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m查看子任务过程[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-overview.test.tsx:32:16
+     30|  expect(screen.queryByText('a reader')).toBeNull()
+     31|  await act(async()=>b.resolve(snapshot('b')))
+     32|  expect(screen.getByText('停止中，等待进程排空')).toBeTruthy()
+       |                ^
+     33|  expect(screen.getByText(/宿主验收阻塞/)).toBeTruthy()
+     34|  fireEvent.click(screen.getByRole('button',{name:'查看子任务过程'}))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > shows lock blockers and bounded host history without calling a historical holder live
+TestingLibraryElementError: Found multiple elements with the text: 关键执行历史
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<summary>[39m
+  [0m关键执行历史[0m
+[36m</summary>[39m
+
+Ignored nodes: comments, script, style
+[36m<summary>[39m
+  [0m关键执行历史[0m
+[36m</summary>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m刷新运行记录[0m
+        [36m</button>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m1 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m0 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m1 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"协作任务"[39m
+        [33mclass[39m=[32m"collaboration-roster"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+          [33mdata-phase[39m=[32m"running"[39m
+          [33mdata-run[39m=[32m"child"[39m
+          [33mdata-selected[39m=[32m"true"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"p reader"[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"collaboration-avatar"[39m
+            [36m>[39m
+              [0mP[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-copy"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mp reader[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m等待产物锁[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-task-meta"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-state"[39m
+                [33mdata-phase[39m=[32m"running"[39m
+              [36m>[39m
+                [0m子任务[0m
+              [36m</span>[39m
+              [36m<small>[39m
+                [0m耗时未知[0m
+              [36m</small>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-detail"[39m
+        [33mdata-selected-run[39m=[32m"child"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mp reader[0m
+          [36m</strong>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m类型 subagent · 执行代次 3[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"任务详情"[39m
+          [33mclass[39m=[32m"collaboration-tabs"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m过程[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m交接[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m产物[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m记录[0m
+          [36m</button>[39m
+        [36m</nav>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"collaboration-current"[39m
+        [36m>[39m
+          [0m等待产物锁[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"run-activity"[39m
+        [36m>[39m
+          [36m<p>[39m
+            [0m等待产物锁[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mwriter · 代次 2 · 会话 other[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<p>[39m
+          [0m已冻结任务契约[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m宿主验收阻塞[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"run-history"[39m
+        [36m>[39m
+          [36m<summary>[39m
+            [0m关键执行历史[0m
+          [36m</summary>[39m
+          [36m<p>[39m
+            [0m较早历史已省略；显示最近 256 条[0m
+          [36m</p>[39m
+          [36m<ol>[39m
+            [36m<li>[39m
+              [36m<time>[39m
+                [0m8:00:00 AM[0m
+              [36m</time>[39m
+              [0m · [0m
+              [36m<span>[39m
+                [0m等待产物锁[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0m · p reader · 3[0m
+              [36m</span>[39m
+            [36m</li>[39m
+          [36m</ol>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+          [36m<details[39m
+            [33mclass[39m=[32m"run-history"[39m
+          [36m>[39m
+            [36m<summary>[39m
+              [0m关键执行历史[0m
+            [36m</summary>[39m
+            [36m<p>[39m
+              [0m较早历史已省略；显示最近 256 条[0m
+            [36m</p>[39m
+            [36m<ol>[39m
+              [36m<li>[39m
+                [36m<time>[39m
+                  [0m8:00:00 AM[0m
+                [36m</time>[39m
+                [0m · [0m
+                [36m<span>[39m
+                  [0m等待产物锁[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0m · p reader · 3[0m
+                [36m</span>[39m
+              [36m</li>[39m
+            [36m</ol>[39m
+          [36m</details>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-overview.test.tsx:52:25
+     50|  expect(view.container.querySelector('.run-activity')?.textContent).to…
+     51|  expect(screen.getByText(/writer.*代次 2/)).toBeTruthy()
+     52|  fireEvent.click(screen.getByText('关键执行历史'))
+       |                         ^
+     53|  expect(screen.getByText(/较早历史已省略/)).toBeTruthy()
+     54|  view.unmount();data.source='disk'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 4 passed (9)
+   Start at  07:52:09
+   Duration  1.68s (transform 894ms, setup 1.30s, import 272ms, tests 278ms, environment 1.19s)
+

@@ -321,6 +321,7 @@ test.describe("侧边对话 · 团队 chip", () => {
     })
 
     await 坞(page).locator(".side-chat .chip-group .chip").first().click()
+    await 坞(page).getByText("团队管理与原始记录", { exact: true }).click()
     const 格 = 坞(page).locator(".team-panel")
     await expect(格).toBeVisible({ timeout: 30_000 })
     await expect(格.locator(".team-name")).toHaveText("审稿小队")

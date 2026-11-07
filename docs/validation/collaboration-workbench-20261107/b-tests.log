@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx tests/ui/collaboration-workflow.test.tsx tests/ui/run-overview.test.tsx tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  121 passed (121)
+   Start at  08:01:50
+   Duration  2.27s (transform 2.61s, setup 3.60s, import 540ms, tests 1.43s, environment 2.76s)
+

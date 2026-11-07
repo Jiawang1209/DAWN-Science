@@ -1,0 +1,38 @@
+{
+  "base": "f685a56122ee6238affa55d8bd9ba6f9b604a6c7",
+  "branch": "codex/evidence-evaluation-20261107",
+  "sourceFiles": 54,
+  "mainCleanUnchanged": true,
+  "formalFilesUnchangedSinceFirstCurrentCheck": true,
+  "formalMatchesPriorAudit": true,
+  "typecheckPassed": true,
+  "buildPassed": true,
+  "nodeUiPassed": 6378,
+  "nodeUiSkipped": 10,
+  "nodeUiFiles": 646,
+  "initialFullRunFailures": [
+    {
+      "file": "tests/runtime/remote-terminal.test.ts",
+      "case": "rejects human edits and selection while an Agent command owns the shell",
+      "location": "afterEach cleanup line 37",
+      "detail": "Real shell exit notification did not arrive within the existing vi.waitFor 1000ms default. Source and test unchanged in this iteration.",
+      "focusedRerun": "25/25 passed",
+      "boundedFullRerun": "6378 passed, 10 skipped; maxWorkers=4, no timeout or assertion changes",
+      "rootCauseResolved": false
+    }
+  ],
+  "kernelPassed": 50,
+  "kernelConditionalSkipped": 1,
+  "desktopUniqueScenarios": 22,
+  "desktopAdditionalExecutions": 5,
+  "nativeExits": 35,
+  "nativeExitProblems": 0,
+  "unexpectedWatchdogs": 1,
+  "historicalTimeoutResolved": false,
+  "newLiveModelRequests": 0,
+  "review": "Independent readonly agent plus self-review; three P2 corrected and rechecked",
+  "committedOrMerged": false,
+  "pushedOrPublished": false,
+  "installedAppReplaced": false,
+  "sourceDrift": []
+}

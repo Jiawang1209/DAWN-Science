@@ -1,4 +1,4 @@
-import {freezeHandoff,readHandoff} from './context-handoff.js'
+import {freezeHandoff,readHandoff,handoffSelection} from './context-handoff.js'
 import {childIdentity} from '../orchestration/store.js'
 import {HandoffSelectionSchema,type HandoffSelection,type ContextHandoff} from '../protocol/context-handoff.js'
 /**
@@ -72,7 +72,7 @@ export interface SubagentToolOptions {
   emit: (event: AgentEvent) => void
 }
 
-const HandoffParameters=Type.Object({recentMessages:Type.Integer({minimum:1,maximum:8,description:"从当前父会话选取最近 N 条已完成正文；最多 16 KiB，不含工具结果或思考，不扩大权限"})},{additionalProperties:false})
+export const HandoffParameters=Type.Object({recentMessages:Type.Integer({minimum:1,maximum:8,description:"选取 N 条已完成正文；最多 16 KiB，不含思考、不扩大权限"}),messageIds:Type.Optional(Type.Array(Type.String(),{minItems:1,maxItems:8,description:'指定当前分支的正文 ID；数量须等于 recentMessages。不指定时取最近正文。'})),routeStepId:Type.Optional(Type.String()),acceptedChildIds:Type.Optional(Type.Array(Type.String(),{minItems:1,maxItems:4}))},{additionalProperties:false})
 const TaskItem = Type.Object({
   handoff:Type.Optional(HandoffParameters),
   contract: Type.Optional(TaskContractParameters),
@@ -165,7 +165,7 @@ export function prepareSubagentTask(opts:SubagentToolOptions,callId:string,index
     if(recorded===null)throw new Error('任务已冻结为不继承父上下文，不能在重试时追加交接')
     if(task.contract||existingMeta?.settings?.contract||child?.settings?.contract)throw new Error('科研任务使用冻结路线与契约，不接受普通对话快照')
     if(existingHandoff){
-      if(existingHandoff.requestedMessages!==selection.recentMessages)throw new Error('交接选择已冻结，不可修改')
+      if(JSON.stringify(handoffSelection(existingHandoff))!==JSON.stringify(selection))throw new Error('交接选择已冻结，不可修改')
     }else{
       if(!opts.captureHandoff)throw new Error('当前后端不支持父上下文交接')
       const captured=opts.captureHandoff(selection)
@@ -196,7 +196,7 @@ export function createSubagentTool(opts: SubagentToolOptions) {
   return {
     name: "subagent",
     label: "subagent",
-    description: describe(load())+'\n可选 handoff:{recentMessages:1..8}：宿主选取当前父会话最近的已完成正文，最多 16 KiB；保存来源和指纹，不复制工具结果、思考或权限。single 放顶层，parallel/chain 放在各项中。科研契约任务仍使用冻结路线，不接受此快照。',
+    description: describe(load())+'\n可选 handoff:{recentMessages:1..8,messageIds?,routeStepId?,acceptedChildIds?}：先用 subagent_context_sources 查正文及历史引用 ID；不指定 messageIds 时取最近正文，最多 16 KiB。宿主冻结来源与指纹，不复制工具原文、思考或权限。历史产物版本未再次核验，路线记录不代表批准。single 放顶层，parallel/chain 放各项。科研契约和独立审阅不接受此快照。',
     parameters,
 
     async execute(toolCallId: string, params: Params, signal?: AbortSignal): Promise<ToolResult> {

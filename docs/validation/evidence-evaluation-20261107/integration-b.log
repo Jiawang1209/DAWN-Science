@@ -1,0 +1,47 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/evidence-handoff.test.ts tests/subagent/context-handoff-tool.test.ts tests/orchestration/tools.test.ts tests/ui/run-overview.test.tsx tests/protocol tests/ui/design-contract.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/protocol/events.test.ts (41 tests | 1 failed) 22ms
+     × 版本号与这份说明一致 4ms
+ ❯ |node| tests/subagent/evidence-handoff.test.ts (4 tests | 1 failed) 18ms
+   × uses the original child binding on retry and does not recapture newer parent facts or change permissions 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/events.test.ts > 协议版本 · 5.5 > 版本号与这份说明一致
+AssertionError: expected '8.47' to be '8.46' // Object.is equality
+
+Expected: "8.46"
+Received: "8.47"
+
+ ❯ tests/protocol/events.test.ts:469:40
+    467|   // 8.40：团队任务增加可选契约与宿主回执，内部权限快照不进入客户端。
+    468|   it("版本号与这份说明一致", () => {
+    469|     expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.46")
+       |                                        ^
+    470|   })
+    471|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/subagent/evidence-handoff.test.ts > uses the original child binding on retry and does not recapture newer parent facts or change permissions
+Error: 交接快照缺少子任务绑定；请核对旧记录后新建任务，不会隐式继承
+ ❯ prepareSubagentTask src/subagent/tool.ts:161:50
+    159|   if(child?.handoffSha256!==undefined&&existingMeta?.handoffSha256!==u…
+    160|   if(recorded!==undefined&&recorded!==(existingHandoff?.sha256??null))…
+    161|   if(existingHandoff&&recorded===undefined)throw new Error('交接快照缺少子任务绑…
+       |                                                  ^
+    162|   if((task.contract||child?.settings?.contract||existingMeta?.settings…
+    163|   if(task.handoff){
+ ❯ tests/subagent/evidence-handoff.test.ts:45:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 19 passed (21)
+      Tests  2 failed | 332 passed (334)
+   Start at  01:40:01
+   Duration  3.42s (transform 1.49s, setup 1.06s, import 3.95s, tests 1.63s, environment 1.13s)
+

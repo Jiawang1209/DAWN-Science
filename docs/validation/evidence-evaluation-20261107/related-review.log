@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent tests/orchestration tests/evaluation tests/policy tests/ui/run-overview.test.tsx tests/protocol --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |node| tests/policy/plan-mode.test.ts (51 tests | 1 failed) 50ms
+     × 只读的几件放（含 pi 的 ls / grep / find：不过 shell） 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/policy/plan-mode.test.ts > 方案期：名单 > 只读的几件放（含 pi 的 ls / grep / find：不过 shell）
+AssertionError: expected [ 'ask_user_question', …(27) ] to deeply equal [ 'ask_user_question', …(26) ]
+
+- Expected
++ Received
+
+@@ -17,10 +17,11 @@
+    "read",
+    "read_main_session",
+    "science_pipeline_status",
+    "sra_get_accession",
+    "sra_search",
++   "subagent_context_sources",
+    "terminal_list",
+    "terminal_snapshot",
+    "terminal_wait",
+    "uniprot_get_accession",
+    "uniprot_search",
+
+ ❯ tests/policy/plan-mode.test.ts:37:31
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 64 passed (65)
+      Tests  1 failed | 680 passed (681)
+   Start at  01:45:53
+   Duration  10.11s (transform 2.04s, setup 553ms, import 16.79s, tests 11.78s, environment 610ms)
+

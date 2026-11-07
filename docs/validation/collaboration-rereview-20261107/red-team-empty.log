@@ -1,0 +1,52 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/team.spec.ts --grep 没有团队 --workers=1
+
+Running 1 test using 1 worker
+
+(node:64530) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59020/ad869bbd-166e-45a5-a52f-6e2f54bcd092
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team (27.3s)
+
+
+  1) e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team ──────────────────────
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.team-empty')
+    Expected substring: "这段会话没有团队"
+    Timeout: 25000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for locator('.team-empty')
+
+
+       98 |   await 在项目里开会话(page)
+       99 |   await 进坞(page, "团队")
+    > 100 |   await expect(page.locator(".team-empty")).toContainText("这段会话没有团队")
+          |                                             ^
+      101 |   const 框 = page.getByPlaceholder(/输入问题/)
+      102 |   await 框.fill("/")
+      103 |   await expect(page.locator(".slash-menu .slash-item").first()).toContainText("组一支团队")
+        at /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/e2e/team.spec.ts:100:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/team--没有团队时那一格说清楚-；-菜单里第一项是「组一支团队」，选了把草稿换成-team/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/team--没有团队时那一格说清楚-；-菜单里第一项是「组一支团队」，选了把草稿换成-team/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/team--没有团队时那一格说清楚-；-菜单里第一项是「组一支团队」，选了把草稿换成-team/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/team--没有团队时那一格说清楚-；-菜单里第一项是「组一支团队」，选了把草稿换成-team/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/team.spec.ts:96:1 › **没有团队时那一格说清楚**；`/` 菜单里第一项是「组一支团队」，选了把草稿换成 /team ───────────────────────

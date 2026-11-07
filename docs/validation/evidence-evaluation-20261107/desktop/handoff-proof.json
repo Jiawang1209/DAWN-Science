@@ -1,0 +1,48 @@
+{
+  "capsule": {
+    "version": 2,
+    "sourceSessionId": "68670844-8115-4a7e-ba99-3e7239199093",
+    "createdAt": 1793987215647,
+    "requestedMessages": 1,
+    "entries": [
+      {
+        "id": "deae2e6a",
+        "role": "user",
+        "text": "早期约束：carbon 单位 mg/g；使用算术均值，只丢弃 NA，不能按降雨筛选。保留原始输入。"
+      }
+    ],
+    "bytes": 117,
+    "sha256": "a1f67a840284a33bb9ffffb1c7c7aa6fcdc4f814282b8ca616127bfde3088a20",
+    "selection": {
+      "recentMessages": 1,
+      "messageIds": [
+        "deae2e6a"
+      ],
+      "routeStepId": "S1"
+    },
+    "references": [
+      {
+        "kind": "route",
+        "routeId": "1ca9ddf6-4a76-448c-8d35-520c7539f4d0",
+        "revision": 1,
+        "stepId": "S1",
+        "text": "{\"title\":\"演示分析路线\",\"goal\":\"通过真实工具演示逐步路线与生成产物；不证明科学分析质量\",\"dataContext\":[\"工程夹具，尚未提供科研输入\"],\"step\":{\"id\":\"S1\",\"title\":\"输入与 Alpha 多样性\",\"purpose\":\"核对输入并说明本步分析条件\",\"inputs\":[\"用户数据仍需核对\"],\"outputs\":[\"本步说明报告\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}",
+        "state": "record-not-approval"
+      }
+    ],
+    "envelopeBytes": 1077
+  },
+  "continuedUnchanged": true,
+  "restartedUnchanged": true,
+  "readOnlyScope": {
+    "version": 1,
+    "tier": "allow-all",
+    "access": "workspace-exec",
+    "tools": [
+      "read",
+      "ls"
+    ],
+    "inputs": [],
+    "outputs": []
+  }
+}

@@ -1,4 +1,4 @@
-import {captureHandoff} from '../subagent/context-handoff.js'
+import {captureEvidenceHandoff,handoffSources} from '../subagent/handoff-sources.js'
 import {liveRunOverview} from '../orchestration/run-overview.js'
 import {createHash} from 'node:crypto'
 import {runControlledScience} from '../team/science-execution.js'
@@ -1722,7 +1722,7 @@ export class NativeRuntime implements AgentRuntime {
     const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       orchestration,
-      captureHandoff:selection=>captureHandoff(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],selection.recentMessages),
+      captureHandoff:selection=>captureEvidenceHandoff(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],selection,{route:this.routeBooks.get(spec.sessionId)?.book?.read(),children:orchestration.store.list()}),
       remote:Boolean(spec.remote),
       taskPolicy:()=>this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??"ask-risky",
       sessionId: spec.sessionId,
@@ -1918,6 +1918,7 @@ export class NativeRuntime implements AgentRuntime {
       return {team, member}
     }
     const controls = createOrchestrationTools({service: orchestration, mailbox: subagentControl.mailbox, start: subagentControl.start,
+      contextSources:()=>handoffSources(spec.sessionId,this.sessions.get(spec.sessionId)?.sessionManager.getBranch()??[],{route:this.routeBooks.get(spec.sessionId)?.book?.read(),children:orchestration.store.list()}),
       sendMember: async (child, text, requestId) => {
         const {team, member} = memberFor(child)
         调度器.assertExternalMutation(team.id)

@@ -1,0 +1,585 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (12 tests | 2 failed) 361ms
+   × coordinates command navigation even if focus temporarily falls on the body while the modal is open 23ms
+   × returns focus to the selected card when the expanded detail drawer closes 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > coordinates command navigation even if focus temporarily falls on the body while the modal is open
+AssertionError: expected <dialog …(3)>…(1)</dialog> to be null
+
+- Expected:
+null
+
++ Received:
+<dialog
+  aria-label="流程工作台"
+  class="collaboration-expanded"
+  open=""
+>
+  <section
+    aria-label="运行总览"
+    class="run-overview collaboration-panel"
+    data-expanded="true"
+  >
+    <header
+      class="collaboration-heading"
+    >
+      <div>
+        <span
+          class="collaboration-eyebrow"
+        >
+          对话协作台
+        </span>
+        <h3>
+          流程工作台
+        </h3>
+      </div>
+      <div
+        class="collaboration-heading-actions"
+      >
+        <button
+          class="btn btn-ghost btn-sm"
+          type="button"
+        >
+          刷新运行记录
+        </button>
+        <button
+          aria-expanded="true"
+          class="btn btn-outline btn-sm"
+          type="button"
+        >
+          返回对话协作台
+        </button>
+      </div>
+    </header>
+    <p
+      class="hint collaboration-source"
+    >
+      来自当前会话的统一编排；每两秒刷新
+    </p>
+    <div
+      class="collaboration-counts"
+    >
+      <strong>
+        2 项任务
+      </strong>
+      <span>
+        1 项验收通过
+      </span>
+      <span>
+        0 项活跃
+      </span>
+      <span>
+        2 项执行完成
+      </span>
+      <span>
+        费用未记录
+      </span>
+      <label
+        class="collaboration-progress"
+      >
+        执行进度
+        <progress
+          aria-label="已执行完成比例"
+          max="2"
+          value="2"
+        />
+        <span>
+          2
+          /
+          2
+        </span>
+      </label>
+    </div>
+    <section
+      aria-label="流程工作台"
+      class="collaboration-workflow"
+    >
+      <div
+        class="collaboration-workflow-columns"
+      >
+        <section
+          class="collaboration-network-panel"
+        >
+          <header>
+            <h4>
+              Agent 网络
+            </h4>
+            <span
+              class="hint"
+            >
+              宿主与直接委派关系 · 点击节点联动
+            </span>
+          </header>
+          <p
+            class="hint"
+          >
+            未声明任务依赖；这些执行记录按并列展示
+          </p>
+          <div
+            aria-label="Agent 网络，可滚动查看"
+            class="collaboration-network-scroll"
+            tabindex="0"
+          >
+            <div
+              class="collaboration-network"
+              style="width: 360px; height: 466px;"
+            >
+              <svg
+                aria-hidden="true"
+                height="466"
+                width="360"
+              >
+                <path … />
+                <path … />
+              </svg>
+              <div
+                class="collaboration-root-node"
+                style="left: 70px; top: 24px;"
+              >
+                <span … />
+                <strong … />
+                <span … />
+                <span … />
+              </div>
+              <button
+                aria-label="网络节点：one"
+                aria-pressed="true"
+                class="btn btn-outline btn-card-compact collaboration-network-node"
+                data-hue="7"
+                style="left: 95px; top: 190px;"
+                type="button"
+              >
+                <span … />
+                <small … />
+                <small … />
+                <small … />
+              </button>
+              <button
+                aria-label="网络节点：two"
+                aria-pressed="false"
+                class="btn btn-outline btn-card-compact collaboration-network-node"
+                data-hue="1"
+                style="left: 95px; top: 328px;"
+                type="button"
+              >
+                <span … />
+                <small … />
+                <small … />
+                <small … />
+              </button>
+            </div>
+          </div>
+        </section>
+        <section
+          class="collaboration-members"
+        >
+          <header>
+            <h4>
+              编队成员
+            </h4>
+            <span>
+              2 项任务
+            </span>
+          </header>
+          <div
+            class="collaboration-member-tools"
+          >
+            <input
+              aria-label="搜索协作成员"
+              class="control"
+              placeholder="按名称搜索"
+              type="search"
+              value=""
+            />
+            <div
+              aria-label="成员状态筛选"
+              class="collaboration-filter"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn btn-ghost btn-sm"
+                type="button"
+              >
+                显示全部成员
+              </button>
+              <button
+                aria-pressed="false"
+                class="btn btn-ghost btn-sm"
+                type="button"
+              >
+                只看活跃成员
+              </button>
+              <button
+                aria-pressed="false"
+                class="btn btn-ghost btn-sm"
+                type="button"
+              >
+                只看已结束
+              </button>
+            </div>
+          </div>
+          <div
+            class="collaboration-member-grid"
+          >
+            <button
+              aria-label="one"
+              aria-pressed="true"
+              class="btn btn-outline btn-card-compact collaboration-member-card"
+              data-hue="7"
+              data-member-card="one"
+              type="button"
+            >
+              <span
+                class="collaboration-node-name"
+              >
+                <span … />
+                <strong … />
+                <span … />
+              </span>
+              <small>
+                执行完成
+              </small>
+              <small>
+                已冻结任务契约
+              </small>
+              <span
+                class="collaboration-card-foot"
+              >
+                <small … />
+                <small … />
+                <svg … />
+              </span>
+            </button>
+            <button
+              aria-label="two"
+              aria-pressed="false"
+              class="btn btn-outline btn-card-compact collaboration-member-card"
+              data-hue="1"
+              data-member-card="two"
+              type="button"
+            >
+              <span
+                class="collaboration-node-name"
+              >
+                <span … />
+                <strong … />
+                <span … />
+              </span>
+              <small>
+                执行完成
+              </small>
+              <small>
+                已冻结任务契约
+              </small>
+              <span
+                class="collaboration-card-foot"
+              >
+                <small … />
+                <small … />
+                <svg … />
+              </span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </section>
+    <div
+      aria-label="协作任务"
+      class="collaboration-roster"
+      hidden=""
+    >
+      <div
+        class="run-overview-row collaboration-row"
+        data-phase="drained"
+        data-run="one"
+        data-selected="true"
+      >
+        <button
+          aria-label="one"
+          aria-pressed="true"
+          class="btn btn-ghost btn-menu-row collaboration-task"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+            class="collaboration-avatar"
+          >
+            O
+          </span>
+          <span
+            class="collaboration-task-copy"
+          >
+            <strong
+              data-authored="1"
+            >
+              one
+            </strong>
+            <small>
+              执行完成
+            </small>
+          </span>
+          <span
+            class="collaboration-task-meta"
+          >
+            <span
+              class="collaboration-state"
+              data-phase="drained"
+            >
+              子任务
+            </span>
+            <small>
+              耗时未知
+            </small>
+          </span>
+        </button>
+      </div>
+      <div
+        class="run-overview-row collaboration-row"
+        data-phase="drained"
+        data-run="two"
+        data-selected="false"
+      >
+        <button
+          aria-label="two"
+          aria-pressed="false"
+          class="btn btn-ghost btn-menu-row collaboration-task"
+          type="button"
+        >
+          <span
+            aria-hidden="true"
+            class="collaboration-avatar"
+          >
+            T
+          </span>
+          <span
+            class="collaboration-task-copy"
+          >
+            <strong
+              data-authored="1"
+            >
+              two
+            </strong>
+            <small>
+              执行完成
+            </small>
+          </span>
+          <span
+            class="collaboration-task-meta"
+          >
+            <span
+              class="collaboration-state"
+              data-phase="drained"
+            >
+              子任务
+            </span>
+            <small>
+              耗时未知
+            </small>
+          </span>
+        </button>
+      </div>
+    </div>
+    <div
+      class="collaboration-detail"
+      data-selected-run="one"
+      hidden=""
+    >
+      <button
+        class="btn btn-ghost btn-sm"
+        type="button"
+      >
+        收起检查面板
+      </button>
+      <header>
+        <strong
+          data-authored="1"
+        >
+          one
+        </strong>
+        <span
+          class="hint"
+        >
+          类型 subagent · 执行代次 1
+        </span>
+      </header>
+      <nav
+        aria-label="任务详情"
+        class="collaboration-tabs"
+        role="tablist"
+      >
+        <button
+          aria-controls="_r_7_-panel"
+          aria-selected="true"
+          class="btn btn-ghost btn-sm"
+          id="_r_7_-process"
+          role="tab"
+          tabindex="0"
+          type="button"
+        >
+          过程
+        </button>
+        <button
+          aria-controls="_r_7_-panel"
+          aria-selected="false"
+          class="btn btn-ghost btn-sm"
+          id="_r_7_-handoff"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          交接
+        </button>
+        <button
+          aria-controls="_r_7_-panel"
+          aria-selected="false"
+          class="btn btn-ghost btn-sm"
+          id="_r_7_-artifacts"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          产物
+        </button>
+        <button
+          aria-controls="_r_7_-panel"
+          aria-selected="false"
+          class="btn btn-ghost btn-sm"
+          id="_r_7_-records"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          记录
+        </button>
+      </nav>
+      <div
+        aria-labelledby="_r_7_-process"
+        id="_r_7_-panel"
+        role="tabpanel"
+      >
+        <p
+          class="collaboration-current"
+        >
+          执行完成
+        </p>
+        <p>
+          已冻结任务契约
+        </p>
+        <p
+          class="hint"
+        >
+          宿主验收阻塞
+        </p>
+      </div>
+    </div>
+    <footer
+      class="collaboration-footer"
+    >
+      <details>
+        <summary>
+          会话完整执行记录
+        </summary>
+      </details>
+    </footer>
+  </section>
+</dialog>
+
+ ❯ tests/ui/collaboration-workbench.test.tsx:98:54
+     96|  fireEvent.click(screen.getByRole('button',{name:'展开流程工作台'}))
+     97|  fireEvent.keyDown(document.body,{key:'k',metaKey:true})
+     98|  expect(screen.queryByRole('dialog',{name:'流程工作台'})).toBeNull()
+       |                                                      ^
+     99|  expect(document.activeElement).toBe(screen.getByRole('combobox',{name…
+    100| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > returns focus to the selected card when the expanded detail drawer closes
+AssertionError: expected <button type="button" …(1)></button> to be <button type="button" …(5)>…(4)</button> // Object.is equality
+
+- Expected
++ Received
+
+  <button
+-   aria-label="one"
+-   aria-pressed="true"
+-   class="btn btn-outline btn-card-compact collaboration-member-card"
+-   data-hue="7"
+-   data-member-card="one"
++   class="btn btn-ghost btn-sm"
+    type="button"
+- >
+-   <span
+-     class="collaboration-node-name"
+-   >
+-     <span
+-       aria-hidden="true"
+-       class="collaboration-avatar"
+  >
+-       O
+-     </span>
+-     <strong
+-       data-authored="1"
+-     >
+-       one
+-     </strong>
+-     <span
+-       class="collaboration-status-dot"
+-       data-phase="drained"
+-     />
+-   </span>
+-   <small>
+-     执行完成
+-   </small>
+-   <small>
+-     已冻结任务契约
+-   </small>
+-   <span
+-     class="collaboration-card-foot"
+-   >
+-     <small>
+-       用量未记录
+-     </small>
+-     <small>
+-       耗时未知
+-     </small>
+-     <svg
+-       aria-hidden="true"
+-       class="icon"
+-       fill="currentColor"
+-       focusable="false"
+-       height="16"
+-       viewBox="0 0 16 16"
+-       width="16"
+-     >
+-       <path
+-         d="M6 4.1a.6.6 0 0 1 1-.5l4 3.9a.6.6 0 0 1 0 .9l-4 3.9a.6.6 0 0 1-1-.5V4.1Z"
+-       />
+-     </svg>
+-   </span>
++   收起检查面板
+  </button>
+
+ ❯ tests/ui/collaboration-workbench.test.tsx:106:33
+    104|  const card=screen.getByRole('button',{name:'one'});fireEvent.click(ca…
+    105|  const close=screen.getByRole('button',{name:'收起检查面板'});close.focus();…
+    106|  expect(document.activeElement).toBe(card)
+       |                                 ^
+    107| })
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  08:41:54
+   Duration  1.62s (transform 392ms, setup 561ms, import 68ms, tests 361ms, environment 539ms)
+

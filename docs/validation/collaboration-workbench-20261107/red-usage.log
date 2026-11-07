@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-model.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-model.test.ts (2 tests | 1 failed) 17ms
+   × uses the same token accounting as the host budget, including cache reads 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-model.test.ts > uses the same token accounting as the host budget, including cache reads
+AssertionError: expected '累计 30 tokens' to be '累计 1,030 tokens' // Object.is equality
+
+Expected: "累计 1,030 tokens"
+Received: "累计 30 tokens"
+
+ ❯ tests/ui/collaboration-model.test.ts:6:141
+      4| const run:Run={id:'a',kind:'subagent',label:'reader',address:['call','…
+      5| it('uses the same token accounting as the host budget, including cache…
+      6|  expect(usageLabel({...run,observation:{elapsedMs:1,submissionAttempts…
+       |                                                                                                                                             ^
+      7|  expect(usageLabel({...run,observation:{elapsedMs:1,submissionAttempts…
+      8|  expect(usageLabel({...run,observation:{elapsedMs:1,submissionAttempts…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  08:02:19
+   Duration  1.05s (transform 375ms, setup 558ms, import 17ms, tests 17ms, environment 372ms)
+

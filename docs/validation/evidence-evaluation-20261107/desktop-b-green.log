@@ -1,0 +1,17 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/evidence-handoff.spec.ts --output=docs/validation/evidence-evaluation-20261107/desktop-b-green
+
+Running 1 test using 1 worker
+
+(node:55273) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「早期约束：carbon 单位 mg/g；」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55116/9fbfb7fa-1d5f-4ace-9fb3-d0cb8fa87c72
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-evidence-evaluation-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55140/8886483c-8796-4657-a205-2210d702c48e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/evidence-handoff.spec.ts:5:1 › selects early context by host ID, shows provenance and preserves it across continuation and restart (6.4s)
+
+  1 passed (7.0s)

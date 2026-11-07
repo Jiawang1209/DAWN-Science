@@ -213,13 +213,13 @@ function 依赖图({ tasks }: { tasks: readonly 任务[] }) {
   )
 }
 
-export function TeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:string)=>void}={}) {
+function LegacyTeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:string)=>void}={}) {
   // 画哪一段的团队由 `team-view.ts` 定：点了坞里那段的团队 chip 就是那段的，否则是主区那段的（2026-09-29）
   const team = useStore($团队格团队)
   const 来源 = useStore($团队格来源)
   const mainId=useStore($activeSessionId),sideId=useStore($侧边会话id)
   const owner=来源 === "侧"?sideId:mainId
-  const overview=client?<RunOverview key={owner} client={client} sessionId={owner} onView={onView}/>:null
+
   const [收起的, 设收起的] = useState<ReadonlySet<string>>(new Set())
   const [开着的任务, 设开着的任务] = useState<string | undefined>(undefined)
   const [展开的, 设展开的] = useState<ReadonlySet<string>>(new Set())
@@ -230,7 +230,6 @@ export function TeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:s
     return (
       <div className="team-empty-wrap">
         {出处}
-        {overview}
         <p className="hint team-empty">{t("这段会话没有团队。对模型说「用团队分工做…」，或在输入框打 /team。")}</p>
       </div>
     )
@@ -319,7 +318,6 @@ export function TeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:s
   return (
     <div className="team-panel" data-team={team.id} data-finished={team.finishedAt ? "1" : "0"}>
       {出处}
-      {overview}
       {/* ① 标题行 */}
       <header className="team-head">
         <h2 className="team-name" data-authored="1">{team.name}</h2>
@@ -441,4 +439,16 @@ export function TeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:s
       <依赖图 tasks={tasks} />
     </div>
   )
+}
+
+/** Preserve team administration while the default surface is the unified collaboration view. */
+export function TeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:string)=>void}={}){
+ const team=useStore($团队格团队),source=useStore($团队格来源),main=useStore($activeSessionId),side=useStore($侧边会话id)
+ const owner=source==='侧'?side:main
+ if(!client)return <LegacyTeamPanel/>
+ return <div className="collaboration-team-surface">
+  {source==='侧'?<p className="hint team-source" data-team-source="side">{t("坞里那段对话的团队")}</p>:null}
+  <RunOverview key={owner} client={client} sessionId={owner} team={team} onView={onView}/>
+  {team?.captainSessionId===owner?<details className="collaboration-legacy"><summary>{t("团队管理与原始记录")}</summary><LegacyTeamPanel/></details>:null}
+ </div>
 }

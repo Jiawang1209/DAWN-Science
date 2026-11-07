@@ -1,0 +1,15 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/submission-feedback.spec.ts
+
+Running 3 tests using 1 worker
+
+(node:72120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/submission-feedback.spec.ts:13:1 › declarative task matching accepts Pi text-array prompts across result turns (4ms)
+  ✓  2 e2e/submission-feedback.spec.ts:19:1 › fixture evidence references reject missing, forged and ambiguous labels (3ms)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52761/a9805e63-9bb6-4f2d-8970-3e06be1be246
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label (2.7s)
+
+  3 passed (3.4s)

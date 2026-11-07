@@ -20,7 +20,7 @@
 - 相关桌面回归：61 项全部通过，含原来需要显式指定 Python/R 的真实解释器产物来源场景，见 [桌面日志](../validation/submission-rereview-20261107/desktop-regression.log)。
 - 该桌面批次 68 个宿主退出均为 exitCode=0，无 cleanup problem；唯一 still-waiting-5s 仅出现在故意 veto quit 的诊断场景，无意外观察。见 [退出汇总](../validation/submission-rereview-20261107/exit-summary.json)。
 - 53 份变更源文件在验证期间无漂移，见 [源码核对](../validation/submission-rereview-20261107/source-check.json)。正式配置、凭证、数据库与已安装 App Info.plist 哈希保持一致，见 [保护检查](../validation/submission-rereview-20261107/protected-check.json)。
-- 真实内核回归：12 文件、50 项通过、1 项条件跳过，见 [内核日志](../validation/submission-rereview-20261107/kernel.log)。main 集成验证待实际结束后记录。本轮没有全桌面 919 项、跨平台、安装升级或发布验收结论。
+- 真实内核回归：12 文件、50 项通过、1 项条件跳过，见 [内核日志](../validation/submission-rereview-20261107/kernel.log)。本轮没有全桌面 919 项、跨平台、安装升级或发布验收结论。
 
 演示使用独立合成项目、共享 localhost 模型与真实 Pi 子进程，不访问正式数据库。界面是本地构建产物，不表示正式安装的 0.0.44 已替换。原有子任务过程、Team 管理、命令面板、坞导航、历史留存和契约验收入口均在相关回归范围内。
 
@@ -30,4 +30,10 @@
 
 ## 本地集成状态
 
-当前在 codex/submission-evidence-workbench-20261107，基线 main 为 77aeae71。待冻结验证全部结束后，按本轮授权提交并快进本地 main；合并后重新构建并检查实际界面和源码指纹。正式配置、凭证、数据库与已安装 App 的保护检查在收口记录中保留。未授权的其他工作区及其他项目不作清理。
+源码已提交为 **5cf4fb1e6bb435f530ffe03c06791e5f02474603**，并从原 main 77aeae71 快进本地 main。main 上重新 typecheck / 完整 build 通过，25 文件 286 项定向检查通过，10 个桌面用例通过（含 2 个纯夹具断言）；53 份源码与当时冻结版本零漂移。见 [main 定向日志](../validation/submission-rereview-20261107/main-targeted.log)、[main 桌面日志](../validation/submission-rereview-20261107/main-desktop.log)、[main 指纹](../validation/submission-rereview-20261107/main-source-check.json)。main 批次 8 次正常退出，无 watchdog。
+
+main 运行发现提交反馈演示的 JSON 输出仍使用固定旧目录；本次新输出已另存为 main-model-visible-example.json，旧示例按提交版本恢复。随后仅调整该 E2E 的输出目录以遵守 DAWN_SUBMISSION_EVIDENCE_DIR，单独 3 用例及 typecheck 通过，避免以后覆盖旧证据。产品代码没有再变化，最终清单另存 [final-source-manifest.json](../validation/submission-rereview-20261107/final-source-manifest.json)。
+
+正式配置、凭证、数据库与已安装 App 的保护哈希一致；专项工作区保留，未清理其他工作区或其他项目。无 push、发布或正式安装包替换。
+
+main 实际效果：从协作任务打开报告，相对图片走同一会话读取，脚本链接打开只读预览且没有执行标记文件；展开/返回恢复焦点。截图：[版本与产物工作台](../validation/submission-rereview-20261107/main-desktop/phase-b-bound-version-workbench.png)、[报告脚本预览](../validation/submission-rereview-20261107/main-desktop/report-linked-script-readonly.png)、[历史副本](../validation/submission-rereview-20261107/main-desktop/phase-b-retained-version-preview.png)。

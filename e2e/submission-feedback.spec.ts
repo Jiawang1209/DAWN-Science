@@ -43,6 +43,6 @@ test('a real child corrects an invalid evidence reference using the host-visible
  expect(outcome.receipt.result.verification.toolCallIds).toEqual([label.toolCallId]);expect(label.toolCallId).not.toBe('forged-id')
  expect(feedback.evidenceCatalog.entries).toContainEqual(label)
  expect(readFileSync(join(workspace,'in.csv'),'utf8')).toBe('x\n1\n2\n')
- const output=resolve('docs/validation/submission-evidence-20261107');mkdirSync(output,{recursive:true})
+ const output=resolve(process.env.DAWN_SUBMISSION_EVIDENCE_DIR??'docs/validation/submission-evidence-20261107');mkdirSync(output,{recursive:true})
  writeFileSync(join(output,'phase-a-model-visible-example.json'),JSON.stringify({inference:'shared localhost fixture; real Pi child',label,invalidFeedback:feedback,recorded:outcome.receipt.result,observation:outcome.observation},null,2)+'\n')
 })

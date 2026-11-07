@@ -7,6 +7,8 @@ import {getBuiltinModel} from '@earendil-works/pi-ai/providers/all'
 import {CredentialStore,defaultCredentialFile,readOnlyCredentials} from '../src/electron/credentials.js'
 import {loadRegistry} from '../src/config/loader.js'
 import {startEvaluationGate} from './evaluation-request-gate.js'
+import {researchBudgetTrial,RESEARCH_STAGE_PROVIDERS} from './research-trial-budget.js'
+import {researchProxyModel} from './research-model-compat.js'
 import {runResearchEvaluation} from './evaluate-research.js'
 async function main(){
 const [outputArg,profileArg,provider,modelId]=process.argv.slice(2)
@@ -27,6 +29,7 @@ try{
  if(!model)throw new Error('当前模型不在本地目录；不会隐式替换模型')
  const connection=registry.providers?.[provider]
  if(model.api!=='openai-completions'||connection?.api&&connection.api!=='openai-completions')throw new Error('当前试验转发器只支持 OpenAI completions，其他 API 明确不支持')
+ const proxyModel=researchProxyModel(model)
  stage='credential-read'
  const port=readOnlyCredentials(new CredentialStore({file:defaultCredentialFile(profile),safeStorage,onInsecure:()=>{}}));port.warm?.()
  const key=port.get(provider);if(!key){console.log(JSON.stringify({stage:'credential-read',hostName:app.getName(),encryptionAvailable:safeStorage.isEncryptionAvailable(),modelRequests:0}));throw new Error('当前 API 凭证不可读；未发模型请求')}
@@ -41,8 +44,9 @@ try{
   return fetch(target,{method:'POST',headers:{...connection?.headers,'content-type':'application/json',authorization:`Bearer ${key}`},body:new Uint8Array(body),signal,redirect:'error'})
  }})
  const modelsPath=join(scratch,'models.json')
- writeFileSync(modelsPath,JSON.stringify({providers:{[provider]:{baseUrl:gate.url,api:'openai-completions',models:[{id:modelId,name:modelId,input:['text'],reasoning:false,contextWindow:model.contextWindow,maxTokens:4096,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}}))
- const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',signal:controller.signal,beginTrial:limit=>{const arm=gate!.partition(limit);return{credential:arm.token,requests:()=>arm.stats().forwarded,stats:arm.stats,close:arm.close}}},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
+ const modelConfig={baseUrl:gate.url,api:'openai-completions',models:[proxyModel]}
+ writeFileSync(modelsPath,JSON.stringify({providers:Object.fromEntries([provider,...Object.values(RESEARCH_STAGE_PROVIDERS)].map(name=>[name,modelConfig]))}))
+ const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',signal:controller.signal,beginTrial:(limit,mode)=>researchBudgetTrial(gate!.partition(limit),mode,modelId)},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
  mkdirSync(output,{recursive:true});writeFileSync(join(output,'request-gate.json'),JSON.stringify(gate.stats(),null,2)+'\n')
  console.log(JSON.stringify({provider,model:modelId,forwarded:gate.stats().forwarded,completePairs:report.completePairs,incompletePairs:report.incompletePairs,rows:report.rows.map(r=>({caseId:r.caseId,mode:r.mode,terminal:r.terminal,success:r.success,requests:r.requests}))}))
 }catch{console.error(`真实 API 试验未完成（${stage}）；未输出凭证、端点或请求正文。查看隔离报告；不会自动重新联网。`);process.exitCode=1}

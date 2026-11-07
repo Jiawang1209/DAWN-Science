@@ -29,3 +29,9 @@ it('counts wrong scientific acceptance and reports requests including unsuccessf
  expect(report.delivery.single).toMatchObject({qualifiedDeliveries:1,correctBlocks:1,exhausted:1,requestsPerDelivery:10})
  expect(report.delivery.multi.requestsPerDelivery).toBeNull()
 })
+it('reports an exhausted review subquota even when the whole arm still has unused requests',()=>{
+ const base={caseId:'carbon-missing',mode:'multi',repeat:1,fingerprint:'same',terminal:'failed',success:false,falseAcceptance:false,inputPreserved:true,requests:13,elapsedMs:100,usage:{visibleTokens:1,unknownUsageTasks:0,partialUsage:false},versions:[],requestBudget:{limit:15,reserved:13,forwarded:13,denied:4},stageRequestBudgets:{work:{limit:11,reserved:9,forwarded:9,denied:0},review:{limit:4,reserved:4,forwarded:4,denied:4}}} as ResearchRow
+ expect(summarizeResearch([base],true).delivery.multi.exhausted).toBe(1)
+ expect(summarizeResearch([{...base,terminal:'cancelled'}],true).delivery.multi.exhausted).toBe(0)
+ expect(summarizeResearch([{...base,requestBudget:{...base.requestBudget!,denied:0},stageRequestBudgets:{...base.stageRequestBudgets!,review:{limit:4,reserved:4,forwarded:4,denied:0}}}],true).delivery.multi.exhausted).toBe(0)
+})

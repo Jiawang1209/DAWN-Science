@@ -1,0 +1,6 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/protocol/task-contract.ts(42,22): error TS2339: Property 'description' does not exist on type '_JSONSchema'.
+  Property 'description' does not exist on type 'false'.
+tests/orchestration/task-reference-guidance.test.ts(40,137): error TS2322: Type '{ kind: string; verdict: string; findings: never[]; reviewedPaths: string[] | undefined; }' is not assignable to type 'JsonValue'.
+  Type '{ kind: string; verdict: string; findings: never[]; reviewedPaths: string[] | undefined; }' is not assignable to type 'null'.

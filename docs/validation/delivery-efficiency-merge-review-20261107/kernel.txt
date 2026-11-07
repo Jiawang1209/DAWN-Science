@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project kernel
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+
+ Test Files  12 passed (12)
+      Tests  50 passed | 1 skipped (51)
+   Start at  20:51:57
+   Duration  48.20s (transform 803ms, setup 0ms, import 2.02s, tests 45.03s, environment 1ms)

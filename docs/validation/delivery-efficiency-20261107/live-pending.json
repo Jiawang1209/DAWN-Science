@@ -1,0 +1,11 @@
+{
+  "state": "completed-with-multi-agent-failure",
+  "approvedLimit": 30,
+  "forwarded": 27,
+  "deniedNotForwarded": 4,
+  "inFlight": 0,
+  "requestGateClosed": true,
+  "noAutomaticFurtherTrial": true,
+  "report": "live/research.json",
+  "historicalIntermittentTimeout": "OPEN"
+}

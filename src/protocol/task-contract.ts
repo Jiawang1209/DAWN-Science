@@ -31,6 +31,30 @@ export const TaskResultSchema=z.object({
   execution:RouteExecutionSchema,verification:RouteVerificationSchema,
 }).strict()
 export type TaskResult=z.infer<typeof TaskResultSchema>
+export function taskResultParameters(contract:TaskContract){
+ const schema=z.toJSONSchema(TaskResultSchema,{io:'input',unrepresentable:'any'})
+ const properties=schema.properties!
+ if(contract.resultType){
+  const data=TaskDataSchema.options.find(option=>option.shape.kind.value===contract.resultType)!
+  properties.data=z.toJSONSchema(data,{io:'input',unrepresentable:'any'})
+  schema.required=[...new Set([...(schema.required??[]),'data'])]
+ }
+ const summary=properties.summary as Record<string,unknown>
+ summary.description='Concise outcome and key blockers only. Do not repeat full reports, data, execution notes or every finding; long tool arguments can be truncated before submission.'
+ if(contract.resultType==='review'){
+  const review=properties.data as {properties:Record<string,Record<string,unknown>>}
+  const paths=review.properties.reviewedPaths!
+  paths.description='Required: exactly the frozen contract.inputs set, each path once, in any order. Additional files read for context belong in summary/findings, not reviewedPaths.'
+  paths.minItems=contract.inputs.length;paths.maxItems=contract.inputs.length;paths.uniqueItems=true
+  if(contract.inputs.length)paths.items={type:'string',enum:[...contract.inputs]}
+ }
+ const execution=properties.execution as {properties:Record<string,Record<string,unknown>>}
+ const verification=properties.verification as {properties:Record<string,Record<string,unknown>>}
+ execution.properties.toolCallIds!.description='For completed execution use only actual bash/powershell/run_code IDs with host execution=ran. Never cite write, edit, read or failed calls as completed execution.'
+ verification.properties.toolCallIds!.description='For reviewed use only successful 本轮成功 read/look_at_image/bash/powershell/run_code IDs. Never include failed reads, write/edit or other tasks. Data-summary/review must read every declared input.'
+ if(!contract.outputs.length)(properties.deliverables as Record<string,unknown>).maxItems=0
+ return schema
+}
 export const TaskResultParameters=z.toJSONSchema(TaskResultSchema,{io:'input',unrepresentable:'any'})
 export const TaskReceiptSchema=z.object({
   acceptance:ScienceAcceptanceReceiptSchema.optional(),

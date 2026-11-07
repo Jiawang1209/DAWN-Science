@@ -1,0 +1,20 @@
+
+Running 2 tests using 1 worker
+
+(node:46148) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:62176/c1e16072-3540-45b7-8ed7-0177deede5d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/bot-collaboration.spec.ts:187:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62199/fe90a922-b2fb-4164-83ff-17ab7bfaf44c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/bot-dispatch.spec.ts:3:1 › slash Bot target dispatches without a captain prompt and exposes its member conversation (2.7s)
+
+  2 passed (9.5s)

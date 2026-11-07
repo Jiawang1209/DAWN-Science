@@ -1,0 +1,31 @@
+{
+  "kind": "offline-accounting-correction-no-model-requests",
+  "originalReportSha256": "14116f1c0e8120dc49e1487eed5167d84566758a74b367c81a91aca4cfb0ce23",
+  "correctionSourceSha256": "89fdb71d502907359c703204e45ebc0063a0b51bffc274d550e319126c964200",
+  "delivery": {
+    "single": {
+      "qualifiedDeliveries": 1,
+      "correctBlocks": 0,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 14,
+      "elapsedMs": 56849,
+      "requestsPerDelivery": 14,
+      "msPerDelivery": 56849
+    },
+    "multi": {
+      "qualifiedDeliveries": 0,
+      "correctBlocks": 0,
+      "falseAcceptances": 0,
+      "exhausted": 1,
+      "requests": 13,
+      "elapsedMs": 103227,
+      "requestsPerDelivery": null,
+      "msPerDelivery": null
+    }
+  },
+  "completePairs": 0,
+  "incompletePairs": 1,
+  "qualifiedPairs": 0,
+  "explanation": "Count exhausted review subquota as a request-limit failure even with unused whole-arm quota. Original rows, terminal, model results and source fingerprints are not rewritten."
+}

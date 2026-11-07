@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/evaluation/research-model-compat.test.ts(12,35): error TS2741: Property '[transcriptContextBrand]' is missing in type '{ messages: ({ role: "user"; content: string; timestamp: number; } | { role: "assistant"; content: { type: "toolCall"; id: string; name: string; arguments: { path: string; }; }[]; api: "openai-completions"; provider: string; model: string; usage: { ...; }; stopReason: "toolUse"; timestamp: number; } | { ...; })[]; }' but required in type 'TranscriptContext'.

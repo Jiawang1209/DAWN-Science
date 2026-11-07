@@ -1,0 +1,51 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-model-compat.test.ts (1 test | 1 failed) 25ms
+   × keeps serialized DeepSeek payloads identical across the single provider and both loopback aliases 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-model-compat.test.ts > keeps serialized DeepSeek payloads identical across the single provider and both loopback aliases
+AssertionError: expected { model: 'deepseek-flash', …(6) } to deeply equal { model: 'deepseek-flash', …(5) }
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "max_tokens": 123,
++   "max_completion_tokens": 123,
+    "messages": [
+      {
+        "content": "Inspect the synthetic input",
+        "role": "user",
+      },
+@@ -25,10 +25,11 @@
+        "role": "tool",
+        "tool_call_id": "read-1",
+      },
+    ],
+    "model": "deepseek-flash",
++   "store": false,
+    "stream": true,
+    "stream_options": {
+      "include_usage": true,
+    },
+    "tools": [],
+
+ ❯ tests/evaluation/research-model-compat.test.ts:27:156
+     25|  expect(expected).not.toHaveProperty('store')
+     26|  for(const provider of ['deepseek',...Object.values(RESEARCH_STAGE_PRO…
+     27|   expect(await serialize({...researchProxyModel(original),api:'openai-…
+       |                                                                                                                                                            ^
+     28|  }
+     29|  expect(()=>researchProxyModel({...original,provider:'unverified'})).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:52:05
+   Duration  191ms (transform 20ms, setup 0ms, import 87ms, tests 25ms, environment 0ms)

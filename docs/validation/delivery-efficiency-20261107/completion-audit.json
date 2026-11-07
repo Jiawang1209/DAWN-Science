@@ -1,0 +1,35 @@
+{
+  "checks": {
+    "mainHasTimeline": true,
+    "mainClean": true,
+    "buildPass": true,
+    "typecheckPass": true,
+    "nodeUiPass": true,
+    "electronPass": true,
+    "noObservedExitAlerts": true,
+    "liveTrialCompleted": true,
+    "withinApprovedRequests": true,
+    "historicalTimeoutOpen": true,
+    "independentCodeReviewNoRemainingBlockers": true,
+    "latestOfflinePatchNotClaimedAsLiveValidated": true
+  },
+  "goalStatus": "requirements-verified",
+  "finalSourceManifest": "final-source-manifest.json",
+  "pilotSourceManifest": "live-source-freeze.json",
+  "pilotTerminal": {
+    "single": "accepted",
+    "multi": "failed"
+  },
+  "pilotForwarded": 27,
+  "remainingWork": [],
+  "limitations": [
+    "Multi-agent pilot did not deliver; no overall performance gain established",
+    "Post-pilot compactness and frozen review-path schema patch has offline verification only",
+    "Independent reviewer performed read-only code review, not independent test execution",
+    "Only relevant Electron suite; not full desktop, cross-platform or installed-app upgrade acceptance",
+    "Historical intermittent Electron timeout remains OPEN"
+  ],
+  "newEfficiencyBranch": "codex/delivery-efficiency-20261107",
+  "efficiencyCommitted": false,
+  "latestSourceMatchesVerifiedManifest": true
+}

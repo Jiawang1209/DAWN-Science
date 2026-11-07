@@ -1,0 +1,73 @@
+
+Running 14 tests using 1 worker
+
+(node:50648) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59721/f24402f6-b402-499e-9561-56b2bf480e35
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59815/faaddac1-8ed4-47c9-811b-e8a0b62097f7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (15.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示产物锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59831/b84ec250-42ed-4da9-a009-413a534a393b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/run-explanation-budget.spec.ts:11:2 › run explanation › explains actual shared lock waiting and retained host history (12.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「历时预算演示」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59920/8b6c3c6c-790e-4849-abed-2c0a107db016
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/run-explanation-budget.spec.ts:39:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (10.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「演示委派预算」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59996/3ac62bbc-ce1c-42e8-9563-442440d8e552
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60040/0510fb65-a5a7-4242-806d-61c2374c4e9e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/run-explanation-budget.spec.ts:63:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60062/64ffaee1-46fc-4959-8a6b-fb24008c9e73
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60098/92d0408d-35bb-444a-898a-1b1a467d1dfd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60140/6e84a8b0-f59a-4969-b7cc-c5c64814682a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「审查报告预览链路」做完了 — {"summary":"report delivered","blockers":[],"deliverables":[{"path":"reports/report.md"}],"execution":{"state":"not_run"…
+[主进程] Debugger ending on ws://127.0.0.1:60180/818d92e6-c65c-4484-a26a-e976a3fca994
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/submission-evidence-review.spec.ts:12:1 › opens report images and scripts in the same owner, closes previews, and returns from expansion (4.9s)
+  ✓   9 e2e/submission-feedback.spec.ts:13:1 › declarative task matching accepts Pi text-array prompts across result turns (1ms)
+  ✓  10 e2e/submission-feedback.spec.ts:19:1 › fixture evidence references reject missing, forged and ambiguous labels (2ms)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60205/8a89a068-8b28-4772-a300-3b67532639ca
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「结构化子任务验收」做完了 — {"summary":"已交付声明文件","blockers":[],"deliverables":[{"path":"results/contract.txt"}],"execution":{"state":"not_run","note…
+[主进程] Debugger ending on ws://127.0.0.1:60224/b77c99f0-a6c9-44de-b6b7-cbe0861f46d2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60254/2f7de893-7a4c-4295-af16-f058c4cb82ba
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/task-contract.spec.ts:66:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60272/fd318a42-2778-4525-a742-ae6558e18dd0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/task-contract.spec.ts:95:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (1.8s)
+
+  14 passed (1.3m)

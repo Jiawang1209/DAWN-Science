@@ -1,0 +1,65 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-reference-guidance.test.ts (6 tests | 2 failed) 61ms
+   × keeps the advertised files and acceptance contract frozen after caller mutation 5ms
+   × rejects duplicate reviewed paths at the host boundary as well as in the tool schema 2ms
+ ❯ |node| tests/evaluation/request-gate.test.ts (11 tests | 1 failed) 934ms
+   × drains a backpressured response on deadline without client cooperation 813ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > drains a backpressured response on deadline without client cooperation
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/evaluation/request-gate.test.ts:136:19
+    134|   const closing=cause==='parent-close'?multi.close():(async()=>{while(…
+    135|   const drained=await Promise.race([closing.then(()=>true),new Promise…
+    136|   expect(drained).toBe(true)
+       |                   ^
+    137|   expect(upstreamAborted).toBe(true)
+    138|   expect(work.stats().inFlight).toBe(0);expect(multi.stats().inFlight)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > keeps the advertised files and acceptance contract frozen after caller mutation
+AssertionError: expected [ 'in.csv', 'never-reviewed.csv' ] to deeply equal [ 'in.csv' ]
+
+- Expected
++ Received
+
+  [
+    "in.csv",
++   "never-reviewed.csv",
+  ]
+
+ ❯ tests/orchestration/task-reference-guidance.test.ts:57:101
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > rejects duplicate reviewed paths at the host boundary as well as in the tool schema
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/task-reference-guidance.test.ts:69:52
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 14 passed (17)
+   Start at  20:43:35
+   Duration  1.07s (transform 125ms, setup 0ms, import 259ms, tests 995ms, environment 0ms)

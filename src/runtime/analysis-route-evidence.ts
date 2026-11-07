@@ -1,5 +1,6 @@
 /** Route records are validated against actual main-session results. Model prose,
  * denied calls and metadata mutations are never scientific execution evidence. */
+import {executionEvidenceTool,verificationEvidenceTool} from './route-evidence-rules.js'
 import { 从工具结果收案例 } from '../cases/results.js'
 import { parseRouteActionMessage, type AnalysisRoute, type AnalysisRouteDraft } from '../protocol/analysis-route.js'
 
@@ -18,8 +19,8 @@ export interface RouteToolEvidence {
 type BranchEntry = { type?: string; message?: { role?: string; content?: unknown } }
 const key = (server: string, id: string) => JSON.stringify([server, id])
 const identity = (value: unknown) => JSON.stringify(value)
-const scientific = (name: string) => ['run_code', 'bash', 'powershell'].includes(name)
-const review = (name: string) => scientific(name) || name === 'read' || name === 'look_at_image'
+const scientific=executionEvidenceTool
+const review=verificationEvidenceTool
 const contentText = (content: unknown): string => typeof content === 'string' ? content : Array.isArray(content)
   ? content.flatMap((block: { type?: string; text?: string }) => block?.type === 'text' && typeof block.text === 'string' ? [block.text] : []).join('\n') : ''
 

@@ -1,0 +1,181 @@
+{
+  "kind": "actual-generated-tool-schema-not-a-model-trial",
+  "contract": {
+    "submission": "tool",
+    "resultType": "review",
+    "version": 1,
+    "inputs": [
+      "results/analysis.py",
+      "results/result.json",
+      "results/report.md"
+    ],
+    "outputs": [],
+    "access": "read-only",
+    "requireExecution": false,
+    "requireReview": true
+  },
+  "parameters": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "data": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "review"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "revise",
+              "blocked"
+            ]
+          },
+          "findings": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "reviewedPaths": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "results/analysis.py",
+                "results/result.json",
+                "results/report.md"
+              ]
+            },
+            "description": "Required: exactly the frozen contract.inputs set, each path once, in any order. Additional files read for context belong in summary/findings, not reviewedPaths.",
+            "minItems": 3,
+            "uniqueItems": true
+          },
+          "revisionInstructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8000
+          }
+        },
+        "required": [
+          "kind",
+          "verdict",
+          "findings",
+          "reviewedPaths"
+        ],
+        "additionalProperties": false
+      },
+      "summary": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 65536,
+        "description": "Concise outcome and key blockers only. Do not repeat full reports, data, execution notes or every finding; long tool arguments can be truncated before submission."
+      },
+      "blockers": {
+        "maxItems": 64,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "deliverables": {
+        "maxItems": 0,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "execution": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "not_run",
+              "partial",
+              "completed",
+              "failed"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toolCallIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "For completed execution use only actual bash/powershell/run_code IDs with host execution=ran. Never cite write, edit, read or failed calls as completed execution."
+          }
+        },
+        "required": [
+          "state",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "verification": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "unreviewed",
+              "reviewed",
+              "issues"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toolCallIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "For reviewed use only successful 本轮成功 read/look_at_image/bash/powershell/run_code IDs. Never include failed reads, write/edit or other tasks. Data-summary/review must read every declared input."
+          }
+        },
+        "required": [
+          "state",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "summary",
+      "blockers",
+      "deliverables",
+      "execution",
+      "verification",
+      "data"
+    ],
+    "additionalProperties": false
+  }
+}

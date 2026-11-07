@@ -1,0 +1,56 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+ ❯ |node| tests/runtime/bot-submission-schema.test.ts (2 tests | 2 failed) 67ms
+   × updates both actual Bot declarations and cached SDK validation for successive frozen scopes 47ms
+   × restores generic Bot schemas after failed work and does not persist a previous task on reopen 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/bot-submission-schema.test.ts > updates both actual Bot declarations and cached SDK validation for successive frozen scopes
+AssertionError: expected undefined to be 'review' // Object.is equality
+
+- Expected:
+"review"
+
++ Received:
+undefined
+
+ ❯ tests/runtime/bot-submission-schema.test.ts:30:64
+     28|    await runtime.runWithTaskScope('bot',resolveTaskSettings(TaskContra…
+     29|     const parameters=active().parameters as any
+     30|     expect(parameters.properties.data.properties?.kind?.const).toBe('r…
+       |                                                                ^
+     31|     expect(parameters.properties.data.properties.reviewedPaths.items.e…
+     32|     expect(session.getToolDefinition('submit_task_result')!.parameters…
+ ❯ NativeRuntime.runWithTaskScope src/runtime/native.ts:634:26
+ ❯ tests/runtime/bot-submission-schema.test.ts:28:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/bot-submission-schema.test.ts > restores generic Bot schemas after failed work and does not persist a previous task on reopen
+AssertionError: expected undefined to be 'data-summary' // Object.is equality
+
+- Expected:
+"data-summary"
+
++ Received:
+undefined
+
+ ❯ tests/runtime/bot-submission-schema.test.ts:61:138
+     59|   expect(session.getToolDefinition('submit_task_result')!.parameters).…
+     60|   await runtime.runWithTaskScope('bot',resolveTaskSettings(TaskContrac…
+     61|    expect((session.agent.state.tools.find(t=>t.name==='submit_task_res…
+       |                                                                                                                                          ^
+     62|    return{ok:false,output:'no scientific result'}
+     63|   })
+ ❯ NativeRuntime.runWithTaskScope src/runtime/native.ts:634:26
+ ❯ tests/runtime/bot-submission-schema.test.ts:60:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  20:46:33
+   Duration  1.59s (transform 625ms, setup 0ms, import 1.43s, tests 67ms, environment 0ms)

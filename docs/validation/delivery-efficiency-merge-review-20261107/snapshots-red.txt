@@ -1,0 +1,92 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-reference-guidance.test.ts (8 tests | 4 failed) 112ms
+   × keeps the advertised files and acceptance contract frozen after caller mutation 5ms
+   × rejects duplicate reviewed paths at the host boundary as well as in the tool schema 2ms
+   × seals exactly the evidence that was checked across asynchronous version validation 38ms
+   × retains the original input version binding if the caller later mutates its settings 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > keeps the advertised files and acceptance contract frozen after caller mutation
+AssertionError: expected [ 'in.csv', 'never-reviewed.csv' ] to deeply equal [ 'in.csv' ]
+
+- Expected
++ Received
+
+  [
+    "in.csv",
++   "never-reviewed.csv",
+  ]
+
+ ❯ tests/orchestration/task-reference-guidance.test.ts:57:101
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > rejects duplicate reviewed paths at the host boundary as well as in the tool schema
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/task-reference-guidance.test.ts:69:52
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > seals exactly the evidence that was checked across asynchronous version validation
+AssertionError: expected [] to match object [ { toolCallId: 'read', …(1) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "input": {
+-       "path": "in.csv",
+-     },
+-     "toolCallId": "read",
+-   },
+- ]
++ []
+
+ ❯ tests/orchestration/task-reference-guidance.test.ts:86:39
+     84|   expect((await pending).isError).not.toBe(true)
+     85|   expect(submission.receipt()?.state).toBe('accepted')
+     86|   expect(submission.sealedEvidence()).toMatchObject([{toolCallId:'read…
+       |                                       ^
+     87|  }finally{rmSync(dir,{recursive:true,force:true})}
+     88| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > retains the original input version binding if the caller later mutates its settings
+AssertionError: expected [] to deeply equal [ { path: 'in.csv', …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "bytes": 4,
+-     "path": "in.csv",
+-     "sha256": "daff832f802000e645771a60983c76c963f6ee602a6230e45237bd360e91cc1a",
+-   },
+- ]
++ []
+
+ ❯ tests/orchestration/task-reference-guidance.test.ts:98:50
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+   Start at  20:44:28
+   Duration  390ms (transform 91ms, setup 0ms, import 203ms, tests 112ms, environment 0ms)

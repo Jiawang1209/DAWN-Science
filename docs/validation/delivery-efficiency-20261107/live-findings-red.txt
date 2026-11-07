@@ -1,0 +1,36 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-tasks.test.ts (5 tests | 1 failed) 8ms
+   × reports an exhausted review subquota even when the whole arm still has unused requests 3ms
+ ❯ |node| tests/orchestration/task-reference-guidance.test.ts (4 tests | 1 failed) 52ms
+   × advertises the exact frozen review paths and rejects extra, duplicate or missing paths before execution 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-tasks.test.ts > reports an exhausted review subquota even when the whole arm still has unused requests
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/evaluation/research-tasks.test.ts:34:66
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/orchestration/task-reference-guidance.test.ts > advertises the exact frozen review paths and rejects extra, duplicate or missing paths before execution
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ tests/orchestration/task-reference-guidance.test.ts:37:70
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 7 passed (9)
+   Start at  20:29:13
+   Duration  378ms (transform 133ms, setup 0ms, import 267ms, tests 60ms, environment 0ms)

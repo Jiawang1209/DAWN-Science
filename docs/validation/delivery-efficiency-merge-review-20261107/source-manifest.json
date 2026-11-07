@@ -1,0 +1,22 @@
+{
+  "scripts/evaluate-current-api.ts": "8f0ea6ad4da10158fbfe30e229a35f6d2d5eb2e9dd36e4e6e91e167aac53905d",
+  "scripts/evaluate-research.ts": "a60351eaf6c2301540b52748459e3e900747d4265c8ae1fefa2bf5a7b8c3f9d2",
+  "scripts/evaluation-request-gate.ts": "855c7724bbd5cfce18cc8700dfac7401252853f65a9965ae6296c8f29b4f5d17",
+  "scripts/research-model-compat.ts": "1c3271e118e52acaa4a2be3d299f9e104ce1a0f85cd7e0a31b7f802020218dc7",
+  "scripts/research-trial-budget.ts": "5865cc88b75989d448bc086884b3ae34844b0db8e5ebc71fad6fe456b8b4cc1b",
+  "src/evaluation/research-tasks.ts": "89fdb71d502907359c703204e45ebc0063a0b51bffc274d550e319126c964200",
+  "src/orchestration/task-contract.ts": "f08355dd8cc8e5b3ad8ff88cdb3d6e008d06abc638ed21faa052790cf79cedfc",
+  "src/orchestration/task-submission.ts": "25a7d4f97c63101e312c31d5ec68dff082900749df08e361d4f5abe59be2b4c1",
+  "src/protocol/task-contract.ts": "c161487bc6d97164dfd66e139ddba844b2a073541fef7029ef5d1373ed0d5832",
+  "src/runtime/analysis-route-evidence.ts": "44e2d13c0a5e679f68b5f98c732dad0c4190e6be526dd2b867a1fbc52cb781cc",
+  "src/runtime/route-evidence-rules.ts": "275723f7b723bb5e114d7babdbc0d8ece875665f98110ef276b3e244de143b54",
+  "src/runtime/native.ts": "f2de78537fe014aea919d42e34ebcd6de18f845a962e84c4ea47c82706c8deb5",
+  "tests/evaluation/request-gate.test.ts": "ce7a2fc30072e60077456e0910b2f27aea9fc504d72141a47be08c2d13683165",
+  "tests/evaluation/research-runner.test.ts": "7a88b47d9674b27b14f3ebffa0837d639c491710222ee4927d9c1f6572687e9c",
+  "tests/evaluation/research-tasks.test.ts": "3a59f6d1100a03219ba147e796d1cf7bef18e9a8ac38a511e9a508eee3cd00cf",
+  "tests/evaluation/research-model-compat.test.ts": "3a7e9b83722b2b8a86a0103e713e558dedf2dcfc32c86a501c28f2ad7286405c",
+  "tests/orchestration/task-reference-guidance.test.ts": "6a998692c92ce0de0e266ec4cce56f7aacdbfdf8a8372a1db7ac5626577ee86b",
+  "tests/orchestration/tool-record.test.ts": "c9e6086309739f59c3da574113419e83a1d3be4e4fb23e22cc371a3464e1d858",
+  "tests/runtime/bot-submission-schema.test.ts": "94a5a47833c845c358e4034c3a85aa04a3c2c26e6b808593f49b356510393a12",
+  "dist/electron/subagent-child.js": "0257c261345244e50fde7b363f0ddccaef0e976d77a3e6e1d0e236b0c40aa32a"
+}

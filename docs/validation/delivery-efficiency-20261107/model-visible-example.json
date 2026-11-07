@@ -1,0 +1,93 @@
+{
+  "inference": "shared localhost fixture; real Pi child",
+  "label": {
+    "toolCallId": "call_mock_55",
+    "name": "read",
+    "status": "done",
+    "execution": "not_observed",
+    "references": [
+      "verification.reviewed"
+    ],
+    "path": "in.csv",
+    "truncatedFields": []
+  },
+  "invalidFeedback": {
+    "recorded": false,
+    "phase": "correctable",
+    "retryable": true,
+    "error": "执行/审阅引用须对应唯一的实际工具记录；不能引用缺失或重复的 ID",
+    "errorTruncated": false,
+    "fieldErrors": [],
+    "fieldErrorsOmitted": 0,
+    "contract": {
+      "access": "read-only",
+      "resultType": "review",
+      "requireExecution": false,
+      "requireReview": true,
+      "inputs": [
+        "in.csv"
+      ],
+      "outputs": [],
+      "readRequirements": [
+        "in.csv"
+      ],
+      "inputsOmitted": 0,
+      "outputsOmitted": 0,
+      "readRequirementsOmitted": 0,
+      "truncatedFields": []
+    },
+    "referenceChoices": {
+      "executionCompleted": [],
+      "verificationReviewed": [
+        "call_mock_55"
+      ]
+    },
+    "evidenceCatalog": {
+      "entries": [
+        {
+          "toolCallId": "call_mock_55",
+          "name": "read",
+          "status": "done",
+          "execution": "not_observed",
+          "references": [
+            "verification.reviewed"
+          ],
+          "path": "in.csv",
+          "truncatedFields": []
+        }
+      ],
+      "total": 1,
+      "omitted": 0
+    },
+    "instruction": "修正后可在本轮再次提交；仅引用本任务实际证据中未截断的 toolCallId。截断字段不完整；原冻结契约仍为准。工具完成不代表科学结论正确。"
+  },
+  "recorded": {
+    "data": {
+      "kind": "review",
+      "verdict": "pass",
+      "findings": [],
+      "reviewedPaths": [
+        "in.csv"
+      ]
+    },
+    "summary": "已读取合成数据",
+    "blockers": [],
+    "deliverables": [],
+    "execution": {
+      "state": "not_run",
+      "note": "只读"
+    },
+    "verification": {
+      "state": "reviewed",
+      "note": "实际读取",
+      "toolCallIds": [
+        "call_mock_55"
+      ]
+    }
+  },
+  "observation": {
+    "elapsedMs": 80,
+    "submissionAttempts": 2,
+    "invalidSubmissions": 1
+  }
+}

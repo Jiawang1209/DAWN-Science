@@ -1,0 +1,21 @@
+{
+  "dist/electron/subagent-child.js": "4e92a6dc51e969bbc830f315f57cf46af06baa88ec4964fcc5f70dfebf30b7a3",
+  "scripts/evaluate-current-api.ts": "8f0ea6ad4da10158fbfe30e229a35f6d2d5eb2e9dd36e4e6e91e167aac53905d",
+  "scripts/evaluate-research.ts": "a60351eaf6c2301540b52748459e3e900747d4265c8ae1fefa2bf5a7b8c3f9d2",
+  "scripts/evaluation-request-gate.ts": "b520440dec65e7080e6749e590770d13cbad38147dcf607d4ef1f99da39b1c40",
+  "scripts/research-cli.ts": "0227116187655ab25bc269357787b8bd90168ce2d8f03dfbf058d74ed8e88984",
+  "scripts/research-model-compat.ts": "1c3271e118e52acaa4a2be3d299f9e104ce1a0f85cd7e0a31b7f802020218dc7",
+  "scripts/research-trial-budget.ts": "5865cc88b75989d448bc086884b3ae34844b0db8e5ebc71fad6fe456b8b4cc1b",
+  "src/evaluation/research-tasks.ts": "89fdb71d502907359c703204e45ebc0063a0b51bffc274d550e319126c964200",
+  "src/orchestration/task-contract.ts": "8a8d01c3dad1d269a442568a0444b63160f3ba70ce9543bd3619410ff060c3e8",
+  "src/orchestration/task-submission.ts": "2fb6f6c5cea02f720ca8fe4db43766ff01bcb65bd0af8ff678e66a61756b2512",
+  "src/protocol/task-contract.ts": "c161487bc6d97164dfd66e139ddba844b2a073541fef7029ef5d1373ed0d5832",
+  "src/runtime/analysis-route-evidence.ts": "44e2d13c0a5e679f68b5f98c732dad0c4190e6be526dd2b867a1fbc52cb781cc",
+  "src/runtime/route-evidence-rules.ts": "275723f7b723bb5e114d7babdbc0d8ece875665f98110ef276b3e244de143b54",
+  "tests/evaluation/request-gate.test.ts": "464117a9dd2289953651af3d3432e2b39692cfb4254319c1e75e90dd411d861f",
+  "tests/evaluation/research-model-compat.test.ts": "3a7e9b83722b2b8a86a0103e713e558dedf2dcfc32c86a501c28f2ad7286405c",
+  "tests/evaluation/research-runner.test.ts": "7a88b47d9674b27b14f3ebffa0837d639c491710222ee4927d9c1f6572687e9c",
+  "tests/evaluation/research-tasks.test.ts": "3a59f6d1100a03219ba147e796d1cf7bef18e9a8ac38a511e9a508eee3cd00cf",
+  "tests/orchestration/task-reference-guidance.test.ts": "6468eaa83f17c4a7a8d7c2f787701eb48abd9b4c4db634a2631192edf3d1b594",
+  "tests/orchestration/tool-record.test.ts": "c9e6086309739f59c3da574113419e83a1d3be4e4fb23e22cc371a3464e1d858"
+}

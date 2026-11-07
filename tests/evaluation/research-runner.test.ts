@@ -53,3 +53,21 @@ it('retains settled check-stage usage when the analysis stage is cancelled and d
   expect(multi.terminal).toBe('cancelled');expect(multi.usage.visibleTokens).toBeGreaterThan(0)
  }finally{await server.close()}
 },30000)
+it('runs a full paired task with staged credentials and leaves a hard review reserve under the same arm cap',async()=>{
+ const {startEvaluationGate}=await import('../../scripts/evaluation-request-gate.js')
+ const {researchBudgetTrial,RESEARCH_STAGE_PROVIDERS}=await import('../../scripts/research-trial-budget.js')
+ const root=mkdtempSync(join(tmpdir(),'dawn-research-reserve-'));roots.push(root)
+ const server=await startMockInferenceServer({scenario:researchScenario(researchTasks())})
+ const gate=await startEvaluationGate({limit:30,forward:async(body,path,signal)=>fetch(server.url+path,{method:'POST',headers:{authorization:'Bearer offline-mock','content-type':'application/json'},body:new Uint8Array(body),signal})})
+ try{
+  const config=mockModelsJson(gate.url)
+  for(const alias of Object.values(RESEARCH_STAGE_PROVIDERS))config.providers[alias]=structuredClone(config.providers.deepseek)
+  const modelsPath=join(root,'models.json');writeFileSync(modelsPath,JSON.stringify(config))
+  const report=await runResearchEvaluation(join(root,'results'),{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:gate.token,kind:'fixture',requests:()=>gate.stats().forwarded,beginTrial:(limit,mode)=>researchBudgetTrial(gate.partition(limit),mode,'deepseek-flash')},{taskIds:['carbon-missing'],perArmLimit:15})
+  expect(report.qualifiedPairs).toBe(1)
+  const multi=report.rows.find(r=>r.mode==='multi')!
+  expect(multi.stageRequestBudgets).toMatchObject({work:{limit:11,forwarded:6},review:{limit:4,forwarded:4}})
+  expect(gate.stats().forwarded).toBe(14)
+  expect(gate.stats().inFlight).toBe(0)
+ }finally{await gate.close();await server.close()}
+},30000)

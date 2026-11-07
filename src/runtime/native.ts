@@ -15,7 +15,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { TERMINAL_REPLY_STYLE } from './terminal-reply-style.js'
 import { getCurrentSystemMessage, getSystemMessageText } from '@earendil-works/pi-ai'
 import {resolveTaskSettings,taskToolDenial} from "../subagent/task-tools.js"
-import {TaskResultParameters,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
+import {TaskResultParameters,TaskSettingsSchema,taskResultParameters,type TaskSettings} from "../orchestration/task-contract.js"
 import {TaskSubmission,appendTaskEvidence} from '../orchestration/task-submission.js'
 import {taskObservation} from './task-observation.js'
 import type {TaskObservation} from '../protocol/task-observation.js'
@@ -629,14 +629,20 @@ export class NativeRuntime implements AgentRuntime {
     const bound=TaskSettingsSchema.parse(settings),evidence:RouteToolEvidence[]=[],started=Date.now()
     const before=new Set(this.sessions.get(sessionId)?.sessionManager.getBranch().map(entry=>entry.id)??[])
     const scope={settings:bound,evidence,...(bound.contract?{submission:new TaskSubmission(bound.contract,this.routeBooks.get(sessionId)?.spec.workspace??'',()=>evidence,bound.versions)}:{})}
+    const session=this.sessions.get(sessionId)?.session
+    // Pi keeps a declaration and a wrapped AgentTool, and caches validators by schema identity.
+    // Publish one fresh schema to both for this scope; never mutate the shared generic schema.
+    const tools=new Set([session?.getToolDefinition('submit_task_result'),...session?.agent.state.tools.filter(tool=>tool.name==='submit_task_result')??[]].filter(tool=>tool!==undefined))
+    const schemas=[...tools].map(tool=>({tool,parameters:tool.parameters}))
     this.taskScopes.set(sessionId,scope)
     try{
+      if(bound.contract){const parameters=taskResultParameters(bound.contract);for(const {tool} of schemas)tool.parameters=parameters as typeof tool.parameters}
       const result=await work(),submitted=scope.submission?.result()
       const usage=sessionUsage(this.sessions.get(sessionId)?.sessionManager.getBranch().filter(entry=>!before.has(entry.id))??[],true)
       const observation=taskObservation(started,scope.submission?.observation(),usage)
       const missing=result.ok&&bound.contract?.submission==='tool'&&!submitted
       return{...result,...(submitted&&result.ok?{output:JSON.stringify(submitted)}:{}),...(missing?{ok:false,output:'',error:'任务要求 submit_task_result，未收到宿主接受的提交'}:{}),evidence:scope.submission?.sealedEvidence()??structuredClone(scope.evidence),observation,...(scope.submission?.receipt()?.versions?{versions:scope.submission.receipt()!.versions!}:{})}
-    }finally{if(this.taskScopes.get(sessionId)===scope)this.taskScopes.delete(sessionId)}
+    }finally{for(const {tool,parameters} of schemas)tool.parameters=parameters;if(this.taskScopes.get(sessionId)===scope)this.taskScopes.delete(sessionId)}
   }
   private botBridge: BotRuntimeBridge | undefined
   private readonly botTeams = new Map<string, { scheduler: 团队调度器; current: { id: string | undefined }; create: (botId: string) => Promise<void> }>()

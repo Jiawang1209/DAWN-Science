@@ -1,0 +1,69 @@
+{
+  "kind": "two-small-live-pilots-not-statistical-benefit-estimate",
+  "sameInputHash": true,
+  "sameReportedProviderAndModel": true,
+  "perArmLimit": {
+    "before": 15,
+    "pilot": 15
+  },
+  "before": [
+    {
+      "mode": "single",
+      "terminal": "accepted",
+      "success": true,
+      "requests": 10,
+      "elapsedMs": 50185,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "stageRequestBudgets": null
+    },
+    {
+      "mode": "multi",
+      "terminal": "failed",
+      "success": false,
+      "requests": 15,
+      "elapsedMs": 99294,
+      "submissionAttempts": 4,
+      "invalidSubmissions": 2,
+      "stageRequestBudgets": null
+    }
+  ],
+  "pilot": [
+    {
+      "mode": "single",
+      "terminal": "accepted",
+      "success": true,
+      "requests": 14,
+      "elapsedMs": 56849,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "stageRequestBudgets": null
+    },
+    {
+      "mode": "multi",
+      "terminal": "failed",
+      "success": false,
+      "requests": 13,
+      "elapsedMs": 103227,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 1,
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 9,
+          "forwarded": 9,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 11
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 4,
+          "inFlight": 0,
+          "limit": 4
+        }
+      }
+    }
+  ],
+  "scope": "Submission counters are host-only. New review also has one output-limit non-execution and one SDK schema rejection. Final schema/compactness patch was made after this pilot and has offline evidence only. Single-arm requests also changed 10 to 14, so no general speed, cost or quality gain is established."
+}

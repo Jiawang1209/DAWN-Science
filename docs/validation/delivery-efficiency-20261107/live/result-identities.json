@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "single",
+    "sha256": {
+      "input.csv": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+      "results/analysis.py": "0bb305d4ad5062f94c611f557016527babf0f41aea43355efe17b22818ab7d12",
+      "results/result.json": "251febe5fafc5245a32be04cc7cd8df857238c5de1d6fcfb8d240bbe998eb595",
+      "results/report.md": "80971ba169c934667e315ee20bd62036c303332ca7329a66196de2ff60f92f59"
+    }
+  },
+  {
+    "mode": "multi",
+    "sha256": {
+      "input.csv": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+      "results/analysis.py": "9bbacf321b8e6990b894e9c6192fa96cf00a35b92b4cf4710f6b6d6e3c8a0dab",
+      "results/result.json": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+      "results/report.md": "61a239bd76403869521a577278b497f9943e4f1f206216ffee6c7d81bef7b9dc"
+    }
+  }
+]

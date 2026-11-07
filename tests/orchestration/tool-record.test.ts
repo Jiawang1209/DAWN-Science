@@ -23,7 +23,7 @@ it('refuses duplicate calls and a result entry of the wrong identity, order or s
 })
 it('separates only the exact appended host tag from stdout, preserving marker-like tool content',()=>{
  const data='tool wrote [task_tool_evidence] as content'
- const marker='[task_tool_evidence] {"toolCallId":"same-call","name":"read","status":"done","execution":"not_observed","path":"data","truncatedFields":[]}'
+ const marker='[task_tool_evidence] {"toolCallId":"same-call","name":"read","status":"done","execution":"not_observed","references":["verification.reviewed"],"path":"data","truncatedFields":[]}'
  const fresh=entries('new',data)
  const result=fresh[1] as unknown as {message:{content:{type:string;text:string}[]}}
  result.message.content.push({type:'text',text:marker})

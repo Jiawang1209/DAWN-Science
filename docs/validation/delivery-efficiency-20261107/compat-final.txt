@@ -1,0 +1,8 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-efficiency-20261107/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:53:17
+   Duration  207ms (transform 23ms, setup 0ms, import 97ms, tests 23ms, environment 0ms)

@@ -1,0 +1,100 @@
+{
+  "normalization": "Only trailing whitespace and extra EOF blank lines removed from archived text logs; raw logs remain in their original temporary run directories. No result lines or failure evidence removed.",
+  "logs": [
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/final-build.txt",
+      "rawSha256": "a04e9c2dd082aa90128b9f3bb4b52a0ed175203c563ea4cc91ce18e159923a9d",
+      "archivedSha256": "0e9ad10c3260663381cf43a2cd74af8581299b6d44946e4ce75fc8917a3f2708"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/compat-final.txt",
+      "rawSha256": "2ab4d2d38b673486fd25eff21684495c55eb689fa0a8fadeed2fcc48421535b6",
+      "archivedSha256": "84d340b3442c89e65db84460d1273db3980eacf67683ef6d8ca51ce7702a328d"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/live-findings-green.txt",
+      "rawSha256": "d17a02dab489dacf88f55d8f37a96f50e14278aea0de3e3c928e3881066d5f15",
+      "archivedSha256": "b93c7c638e242931d5b1f46b096908edcc8835d8423db7102537907016a69a66"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/final-node-ui.txt",
+      "rawSha256": "4bb5f1af3253d94c6124dc518627ede052bf7ae2ab54e75b87712e4bfca0d5db",
+      "archivedSha256": "ef8eadb5c24a09a43c8eb470efefe27923a905014eb2419c9f20c1dde14981e5"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/build.txt",
+      "rawSha256": "c40652e50ef367f4d17a444695a686de5cd6a282abf3d73392ef69148fe84ee7",
+      "archivedSha256": "c09e08493baad3c93a2d30ad7f4df31d8a60b37afab9f7791facd27558b1ca22"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/node-ui.txt",
+      "rawSha256": "d7e20bc549091449a2aa8861445b37ee9aae467425e14ac0bc7b08246fce345a",
+      "archivedSha256": "8d81af1a299e3a7b6a928c74f64ff9c29d6baf26cd91c2035d04a4d2b863b7ec"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/focused.txt",
+      "rawSha256": "ce96cbf4fb8a4f43e1e1e774d6e2e8450886654f4d58d1b9fd7c3b899f2bb525",
+      "archivedSha256": "b5ee1959d2620c00fc0849332ffa3176a73bd2f70c04e0b8e1966021ea7d43bf"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/live-findings-red.txt",
+      "rawSha256": "62a08281eed802577678d548fbf0f067101841a8eb67de0d9a7cb40b0ba9a3c6",
+      "archivedSha256": "4c49322dc690d7046c16ec2469630e886d4337303f365012b3695fff46073ae3"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/compat-before.txt",
+      "rawSha256": "3e470b2f9ecb451359c8096cba252e1a296e567b375ac08c8b3e5044bfc533b7",
+      "archivedSha256": "a5ddce0112b5b035035d915d5088fe7a3561ba3d823634d833eb3d8ce80dba9a"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-20261107/compat-and-drain-after.txt",
+      "rawSha256": "6bb508c158e2ed0c5df7c9e078483f06a81968f3407e06080425b71cde4b310e",
+      "archivedSha256": "d9357eecf35d835b39b76c66a48cb4ef5959b45c48f8cf5ff78ea988aa93e728"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/bot-refresh-final.txt",
+      "rawSha256": "165a09944dfeee8c6f0ff9ce5cc841ebacdc41d6ca954a9f62cae0ce7c8e44f1",
+      "archivedSha256": "4fe95054415925a8053be106fd43aa91f88f2a3a99a52899610117d750550d24"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/build.txt",
+      "rawSha256": "576e861daea072033482ed8339fa72e79e8686fdb44b7f80e70af2610fde23af",
+      "archivedSha256": "14a1af49b4021a9f8f4ae28330d046d86ce402ad52b53b1f005f3150ea02e9b9"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/node-ui.txt",
+      "rawSha256": "7c0a449cc7972531f9b47ddec8cdec3cc87f69cab1b0779f7ebe7c6228614a29",
+      "archivedSha256": "2383121cad9663f0678bd842b45f65cd5b895bfd508c72ed0d5dc034c937ecda"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/snapshots-red.txt",
+      "rawSha256": "b2c0c75ad58dc9a048106c56d1ee339ced8043d107043b82e38cec4df03bd5db",
+      "archivedSha256": "c9c63480837944f4c82e73c1efd3494cd0b9f2a2cac4b675873778853d7ab9f1"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/kernel.txt",
+      "rawSha256": "9a72aeb42510b6c58a5ef7f9665eff3aa51b68165148b43b5d0d0688ac20a9d8",
+      "archivedSha256": "c6df7633cbb587330c9e4dd6016e37cccf21724ce8808a795bf6c28d3c133a1d"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/bot-schema-red-confirmed.txt",
+      "rawSha256": "c05780e2b9f13500a94aad4cbd8770fb4d68b9ddb9656469b235f6ab407cc04a",
+      "archivedSha256": "1c4b6f48bf6828fa7aba10b8087c0f36a932fb312d5f877a39e04bee63f40fe4"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/bot-schema-green.txt",
+      "rawSha256": "1677604b93388d9a7a3036a819a229d993e5d06c3f4eb3eae53dfd0ea070a15c",
+      "archivedSha256": "a59e50e002b9cdb62f42c289917d72b65c0bcd8273f6e44fbd071e74464616ae"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/boundary-red.txt",
+      "rawSha256": "61132a99e767fb4614633afdb96d59ec2bb11dd603126f482cfba511fd828cc1",
+      "archivedSha256": "0273c0e77b6980c1adfc418adee987d1393353aa7cd69b414c89ab01213a3a45"
+    },
+    {
+      "path": "docs/validation/delivery-efficiency-merge-review-20261107/boundaries-green.txt",
+      "rawSha256": "010a0b0fc0711ded63a9dbb63bf303a2fb964fad09e1ac69af559a3f9e803dea",
+      "archivedSha256": "9ffd3d4a0ab30be5ce40467834ba67e27421e62be1d4cc132dd2a582f6a09b09"
+    }
+  ]
+}

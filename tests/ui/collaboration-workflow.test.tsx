@@ -11,7 +11,7 @@ const snapshot:RunOverview={ownerSessionId:'p',source:'live',runs:[]}
 it('draws only actual task dependencies and routes selection by task ID',()=>{
  const choose=vi.fn();const view=render(<CollaborationWorkflow snapshot={snapshot} team={team} selected={collaborationTaskKey('team','analyze')} onSelect={choose}/>);
  expect(view.container.querySelectorAll('[data-workflow-edge]')).toHaveLength(2)
- fireEvent.click(screen.getByRole('button',{name:'review'}));expect(choose).toHaveBeenCalledWith(collaborationTaskKey('team','review'))
+ fireEvent.click(screen.getByRole('button',{name:'review'}));expect(choose).toHaveBeenCalledWith(collaborationTaskKey('team','review'),screen.getByRole('button',{name:'review'}))
  expect(view.container.querySelector('[data-task-id="analyze"]')?.getAttribute('aria-pressed')).toBe('true')
 })
 it('ignores foreign team snapshots and never fabricates dependencies for ordinary delegates',()=>{

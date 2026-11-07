@@ -3,10 +3,10 @@
  */
 import { afterEach, describe, expect, it } from "vitest"
 import Database from "better-sqlite3"
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
-import { SessionManager as PiSessions } from "@earendil-works/pi-coding-agent"
+import { parseSessionEntries, type SessionEntry, SessionManager as PiSessions } from "@earendil-works/pi-coding-agent"
 import { migrate } from "../../src/store/schema.js"
 import { ProjectStore } from "../../src/store/projects.js"
 import { SessionStore } from "../../src/store/sessions.js"
@@ -23,6 +23,10 @@ import { memoryCredentials } from "../helpers/credentials.js"
 import type { ProviderRegistry } from "../../src/config/schema.js"
 import { 子转录id } from "../../src/protocol/subagent-id.js"
 import { 子运行目录, 写元 } from "../../src/subagent/run-dir.js"
+import {taskTeamSnapshot} from '../../src/team/task-snapshot.js'
+import {加成员,加任务,写团队,团队目录,建团队,结算,领取} from '../../src/team/state.js'
+import {bindToolRecords} from '../../src/orchestration/tool-record.js'
+import {taskTrace} from '../../src/orchestration/task-trace.js'
 import {OrchestrationStore} from '../../src/orchestration/store.js'
 import {captureHandoff,freezeHandoff} from '../../src/subagent/context-handoff.js'
 
@@ -327,4 +331,67 @@ describe("openSubagent / askSubagent（审查）", () => {
     expect(ctx.events.peek(晚)).toBeUndefined()
     expect(ctx.events.peek(早)?.subagent?.asking).toBe(true)
   })
+})
+
+it('reads an exact settled tool record without subscribing, and rejects foreign owners or stale epochs',async()=>{
+ const ctx=make0(),sessionId=await ctx.开一段(),other=await ctx.开一段(),dir=ctx.sessions.get(sessionId)!.sessionDir
+ const store=new OrchestrationStore(dir,sessionId),child=store.register('subagent',['call','0'],'reader')
+ const transcript=join(子运行目录(dir,'call',0),'transcript'),file=join(transcript,'raw.jsonl')
+ mkdirSync(transcript,{recursive:true})
+ writeFileSync(file,rawToolRecord())
+ store.update(child.id,{state:'completed',epoch:2,result:{ok:true,output:'done',trace:boundFixtureTrace()}})
+ const request={sessionId,toolCallId:'tool-id',target:{kind:'run' as const,id:child.id,epoch:2}}
+ expect(await ctx.backend.getToolRecord(request)).toMatchObject({state:'available',output:'original output'})
+ expect(JSON.stringify(await ctx.backend.getRunOverview({sessionId}))).not.toContain('transcriptRef')
+ expect(ctx.events.找子转录(子转录id(sessionId,'call',0))).toBeUndefined()
+ expect(await ctx.backend.getToolRecord({...request,sessionId:other})).toEqual({state:'unavailable'})
+ expect(await ctx.backend.getToolRecord({...request,target:{...request.target,epoch:1}})).toEqual({state:'unavailable'})
+ expect(await ctx.backend.getToolRecord({...request,toolCallId:'made-up'})).toEqual({state:'unavailable'})
+ const unrelated=join(ctx.sessions.get(other)!.sessionDir,'foreign.jsonl')
+ mkdirSync(dirname(unrelated),{recursive:true});writeFileSync(unrelated,rawToolRecord())
+ rmSync(file);linkSync(unrelated,file)
+ expect(await ctx.backend.getToolRecord(request)).toEqual({state:'unavailable'})
+ rmSync(file);writeFileSync(file,rawToolRecord().replace('original output','foreign text with copied IDs'))
+ expect(await ctx.backend.getToolRecord(request)).toEqual({state:'unavailable'})
+ writeFileSync(file,rawToolRecord())
+
+ const statePath=join(dir,'orchestration/state.json'),saved=readFileSync(statePath,'utf8'),stale=JSON.parse(saved)
+ stale.children[0].resultEpoch=1
+ writeFileSync(statePath,JSON.stringify(stale))
+ expect(await ctx.backend.getToolRecord(request)).toEqual({state:'unavailable'})
+ rmSync(statePath)
+ const alias=join(dir,'state-alias.json');writeFileSync(alias,saved);symlinkSync(alias,statePath)
+ expect(await ctx.backend.getToolRecord(request)).toEqual({state:'unavailable'})
+
+})
+
+function boundFixtureTrace(){
+ const entries=parseSessionEntries(rawToolRecord()).filter((entry):entry is SessionEntry=>entry.type!=='session')
+ return taskTrace(bindToolRecords([{toolCallId:'tool-id',name:'read',status:'done',execution:'not_observed',result:'original output',input:{path:'input.csv'}}],entries,'raw.jsonl'))
+}
+
+function rawToolRecord(){
+ return [
+  {type:'message',id:'a',message:{role:'assistant',content:[{type:'toolCall',id:'tool-id',name:'read',arguments:{path:'input.csv'}}]}},
+  {type:'message',id:'r',message:{role:'toolResult',toolCallId:'tool-id',toolName:'read',isError:false,content:[{type:'text',text:'original output'}]}},
+ ].map(x=>JSON.stringify(x)).join('\n')
+}
+
+it('opens a Unicode member transcript only for the exact settled team attempt and refuses aliases',async()=>{
+ const ctx=make0(),sessionId=await ctx.开一段(),other=await ctx.开一段(),owner=ctx.sessions.get(sessionId)!.sessionDir
+ const team=建团队({id:'team',name:'team',goal:'check',captainSessionId:sessionId}),dir=团队目录(owner,team.id)
+ const member=加成员(team,{name:'分析员',agent:'reader'}),task=加任务(team,{subject:'check',assignee:member.name,dependencies:[]})
+ const {attemptId}=领取(team,task.id,member.name)
+ 结算(team,task.id,attemptId,{ok:true,output:'done',trace:boundFixtureTrace()})
+ 写团队(dir,team)
+ expect(JSON.stringify(taskTeamSnapshot(team))).not.toContain('transcriptRef')
+ const transcript=join(dir,member.sessionDir),file=join(transcript,'raw.jsonl')
+ mkdirSync(transcript,{recursive:true});writeFileSync(file,rawToolRecord())
+ const request={sessionId,toolCallId:'tool-id',target:{kind:'task' as const,teamId:team.id,id:task.id,attemptId}}
+ expect(await ctx.backend.getToolRecord(request)).toMatchObject({state:'available',output:'original output'})
+ expect(await ctx.backend.getToolRecord({...request,sessionId:other})).toEqual({state:'unavailable'})
+ expect(await ctx.backend.getToolRecord({...request,target:{...request.target,attemptId:'old'}})).toEqual({state:'unavailable'})
+ const aliased=join(owner,'unrelated.jsonl');writeFileSync(aliased,rawToolRecord())
+ rmSync(file);symlinkSync(aliased,file)
+ expect(await ctx.backend.getToolRecord(request)).toEqual({state:'unavailable'})
 })

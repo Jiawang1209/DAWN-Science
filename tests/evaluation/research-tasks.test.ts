@@ -21,3 +21,11 @@ it('refuses incomparable pairs and distinguishes incomplete trials from complete
 it('does not invent input verification or unknown executed tasks for a trial that never started',()=>{
  expect(notRunResearch(researchTasks()[0]!,'single','same')).toMatchObject({terminal:'not-run',inputPreserved:null,requests:0,usage:{unknownUsageTasks:0,partialUsage:false}})
 })
+it('counts wrong scientific acceptance and reports requests including unsuccessful trials, without treating a correct block as a delivery',()=>{
+ const [task,unknown]=researchTasks()
+ expect(judgeResearch(task!,'accepted',task!.expected,false).falseAcceptance).toBe(true)
+ const base={caseId:task!.id,mode:'single',repeat:1,fingerprint:'x',terminal:'accepted',success:true,falseAcceptance:false,inputPreserved:true,requests:3,elapsedMs:100,usage:{visibleTokens:0,unknownUsageTasks:0,partialUsage:false},versions:[]} as ResearchRow
+ const report=summarizeResearch([base,{...base,repeat:2,terminal:'failed',success:false,requests:5,requestBudget:{limit:5,reserved:5,forwarded:5,denied:1}},{...base,caseId:unknown!.id,terminal:'blocked',requests:2}],true)
+ expect(report.delivery.single).toMatchObject({qualifiedDeliveries:1,correctBlocks:1,exhausted:1,requestsPerDelivery:10})
+ expect(report.delivery.multi.requestsPerDelivery).toBeNull()
+})

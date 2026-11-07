@@ -1,3 +1,4 @@
+import {preservePiToolStatus} from './pi-tool-status.js'
 import {captureEvidenceHandoff,handoffSources} from '../subagent/handoff-sources.js'
 import {liveRunOverview} from '../orchestration/run-overview.js'
 import {createHash} from 'node:crypto'
@@ -2361,15 +2362,7 @@ export class NativeRuntime implements AgentRuntime {
     // messages have been delivered. SDK run prompts are snapshots; rebuilding
     // the base prompt here would not update an active follow-up run.
     const originalTransform = session.agent.transformContext
-    // App tools return structured failures, while the SDK only flags thrown
-    // errors by default. Carry that status into hooks and the persisted receipt.
-    const originalAfterToolCall = session.agent.afterToolCall
-    session.agent.afterToolCall = async (context, signal) => {
-      const isError = context.isError || Boolean((context.result as { isError?: boolean }).isError)
-      const result = await originalAfterToolCall?.({ ...context, isError }, signal)
-      if (!result && isError === context.isError) return undefined
-      return { ...result, isError: result?.isError ?? isError }
-    }
+    preservePiToolStatus(session.agent)
     const oldStopAfterTurn=session.agent.shouldStopAfterTurn
     session.agent.shouldStopAfterTurn=async(...args)=>Boolean(this.taskScopes.get(spec.sessionId)?.submission?.result())||Boolean(await oldStopAfterTurn?.(...args))
     session.agent.transformContext = async (messages, signal) => {

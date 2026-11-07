@@ -1,0 +1,76 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 1548ms
+     × 按钮不用原生 title= —— 无样式、约 500ms 系统延迟、与主题不符 60ms
+     × **JSX 里的类名，styles.css 里都定义过** 41ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |kernel| tests/kernel/bot-native.integration.test.ts (1 test | 1 failed) 60012ms
+   × Bot 的真实 run_code 内核在所属 scope 执行并与主会话隔离 60011ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |kernel| tests/kernel/bot-native.integration.test.ts > Bot 的真实 run_code 内核在所属 scope 执行并与主会话隔离
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/kernel/bot-native.integration.test.ts:14:37
+     12| afterEach(()=>dirs.splice(0).forEach(dir=>rmSync(dir,{recursive:true,f…
+     13| const kernelConfig=join(homedir(),"Library/Jupyter/kernels/dawn-spike/…
+     14| it.skipIf(!existsSync(kernelConfig))("Bot 的真实 run_code 内核在所属 scope 执行并…
+       |                                     ^
+     15|  const dir=mkdtempSync(join(tmpdir(),"bot-real-kernel-"));dirs.push(di…
+     16|  const server=await startMockInferenceServer({toolCall:(body:{messages…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 可访问性与文案 > 按钮不用原生 title= —— 无样式、约 500ms 系统延迟、与主题不符
+AssertionError: 改用 aria-label，或做成可见文案: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "run-overview.tsx：<Button ref={detailClose} variant=\"ghost\" size=\"sm\" aria-label={t(\"收起检",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:238:41
+    236|       }
+    237|     }
+    238|     expect(违规, "改用 aria-label，或做成可见文案").toEqual([])
+       |                                         ^
+    239|   })
+    240|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **JSX 里的类名，styles.css 里都定义过**
+AssertionError: 这些类名只存在于 JSX 里——写它的人以为自己配了样式: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "collaboration-tool-records.tsx：.collaboration-tool-result",
++   "collaboration-tool-records.tsx：.collaboration-tools",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1153:7
+    1151|       [...缺的].filter((x) => !欠账.has(x)).sort(),
+    1152|       "这些类名只存在于 JSX 里——写它的人以为自己配了样式",
+    1153|     ).toEqual([])
+       |       ^
+    1154|   })
+    1155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 659 passed (661)
+      Tests  3 failed | 6481 passed | 11 skipped (6495)
+   Start at  12:30:29
+   Duration  255.34s (transform 29.00s, setup 95.55s, import 293.92s, tests 684.29s, environment 175.64s)

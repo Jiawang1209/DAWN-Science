@@ -4,7 +4,7 @@ import type {TeamSnapshot} from '../protocol/index.js'
 import {ScienceAcceptanceStatus} from './science-acceptance-status.js'
 import {t,tf} from './i18n/index.js'
 type Task=TeamSnapshot['tasks'][number]
-export function CollaborationTaskDetail({task,tab,client,sessionId}:{task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
+export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspectToolRecord}:{inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
  const settled=task.status==='completed'||task.status==='failed'
  const receipt=settled?task.receipt:undefined
  return <div className="collaboration-team-task" data-task-detail={task.id}>
@@ -16,7 +16,7 @@ export function CollaborationTaskDetail({task,tab,client,sessionId}:{task:Task;t
    {receipt?.versions?.outputs.length?<ul>{receipt.versions.outputs.map(file=><li key={file.path} data-authored="1">{file.path}<details><summary>{t("内容版本")}</summary><code>{file.sha256}</code></details></li>)}</ul>:null}
    <ScienceAcceptanceStatus tasks={settled?[task]:[]}/>
   </>:null}
-  {tab==='records'?<><p data-authored="1">{task.id} · {task.attemptId??t("无代次标识")}</p><p>{tf("第 {0} 次",task.attempt)}</p>{receipt?.reason?<p data-authored="1">{receipt.reason}</p>:null}</>:null}
-  {client&&sessionId&&(task.status==='completed'||task.status==='failed')&&(tab==='artifacts'||tab==='records')?<CollaborationEvidence key={`${sessionId}:${task.id}:${task.attemptId}`} client={client} sessionId={sessionId} receipt={receipt} trace={task.trace} observation={task.observation} tab={tab}/>:null}
+  {tab==='records'?<><details className="collaboration-execution-id"><summary>{tf("第 {0} 次",task.attempt)} <span>{t("执行标识")}</span></summary><code data-authored="1">{task.id} · {task.attemptId??t("无代次标识")}</code></details>{receipt?.reason?<p data-authored="1">{receipt.reason}</p>:null}</>:null}
+  {client&&sessionId&&(task.status==='completed'||task.status==='failed')&&(tab==='artifacts'||tab==='records')?<CollaborationEvidence key={`${sessionId}:${task.id}:${task.attemptId}`} client={client} sessionId={sessionId} receipt={receipt} trace={task.trace} observation={task.observation} tab={tab} target={inspectToolRecord&&teamId&&task.attemptId?{kind:"task",teamId,id:task.id,attemptId:task.attemptId}:undefined}/>:null}
  </div>
 }

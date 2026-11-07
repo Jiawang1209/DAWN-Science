@@ -12,12 +12,15 @@ const roots:string[]=[]
 afterEach(()=>{for(const r of roots.splice(0))rmSync(r,{recursive:true,force:true})})
 it('runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline',async()=>{
  const root=mkdtempSync(join(tmpdir(),'dawn-research-test-'));roots.push(root)
- const server=await startMockInferenceServer({scenario:researchScenario(researchTasks()[0]!.expected)})
+ const server=await startMockInferenceServer({scenario:researchScenario(researchTasks())})
  try{
   const modelsPath=join(root,'models.json');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))
   const report=await runResearchEvaluation(join(root,'results'),{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:'offline-mock',kind:'fixture',requests:()=>server.requests.length},{repeats:2})
-  expect(report.completePairs,JSON.stringify(report.rows)).toBe(4)
-  expect(report.rows.filter(r=>r.repeat===2)).toHaveLength(4)
+  expect(report.completePairs,JSON.stringify(report.rows)).toBe(8)
+  expect(report.rows.filter(r=>r.repeat===2)).toHaveLength(8)
+  expect(report.qualifiedPairs).toBe(8)
+  expect(report.delivery.single).toMatchObject({qualifiedDeliveries:6,correctBlocks:2,falseAcceptances:0})
+  expect(report.delivery.multi).toMatchObject({qualifiedDeliveries:6,correctBlocks:2,falseAcceptances:0})
   expect(report.requestLimit).toBeNull()
   expect(report.requestAllocation.enforced).toBe(false)
   expect(report.rows.every(r=>r.success),JSON.stringify(report.rows)).toBe(true)
@@ -27,7 +30,7 @@ it('runs paired scientific tasks through actual Pi, files, host acceptance and t
 },60000)
 it('records cancellation during a live single child as cancelled, not a failed scientific result',async()=>{
  const root=mkdtempSync(join(tmpdir(),'dawn-research-cancel-'));roots.push(root)
- const controller=new AbortController(),scenario=researchScenario(researchTasks()[0]!.expected)
+ const controller=new AbortController(),scenario=researchScenario(researchTasks())
  const server=await startMockInferenceServer({scenario:{...scenario,toolCall:(body:unknown)=>{controller.abort();return scenario.toolCall(body)}}})
  try{
   const modelsPath=join(root,'models.json');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))
@@ -38,7 +41,7 @@ it('records cancellation during a live single child as cancelled, not a failed s
 },30000)
 it('retains settled check-stage usage when the analysis stage is cancelled and drained',async()=>{
  const root=mkdtempSync(join(tmpdir(),'dawn-research-team-cancel-'));roots.push(root)
- const controller=new AbortController(),scenario=researchScenario(researchTasks()[0]!.expected)
+ const controller=new AbortController(),scenario=researchScenario(researchTasks())
  const server=await startMockInferenceServer({scenario:{...scenario,toolCall:(body:unknown)=>{
   if(JSON.stringify(body).includes('阶段 analyze'))controller.abort()
   return scenario.toolCall(body)

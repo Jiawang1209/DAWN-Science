@@ -6,6 +6,7 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
  test.use({dawnOptions:{sciencePipeline:mode}})
  test('scientific pipeline persists receipts and projects through the strict desktop protocol',async({dawn})=>{
   const {page,workspace}=dawn
+  if(mode==='pass'&&process.env.DAWN_TRACE_VERIFY==='1'){await page.evaluate(()=>localStorage.setItem('dawn.global.theme','dark'));await page.reload();await expect(page.locator('html')).toHaveClass(/dawn-dark/)}
   mkdirSync(join(workspace,'.dawn','agents'),{recursive:true});writeFileSync(join(workspace,'in.csv'),'x\n1\n2\n3\n4\n5\n')
   for(const stage of ['check','analyze','review'])writeFileSync(join(workspace,'.dawn','agents',`pipeline-${stage}.md`),`---\nname: pipeline-${stage}\ndescription: ${stage}\ntools: read, write, bash\n---\n按冻结契约执行，最终调用 submit_task_result。\n`)
   await 在项目里开会话(page);await page.getByPlaceholder(/输入问题/).fill('科研流水线验收：按已确认方法执行合成数据核查、分析及独立审阅。');await page.getByRole('button',{name:'发送',exact:true}).click()
@@ -44,6 +45,22 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
    await dialog.getByRole('button',{name:`预览当前文件：${version.path}`,exact:true}).click()
    await dialog.locator('.collaboration-file-preview').scrollIntoViewIfNeeded()
    await page.screenshot({path:join(evidence,'phase-b-bound-version-workbench.png')})
+   await page.setViewportSize({width:1440,height:960})
+   await dialog.getByRole('button',{name:team.tasks[0].subject,exact:true}).click()
+   await dialog.getByRole('tab',{name:'记录',exact:true}).click()
+   const call=team.tasks[0].trace.records.find((record:any)=>record.name==='read')
+   expect(call.transcriptRef).toBeTruthy()
+   await dialog.getByRole('button',{name:`查看原始工具记录：${call.toolCallId}`,exact:true}).click()
+   await expect(dialog.locator('.collaboration-tool-original')).toContainText('in.csv')
+   await expect(dialog.locator('.collaboration-tool-original')).toContainText('记录中的工具结果')
+   const output=dialog.locator('.collaboration-tool-result pre')
+   await expect(output).toHaveText('x\n1\n2\n3\n4\n5')
+   await expect(dialog.getByLabel('宿主证据标签')).not.toBeVisible()
+   if(process.env.DAWN_TRACE_VERIFY==='1'){
+    await page.screenshot({path:join(evidence,'team-exact-tool-record.png')})
+    await dialog.locator('.collaboration-detail').screenshot({path:join(evidence,'team-record-panel.png')})
+   }
+
   }
  })
 })

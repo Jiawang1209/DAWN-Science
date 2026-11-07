@@ -62,7 +62,7 @@ describe("操作注册表", () => {
         "compactSession",
         "previewRewind",
         "rewindTurn",
-        "getRunOverview",
+        "getRunOverview", "getToolRecord",
         "setRunBudget",
         "openSubagent",
         "askSubagent",
@@ -227,7 +227,7 @@ describe("操作注册表", () => {
   })
 
   it("读写分明：只读操作不得标为 mutating", () => {
-    for (const name of ["getCapabilities", "listProjects", "listSessions", "listRuns", "getRun", "getProvenance", "listArtifacts", "deletionImpact", "listDirectory", "listCredentials", "getProviders", "listTemporarySessions", "getPermissionMode"]) {
+    for (const name of ["getCapabilities", "getToolRecord", "listProjects", "listSessions", "listRuns", "getRun", "getProvenance", "listArtifacts", "deletionImpact", "listDirectory", "listCredentials", "getProviders", "listTemporarySessions", "getPermissionMode"]) {
       expect(isMutating(name), `${name} 应为只读`).toBe(false)
     }
     for (const name of ["createTask", "setTaskWorkspace", "deleteTask", "setPermissionMode", "initScienceLayout",

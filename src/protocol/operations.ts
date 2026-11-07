@@ -1,3 +1,4 @@
+import {ToolRecordRequestSchema,ToolRecordResponseSchema} from './tool-record.js'
 import {RunOverviewSchema} from './run-overview.js'
 import {SubagentControlActionSchema,SubagentControlStateSchema} from './subagent-control.js'
 import {RunBudgetLimitsSchema,RunBudgetSchema} from './run-budget.js'
@@ -585,6 +586,7 @@ export const OPERATIONS = {
     response: RunOverviewSchema,
     mutating:false,
   },
+  getToolRecord:{request:ToolRecordRequestSchema,response:ToolRecordResponseSchema,mutating:false},
   setRunBudget:{
     request:z.object({sessionId:z.string().min(1),expectedRevision:z.number().int().nonnegative(),limits:RunBudgetLimitsSchema}).strict(),
     response:RunBudgetSchema,

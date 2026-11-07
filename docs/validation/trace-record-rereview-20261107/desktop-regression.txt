@@ -1,0 +1,98 @@
+
+Running 18 tests using 1 worker
+
+(node:74315) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52657/5b20e4e1-92bf-4ec3-a195-8c9211fb7125
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (20.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52784/d9ba0784-8ff3-4f0c-8e99-a1e4d7fdc1ab
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52914/21d7c5c5-ac28-4bc1-9aa1-8ca54f6c3ece
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (19.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「早期约束：carbon 单位 mg/g；」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52940/98a19261-db6c-4980-bc62-693b2bd1642b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53007/505397b7-593b-47df-99e2-7333adf8daff
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/evidence-handoff.spec.ts:5:1 › selects early context by host ID, shows provenance and preserves it across continuation and restart (9.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53020/4ebd9618-698f-4de1-bb53-088a31ed3972
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53052/26c1ee2e-8fc9-4572-b9a6-5214da6898e2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › single quit during a root bash task drains its owned process before restart (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53076/26aa8229-9d50-4d59-8f87-29097cd9a7a6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53106/36ba8150-1c7c-4278-a7f4-6090a4aedd02
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › repeated quit during a root bash task drains its owned process before restart (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53168/dbfc92d2-2513-4139-bc0d-e3fbe3055b2b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53435/409c8b87-e4d9-4f78-b638-65bd71bc9c4d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/exit-lifecycle.spec.ts:47:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认方法分别核查、分析」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:53479/3d834644-9f7b-4be1-a197-600248e7e65e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/science-batch.spec.ts:4:1 › batch versions, host summary and progress cross the actual strict desktop protocol (10.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：两个独立 CSV，以并发上」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:53714/280c0d66-3835-4b94-bea4-ff80224a1fa4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/science-parallel.spec.ts:5:1 › two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary (9.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53874/70fd908b-9569-4aff-872a-baf386fe1f6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (8.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:54034/0a9bdd02-87ea-4a9e-a427-4385a64b8a5d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (9.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:54203/499799b1-122a-42b9-baf9-dda204565f40
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「审查报告预览链路」做完了 — {"summary":"report delivered","blockers":[],"deliverables":[{"path":"reports/report.md"}],"execution":{"state":"not_run"…
+[主进程] Debugger ending on ws://127.0.0.1:54290/74a15437-ee54-4fab-b952-935db8f63298
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/submission-evidence-review.spec.ts:12:1 › opens report images and scripts in the same owner, closes previews, and returns from expansion (6.2s)
+  ✓  13 e2e/submission-feedback.spec.ts:13:1 › declarative task matching accepts Pi text-array prompts across result turns (1ms)
+  ✓  14 e2e/submission-feedback.spec.ts:19:1 › fixture evidence references reject missing, forged and ambiguous labels (2ms)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54364/53b2eb48-285f-4998-a611-3cbf2e448957
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「结构化子任务验收」做完了 — {"summary":"已交付声明文件","blockers":[],"deliverables":[{"path":"results/contract.txt"}],"execution":{"state":"not_run","note…
+[主进程] Debugger ending on ws://127.0.0.1:54395/e9f7d0a8-5e3e-4458-88fa-2a4202818400
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (5.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54453/2e879fe5-00e9-4310-a151-6e32018e5ccc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/task-contract.spec.ts:66:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54490/ae48492f-1146-4d50-a91e-b059dacc0fd4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/task-contract.spec.ts:95:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (2.6s)
+
+  18 passed (2.2m)

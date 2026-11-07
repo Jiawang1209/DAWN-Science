@@ -152,6 +152,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
     }),
     unsubscribeSession: async () => ({}),
     getRunOverview: async ({sessionId}) => ({ownerSessionId:sessionId,source:'disk',runs:[]}),
+    getToolRecord:async()=>({state:'unavailable'}),
     setRunBudget:async()=>{throw new Error('Budget unavailable in this fixture')},
     openSubagent: async () => ({
       sessionId: "s1#sub:c1:0", kind: "native" as const, revision: 0, items: [],

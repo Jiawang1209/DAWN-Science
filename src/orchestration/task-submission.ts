@@ -21,8 +21,9 @@ export function taskEvidenceMetadata(record:RouteToolEvidence){
   ...(path!==undefined?{path:field('path',path)}:{}),
   ...(record.filesWritten?{filesWritten:record.filesWritten.slice(0,2).map((p,i)=>field(`filesWritten.${i}`,p)),filesWrittenOmitted:Math.max(0,record.filesWritten.length-2)}:{}),truncatedFields}
 }
+export const taskEvidenceTag=(record:RouteToolEvidence)=>`[task_tool_evidence] ${JSON.stringify(taskEvidenceMetadata(record))}`
 export function appendTaskEvidence<T extends {content?:{type?:string;text?:string}[]}>(result:T,record:RouteToolEvidence):T {
- return{...result,content:[...(result.content??[]),{type:'text',text:`[task_tool_evidence] ${JSON.stringify(taskEvidenceMetadata(record))}`}]}
+ return{...result,content:[...(result.content??[]),{type:'text',text:taskEvidenceTag(record)}]}
 }
 export class TaskSubmission {
  private active=0

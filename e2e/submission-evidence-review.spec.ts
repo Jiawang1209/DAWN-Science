@@ -6,12 +6,13 @@ const markdown='# 合成数据核查报告\n\n预览演示：图片和脚本均�
 const reply=JSON.stringify({summary:'report delivered',blockers:[],deliverables:[{path:'reports/report.md'}],execution:{state:'not_run',note:'document only'},verification:{state:'unreviewed',note:'preview fixture'}})
 test.use({dawnOptions:{reply,toolCall:[
  {when:'审查报告预览链路',toolName:'start_subagent',args:{agent:'writer',task:'交付预览报告',contract:{access:'workspace-write',outputs:['reports/report.md']}}},
- {when:'交付预览报告',toolName:'write',args:{path:'reports/report.md',content:markdown}},
+ {duringTask:'交付预览报告',toolName:'read',args:{path:'../missing-for-trace.txt'}},
+ {duringTask:'交付预览报告',toolName:'write',args:{path:'reports/report.md',content:markdown}},
 ]}})
 test('opens report images and scripts in the same owner, closes previews, and returns from expansion',async({dawn})=>{
  const{page,workspace}=dawn,evidence=resolve(process.env.DAWN_SUBMISSION_EVIDENCE_DIR??'docs/validation/submission-rereview-20261107/desktop')
  for(const path of ['.dawn/agents','figures','scripts'])mkdirSync(join(workspace,path),{recursive:true})
- writeFileSync(join(workspace,'.dawn/agents/writer.md'),'---\nname: writer\ndescription: writer\ntools: write\n---\nOnly write the declared report.\n')
+ writeFileSync(join(workspace,'.dawn/agents/writer.md'),'---\nname: writer\ndescription: writer\ntools: read, write\n---\nOnly write the declared report.\n')
  writeFileSync(join(workspace,'figures/plot.png'),Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aK1sAAAAASUVORK5CYII=','base64'))
  writeFileSync(join(workspace,'scripts/analyse.py'),'from pathlib import Path\nPath("must-not-run.txt").write_text("executed")\n')
  await 在项目里开会话(page)
@@ -35,6 +36,35 @@ test('opens report images and scripts in the same owner, closes previews, and re
  await overview.getByRole('button',{name:'展开流程工作台',exact:true}).click()
  const dialog=page.getByRole('dialog',{name:'流程工作台',exact:true})
  await dialog.getByRole('button',{name:'writer',exact:true}).click()
+ await page.setViewportSize({width:1440,height:960})
+ await dialog.getByRole('tab',{name:'记录',exact:true}).click()
+ const original=dialog.locator('li').filter({hasText:'reports/report.md'}).getByRole('button',{name:/查看原始工具记录：/})
+ await original.click()
+ await expect(dialog.locator('.collaboration-tool-original')).toContainText('reports/report.md')
+ await expect(dialog.locator('.collaboration-tool-original')).toContainText('记录中的工具结果')
+ const member=await dialog.locator('.collaboration-members').boundingBox()
+ const detail=await dialog.locator('.collaboration-detail').boundingBox()
+ expect(member).not.toBeNull();expect(detail).not.toBeNull()
+ expect(member!.x+member!.width).toBeLessThan(detail!.x)
+ if(process.env.DAWN_TRACE_VERIFY==='1')await page.screenshot({path:join(evidence,'tool-record-side-by-side.png')})
+ await dialog.getByRole('button',{name:'收起原始工具记录',exact:true}).click()
+ await expect(original).toBeFocused()
+ await dialog.getByRole('button',{name:/只看失败工具/}).click()
+ const failed=dialog.locator('li').filter({hasText:'../missing-for-trace.txt'}).getByRole('button',{name:/查看原始工具记录：/})
+ await failed.click()
+ await expect(dialog.locator('.collaboration-tool-original')).toContainText('记录中的工具结果',{timeout:5000})
+ await dialog.locator('.collaboration-tool-original summary').filter({hasText:'调用参数'}).click()
+ await expect(dialog.locator('.collaboration-tool-original')).toContainText('missing-for-trace.txt')
+ await expect(dialog.locator('.collaboration-tool-result pre')).not.toContainText('[task_tool_evidence]')
+ await dialog.locator('.collaboration-tool-original summary').filter({hasText:'证据与调用标识'}).click()
+ await expect(dialog.getByLabel('宿主证据标签')).toBeVisible()
+ if(process.env.DAWN_TRACE_VERIFY==='1')await dialog.locator('.collaboration-detail').screenshot({path:join(evidence,'failed-record-panel.png')})
+
+ await page.setViewportSize({width:860,height:900})
+ const narrowMember=await dialog.locator('.collaboration-members').boundingBox()
+ const narrowDetail=await dialog.locator('.collaboration-detail').boundingBox()
+ expect(narrowMember!.y+narrowMember!.height).toBeLessThan(narrowDetail!.y)
+
  await page.keyboard.press('Escape')
  overview=page.getByRole('region',{name:'运行总览',exact:true})
  await expect(overview.getByRole('button',{name:'展开流程工作台',exact:true})).toBeFocused()

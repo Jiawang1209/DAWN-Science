@@ -33,6 +33,8 @@
  * - skills / prompts 的默认扫描关闭，保持上下文精简。2026-10-18 起，
  *   配有父侧资源访问器时只通过只读 RPC 按需查目录和正文，不自动加载扩展。
  */
+import {preservePiToolStatus} from '../runtime/pi-tool-status.js'
+import {bindToolRecords} from '../orchestration/tool-record.js'
 import {createChildSteering,SteeringBindingSchema} from "./steering.js"
 import {TaskSettingsSchema} from "../orchestration/task-contract.js"
 import {createTaskTools,taskToolDenial} from "./task-tools.js"
@@ -150,6 +152,7 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
     ...(taskTools ? {tools:customTools.map(t=>t.name)} : spec.tools ? {tools: [...new Set([...spec.tools, ...customTools.map(t => t.name)])]} : {}),
     ...(customTools.length ? {customTools: customTools as never} : {}),
   })
+  if(taskTools)preservePiToolStatus(session.agent)
   if(taskTools?.submission){const before=session.agent.shouldStopAfterTurn;session.agent.shouldStopAfterTurn=async(...args)=>Boolean(taskTools.submission?.result())||Boolean(await before?.(...args))}
   const beforeIds=new Set(session.sessionManager.getBranch().map(entry=>entry.id))
 
@@ -160,7 +163,7 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
   }
   return {
     prompt: (text) => session.prompt(text),
-    ...(taskTools?{evidence:taskTools.evidence}:{}),
+    ...(taskTools?{evidence:()=>bindToolRecords(taskTools.evidence(),session.sessionManager.getBranch().filter(entry=>!beforeIds.has(entry.id)),session.sessionManager.getSessionFile(),!!taskTools.submission)}:{}),
     submitted:()=>taskTools?.submission?.result(),
     submittedVersions:()=>taskTools?.submission?.receipt()?.versions,
     submissionObservation:()=>taskTools?.submission?.observation()??{submissionAttempts:0,invalidSubmissions:0},

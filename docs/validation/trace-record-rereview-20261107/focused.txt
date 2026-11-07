@@ -1,0 +1,8 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-trace-delivery-20261107/dawn-science
+
+
+ Test Files  6 passed (6)
+      Tests  157 passed (157)
+   Start at  12:32:47
+   Duration  3.29s (transform 3.97s, setup 3.30s, import 3.89s, tests 2.50s, environment 2.82s)

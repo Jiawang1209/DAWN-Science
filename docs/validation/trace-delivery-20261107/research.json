@@ -1,0 +1,362 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-07T04:03:09.477Z",
+  "inference": "fixture",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestLimit": null,
+  "requestAllocation": {
+    "perArmLimit": null,
+    "repeats": 1,
+    "enforced": false,
+    "plannedArms": 8
+  },
+  "sourceFiles": [
+    "scripts/evaluate-research.ts",
+    "src/evaluation/research-tasks.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/child.ts",
+    "src/team/science-pipeline.ts",
+    "src/team/science-acceptance.ts",
+    "src/orchestration/task-submission.ts",
+    "src/orchestration/task-contract.ts",
+    "src/protocol/task-contract.ts",
+    "src/team/science-templates.ts",
+    "src/protocol/science-pipeline.ts",
+    "src/subagent/task-tools.ts",
+    "src/runtime/native.ts",
+    "src/runtime/pi-tool-status.ts",
+    "scripts/evaluation-request-gate.ts",
+    "src/bot/output-locks.ts",
+    "scripts/mock-research.mjs"
+  ],
+  "sourceFingerprint": "69de05c7c077ed55d57a036d4ed0b1420bc48ac555636c5e0ec2460db57ea9c6",
+  "childBuildFingerprint": "372aedaa49b6c543397320a64f58b394a889c6c983edb2d42c50d65ede0f9196",
+  "tasks": [
+    {
+      "id": "carbon-missing",
+      "csv": "site,carbon_mg_g,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "drop",
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568"
+    },
+    {
+      "id": "unknown-unit",
+      "csv": "site,carbon,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon",
+      "missing": "drop",
+      "instructions": "请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be"
+    },
+    {
+      "id": "short-known-mean",
+      "csv": "site,temperature_c\nA,14\nB,18\nC,22\nD,26\n",
+      "column": "temperature_c",
+      "unit": "°C",
+      "missing": "block",
+      "instructions": "计算 temperature_c 的算术均值，单位 °C；输入 4 行、不能丢弃样本。使用 Python stdlib，交付脚本、result.json 和报告。",
+      "inputHash": "bbd83677526400132d2a750cc4a3a53bd342b1eab54ded771327d4680016fb59"
+    },
+    {
+      "id": "moisture-strata",
+      "csv": "site,stratum,moisture_pct\nsite-1,ridge,12\nsite-2,ridge,13\nsite-3,ridge,14\nsite-4,ridge,15\nsite-5,ridge,16\nsite-6,ridge,17\nsite-7,ridge,12\nsite-8,ridge,13\nsite-9,ridge,14\nsite-10,ridge,15\nsite-11,ridge,16\nsite-12,ridge,17\nsite-13,ridge,12\nsite-14,ridge,13\nsite-15,ridge,14\nsite-16,ridge,15\nsite-17,ridge,16\nsite-18,ridge,17\nsite-19,ridge,12\nsite-20,ridge,13\nsite-21,ridge,14\nsite-22,ridge,15\nsite-23,ridge,16\nsite-24,ridge,17\nsite-25,ridge,12\nsite-26,ridge,13\nsite-27,ridge,14\nsite-28,ridge,15\nsite-29,ridge,16\nsite-30,ridge,17\nsite-31,ridge,12\nsite-32,ridge,13\nsite-33,ridge,14\nsite-34,ridge,15\nsite-35,ridge,16\nsite-36,ridge,17\nsite-37,ridge,12\nsite-38,ridge,13\nsite-39,ridge,14\nsite-40,ridge,15\nsite-41,ridge,16\nsite-42,ridge,17\nsite-43,ridge,12\nsite-44,ridge,13\nsite-45,ridge,14\nsite-46,ridge,15\nsite-47,ridge,16\nsite-48,ridge,17\nsite-49,ridge,12\nsite-50,ridge,13\nsite-51,ridge,14\nsite-52,ridge,15\nsite-53,ridge,16\nsite-54,ridge,17\nsite-55,ridge,12\nsite-56,ridge,13\nsite-57,ridge,14\nsite-58,ridge,15\nsite-59,ridge,16\nsite-60,ridge,17\nsite-61,ridge,12\nsite-62,ridge,13\nsite-63,ridge,14\nsite-64,ridge,15\nsite-65,ridge,16\nsite-66,ridge,17\nsite-67,ridge,12\nsite-68,ridge,13\nsite-69,ridge,14\nsite-70,ridge,15\nsite-71,ridge,16\nsite-72,ridge,17\nsite-73,ridge,12\nsite-74,ridge,13\nsite-75,ridge,14\nsite-76,ridge,15\nsite-77,ridge,16\nsite-78,ridge,17\nsite-79,ridge,12\nsite-80,ridge,13\nsite-81,ridge,14\nsite-82,ridge,15\nsite-83,ridge,16\nsite-84,ridge,17\nsite-85,ridge,12\nsite-86,ridge,13\nsite-87,ridge,14\nsite-88,ridge,15\nsite-89,ridge,16\nsite-90,ridge,17\nsite-91,ridge,12\nsite-92,ridge,13\nsite-93,ridge,14\nsite-94,ridge,15\nsite-95,ridge,16\nsite-96,ridge,17\nsite-97,ridge,12\nsite-98,ridge,13\nsite-99,ridge,14\nsite-100,ridge,15\nsite-101,ridge,16\nsite-102,ridge,17\nsite-103,ridge,12\nsite-104,ridge,13\nsite-105,ridge,14\nsite-106,ridge,15\nsite-107,ridge,16\nsite-108,ridge,17\nsite-109,ridge,12\nsite-110,ridge,13\nsite-111,ridge,14\nsite-112,ridge,15\nsite-113,ridge,16\nsite-114,ridge,17\nsite-115,ridge,12\nsite-116,ridge,13\nsite-117,ridge,14\nsite-118,ridge,15\nsite-119,ridge,16\nsite-120,ridge,17\nsite-121,valley,24\nsite-122,valley,25\nsite-123,valley,26\nsite-124,valley,27\nsite-125,valley,28\nsite-126,valley,29\nsite-127,valley,24\nsite-128,valley,25\nsite-129,valley,26\nsite-130,valley,27\nsite-131,valley,28\nsite-132,valley,29\nsite-133,valley,24\nsite-134,valley,25\nsite-135,valley,26\nsite-136,valley,27\nsite-137,valley,28\nsite-138,valley,29\nsite-139,valley,24\nsite-140,valley,25\nsite-141,valley,26\nsite-142,valley,27\nsite-143,valley,28\nsite-144,valley,29\nsite-145,valley,24\nsite-146,valley,25\nsite-147,valley,26\nsite-148,valley,27\nsite-149,valley,28\nsite-150,valley,29\nsite-151,valley,24\nsite-152,valley,25\nsite-153,valley,26\nsite-154,valley,27\nsite-155,valley,28\nsite-156,valley,29\nsite-157,valley,24\nsite-158,valley,25\nsite-159,valley,26\nsite-160,valley,27\nsite-161,valley,28\nsite-162,valley,29\nsite-163,valley,24\nsite-164,valley,25\nsite-165,valley,26\nsite-166,valley,27\nsite-167,valley,28\nsite-168,valley,29\nsite-169,valley,24\nsite-170,valley,25\nsite-171,valley,26\nsite-172,valley,27\nsite-173,valley,28\nsite-174,valley,29\nsite-175,valley,24\nsite-176,valley,25\nsite-177,valley,26\nsite-178,valley,27\nsite-179,valley,28\nsite-180,valley,29\nsite-181,valley,24\nsite-182,valley,25\nsite-183,valley,26\nsite-184,valley,27\nsite-185,valley,28\nsite-186,valley,29\nsite-187,valley,24\nsite-188,valley,25\nsite-189,valley,26\nsite-190,valley,27\nsite-191,valley,28\nsite-192,valley,29\nsite-193,valley,24\nsite-194,valley,25\nsite-195,valley,26\nsite-196,valley,27\nsite-197,valley,28\nsite-198,valley,29\nsite-199,valley,24\nsite-200,valley,25\nsite-201,valley,26\nsite-202,valley,27\nsite-203,valley,28\nsite-204,valley,29\nsite-205,valley,24\nsite-206,valley,25\nsite-207,valley,26\nsite-208,valley,27\nsite-209,valley,28\nsite-210,valley,29\nsite-211,valley,24\nsite-212,valley,25\nsite-213,valley,26\nsite-214,valley,27\nsite-215,valley,28\nsite-216,valley,29\nsite-217,valley,24\nsite-218,valley,25\nsite-219,valley,26\nsite-220,valley,27\nsite-221,valley,28\nsite-222,valley,29\nsite-223,valley,24\nsite-224,valley,25\nsite-225,valley,26\nsite-226,valley,27\nsite-227,valley,28\nsite-228,valley,29\nsite-229,valley,24\nsite-230,valley,25\nsite-231,valley,26\nsite-232,valley,27\nsite-233,valley,28\nsite-234,valley,29\nsite-235,valley,24\nsite-236,valley,25\nsite-237,valley,26\nsite-238,valley,27\nsite-239,valley,28\nsite-240,valley,29\n",
+      "column": "moisture_pct",
+      "unit": "%",
+      "missing": "block",
+      "instructions": "核查 ridge/valley 两层各 120 行，计算全部 240 行 moisture_pct 的算术均值（单位 %）。保留原始输入，不去重；Python stdlib 脚本、result.json 和报告。",
+      "inputHash": "36e19776bc59073a5b82b240b603a9fcc900a5c6bec73ae2530d506b0d28cfce"
+    }
+  ],
+  "delivery": {
+    "single": {
+      "qualifiedDeliveries": 3,
+      "correctBlocks": 1,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 14,
+      "elapsedMs": 7829,
+      "requestsPerDelivery": 4.666666666666667,
+      "msPerDelivery": 2609.6666666666665
+    },
+    "multi": {
+      "qualifiedDeliveries": 3,
+      "correctBlocks": 1,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 32,
+      "elapsedMs": 15877,
+      "requestsPerDelivery": 10.666666666666666,
+      "msPerDelivery": 5292.333333333333
+    }
+  },
+  "kind": "representative-research-pilot",
+  "completePairs": 4,
+  "incompletePairs": 0,
+  "qualifiedPairs": 4,
+  "rows": [
+    {
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 2083,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+          "bytes": 347
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 10,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 0,
+      "elapsedMs": 4687,
+      "usage": {
+        "visibleTokens": 200,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+          "bytes": 347
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 1287,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 1437,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "caseId": "short-known-mean",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "9e50734814d5074b18c393ae5048f4d7c98ae2f7bb9a1782c154931cab421bc3",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 1991,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+          "bytes": 350
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+          "bytes": 41
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "caseId": "short-known-mean",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "9e50734814d5074b18c393ae5048f4d7c98ae2f7bb9a1782c154931cab421bc3",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 10,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 0,
+      "elapsedMs": 5085,
+      "usage": {
+        "visibleTokens": 200,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+          "bytes": 350
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+          "bytes": 41
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "caseId": "moisture-strata",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "d5e37aadb0613cca469c8e5fb5650696d08ec1edcb90b9eea69094fd800d4336",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 10,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 0,
+      "elapsedMs": 4818,
+      "usage": {
+        "visibleTokens": 200,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "70e5298a662e7798446c4c0d9d857f267cfc36048f042292d4b16c01d8dee10e",
+          "bytes": 344
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "fbcadfa717d9620e64b9a0abde134c55f7410b79b1778880b28805eda229414a",
+          "bytes": 37
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "929e713a93be043b49d2c6cba7432de9b22c2e526b1b62311a5250f3f8b16d60",
+          "bytes": 63
+        }
+      ]
+    },
+    {
+      "caseId": "moisture-strata",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "d5e37aadb0613cca469c8e5fb5650696d08ec1edcb90b9eea69094fd800d4336",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 2318,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "70e5298a662e7798446c4c0d9d857f267cfc36048f042292d4b16c01d8dee10e",
+          "bytes": 344
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "fbcadfa717d9620e64b9a0abde134c55f7410b79b1778880b28805eda229414a",
+          "bytes": 37
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "929e713a93be043b49d2c6cba7432de9b22c2e526b1b62311a5250f3f8b16d60",
+          "bytes": 63
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
+    "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
+    "未使用分区请求门；离线夹具不能代表真实同预算收益。",
+    "缺失或部分用量不作零费用；无价格换算；未运行的输入核验和用量不适用。"
+  ]
+}

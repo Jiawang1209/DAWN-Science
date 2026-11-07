@@ -66,3 +66,37 @@ it('closes a failed current-file read and returns focus to its original artifact
  fireEvent.click(screen.getByRole('button',{name:'收起预览'}));expect(document.activeElement).toBe(trigger)
  expect(screen.queryByRole('alert')).toBeNull()
 })
+it('loads one exact tool payload on demand, and discards it when the execution identity changes',async()=>{
+ let finish!:(response:unknown)=>void
+ const get=vi.fn(()=>new Promise(r=>finish=r)),client={get} as unknown as WorkbenchClient
+ const trace={records:[{toolCallId:'call-a',name:'read',status:'done' as const,execution:'not_observed' as const,transcriptRef:{file:'private.jsonl',callEntry:'a',resultEntry:'b'}}],omitted:0}
+ const target={kind:'run' as const,id:'child',epoch:1}
+ const view=render(<CollaborationEvidence client={client} sessionId="p" trace={trace} tab="records" target={target}/>)
+ expect(get).not.toHaveBeenCalled()
+ fireEvent.click(screen.getByRole('button',{name:'查看原始工具记录：call-a'}))
+ expect(get).toHaveBeenCalledWith('getToolRecord',{sessionId:'p',toolCallId:'call-a',target})
+ view.rerender(<CollaborationEvidence client={client} sessionId="p" trace={trace} tab="records" target={{...target,epoch:2}}/>)
+ await act(async()=>finish({state:'available',input:'old private input',output:'old private output',clipped:false}))
+ expect(screen.queryByText('old private output')).toBeNull()
+ fireEvent.click(screen.getByRole('button',{name:'查看原始工具记录：call-a'}))
+ await act(async()=>finish({state:'available',input:'current input',output:'current output',clipped:false}))
+ expect(screen.getByText('current output')).toBeTruthy()
+ const trigger=screen.getByRole('button',{name:'收起原始工具记录'})
+ fireEvent.click(trigger)
+ expect(screen.queryByText('current output')).toBeNull()
+ expect(document.activeElement).toBe(trigger)
+})
+
+it('discards a pending original response when a different owner reuses the same call ID',async()=>{
+ let resolveOld!:(value:unknown)=>void
+ const get=vi.fn().mockImplementationOnce(()=>new Promise(r=>{resolveOld=r})).mockResolvedValue({state:'available',input:'{}',output:'second owner output',clipped:false})
+ const client={get} as unknown as WorkbenchClient,target={kind:'run' as const,id:'same-child',epoch:1}
+ const trace={records:[{toolCallId:'same',name:'read',status:'done' as const,execution:'not_observed' as const}],omitted:0}
+ const view=render(<CollaborationEvidence client={client} sessionId="first" target={target} trace={trace} tab="records"/>)
+ fireEvent.click(screen.getByRole('button',{name:'查看原始工具记录：same'}))
+ view.rerender(<CollaborationEvidence client={client} sessionId="second" target={target} trace={trace} tab="records"/>)
+ fireEvent.click(screen.getByRole('button',{name:'查看原始工具记录：same'}))
+ await act(async()=>resolveOld({state:'available',input:'{}',output:'first owner output',clipped:false}))
+ expect(screen.queryByText('first owner output')).toBeNull()
+ expect(screen.getByText('second owner output')).toBeTruthy()
+})

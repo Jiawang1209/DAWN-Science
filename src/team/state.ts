@@ -68,7 +68,7 @@ export function 写团队(dir: string, team: 团队): void {
   renameSync(tmp, f)
 }
 
-const 合法名 = /^[\p{L}\p{N}_-]{1,40}$/u
+export const 合法成员名 = /^[\p{L}\p{N}_-]{1,40}$/u
 
 export function 建团队(input: {
   id?: string
@@ -94,7 +94,7 @@ export function 建团队(input: {
 export function 加成员(team: 团队, m: { name: string; agent: string; role?: string | undefined; provider?: string | undefined; model?: string | undefined; botScopeKey?: string | undefined; botId?: string | undefined; botInstructions?: string | undefined }, now = Date.now()): 成员 {
   if (m.botId && team.members.some(x => x.botId === m.botId && x.status !== "removed")) throw new 团队错误("同一个 Bot 不能重复加入团队。")
   const name = m.name.trim()
-  if (!合法名.test(name)) throw new 团队错误(`成员名「${m.name}」不合规：只许字母、数字、下划线、连字符，1–40 个字符。`)
+  if (!合法成员名.test(name)) throw new 团队错误(`成员名「${m.name}」不合规：只许字母、数字、下划线、连字符，1–40 个字符。`)
   if (name === "captain") throw new 团队错误("「captain」是队长的名字，成员不能叫这个。")
   if (team.members.some((x) => x.name === name && x.status !== "removed")) throw new 团队错误(`已经有一个叫「${name}」的成员。`)
   if (team.members.filter((x) => x.status !== "removed").length >= 团队上限.maxMembers) throw new 团队错误(`一支团队最多 ${团队上限.maxMembers} 个成员。`)

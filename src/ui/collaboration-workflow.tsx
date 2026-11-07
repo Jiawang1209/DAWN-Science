@@ -9,7 +9,7 @@ import {分列布局,节点宽,节点高,任务的态} from './team-dag.js'
 import {Button} from './primitives.js'
 import {t,tf} from './i18n/index.js'
 import {runStatus,collaborationTaskKey} from './collaboration-model.js'
-export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapshot:RunOverview;team?:TeamSnapshot|undefined;selected?:string|undefined;onSelect:(key:string)=>void}){
+export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapshot:RunOverview;team?:TeamSnapshot|undefined;selected?:string|undefined;onSelect:(key:string,trigger:HTMLButtonElement)=>void}){
  const[query,setQuery]=useState(''),[filter,setFilter]=useState('all')
  const active=(run:RunOverview['runs'][number])=>snapshot.source==='live'&&(run.phase==='running'||run.phase==='queued'||run.phase==='stopping')
  const visible=snapshot.runs.filter(run=>run.label.toLocaleLowerCase().includes(query.toLocaleLowerCase())&&(filter==='all'||(filter==='active'?active(run):run.phase!=='unknown'&&snapshot.source==='live'&&!active(run)&&['completed','failed','cancelled','interrupted'].includes(run.state))))
@@ -32,7 +32,7 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
      </div>
     </div>
     <div className="collaboration-member-grid">
-     {visible.map(run=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={()=>onSelect(`run:${run.id}`)}>
+     {visible.map(run=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
       <span className="collaboration-node-name"><span className="collaboration-avatar" aria-hidden="true">{[...run.label][0]?.toUpperCase()??'?'}</span><strong data-authored="1">{run.label}</strong><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/></span>
       <small>{runStatus(run,snapshot.source==='live')}</small><small>{run.reason??(run.contract?t("已冻结任务契约"):t("普通委派任务"))}</small><span className="collaboration-card-foot"><small>{usageLabel(run)}</small><small>{settledDuration(run)}</small><三角图标/></span>
      </Button>)}
@@ -46,7 +46,7 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
      <svg width={layout.width*scale} height={layout.height*scale} aria-hidden="true"><g transform={`scale(${scale})`}>
       {layout.edges.map(edge=><path key={`${edge.from}:${edge.to}`} data-workflow-edge={`${edge.from}:${edge.to}`} d={edge.path}/>)}
      </g></svg>
-     {layout.nodes.map(({task,x,y})=><Button key={task.id} variant="outline" size="card-compact" className="collaboration-graph-node" style={{left:x*scale,top:y*scale,width:节点宽*scale,height:节点高*scale}} data-task-id={task.id} data-state={任务的态(task,owned.tasks)} aria-label={task.subject} aria-pressed={selected===collaborationTaskKey(owned.id,task.id)} onClick={()=>onSelect(collaborationTaskKey(owned.id,task.id))}><strong data-authored="1">{task.subject}</strong><small>{tf("第 {0} 次",task.attempt)}</small></Button>)}
+     {layout.nodes.map(({task,x,y})=><Button key={task.id} variant="outline" size="card-compact" className="collaboration-graph-node" style={{left:x*scale,top:y*scale,width:节点宽*scale,height:节点高*scale}} data-task-id={task.id} data-state={任务的态(task,owned.tasks)} aria-label={task.subject} aria-pressed={selected===collaborationTaskKey(owned.id,task.id)} onClick={event=>onSelect(collaborationTaskKey(owned.id,task.id),event.currentTarget)}><strong data-authored="1">{task.subject}</strong><small>{tf("第 {0} 次",task.attempt)}</small></Button>)}
     </div>
    </div>
   </>:null}

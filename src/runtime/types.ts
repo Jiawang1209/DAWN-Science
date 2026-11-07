@@ -649,7 +649,7 @@ export interface AgentRuntime {
    * 接着问一个跑完的子 agent（2026-09-27）。**只有 native 有，有无即判据**。起一轮就返回——过程与结果经 `subagent_event` 出来。
    * @throws 这段会话没装子 agent（没有子进程入口）
    */
-  runOverview?(sessionId:SessionId):import('../protocol/run-overview.js').RunOverview|undefined
+  runOverview?(sessionId:SessionId):import('../orchestration/run-overview.js').InternalRunOverview|undefined
   configureRunBudget?(sessionId:SessionId,limits:import('../protocol/run-budget.js').RunBudgetLimits,expectedRevision:number):import('../protocol/run-budget.js').RunBudget
   controlSubagent?(sessionId:SessionId,toolCallId:string,index:number,action:import("../protocol/subagent-control.js").SubagentControlAction):Promise<import("../protocol/subagent-control.js").SubagentControlState>
   askSubagent?(sessionId: SessionId, toolCallId: string, index: number, agent: string, text: string): Promise<void>

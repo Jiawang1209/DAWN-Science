@@ -1,5 +1,6 @@
+import {readToolRecord} from './tool-record.js'
 import {readHandoff} from '../subagent/context-handoff.js'
-import {readRunOverview} from '../orchestration/run-overview.js'
+import {publicRunOverview,readRunOverview} from '../orchestration/run-overview.js'
 import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
 import { readAcpSkillHistory } from "../acp/skill-read-history.js"
 import { assertProjectInstallRoot } from "../skills/project-install-root.js"
@@ -2845,7 +2846,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
           if(handoff)run.handoff=handoff
         }catch(error){run.handoffIssue=error instanceof Error?error.message:String(error)}
       }
-      return snapshot
+      return publicRunOverview(snapshot)
+    },
+    getToolRecord:async({sessionId,target,toolCallId})=>{
+      const record=sessions.get(sessionId)
+      if(!record)return {state:'unavailable'}
+      return readToolRecord(record.sessionDir,sessionId,target,toolCallId,()=>sessions.runtimeOf(sessionId)?.runOverview?.(sessionId))
     },
     setRunBudget:async({sessionId,limits,expectedRevision})=>{
       if(!sessions.get(sessionId))throw fault("not_found","会话不存在：{0}",sessionId)

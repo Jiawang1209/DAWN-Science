@@ -1,3 +1,4 @@
+import {ToolRecordRefSchema} from './tool-record.js'
 /** Client-safe task contracts and host receipt vocabulary. No execution or filesystem imports. */
 import {z} from 'zod'
 import {ScienceAcceptanceSchema,ScienceAcceptanceReceiptSchema} from './science-acceptance.js'
@@ -47,6 +48,6 @@ export const TaskSettingsSchema=z.object({contract:TaskContractSchema.optional()
   if(scope.access!=='workspace-exec'&&scope.tools.some(t=>!['read','ls','grep','find','resource_read','resource_search','team_status','bot_say',...(scope.access==='workspace-write'?['write','edit']:[])].includes(t)))ctx.addIssue({code:'custom',message:'Tools exceed frozen task access'})
 })
 export type TaskSettings=z.infer<typeof TaskSettingsSchema>
-export const TaskEvidenceSchema=z.array(z.object({toolCallId:z.string(),name:z.string(),status:z.enum(['done','error']),result:z.string(),
+export const TaskEvidenceSchema=z.array(z.object({toolCallId:z.string(),name:z.string(),status:z.enum(['done','error']),result:z.string(),transcriptRef:ToolRecordRefSchema.optional(),
   scienceExecution:z.object({script:FileVersionSchema,dependencyBound:z.literal(true).optional(),environmentFingerprint:z.string().regex(/^[a-f0-9]{64}$/)}).strict().optional(),input:z.unknown().optional(),filesWritten:z.array(z.string()).optional(),stepId:z.string().optional(),execution:z.enum(['ran','failed','not_observed']).optional(),
 }).strict()).max(1024)

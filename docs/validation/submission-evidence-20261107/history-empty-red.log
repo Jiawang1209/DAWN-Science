@@ -1,0 +1,84 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/artifact-history.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |ui| tests/ui/artifact-history.test.tsx (8 tests | 1 failed) 1286ms
+   × reports an empty filtered history rather than a blank panel when only other files have retained versions 1007ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/artifact-history.test.tsx > reports an empty filtered history rather than a blank panel when only other files have retained versions
+TestingLibraryElementError: Unable to find an element with the text: 当前已读取的留存中没有此文件. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"已保留版本"[39m
+      [33mclass[39m=[32m"artifact-history-panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"artifact-evidence-toolbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m回到产物[0m
+        [36m</button>[39m
+        [36m<strong>[39m
+          [0m已保留版本[0m
+        [36m</strong>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"artifact-retained-groups"[39m
+      [36m/>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"已保留版本"[39m
+      [33mclass[39m=[32m"artifact-history-panel"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"artifact-evidence-toolbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m回到产物[0m
+        [36m</button>[39m
+        [36m<strong>[39m
+          [0m已保留版本[0m
+        [36m</strong>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"artifact-retained-groups"[39m
+      [36m/>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/ui/artifact-history.test.tsx:249:22
+    247|  const get=vi.fn(async()=>({supported:true,results:[saved]}))
+    248|  render(<ArtifactHistoryPanel client={{get} as unknown as WorkbenchCli…
+    249|  expect(await screen.findByText('当前已读取的留存中没有此文件')).toBeTruthy()
+       |                      ^
+    250|  expect(screen.queryByRole('button',{name:'打开已保留文件 a.csv'})).toBeNull()
+    251| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  09:33:07
+   Duration  3.10s (transform 550ms, setup 727ms, import 287ms, tests 1.29s, environment 702ms)
+

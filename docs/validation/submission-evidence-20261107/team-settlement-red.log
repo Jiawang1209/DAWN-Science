@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-workbench.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (13 tests | 1 failed) 345ms
+   × never shows a previous Team receipt as current while a fresh attempt is pending 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > never shows a previous Team receipt as current while a fresh attempt is pending
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  宿主验收通过
+</p>
+
+ ❯ tests/ui/collaboration-workbench.test.tsx:112:39
+    110|  render(<RunOverview client={client(data())} sessionId="p" team={team}…
+    111|  fireEvent.click(screen.getByRole('button',{name:'rerun task'}));fireE…
+    112|  expect(screen.queryByText('宿主验收通过')).toBeNull();expect(screen.queryBy…
+       |                                       ^
+    113| })
+    114|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  09:10:13
+   Duration  1.60s (transform 480ms, setup 535ms, import 268ms, tests 345ms, environment 363ms)
+

@@ -1,0 +1,220 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-evidence.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-evidence.test.tsx (4 tests | 1 failed) 160ms
+   × opens retained bytes through the retained list and restores the history trigger on return 58ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-evidence.test.tsx > opens retained bytes through the retained list and restores the history trigger on return
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "打开已保留文件 result.json"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "任务证据与产物":
+  [36m<section[39m
+    [33maria-label[39m=[32m"任务证据与产物"[39m
+    [33mclass[39m=[32m"collaboration-evidence"[39m
+  [36m/>[39m
+
+  Name "结果保留与来源":
+  [36m<section[39m
+    [33maria-label[39m=[32m"结果保留与来源"[39m
+    [33mclass[39m=[32m"artifact-result-controls"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint artifact-source-summary"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  code:
+
+  Name "":
+  [36m<code[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "预览当前文件：result.json":
+  [36m<button[39m
+    [33maria-label[39m=[32m"预览当前文件：result.json"[39m
+    [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "查看文件留存：result.json":
+  [36m<button[39m
+    [33maria-label[39m=[32m"查看文件留存：result.json"[39m
+    [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "刷新记录":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-text btn-xs"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"field-error"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"artifact-disclosure"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"任务证据与产物"[39m
+      [33mclass[39m=[32m"collaboration-evidence"[39m
+    [36m>[39m
+      [36m<p[39m
+        [33mdata-authored[39m=[32m"1"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mnumeric mismatch[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m验收指纹属于历史结算；预览读取当前文件，不代表已验收版本仍有效。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-artifact-row"[39m
+      [36m>[39m
+        [36m<strong[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0mresult.json[0m
+        [36m</strong>[39m
+        [36m<small>[39m
+          [0m验收版本 · 10 字节[0m
+        [36m</small>[39m
+        [36m<code[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+        [36m</code>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"预览当前文件：result.json"[39m
+            [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m预览当前文件[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"查看文件留存：result.json"[39m
+            [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m查看文件留存[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"结果保留与来源"[39m
+        [33mclass[39m=[32m"artifact-result-controls"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"artifact-result-actions"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint artifact-source-summary"[39m
+          [36m>[39m
+            [0m正在读取来源记录[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"field-error"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [0mCannot read properties of undefined (reading 'find')[0m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-text btn-xs"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m刷新记录[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"artifact-result-details"[39m
+        [36m>[39m
+          [36m<details[39m
+            [33mclass[39m=[32m"artifact-disclosure"[39m
+          [36m>[39m
+            [36m<summary>[39m
+              [0m详细来源[0m
+            [36m</summary>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/collaboration-evidence.test.tsx:35:25
+     33|  render(<CollaborationEvidence client={client} sessionId="p" receipt={…
+     34|  const trigger=screen.getByRole('button',{name:'查看文件留存：result.json'});…
+     35|  fireEvent.click(screen.getByRole('button',{name:'打开已保留文件 result.json'…
+       |                         ^
+     36|  expect(get).toHaveBeenCalledWith('readRetainedArtifact',{sessionId:'p…
+     37|  expect(screen.getByText('retained bytes')).toBeTruthy();expect(screen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  09:15:57
+   Duration  1.65s (transform 507ms, setup 662ms, import 219ms, tests 160ms, environment 521ms)
+

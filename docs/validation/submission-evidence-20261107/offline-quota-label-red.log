@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (3 tests | 1 failed) 12057ms
+   × runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline 9218ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline
+AssertionError: expected 30 to be null
+
+- Expected:
+null
+
++ Received:
+30
+
+ ❯ tests/evaluation/research-runner.test.ts:21:31
+     19|   expect(report.completePairs,JSON.stringify(report.rows)).toBe(4)
+     20|   expect(report.rows.filter(r=>r.repeat===2)).toHaveLength(4)
+     21|   expect(report.requestLimit).toBeNull()
+       |                               ^
+     22|   expect(report.requestAllocation.enforced).toBe(false)
+     23|   expect(report.rows.every(r=>r.success),JSON.stringify(report.rows)).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  09:28:32
+   Duration  12.90s (transform 266ms, setup 0ms, import 754ms, tests 12.06s, environment 0ms)
+

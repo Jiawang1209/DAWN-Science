@@ -1,0 +1,130 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/submission-feedback.spec.ts e2e/task-contract.spec.ts e2e/science-pipeline.spec.ts
+
+Running 7 tests using 1 worker
+
+(node:73904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:59143/5fb6a6f1-cd88-4290-9fe7-fae034280ffd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:59204/03cf6351-1b5c-42cc-ba1e-9578f25ba41d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:59271/d3086c1d-39e2-421b-9815-72c795c2e44f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「提交反馈主任务」做完了 — 提交反馈夹具已完成。
+[主进程] Debugger ending on ws://127.0.0.1:59310/3cbd02d2-7e63-4bb3-92c4-9dcce8dce1db
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  4 e2e/submission-feedback.spec.ts:13:1 › a real child corrects an invalid evidence reference using the host-visible label (46.9s)
+(node:74911) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「结构化子任务验收」做完了 — {"summary":"已交付声明文件","blockers":[],"deliverables":[{"path":"results/contract.txt"}],"execution":{"state":"not_run","note…
+[主进程] Debugger ending on ws://127.0.0.1:59647/0ffa9504-359f-40a8-82c8-5db2dbac7f75
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  5 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (29.2s)
+(node:75314) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59838/5638fa06-dbfd-4003-972b-44eb3c896afd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/task-contract.spec.ts:51:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59862/bc806668-4c5e-46a6-8e80-8a970ae2b2b6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/task-contract.spec.ts:80:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (1.9s)
+
+
+  1) e2e/submission-feedback.spec.ts:13:1 › a real child corrects an invalid evidence reference using the host-visible label 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('.chip-group .chip').first()
+    Expected: "ok"
+    Received: "error"
+    Timeout:  45000ms
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 45000ms
+      - waiting for locator('.chip-group .chip').first()
+        5 × locator resolved to <button type="button" data-status="running" class="btn btn-text btn-inline chip running">…</button>
+          - unexpected value "running"
+        88 × locator resolved to <button type="button" data-status="error" class="btn btn-text btn-inline chip error">…</button>
+           - unexpected value "error"
+
+
+      16 |  writeFileSync(join(workspace,'.dawn','agents','feedback-reviewer.md'),'---\nname: feedback-reviewer\ndescription: 审阅指定文件\ntools: read\n---\n按冻结契约审阅并正式提交。\n')
+      17 |  await 在项目里开会话(page);await page.getByPlaceholder(/输入问题/).fill('提交反馈主任务');await page.getByRole('button',{name:'发送',exact:true}).click()
+    > 18 |  await expect(page.locator('.chip-group .chip').first()).toHaveAttribute('data-status','ok',{timeout:45000})
+         |                                                          ^
+      19 |  await expect(page.getByRole('button',{name:'停止',exact:true})).toHaveCount(0,{timeout:45000})
+      20 |  const states=(p:string):string[]=>readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()&&!e.isSymbolicLink()&&!['electron-user-data','.git'].includes(e.name)?states(join(p,e.name)):e.name==='state.json'&&p.endsWith('orchestration')?[join(p,e.name)]:[])
+      21 |  const state=states(dir).map(p=>JSON.parse(readFileSync(p,'utf8'))).find(s=>s.messages?.some((m:{outcome?:{receipt?:unknown}})=>m.outcome?.receipt))
+        at /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/e2e/submission-feedback.spec.ts:18:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('region', { name: '运行总览', exact: true }).getByRole('region', { name: '任务证据与产物', exact: true })
+    Expected substring: "write"
+    Received string:    "正式提交 0 次 · 退回 0 次 · 阶段耗时 73 ms此任务没有保留工具证据摘要；可查看原始过程。"
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for getByRole('region', { name: '运行总览', exact: true }).getByRole('region', { name: '任务证据与产物', exact: true })
+        53 × locator resolved to <section aria-label="任务证据与产物" class="collaboration-evidence">…</section>
+           - unexpected value "正式提交 0 次 · 退回 0 次 · 阶段耗时 73 ms此任务没有保留工具证据摘要；可查看原始过程。"
+
+
+      29 |  const overview=page.getByRole('region',{name:'运行总览',exact:true})
+      30 |  await overview.getByRole('tab',{name:'记录',exact:true}).click()
+    > 31 |  await expect(overview.getByRole('region',{name:'任务证据与产物',exact:true})).toContainText('write')
+         |                                                                         ^
+      32 |  await page.screenshot({path:join(evidence,'phase-b-actual-tool-evidence.png')})
+      33 |  await overview.getByRole('tab',{name:'产物',exact:true}).click()
+      34 |  await overview.getByRole('button',{name:'预览当前文件：results/contract.txt',exact:true}).click()
+        at /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/e2e/task-contract.spec.ts:31:73
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e/submission-feedback.spec.ts:13:1 › a real child corrects an invalid evidence reference using the host-visible label 
+    e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI 
+  5 passed (1.6m)

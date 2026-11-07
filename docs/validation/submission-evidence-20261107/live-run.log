@@ -1,0 +1,5 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' scripts/evaluate-science-pipeline.ts --research-current-api /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/docs/validation/submission-evidence-20261107/live /Users/liuyue/Library/Application Support/dawn-science deepseek deepseek-flash
+research-host-ready
+[79155:1107/092633.230823:ERROR:content/browser/network_service_instance_impl.cc:721] Network service crashed or was terminated, restarting service.
+{"provider":"deepseek","model":"deepseek-flash","forwarded":18,"completePairs":0,"incompletePairs":1,"rows":[{"caseId":"carbon-missing","mode":"single","terminal":"failed","success":false,"requests":15},{"caseId":"carbon-missing","mode":"multi","terminal":"blocked","success":false,"requests":3}]}

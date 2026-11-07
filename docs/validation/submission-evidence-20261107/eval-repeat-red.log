@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (3 tests | 1 failed) 7695ms
+   × runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline 4620ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline
+AssertionError: [{"caseId":"carbon-missing","mode":"single","repeat":1,"fingerprint":"90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"elapsedMs":992,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"5973d07b174570fa9e0425dea7852d7f5450400b95d4c14049ed72e5d53b2fcf","bytes":352},{"path":"results/result.json","sha256":"51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544","bytes":53},{"path":"results/report.md","sha256":"7de1f68a964843cb3da5cec14f57e4d83838cc9c9788e3f86969b2c6fa86e685","bytes":70}]},{"caseId":"carbon-missing","mode":"multi","repeat":1,"fingerprint":"90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"elapsedMs":2310,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"5973d07b174570fa9e0425dea7852d7f5450400b95d4c14049ed72e5d53b2fcf","bytes":352},{"path":"results/result.json","sha256":"51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544","bytes":53},{"path":"results/report.md","sha256":"7de1f68a964843cb3da5cec14f57e4d83838cc9c9788e3f86969b2c6fa86e685","bytes":70}]},{"caseId":"unknown-unit","mode":"multi","repeat":1,"fingerprint":"78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555","terminal":"blocked","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":2,"elapsedMs":648,"usage":{"visibleTokens":40,"unknownUsageTasks":0,"partialUsage":false},"versions":[]},{"caseId":"unknown-unit","mode":"single","repeat":1,"fingerprint":"78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555","terminal":"blocked","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":2,"elapsedMs":620,"usage":{"visibleTokens":40,"unknownUsageTasks":0,"partialUsage":false},"versions":[]}]: expected 2 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 2
+
+ ❯ tests/evaluation/research-runner.test.ts:19:60
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  09:12:14
+   Duration  8.52s (transform 267ms, setup 0ms, import 739ms, tests 7.69s, environment 0ms)
+

@@ -20,6 +20,7 @@ import { 子目录段 } from "../protocol/subagent-id.js"
 import { 截工具结果 } from "./child-events.js"
 
 export interface 子运行元 {
+  trace?:import('../protocol/task-trace.js').TaskTrace
   handoffSha256?:string|null
 
   observation?:import('../protocol/task-observation.js').TaskObservation

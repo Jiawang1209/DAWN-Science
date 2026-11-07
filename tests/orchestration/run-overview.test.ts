@@ -46,3 +46,28 @@ it('cold reads reject foreign event and budget identities rather than displaying
  const other=JSON.parse(original);other.budget.active[0].childId='foreign-child';writeFileSync(file,JSON.stringify(other))
  expect(()=>readRunOverview(root,'p')).toThrow()
 })
+it('persists trace and full host receipt for cold inspection, but hides previous settlement while rerunning',async()=>{
+ const {root,service}=setup(),child=service.register('subagent',['call','0'],'reader')
+ const trace={records:[{toolCallId:'r',name:'read',status:'done' as const,execution:'not_observed' as const,path:'in.csv'}],omitted:0}
+ const receipt={version:1 as const,state:'blocked' as const,summary:'needs input',reason:'missing unit',deliverables:[]}
+ await service.run(child.id,async()=>({ok:false,output:'',trace,receipt}))
+ expect(readRunOverview(root,'p').runs[0]).toMatchObject({taskReceipt:receipt,trace})
+ let release!:()=>void;const gate=new Promise<void>(r=>release=r)
+ const rerun=service.run(child.id,async()=>{await gate;return{ok:true,output:''}})
+ expect(liveRunOverview(service).runs[0]?.taskReceipt).toBeUndefined()
+ expect(liveRunOverview(service).runs[0]?.trace).toBeUndefined()
+ release();await rerun;await service.close()
+})
+it('cold cancellation diagnostics need a matching settled epoch and never recover previous-run traces as current',()=>{
+ const {root,store}=setup(),child=store.register('subagent',['call','0'],'reader')
+ const trace={records:[{toolCallId:'r1',name:'read',status:'done' as const,execution:'not_observed' as const}],omitted:0}
+ store.update(child.id,{state:'cancelled',epoch:1,result:{ok:false,output:'',trace}})
+ const file=join(root,'orchestration/state.json'),before=readFileSync(file,'utf8')
+ expect(readRunOverview(root,'p').runs[0]?.trace).toEqual(trace);expect(readFileSync(file,'utf8')).toBe(before)
+ store.update(child.id,{state:'running',epoch:2})
+ new OrchestrationStore(root,'p')
+ expect(readRunOverview(root,'p').runs[0]).toMatchObject({state:'interrupted'})
+ expect(readRunOverview(root,'p').runs[0]?.trace).toBeUndefined()
+ const bad=JSON.parse(readFileSync(file,'utf8'));bad.children[0].resultEpoch=3;writeFileSync(file,JSON.stringify(bad))
+ expect(()=>readRunOverview(root,'p')).toThrow()
+})

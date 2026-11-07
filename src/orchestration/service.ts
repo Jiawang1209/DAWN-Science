@@ -219,7 +219,7 @@ export class OrchestrationService {
         observationFailed:()=>{this.observationIssue='部分运行观察未能保存；不影响既有锁和排空规则'},
       },()=>{reportExecutionStage('execution');return entry.work(entry.controller.signal)})}
       catch (error) {outcome = {ok: false, output: '', error: error instanceof Error ? error.message : String(error)}}
-      if (entry.controller.signal.aborted) outcome = {...cancelled(),...(outcome.observation?{observation:outcome.observation}:{})}
+      if (entry.controller.signal.aborted) outcome = {...cancelled(),...(outcome.observation?{observation:outcome.observation}:{}),...(outcome.trace?{trace:outcome.trace}:{})}
       this.store.settleRun(entry.id,epoch,outcome,entry.controller.signal.aborted)
       this.enforceBudget()
       entry.resolve(outcome)

@@ -15,7 +15,7 @@ import { TERMINAL_REPLY_STYLE } from './terminal-reply-style.js'
 import { getCurrentSystemMessage, getSystemMessageText } from '@earendil-works/pi-ai'
 import {resolveTaskSettings,taskToolDenial} from "../subagent/task-tools.js"
 import {TaskResultParameters,TaskSettingsSchema,type TaskSettings} from "../orchestration/task-contract.js"
-import {TaskSubmission} from '../orchestration/task-submission.js'
+import {TaskSubmission,appendTaskEvidence} from '../orchestration/task-submission.js'
 import {taskObservation} from './task-observation.js'
 import type {TaskObservation} from '../protocol/task-observation.js'
 import { sessionUsage } from './session-usage.js'
@@ -4465,24 +4465,30 @@ ${描述}`
       ...def,
       execute: async (toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | undefined, onUpdate: unknown, ctx: unknown) => {
         const frozenTask=this.taskScopes.get(spec.sessionId)
+        const denied=(text:string,details?:Record<string,unknown>,observe=true)=>{
+          const response={content:[{type:'text',text}],isError:true,details}
+          const record:RouteToolEvidence={toolCallId,name,status:'error',execution:'not_observed',input:params,result:text}
+          if(observe){this.routeBooks.get(spec.sessionId)?.tools.delete(toolCallId);if(name!=='submit_task_result')frozenTask?.evidence.push(record)}
+          return frozenTask?.settings.contract&&name!=='submit_task_result'?appendTaskEvidence(response,record):response
+        }
         const sealed=frozenTask?.submission?.denial()
-        if(sealed&&name!=='submit_task_result')return{content:[{type:'text',text:sealed}],isError:true,details:undefined}
+        if(sealed&&name!=='submit_task_result')return denied(sealed,undefined,false)
         const taskDenial=frozenTask?taskToolDenial(frozenTask.settings.scope,spec.workspace,name,params):undefined
-        if(taskDenial)return{content:[{type:'text',text:taskDenial}],isError:true,details:undefined}
+        if(taskDenial)return denied(taskDenial)
         if (terminalRequestTarget(this.sessions.get(spec.sessionId)?.session.messages ?? []) &&
             ['bash', 'run_code'].includes(name) && !本轮内核语言(this.sessions.get(spec.sessionId)?.session.messages ?? [])) {
-          return { content: [{ type: 'text', text: '本轮从终端输入，请使用所选终端工具执行，不能改走其他执行入口。' }], isError: true, details: undefined }
+          return denied('本轮从终端输入，请使用所选终端工具执行，不能改走其他执行入口。')
         }
         // A model may reuse an ID. Never let an earlier successful call's
         // execution/files observation survive into a newly denied invocation.
         this.routeBooks.get(spec.sessionId)?.tools.delete(toolCallId)
         const branch = this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? []
         const routeDenial = routeTurnDenial(name, branch, mcp只读)
-        if (routeDenial) return { content: [{ type: 'text', text: routeDenial }], isError: true, details: undefined }
+        if (routeDenial) return denied(routeDenial)
         const 讨论理由 = 讨论拒绝理由(name, this.sessions.get(spec.sessionId)?.sessionManager.getBranch() ?? [], mcp只读)
-        if (讨论理由) return { content: [{ type: "text", text: 讨论理由 }], isError: true, details: undefined }
+        if (讨论理由) return denied(讨论理由)
         const 内核理由 = 内核调用拒绝理由(name, branch)
-        if (内核理由) return { content: [{ type: "text", text: 内核理由 }], isError: true, details: undefined }
+        if (内核理由) return denied(内核理由)
         const 簿 = this.方案簿(spec.sessionId)
         const 决定 = 方案期判(name, params ?? {}, {
           方案期: 簿.阶段 === "planning",
@@ -4490,12 +4496,12 @@ ${描述}`
           workspace: spec.workspace,
           ...(mcp只读 ? { mcp只读: true } : {}),
         })
-        if (决定.kind === "deny") return { content: [{ type: "text", text: 决定.reason }], isError: true, details: undefined }
+        if (决定.kind === "deny") return denied(决定.reason)
         let release=()=>{}
         try{
         if(frozenTask?.submission&&name!=='submit_task_result')release=frozenTask.submission.enter()
         await this.记轮基线(spec.sessionId)
-        if(signal?.aborted)return{content:[{type:'text',text:'调用已中止，未进入工具执行'}],isError:true,details:{analysisRouteEvidence:{execution:'not_observed'}}}
+        if(signal?.aborted)return denied('调用已中止，未进入工具执行',{analysisRouteEvidence:{execution:'not_observed'}})
         const currentStep = parseRouteActionMessage(latestRouteUserText(branch))?.stepId
         let result: unknown
         let controlled:Awaited<ReturnType<typeof runControlledScience>>
@@ -4516,13 +4522,15 @@ ${描述}`
           ...(currentStep ? { stepId: currentStep } : {}),
           ...(old?.filesWritten ? { filesWritten: old.filesWritten } : {}),
         }
-        tools?.set(toolCallId, {
+        const record:RouteToolEvidence={
           toolCallId, name, status: response.isError ? 'error' : 'done', result: output, input: params, ...observation,
-        })
-        frozenTask?.evidence.push({toolCallId,name,status:response.isError?'error':'done',result:output,input:params,...observation})
+        }
+        tools?.set(toolCallId,record)
+        frozenTask?.evidence.push(record)
         // Persist app observations in the actual tool result. Models cannot supply
         // these details; a denied outer gate returns before this point.
-        return { ...response, details: { ...response.details, analysisRouteEvidence: observation } }
+        const visible={ ...response, details: { ...response.details, analysisRouteEvidence: observation } }
+        return frozenTask?.settings.contract&&name!=='submit_task_result'?appendTaskEvidence(visible,record):visible
         }finally{release()}
       },
     }

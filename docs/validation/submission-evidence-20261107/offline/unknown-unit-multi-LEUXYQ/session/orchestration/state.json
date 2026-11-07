@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "ownerSessionId": "research",
+  "children": [
+    {
+      "id": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "kind": "team",
+      "address": [
+        "research",
+        "check",
+        "1daaa108-dd70-4b2a-a3b7-58f40b88909d"
+      ],
+      "label": "check",
+      "state": "failed",
+      "epoch": 1,
+      "updatedAt": 1794014447534,
+      "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+      "timing": {
+        "executionMs": 617,
+        "preflightMs": 24,
+        "acceptanceMs": 24
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 115,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 24,
+            "output": 16,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": false,
+        "output": "{\"data\":{\"kind\":\"data-summary\",\"rows\":48,\"columns\":[{\"name\":\"carbon\"}],\"issues\":[\"单位未提供\"]},\"summary\":\"offline representative fixture\",\"blockers\":[\"单位未提供，必须先确认\"],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"fixture\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"read files\",\"toolCallIds\":[\"call_mock_15\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "blocked",
+          "summary": "offline representative fixture",
+          "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+          "result": {
+            "data": {
+              "kind": "data-summary",
+              "rows": 48,
+              "columns": [
+                {
+                  "name": "carbon"
+                }
+              ],
+              "issues": [
+                "单位未提供"
+              ]
+            },
+            "summary": "offline representative fixture",
+            "blockers": [
+              "单位未提供，必须先确认"
+            ],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "fixture"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "read files",
+              "toolCallIds": [
+                "call_mock_15"
+              ]
+            }
+          },
+          "deliverables": [],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "input.csv",
+                "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+                "bytes": 805
+              }
+            ],
+            "outputs": []
+          }
+        },
+        "error": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_mock_15",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "input.csv"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 8,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1794014446868,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1794014446869,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1794014446869,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 1,
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1794014446869,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1794014446870,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1794014446894,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 7,
+      "at": 1794014447510,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 8,
+      "at": 1794014447534,
+      "childId": "child-b0fc166d928afa8fe343b01f79c8c23b",
+      "epoch": 1,
+      "type": "settled",
+      "state": "failed",
+      "receipt": "blocked"
+    }
+  ],
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 40,
+    "unknownRuns": 1,
+    "active": [],
+    "startedAt": 1794014446869
+  }
+}

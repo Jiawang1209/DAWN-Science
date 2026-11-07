@@ -170,3 +170,9 @@ it('structured tasks use the closing assistant text and host-collected evidence 
   const done=await runChildTask(spec,async()=>({subscribe:cb=>{sink=cb;return()=>{}},prompt:async()=>{sink?.({type:'message_update',assistantMessageEvent:{type:'text_delta',delta:'interim narration'}})},finalText:()=>'{"summary":"closing"}',evidence:()=>[{toolCallId:'r1',name:'read',status:'done' as const,result:'actual file'}]}))
   expect(done).toMatchObject({ok:true,output:'{"summary":"closing"}',evidence:[{toolCallId:'r1'}]})
 })
+it.each(['quota failure','missing submission'])('preserves bounded diagnostic trace after %s without an accepted output',async(reason)=>{
+ const {TaskContractSchema}=await import('../../src/orchestration/task-contract.js'),{resolveTaskSettings}=await import('../../src/subagent/task-tools.js')
+ const result=await runChildTask({...SPEC,taskSettings:resolveTaskSettings(TaskContractSchema.parse({submission:'tool'}),'allow-all')},async()=>({subscribe:()=>()=>{},prompt:async()=>{if(reason==='quota failure')throw new Error('quota')},evidence:()=>[{toolCallId:'read-before-failure',name:'read',status:'done',result:'private body',input:{path:'input.csv'}}]}))
+ expect(result).toMatchObject({ok:false,trace:{records:[{toolCallId:'read-before-failure',name:'read',status:'done',execution:'not_observed',path:'input.csv'}],omitted:0}})
+ expect(JSON.stringify(result)).not.toContain('private body');expect('output' in result).toBe(false)
+})

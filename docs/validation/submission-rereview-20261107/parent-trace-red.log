@@ -1,0 +1,45 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-executor.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/subagent/task-executor.test.ts (8 tests | 1 failed) 499ms
+   × retains a child failure trace as diagnostics without accepting its output or receipt 36ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/task-executor.test.ts > retains a child failure trace as diagnostics without accepting its output or receipt
+AssertionError: expected { agent: 'a', task: 'read', …(5) } to match object { ok: false, output: '', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+    "output": "",
+-   "trace": {
+-     "omitted": 0,
+-     "records": [
+-       {
+-         "execution": "not_observed",
+-         "name": "read",
+-         "path": "in.csv",
+-         "status": "done",
+-         "toolCallId": "real-read",
+-       },
+-     ],
+-   },
+  }
+
+ ❯ tests/subagent/task-executor.test.ts:58:12
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  10:04:59
+   Duration  1.14s (transform 140ms, setup 0ms, import 558ms, tests 499ms, environment 0ms)
+

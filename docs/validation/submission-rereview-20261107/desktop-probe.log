@@ -1,0 +1,14 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/submission-evidence-review.spec.ts
+
+Running 1 test using 1 worker
+
+(node:20430) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「审查报告预览链路」做完了 — {"summary":"report delivered","blockers":[],"deliverables":[{"path":"reports/report.md"}],"execution":{"state":"not_run"…
+[主进程] Debugger ending on ws://127.0.0.1:63462/214d27e9-4abf-495a-b48a-e2e4e921d8f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/submission-evidence-review.spec.ts:11:1 › opens report images and scripts in the same owner, closes previews, and returns from expansion (5.0s)
+
+  1 passed (5.5s)

@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/orchestration.test.ts -t Native scoped tools expose host evidence
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/runtime/orchestration.test.ts (14 tests | 1 failed | 13 skipped) 47ms
+   × Native scoped tools expose host evidence labels without treating metadata or denied calls as execution 46ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > Native scoped tools expose host evidence labels without treating metadata or denied calls as execution
+TypeError: Cannot read properties of undefined (reading 'text')
+ ❯ label tests/runtime/orchestration.test.ts:184:133
+
+ ❯ tests/runtime/orchestration.test.ts:188:74
+ ❯ NativeRuntime.runWithTaskScope src/runtime/native.ts:633:20
+ ❯ tests/runtime/orchestration.test.ts:186:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  09:10:13
+   Duration  1.90s (transform 638ms, setup 0ms, import 1.76s, tests 47ms, environment 0ms)
+

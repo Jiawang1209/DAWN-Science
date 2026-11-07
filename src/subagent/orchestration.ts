@@ -1,3 +1,5 @@
+import {TaskTraceSchema} from '../protocol/task-trace.js'
+import {taskTrace} from '../orchestration/task-trace.js'
 /** Adapts ordinary Pi subprocess delegations to the shared durable controls. */
 import {TaskSettingsSchema,TaskReceiptSchema} from "../orchestration/task-contract.js"
 import {TaskObservationSchema} from '../protocol/task-observation.js'
@@ -34,7 +36,7 @@ export function createSubagentOrchestration(opts: SubagentToolOptions, service: 
             ok: meta.status === 'ok', output: meta.result?.text ?? '',
             ...(meta.error ? {error: meta.error} : {}),
             ...(receipt ? {receipt} : {}),
-            ...(meta.observation?{observation:TaskObservationSchema.parse(meta.observation)}:{}),
+            ...(meta.observation?{observation:TaskObservationSchema.parse(meta.observation)}:{}),...(meta.trace?{trace:TaskTraceSchema.parse(meta.trace)}:{}),
           }} : {})})
       }
     }
@@ -52,15 +54,15 @@ export function createSubagentOrchestration(opts: SubagentToolOptions, service: 
       if (index !== 0) throw new Error('后台初始任务地址无效')
       const result = await startTool.execute(message.requestId, {agent: child.label, task: prompt}, signal)
       const meta = 读元(dir)
-      if (result.isError || !meta?.result) return {ok: false, output: '', error: meta?.error ?? result.content.map(item => item.text).join('\n'),...(meta?.receipt?{receipt:meta.receipt}:{}),...(meta?.observation?{observation:meta.observation}:{})}
-      return {ok: true, output: meta.result.text,...(meta.receipt?{receipt:meta.receipt}:{}),...(meta.observation?{observation:meta.observation}:{})}
+      if (result.isError || !meta?.result) return {ok: false, output: '', error: meta?.error ?? result.content.map(item => item.text).join('\n'),...(meta?.receipt?{receipt:meta.receipt}:{}),...(meta?.observation?{observation:meta.observation}:{}),...(meta?.trace?{trace:TaskTraceSchema.parse(meta.trace)}:{})}
+      return {ok: true, output: meta.result.text,...(meta.receipt?{receipt:meta.receipt}:{}),...(meta.observation?{observation:meta.observation}:{}),...(meta.trace?{trace:TaskTraceSchema.parse(meta.trace)}:{})}
     }
     if (!会话文件(dir)) {
       // Ordinary children always have a transcript subdirectory. Never silently create a fresh conversation.
       throw new Error('子 agent 未留下可续接转录；请核对已有产物后启动新任务')
     }
     const result = await followUp(toolCallId, index, child.label, prompt, signal)
-    return {ok: result.ok, output: result.output, ...(result.error ? {error: result.error} : {}),...(result.receipt?{receipt:result.receipt}:{}),...(result.observation?{observation:result.observation}:{})}
+    return {...(result.evidence?{trace:taskTrace(result.evidence)}:result.trace?{trace:result.trace}:{}),ok: result.ok, output: result.output, ...(result.error ? {error: result.error} : {}),...(result.receipt?{receipt:result.receipt}:{}),...(result.observation?{observation:result.observation}:{})}
   }, onResult, onError)
   return {
     mailbox,

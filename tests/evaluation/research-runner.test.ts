@@ -15,8 +15,11 @@ it('runs paired scientific tasks through actual Pi, files, host acceptance and t
  const server=await startMockInferenceServer({scenario:researchScenario(researchTasks()[0]!.expected)})
  try{
   const modelsPath=join(root,'models.json');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))
-  const report=await runResearchEvaluation(join(root,'results'),{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:'offline-mock',kind:'fixture',requests:()=>server.requests.length})
-  expect(report.completePairs,JSON.stringify(report.rows)).toBe(2)
+  const report=await runResearchEvaluation(join(root,'results'),{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:'offline-mock',kind:'fixture',requests:()=>server.requests.length},{repeats:2})
+  expect(report.completePairs,JSON.stringify(report.rows)).toBe(4)
+  expect(report.rows.filter(r=>r.repeat===2)).toHaveLength(4)
+  expect(report.requestLimit).toBeNull()
+  expect(report.requestAllocation.enforced).toBe(false)
   expect(report.rows.every(r=>r.success),JSON.stringify(report.rows)).toBe(true)
   expect(report.rows.every(r=>!r.falseAcceptance&&r.inputPreserved)).toBe(true)
   expect(report.rows.filter(r=>r.terminal==='accepted').every(r=>r.versions.length===3)).toBe(true)

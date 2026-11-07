@@ -90,3 +90,18 @@ it('the real captain tool rejects a forged text receipt and leaves downstream bl
  const failure=await update.execute('explicit-failure',{taskId:'first',attemptId,status:'failed',output:'cannot validate'} as never)
  expect(failure.isError).not.toBe(true);expect(scheduler.读('t').tasks[0]?.status).toBe('failed')
 })
+it('standalone Team adapter settles the same bounded host trace without an orchestration service',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-team-trace-'));roots.push(cwd)
+ const team=建团队({id:'t',name:'t',goal:'g',captainSessionId:'p'});加成员(team,{name:'bot',agent:'a',botId:'b'});加任务(team,{subject:'read',assignee:'bot'})
+ const scheduler=new 团队调度器({sessionDir:cwd,定义:()=>[],跑:{childOf:()=>({command:'unused',args:[]}),context:{provider:'p',model:'m',cwd}},onChange:()=>{},memberRunner:async()=>({ok:true,output:'done',evidence:[{toolCallId:'actual',name:'read',status:'done',input:{path:'in.csv'},result:'large private result'}]})})
+ 写团队(scheduler.dir('t'),team);await scheduler.踢一下('t')
+ const end=Date.now()+2000;while(scheduler.读('t').tasks[0]?.status!=='completed'&&Date.now()<end)await new Promise(r=>setTimeout(r,10))
+ expect(scheduler.读('t').tasks[0]?.trace).toEqual({records:[{toolCallId:'actual',name:'read',status:'done',execution:'not_observed',path:'in.csv'}],omitted:0})
+})
+it('the Team subprocess adapter keeps a failed child trace without accepting a result',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-team-failed-trace-'));roots.push(cwd)
+ const trace={records:[{toolCallId:'read-1',name:'read',status:'done',execution:'not_observed',path:'in.csv'}],omitted:0}
+ const r=await 跑一轮({definition:{name:'a',description:'a',systemPrompt:'a',filePath:'/a'},memberName:'a',teamId:'t',prompt:'read',systemPrompt:'read',sessionDir:cwd,agentDir:cwd,resume:false},
+ {childOf:()=>({command:process.execPath,args:['-e',`process.stdin.once('data',()=>{console.log(JSON.stringify(${JSON.stringify({type:'done',ok:false,error:'quota',trace})}));process.exit()})`]}),context:{cwd,provider:'p',model:'m'},onCall:async()=>'',timeoutMs:3000})
+ expect(r).toMatchObject({ok:false,output:'',trace});expect(r.receipt).toBeUndefined()
+})

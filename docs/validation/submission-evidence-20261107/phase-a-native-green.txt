@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/orchestration.test.ts tests/runtime/analysis-route.test.ts tests/subagent/task-tools.test.ts tests/orchestration/task-submission.test.ts tests/orchestration/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  56 passed (56)
+   Start at  09:10:42
+   Duration  1.92s (transform 1.33s, setup 0ms, import 4.02s, tests 778ms, environment 0ms)
+

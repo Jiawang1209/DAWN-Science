@@ -1,0 +1,15 @@
+{
+  "scripts/evaluate-research.ts": "b1c8c924869aad6c2cbcceedbdf8cdc425b9719a8c75595085b5d78465dfe2e0",
+  "src/evaluation/research-tasks.ts": "94ad6f44c3d09a3b6021de1f13b086c4c80326b04ed9621bb0b40241623ed09b",
+  "src/subagent/executor.ts": "57dd3b23d6acbb155045e0730f4b150341e3acd2e70e516965586aa15ffd62b5",
+  "src/subagent/child.ts": "57e4bc5e6d22014887b11e08901b241a0da8cadd2de2729dc5ed96ced1ace69b",
+  "src/team/science-pipeline.ts": "c1adfa5d3eb1b2c5ac498d4c08ad339adc77a5302eb311049eb2fcc59d0a74ed",
+  "src/team/science-acceptance.ts": "3c6df4cb368318e3604532a9907db00d710769ebae96ee423e0f497e0b01ebf7",
+  "src/orchestration/task-submission.ts": "3fe0f29eab9e5217c7120d4e29c32d9f8e6749cc831ad839c6820ef89c6ac4d9",
+  "src/subagent/task-tools.ts": "3f67c0551133e2abce3f5e23c72ebbcdb6688462b7ccb0eb1e014a3dd0cec802",
+  "src/runtime/native.ts": "1af52ce179a14b140995d05638d286c85bdcacc757e5ea93785e958897d1791f",
+  "scripts/evaluation-request-gate.ts": "3eddbb0076529528e05ce6f2f0826c15491012c5e70fa26d577b700ac4bfc1b4",
+  "src/bot/output-locks.ts": "5fc6188a603d79deb4aedc230611a1ec24c965bd2f78af0084121b9d506fc2db",
+  "scripts/evaluate-current-api.ts": "76d94c8983644d754a6128492065744b9d25eb59fbccbe0e43a7ec7abb21fc04",
+  "scripts/research-cli.ts": "0227116187655ab25bc269357787b8bd90168ce2d8f03dfbf058d74ed8e88984"
+}

@@ -1,0 +1,11 @@
+{
+  "stringResult": {
+    "toolName": "read",
+    "args": {
+      "path": "in.csv"
+    }
+  },
+  "arrayResult": null,
+  "expectedArrayTool": "read",
+  "sdkSerializer": "pi-ai/dist/api/openai-completions.js lines 922-952 retain user text arrays"
+}

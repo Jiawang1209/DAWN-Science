@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-submission.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-submission.test.ts (10 tests | 1 failed) 161ms
+   × never suggests a new submission after sealing or cancellation and tells busy calls to wait 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-submission.test.ts > never suggests a new submission after sealing or cancellation and tells busy calls to wait
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/task-submission.test.ts:93:25
+     91|  const release=submission.enter()
+     92|  const busy=JSON.parse((await submission.submit(result())).content[0]!…
+     93|  expect(busy.retryable).toBe(false);expect(busy.phase).toBe('draining')
+       |                         ^
+     94|  release()
+     95|  const controller=new AbortController();controller.abort()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  09:58:48
+   Duration  438ms (transform 85ms, setup 0ms, import 197ms, tests 161ms, environment 0ms)
+

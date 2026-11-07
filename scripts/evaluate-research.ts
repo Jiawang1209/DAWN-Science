@@ -15,32 +15,39 @@ import {团队调度器} from '../src/team/scheduler.js'
 import {OrchestrationService} from '../src/orchestration/service.js'
 import {OrchestrationStore} from '../src/orchestration/store.js'
 import type {TaskObservation} from '../src/protocol/task-observation.js'
-export interface ResearchRoute {provider:string;model:string;modelsPath:string;credential:string;requests:()=>number;signal?:AbortSignal;kind:'live'|'fixture'}
-export async function runResearchEvaluation(outputDir:string,route:ResearchRoute){
+export interface ResearchTrial {credential:string;requests:()=>number;stats?:()=>{reserved:number;forwarded:number;denied:number;limit:number};close:()=>Promise<void>}
+export interface ResearchOptions {repeats?:number;taskIds?:string[];perArmLimit?:number}
+export interface ResearchRoute {beginTrial?:(limit:number)=>ResearchTrial;provider:string;model:string;modelsPath:string;credential:string;requests:()=>number;signal?:AbortSignal;kind:'live'|'fixture'}
+export async function runResearchEvaluation(outputDir:string,route:ResearchRoute,options:ResearchOptions={}){
  mkdirSync(outputDir,{recursive:true})
- const rows:ResearchRow[]=[],tasks=researchTasks(),sourceFiles=['scripts/evaluate-research.ts','src/evaluation/research-tasks.ts','src/subagent/executor.ts','src/subagent/child.ts','src/team/science-pipeline.ts','src/team/science-acceptance.ts','src/orchestration/task-submission.ts','src/bot/output-locks.ts']
+ const repeats=options.repeats??1,tasks=researchTasks().filter(t=>!options.taskIds||options.taskIds.includes(t.id)),perArmLimit=options.perArmLimit??Math.floor(30/(2*repeats*tasks.length))
+ if(!Number.isSafeInteger(repeats)||repeats<1||repeats>4||!tasks.length||!Number.isSafeInteger(perArmLimit)||perArmLimit<1||perArmLimit*2*repeats*tasks.length>30)throw new Error('Invalid paired evaluation allocation')
+ if(route.kind==='live'&&!route.beginTrial)throw new Error('Live evaluation requires isolated per-arm quotas')
+ const rows:ResearchRow[]=[],sourceFiles=['scripts/evaluate-research.ts','src/evaluation/research-tasks.ts','src/subagent/executor.ts','src/subagent/child.ts','src/team/science-pipeline.ts','src/team/science-acceptance.ts','src/orchestration/task-submission.ts','src/orchestration/task-contract.ts','src/protocol/task-contract.ts','src/team/science-templates.ts','src/protocol/science-pipeline.ts','src/subagent/task-tools.ts','src/runtime/native.ts','scripts/evaluation-request-gate.ts','src/bot/output-locks.ts']
  const sourceFingerprint=researchFingerprint(sourceFiles.map(p=>[p,readFileSync(p,'utf8')]))
  const save=()=>{
-  const report={version:1,generatedAt:new Date().toISOString(),inference:route.kind,provider:route.provider,model:route.model,requestLimit:30,sourceFiles,sourceFingerprint,childBuildFingerprint:researchFingerprint(readFileSync(resolve('dist/electron/subagent-child.js'),'utf8')),tasks:tasks.map(({expected:_expected,...t})=>({...t,inputHash:researchFingerprint(t.csv)})),...summarizeResearch(rows)}
+  const report={version:1,generatedAt:new Date().toISOString(),inference:route.kind,provider:route.provider,model:route.model,requestLimit:route.kind==='live'?30:null,requestAllocation:{perArmLimit:route.beginTrial?perArmLimit:null,repeats,enforced:!!route.beginTrial,plannedArms:tasks.length*2*repeats},sourceFiles,sourceFingerprint,childBuildFingerprint:researchFingerprint(readFileSync(resolve('dist/electron/subagent-child.js'),'utf8')),tasks:tasks.map(({expected:_expected,...t})=>({...t,inputHash:researchFingerprint(t.csv)})),...summarizeResearch(rows,!!route.beginTrial)}
   writeFileSync(join(outputDir,'research.json'),JSON.stringify(report,null,2)+'\n')
-  writeFileSync(join(outputDir,'research.md'),['# 代表性科研任务对照',`推理：${route.kind}；模型 ${route.provider}/${route.model}；整轮最多 30 次请求。`,...report.limitations,'','| 任务 | 模式 | 终态 | 独立验收 | 请求 | 可见 token | 用量未知任务 | 耗时 ms |','|---|---|---|---|---|---|---|---|',...rows.map(r=>`| ${r.caseId} | ${r.mode} | ${r.terminal} | ${r.success} | ${r.requests} | ${r.usage.visibleTokens} | ${r.usage.unknownUsageTasks} | ${r.elapsedMs} |`),`\n完整配对 ${report.completePairs}；不完整配对 ${report.incompletePairs}。`].join('\n')+'\n')
+  writeFileSync(join(outputDir,'research.md'),['# 代表性科研任务对照',`推理：${route.kind}；模型 ${route.provider}/${route.model}；${route.kind==='live'?'整轮最多 30 次请求':'离线夹具不消耗真实调用额度'}；每组上限 ${route.beginTrial?perArmLimit:'未强制'}；重复 ${repeats}；分区强制 ${!!route.beginTrial}。`,...report.limitations,'','| 任务 | 重复 | 模式 | 终态 | 独立验收 | 请求 | 提交/退回 | 可见 token | 用量未知任务 | 耗时 ms |','|---|---|---|---|---|---|---|---|---|---|',...rows.map(r=>`| ${r.caseId} | ${r.repeat} | ${r.mode} | ${r.terminal} | ${r.success} | ${r.requests} | ${r.submissionAttempts??'未知'}/${r.invalidSubmissions??'未知'} | ${r.usage.visibleTokens} | ${r.usage.unknownUsageTasks} | ${r.elapsedMs} |`),`\n完整配对 ${report.completePairs}；不完整配对 ${report.incompletePairs}。`].join('\n')+'\n')
   return report
  }
- for(const [index,task] of tasks.entries())for(const mode of (index%2?['multi','single']:['single','multi']) as ('single'|'multi')[]){
-  rows.push(await runTrial(outputDir,task,mode,route));save()
+ for(let repeat=1;repeat<=repeats;repeat++)for(const [index,task] of tasks.entries())for(const mode of ((index+repeat-1)%2?['multi','single']:['single','multi']) as ('single'|'multi')[]){
+  rows.push(await runTrial(outputDir,task,mode,route,repeat,perArmLimit));save()
  }
  return save()
 }
-async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route:ResearchRoute):Promise<ResearchRow>{
+async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route:ResearchRoute,repeat:number,perArmLimit:number):Promise<ResearchRow>{
  const fingerprint=researchFingerprint({task,provider:route.provider,model:route.model,inference:route.kind,tools:['read','write','bash'],tier:'allow-all',revisionLimit:0,outputCap:4096}),before=route.requests(),started=Date.now()
- if(before>=30||route.signal?.aborted)return notRunResearch(task,mode,fingerprint)
+ if(route.kind==='live'&&before>=30||route.signal?.aborted)return {...notRunResearch(task,mode,fingerprint),repeat}
+ const lease=route.beginTrial?.(perArmLimit),requests=lease?.requests??route.requests,armBefore=requests()
+ try{
  // Each trial is retained under this explicit output, never a user workspace; no formal DB is opened.
  const root=mkdtempSync(join(out,`${task.id}-${mode}-`)),input='input.csv';writeFileSync(join(root,input),task.csv)
  const versions=await captureFileVersions(root,[input]),template={id:'tabular-ecology' as const,version:1 as const,language:'python' as const,method:'arithmetic mean',units:task.unit??'未提供，必须阻塞，不能猜测',missingValues:'drop NA in target column only',...(task.unit?{validation:{version:1 as const,column:task.column,metric:'mean' as const,unit:task.unit,missing:task.missing,absoluteTolerance:1e-9}}:{})}
  const recipe=scienceTemplate(template,'results',[input],input),instructions=task.instructions+'\n'+recipe.instructions
  const routeRecord=AnalysisRouteSchema.parse({routeId:'research',revision:1,updatedAt:1,title:task.id,goal:task.instructions,dataContext:[],steps:[{id:'s',title:task.id,purpose:task.instructions,inputs:[input],outputs:recipe.outputs,dependencies:[],status:'pending',blockers:[],cases:[],deliverables:[],execution:{state:'not_run',note:'pending'},verification:{state:'unreviewed',note:'pending'},needsReview:true,notes:[]}]})
  const definition={route:routeRecord,stepId:'s',inputs:[input],outputs:recipe.outputs,initialVersions:versions,members:{check:'check',analyze:'analyze',review:'review'},instructions,requireExecution:true,maxRevisions:0,acceptance:recipe.acceptance}
- const context={cwd:root,provider:route.provider,model:route.model,modelsPath:route.modelsPath,credentials:{[route.provider]:route.credential}},entry=resolve('dist/electron/subagent-child.js'),childOf=()=>({command:process.execPath,args:[entry],env:{ELECTRON_RUN_AS_NODE:'1'}})
+ const context={cwd:root,provider:route.provider,model:route.model,modelsPath:route.modelsPath,credentials:{[route.provider]:lease?.credential??route.credential}},entry=resolve('dist/electron/subagent-child.js'),childOf=()=>({command:process.execPath,args:[entry],env:{ELECTRON_RUN_AS_NODE:'1'}})
  const definitions=['check','analyze','review'].map(name=>({name,description:'representative research',systemPrompt:'Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.',filePath:'/'+name,tools:['read','write','bash']}))
  const observations:(TaskObservation|undefined)[]=[],controller=new AbortController(),abort=()=>controller.abort()
  route.signal?.addEventListener('abort',abort,{once:true})
@@ -88,5 +95,6 @@ async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route
   }
  }
  let actual:unknown;try{actual=JSON.parse(readFileSync(join(root,'results/result.json'),'utf8'))}catch{}
- return{caseId:task.id,mode,repeat:1,fingerprint,terminal,...judgeResearch(task,terminal,actual,existsSync(join(root,input))&&readFileSync(join(root,input),'utf8')===task.csv,blocking),requests:route.requests()-before,elapsedMs:Date.now()-started,usage:baselineUsage(observations.length?observations:[undefined]),versions:outputVersions,...(reason?{reason}:{})}
+ return{caseId:task.id,mode,repeat,fingerprint,terminal,...judgeResearch(task,terminal,actual,existsSync(join(root,input))&&readFileSync(join(root,input),'utf8')===task.csv,blocking),requests:requests()-armBefore,submissionAttempts:observations.reduce((n,o)=>n+(o?.submissionAttempts??0),0),invalidSubmissions:observations.reduce((n,o)=>n+(o?.invalidSubmissions??0),0),...(lease?.stats?{requestBudget:lease.stats()}:{}),elapsedMs:Date.now()-started,usage:baselineUsage(observations.length?observations:[undefined]),versions:outputVersions,...(reason?{reason}:{})}
+ }finally{await lease?.close()}
 }

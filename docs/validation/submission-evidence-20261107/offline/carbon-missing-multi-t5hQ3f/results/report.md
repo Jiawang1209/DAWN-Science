@@ -1,0 +1,1 @@
+Arithmetic mean; mg/g; missing target values dropped; input preserved.

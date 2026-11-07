@@ -1,0 +1,118 @@
+{
+  "inference": "none; real Pi file tool invoked directly",
+  "modelVisibleRead": [
+    {
+      "type": "text",
+      "text": "x\n1\n2\n"
+    },
+    {
+      "type": "text",
+      "text": "[task_tool_evidence] {\"toolCallId\":\"example-host-read\",\"name\":\"read\",\"status\":\"done\",\"execution\":\"not_observed\",\"path\":\"in.csv\",\"truncatedFields\":[]}"
+    }
+  ],
+  "semanticFeedback": {
+    "recorded": false,
+    "error": "审阅文件缺少本轮真实 read 证据",
+    "errorTruncated": false,
+    "fieldErrors": [],
+    "fieldErrorsOmitted": 0,
+    "contract": {
+      "access": "read-only",
+      "resultType": "review",
+      "requireExecution": false,
+      "requireReview": true,
+      "inputs": [
+        "in.csv"
+      ],
+      "outputs": [],
+      "readRequirements": [
+        "in.csv"
+      ],
+      "inputsOmitted": 0,
+      "outputsOmitted": 0,
+      "readRequirementsOmitted": 0,
+      "truncatedFields": []
+    },
+    "evidenceCatalog": {
+      "entries": [
+        {
+          "toolCallId": "example-host-read",
+          "name": "read",
+          "status": "done",
+          "execution": "not_observed",
+          "path": "in.csv",
+          "truncatedFields": []
+        }
+      ],
+      "total": 1,
+      "omitted": 0
+    },
+    "instruction": "修正后可在本轮再次提交；仅引用本任务实际证据中未截断的 toolCallId。截断字段不完整；原冻结契约仍为准。工具完成不代表科学结论正确。"
+  },
+  "schemaFeedback": {
+    "recorded": false,
+    "error": "提交字段未通过校验，请按 fieldErrors 修正",
+    "errorTruncated": false,
+    "fieldErrors": [
+      {
+        "path": "execution.state",
+        "message": "Invalid option: expected one of \"not_run\"|\"partial\"|\"completed\"|\"failed\"",
+        "truncated": false
+      }
+    ],
+    "fieldErrorsOmitted": 0,
+    "contract": {
+      "access": "read-only",
+      "resultType": "review",
+      "requireExecution": false,
+      "requireReview": true,
+      "inputs": [
+        "in.csv"
+      ],
+      "outputs": [],
+      "readRequirements": [
+        "in.csv"
+      ],
+      "inputsOmitted": 0,
+      "outputsOmitted": 0,
+      "readRequirementsOmitted": 0,
+      "truncatedFields": []
+    },
+    "evidenceCatalog": {
+      "entries": [
+        {
+          "toolCallId": "example-host-read",
+          "name": "read",
+          "status": "done",
+          "execution": "not_observed",
+          "path": "in.csv",
+          "truncatedFields": []
+        }
+      ],
+      "total": 1,
+      "omitted": 0
+    },
+    "instruction": "修正后可在本轮再次提交；仅引用本任务实际证据中未截断的 toolCallId。截断字段不完整；原冻结契约仍为准。工具完成不代表科学结论正确。"
+  },
+  "corrected": {
+    "recorded": true,
+    "state": "accepted"
+  },
+  "authoritativeEvidence": [
+    {
+      "toolCallId": "example-host-read",
+      "name": "read",
+      "status": "done",
+      "input": {
+        "path": "in.csv",
+        "toolCallId": "model-forged"
+      },
+      "result": "x\n1\n2\n",
+      "execution": "not_observed"
+    }
+  ],
+  "observation": {
+    "submissionAttempts": 3,
+    "invalidSubmissions": 2
+  }
+}

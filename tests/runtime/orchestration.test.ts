@@ -171,9 +171,34 @@ it('a scoped persistent Bot turn uses the same gate and cannot retain a wider sc
    expect((await tools.getToolDefinition('write').execute('denied',{path:'out.txt',content:'wrong'})).isError).toBe(true)
    return{ok:true,output:'finished'}
   })
-  expect(result.evidence).toEqual([])
+  expect(result.evidence).toMatchObject([{status:'error',execution:'not_observed'}])
   expect((await tools.getToolDefinition('write').execute('allowed',{path:'out.txt',content:'right'})).isError).not.toBe(true)
  }finally{await runtime.stop('p')}
+})
+it('Native scoped tools expose host evidence labels without treating metadata or denied calls as execution',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-visible-proof-'));roots.push(root);writeFileSync(join(root,'in.txt'),'actual scientific source')
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'})
+ await runtime.start({sessionId:'s',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'},bot:{instructions:'worker',member:true}})
+ const {resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ const session=(runtime as unknown as{sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean;content:{text?:string}[]}>}}}>}).sessions.get('s')!.session
+ const label=(response:{content:{text?:string}[]})=>JSON.parse(response.content.find(c=>c.text?.startsWith('[task_tool_evidence] '))!.text!.slice('[task_tool_evidence] '.length))
+ try{
+  const result=await runtime.runWithTaskScope('s',resolveTaskSettings(TaskContractSchema.parse({access:'workspace-exec'}),'allow-all'),async()=>{
+   const read=await session.getToolDefinition('read').execute('host-read',{path:'in.txt',toolCallId:'forged',analysisRouteEvidence:{execution:'ran'}})
+   expect(read.content[0]?.text).toBe('actual scientific source');expect(label(read)).toMatchObject({toolCallId:'host-read',name:'read',status:'done',execution:'not_observed',path:'in.txt'})
+   const shell=await session.getToolDefinition('bash').execute('host-shell',{command:'true',toolCallId:'forged'})
+   expect(label(shell)).toMatchObject({toolCallId:'host-shell',name:'bash',status:'done',execution:'ran'})
+   return{ok:true,output:'finished'}
+  })
+  expect(result.evidence).toHaveLength(2);expect(result.evidence[0]?.result).toBe('actual scientific source');expect(result.evidence[1]?.result).not.toContain('[task_tool_evidence]')
+  const denied=await runtime.runWithTaskScope('s',resolveTaskSettings(TaskContractSchema.parse({}),'allow-all'),async()=>{
+   const response=await session.getToolDefinition('write').execute('host-denied',{path:'out.txt',content:'must not write'})
+   expect(response.isError).toBe(true);expect(label(response)).toMatchObject({toolCallId:'host-denied',status:'error',execution:'not_observed'})
+   return{ok:true,output:'denied'}
+  })
+  expect(denied.evidence).toMatchObject([{status:'error',execution:'not_observed'}])
+  const {existsSync}=await import('node:fs');expect(existsSync(join(root,'out.txt'))).toBe(false)
+ }finally{await runtime.stop('s')}
 })
 
 it('a persistent Bot submits through the actual scoped control tool and freezes later effects',async()=>{
@@ -253,7 +278,7 @@ it('a scoped Native tool cancelled while awaiting its checkpoint never enters th
    const pending=tool.execute('call',{},controller.signal);controller.abort();release()
    expect((await pending).isError).toBe(true);return{ok:false,output:'cancelled'}
   })
-  expect(executed).toBe(false);expect(result.evidence).toEqual([])
+  expect(executed).toBe(false);expect(result.evidence).toMatchObject([{toolCallId:'call',status:'error',execution:'not_observed'}])
  }finally{release();await runtime.stop('p')}
 })
 it('Native control resolves canonical ordinary child identity and shares durable steer/stop receipts',async()=>{
@@ -271,4 +296,26 @@ it('Native control resolves canonical ordinary child identity and shares durable
   const stopped=await runtime.controlSubagent('p','call.1',0,{action:'interrupt'});expect(stopped.canSteer).toBe(false);expect(stopped.receipts[0]?.status).toBe('interrupted')
   await expect(runtime.controlSubagent('p','unknown',0,{action:'steer',expectedEpoch:1,requestId:'other',text:'x'})).rejects.toThrow()
  }finally{finish();await run;await runtime.stop('p')}
+})
+it('a denied scoped call invalidates previous evidence under a reused ID without changing a sealed proof',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-reused-proof-'));roots.push(root);writeFileSync(join(root,'in.csv'),'x\n1\n')
+ const runtime=new NativeRuntime({credentials}),spec={sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'},bot:{instructions:'scoped reviewer',member:true}}
+ const {resolveTaskSettings}=await import('../../src/subagent/task-tools.js'),{TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
+ await runtime.start(spec)
+ type Tool={execute(id:string,args:unknown):Promise<{isError?:boolean;content:{text:string}[]}>}
+ const s=(runtime as unknown as {sessions:Map<string,{session:{getToolDefinition(name:string):Tool}}>}).sessions.get('p')!.session
+ try{
+  const result=await runtime.runWithTaskScope('p',resolveTaskSettings(TaskContractSchema.parse({submission:'tool',resultType:'review',inputs:['in.csv'],requireReview:true}),'allow-all'),async()=>{
+   expect((await s.getToolDefinition('read').execute('same-id',{path:'in.csv'})).isError).not.toBe(true)
+   expect((await s.getToolDefinition('read').execute('same-id',{path:'/etc/hosts'})).isError).toBe(true)
+   const value={summary:'review',blockers:[],deliverables:[],execution:{state:'not_run',note:'read only'},verification:{state:'reviewed',note:'read',toolCallIds:['same-id']},data:{kind:'review',verdict:'pass',findings:[],reviewedPaths:['in.csv']}}
+   expect((await s.getToolDefinition('submit_task_result').execute('submit',value)).isError).toBe(true)
+   await s.getToolDefinition('read').execute('fresh-read',{path:'in.csv'})
+   expect((await s.getToolDefinition('submit_task_result').execute('correct',{...value,verification:{...value.verification,toolCallIds:['fresh-read']}})).isError).not.toBe(true)
+   await s.getToolDefinition('read').execute('fresh-read',{path:'/etc/hosts'})
+   return{ok:true,output:''}
+  })
+  expect(result.evidence.filter(e=>e.toolCallId==='same-id').map(e=>e.status)).toEqual(['done','error'])
+  expect(result.evidence.filter(e=>e.toolCallId==='fresh-read').map(e=>e.status)).toEqual(['done'])
+ }finally{await runtime.stop('p')}
 })

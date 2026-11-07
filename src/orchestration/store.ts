@@ -3,6 +3,7 @@ import {createHash, randomUUID} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {z} from 'zod'
+import {TaskTraceSchema,type TaskTrace} from '../protocol/task-trace.js'
 import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-contract.js'
 import {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
 export {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
@@ -15,12 +16,12 @@ export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
 export type ChildKind = z.infer<typeof ChildKindSchema>
 export const RunStateSchema = z.enum(['idle', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted'])
 export type RunState = z.infer<typeof RunStateSchema>
-export const OutcomeSchema = z.object({ok: z.boolean(), output: z.string(), error: z.string().optional(), receipt: TaskReceiptSchema.optional(),observation:TaskObservationSchema.optional()}).strict()
-export interface Outcome {ok: boolean; output: string; error?: string; receipt?: import('./task-contract.js').TaskReceipt;observation?:import('../protocol/task-observation.js').TaskObservation}
+export const OutcomeSchema = z.object({ok: z.boolean(), output: z.string(), error: z.string().optional(), receipt: TaskReceiptSchema.optional(),observation:TaskObservationSchema.optional(),trace:TaskTraceSchema.optional()}).strict()
+export interface Outcome {trace?:TaskTrace;ok: boolean; output: string; error?: string; receipt?: import('./task-contract.js').TaskReceipt;observation?:import('../protocol/task-observation.js').TaskObservation}
 const ChildSchema = z.object({
   id: z.string(), kind: ChildKindSchema, address: z.array(z.string().min(1)).min(1).max(8),
   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),
-  updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
+  resultEpoch:z.number().int().nonnegative().optional(),updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
   handoffSha256:z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
   activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),
 }).strict()
@@ -61,7 +62,7 @@ export function childIdentity(kind: ChildKind, address: readonly string[], owner
 export function validateOrchestrationIdentity(state:State,ownerSessionId:string):void{
  if(state.ownerSessionId!==ownerSessionId)throw new Error('owner mismatch')
  const children=new Map<string,ChildRecord>()
- for(const child of state.children){if(child.id!==childIdentity(child.kind,child.address,ownerSessionId)||children.has(child.id))throw new Error('invalid or duplicate child identity');children.set(child.id,child)}
+ for(const child of state.children){if(child.id!==childIdentity(child.kind,child.address,ownerSessionId)||children.has(child.id))throw new Error('invalid or duplicate child identity');if(child.resultEpoch!==undefined&&(!child.result||child.resultEpoch>child.epoch))throw new Error('invalid result epoch binding');children.set(child.id,child)}
  let sequence=0
  for(const event of state.events??[]){
   const child=event.childId?children.get(event.childId):undefined
@@ -151,7 +152,7 @@ export class OrchestrationStore {
       const child=state.children.find(c=>c.id===id),budget=state.budget,index=budget?.active.findIndex(active=>active.childId===id&&active.epoch===epoch)??-1
       if(!child||child.epoch!==epoch||!budget||index<0)throw new Error('Stale or already settled budget epoch')
       budget.active.splice(index,1);chargeObservation(budget,outcome.observation)
-      finishActivity(child);child.state=cancelled?'cancelled':outcome.ok?'completed':'failed';child.result=outcome;child.reason=outcome.error??'';child.updatedAt=Date.now()
+      finishActivity(child);child.state=cancelled?'cancelled':outcome.ok?'completed':'failed';child.result=outcome;child.resultEpoch=epoch;child.reason=outcome.error??'';child.updatedAt=Date.now()
       appendEvent(state,{type:'settled',childId:id,epoch,state:child.state,...(outcome.receipt?{receipt:outcome.receipt.state}:{})})
     })
   }
@@ -211,6 +212,8 @@ export class OrchestrationStore {
     if (!child) throw new Error(`Unknown child in this parent session: ${id}`)
     if (expectedEpoch !== undefined && child.epoch !== expectedEpoch) throw new Error(`Stale child epoch: ${id}`)
     const next = ChildSchema.parse({...child, ...patch, updatedAt: Date.now()})
+    if(patch.result)next.resultEpoch=next.epoch
+    else if(patch.state==='queued'||patch.state==='cancelled')delete next.resultEpoch
     this.change(state => {
       if(patch.state&&patch.state!==child.state||patch.epoch!==undefined&&patch.epoch!==child.epoch){
         if(patch.state!=='running')finishActivity(next)

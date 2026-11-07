@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/run-overview.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/run-overview.test.ts (6 tests | 1 failed) 35ms
+   × cold cancellation diagnostics need a matching settled epoch and never recover previous-run traces as current 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > cold cancellation diagnostics need a matching settled epoch and never recover previous-run traces as current
+AssertionError: expected [Function] to throw an error
+ ❯ tests/orchestration/run-overview.test.ts:72:40
+     70|  expect(readRunOverview(root,'p').runs[0]?.trace).toBeUndefined()
+     71|  const bad=JSON.parse(readFileSync(file,'utf8'));bad.children[0].resul…
+     72|  expect(()=>readRunOverview(root,'p')).toThrow()
+       |                                        ^
+     73| })
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  10:09:12
+   Duration  311ms (transform 82ms, setup 0ms, import 189ms, tests 35ms, environment 0ms)
+

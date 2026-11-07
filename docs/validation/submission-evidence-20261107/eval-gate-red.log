@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/request-gate.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/request-gate.test.ts (4 tests | 1 failed) 87ms
+   × reserves equal independent arms and refuses late requests from a finished arm 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > reserves equal independent arms and refuses late requests from a finished arm
+TypeError: gate.partition is not a function
+ ❯ tests/evaluation/request-gate.test.ts:39:16
+     37|  const gate=await startEvaluationGate({limit:6,forward:async()=>new Re…
+     38|  try{
+     39|   const a=gate.partition(3),b=gate.partition(3),call=(token:string)=>f…
+       |                ^
+     40|   expect((await Promise.all(Array.from({length:4},()=>call(a.token))))…
+     41|   expect(gate.stats().forwarded).toBe(3);expect(b.stats().forwarded).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  09:11:38
+   Duration  211ms (transform 18ms, setup 0ms, import 36ms, tests 87ms, environment 0ms)
+

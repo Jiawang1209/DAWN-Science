@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/request-gate.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  09:11:59
+   Duration  207ms (transform 18ms, setup 0ms, import 36ms, tests 90ms, environment 0ms)
+

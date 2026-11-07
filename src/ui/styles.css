@@ -9546,3 +9546,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 .collaboration-progress { display: flex; align-items: center; gap: var(--dawn-space-2); margin-left: auto; }
 .collaboration-progress progress { width: 110px; height: var(--dawn-space-2); accent-color: var(--dawn-accent); }
+
+/* Evidence stays within the existing collaboration detail drawer. */
+.collaboration-evidence code { overflow-wrap: anywhere; white-space: pre-wrap; }
+.collaboration-evidence ol { padding-inline-start: 1.5em; }
+.collaboration-evidence li { margin-block: var(--dawn-space-2); overflow-wrap: anywhere; }
+.collaboration-artifact-row { display: grid; gap: var(--dawn-space-2); padding-block: var(--dawn-space-3); border-bottom: 1px solid var(--dawn-stroke-4); }
+.collaboration-file-preview { min-width: 0; max-height: 55vh; overflow: auto; }

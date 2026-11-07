@@ -14,6 +14,7 @@ export const 终态: readonly 任务状态[] = ["completed", "failed", "cancelle
 
 export interface 任务 {
   reusedFrom?:import('../protocol/science-reuse.js').ScienceReuseDecision['source']
+  trace?:import('../protocol/task-trace.js').TaskTrace
   observation?:import('../protocol/task-observation.js').TaskObservation
   contract?: import("../orchestration/task-contract.js").TaskContract
   settings?: import("../orchestration/task-contract.js").TaskSettings
@@ -153,6 +154,7 @@ export interface 团队 {
 /** 一轮成员执行的结果（子进程回来的） */
 export interface 成员轮结果 {
   versions?:import('../protocol/file-versions.js').TaskVersions
+  trace?:import('../protocol/task-trace.js').TaskTrace
   observation?:import('../protocol/task-observation.js').TaskObservation
   receipt?: import("../orchestration/task-contract.js").TaskReceipt
   evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[]

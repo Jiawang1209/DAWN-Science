@@ -70,7 +70,7 @@ export interface SubagentChildSpec {
  */
 export type SubagentDoneMessage =
   | { type: "done"; ok: true; output: string;submitted?:true;versions?:import('../protocol/file-versions.js').TaskVersions; evidence?: import("../runtime/analysis-route-evidence.js").RouteToolEvidence[];observation?:import('../protocol/task-observation.js').TaskObservation }
-  | { type: "done"; ok: false; error: string;observation?:import('../protocol/task-observation.js').TaskObservation }
+  | { type: "done"; ok: false; error: string;trace?:import('../protocol/task-trace.js').TaskTrace;observation?:import('../protocol/task-observation.js').TaskObservation }
 
 /** 成员模式：一次工具调用，等父进程回一行 `reply` */
 export interface SubagentCallMessage {

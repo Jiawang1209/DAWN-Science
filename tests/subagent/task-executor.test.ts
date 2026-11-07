@@ -50,3 +50,27 @@ it.each(['missing','changed','matching'] as const)('verifies sealed content proo
  const result=(await executor.run({mode:'single',agent:'a',task:'produce'},definitions)).results[0]!
  expect(result.ok).toBe(mode==='matching');expect(result.receipt?.state).toBe(mode==='matching'?'accepted':'blocked')
 })
+it('retains a child failure trace as diagnostics without accepting its output or receipt',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-failed-trace-'));roots.push(cwd)
+ const trace={records:[{toolCallId:'real-read',name:'read',status:'done',execution:'not_observed',path:'in.csv'}],omitted:0}
+ const executor=new SubagentExecutor({context:{cwd,provider:'p',model:'m',agentDirOf:()=>join(cwd,'run')},childOf:()=>({command:process.execPath,args:['-e',`process.stdin.resume();process.stdin.on('end',()=>console.log(JSON.stringify(${JSON.stringify({type:'done',ok:false,error:'quota',trace})})))`]})})
+ const r=(await executor.run({mode:'single',agent:'a',task:'read'},definitions)).results[0]!
+ expect(r).toMatchObject({ok:false,output:'',trace});expect(r.receipt).toBeUndefined()
+})
+it('keeps an already received failure trace while cancellation drains the owned process',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-stopped-trace-'));roots.push(cwd);const controller=new AbortController();let ready=false
+ const trace={records:[{toolCallId:'read-before-stop',name:'read',status:'done',execution:'not_observed'}],omitted:0}
+ const executor=new SubagentExecutor({context:{cwd,provider:'p',model:'m',agentDirOf:()=>join(cwd,'run')},onProgress:event=>{if(event.type==='event'&&event.event.kind==='thinking')ready=true},childOf:()=>({command:process.execPath,args:['-e',`process.stdin.once('data',()=>{console.log(JSON.stringify(${JSON.stringify({type:'done',ok:false,error:'stopped',trace})}));console.log(JSON.stringify({type:'event',event:{kind:'thinking',delta:'ready'}}))});setInterval(()=>{},1000)`]})})
+ const pending=executor.run({mode:'single',agent:'a',task:'read'},definitions,controller.signal)
+ const deadline=Date.now()+3000;while(!ready&&Date.now()<deadline)await new Promise(r=>setTimeout(r,5))
+ expect(ready).toBe(true);controller.abort();const r=(await pending).results[0]!
+ expect(r).toMatchObject({ok:false,output:'',trace});expect(r.receipt).toBeUndefined()
+})
+it('keeps diagnostic done buffered after abort while refusing a buffered late authorization RPC',async()=>{
+ const cwd=mkdtempSync(join(tmpdir(),'dawn-buffered-trace-'));roots.push(cwd);const controller=new AbortController();let calls=0
+ const trace={records:[{toolCallId:'buffered-read',name:'read',status:'done',execution:'not_observed'}],omitted:0}
+ const lines=[{type:'event',event:{kind:'thinking',delta:'abort-now'}},{type:'call',id:'late',name:'task_authorize',params:{name:'write',params:{path:'late'}}},{type:'done',ok:false,error:'quota',trace}].map(v=>JSON.stringify(v)).join('\n')+'\n'
+ const executor=new SubagentExecutor({context:{cwd,provider:'p',model:'m',agentDirOf:()=>join(cwd,'run'),authorize:async()=>{calls++;return undefined}},onProgress:event=>{if(event.type==='event'&&event.event.kind==='thinking')controller.abort()},childOf:()=>({command:process.execPath,args:['-e',`process.stdin.once('data',()=>process.stdout.write(${JSON.stringify(lines)}));setInterval(()=>{},1000)`]})})
+ const r=(await executor.run({mode:'single',agent:'a',task:'read'},definitions,controller.signal)).results[0]!
+ expect(calls).toBe(0);expect(r).toMatchObject({ok:false,output:'',trace});expect(r.receipt).toBeUndefined()
+})

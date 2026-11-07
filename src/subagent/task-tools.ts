@@ -8,7 +8,7 @@ import {canonicalOutputPaths} from '../bot/output-locks.js'
 import {不自己下载} from '../runtime/no-tool-download.js'
 import type {TaskContract,TaskSettings,TaskScope} from '../orchestration/task-contract.js'
 import type {RouteToolEvidence} from '../runtime/analysis-route-evidence.js'
-import {TaskSubmission} from '../orchestration/task-submission.js'
+import {TaskSubmission,appendTaskEvidence} from '../orchestration/task-submission.js'
 const readers=new Set(['read','ls','grep','find','resource_search','resource_read','team_status','bot_say'])
 const defaults=['*']
 export function resolveTaskSettings(contract:TaskContract|undefined,tier:权限档,tools:readonly string[]=defaults):TaskSettings {
@@ -46,6 +46,7 @@ export interface TaskTool {name:string;label:string;description:string;parameter
 export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(name:string,params:Record<string,unknown>,signal?:AbortSignal)=>Promise<string|undefined>){
  const records:RouteToolEvidence[]=[]
  const submission=settings.contract?new TaskSubmission(settings.contract,cwd,()=>records,settings.versions):undefined
+ const labeled=<T extends {content:{type:string;text?:string}[]}>(result:T,record:RouteToolEvidence):T=>submission?appendTaskEvidence(result,record):result
  const shell=createLocalBashOperations()
  const definitions=[createReadToolDefinition(cwd),createWriteToolDefinition(cwd),createEditToolDefinition(cwd),createBashToolDefinition(cwd,{exposeSessionEnvironment:false}),createLsToolDefinition(cwd),不自己下载(createGrepToolDefinition(cwd),'rg'),不自己下载(createFindToolDefinition(cwd),'fd')] as TaskTool[]
  const wrap=(def:TaskTool,observe=true):TaskTool=>({...def,async execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown){
@@ -55,7 +56,7 @@ export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(nam
   let denial=taskToolDenial(settings.scope,cwd,def.name,params)
   if(!denial)denial=await authorize?.(def.name,params,signal)
   if(signal?.aborted)denial='调用已中止'
-  if(denial){const result={content:[{type:'text',text:denial}],isError:true};records.push({toolCallId:id,name:def.name,status:'error',result:denial,input:params,execution:'not_observed'});return result}
+  if(denial){const result={content:[{type:'text',text:denial}],isError:true},record:RouteToolEvidence={toolCallId:id,name:def.name,status:'error',result:denial,input:params,execution:'not_observed'};records.push(record);return labeled(result,record)}
   let observed=false
   const actual=def.name==='bash'?createBashToolDefinition(cwd,{exposeSessionEnvironment:false,operations:{exec:async(command,directory,options)=>{
    const result=await shell.exec(command,directory,{...options,onData:data=>{if(data.length)observed=true;options.onData(data)}})
@@ -72,8 +73,8 @@ export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(nam
    if(!observe)return result
    const observedRecord=records[records.length-1]!
    const details=typeof result.details==='object'&&result.details?result.details:{}
-   return {...result,details:{...details,analysisRouteEvidence:{execution:observedRecord.execution,...(observedRecord.filesWritten?{filesWritten:observedRecord.filesWritten}:{})}}}
-  }catch(error){if(observe)records.push({toolCallId:id,name:def.name,status:'error',input:params,result:String(error),execution:observed?'failed':'not_observed'});throw error}
+   return labeled({...result,details:{...details,analysisRouteEvidence:{execution:observedRecord.execution,...(observedRecord.filesWritten?{filesWritten:observedRecord.filesWritten}:{})}}},observedRecord)
+  }catch(error){if(observe){const record:RouteToolEvidence={toolCallId:id,name:def.name,status:'error',input:params,result:String(error),execution:observed?'failed':'not_observed'};records.push(record);if(submission)return labeled({content:[{type:'text',text:String(error)}],isError:true},record)}throw error}
   }finally{release()}
  }})
  const tools:TaskTool[]=definitions.filter(t=>settings.scope.tools.includes('*')||settings.scope.tools.includes(t.name)).map(def=>wrap(def))

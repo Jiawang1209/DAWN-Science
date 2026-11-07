@@ -1,3 +1,4 @@
+import {TaskTraceSchema} from '../protocol/task-trace.js'
 /**
  * 团队状态机（team-board，2026-08-22）。**纯函数 + 一份落盘**：每个变更都是「读 → 变 → 原子写」。
  *
@@ -44,6 +45,7 @@ export function 读团队(dir: string): 团队 | undefined {
   const team = JSON.parse(readFileSync(f, "utf8")) as 团队
   if(team.scienceBatch)team.scienceBatch=ScienceBatchSchema.parse(team.scienceBatch)
   if(team.pipeline)team.pipeline=SciencePipelineSchema.parse(team.pipeline)
+  for(const task of team.tasks)if(task.trace)task.trace=TaskTraceSchema.parse(task.trace)
   for(const task of team.tasks)if(task.observation)task.observation=TaskObservationSchema.parse(task.observation)
   const origin = botTeamOriginScope(team)
   if (!team.botOriginScopeKey && origin) { team.botOriginScopeKey = origin; 写团队(dir, team) }
@@ -222,13 +224,14 @@ export function 开始做(team: 团队, taskId: string, attemptId: string, now =
 }
 
 /** 结算：必须出示当前令牌；终态不可覆盖 */
-export function 结算(team: 团队, taskId: string, attemptId: string, 结果: { ok: boolean; output: string; receipt?: TaskReceipt;observation?:import('../protocol/task-observation.js').TaskObservation }, now = Date.now()): 任务 {
+export function 结算(team: 团队, taskId: string, attemptId: string, 结果: { ok: boolean; output: string; receipt?: TaskReceipt;trace?:import('../protocol/task-trace.js').TaskTrace;observation?:import('../protocol/task-observation.js').TaskObservation }, now = Date.now()): 任务 {
   const t = 验令牌(team, taskId, attemptId)
   const receipt=结果.receipt?TaskReceiptSchema.parse(结果.receipt):undefined
   if(t.contract&&结果.ok&&receipt?.state!=='accepted')throw new 团队错误('严格契约任务缺少宿主验收回执，不能凭文本标为完成；请交由成员执行并验收。')
   t.status = 结果.ok ? "completed" : "failed"
   t.output = 结果.output
   if(receipt)t.receipt=receipt
+  if(结果.trace)t.trace=TaskTraceSchema.parse(结果.trace);else delete t.trace
   if(结果.observation)t.observation=结果.observation
   t.updatedAt = now
   return t

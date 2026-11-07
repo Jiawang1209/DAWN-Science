@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-contract.test.ts (11 tests | 1 failed) 18ms
+   × rejects ambiguous reused proof IDs even when both matching tool records succeeded 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-contract.test.ts > rejects ambiguous reused proof IDs even when both matching tool records succeeded
+AssertionError: expected 'accepted' to be 'invalid' // Object.is equality
+
+Expected: "invalid"
+Received: "accepted"
+
+ ❯ tests/orchestration/task-contract.test.ts:77:71
+     75|  const body=result({verification:{state:'reviewed',note:'review',toolC…
+     76|  const proof={toolCallId:'reused',name:'read',status:'done' as const,i…
+     77|  expect(acceptTaskResult(contract,body,[proof,{...proof}],cwd).state).…
+       |                                                                       ^
+     78|  expect(acceptTaskResult(contract,body,[proof],cwd).state).toBe('accep…
+     79| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  10:08:48
+   Duration  249ms (transform 54ms, setup 0ms, import 150ms, tests 18ms, environment 0ms)
+

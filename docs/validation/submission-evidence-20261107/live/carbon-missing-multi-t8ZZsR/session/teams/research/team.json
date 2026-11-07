@@ -1,0 +1,468 @@
+{
+  "id": "research",
+  "name": "research",
+  "goal": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：mg/g。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"carbon_mg_g\",\"metric\":\"mean\",\"unit\":\"mg/g\",\"missing\":\"drop\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。",
+  "captainSessionId": "research",
+  "createdAt": 1794014867238,
+  "members": [
+    {
+      "orchestrationId": "76283189-2f86-494b-be7e-335a7aaab808",
+      "name": "check",
+      "agent": "check",
+      "status": "idle",
+      "sessionDir": "members/check",
+      "turns": 1,
+      "joinedAt": 1794014867238,
+      "taskSettings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "data-summary",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      }
+    },
+    {
+      "orchestrationId": "08bcd4b3-00c3-46ea-ac5b-dc28606e8fa5",
+      "name": "analyze",
+      "agent": "analyze",
+      "status": "idle",
+      "sessionDir": "members/analyze",
+      "turns": 0,
+      "joinedAt": 1794014867239
+    },
+    {
+      "orchestrationId": "15f3ee2b-8f08-4973-864c-52a2d675589a",
+      "name": "review",
+      "agent": "review",
+      "status": "idle",
+      "sessionDir": "members/review",
+      "turns": 0,
+      "joinedAt": 1794014867239
+    }
+  ],
+  "tasks": [
+    {
+      "contract": {
+        "submission": "tool",
+        "resultType": "data-summary",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      },
+      "id": "p-check-0-0",
+      "subject": "数据核查 · 修正 0",
+      "description": "科研流程 research，阶段 check，修正轮次 0/0。\n\n计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：mg/g。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"carbon_mg_g\",\"metric\":\"mean\",\"unit\":\"mg/g\",\"missing\":\"drop\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n用户已确认路线：{\"title\":\"carbon-missing\",\"goal\":\"计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\",\"dataContext\":[],\"step\":{\"id\":\"s\",\"title\":\"carbon-missing\",\"purpose\":\"计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\",\"inputs\":[\"input.csv\"],\"outputs\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n使用冻结契约；完成时调用 submit_task_result。",
+      "status": "failed",
+      "assignee": "check",
+      "dependencies": [],
+      "outputs": [],
+      "attempt": 1,
+      "createdAt": 1794014867239,
+      "updatedAt": 1794014896802,
+      "settings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "data-summary",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      },
+      "attemptId": "978984ba-25cd-4931-bca4-ff809f0a2460",
+      "output": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "blocked",
+        "summary": "数据核查完成（只读）。input.csv 为 48 行 × 3 列：site、carbon_mg_g、rain_mm。carbon_mg_g 有 7 个 NA（plot-1/8/15/22/29/36/43），按批准规则仅丢弃该列 NA、不填补、不按 rain_mm 筛选，有效样本 n=41。手工交叉核算：41 个有效值之和 568.7，算术均值 = 13.870731707317073 mg/g（非执行证据）。单位 mg/g 来自列名后缀与用户给定单位规则，文件内无独立单位元数据，未做任何换算。结构上 site 唯一、无重复行、无非数值脏值。方法（arithmetic mean + drop-only-NA）在本数据上适用，无结构级 blockers。范围说明：本轮访问为只读且冻结契约 outputs=[]，我无写入/执行工具，因此 results/analysis.py、results/result.json、results/report.md 尚未生成，需由 analyze 步骤写入脚本并实跑产数；下游不得引用我手工算术充当脚本执行证据，result.json 须写平铺对象 {n:41, unit:\"mg/g\", mean:13.870731707317073} 且与正式 data.metrics/sampleCount 一致。",
+        "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+        "result": {
+          "data": {
+            "kind": "data-summary",
+            "rows": 48,
+            "columns": [
+              {
+                "name": "site",
+                "type": "string",
+                "unit": "unitless"
+              },
+              {
+                "name": "carbon_mg_g",
+                "type": "number",
+                "unit": "mg/g"
+              },
+              {
+                "name": "rain_mm",
+                "type": "number",
+                "unit": "mm"
+              }
+            ],
+            "issues": [
+              "carbon_mg_g 含 7 个 NA（plot-1, plot-8, plot-15, plot-22, plot-29, plot-36, plot-43），其余 41 个值均可解析为有限数值；按批准规则仅丢弃该列 NA，不填补，有效样本 n=41。",
+              "不得按 rain_mm 做任何筛选或分层：rain_mm 列（300–817 mm，逐行 +11，与行序完全共线）在文件中仅为来源信息，不参与均值计算。",
+              "本轮为只读核查（access=read-only，契约 outputs=[]），无写入/执行工具，因此 results/analysis.py、results/result.json、results/report.md 未由我生成，须由 analyze 步骤落盘并实跑；结果不得引用我的手工算术作为执行证据。",
+              "手工核算（仅作交叉校验，非执行证据）：41 个有效值之和 568.7，均值 568.7/41 = 13.870731707317073 mg/g，单位 mg/g。",
+              "单位依据为列名后缀 carbon_mg_g 加用户给定单位规则 mg/g；文件内无独立单位元数据行，故未做单位换算或推断。",
+              "结构检查：48 行数据 + 1 行表头；site 标签 plot-1…plot-48 唯一、无重复行；除目标列的 NA 标记外无缺失、无非数值脏值、无负值或零值异常。",
+              "方法适用条件：算术均值在“仅丢弃目标列 NA、不做其他筛选”的前提下可计算；无需分布假设，但均值对离群值敏感，本轮未报告离散度/离群值诊断，属下游可选补充。"
+            ]
+          },
+          "summary": "数据核查完成（只读）。input.csv 为 48 行 × 3 列：site、carbon_mg_g、rain_mm。carbon_mg_g 有 7 个 NA（plot-1/8/15/22/29/36/43），按批准规则仅丢弃该列 NA、不填补、不按 rain_mm 筛选，有效样本 n=41。手工交叉核算：41 个有效值之和 568.7，算术均值 = 13.870731707317073 mg/g（非执行证据）。单位 mg/g 来自列名后缀与用户给定单位规则，文件内无独立单位元数据，未做任何换算。结构上 site 唯一、无重复行、无非数值脏值。方法（arithmetic mean + drop-only-NA）在本数据上适用，无结构级 blockers。范围说明：本轮访问为只读且冻结契约 outputs=[]，我无写入/执行工具，因此 results/analysis.py、results/result.json、results/report.md 尚未生成，需由 analyze 步骤写入脚本并实跑产数；下游不得引用我手工算术充当脚本执行证据，result.json 须写平铺对象 {n:41, unit:\"mg/g\", mean:13.870731707317073} 且与正式 data.metrics/sampleCount 一致。",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "未执行任何脚本：本轮为只读核查（requireExecution=false，契约 outputs=[]），可用工具只有 read/team_status/submit_task_result，无写文件与执行入口，故未创建 results/ 产物，也未运行 python3 -I 脚本（声明脚本尚不存在）。核心数值仅通过读取 input.csv 后手工算术交叉核算，不作为执行证据。",
+            "toolCallIds": [
+              "call_00_mu57JHaZ9UyozS9ZuJer6804"
+            ]
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "已实际读取 input.csv 全文（48 行数据）并逐行核对：列名与顺序为 site,carbon_mg_g,rain_mm；逐行定位 7 个 NA 行并确认其余 41 个值为有限数值；核对 site 无重复；手工求和 568.7 与 n=41 一致，均值 13.870731707317073。同时确认 results/ 目录当前不存在（读取返回 ENOENT），因此不得声称产物已生成。",
+            "toolCallIds": [
+              "call_01_ET_XbPG70KvwCL9PiaBgP1l0032"
+            ]
+          }
+        },
+        "deliverables": []
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_00_ET_vuSfNKCdcCrIvFdqob0v6065",
+            "name": "read",
+            "status": "error",
+            "execution": "not_observed",
+            "path": "/Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/docs/validation/submission-evidence-20261107/live/carbon-missing-multi-t8ZZsR"
+          },
+          {
+            "toolCallId": "call_01_ET_XbPG70KvwCL9PiaBgP1l0032",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "/Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/docs/validation/submission-evidence-20261107/live/carbon-missing-multi-t8ZZsR/input.csv"
+          },
+          {
+            "toolCallId": "call_00_mu57JHaZ9UyozS9ZuJer6804",
+            "name": "read",
+            "status": "error",
+            "execution": "not_observed",
+            "path": "/Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/docs/validation/submission-evidence-20261107/live/carbon-missing-multi-t8ZZsR/results"
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 29090,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 10523,
+          "output": 4430,
+          "cacheRead": 21504
+        }
+      }
+    }
+  ],
+  "messages": [],
+  "taskSeq": 0,
+  "pipeline": {
+    "version": 1,
+    "requestId": "trial",
+    "definition": {
+      "route": {
+        "title": "carbon-missing",
+        "goal": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+        "dataContext": [],
+        "steps": [
+          {
+            "id": "s",
+            "title": "carbon-missing",
+            "purpose": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+            "inputs": [
+              "input.csv"
+            ],
+            "outputs": [
+              "results/analysis.py",
+              "results/result.json",
+              "results/report.md"
+            ],
+            "dependencies": [],
+            "status": "pending",
+            "blockers": [],
+            "cases": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "pending"
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "pending"
+            },
+            "needsReview": true,
+            "notes": []
+          }
+        ],
+        "routeId": "research",
+        "revision": 1,
+        "updatedAt": 1
+      },
+      "stepId": "s",
+      "inputs": [
+        "input.csv"
+      ],
+      "outputs": [
+        "results/analysis.py",
+        "results/result.json",
+        "results/report.md"
+      ],
+      "initialVersions": [
+        {
+          "path": "input.csv",
+          "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+          "bytes": 810
+        }
+      ],
+      "acceptance": {
+        "version": 1,
+        "kind": "tabular-ecology",
+        "scriptPath": "results/analysis.py",
+        "reportPath": "results/report.md",
+        "resultPath": "results/result.json",
+        "numeric": {
+          "version": 1,
+          "dataPath": "input.csv",
+          "column": "carbon_mg_g",
+          "metric": "mean",
+          "unit": "mg/g",
+          "missing": "drop",
+          "absoluteTolerance": 1e-9
+        }
+      },
+      "members": {
+        "check": "check",
+        "analyze": "analyze",
+        "review": "review"
+      },
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：mg/g。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"carbon_mg_g\",\"metric\":\"mean\",\"unit\":\"mg/g\",\"missing\":\"drop\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。",
+      "requireExecution": true,
+      "maxRevisions": 0
+    },
+    "settingsByStage": {
+      "check": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "data-summary",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      },
+      "analyze": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json",
+            "numeric": {
+              "version": 1,
+              "dataPath": "input.csv",
+              "column": "carbon_mg_g",
+              "metric": "mean",
+              "unit": "mg/g",
+              "missing": "drop",
+              "absoluteTolerance": 1e-9
+            }
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      },
+      "review": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": []
+        }
+      }
+    },
+    "status": "blocked",
+    "stage": "check",
+    "round": 0,
+    "currentTaskId": "p-check-0-0",
+    "taskIds": [
+      "p-check-0-0"
+    ],
+    "stateRevision": 2,
+    "startedAt": 1794014867239,
+    "updatedAt": 1794014896802,
+    "endedAt": 1794014896802,
+    "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+    "routeSync": "pending"
+  }
+}

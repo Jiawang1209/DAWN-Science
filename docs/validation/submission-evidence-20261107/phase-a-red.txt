@@ -1,0 +1,98 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-submission.test.ts tests/subagent/task-tools.test.ts tests/orchestration/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-contract.test.ts (9 tests | 1 failed) 20ms
+   × explains host evidence labels and the bounds of submission feedback 7ms
+ ❯ |node| tests/orchestration/task-submission.test.ts (8 tests | 2 failed) 173ms
+   × returns structured schema paths and frozen requirements without echoing model data 4ms
+   × lists latest bounded host evidence without command or result dumps and reports all truncation 1ms
+ ❯ |node| tests/subagent/task-tools.test.ts (12 tests | 3 failed) 36ms
+   × exposes actual read and silent execution IDs in separate text without altering scientific evidence 4ms
+   × labels denied, failed and successful file calls with their real status and paths 1ms
+   × keeps task catalogs isolated and rejects IDs copied from another task 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-contract.test.ts > explains host evidence labels and the bounds of submission feedback
+AssertionError: expected 'inspect\n\n任务契约（范围已冻结）：{"submission":…' to contain '[task_tool_evidence]'
+
+- Expected
++ Received
+
+- [task_tool_evidence]
++ inspect
++
++ 任务契约（范围已冻结）：{"submission":"tool","version":1,"inputs":[],"outputs":[],"access":"read-only","requireExecution":false,"requireReview":false}
++
++ 必须调用 submit_task_result 提交最终结果；纯文本/JSON 不算提交。工具报错可在本轮修正参数。提交成功（含 blocked）后不能再调用其他工具。格式：{summary:string,blockers:string[],deliverables:[{path:string,note?:string}],execution:{state:"not_run"|"partial"|"completed"|"failed",note:string,toolCallIds?:string[]},verification:{state:"unreviewed"|"reviewed"|"issues",note:string,toolCallIds?:string[]},data?:按 resultType 要求的数据对象}。resultType=data-summary 时 data={kind:"data-summary",rows:number,columns:[{name,type?,unit?}],issues:string[]}；model-metrics 时 data={kind:"model-metrics",method:string,metrics:{名称:number},sampleCount?:number,caveats:string[]}；review 时 data={kind:"review",verdict:"pass"|"revise"|"blocked",findings:string[],reviewedPaths:string[],revisionInstructions?:string}。执行/审阅声明须引用实际本轮工具 callId。审阅须真实读取 reviewedPaths 中的文件。文件存在、格式通过和工具执行不等于科学正确。阻塞用 blockers 交还主 agent，不得扩大权限。
+
+ ❯ tests/orchestration/task-contract.test.ts:12:17
+     10| it('explains host evidence labels and the bounds of submission feedbac…
+     11|  const prompt=taskPrompt('inspect',TaskContractSchema.parse({submissio…
+     12|  expect(prompt).toContain('[task_tool_evidence]');expect(prompt).toCon…
+       |                 ^
+     13| })
+     14| it('rejects paths and contracts that cannot match their execution scop…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/orchestration/task-submission.test.ts > returns structured schema paths and frozen requirements without echoing model data
+SyntaxError: Unexpected token '提', "提交未接受，可修正后"... is not valid JSON
+ ❯ tests/orchestration/task-submission.test.ts:60:22
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/orchestration/task-submission.test.ts > lists latest bounded host evidence without command or result dumps and reports all truncation
+SyntaxError: Unexpected token '提', "提交未接受，可修正后"... is not valid JSON
+ ❯ tests/orchestration/task-submission.test.ts:71:53
+     69|  const submission=new TaskSubmission(TaskContractSchema.parse({access:…
+     70|  const response=await submission.submit({summary:'bad'})
+     71|  const text=response.content[0]!.text,feedback=JSON.parse(text)
+       |                                                     ^
+     72|  expect(feedback.evidenceCatalog.total).toBe(30);expect(feedback.evide…
+     73|  expect(feedback.evidenceCatalog.omitted).toBe(30-feedback.evidenceCat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/subagent/task-tools.test.ts > exposes actual read and silent execution IDs in separate text without altering scientific evidence
+TypeError: Cannot read properties of undefined (reading 'text')
+ ❯ evidenceLabel tests/subagent/task-tools.test.ts:82:148
+     80| })
+     81|
+     82| const evidenceLabel=(result:{content:{type:string;text?:string}[]})=>J…
+       |                                                                                                                                                    ^
+     83| it('exposes actual read and silent execution IDs in separate text with…
+     84|  const cwd=root();writeFileSync(join(cwd,'input.txt'),'scientific sour…
+ ❯ tests/subagent/task-tools.test.ts:88:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/subagent/task-tools.test.ts > labels denied, failed and successful file calls with their real status and paths
+TypeError: Cannot read properties of undefined (reading 'text')
+ ❯ evidenceLabel tests/subagent/task-tools.test.ts:82:148
+     80| })
+     81|
+     82| const evidenceLabel=(result:{content:{type:string;text?:string}[]})=>J…
+       |                                                                                                                                                    ^
+     83| it('exposes actual read and silent execution IDs in separate text with…
+     84|  const cwd=root();writeFileSync(join(cwd,'input.txt'),'scientific sour…
+ ❯ tests/subagent/task-tools.test.ts:97:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |node| tests/subagent/task-tools.test.ts > keeps task catalogs isolated and rejects IDs copied from another task
+SyntaxError: Unexpected token '提', "提交未接受，可修正后"... is not valid JSON
+ ❯ tests/subagent/task-tools.test.ts:110:14
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 23 passed (29)
+   Start at  09:07:52
+   Duration  647ms (transform 229ms, setup 0ms, import 934ms, tests 229ms, environment 0ms)
+

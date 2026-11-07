@@ -76,3 +76,35 @@ describe('shared execution ownership', () => {
     await service.close()
   })
 })
+it('keeps only diagnostic metadata after abort, with current-epoch binding and no stale queued cancellation trace',async()=>{
+ const {store,service}=setup(1),a=store.register('subagent',['trace','0'],'reader'),b=store.register('bot',['blocker'],'b')
+ const trace={records:[{toolCallId:'actual-read',name:'read',status:'done' as const,execution:'not_observed' as const,path:'in.csv'}],omitted:0}
+ const ctrl=new AbortController(),cleanup=gate()
+ const run=service.run(a.id,async()=>{await cleanup.promise;return{ok:true,output:'late',trace,receipt:{version:1 as const,state:'accepted' as const,summary:'late',deliverables:[]}}},ctrl.signal)
+ ctrl.abort();cleanup.release();const outcome=await run
+ expect(outcome).toMatchObject({ok:false,output:'',trace});expect(outcome.receipt).toBeUndefined()
+ const {liveRunOverview}=await import('../../src/orchestration/run-overview.js')
+ expect(liveRunOverview(service).runs.find(r=>r.id===a.id)?.trace).toEqual(trace)
+ const wait=gate(),busy=service.run(b.id,async()=>{await wait.promise;return{ok:true,output:''}})
+ const queuedCtrl=new AbortController(),queued=service.run(a.id,async()=>({ok:true,output:''}),queuedCtrl.signal)
+ queuedCtrl.abort();await queued
+ expect(store.get(a.id)?.result?.trace).toEqual(trace)
+ expect(liveRunOverview(service).runs.find(r=>r.id===a.id)?.trace).toBeUndefined()
+ wait.release();await busy;await service.close()
+})
+it.each(['abort','close'])('queued continuation %s cannot expose the prior active turn trace as its cancellation',async(action)=>{
+ const {store,service}=setup(1),a=store.register('subagent',['a'],'a'),b=store.register('bot',['b'],'b'),one=gate(),two=gate(),controller=new AbortController()
+ const trace={records:[{toolCallId:'previous-turn',name:'read',status:'done' as const,execution:'not_observed' as const}],omitted:0}
+ const first=service.run(a.id,async()=>{await one.promise;return{ok:true,output:'previous',trace}})
+ const blocker=service.run(b.id,async()=>{await two.promise;return{ok:true,output:''}})
+ const next=service.run(a.id,async()=>({ok:true,output:'must not run'}),controller.signal)
+ one.release();await first;await tick()
+ let closing:Promise<void>|undefined
+ if(action==='abort')controller.abort();else closing=service.close()
+ await next
+ const {liveRunOverview}=await import('../../src/orchestration/run-overview.js')
+ try{
+  expect(liveRunOverview(service).runs.find(r=>r.id===a.id)?.trace).toBeUndefined()
+  expect(store.get(a.id)?.result?.trace).toEqual(trace)
+ }finally{two.release();await blocker;await(closing??service.close())}
+})

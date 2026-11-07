@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/request-gate.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/request-gate.test.ts (6 tests | 1 failed) 603ms
+   × a partition close drains an incomplete request body immediately rather than waiting for its deadline 506ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > a partition close drains an incomplete request body immediately rather than waiting for its deadline
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/evaluation/request-gate.test.ts:67:29
+     65|   expect(arm.stats().inFlight).toBe(1)
+     66|   const close=arm.close(),quick=await Promise.race([close.then(()=>tru…
+     67|   await close;expect(quick).toBe(true);expect(arm.stats().inFlight).to…
+       |                             ^
+     68|  }finally{await gate.close()}
+     69| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  09:18:47
+   Duration  735ms (transform 22ms, setup 0ms, import 40ms, tests 603ms, environment 0ms)
+

@@ -1,0 +1,55 @@
+{
+  "capsule": {
+    "version": 1,
+    "sourceSessionId": "04d0d8ac-e864-4975-9b74-c66a7d6238b5",
+    "createdAt": 1794017761222,
+    "requestedMessages": 1,
+    "entries": [
+      {
+        "id": "9c1cbe6b",
+        "role": "user",
+        "text": "保留原始样本，单位为 m；仅汇总均值，不修改原文件。"
+      }
+    ],
+    "bytes": 74,
+    "sha256": "e86dc8e2db516b7ff592caa649137cec1071d324b23f608a22047edd5046ec61"
+  },
+  "metadata": {
+    "agent": "scout",
+    "task": "请确认已收到交接背景，用一句话回答。",
+    "status": "ok",
+    "startedAt": 1794017761218,
+    "handoffSha256": "e86dc8e2db516b7ff592caa649137cec1071d324b23f608a22047edd5046ec61",
+    "settings": {
+      "scope": {
+        "version": 1,
+        "tier": "allow-all",
+        "access": "workspace-exec",
+        "tools": [
+          "read",
+          "ls"
+        ],
+        "inputs": [],
+        "outputs": []
+      }
+    },
+    "observation": {
+      "elapsedMs": 67,
+      "submissionAttempts": 0,
+      "invalidSubmissions": 0,
+      "usage": {
+        "input": 12,
+        "output": 8,
+        "cacheRead": 0,
+        "partial": [
+          "cacheRead"
+        ]
+      }
+    },
+    "result": {
+      "text": "假模型已应答：DAWN 的整条链路是通的。"
+    },
+    "endedAt": 1794017761757
+  },
+  "verifiedInActualChildTranscript": true
+}

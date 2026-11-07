@@ -36,6 +36,14 @@ for(const mode of ['pass','revise','blocked'] as const)test.describe(mode,()=>{
    await dialog.getByRole('tab',{name:'产物',exact:true}).click()
    await expect(dialog.locator('.collaboration-detail')).toContainText('宿主验收通过')
    await page.screenshot({path:join(evidence,'phase-c-pipeline-accepted.png')})
+   const analysis=team.tasks.find((task:any)=>task.contract?.resultType==='model-metrics')
+   expect(analysis.receipt.versions.outputs.length).toBeGreaterThan(0)
+   await dialog.getByRole('button',{name:analysis.subject,exact:true}).click()
+   const version=analysis.receipt.versions.outputs[0]
+   await expect(dialog.locator('.collaboration-evidence')).toContainText(version.sha256)
+   await dialog.getByRole('button',{name:`预览当前文件：${version.path}`,exact:true}).click()
+   await dialog.locator('.collaboration-file-preview').scrollIntoViewIfNeeded()
+   await page.screenshot({path:join(evidence,'phase-b-bound-version-workbench.png')})
   }
  })
 })

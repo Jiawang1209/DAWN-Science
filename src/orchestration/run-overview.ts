@@ -5,7 +5,9 @@ import type {OrchestrationService} from './service.js'
 import type {RunOverview} from '../protocol/run-overview.js'
 import {budgetView,initialBudget} from './budget.js'
 function project(child:ChildRecord,phase:RunOverview['runs'][number]['phase']):RunOverview['runs'][number]{
- return{id:child.id,kind:child.kind,label:child.label,address:child.address,state:child.state,epoch:child.epoch,updatedAt:child.updatedAt,phase,
+ const settled=(child.state==='completed'||child.state==='failed')&&phase!=='running'&&phase!=='queued'&&phase!=='stopping'
+ const diagnostic=settled||child.state==='cancelled'&&child.resultEpoch===child.epoch&&phase!=='queued'&&phase!=='running'&&phase!=='stopping'
+ return{...(settled&&child.result?.receipt?{taskReceipt:child.result.receipt}:{}),...(diagnostic&&child.result?.trace?{trace:child.result.trace}:{}),id:child.id,kind:child.kind,label:child.label,address:child.address,state:child.state,epoch:child.epoch,updatedAt:child.updatedAt,phase,
  ...(child.reason?{reason:child.reason}:{}),contract:!!child.settings?.contract,
  ...(child.handoffSha256!==undefined?{handoffSha256:child.handoffSha256}:{}),
  ...(child.activity?{activity:child.activity}:{}),...(child.timing?{timing:child.timing}:{}),

@@ -243,3 +243,9 @@ describe("simple artifact retention", () => {
     expect(screen.queryByRole("button", { name: "保留当前结果" })).toBeNull()
   })
 })
+it('reports an empty filtered history rather than a blank panel when only other files have retained versions',async()=>{
+ const get=vi.fn(async()=>({supported:true,results:[saved]}))
+ render(<ArtifactHistoryPanel client={{get} as unknown as WorkbenchClient} sessionId="s" paths={['other.csv']} filterPath="other.csv" readOnly onClose={()=>{}}/>)
+ expect(await screen.findByText('当前已读取的留存中没有此文件')).toBeTruthy()
+ expect(screen.queryByRole('button',{name:'打开已保留文件 a.csv'})).toBeNull()
+})

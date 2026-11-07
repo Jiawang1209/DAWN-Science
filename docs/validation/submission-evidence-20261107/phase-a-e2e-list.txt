@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/submission-feedback.spec.ts --list
+Listing tests:
+  submission-feedback.spec.ts:13:1 › declarative task matching accepts Pi text-array prompts across result turns
+  submission-feedback.spec.ts:19:1 › fixture evidence references reject missing, forged and ambiguous labels
+  submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label
+Total: 3 tests in 1 file

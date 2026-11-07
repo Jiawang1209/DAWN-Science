@@ -1,0 +1,16 @@
+{
+  "beforeMessages": 0,
+  "afterMessages": 1,
+  "feedback": {
+    "recorded": false,
+    "evidenceCatalog": {
+      "entries": [
+        {
+          "toolCallId": "actual",
+          "name": "read"
+        }
+      ]
+    }
+  },
+  "passed": true
+}

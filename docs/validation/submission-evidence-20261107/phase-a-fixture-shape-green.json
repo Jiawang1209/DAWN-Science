@@ -1,0 +1,17 @@
+{
+  "results": [
+    {
+      "toolName": "read",
+      "args": {
+        "path": "in.csv"
+      }
+    },
+    {
+      "toolName": "read",
+      "args": {
+        "path": "in.csv"
+      }
+    }
+  ],
+  "passed": true
+}

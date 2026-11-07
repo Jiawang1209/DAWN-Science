@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/subagent/diagnostics.ts(9,81): error TS2345: Argument of type '{ toolCallId: string; name: string; status: "done" | "error"; result: string; scienceExecution?: { script: { path: string; sha256: string; bytes: number; observationId?: string | undefined; versionId?: string | undefined; }; dependencyBound?: true | undefined; environmentFingerprint: string; } | undefined; input?: u...' is not assignable to parameter of type 'readonly RouteToolEvidence[]'.
+  Type '{ toolCallId: string; name: string; status: "done" | "error"; result: string; scienceExecution?: { script: { path: string; sha256: string; bytes: number; observationId?: string | undefined; versionId?: string | undefined; }; dependencyBound?: true | undefined; environmentFingerprint: string; } | undefined; input?: u...' is not assignable to type 'RouteToolEvidence' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'filesWritten' are incompatible.
+      Type 'string[] | undefined' is not assignable to type 'string[]'.
+        Type 'undefined' is not assignable to type 'string[]'.

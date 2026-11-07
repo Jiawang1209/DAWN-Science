@@ -1,3 +1,4 @@
+import {CollaborationEvidence} from './collaboration-evidence.js'
 import {useId,useRef,useState} from 'react'
 import type {RunOverview as Snapshot} from '../protocol/run-overview.js'
 import type {WorkbenchClient} from './client.js'
@@ -58,7 +59,7 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
       <Button variant="ghost" size="sm" role="tab" id={`${tabId}-records`} aria-controls={`${tabId}-panel`} aria-selected={tab==='records'} tabIndex={tab==='records'?0:-1} onClick={()=>setTab('records')}>{t("记录")}</Button>
      </nav>
      <div role="tabpanel" id={`${tabId}-panel`} aria-labelledby={`${tabId}-${tab}`}>
-     {task?<CollaborationTaskDetail key={`${task.id}:${task.attemptId}`} task={task} tab={tab}/>:run?<>
+     {task?<CollaborationTaskDetail key={`${task.id}:${task.attemptId}`} task={task} tab={tab} client={client} sessionId={sessionId!}/>:run?<>
      {tab==='process'?<>
       <p className="collaboration-current">{runStatus(run,live)}</p>{run.reason?<p data-authored="1">{run.reason}</p>:null}
       <RunActivity run={run} live={live&&run.phase!=='unknown'} compact/>
@@ -66,8 +67,9 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
       {current.history?<RunHistory snapshot={{...current,history:{...current.history,events:current.history.events.filter(e=>e.childId===run.id&&e.epoch===run.epoch)}}}/>:null}
      </>:null}
      {tab==='handoff'?<CollaborationHandoff key={`${run.id}:${run.epoch}`} run={run}/>:null}
-     {tab==='artifacts'?<><p>{acceptance(run)}</p>{hasCurrentSettlement(run)?<p>{tf("输入版本 {0} · 产物版本 {1}",run.inputVersions,run.outputVersions)}</p>:<p className="hint">{t("本轮产物尚未结算；保留的上次结果不作为本轮验收")}</p>}<p className="hint">{t("版本数量来自宿主回执；不代表文件当前内容已重新核验。具体文件请在原任务或产物入口查看。")}</p></>:null}
+     {tab==='artifacts'?<><p>{acceptance(run)}</p>{hasCurrentSettlement(run)?<p>{tf("输入版本 {0} · 产物版本 {1}",run.inputVersions,run.outputVersions)}</p>:<p className="hint">{t("本轮产物尚未结算；保留的上次结果不作为本轮验收")}</p>}<p className="hint">{t("版本数量来自宿主回执；不代表文件当前内容已重新核验。")}</p></>:null}
      {tab==='records'?<><p>{tf("类型 {0} · 执行代次 {1}",run.kind,run.epoch)}</p><p className="hint">{live?t("实时编排记录"):t("历史记录")}</p><p>{tf("保留版本信息：输入 {0} · 产物 {1}",run.inputVersions,run.outputVersions)}</p><code data-authored="1">{run.id}</code><RunHistory snapshot={{...current,history:{events:current.history?.events.filter(e=>e.childId===run.id&&e.epoch===run.epoch)??[],truncated:current.history?.truncated??false}}}/></>:null}
+     {(hasCurrentSettlement(run)||tab==='records'&&!!run.trace)&&sessionId&&(tab==='artifacts'||tab==='records')?<CollaborationEvidence key={`${sessionId}:${run.id}:${run.epoch}`} client={client} sessionId={sessionId} receipt={run.taskReceipt} trace={run.trace} observation={run.observation} tab={tab}/>:null}
      </>:null}
      </div>
      {!task&&run&&run.kind==='subagent'&&run.address.length===2&&/^\d+$/.test(run.address[1]!)&&onView?<Button variant="text" size="sm" onClick={()=>onView(子转录id(sessionId!,run.address[0]!,Number(run.address[1])))}>{t("查看子任务过程")}</Button>:null}

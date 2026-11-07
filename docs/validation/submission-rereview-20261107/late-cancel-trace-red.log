@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-executor.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/subagent/task-executor.test.ts (9 tests | 1 failed) 544ms
+   × keeps an already received failure trace while cancellation drains the owned process 61ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/task-executor.test.ts > keeps an already received failure trace while cancellation drains the owned process
+AssertionError: expected { agent: 'a', task: 'read', …(5) } to match object { ok: false, output: '', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+    "output": "",
+-   "trace": {
+-     "omitted": 0,
+-     "records": [
+-       {
+-         "execution": "not_observed",
+-         "name": "read",
+-         "status": "done",
+-         "toolCallId": "read-before-stop",
+-       },
+-     ],
+-   },
+  }
+
+ ❯ tests/subagent/task-executor.test.ts:67:12
+     65|  const deadline=Date.now()+3000;while(!ready&&Date.now()<deadline)awai…
+     66|  expect(ready).toBe(true);controller.abort();const r=(await pending).r…
+     67|  expect(r).toMatchObject({ok:false,output:'',trace});expect(r.receipt)…
+       |            ^
+     68| })
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  10:07:28
+   Duration  1.18s (transform 137ms, setup 0ms, import 555ms, tests 544ms, environment 0ms)
+

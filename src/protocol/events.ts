@@ -1,3 +1,4 @@
+import {TaskTraceSchema} from './task-trace.js'
 import {ScienceReuseSourceSchema} from './science-reuse.js'
 import {TaskContractSchema,TaskReceiptSchema} from "./task-contract.js"
 import {TaskObservationSchema} from './task-observation.js'
@@ -499,7 +500,7 @@ export const TeamSnapshotSchema = z
           reusedFrom:ScienceReuseSourceSchema.optional(),
           contract: TaskContractSchema.optional(),
           receipt: TaskReceiptSchema.optional(),
-          observation:TaskObservationSchema.optional(),
+          observation:TaskObservationSchema.optional(),trace:TaskTraceSchema.optional(),
           description: z.string().optional(),
           status: z.enum(["pending", "claimed", "in_progress", "completed", "failed", "cancelled"]),
           assignee: z.string().optional(),

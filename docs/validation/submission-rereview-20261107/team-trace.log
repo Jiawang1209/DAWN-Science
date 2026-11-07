@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  10:06:22
+   Duration  913ms (transform 216ms, setup 0ms, import 667ms, tests 168ms, environment 0ms)
+

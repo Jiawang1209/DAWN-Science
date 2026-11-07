@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-07T01:31:17.649Z",
+  "inference": "fixture",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestLimit": null,
+  "requestAllocation": {
+    "perArmLimit": null,
+    "repeats": 2,
+    "enforced": false,
+    "plannedArms": 8
+  },
+  "sourceFiles": [
+    "scripts/evaluate-research.ts",
+    "src/evaluation/research-tasks.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/child.ts",
+    "src/team/science-pipeline.ts",
+    "src/team/science-acceptance.ts",
+    "src/orchestration/task-submission.ts",
+    "src/orchestration/task-contract.ts",
+    "src/protocol/task-contract.ts",
+    "src/team/science-templates.ts",
+    "src/protocol/science-pipeline.ts",
+    "src/subagent/task-tools.ts",
+    "src/runtime/native.ts",
+    "scripts/evaluation-request-gate.ts",
+    "src/bot/output-locks.ts"
+  ],
+  "sourceFingerprint": "94be84c16160e6c418adf1fb4d383bdc299936a3c2fe829076a471dbfff439e0",
+  "childBuildFingerprint": "36533904a0d84c9f962bba0cf9e8264673b18593fe3c91d7ff95802efd703bac",
+  "tasks": [
+    {
+      "id": "carbon-missing",
+      "csv": "site,carbon_mg_g,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "drop",
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568"
+    },
+    {
+      "id": "unknown-unit",
+      "csv": "site,carbon,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon",
+      "missing": "drop",
+      "instructions": "请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be"
+    }
+  ],
+  "kind": "representative-research-pilot",
+  "completePairs": 4,
+  "incompletePairs": 0,
+  "rows": [
+    {
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 1024,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "5973d07b174570fa9e0425dea7852d7f5450400b95d4c14049ed72e5d53b2fcf",
+          "bytes": 352
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "7de1f68a964843cb3da5cec14f57e4d83838cc9c9788e3f86969b2c6fa86e685",
+          "bytes": 70
+        }
+      ]
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 10,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 0,
+      "elapsedMs": 2758,
+      "usage": {
+        "visibleTokens": 200,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "5973d07b174570fa9e0425dea7852d7f5450400b95d4c14049ed72e5d53b2fcf",
+          "bytes": 352
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "7de1f68a964843cb3da5cec14f57e4d83838cc9c9788e3f86969b2c6fa86e685",
+          "bytes": 70
+        }
+      ]
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 781,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 726,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 2,
+      "fingerprint": "90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 10,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 0,
+      "elapsedMs": 2707,
+      "usage": {
+        "visibleTokens": 200,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "5973d07b174570fa9e0425dea7852d7f5450400b95d4c14049ed72e5d53b2fcf",
+          "bytes": 352
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "7de1f68a964843cb3da5cec14f57e4d83838cc9c9788e3f86969b2c6fa86e685",
+          "bytes": 70
+        }
+      ]
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 2,
+      "fingerprint": "90b669a2ca7a1b3008a93ef83a38105fa9a39ebd5dce573401ee4d640955a69d",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 1129,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "5973d07b174570fa9e0425dea7852d7f5450400b95d4c14049ed72e5d53b2fcf",
+          "bytes": 352
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "7de1f68a964843cb3da5cec14f57e4d83838cc9c9788e3f86969b2c6fa86e685",
+          "bytes": 70
+        }
+      ]
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "repeat": 2,
+      "fingerprint": "78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 820,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "repeat": 2,
+      "fingerprint": "78fc6050fa71b46722a0831fa290fc9bb547f9c1d7a10165ddd354b0ff8d2555",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "elapsedMs": 740,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    }
+  ],
+  "limitations": [
+    "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
+    "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
+    "未使用分区请求门；离线夹具不能代表真实同预算收益。",
+    "缺失或部分用量不作零费用；无价格换算；未运行的输入核验和用量不适用。"
+  ]
+}

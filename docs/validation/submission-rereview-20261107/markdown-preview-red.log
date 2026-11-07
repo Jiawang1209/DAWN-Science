@@ -1,0 +1,30 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-evidence.test.tsx (5 tests | 1 failed | 4 skipped) 119ms
+   × resolves report plots and script links through the same owner workspace without execution 119ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-evidence.test.tsx > resolves report plots and script links through the same owner workspace without execution
+AssertionError: expected '/figures/plot.png' to be 'data:image/png;base64,cG5n' // Object.is equality
+
+Expected: "data:image/png;base64,cG5n"
+Received: "/figures/plot.png"
+
+ ❯ tests/ui/collaboration-evidence.test.tsx:47:77
+     45|  render(<CollaborationEvidence client={{get} as unknown as WorkbenchCl…
+     46|  fireEvent.click(screen.getByRole('button',{name:'预览当前文件：reports/repor…
+     47|  expect((await screen.findByRole('img',{name:'plot'})).getAttribute('s…
+       |                                                                             ^
+     48|  fireEvent.click(screen.getByRole('link',{name:'analysis script'}));aw…
+     49|  expect(get).toHaveBeenCalledWith('readFile',{sessionId:'owner',path:'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  10:03:46
+   Duration  1.30s (transform 432ms, setup 539ms, import 211ms, tests 119ms, environment 344ms)
+

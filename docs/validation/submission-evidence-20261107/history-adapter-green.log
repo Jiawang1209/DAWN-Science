@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-evidence.test.tsx tests/ui/artifact-history.test.tsx tests/subagent/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  09:16:49
+   Duration  1.56s (transform 838ms, setup 1.09s, import 462ms, tests 446ms, environment 848ms)
+

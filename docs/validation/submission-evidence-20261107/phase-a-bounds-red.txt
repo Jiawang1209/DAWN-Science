@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-submission.test.ts -t bounds serialized feedback
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-submission.test.ts (9 tests | 1 failed | 8 skipped) 7ms
+   × bounds serialized feedback even for escaped control characters and unicode paths 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-submission.test.ts > bounds serialized feedback even for escaped control characters and unicode paths
+AssertionError: expected 91153 to be less than 32768
+ ❯ tests/orchestration/task-submission.test.ts:85:54
+     83|  const submission=new TaskSubmission(TaskContractSchema.parse({access:…
+     84|  const feedback=submission.feedback(new Error('\u0000'.repeat(10000)))
+     85|  expect(Buffer.byteLength(JSON.stringify(feedback))).toBeLessThan(32*1…
+       |                                                      ^
+     86|  expect(feedback.contract.truncatedFields).toEqual(expect.arrayContain…
+     87|  expect(feedback.errorTruncated).toBe(true);expect(feedback.evidenceCa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  09:12:55
+   Duration  328ms (transform 102ms, setup 0ms, import 227ms, tests 7ms, environment 0ms)
+

@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {TaskContractSchema,acceptTaskResult} from '../../src/orchestration/task-contract.js'
 import {TaskSubmission} from '../../src/orchestration/task-submission.js'
+import type {RouteToolEvidence} from '../../src/runtime/analysis-route-evidence.js'
 const roots:string[]=[];afterEach(()=>{for(const p of roots.splice(0))rmSync(p,{recursive:true,force:true})})
 const result=()=>({summary:'checked',blockers:[],deliverables:[],execution:{state:'not_run',note:'read only'},verification:{state:'unreviewed',note:'no scientific review'}})
 const root=()=>{const p=mkdtempSync(join(tmpdir(),'dawn-submit-'));roots.push(p);return p}
@@ -50,4 +51,52 @@ it('seals a host-blocked numeric receipt and never accepts model text as the exe
  const submission=new TaskSubmission(c,cwd,()=>[],{version:1,inputs:await captureFileVersions(cwd,['in.csv'])})
  const answer={summary:'model says passed',blockers:[],deliverables:c.outputs.map(path=>({path})),execution:{state:'not_run',note:'fixture'},verification:{state:'unreviewed',note:'fixture'},data:{kind:'model-metrics',method:'mean',metrics:{n:3,mean:999},sampleCount:3,caveats:[]}}
  expect((await submission.submit(answer)).isError).not.toBe(true);expect(submission.receipt()?.state).toBe('blocked');expect(submission.receipt()?.acceptance?.checks.find(c=>c.id==='numeric.mean')).toMatchObject({state:'blocked',expected:'2',actual:'999'});expect(()=>submission.enter()).toThrow('结果已经提交')
+})
+it('returns structured schema paths and frozen requirements without echoing model data',async()=>{
+ const c=TaskContractSchema.parse({submission:'tool',access:'workspace-write',inputs:['in.csv'],outputs:['out.csv'],resultType:'review',requireReview:true})
+ const submission=new TaskSubmission(c,root(),()=>[])
+ const response=await submission.submit({...result(),summary:'PRIVATE MODEL DATA',execution:{state:'invented',note:'bad'}})
+ expect(response.isError).toBe(true)
+ const feedback=JSON.parse(response.content[0]!.text)
+ expect(feedback).toMatchObject({recorded:false,error:expect.any(String),fieldErrors:expect.arrayContaining([expect.objectContaining({path:'execution.state'})]),contract:{inputs:['in.csv'],outputs:['out.csv'],resultType:'review',requireReview:true,readRequirements:['in.csv']},evidenceCatalog:{entries:[],total:0,omitted:0}})
+ expect(response.content[0]!.text).not.toContain('PRIVATE MODEL DATA')
+ expect(submission.observation()).toEqual({submissionAttempts:1,invalidSubmissions:1})
+})
+it('lists latest bounded host evidence without command or result dumps and reports all truncation',async()=>{
+ const proof:RouteToolEvidence[]=Array.from({length:30},(_,i)=>({toolCallId:`actual-${i}`,name:'bash',status:'done',execution:'ran',input:{command:'PRIVATE COMMAND'},result:'PRIVATE RESULT'}))
+ proof[29]={...proof[29]!,toolCallId:'x'.repeat(10000),filesWritten:Array.from({length:20},()=>'/'+ 'p'.repeat(10000))}
+ const paths=Array.from({length:64},(_,i)=>`${i}-${'p'.repeat(1000)}`)
+ const submission=new TaskSubmission(TaskContractSchema.parse({access:'workspace-write',outputs:paths}),root(),()=>proof)
+ const response=await submission.submit({summary:'bad'})
+ const text=response.content[0]!.text,feedback=JSON.parse(text)
+ expect(feedback.evidenceCatalog.total).toBe(30);expect(feedback.evidenceCatalog.entries.length).toBeLessThanOrEqual(12)
+ expect(feedback.evidenceCatalog.omitted).toBe(30-feedback.evidenceCatalog.entries.length)
+ expect(feedback.evidenceCatalog.entries[0].toolCallId).toBe(`actual-${feedback.evidenceCatalog.omitted}`)
+ expect(feedback.evidenceCatalog.entries.at(-1).truncatedFields).toContain('toolCallId')
+ expect(feedback.evidenceCatalog.entries.at(-1).filesWrittenOmitted).toBeGreaterThan(0)
+ expect(feedback.contract.truncatedFields).toContain('outputs');expect(Buffer.byteLength(text)).toBeLessThan(32*1024)
+ expect(text).not.toContain('PRIVATE COMMAND');expect(text).not.toContain('PRIVATE RESULT')
+})
+it('bounds serialized feedback even for escaped control characters and unicode paths',()=>{
+ const proof:RouteToolEvidence[]=Array.from({length:8},()=>({toolCallId:'\u0000'.repeat(1000),name:'read',status:'done',execution:'not_observed',input:{path:'\u0000'.repeat(1000)},filesWritten:Array.from({length:3},()=>'\u0000'.repeat(1000)),result:'not disclosed'}))
+ const inputs=Array.from({length:64},(_,i)=>`${i}-${'数'.repeat(1000)}`),outputs=inputs.map(path=>'out/'+path)
+ const submission=new TaskSubmission(TaskContractSchema.parse({access:'workspace-write',resultType:'review',inputs,outputs}),root(),()=>proof)
+ const feedback=submission.feedback(new Error('\u0000'.repeat(10000)))
+ expect(Buffer.byteLength(JSON.stringify(feedback))).toBeLessThan(32*1024)
+ expect(feedback.contract.truncatedFields).toEqual(expect.arrayContaining(['inputs','outputs','readRequirements']))
+ expect(feedback.errorTruncated).toBe(true);expect(feedback.evidenceCatalog.entries[0]?.truncatedFields).toContain('path')
+})
+it('never suggests a new submission after sealing or cancellation and tells busy calls to wait',async()=>{
+ const submission=new TaskSubmission(TaskContractSchema.parse({submission:'tool'}),root(),()=>[])
+ const release=submission.enter()
+ const busy=JSON.parse((await submission.submit(result())).content[0]!.text)
+ expect(busy.retryable).toBe(false);expect(busy.phase).toBe('draining')
+ release()
+ const controller=new AbortController();controller.abort()
+ const stopped=JSON.parse((await submission.submit(result(),controller.signal)).content[0]!.text)
+ expect(stopped.retryable).toBe(false);expect(stopped.phase).toBe('cancelled');expect(stopped.instruction).not.toContain('修正后可在本轮再次提交')
+ expect((await submission.submit(result())).isError).not.toBe(true)
+ const sealed=JSON.parse((await submission.submit(result())).content[0]!.text)
+ expect(sealed).toMatchObject({retryable:false,phase:'sealed',sealedState:'accepted'})
+ expect(sealed.instruction).not.toContain('修正后可在本轮再次提交')
 })

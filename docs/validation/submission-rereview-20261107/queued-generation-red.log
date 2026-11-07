@@ -1,0 +1,47 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/service.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (7 tests | 2 failed) 57ms
+   × queued continuation abort cannot expose the prior active turn trace as its cancellation 8ms
+   × queued continuation close cannot expose the prior active turn trace as its cancellation 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > queued continuation abort cannot expose the prior active turn trace as its cancellation
+ FAIL  |node| tests/orchestration/service.test.ts > queued continuation close cannot expose the prior active turn trace as its cancellation
+AssertionError: expected { records: [ { …(4) } ], omitted: +0 } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "omitted": 0,
+  "records": [
+    {
+      "execution": "not_observed",
+      "name": "read",
+      "status": "done",
+      "toolCallId": "previous-turn",
+    },
+  ],
+}
+
+ ❯ tests/orchestration/service.test.ts:106:68
+    104|  await next
+    105|  const {liveRunOverview}=await import('../../src/orchestration/run-ove…
+    106|  expect(liveRunOverview(service).runs.find(r=>r.id===a.id)?.trace).toB…
+       |                                                                    ^
+    107|  expect(store.get(a.id)?.result?.trace).toEqual(trace)
+    108|  two.release();await blocker;await(closing??service.close())
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  10:12:03
+   Duration  338ms (transform 87ms, setup 0ms, import 195ms, tests 57ms, environment 0ms)
+

@@ -42,7 +42,7 @@ try{
  }})
  const modelsPath=join(scratch,'models.json')
  writeFileSync(modelsPath,JSON.stringify({providers:{[provider]:{baseUrl:gate.url,api:'openai-completions',models:[{id:modelId,name:modelId,input:['text'],reasoning:false,contextWindow:model.contextWindow,maxTokens:4096,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}}))
- const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',signal:controller.signal})
+ const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',signal:controller.signal,beginTrial:limit=>{const arm=gate!.partition(limit);return{credential:arm.token,requests:()=>arm.stats().forwarded,stats:arm.stats,close:arm.close}}},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
  mkdirSync(output,{recursive:true});writeFileSync(join(output,'request-gate.json'),JSON.stringify(gate.stats(),null,2)+'\n')
  console.log(JSON.stringify({provider,model:modelId,forwarded:gate.stats().forwarded,completePairs:report.completePairs,incompletePairs:report.incompletePairs,rows:report.rows.map(r=>({caseId:r.caseId,mode:r.mode,terminal:r.terminal,success:r.success,requests:r.requests}))}))
 }catch{console.error(`真实 API 试验未完成（${stage}）；未输出凭证、端点或请求正文。查看隔离报告；不会自动重新联网。`);process.exitCode=1}

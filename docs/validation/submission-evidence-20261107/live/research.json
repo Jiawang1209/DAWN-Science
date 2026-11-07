@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-07T01:28:16.814Z",
+  "inference": "live",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestLimit": 30,
+  "requestAllocation": {
+    "perArmLimit": 15,
+    "repeats": 1,
+    "enforced": true,
+    "plannedArms": 2
+  },
+  "sourceFiles": [
+    "scripts/evaluate-research.ts",
+    "src/evaluation/research-tasks.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/child.ts",
+    "src/team/science-pipeline.ts",
+    "src/team/science-acceptance.ts",
+    "src/orchestration/task-submission.ts",
+    "src/subagent/task-tools.ts",
+    "src/runtime/native.ts",
+    "scripts/evaluation-request-gate.ts",
+    "src/bot/output-locks.ts"
+  ],
+  "sourceFingerprint": "4baaf8267b0dab160feb6f5e9e93479f0b46df407232d891fda0ddd3b4119827",
+  "childBuildFingerprint": "fc933aa0631b7445cb232ecac4589a2eea35ec194db6cc5e6d25e43f63736f19",
+  "tasks": [
+    {
+      "id": "carbon-missing",
+      "csv": "site,carbon_mg_g,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "drop",
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568"
+    }
+  ],
+  "kind": "representative-research-pilot",
+  "completePairs": 0,
+  "incompletePairs": 1,
+  "rows": [
+    {
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "54c2011404d2efdd686045d2197f2209baff15e8be359c71f1cdbada4c721163",
+      "terminal": "failed",
+      "success": false,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 15,
+      "submissionAttempts": 0,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 15,
+        "forwarded": 15,
+        "denied": 4,
+        "inFlight": 0,
+        "limit": 15
+      },
+      "elapsedMs": 74074,
+      "usage": {
+        "visibleTokens": 22100,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [],
+      "reason": "后端或正式提交未完成；查看隔离试验产物"
+    },
+    {
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "54c2011404d2efdd686045d2197f2209baff15e8be359c71f1cdbada4c721163",
+      "terminal": "blocked",
+      "success": false,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 3,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 3,
+        "forwarded": 3,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 15
+      },
+      "elapsedMs": 29585,
+      "usage": {
+        "visibleTokens": 14953,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    }
+  ],
+  "limitations": [
+    "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
+    "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
+    "各组独立等额请求上限，未用额度不借给另一组；额度用尽与科学错误分开，不完整配对不形成质量或费用收益结论。",
+    "缺失或部分用量不作零费用；无价格换算；未运行的输入核验和用量不适用。"
+  ]
+}

@@ -1,0 +1,82 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/service.test.ts tests/subagent/child-task.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (5 tests | 1 failed) 39ms
+   × keeps only diagnostic metadata after abort, with current-epoch binding and no stale queued cancellation trace 9ms
+ ❯ |node| tests/subagent/child-task.test.ts (14 tests | 2 failed) 486ms
+   × preserves bounded diagnostic trace after quota failure without an accepted output 5ms
+   × preserves bounded diagnostic trace after missing submission without an accepted output 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > keeps only diagnostic metadata after abort, with current-epoch binding and no stale queued cancellation trace
+AssertionError: expected { ok: false, output: '', …(1) } to match object { ok: false, output: '', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+    "output": "",
+-   "trace": {
+-     "omitted": 0,
+-     "records": [
+-       {
+-         "execution": "not_observed",
+-         "name": "read",
+-         "path": "in.csv",
+-         "status": "done",
+-         "toolCallId": "actual-read",
+-       },
+-     ],
+-   },
+  }
+
+ ❯ tests/orchestration/service.test.ts:85:18
+     83|  const run=service.run(a.id,async()=>{await cleanup.promise;return{ok:…
+     84|  ctrl.abort();cleanup.release();const outcome=await run
+     85|  expect(outcome).toMatchObject({ok:false,output:'',trace});expect(outc…
+       |                  ^
+     86|  const {liveRunOverview}=await import('../../src/orchestration/run-ove…
+     87|  expect(liveRunOverview(service).runs.find(r=>r.id===a.id)?.trace).toE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/subagent/child-task.test.ts > preserves bounded diagnostic trace after quota failure without an accepted output
+ FAIL  |node| tests/subagent/child-task.test.ts > preserves bounded diagnostic trace after missing submission without an accepted output
+AssertionError: expected { type: 'done', ok: false, …(2) } to match object { ok: false, trace: { …(2) } }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "trace": {
+-     "omitted": 0,
+-     "records": [
+-       {
+-         "execution": "not_observed",
+-         "name": "read",
+-         "path": "input.csv",
+-         "status": "done",
+-         "toolCallId": "read-before-failure",
+-       },
+-     ],
+-   },
+  }
+
+ ❯ tests/subagent/child-task.test.ts:176:17
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 16 passed (19)
+   Start at  10:04:14
+   Duration  661ms (transform 214ms, setup 0ms, import 300ms, tests 525ms, environment 0ms)
+

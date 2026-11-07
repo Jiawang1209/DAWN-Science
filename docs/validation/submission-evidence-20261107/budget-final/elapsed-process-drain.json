@@ -1,0 +1,20 @@
+{
+  "owned": [
+    21022,
+    21023
+  ],
+  "allExited": true,
+  "budget": {
+    "revision": 3,
+    "limits": {
+      "maxElapsedMs": 6000
+    },
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 0,
+    "unknownRuns": 1,
+    "active": [],
+    "startedAt": 1794014759740
+  },
+  "childState": "cancelled"
+}

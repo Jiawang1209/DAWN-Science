@@ -1,0 +1,119 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/submission-feedback.spec.ts e2e/task-contract.spec.ts e2e/science-pipeline.spec.ts
+
+Running 9 tests using 1 worker
+
+(node:76883) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60895/206c9c0a-cbb4-4cd9-9913-6eb206bcd161
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60942/9c1715fd-b933-4aab-a6c2-5da19721be5e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60983/02733e07-6c50-4b7e-a65b-4d07d3d84090
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.0s)
+  ✓  4 e2e/submission-feedback.spec.ts:13:1 › declarative task matching accepts Pi text-array prompts across result turns (1ms)
+  ✓  5 e2e/submission-feedback.spec.ts:19:1 › fixture evidence references reject missing, forged and ambiguous labels (1ms)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61004/421a662a-5ea8-4057-9daf-1953907bdd60
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  6 e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label (2.7s)
+(node:77444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「结构化子任务验收」做完了 — {"summary":"已交付声明文件","blockers":[],"deliverables":[{"path":"results/contract.txt"}],"execution":{"state":"not_run","note…
+[主进程] Debugger ending on ws://127.0.0.1:61032/17c2539a-75b8-4769-b469-26ec6c37ccbf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  7 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (29.3s)
+(node:77873) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61249/0972dd8f-a0fe-413f-bf99-8fc0ab628e34
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  8 e2e/task-contract.spec.ts:64:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61269/189e0f26-41e6-4895-809b-f4e31e5b78f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  9 e2e/task-contract.spec.ts:93:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (1.9s)
+
+
+  1) e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label 
+
+    Error: expect(received).toBeDefined()
+
+    Received: undefined
+
+      38 |  const messages=requests.flatMap((body:any)=>body.messages??[]),toolResults=messages.filter((m:any)=>m.role==='tool'&&typeof m.content==='string')
+      39 |  const feedback=toolResults.flatMap((m:any)=>{try{const value=JSON.parse(m.content);return value.recorded===false&&value.evidenceCatalog?[value]:[]}catch{return[]}}).find((f:any)=>f.evidenceCatalog.entries.some((e:any)=>e.name==='read'))
+    > 40 |  expect(feedback).toBeDefined();expect(feedback.contract).toMatchObject({inputs:['in.csv'],outputs:[],requireReview:true,readRequirements:['in.csv']})
+         |                   ^
+      41 |  const label=toolResults.flatMap((m:any)=>m.content.split('\n').filter((line:string)=>line.startsWith('[task_tool_evidence] ')).map((line:string)=>JSON.parse(line.slice('[task_tool_evidence] '.length)))).find((e:any)=>e.name==='read')
+      42 |  expect(label).toMatchObject({name:'read',status:'done',execution:'not_observed',path:'in.csv'})
+      43 |  expect(outcome.receipt.result.verification.toolCallIds).toEqual([label.toolCallId]);expect(label.toolCallId).not.toBe('forged-id')
+        at /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/e2e/submission-feedback.spec.ts:40:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/submission-feedback-a-real-3c5bb-sing-the-host-visible-label/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('region', { name: '运行总览', exact: true }).getByRole('region', { name: '任务证据与产物', exact: true })
+    Expected substring: "write"
+    Received string:    "正式提交 0 次 · 退回 0 次 · 阶段耗时 73 ms此任务没有保留工具证据摘要；可查看原始过程。"
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for getByRole('region', { name: '运行总览', exact: true }).getByRole('region', { name: '任务证据与产物', exact: true })
+        53 × locator resolved to <section aria-label="任务证据与产物" class="collaboration-evidence">…</section>
+           - unexpected value "正式提交 0 次 · 退回 0 次 · 阶段耗时 73 ms此任务没有保留工具证据摘要；可查看原始过程。"
+
+
+      29 |  const overview=page.getByRole('region',{name:'运行总览',exact:true})
+      30 |  await overview.getByRole('tab',{name:'记录',exact:true}).click()
+    > 31 |  await expect(overview.getByRole('region',{name:'任务证据与产物',exact:true})).toContainText('write')
+         |                                                                         ^
+      32 |  await page.screenshot({path:join(evidence,'phase-b-actual-tool-evidence.png')})
+      33 |  await overview.getByRole('tab',{name:'产物',exact:true}).click()
+      34 |  await overview.getByRole('button',{name:'预览当前文件：results/contract.txt',exact:true}).click()
+        at /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/e2e/task-contract.spec.ts:31:73
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/task-contract-scoped-child-8f6dc-ipt-through-the-existing-UI/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label 
+    e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI 
+  7 passed (52.9s)

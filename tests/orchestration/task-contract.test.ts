@@ -2,11 +2,15 @@ import {afterEach, expect, it} from 'vitest'
 import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
-import {TaskContractSchema, acceptTaskResult} from '../../src/orchestration/task-contract.js'
+import {TaskContractSchema, acceptTaskResult,taskPrompt,TaskResultParameters} from '../../src/orchestration/task-contract.js'
 const roots: string[] = []
 afterEach(() => {for (const p of roots.splice(0)) rmSync(p, {recursive:true, force:true})})
 const root = () => {const p=mkdtempSync(join(tmpdir(),'dawn-contract-'));roots.push(p);return p}
 const result = (extra={}) => JSON.stringify({summary:'checked', blockers:[], deliverables:[], execution:{state:'not_run',note:'read only'}, verification:{state:'unreviewed',note:'no scientific review'},...extra})
+it('explains host evidence labels and the bounds of submission feedback',()=>{
+ const prompt=taskPrompt('inspect',TaskContractSchema.parse({submission:'tool'}))
+ expect(prompt).toContain('[task_tool_evidence]');expect(prompt).toContain('evidenceCatalog');expect(prompt).toContain('截断')
+})
 it('rejects paths and contracts that cannot match their execution scope', () => {
   expect(TaskContractSchema.safeParse({inputs:['../raw.csv']}).success).toBe(false)
   expect(TaskContractSchema.safeParse({outputs:['result.csv']}).success).toBe(false)
@@ -56,4 +60,20 @@ it('enforces caller-required execution and review rather than accepting an unrun
 it('does not accept a task whose declared input file is unavailable',()=>{
  const contract=TaskContractSchema.parse({inputs:['missing.csv']})
  expect(acceptTaskResult(contract,result(),[],root()).state).not.toBe('accepted')
+})
+it('explains that issues are blocking findings, while informational notes belong in summary',()=>{
+ const contract=TaskContractSchema.parse({resultType:'data-summary'})
+ expect(taskPrompt('check',contract)).toContain('issues=[]')
+ expect(JSON.stringify(TaskResultParameters)).toContain('blocking')
+ const data={kind:'data-summary',rows:48,columns:[],issues:['method excludes these rows']}
+ expect(acceptTaskResult(contract,result({data}),[],root()).state).toBe('blocked')
+ expect(acceptTaskResult(contract,result({data:{...data,issues:[]}}),[],root()).state).toBe('accepted')
+})
+it('rejects ambiguous reused proof IDs even when both matching tool records succeeded',()=>{
+ const cwd=root();writeFileSync(join(cwd,'in.csv'),'x\n1\n')
+ const contract=TaskContractSchema.parse({resultType:'review',inputs:['in.csv'],requireReview:true})
+ const body=result({verification:{state:'reviewed',note:'review',toolCallIds:['reused']},data:{kind:'review',verdict:'pass',findings:[],reviewedPaths:['in.csv']}})
+ const proof={toolCallId:'reused',name:'read',status:'done' as const,input:{path:'in.csv'},result:'x\n1\n'}
+ expect(acceptTaskResult(contract,body,[proof,{...proof}],cwd).state).toBe('invalid')
+ expect(acceptTaskResult(contract,body,[proof],cwd).state).toBe('accepted')
 })

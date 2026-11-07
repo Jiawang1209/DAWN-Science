@@ -1,6 +1,6 @@
 /** Same mock hook as dev:mock; real parent/child Pi, scoped write and durable host receipt. */
 import {existsSync,mkdirSync,writeFileSync,readFileSync,readdirSync} from 'node:fs'
-import {join} from 'node:path'
+import {join,resolve} from 'node:path'
 import {test,expect,在项目里开会话} from './fixtures.js'
 const reply=JSON.stringify({summary:'已交付声明文件',blockers:[],deliverables:[{path:'results/contract.txt'}],execution:{state:'not_run',note:'仅写入文档'},verification:{state:'unreviewed',note:'未作科学审阅'}})
 test.use({dawnOptions:{reply,toolCall:[
@@ -23,6 +23,39 @@ test('scoped child writes the declared output and returns a host-validated recei
  expect(state.messages[0]).toMatchObject({status:'completed',deliveredAt:expect.any(Number),outcome:{receipt:{state:'accepted',deliverables:[{path:'results/contract.txt',state:'observed'}]}}})
  expect(state.children[0].settings.scope).toMatchObject({access:'workspace-write',outputs:['results/contract.txt']})
  expect(state.children[0].settings.scope.tools).not.toContain('bash')
+ const evidence=resolve(process.env.DAWN_SUBMISSION_EVIDENCE_DIR??'docs/validation/submission-evidence-20261107/desktop')
+ mkdirSync(evidence,{recursive:true})
+ await page.getByRole('button',{name:'打开协作：1 项任务 · 1 项验收通过',exact:true}).click()
+ const overview=page.getByRole('region',{name:'运行总览',exact:true})
+ await overview.getByRole('tab',{name:'记录',exact:true}).click()
+ await expect(overview.getByRole('region',{name:'任务证据与产物',exact:true})).toContainText('write')
+ await page.screenshot({path:join(evidence,'phase-b-actual-tool-evidence.png')})
+ await overview.getByRole('tab',{name:'产物',exact:true}).click()
+ await overview.getByRole('button',{name:'预览当前文件：results/contract.txt',exact:true}).click()
+ await expect(overview.locator('.collaboration-file-preview')).toContainText('contract output')
+ await expect(overview).toContainText('当前工作区文件预览')
+ await overview.locator('.collaboration-file-preview').scrollIntoViewIfNeeded()
+ await page.screenshot({path:join(evidence,'phase-b-current-file-preview.png')})
+ const saved=await page.evaluate(async sessionId=>{
+  const w=window as unknown as {dawn:{invoke:(op:string,request:unknown)=>Promise<{ok:boolean}>}}
+  return w.dawn.invoke('captureAndRetainCurrent',{sessionId,path:'results/contract.txt',name:'契约产物第一版',requestId:'collaboration-history'})
+ },state.ownerSessionId)
+ expect(saved.ok).toBe(true)
+ writeFileSync(join(workspace,'results','contract.txt'),'current changed after acceptance\n')
+ await overview.getByRole('button',{name:'查看文件留存：results/contract.txt',exact:true}).click()
+ await overview.getByRole('button',{name:'打开已保留文件 results/contract.txt',exact:true}).click()
+ await expect(overview.locator('.artifact-retained-preview')).toContainText('contract output')
+ await expect(overview.locator('.artifact-retained-preview')).not.toContainText('current changed after acceptance')
+ await overview.locator('.artifact-retained-preview').scrollIntoViewIfNeeded()
+ await page.screenshot({path:join(evidence,'phase-b-retained-version-preview.png')})
+ await overview.getByRole('button',{name:'回到产物',exact:true}).click()
+ await expect(overview.getByRole('button',{name:'查看文件留存：results/contract.txt',exact:true})).toBeFocused()
+ await overview.getByRole('button',{name:'展开流程工作台',exact:true}).click()
+ const dialog=page.getByRole('dialog',{name:'流程工作台',exact:true})
+ await dialog.getByRole('button',{name:'writer',exact:true}).click()
+ await expect(dialog.getByRole('tab',{name:'产物',exact:true})).toHaveAttribute('aria-selected','true')
+ await page.keyboard.press('Escape')
+ await expect(page.getByRole('button',{name:'展开流程工作台',exact:true})).toBeFocused()
 })
 
 test.describe('legacy Team contract adapter',()=>{

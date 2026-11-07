@@ -1,0 +1,54 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-trace.test.ts tests/orchestration/run-overview.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-trace.test.ts (0 test)
+ ❯ |node| tests/orchestration/run-overview.test.ts (5 tests | 1 failed) 29ms
+   × persists trace and full host receipt for cold inspection, but hides previous settlement while rerunning 6ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-trace.test.ts [ tests/orchestration/task-trace.test.ts ]
+Error: Cannot find module '../../src/orchestration/task-trace.js' imported from /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/tests/orchestration/task-trace.test.ts
+ ❯ tests/orchestration/task-trace.test.ts:2:1
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > persists trace and full host receipt for cold inspection, but hides previous settlement while rerunning
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "trace"
+    ],
+    "path": [
+      "children",
+      0,
+      "result"
+    ],
+    "message": "Unrecognized key: \"trace\""
+  }
+]
+ ❯ OrchestrationStore.change src/orchestration/store.ts:280:17
+    278|     const next = structuredClone(this.state)
+    279|     mutate(next)
+    280|     StateSchema.parse(next)
+       |                 ^
+    281|     mkdirSync(this.directory, {recursive: true})
+    282|     const temporary = join(this.directory, `.state-${process.pid}-${ra…
+ ❯ OrchestrationStore.settleRun src/orchestration/store.ts:150:10
+ ❯ OrchestrationService.execute src/orchestration/service.ts:223:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 4 passed (5)
+   Start at  09:06:52
+   Duration  319ms (transform 111ms, setup 0ms, import 202ms, tests 29ms, environment 0ms)
+

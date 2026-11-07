@@ -1,0 +1,4 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/subagent/executor.ts(548,28): error TS2339: Property 'trace' does not exist on type 'DoneLine'.
+src/subagent/executor.ts(548,89): error TS2339: Property 'trace' does not exist on type 'DoneLine'.

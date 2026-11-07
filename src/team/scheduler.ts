@@ -1,3 +1,4 @@
+import {taskTrace} from '../orchestration/task-trace.js'
 import {versionInputReceipt,finalizeTaskVersions,validateVersionReceipt} from '../artifacts/task-versions.js'
 /**
  * 团队调度器（team-board，2026-08-22，学自 dsh-agent-teams `scheduler.ts`）。
@@ -421,7 +422,7 @@ export class 团队调度器 {
         }
       }
       const execute=async(runSignal:AbortSignal):Promise<成员轮结果>=>{
-        const record=(result:成员轮结果):成员轮结果=>result.receipt?.versions&&this.opts.recordReceipt?{...result,receipt:this.opts.recordReceipt(result.receipt)}:result
+        const record=(result:成员轮结果):成员轮结果=>({...result,...(result.evidence?{trace:taskTrace(result.evidence)}:{}),...(result.receipt?.versions&&this.opts.recordReceipt?{receipt:this.opts.recordReceipt(result.receipt)}:{})})
         const release=settings&&!m.botId?await taskOutputReservation(this.opts.跑.context.cwd,settings,runSignal):()=>{}
         try {
           reportExecutionStage('preflight')
@@ -447,7 +448,7 @@ export class 团队调度器 {
         const coordinator = this.opts.orchestration
         if (coordinator) {
           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
-          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return outcome}, ctrl.signal)
+          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal)
         } else 结果 = await execute(ctrl.signal)
       } catch (error) {
         结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
@@ -458,7 +459,7 @@ export class 团队调度器 {
         if (bytes > limit) 结果 = {ok: false, output: "", error: `Bot 最终回复 ${bytes} 字节，超过 ${limit === 团队上限.maxOutputBytes ? "64 KiB" : "16 KiB"} 上限；省略全部 ${bytes} 字节，未接收截断的回复或产物列表。请提供更短摘要与完整产物列表。`}
         if (结果.error && Buffer.byteLength(结果.error, "utf8") > 16 * 1024) 结果 = {ok: false, output: "", error: `Bot 错误报告 ${Buffer.byteLength(结果.error, "utf8")} 字节，超过 16 KiB 上限；省略全部错误原文，未接收截断的结果。`}
       }
-      if (ctrl.signal.aborted) 结果 = { ok: false, output: "", error: m.botId ? "Bot 执行已停止。" : "已中止，未采用迟到结果。" }
+      if (ctrl.signal.aborted) 结果 = { ...(结果.trace?{trace:结果.trace}:{}),...(结果.observation?{observation:结果.observation}:{}),ok: false, output: "", error: m.botId ? "Bot 执行已停止。" : "已中止，未采用迟到结果。" }
       this.跑着.delete(key)
       this.botTurns.delete(key)
       // 结算：令牌对不上就丢掉并出声（转派 / 接管 / 取消都会让它对不上）
@@ -495,7 +496,7 @@ export class 团队调度器 {
           yielded = !ctrl.signal.aborted && !!outstanding
           if (yielded) return
           try {
-            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因",...(结果.receipt?{receipt:结果.receipt}:{}),...(结果.observation?{observation:结果.observation}:{}) }, this.now())
+            结算(t, 任务.taskId, 任务.attemptId, { ok: 结果.ok, output: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因",...(结果.receipt?{receipt:结果.receipt}:{}),...(结果.observation?{observation:结果.observation}:{}),...(结果.trace?{trace:结果.trace}:{}) }, this.now())
           if (m.botId) appendBotEvent(t, {id: `result:${任务.taskId}:${任务.attemptId}`, role: 结果.ok ? "bot" : "system", from: 结果.ok ? member : "system", botId: m.botId, content: 结果.ok ? 结果.output : 结果.error ?? "失败，没有说原因", createdAt: this.now(), kind: 结果.ok ? "result" : "status"})
           } catch (e) {
             丢了 = e instanceof Error ? e.message : String(e)

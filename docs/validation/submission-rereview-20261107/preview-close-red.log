@@ -1,0 +1,232 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-evidence.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-evidence.test.tsx (6 tests | 1 failed) 260ms
+   × can close a pending or failed current-file preview and does not reopen for late completion 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-evidence.test.tsx > can close a pending or failed current-file preview and does not reopen for late completion
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "收起预览"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "任务证据与产物":
+  [36m<section[39m
+    [33maria-label[39m=[32m"任务证据与产物"[39m
+    [33mclass[39m=[32m"collaboration-evidence"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<span[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"loader"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  code:
+
+  Name "":
+  [36m<code[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "预览当前文件：result.json":
+  [36m<button[39m
+    [33maria-label[39m=[32m"预览当前文件：result.json"[39m
+    [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "查看文件留存：result.json":
+  [36m<button[39m
+    [33maria-label[39m=[32m"查看文件留存：result.json"[39m
+    [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"任务证据与产物"[39m
+      [33mclass[39m=[32m"collaboration-evidence"[39m
+    [36m>[39m
+      [36m<p[39m
+        [33mdata-authored[39m=[32m"1"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mnumeric mismatch[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m验收指纹属于历史结算；预览读取当前文件，不代表已验收版本仍有效。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-artifact-row"[39m
+      [36m>[39m
+        [36m<strong[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0mresult.json[0m
+        [36m</strong>[39m
+        [36m<small>[39m
+          [0m验收版本 · 10 字节[0m
+        [36m</small>[39m
+        [36m<code[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+        [36m</code>[39m
+        [36m<div>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"预览当前文件：result.json"[39m
+            [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m预览当前文件[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"查看文件留存：result.json"[39m
+            [33mclass[39m=[32m"btn btn-text btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m查看文件留存[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-file-preview"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0m当前工作区文件预览[0m
+        [36m</p>[39m
+        [36m<span[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"loader"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"loader-glyph"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 0ms;"[39m
+            [36m>[39m
+              [0m⠋[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 80ms;"[39m
+            [36m>[39m
+              [0m⠙[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 160ms;"[39m
+            [36m>[39m
+              [0m⠹[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 240ms;"[39m
+            [36m>[39m
+              [0m⠸[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 320ms;"[39m
+            [36m>[39m
+              [0m⠼[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 400ms;"[39m
+            [36m>[39m
+              [0m⠴[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 480ms;"[39m
+            [36m>[39m
+              [0m⠦[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 560ms;"[39m
+            [36m>[39m
+              [0m⠧[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 640ms;"[39m
+            [36m>[39m
+              [0m⠇[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"animation-delay: 720ms;"[39m
+            [36m>[39m
+              [0m⠏[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"loader-label"[39m
+          [36m>[39m
+            [0m正在读文件[0m
+          [36m</span>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/collaboration-evidence.test.tsx:57:25
+     55|  render(<CollaborationEvidence client={client} sessionId="owner" recei…
+     56|  const trigger=screen.getByRole('button',{name:'预览当前文件：result.json'});…
+     57|  fireEvent.click(screen.getByRole('button',{name:'收起预览'}));expect(docu…
+       |                         ^
+     58|  await act(async()=>finish({kind:'text',mediaType:'text/plain',text:'l…
+     59|  expect(screen.queryByText('late body')).toBeNull()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  10:06:40
+   Duration  1.40s (transform 414ms, setup 512ms, import 205ms, tests 260ms, environment 343ms)
+

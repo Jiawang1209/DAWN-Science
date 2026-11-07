@@ -1,3 +1,6 @@
+import {childDiagnostics} from './diagnostics.js'
+import {TaskTraceSchema,type TaskTrace} from '../protocol/task-trace.js'
+import {taskTrace} from '../orchestration/task-trace.js'
 import {handoffPrompt} from './context-handoff.js'
 import type {HandoffSelection,ContextHandoff} from '../protocol/context-handoff.js'
 import {SteeringEventSchema} from "./steering.js"
@@ -66,6 +69,7 @@ export type SubagentRequest =
   | { mode: "chain"; chain: SubagentTask[] }
 
 export interface SubagentResult {
+  trace?:TaskTrace
   versions?:TaskVersions
   observation?:TaskObservation
   receipt?: TaskReceipt
@@ -347,9 +351,9 @@ export class SubagentExecutor {
     let result:SubagentResult|undefined
     const outcome=await service.run(child.id,async childSignal=>{
       result=await execute(childSignal)
-      return{ok:result.ok,output:result.output,...(result.error?{error:result.error}:{}),...(result.receipt?{receipt:result.receipt}:{}),...(result.observation?{observation:result.observation}:{})}
+      return{...(result.evidence?{trace:taskTrace(result.evidence)}:result.trace?{trace:result.trace}:{}),ok:result.ok,output:result.output,...(result.error?{error:result.error}:{}),...(result.receipt?{receipt:result.receipt}:{}),...(result.observation?{observation:result.observation}:{})}
     },signal)
-    return result&&result.ok===outcome.ok?result:fail(task,outcome.error??"子任务未执行")
+    return result&&result.ok===outcome.ok?result:{...fail(task,outcome.error??"子任务未执行"),...childDiagnostics(outcome)}
   }
 
   private spawnOne(
@@ -402,7 +406,7 @@ export class SubagentExecutor {
       let 最后done: DoneLine | undefined
       let forced: SubagentResult | undefined
       const 收一行 = (line: string) => {
-        if (forced || settled) return
+        if (settled) return
         const s = line.trim()
         if (!s.startsWith("{")) return
         let v: { type?: string; event?: 子事件; id?: string; name?: string; params?: unknown }
@@ -411,6 +415,7 @@ export class SubagentExecutor {
         } catch {
           return
         }
+        if(forced){if(v.type==='done')最后done=v as DoneLine;return}
         if(binding&&control&&typeof v.type==='string'&&v.type.startsWith('steer_')){
           try{
             const parsed=SteeringEventSchema.safeParse(v)
@@ -435,7 +440,7 @@ export class SubagentExecutor {
           return
         }
         if (v.type === "done") 最后done = v as DoneLine
-        else if (v.type === "call" && (resources || this.context.authorize) && typeof v.id === "string" && !settled) {
+        else if (v.type === "call" && (resources || this.context.authorize) && typeof v.id === "string" && !settled && !forced && !signal?.aborted) {
           const id = v.id
           const reply = (ok: boolean, result: string) => {
             if (settled) return
@@ -450,7 +455,7 @@ export class SubagentExecutor {
           else if(resources) void resources.call(v.name, v.params).then(result => reply(true, result), error => reply(false, message(error)))
         }
         // 已收尾（中止 / 超时）之后到的过程不再转：chip 已经 settled，再来一行只会让界面以为它还活着
-        else if (v.type === "event" && v.event && !settled) {
+        else if (v.type === "event" && v.event && !settled && !forced) {
           const parsed = 子事件Schema.safeParse(v.event)
           if (parsed.success) this.onProgress({ type: "event", index, event: parsed.data })
         }
@@ -516,10 +521,10 @@ export class SubagentExecutor {
       child.on("error", (e) => done(fail(task, `子进程起不来：${e.message}`)))
 
       child.on("close", (code) => {
-        if (forced) return done(forced)
         if (!丢弃中 && 行缓冲.trim()) 收一行(行缓冲)
         行缓冲 = ""
         const report = 最后done
+        if(forced)return done({...forced,...childDiagnostics(report)})
 
         if (!report) {
           // 两种都在这里落地，措辞不同：非 0 退出有码可报；
@@ -542,8 +547,10 @@ export class SubagentExecutor {
         const observation=measured?.success?{observation:measured.data}:{}
         const versions=report.versions===undefined?undefined:TaskVersionsSchema.safeParse(report.versions)
         if(versions&&!versions.success)return done(fail(task,'子进程内容版本格式无效'))
+        const trace=report.trace===undefined?undefined:TaskTraceSchema.safeParse(report.trace)
+        if(trace&&!trace.success)return done(fail(task,'Invalid child diagnostic trace'))
         if (!report.ok) {
-          return done({...fail(task, report.error ?? "子 agent 报告失败，但没有说原因"),...observation})
+          return done({...fail(task, report.error ?? "子 agent 报告失败，但没有说原因"),...observation,...(trace?.success?{trace:trace.data}:{})})
         }
 
         if(settings?.contract?.submission==='tool'&&report.submitted!==true)return done({...fail(task,'缺少宿主提交标记，不能用文本完成工具契约'),...observation})
@@ -613,6 +620,7 @@ function toTasks(req: SubagentRequest): SubagentTask[] {
 }
 
 interface DoneLine {
+  trace?:unknown
   versions?:unknown
   submitted?:unknown
   observation?:unknown

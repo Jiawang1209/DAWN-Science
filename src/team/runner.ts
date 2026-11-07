@@ -1,3 +1,5 @@
+import {childDiagnostics} from '../subagent/diagnostics.js'
+import {TaskTraceSchema} from '../protocol/task-trace.js'
 import {TaskVersionsSchema} from '../protocol/file-versions.js'
 /**
  * 成员的一轮（team-board，2026-08-22）：起一个子进程、递规格、回答它的工具调用、收结果。
@@ -93,7 +95,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       }
     }
     const 收一行 = (line: string) => {
-      if (forced || settled) return
+      if (settled) return
       const t = line.trim()
       if (!t) return
       let m: SubagentChildMessage
@@ -102,6 +104,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       } catch {
         return
       }
+      if(forced){if(m.type==='done')forced={...forced,...childDiagnostics(m)};return}
       if (m.type === "call") {
         const resource = m.name === "resource_search" || m.name === "resource_read"
         // Communication is a separate RPC path, so enforce the frozen scope here too.
@@ -120,7 +123,9 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
         if(observation&&!observation.success){结果={ok:false,output:'',error:'子进程观测格式无效'};return}
         const versions='versions' in m&&m.versions!==undefined?TaskVersionsSchema.safeParse(m.versions):undefined
         if(versions&&!versions.success){结果={ok:false,output:'',error:'子进程内容版本格式无效'};return}
-        const measured={...(observation?.success?{observation:observation.data}:{}),...(versions?.success?{versions:versions.data}:{})}
+        const trace=!m.ok&&m.trace!==undefined?TaskTraceSchema.safeParse(m.trace):undefined
+        if(trace&&!trace.success){结果={ok:false,output:'',error:'Invalid child diagnostic trace'};return}
+        const measured={...(trace?.success?{trace:trace.data}:{}),...(observation?.success?{observation:observation.data}:{}),...(versions?.success?{versions:versions.data}:{})}
         if (m.ok) {
           if(规格.settings?.contract?.submission==='tool'&&m.submitted!==true){结果={...measured,ok:false,output:'',error:'缺少宿主提交标记，不能用文本完成工具契约'};return}
           const bytes = Buffer.byteLength(m.output, "utf8")
@@ -144,7 +149,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
     child.stderr.on("data", (d: string) => (err += d))
     child.on("error", (e) => done({ ok: false, output: "", error: `子进程起不来：${e.message}` }))
     child.on("close", (code) => {
-      if (forced) return done(forced)
+      if (forced) return done({...forced,...childDiagnostics(结果)})
       if (缓冲.trim()) 收一行(缓冲)
       if (结果) return done(结果)
       const detail = err.trim() ? `：${err.trim().slice(-500)}` : ""

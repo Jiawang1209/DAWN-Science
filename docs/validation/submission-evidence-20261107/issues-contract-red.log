@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/task-contract.test.ts (10 tests | 1 failed) 16ms
+   × explains that issues are blocking findings, while informational notes belong in summary 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-contract.test.ts > explains that issues are blocking findings, while informational notes belong in summary
+AssertionError: expected 'check\n\n任务契约（范围已冻结）：{"resultType":"d…' to contain 'issues=[]'
+
+- Expected
++ Received
+
+- issues=[]
++ check
++
++ 任务契约（范围已冻结）：{"resultType":"data-summary","version":1,"inputs":[],"outputs":[],"access":"read-only","requireExecution":false,"requireReview":false}
++
++ 可调用 submit_task_result 正式提交；未使用时最终答复须仅为 JSON。格式：{summary:string,blockers:string[],deliverables:[{path:string,note?:string}],execution:{state:"not_run"|"partial"|"completed"|"failed",note:string,toolCallIds?:string[]},verification:{state:"unreviewed"|"reviewed"|"issues",note:string,toolCallIds?:string[]},data?:按 resultType 要求的数据对象}。resultType=data-summary 时 data={kind:"data-summary",rows:number,columns:[{name,type?,unit?}],issues:string[]}；model-metrics 时 data={kind:"model-metrics",method:string,metrics:{名称:number},sampleCount?:number,caveats:string[]}；review 时 data={kind:"review",verdict:"pass"|"revise"|"blocked",findings:string[],reviewedPaths:string[],revisionInstructions?:string}。执行/审阅声明须引用实际本轮工具 callId。工具结果正文末尾的 [task_tool_evidence] 是宿主追加的本任务真实调用标签，含 toolCallId、工具状态、执行状态和路径；不是科学结论或文件内容。提交报错返回 fieldErrors、冻结契约要求和 evidenceCatalog（仅最近调用）；省略数量、截断字段均有标记。不得猜测 ID、借用其他任务 ID 或引用截断 ID；较早未列出的本任务完整 ID 仍可使用。审阅须真实读取 reviewedPaths 中的文件。文件存在、格式通过和工具执行不等于科学正确。阻塞用 blockers 交还主 agent，不得扩大权限。
+
+ ❯ tests/orchestration/task-contract.test.ts:66:39
+     64| it('explains that issues are blocking findings, while informational no…
+     65|  const contract=TaskContractSchema.parse({resultType:'data-summary'})
+     66|  expect(taskPrompt('check',contract)).toContain('issues=[]')
+       |                                       ^
+     67|  expect(JSON.stringify(TaskResultParameters)).toContain('blocking')
+     68|  const data={kind:'data-summary',rows:48,columns:[],issues:['method ex…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  09:29:54
+   Duration  260ms (transform 56ms, setup 0ms, import 160ms, tests 16ms, environment 0ms)
+

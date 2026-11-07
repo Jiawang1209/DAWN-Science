@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/ui/collaboration-evidence.tsx(23,116): error TS2339: Property 'note' does not exist on type '{ id: string; state: "blocked" | "not_configured" | "passed"; expected?: string | undefined; actual?: string | undefined; reason?: string | undefined; }'.

@@ -317,6 +317,10 @@ export interface DawnFixture {
 export interface MockToolCallSpec {
   toolName: string
   args: Record<string, unknown>
+  /** Resolve only from one complete, host-labelled tool result in this task. */
+  evidenceReferences?: Partial<Record<'execution'|'verification',string>>
+  /** Match the current task's latest user instruction across its tool-result turns. */
+  duringTask?: string
   /**
    * 调工具**之前先说的那一句**（2026-08-15）。
    *
@@ -506,7 +510,7 @@ export interface DawnOptions {
 }
 
 /** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
-function toolCallHook(spec: MockToolCallSpec | readonly MockToolCallSpec[] | undefined) {
+export function toolCallHook(spec: MockToolCallSpec | readonly MockToolCallSpec[] | undefined) {
   if (!spec) return undefined
   /** 数组：每条各建一个状态机，按顺序取第一个不是 undefined 的（2026-09-24） */
   if (isSpecList(spec)) {
@@ -522,7 +526,28 @@ function toolCallHook(spec: MockToolCallSpec | readonly MockToolCallSpec[] | und
   return 一条的状态机(spec)
 }
 
-type 请求体 = { messages?: Array<{ role?: string; content?: unknown }> }
+type 请求体 = { messages?: Array<{ role?: string; content?: unknown;tool_call_id?:string }> }
+
+function evidenceArguments(spec:MockToolCallSpec,body:请求体):Record<string,unknown>{
+ if(!spec.evidenceReferences)return spec.args
+ const args=structuredClone(spec.args)
+ for(const [field,name] of Object.entries(spec.evidenceReferences)){
+  const ids=new Set<string>()
+  for(const message of body.messages??[]){
+   if(message.role!=='tool')continue
+   const text=typeof message.content==='string'?message.content:Array.isArray(message.content)?message.content.map(c=>typeof c?.text==='string'?c.text:'').join('\n'):''
+   for(const line of text.split('\n'))if(line.startsWith('[task_tool_evidence] ')){
+    const label=JSON.parse(line.slice('[task_tool_evidence] '.length))
+    if(label.name===name&&label.status==='done'&&label.toolCallId===message.tool_call_id&&!label.truncatedFields?.includes('toolCallId'))ids.add(label.toolCallId)
+   }
+  }
+  if(ids.size!==1)throw new Error(`Fixture evidence reference ${field}/${name} requires exactly one actual labelled tool result; found ${ids.size}`)
+  const record=args[field]
+  if(!record||typeof record!=='object'||Array.isArray(record))throw new Error(`Fixture evidence target ${field} must be a result record`)
+  args[field]={...record,toolCallIds:[...ids]}
+ }
+ return args
+}
 
 function isSpecList(spec: MockToolCallSpec | readonly MockToolCallSpec[]): spec is readonly MockToolCallSpec[] {
   return Array.isArray(spec)
@@ -543,26 +568,29 @@ function 最后一句用户话(body: 请求体): string | undefined {
 
 function 一条的状态机(spec: MockToolCallSpec) {
   if (spec.when === "") throw new Error(`toolCall.when 不许是空串（${spec.toolName}）：它对每一问都成立，等于没写`)
+  if(spec.duringTask==='')throw new Error(`toolCall.duringTask must not be empty (${spec.toolName})`)
   let fired = false
   let 次数 = 0
   return (body: 请求体) => {
     // **先判 `when`、再动状态机**：没对上的请求不许吃掉 `once` 那一次
     if (spec.when !== undefined && !(最后一句用户话(body) ?? "").includes(spec.when)) return undefined
+    if(spec.duringTask!==undefined){const user=body.messages?.findLast(message=>message.role==='user');if(!(最后一句用户话({messages:user?[user]:[]})??'').includes(spec.duringTask))return undefined}
+    const call=()=>({toolName:spec.toolName,args:evidenceArguments(spec,body),...(spec.say?{say:spec.say}:{})})
     if (spec.perTurn) {
       const 最后 = body.messages?.at(-1)
       return 最后?.role === "user"
-        ? { toolName: spec.toolName, args: spec.args, ...(spec.say ? { say: spec.say } : {}) }
+        ? call()
         : undefined
     }
     if (spec.repeat !== undefined) {
       if (次数 >= spec.repeat) return undefined
       次数++
-      return { toolName: spec.toolName, args: spec.args }
+      return call()
     }
     if (fired && (spec.once ?? true)) return undefined
     fired = true
     // ** 不给就不带**：旧用例一个字节不变
-    return { toolName: spec.toolName, args: spec.args, ...(spec.say ? { say: spec.say } : {}) }
+    return call()
   }
 }
 

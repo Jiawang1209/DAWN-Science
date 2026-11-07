@@ -1,0 +1,29 @@
+{
+  "before": {
+    "revision": 5,
+    "limits": {
+      "maxRuns": 2
+    },
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 40,
+    "unknownRuns": 2,
+    "active": [],
+    "startedAt": 1794017810081
+  },
+  "after": {
+    "revision": 5,
+    "limits": {
+      "maxRuns": 2
+    },
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 40,
+    "unknownRuns": 2,
+    "startedAt": 1794017810081,
+    "active": []
+  },
+  "actualElectron": true,
+  "actualPiChildren": 2,
+  "thirdChildRejected": true
+}

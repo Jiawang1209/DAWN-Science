@@ -105,3 +105,9 @@ it('returns focus to the selected card when the expanded detail drawer closes',a
  const close=screen.getByRole('button',{name:'收起检查面板'});close.focus();fireEvent.click(close)
  expect(document.activeElement).toBe(card)
 })
+it('never shows a previous Team receipt as current while a fresh attempt is pending',async()=>{
+ const team:TeamSnapshot={id:'team',captainSessionId:'p',name:'team',goal:'g',createdAt:1,members:[],messages:[],taskSeq:1,tasks:[{id:'t1',subject:'rerun task',status:'pending',dependencies:[],attempt:2,createdAt:1,updatedAt:1,receipt:{version:1,state:'accepted',summary:'old',deliverables:[],versions:{version:1,inputs:[],outputs:[{path:'old.txt',bytes:1,sha256:'a'.repeat(64)}]}}}]}
+ render(<RunOverview client={client(data())} sessionId="p" team={team}/>);await act(async()=>{})
+ fireEvent.click(screen.getByRole('button',{name:'rerun task'}));fireEvent.click(screen.getByRole('tab',{name:'产物'}))
+ expect(screen.queryByText('宿主验收通过')).toBeNull();expect(screen.queryByText('old.txt')).toBeNull()
+})

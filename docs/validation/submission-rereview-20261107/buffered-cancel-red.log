@@ -1,0 +1,44 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/task-executor.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science
+
+ ❯ |node| tests/subagent/task-executor.test.ts (10 tests | 1 failed) 617ms
+   × keeps diagnostic done buffered after abort while refusing a buffered late authorization RPC 61ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/task-executor.test.ts > keeps diagnostic done buffered after abort while refusing a buffered late authorization RPC
+AssertionError: expected { agent: 'a', task: 'read', …(5) } to match object { ok: false, output: '', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+    "output": "",
+-   "trace": {
+-     "omitted": 0,
+-     "records": [
+-       {
+-         "execution": "not_observed",
+-         "name": "read",
+-         "status": "done",
+-         "toolCallId": "buffered-read",
+-       },
+-     ],
+-   },
+  }
+
+ ❯ tests/subagent/task-executor.test.ts:75:34
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  10:11:32
+   Duration  1.25s (transform 134ms, setup 0ms, import 558ms, tests 617ms, environment 0ms)
+

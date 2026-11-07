@@ -20,6 +20,7 @@ type Props = {
   client: WorkbenchClient
   paths: string[]
   path?: string | undefined
+  filterPath?: string | undefined
   readOnly?: boolean | undefined
   onClose: () => void
   onUseForDelivery?: ((group: RetainedResult) => void) | undefined
@@ -531,6 +532,7 @@ function RetainedHistory(p: Props) {
     }
   }
   const member = preview?.group.members.find((m) => m.id === preview.memberId)
+  const filteredGroups=groups?.filter(group=>!p.filterPath||group.members.some(m=>m.observation.path===p.filterPath))
   return (
     <section className="artifact-history-panel" aria-label={t("已保留版本")}>
       <header className="artifact-evidence-toolbar">
@@ -581,11 +583,11 @@ function RetainedHistory(p: Props) {
       ) : (
         <>
           {!groups && !error ? <Loader label={t("正在读取来源记录")} /> : null}
-          {groups?.length === 0 ? (
-            <p className="hint">{t("还没有保留的版本，打开结果后点击保留")}</p>
+          {filteredGroups?.length === 0 ? (
+            <p className="hint">{p.filterPath?t("当前已读取的留存中没有此文件"):t("还没有保留的版本，打开结果后点击保留")}</p>
           ) : null}
           <div className="artifact-retained-groups">
-            {groups?.map((group) => (
+            {filteredGroups?.map((group) => (
               <article
                 className="artifact-retained-group"
                 key={group.id}
@@ -598,7 +600,7 @@ function RetainedHistory(p: Props) {
                   </time>
                 </div>
                 {group.note ? <p className="hint">{group.note}</p> : null}
-                {group.members.map((m) => (
+                {group.members.filter(m=>!p.filterPath||m.observation.path===p.filterPath).map((m) => (
                   <Button
                     variant="ghost"
                     size="sm"

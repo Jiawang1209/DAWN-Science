@@ -6,7 +6,7 @@ import {RouteExecutionSchema,RouteVerificationSchema,WorkspaceRelativePathSchema
 const paths = z.array(WorkspaceRelativePathSchema).max(64)
 export const TaskAccessSchema = z.enum(['read-only','workspace-write','workspace-exec'])
 export const TaskDataSchema=z.discriminatedUnion('kind',[
- z.object({kind:z.literal('data-summary'),rows:z.number().int().nonnegative(),columns:z.array(z.object({name:z.string().min(1).max(200),type:z.string().max(200).optional(),unit:z.string().max(200).optional()}).strict()).max(256),issues:z.array(z.string().min(1).max(2000)).max(64)}).strict(),
+ z.object({kind:z.literal('data-summary'),rows:z.number().int().nonnegative(),columns:z.array(z.object({name:z.string().min(1).max(200),type:z.string().max(200).optional(),unit:z.string().max(200).optional()}).strict()).max(256),issues:z.array(z.string().min(1).max(2000)).max(64).describe('Unresolved blocking findings only. Empty [] means no blocker; informational observations and approved missing-value handling belong in summary.')}).strict(),
  z.object({kind:z.literal('model-metrics'),method:z.string().min(1).max(2000),metrics:z.record(z.string().min(1).max(100),z.number().finite()).refine(v=>Object.keys(v).length<=64,'Too many metrics'),sampleCount:z.number().int().nonnegative().optional(),caveats:z.array(z.string().max(2000)).max(64)}).strict(),
  z.object({kind:z.literal('review'),verdict:z.enum(['pass','revise','blocked']),findings:z.array(z.string().min(1).max(2000)).max(64),reviewedPaths:paths,revisionInstructions:z.string().min(1).max(8000).optional()}).strict().refine(v=>v.verdict==='pass'||v.findings.length>0,'Review issues need concrete findings'),
 ])

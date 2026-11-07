@@ -1,0 +1,18 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/artifact-retention.spec.ts e2e/task-contract.spec.ts --grep actual interpreter snapshots|scoped child writes
+
+Running 2 tests using 1 worker
+
+(node:70871) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51988/12d51849-4b05-4e12-ba80-ab40b9e3056c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/artifact-retention.spec.ts:191:3 › automatic artifact sources and explicit result retention › actual interpreter snapshots belong to each Python/R notebook execution (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-submission-evidence-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「结构化子任务验收」做完了 — {"summary":"已交付声明文件","blockers":[],"deliverables":[{"path":"results/contract.txt"}],"execution":{"state":"not_run","note…
+[主进程] Debugger ending on ws://127.0.0.1:52081/531ac2ad-bd5d-464d-90f4-f4f086472f3f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (5.0s)
+
+  2 passed (10.6s)

@@ -1,0 +1,93 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (31 tests | 4 failed) 135ms
+     × cannot use an unrelated ordinary charge to claim that a held review reservation was consumed 6ms
+     × an admitted review binding must correspond to its consumed reservation even after settlement 3ms
+     × requires exactly one admitted review binding for each consumed reservation key 4ms
+     × waits for the same cycle predecessor to drain before atomically consuming its review hold 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > cannot use an unrelated ordinary charge to claim that a held review reservation was consumed
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:259:47
+    257|   state.budget.reviewReservations[0].phase='consumed';state.budget.rev…
+    258|   const text=JSON.stringify(state);writeFileSync(file,text)
+    259|   expect(()=>new OrchestrationStore(dir,'p')).toThrow(/accounting|rese…
+       |                                               ^
+    260|   expect(readFileSync(file,'utf8')).toBe(text)
+    261|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > an admitted review binding must correspond to its consumed reservation even after settlement
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:270:48
+    268|    reservation.phase=phase;reservation.remainingRuns=phase==='released…
+    269|    const text=JSON.stringify(state);writeFileSync(file,text)
+    270|    expect(()=>new OrchestrationStore(dir,'p')).toThrow(/accounting|res…
+       |                                                ^
+    271|    expect(readFileSync(file,'utf8')).toBe(text)
+    272|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > requires exactly one admitted review binding for each consumed reservation key
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:282:47
+    280|   state.budget.reviewReservations[1].phase='released';state.budget.rev…
+    281|   const text=JSON.stringify(state);writeFileSync(file,text)
+    282|   expect(()=>new OrchestrationStore(dir,'p')).toThrow(/accounting|rese…
+       |                                               ^
+    283|   expect(readFileSync(file,'utf8')).toBe(text)
+    284|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > waits for the same cycle predecessor to drain before atomically consuming its review hold
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:288:59
+    286|   const{dir,store}=setup(),key=store.reserveReviewRuns('a',0)!.key,che…
+    287|   const epoch=begin(store,check.id,{key,stage:'check'})
+    288|   expect(()=>begin(store,review.id,{key,stage:'review'})).toThrow(/排空|…
+       |                                                           ^
+    289|   expect(store.budget()).toMatchObject({consumedRuns:1,reviewReservedR…
+    290|   settle(store,check.id,epoch);begin(store,review.id,{key,stage:'revie…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 failed | 44 passed (48)
+   Start at  21:40:32
+   Duration  501ms (transform 428ms, setup 0ms, import 840ms, tests 218ms, environment 0ms)
+

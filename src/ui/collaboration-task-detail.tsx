@@ -1,3 +1,6 @@
+import type {RunOverview} from '../protocol/run-overview.js'
+import {exactTaskObservationRun} from './agent-observation.js'
+import {AgentObservation} from './agent-observation-view.js'
 import {CollaborationEvidence} from './collaboration-evidence.js'
 import type {WorkbenchClient} from './client.js'
 import type {TeamSnapshot} from '../protocol/index.js'
@@ -6,10 +9,11 @@ import {TaskTimeline,type TimelineDestination,type TimelineRun} from './task-tim
 import {runStatus} from './collaboration-model.js'
 import {t,tf} from './i18n/index.js'
 type Task=TeamSnapshot['tasks'][number]
-export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspectToolRecord,timeline,pendingDependencies,live,onInspect}:{timeline?:TimelineRun;pendingDependencies?:string[];live?:boolean;onInspect?:(destination:TimelineDestination)=>void;inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
+export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,snapshot,inspectToolRecord,timeline,pendingDependencies,live,onInspect}: {snapshot?:RunOverview;timeline?:TimelineRun;pendingDependencies?:string[];live?:boolean;onInspect?:(destination:TimelineDestination)=>void;inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
  const settled=task.status==='completed'||task.status==='failed'
  const receipt=settled?task.receipt:undefined
  const current=timeline?.current
+ const observationRun=snapshot&&sessionId&&teamId?exactTaskObservationRun(snapshot,sessionId,{teamId,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt},current):undefined
  const active=task.status==='claimed'||task.status==='in_progress'
  const liveActivity=!!(live&&active&&current&&(current.phase==='running'||current.phase==='stopping'||current.phase==='queued'))
  const status=receipt?.state==='blocked'?t("宿主验收阻塞"):liveActivity?runStatus(current!,true):
@@ -18,6 +22,7 @@ export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspec
  const reason=receipt?.reason||(receipt?.result?.blockers.length?receipt.result.blockers.join('；'):undefined)||(task.status==='failed'?task.output:undefined)||(task.status==='pending'&&pendingDependencies?.length?tf("等待前置：{0}",pendingDependencies.join(' · ')):undefined)
  return <div className="collaboration-team-task" data-task-detail={task.id}>
   {tab==='process'?<>
+   {snapshot&&observationRun?<AgentObservation snapshot={snapshot} run={observationRun} owner={sessionId} details/>:<p className="hint">{t("本次任务没有可精确关联的成员观测")}</p>}
    {onInspect?<TaskTimeline events={timeline?.events??[]} truncated={timeline?.truncated} historical={timeline?.historical} current={active?current:undefined} live={liveActivity}
     status={status} reason={reason} toolCount={settled&&!timeline?.historical?task.trace?.records.length??0:0} versionCount={timeline?.historical?0:receipt?.versions?.outputs.length??0} onInspect={onInspect}/>:null}
    <details className="task-timeline-context"><summary>{t("任务说明与回报")}</summary><p data-authored="1">{task.description??task.subject}</p>

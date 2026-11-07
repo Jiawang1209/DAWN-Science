@@ -1,0 +1,39 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (29 tests | 1 failed) 18ms
+     × prioritizes an actual stopping run over an unrelated unknown historical record 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > prioritizes an actual stopping run over an unrelated unknown historical record
+AssertionError: expected { state: 'history', …(4) } to match object { state: 'stopping', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "wait-for-drain",
+-   "state": "stopping",
++   "action": "inspect-artifacts",
++   "state": "history",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:129:116
+    127|  })
+    128|  it('prioritizes an actual stopping run over an unrelated unknown hist…
+    129|   expect(selectCollaborationOutcome(snapshot([{...run,phase:'unknown'}…
+       |                                                                                                                    ^
+    130|  })
+    131|  it('keeps protocol optional fields backward compatible and strict',()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 passed (29)
+   Start at  22:19:46
+   Duration  967ms (transform 330ms, setup 488ms, import 21ms, tests 18ms, environment 355ms)
+

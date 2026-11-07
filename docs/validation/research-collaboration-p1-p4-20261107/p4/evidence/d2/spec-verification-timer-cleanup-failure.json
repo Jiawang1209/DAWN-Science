@@ -1,0 +1,58 @@
+[
+  {
+    "name": "spec-final-d2-targets",
+    "command": [
+      "npm",
+      "exec",
+      "vitest",
+      "run",
+      "--",
+      "--project",
+      "node",
+      "tests/orchestration/agent-usage-totals.test.ts",
+      "tests/protocol/agent-usage-totals.test.ts",
+      "tests/runtime/native-usage-observation.test.ts",
+      "tests/runtime/session-usage.test.ts",
+      "tests/subagent/task-recovery.test.ts",
+      "tests/subagent/child-task.test.ts",
+      "tests/workbench/bot-usage.test.ts",
+      "tests/integration/subagent-child.test.ts"
+    ],
+    "started": "2026-11-08T00:31:29.728531+08:00",
+    "exitCode": 0
+  },
+  {
+    "name": "spec-targeted-full-final",
+    "command": [
+      "npm",
+      "exec",
+      "vitest",
+      "run",
+      "--",
+      "--project",
+      "node",
+      "tests/protocol",
+      "tests/orchestration",
+      "tests/subagent",
+      "tests/team",
+      "tests/bot",
+      "tests/runtime/native.test.ts",
+      "tests/runtime/native-turn-failed.test.ts",
+      "tests/runtime/native-kernel-cleanup.test.ts",
+      "tests/runtime/agent-context-native.test.ts",
+      "tests/runtime/agent-context-sampler.test.ts",
+      "tests/runtime/session-usage.test.ts",
+      "tests/runtime/native-usage-observation.test.ts",
+      "tests/runtime/bot-submission-schema.test.ts",
+      "tests/runtime/subagent-follow-up.test.ts",
+      "tests/workbench/bot-contract.test.ts",
+      "tests/workbench/bot-usage.test.ts",
+      "tests/workbench/bot-ops.test.ts",
+      "tests/workbench/bot-science-acceptance.test.ts",
+      "tests/integration/subagent-child.test.ts",
+      "tests/integration/bot-native-session.test.ts"
+    ],
+    "started": "2026-11-08T00:31:35.837400+08:00",
+    "exitCode": 1
+  }
+]

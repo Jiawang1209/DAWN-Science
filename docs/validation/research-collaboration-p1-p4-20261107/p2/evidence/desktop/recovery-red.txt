@@ -1,0 +1,54 @@
+
+Running 1 test using 1 worker
+
+(node:53565) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55429/7b0b7256-a96c-4e98-a0f4-fb701496b61c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：演示审阅执行轮次预留，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:55447/951a3d03-0639-43a7-bc40-32c61d5c16a6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/run-explanation-budget.spec.ts:82:2 › scientific reservation recovery › keeps an interrupted hold for verification across restart and resumes only after an explicit budget change (29.2s)
+
+
+  1) e2e/run-explanation-budget.spec.ts:82:2 › scientific reservation recovery › keeps an interrupted hold for verification across restart and resumes only after an explicit budget change 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "completed"
+    Received: "interrupted"
+
+    Call Log:
+    - Timeout 25000ms exceeded while waiting on the predicate
+
+      102 |   await overview.getByRole('button',{name:'委派限额生效',exact:true}).click();await expect(overview).toContainText('当前限制：轮次 4')
+      103 |   await page.locator('main.main .composer textarea').fill('显式恢复科研流程，已核对中断副作用');await page.getByRole('button',{name:'发送',exact:true}).click()
+    > 104 |   await expect.poll(()=>persistedPipeline(workspace)?.team.pipeline.status).toBe('completed')
+          |                                                                             ^
+      105 |   const after=persistedPipeline(workspace)!
+      106 |   expect(after.budget).toMatchObject({consumedRuns:4,active:[],reviewReservations:[{phase:'consumed',remainingRuns:0}]})
+      107 |   expect(after.team.pipeline.round).toBe(0)
+        at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/e2e/run-explanation-budget.spec.ts:104:77
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-p14-stage-b-desktop-20261107.Yx2dJs/recovery-red-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-p14-stage-b-desktop-20261107.Yx2dJs/recovery-red-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../../tmp/dawn-p14-stage-b-desktop-20261107.Yx2dJs/recovery-red-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-p14-stage-b-desktop-20261107.Yx2dJs/recovery-red-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../../tmp/dawn-p14-stage-b-desktop-20261107.Yx2dJs/recovery-red-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/run-explanation-budget.spec.ts:82:2 › scientific reservation recovery › keeps an interrupted hold for verification across restart and resumes only after an explicit budget change 

@@ -1,0 +1,71 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/orchestration/agent-usage-totals.test.ts tests/subagent/child-task.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/subagent/child-task.test.ts (15 tests | 2 failed) 461ms
+     × 每条能翻的 pi 事件都交给 onEvent；`done` 的语义一个字不变 5ms
+     × 不给 onEvent 照旧能跑（老调用方） 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/child-task.test.ts > 过程（2026-09-27，子 agent 看得见） > 每条能翻的 pi 事件都交给 onEvent；`done` 的语义一个字不变
+AssertionError: expected { type: 'done', ok: true, …(2) } to deeply equal { Object (type, ok, ...) }
+
+- Expected
++ Received
+
+  {
++   "observation": {
++     "elapsedMs": 0,
++     "invalidSubmissions": 0,
++     "submissionAttempts": 0,
++   },
+    "ok": true,
+    "output": "结论",
+    "type": "done",
+  }
+
+ ❯ tests/subagent/child-task.test.ts:169:15
+    167|     )
+    168|     expect(收到.map((e) => (e as { kind: string }).kind)).toEqual(["tool…
+    169|     expect(r).toEqual({ type: "done", ok: true, output: "结论" })
+       |               ^
+    170|   })
+    171|   it("不给 onEvent 照旧能跑（老调用方）", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/subagent/child-task.test.ts > 过程（2026-09-27，子 agent 看得见） > 不给 onEvent 照旧能跑（老调用方）
+AssertionError: expected { type: 'done', ok: true, …(2) } to deeply equal { type: 'done', ok: true, output: 'x' }
+
+- Expected
++ Received
+
+  {
++   "observation": {
++     "elapsedMs": 0,
++     "invalidSubmissions": 0,
++     "submissionAttempts": 0,
++   },
+    "ok": true,
+    "output": "x",
+    "type": "done",
+  }
+
+ ❯ tests/subagent/child-task.test.ts:172:70
+    170|   })
+    171|   it("不给 onEvent 照旧能跑（老调用方）", async () => {
+    172|     expect(await runChildTask(SPEC, fakeSession({ deltas: ["x"] }))).t…
+       |                                                                      ^
+    173|   })
+    174| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 20 passed (22)
+   Start at  00:19:16
+   Duration  643ms (transform 268ms, setup 0ms, import 376ms, tests 498ms, environment 0ms)
+

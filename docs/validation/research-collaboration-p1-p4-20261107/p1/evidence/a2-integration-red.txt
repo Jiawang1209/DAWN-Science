@@ -1,0 +1,694 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (6 tests | 4 failed) 49798ms
+   × runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline 23497ms
+   × records cancellation during a live single child as cancelled, not a failed scientific result 684ms
+   × refuses a reused output directory before inference so an old experiment is never overwritten 16167ms
+   × invalidates a comparison if its declared model config changes during a trial and never starts the next arm 3464ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/evaluation/research-runner.test.ts:19:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > records cancellation during a live single child as cancelled, not a failed scientific result
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ tests/evaluation/research-runner.test.ts:48:59
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > refuses a reused output directory before inference so an old experiment is never overwritten
+AssertionError: promise resolved "{ version: 1, …(17) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "childBuildFingerprint": "3ef8e39b8bb1b1c61e9049289885ff04881fc7fc6a27c968354f55acb47c7e4b",
++   "completePairs": 0,
++   "delivery": {
++     "multi": {
++       "correctBlocks": 0,
++       "elapsedMs": 9145,
++       "exhausted": 0,
++       "falseAcceptances": 0,
++       "msPerDelivery": null,
++       "qualifiedDeliveries": 0,
++       "requests": 0,
++       "requestsPerDelivery": null,
++     },
++     "single": {
++       "correctBlocks": 0,
++       "elapsedMs": 6941,
++       "exhausted": 0,
++       "falseAcceptances": 0,
++       "msPerDelivery": null,
++       "qualifiedDeliveries": 0,
++       "requests": 0,
++       "requestsPerDelivery": null,
++     },
++   },
++   "generatedAt": "2026-11-07T13:22:37.926Z",
++   "incompletePairs": 4,
++   "inference": "fixture",
++   "kind": "representative-research-pilot",
++   "limitations": [
++     "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
++     "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
++     "未使用分区请求门；离线夹具不能代表真实同预算收益。",
++     "缺失或部分用量不作零费用；无价格换算；未运行的输入核验和用量不适用。",
++   ],
++   "model": "deepseek-flash",
++   "provider": "deepseek",
++   "qualifiedPairs": 0,
++   "requestAllocation": {
++     "enforced": false,
++     "perArmLimit": null,
++     "plannedArms": 8,
++     "repeats": 1,
++   },
++   "requestLimit": null,
++   "rows": [
++     {
++       "caseId": "carbon-missing",
++       "elapsedMs": 1799,
++       "falseAcceptance": false,
++       "fingerprint": "ebacfcbb55bd2e0a7fe75f80c5ceb8a8960b14522c465d87681245f47daf1f7a",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "single",
++       "reason": "后端或正式提交未完成；查看隔离试验产物",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "carbon-missing",
++       "elapsedMs": 1691,
++       "falseAcceptance": false,
++       "fingerprint": "ebacfcbb55bd2e0a7fe75f80c5ceb8a8960b14522c465d87681245f47daf1f7a",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "multi",
++       "reason": "流程未完成；查看隔离阶段记录",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "unknown-unit",
++       "elapsedMs": 1692,
++       "falseAcceptance": false,
++       "fingerprint": "b4428d425e96bb7aa81c9e8c24c63463f272ddcb25174f8263cabaf472b6b404",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "multi",
++       "reason": "流程未完成；查看隔离阶段记录",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "unknown-unit",
++       "elapsedMs": 1629,
++       "falseAcceptance": false,
++       "fingerprint": "b4428d425e96bb7aa81c9e8c24c63463f272ddcb25174f8263cabaf472b6b404",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "single",
++       "reason": "后端或正式提交未完成；查看隔离试验产物",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "short-known-mean",
++       "elapsedMs": 1684,
++       "falseAcceptance": false,
++       "fingerprint": "978473437ca7c8d1194b733998ded41681781a7e3439e2399e9075c5718c37a3",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "single",
++       "reason": "后端或正式提交未完成；查看隔离试验产物",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "short-known-mean",
++       "elapsedMs": 1640,
++       "falseAcceptance": false,
++       "fingerprint": "978473437ca7c8d1194b733998ded41681781a7e3439e2399e9075c5718c37a3",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "multi",
++       "reason": "流程未完成；查看隔离阶段记录",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "moisture-strata",
++       "elapsedMs": 4122,
++       "falseAcceptance": false,
++       "fingerprint": "5f180e28b0f7b254ec4f2bb22e82c5d45d8e857cb29f79c06aa9916be6f2fcd2",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "multi",
++       "reason": "流程未完成；查看隔离阶段记录",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++     {
++       "caseId": "moisture-strata",
++       "elapsedMs": 1829,
++       "falseAcceptance": false,
++       "fingerprint": "5f180e28b0f7b254ec4f2bb22e82c5d45d8e857cb29f79c06aa9916be6f2fcd2",
++       "inputPreserved": true,
++       "invalidSubmissions": 0,
++       "mode": "single",
++       "reason": "后端或正式提交未完成；查看隔离试验产物",
++       "repeat": 1,
++       "requests": 0,
++       "submissionAttempts": 0,
++       "success": false,
++       "terminal": "failed",
++       "usage": {
++         "partialUsage": true,
++         "unknownUsageTasks": 1,
++         "visibleTokens": 0,
++       },
++       "versions": [],
++     },
++   ],
++   "sourceFiles": [
++     "scripts/evaluate-research.ts",
++     "src/evaluation/research-tasks.ts",
++     "src/subagent/executor.ts",
++     "src/subagent/child.ts",
++     "src/team/science-pipeline.ts",
++     "src/team/science-acceptance.ts",
++     "src/orchestration/task-submission.ts",
++     "src/orchestration/task-contract.ts",
++     "src/protocol/task-contract.ts",
++     "src/team/science-templates.ts",
++     "src/protocol/science-pipeline.ts",
++     "src/subagent/task-tools.ts",
++     "src/runtime/native.ts",
++     "src/runtime/pi-tool-status.ts",
++     "scripts/evaluation-request-gate.ts",
++     "scripts/research-trial-budget.ts",
++     "scripts/research-model-compat.ts",
++     "src/runtime/route-evidence-rules.ts",
++     "src/bot/output-locks.ts",
++     "scripts/mock-research.mjs",
++   ],
++   "sourceFingerprint": "4a9f417e818ba95eace54da1a7a508ed7ef2b29cdc315dd0af3f482965488ea3",
++   "tasks": [
++     {
++       "column": "carbon_mg_g",
++       "csv": "site,carbon_mg_g,rain_mm
++ plot-1,NA,300
++ plot-2,13.7,311
++ plot-3,15.4,322
++ plot-4,13.4,333
++ plot-5,15.1,344
++ plot-6,13.1,355
++ plot-7,14.8,366
++ plot-8,NA,377
++ plot-9,14.5,388
++ plot-10,12.5,399
++ plot-11,14.2,410
++ plot-12,12.2,421
++ plot-13,13.9,432
++ plot-14,15.6,443
++ plot-15,NA,454
++ plot-16,15.3,465
++ plot-17,13.3,476
++ plot-18,15,487
++ plot-19,13,498
++ plot-20,14.7,509
++ plot-21,12.7,520
++ plot-22,NA,531
++ plot-23,12.4,542
++ plot-24,14.1,553
++ plot-25,12.1,564
++ plot-26,13.8,575
++ plot-27,15.5,586
++ plot-28,13.5,597
++ plot-29,NA,608
++ plot-30,13.2,619
++ plot-31,14.9,630
++ plot-32,12.9,641
++ plot-33,14.6,652
++ plot-34,12.6,663
++ plot-35,14.3,674
++ plot-36,NA,685
++ plot-37,14,696
++ plot-38,12,707
++ plot-39,13.7,718
++ plot-40,15.4,729
++ plot-41,13.4,740
++ plot-42,15.1,751
++ plot-43,NA,762
++ plot-44,14.8,773
++ plot-45,12.8,784
++ plot-46,14.5,795
++ plot-47,12.5,806
++ plot-48,14.2,817
++ ",
++       "id": "carbon-missing",
++       "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568",
++       "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
++       "missing": "drop",
++       "unit": "mg/g",
++     },
++     {
++       "column": "carbon",
++       "csv": "site,carbon,rain_mm
++ plot-1,NA,300
++ plot-2,13.7,311
++ plot-3,15.4,322
++ plot-4,13.4,333
++ plot-5,15.1,344
++ plot-6,13.1,355
++ plot-7,14.8,366
++ plot-8,NA,377
++ plot-9,14.5,388
++ plot-10,12.5,399
++ plot-11,14.2,410
++ plot-12,12.2,421
++ plot-13,13.9,432
++ plot-14,15.6,443
++ plot-15,NA,454
++ plot-16,15.3,465
++ plot-17,13.3,476
++ plot-18,15,487
++ plot-19,13,498
++ plot-20,14.7,509
++ plot-21,12.7,520
++ plot-22,NA,531
++ plot-23,12.4,542
++ plot-24,14.1,553
++ plot-25,12.1,564
++ plot-26,13.8,575
++ plot-27,15.5,586
++ plot-28,13.5,597
++ plot-29,NA,608
++ plot-30,13.2,619
++ plot-31,14.9,630
++ plot-32,12.9,641
++ plot-33,14.6,652
++ plot-34,12.6,663
++ plot-35,14.3,674
++ plot-36,NA,685
++ plot-37,14,696
++ plot-38,12,707
++ plot-39,13.7,718
++ plot-40,15.4,729
++ plot-41,13.4,740
++ plot-42,15.1,751
++ plot-43,NA,762
++ plot-44,14.8,773
++ plot-45,12.8,784
++ plot-46,14.5,795
++ plot-47,12.5,806
++ plot-48,14.2,817
++ ",
++       "id": "unknown-unit",
++       "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be",
++       "instructions": "请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。",
++       "missing": "drop",
++     },
++     {
++       "column": "temperature_c",
++       "csv": "site,temperature_c
++ A,14
++ B,18
++ C,22
++ D,26
++ ",
++       "id": "short-known-mean",
++       "inputHash": "bbd83677526400132d2a750cc4a3a53bd342b1eab54ded771327d4680016fb59",
++       "instructions": "计算 temperature_c 的算术均值，单位 °C；输入 4 行、不能丢弃样本。使用 Python stdlib，交付脚本、result.json 和报告。",
++       "missing": "block",
++       "unit": "°C",
++     },
++     {
++       "column": "moisture_pct",
++       "csv": "site,stratum,moisture_pct
++ site-1,ridge,12
++ site-2,ridge,13
++ site-3,ridge,14
++ site-4,ridge,15
++ site-5,ridge,16
++ site-6,ridge,17
++ site-7,ridge,12
++ site-8,ridge,13
++ site-9,ridge,14
++ site-10,ridge,15
++ site-11,ridge,16
++ site-12,ridge,17
++ site-13,ridge,12
++ site-14,ridge,13
++ site-15,ridge,14
++ site-16,ridge,15
++ site-17,ridge,16
++ site-18,ridge,17
++ site-19,ridge,12
++ site-20,ridge,13
++ site-21,ridge,14
++ site-22,ridge,15
++ site-23,ridge,16
++ site-24,ridge,17
++ site-25,ridge,12
++ site-26,ridge,13
++ site-27,ridge,14
++ site-28,ridge,15
++ site-29,ridge,16
++ site-30,ridge,17
++ site-31,ridge,12
++ site-32,ridge,13
++ site-33,ridge,14
++ site-34,ridge,15
++ site-35,ridge,16
++ site-36,ridge,17
++ site-37,ridge,12
++ site-38,ridge,13
++ site-39,ridge,14
++ site-40,ridge,15
++ site-41,ridge,16
++ site-42,ridge,17
++ site-43,ridge,12
++ site-44,ridge,13
++ site-45,ridge,14
++ site-46,ridge,15
++ site-47,ridge,16
++ site-48,ridge,17
++ site-49,ridge,12
++ site-50,ridge,13
++ site-51,ridge,14
++ site-52,ridge,15
++ site-53,ridge,16
++ site-54,ridge,17
++ site-55,ridge,12
++ site-56,ridge,13
++ site-57,ridge,14
++ site-58,ridge,15
++ site-59,ridge,16
++ site-60,ridge,17
++ site-61,ridge,12
++ site-62,ridge,13
++ site-63,ridge,14
++ site-64,ridge,15
++ site-65,ridge,16
++ site-66,ridge,17
++ site-67,ridge,12
++ site-68,ridge,13
++ site-69,ridge,14
++ site-70,ridge,15
++ site-71,ridge,16
++ site-72,ridge,17
++ site-73,ridge,12
++ site-74,ridge,13
++ site-75,ridge,14
++ site-76,ridge,15
++ site-77,ridge,16
++ site-78,ridge,17
++ site-79,ridge,12
++ site-80,ridge,13
++ site-81,ridge,14
++ site-82,ridge,15
++ site-83,ridge,16
++ site-84,ridge,17
++ site-85,ridge,12
++ site-86,ridge,13
++ site-87,ridge,14
++ site-88,ridge,15
++ site-89,ridge,16
++ site-90,ridge,17
++ site-91,ridge,12
++ site-92,ridge,13
++ site-93,ridge,14
++ site-94,ridge,15
++ site-95,ridge,16
++ site-96,ridge,17
++ site-97,ridge,12
++ site-98,ridge,13
++ site-99,ridge,14
++ site-100,ridge,15
++ site-101,ridge,16
++ site-102,ridge,17
++ site-103,ridge,12
++ site-104,ridge,13
++ site-105,ridge,14
++ site-106,ridge,15
++ site-107,ridge,16
++ site-108,ridge,17
++ site-109,ridge,12
++ site-110,ridge,13
++ site-111,ridge,14
++ site-112,ridge,15
++ site-113,ridge,16
++ site-114,ridge,17
++ site-115,ridge,12
++ site-116,ridge,13
++ site-117,ridge,14
++ site-118,ridge,15
++ site-119,ridge,16
++ site-120,ridge,17
++ site-121,valley,24
++ site-122,valley,25
++ site-123,valley,26
++ site-124,valley,27
++ site-125,valley,28
++ site-126,valley,29
++ site-127,valley,24
++ site-128,valley,25
++ site-129,valley,26
++ site-130,valley,27
++ site-131,valley,28
++ site-132,valley,29
++ site-133,valley,24
++ site-134,valley,25
++ site-135,valley,26
++ site-136,valley,27
++ site-137,valley,28
++ site-138,valley,29
++ site-139,valley,24
++ site-140,valley,25
++ site-141,valley,26
++ site-142,valley,27
++ site-143,valley,28
++ site-144,valley,29
++ site-145,valley,24
++ site-146,valley,25
++ site-147,valley,26
++ site-148,valley,27
++ site-149,valley,28
++ site-150,valley,29
++ site-151,valley,24
++ site-152,valley,25
++ site-153,valley,26
++ site-154,valley,27
++ site-155,valley,28
++ site-156,valley,29
++ site-157,valley,24
++ site-158,valley,25
++ site-159,valley,26
++ site-160,valley,27
++ site-161,valley,28
++ site-162,valley,29
++ site-163,valley,24
++ site-164,valley,25
++ site-165,valley,26
++ site-166,valley,27
++ site-167,valley,28
++ site-168,valley,29
++ site-169,valley,24
++ site-170,valley,25
++ site-171,valley,26
++ site-172,valley,27
++ site-173,valley,28
++ site-174,valley,29
++ site-175,valley,24
++ site-176,valley,25
++ site-177,valley,26
++ site-178,valley,27
++ site-179,valley,28
++ site-180,valley,29
++ site-181,valley,24
++ site-182,valley,25
++ site-183,valley,26
++ site-184,valley,27
++ site-185,valley,28
++ site-186,valley,29
++ site-187,valley,24
++ site-188,valley,25
++ site-189,valley,26
++ site-190,valley,27
++ site-191,valley,28
++ site-192,valley,29
++ site-193,valley,24
++ site-194,valley,25
++ site-195,valley,26
++ site-196,valley,27
++ site-197,valley,28
++ site-198,valley,29
++ site-199,valley,24
++ site-200,valley,25
++ site-201,valley,26
++ site-202,valley,27
++ site-203,valley,28
++ site-204,valley,29
++ site-205,valley,24
++ site-206,valley,25
++ site-207,valley,26
++ site-208,valley,27
++ site-209,valley,28
++ site-210,valley,29
++ site-211,valley,24
++ site-212,valley,25
++ site-213,valley,26
++ site-214,valley,27
++ site-215,valley,28
++ site-216,valley,29
++ site-217,valley,24
++ site-218,valley,25
++ site-219,valley,26
++ site-220,valley,27
++ site-221,valley,28
++ site-222,valley,29
++ site-223,valley,24
++ site-224,valley,25
++ site-225,valley,26
++ site-226,valley,27
++ site-227,valley,28
++ site-228,valley,29
++ site-229,valley,24
++ site-230,valley,25
++ site-231,valley,26
++ site-232,valley,27
++ site-233,valley,28
++ site-234,valley,29
++ site-235,valley,24
++ site-236,valley,25
++ site-237,valley,26
++ site-238,valley,27
++ site-239,valley,28
++ site-240,valley,29
++ ",
++       "id": "moisture-strata",
++       "inputHash": "36e19776bc59073a5b82b240b603a9fcc900a5c6bec73ae2530d506b0d28cfce",
++       "instructions": "核查 ridge/valley 两层各 120 行，计算全部 240 行 moisture_pct 的算术均值（单位 %）。保留原始输入，不去重；Python stdlib 脚本、result.json 和报告。",
++       "missing": "block",
++       "unit": "%",
++     },
++   ],
++   "version": 1,
+  }
+
+ ❯ tests/evaluation/research-runner.test.ts:88:175
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > invalidates a comparison if its declared model config changes during a trial and never starts the next arm
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ tests/evaluation/research-runner.test.ts:101:37
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  21:21:50
+   Duration  50.78s (transform 288ms, setup 0ms, import 896ms, tests 49.80s, environment 0ms)
+

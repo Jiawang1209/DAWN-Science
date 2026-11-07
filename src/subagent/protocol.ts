@@ -115,7 +115,7 @@ export type 子转录事件 =
       followUp?: true
     }
 
-export type SubagentChildMessage = SubagentDoneMessage | SubagentCallMessage | SubagentEventMessage | import("./steering.js").SteeringEvent
+export type SubagentChildMessage = {type:'context_observation';sample:import('../protocol/agent-context-observation.js').AgentContextSample} | SubagentDoneMessage | SubagentCallMessage | SubagentEventMessage | import("./steering.js").SteeringEvent
 
 /** 父 → 子（成员通信或只读资源）：工具调用的回应，一行一条 */
 export interface SubagentParentReply {

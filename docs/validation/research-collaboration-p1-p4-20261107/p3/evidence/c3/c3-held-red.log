@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/collaboration-outcome-panel.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome-panel.test.tsx (17 tests | 1 failed) 283ms
+   × preserves host held and recovery reservation counts after the future reservation policy is disabled 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > preserves host held and recovery reservation counts after the future reservation policy is disabled
+AssertionError: expected '任务目标本会话协作本轮成果已验收验收对应宿主回执中的内容版本。下一步 · …' to contain '审阅预留 1'
+
+Expected: "审阅预留 1"
+Received: "任务目标本会话协作本轮成果已验收验收对应宿主回执中的内容版本。下一步 · 查看对应任务的证据与记录查看验收成果验收成果与版本reports/result.csv最终成果SHA256 aaaaaaaaaaaa… · 12 字节版本定位详情host-v7 · SHA256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa执行 analysis · 代次 3普通可用 0 · 审阅预留未启用 · 恢复待核对 1 · 在途 1 · 费用未记录展开流程工作台"
+
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:102:81
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  23:26:23
+   Duration  1.50s (transform 475ms, setup 502ms, import 294ms, tests 283ms, environment 344ms)
+

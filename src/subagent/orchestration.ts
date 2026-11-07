@@ -26,6 +26,7 @@ export function createSubagentOrchestration(opts: SubagentToolOptions, service: 
         const receipt=meta.status !== 'running' && meta.receipt ? TaskReceiptSchema.parse(meta.receipt) : undefined
         const known = service.store.list().find(child => child.kind === 'subagent' && child.address[0] === call.name && child.address[1] === index.name)
         const child = known??service.register('subagent', [call.name, index.name], meta.agent)
+        if(!known||known.epoch===0&&!known.usageTotals?.settledEpochs)service.store.markUsageHistoryLegacy(child.id)
         if(meta.settings)service.store.bindTask(child.id,TaskSettingsSchema.parse(meta.settings))
         // Registration and legacy reconstruction are separate durable writes. If
         // interrupted between them, an empty epoch-0 identity still needs repair.

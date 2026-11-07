@@ -1,0 +1,89 @@
+ * ```
+ */
+export async function createAgentSession(options = {}) {
+    const cwd = resolvePath(options.cwd ?? options.sessionManager?.getCwd() ?? process.cwd());
+    const agentDir = options.agentDir ? resolvePath(options.agentDir) : getDefaultAgentDir();
+    let resourceLoader = options.resourceLoader;
+    const authPath = options.agentDir ? join(agentDir, "auth.json") : undefined;
+    const modelsPath = options.agentDir ? join(agentDir, "models.json") : undefined;
+    const modelRuntime = options.modelRuntime ?? (await ModelRuntime.create({ authPath, modelsPath }));
+    const settingsManager = options.settingsManager ?? SettingsManager.create(cwd, agentDir);
+    const sessionManager = options.sessionManager ?? SessionManager.create(cwd, getDefaultSessionDir(cwd, agentDir));
+    if (!resourceLoader) {
+        resourceLoader = new DefaultResourceLoader({ cwd, agentDir, settingsManager });
+        });
+    };
+    const extensionRunnerRef = {};
+    const cacheWarmer = new CacheWarmer(modelRuntime, sessionManager, () => settingsManager.getCacheWarmingMode(), async (event) => extensionRunnerRef.current?.emitCacheWarmingDecision(event) ?? event.action);
+    const buildRequestOptions = (requestModel, options = {}) => {
+        const providerRetrySettings = settingsManager.getProviderRetrySettings();
+        const httpIdleTimeoutMs = settingsManager.getHttpIdleTimeoutMs();
+        const effectiveTimeoutMs = httpIdleTimeoutMs === 0 ? 2147483647 : httpIdleTimeoutMs;
+        const headerRunner = extensionRunnerRef.current;
+        return {
+            ...options,
+            timeoutMs: options.timeoutMs ?? providerRetrySettings.timeoutMs ?? effectiveTimeoutMs,
+            websocketConnectTimeoutMs: options.websocketConnectTimeoutMs ?? settingsManager.getWebSocketConnectTimeoutMs(),
+            maxRetries: options.maxRetries ?? providerRetrySettings.maxRetries,
+            maxRetryDelayMs: options.maxRetryDelayMs ?? providerRetrySettings.maxRetryDelayMs,
+            transformHeaders: async (requestHeaders) => {
+                const headers = mergeProviderAttributionHeaders(requestModel, settingsManager, options.sessionId, requestHeaders);
+                return headerRunner?.hasHandlers("before_provider_headers")
+                    ? headerRunner.emitBeforeProviderHeaders(headers ?? {})
+                    : (headers ?? {});
+            },
+    setRetryEnabled(enabled) {
+        if (!this.globalSettings.retry) {
+            this.globalSettings.retry = {};
+        }
+        this.globalSettings.retry.enabled = enabled;
+        this.markModified("retry", "enabled");
+        this.save();
+    }
+    getRetrySettings() {
+        return {
+            enabled: this.getRetryEnabled(),
+            maxRetries: this.settings.retry?.maxRetries ?? 3,
+            baseDelayMs: this.settings.retry?.baseDelayMs ?? 2000,
+            maxAgentDelayMs: this.settings.retry?.maxAgentDelayMs ?? DEFAULT_MAX_AGENT_RETRY_DELAY_MS,
+        };
+    }
+    getHttpIdleTimeoutMs() {
+        return parseTimeoutSetting(this.settings.httpIdleTimeoutMs, "httpIdleTimeoutMs") ?? DEFAULT_HTTP_IDLE_TIMEOUT_MS;
+    }
+    setHttpIdleTimeoutMs(timeoutMs) {
+        if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
+            throw new Error(`Invalid httpIdleTimeoutMs setting: ${String(timeoutMs)}`);
+        }
+        this.globalSettings.httpIdleTimeoutMs = Math.floor(timeoutMs);
+        this.markModified("httpIdleTimeoutMs");
+        this.save();
+    }
+    /** Read from global settings only because warming costs money. */
+    getCacheWarmingMode() {
+        const mode = this.globalSettings.cacheWarming;
+        return mode !== undefined && CACHE_WARMING_MODES.includes(mode) ? mode : "streaming";
+    }
+    setCacheWarmingMode(mode) {
+        this.globalSettings.cacheWarming = mode;
+        this.markModified("cacheWarming");
+        this.save();
+    }
+    getProviderRetrySettings() {
+        return {
+            timeoutMs: this.settings.retry?.provider?.timeoutMs,
+            maxRetries: this.settings.retry?.provider?.maxRetries,
+            maxRetryDelayMs: this.settings.retry?.provider?.maxRetryDelayMs ?? 60000,
+        };
+    }
+    getWebSocketConnectTimeoutMs() {
+      const to = typeof p.to === "string" ? p.to : ""
+      if(this.读(teamId).pipeline&&to!=='captain')throw new 团队错误('科研流程成员不能触发阶段外执行；请提交 blockers 或报告队长')
+      const content = typeof p.content === "string" ? p.content : ""
+      this.改(teamId, (t) => 发消息(t, { from: member, to, content }, this.now()))
+      // 后台踢一下:失败(如会话目录被外部删)只记一笔,不冒泡成 unhandledRejection 炸进程(审查 debug H12)
+      if (to !== "captain") void this.踢一下(teamId).catch((e) => console.error(`[团队] 踢一下失败 ${teamId}：${e instanceof Error ? e.message : String(e)}`))
+      return `已送到「${to}」的邮箱。`
+    }
+    if (name === "team_status") return 状态文本(this.读(teamId), member)
+    throw new 团队错误(`没有叫「${name}」的团队工具。`)

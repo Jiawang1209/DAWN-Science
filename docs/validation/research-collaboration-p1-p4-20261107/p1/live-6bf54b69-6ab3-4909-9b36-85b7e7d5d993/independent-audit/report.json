@@ -1,0 +1,782 @@
+{
+  "status": "PASS",
+  "base": "/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p1/live-6bf54b69-6ab3-4909-9b36-85b7e7d5d993",
+  "checks": [
+    {
+      "name": "run IDs",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "manifest fingerprint independently recomputed",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "runtime frozen integrity",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "manifest/report source identity",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen child fingerprint",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen execution SHA256 frozen-execution/current-api-20261108.mjs",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen execution SHA256 frozen-execution/subagent-child.js",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen execution SHA256 frozen-execution/run-frozen-pilot.mjs",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen execution SHA256 frozen-execution/helper-build.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "helper launch/build identity",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "632 candidate source SHA records",
+      "pass": true,
+      "detail": 632
+    },
+    {
+      "name": "candidate records cover src set used in report",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "authorized model settings",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "stage declarations consistent",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "30/15/11+4 allocation",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "global gate settled 24/30",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "before/after profile hash records unchanged",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "pilot process exit 0",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen retry/compaction/cache-warm settings",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "persisted trial settings carbon-missing-multi-iUeN2Q/.pi/settings.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "persisted trial settings carbon-missing-multi-iUeN2Q/session/teams/research/members/review/agent/0/settings.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "persisted trial settings carbon-missing-multi-iUeN2Q/session/teams/research/members/analyze/agent/0/settings.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "persisted trial settings carbon-missing-multi-iUeN2Q/session/teams/research/members/check/agent/0/settings.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "persisted trial settings carbon-missing-single-0pNKpj/single/settings.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "persisted trial settings carbon-missing-single-0pNKpj/.pi/settings.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "baselineUsage input/output-only code retained",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "SDK session zeroes-unverified branch retained",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "pipeline complete with actual review stage",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single exact input bytes preserved",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single input JSON fingerprint matches manifest",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single independently computed n mean unit",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single qualified accepted",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single output SHA and bytes results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single output SHA and bytes results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single output SHA and bytes results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single script stdlib imports",
+      "pass": true,
+      "detail": [
+        "__future__",
+        "csv",
+        "json",
+        "math",
+        "sys",
+        "decimal",
+        "pathlib"
+      ]
+    },
+    {
+      "name": "single/single all tool calls have ordered results",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single recorded bash cleanup observed",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single/single final write plus recorded cleanup results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single/single final write plus recorded cleanup results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single/single actual read payload results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single/single actual read payload results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single/single actual read payload results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single/single positive observed input output; nonnegative SDK cacheRead",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single request count from raw assistant turns",
+      "pass": true,
+      "detail": {
+        "single": 10
+      }
+    },
+    {
+      "name": "single visible input+output usage",
+      "pass": true,
+      "detail": {
+        "input": 14010,
+        "output": 5893,
+        "cacheRead": 113152,
+        "cacheWrite": 0,
+        "reasoning": 1787,
+        "totalTokens": 133055
+      }
+    },
+    {
+      "name": "single per-arm settled partition",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single host accepted submission counts",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single no host rejected submission",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single SDK rejection raw count",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single formal submission n/mean equals file",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "single exact elapsed aggregate",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi exact input bytes preserved",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi input JSON fingerprint matches manifest",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi independently computed n mean unit",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi qualified accepted",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi output SHA and bytes results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi output SHA and bytes results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi output SHA and bytes results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi script stdlib imports",
+      "pass": true,
+      "detail": [
+        "csv",
+        "json",
+        "math",
+        "os",
+        "sys"
+      ]
+    },
+    {
+      "name": "multi/review all tool calls have ordered results",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/review actual read payload results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/review actual read payload results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/review actual read payload results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/review actual read payload input.csv",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/review positive observed input output; nonnegative SDK cacheRead",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/analyze all tool calls have ordered results",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/analyze actual read payload input.csv",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/analyze final write plus recorded cleanup results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/analyze actual read payload results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/analyze final write plus recorded cleanup results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/analyze positive observed input output; nonnegative SDK cacheRead",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/check all tool calls have ordered results",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/check actual read payload input.csv",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi/check positive observed input output; nonnegative SDK cacheRead",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi request count from raw assistant turns",
+      "pass": true,
+      "detail": {
+        "review": 4,
+        "analyze": 7,
+        "check": 3
+      }
+    },
+    {
+      "name": "multi visible input+output usage",
+      "pass": true,
+      "detail": {
+        "input": 41691,
+        "output": 11389,
+        "cacheRead": 162432,
+        "cacheWrite": 0,
+        "reasoning": 3882,
+        "totalTokens": 215512
+      }
+    },
+    {
+      "name": "multi per-arm settled partition",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi host accepted submission counts",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi no host rejected submission",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi SDK rejection raw count",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi formal submission n/mean equals file",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "multi exact elapsed aggregate",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "work/review turns independent",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "work isolated settled gate",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review isolated settled gate",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "check accepted with one host attempt",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "check receipt inputs input.csv",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "check trace payload call_00_ET_yMbvtfyGuyJ3t9n0nxAD7352",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "check trace payload call_00_6wCD2q6P71i4RbKSqQi76530",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "check trace payload call_01_RvqHx3hJ1Jc5csizCmFY5537",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze accepted with one host attempt",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze receipt inputs input.csv",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze receipt outputs results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze receipt outputs results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze receipt outputs results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze trace payload call_00_ET_pomNCufai9aIbWj5NIXD8851",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze trace payload call_00_epKmMxRAwOF5PjP3NEFP7727",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze trace payload call_00_ET_Nl29eDKkvCpEhYVYxua34898",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze trace payload call_00_TuVqfSLfZq2nrdoRrNVT1776",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze trace payload call_00_qcXAPg90iwQwf3z0w8to3972",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "analyze trace payload call_00_OyohpcndtG9d7YWF5Psx2885",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review accepted with one host attempt",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review receipt inputs results/analysis.py",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review receipt inputs results/result.json",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review receipt inputs results/report.md",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review trace payload call_02_ET_egdnGhu6snrHoSFkKYk78048",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review trace payload call_00_ET_QxA7Ou1EiYStt9mVGgVY1993",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review trace payload call_01_ET_9nIZ2tjmgU7dgJaULXRn9720",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review trace payload call_00_9xzcPlm4oE3GpZpbNzQ44298",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "formal review pass and exact reviewed paths",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "review cited real completed reads before pass",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "SDK rejection reason reviewedPaths schema",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "gate total equals arm requests",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "frozen evidence unchanged during audit",
+      "pass": true,
+      "detail": null
+    }
+  ],
+  "evidence": {
+    "single_truth": {
+      "rawInputSha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+      "rows": 48,
+      "n": 41,
+      "missingRows": [
+        1,
+        8,
+        15,
+        22,
+        29,
+        36,
+        43
+      ],
+      "decimalSum": "568.7",
+      "decimalMean": "13.87073170731707317073170732",
+      "fileResult": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      }
+    },
+    "single_sdk_zero_cacheRead_lines": [
+      6
+    ],
+    "single_transcript": {
+      "requestTurns": {
+        "single": 10
+      },
+      "usage": {
+        "input": 14010,
+        "output": 5893,
+        "cacheRead": 113152,
+        "cacheWrite": 0,
+        "reasoning": 1787,
+        "totalTokens": 133055
+      },
+      "toolErrors": [],
+      "submissions": [
+        {
+          "label": "single",
+          "call": "call_00_xIVKswtvFTkDE078xw6F6770",
+          "line": 26,
+          "resultLine": 27,
+          "error": false,
+          "transcript": "carbon-missing-single-0pNKpj/single/transcript/2026-11-07T16-48-07-396Z_01a1b6e9-06e3-7564-bea7-277b4356393d.jsonl"
+        }
+      ]
+    },
+    "multi_truth": {
+      "rawInputSha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+      "rows": 48,
+      "n": 41,
+      "missingRows": [
+        1,
+        8,
+        15,
+        22,
+        29,
+        36,
+        43
+      ],
+      "decimalSum": "568.7",
+      "decimalMean": "13.87073170731707317073170732",
+      "fileResult": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      }
+    },
+    "multi_transcript": {
+      "requestTurns": {
+        "review": 4,
+        "analyze": 7,
+        "check": 3
+      },
+      "usage": {
+        "input": 41691,
+        "output": 11389,
+        "cacheRead": 162432,
+        "cacheWrite": 0,
+        "reasoning": 3882,
+        "totalTokens": 215512
+      },
+      "toolErrors": [
+        {
+          "label": "review",
+          "tool": "submit_task_result",
+          "call": "call_00_w9YDhg7WndNOUUfypZPV1454",
+          "line": 13,
+          "text": "Validation failed for tool \"submit_task_result\":\n  - data.reviewedPaths: must have required properties reviewedPaths\n\nReceived arguments:\n{\n  \"summary\": \"独立只读审阅通过（pass）。本轮真实读取 results/analysis.py、results/result.json、results/report.md（call_00_ET_QxA7Ou1EiYStt9mVGgVY1993 / call_01_ET_9nIZ2tjmgU7dgJaULXRn9720 / call_02_ET_egdnGhu6snrHoSFkKYk78048），并额外读取 input.csv（call_00_9xzcPlm4oE3GpZpbNzQ44298）做独立核算。脚本仅用 stdlib、无子进程、不按 rain_mm 筛选/加权/填补，仅对 carbon_mg_g 丢弃 NA token，非 NA 非数值即报错不静默丢弃；result.json 为平铺 {n:41, unit:\\\"mg/g\\\", mean:13.870731707317074}，与提交的 sampleCount/metrics 一致；报告覆盖输入、处理、结果与局限。人工逐值核算：48 行中 plot-1/8/15/22/29/36/43 为 NA，纳入 41 个观测，和 568.7，均值 13.870731707317073，与机器值差约 1e-15 ≪ 1e-9 容差。单位 mg/g 与列名 carbon_mg_g 及冻结契约一致，无需猜测。未发现需修正问题；本轮未执行脚本（审阅为只读，仅用 read 工具），执行声明沿用上游已完成记录。\",\n  \"blockers\": [],\n  \"deliverables\": [],\n  \"execution\": {\n    \"state\": \"not_run\",\n    \"note\": \"本次为只读审阅，无 shell/执行工具可用，未重跑 results/analysis.py；上游执行记录（python3 -I results/analysis.py，n=41 sum=568.70000000000005 mean=13.870731707317074）未被本审阅改写。数值一致性改由独立读取 input.csv 人工核算确认。\"\n  },\n  \"verification\": {\n    \"state\": \"reviewed\",\n    \"note\": \"本轮成功读取三个声明产物并额外读取 input.csv。analysis.py：stdlib only、DictReader 校验表头含 carbon_mg_g、NA_TOKENS 仅作用于目标列、非 NA 非数值即 SystemExit（不填值）、math.fsum 未加权求和后除以 n、写出平铺 {n,unit,mean}，无 rain_mm 参与。result.json：{n:41, unit:\\\"mg/g\\\", mean:13.870731707317074}，n 正整数、单位非空、均值有限，与上游 data.metrics/sampleCount 一致。report.md：列出输入（48 行、7 个 NA、单位依据列名 _mg_g）、处理步骤、结果（n=41、和 568.7、均值 13.870731707317074 mg/g）与局限（未加权、缺失机制未检验、rain_mm 不参与、浮点差 1e-15）。独立核算 input.csv 得同样的 7 个 NA 位置、n=41、和 568.7，均值 13.870731707317073，差 ~1e-15 < 1e-9 容差。\",\n    \"toolCallIds\": [\n      \"call_00_ET_QxA7Ou1EiYStt9mVGgVY1993\",\n      \"call_01_ET_9nIZ2tjmgU7dgJaULXRn9720\",\n      \"call_02_ET_egdnGhu6snrHoSFkKYk78048\",\n      \"call_00_9xzcPlm4oE3GpZpbNzQ44298\"\n    ]\n  },\n  \"data\": {\n    \"kind\": \"review\",\n    \"verdict\": \"pass\",\n    \"findings\": [\n      \"方法一致性：脚本实现未加权算术均值，先按目标列 NA token 丢弃再 fsum 求和除以 n，未使用 rain_mm 做筛选、加权或填补，符合已批准方法与冻结契约。\",\n      \"缺失处理正确：48 行中仅有 carbon_mg_g 的 7 个 NA（plot-1/8/15/22/29/36/43），脚本仅在目标列判定缺失，其余列不读不筛；遇非 NA 非数值 token 以 SystemExit 中止而非静默丢弃或插值。\",\n      \"数值可复核：独立逐值核算 input.csv 得 n=41、和 568.7、均值 13.870731707317073；result.json 给出 13.870731707317074（math.fsum 得 568.70000000000005），差 ~1e-15，远小于 absoluteTolerance 1e-9。\",\n      \"结果文件结构合规：平铺对象 {n:41（正整数）, unit:\\\"mg/g\\\"（非空字符串）, mean:13.870731707317074（有限数值）}，三方一致（result.json / data.metrics.mean / data.metrics.sampleCount）。\",\n      \"单位来源说明充分：单位 mg/g 来自列名 carbon_mg_g 与冻结契约 numeric.unit，报告明确写出依据，未凭猜测赋值。\",\n      \"报告完整性：report.md 含输入（文件、列、缺失情况、sha256）、处理（stdlib、调用命令 python3 -I results/analysis.py、五步流程）、结果（含机器输出与 json 原文）与局限（未加权、缺失机制未检验有偏风险、rain_mm 与结果无关、浮点精度、显示精度），未夸大结论。\",\n      \"证据缺口（不构成阻塞）：未提供标准差/置信区间与缺失机制敏感性分析，均在报告局限中声明且超出本任务范围；本轮未重跑脚本，数值一致性由独立读取 input.csv 人工核算替代佐证。\"\n    ]\n  }\n}"
+        },
+        {
+          "label": "check",
+          "tool": "read",
+          "call": "call_00_6wCD2q6P71i4RbKSqQi76530",
+          "line": 10,
+          "text": "Error: ENOENT: no such file or directory, access '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p1/live-6bf54b69-6ab3-4909-9b36-85b7e7d5d993/carbon-missing-multi-iUeN2Q/results/result.json'\n[task_tool_evidence] {\"toolCallId\":\"call_00_6wCD2q6P71i4RbKSqQi76530\",\"name\":\"read\",\"status\":\"error\",\"execution\":\"not_observed\",\"references\":[],\"path\":\"results/result.json\",\"truncatedFields\":[]}"
+        },
+        {
+          "label": "check",
+          "tool": "read",
+          "call": "call_01_RvqHx3hJ1Jc5csizCmFY5537",
+          "line": 11,
+          "text": "Error: ENOENT: no such file or directory, access '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p1/live-6bf54b69-6ab3-4909-9b36-85b7e7d5d993/carbon-missing-multi-iUeN2Q/results/analysis.py'\n[task_tool_evidence] {\"toolCallId\":\"call_01_RvqHx3hJ1Jc5csizCmFY5537\",\"name\":\"read\",\"status\":\"error\",\"execution\":\"not_observed\",\"references\":[],\"path\":\"results/analysis.py\",\"truncatedFields\":[]}"
+        }
+      ],
+      "submissions": [
+        {
+          "label": "review",
+          "call": "call_00_w9YDhg7WndNOUUfypZPV1454",
+          "line": 12,
+          "resultLine": 13,
+          "error": true,
+          "transcript": "carbon-missing-multi-iUeN2Q/session/teams/research/members/review/2026-11-07T16-49-41-549Z_01a1b6ea-76ac-70c3-8e43-0c9b83b97dc9.jsonl"
+        },
+        {
+          "label": "review",
+          "call": "call_00_fiaMKkGXR4Eu7jmIjnXa7146",
+          "line": 14,
+          "resultLine": 15,
+          "error": false,
+          "transcript": "carbon-missing-multi-iUeN2Q/session/teams/research/members/review/2026-11-07T16-49-41-549Z_01a1b6ea-76ac-70c3-8e43-0c9b83b97dc9.jsonl"
+        },
+        {
+          "label": "analyze",
+          "call": "call_00_WEikB89Ya75d7zXDSOFC1529",
+          "line": 18,
+          "resultLine": 19,
+          "error": false,
+          "transcript": "carbon-missing-multi-iUeN2Q/session/teams/research/members/analyze/2026-11-07T16-49-11-035Z_01a1b6e9-ff7a-7745-89f9-6c870a3e9809.jsonl"
+        },
+        {
+          "label": "check",
+          "call": "call_00_T0yCZPxF5aR9MpGIWVZm0737",
+          "line": 12,
+          "resultLine": 13,
+          "error": false,
+          "transcript": "carbon-missing-multi-iUeN2Q/session/teams/research/members/check/2026-11-07T16-48-52-092Z_01a1b6e9-b57c-7364-bfb0-6f365fdd9164.jsonl"
+        }
+      ]
+    },
+    "sdkRejection": {
+      "label": "review",
+      "call": "call_00_w9YDhg7WndNOUUfypZPV1454",
+      "line": 12,
+      "resultLine": 13,
+      "error": true,
+      "text": "Validation failed for tool \"submit_task_result\":\n  - data.reviewedPaths: must have required properties reviewedPaths\n\nReceived arguments:\n{\n  \"summary\": \"独立只读审阅通过（pass）。本轮真实读取 results/analysis.py、results/result.json、results/report.md（call_00_ET_QxA7Ou1EiYStt9mVGgVY1993 / call_01_ET_9nIZ2tjmgU7dgJaULXRn9720 / call_02_ET_egdnGhu6snrHoSFkKYk78048），并额外读取 input.csv（call_00_9xzcPlm4oE3GpZpbNzQ44298）做独立核算。脚本仅用 stdlib、无子进程、不按 rain_mm 筛选/加权/填补，仅对 carbon_mg_g 丢弃 NA token，非 NA 非数值即报错不静默丢弃；result.json 为平铺 {n:41, unit:\\\"mg/g\\\", mean:13.870731707317074}，与提交的 sampleCount/metrics 一致；报告覆盖输入、处理、结果与局限。人工逐值核算：48 行中 plot-1/8/15/22/29/36/43 为 NA，纳入 41 个观测，和 568.7，均值 13.870731707317073，与机器值差约 1e-15 ≪ 1e-9 容差。单位 mg/g 与列名 carbon_mg_g 及冻结契约一致，无需猜测。未发现需修正问题；本轮未执行脚本（审阅为只读，仅用 read 工具），执行声明沿用上游已完成记录。\",\n  \"blockers\": [],\n  \"deliverables\": [],\n  \"execution\": {\n    \"state\": \"not_run\",\n    \"note\": \"本次为只读审阅，无 shell/执行工具可用，未重跑 results/analysis.py；上游执行记录（python3 -I results/analysis.py，n=41 sum=568.70000000000005 mean=13.870731707317074）未被本审阅改写。数值一致性改由独立读取 input.csv 人工核算确认。\"\n  },\n  \"verification\": {\n    \"state\": \"reviewed\",\n    \"note\": \"本轮成功读取三个声明产物并额外读取 input.csv。analysis.py：stdlib only、DictReader 校验表头含 carbon_mg_g、NA_TOKENS 仅作用于目标列、非 NA 非数值即 SystemExit（不填值）、math.fsum 未加权求和后除以 n、写出平铺 {n,unit,mean}，无 rain_mm 参与。result.json：{n:41, unit:\\\"mg/g\\\", mean:13.870731707317074}，n 正整数、单位非空、均值有限，与上游 data.metrics/sampleCount 一致。report.md：列出输入（48 行、7 个 NA、单位依据列名 _mg_g）、处理步骤、结果（n=41、和 568.7、均值 13.870731707317074 mg/g）与局限（未加权、缺失机制未检验、rain_mm 不参与、浮点差 1e-15）。独立核算 input.csv 得同样的 7 个 NA 位置、n=41、和 568.7，均值 13.870731707317073，差 ~1e-15 < 1e-9 容差。\",\n    \"toolCallIds\": [\n      \"call_00_ET_QxA7Ou1EiYStt9mVGgVY1993\",\n      \"call_01_ET_9nIZ2tjmgU7dgJaULXRn9720\",\n      \"call_02_ET_egdnGhu6snrHoSFkKYk78048\",\n      \"call_00_9xzcPlm4oE3GpZpbNzQ44298\"\n    ]\n  },\n  \"data\": {\n    \"kind\": \"review\",\n    \"verdict\": \"pass\",\n    \"findings\": [\n      \"方法一致性：脚本实现未加权算术均值，先按目标列 NA token 丢弃再 fsum 求和除以 n，未使用 rain_mm 做筛选、加权或填补，符合已批准方法与冻结契约。\",\n      \"缺失处理正确：48 行中仅有 carbon_mg_g 的 7 个 NA（plot-1/8/15/22/29/36/43），脚本仅在目标列判定缺失，其余列不读不筛；遇非 NA 非数值 token 以 SystemExit 中止而非静默丢弃或插值。\",\n      \"数值可复核：独立逐值核算 input.csv 得 n=41、和 568.7、均值 13.870731707317073；result.json 给出 13.870731707317074（math.fsum 得 568.70000000000005），差 ~1e-15，远小于 absoluteTolerance 1e-9。\",\n      \"结果文件结构合规：平铺对象 {n:41（正整数）, unit:\\\"mg/g\\\"（非空字符串）, mean:13.870731707317074（有限数值）}，三方一致（result.json / data.metrics.mean / data.metrics.sampleCount）。\",\n      \"单位来源说明充分：单位 mg/g 来自列名 carbon_mg_g 与冻结契约 numeric.unit，报告明确写出依据，未凭猜测赋值。\",\n      \"报告完整性：report.md 含输入（文件、列、缺失情况、sha256）、处理（stdlib、调用命令 python3 -I results/analysis.py、五步流程）、结果（含机器输出与 json 原文）与局限（未加权、缺失机制未检验有偏风险、rain_mm 与结果无关、浮点精度、显示精度），未夸大结论。\",\n      \"证据缺口（不构成阻塞）：未提供标准差/置信区间与缺失机制敏感性分析，均在报告局限中声明且超出本任务范围；本轮未重跑脚本，数值一致性由独立读取 input.csv 人工核算替代佐证。\"\n    ]\n  }\n}",
+      "transcript": "carbon-missing-multi-iUeN2Q/session/teams/research/members/review/2026-11-07T16-49-41-549Z_01a1b6ea-76ac-70c3-8e43-0c9b83b97dc9.jsonl"
+    }
+  },
+  "observations": [
+    "Only frozen pilot evidence was read. No model/provider invocation, generated-code execution, Electron/API startup, formal profile/DB access, source/report writes, or new quota consumption occurred.",
+    "Two actual input byte streams match the CSV embedded in research.json; JSON-string inputHash is distinct from raw-byte SHA256 by design, and both were independently verified.",
+    "Source integrity.changed=[] is the frozen runtime comparison result. The 632-file candidate SHA index is retained; source text cannot be reconstructed from hashes. Current working-tree source was deliberately not compared, because D3 edits started after pilot exit and are outside execution evidence.",
+    "One SDK validation failure is retained at review transcript line 13, missing data.reviewedPaths. The following assistant turn line 14 supplies it and line 15 is host accepted. This is explicit model correction, not automatic HTTP/provider retry, and it consumed the fourth review request. No new retry run is proposed.",
+    "Retry disabled/maxRetries=0/provider.maxRetries=0, compaction off and cacheWarming off are present in frozen declaration and every persisted trial settings file. Raw assistant-turn counts equal gate counts. Frozen evidence does not include raw HTTP exchanges; this audit does not claim packet-level absence of retries.",
+    "VisibleTokens 19903/53080 means input+output only. Raw cacheRead is 113152/162432 and is excluded; raw totalTokens sums are 133055/215512. Neither number is a price. partialUsage=false/unknownUsageTasks=0 only covers presence of input/output; it is not a general all-usage-or-cost completeness statement.",
+    "All 24 assistant messages have positive input/output. Single first assistant turn (JSONL line 6) has SDK cacheRead=0. Frozen sessionUsage(...,true) marks zeroes unverified, so its cacheRead aggregate is partial; baselineUsage ignores cacheRead partialness. Thus report partialUsage=false does not establish complete cache usage. Raw cacheWrite=0 and cost=0 are SDK/declaration fields without raw-provider evidence, not confirmed zero cache writes or zero money; this pilot report is not the D2 native usage ledger.",
+    "Configured reasoning=false and thinking-level off are verified declarations; SDK usage still reports reasoning counters (single 1787, multi 3882). These counters alone do not establish provider execution mode. Reasoning is not added again to totalTokens.",
+    "Single 10 requests/44529 ms and multi 14/73719 ms are one completed sequential pair on one self-made 48-row carbon task. Multi is slower here; no general speed, quality, reliability, or monetary advantage is established. The launch sampling noise and fixed arm order were not experimentally controlled.",
+    "Profile unchanged is verified only by comparing retained parent before/after hashes; no formal profile files were reopened. postReportToOsCloseMs=23.8924 measures final report observation to OS close and includes cleanup, not pure app shutdown. Historical shutdown remains OPEN and has no root-cause conclusion.",
+    "The single agent made two pre-submission generated-script cleanups via a successful recorded bash tool call (line 12): removing an unused overwritten result assignment and a NoReturn annotation. Independently applying only those literal replacements to the initial write yields the accepted final script; final read payload also matches it. These are task artifact edits, not DAWN source drift.",
+    "Independent review actually read all three versioned analysis outputs and input.csv, with exact payload matches and bound trace SHA256. It submitted formal pass. The reviewer did not execute the script; this audit uses independent Decimal arithmetic and static AST/import inspection, not a rerun of model-generated code."
+  ],
+  "fileSnapshotSha256": "dadd3a51789cca5f141faa30afd7c0f7288f7168d42c801df5ec06f095aeefef"
+}

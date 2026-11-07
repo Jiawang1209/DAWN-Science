@@ -1,0 +1,56 @@
+{
+  "scenario": "parallel consumed-review recovery",
+  "status": "completed",
+  "calls": 2,
+  "budget": {
+    "revision": 31,
+    "limits": {
+      "maxRuns": 9,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 9,
+    "legacyRuns": 0,
+    "knownTokens": 0,
+    "unknownRuns": 9,
+    "inFlight": 0,
+    "startedAt": 1794072427397,
+    "elapsedMs": 483,
+    "blocked": {
+      "code": "runs",
+      "message": "委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动"
+    },
+    "reviewReservations": [
+      {
+        "key": "[\"parent\",\"pipeline-20c663e5cd791b44b2aca9043e50ac4cc04715b6117fd2dc3bb9468ff024f1b5\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      },
+      {
+        "key": "[\"parent\",\"pipeline-a8cdcc0aacd3750f75cc947df160137f8a30a63361981d58941aad838fb39c30\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      },
+      {
+        "key": "[\"parent\",\"pipeline-e2de8d0d18b4e76e67bc3677f51efd1c034880eaad4f67edbefdc5e6ed65afaa\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      },
+      {
+        "key": "[\"parent\",\"pipeline-997d7ee2b570ffdd433203bccdaf55ad6beb80460452efc008053d5bf226effa\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      }
+    ],
+    "reviewReservedRuns": 0,
+    "reviewRecoveryRuns": 0,
+    "ordinaryRemainingRuns": 0
+  },
+  "generations": [
+    1,
+    1
+  ]
+}

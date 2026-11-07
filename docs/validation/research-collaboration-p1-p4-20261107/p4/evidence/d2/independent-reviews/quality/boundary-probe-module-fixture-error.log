@@ -1,0 +1,22 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 3 errors:
+/private/tmp/dawn-d2-quality-20261108-MtflZB/boundary-probe.ts:26:26: ERROR: Top-level await is currently not supported with the "cjs" output format
+/private/tmp/dawn-d2-quality-20261108-MtflZB/boundary-probe.ts:26:46: ERROR: Top-level await is currently not supported with the "cjs" output format
+/private/tmp/dawn-d2-quality-20261108-MtflZB/boundary-probe.ts:26:73: ERROR: Top-level await is currently not supported with the "cjs" output format
+    at failureErrorWithLog (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/esbuild/lib/main.js:1752:15)
+    at /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/esbuild/lib/main.js:1019:50
+    at responseCallbacks.<computed> (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/esbuild/lib/main.js:886:9)
+    at handleIncomingPacket (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/esbuild/lib/main.js:941:12)
+    at Socket.readFromStdout (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/esbuild/lib/main.js:864:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v22.23.0

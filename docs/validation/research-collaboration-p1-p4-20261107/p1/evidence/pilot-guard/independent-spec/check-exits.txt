@@ -1,0 +1,2 @@
+pre_post_hash_compare_exit=0
+diff_check_exit=0

@@ -1,0 +1,7 @@
+PROVENANCE: summary transcribed from observed tool output; full raw stdout was not persisted.
+Command: npx vitest run --project=ui tests/ui/design-contract.test.ts --reporter=dot
+Test Files  1 passed (1)
+Tests  103 passed (103)
+Start at  23:51:11
+Duration  1.64s
+Exit code  0

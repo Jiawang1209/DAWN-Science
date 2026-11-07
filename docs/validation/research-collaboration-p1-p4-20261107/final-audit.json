@@ -1,0 +1,77 @@
+{
+  "at": "2026-11-07T17:19:41.363378+00:00",
+  "stageStatus": "A-D local delivery and independent reviews complete",
+  "frozenCandidate": {
+    "source": {
+      "files": 634,
+      "manifestSha256": "d63c1aeb618793f7980aa6e3ec6aeb349bd4ddbbb1af30a246f1cd23ac50a04f",
+      "changed": [],
+      "missing": [],
+      "extra": []
+    },
+    "build": {
+      "files": 625,
+      "manifestSha256": "96f733049a46567744cf28e379ca35c48804bb61049957743c7f0b84c7eb36bf",
+      "changed": [],
+      "missing": [],
+      "extra": []
+    }
+  },
+  "branch": "codex/research-collaboration-p1-p4-20261107",
+  "head": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+  "mainHead": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+  "mainStatus": "clean",
+  "sourceOnlyD3UIChanges": 8,
+  "trackedDocsOutsideNewBatchChanged": [],
+  "deletedTrackedFiles": [],
+  "dependencyManifestChanged": false,
+  "gitDiffCheck": "PASS",
+  "sourceAndBuildPostReviewUnchanged": true,
+  "nodeUi": {
+    "files": 671,
+    "passed": 6813,
+    "skipped": 10,
+    "exitCode": 0
+  },
+  "electron": {
+    "behaviorBeforeFinalCss": 15,
+    "finalCssTargeted": 5,
+    "diskVisibleCapture": 1,
+    "note": "15-case candidate differs only styles.css; host and metrics logic identical"
+  },
+  "independentFinalQuality": {
+    "result": "PASS",
+    "tests": 346,
+    "crossStageCases": 18,
+    "frozenPilotChecks": 115,
+    "report": "p4/evidence/d3/independent-reviews/quality-final/QUALITY-FINAL-REVIEW.md"
+  },
+  "live": {
+    "forwarded": 24,
+    "limit": 30,
+    "inFlight": 0,
+    "closed": true,
+    "unusedQuotaRolledOver": 0,
+    "singleRequests": 10,
+    "multiRequests": 14,
+    "profileBytesUnchanged": true,
+    "comparisonEligible": true
+  },
+  "unresolved": [
+    "Historical 7350/20690ms OS shutdown delay remains OPEN",
+    "Long Bot/MCP stopping not actually exercised",
+    "Cross-platform/full kernel/full desktop feature suite not rerun",
+    "P3 compact cumulative label; input+output/cache scope explicit in details"
+  ],
+  "noCommitMergePushReleaseOrInstalledAppReplacement": true,
+  "finalDocumentSha256": {
+    "docs/validation/research-collaboration-p1-p4-20261107/README.md": "f0788267e906e6822a51355f51d97fef0d8cf34fd18c3e4d267e1ddbb2799a5e",
+    "docs/validation/research-collaboration-p1-p4-20261107/p1/live-delivery.md": "3ec28e20e544cc203edd45bd78dca6a30a266d373ed159ae58fafee887887505",
+    "docs/validation/research-collaboration-p1-p4-20261107/p4/d3-delivery.md": "b778b186285a64fcd4b9857842ec43f997e5ad92470a38de3d2d022fa0e20e02",
+    "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/verification-results.json": "5877d0f4999677cc9c27093e958bb8affaf42134e9b215b8714de719ede4f215",
+    "docs/superpowers/plans/2026-11-07-research-collaboration-p1-p4.md": "b14db98474ce5360832aa8b53bd71d76e2b3a6ad78b19fb59807d541356bc7ce",
+    "docs/superpowers/plans/2026-11-07-research-collaboration-p1-delivery.md": "994623dca9f4d8332744e35f940f4ea1db93fa16c6353c17d144e93aa8f9109d",
+    "docs/superpowers/plans/2026-11-07-research-collaboration-p4-observation.md": "4c27dae54a1b7091f2133fef126902830b7d5ef378d9809116e7ffafb21b7a26"
+  },
+  "evidenceScope": "Earlier stage manifests retained as historical handoffs; root appended reviews and reconciled final documentation only"
+}

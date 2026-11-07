@@ -1,0 +1,86 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project node --project ui
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 1089ms
+     × 组件里的 textarea / input / select 都带 control 类 23ms
+     × **JSX 里的类名，styles.css 里都定义过** 23ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 94ms
+     × **每一个 `t()` 的 msgid 在英文表里都有** 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: run-budget.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "41: <label htmlFor={`${id}-review`}><input id={`${id}-review`} type=\"checkbox\" checked={reserveReview} disabled={busy} onChange={e=>{beginEdit();setReserveReview(e.target.checked)}}/>{t(\"为科研周期保留独立审阅执行轮次\")}</label>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **JSX 里的类名，styles.css 里都定义过**
+AssertionError: 这些类名只存在于 JSX 里——写它的人以为自己配了样式: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "run-budget.tsx：.run-budget-reserve",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1153:7
+    1151|       [...缺的].filter((x) => !欠账.has(x)).sort(),
+    1152|       "这些类名只存在于 JSX 里——写它的人以为自己配了样式",
+    1153|     ).toEqual([])
+       |       ^
+    1154|   })
+    1155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **每一个 `t()` 的 msgid 在英文表里都有**
+AssertionError: 这些句子切到英文会原样显示中文——补进 i18n/en.ts: expected [ 'run-budget.tsx："未知"', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "run-budget.tsx：\"未知\"",
++   "run-budget.tsx：\"未知\"",
++   "run-budget.tsx：\"未知\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:105:50
+    103|       }
+    104|     }
+    105|     expect(缺的, "这些句子切到英文会原样显示中文——补进 i18n/en.ts").toEqual([])
+       |                                                  ^
+    106|   })
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 655 passed (657)
+      Tests  3 failed | 6574 passed | 10 skipped (6587)
+   Start at  21:41:55
+   Duration  133.98s (transform 24.10s, setup 83.40s, import 288.08s, tests 578.74s, environment 165.37s)
+

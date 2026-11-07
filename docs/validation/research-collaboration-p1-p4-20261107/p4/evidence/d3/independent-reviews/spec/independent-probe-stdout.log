@@ -1,0 +1,173 @@
+{
+  "passed": 42,
+  "results": [
+    {
+      "name": "qualification live/running/running",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/running/running",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/running/running",
+      "pass": true
+    },
+    {
+      "name": "qualification live/running/stopping",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/running/stopping",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/running/stopping",
+      "pass": true
+    },
+    {
+      "name": "qualification live/cancelled/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/cancelled/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/cancelled/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification live/interrupted/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/interrupted/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/interrupted/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification live/completed/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/completed/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/completed/drained",
+      "pass": true
+    },
+    {
+      "name": "qualification live/queued/queued",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/queued/queued",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/queued/queued",
+      "pass": true
+    },
+    {
+      "name": "qualification live/idle/idle",
+      "pass": true
+    },
+    {
+      "name": "qualification disk/idle/idle",
+      "pass": true
+    },
+    {
+      "name": "qualification unsupported/idle/idle",
+      "pass": true
+    },
+    {
+      "name": "foreign/future retained ownerSessionId",
+      "pass": true
+    },
+    {
+      "name": "foreign/future retained childId",
+      "pass": true
+    },
+    {
+      "name": "foreign/future retained epoch",
+      "pass": true
+    },
+    {
+      "name": "older epoch retains history without current meter",
+      "pass": true
+    },
+    {
+      "name": "revoked host qualification route-changed",
+      "pass": true
+    },
+    {
+      "name": "revoked host qualification awaiting-sample",
+      "pass": true
+    },
+    {
+      "name": "revoked host qualification historical",
+      "pass": true
+    },
+    {
+      "name": "unknown sample valid capacity is not occupancy",
+      "pass": true
+    },
+    {
+      "name": "no capacity retains known occupancy without ratio",
+      "pass": true
+    },
+    {
+      "name": "settled exact zero",
+      "pass": true
+    },
+    {
+      "name": "settled cache excluded",
+      "pass": true
+    },
+    {
+      "name": "settled partial lower bound",
+      "pass": true
+    },
+    {
+      "name": "settled sum overflow",
+      "pass": true
+    },
+    {
+      "name": "settled fresh unsettled",
+      "pass": true
+    },
+    {
+      "name": "settled legacy unsettled",
+      "pass": true
+    },
+    {
+      "name": "missing output is never filled with zero",
+      "pass": true
+    },
+    {
+      "name": "actual timeline chain accepts exact assignment then rejects successor binding",
+      "pass": true
+    },
+    {
+      "name": "real host fixture expanded-current-1440-light",
+      "pass": true
+    },
+    {
+      "name": "real host fixture settled-two-epochs-partial-1440-dark",
+      "pass": true
+    },
+    {
+      "name": "real host fixture restarted-history-1440-dark",
+      "pass": true
+    },
+    {
+      "name": "real host fixture retired-disk-history-1440-dark",
+      "pass": true
+    }
+  ]
+}

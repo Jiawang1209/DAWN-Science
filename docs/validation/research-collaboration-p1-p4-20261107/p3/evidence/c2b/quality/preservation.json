@@ -1,0 +1,17 @@
+{
+  "root": "/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science",
+  "baseline_source_count": 627,
+  "current_source_count": 627,
+  "changed_source_files": [
+    "src/ui/client.ts",
+    "src/ui/run-overview.tsx",
+    "src/ui/use-run-overview.ts"
+  ],
+  "missing": [],
+  "added": [],
+  "candidate_hashes": {
+    "src/ui/client.ts": "d84b4c033a0cd9562eb3addf1e4d131122321557416301803a70ac80c0c0c02a",
+    "src/ui/run-overview.tsx": "4e637e1c4a6bc7aa5efbbca693d8a4a1acaefe1526450dc063b92ea594221a09",
+    "src/ui/use-run-overview.ts": "d95b16d7ef75d73538d1d5b2609b4d1b64e70ba7efa1349234f0ea75059ebd93"
+  }
+}

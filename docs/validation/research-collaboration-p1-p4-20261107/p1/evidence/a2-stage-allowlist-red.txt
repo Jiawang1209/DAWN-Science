@@ -1,0 +1,39 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-manifest.test.ts (5 tests | 1 failed) 10ms
+   × copies only stage identity fields even when callers pass credential-bearing route objects 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-manifest.test.ts > copies only stage identity fields even when callers pass credential-bearing route objects
+AssertionError: expected [ 'baseUrl', 'credential', …(4) ] to deeply equal [ 'declaration', 'model', 'provider' ]
+
+- Expected
++ Received
+
+  [
++   "baseUrl",
++   "credential",
+    "declaration",
++   "headers",
+    "model",
+    "provider",
+  ]
+
+ ❯ tests/evaluation/research-manifest.test.ts:15:44
+     13|  const route={provider:'p',model:'m',credential:'synthetic-never-persi…
+     14|  const result=researchStageDeclarations(config,route,{check:route,anal…
+     15|  expect(Object.keys(result.review).sort()).toEqual(['declaration','mod…
+       |                                            ^
+     16|  expect(JSON.stringify(result)).not.toMatch(/credential|baseUrl|header…
+     17| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  21:34:25
+   Duration  137ms (transform 29ms, setup 0ms, import 40ms, tests 10ms, environment 0ms)
+

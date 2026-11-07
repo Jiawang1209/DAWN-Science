@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (1 test | 1 failed) 5ms
+     × uses settled child totals even while next epoch runs, and keeps cache reads separate 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > settled member usage > uses settled child totals even while next epoch runs, and keeps cache reads separate
+AssertionError: expected '本轮用量以会话额度记录为准' to be '已结算累计 · 20 tokens' // Object.is equality
+
+Expected: "已结算累计 · 20 tokens"
+Received: "本轮用量以会话额度记录为准"
+
+ ❯ tests/ui/agent-observation.test.tsx:7:27
+      5| describe('settled member usage',()=>{
+      6|  it('uses settled child totals even while next epoch runs, and keeps c…
+      7|   expect(usageLabel(run)).toBe('已结算累计 · 20 tokens')
+       |                           ^
+      8|  })
+      9| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  00:52:17
+   Duration  1.43s (transform 349ms, setup 583ms, import 19ms, tests 5ms, environment 732ms)
+

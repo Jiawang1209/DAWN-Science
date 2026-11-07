@@ -1,0 +1,111 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/acceptance-cancel-usage.test.ts (2 tests | 2 failed) 114ms
+   × keeps received child usage and trace when cancellation interrupts host version acceptance 52ms
+   × keeps received team usage through cancelled version acceptance without adopting a late receipt 61ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/acceptance-cancel-usage.test.ts > keeps received child usage and trace when cancellation interrupts host version acceptance
+AssertionError: expected { agent: 'worker', task: 'read', …(5) } to match object { ok: false, output: '', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "observation": {
+-     "elapsedMs": 5,
+-     "invalidSubmissions": 0,
+-     "submissionAttempts": 0,
+-     "usage": {
+-       "cacheRead": 1,
+-       "input": 10,
+-       "output": 2,
+-     },
+-   },
+    "ok": false,
+    "output": "",
+-   "trace": {
+-     "omitted": 0,
+-     "records": [
+-       {
+-         "execution": "not_observed",
+-         "name": "read",
+-         "status": "done",
+-         "toolCallId": "read-before-acceptance",
+-       },
+-     ],
+-   },
+  }
+
+ ❯ tests/orchestration/acceptance-cancel-usage.test.ts:44:54
+     42|  try{
+     43|   const result=(await executor.run({mode:'single',agent:'worker',task:…
+     44|   expect(x.wasCancelled()).toBe(true);expect(result).toMatchObject({ok…
+       |                                                      ^
+     45|   assertSettled(x.store)
+     46|  }finally{await x.service.close()}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/orchestration/acceptance-cancel-usage.test.ts > keeps received team usage through cancelled version acceptance without adopting a late receipt
+AssertionError: expected { …(12) } to match object { state: 'cancelled', epoch: 1, …(3) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "epoch": 1,
+    "result": {
+-     "observation": {
+-       "elapsedMs": 5,
+-       "invalidSubmissions": 0,
+-       "submissionAttempts": 0,
+-       "usage": {
+-         "cacheRead": 1,
+-         "input": 10,
+-         "output": 2,
+-       },
+-     },
+      "ok": false,
+      "output": "",
+-     "trace": {
+-       "omitted": 0,
+-       "records": [
+-         {
+-           "execution": "not_observed",
+-           "name": "read",
+-           "status": "done",
+-           "toolCallId": "read-before-acceptance",
+-         },
+-       ],
+-     },
+    },
+    "resultEpoch": 1,
+    "state": "cancelled",
+    "usageTotals": {
+-     "cacheRead": 1,
+-     "input": 10,
+      "lastSettledEpoch": 1,
+-     "output": 2,
+      "settledEpochs": 1,
+-     "unknownEpochs": 0,
++     "unknownEpochs": 1,
+    },
+  }
+
+ ❯ assertSettled tests/orchestration/acceptance-cancel-usage.test.ts:32:16
+
+ ❯ tests/orchestration/acceptance-cancel-usage.test.ts:55:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  01:28:49
+   Duration  843ms (transform 227ms, setup 0ms, import 654ms, tests 114ms, environment 0ms)
+

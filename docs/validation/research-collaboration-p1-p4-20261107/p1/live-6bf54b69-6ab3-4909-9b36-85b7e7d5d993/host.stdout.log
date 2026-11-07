@@ -1,0 +1,2 @@
+research-host-ready
+{"provider":"deepseek","model":"deepseek-flash","forwarded":24,"completePairs":1,"incompletePairs":0,"rows":[{"caseId":"carbon-missing","mode":"single","terminal":"accepted","success":true,"requests":10},{"caseId":"carbon-missing","mode":"multi","terminal":"accepted","success":true,"requests":14}]}

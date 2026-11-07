@@ -1,0 +1,57 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' /tmp/dawn-p14-d2-spec-z8ad6s/unknown-error-repro.ts
+{
+  "usage": {
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1
+  },
+  "totals": {
+    "source": "host-epoch-deltas",
+    "partial": [],
+    "settledEpochs": 1,
+    "unknownEpochs": 0,
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1,
+    "lastSettledEpoch": 1
+  },
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 13,
+    "unknownRuns": 0,
+    "inFlight": 0,
+    "startedAt": 1794068996336,
+    "elapsedMs": 4
+  }
+}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: SDK error receipt absence must mark the admitted epoch unknown while preserving prior known lower bounds
+
+0 !== 1
+
+    at assert (/private/tmp/dawn-p14-d2-spec-z8ad6s/unknown-error-repro.ts:15:9)
+    at Object.<anonymous> (/private/tmp/dawn-p14-d2-spec-z8ad6s/unknown-error-repro.ts:17:50)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object.transformer (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/tsx/dist/register-CeSc3Ioe.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:335:3)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:235:7)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.0

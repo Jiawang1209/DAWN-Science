@@ -1,0 +1,78 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (10 tests | 3 failed | 7 skipped) 40ms
+   × admits its protected review after ordinary work has spent every unreserved execution run 23ms
+   × keeps a queued protected review when lowering the limit blocks ordinary queued work 9ms
+   × does not release an unused review hold until matching queued and cancelled work has drained 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > admits its protected review after ordinary work has spent every unreserved execution run
+AssertionError: expected { ok: false, output: '', …(1) } to match object { ok: true, output: 'reviewed' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": true,
+-   "output": "reviewed",
++   "ok": false,
++   "output": "",
+  }
+
+ ❯ tests/orchestration/service.test.ts:33:108
+     31|  const reviewer=store.register('team',['team','review','1'],'review'),…
+     32|  store.bindReviewAdmission(reviewer.id,admission,attempt)
+     33|  expect(await service.run(reviewer.id,async()=>({ok:true,output:'revie…
+       |                                                                                                            ^
+     34|  expect(store.budget()).toMatchObject({consumedRuns:3,reviewReservedRu…
+     35|  await service.close()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > keeps a queued protected review when lowering the limit blocks ordinary queued work
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/orchestration/service.test.ts:49:28
+     47|  expect((await queued).ok).toBe(false)
+     48|  wait.release();await active
+     49|  expect((await review).ok).toBe(true)
+       |                            ^
+     50|  expect(store.budget().consumedRuns).toBe(2)
+     51|  await service.close()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > does not release an unused review hold until matching queued and cancelled work has drained
+AssertionError: expected [Function] to throw error matching /排空|queued|在途/ but got 'service.releaseReviewReservation is n…'
+
+- Expected:
+/排空|queued|在途/
+
++ Received:
+"service.releaseReviewReservation is not a function"
+
+ ❯ tests/orchestration/service.test.ts:61:52
+     59|  store.bindReviewAdmission(child.id,admission,attempt)
+     60|  const queued=service.run(child.id,async()=>({ok:true,output:'must not…
+     61|  expect(()=>service.releaseReviewReservation(key)).toThrow(/排空|queued|…
+       |                                                    ^
+     62|  ctrl.abort();await queued
+     63|  service.releaseReviewReservation(key)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 skipped (10)
+   Start at  21:34:48
+   Duration  349ms (transform 99ms, setup 0ms, import 224ms, tests 40ms, environment 0ms)
+

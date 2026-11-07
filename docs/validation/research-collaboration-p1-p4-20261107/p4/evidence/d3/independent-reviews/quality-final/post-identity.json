@@ -1,0 +1,26 @@
+{
+  "src": {
+    "count": 634,
+    "manifestSHA256": "d63c1aeb618793f7980aa6e3ec6aeb349bd4ddbbb1af30a246f1cd23ac50a04f",
+    "matches": true,
+    "added": [],
+    "missing": [],
+    "changed": []
+  },
+  "dist": {
+    "count": 625,
+    "manifestSHA256": "96f733049a46567744cf28e379ca35c48804bb61049957743c7f0b84c7eb36bf",
+    "matches": true,
+    "added": [],
+    "missing": [],
+    "changed": []
+  },
+  "candidate": {
+    "head": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+    "status": " M e2e/fixtures.ts\n M e2e/run-explanation-budget.spec.ts\n M e2e/science-parallel.spec.ts\n M scripts/evaluate-current-api.ts\n M scripts/evaluate-research.ts\n M scripts/mock-science-pipeline.mjs\n M scripts/research-trial-budget.ts\n M src/electron/main.ts\n M src/evaluation/research-tasks.ts\n M src/orchestration/budget.ts\n M src/orchestration/execution-context.ts\n M src/orchestration/run-overview.ts\n M src/orchestration/service.ts\n M src/orchestration/store.ts\n M src/protocol/index.ts\n M src/protocol/run-budget.ts\n M src/protocol/run-overview.ts\n M src/protocol/science-batch.ts\n M src/protocol/science-pipeline.ts\n M src/runtime/native.ts\n M src/runtime/session-usage.ts\n M src/runtime/types.ts\n M src/subagent/child-task.ts\n M src/subagent/child.ts\n M src/subagent/executor.ts\n M src/subagent/orchestration.ts\n M src/subagent/protocol.ts\n M src/subagent/tool.ts\n M src/team/runner.ts\n M src/team/scheduler.ts\n M src/team/science-pipeline-tools.ts\n M src/team/science-pipeline.ts\n M src/team/task-snapshot.ts\n M src/ui/client.ts\n M src/ui/collaboration-model.ts\n M src/ui/collaboration-network.tsx\n M src/ui/collaboration-summary.tsx\n M src/ui/collaboration-task-detail.tsx\n M src/ui/collaboration-workflow.tsx\n M src/ui/i18n/en.ts\n M src/ui/run-budget.tsx\n M src/ui/run-overview.tsx\n M src/ui/styles.css\n M src/ui/use-run-overview.ts\n M src/workbench/backend.ts\n M src/workbench/events.ts\n M tests/evaluation/research-runner.test.ts\n M tests/integration/subagent-child.test.ts\n M tests/orchestration/run-overview.test.ts\n M tests/orchestration/service.test.ts\n M tests/orchestration/store.test.ts\n M tests/protocol/run-budget.test.ts\n M tests/runtime/compaction.test.ts\n M tests/runtime/orchestration.test.ts\n M tests/runtime/session-usage.test.ts\n M tests/subagent/child-task.test.ts\n M tests/subagent/task-recovery.test.ts\n M tests/team/science-batch.test.ts\n M tests/ui/app-mvp.test.tsx\n M tests/ui/client.test.ts\n M tests/ui/collaboration-model.test.ts\n M tests/ui/collaboration-workbench.test.tsx\n M tests/ui/collaboration-workflow.test.tsx\n M tests/ui/run-budget.test.tsx\n M tests/ui/run-overview.test.tsx\n M tests/workbench/bot-contract.test.ts\n M tests/workbench/events.test.ts\n M tests/workbench/subagent-view-backend.test.ts\n?? docs/superpowers/plans/2026-11-07-research-collaboration-p1-delivery.md\n?? docs/superpowers/plans/2026-11-07-research-collaboration-p1-p4.md\n?? docs/superpowers/plans/2026-11-07-research-collaboration-p2-budget.md\n?? docs/superpowers/plans/2026-11-07-research-collaboration-p3-workbench.md\n?? docs/superpowers/plans/2026-11-07-research-collaboration-p4-observation.md\n?? docs/superpowers/specs/2026-11-07-research-collaboration-p1-p4-design.md\n?? docs/validation/research-collaboration-p1-p4-20261107/\n?? e2e/agent-observation.spec.ts\n?? e2e/collaboration-outcome.spec.ts\n?? e2e/collaboration-stopping.spec.ts\n?? scripts/research-transcripts.ts\n?? src/evaluation/research-manifest.ts\n?? src/evaluation/research-submissions.ts\n?? src/orchestration/agent-usage-totals.ts\n?? src/protocol/agent-context-observation.ts\n?? src/protocol/agent-usage-totals.ts\n?? src/runtime/agent-context-sampler.ts\n?? src/team/read-current-snapshot.ts\n?? src/ui/agent-observation-view.tsx\n?? src/ui/agent-observation.ts\n?? src/ui/collaboration-outcome-panel.tsx\n?? src/ui/collaboration-outcome.ts\n?? tests/evaluation/research-manifest.test.ts\n?? tests/evaluation/research-submissions.test.ts\n?? tests/evaluation/research-transcripts.test.ts\n?? tests/orchestration/agent-usage-totals.test.ts\n?? tests/orchestration/context-observation.test.ts\n?? tests/protocol/agent-usage-totals.test.ts\n?? tests/protocol/run-overview-changed.test.ts\n?? tests/protocol/science-batch.test.ts\n?? tests/runtime/agent-context-native.test.ts\n?? tests/runtime/agent-context-sampler.test.ts\n?? tests/runtime/native-usage-observation.test.ts\n?? tests/subagent/context-observation.test.ts\n?? tests/team/science-review-budget.test.ts\n?? tests/ui/agent-observation.test.tsx\n?? tests/ui/collaboration-outcome-panel.test.tsx\n?? tests/ui/collaboration-outcome.test.ts\n?? tests/ui/use-run-overview.test.tsx\n?? tests/workbench/bot-usage.test.ts\n"
+  },
+  "main": {
+    "head": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+    "status": ""
+  }
+}

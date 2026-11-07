@@ -1,0 +1,20 @@
+PASS D1 sample produces valid-zero D3 current occupancy
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'No settled turns yet'
+- '尚未结算'
+
+    at <anonymous> (/private/tmp/dawn-p14-final-quality-20261108-HUfZ0w/cross-stage-probe.mts:31:90)
+    at check (/private/tmp/dawn-p14-final-quality-20261108-HUfZ0w/cross-stage-probe.mts:13:40)
+    at <anonymous> (/private/tmp/dawn-p14-final-quality-20261108-HUfZ0w/cross-stage-probe.mts:31:2)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'No settled turns yet',
+  expected: '尚未结算',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

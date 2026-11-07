@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/service.test.ts tests/runtime/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (13 tests | 1 failed) 248ms
+   × disposes observation listeners after final close settlement 5ms
+ ❯ |node| tests/runtime/orchestration.test.ts (19 tests | 1 failed) 391ms
+   × live current team reads stay pure, reject foreign/malformed pointers and only attach trusted live Bot owner context 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > disposes observation listeners after final close settlement
+AssertionError: expected [ 1, 2 ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/orchestration/service.test.ts:189:93
+    187| it('disposes observation listeners after final close settlement',async…
+    188|  const {service}=setup(),seen:number[]=[];service.subscribeObservation…
+    189|  await service.close();const count=seen.length;service.invalidateObser…
+       |                                                                                             ^
+    190| })
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > live current team reads stay pure, reject foreign/malformed pointers and only attach trusted live Bot owner context
+TypeError: Cannot read properties of undefined (reading 'current')
+ ❯ tests/runtime/orchestration.test.ts:396:152
+    394|  const internal=runtime as unknown as {botTeams:Map<string,{current:{i…
+    395|  const control=internal.botTeams.get('p')!,team={...建团队({id:'owned',na…
+    396|  mkdirSync(join(sessionDir,'teams','owned'),{recursive:true});writeFil…
+       |                                                                                                                                                        ^
+    397|  const read=vi.spyOn(control.scheduler,'读').mockImplementation(()=>{th…
+    398|  try{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 30 passed (32)
+   Start at  22:51:25
+   Duration  1.81s (transform 671ms, setup 0ms, import 1.58s, tests 639ms, environment 0ms)
+

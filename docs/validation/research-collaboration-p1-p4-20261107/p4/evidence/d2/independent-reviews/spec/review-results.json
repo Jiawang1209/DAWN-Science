@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "priorP2": "fixed",
+  "reviewedAt": "2026-11-07T16:35:22.781844+00:00",
+  "checks": {
+    "originalProbe": {
+      "exitCode": 0,
+      "log": "original-probe.log"
+    },
+    "focused": {
+      "files": 8,
+      "tests": 70,
+      "exitCode": 0,
+      "log": "focused.log"
+    },
+    "broad": {
+      "files": 107,
+      "tests": 914,
+      "exitCode": 0,
+      "log": "broad-107.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "typecheck.log"
+    },
+    "diffCheck": {
+      "exitCode": 0,
+      "log": "diff-check.log"
+    }
+  },
+  "hashes": {
+    "src": {
+      "entries": 632,
+      "mismatches": [],
+      "manifestSHA256": "d2ba0e6f72190bb5d44e286ddf0f47f025cb34589f204ecc767e95f08573bc5c"
+    },
+    "tests": {
+      "entries": 694,
+      "mismatches": [],
+      "manifestSHA256": "ec4dfa9160da3b43128cc63ad13d42c6b2c68a6109624afba36e1166766c66d7"
+    },
+    "build": {
+      "entries": 624,
+      "mismatches": [],
+      "manifestSHA256": "25254afd806b5d17df0236ef6dbbd9c554c42a5cb6c61aebec9c266db84c8cb0"
+    }
+  }
+}

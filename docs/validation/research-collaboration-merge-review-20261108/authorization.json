@@ -1,0 +1,11 @@
+{
+  "userAuthorized": "Review, fix and test, then commit and merge locally to main",
+  "baseCommit": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+  "branch": "codex/research-collaboration-p1-p4-20261107",
+  "push": false,
+  "release": false,
+  "installedAppReplacement": false,
+  "externalApiCallsThisReview": 0,
+  "historicalShutdown": "OPEN: 7350ms / 20690ms; budgets 1500ms / 4000ms unchanged",
+  "startedReviewClientDate": "2026-11-08"
+}

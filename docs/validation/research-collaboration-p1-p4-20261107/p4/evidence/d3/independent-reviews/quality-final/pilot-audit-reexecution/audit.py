@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Read-only frozen-pilot audit. Never execute generated code, models, shell, or access live profile."""
+from pathlib import Path
+from decimal import Decimal
+import ast, csv, hashlib, io, json, math, sys
+BASE = Path('/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p1/live-6bf54b69-6ab3-4909-9b36-85b7e7d5d993')
+OUT = Path(__file__).resolve().parent
+checks=[]; evidence={}; observations=[]
+def check(name, ok, detail=None):
+    checks.append({'name':name,'pass':bool(ok), 'detail':detail})
+def sha(x): return hashlib.sha256(x).hexdigest()
+def js(x): return json.dumps(x,ensure_ascii=False,separators=(',',':'))
+def fp(x): return sha(js(x).encode())
+def load(n): return json.loads((BASE/n).read_text())
+def snapshot(): return {str(p.relative_to(BASE)):sha(p.read_bytes()) for p in sorted(BASE.rglob('*')) if p.is_file()}
+before=snapshot(); r=load('research.json'); m=load('research-manifest.json'); launch=load('launch.json'); end=load('launch-result.json'); gate=load('request-gate.json')
+helper=(BASE/'frozen-execution/current-api-20261108.mjs').read_text(); child=(BASE/'frozen-execution/subagent-child.js').read_text()
+check('run IDs',r['runId']==m['runId']=='71d21e8b-dd68-4953-b462-e9812669b02e' and launch['id']==end['id']=='6bf54b69-6ab3-4909-9b36-85b7e7d5d993')
+check('manifest fingerprint independently recomputed',fp({k:v for k,v in m.items() if k not in ['version','runId','generatedAt','fingerprint']})==m['fingerprint']==r['manifestFingerprint'])
+check('runtime frozen integrity',r['integrity']['changed']==[] and r['comparisonEligible'] is True)
+check('manifest/report source identity',r['sourceFingerprint']==m['sourceFingerprint'])
+check('frozen child fingerprint',fp(child)==r['childBuildFingerprint']==m['childBuildFingerprint'])
+for name,expected in load('frozen-execution-sha256.json').items():check('frozen execution SHA256 '+name,sha((BASE/name).read_bytes())==expected)
+build=load('frozen-execution/helper-build.json');check('helper launch/build identity',sha(helper.encode())==build['sha256']==launch['helperSha256'])
+candidates=load('candidate-src-sha256.json');check('632 candidate source SHA records',len(candidates)==632 and all(len(h)==64 for h in candidates.values()),len(candidates))
+check('candidate records cover src set used in report',set(n for n in r['sourceFiles'] if n.startswith('src/')).issubset(set(candidates)))
+check('authorized model settings',m['provider']=='deepseek' and m['model']=='deepseek-flash' and m['modelDeclaration']['configuredMaxOutputTokens']==4096 and m['modelDeclaration']['configuredReasoning'] is False)
+check('stage declarations consistent',all(s['model']==m['model'] and s['declaration']==m['modelDeclaration'] for s in m['stageModels'].values()))
+check('30/15/11+4 allocation',m['requestAllocation']=={'enforced':True,'perArmLimit':15,'totalLimit':30,'multiStageLimits':{'work':11,'review':4}})
+check('global gate settled 24/30',gate=={'reserved':24,'forwarded':24,'denied':0,'inFlight':0,'limit':30})
+check('before/after profile hash records unchanged',launch['profileBefore']==end['profileAfter'] and end['profileUnchanged'] is True)
+check('pilot process exit 0',end['exitCode']==0 and end['signal'] is None)
+settings={'retry':{'enabled':False,'maxRetries':0,'provider':{'maxRetries':0}},'compaction':{'enabled':False},'cacheWarming':'off'}
+check('frozen retry/compaction/cache-warm settings',all(x==settings for x in m['execution']['trialSettings'].values()))
+for p in BASE.rglob('settings.json'):check('persisted trial settings '+str(p.relative_to(BASE)),json.loads(p.read_text())==settings)
+check('baselineUsage input/output-only code retained','(o?.usage?.input ?? 0) + (o?.usage?.output ?? 0)' in helper)
+check('SDK session zeroes-unverified branch retained','sessionUsage(session.sessionManager.getBranch().filter((entry) => !beforeIds.has(entry.id)), true)' in child)
+roots={mode:next(BASE.glob('carbon-missing-'+mode+'-*')) for mode in ['single','multi']}
+team=json.loads((roots['multi']/'session/teams/research/team.json').read_text()); tasks={t['assignee']:t for t in team['tasks']}
+check('pipeline complete with actual review stage',team['pipeline']['status']=='completed' and team['pipeline']['stage']=='review' and tasks['review']['receipt']['result']['data']['verdict']=='pass')
+expectedpaths=['results/analysis.py','results/result.json','results/report.md']
+for mode,root in roots.items():
+    row=next(x for x in r['rows'] if x['mode']==mode); raw=(root/'input.csv').read_bytes(); rows=list(csv.DictReader(io.StringIO(raw.decode()))); values=[Decimal(x['carbon_mg_g']) for x in rows if x['carbon_mg_g']!='NA']; exact=sum(values)/Decimal(len(values)); result=json.loads((root/'results/result.json').read_text())
+    check(mode+' exact input bytes preserved',raw==r['tasks'][0]['csv'].encode())
+    check(mode+' input JSON fingerprint matches manifest',fp(raw.decode())==r['tasks'][0]['inputHash']==m['tasks'][0]['inputHash'])
+    check(mode+' independently computed n mean unit',len(rows)==48 and len(values)==41 and result['n']==41 and result['unit']=='mg/g' and math.isfinite(result['mean']) and abs(Decimal(str(result['mean']))-exact)<Decimal('1e-9'))
+    evidence[mode+'_truth']={'rawInputSha256':sha(raw),'rows':len(rows),'n':len(values),'missingRows':[i for i,x in enumerate(rows,1) if x['carbon_mg_g']=='NA'],'decimalSum':str(sum(values)),'decimalMean':str(exact),'fileResult':result}
+    check(mode+' qualified accepted',row['terminal']=='accepted' and row['success'] and row['inputPreserved'] and not row['falseAcceptance'])
+    for version in row['versions']:
+        data=(root/version['path']).read_bytes();check(mode+' output SHA and bytes '+version['path'],sha(data)==version['sha256'] and len(data)==version['bytes'])
+    script=ast.parse((root/'results/analysis.py').read_text()); imports=[]
+    for n in ast.walk(script):
+        if isinstance(n,ast.Import):imports.extend(a.name for a in n.names)
+        if isinstance(n,ast.ImportFrom): imports.append(n.module)
+    check(mode+' script stdlib imports',all(n in {'__future__','csv','json','math','sys','decimal','pathlib','os'} for n in imports),imports)
+    # No exec/eval, compile, external command, imported generated code, or function call from script occurs here.
+    files=list(root.rglob('*.jsonl')); armcounts={}; totalusage={k:0 for k in ['input','output','cacheRead','cacheWrite','reasoning','totalTokens']}; submits=[]; errors=[]; alltrans={}
+    for p in files:
+        entries=[(i,json.loads(l)) for i,l in enumerate(p.read_text().splitlines(),1)]; label='single' if mode=='single' else p.parent.name
+        calls={}; results={}; assistant=[]
+        for lineno,x in entries:
+            msg=x.get('message',{})
+            if msg.get('role')=='assistant':
+                assistant.append(msg)
+                for c in msg.get('content',[]):
+                    if c.get('type')=='toolCall': calls[c['id']]={'line':lineno,'entry':x['id'],'call':c}
+            if msg.get('role')=='toolResult':results[msg['toolCallId']]={'line':lineno,'entry':x['id'],'message':msg}
+        check(mode+'/'+label+' all tool calls have ordered results',set(calls)==set(results) and all(c['line']<results[k]['line'] for k,c in calls.items()))
+        for callid,c in calls.items():
+            resultmsg=results[callid]['message']; text='\n'.join(v.get('text','') for v in resultmsg['content'] if v.get('type')=='text'); call=c['call']
+            if call['name']=='submit_task_result':submits.append({'label':label,'call':callid,'line':c['line'],'resultLine':results[callid]['line'],'error':bool(resultmsg.get('isError')),'args':call['arguments'],'text':text,'transcript':str(p.relative_to(BASE))})
+            if resultmsg.get('isError'):errors.append({'label':label,'tool':call['name'],'call':callid,'line':results[callid]['line'],'text':text})
+            if call['name']=='read' and not resultmsg.get('isError'):
+                rel=call['arguments'].get('path'); body=text.split('\n[task_tool_evidence]')[0]
+                check(mode+'/'+label+' actual read payload '+str(rel),body.rstrip('\n')==(root/rel).read_text().rstrip('\n'))
+            if call['name']=='write' and not resultmsg.get('isError'):
+                written=call['arguments']['content']; final=(root/call['arguments']['path']).read_text()
+                if mode=='single' and call['arguments']['path']=='results/analysis.py':
+                    # Independently account for exactly the two textual replacements retained in the subsequent successful bash record; do not execute its Python or shell.
+                    written=written.replace('    result = {"n": n, UNIT: mean}\n    result = {"n": n, "unit": UNIT, "mean": mean}\n','    result = {"n": n, "unit": UNIT, "mean": mean}\n').replace('def fail(message: str) -> "NoReturn":  # type: ignore[name-defined]','def fail(message: str):')
+                    check('single recorded bash cleanup observed',any(z.get('message',{}).get('role')=='toolResult' and z['message'].get('toolName')=='bash' and not z['message'].get('isError') and any(v.get('text','').startswith('patched\n') for v in z['message'].get('content',[])) for _,z in entries))
+                check(mode+'/'+label+' final write plus recorded cleanup '+call['arguments']['path'],written==final)
+        armcounts[label]=len(assistant)
+        sums={k:sum(x.get('usage',{}).get(k,0) for x in assistant) for k in totalusage}
+        for k,v in sums.items():totalusage[k]+=v
+        check(mode+'/'+label+' positive observed input output; nonnegative SDK cacheRead',all(x.get('usage',{}).get(k,0)>0 for x in assistant for k in ['input','output']) and all(x.get('usage',{}).get('cacheRead',-1)>=0 for x in assistant))
+        if mode=='single': evidence['single_sdk_zero_cacheRead_lines']=[i for i,x in entries if x.get('message',{}).get('role')=='assistant' and x['message']['usage']['cacheRead']==0]
+        alltrans[p.name]={'calls':calls,'results':results,'path':str(p.relative_to(BASE)),'entries':entries}
+    check(mode+' request count from raw assistant turns',sum(armcounts.values())==row['requests']==(10 if mode=='single' else 14),armcounts)
+    check(mode+' visible input+output usage',totalusage['input']+totalusage['output']==row['usage']['visibleTokens']==(19903 if mode=='single' else 53080),totalusage)
+    check(mode+' per-arm settled partition',row['requestBudget']=={'reserved':row['requests'],'forwarded':row['requests'],'denied':0,'inFlight':0,'limit':15})
+    check(mode+' host accepted submission counts',sum(not x['error'] for x in submits)==row['submissionDiagnostics']['hostAttempts']==(1 if mode=='single' else 3))
+    check(mode+' no host rejected submission',row['submissionDiagnostics']['hostRejected']==0 and row['invalidSubmissions']==0)
+    sdkfails=[x for x in submits if x['error']];check(mode+' SDK rejection raw count',len(sdkfails)==row['submissionDiagnostics']['sdkRejected']==(0 if mode=='single' else 1))
+    metrics=[s for s in submits if not s['error'] and s['args'].get('data',{}).get('kind')=='model-metrics'];check(mode+' formal submission n/mean equals file',len(metrics)==1 and metrics[0]['args']['data']['sampleCount']==41 and metrics[0]['args']['data']['metrics']['mean']==result['mean'])
+    check(mode+' exact elapsed aggregate',row['elapsedMs']==r['delivery'][mode]['elapsedMs']==(44529 if mode=='single' else 73719))
+    evidence[mode+'_transcript']={'requestTurns':armcounts,'usage':totalusage,'toolErrors':errors,'submissions':[{k:v for k,v in s.items() if k not in ['args','text']} for s in submits]}
+    if mode=='multi':
+        check('work/review turns independent',armcounts['check']+armcounts['analyze']==10 and armcounts['review']==4)
+        for stage,limit in [('work',11),('review',4)]:
+            used=10 if stage=='work' else 4;check(stage+' isolated settled gate',row['stageRequestBudgets'][stage]=={'reserved':used,'forwarded':used,'denied':0,'inFlight':0,'limit':limit})
+        for stage,t in tasks.items():
+            check(stage+' accepted with one host attempt',t['receipt']['state']=='accepted' and t['observation']['submissionAttempts']==1 and t['observation']['invalidSubmissions']==0)
+            for direction in ['inputs','outputs']:
+                for v in t['receipt']['versions'][direction]:
+                    data=(root/v['path']).read_bytes();check(stage+' receipt '+direction+' '+v['path'],sha(data)==v['sha256'] and len(data)==v['bytes'])
+            for rec in t['trace']['records']:
+                ref=rec['transcriptRef'];tr=alltrans[ref['file']];call=tr['calls'][rec['toolCallId']];res=tr['results'][rec['toolCallId']]
+                check(stage+' trace payload '+rec['toolCallId'],ref['callEntry']==call['entry'] and ref['resultEntry']==res['entry'] and fp([call['call']['arguments'],res['message']['content']])==ref['payloadSha256'])
+        review=tasks['review'];rv=review['receipt']['result'];check('formal review pass and exact reviewed paths',rv['data']['verdict']=='pass' and rv['data']['reviewedPaths']==expectedpaths and rv['verification']['state']=='reviewed')
+        successful=next(s for s in submits if s['label']=='review' and not s['error']);tr=next(v for k,v in alltrans.items() if '/review/' in v['path']); cited=rv['verification']['toolCallIds']
+        check('review cited real completed reads before pass',set(cited)=={k for k,c in tr['calls'].items() if c['call']['name']=='read'} and all(tr['results'][k]['line']<successful['line'] and not tr['results'][k]['message']['isError'] for k in cited))
+        check('SDK rejection reason reviewedPaths schema',len(sdkfails)==1 and 'data.reviewedPaths: must have required properties reviewedPaths' in sdkfails[0]['text'] and 'reviewedPaths' not in sdkfails[0]['args']['data'] and successful['args']['data']['reviewedPaths']==expectedpaths)
+        evidence['sdkRejection']={k:v for k,v in sdkfails[0].items() if k!='args'}
+check('gate total equals arm requests',sum(x['requests'] for x in r['rows'])==gate['forwarded'])
+check('frozen evidence unchanged during audit',before==snapshot())
+observations=[
+'Only frozen pilot evidence was read. No model/provider invocation, generated-code execution, Electron/API startup, formal profile/DB access, source/report writes, or new quota consumption occurred.',
+'Two actual input byte streams match the CSV embedded in research.json; JSON-string inputHash is distinct from raw-byte SHA256 by design, and both were independently verified.',
+'Source integrity.changed=[] is the frozen runtime comparison result. The 632-file candidate SHA index is retained; source text cannot be reconstructed from hashes. Current working-tree source was deliberately not compared, because D3 edits started after pilot exit and are outside execution evidence.',
+'One SDK validation failure is retained at review transcript line 13, missing data.reviewedPaths. The following assistant turn line 14 supplies it and line 15 is host accepted. This is explicit model correction, not automatic HTTP/provider retry, and it consumed the fourth review request. No new retry run is proposed.',
+'Retry disabled/maxRetries=0/provider.maxRetries=0, compaction off and cacheWarming off are present in frozen declaration and every persisted trial settings file. Raw assistant-turn counts equal gate counts. Frozen evidence does not include raw HTTP exchanges; this audit does not claim packet-level absence of retries.',
+'VisibleTokens 19903/53080 means input+output only. Raw cacheRead is 113152/162432 and is excluded; raw totalTokens sums are 133055/215512. Neither number is a price. partialUsage=false/unknownUsageTasks=0 only covers presence of input/output; it is not a general all-usage-or-cost completeness statement.',
+'All 24 assistant messages have positive input/output. Single first assistant turn (JSONL line 6) has SDK cacheRead=0. Frozen sessionUsage(...,true) marks zeroes unverified, so its cacheRead aggregate is partial; baselineUsage ignores cacheRead partialness. Thus report partialUsage=false does not establish complete cache usage. Raw cacheWrite=0 and cost=0 are SDK/declaration fields without raw-provider evidence, not confirmed zero cache writes or zero money; this pilot report is not the D2 native usage ledger.',
+'Configured reasoning=false and thinking-level off are verified declarations; SDK usage still reports reasoning counters (single 1787, multi 3882). These counters alone do not establish provider execution mode. Reasoning is not added again to totalTokens.',
+'Single 10 requests/44529 ms and multi 14/73719 ms are one completed sequential pair on one self-made 48-row carbon task. Multi is slower here; no general speed, quality, reliability, or monetary advantage is established. The launch sampling noise and fixed arm order were not experimentally controlled.',
+'Profile unchanged is verified only by comparing retained parent before/after hashes; no formal profile files were reopened. postReportToOsCloseMs=23.8924 measures final report observation to OS close and includes cleanup, not pure app shutdown. Historical shutdown remains OPEN and has no root-cause conclusion.',
+'The single agent made two pre-submission generated-script cleanups via a successful recorded bash tool call (line 12): removing an unused overwritten result assignment and a NoReturn annotation. Independently applying only those literal replacements to the initial write yields the accepted final script; final read payload also matches it. These are task artifact edits, not DAWN source drift.',
+'Independent review actually read all three versioned analysis outputs and input.csv, with exact payload matches and bound trace SHA256. It submitted formal pass. The reviewer did not execute the script; this audit uses independent Decimal arithmetic and static AST/import inspection, not a rerun of model-generated code.'
+]
+result={'status':'PASS' if all(c['pass'] for c in checks) else 'FAIL','base':str(BASE),'checks':checks,'evidence':evidence,'observations':observations,'fileSnapshotSha256':fp(before)}
+(OUT/'report.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+lines=['# Independent frozen-pilot audit', '',result['status'], '',f"Checks: {sum(c['pass'] for c in checks)}/{len(checks)}",'']
+for c in checks:lines.append(('PASS ' if c['pass'] else 'FAIL ')+c['name']+((': '+str(c['detail'])) if c['detail'] is not None else ''))
+lines+=['','Observations:']+['- '+x for x in observations]
+(OUT/'report.md').write_text('\n'.join(lines)+'\n')
+print(json.dumps({'status':result['status'],'checks':len(checks),'passed':sum(c['pass'] for c in checks),'failures':[c for c in checks if not c['pass']],'evidence':evidence,'outputs':str(OUT)},ensure_ascii=False,indent=2))
+sys.exit(0 if result['status']=='PASS' else 1)

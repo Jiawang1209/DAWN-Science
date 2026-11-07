@@ -1,6 +1,9 @@
+import {sampleAgentContext,contextUsageAnchor,observeAgentContext} from './agent-context-sampler.js'
+import {currentExecutionContext,bindExecutionContextRoute} from '../orchestration/execution-context.js'
 import {preservePiToolStatus} from './pi-tool-status.js'
 import {captureEvidenceHandoff,handoffSources} from '../subagent/handoff-sources.js'
-import {liveRunOverview} from '../orchestration/run-overview.js'
+import {readCurrentTeamSnapshot} from '../team/read-current-snapshot.js'
+import {DISK_OBSERVATION,liveRunOverview} from '../orchestration/run-overview.js'
 import {createHash} from 'node:crypto'
 import {runControlledScience} from '../team/science-execution.js'
 import {taskTeamSnapshot} from "../team/task-snapshot.js"
@@ -79,7 +82,6 @@ import {
   ModelRuntime,
   SessionManager,
   SettingsManager,
-  calculateContextTokens,
   createSyntheticSourceInfo,
 } from "@earendil-works/pi-coding-agent"
 import { StuckGuard, type GuardedCall } from "./stuck-guard.js"
@@ -607,23 +609,16 @@ export function 压缩收尾字段(
   return { reason, status: "failed", error: 压缩原因人话(e.errorMessage) }
 }
 
-/**
- * 最近一次**真回复**报的上下文大小（2026-09-27）：倒着找第一条没中止、没出错、用量不为零的助手消息，
- * 用 pi 判线的那个函数（`calculateContextTokens`：`totalTokens`，没有就四项相加）算。
- * 拿它与 pi 的数一比，就知道 pi 那个数里有没有「按字数估」的一截。
- */
-function 最后一次真回复(messages: readonly unknown[]): number | undefined {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i] as { role?: string; stopReason?: string; usage?: Parameters<typeof calculateContextTokens>[0] } | undefined
-    if (m?.role !== "assistant" || !m.usage || m.stopReason === "aborted" || m.stopReason === "error") continue
-    const n = calculateContextTokens(m.usage)
-    if (n > 0) return n
-  }
-  return undefined
-}
-
 export class NativeRuntime implements AgentRuntime {
   private readonly taskScopes=new Map<string,{settings:TaskSettings;evidence:RouteToolEvidence[];submission?:TaskSubmission}>()
+  /** Usage capture alone grants no task scope and never changes tools, schemas or permissions.
+   * The caller holds the existing session/output lock; reused Bot history is excluded by ID. */
+  async runWithUsageObservation<T extends {ok:boolean;output:string}>(sessionId:string,work:()=>Promise<T>):Promise<T&{observation:TaskObservation}>{
+    const started=Date.now(),before=new Set(this.sessions.get(sessionId)?.sessionManager.getBranch().map(entry=>entry.id)??[])
+    const result=await work()
+    const usage=sessionUsage(this.sessions.get(sessionId)?.sessionManager.getBranch().filter(entry=>!before.has(entry.id))??[],true)
+    return{...result,observation:taskObservation(started,undefined,usage)}
+  }
   async runWithTaskScope<T extends {ok:boolean;output:string}>(sessionId:string,settings:TaskSettings,work:()=>Promise<T>):Promise<T&{evidence:RouteToolEvidence[];observation:TaskObservation;versions?:import('../protocol/file-versions.js').TaskVersions}> {
     if(this.taskScopes.has(sessionId))throw new Error('子任务会话已有冻结的执行范围')
     const bound=TaskSettingsSchema.parse(settings),evidence:RouteToolEvidence[]=[],started=Date.now()
@@ -1173,7 +1168,10 @@ export class NativeRuntime implements AgentRuntime {
         })
       }
     }
-    for (const sink of [...(this.sinks.get(event.sessionId) ?? [])]) sink(event)
+    for (const sink of [...(this.sinks.get(event.sessionId) ?? [])]) {
+      if(event.kind==='run_overview_changed'){try{sink(event)}catch{/* Read observers cannot prevent other deliveries. */}}
+      else sink(event)
+    }
   }
   recordArtifactFiles(sessionId:SessionId,toolCallId:string,facts:{filesWritten:string[];filesCreated:string[];mayIncludeUserEdits:boolean}):void{
     this.emit({kind:'tool_files',sessionId,toolCallId,...facts,filesRead:[]})
@@ -1726,6 +1724,9 @@ export class NativeRuntime implements AgentRuntime {
 
     const orchestration = new OrchestrationService(new OrchestrationStore(spec.sessionDir, spec.sessionId), this.opts.orchestrationMaxConcurrent ?? 4)
     this.orchestrations.set(spec.sessionId, orchestration)
+    orchestration.subscribeObservation(stamp=>{
+      if(this.orchestrations.get(spec.sessionId)===orchestration)this.emit({kind:'run_overview_changed',sessionId:spec.sessionId,...stamp})
+    })
     const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       orchestration,
@@ -1841,12 +1842,16 @@ export class NativeRuntime implements AgentRuntime {
         onResult: (event: Parameters<BotRuntimeBridge["result"]>[1]) => this.botBridge!.result(spec.sessionId, event),
       } : {}),
       onChange: (team) => {
+        if(this.orchestrations.get(spec.sessionId)===orchestration){
+        orchestration.invalidateObservation()
         // A durable stage/recovery transition is real progress; repeated status reads are not.
         const progress=team.pipeline?`${team.id}:${team.pipeline.stateRevision}:${team.scienceBatch?.stateRevision}`:undefined
         if(progress&&progress!==流程进展版本){流程进展版本=progress;this.sessions.get(spec.sessionId)?.stuck.reset()}
         projection?.schedule(team)
         for (const member of team.members) if (!orchestration.isClosed && member.status !== "removed") orchestration.register(member.botId ? "bot" : "team", [team.id, member.name, memberGeneration(member)], member.agent)
         this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, team) as never })
+        }
+        // Durable old-team cancellation still needs its Bot record after an instance replacement.
         for (const task of team.tasks) if (task.status === "cancelled") {
           const member = team.members.find(m => m.botId && m.name === task.assignee)
           if (member) void Promise.resolve(this.botBridge?.cancel?.(spec.sessionId, {team, member, taskId: task.id, attemptId: `cancelled-${task.attempt}`})).catch(error => console.error("[Bot] 取消记录失败", error))
@@ -1877,17 +1882,18 @@ export class NativeRuntime implements AgentRuntime {
       调度器,
       定义,
       resolveBot: id => { const bot = this.botBridge?.list().find(b => b.id === id);return bot ? {...bot, scopeKey: this.botBridge?.scopeKey?.(spec.sessionId), model: bot.model ?? this.botModel(spec.sessionId) ?? {provider: native.provider, model: native.model}} : undefined },
-      当前: { get: () => 当前团队.id, set: (id) => { 记当前团队(spec.sessionDir, id); 当前团队.id = id } },
+      当前: { get: () => 当前团队.id, set: (id) => { 记当前团队(spec.sessionDir, id); 当前团队.id = id; if(this.orchestrations.get(spec.sessionId)===orchestration)orchestration.invalidateObservation() } },
       已知模型: async () => (await this.runtime()).getModels().map((m) => ({ provider: m.provider, model: m.id })),
     })
     this.botTeams.set(spec.sessionId, { scheduler: 调度器, current: 当前团队, create: async (botId) => {
       const result = await 团队工具.find(t => t.name === "team_create")!.execute("bot-dispatch", { name: "Bot Team", goal: "完成用户委派的科研任务", members: [{ name: `bot_${botId.replace(/-/g, "").slice(0, 30)}`, botId }] } as never)
       if (result.isError) throw new UserFacingError(result.content.map(c => c.text).join("\n"))
     } })
+    if(this.orchestrations.get(spec.sessionId)===orchestration)orchestration.invalidateObservation()
     const 流程工具=createSciencePipelineTools({sessionId:spec.sessionId,调度器,定义,
       executorBuild:()=>{try{return createHash('sha256').update(readFileSync(entry)).digest('hex')}catch{return 'executor-unavailable'}},
       resolveBot:id=>{const bot=this.botBridge?.list().find(b=>b.id===id);return bot?{...bot,scopeKey:this.botBridge?.scopeKey?.(spec.sessionId),model:bot.model??this.botModel(spec.sessionId)??{provider:native.provider,model:native.model}}:undefined},
-      当前:{get:()=>当前团队.id,set:id=>{记当前团队(spec.sessionDir,id);当前团队.id=id}},
+      当前:{get:()=>当前团队.id,set:id=>{记当前团队(spec.sessionDir,id);当前团队.id=id;if(this.orchestrations.get(spec.sessionId)===orchestration)orchestration.invalidateObservation()}},
       已知模型:async()=>(await this.runtime()).getModels().map(m=>({provider:m.provider,model:m.id})),
       recordInputs:inputs=>this.opts.artifactCapture?.recordTaskVersions(spec.sessionId,{version:1,inputs,outputs:[]}).inputs??inputs,
       route:()=>this.routeBooks.get(spec.sessionId)?.book?.read(),remote:Boolean(spec.remote),defaultModel:{provider:native.provider,model:native.model},
@@ -1905,7 +1911,10 @@ export class NativeRuntime implements AgentRuntime {
         if(t.pipeline?.status==='completed'&&t.pipeline.routeSync==='pending')t=调度器.改(当前团队.id,()=>{})
         for (const member of t.members) if (member.status !== "removed") {
           const child = orchestration.register(member.botId ? "bot" : "team", [t.id, member.name, memberGeneration(member)], member.agent)
-          if (child.state === "idle" && member.turns > 0) orchestration.store.update(child.id, {state: "idle", reason: "从既有团队恢复身份；任务结果以 team_status 为准"})
+          if (child.state === "idle" && member.turns > 0) {
+            if(child.epoch===0)orchestration.store.markUsageHistoryLegacy(child.id)
+            orchestration.store.update(child.id, {state: "idle", reason: "从既有团队恢复身份；任务结果以 team_status 为准"})
+          }
         }
         queueMicrotask(() => {
           this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, t) as never })
@@ -1962,13 +1971,14 @@ export class NativeRuntime implements AgentRuntime {
       }
       return handle
     } catch (error) {
-      await this.pipelineProjections.get(id)?.close();this.pipelineProjections.delete(id)
-      const control = this.orchestrationControls.get(id)
+      const projection=this.pipelineProjections.get(id),control=this.orchestrationControls.get(id),coordinator=this.orchestrations.get(id)
+      await projection?.close()
+      if(this.pipelineProjections.get(id)===projection)this.pipelineProjections.delete(id)
       control?.delivery.close()
       await control?.mailbox.close()
-      this.orchestrationControls.delete(id)
-      const coordinator = this.orchestrations.get(id)
-      if (coordinator) {await coordinator.close(); this.orchestrations.delete(id)}
+      if(this.orchestrationControls.get(id)===control)this.orchestrationControls.delete(id)
+      if(coordinator)await coordinator.close()
+      this.retireOrchestration(id,coordinator)
       throw error
     } finally {
       this.起中.delete(id)
@@ -2859,6 +2869,8 @@ export class NativeRuntime implements AgentRuntime {
     }
     const target = set
     target.add(sink)
+    const service=this.orchestrations.get(sessionId)
+    if(service)try{sink({kind:'run_overview_changed',sessionId,...service.observation})}catch{/* A newly attached read observer cannot break attachment. */}
     return () => {
       target.delete(sink)
     }
@@ -3153,8 +3165,13 @@ ${描述}`
      */
     let 起跑了!: () => void
     const 起跑 = new Promise<void>((r) => (起跑了 = r))
+    // Capture the execution identity here: the session's long-lived event callbacks were created outside this ALS scope.
+    let stopContext=()=>{}
+    const execution=currentExecutionContext(),model=s.session.model
+    if(execution?.bindContextRoute&&model)try{stopContext=observeAgentContext(s.session,bindExecutionContextRoute({provider:model.provider,model:model.id},execution))}catch{/* Observation only. */}
     /** 一轮的同步收尾（`inFlight`、`turn_end`、`cost`、存档收尾、`idle`）。先出方案要核对时排在核对之后 */
     const 收尾 = (): void => {
+      stopContext()
       s.inFlight -= 1
       /**
        * **这一轮到此为止——不管是好是坏**（2026-08-11 修）。
@@ -3294,31 +3311,26 @@ ${描述}`
   contextUsage(sessionId: SessionId): ContextUsage | undefined {
     const s = this.sessions.get(sessionId)
     if (!s) return undefined
-    const st = s.session.state as {
-      systemPrompt?: string
-      tools?: unknown[]
-      messages?: unknown[]
-      model?: { contextWindow?: number; id?: string; provider?: string }
-    }
-    const size = (v: unknown): number =>
-      v === undefined ? 0 : Buffer.byteLength(typeof v === "string" ? v : JSON.stringify(v), "utf8")
+    const sample=sampleAgentContext(s.session)
+    const composition=sample.composition
+    const used=sample.availability==='available'?{usedTokens:sample.usedTokens,...(contextUsageAnchor(s.session.sessionManager.getBranch(),{provider:sample.provider,model:sample.model}).tokens!==sample.usedTokens?{estimated:true as const}:{})}:sample.reason==='after-compaction'?{afterCompaction:true as const}:{}
     return {
       // `exactOptionalPropertyTypes`：**缺省与「值为 undefined」不是一回事**，
       // 所以拿不到就不给这个字段，而不是给一个 undefined
-      ...(st.model?.id ? { model: st.model.id } : {}),
-      ...(st.model?.provider ? { provider: st.model.provider } : {}),
-      ...(st.model?.contextWindow ? { contextWindow: st.model.contextWindow } : {}),
-      ...this.已用(s),
+      model:sample.model,
+      provider:sample.provider,
+      ...(sample.contextWindow!==undefined?{contextWindow:sample.contextWindow}:{}),
+      ...used,
       ...(() => {
         // 自动压缩线：上限 − 留给摘要的那份（pi 的 `shouldCompact`：`contextTokens > contextWindow - reserveTokens`）
-        if (!st.model?.contextWindow) return {}
+        if (sample.contextWindow===undefined) return {}
         const 设 = s.session.settingsManager.getCompactionSettings(s.session.model)
-        return 设.enabled ? { compactAt: Math.max(0, st.model.contextWindow - 设.reserveTokens) } : {}
+        return 设.enabled ? { compactAt: Math.max(0, sample.contextWindow - 设.reserveTokens) } : {}
       })(),
       bytes: {
-        system: size(st.systemPrompt),
-        tools: size(st.tools),
-        history: size(st.messages),
+        system: composition?.systemBytes??0,
+        tools: composition?.toolBytes??0,
+        history: composition?.messageBytes??0,
       },
     }
   }
@@ -3364,17 +3376,6 @@ ${描述}`
       })
     s.pending = s.pending ? s.pending.then(() => run) : run
     void s.pending
-  }
-
-  /** 已用多少（2026-09-27）。见 `contextUsage` 的头注 */
-  private 已用(s: NativeSession): Pick<ContextUsage, "usedTokens" | "estimated" | "afterCompaction"> {
-    const pi = s.session.getContextUsage()
-    if (pi && pi.tokens === null) return { afterCompaction: true }
-    const 真 = 最后一次真回复(s.session.messages as readonly unknown[])
-    if (真 === undefined) return {}
-    if (!pi || pi.tokens === null) return { usedTokens: 真 }
-    const 数 = Math.round(pi.tokens)
-    return 数 === 真 ? { usedTokens: 数 } : { usedTokens: 数, estimated: true }
   }
 
   /**
@@ -4068,9 +4069,20 @@ ${描述}`
    * 与主 agent 派的那一轮同一条路。答复不回主 agent。「一次一句」由中枢的 `asking` 管（后端在调这里之前就标上了）。
    * 那一轮若没走到 `settled` 就抛了，这里补一条失败的 settled——不补的话那一格永远「正在答」、再也问不了。
    */
+  private retireOrchestration(sessionId:SessionId,service:OrchestrationService|undefined):void {
+    if(!service)return
+    service.disposeObservation()
+    if(this.orchestrations.get(sessionId)!==service)return
+    this.orchestrations.delete(sessionId)
+    // Exact same reserved source marker as readRunOverview; no retained mutable truth store.
+    this.emit({kind:'run_overview_changed',sessionId,...DISK_OBSERVATION})
+  }
   runOverview(sessionId:SessionId){
     const service=this.orchestrations.get(sessionId)
-    return service?liveRunOverview(service):undefined
+    if(!service)return undefined
+    const current=this.botTeams.get(sessionId)?.current
+    const team=readCurrentTeamSnapshot(service.store.sessionDir,sessionId,current,team=>this.botTeamSnapshot(sessionId,team))
+    return{...liveRunOverview(service),...team}
   }
   configureRunBudget(sessionId:SessionId,limits:import('../protocol/run-budget.js').RunBudgetLimits,expectedRevision:number){
     const service=this.orchestrations.get(sessionId)
@@ -4687,7 +4699,7 @@ ${描述}`
       // 到这里 start() 的收尾要么已经把它停干净(下面 get 拿不到直接返回),要么启动失败了
     }
     const s = this.sessions.get(sessionId)
-    if (!s) { await projectionClosing;await coordinationClosing; this.orchestrations.delete(sessionId); this.orchestrationControls.delete(sessionId); await 内核收尾; if (coordinationError) throw coordinationError; return }
+    if (!s) { await projectionClosing;await coordinationClosing; this.retireOrchestration(sessionId,coordinator); if(this.orchestrationControls.get(sessionId)===controls)this.orchestrationControls.delete(sessionId); await 内核收尾; if (coordinationError) throw coordinationError; return }
     // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
     // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
     this.interruptAnalysisRoute(sessionId, '会话已停止')
@@ -4713,8 +4725,8 @@ ${描述}`
     try {s.收尾?.()} catch (error) {coordinationError ??= error}
     await projectionClosing
     await coordinationClosing
-    this.orchestrations.delete(sessionId)
-    this.orchestrationControls.delete(sessionId)
+    this.retireOrchestration(sessionId,coordinator)
+    if(this.orchestrationControls.get(sessionId)===controls)this.orchestrationControls.delete(sessionId)
     this.taskScopes.delete(sessionId)
     this.产物们.delete(sessionId)
     // 这一轮的方案底（先出方案）：会话都停了，这一轮不会再收尾核对；方案簿本身不摘（见 `方案簿们`）

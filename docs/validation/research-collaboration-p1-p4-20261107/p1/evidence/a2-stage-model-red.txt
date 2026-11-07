@@ -1,0 +1,28 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (7 tests | 1 failed | 6 skipped) 35ms
+   × rejects a staged model declaration with a different effective setting before any inference 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > rejects a staged model declaration with a different effective setting before any inference
+AssertionError: expected [Function] to throw error matching /阶段.*(?:模型|配置)/ but got 'inference must not start'
+
+- Expected:
+/阶段.*(?:模型|配置)/
+
++ Received:
+"inference must not start"
+
+ ❯ tests/evaluation/research-runner.test.ts:98:488
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  21:30:41
+   Duration  894ms (transform 288ms, setup 0ms, import 773ms, tests 35ms, environment 0ms)
+

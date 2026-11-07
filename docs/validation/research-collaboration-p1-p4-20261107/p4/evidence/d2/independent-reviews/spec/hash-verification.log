@@ -1,0 +1,6 @@
+src 632 bad [] manifestSHA256 d2ba0e6f72190bb5d44e286ddf0f47f025cb34589f204ecc767e95f08573bc5c
+src changed ['src/runtime/session-usage.ts'] new [] removed []
+tests 694 bad [] manifestSHA256 ec4dfa9160da3b43128cc63ad13d42c6b2c68a6109624afba36e1166766c66d7
+tests changed ['tests/orchestration/agent-usage-totals.test.ts', 'tests/runtime/session-usage.test.ts', 'tests/workbench/bot-contract.test.ts', 'tests/workbench/bot-usage.test.ts'] new [] removed []
+build 624 bad [] manifestSHA256 25254afd806b5d17df0236ef6dbbd9c554c42a5cb6c61aebec9c266db84c8cb0
+build changed ['dist/cli/main.js', 'dist/cli/main.js.map', 'dist/electron/main.js', 'dist/electron/subagent-child.js'] new [] removed []

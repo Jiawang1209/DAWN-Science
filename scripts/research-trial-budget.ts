@@ -3,11 +3,12 @@ import type {EvaluationQuota} from './evaluation-request-gate.js'
 import type {ResearchTrial} from './evaluate-research.js'
 
 export const RESEARCH_STAGE_PROVIDERS={work:'dawn-evaluation-work',review:'dawn-evaluation-review'} as const
+export const RESEARCH_STAGE_LIMITS=Object.freeze({work:11,review:4})
 export function researchBudgetTrial(arm:EvaluationQuota,mode:'single'|'multi',model:string):ResearchTrial{
  const base={credential:arm.token,requests:()=>arm.stats().forwarded,stats:arm.stats,close:arm.close}
  if(mode==='single')return base
- if(arm.stats().limit!==15)throw new Error('Staged pilot requires the approved 15-request arm')
- const work=arm.partition(11),review=arm.partition(4)
+ if(arm.stats().limit!==RESEARCH_STAGE_LIMITS.work+RESEARCH_STAGE_LIMITS.review)throw new Error('Staged pilot requires the approved 15-request arm')
+ const work=arm.partition(RESEARCH_STAGE_LIMITS.work),review=arm.partition(RESEARCH_STAGE_LIMITS.review)
  const workRoute={provider:RESEARCH_STAGE_PROVIDERS.work,model,credential:work.token}
  return{...base,stageRoutes:{check:workRoute,analyze:workRoute,review:{provider:RESEARCH_STAGE_PROVIDERS.review,model,credential:review.token}},
  stageStats:()=>({work:work.stats(),review:review.stats()}),

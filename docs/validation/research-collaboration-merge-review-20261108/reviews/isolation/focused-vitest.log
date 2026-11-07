@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/use-run-overview.test.tsx tests/ui/agent-observation.test.tsx tests/orchestration/context-observation.test.ts tests/runtime/agent-context-native.test.ts tests/subagent/context-observation.test.ts tests/protocol/run-overview-changed.test.ts tests/orchestration/run-overview.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  7 passed (7)
+      Tests  73 passed (73)
+   Start at  01:26:49
+   Duration  3.17s (transform 1.26s, setup 821ms, import 3.06s, tests 507ms, environment 924ms)
+

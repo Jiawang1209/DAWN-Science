@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project kernel
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  12 passed (12)
+      Tests  50 passed | 1 skipped (51)
+   Start at  01:35:37
+   Duration  48.38s (transform 796ms, setup 0ms, import 2.05s, tests 45.19s, environment 1ms)
+

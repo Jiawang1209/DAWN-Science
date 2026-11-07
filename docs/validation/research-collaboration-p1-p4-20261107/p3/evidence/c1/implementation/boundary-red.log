@@ -1,0 +1,82 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (25 tests | 3 failed) 18ms
+     × keeps an exact team task attempt stopping until its bound run drains 5ms
+     × does not accept a foreign owner team, or hide a current review rejection behind running 1ms
+     × requires review contract paths and review receipt versions to match the accepted analysis 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > keeps an exact team task attempt stopping until its bound run drains
+AssertionError: expected { state: 'cancelled', …(4) } to match object { state: 'stopping', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "wait-for-drain",
+-   "state": "stopping",
++   "action": "inspect-recovery",
++   "state": "cancelled",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:90:85
+     88|   value.runs=[{...run,kind:'team',phase:'stopping',state:'cancelled'}]
+     89|   value.history={truncated:false,events:[{seq:1,at:1,type:'started',ch…
+     90|   expect(selectCollaborationOutcome(value,{kind:'task',teamId:'team',t…
+       |                                                                                     ^
+     91|   expect(selectCollaborationOutcome(value).state).toBe('stopping')
+     92|   value.history.events[0]!.taskAttempt!.attemptId='another-attempt'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not accept a foreign owner team, or hide a current review rejection behind running
+AssertionError: expected { state: 'active', …(6) } to match object { state: 'blocked', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "action": "inspect-feedback",
+-   "blocker": "Review needs units",
+-   "state": "blocked",
++   "action": "inspect-findings",
++   "state": "active",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:97:45
+     95|  it('does not accept a foreign owner team, or hide a current review re…
+     96|   const value=withTeam({...team([task(),{...reviewed(),receipt:{...rec…
+     97|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'bloc…
+       |                                             ^
+     98|   value.team!.captainSessionId='foreign-owner'
+     99|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'unve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires review contract paths and review receipt versions to match the accepted analysis
+AssertionError: expected 'accepted' to be 'unverified' // Object.is equality
+
+Expected: "unverified"
+Received: "accepted"
+
+ ❯ tests/ui/collaboration-outcome.test.ts:104:51
+    102|   const value=withTeam({...team([task(),reviewed()]),pipeline:pipeline…
+    103|   value.team!.tasks[1]!.contract=TaskContractSchema.parse({resultType:…
+    104|   expect(selectCollaborationOutcome(value).state).toBe('unverified')
+       |                                                   ^
+    105|   value.team!.tasks[1]=reviewed();value.team!.tasks[1]!.receipt!.versi…
+    106|   expect(selectCollaborationOutcome(value).state).toBe('unverified')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 22 passed (25)
+   Start at  22:17:55
+   Duration  975ms (transform 345ms, setup 505ms, import 20ms, tests 18ms, environment 341ms)
+

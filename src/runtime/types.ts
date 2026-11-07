@@ -194,6 +194,7 @@ export interface 会话开关 {
 }
 
 export type AgentEvent =
+  | {kind:"run_overview_changed";sessionId:SessionId;observerId:string;revision:number}
   | {kind:"analysis_route";sessionId:SessionId;route:import("../protocol/analysis-route.js").AnalysisRoute}
   | { kind: "started"; sessionId: SessionId; pid: number }
   | { kind: "output"; sessionId: SessionId; data: string }

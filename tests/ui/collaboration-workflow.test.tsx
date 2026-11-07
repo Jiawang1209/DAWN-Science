@@ -29,5 +29,5 @@ it('links the owning coordinator to direct delegates, provides search and status
  expect(view.container.querySelectorAll('[data-member-card]')).toHaveLength(1)
  fireEvent.click(screen.getByRole('button',{name:'只看已结束'}));expect(view.container.querySelectorAll('[data-member-card]')).toHaveLength(0)
  expect(screen.getByText('暂无匹配成员')).toBeTruthy()
- expect(screen.getAllByText('用量未记录').length).toBeGreaterThan(0)
+ expect(screen.getAllByText('未记录').length).toBeGreaterThan(0)
 })

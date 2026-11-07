@@ -1,0 +1,60 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/runtime/orchestration.test.ts tests/orchestration/service.test.ts tests/orchestration/run-overview.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (13 tests | 1 failed) 252ms
+   × disposes observation listeners after final close settlement 5ms
+ ❯ |node| tests/runtime/orchestration.test.ts (20 tests | 1 failed) 391ms
+   × publishes a fresh live source stamp when an empty coordinator is installed 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > disposes observation listeners after final close settlement
+AssertionError: expected [ 1, 2 ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/orchestration/service.test.ts:189:93
+    187| it('disposes observation listeners after final close settlement',async…
+    188|  const {service}=setup(),seen:number[]=[];service.subscribeObservation…
+    189|  await service.close();const count=seen.length;service.invalidateObser…
+       |                                                                                             ^
+    190| })
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > publishes a fresh live source stamp when an empty coordinator is installed
+AssertionError: expected undefined to match object { kind: 'run_overview_changed', …(2) }
+
+- Expected:
+{
+  "kind": "run_overview_changed",
+  "observerId": "c136d1ba-bb3b-4b4e-995f-4274e8ff897e",
+  "revision": 0,
+}
+
++ Received:
+undefined
+
+ ❯ tests/runtime/orchestration.test.ts:411:69
+    409|  runtime.attach('p',e=>seen.push(e))
+    410|  await runtime.start({sessionId:'p',workspace:root,sessionDir:join(roo…
+    411|  try{expect(seen.filter(e=>e.kind==='run_overview_changed').at(-1)).to…
+       |                                                                     ^
+    412|  finally{await runtime.stop('p')}
+    413| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 42 passed (44)
+   Start at  22:52:00
+   Duration  1.80s (transform 789ms, setup 0ms, import 1.89s, tests 716ms, environment 0ms)
+

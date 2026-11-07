@@ -1,0 +1,57 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/protocol/science-batch.test.ts (1 test | 1 failed) 7ms
+   × keeps legacy batch summaries valid and validates optional exact task membership strictly 6ms
+ ❯ |node| tests/team/science-batch.test.ts (4 tests | 1 failed) 213ms
+   × projects complete serial batch task membership after a member moves to the next item 90ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/science-batch.test.ts > keeps legacy batch summaries valid and validates optional exact task membership strictly
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/protocol/science-batch.test.ts:6:115
+      4| it('keeps legacy batch summaries valid and validates optional exact ta…
+      5|  expect(ScienceBatchSummarySchema.safeParse(legacy).success).toBe(true)
+      6|  expect(ScienceBatchSummarySchema.safeParse({...legacy,taskIds:['check…
+       |                                                                                                                   ^
+      7|  expect(ScienceBatchSummarySchema.safeParse({...legacy,taskIds:[]}).su…
+      8|  for(const taskIds of [['same','same'],[''],[1],Array.from({length:161…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-batch.test.ts > projects complete serial batch task membership after a member moves to the next item
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+- Expected:
+ArrayContaining [
+  "p-0-one-analyze-0-1",
+  "p-1-two-analyze-0-1",
+]
+
++ Received:
+undefined
+
+ ❯ tests/team/science-batch.test.ts:42:29
+     40|   const standalone={...structuredClone(oldAnalysis),id:'standalone',at…
+     41|   const projected=publicScienceBatch(team.scienceBatch!,team.pipeline)
+     42|   expect(projected.taskIds).toEqual(expect.arrayContaining([oldAnalysi…
+       |                             ^
+     43|   expect(projected.taskIds).not.toContain(standalone.id)
+     44|   expect(ScienceBatchSummarySchema.safeParse(projected).success).toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 3 passed (5)
+   Start at  22:37:16
+   Duration  875ms (transform 226ms, setup 0ms, import 685ms, tests 220ms, environment 0ms)
+

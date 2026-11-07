@@ -1,0 +1,134 @@
+{
+  "inference": "localhost-fixture",
+  "actualElectron": true,
+  "before": {
+    "revision": 11,
+    "limits": {
+      "maxRuns": 3,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 3,
+    "legacyRuns": 0,
+    "knownTokens": 140,
+    "unknownRuns": 3,
+    "active": [],
+    "reviewReservations": [
+      {
+        "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      }
+    ],
+    "reviewBindings": [
+      {
+        "childId": "child-55465bc2796700e7ad0510dcf0a024e4",
+        "taskAttempt": {
+          "teamId": "pipeline-b07d17316216adaaf00edc82",
+          "taskId": "p-check-0-0",
+          "attemptId": "7844251f-5b8b-468c-b03b-63ccdaf638bf",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+          "stage": "check"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-4182b0e831d0ece0d13cf7109f436520",
+        "taskAttempt": {
+          "teamId": "pipeline-b07d17316216adaaf00edc82",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "dc76eafb-5186-4062-acca-a5ba728b2bda",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-c7e54eeaf7f4fafc6ad8297b40d17bf5",
+        "taskAttempt": {
+          "teamId": "pipeline-b07d17316216adaaf00edc82",
+          "taskId": "p-review-0-2",
+          "attemptId": "073ee4fe-129c-44f8-ab10-ed2741330134",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+          "stage": "review"
+        },
+        "admittedEpoch": 1
+      }
+    ],
+    "startedAt": 1794060071665
+  },
+  "after": {
+    "revision": 11,
+    "limits": {
+      "maxRuns": 3,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 3,
+    "legacyRuns": 0,
+    "knownTokens": 140,
+    "unknownRuns": 3,
+    "active": [],
+    "reviewReservations": [
+      {
+        "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      }
+    ],
+    "reviewBindings": [
+      {
+        "childId": "child-55465bc2796700e7ad0510dcf0a024e4",
+        "taskAttempt": {
+          "teamId": "pipeline-b07d17316216adaaf00edc82",
+          "taskId": "p-check-0-0",
+          "attemptId": "7844251f-5b8b-468c-b03b-63ccdaf638bf",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+          "stage": "check"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-4182b0e831d0ece0d13cf7109f436520",
+        "taskAttempt": {
+          "teamId": "pipeline-b07d17316216adaaf00edc82",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "dc76eafb-5186-4062-acca-a5ba728b2bda",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-c7e54eeaf7f4fafc6ad8297b40d17bf5",
+        "taskAttempt": {
+          "teamId": "pipeline-b07d17316216adaaf00edc82",
+          "taskId": "p-review-0-2",
+          "attemptId": "073ee4fe-129c-44f8-ab10-ed2741330134",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"e71be4a0-53c7-477a-9cec-4ddf3b59e481\",\"pipeline-45f073bbd0823111c8df29d917d48d044916798b2a3ac3502b820acf2fac053d\",0]",
+          "stage": "review"
+        },
+        "admittedEpoch": 1
+      }
+    ],
+    "startedAt": 1794060071665
+  }
+}

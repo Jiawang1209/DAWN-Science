@@ -1,0 +1,5 @@
+src-sha256.json entries 632 manifestSHA d2ba0e6f72190bb5d44e286ddf0f47f025cb34589f204ecc767e95f08573bc5c mismatches []
+tests-sha256.json entries 694 manifestSHA ec4dfa9160da3b43128cc63ad13d42c6b2c68a6109624afba36e1166766c66d7 mismatches []
+build-sha256.json entries 624 manifestSHA 25254afd806b5d17df0236ef6dbbd9c554c42a5cb6c61aebec9c266db84c8cb0 mismatches []
+candidate-sha256.json entries 1950 manifestSHA 8238f81f258e5f39a0d5af5a82eb6046e32a65f9d6cf5118f7739ea73bd42bcf mismatches []
+PASS frozen manifests match current files; 3900 checks

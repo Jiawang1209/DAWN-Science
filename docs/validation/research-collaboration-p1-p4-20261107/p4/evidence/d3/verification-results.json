@@ -1,0 +1,114 @@
+{
+  "candidate": {
+    "src": "candidate-src-sha256.json",
+    "build": "candidate-build-sha256.json",
+    "pilotDelta": "source-delta-from-pilot.json"
+  },
+  "checks": [
+    {
+      "name": "first behavior RED",
+      "command": "npm test -- --project ui tests/ui/agent-observation.test.tsx",
+      "exitCode": 1,
+      "log": "logs/dawn-d3-first-red-20261108.log",
+      "reason": "Existing usageLabel ignores settled child totals while next epoch runs"
+    },
+    {
+      "name": "module scaffolding import failure",
+      "exitCode": 1,
+      "log": "logs/dawn-d3-projection-red-20261108.log",
+      "countsAsBehaviorRed": false
+    },
+    {
+      "name": "first Electron fixture assumption failure",
+      "command": "npx playwright test e2e/agent-observation.spec.ts --output=/tmp/dawn-d3-electron-first-20261108/playwright",
+      "exitCode": 1,
+      "log": "logs/dawn-d3-electron-first-20261108.log",
+      "reason": "Expected cacheRead zero; real host returned absent + partial and UI correctly showed not recorded",
+      "artifacts": "first-electron"
+    },
+    {
+      "name": "26 observation UI tests after last semantic fix",
+      "command": "npm test -- --project ui tests/ui/agent-observation.test.tsx",
+      "exitCode": 0,
+      "testsPassed": 26,
+      "log": "logs/dawn-d3-direct-epoch-green-20261108.log"
+    },
+    {
+      "name": "broad Electron behavior regression before final opacity CSS",
+      "command": "npx playwright test e2e/agent-observation.spec.ts e2e/context-usage.spec.ts e2e/collaboration-workbench.spec.ts e2e/collaboration-outcome.spec.ts e2e/collaboration-stopping.spec.ts e2e/collaboration-network.spec.ts e2e/run-explanation-budget.spec.ts e2e/science-parallel.spec.ts --output=/tmp/dawn-d3-electron-candidate-20261108/playwright",
+      "exitCode": 0,
+      "testsPassed": 15,
+      "duration": "2.8m",
+      "log": "logs/dawn-d3-electron-candidate-20261108.log",
+      "artifacts": "behavior-electron",
+      "sourceDeltaToFinal": "behavior-to-final-source-delta.json",
+      "note": "Only final selected-card opacity CSS differs; host and metrics source identical"
+    },
+    {
+      "name": "final build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "logs/dawn-d3-build-release-candidate-20261108.log"
+    },
+    {
+      "name": "final typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "log": "logs/dawn-d3-typecheck-release-candidate-20261108.log"
+    },
+    {
+      "name": "final complete Node/UI",
+      "command": "npm test -- --project node --project ui",
+      "log": "logs/dawn-d3-full-node-ui-release-candidate-20261108.log",
+      "exitCode": 0,
+      "filesPassed": 671,
+      "testsPassed": 6813,
+      "testsSkipped": 10,
+      "durationSeconds": 134.57
+    },
+    {
+      "name": "final targeted Electron and screenshots",
+      "command": "npx playwright test e2e/agent-observation.spec.ts e2e/collaboration-network.spec.ts e2e/collaboration-workbench.spec.ts e2e/context-usage.spec.ts --output=/tmp/dawn-d3-electron-final-20261108/playwright",
+      "log": "logs/dawn-d3-electron-final-20261108.log",
+      "exitCode": 0,
+      "testsPassed": 5,
+      "durationSeconds": 55.9,
+      "artifacts": "final-electron"
+    },
+    {
+      "name": "disk UI refresh capture verification",
+      "command": "npx playwright test e2e/agent-observation.spec.ts --output=/tmp/dawn-d3-electron-disk-capture-20261108/playwright",
+      "log": "logs/dawn-d3-electron-disk-capture-20261108.log",
+      "note": "Same production candidate; test only waits for shared UI refresh before final disk screenshot",
+      "exitCode": 0,
+      "testsPassed": 1,
+      "durationSeconds": 22.6,
+      "artifacts": "disk-ui-electron"
+    }
+  ],
+  "independentReviews": {
+    "spec": {
+      "result": "PASS",
+      "softwareTests": 115,
+      "probeCases": 42,
+      "evidence": "independent-reviews/spec"
+    },
+    "qualityFinal": {
+      "result": "PASS",
+      "softwareTests": 346,
+      "crossStageCases": 18,
+      "frozenPilotChecks": 115,
+      "evidence": "independent-reviews/quality-final"
+    }
+  },
+  "historicalShutdownOpenMs": [
+    7350,
+    20690
+  ],
+  "shutdownBudgetsUnchangedMs": [
+    1500,
+    4000
+  ],
+  "postVerificationIdentity": "post-verification-identity.json",
+  "labelTradeoffAcceptedP3": "Compact card label; explicit input+output/cache and cross-task scope in details"
+}

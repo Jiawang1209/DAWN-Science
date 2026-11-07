@@ -1,0 +1,19 @@
+{
+  "src/ui/agent-observation.ts": "1573f22f987511c8de8be8472e358e7b77d072ad3b55d1daf55118d4711ccac0",
+  "src/ui/agent-observation-view.tsx": "ebfcf41f7387e4a58e77a40fc20ce4bba214a037677f5b7c94e79a052c28fdd9",
+  "src/ui/collaboration-network.tsx": "a76433420224f9d8a0ece05ecbdc488a95fce540450de346517485b85d786a4d",
+  "src/ui/collaboration-workflow.tsx": "767bea34421ff93951a97f81f36314e503d5f50ee16afe5e3c91d51f99e39ea2",
+  "src/ui/collaboration-task-detail.tsx": "c96c4f1c0b1a5a69c224a5ed25f8e21c39967344cf0b36210a5f41d47c7fa157",
+  "src/ui/run-overview.tsx": "b242076a16b43caecb9339770ebd4293b59267572640784da4c0e39e8b224fe0",
+  "src/ui/i18n/en.ts": "d78a04d22f4668c57afcae9a5adc05835f6f41548186d95320f224dbe331e050",
+  "src/ui/styles.css": "dd0512d40484b844f202940e3e4177cceff667905bf5e356e2f9fa4a08ca4b5a",
+  "tests/ui/agent-observation.test.tsx": "5a216e6ab9e75b79d4fdc83d440fece34dd8276de21f5babb4656ec5d7b599e0",
+  "tests/ui/collaboration-model.test.ts": "c0b23e0609916512a8169487856e21e6ce821a38692cfb1b3e836dd5454e97e1",
+  "tests/ui/collaboration-workflow.test.tsx": "c460b012916b858e8a8952bbe10e5d8d780c438034c03dc7e32358502153db36",
+  "e2e/agent-observation.spec.ts": "fe7f842e8a49dcc8bd3ff6d038d07a4724a63ba062583e213a3bf5880794988f",
+  "e2e/fixtures.ts": "d099b530e296594813b951378efb5ce2a0ba8f19ac2850391183848d6bdf7bd8",
+  "e2e/collaboration-stopping.spec.ts": "b3e09e071bcc65d20485144159b76582985e89beaa8acaaa835007487e41c2ac",
+  "scripts/mock-science-pipeline.mjs": "2faec93a61cab151c87302ee99993e8f8a5cb88a8c8c51f806592e956b29af81",
+  "docs/superpowers/plans/2026-11-07-research-collaboration-p4-observation.md": "5f272003a015c1a5a00c110d39857663efd73286aadd8f414449f9face959c9d",
+  "docs/validation/research-collaboration-p1-p4-20261107/p4/d3-delivery.md": "6616b3a0199d75cff74c9272d25b3032fb318a4ce41c0422e7bee87b29c85a6b"
+}

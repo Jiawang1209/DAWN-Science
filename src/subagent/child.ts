@@ -1,3 +1,4 @@
+import {observeAgentContext} from '../runtime/agent-context-sampler.js'
 /**
  * 子 agent 的进程入口（①-B″ · S1）。
  *
@@ -162,7 +163,10 @@ async function realSession(spec: SubagentChildSpec): Promise<ChildPiSession> {
     emit({...binding,type:'steer_ready'})
   }
   return {
-    prompt: (text) => session.prompt(text),
+    prompt: async text => {
+      const stop=observeAgentContext(session,sample=>emit({type:'context_observation',sample}))
+      try{await session.prompt(text)}finally{stop()}
+    },
     ...(taskTools?{evidence:()=>bindToolRecords(taskTools.evidence(),session.sessionManager.getBranch().filter(entry=>!beforeIds.has(entry.id)),session.sessionManager.getSessionFile(),!!taskTools.submission)}:{}),
     submitted:()=>taskTools?.submission?.result(),
     submittedVersions:()=>taskTools?.submission?.receipt()?.versions,

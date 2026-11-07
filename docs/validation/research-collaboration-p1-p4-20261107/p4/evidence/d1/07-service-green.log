@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/context-observation.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/context-observation.test.ts (3 tests | 1 failed) 29ms
+   × binds ordinary execution without taskSettings/steering and only invalidates observation 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/context-observation.test.ts > binds ordinary execution without taskSettings/steering and only invalidates observation
+AssertionError: expected { …(10) } to match object { updatedAt: 1794067041313, …(2) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "activity": {
+      "since": 1794067041314,
+      "stage": "execution",
+    },
+-   "timing": undefined,
+    "updatedAt": 1794067041313,
+  }
+
+ ❯ tests/orchestration/context-observation.test.ts:21:30
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  23:57:20
+   Duration  379ms (transform 142ms, setup 0ms, import 268ms, tests 29ms, environment 0ms)
+

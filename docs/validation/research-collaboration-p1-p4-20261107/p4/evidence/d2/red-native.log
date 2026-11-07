@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/runtime/native-usage-observation.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/native-usage-observation.test.ts (1 test | 1 failed) 45ms
+   × local ordinary Bot usage is one scoped delta across reused sessions and teams without task permissions or schema changes 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/native-usage-observation.test.ts > local ordinary Bot usage is one scoped delta across reused sessions and teams without task permissions or schema changes
+AssertionError: expected undefined to deeply equal { input: 5, output: 2, cacheRead: 1 }
+
+- Expected:
+{
+  "cacheRead": 1,
+  "input": 5,
+  "output": 2,
+}
+
++ Received:
+undefined
+
+ ❯ tests/runtime/native-usage-observation.test.ts:19:38
+     17|   for(const [child,input] of [[a,5],[a,7],[b,11]] as const){
+     18|    const result=await service.run(child.id,()=>runtime.runWithUsageObs…
+     19|    expect(result.observation?.usage).toEqual({input,output:2,cacheRead…
+       |                                      ^
+     20|   }
+     21|   expect(store.get(a.id)?.usageTotals).toMatchObject({input:12,output:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  00:19:38
+   Duration  1.46s (transform 588ms, setup 0ms, import 1.34s, tests 45ms, environment 0ms)
+

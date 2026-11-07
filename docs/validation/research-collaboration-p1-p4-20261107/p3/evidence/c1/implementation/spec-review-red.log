@@ -1,0 +1,261 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (47 tests | 12 failed) 25ms
+     × requires a positive settled task attempt even when an attempt token is present 5ms
+     × preserves stage acceptance and pending review when selecting an analysis or check task 1ms
+     × rejects incomplete or non-independent final provenance: missing-check 1ms
+     × rejects incomplete or non-independent final provenance: unaccepted-check 0ms
+     × rejects incomplete or non-independent final provenance: wrong-input-version 0ms
+     × rejects incomplete or non-independent final provenance: same-reviewer 0ms
+     × rejects incomplete or non-independent final provenance: missing-reviewer 0ms
+     × rejects foreign current checkpoint tasks while running 0ms
+     × rejects foreign current checkpoint tasks while blocked 1ms
+     × rejects foreign current checkpoint tasks while interrupted 0ms
+     × rejects foreign current checkpoint tasks while cancelled 0ms
+     × qualifies cancelled pipelines and batches with explicit drain proof only 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires a positive settled task attempt even when an attempt token is present
+AssertionError: expected { state: 'accepted', …(5) } to match object { state: 'unverified', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [],
+-   "state": "unverified",
++   "acceptedPaths": [
++     "result.csv",
++   ],
++   "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:167:125
+    165|  })
+    166|  it('requires a positive settled task attempt even when an attempt tok…
+    167|   expect(selectCollaborationOutcome(withTeam(team([{...task(),attempt:…
+       |                                                                                                                             ^
+    168|  })
+    169|  it('preserves stage acceptance and pending review when selecting an a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > preserves stage acceptance and pending review when selecting an analysis or check task
+AssertionError: expected { state: 'accepted', …(5) } to match object { state: 'accepted', …(3) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptanceScope": "stage",
+    "artifacts": [
+      {
+-       "scope": "stage",
++       "scope": "final",
+      },
+    ],
+-   "pendingReview": true,
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:171:72
+    169|  it('preserves stage acceptance and pending review when selecting an a…
+    170|   const value=withTeam({...pipelineTeam(),pipeline:pipeline()})
+    171|   expect(selectCollaborationOutcome(value,'task:["team","analysis"]'))…
+       |                                                                        ^
+    172|   expect(selectCollaborationOutcome(value,'task:["team","check"]')).to…
+    173|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects incomplete or non-independent final provenance: missing-check
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects incomplete or non-independent final provenance: unaccepted-check
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects incomplete or non-independent final provenance: wrong-input-version
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects incomplete or non-independent final provenance: same-reviewer
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects incomplete or non-independent final provenance: missing-reviewer
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'unverified', …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [],
+-   "state": "unverified",
++   "acceptedPaths": [
++     "result.csv",
++   ],
++   "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:181:45
+    179|   if(problem==='same-reviewer')value.team!.tasks[1]!.assignee=value.te…
+    180|   if(problem==='missing-reviewer')delete value.team!.tasks[1]!.assignee
+    181|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'unve…
+       |                                             ^
+    182|  })
+    183|  it.each(['running','blocked','interrupted','cancelled'] as const)('re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects foreign current checkpoint tasks while running
+AssertionError: expected { state: 'active', …(7) } to match object { state: 'unverified', …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [],
+-   "artifacts": [],
+-   "state": "unverified",
++   "acceptedPaths": [
++     "result.csv",
++   ],
++   "artifacts": [
++     {
++       "attemptId": "attempt-analysis",
++       "scope": "stage",
++       "selectionKey": "task:[\"team\",\"analysis\"]",
++       "taskId": "analysis",
++       "teamId": "team",
++       "version": {
++         "bytes": 1,
++         "path": "result.csv",
++         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++         "versionId": "retained-v1",
++       },
++     },
++   ],
++   "state": "active",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:186:18
+    184|   const value=withTeam({...pipelineTeam(reviewed()),pipeline:{...pipel…
+    185|   const result=selectCollaborationOutcome(value)
+    186|   expect(result).toMatchObject({state:'unverified',acceptedPaths:[],ar…
+       |                  ^
+    187|   expect(result.actionTarget).toBeUndefined()
+    188|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects foreign current checkpoint tasks while blocked
+AssertionError: expected { state: 'blocked', …(8) } to match object { state: 'unverified', …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [],
+-   "artifacts": [],
+-   "state": "unverified",
++   "acceptedPaths": [
++     "result.csv",
++   ],
++   "artifacts": [
++     {
++       "attemptId": "attempt-analysis",
++       "scope": "stage",
++       "selectionKey": "task:[\"team\",\"analysis\"]",
++       "taskId": "analysis",
++       "teamId": "team",
++       "version": {
++         "bytes": 1,
++         "path": "result.csv",
++         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++         "versionId": "retained-v1",
++       },
++     },
++   ],
++   "state": "blocked",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:186:18
+    184|   const value=withTeam({...pipelineTeam(reviewed()),pipeline:{...pipel…
+    185|   const result=selectCollaborationOutcome(value)
+    186|   expect(result).toMatchObject({state:'unverified',acceptedPaths:[],ar…
+       |                  ^
+    187|   expect(result.actionTarget).toBeUndefined()
+    188|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects foreign current checkpoint tasks while interrupted
+AssertionError: expected { Object (selectionKey) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "selectionKey": "task:[\"team\",\"review\"]",
+}
+
+ ❯ tests/ui/collaboration-outcome.test.ts:187:31
+    185|   const result=selectCollaborationOutcome(value)
+    186|   expect(result).toMatchObject({state:'unverified',acceptedPaths:[],ar…
+    187|   expect(result.actionTarget).toBeUndefined()
+       |                               ^
+    188|  })
+    189|  it('qualifies cancelled pipelines and batches with explicit drain pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > rejects foreign current checkpoint tasks while cancelled
+AssertionError: expected { state: 'cancelled', …(7) } to match object { state: 'unverified', …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+    "artifacts": [],
+-   "state": "unverified",
++   "state": "cancelled",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:186:18
+    184|   const value=withTeam({...pipelineTeam(reviewed()),pipeline:{...pipel…
+    185|   const result=selectCollaborationOutcome(value)
+    186|   expect(result).toMatchObject({state:'unverified',acceptedPaths:[],ar…
+       |                  ^
+    187|   expect(result.actionTarget).toBeUndefined()
+    188|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > qualifies cancelled pipelines and batches with explicit drain proof only
+AssertionError: expected { state: 'cancelled', …(7) } to match object { state: 'cancelled', …(1) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "drainVerified": false,
+    "state": "cancelled",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:191:45
+    189|  it('qualifies cancelled pipelines and batches with explicit drain pro…
+    190|   const value=withTeam({...pipelineTeam(),pipeline:pipeline('cancelled…
+    191|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'canc…
+       |                                             ^
+    192|   value.runs=[{...run,kind:'team',address:['team','worker','generation…
+    193|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'stop…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 35 passed (47)
+   Start at  22:26:58
+   Duration  952ms (transform 325ms, setup 476ms, import 23ms, tests 25ms, environment 326ms)
+

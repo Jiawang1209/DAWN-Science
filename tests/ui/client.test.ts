@@ -205,3 +205,39 @@ describe("客户端 · 标题元信息独立于转录 revision", () => {
     expect(onResync).not.toHaveBeenCalled()
   })
 })
+
+describe('客户端 · 独立运行总览通知', () => {
+  const packet = (extra: object = {}) => ({type:'runOverviewChanged', ownerSessionId:'s1', observerId:'service-a', revision:999, workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION, ...extra})
+  it('uses a dedicated raw subscription and cannot poison transcript revision or cause resync', () => {
+    const listeners = new Set<(raw: unknown) => void>(), close=vi.fn()
+    const c=createClient(undefined, cb=>{listeners.add(cb);return()=>{listeners.delete(cb);close()}})
+    const update=vi.fn(), resync=vi.fn(), problem=vi.fn(), changed=vi.fn()
+    c.expectRevision('s1',1)
+    const stop=c.subscribeRunOverviewChanges(changed,problem)
+    const normal=c.subscribeUpdates({onUpdate:update,onResync:resync,onProblem:problem})
+    for(const cb of listeners)cb(packet())
+    for(const cb of listeners)cb({type:'bytes',sessionId:'s1',revision:2,data:'next',workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION})
+    expect(changed).toHaveBeenCalledExactlyOnceWith(packet())
+    expect(update).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({revision:2,type:'bytes'}))
+    expect(resync).not.toHaveBeenCalled();expect(problem).not.toHaveBeenCalled()
+    stop();normal();expect(close).toHaveBeenCalledTimes(2);expect(listeners.size).toBe(0)
+  })
+  it('ignores other packets, rejects invalid notification and protocol, and contains callback failures', () => {
+    let emit!:(raw:unknown)=>void
+    const c=createClient(undefined,cb=>{emit=cb;return()=>{}}),changed=vi.fn(()=>{throw new Error('broken view')}),problem=vi.fn()
+    c.subscribeRunOverviewChanges(changed,problem)
+    emit({type:'bytes',sessionId:'s1',revision:1,data:'x',workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION})
+    expect(problem).not.toHaveBeenCalled()
+    emit(packet({revision:-1}));emit(packet({workbenchProtocolVersion:'0.0'}));emit(packet({extra:true}))
+    expect(changed).not.toHaveBeenCalled();expect(problem).toHaveBeenCalledTimes(3)
+    expect(()=>emit(packet())).not.toThrow()
+    expect(problem).toHaveBeenLastCalledWith(expect.stringContaining('broken view'))
+  })
+  it('normal subscription quietly ignores even malformed overview packets',()=>{
+    let emit!:(raw:unknown)=>void
+    const c=createClient(undefined,cb=>{emit=cb;return()=>{}}),problem=vi.fn(),update=vi.fn(),resync=vi.fn()
+    c.subscribeUpdates({onUpdate:update,onResync:resync,onProblem:problem})
+    emit(packet({revision:-1}));emit(packet({workbenchProtocolVersion:'0.0'}))
+    expect(problem).not.toHaveBeenCalled();expect(update).not.toHaveBeenCalled();expect(resync).not.toHaveBeenCalled()
+  })
+})

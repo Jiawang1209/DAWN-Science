@@ -1,0 +1,8 @@
+{
+  "src": true,
+  "dist": true,
+  "protected": true,
+  "mainUnchanged": true,
+  "candidateHeadUnchanged": true,
+  "candidatePorcelainUnchanged": true
+}

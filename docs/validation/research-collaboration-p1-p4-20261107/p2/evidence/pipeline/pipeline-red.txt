@@ -1,0 +1,103 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (5 tests | 4 failed) 338ms
+   × blocks an initial pipeline below three available runs before dispatching a backend 84ms
+   × completes check analysis and independent review with exactly three runs and no ordinary capacity left 63ms
+   × a correction round under maxRuns=4 reserves new capacity without refunding the prior review 62ms
+   × retains an unused hold through cancellation until the active analysis backend cleanup settles 67ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > blocks an initial pipeline below three available runs before dispatching a backend
+AssertionError: expected [ …(2) ] to have a length of +0 but got 2
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ tests/team/science-review-budget.test.ts:37:16
+     35|  await scheduler.踢一下(team.id)
+     36|  await vi.waitFor(()=>expect(scheduler.读(team.id).pipeline?.status).to…
+     37|  expect(calls).toHaveLength(0);expect(store.budget()).toMatchObject({c…
+       |                ^
+     38|  await service.close()
+     39| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > completes check analysis and independent review with exactly three runs and no ordinary capacity left
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "phase": "consumed",
+-     "remainingRuns": 0,
+-   },
+- ]
++ []
+
+ ❯ tests/team/science-review-budget.test.ts:46:44
+     44|  expect(calls.map(r=>r.settings!.contract!.resultType)).toEqual(['data…
+     45|  expect(store.budget()).toMatchObject({consumedRuns:3,inFlight:0,revie…
+     46|  expect(store.budget().reviewReservations).toEqual([expect.objectConta…
+       |                                            ^
+     47|  await service.close()
+     48| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > a correction round under maxRuns=4 reserves new capacity without refunding the prior review
+AssertionError: expected 4 to be 3 // Object.is equality
+
+- Expected
++ Received
+
+- 3
++ 4
+
+ ❯ tests/team/science-review-budget.test.ts:54:38
+     52|  await scheduler.踢一下(team.id)
+     53|  await vi.waitFor(()=>expect(scheduler.读(team.id).pipeline?.status).to…
+     54|  expect(store.budget().consumedRuns).toBe(maxRuns===4?3:5)
+       |                                      ^
+     55|  expect(calls).toHaveLength(maxRuns===4?3:5)
+     56|  expect(store.budget().reviewReservedRuns).toBe(0)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > retains an unused hold through cancellation until the active analysis backend cleanup settles
+AssertionError: expected { Object (revision, limits, ...) } to match object { consumedRuns: 2, inFlight: 1, …(1) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "consumedRuns": 2,
+    "inFlight": 1,
+-   "reviewReservedRuns": 1,
++   "reviewReservedRuns": 0,
+  }
+
+ ❯ tests/team/science-review-budget.test.ts:68:26
+     66|   scheduler.中止全部(team.id)
+     67|   scheduler.改(team.id,t=>{cancelPipeline(t);for(const task of t.tasks)…
+     68|   expect(store.budget()).toMatchObject({consumedRuns:2,inFlight:1,revi…
+       |                          ^
+     69|   release({ok:true,output:'late completion must not publish'})
+     70|   await vi.waitFor(()=>expect(scheduler.hasActiveTeam(team.id)).toBe(f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  21:35:36
+   Duration  1.27s (transform 274ms, setup 0ms, import 836ms, tests 338ms, environment 0ms)
+

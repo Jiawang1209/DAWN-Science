@@ -1,0 +1,7 @@
+PROVENANCE: summary transcribed from observed tool output; full raw stdout was not persisted.
+Command: npx vitest run --project=node tests/orchestration/service.test.ts --reporter=dot
+Test Files  1 passed (1)
+Tests  15 passed (15)
+Start at  23:50:33
+Duration  636ms
+Exit code  0

@@ -7,7 +7,7 @@ import {getBuiltinModel} from '@earendil-works/pi-ai/providers/all'
 import {CredentialStore,defaultCredentialFile,readOnlyCredentials} from '../src/electron/credentials.js'
 import {loadRegistry} from '../src/config/loader.js'
 import {startEvaluationGate} from './evaluation-request-gate.js'
-import {researchBudgetTrial,RESEARCH_STAGE_PROVIDERS} from './research-trial-budget.js'
+import {researchBudgetTrial,RESEARCH_STAGE_PROVIDERS,RESEARCH_STAGE_LIMITS} from './research-trial-budget.js'
 import {researchProxyModel} from './research-model-compat.js'
 import {runResearchEvaluation} from './evaluate-research.js'
 async function main(){
@@ -46,7 +46,8 @@ try{
  const modelsPath=join(scratch,'models.json')
  const modelConfig={baseUrl:gate.url,api:'openai-completions',models:[proxyModel]}
  writeFileSync(modelsPath,JSON.stringify({providers:Object.fromEntries([provider,...Object.values(RESEARCH_STAGE_PROVIDERS)].map(name=>[name,modelConfig]))}))
- const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',signal:controller.signal,beginTrial:(limit,mode)=>researchBudgetTrial(gate!.partition(limit),mode,modelId)},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
+ const workModel={provider:RESEARCH_STAGE_PROVIDERS.work,model:modelId},reviewModel={provider:RESEARCH_STAGE_PROVIDERS.review,model:modelId}
+ const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',multiStageLimits:RESEARCH_STAGE_LIMITS,multiStageModels:{check:workModel,analyze:workModel,review:reviewModel},signal:controller.signal,beginTrial:(limit,mode)=>researchBudgetTrial(gate!.partition(limit),mode,modelId)},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
  mkdirSync(output,{recursive:true});writeFileSync(join(output,'request-gate.json'),JSON.stringify(gate.stats(),null,2)+'\n')
  console.log(JSON.stringify({provider,model:modelId,forwarded:gate.stats().forwarded,completePairs:report.completePairs,incompletePairs:report.incompletePairs,rows:report.rows.map(r=>({caseId:r.caseId,mode:r.mode,terminal:r.terminal,success:r.success,requests:r.requests}))}))
 }catch{console.error(`真实 API 试验未完成（${stage}）；未输出凭证、端点或请求正文。查看隔离报告；不会自动重新联网。`);process.exitCode=1}

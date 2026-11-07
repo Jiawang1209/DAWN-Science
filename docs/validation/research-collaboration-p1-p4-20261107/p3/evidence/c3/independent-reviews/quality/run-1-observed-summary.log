@@ -1,0 +1,7 @@
+PROVENANCE: summary transcribed from observed tool output; full raw stdout was not persisted.
+Command: npx vitest run --project=ui tests/ui/collaboration-outcome.test.ts tests/ui/collaboration-outcome-panel.test.tsx tests/ui/collaboration-model.test.ts tests/ui/run-overview.test.tsx tests/ui/collaboration-workbench.test.tsx --reporter=dot
+Test Files  5 passed (5)
+Tests  108 passed (108)
+Start at  23:50:31
+Duration  2.06s
+Exit code  0

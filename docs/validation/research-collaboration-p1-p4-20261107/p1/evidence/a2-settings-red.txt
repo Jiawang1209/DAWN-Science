@@ -1,0 +1,33 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-manifest.test.ts (4 tests | 1 failed) 7ms
+   × uses model API precedence and fingerprints inherited compatibility and declared sampling 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-manifest.test.ts > uses model API precedence and fingerprints inherited compatibility and declared sampling
+AssertionError: expected 'openai-completions' to be null
+
+- Expected:
+null
+
++ Received:
+"openai-completions"
+
+ ❯ tests/evaluation/research-manifest.test.ts:14:26
+     12|  const config={providers:{p:{api:'openai-completions',compat:{requires…
+     13|  const a=researchModelDeclaration(config,'p','m')
+     14|  expect(a.configuredApi).toBeNull()
+       |                          ^
+     15|  expect(a.configuredSampling).toEqual({temperature:0.2})
+     16|  const b=structuredClone(config);b.providers.p.compat.requiresToolResu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  21:27:41
+   Duration  145ms (transform 28ms, setup 0ms, import 39ms, tests 7ms, environment 0ms)
+

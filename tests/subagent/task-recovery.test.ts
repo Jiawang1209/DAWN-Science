@@ -18,6 +18,7 @@ it('rebuilds the new index from legacy run metadata without dropping the frozen 
  const service=new OrchestrationService(new OrchestrationStore(root,'p'))
  const control=createSubagentOrchestration({sessionId:'p',projectRoot:root,运行目录:run,emit:()=>{},childOf:()=>({command:'unused',args:[]}),context:{cwd:root,provider:'p',model:'m',agentDirOf:i=>run('_',i)}},service,()=>{},()=>{})
  expect(service.store.list()[0]?.settings).toEqual(settings)
+ expect(service.store.list()[0]?.usageTotals).toMatchObject({legacyHistory:true,settledEpochs:0,unknownEpochs:0,partial:['input','output','cacheRead']})
  expect(prepareSubagentTask({taskStore:service.store,taskPolicy:()=> 'allow-all',sessionId:'p',projectRoot:root,运行目录:run,emit:()=>{},childOf:()=>({command:'unused',args:[]}),context:{cwd:root,provider:'p',model:'m',agentDirOf:i=>run('_',i)}},'call',0,{agent:'a'},['*'])).toEqual(settings)
  await control.mailbox.close()
 })

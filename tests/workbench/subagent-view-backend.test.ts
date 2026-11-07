@@ -395,3 +395,36 @@ it('opens a Unicode member transcript only for the exact settled team attempt an
  rmSync(file);symlinkSync(aliased,file)
  expect(await ctx.backend.getToolRecord(request)).toEqual({state:'unavailable'})
 })
+it('backend pulls follow real Native live to disk observations across two reopening cycles',async()=>{
+ const ctx=make0(),sessionId=await ctx.开一段(),record=ctx.sessions.get(sessionId)!,{NativeRuntime}=await import('../../src/runtime/native.js'),{vi}=await import('vitest')
+ const native=new NativeRuntime({credentials:{read:async()=>({type:'api_key',key:'sk-offline'}),list:async()=>[],modify:async()=>undefined,delete:async()=>{}},subagentChildEntry:'/unused.js'}),seen:import('../../src/protocol/run-overview.js').RunOverviewChanged[]=[]
+ vi.spyOn(ctx.sessions,'runtimeOf').mockReturnValue(native)
+ ctx.events.onRunOverviewChange(event=>seen.push(event))
+ let previous:string|undefined
+ for(let cycle=0;cycle<2;cycle++){
+  native.attach(sessionId,event=>ctx.events.ingest(sessionId,event))
+  await native.start({sessionId,workspace:record.workspace,sessionDir:record.sessionDir,resume:cycle>0,native:{provider:'deepseek',model:'deepseek-flash'}})
+  const live=await ctx.backend.getRunOverview({sessionId}) as import('../../src/protocol/run-overview.js').RunOverview
+  expect(live.source).toBe('live');expect(live.observation?.observerId).not.toBe(previous);expect(live.observation?.observerId).not.toBe('disk')
+  expect(seen.at(-1)).toMatchObject(live.observation!)
+  previous=live.observation?.observerId
+  await native.stop(sessionId)
+  expect(native.runOverview(sessionId)).toBeUndefined()
+  const disk=await ctx.backend.getRunOverview({sessionId}) as import('../../src/protocol/run-overview.js').RunOverview
+  expect(disk).toMatchObject({source:'disk',observation:{observerId:'disk',revision:0}})
+  expect(seen.at(-1)).toMatchObject(disk.observation!);expect(disk.runs.every(run=>run.phase==='unknown')).toBe(true)
+ }
+})
+it('old runtimes without overview support read owned disk teams without creating orchestration or migrating private state',async()=>{
+ const ctx=make0(),sessionId=await ctx.开一段(),record=ctx.sessions.get(sessionId)!,{readdirSync,existsSync}=await import('node:fs')
+ const team=建团队({id:'owned',name:'owned',goal:'g',captainSessionId:sessionId})
+ 加成员(team,{name:'m',agent:'reader',botId:'bot',botScopeKey:'scope'});delete team.botOriginScopeKey
+ const member=team.members[0]! as unknown as {taskSettings?:unknown;frozenAgentDefinition?:unknown};member.taskSettings={private:'permission'};member.frozenAgentDefinition={private:'definition'}
+ 加任务(team,{subject:'task'});(team.tasks[0]! as unknown as {settings?:unknown}).settings={private:'task permission'}
+ const file=join(record.sessionDir,'teams','owned','team.json');mkdirSync(dirname(file),{recursive:true});writeFileSync(file,JSON.stringify({...team,botOwnerContext:{key:'scope',workspace:'/imported'}}));writeFileSync(join(record.sessionDir,'teams','current'),'owned')
+ const before=readFileSync(file,'utf8'),files=readdirSync(record.sessionDir,{recursive:true})
+ const snapshot=await ctx.backend.getRunOverview({sessionId}) as import('../../src/protocol/run-overview.js').RunOverview
+ expect(snapshot).toMatchObject({source:'disk',team:{id:'owned'},runs:[]})
+ expect(JSON.stringify(snapshot)).not.toMatch(/imported|permission|definition|taskSettings|frozenAgentDefinition/)
+ expect(readFileSync(file,'utf8')).toBe(before);expect(readdirSync(record.sessionDir,{recursive:true})).toEqual(files);expect(existsSync(join(record.sessionDir,'orchestration'))).toBe(false)
+})

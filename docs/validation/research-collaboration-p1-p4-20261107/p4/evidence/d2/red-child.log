@@ -1,0 +1,47 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/subagent/child-task.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/subagent/child-task.test.ts (15 tests | 1 failed) 451ms
+   × ordinary tasks always return actual epoch usage without creating contract evidence 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/child-task.test.ts > ordinary tasks always return actual epoch usage without creating contract evidence
+AssertionError: expected { type: 'done', ok: true, …(1) } to match object { ok: true, output: 'done', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "observation": {
+-     "invalidSubmissions": 0,
+-     "submissionAttempts": 0,
+-     "usage": {
+-       "cacheRead": 2,
+-       "input": 12,
+-       "output": 4,
+-     },
+-   },
+    "ok": true,
+    "output": "done",
+  }
+
+ ❯ tests/subagent/child-task.test.ts:28:17
+     26| it('ordinary tasks always return actual epoch usage without creating c…
+     27|  const result=await runChildTask(SPEC,async()=>({...await fakeSession(…
+     28|  expect(result).toMatchObject({ok:true,output:'done',observation:{subm…
+       |                 ^
+     29|  expect('trace' in result).toBe(false);expect('evidence' in result).to…
+     30|  const failure=await runChildTask(SPEC,async()=>{throw new Error('no s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  00:18:24
+   Duration  609ms (transform 124ms, setup 0ms, import 83ms, tests 451ms, environment 0ms)
+

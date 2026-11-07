@@ -23,6 +23,15 @@ const SPEC: SubagentChildSpec = {
   agentDir: "/tmp/w/.dawn/x/pi",
 }
 
+it('ordinary tasks always return actual epoch usage without creating contract evidence',async()=>{
+ const result=await runChildTask(SPEC,async()=>({...await fakeSession({deltas:['done']})(),usage:()=>({input:12,output:4,cacheRead:2})}))
+ expect(result).toMatchObject({ok:true,output:'done',observation:{submissionAttempts:0,invalidSubmissions:0,usage:{input:12,output:4,cacheRead:2}}})
+ expect('trace' in result).toBe(false);expect('evidence' in result).toBe(false)
+ const failure=await runChildTask(SPEC,async()=>{throw new Error('no session')})
+ expect(failure.observation).toMatchObject({submissionAttempts:0,invalidSubmissions:0})
+ expect(failure.observation?.usage).toBeUndefined()
+})
+
 it('requires a real submission in tool mode rather than accepting a plain final JSON',async()=>{
  const {TaskContractSchema}=await import('../../src/orchestration/task-contract.js')
  const {resolveTaskSettings}=await import('../../src/subagent/task-tools.js')
@@ -157,10 +166,10 @@ describe("过程（2026-09-27，子 agent 看得见）", () => {
       (e) => 收到.push(e),
     )
     expect(收到.map((e) => (e as { kind: string }).kind)).toEqual(["tool_start", "tool_end", "output"])
-    expect(r).toEqual({ type: "done", ok: true, output: "结论" })
+    expect(r).toEqual({ type: "done", ok: true, output: "结论",observation:{elapsedMs:expect.any(Number),submissionAttempts:0,invalidSubmissions:0} })
   })
   it("不给 onEvent 照旧能跑（老调用方）", async () => {
-    expect(await runChildTask(SPEC, fakeSession({ deltas: ["x"] }))).toEqual({ type: "done", ok: true, output: "x" })
+    expect(await runChildTask(SPEC, fakeSession({ deltas: ["x"] }))).toEqual({ type: "done", ok: true, output: "x",observation:{elapsedMs:expect.any(Number),submissionAttempts:0,invalidSubmissions:0} })
   })
 })
 

@@ -1,0 +1,10 @@
+{
+  "baseline": "prior goal final D3 source manifest",
+  "changed": [
+    "src/subagent/executor.ts",
+    "src/team/scheduler.ts",
+    "src/workbench/backend.ts"
+  ],
+  "new": [],
+  "removed": []
+}

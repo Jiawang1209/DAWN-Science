@@ -42,7 +42,7 @@ export async function runChildTask(
 ): Promise<SubagentDoneMessage> {
   const started=Date.now()
   let session: ChildPiSession|undefined
-  const observed=(result:SubagentDoneMessage):SubagentDoneMessage=>spec.taskSettings?{...result,...(!result.ok&&spec.taskSettings.contract&&session?.evidence?{trace:taskTrace(session.evidence())}:{}),observation:taskObservation(started,session?.submissionObservation?.(),session?.usage?.())}:result
+  const observed=(result:SubagentDoneMessage):SubagentDoneMessage=>({...result,...(!result.ok&&spec.taskSettings?.contract&&session?.evidence?{trace:taskTrace(session.evidence())}:{}),observation:taskObservation(started,session?.submissionObservation?.(),session?.usage?.())})
   try {
     session = await createSession(spec)
   } catch (err) {

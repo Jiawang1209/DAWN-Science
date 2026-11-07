@@ -1,0 +1,24 @@
+{
+  "baseManifest": "p3/evidence/c3/full-suite-remediation/src-sha256.json",
+  "baseCount": 628,
+  "currentCount": 630,
+  "changed": [
+    "src/orchestration/execution-context.ts",
+    "src/orchestration/run-overview.ts",
+    "src/orchestration/service.ts",
+    "src/orchestration/store.ts",
+    "src/protocol/index.ts",
+    "src/protocol/run-overview.ts",
+    "src/runtime/native.ts",
+    "src/subagent/child.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/protocol.ts",
+    "src/team/runner.ts"
+  ],
+  "added": [
+    "src/protocol/agent-context-observation.ts",
+    "src/runtime/agent-context-sampler.ts"
+  ],
+  "removed": [],
+  "unchangedCount": 617
+}

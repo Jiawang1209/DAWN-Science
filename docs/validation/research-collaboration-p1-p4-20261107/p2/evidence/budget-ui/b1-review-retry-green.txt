@@ -1,0 +1,26 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (26 tests | 1 failed) 115ms
+     × recovers an interrupted charge once and a later cycle needs fresh available runs 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > recovers an interrupted charge once and a later cycle needs fresh available runs
+AssertionError: expected [Function] to throw an error
+ ❯ tests/orchestration/store.test.ts:163:48
+    161|   twice.releaseReviewReservation(key)
+    162|   expect(twice.reserveReviewRuns('a',1,2)).toMatchObject({phase:'held'…
+    163|   expect(()=>twice.reserveReviewRuns('a',2,1)).toThrow()
+       |                                                ^
+    164|  })
+    165|  it('rejects foreign and duplicate reservation keys on cold read witho…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 42 passed (43)
+   Start at  21:34:37
+   Duration  477ms (transform 432ms, setup 0ms, import 831ms, tests 196ms, environment 0ms)
+

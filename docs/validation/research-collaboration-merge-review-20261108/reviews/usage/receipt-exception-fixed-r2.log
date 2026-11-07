@@ -1,0 +1,53 @@
+preCancelReceipt accepted
+{
+  "acceptance": true,
+  "emittedUsage": {
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1
+  },
+  "result": {
+    "results": [
+      {
+        "agent": "worker",
+        "task": "task",
+        "ok": false,
+        "output": "",
+        "error": "receipt persistence unavailable",
+        "outputTruncated": false,
+        "outputBytes": 0,
+        "observation": {
+          "elapsedMs": 5,
+          "submissionAttempts": 0,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 10,
+            "output": 2,
+            "cacheRead": 1
+          }
+        }
+      }
+    ]
+  },
+  "usageTotals": {
+    "source": "host-epoch-deltas",
+    "partial": [],
+    "settledEpochs": 1,
+    "unknownEpochs": 0,
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1,
+    "lastSettledEpoch": 1
+  },
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 13,
+    "unknownRuns": 0,
+    "inFlight": 0,
+    "startedAt": 1794072688256,
+    "elapsedMs": 39
+  }
+}

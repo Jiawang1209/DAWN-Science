@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  00:59:55
+   Duration  3.37s (transform 1.47s, setup 1.41s, import 734ms, tests 246ms, environment 848ms)
+

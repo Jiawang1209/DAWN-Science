@@ -1,0 +1,62 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (35 tests | 2 failed) 18ms
+     × uses current run task binding when bounded history has lost the started event 5ms
+     × prefers current run binding over contradictory legacy history 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > uses current run task binding when bounded history has lost the started event
+AssertionError: expected { state: 'cancelled', …(5) } to match object { state: 'stopping', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "action": "wait-for-drain",
+-   "state": "stopping",
++   "action": "inspect-recovery",
++   "state": "cancelled",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:151:85
+    149|   const value=withTeam(team([t]));value.history={events:[],truncated:t…
+    150|   value.runs=[{...run,phase:'stopping',state:'cancelled',taskAttempt:{…
+    151|   expect(selectCollaborationOutcome(value,{kind:'task',teamId:'team',t…
+       |                                                                                     ^
+    152|   value.runs[0]!.taskAttempt!.attempt=2
+    153|   expect(selectCollaborationOutcome(value,{kind:'task',teamId:'team',t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > prefers current run binding over contradictory legacy history
+AssertionError: expected { state: 'stopping', …(5) } to match object { state: 'cancelled', …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "drainVerified": false,
+-   "state": "cancelled",
++   "state": "stopping",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:159:85
+    157|   value.runs=[{...run,phase:'stopping',taskAttempt:{teamId:'team',task…
+    158|   value.history={truncated:false,events:[{seq:1,at:1,type:'started',ch…
+    159|   expect(selectCollaborationOutcome(value,{kind:'task',teamId:'team',t…
+       |                                                                                     ^
+    160|  })
+    161|  it('keeps protocol optional fields backward compatible and strict',()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 33 passed (35)
+   Start at  22:21:46
+   Duration  960ms (transform 335ms, setup 498ms, import 22ms, tests 18ms, environment 336ms)
+

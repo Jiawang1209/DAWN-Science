@@ -1,4 +1,5 @@
 import {readToolRecord} from './tool-record.js'
+import {childDiagnostics} from '../subagent/diagnostics.js'
 import {readHandoff} from '../subagent/context-handoff.js'
 import {publicRunOverview,readRunOverview} from '../orchestration/run-overview.js'
 import {versionInputReceipt,finalizeTaskVersions} from '../artifacts/task-versions.js'
@@ -2346,7 +2347,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         sessions.write(sid, request.prompt, holder)
       }})
       reportExecutionStage('execution')
-      const result:import("../team/types.js").成员轮结果=request.settings&&!owner.connectionId?await botRuntime(sid).runWithTaskScope(sid,request.settings,run):await run()
+      const result:import("../team/types.js").成员轮结果=owner.connectionId?await run():request.settings?await botRuntime(sid).runWithTaskScope(sid,request.settings,run):await botRuntime(sid).runWithUsageObservation(sid,run)
+      try{
       if(result.ok&&request.settings?.contract){
         reportExecutionStage('acceptance')
         const evidence=result.evidence??[]
@@ -2354,6 +2356,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??'未通过契约验收'}:{})}
       }
       return result
+      }catch(error){return{ok:false,output:'',error:error instanceof Error?error.message:String(error),...childDiagnostics(result)}}
       } finally {release()}
     },
     result: async (owner, event) => {

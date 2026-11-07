@@ -1,0 +1,99 @@
+{
+  "scope": "Final opacity CSS candidate, 5 targeted Electron cases",
+  "runs": 7,
+  "maxMs": {
+    "appCloseReturnedMs": 143.207,
+    "osProcessExitMs": 141.85,
+    "osProcessCloseMs": 142.24
+  },
+  "over4000Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "over1500Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "rows": [
+    {
+      "file": "exit-93534.jsonl",
+      "appCloseReturnedMs": 129.988,
+      "osProcessExitMs": 128.862,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 129.696,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-93989.jsonl",
+      "appCloseReturnedMs": 111.712,
+      "osProcessExitMs": 111.147,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 111.507,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-94161.jsonl",
+      "appCloseReturnedMs": 116.638,
+      "osProcessExitMs": 116.126,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 116.437,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-94474.jsonl",
+      "appCloseReturnedMs": 132.561,
+      "osProcessExitMs": 132.01,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 132.363,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-94727.jsonl",
+      "appCloseReturnedMs": 130.829,
+      "osProcessExitMs": 130.311,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 130.618,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-94773.jsonl",
+      "appCloseReturnedMs": 143.207,
+      "osProcessExitMs": 141.85,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 142.24,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-94873.jsonl",
+      "appCloseReturnedMs": 130.883,
+      "osProcessExitMs": 130.362,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 130.688,
+      "observerProblems": [],
+      "nativeProblems": []
+    }
+  ],
+  "historicalOpenMs": [
+    7350,
+    20690
+  ],
+  "historicalBudgetsUnchanged": [
+    1500,
+    4000
+  ]
+}

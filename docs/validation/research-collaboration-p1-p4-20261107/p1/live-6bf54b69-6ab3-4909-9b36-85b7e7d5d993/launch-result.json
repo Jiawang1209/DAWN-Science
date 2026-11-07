@@ -1,0 +1,36 @@
+{
+  "id": "6bf54b69-6ab3-4909-9b36-85b7e7d5d993",
+  "finishedAt": "2026-11-07T16:50:05.338Z",
+  "exitCode": 0,
+  "signal": null,
+  "summary": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "forwarded": 24,
+    "completePairs": 1,
+    "incompletePairs": 0,
+    "rows": [
+      {
+        "caseId": "carbon-missing",
+        "mode": "single",
+        "terminal": "accepted",
+        "success": true,
+        "requests": 10
+      },
+      {
+        "caseId": "carbon-missing",
+        "mode": "multi",
+        "terminal": "accepted",
+        "success": true,
+        "requests": 14
+      }
+    ]
+  },
+  "postReportToOsCloseMs": 23.892416999995476,
+  "profileAfter": {
+    "providers.yaml": "4380a472e84b4205b9180bb7d790930c2b358e57f8d64303cd39e0cf44e8d9dc",
+    "credentials.json": "541e3d353636c9a2b42eb206f272fb49fe9899a2a417f80d3358cf2c1d709f4b"
+  },
+  "profileUnchanged": true,
+  "historicalShutdownStatus": "OPEN"
+}

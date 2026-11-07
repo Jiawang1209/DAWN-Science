@@ -1,0 +1,50 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/agent-context-sampler.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/agent-context-sampler.test.ts (10 tests | 2 failed) 12ms
+   × samples after SDK message persistence, coalesces boundaries, and never samples deltas 3ms
+   × isolates both subscriber and reporter failures from execution 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > samples after SDK message persistence, coalesces boundaries, and never samples deltas
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:33:40
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > isolates both subscriber and reporter failures from execution
+AssertionError: expected [Function] to not throw an error but 'Error: PRIVATE' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"Error: PRIVATE"
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:36:101
+     34| })
+     35| it('isolates both subscriber and reporter failures from execution',()=…
+     36|  expect(()=>observeAgentContext({...make(),subscribe:()=>{throw new Er…
+       |                                                                                                     ^
+     37|  expect(()=>observeAgentContext(make(),()=>{throw new Error('PRIVATE')…
+     38| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:59:45
+   Duration  477ms (transform 25ms, setup 0ms, import 386ms, tests 12ms, environment 0ms)
+

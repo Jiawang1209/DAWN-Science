@@ -36,7 +36,7 @@ import {
   type SubagentResult,
 } from "./executor.js"
 import type { AgentEvent, SessionId } from "../runtime/types.js"
-import { 写元, 读元, type 子运行元 } from "./run-dir.js"
+import { 写元, 读元, 会话文件, type 子运行元 } from "./run-dir.js"
 
 export interface SubagentToolOptions {
   captureHandoff?:(selection:HandoffSelection)=>ContextHandoff
@@ -155,6 +155,7 @@ export function prepareSubagentTask(opts:SubagentToolOptions,callId:string,index
   const child=store?.register('subagent',[子目录段(callId),String(index)],task.agent)
   const dir=目录于(opts,callId)(index)
   const existingHandoff=readHandoff(dir,opts.sessionId),existingMeta=读元(dir)
+  if(child?.epoch===0&&existingMeta&&(existingMeta.status!=='running'||会话文件(dir)))store!.markUsageHistoryLegacy(child.id)
   const legacyStarted=child&&(child.epoch>0||child.state!=='idle'||child.settings)
   const recorded=child?.handoffSha256!==undefined?child.handoffSha256:existingMeta?.handoffSha256!==undefined?existingMeta.handoffSha256:legacyStarted?null:undefined
   if(child?.handoffSha256!==undefined&&existingMeta?.handoffSha256!==undefined&&child.handoffSha256!==existingMeta.handoffSha256)throw new Error('交接绑定与运行记录冲突')

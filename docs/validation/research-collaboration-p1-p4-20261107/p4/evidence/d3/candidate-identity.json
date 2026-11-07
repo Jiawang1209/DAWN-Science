@@ -1,0 +1,21 @@
+{
+  "createdAt": "2026-11-08T01:04:37.457075",
+  "head": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+  "branch": "codex/research-collaboration-p1-p4-20261107",
+  "sourceCount": 634,
+  "buildCount": 625,
+  "childSourceSha256": "1268e35920d1fa5c48e2ffb92b10596ee8992e6f9d3ae92b5c65e244aa1cdd9f",
+  "childBuildSha256": "96b1f3e966c391d88fb45fa9524dbb61d4b0203da6ac4cbf69ae41f577d7063e",
+  "productionScope": [
+    "src/ui/agent-observation-view.tsx",
+    "src/ui/agent-observation.ts",
+    "src/ui/collaboration-network.tsx",
+    "src/ui/collaboration-task-detail.tsx",
+    "src/ui/collaboration-workflow.tsx",
+    "src/ui/i18n/en.ts",
+    "src/ui/run-overview.tsx",
+    "src/ui/styles.css"
+  ],
+  "externalApiCalls": 0,
+  "formalProfileTouched": false
+}

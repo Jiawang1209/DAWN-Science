@@ -35,7 +35,7 @@ interface Options extends 团队工具选项 {route:()=>AnalysisRoute|undefined;
 export function createSciencePipelineTools(opts:Options){
  const scheduler=opts.调度器
  const owned=(requested?:string)=>{const id=requested??opts.当前.get();if(!id||!teamId.safeParse(id).success)throw new 团队错误('请先启动科研流程，或提供有效 teamId');const t=scheduler.读(id);if(t.captainSessionId!==opts.sessionId||!t.pipeline)throw new 团队错误('流程不属于当前主会话');return t}
- const status=(t:ReturnType<typeof owned>)=>({teamId:t.id,...pipelineStatus(t),...(t.scienceBatch?{batch:publicScienceBatch(t.scienceBatch)}:{})})
+ const status=(t:ReturnType<typeof owned>)=>({teamId:t.id,...pipelineStatus(t),...(t.scienceBatch?{batch:publicScienceBatch(t.scienceBatch,t.pipeline)}:{})})
  const make=<S extends z.ZodType>(name:string,description:string,schema:S,action:(args:z.output<S>,callId:string,signal?:AbortSignal)=>unknown)=>({
   name,label:name,description,parameters:z.toJSONSchema(schema,{io:'input',unrepresentable:'any'}),
   async execute(callId:string,raw:unknown,signal?:AbortSignal){
@@ -142,7 +142,7 @@ export function createSciencePipelineTools(opts:Options){
    if((scheduler.读(team.id).scienceBatch?.stateRevision??scheduler.读(team.id).pipeline?.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
    let transitioned=false
    try{
-    scheduler.改(team.id,t=>{if(t.scienceBatch)resumeScienceBatch(t,args.acknowledgeInterrupted);else resumePipeline(t,args.acknowledgeInterrupted);transitioned=true});scheduler.resumeTeam(team.id);await scheduler.踢一下(team.id)
+    scheduler.改(team.id,t=>{if(t.scienceBatch)resumeScienceBatch(t,args.acknowledgeInterrupted);else resumePipeline(t,args.acknowledgeInterrupted);transitioned=true});scheduler.resumePipelineReservationsVerified(team.id);scheduler.resumeTeam(team.id);await scheduler.踢一下(team.id)
    }catch(error){
     if(!transitioned)throw error // Rejected preconditions must not interrupt valid live work.
     // Pause live work first, even if a snapshot notification or disk write failed.
@@ -156,7 +156,7 @@ export function createSciencePipelineTools(opts:Options){
   }),
   make('cancel_science_pipeline','取消科研流程并停止当前尝试；保留检查点和产物，不采用迟到结果。停止请求不等于清理已完成。',cancelSchema,args=>{
    const team=owned(args.teamId),p=team.pipeline!
-   if(['completed','cancelled'].includes(team.scienceBatch?.status??p.status))return status(team)
+   if(['completed','cancelled'].includes(team.scienceBatch?.status??p.status)){scheduler.reconcileTerminalPipelineReservations(team.id);return status(team)}
    if((team.scienceBatch?.stateRevision??p.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
    scheduler.中止全部(team.id)
    scheduler.改(team.id,t=>{if(t.scienceBatch)cancelScienceBatch(t);else cancelPipeline(t);for(const task of t.tasks)if(!['completed','failed','cancelled'].includes(task.status))取消任务(t,task.id)})

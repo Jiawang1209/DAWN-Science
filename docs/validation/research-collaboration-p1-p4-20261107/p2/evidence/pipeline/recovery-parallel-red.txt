@@ -1,0 +1,43 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (10 tests | 3 failed) 845ms
+   × keeps the full legal escaped request identity bounded and distinct across retry generations 6ms
+   × reserves hidden parallel checkpoints independently with maxRuns=3 before any backend admission 6ms
+   × reserves hidden parallel checkpoints independently with maxRuns=6 before any backend admission 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > keeps the full legal escaped request identity bounded and distinct across retry generations
+AssertionError: expected 1071 to be less than or equal to 512
+ ❯ tests/team/science-review-budget.test.ts:48:20
+     46|  team.pipeline!.requestId='\\"'.repeat(256)
+     47|  const id=pipelineBudgetId(team,team.pipeline!)
+     48|  expect(id.length).toBeLessThanOrEqual(512)
+       |                    ^
+     49|  team.pipeline!.budgetGeneration=1
+     50|  expect(pipelineBudgetId(team,team.pipeline!)).not.toBe(id)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > reserves hidden parallel checkpoints independently with maxRuns=3 before any backend admission
+ FAIL  |node| tests/team/science-review-budget.test.ts > reserves hidden parallel checkpoints independently with maxRuns=6 before any backend admission
+ZodError: [
+  {
+    "code": "custom",
+    "message": "批量项必须冻结输入版本",
+    "path": []
+  }
+]
+ ❯ startScienceBatch src/team/science-batch.ts:34:29
+
+ ❯ tests/team/science-review-budget.test.ts:59:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  21:40:34
+   Duration  1.65s (transform 246ms, setup 0ms, import 728ms, tests 845ms, environment 0ms)
+

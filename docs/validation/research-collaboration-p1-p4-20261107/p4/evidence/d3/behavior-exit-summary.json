@@ -1,0 +1,249 @@
+{
+  "scope": "15-case behavior regression before final selected-card opacity CSS",
+  "runs": 22,
+  "maxMs": {
+    "appCloseReturnedMs": 209.228,
+    "osProcessExitMs": 208.732,
+    "osProcessCloseMs": 209.041
+  },
+  "over4000Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "over1500Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "rows": [
+    {
+      "file": "exit-54014.jsonl",
+      "appCloseReturnedMs": 115.495,
+      "osProcessExitMs": 114.519,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 115.231,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-54546.jsonl",
+      "appCloseReturnedMs": 113.443,
+      "osProcessExitMs": 112.795,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 113.238,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-54675.jsonl",
+      "appCloseReturnedMs": 114.514,
+      "osProcessExitMs": 113.88,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 114.308,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-55057.jsonl",
+      "appCloseReturnedMs": 131.067,
+      "osProcessExitMs": 130.482,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 130.873,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-55312.jsonl",
+      "appCloseReturnedMs": 132.562,
+      "osProcessExitMs": 132.073,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 132.378,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-55439.jsonl",
+      "appCloseReturnedMs": 136.726,
+      "osProcessExitMs": 135.908,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 136.482,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-55612.jsonl",
+      "appCloseReturnedMs": 139.892,
+      "osProcessExitMs": 139.366,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 139.678,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-55765.jsonl",
+      "appCloseReturnedMs": 142.554,
+      "osProcessExitMs": 142.004,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 142.349,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56045.jsonl",
+      "appCloseReturnedMs": 186.327,
+      "osProcessExitMs": 185.507,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 185.927,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56256.jsonl",
+      "appCloseReturnedMs": 133.392,
+      "osProcessExitMs": 132.634,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 132.978,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56296.jsonl",
+      "appCloseReturnedMs": 138.915,
+      "osProcessExitMs": 138.411,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 138.71,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56392.jsonl",
+      "appCloseReturnedMs": 129.546,
+      "osProcessExitMs": 129.114,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 129.318,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56576.jsonl",
+      "appCloseReturnedMs": 142.511,
+      "osProcessExitMs": 141.803,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 142.271,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56747.jsonl",
+      "appCloseReturnedMs": 138.416,
+      "osProcessExitMs": 137.838,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 138.216,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-56875.jsonl",
+      "appCloseReturnedMs": 155.065,
+      "osProcessExitMs": 154.497,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 154.839,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-57217.jsonl",
+      "appCloseReturnedMs": 185.917,
+      "osProcessExitMs": 185.409,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 185.728,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-57367.jsonl",
+      "appCloseReturnedMs": 137.446,
+      "osProcessExitMs": 136.962,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 137.258,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-57548.jsonl",
+      "appCloseReturnedMs": 145.059,
+      "osProcessExitMs": 144.533,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 144.855,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-57776.jsonl",
+      "appCloseReturnedMs": 209.228,
+      "osProcessExitMs": 208.732,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 209.041,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-58072.jsonl",
+      "appCloseReturnedMs": 161.555,
+      "osProcessExitMs": 160.983,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 161.326,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-58203.jsonl",
+      "appCloseReturnedMs": 167.78,
+      "osProcessExitMs": 167.252,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 167.579,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-58266.jsonl",
+      "appCloseReturnedMs": 170.687,
+      "osProcessExitMs": 170.147,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 170.506,
+      "observerProblems": [],
+      "nativeProblems": []
+    }
+  ],
+  "historicalOpenMs": [
+    7350,
+    20690
+  ],
+  "historicalBudgetsUnchanged": [
+    1500,
+    4000
+  ]
+}

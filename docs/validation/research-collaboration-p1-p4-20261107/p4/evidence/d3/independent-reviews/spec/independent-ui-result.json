@@ -1,0 +1,18 @@
+{
+  "command": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "--project",
+    "ui",
+    "tests/ui/agent-observation.test.tsx",
+    "tests/ui/collaboration-model.test.ts",
+    "tests/ui/collaboration-workbench.test.tsx",
+    "tests/ui/collaboration-workflow.test.tsx",
+    "tests/ui/context-meter.test.tsx",
+    "tests/ui/use-run-overview.test.tsx",
+    "tests/ui/run-overview.test.tsx",
+    "tests/ui/run-budget.test.tsx"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 2.923153042
+}

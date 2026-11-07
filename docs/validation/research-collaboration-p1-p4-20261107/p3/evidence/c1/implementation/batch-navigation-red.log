@@ -1,0 +1,56 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-batch.test.ts (7 tests | 2 failed) 392ms
+   × navigates to the actual blocked batch item with concurrency 1 and keeps stopping higher priority 85ms
+   × navigates to the actual blocked batch item with concurrency 2 and keeps stopping higher priority 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-batch.test.ts > navigates to the actual blocked batch item with concurrency 1 and keeps stopping higher priority
+AssertionError: expected { state: 'blocked', …(5) } to match object { state: 'blocked', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "action": "inspect-feedback",
+-   "actionTarget": {
+-     "selectionKey": "task:[\"versioned\",\"p-0-one-check-0-0\"]",
+-   },
+    "state": "blocked",
+  }
+
+ ❯ tests/team/science-batch.test.ts:81:48
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-batch.test.ts > navigates to the actual blocked batch item with concurrency 2 and keeps stopping higher priority
+AssertionError: expected { state: 'blocked', …(6) } to match object { state: 'blocked', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "action": "inspect-feedback",
+    "actionTarget": {
+-     "selectionKey": "task:[\"versioned\",\"p-1-two-check-0-0\"]",
++     "selectionKey": "task:[\"versioned\",\"p-0-one-check-0-0\"]",
+    },
+    "state": "blocked",
+  }
+
+ ❯ tests/team/science-batch.test.ts:81:48
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  22:44:11
+   Duration  1.08s (transform 233ms, setup 0ms, import 606ms, tests 392ms, environment 0ms)
+

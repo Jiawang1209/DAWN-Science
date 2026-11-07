@@ -1,0 +1,30 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (30 tests | 1 failed) 17ms
+     × requires the final review to belong to the public checkpoint task set 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires the final review to belong to the public checkpoint task set
+AssertionError: expected 'accepted' to be 'unverified' // Object.is equality
+
+Expected: "unverified"
+Received: "accepted"
+
+ ❯ tests/ui/collaboration-outcome.test.ts:134:51
+    132|   const value=withTeam({...team([task(),reviewed()]),pipeline:pipeline…
+    133|   value.team!.pipeline!.taskIds=['analysis']
+    134|   expect(selectCollaborationOutcome(value).state).toBe('unverified')
+       |                                                   ^
+    135|  })
+    136|  it('keeps protocol optional fields backward compatible and strict',()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 29 passed (30)
+   Start at  22:20:05
+   Duration  960ms (transform 337ms, setup 499ms, import 22ms, tests 17ms, environment 338ms)
+

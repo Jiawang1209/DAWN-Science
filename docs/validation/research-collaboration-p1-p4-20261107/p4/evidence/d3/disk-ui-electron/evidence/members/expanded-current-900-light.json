@@ -1,0 +1,597 @@
+{
+  "actualElectron": true,
+  "inference": "localhost-fixture",
+  "scientificValidation": false,
+  "viewport": {
+    "width": 900,
+    "height": 900
+  },
+  "hostOverview": {
+    "ownerSessionId": "5a408d75-667c-4bf0-a3f8-35ecc8a6f258",
+    "source": "live",
+    "team": {
+      "pipeline": {
+        "version": 1,
+        "requestId": "call_mock_2",
+        "status": "running",
+        "stage": "analyze",
+        "round": 0,
+        "currentTaskId": "p-analyze-0-1",
+        "taskIds": [
+          "p-check-0-0",
+          "p-analyze-0-1"
+        ],
+        "stateRevision": 2,
+        "startedAt": 1794071300753,
+        "updatedAt": 1794071304095,
+        "routeSync": "pending",
+        "contentVersionBound": true,
+        "maxRevisions": 1,
+        "route": {
+          "routeId": "bd172c1e-554b-4ef0-ad06-eb41a2484558",
+          "revision": 1,
+          "stepId": "analysis"
+        }
+      },
+      "id": "pipeline-ac3f419b4137631d935546f6",
+      "name": "科研流程",
+      "goal": "按已确认方法执行合成数据流程，保留输入并交付文件",
+      "captainSessionId": "5a408d75-667c-4bf0-a3f8-35ecc8a6f258",
+      "createdAt": 1794071300713,
+      "members": [
+        {
+          "name": "check",
+          "agent": "pipeline-check",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "status": "idle",
+          "sessionDir": "members/check",
+          "turns": 1,
+          "joinedAt": 1794071300718,
+          "orchestrationId": "7956b20d-3802-440d-aa07-dc3c8a563916"
+        },
+        {
+          "name": "analyze",
+          "agent": "pipeline-analyze",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "status": "working",
+          "sessionDir": "members/analyze",
+          "turns": 0,
+          "joinedAt": 1794071300722,
+          "orchestrationId": "eb814b7e-a2f3-418e-a26e-37fbf9c19e4a"
+        },
+        {
+          "name": "review",
+          "agent": "pipeline-review",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "status": "idle",
+          "sessionDir": "members/review",
+          "turns": 0,
+          "joinedAt": 1794071300727,
+          "orchestrationId": "276dc60d-dcd6-4226-9aba-e36a77772a38"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "p-check-0-0",
+          "subject": "数据核查 · 修正 0",
+          "contract": {
+            "submission": "tool",
+            "resultType": "data-summary",
+            "version": 1,
+            "inputs": [
+              "in.csv"
+            ],
+            "outputs": [],
+            "access": "read-only",
+            "requireExecution": false,
+            "requireReview": true
+          },
+          "receipt": {
+            "versions": {
+              "version": 1,
+              "inputs": [
+                {
+                  "path": "in.csv",
+                  "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                  "bytes": 12,
+                  "observationId": "12b1469e-24a6-4475-85c7-012ea8b704ff",
+                  "versionId": "6caa30561a6e4dd49aba4bc0baac8052f4a8f2cc0dc37d4e176f3e62e6a407b4:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+                }
+              ],
+              "outputs": []
+            },
+            "version": 1,
+            "state": "accepted",
+            "summary": "已核查合成数据",
+            "result": {
+              "data": {
+                "kind": "data-summary",
+                "rows": 5,
+                "columns": [
+                  {
+                    "name": "x",
+                    "type": "number"
+                  }
+                ],
+                "issues": []
+              },
+              "summary": "已核查合成数据",
+              "blockers": [],
+              "deliverables": [],
+              "execution": {
+                "state": "not_run",
+                "note": "只读检查"
+              },
+              "verification": {
+                "state": "reviewed",
+                "note": "实际读取声明文件，仅作为软件验收",
+                "toolCallIds": [
+                  "call_mock_4"
+                ]
+              }
+            },
+            "deliverables": []
+          },
+          "observation": {
+            "elapsedMs": 2840,
+            "submissionAttempts": 2,
+            "invalidSubmissions": 1,
+            "usage": {
+              "input": 36,
+              "output": 24,
+              "cacheRead": 0,
+              "partial": [
+                "cacheRead"
+              ]
+            }
+          },
+          "trace": {
+            "records": [
+              {
+                "toolCallId": "call_mock_4",
+                "name": "read",
+                "status": "done",
+                "execution": "not_observed",
+                "path": "in.csv"
+              }
+            ],
+            "omitted": 0
+          },
+          "description": "科研流程 pipeline-ac3f419b4137631d935546f6，阶段 check，修正轮次 0/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n使用冻结契约；完成时调用 submit_task_result。",
+          "status": "completed",
+          "assignee": "check",
+          "outputs": [],
+          "dependencies": [],
+          "output": "{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}}",
+          "attempt": 1,
+          "attemptId": "4c9035d9-0888-4fb5-8ba1-9d0749be2a19",
+          "createdAt": 1794071300753,
+          "updatedAt": 1794071304095
+        },
+        {
+          "id": "p-analyze-0-1",
+          "subject": "分析执行 · 修正 0",
+          "contract": {
+            "submission": "tool",
+            "resultType": "model-metrics",
+            "version": 1,
+            "inputs": [
+              "in.csv"
+            ],
+            "outputs": [
+              "results/pipeline.csv"
+            ],
+            "access": "workspace-exec",
+            "requireExecution": true,
+            "requireReview": false
+          },
+          "description": "科研流程 pipeline-ac3f419b4137631d935546f6，阶段 analyze，修正轮次 0/1。\n\n按已确认方法执行合成数据流程，保留输入并交付文件\n\n用户已确认路线：{\"title\":\"合成数据科研流程\",\"goal\":\"核查合成数据，按已确认方法交付并审阅\",\"dataContext\":[\"确定性合成数据，仅验证软件流程，不支持科研推断\"],\"step\":{\"id\":\"analysis\",\"title\":\"合成数据分析\",\"purpose\":\"按用户确认的方法生成合成统计交付\",\"inputs\":[\"in.csv\"],\"outputs\":[\"results/pipeline.csv\"],\"dependencies\":[],\"cases\":[],\"blockers\":[],\"notes\":[]}}\n\n上一阶段宿主回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"12b1469e-24a6-4475-85c7-012ea8b704ff\",\"versionId\":\"6caa30561a6e4dd49aba4bc0baac8052f4a8f2cc0dc37d4e176f3e62e6a407b4:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已核查合成数据\",\"result\":{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}},\"deliverables\":[]}\n\n核查回执：{\"versions\":{\"version\":1,\"inputs\":[{\"path\":\"in.csv\",\"sha256\":\"f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\",\"bytes\":12,\"observationId\":\"12b1469e-24a6-4475-85c7-012ea8b704ff\",\"versionId\":\"6caa30561a6e4dd49aba4bc0baac8052f4a8f2cc0dc37d4e176f3e62e6a407b4:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224\"}],\"outputs\":[]},\"version\":1,\"state\":\"accepted\",\"summary\":\"已核查合成数据\",\"result\":{\"data\":{\"kind\":\"data-summary\",\"rows\":5,\"columns\":[{\"name\":\"x\",\"type\":\"number\"}],\"issues\":[]},\"summary\":\"已核查合成数据\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读检查\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"实际读取声明文件，仅作为软件验收\",\"toolCallIds\":[\"call_mock_4\"]}},\"deliverables\":[]}\n\n使用冻结契约；完成时调用 submit_task_result。",
+          "status": "in_progress",
+          "assignee": "analyze",
+          "outputs": [
+            "results/pipeline.csv"
+          ],
+          "dependencies": [
+            "p-check-0-0"
+          ],
+          "attempt": 1,
+          "attemptId": "4ee4e21b-2557-4776-8c8f-fe4ccb79762c",
+          "createdAt": 1794071304095,
+          "updatedAt": 1794071304101
+        }
+      ],
+      "messages": [],
+      "taskSeq": 0
+    },
+    "observation": {
+      "observerId": "2a1ad0e2-4b66-4743-9bac-f13ba6a266cf",
+      "revision": 41
+    },
+    "history": {
+      "events": [
+        {
+          "seq": 1,
+          "at": 1794071300776,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 2,
+          "at": 1794071300777,
+          "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 3,
+          "at": 1794071300778,
+          "childId": "child-f56fdb1cf710150872b442733a24e3b0",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 4,
+          "at": 1794071300789,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 5,
+          "at": 1794071300790,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "taskAttempt": {
+            "teamId": "pipeline-ac3f419b4137631d935546f6",
+            "taskId": "p-check-0-0",
+            "attemptId": "4c9035d9-0888-4fb5-8ba1-9d0749be2a19",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 6,
+          "at": 1794071300791,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 7,
+          "at": 1794071300792,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "lock-wait",
+          "unknownBlockers": true,
+          "resources": [
+            "/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-bjYwZF/workspace/in.csv"
+          ]
+        },
+        {
+          "seq": 8,
+          "at": 1794071300794,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 9,
+          "at": 1794071300811,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 10,
+          "at": 1794071304072,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "acceptance"
+        },
+        {
+          "seq": 11,
+          "at": 1794071304094,
+          "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+          "epoch": 1,
+          "type": "settled",
+          "state": "completed",
+          "receipt": "accepted"
+        },
+        {
+          "seq": 12,
+          "at": 1794071304104,
+          "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 13,
+          "at": 1794071304105,
+          "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+          "epoch": 1,
+          "taskAttempt": {
+            "teamId": "pipeline-ac3f419b4137631d935546f6",
+            "taskId": "p-analyze-0-1",
+            "attemptId": "4ee4e21b-2557-4776-8c8f-fe4ccb79762c",
+            "attempt": 1
+          },
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 14,
+          "at": 1794071304106,
+          "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 15,
+          "at": 1794071304106,
+          "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 16,
+          "at": 1794071304123,
+          "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        }
+      ],
+      "truncated": false
+    },
+    "budget": {
+      "revision": 3,
+      "limits": {},
+      "consumedRuns": 2,
+      "legacyRuns": 0,
+      "knownTokens": 60,
+      "unknownRuns": 1,
+      "inFlight": 1,
+      "startedAt": 1794071300790,
+      "elapsedMs": 5222
+    },
+    "runs": [
+      {
+        "id": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+        "kind": "team",
+        "label": "pipeline-check",
+        "address": [
+          "pipeline-ac3f419b4137631d935546f6",
+          "check",
+          "7956b20d-3802-440d-aa07-dc3c8a563916"
+        ],
+        "state": "completed",
+        "epoch": 1,
+        "resultEpoch": 1,
+        "updatedAt": 1794071304094,
+        "phase": "drained",
+        "contract": false,
+        "receipt": "accepted",
+        "inputVersions": 1,
+        "outputVersions": 0,
+        "contextObservation": {
+          "current": false,
+          "reason": "historical",
+          "sample": {
+            "ownerSessionId": "5a408d75-667c-4bf0-a3f8-35ecc8a6f258",
+            "childId": "child-f3ff2d95ee846a4317e29dfa3afcd185",
+            "epoch": 1,
+            "sample": {
+              "version": 1,
+              "observedAt": 1794071304063,
+              "provider": "deepseek",
+              "model": "deepseek-flash",
+              "contextWindow": 128000,
+              "contextWindowSource": "model-config",
+              "composition": {
+                "systemBytes": 1531,
+                "toolBytes": 3777,
+                "messageBytes": 5423,
+                "source": "retained-bytes-estimate"
+              },
+              "availability": "available",
+              "source": "sdk-estimate",
+              "usedTokens": 29
+            }
+          }
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "input": 36,
+          "output": 24,
+          "partial": [
+            "cacheRead"
+          ],
+          "settledEpochs": 1,
+          "unknownEpochs": 1,
+          "lastSettledEpoch": 1
+        },
+        "observation": {
+          "elapsedMs": 2840,
+          "submissionAttempts": 2,
+          "invalidSubmissions": 1,
+          "usage": {
+            "input": 36,
+            "output": 24,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "taskReceipt": {
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "in.csv",
+                "sha256": "f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224",
+                "bytes": 12,
+                "observationId": "12b1469e-24a6-4475-85c7-012ea8b704ff",
+                "versionId": "6caa30561a6e4dd49aba4bc0baac8052f4a8f2cc0dc37d4e176f3e62e6a407b4:f7334af2041fe1d08d12f53e406ca1eed6f68446f8e31757da48aa586d080224"
+              }
+            ],
+            "outputs": []
+          },
+          "version": 1,
+          "state": "accepted",
+          "summary": "已核查合成数据",
+          "result": {
+            "data": {
+              "kind": "data-summary",
+              "rows": 5,
+              "columns": [
+                {
+                  "name": "x",
+                  "type": "number"
+                }
+              ],
+              "issues": []
+            },
+            "summary": "已核查合成数据",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "只读检查"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "实际读取声明文件，仅作为软件验收",
+              "toolCallIds": [
+                "call_mock_4"
+              ]
+            }
+          },
+          "deliverables": []
+        },
+        "trace": {
+          "records": [
+            {
+              "toolCallId": "call_mock_4",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "in.csv"
+            }
+          ],
+          "omitted": 0
+        },
+        "timing": {
+          "lockWaitMs": 2,
+          "preflightMs": 17,
+          "executionMs": 3262,
+          "acceptanceMs": 22
+        }
+      },
+      {
+        "id": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+        "kind": "team",
+        "label": "pipeline-analyze",
+        "address": [
+          "pipeline-ac3f419b4137631d935546f6",
+          "analyze",
+          "eb814b7e-a2f3-418e-a26e-37fbf9c19e4a"
+        ],
+        "state": "running",
+        "epoch": 1,
+        "updatedAt": 1794071304105,
+        "phase": "running",
+        "taskAttempt": {
+          "teamId": "pipeline-ac3f419b4137631d935546f6",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "4ee4e21b-2557-4776-8c8f-fe4ccb79762c",
+          "attempt": 1
+        },
+        "contract": false,
+        "inputVersions": 0,
+        "outputVersions": 0,
+        "contextObservation": {
+          "current": true,
+          "reason": "current",
+          "sample": {
+            "ownerSessionId": "5a408d75-667c-4bf0-a3f8-35ecc8a6f258",
+            "childId": "child-d20f23cf77d9f6ba96af31a8a1c7a262",
+            "epoch": 1,
+            "sample": {
+              "version": 1,
+              "observedAt": 1794071305512,
+              "provider": "deepseek",
+              "model": "deepseek-flash",
+              "contextWindow": 128000,
+              "contextWindowSource": "model-config",
+              "composition": {
+                "systemBytes": 1533,
+                "toolBytes": 4613,
+                "messageBytes": 5693,
+                "source": "retained-bytes-estimate"
+              },
+              "availability": "available",
+              "source": "sdk-estimate",
+              "usedTokens": 20
+            }
+          }
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "partial": [],
+          "settledEpochs": 0,
+          "unknownEpochs": 0
+        },
+        "activity": {
+          "stage": "execution",
+          "since": 1794071304123
+        },
+        "timing": {
+          "preflightMs": 17,
+          "executionMs": 0
+        }
+      },
+      {
+        "id": "child-f56fdb1cf710150872b442733a24e3b0",
+        "kind": "team",
+        "label": "pipeline-review",
+        "address": [
+          "pipeline-ac3f419b4137631d935546f6",
+          "review",
+          "276dc60d-dcd6-4226-9aba-e36a77772a38"
+        ],
+        "state": "idle",
+        "epoch": 0,
+        "updatedAt": 1794071300778,
+        "phase": "idle",
+        "contract": false,
+        "inputVersions": 0,
+        "outputVersions": 0,
+        "contextObservation": {
+          "current": false,
+          "reason": "historical"
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "partial": [],
+          "settledEpochs": 0,
+          "unknownEpochs": 0
+        }
+      }
+    ]
+  }
+}

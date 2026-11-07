@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "ownerSessionId": "b15258a5-b72f-4635-91d4-c9df0a4a68bc",
+  "children": [
+    {
+      "id": "child-82eac8d71f43d5c6d138475e20546404",
+      "kind": "subagent",
+      "address": [
+        "call_mock_85",
+        "0"
+      ],
+      "label": "lockwriter",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794072881886,
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": null,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "input",
+          "output",
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 12,
+        "output": 8,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 8575,
+        "preflightMs": 7
+      },
+      "contextObservation": {
+        "ownerSessionId": "b15258a5-b72f-4635-91d4-c9df0a4a68bc",
+        "childId": "child-82eac8d71f43d5c6d138475e20546404",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794072881876,
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 540,
+            "toolBytes": 2000,
+            "messageBytes": 127,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 20
+        }
+      },
+      "result": {
+        "ok": true,
+        "output": "假模型已应答：DAWN 的整条链路是通的。",
+        "observation": {
+          "elapsedMs": 8097,
+          "submissionAttempts": 0,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 12,
+            "output": 8,
+            "cacheRead": 0,
+            "partial": [
+              "input",
+              "output",
+              "cacheRead"
+            ]
+          }
+        }
+      },
+      "resultEpoch": 1
+    },
+    {
+      "id": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "kind": "subagent",
+      "address": [
+        "call_mock_85",
+        "1"
+      ],
+      "label": "lockwriter",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794072882399,
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": null,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 12,
+        "output": 8,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 511,
+        "lockWaitMs": 8573,
+        "preflightMs": 3
+      },
+      "contextObservation": {
+        "ownerSessionId": "b15258a5-b72f-4635-91d4-c9df0a4a68bc",
+        "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794072882393,
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 540,
+            "toolBytes": 2000,
+            "messageBytes": 104,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 20
+        }
+      },
+      "result": {
+        "ok": true,
+        "output": "假模型已应答：DAWN 的整条链路是通的。",
+        "observation": {
+          "elapsedMs": 66,
+          "submissionAttempts": 0,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 12,
+            "output": 8,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        }
+      },
+      "resultEpoch": 1
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 15,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1794072873298,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1794072873302,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1794072873303,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 1,
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1794072873304,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1794072873306,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1794072873308,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 7,
+      "at": 1794072873310,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 8,
+      "at": 1794072873311,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 1,
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 9,
+      "at": 1794072873312,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 10,
+      "at": 1794072873312,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "lock-wait",
+      "blockers": [
+        {
+          "ownerSessionId": "b15258a5-b72f-4635-91d4-c9df0a4a68bc",
+          "childId": "child-82eac8d71f43d5c6d138475e20546404",
+          "label": "lockwriter",
+          "epoch": 1
+        }
+      ],
+      "resources": [
+        "*"
+      ]
+    },
+    {
+      "seq": 11,
+      "at": 1794072873313,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 12,
+      "at": 1794072881885,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 13,
+      "at": 1794072881886,
+      "childId": "child-82eac8d71f43d5c6d138475e20546404",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed"
+    },
+    {
+      "seq": 14,
+      "at": 1794072881888,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 15,
+      "at": 1794072882399,
+      "childId": "child-14decbca2a9fc4b2fbbf78664cd1ace2",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed"
+    }
+  ],
+  "budget": {
+    "revision": 4,
+    "limits": {},
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 40,
+    "unknownRuns": 2,
+    "active": [],
+    "startedAt": 1794072873303
+  }
+}

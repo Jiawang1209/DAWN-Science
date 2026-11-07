@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/runtime/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/orchestration.test.ts (23 tests | 1 failed) 435ms
+   × late old team writes retain cancellation side effects without notifying or overwriting the new observer 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > late old team writes retain cancellation side effects without notifying or overwriting the new observer
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ tests/runtime/orchestration.test.ts:455:18
+    453|  try{
+    454|   control.scheduler.改('owned',team=>取消任务(team,'t'))
+    455|   expect(cancel).toHaveBeenCalledTimes(1);expect(seen.filter(event=>ev…
+       |                  ^
+    456|   expect(control.scheduler.读('owned').tasks[0]?.status).toBe('cancelle…
+    457|  }finally{off();internal.orchestrations.set('p',old);await runtime.sto…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  22:57:31
+   Duration  2.18s (transform 590ms, setup 0ms, import 1.66s, tests 435ms, environment 0ms)
+

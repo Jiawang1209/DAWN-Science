@@ -1,0 +1,89 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/orchestration/agent-usage-totals.test.ts tests/runtime/session-usage.test.ts tests/protocol/agent-usage-totals.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/session-usage.test.ts (6 tests | 1 failed) 7ms
+   × retains safe known fields when provider deltas are fractional, unsafe or overflow their sum 4ms
+ ❯ |node| tests/protocol/agent-usage-totals.test.ts (13 tests | 2 failed) 10ms
+   × rejects unsafe or inconsistent settled coverage {"source":"host-epoch-deltas","settledEpochs":0,"unknownEpochs":0,"partial":["input"]} 3ms
+   × rejects unsafe or inconsistent settled coverage {"source":"host-epoch-deltas","settledEpochs":1,"unknownEpochs":0,"partial":["input"],"lastSettledEpoch":1,"input":1,"output":1,"cacheRead":1} 0ms
+ ❯ |node| tests/orchestration/agent-usage-totals.test.ts (9 tests | 1 failed) 41ms
+   × an unverified SDK zero remains absent rather than becoming a known cache sum 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > an unverified SDK zero remains absent rather than becoming a known cache sum
+AssertionError: expected { source: 'host-epoch-deltas', …(7) } to deeply equal { source: 'host-epoch-deltas', …(6) }
+
+- Expected
++ Received
+
+@@ -1,6 +1,7 @@
+  {
++   "cacheRead": 0,
+    "input": 12,
+    "lastSettledEpoch": 1,
+    "output": 8,
+    "partial": [
+      "cacheRead",
+
+ ❯ tests/orchestration/agent-usage-totals.test.ts:16:43
+     14|  const{store,child}=setup(),epoch=store.beginRun(child.id)
+     15|  store.settleRun(child.id,epoch,observed({input:12,output:8,cacheRead:…
+     16|  expect(store.get(child.id)?.usageTotals).toEqual({...zero,input:12,ou…
+       |                                           ^
+     17| })
+     18| it('tracks two settled deltas once, keeps last result distinct, and ch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/protocol/agent-usage-totals.test.ts > rejects unsafe or inconsistent settled coverage {"source":"host-epoch-deltas","settledEpochs":0,"unknownEpochs":0,"partial":["input"]}
+ FAIL  |node| tests/protocol/agent-usage-totals.test.ts > rejects unsafe or inconsistent settled coverage {"source":"host-epoch-deltas","settledEpochs":1,"unknownEpochs":0,"partial":["input"],"lastSettledEpoch":1,"input":1,"output":1,"cacheRead":1}
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/protocol/agent-usage-totals.test.ts:19:120
+     17|  {...zero,settledEpochs:1,lastSettledEpoch:1,input:1,output:1,cacheRea…
+     18|  {...zero,settledEpochs:1,lastSettledEpoch:1,unknownEpochs:1,partial:[…
+     19| ])('rejects unsafe or inconsistent settled coverage %j',value=>expect(…
+       |                                                                                                                        ^
+     20|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/runtime/session-usage.test.ts > retains safe known fields when provider deltas are fractional, unsafe or overflow their sum
+AssertionError: expected { input: 9007199254740992, …(3) } to deeply equal { input: 2, output: 3, …(2) }
+
+- Expected
++ Received
+
+  {
+    "cacheRead": 1,
+-   "input": 2,
+-   "output": 3,
++   "input": 9007199254740992,
++   "output": 3.5,
+    "partial": [
+-     "input",
+-     "output",
+      "cacheRead",
+    ],
+  }
+
+ ❯ tests/runtime/session-usage.test.ts:34:142
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 24 passed (28)
+   Start at  00:22:59
+   Duration  351ms (transform 207ms, setup 0ms, import 414ms, tests 58ms, environment 0ms)
+

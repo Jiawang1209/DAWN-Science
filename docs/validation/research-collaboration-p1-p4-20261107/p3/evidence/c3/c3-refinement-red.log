@@ -1,0 +1,323 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/collaboration-outcome-panel.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome-panel.test.tsx (12 tests | 3 failed) 248ms
+   × does not label inspection of unverified files as accepted results and keeps policy-off budget quiet 31ms
+   × collapses outcome artifact details in the expanded workflow while preserving the full compact-dock outcome 28ms
+   × ignores an already queued navigation frame after the overview changes owner 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > does not label inspection of unverified files as accepted results and keeps policy-off budget quiet
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "查看产物记录"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "本会话协作":
+  [36m<h3[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------heading:
+
+  Name "当前成果尚未核验":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "查看验收成果":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------heading:
+
+  Name "验收成果与版本":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details />[39m
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"collaboration-outcome-version"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "reports/result.csv留存版本，仅供检查SHA256 aaaaaaaaaaaa… · 12 字节":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-card-compact collaboration-outcome-artifact"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  code:
+
+  Name "":
+  [36m<code[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint collaboration-outcome-budget"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "展开流程工作台":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"协作成果"[39m
+  [33mclass[39m=[32m"collaboration-outcome"[39m
+  [33mdata-outcome[39m=[32m"unverified"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-goal"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"collaboration-eyebrow"[39m
+    [36m>[39m
+      [0m任务目标[0m
+    [36m</span>[39m
+    [36m<h3[39m
+      [33mdata-authored[39m=[32m"1"[39m
+    [36m>[39m
+      [0m本会话协作[0m
+    [36m</h3>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-result"[39m
+  [36m>[39m
+    [36m<h4>[39m
+      [0m当前成果尚未核验[0m
+    [36m</h4>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"hint"[39m
+    [36m>[39m
+      [0m保留的记录不作为本轮验收通过。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-next"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"hint"[39m
+    [36m>[39m
+      [0m下一步 · 查看对应任务的证据与记录[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m查看验收成果[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-artifacts"[39m
+  [36m>[39m
+    [36m<h4>[39m
+      [0m验收成果与版本[0m
+    [36m</h4>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"hint"[39m
+    [36m>[39m
+      [0m尚无本轮已验收成果。[0m
+    [36m</p>[39m
+    [36m<details>[39m
+      [36m<summary>[39m
+        [0m留存版本，仅供检查[0m
+      [36m</summary>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-files"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-outcome-file"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-outline btn-card-compact collaboration-outcome-artifact"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"collaboration-outcome-artifact-head"[39m
+            [36m>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mreports/result.csv[0m
+              [36m</strong>[39m
+              [36m<small>[39m
+                [0m留存版本，仅供检查[0m
+              [36m</small>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"hint"[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0mSHA256 [0m
+              [0maaaaaaaaaaaa[0m
+              [0m… · [0m
+              [0m12 字节[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<details[39m
+            [33mclass[39m=[32m"collaboration-outcome-version"[39m
+          [36m>[39m
+            [36m<summary>[39m
+              [0m版本定位详情[0m
+            [36m</summary>[39m
+            [36m<code[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0mhost-v7[0m
+              [0m · SHA256 [0m
+              [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+            [36m</code>[39m
+            [36m<small[39m
+              [33mclass[39m=[32m"hint"[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0m执行 analysis · 代次 2[0m
+            [36m</small>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</details>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-footer"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"hint collaboration-outcome-budget"[39m
+    [36m>[39m
+      [0m普通可用 未知 · 审阅预留 未知 · 恢复待核对 未知 · 在途 0[0m
+      [0m · [0m
+      [0m费用未记录[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m展开流程工作台[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:64:76
+     62|  const value=base();value.runs[0]!.resultEpoch=2;value.budget={revisio…
+     63|  render(<RunOverview client={client(value)} sessionId="p"/>);await act…
+     64|  const panel=screen.getByRole('region',{name:'协作成果'});expect(within(pa…
+       |                                                                            ^
+     65|  expect(panel.textContent).toContain('执行轮次未设上限');expect(panel.textCont…
+     66| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > collapses outcome artifact details in the expanded workflow while preserving the full compact-dock outcome
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:70:98
+     68|  render(<RunOverview client={client(base())} sessionId="p"/>);await ac…
+     69|  fireEvent.click(screen.getByRole('button',{name:'展开流程工作台'}))
+     70|  const panel=screen.getByRole('region',{name:'协作成果'});expect(panel.get…
+       |                                                                                                  ^
+     71|  const disclosure=within(panel).getByText('展开成果版本与检查入口').closest('deta…
+     72| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > ignores an already queued navigation frame after the overview changes owner
+AssertionError: expected <button type="button" …(7)></button> to be <button type="button" …(7)></button> // Object.is equality
+
+- Expected
++ Received
+
+  <button
+    aria-controls="_r_b_-panel"
+-   aria-selected="true"
++   aria-selected="false"
+    class="btn btn-ghost btn-sm"
+-   data-collaboration-tab="process"
+-   id="_r_b_-process"
++   data-collaboration-tab="artifacts"
++   id="_r_b_-artifacts"
+    role="tab"
+-   tabindex="0"
++   tabindex="-1"
+    type="button"
+  >
+-   过程
++   产物
+  </button>
+
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:80:119
+     78|  fireEvent.click(within(screen.getByRole('region',{name:'协作成果'})).getB…
+     79|  view.rerender(<RunOverview client={c} sessionId="other"/>);await act(…
+     80|  const process=screen.getByRole('tab',{name:'过程'});process.focus();act…
+       |                                                                                                                       ^
+     81|  }finally{raf.mockRestore();cancel.mockRestore()}
+     82| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  23:22:55
+   Duration  1.38s (transform 437ms, setup 473ms, import 254ms, tests 248ms, environment 328ms)
+

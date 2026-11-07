@@ -1,0 +1,9 @@
+malformed pipeline null {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed pipeline false {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed pipeline 0 {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed pipeline "" {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed scienceBatch null {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed scienceBatch false {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed scienceBatch 0 {"issue":"当前团队记录不可读取或身份不匹配"}
+malformed scienceBatch "" {"issue":"当前团队记录不可读取或身份不匹配"}
+stop projection {"before":"stopping-team","during":{"id":"team-mw6j7rfh","name":"stopping-team","goal":"preserve stopping goal","captainSessionId":"p","createdAt":1794063716765,"members":[],"tasks":[],"messages":[],"taskSeq":0},"source":"live","phase":"stopping","persistedPointer":"team-mw6j7rfh","persistedTeam":"stopping-team"}

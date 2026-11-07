@@ -1,0 +1,489 @@
+{
+  "integrity": {
+    "src": {
+      "files": 628,
+      "mismatches": []
+    },
+    "build": {
+      "files": 624,
+      "mismatches": []
+    }
+  },
+  "osExitObservers": [
+    {
+      "file": "remediated/exit/exit-58970.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 58970,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": true,
+          "readableEnded": true,
+          "closed": true
+        },
+        "stderr": {
+          "destroyed": true,
+          "readableEnded": true,
+          "closed": true
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-59163.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 59163,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-59291.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 59291,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-59454.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 59454,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-59582.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 59582,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": true,
+          "readableEnded": true,
+          "closed": true
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-59864.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 59864,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-60071.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 60071,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-60111.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 60111,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-60239.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 60239,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-60384.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 60384,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "remediated/exit/exit-60509.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 60509,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    }
+  ],
+  "applicationDiagnostics": [
+    {
+      "file": "remediated/exit/app-58970.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-59163.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-59291.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-59454.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-59582.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-59864.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-60071.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-60111.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-60239.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-60384.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "remediated/exit/app-60509.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    }
+  ]
+}

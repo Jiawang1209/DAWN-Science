@@ -1,0 +1,353 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-submissions.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts [ tests/evaluation/research-submissions.test.ts ]
+Error: Cannot find module '../../src/evaluation/research-submissions.js' imported from /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/evaluation/research-submissions.test.ts
+ ❯ tests/evaluation/research-submissions.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {researchSubmissionDiagnostics} from '../../src/evaluation/rese…
+       | ^
+      3|
+      4| // Sanitized Pi message shapes and exact SDK messages from the saved r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  21:15:25
+   Duration  123ms (transform 18ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-submissions.test.ts (28 tests | 6 failed) 12ms
+   × separates output-limit nonexecution, SDK rejection and host rejection from the saved review sequence 5ms
+   × recognizes a recorded accepted host submission 1ms
+   × recognizes a recorded blocked host submission 1ms
+   × records reliable zeros for a complete transcript without submission calls 0ms
+   × ignores user messages, assistant quotations, non-message wrappers and ordinary read results containing fake labels 0ms
+   × keeps identical call ids separate across distinct scopes 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > separates output-limit nonexecution, SDK rejection and host rejection from the saved review sequence
+AssertionError: expected { hostAttempts: 1, …(3) } to deeply equal { hostAttempts: 1, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 1,
+    "hostRejected": 1,
+-   "outputLimitNotExecuted": 1,
+-   "sdkRejected": 1,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:22:19
+     20|   call('host'),result('host',JSON.stringify({recorded:false,error:'审阅文…
+     21|  ])])
+     22|  expect(observed).toEqual({hostAttempts:1,hostRejected:1,sdkRejected:1…
+       |                   ^
+     23| })
+     24| it.each(['accepted','blocked'])('recognizes a recorded %s host submiss…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > recognizes a recorded accepted host submission
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > recognizes a recorded blocked host submission
+AssertionError: expected { hostAttempts: 1, …(3) } to deeply equal { hostAttempts: 1, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 1,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 0,
+-   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:27:8
+     25|  expect(researchSubmissionDiagnostics({hostAttempts:1,hostRejected:0},…
+     26|   call('host'),result('host',JSON.stringify({recorded:true,state}),fal…
+     27|  ])])).toEqual({hostAttempts:1,hostRejected:0,sdkRejected:0,outputLimi…
+       |        ^
+     28| })
+     29| it('keeps reliable host counts and omits transcript counts when no tra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > records reliable zeros for a complete transcript without submission calls
+AssertionError: expected { hostAttempts: +0, …(3) } to deeply equal { hostAttempts: +0, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 0,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 0,
+-   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:33:58
+     31| })
+     32| it('records reliable zeros for a complete transcript without submissio…
+     33|  expect(researchSubmissionDiagnostics(host,[scope([])])).toEqual({...h…
+       |                                                          ^
+     34| })
+     35| it('ignores user messages, assistant quotations, non-message wrappers …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > ignores user messages, assistant quotations, non-message wrappers and ordinary read results containing fake labels
+AssertionError: expected { hostAttempts: +0, …(3) } to deeply equal { hostAttempts: +0, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 0,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 0,
+-   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:40:63
+     38|   {type:'custom',message:{role:'toolResult',toolName:'submit_task_resu…
+     39|   call('read','read'),result('read',fake,true,'read')]
+     40|  expect(researchSubmissionDiagnostics(host,[scope(entries)])).toEqual(…
+       |                                                               ^
+     41| })
+     42| it.each([undefined,'','   '])('does not infer a submission match with …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > keeps identical call ids separate across distinct scopes
+AssertionError: expected { hostAttempts: +0, …(3) } to deeply equal { hostAttempts: +0, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 0,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 1,
+-   "sdkRejected": 1,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:62:4
+     60| it('keeps identical call ids separate across distinct scopes',()=>{
+     61|  expect(researchSubmissionDiagnostics(host,[scope([call('same'),result…
+     62|   .toEqual({...host,sdkRejected:1,outputLimitNotExecuted:1,source:'hos…
+       |    ^
+     63| })
+     64| it('never matches a declaration with a result from another scope',()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 22 passed (28)
+   Start at  21:15:32
+   Duration  140ms (transform 20ms, setup 0ms, import 28ms, tests 12ms, environment 0ms)
+
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-submissions.test.ts (34 tests | 5 failed) 12ms
+   × does not infer complete coverage from malformed Pi message entries 4ms
+   × does not infer complete coverage from malformed Pi message entries 1ms
+   × does not infer complete coverage from malformed Pi message entries 1ms
+   × does not infer complete coverage from malformed Pi message entries 0ms
+   × does not infer complete coverage from malformed Pi message entries 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer complete coverage from malformed Pi message entries
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer complete coverage from malformed Pi message entries
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer complete coverage from malformed Pi message entries
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer complete coverage from malformed Pi message entries
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer complete coverage from malformed Pi message entries
+AssertionError: expected { hostAttempts: +0, …(5) } to deeply equal { hostAttempts: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "complete": false,
++   "complete": true,
+    "hostAttempts": 0,
+    "hostRejected": 0,
++   "outputLimitNotExecuted": 0,
++   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ unknown tests/evaluation/research-submissions.test.ts:14:19
+     12| const unknown=(entries:unknown[],complete=true)=>{
+     13|  const observed=researchSubmissionDiagnostics(host,[scope(entries,comp…
+     14|  expect(observed).toEqual({...host,source:'host-and-transcript',comple…
+       |                   ^
+     15| }
+     16|
+ ❯ tests/evaluation/research-submissions.test.ts:97:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 29 passed (34)
+   Start at  21:16:24
+   Duration  133ms (transform 22ms, setup 0ms, import 30ms, tests 12ms, environment 0ms)
+
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-submissions.test.ts (38 tests | 3 failed) 12ms
+   × classifies the installed SDK validation format including the complete Received arguments JSON suffix 5ms
+   × recognizes the SDK validator fallback without guessing from arbitrary errors 1ms
+   × recognizes the installed SDK harness output-limit nonexecution template 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > classifies the installed SDK validation format including the complete Received arguments JSON suffix
+AssertionError: expected { hostAttempts: +0, …(3) } to deeply equal { hostAttempts: +0, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 0,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 0,
+-   "sdkRejected": 1,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:106:4
+    104|  const text=sdkRejected+'\n\nReceived arguments:\n'+JSON.stringify({da…
+    105|  expect(researchSubmissionDiagnostics(host,[scope([call('full'),result…
+    106|   .toEqual({...host,sdkRejected:1,outputLimitNotExecuted:0,source:'hos…
+       |    ^
+    107| })
+    108| it('recognizes the SDK validator fallback without guessing from arbitr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > recognizes the SDK validator fallback without guessing from arbitrary errors
+AssertionError: expected { hostAttempts: +0, …(3) } to deeply equal { hostAttempts: +0, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 0,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 0,
+-   "sdkRejected": 1,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:111:4
+    109|  const text='Validation failed for tool "submit_task_result":\nUnknown…
+    110|  expect(researchSubmissionDiagnostics(host,[scope([call('fallback'),re…
+    111|   .toEqual({...host,sdkRejected:1,outputLimitNotExecuted:0,source:'hos…
+       |    ^
+    112| })
+    113| it('does not classify a cropped SDK Received arguments body',()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > recognizes the installed SDK harness output-limit nonexecution template
+AssertionError: expected { hostAttempts: +0, …(3) } to deeply equal { hostAttempts: +0, …(5) }
+
+- Expected
++ Received
+
+  {
+-   "complete": true,
++   "complete": false,
+    "hostAttempts": 0,
+    "hostRejected": 0,
+-   "outputLimitNotExecuted": 1,
+-   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ tests/evaluation/research-submissions.test.ts:119:4
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 35 passed (38)
+   Start at  21:17:16
+   Duration  137ms (transform 23ms, setup 0ms, import 32ms, tests 12ms, environment 0ms)
+
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-submissions.test.ts (39 tests | 1 failed) 10ms
+   × does not mistake the saved abbreviated summary for a complete SDK result 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not mistake the saved abbreviated summary for a complete SDK result
+AssertionError: expected { hostAttempts: +0, …(5) } to deeply equal { hostAttempts: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "complete": false,
++   "complete": true,
+    "hostAttempts": 0,
+    "hostRejected": 0,
++   "outputLimitNotExecuted": 0,
++   "sdkRejected": 1,
+    "source": "host-and-transcript",
+  }
+
+ ❯ unknown tests/evaluation/research-submissions.test.ts:15:19
+     13| const unknown=(entries:unknown[],complete=true)=>{
+     14|  const observed=researchSubmissionDiagnostics(host,[scope(entries,comp…
+     15|  expect(observed).toEqual({...host,source:'host-and-transcript',comple…
+       |                   ^
+     16| }
+     17|
+ ❯ tests/evaluation/research-submissions.test.ts:124:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 passed (39)
+   Start at  21:17:44
+   Duration  133ms (transform 24ms, setup 0ms, import 33ms, tests 10ms, environment 0ms)
+

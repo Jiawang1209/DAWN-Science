@@ -1,0 +1,145 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (24 tests | 11 failed) 76ms
+     × holds the final review run while ordinary work uses its available runs 7ms
+     × does not release a running cycle and never refunds an admitted execution 2ms
+     × retains holds through disabling and lowering limits while review respects the absolute run cap 6ms
+     × does not bypass token or elapsed constraints with a review hold 2ms
+     × recovery holds remain pending even without active children and are resumed explicitly once 2ms
+     × recovers an interrupted charge once and a later cycle needs fresh available runs 2ms
+     × can hold two pipeline reviews without allowing ordinary work to use either final run 8ms
+     × a revised cycle requires fresh analysis and review capacity and keeps all prior charges 2ms
+     × review admission cannot bypass known-token or unknown-usage limits 2ms
+     × requires a frozen host-owned attempt binding and rejects a swapped pipeline or revision 3ms
+     × keeps distinct task bindings for a reused member without allowing old attempts to be charged again 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > holds the final review run while ordinary work uses its available runs
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:88:85
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > does not release a running cycle and never refunds an admitted execution
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:114:93
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > retains holds through disabling and lowering limits while review respects the absolute run cap
+AssertionError: expected [Function] to throw error matching /预算|轮次/ but got 'store.bindReviewAdmission is not a fu…'
+
+- Expected:
+/预算|轮次/
+
++ Received:
+"store.bindReviewAdmission is not a function"
+
+ ❯ tests/orchestration/store.test.ts:126:54
+    124|   store.configureBudget({maxRuns:1,reserveReviewRuns:false},store.budg…
+    125|   expect(store.budget()).toMatchObject({reviewReservedRuns:1,ordinaryR…
+    126|   expect(()=>begin(store,c.id,{key,stage:'review'})).toThrow(/预算|轮次/)
+       |                                                      ^
+    127|   expect(()=>store.configureBudget({},store.budget().revision)).toThro…
+    128|   store.configureBudget({maxRuns:2,reserveReviewRuns:false},store.budg…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > does not bypass token or elapsed constraints with a review hold
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:132:93
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > recovery holds remain pending even without active children and are resumed explicitly once
+AssertionError: expected [Function] to throw error matching /核对|恢复/ but got 'store.bindReviewAdmission is not a fu…'
+
+- Expected:
+/核对|恢复/
+
++ Received:
+"store.bindReviewAdmission is not a function"
+
+ ❯ tests/orchestration/store.test.ts:141:90
+    139|   const restored=new OrchestrationStore(dir,'p')
+    140|   expect(restored.budget()).toMatchObject({consumedRuns:0,reviewReserv…
+    141|   const c=child(restored,'review');expect(()=>begin(restored,c.id,{key…
+       |                                                                                          ^
+    142|   restored.resumeReviewReservation(key);const rev=restored.budget().re…
+    143|   restored.resumeReviewReservation(key);expect(restored.budget().revis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > recovers an interrupted charge once and a later cycle needs fresh available runs
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:150:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > can hold two pipeline reviews without allowing ordinary work to use either final run
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:170:70
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > a revised cycle requires fresh analysis and review capacity and keeps all prior charges
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:175:106
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > review admission cannot bypass known-token or unknown-usage limits
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:188:94
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > requires a frozen host-owned attempt binding and rejects a swapped pipeline or revision
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:215:58
+    213|   const{store}=setup();store.configureBudget({maxRuns:8,reserveReviewR…
+    214|   const key=store.reserveReviewRuns('a',0)!.key,other=store.reserveRev…
+    215|   expect(()=>store.beginRun(c.id,taskAttempt,admission)).toThrow(/绑定|b…
+       |                                                          ^
+    216|   store.bindReviewAdmission(c.id,admission,taskAttempt)
+    217|   expect(()=>store.bindReviewAdmission(c.id,{key:other,stage:'review'}…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > keeps distinct task bindings for a reused member without allowing old attempts to be charged again
+TypeError: store.bindReviewAdmission is not a function
+ ❯ begin tests/orchestration/store.test.ts:83:122
+
+ ❯ tests/orchestration/store.test.ts:229:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 13 passed (24)
+   Start at  21:30:18
+   Duration  403ms (transform 98ms, setup 0ms, import 221ms, tests 76ms, environment 0ms)
+

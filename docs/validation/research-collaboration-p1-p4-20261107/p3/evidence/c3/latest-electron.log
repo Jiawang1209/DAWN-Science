@@ -1,0 +1,91 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/collaboration-stopping.spec.ts e2e/collaboration-outcome.spec.ts e2e/collaboration-workbench.spec.ts e2e/submission-evidence-review.spec.ts e2e/science-pipeline.spec.ts --output=/tmp/dawn-c3-proof-X2RwzJ/latest/playwright
+
+Running 8 tests using 1 worker
+
+(node:83223) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/collaboration-outcome.spec.ts:15:2 › outcome pass › shows exact stage and final versions, compact expansion, and readable 900px views (21.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/collaboration-outcome.spec.ts:15:2 › outcome blocked › shows exact stage and final versions, compact expansion, and readable 900px views (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  3 e2e/collaboration-stopping.spec.ts:26:1 › shows actual stopping until the bounded descendant finishes, without claiming an artifact lock (33.0s)
+(node:84163) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (13.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (4.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「审查报告预览链路」做完了 — {"summary":"report delivered","blockers":[],"deliverables":[{"path":"reports/report.md"}],"execution":{"state":"not_run"…
+[主进程] Debugger ending on [expired local inspector endpoint redacted]
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  8 e2e/submission-evidence-review.spec.ts:12:1 › opens report images and scripts in the same owner, closes previews, and returns from expansion (3.6s)
+
+
+  1) e2e/collaboration-stopping.spec.ts:26:1 › shows actual stopping until the bounded descendant finishes, without claiming an artifact lock 
+
+    TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('region', { name: '协作成果', exact: true }).locator('h4').filter({ hasText: '正在停止，等待执行排空' }) to be visible
+
+
+      33 |   await expect.poll(()=>existsSync(join(workspace,'cleanup.pid'))).toBe(true);pid=Number(readFileSync(join(workspace,'cleanup.pid'),'utf8'))
+      34 |   const outcome=page.getByRole('region',{name:'协作成果',exact:true})
+    > 35 |   const stopping=outcome.locator('h4').filter({hasText:'正在停止，等待执行排空'}).waitFor({state:'visible'})
+         |                                                                        ^
+      36 |   await page.locator('main.main').getByRole('button',{name:'停止',exact:true}).click();await stopping
+      37 |   await expect(outcome).toHaveAttribute('data-outcome','stopping');await expect(outcome).not.toContainText('持有产物锁')
+      38 |   await page.screenshot({path:join(out,'actual-stopping.png')})
+        at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/e2e/collaboration-stopping.spec.ts:35:72
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-c3-proof-X2RwzJ/latest/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../../tmp/dawn-c3-proof-X2RwzJ/latest/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-c3-proof-X2RwzJ/latest/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../../tmp/dawn-c3-proof-X2RwzJ/latest/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/collaboration-stopping.spec.ts:26:1 › shows actual stopping until the bounded descendant finishes, without claiming an artifact lock 
+  7 passed (1.5m)

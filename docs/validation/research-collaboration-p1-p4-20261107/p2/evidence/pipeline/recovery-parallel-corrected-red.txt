@@ -1,0 +1,26 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (10 tests | 1 failed) 935ms
+   × keeps the full legal escaped request identity bounded and distinct across retry generations 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > keeps the full legal escaped request identity bounded and distinct across retry generations
+AssertionError: expected 1071 to be less than or equal to 512
+ ❯ tests/team/science-review-budget.test.ts:48:20
+     46|  team.pipeline!.requestId='\\"'.repeat(256)
+     47|  const id=pipelineBudgetId(team,team.pipeline!)
+     48|  expect(id.length).toBeLessThanOrEqual(512)
+       |                    ^
+     49|  team.pipeline!.budgetGeneration=1
+     50|  expect(pipelineBudgetId(team,team.pipeline!)).not.toBe(id)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  21:40:56
+   Duration  1.73s (transform 245ms, setup 0ms, import 717ms, tests 935ms, environment 0ms)
+

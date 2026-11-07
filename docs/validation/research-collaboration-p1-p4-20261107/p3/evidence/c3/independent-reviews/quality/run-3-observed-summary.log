@@ -1,0 +1,8 @@
+PROVENANCE: summary transcribed from observed tool output; full raw stdout was not persisted.
+Command: npx vitest run --project=ui tests/ui/app-mvp.test.tsx tests/ui/design-system-contract.test.ts tests/ui/i18n.test.ts tests/ui/client.test.ts tests/ui/use-run-overview.test.tsx --reporter=dot
+Test Files  4 passed (4)
+Tests  69 passed (69)
+Start at  23:51:02
+Duration  4.86s
+Exit code  0
+Note: design-system-contract.test.ts does not exist; it selected no file. Actual design-contract.test.ts was then run separately below.

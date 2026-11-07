@@ -1,0 +1,16 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/agent-observation.spec.ts --output=/tmp/dawn-d3-electron-disk-capture-20261108/playwright
+
+Running 1 test using 1 worker
+
+(node:95147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57321/63007cec-8080-446b-87d4-c4e8b75a62cf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57398/6bd9bee1-7a60-4899-ac9b-8a5d7a216708
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/agent-observation.spec.ts:16:2 › member observation › keeps current SDK context separate from two settled epochs, history, owner switches and restart (22.1s)
+
+  1 passed (22.6s)

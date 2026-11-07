@@ -1,0 +1,67 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (24 tests | 1 failed) 186ms
+   × labels only actual SDK estimates and makes eligible retained values visibly historical 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > labels only actual SDK estimates and makes eligible retained values visibly historical
+TestingLibraryElementError: Unable to find an element with the text: 当前上下文. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"agent-observation"[39m
+      [33mdata-context-current[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"agent-observation-row"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0m当前上下文 · SDK估算[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"agent-observation-number"[39m
+        [36m>[39m
+          [0m未知[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"agent-observation-row"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0m已结算累计[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"agent-observation-number"[39m
+        [36m>[39m
+          [0m输入或输出未记录[0m
+        [36m</span>[39m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/agent-observation.test.tsx:142:16
+    140|  const unknown=sampled();delete unknown.contextObservation
+    141|  let view=render(<AgentObservation snapshot={snapshot(unknown)} run={u…
+    142|  expect(screen.getByText('当前上下文')).toBeTruthy();expect(screen.queryByT…
+       |                ^
+    143|  const historical=sampled({phase:'drained',state:'completed'});histori…
+    144|  view=render(<AgentObservation snapshot={snapshot(historical)} run={hi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 passed (24)
+   Start at  00:57:38
+   Duration  1.37s (transform 451ms, setup 488ms, import 264ms, tests 186ms, environment 338ms)
+

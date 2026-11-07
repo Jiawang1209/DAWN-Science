@@ -1,0 +1,33 @@
+{
+  "targeted": {
+    "exitCode": 0,
+    "tests": 38
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "build": {
+    "exitCode": 0
+  },
+  "nodeUi": {
+    "exitCode": 0,
+    "files": 672,
+    "passed": 6816,
+    "skipped": 10,
+    "seconds": 170.84
+  },
+  "kernel": {
+    "exitCode": 0,
+    "files": 12,
+    "passed": 50,
+    "skipped": 1,
+    "seconds": 48.38
+  },
+  "electron": {
+    "exitCode": 0,
+    "passed": 15,
+    "secondsApprox": 192
+  },
+  "newExternalApiRequests": 0,
+  "historicalShutdownStatus": "OPEN"
+}

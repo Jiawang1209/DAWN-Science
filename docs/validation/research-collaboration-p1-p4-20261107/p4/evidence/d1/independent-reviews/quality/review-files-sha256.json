@@ -1,0 +1,14 @@
+{
+  "candidate-verification.json": "186701ae2a71d041155d02820bfbf5a9ec72aea8ea8adb37cef513ef6a64c855",
+  "diff-check.log": "2a3954627795f50423fd88b74045fed1aa6fcc709aa93aa4113bc4d4ac5d9a30",
+  "focused-tests.log": "58bbe6c2b0f4b7ecd55e3a716ce0ae6096efda4c452e97115a0c15e61a9e8eac",
+  "independent-probe-initial-cjs-loader.log": "0249d342237f99826723372cb99dc05bc94aef818d9c0fb8683e5c5d81faa8b6",
+  "independent-probe.log": "fef8fa482ccedca037ef28670774f62e526276526bf858e11d9f7999c9dbc0df",
+  "independent-probe.mts": "15eddff96cbf45ea2afc812fbc77e45a04a0744081eb564296e9df9135f8a3db",
+  "independent-probe.ts": "15eddff96cbf45ea2afc812fbc77e45a04a0744081eb564296e9df9135f8a3db",
+  "post-source-sha256.json": "f579bf5eef6922e2b7a95b1be0e7854568f3ee69fd0116eb8f9d2c018c15bf70",
+  "pre-source-sha256.json": "f579bf5eef6922e2b7a95b1be0e7854568f3ee69fd0116eb8f9d2c018c15bf70",
+  "quality-review.md": "1f2bd20f012c0d51ea32e50d0dc523c524738eeef4728616ec70709eff2889d6",
+  "source-verification.json": "7dceeeefceead3ae5e75febf879deb8ac454b18add606d61e00548cf6c1db659",
+  "typecheck.log": "74d021568cba4ebdf1167b067be76e9c36b6d1d7ab08740f6bb73eef00895daf"
+}

@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {RunOverviewSchema} from '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/protocol/run-overview.ts';
+import {projectAgentObservation,settledUsage,exactTaskObservationRun} from '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/agent-observation.ts';
+import {teamTaskTimeline} from '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/task-timeline.tsx';
+import {$lang} from '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/i18n/index.ts';
+$lang.set('zh');
+const results:any[]=[];
+function check(name:string,fn:()=>void){fn();results.push({name,pass:true});}
+const sample:any={version:1,availability:'available',source:'sdk-estimate',usedTokens:20,observedAt:1000,provider:'child-provider',model:'child-model',contextWindow:100,contextWindowSource:'model-config'};
+const run:any={id:'member',kind:'team',label:'reader',address:['team','member','reader'],epoch:2,updatedAt:1,state:'running',phase:'running',contract:false,inputVersions:0,outputVersions:0,contextObservation:{current:true,reason:'current',sample:{ownerSessionId:'owner',childId:'member',epoch:2,sample}}};
+const snap=(r:any,source='live')=>RunOverviewSchema.parse({ownerSessionId:'owner',source,runs:[r]});
+for(const [state,phase] of [['running','running'],['running','stopping'],['cancelled','drained'],['interrupted','drained'],['completed','drained'],['queued','queued'],['idle','idle']])for(const source of ['live','disk','unsupported']){
+ check(`qualification ${source}/${state}/${phase}`,()=>{const r=structuredClone(run);Object.assign(r,{state,phase});const s=snap(r,source);const p=projectAgentObservation(s,s.runs[0]!);assert.equal(p.context.current,source==='live'&&state==='running'&&phase==='running');if(!p.context.current){assert.equal(p.context.percent,undefined);assert.equal(p.context.label,'上次上下文 · 历史（估算）');}});
+}
+for(const [field,value] of [['ownerSessionId','other'],['childId','other'],['epoch',3]] as const){check(`foreign/future retained ${field}`,()=>{const r=structuredClone(run);r.contextObservation.current=false;r.contextObservation.sample[field]=value;const s=snap(r);const p=projectAgentObservation(s,s.runs[0]!);assert.equal(p.context.sample,undefined);assert.equal(p.context.value,'未知');});}
+check('older epoch retains history without current meter',()=>{const r=structuredClone(run);r.contextObservation.sample.epoch=1;const s=snap(r);const p=projectAgentObservation(s,s.runs[0]!);assert.equal(p.context.current,false);assert.equal(p.context.historical,true);assert.equal(p.context.value,'20 tokens');assert.equal(p.context.percent,undefined);});
+for(const reason of ['route-changed','awaiting-sample','historical'])check(`revoked host qualification ${reason}`,()=>{const r=structuredClone(run);r.contextObservation.current=false;r.contextObservation.reason=reason;const s=snap(r);const p=projectAgentObservation(s,s.runs[0]!);assert.equal(p.context.current,false);assert.equal(p.context.percent,undefined);assert.equal(p.context.historical,true);});
+check('unknown sample valid capacity is not occupancy',()=>{const r=structuredClone(run);r.contextObservation.sample.sample={...sample,availability:'unknown',source:'unknown',reason:'after-compaction'};delete r.contextObservation.sample.sample.usedTokens;const s=snap(r);const p=projectAgentObservation(s,s.runs[0]!);assert.equal(p.context.current,false);assert.equal(p.context.value,'未知');assert.equal(p.context.percent,undefined);});
+check('no capacity retains known occupancy without ratio',()=>{const r=structuredClone(run);delete r.contextObservation.sample.sample.contextWindow;delete r.contextObservation.sample.sample.contextWindowSource;const s=snap(r);const p=projectAgentObservation(s,s.runs[0]!);assert.equal(p.context.current,true);assert.equal(p.context.value,'20 tokens');assert.equal(p.context.percent,undefined);});
+const base={source:'host-epoch-deltas',settledEpochs:1,lastSettledEpoch:1,unknownEpochs:0,partial:[],input:0,output:0,cacheRead:0};
+for(const [name,u,expected] of [
+ ['exact zero',base,'0 tokens'],['cache excluded',{...base,input:12,output:8,cacheRead:100},'20 tokens'],
+ ['partial lower bound',{...base,input:12,output:8,unknownEpochs:1,partial:['input']},'至少 20 tokens'],
+ ['sum overflow',{...base,input:Number.MAX_SAFE_INTEGER,output:1},'合计超出安全范围'],
+ ['fresh unsettled',{source:'host-epoch-deltas',settledEpochs:0,unknownEpochs:0,partial:[]},'尚未结算'],
+ ['legacy unsettled',{source:'host-epoch-deltas',settledEpochs:0,unknownEpochs:0,partial:['input','output','cacheRead'],legacyHistory:true},'历史未覆盖']
+] as any[]){check(`settled ${name}`,()=>{const s=snap({...run,usageTotals:u});assert.equal(settledUsage(s.runs[0]!).value,expected);});}
+check('missing output is never filled with zero',()=>{const u:any={...base,input:12,unknownEpochs:1,partial:['output']};delete u.output;const s=snap({...run,usageTotals:u});const p=settledUsage(s.runs[0]!);assert.equal(p.value,'输入或输出未记录');assert.equal(p.output,'未记录');});
+const q={teamId:'team',taskId:'old-task',attemptId:'old-token',attempt:1};
+check('actual timeline chain accepts exact assignment then rejects successor binding',()=>{const r={...run,taskAttempt:q};const s:any=snap(r);s.history={events:[{seq:1,at:1,type:'started',childId:r.id,epoch:2,taskAttempt:q}],truncated:false};RunOverviewSchema.parse(s);let t=teamTaskTimeline(s,'owner',q);assert.equal(exactTaskObservationRun(s,'owner',q,t.current)?.id,'member');s.runs[0].taskAttempt={...q,taskId:'new-task',attemptId:'new-token'};t=teamTaskTimeline(s,'owner',q);assert.equal(exactTaskObservationRun(s,'owner',q,t.current),undefined);});
+const ev='/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3';
+for(const [folder,name] of [['final-electron','expanded-current-1440-light'],['final-electron','settled-two-epochs-partial-1440-dark'],['disk-ui-electron','restarted-history-1440-dark'],['disk-ui-electron','retired-disk-history-1440-dark']])check(`real host fixture ${name}`,()=>{const j=JSON.parse(readFileSync(join(ev,folder,'evidence/members',name+'.json'),'utf8'));const s=RunOverviewSchema.parse(j.hostOverview);const r=s.runs.find(r=>r.label.includes('analyze'))!;const p=projectAgentObservation(s,r);if(name.startsWith('expanded')){assert.equal(p.context.current,true);assert.equal(p.context.value,'20 / 128,000 tokens');}else{assert.equal(p.context.current,false);assert.equal(p.context.percent,undefined);assert.equal(p.context.historical,true);assert.equal(p.context.value,'29 tokens');assert.equal(p.usage.value,'80 tokens');assert.equal(p.usage.cacheRead,'未记录');}if(name.startsWith('retired'))assert.equal(s.source,'disk');});
+writeFileSync(join(import.meta.dirname,'independent-probe-result.json'),JSON.stringify({passed:results.length,results},null,2)+'\n');console.log(JSON.stringify({passed:results.length,results},null,2));

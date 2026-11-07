@@ -1,0 +1,50 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (18 tests | 4 failed | 11 skipped) 285ms
+   × reserves hidden parallel checkpoints independently with maxRuns=4 before any backend admission 52ms
+   × reserves hidden parallel checkpoints independently with maxRuns=5 before any backend admission 37ms
+   × counts an admitted predecessor only once when a third parallel item starts with maxRuns=8 and truncated history 5ms
+   × counts an admitted predecessor only once when a third parallel item starts with maxRuns=9 and truncated history 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > reserves hidden parallel checkpoints independently with maxRuns=4 before any backend admission
+ FAIL  |node| tests/team/science-review-budget.test.ts > reserves hidden parallel checkpoints independently with maxRuns=5 before any backend admission
+AssertionError: expected 'running' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "running"
+
+ ❯ tests/team/science-review-budget.test.ts:74:54
+     72|   await scheduler.踢一下(team.id)
+     73|   if(maxRuns<6){
+     74|    expect(scheduler.读(team.id).scienceBatch?.status).toBe('blocked')
+       |                                                      ^
+     75|    expect(calls).toHaveLength(0);expect(store.budget()).toMatchObject(…
+     76|   }else{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > counts an admitted predecessor only once when a third parallel item starts with maxRuns=8 and truncated history
+ FAIL  |node| tests/team/science-review-budget.test.ts > counts an admitted predecessor only once when a third parallel item starts with maxRuns=9 and truncated history
+团队错误: 一支团队最多 8 个成员。
+ ❯ 加成员 src/team/state.ts:100:91
+     98|   if (name === "captain") throw new 团队错误("「captain」是队长的名字，成员不能叫这个。")
+     99|   if (team.members.some((x) => x.name === name && x.status !== "remove…
+    100|   if (team.members.filter((x) => x.status !== "removed").length >= 团队上…
+       |                                                                                           ^
+    101|   const origin = botTeamOriginScope(team)
+    102|   if (m.botId && origin && m.botScopeKey !== origin) throw new 团队错误("B…
+ ❯ tests/team/science-review-budget.test.ts:44:44
+ ❯ parallelSetup tests/team/science-review-budget.test.ts:40:18
+ ❯ tests/team/science-review-budget.test.ts:94:45
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed | 11 skipped (18)
+   Start at  21:54:03
+   Duration  1.03s (transform 237ms, setup 0ms, import 668ms, tests 285ms, environment 0ms)
+

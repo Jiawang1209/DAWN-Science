@@ -1,4 +1,5 @@
 import {taskTrace} from '../orchestration/task-trace.js'
+import {childDiagnostics} from '../subagent/diagnostics.js'
 import {versionInputReceipt,finalizeTaskVersions,validateVersionReceipt} from '../artifacts/task-versions.js'
 /**
  * 团队调度器（team-board，2026-08-22，学自 dsh-agent-teams `scheduler.ts`）。
@@ -15,7 +16,8 @@ import {taskOutputReservation} from "../bot/output-locks.js"
 import {reportExecutionStage} from '../orchestration/execution-context.js'
 import {advanceScienceBatch,recoverScienceBatch} from './science-batch.js'
 import {runScienceSummary} from './science-summary.js'
-import {advancePipeline,recoverPipeline} from './science-pipeline.js'
+import {advancePipeline,recoverPipeline,pipelineBudgetId,pipelineRemainingRuns,scienceBudgetPipelines,blockPipelineBudget} from './science-pipeline.js'
+import {reviewReservationKey,type ReviewRunAdmission} from '../orchestration/budget.js'
 import {recoverTeamExecution} from './recovery.js'
 import { join } from "node:path"
 import { randomUUID } from "node:crypto"
@@ -109,6 +111,7 @@ export class 团队调度器 {
       const exchange = team.collaboration?.find(x => x.id === (turn.handlingExchangeId ?? turn.collaboration!.exchangeId))
       if (!exchange || exchange.status === "cancelled" || exchange.status === "interrupted" || !sourceIsCurrent(team, exchange)) this.跑着.get(key)?.abort()
     }
+    this.releasePipelineReviewReservations(team)
     this.opts.onChange(team)
     for (const w of this.等着的) w()
     this.等着的.clear()
@@ -275,6 +278,7 @@ export class 团队调度器 {
   private 派一轮(teamId: string): void {
     const team = this.读(teamId)
     if (team.finishedAt || this.stoppedTeams.has(teamId) || (team.scienceBatch?!['running','aggregating'].includes(team.scienceBatch.status):team.pipeline&&team.pipeline.status!=='running')) return
+    if(!this.preparePipelineReviewReservations(teamId))return
     for (const m of team.members) {
       if (m.status === "removed") continue
       if (this.跑着.has(`${teamId}/${m.name}`)) continue
@@ -424,6 +428,7 @@ export class 团队调度器 {
       const execute=async(runSignal:AbortSignal):Promise<成员轮结果>=>{
         const record=(result:成员轮结果):成员轮结果=>({...result,...(result.evidence?{trace:taskTrace(result.evidence)}:{}),...(result.receipt?.versions&&this.opts.recordReceipt?{receipt:this.opts.recordReceipt(result.receipt)}:{})})
         const release=settings&&!m.botId?await taskOutputReservation(this.opts.跑.context.cwd,settings,runSignal):()=>{}
+        let diagnostics:ReturnType<typeof childDiagnostics>={}
         try {
           reportExecutionStage('preflight')
           if(runSignal.aborted)return{ok:false,output:'',error:'已中止'}
@@ -433,6 +438,7 @@ export class 团队调度器 {
           if(versionProblem)return{ok:false,output:'',error:versionProblem.reason??versionProblem.summary,receipt:versionProblem}
           reportExecutionStage('execution')
           const result=await backend(runSignal)
+          diagnostics=childDiagnostics(result)
           if(result.ok&&settings?.contract&&!result.receipt){
             reportExecutionStage('acceptance')
             const receipt=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.opts.跑.context.cwd),this.opts.跑.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]});return record({...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'未通过契约验收'}:{})})
@@ -442,13 +448,15 @@ export class 团队调度器 {
             const receipt=validateVersionReceipt(settings,result.receipt);return record({...result,receipt,ok:result.ok&&receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.summary}:{})})
           }
           return record(result)
-        }finally{release()}
+        }catch(error){return{ok:false,output:'',error:error instanceof Error?error.message:String(error),...diagnostics}}finally{release()}
       }
       try {
         const coordinator = this.opts.orchestration
         if (coordinator) {
           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
-          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal,任务&&assignment?.attemptId===任务.attemptId?{teamId,taskId:任务.taskId,attemptId:任务.attemptId,attempt:assignment.attempt}:undefined)
+          const taskAttempt=任务&&assignment?.attemptId===任务.attemptId?{teamId,taskId:任务.taskId,attemptId:任务.attemptId,attempt:assignment.attempt}:undefined
+          const admission=taskAttempt?this.pipelineReviewAdmission(team,taskAttempt.taskId):undefined
+          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal,taskAttempt,admission)
         } else 结果 = await execute(ctrl.signal)
       } catch (error) {
         结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
@@ -554,6 +562,112 @@ export class 团队调度器 {
       if (snapshot && !ended) this.opts.onTurn?.({runId, team: snapshot, member, taskId: 任务?.taskId, phase: "end", ok: false, error: reason})
     } finally {
       if (this.跑着.get(key) === ctrl) {this.跑着.delete(key); this.botTurns.delete(key)}
+      try{this.releasePipelineReviewReservations(this.读(teamId))}catch(error){
+        if(this.opts.orchestration)this.opts.orchestration.observationIssue='审阅预留收尾未能保存；已用额度保留，核对账本后再继续'
+        console.error('[团队] 审阅预留收尾失败',error)
+      }
+    }
+  }
+
+  private preparePipelineReviewReservations(teamId:string):boolean {
+    const coordinator=this.opts.orchestration
+    if(!coordinator)return true
+    const team=this.读(teamId),budget=coordinator.budgetSnapshot()
+    const cycles=scienceBudgetPipelines(team).filter(p=>p.status==='running').map(p=>{
+      const pipelineId=pipelineBudgetId(team,p),key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineId,p.round)
+      return{p,pipelineId,key,task:team.tasks.find(task=>task.id===p.currentTaskId),reservation:budget.reviewReservations?.find(r=>r.key===key)}
+    })
+    const pending=cycles.filter(cycle=>cycle.task?.status==='pending'&&(budget.limits.reserveReviewRuns||cycle.reservation?.remainingRuns===1))
+    if(!pending.length)return true
+    // A new cycle must fit beside the remaining work in every live checkpoint.
+    // Already admitted stages are charged in consumedRuns, including when diagnostic history was truncated.
+    const newCycles=pending.filter(cycle=>!cycle.reservation)
+    const assertCapacity=()=>{
+      if(!newCycles.length)return
+      const current=coordinator.budgetSnapshot()
+      let needed=0
+      for(const cycle of cycles){
+        const own=current.reviewReservations?.find(r=>r.key===cycle.key)
+        if(!current.limits.reserveReviewRuns&&own?.remainingRuns!==1)continue
+        const task=cycle.task
+        const admitted=!!task?.attemptId&&['claimed','in_progress'].includes(task.status)&&coordinator.store.reviewRunAdmitted({key:cycle.key,stage:cycle.p.stage},{teamId:team.id,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt})
+        needed+=Math.max(0,pipelineRemainingRuns(cycle.p)-(admitted?1:0)-(own?.remainingRuns??0))
+      }
+      const available=current.limits.maxRuns===undefined?Infinity:Math.max(0,current.limits.maxRuns-current.consumedRuns-(current.reviewReservedRuns??0))
+      if(available<needed)throw new 团队错误(`并行流程剩余阶段至少需要 ${needed} 个未预留执行轮次，当前仅 ${available} 个；新周期未启动`)
+    }
+    const failedPipelineId=(newCycles[0]??pending[0])!.pipelineId
+    try{
+      assertCapacity()
+      for(const {p,pipelineId} of pending){
+        const reservation=coordinator.reserveReviewRuns(pipelineId,p.round,pipelineRemainingRuns(p))
+        if(reservation&&reservation.phase!=='held')throw new 团队错误('审阅预留恢复待核对；请通过科研流程专用恢复入口核验后继续')
+      }
+      assertCapacity()
+    }catch(error){
+      this.改(teamId,saved=>{const current=scienceBudgetPipelines(saved).find(item=>pipelineBudgetId(saved,item)===failedPipelineId);if(current)blockPipelineBudget(current,error instanceof Error?error.message:String(error),this.now())})
+      return false
+    }
+    return true
+  }
+
+  private pipelineReviewAdmission(team:团队,taskId:string):ReviewRunAdmission|undefined {
+    const coordinator=this.opts.orchestration,p=scienceBudgetPipelines(team).find(p=>p.taskIds.includes(taskId))
+    if(!coordinator||!p)return
+    if(p.status!=='running'||p.currentTaskId!==taskId)throw new 团队错误('科研任务不是当前流程阶段，未启动')
+    const budget=coordinator.budgetSnapshot(),key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(team,p),p.round)
+    if(!budget.limits.reserveReviewRuns&&!budget.reviewReservations?.some(r=>r.key===key&&r.remainingRuns===1))return
+    const reservation=coordinator.reserveReviewRuns(pipelineBudgetId(team,p),p.round,pipelineRemainingRuns(p))
+    if(!reservation)return
+    if(reservation.phase!=='held')throw new 团队错误('本周期审阅预留尚未核验或已结束，未启动')
+    return{key:reservation.key,stage:p.stage}
+  }
+
+  private releasePipelineReviewReservations(team:团队):void {
+    const coordinator=this.opts.orchestration
+    if(!coordinator)return
+    const reservations=coordinator.budgetSnapshot().reviewReservations??[]
+    const batchTerminal=!!team.scienceBatch&&['blocked','completed','cancelled'].includes(team.scienceBatch.status)
+    for(const p of scienceBudgetPipelines(team)){
+      if(!batchTerminal&&!['blocked','completed','cancelled'].includes(p.status))continue
+      const key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(team,p),p.round)
+      if(!reservations.some(reservation=>reservation.key===key&&reservation.remainingRuns===1))continue
+      if(coordinator.hasReviewWork(key)||coordinator.hasTaskWork(team.id,p.taskIds))continue
+      if(team.tasks.some(task=>p.taskIds.includes(task.id)&&['claimed','in_progress'].includes(task.status)))continue
+      coordinator.releaseReviewReservation(key)
+    }
+  }
+
+  /** Explicit cancel retry may reconcile a persisted terminal checkpoint after a failed ledger write. */
+  reconcileTerminalPipelineReservations(teamId:string):void {
+    const team=this.读(teamId),status=team.scienceBatch?.status??team.pipeline?.status
+    if(!status||!['blocked','completed','cancelled'].includes(status))throw new 团队错误('流程尚未终结，不能释放审阅预留')
+    this.releasePipelineReviewReservations(team)
+  }
+
+  /** Called only by explicit recovery after frozen file versions and route/CAS have been verified. */
+  resumePipelineReservationsVerified(teamId:string):void {
+    const coordinator=this.opts.orchestration
+    if(!coordinator)return
+    const team=this.读(teamId),budget=coordinator.budgetSnapshot(),reservations=budget.reviewReservations??[]
+    const plans=scienceBudgetPipelines(team).filter(p=>p.status==='running').map(p=>{
+      const key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(team,p),p.round)
+      return{pipelineId:pipelineBudgetId(team,p),p,reservation:reservations.find(r=>r.key===key)}
+    }).filter(plan=>budget.limits.reserveReviewRuns||plan.reservation?.remainingRuns===1)
+    if(!plans.length)return
+    if(budget.blocked&&budget.blocked.code!=='runs')throw new 团队错误(budget.blocked.message)
+    const needed=plans.reduce((sum,plan)=>sum+pipelineRemainingRuns(plan.p)-(plan.reservation?.remainingRuns??0),0)
+    const available=budget.limits.maxRuns===undefined?0:budget.limits.maxRuns-budget.consumedRuns-(budget.reviewReservedRuns??0)
+    if(available<needed)throw new 团队错误(`恢复后剩余阶段至少需要 ${needed} 个未预留执行轮次；当前预算不足，未启动`)
+    if(plans.some(plan=>plan.reservation?.phase==='released'))throw new 团队错误('流程预留已释放，不能沿用旧恢复身份')
+    const retryIds=new Set(plans.filter(plan=>plan.reservation?.phase==='consumed').map(plan=>plan.pipelineId))
+    if(retryIds.size)this.改(teamId,saved=>{for(const p of scienceBudgetPipelines(saved))if(retryIds.has(pipelineBudgetId(saved,p))){p.budgetGeneration=(p.budgetGeneration??0)+1;p.stateRevision++;p.updatedAt=this.now()}})
+    const current=this.读(teamId)
+    for(const p of scienceBudgetPipelines(current).filter(p=>p.status==='running')){
+      const budget=coordinator.budgetSnapshot(),key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(current,p),p.round)
+      if(!budget.limits.reserveReviewRuns&&!budget.reviewReservations?.some(r=>r.key===key&&r.remainingRuns===1))continue
+      const reservation=coordinator.reserveReviewRuns(pipelineBudgetId(current,p),p.round,pipelineRemainingRuns(p))
+      if(reservation?.phase==='recovery-check')coordinator.resumeReviewReservation(reservation.key)
     }
   }
 

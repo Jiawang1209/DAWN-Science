@@ -1,0 +1,136 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (23 tests | 1 failed) 206ms
+   × renders protocol-valid timestamps outside the Date range as unknown time 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > renders protocol-valid timestamps outside the Date range as unknown time
+TestingLibraryElementError: Unable to find an element with the text: 采样时间：未知时间. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"agent-observation"[39m
+      [33mdata-context-current[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"agent-observation-row"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0m当前上下文 · SDK估算[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"agent-observation-number"[39m
+        [36m>[39m
+          [0m20 / 100 tokens[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33maria-label[39m=[32m"当前上下文估算占比"[39m
+        [33maria-valuemax[39m=[32m"100"[39m
+        [33maria-valuemin[39m=[32m"0"[39m
+        [33maria-valuenow[39m=[32m"20"[39m
+        [33mclass[39m=[32m"agent-context-bar"[39m
+        [33mrole[39m=[32m"meter"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mstyle[39m=[32m"width: 20%;"[39m
+        [36m/>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"agent-observation-row"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0m已结算累计[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"agent-observation-number"[39m
+        [36m>[39m
+          [0m输入或输出未记录[0m
+        [36m</span>[39m
+      [36m</span>[39m
+      [36m<details[39m
+        [33mclass[39m=[32m"agent-observation-details"[39m
+      [36m>[39m
+        [36m<summary>[39m
+          [0m查看观测来源与覆盖[0m
+        [36m</summary>[39m
+        [36m<span>[39m
+          [0m当前有效样本[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0mfixture[0m
+          [0m / [0m
+          [0mchild-model[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m采样时间：Invalid Date[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m来源：SDK估算[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m模型容量：100 tokens · 模型配置[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"agent-composition"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0m组成估算 · 保留内容字节[0m
+          [36m</strong>[39m
+          [36m<span>[39m
+            [0m系统 10 · 工具 20 · 消息 30 字节[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m不含隐藏推理；不是 token 分解或真实请求字节。[0m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m成员跨轮次、跨任务累计；仅已记录的结算输入与输出，不代表本任务费用。[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m来源：宿主逐轮结算增量[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m1 轮已结算 · 1 轮不完整[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m输入：未记录 · 输出：1 tokens[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m缓存读取：40 tokens（单列）[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m费用未记录[0m
+        [36m</span>[39m
+      [36m</details>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/agent-observation.test.tsx:136:16
+    134|  const r=sampled();r.contextObservation!.sample!.sample.observedAt=Num…
+    135|  render(<AgentObservation snapshot={snapshot(r)} run={r} details/>);
+    136|  expect(screen.getByText('采样时间：未知时间')).toBeTruthy()
+       |                ^
+    137|  expect(screen.queryByText(/Invalid Date/)).toBeNull()
+    138| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  00:56:45
+   Duration  1.47s (transform 485ms, setup 514ms, import 298ms, tests 206ms, environment 365ms)
+

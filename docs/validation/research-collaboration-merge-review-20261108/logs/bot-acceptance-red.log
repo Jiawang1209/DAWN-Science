@@ -1,0 +1,51 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/workbench/bot-contract.test.ts (4 tests | 1 failed | 3 skipped) 332ms
+   × accepts the authoritative acceptance-cancel Bot result through real backend and SQLite 332ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/bot-contract.test.ts > accepts the authoritative acceptance-cancel Bot result through real backend and SQLite
+AssertionError: expected { …(13) } to match object { state: 'cancelled', …(2) }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,21 +1,15 @@
+  {
+    "result": {
+-     "observation": {
+-       "usage": {
+-         "input": 24,
+-         "output": 16,
+-       },
+-     },
+      "ok": false,
+      "output": "",
+    },
+    "state": "cancelled",
+    "usageTotals": {
+-     "input": 24,
+-     "output": 16,
+      "partial": [
++       "input",
++       "output",
+        "cacheRead",
+      ],
+      "settledEpochs": 1,
+      "unknownEpochs": 1,
+    },
+
+ ❯ tests/workbench/bot-contract.test.ts:60:18
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  01:29:17
+   Duration  2.22s (transform 951ms, setup 0ms, import 1.81s, tests 332ms, environment 0ms)
+

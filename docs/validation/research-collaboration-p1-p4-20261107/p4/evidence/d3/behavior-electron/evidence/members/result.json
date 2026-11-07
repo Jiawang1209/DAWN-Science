@@ -1,0 +1,19 @@
+{
+  "actualElectron": true,
+  "unknownCaptured": true,
+  "currentCaptured": true,
+  "ownerSwitch": true,
+  "restartCurrentInvalidated": true,
+  "twoEpochs": {
+    "source": "host-epoch-deltas",
+    "input": 48,
+    "output": 32,
+    "partial": [
+      "cacheRead"
+    ],
+    "settledEpochs": 2,
+    "unknownEpochs": 2,
+    "lastSettledEpoch": 2
+  },
+  "fixtureReleasePresent": true
+}

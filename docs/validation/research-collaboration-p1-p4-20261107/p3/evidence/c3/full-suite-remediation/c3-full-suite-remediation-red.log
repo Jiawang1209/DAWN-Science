@@ -1,0 +1,1447 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/app-mvp.test.tsx tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 771ms
+     × font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家 9ms
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 从零走到「agent 的回复出现在界面上」
+[设置] MCP 台数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "servers"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  },
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "problems"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3369:41
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4292:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+[设置] 插件数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "plugins"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3371:40
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4295:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 从零走到「agent 的回复出现在界面上」
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 从零走到「agent 的回复出现在界面上」
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 从零走到「agent 的回复出现在界面上」
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 从零走到「agent 的回复出现在界面上」
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条
+[设置] MCP 台数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "servers"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  },
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "problems"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3369:41
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4292:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+[设置] 插件数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "plugins"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3371:40
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4295:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > **revision 跳号时重新取快照，而不是只报警**
+[设置] MCP 台数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "servers"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  },
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "problems"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3369:41
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4292:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+[设置] 插件数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "plugins"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3371:40
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4295:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > **revision 跳号时重新取快照，而不是只报警**
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > **revision 跳号时重新取快照，而不是只报警**
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > **revision 跳号时重新取快照，而不是只报警**
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 跳号后连着来的更新不会每条都触发一次重取
+[设置] MCP 台数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "servers"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  },
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "problems"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3369:41
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4292:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+[设置] 插件数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "plugins"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3371:40
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4295:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 跳号后连着来的更新不会每条都触发一次重取
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 跳号后连着来的更新不会每条都触发一次重取
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 跳号后连着来的更新不会每条都触发一次重取
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 畸形更新被丢弃并出声，不流进对话
+[设置] MCP 台数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "servers"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  },
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "problems"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3369:41
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4292:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+[设置] 插件数读取失败： ZodError: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "plugins"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+    at invoke (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/app-mvp.test.tsx:258:27)
+    at raw (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:165:23)
+    at Object.get (/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/client.ts:331:21)
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:3371:40
+    at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/ui/App.tsx:4295:5
+    at Object.react_stack_bottom_frame (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 畸形更新被丢弃并出声，不流进对话
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 畸形更新被丢弃并出声，不流进对话
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 畸形更新被丢弃并出声，不流进对话
+Encountered two children with the same key, `s1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ❯ |ui| tests/ui/app-mvp.test.tsx (25 tests | 6 failed) 8013ms
+   × keeps overview and transcript deliveries independent when either harness subscriber unmounts 7ms
+     × 从零走到「agent 的回复出现在界面上」 1083ms
+     × 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条 1175ms
+     × **revision 跳号时重新取快照，而不是只报警** 1070ms
+     × 跳号后连着来的更新不会每条都触发一次重取 1143ms
+     × 畸形更新被丢弃并出声，不流进对话 1135ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/app-mvp.test.tsx > keeps overview and transcript deliveries independent when either harness subscriber unmounts
+AssertionError: expected "vi.fn()" to be called once with arguments: [ { type: 'bytes', …(4) } ]
+
+Number of calls: 0
+
+ ❯ tests/ui/app-mvp.test.tsx:296:78
+    294|  const bytes=(revision:number)=>({type:'bytes',sessionId:'s1',revision…
+    295|  h.push(changed(1));h.push(bytes(1))
+    296|  expect(overview).toHaveBeenCalledExactlyOnceWith(changed(1));expect(u…
+       |                                                                              ^
+    297|  stopOverview();h.push(changed(2));h.push(bytes(2))
+    298|  expect(overview).toHaveBeenCalledTimes(1);expect(update).toHaveBeenLa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |ui| tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 从零走到「agent 的回复出现在界面上」
+TestingLibraryElementError: Unable to find an element with the text: 在，我在. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app-shell"[39m
+      [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+      [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"topbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-navigation"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"brand-stack"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"DAWN Science"[39m
+              [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"brand-mark"[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"brand-name"[39m
+              [36m>[39m
+                [0mDAWN Science[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33maria-label[39m=[32m"收起侧边栏"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                [33mfill-rule[39m=[32m"evenodd"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33maria-label[39m=[32m"快捷键速查"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"9"[39m
+                [33mrx[39m=[32m"1.6"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mx[39m=[32m"1.5"[39m
+                [33my[39m=[32m"3.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-conversation"[39m
+          [33mdata-tabs[39m=[32m"false"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation-slot"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"conv-head-text"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"icon conv-title-icon"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.5"[39m
+                  [33mviewBox[39m=[32m"0 0 16 16"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<h1[39m
+                  [33mclass[39m=[32m"conv-title"[39m
+                  [33mtitle[39m=[32m"新对话"[39m
+                [36m>[39m
+                  [0m新对话[0m
+                [36m</h1>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dock-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m面板[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"body"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-w: 260px; --dawn-dock-w: 0px; --dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app-shell"[39m
+      [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+      [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"topbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-navigation"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"brand-stack"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"DAWN Science"[39m
+              [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"brand-mark"[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"brand-name"[39m
+              [36m>[39m
+                [0mDAWN Science[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33maria-label[39m=[32m"收起侧边栏"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                [33mfill-rule[39m=[32m"evenodd"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33maria-label[39m=[32m"快捷键速查"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"9"[39m
+                [33mrx[39m=[32m"1.6"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mx[39m=[32m"1.5"[39m
+                [33my[39m=[32m"3.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-conversation"[39m
+          [33mdata-tabs[39m=[32m"false"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation-slot"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"conv-head-text"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"icon conv-title-icon"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.5"[39m
+                  [33mviewBox[39m=[32m"0 0 16 16"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<h1[39m
+                  [33mclass[39m=[32m"conv-title"[39m
+                  [33mtitle[39m=[32m"新对话"[39m
+                [36m>[39m
+                  [0m新对话[0m
+                [36m</h1>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dock-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m面板[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"body"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-w: 260px; --dawn-dock-w: 0px; --dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39...
+ ❯ waitForWrapper ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/ui/app-mvp.test.tsx:433:25
+    431|
+    432|     // **这一条就是上一版做不到的事**
+    433|     expect(await screen.findByText("在，我在")).toBeDefined()
+       |                         ^
+    434|   })
+    435|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |ui| tests/ui/app-mvp.test.tsx > MVP 主路径 · 说一句话，看见回复 > 自己说的话以事件流为准：回显先画，真的那条来了顶掉它，始终只有一条
+AssertionError: expected 'echo:6' to be 'u1' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-shell"[39m
+        [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-navigation"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"brand-stack"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"DAWN Science"[39m
+                [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<img[39m
+                  [33malt[39m=[32m""[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"brand-mark"[39m
+                  [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"brand-name"[39m
+                [36m>[39m
+                  [0mDAWN Science[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"收起侧边栏"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"currentColor"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                  [33mfill-rule[39m=[32m"evenodd"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33maria-haspopup[39m=[32m"dialog"[39m
+              [33maria-label[39m=[32m"快捷键速查"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"9"[39m
+                  [33mrx[39m=[32m"1.6"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mx[39m=[32m"1.5"[39m
+                  [33my[39m=[32m"3.5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation"[39m
+            [33mdata-tabs[39m=[32m"false"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"topbar-conversation-slot"[39m
+            [36m>[39m
+              [36m<header[39m
+                [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"conv-head-text"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"icon conv-title-icon"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.5"[39m
+                    [33mviewBox[39m=[32m"0 0 16 16"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<h1[39m
+                    [33mclass[39m=[32m"conv-title"[39m
+                    [33mtitle[39m=[32m"新对话"[39m
+                  [36m>[39m
+                    [0m新对话[0m
+                  [36m</h1>[39m
+                [36m</div>[39m
+              [36m</header>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dock-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+              [33mtype[39m=[32m"button"[39m
+           ...
+
+Expected: "u1"
+Received: "echo:6"
+
+ ❯ tests/ui/app-mvp.test.tsx:461:71
+    459|       item: { type: "turn", id: "u1", who: "user", text: "跑一下测试", fina…
+    460|     })
+    461|     await waitFor(() => expect(人话()[0]?.getAttribute("data-turn-id")).…
+       |                                                                       ^
+    462|     expect(人话()).toHaveLength(1)
+    463|     expect(人话()[0]!.hasAttribute("data-echo")).toBe(false)
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ MutationObserver.checkRealTimersCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ ❯ MutationObserver.invokeTheCallbackFunction ../../../../Desktop/Github_repos/dawn-science/node_modules/jsdom/lib/generated/idl/MutationCallback.js:19:26
+ ❯ notifyMutationObservers ../../../../Desktop/Github_repos/dawn-science/node_modules/jsdom/lib/jsdom/living/helpers/mutation-observers.js:160:22
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/jsdom/lib/jsdom/living/helpers/mutation-observers.js:133:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |ui| tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > **revision 跳号时重新取快照，而不是只报警**
+AssertionError: expected 1 to be greater than 1
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-shell"[39m
+        [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-navigation"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"brand-stack"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"DAWN Science"[39m
+                [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<img[39m
+                  [33malt[39m=[32m""[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"brand-mark"[39m
+                  [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"brand-name"[39m
+                [36m>[39m
+                  [0mDAWN Science[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"收起侧边栏"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"currentColor"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                  [33mfill-rule[39m=[32m"evenodd"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33maria-haspopup[39m=[32m"dialog"[39m
+              [33maria-label[39m=[32m"快捷键速查"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"9"[39m
+                  [33mrx[39m=[32m"1.6"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mx[39m=[32m"1.5"[39m
+                  [33my[39m=[32m"3.5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation"[39m
+            [33mdata-tabs[39m=[32m"false"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"topbar-conversation-slot"[39m
+            [36m>[39m
+              [36m<header[39m
+                [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"conv-head-text"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"icon conv-title-icon"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.5"[39m
+                    [33mviewBox[39m=[32m"0 0 16 16"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<h1[39m
+                    [33mclass[39m=[32m"conv-title"[39m
+                    [33mtitle[39m=[32m"新对话"[39m
+                  [36m>[39m
+                    [0m新对话[0m
+                  [36m</h1>[39m
+                [36m</div>[39m
+              [36m</header>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dock-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+              [33mtype[39m=[32m"button"[39m
+           ...
+ ❯ tests/ui/app-mvp.test.tsx:596:73
+    594|
+    595|     await waitFor(() =>
+    596|       expect(h.calls.filter((c) => c.op === "subscribeSession").length…
+       |                                                                         ^
+    597|     )
+    598|   })
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |ui| tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 跳号后连着来的更新不会每条都触发一次重取
+AssertionError: expected 1 to be 2 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app-shell"[39m
+        [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-navigation"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"brand-stack"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"DAWN Science"[39m
+                [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<img[39m
+                  [33malt[39m=[32m""[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"brand-mark"[39m
+                  [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"brand-name"[39m
+                [36m>[39m
+                  [0mDAWN Science[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"收起侧边栏"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"currentColor"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                  [33mfill-rule[39m=[32m"evenodd"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33maria-haspopup[39m=[32m"dialog"[39m
+              [33maria-label[39m=[32m"快捷键速查"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"icon"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 16 16"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"9"[39m
+                  [33mrx[39m=[32m"1.6"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mx[39m=[32m"1.5"[39m
+                  [33my[39m=[32m"3.5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation"[39m
+            [33mdata-tabs[39m=[32m"false"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"topbar-conversation-slot"[39m
+            [36m>[39m
+              [36m<header[39m
+                [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"conv-head-text"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"icon conv-title-icon"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.5"[39m
+                    [33mviewBox[39m=[32m"0 0 16 16"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<h1[39m
+                    [33mclass[39m=[32m"conv-title"[39m
+                    [33mtitle[39m=[32m"新对话"[39m
+                  [36m>[39m
+                    [0m新对话[0m
+                  [36m</h1>[39m
+                [36m</div>[39m
+              [36m</header>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dock-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+              [33mtype[39m=[32m"button"[39m
+           ...
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/ui/app-mvp.test.tsx:609:73
+    607|     h.push(agentSays("七", 11))
+    608|     await waitFor(() =>
+    609|       expect(h.calls.filter((c) => c.op === "subscribeSession").length…
+       |                                                                         ^
+    610|     )
+    611|   })
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |ui| tests/ui/app-mvp.test.tsx > MVP 主路径 · 异常要出声 > 畸形更新被丢弃并出声，不流进对话
+TestingLibraryElementError: Unable to find an element with the text: /不合协议/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app-shell"[39m
+      [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+      [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"topbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-navigation"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"brand-stack"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"DAWN Science"[39m
+              [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"brand-mark"[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"brand-name"[39m
+              [36m>[39m
+                [0mDAWN Science[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33maria-label[39m=[32m"收起侧边栏"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                [33mfill-rule[39m=[32m"evenodd"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33maria-label[39m=[32m"快捷键速查"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"9"[39m
+                [33mrx[39m=[32m"1.6"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mx[39m=[32m"1.5"[39m
+                [33my[39m=[32m"3.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-conversation"[39m
+          [33mdata-tabs[39m=[32m"false"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation-slot"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"conv-head-text"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"icon conv-title-icon"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.5"[39m
+                  [33mviewBox[39m=[32m"0 0 16 16"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<h1[39m
+                  [33mclass[39m=[32m"conv-title"[39m
+                  [33mtitle[39m=[32m"新对话"[39m
+                [36m>[39m
+                  [0m新对话[0m
+                [36m</h1>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dock-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m面板[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"body"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-w: 260px; --dawn-dock-w: 0px; --dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"app-shell"[39m
+      [33mdata-sidebar-collapsed[39m=[32m"false"[39m
+      [33mstyle[39m=[32m"--dawn-sidebar-content-w: 260px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"topbar"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-navigation"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"brand-stack"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"DAWN Science"[39m
+              [33mclass[39m=[32m"btn btn-text btn-inline brand"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"brand-mark"[39m
+                [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1024'%20height='1024'%20viewBox='0%200%201024%201024'%3e%3crect%20x='64'%20y='64'%20width='896'%20height='896'%20rx='200'%20fill='%2308213f'/%3e%3cg%20transform='translate(146%20274)%20scale(1.19)'%3e%3cpath%20fill='%231685f8'%20fill-rule='evenodd'%20d='M12%200H150C232%200%20284%2047%20284%20126C284%20188%20249%20231%20193%20247L294%20386Q301%20400%20287%20400H207Q200%20400%20196%20394L90%20247V390Q90%20400%2080%20400H12Q0%20400%200%20388V12Q0%200%2012%200ZM90%2078V171H145C177%20171%20195%20154%20195%20125C195%2095%20177%2078%20145%2078Z'/%3e%3cpath%20fill='%23ffc52f'%20fill-rule='evenodd'%20d='M344%200H482C564%200%20616%2047%20616%20126C616%20205%20564%20252%20482%20252H422V390Q422%20400%20412%20400H344Q332%20400%20332%20388V12Q332%200%20344%200ZM422%2078V174H477C509%20174%20527%20156%20527%20126C527%2096%20509%2078%20477%2078Z'/%3e%3c/g%3e%3c/svg%3e"[39m
+              [36m/>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"brand-name"[39m
+              [36m>[39m
+                [0mDAWN Science[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"true"[39m
+            [33maria-label[39m=[32m"收起侧边栏"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon side-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 2.6h10a1.8 1.8 0 0 1 1.8 1.8v7.2A1.8 1.8 0 0 1 13 13.4H3a1.8 1.8 0 0 1-1.8-1.8V4.4A1.8 1.8 0 0 1 3 2.6Zm3.6 1.4v8H13a.8.8 0 0 0 .8-.8V4.8a.8.8 0 0 0-.8-.8H6.6Z"[39m
+                [33mfill-rule[39m=[32m"evenodd"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33maria-haspopup[39m=[32m"dialog"[39m
+            [33maria-label[39m=[32m"快捷键速查"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-icon shortcut-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 16 16"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"9"[39m
+                [33mrx[39m=[32m"1.6"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mx[39m=[32m"1.5"[39m
+                [33my[39m=[32m"3.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 6h.6M7 6h.6M10 6h.6M4 8h.6M7 8h.6M10 8h.6M5 10.3h6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"topbar-conversation"[39m
+          [33mdata-tabs[39m=[32m"false"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"topbar-conversation-slot"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"conv-head conv-head-topbar"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"conv-head-text"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"icon conv-title-icon"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.5"[39m
+                  [33mviewBox[39m=[32m"0 0 16 16"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M8 2.9c3 0 5.3 1.8 5.3 4.3S11 11.5 8 11.5c-.5 0-1-.1-1.5-.2L3.6 12.6l.8-2.1C3.3 9.6 2.7 8.5 2.7 7.2 2.7 4.7 5 2.9 8 2.9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<h1[39m
+                  [33mclass[39m=[32m"conv-title"[39m
+                  [33mtitle[39m=[32m"新对话"[39m
+                [36m>[39m
+                  [0m新对话[0m
+                [36m</h1>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dock-switch"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm dock-switch-trigger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m面板[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"body"[39m
+        [33mstyle[39m=[32m"--dawn-sidebar-w: 260px; --dawn-dock-w: 0px; --dawn-sidebar-content-w: 260px;"[39m
+      [36m>[39...
+ ❯ waitForWrapper ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/ui/app-mvp.test.tsx:617:25
+    615|     await openAndStart(h)
+    616|     h.push({ garbage: true })
+    617|     expect(await screen.findByText(/不合协议/)).toBeDefined()
+       |                         ^
+    618|   })
+    619| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9609: .collaboration-outcome h3 { font-size: var(--dawn-fs-title); line-height: 1.5; font-weight: 500; }",
++   "9610: .collaboration-outcome h4 { font-size: var(--dawn-fs-sub); line-height: 1.5; font-weight: 600; }",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:685:23
+    683|   it("font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家",…
+    684|     const offenders = findLines(read("styles.css"), (l) => /font-weigh…
+    685|     expect(offenders).toEqual([])
+       |                       ^
+    686|   })
+    687|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 121 passed (128)
+   Start at  23:43:02
+   Duration  10.03s (transform 1.46s, setup 1.00s, import 1.10s, tests 8.78s, environment 775ms)
+

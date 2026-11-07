@@ -1,0 +1,6 @@
+{
+  "tests/ui/collaboration-outcome-panel.test.tsx": "26c3249ab4228ab6a874603f240d4f83d38859966c84bd075e52f2952d8e399c",
+  "tests/ui/collaboration-workbench.test.tsx": "2c0b95478223e9ac030115b356bd9795834112116ff4e70fe8fef90d4861d5d0",
+  "e2e/collaboration-outcome.spec.ts": "d3be43eec3ec4f523b41a05176149188e1a7732cc732e57ff3cb84334c2ed11b",
+  "e2e/collaboration-stopping.spec.ts": "6d43adf7df35df50d3dde5b037b9f9868d73a4a04d5334982cfba5faa4a4dd0c"
+}

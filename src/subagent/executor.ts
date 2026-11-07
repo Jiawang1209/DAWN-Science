@@ -1,3 +1,5 @@
+import {AgentContextMessageSchema} from '../protocol/agent-context-observation.js'
+import {bindExecutionContextRoute} from '../orchestration/execution-context.js'
 import {childDiagnostics} from './diagnostics.js'
 import {TaskTraceSchema,type TaskTrace} from '../protocol/task-trace.js'
 import {taskTrace} from '../orchestration/task-trace.js'
@@ -324,6 +326,7 @@ export class SubagentExecutor {
     try {settings=this.prepareTask?.(index,task,definition);preparedHandoff=this.context.handoffOf?.(index)} catch(error){return fail(task,message(error))}
     const execute=async (runSignal:AbortSignal):Promise<SubagentResult>=>{
       const release=settings?await taskOutputReservation(this.context.cwd,settings,runSignal):()=>{}
+      let diagnostics:ReturnType<typeof childDiagnostics>={}
       try {
         reportExecutionStage('preflight')
         if(runSignal.aborted)return fail(task,"已中止")
@@ -335,6 +338,7 @@ export class SubagentExecutor {
         if(handoff?.sha256!==preparedHandoff?.sha256)throw new Error('排队期间冻结交接快照发生变化；子进程未启动')
         reportExecutionStage('execution')
         const result=await this.spawnOne(definition,task,index,runSignal,resume,settings,handoff)
+        diagnostics=childDiagnostics(result)
         if(result.ok&&settings?.contract){
           reportExecutionStage('acceptance')
           const verified=await finalizeTaskVersions(settings,acceptTaskResult(settings.contract,result.output,result.evidence??[],this.context.cwd),this.context.cwd,runSignal,{required:settings.contract.submission==='tool',submitted:result.versions,evidence:result.evidence??[]})
@@ -342,12 +346,13 @@ export class SubagentExecutor {
           return {...result,receipt,ok:receipt.state==='accepted',...(receipt.state!=='accepted'?{error:receipt.reason??receipt.result?.blockers.join('；')??'任务未通过验收'}:{})}
         }
         return result
-      }finally{release()}
+      }catch(error){return {...fail(task,message(error)),...diagnostics}}finally{release()}
     }
     if(!this.orchestration)return execute(signal??new AbortController().signal).catch(error=>fail(task,message(error)))
     const {service,addressOf}=this.orchestration
     if(signal?.aborted||service.isClosed)return fail(task,"父会话已停止，子任务未执行")
     const child=service.register("subagent",addressOf(index),task.agent)
+    if(resume&&child.epoch===0)service.store.markUsageHistoryLegacy(child.id)
     let result:SubagentResult|undefined
     const outcome=await service.run(child.id,async childSignal=>{
       result=await execute(childSignal)
@@ -367,6 +372,8 @@ export class SubagentExecutor {
     handoff?:ContextHandoff,
   ): Promise<SubagentResult> {
     const cmd = this.childOf({ definition, agent: task.agent, task: task.task })
+    const route={provider:this.context.provider,model:definition.model??this.context.model}
+    const reportContext=bindExecutionContextRoute(route)
 
     return new Promise<SubagentResult>((resolve) => {
       if (signal?.aborted) return resolve(fail(task, "开始前已被中止"))
@@ -416,6 +423,7 @@ export class SubagentExecutor {
           return
         }
         if(forced){if(v.type==='done')最后done=v as DoneLine;return}
+        if(v.type==='context_observation'){const parsed=AgentContextMessageSchema.safeParse(v);if(parsed.success)reportContext(parsed.data.sample);return}
         if(binding&&control&&typeof v.type==='string'&&v.type.startsWith('steer_')){
           try{
             const parsed=SteeringEventSchema.safeParse(v)
@@ -596,9 +604,7 @@ export class SubagentExecutor {
         ...(settings?{taskSettings:settings}:{}),
         ...(ctx.authorize?{authorize:true as const}:{}),
         systemPrompt: definition.systemPrompt,
-        provider: ctx.provider,
-        // **定义里写了 model 就以定义为准**——子 agent 挑一个便宜模型是常见用法
-        model: definition.model ?? ctx.model,
+        ...route,
         cwd: ctx.cwd,
         agentDir,
         // 会话落在运行目录里（2026-09-27）：坞里那一格重开后读它、接着问时续它

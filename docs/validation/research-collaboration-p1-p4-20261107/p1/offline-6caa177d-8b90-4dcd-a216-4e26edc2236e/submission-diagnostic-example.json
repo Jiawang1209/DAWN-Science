@@ -1,0 +1,18 @@
+{
+  "inference": "synthetic-diagnostic-example",
+  "diagnostic": {
+    "hostAttempts": 1,
+    "hostRejected": 1,
+    "sdkRejected": 1,
+    "outputLimitNotExecuted": 1,
+    "source": "host-and-transcript",
+    "complete": true
+  },
+  "missing": {
+    "hostAttempts": 0,
+    "hostRejected": 0,
+    "source": "host-only",
+    "complete": false
+  },
+  "note": "Synthetic exact-format records; not a new real model trial."
+}

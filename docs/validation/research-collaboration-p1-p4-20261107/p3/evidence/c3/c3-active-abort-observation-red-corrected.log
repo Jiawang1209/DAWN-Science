@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/orchestration/service.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (15 tests | 1 failed) 269ms
+   × publishes active external cancellation as stopping before cleanup drains without advancing wait revision 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > publishes active external cancellation as stopping before cleanup drains without advancing wait revision
+AssertionError: expected [] to deeply equal [ 'stopping' ]
+
+- Expected
++ Received
+
+- [
+-   "stopping",
+- ]
++ []
+
+ ❯ tests/orchestration/service.test.ts:209:15
+    207|  controller.abort();await Promise.resolve()
+    208|  expect(service.controlPhase(child.id)).toBe('stopping')
+    209|  expect(seen).toEqual(['stopping'])
+       |               ^
+    210|  expect(service.observation).toEqual({observerId:before.observerId,rev…
+    211|  expect(service.revision).toBe(revision);expect(woke).toBe(false)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  23:32:21
+   Duration  550ms (transform 134ms, setup 0ms, import 203ms, tests 269ms, environment 0ms)
+

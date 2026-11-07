@@ -1,0 +1,307 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/run-overview.test.ts tests/runtime/orchestration.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/run-overview.test.ts (19 tests | 8 failed) 90ms
+   × rejects explicitly malformed falsy pipeline=null without rewriting the team 7ms
+   × rejects explicitly malformed falsy pipeline=false without rewriting the team 2ms
+   × rejects explicitly malformed falsy pipeline=0 without rewriting the team 2ms
+   × rejects explicitly malformed falsy pipeline="" without rewriting the team 2ms
+   × rejects explicitly malformed falsy scienceBatch=null without rewriting the team 2ms
+   × rejects explicitly malformed falsy scienceBatch=false without rewriting the team 2ms
+   × rejects explicitly malformed falsy scienceBatch=0 without rewriting the team 2ms
+   × rejects explicitly malformed falsy scienceBatch="" without rewriting the team 2ms
+ ❯ |node| tests/runtime/orchestration.test.ts (24 tests | 1 failed) 443ms
+   × retains the owned persisted team while stopping children drain, while explicit live empty stays empty 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy pipeline=null without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621118,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy pipeline=false without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621126,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy pipeline=0 without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621128,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy pipeline="" without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621130,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy scienceBatch=null without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621133,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy scienceBatch=false without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621135,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy scienceBatch=0 without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621137,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > rejects explicitly malformed falsy scienceBatch="" without rewriting the team
+AssertionError: expected { team: { id: 't', …(8) } } to match object { team: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "team": null,
+-   "teamIssue": "当前团队记录不可读取或身份不匹配",
++   "team": {
++     "captainSessionId": "p",
++     "createdAt": 1794063621139,
++     "goal": "g",
++     "id": "t",
++     "members": [],
++     "messages": [],
++     "name": "legacy",
++     "taskSeq": 0,
++     "tasks": [],
++   },
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:141:44
+    139|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'…
+    140|  writeFileSync(file,JSON.stringify({...base,[field]:value}));const bef…
+    141|  expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,te…
+       |                                            ^
+    142|  expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{r…
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  |node| tests/runtime/orchestration.test.ts > retains the owned persisted team while stopping children drain, while explicit live empty stays empty
+AssertionError: expected { ownerSessionId: 'p', …(6) } to match object { source: 'live', team: { …(2) } }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "source": "live",
+-   "team": {
+-     "captainSessionId": "p",
+-     "id": "team-mw6j5qr0",
+-   },
++   "team": null,
+  }
+
+ ❯ tests/runtime/orchestration.test.ts:474:16
+    472|   await new Promise<void>(r=>setImmediate(r));expect(internal.botTeams…
+    473|   const view=runtime.runOverview('p')!
+    474|   expect(view).toMatchObject({source:'live',team:{id:teamId,captainSes…
+       |                ^
+    475|   expect(view.runs.find(run=>run.id===child.id)?.phase).toBe('stopping…
+    476|  }finally{release();await running;await stopping;await runtime.stop('p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 34 passed (43)
+   Start at  23:00:20
+   Duration  1.93s (transform 692ms, setup 0ms, import 1.71s, tests 533ms, environment 0ms)
+

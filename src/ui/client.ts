@@ -14,12 +14,14 @@ import {
   SessionUpdateSchema,
   UpdatePushSchema,
   OpenSessionPushSchema,
+  RunOverviewChangedSchema,
   WORKBENCH_PROTOCOL_VERSION,
   isCompatible,
   type ErrorCode,
   type OperationName,
   type RemoteUpdate,
   type SessionUpdate,
+  type RunOverviewChanged,
   type 更新状态,
   取错误i18n,
 } from "../protocol/index.js"
@@ -181,6 +183,31 @@ export function createClient(
   return {
     raw,
 
+    /** Readonly invalidation, deliberately independent of transcript revisions and consumers. */
+    subscribeRunOverviewChanges(onChange: (change: RunOverviewChanged) => void, onProblem?: (message: string) => void): () => void {
+      const src = eventSource ?? window.dawn?.onEvent
+      if (!src) {
+        onProblem?.("找不到 window.dawn.onEvent —— 收不到运行总览更新")
+        return () => {}
+      }
+      return src((raw) => {
+        if (!raw || typeof raw !== "object" || !("type" in raw) || raw.type !== "runOverviewChanged") return
+        const parsed = RunOverviewChangedSchema.safeParse(raw)
+        if (!parsed.success) {
+          onProblem?.(`收到不合协议的运行总览更新，已丢弃：${parsed.error.issues[0]?.message ?? "结构不符"}`)
+          return
+        }
+        const change = parsed.data
+        if (!isCompatible(WORKBENCH_PROTOCOL_VERSION, change.workbenchProtocolVersion)) {
+          onProblem?.(`运行总览更新的协议版本不兼容，已丢弃`)
+          return
+        }
+        try { onChange(change) } catch (error) {
+          onProblem?.(`处理运行总览更新时出错：${error instanceof Error ? error.message : String(error)}`)
+        }
+      })
+    },
+
     /**
      * 取到快照后告诉客户端「我已经同步到第 N 版了」。
      *
@@ -219,6 +246,8 @@ export function createClient(
       }
 
       return src((raw) => {
+        // This packet belongs exclusively to the readonly overview channel, even when malformed.
+        if (raw && typeof raw === "object" && "type" in raw && raw.type === "runOverviewChanged") return
         /**
          * **先认远端更新。** 它与会话更新共用一条 IPC 通道但不是同一种东西
          * （没有 `sessionId`，也没有 revision）。

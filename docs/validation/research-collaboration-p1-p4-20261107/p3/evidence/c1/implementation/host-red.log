@@ -1,0 +1,36 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/run-overview.test.ts (8 tests | 1 failed) 40ms
+   × projects settled resultEpoch so consumers can distinguish retained earlier results 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > projects settled resultEpoch so consumers can distinguish retained earlier results
+AssertionError: expected { …(14) } to match object { epoch: 1, resultEpoch: 1 }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "epoch": 1,
+-   "resultEpoch": 1,
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:90:43
+     88|  const {service}=setup(),child=service.register('subagent',['call','0'…
+     89|  await service.run(child.id,async()=>({ok:true,output:'',receipt:{vers…
+     90|  expect(liveRunOverview(service).runs[0]).toMatchObject({epoch:1,resul…
+       |                                           ^
+     91|  let release!:()=>void;const gate=new Promise<void>(r=>release=r)
+     92|  const rerun=service.run(child.id,async()=>{await gate;return{ok:true,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  22:16:23
+   Duration  315ms (transform 92ms, setup 0ms, import 197ms, tests 40ms, environment 0ms)
+

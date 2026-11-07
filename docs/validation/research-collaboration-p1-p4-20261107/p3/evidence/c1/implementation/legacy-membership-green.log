@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  57 passed (57)
+   Start at  22:37:47
+   Duration  924ms (transform 330ms, setup 477ms, import 28ms, tests 19ms, environment 322ms)
+

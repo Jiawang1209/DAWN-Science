@@ -1,0 +1,80 @@
+{
+  "baseline": "p4/evidence/d1/src-sha256.json",
+  "baselineManifestSha256": "f579bf5eef6922e2b7a95b1be0e7854568f3ee69fd0116eb8f9d2c018c15bf70",
+  "baselineFiles": 630,
+  "currentFiles": 632,
+  "unchanged": 619,
+  "changed": [
+    "src/orchestration/run-overview.ts",
+    "src/orchestration/store.ts",
+    "src/protocol/index.ts",
+    "src/protocol/run-overview.ts",
+    "src/runtime/native.ts",
+    "src/runtime/session-usage.ts",
+    "src/subagent/child-task.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/orchestration.ts",
+    "src/subagent/tool.ts",
+    "src/workbench/backend.ts"
+  ],
+  "added": [
+    "src/orchestration/agent-usage-totals.ts",
+    "src/protocol/agent-usage-totals.ts"
+  ],
+  "removed": [],
+  "uiChanged": [],
+  "hashes": {
+    "src/orchestration/run-overview.ts": {
+      "before": "7dc548f6c150103c23bd73cd6a99effb209d362c4485c66f81389b94ab1bf321",
+      "after": "52a2a04971faf282f6a3d26a9f80ba1008fde02dd27e3ec6807514d023b19a49"
+    },
+    "src/orchestration/store.ts": {
+      "before": "f0fba032aaeb9de3ede5dc043981420a4aa95359285268c536c63705946846fc",
+      "after": "7a4ec41f6ba3296ae4ba0699cea7378ada17e1732c4130334f3bdb1388545c53"
+    },
+    "src/protocol/index.ts": {
+      "before": "77c11ab2dfec0aedc45fb1bcb9daa0cbd3ea3664a8800d5ffb1cc945a80fdd79",
+      "after": "c8ba83f84181c30bf895e1b51f691f20340094bd8824c3f40b8d302eeb6283e8"
+    },
+    "src/protocol/run-overview.ts": {
+      "before": "0c6dff0c3f97e4a1cbf24e812f01d903b9ca63ee98ecaa36da921fd0e30e703a",
+      "after": "5d6e0ca75f5d2dbb0d7aa5fbdb24fb9ea390dcbc2f2e5248a03621f422de4690"
+    },
+    "src/runtime/native.ts": {
+      "before": "734345fc5dbccc54b037f9d33fec1cad2faac909c7d5994e9b489730c0d08dbd",
+      "after": "ece8bb801beb692f35f4ba9d1a4f89cc8db3e511f2d9a8c02f7c929ad7a00016"
+    },
+    "src/runtime/session-usage.ts": {
+      "before": "5acf5db504e00f965e56caf5bfae14771668d8292e7e68d64a454b0975c1551d",
+      "after": "bfaae1e165c03ad0ec535b5944ac236797ea94e5ece9ffa4295c4596bbde25be"
+    },
+    "src/subagent/child-task.ts": {
+      "before": "a2a9a34ce25b59a7995cf5e2d389b7f7fec953abdac3a77a2b3797af5e503af1",
+      "after": "ffcaa92233def6ba8be32d62abd7f29946711874545afd2c0e03255a4edefad4"
+    },
+    "src/subagent/executor.ts": {
+      "before": "0fa60ee6cdb04c622f9dc9aed1027cc3065dce77263d407c5ab788e2bf6e32b3",
+      "after": "1c7e3ceb09afa2ea4fdc5062f3a782775b2b50170c50a94b71faf693b67879c8"
+    },
+    "src/subagent/orchestration.ts": {
+      "before": "9e66de94e51bf8ac9fcf5c36f10e7cb726437d14272a13de82f724c07b4e358b",
+      "after": "aea340446b7a4ebcab5ab3a64053130b1f1c02d2491113711454884cd34f60c3"
+    },
+    "src/subagent/tool.ts": {
+      "before": "a246f3e146c5f0a5a748a51198f5b70f261321f497c2c5416a4892344c9dfbb5",
+      "after": "033db513eb6834b72cf4f4694143f7385f9fa89538037f2e0eb58e4e2fc36fc3"
+    },
+    "src/workbench/backend.ts": {
+      "before": "a4fcd0d2f808b35a234ef22883228d7e59451f18ae75c244f2c4011136f310de",
+      "after": "14f891636d4dbc1a093717e55d8b195918d576d310fd477406328a53b6854851"
+    },
+    "src/orchestration/agent-usage-totals.ts": {
+      "before": null,
+      "after": "e66aac5eec64589e2fce0e0bad7040e05b56387c90695b11f3478b6fdab9398d"
+    },
+    "src/protocol/agent-usage-totals.ts": {
+      "before": null,
+      "after": "4568749459f49c21bebde7177b71d582b0de90c23bd173573a01dd72933c9d8a"
+    }
+  }
+}

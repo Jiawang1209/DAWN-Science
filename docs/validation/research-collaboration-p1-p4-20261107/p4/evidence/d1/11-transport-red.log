@@ -1,0 +1,60 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/subagent/context-observation.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/subagent/context-observation.test.ts (2 tests | 2 failed) 75ms
+   × ordinary executor binds final definition model at actual spawn without steering or settings 44ms
+   × team runner captures its own actual execution scope and resolved member model 31ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/context-observation.test.ts > ordinary executor binds final definition model at actual spawn without steering or settings
+AssertionError: expected undefined to match object { ownerSessionId: 'owner', …(2) }
+
+- Expected:
+{
+  "epoch": 1,
+  "ownerSessionId": "owner",
+  "sample": {
+    "model": "resolved",
+    "usedTokens": 37,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/subagent/context-observation.test.ts:16:46
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/subagent/context-observation.test.ts > team runner captures its own actual execution scope and resolved member model
+AssertionError: expected undefined to match object { ownerSessionId: 'owner', …(2) }
+
+- Expected:
+{
+  "epoch": 1,
+  "ownerSessionId": "owner",
+  "sample": {
+    "model": "member-m",
+    "provider": "member-p",
+    "usedTokens": 37,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/subagent/context-observation.test.ts:21:94
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  23:58:26
+   Duration  729ms (transform 164ms, setup 0ms, import 574ms, tests 75ms, environment 0ms)
+

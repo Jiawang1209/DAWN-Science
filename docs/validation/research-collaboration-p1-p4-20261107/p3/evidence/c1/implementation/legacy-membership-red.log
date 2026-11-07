@@ -1,0 +1,38 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (57 tests | 1 failed) 25ms
+     × does not promote ambiguous legacy batch tasks to final when membership is absent 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not promote ambiguous legacy batch tasks to final when membership is absent
+AssertionError: expected { state: 'accepted', …(6) } to match object { state: 'accepted', …(2) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptanceScope": "stage",
++   "acceptanceScope": "final",
+    "artifacts": [
+      {
+-       "scope": "stage",
++       "scope": "final",
+      },
+    ],
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:252:72
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 56 passed (57)
+   Start at  22:37:17
+   Duration  929ms (transform 324ms, setup 469ms, import 27ms, tests 25ms, environment 328ms)
+

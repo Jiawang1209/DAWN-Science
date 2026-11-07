@@ -1,0 +1,21 @@
+node:internal/modules/esm/resolve:314
+  return new ERR_PACKAGE_PATH_NOT_EXPORTED(
+         ^
+
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports" main defined in /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/node_modules/@earendil-works/pi-coding-agent/package.json
+    at exportsNotFound (node:internal/modules/esm/resolve:314:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:604:13)
+    at resolveExports (node:internal/modules/cjs/loader:664:36)
+    at Function._findPath (node:internal/modules/cjs/loader:731:31)
+    at node:internal/modules/cjs/loader:1415:27
+    at nextResolveSimple (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/tsx/dist/register-CeSc3Ioe.cjs:10:1006)
+    at /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/tsx/dist/register-CeSc3Ioe.cjs:9:4959
+    at /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/tsx/dist/register-CeSc3Ioe.cjs:9:4261
+    at resolveTsPaths (/Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/tsx/dist/register-CeSc3Ioe.cjs:10:759)
+    at /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/tsx/dist/register-CeSc3Ioe.cjs:10:1199 {
+  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'
+}
+
+Node.js v22.23.0
+
+EXIT 1

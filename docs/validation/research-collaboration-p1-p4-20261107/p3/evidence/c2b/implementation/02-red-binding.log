@@ -1,0 +1,522 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/run-overview.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/run-overview.test.tsx (8 tests | 3 failed) 203ms
+   × uses the authoritative same-snapshot team instead of a stale parent and explicitly clears it with null 11ms
+   × ignores foreign authoritative teams and only falls back to the parent when snapshot team is absent 9ms
+   × push refresh keeps the same snapshot projection, selected tab, expanded view and task inspection scoped to the owner 36ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > uses the authoritative same-snapshot team instead of a stale parent and explicitly clears it with null
+AssertionError: expected <button type="button" …(2)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-pressed="false"
+  class="btn btn-ghost btn-menu-row"
+  type="button"
+>
+  stale A task
+</button>
+
+ ❯ tests/ui/run-overview.test.tsx:66:61
+     64|  const parent=bindingTeam('stale A'),owned=bindingTeam('owned B'),data…
+     65|  const view=render(<RunOverview client={{get} as unknown as WorkbenchC…
+     66|  expect(screen.queryByRole('button',{name:'stale A task'})).toBeNull()…
+       |                                                             ^
+     67|  fireEvent.click(screen.getByRole('button',{name:'owned B task'}));exp…
+     68|  get.mockResolvedValue({...data,team:null});fireEvent.click(screen.get…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > ignores foreign authoritative teams and only falls back to the parent when snapshot team is absent
+AssertionError: expected <button type="button" …(2)></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-pressed="false"
+  class="btn btn-ghost btn-menu-row"
+  type="button"
+>
+  legacy A task
+</button>
+
+ ❯ tests/ui/run-overview.test.tsx:74:132
+     72|  const parent=bindingTeam('legacy A','binding-legacy'),get=vi.fn().moc…
+     73|  render(<RunOverview client={{get} as unknown as WorkbenchClient} sess…
+     74|  expect(screen.queryByRole('button',{name:'foreign task'})).toBeNull()…
+       |                                                                                                                                    ^
+     75|  get.mockResolvedValue(snapshot('binding-legacy'));fireEvent.click(scr…
+     76|  expect(screen.getByRole('button',{name:'legacy A task'})).toBeTruthy()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > push refresh keeps the same snapshot projection, selected tab, expanded view and task inspection scoped to the owner
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "current task"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "运行总览":
+  [36m<section[39m
+    [33maria-label[39m=[32m"运行总览"[39m
+    [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [33mdata-expanded[39m=[32m"false"[39m
+    [33mdata-inspecting[39m=[32m"false"[39m
+  [36m/>[39m
+
+  Name "任务轨迹":
+  [36m<section[39m
+    [33maria-label[39m=[32m"任务轨迹"[39m
+    [33mclass[39m=[32m"task-timeline"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"collaboration-heading"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"collaboration-detail-heading"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header />[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "协作":
+  [36m<h3 />[39m
+
+  Name "任务板":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "刷新运行记录":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "展开流程工作台":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "stale task":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-menu-row"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "binding-refresh reader":
+  [36m<button[39m
+    [33maria-label[39m=[32m"binding-refresh reader"[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint collaboration-source"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  tablist:
+
+  Name "任务详情":
+  [36m<nav[39m
+    [33maria-label[39m=[32m"任务详情"[39m
+    [33mclass[39m=[32m"collaboration-tabs"[39m
+    [33mrole[39m=[32m"tablist"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  tab:
+
+  Name "过程":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_7_-panel"[39m
+    [33maria-selected[39m=[32m"true"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mid[39m=[32m"_r_7_-process"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "交接":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_7_-panel"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mid[39m=[32m"_r_7_-handoff"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "产物":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_7_-panel"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mdata-collaboration-tab[39m=[32m"artifacts"[39m
+    [33mid[39m=[32m"_r_7_-artifacts"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "记录":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_7_-panel"[39m
+    [33maria-selected[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mdata-collaboration-tab[39m=[32m"records"[39m
+    [33mid[39m=[32m"_r_7_-records"[39m
+    [33mrole[39m=[32m"tab"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  tabpanel:
+
+  Name "过程":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"_r_7_-process"[39m
+    [33mid[39m=[32m"_r_7_-panel"[39m
+    [33mrole[39m=[32m"tabpanel"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  contentinfo:
+
+  Name "":
+  [36m<footer[39m
+    [33mclass[39m=[32m"collaboration-footer"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+      [33mdata-expanded[39m=[32m"false"[39m
+      [33mdata-inspecting[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-heading-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m刷新运行记录[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m展开流程工作台[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m1 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m0 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m1 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-task-board"[39m
+        [36m>[39m
+          [36m<h4>[39m
+            [0m任务板[0m
+          [36m</h4>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-menu-row"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mstale task[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"协作任务"[39m
+          [33mclass[39m=[32m"collaboration-roster"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+            [33mdata-phase[39m=[32m"stopping"[39m
+            [33mdata-run[39m=[32m"child"[39m
+            [33mdata-selected[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"binding-refresh reader"[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"collaboration-avatar"[39m
+              [36m>[39m
+                [0mB[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-task-copy"[39m
+              [36m>[39m
+                [36m<strong[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0mbinding-refresh reader[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0m停止中，等待进程排空[0m
+                [36m</small>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-task-meta"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"collaboration-state"[39m
+                  [33mdata-phase[39m=[32m"stopping"[39m
+                [36m>[39m
+                  [0m子任务[0m
+                [36m</span>[39m
+                [36m<small>[39m
+                  [0m耗时未知[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-detail"[39m
+          [33mdata-selected-run[39m=[32m"child"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"collaboration-detail-heading"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mbinding-refresh reader[0m
+              [36m</strong>[39m
+              [36m<small[39m
+                [33mclass[39m=[32m"hint"[39m
+              [36m>[39m
+                [0m类型 subagent · 执行代次 3[0m
+              [36m</small>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"任务详情"[39m
+            [33mclass[39m=[32m"collaboration-tabs"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_7_-panel"[39m
+              [33maria-selected[39m=[32m"true"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mid[39m=[32m"_r_7_-process"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m过程[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_7_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mid[39m=[32m"_r_7_-handoff"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m交接[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_7_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mdata-collaboration-tab[39m=[32m"artifacts"[39m
+              [33mid[39m=[32m"_r_7_-artifacts"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m产物[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_7_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mdata-collaboration-tab[39m=[32m"records"[39m
+              [33mid[39m=[32m"_r_7_-records"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m记录[0m
+            [36m</button>[39m
+          [36m</nav>[39m
+          [36m<div[39m
+            [33maria-labelledby[39m=[32m"_r_7_-process"[39m
+            [33mid[39m=[32m"_r_7_-panel"[39m
+            [33mrole[39m=[32m"tabpanel"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"任务轨迹"[39m
+              [33mclass[39m=[32m"task-timeline"[39m
+            [36m>[39m
+              [36m<header>[39m
+                [36m<strong>[39m
+                  [0m任务轨迹[0m
+                [36m</strong>[39m
+                [36m<span>[39m
+                  [0m停止中，等待进程排空[0m
+                [36m</span>[39m
+              [36m</header>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"hint"[39m
+              [36m>[39m
+                [0m本次执行没有可关联的阶段记录[0m
+              [36m</p>[39m
+            [36m</section>[39m
+            [36m<p>[39m
+              [0m已冻结任务契约[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"hint"[39m
+            [36m>[39m
+              [0m暂无宿主验收回执[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/run-overview.test.tsx:83:25
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  23:06:36
+   Duration  1.64s (transform 476ms, setup 487ms, import 501ms, tests 203ms, environment 360ms)
+

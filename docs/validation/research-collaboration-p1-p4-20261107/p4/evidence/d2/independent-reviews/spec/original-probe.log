@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' /tmp/dawn-p14-d2-spec-z8ad6s/unknown-error-repro.ts
+{
+  "usage": {
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1,
+    "partial": [
+      "input",
+      "output",
+      "cacheRead"
+    ]
+  },
+  "totals": {
+    "source": "host-epoch-deltas",
+    "partial": [
+      "input",
+      "output",
+      "cacheRead"
+    ],
+    "settledEpochs": 1,
+    "unknownEpochs": 1,
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1,
+    "lastSettledEpoch": 1
+  },
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 13,
+    "unknownRuns": 1,
+    "inFlight": 0,
+    "startedAt": 1794069273660,
+    "elapsedMs": 3
+  }
+}

@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/workbench/bot-usage.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/workbench/bot-usage.test.ts (1 test | 1 failed) 220ms
+   × ordinary managed Bot tasks capture actual local scope deltas without settings or contracts 220ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/bot-usage.test.ts > ordinary managed Bot tasks capture actual local scope deltas without settings or contracts
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ tests/workbench/bot-usage.test.ts:43:28
+     41|   expect(child.settings).toBeUndefined();expect(team.tasks.every(task=…
+     42|   const usages=team.tasks.map(task=>task.observation?.usage)
+     43|   expect(usages[0]?.input).toBeGreaterThan(0);expect(usages[1]?.input)…
+       |                            ^
+     44|   expect(child.usageTotals).toMatchObject({input:usages.reduce((n,u)=>…
+     45|   expect(child.usageTotals?.input).toBeLessThan(runtime.sessionUsage(t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  00:24:23
+   Duration  2.09s (transform 930ms, setup 0ms, import 1.79s, tests 220ms, environment 0ms)
+

@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/orchestration/service.ts(65,86): error TS18048: 'sample' is possibly 'undefined'.
+src/orchestration/service.ts(65,135): error TS18048: 'sample' is possibly 'undefined'.
+tests/orchestration/context-observation.test.ts(41,87): error TS2339: Property 'usedTokens' does not exist on type '{ provider: string; model: string; version: 1; observedAt: number; contextWindow?: number | undefined; contextWindowSource?: "model-config" | undefined; composition?: { systemBytes: number; toolBytes: number; messageBytes: number; source: "retained-bytes-estimate"; } | undefined; availability: "available"; source: "...'.
+  Property 'usedTokens' does not exist on type '{ provider: string; model: string; version: 1; observedAt: number; contextWindow?: number | undefined; contextWindowSource?: "model-config" | undefined; composition?: { systemBytes: number; toolBytes: number; messageBytes: number; source: "retained-bytes-estimate"; } | undefined; availability: "unknown"; source: "un...'.
+tests/runtime/agent-context-sampler.test.ts(11,121): error TS2322: Type 'undefined' is not assignable to type 'number'.

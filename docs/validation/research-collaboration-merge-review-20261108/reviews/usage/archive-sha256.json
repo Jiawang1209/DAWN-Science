@@ -1,0 +1,12 @@
+{
+  "acceptance-cancel-fixed.log": "66a77ba872445e07b127e5b355f0dd2f5f19d8206942fd0ec716b6ac372c25cb",
+  "acceptance-cancel-valid.log": "655a89ac0887e0d46f0332beef72b2fdf2fdd0acfda68f9e422b66ad946a5607",
+  "acceptance-cancel.log": "b17a67e9fcc9ee6aeabdbcb1126a3de152325c040f544e604c9995cacfaf0007",
+  "acceptance-cancel.ts": "0f911d1846636f921893f09043613249d43140b26e28154a776c982658353d4b",
+  "acceptance-regression-fixed.log": "dcb2f1200172d236c0ae5d10f2cfd1e523939c7e04e6485673a44533760e2a7f",
+  "native-subprocess.log": "1dbf73e266ea3572745aec7399bb2d5015db7f16e5604553fbfc867c349ed154",
+  "receipt-exception-fixed-r2.log": "080e17ae4f73b8fb3aa31ed5a4c8d2dff630598bf08b0e6a4a85376f2adbe5c8",
+  "receipt-exception-fixed.log": "c38135d9d01e3ded7f3dfc422104abca9430592eaf709ac503f0c44b4e389a80",
+  "receipt-exception.ts": "40a55357e4ffcc396407991419ef95107d78e7a7f736ee3934f84006a6e660c0",
+  "ui-observation.log": "58acbe77c9bcb5985becb4f877d3687bcfc83a9ab8424bc39245aab284abcd9f"
+}

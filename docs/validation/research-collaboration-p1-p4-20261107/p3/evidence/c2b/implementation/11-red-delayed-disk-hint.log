@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/use-run-overview.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/use-run-overview.test.tsx (19 tests | 2 failed) 43ms
+     × does not retire accepted B on an ambiguous delayed disk hint from A close 6ms
+     × retains the live revision guard while an unconfirmed disk hint is pending without a refetch storm 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > does not retire accepted B on an ambiguous delayed disk hint from A close
+AssertionError: expected 'B accepted' to be 'B fresh' // Object.is equality
+
+Expected: "B fresh"
+Received: "B accepted"
+
+ ❯ tests/ui/use-run-overview.test.tsx:148:58
+    146|   expect(view.result.current.snapshot?.observationIssue).toBe('B accep…
+    147|   h.read.mockResolvedValue(snapshot('p','B',1,'B fresh'));act(()=>h.em…
+    148|   expect(view.result.current.snapshot?.observationIssue).toBe('B fresh…
+       |                                                          ^
+    149|   h.read.mockResolvedValue(snapshot('p','B',2,'B newer'));act(()=>h.em…
+    150|   expect(view.result.current.snapshot?.observationIssue).toBe('B newer…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > retains the live revision guard while an unconfirmed disk hint is pending without a refetch storm
+AssertionError: expected 'B eight' to be 'B nine' // Object.is equality
+
+Expected: "B nine"
+Received: "B eight"
+
+ ❯ tests/ui/use-run-overview.test.tsx:180:58
+    178|   await act(async()=>vi.advanceTimersByTimeAsync(1999));expect(h.invok…
+    179|   h.read.mockResolvedValue(snapshot('p','B',9,'B nine'));await act(asy…
+    180|   expect(view.result.current.snapshot?.observationIssue).toBe('B nine'…
+       |                                                          ^
+    181|  })
+    182|  it('keeps get-only legacy clients on one two-second timer scheduled a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 passed (19)
+   Start at  23:12:43
+   Duration  929ms (transform 315ms, setup 472ms, import 14ms, tests 43ms, environment 322ms)
+

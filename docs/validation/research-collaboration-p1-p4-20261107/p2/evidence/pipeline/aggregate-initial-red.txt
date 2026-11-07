@@ -1,0 +1,32 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (15 tests | 2 failed | 11 skipped) 192ms
+   × reserves hidden parallel checkpoints independently with maxRuns=4 before any backend admission 51ms
+   × reserves hidden parallel checkpoints independently with maxRuns=5 before any backend admission 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > reserves hidden parallel checkpoints independently with maxRuns=4 before any backend admission
+ FAIL  |node| tests/team/science-review-budget.test.ts > reserves hidden parallel checkpoints independently with maxRuns=5 before any backend admission
+AssertionError: expected 'running' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "running"
+
+ ❯ tests/team/science-review-budget.test.ts:67:54
+     65|   await scheduler.踢一下(team.id)
+     66|   if(maxRuns<6){
+     67|    expect(scheduler.读(team.id).scienceBatch?.status).toBe('blocked')
+       |                                                      ^
+     68|    expect(calls).toHaveLength(0);expect(store.budget()).toMatchObject(…
+     69|   }else{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed | 11 skipped (15)
+   Start at  21:52:42
+   Duration  957ms (transform 242ms, setup 0ms, import 686ms, tests 192ms, environment 0ms)
+

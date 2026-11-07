@@ -1,0 +1,28 @@
+{
+  "testEvidenceRoot": "/tmp/dawn-p14-evidence-isolation-20261107.OpHv58/results/science-parallel-two-indep-ef08f-nd-deliver-one-host-summary/evidence",
+  "defaultOutputIsolated": true,
+  "historicalFiles": [
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/desktop-team.json",
+      "matchesHead": true,
+      "sha256": "02ed6b15f3acd9c9e36cc64185c5a7ffa51a962447cf6a74dd8a1890bf6d9bca"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/parallel-completed.png",
+      "matchesHead": true,
+      "sha256": "62d112a56b717befdb15da3b4b65bb7a9da64e745d873244cb9eeb17741a822b"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/summary.json",
+      "matchesHead": true,
+      "sha256": "9287b6ac6ebb40c353580a807239d1de24ee46ea1687aa1cb4cfe0a362e04056"
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/summary.md",
+      "matchesHead": true,
+      "sha256": "346afc612f895241c777cf43e65097f39566439103bcc57587ada1483631d9b9"
+    }
+  ],
+  "testFileSha256": "d69905a60eac986d1ae230750ca81c0b0c133b46859532ec95e0e98a26613824",
+  "productChanged": false
+}

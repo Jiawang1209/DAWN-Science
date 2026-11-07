@@ -1,0 +1,6 @@
+Warning: Detected unsettled top-level await at /private/tmp/dawn-p14-final-quality-20261108-HUfZ0w/cross-stage-probe.mts:72
+}finally{await service?.close();rmSync(root,{recursive:true,force:true})}
+         ^
+
+
+

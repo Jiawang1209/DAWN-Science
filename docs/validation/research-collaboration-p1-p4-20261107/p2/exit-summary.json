@@ -1,0 +1,91 @@
+{
+  "stage": "B final9 Electron",
+  "exits": [
+    {
+      "record": "evidence/desktop/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-52168.jsonl",
+      "osExitMs": 127.716,
+      "closeReturnedMs": 128.259,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-52297.jsonl",
+      "osExitMs": 174.38,
+      "closeReturnedMs": 174.862,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/run-explanation-budget-ela-60dc3-ns-ownership-until-it-exits/electron-exit/exit-51980.jsonl",
+      "osExitMs": 123.247,
+      "closeReturnedMs": 123.933,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/run-explanation-budget-run-efec7-g-and-retained-host-history/electron-exit/exit-51812.jsonl",
+      "osExitMs": 118.108,
+      "closeReturnedMs": 118.712,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/run-explanation-budget-sci-186c7-s-consumption-after-restart/electron-exit/exit-51355.jsonl",
+      "osExitMs": 130.351,
+      "closeReturnedMs": 131.355,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/run-explanation-budget-sci-186c7-s-consumption-after-restart/electron-exit/exit-51523.jsonl",
+      "osExitMs": 143.944,
+      "closeReturnedMs": 144.529,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/run-explanation-budget-sci-955c0-tion-drains-actual-analysis/electron-exit/exit-51596.jsonl",
+      "osExitMs": 133.825,
+      "closeReturnedMs": 134.341,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/science-parallel-two-indep-ef08f-nd-deliver-one-host-summary/electron-exit/exit-52328.jsonl",
+      "osExitMs": 682.757,
+      "closeReturnedMs": 683.889,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/science-pipeline-blocked-s-9f57c-the-strict-desktop-protocol/electron-exit/exit-52886.jsonl",
+      "osExitMs": 126.678,
+      "closeReturnedMs": 127.23,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/science-pipeline-pass-scie-555d8-the-strict-desktop-protocol/electron-exit/exit-52630.jsonl",
+      "osExitMs": 111.74,
+      "closeReturnedMs": 112.353,
+      "exitCode": 0,
+      "problemEvents": []
+    },
+    {
+      "record": "evidence/desktop/science-pipeline-revise-sc-97aec-the-strict-desktop-protocol/electron-exit/exit-52750.jsonl",
+      "osExitMs": 150.852,
+      "closeReturnedMs": 151.595,
+      "exitCode": 0,
+      "problemEvents": []
+    }
+  ],
+  "historicalIntermittentTimeout": "OPEN",
+  "previousDelayedOsExitSeconds": [
+    7.35,
+    20.69
+  ],
+  "budgetsUnchangedMs": [
+    1500,
+    4000
+  ]
+}

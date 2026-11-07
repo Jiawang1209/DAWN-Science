@@ -1,0 +1,126 @@
+{
+  "actualElectron": true,
+  "inference": "localhost-fixture",
+  "ownedPid": 59711,
+  "ownedProcessTree": [
+    59710,
+    59711
+  ],
+  "allOwnedExited": true,
+  "hostOverview": {
+    "ownerSessionId": "24e22cf3-5d8d-42d9-98d8-0c18a216d9cb",
+    "source": "live",
+    "team": null,
+    "observation": {
+      "observerId": "4f62a379-f90a-4d81-a801-2df180139444",
+      "revision": 10
+    },
+    "history": {
+      "events": [
+        {
+          "seq": 1,
+          "at": 1794066468510,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 2,
+          "at": 1794066468513,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 3,
+          "at": 1794066468514,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 1,
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 4,
+          "at": 1794066468515,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 5,
+          "at": 1794066468516,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 6,
+          "at": 1794066468517,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 7,
+          "at": 1794066469465,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 1,
+          "type": "cancel-requested"
+        },
+        {
+          "seq": 8,
+          "at": 1794066469495,
+          "childId": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+          "epoch": 1,
+          "type": "settled",
+          "state": "cancelled"
+        }
+      ],
+      "truncated": false
+    },
+    "budget": {
+      "revision": 2,
+      "limits": {},
+      "consumedRuns": 1,
+      "legacyRuns": 0,
+      "knownTokens": 0,
+      "unknownRuns": 1,
+      "inFlight": 0,
+      "startedAt": 1794066468514,
+      "elapsedMs": 1000
+    },
+    "runs": [
+      {
+        "id": "child-8ab7eb480db13d1a64a6bdf6f2dad991",
+        "kind": "subagent",
+        "label": "cleanup-agent",
+        "address": [
+          "call_mock_21",
+          "0"
+        ],
+        "state": "cancelled",
+        "epoch": 1,
+        "resultEpoch": 1,
+        "updatedAt": 1794066469495,
+        "phase": "drained",
+        "reason": "执行已中止",
+        "contract": false,
+        "handoffSha256": null,
+        "inputVersions": 0,
+        "outputVersions": 0,
+        "timing": {
+          "preflightMs": 1,
+          "executionMs": 979
+        }
+      }
+    ]
+  },
+  "script": "import os, time\nfrom pathlib import Path\nPath('owned-worker.pid').write_text(str(os.getpid()))\nprint('owned CLI worker ready', flush=True)\ntime.sleep(30)\n",
+  "scientificValidation": false,
+  "stoppingScreenshotCaptured": false,
+  "limitation": "CLI cancellation SIGKILLs the owned child process tree; stopping is transient. Gated host and UI tests cover the stopping state; longer-lived actual Bot/MCP drain is not exercised."
+}

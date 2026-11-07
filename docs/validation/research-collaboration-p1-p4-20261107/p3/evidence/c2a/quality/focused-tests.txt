@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/runtime/orchestration.test.ts tests/orchestration/service.test.ts tests/orchestration/store.test.ts tests/orchestration/run-overview.test.ts tests/protocol/events.test.ts tests/protocol/run-overview-changed.test.ts tests/workbench/events.test.ts tests/workbench/subagent-view-backend.test.ts tests/runtime/native.test.ts tests/runtime/native-turn-failed.test.ts tests/runtime/native-kernel-cleanup.test.ts tests/team/scheduler.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  12 passed (12)
+      Tests  266 passed (266)
+   Start at  23:02:44
+   Duration  3.49s (transform 3.69s, setup 0ms, import 11.81s, tests 4.70s, environment 1ms)
+

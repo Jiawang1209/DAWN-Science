@@ -1,0 +1,49 @@
+{
+  "scope": "Same final production candidate, disk UI source capture follow-up",
+  "runs": 2,
+  "maxMs": {
+    "appCloseReturnedMs": 120.141,
+    "osProcessExitMs": 118.774,
+    "osProcessCloseMs": 119.737
+  },
+  "over4000Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "over1500Ms": {
+    "appCloseReturnedMs": [],
+    "osProcessExitMs": [],
+    "osProcessCloseMs": []
+  },
+  "rows": [
+    {
+      "file": "exit-95249.jsonl",
+      "appCloseReturnedMs": 120.141,
+      "osProcessExitMs": 118.774,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 119.737,
+      "observerProblems": [],
+      "nativeProblems": []
+    },
+    {
+      "file": "exit-95727.jsonl",
+      "appCloseReturnedMs": 99.08,
+      "osProcessExitMs": 98.573,
+      "exitCode": 0,
+      "signal": null,
+      "osProcessCloseMs": 98.893,
+      "observerProblems": [],
+      "nativeProblems": []
+    }
+  ],
+  "historicalOpenMs": [
+    7350,
+    20690
+  ],
+  "historicalBudgetsUnchanged": [
+    1500,
+    4000
+  ]
+}

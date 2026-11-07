@@ -1,0 +1,33 @@
+{
+  "cause": "science-parallel.spec default DAWN_SCIENCE_DEMO_DIR path",
+  "scope": [
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/desktop-team.json",
+      "archivedNew": "docs/validation/research-collaboration-p1-p4-20261107/p2/desktop/parallel/desktop-team.json",
+      "archivedNewSha256": "7df6786e51e9ada0ccf3eb0d86c295dcd9c859d5cc595c5c1e62a5aa902305f4",
+      "restoredHeadSha256": "02ed6b15f3acd9c9e36cc64185c5a7ffa51a962447cf6a74dd8a1890bf6d9bca",
+      "restoredExact": true
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/parallel-completed.png",
+      "archivedNew": "docs/validation/research-collaboration-p1-p4-20261107/p2/desktop/parallel/parallel-completed.png",
+      "archivedNewSha256": "64eaff4c225d85cbc081ff9ecf702d61f216e8210d20750ad2e82ac75e526520",
+      "restoredHeadSha256": "62d112a56b717befdb15da3b4b65bb7a9da64e745d873244cb9eeb17741a822b",
+      "restoredExact": true
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/summary.json",
+      "archivedNew": "docs/validation/research-collaboration-p1-p4-20261107/p2/desktop/parallel/summary.json",
+      "archivedNewSha256": "2dc2804d91ca98a6c6adee002f3e3202833e9e36fced91118e34b3b8605dd3d1",
+      "restoredHeadSha256": "9287b6ac6ebb40c353580a807239d1de24ee46ea1687aa1cb4cfe0a362e04056",
+      "restoredExact": true
+    },
+    {
+      "path": "docs/validation/live-parallel-20261105/stage-b/summary.md",
+      "archivedNew": "docs/validation/research-collaboration-p1-p4-20261107/p2/desktop/parallel/summary.md",
+      "archivedNewSha256": "366117fc54c4dc826ecd6bcfacd54ac0b0979e47850731b421be6ee6cca247d2",
+      "restoredHeadSha256": "346afc612f895241c777cf43e65097f39566439103bcc57587ada1483631d9b9",
+      "restoredExact": true
+    }
+  ]
+}

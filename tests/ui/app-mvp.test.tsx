@@ -109,7 +109,7 @@ function harness(
 ) {
   const calls: { op: string; req: unknown }[] = []
   let releaseCreate: (() => void) | undefined
-  let emit: ((raw: unknown) => void) | undefined
+  const listeners = new Set<(raw: unknown) => void>()
 
   const projects = [...(over.projects ?? [])]
   const runs = over.runs ?? []
@@ -267,9 +267,9 @@ function harness(
   const client = createClient(
     invoke,
     (cb) => {
-      emit = cb
+      listeners.add(cb)
       return () => {
-        emit = undefined
+        listeners.delete(cb)
       }
     },
     pickDirectory,
@@ -279,11 +279,28 @@ function harness(
     client,
     calls,
     pickDirectory,
-    push: (e: unknown) => act(() => emit?.(e)),
+    push: (e: unknown) => act(() => { for (const listener of [...listeners]) listener(e) }),
     /** 放行挂起的 createSession */
     releaseCreateSession: () => act(() => releaseCreate?.()),
   }
 }
+
+it("keeps overview and transcript deliveries independent when either harness subscriber unmounts",()=>{
+ const h=harness(),update=vi.fn(),overview=vi.fn(),resync=vi.fn(),problem=vi.fn()
+ h.client.expectRevision('s1',0)
+ const normal=h.client.subscribeUpdates({onUpdate:update,onResync:resync,onProblem:problem})
+ const stopOverview=h.client.subscribeRunOverviewChanges(overview,problem)
+ const changed=(revision:number)=>({type:'runOverviewChanged',ownerSessionId:'s1',observerId:'service',revision,workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION})
+ const bytes=(revision:number)=>({type:'bytes',sessionId:'s1',revision,data:'next',workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION})
+ h.push(changed(1));h.push(bytes(1))
+ expect(overview).toHaveBeenCalledExactlyOnceWith(changed(1));expect(update).toHaveBeenCalledExactlyOnceWith(bytes(1))
+ stopOverview();h.push(changed(2));h.push(bytes(2))
+ expect(overview).toHaveBeenCalledTimes(1);expect(update).toHaveBeenLastCalledWith(bytes(2))
+ const remainingOverview=h.client.subscribeRunOverviewChanges(overview,problem)
+ normal();h.push(bytes(3));h.push(changed(3))
+ expect(update).toHaveBeenCalledTimes(2);expect(overview).toHaveBeenLastCalledWith(changed(3));expect(overview).toHaveBeenCalledTimes(2)
+ expect(resync).not.toHaveBeenCalled();expect(problem).not.toHaveBeenCalled();remainingOverview()
+})
 
 type Harness = ReturnType<typeof harness>
 

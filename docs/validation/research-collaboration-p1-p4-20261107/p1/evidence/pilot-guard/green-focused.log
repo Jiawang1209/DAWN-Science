@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/evaluation/research-runner.test.ts tests/evaluation/research-manifest.test.ts -t pins both arms|invalidates settings drift|freezes the actual
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  3 passed | 12 skipped (15)
+   Start at  00:41:28
+   Duration  4.35s (transform 393ms, setup 0ms, import 1.20s, tests 3.11s, environment 0ms)
+

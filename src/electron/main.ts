@@ -511,6 +511,10 @@ function 接上事件流(win: BrowserWindow): void {
     win.on("closed", () => 待接的窗口.delete(win))
     return
   }
+  const offRunOverview = workbench.events.onRunOverviewChange((event) => {
+    if (win.isDestroyed()) return
+    win.webContents.send(IPC_EVENT_CHANNEL, event)
+  })
   const off = workbench.events.onUpdate((event) => {
     if (win.isDestroyed()) return
     win.webContents.send(IPC_EVENT_CHANNEL, event)
@@ -556,6 +560,7 @@ function 接上事件流(win: BrowserWindow): void {
   })
   win.on("closed", () => {
     off()
+    offRunOverview()
     offRemote()
     offRemoteList()
     offUpdate()

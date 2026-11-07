@@ -1,0 +1,50 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/protocol tests/orchestration tests/subagent tests/team tests/bot tests/runtime/native.test.ts tests/runtime/native-turn-failed.test.ts tests/runtime/native-kernel-cleanup.test.ts tests/runtime/agent-context-native.test.ts tests/runtime/agent-context-sampler.test.ts tests/runtime/session-usage.test.ts tests/runtime/native-usage-observation.test.ts tests/runtime/bot-submission-schema.test.ts tests/runtime/subagent-follow-up.test.ts tests/workbench/bot-contract.test.ts tests/workbench/bot-usage.test.ts tests/workbench/bot-ops.test.ts tests/workbench/bot-science-acceptance.test.ts tests/integration/subagent-child.test.ts tests/integration/bot-native-session.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: The database connection is not open
+ ❯ Database.prepare ../../../../Desktop/Github_repos/dawn-science/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21
+ ❯ SessionStore.get src/store/sessions.ts:140:25
+ ❯ SessionManager.get src/session/manager.ts:1013:23
+ ❯ Object.标题of src/workbench/backend.ts:2183:29
+ ❯ 桌面通知器.发 src/workbench/desktop-notify.ts:276:23
+ ❯ Timeout._onTimeout src/workbench/desktop-notify.ts:269:14
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+This error originated in "tests/workbench/bot-contract.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "accepts the authoritative versioned Bot result through real backend and SQLite". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: The database connection is not open
+ ❯ Database.prepare ../../../../Desktop/Github_repos/dawn-science/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21
+ ❯ SessionStore.get src/store/sessions.ts:140:25
+ ❯ SessionManager.get src/session/manager.ts:1013:23
+ ❯ Object.标题of src/workbench/backend.ts:2183:29
+ ❯ 桌面通知器.发 src/workbench/desktop-notify.ts:276:23
+ ❯ Timeout._onTimeout src/workbench/desktop-notify.ts:269:14
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ process.processTimers node:internal/timers:521:7
+
+This error originated in "tests/workbench/bot-contract.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "accepts the authoritative versioned Bot result through real backend and SQLite". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  107 passed (107)
+      Tests  914 passed (914)
+     Errors  2 errors
+   Start at  00:31:36
+   Duration  26.17s (transform 4.94s, setup 0ms, import 66.99s, tests 105.05s, environment 6ms)
+

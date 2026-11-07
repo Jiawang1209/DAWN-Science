@@ -1,0 +1,19 @@
+{
+  "id": "6bf54b69-6ab3-4909-9b36-85b7e7d5d993",
+  "startedAt": "2026-11-07T16:47:53.078Z",
+  "model": {
+    "provider": "deepseek",
+    "id": "deepseek-flash"
+  },
+  "authorizedRequests": 30,
+  "perArm": 15,
+  "multiStage": {
+    "work": 11,
+    "review": 4
+  },
+  "helperSha256": "9eef92318f77233f4284b300f158048ffbb70467a518f0836e1c4a3d19a30505",
+  "profileBefore": {
+    "providers.yaml": "4380a472e84b4205b9180bb7d790930c2b358e57f8d64303cd39e0cf44e8d9dc",
+    "credentials.json": "541e3d353636c9a2b42eb206f272fb49fe9899a2a417f80d3358cf2c1d709f4b"
+  }
+}

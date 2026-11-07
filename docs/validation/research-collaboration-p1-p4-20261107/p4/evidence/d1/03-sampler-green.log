@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/agent-context-sampler.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/agent-context-sampler.test.ts (7 tests | 2 failed) 12ms
+     × does not turn null or missing SDK readings into pseudo-zero or old receipt totals 3ms
+     × accepts actual SDK zero but omits unavailable capacity and percent 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > does not turn null or missing SDK readings into pseudo-zero or old receipt totals
+AssertionError: expected 'available' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "available"
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:10:229
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > accepts actual SDK zero but omits unavailable capacity and percent
+AssertionError: expected { version: 1, observedAt: 10, …(8) } to not have property "contextWindow"
+
+- Expected:
+undefined
+
++ Received:
+100
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:11:242
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  23:56:03
+   Duration  478ms (transform 25ms, setup 0ms, import 387ms, tests 12ms, environment 0ms)
+

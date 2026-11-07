@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/agent-observation.spec.ts e2e/collaboration-network.spec.ts e2e/collaboration-workbench.spec.ts e2e/context-usage.spec.ts --output=/tmp/dawn-d3-electron-final-20261108/playwright
+
+Running 5 tests using 1 worker
+
+(node:93445) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56956/13bb8d51-b4ec-498b-a8b1-740a1827d442
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57040/6bb4cc0c-939d-4ef0-a8d9-c446515edba9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/agent-observation.spec.ts:16:2 › member observation › keeps current SDK context separate from two settled epochs, history, owner switches and restart (22.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57051/58710670-d5aa-43a2-80f6-3829b6c8b5a1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:57128/015afe0d-ead8-466b-99e2-afbb44a75026
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57187/015f6ba7-35fa-4a09-9b6f-0cacb09ab66c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (13.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57195/9e0d7421-1c84-462e-af44-d476a928ac20
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/context-usage.spec.ts:12:1 › 说过一句话之后，上下文面板给出真实的 token 数 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57212/fc4d00ae-1890-40d7-a6a2-9b0ec927a083
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/context-usage.spec.ts:44:1 › **下表明写「按字节」** —— 不写清楚，人会把它当成 token 分解 (1.9s)
+
+  5 passed (55.9s)

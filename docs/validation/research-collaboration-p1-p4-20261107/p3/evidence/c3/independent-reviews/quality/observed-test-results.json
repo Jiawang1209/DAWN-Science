@@ -1,0 +1,64 @@
+{
+  "provenance": "Transcribed from tool-returned terminal results observed during this review. These are exact commands and observed summary values, not full raw stdout logs. No tests were rerun for this handoff.",
+  "cwd": "/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science",
+  "runs": [
+    {
+      "command": "npx vitest run --project=ui tests/ui/collaboration-outcome.test.ts tests/ui/collaboration-outcome-panel.test.tsx tests/ui/collaboration-model.test.ts tests/ui/run-overview.test.tsx tests/ui/collaboration-workbench.test.tsx --reporter=dot",
+      "files": 5,
+      "passed": 108,
+      "duration": "2.06s",
+      "start": "23:50:31",
+      "exitCode": 0,
+      "filesRun": [
+        "tests/ui/collaboration-outcome.test.ts",
+        "tests/ui/collaboration-outcome-panel.test.tsx",
+        "tests/ui/collaboration-model.test.ts",
+        "tests/ui/run-overview.test.tsx",
+        "tests/ui/collaboration-workbench.test.tsx"
+      ]
+    },
+    {
+      "command": "npx vitest run --project=node tests/orchestration/service.test.ts --reporter=dot",
+      "files": 1,
+      "passed": 15,
+      "duration": "636ms",
+      "start": "23:50:33",
+      "exitCode": 0,
+      "filesRun": [
+        "tests/orchestration/service.test.ts"
+      ]
+    },
+    {
+      "command": "npx vitest run --project=ui tests/ui/app-mvp.test.tsx tests/ui/design-system-contract.test.ts tests/ui/i18n.test.ts tests/ui/client.test.ts tests/ui/use-run-overview.test.tsx --reporter=dot",
+      "files": 4,
+      "passed": 69,
+      "duration": "4.86s",
+      "start": "23:51:02",
+      "exitCode": 0,
+      "filesRun": [
+        "tests/ui/app-mvp.test.tsx",
+        "tests/ui/i18n.test.ts",
+        "tests/ui/client.test.ts",
+        "tests/ui/use-run-overview.test.tsx"
+      ],
+      "note": "design-system-contract.test.ts does not exist; it selected no file. Actual design-contract.test.ts was then run separately below."
+    },
+    {
+      "command": "npx vitest run --project=ui tests/ui/design-contract.test.ts --reporter=dot",
+      "files": 1,
+      "passed": 103,
+      "duration": "1.64s",
+      "start": "23:51:11",
+      "exitCode": 0,
+      "filesRun": [
+        "tests/ui/design-contract.test.ts"
+      ]
+    }
+  ],
+  "totals": {
+    "files": 11,
+    "uiPassed": 280,
+    "nodePassed": 15,
+    "passed": 295
+  }
+}

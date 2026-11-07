@@ -10,7 +10,7 @@ import type {WorkbenchClient} from '../../src/ui/client.js'
 beforeEach(()=>{HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};HTMLDialogElement.prototype.close=function(){this.removeAttribute('open')}})
 afterEach(()=>{cleanup();vi.useRealTimers()})
 const run=(id:string):Snapshot['runs'][number]=>({id,kind:'subagent',label:id,address:['call',id],state:'completed',phase:'drained',epoch:1,updatedAt:1,contract:true,inputVersions:1,outputVersions:1})
-const data=():Snapshot=>({ownerSessionId:'p',source:'live',runs:[{...run('one'),receipt:'blocked'},{...run('two'),receipt:'accepted'}]})
+const data=():Snapshot=>({ownerSessionId:'p',source:'live',runs:[{...run('one'),receipt:'blocked'},{...run('two'),receipt:'accepted',resultEpoch:1}]})
 const client=(value:Snapshot)=>({get:vi.fn().mockResolvedValue(value)}) as unknown as WorkbenchClient
 it('counts only accepted receipts and shares one polling source with the conversation summary',async()=>{
  const c=client(data()),open=vi.fn();render(<><CollaborationSummary client={c} sessionId="p" onOpen={open}/><RunOverview client={c} sessionId="p"/></>);await act(async()=>{})
@@ -39,10 +39,10 @@ it('stops polling after the last subscriber leaves and does not start overlappin
  const view=render(<RunOverview client={c} sessionId="p"/>);await act(async()=>{});fireEvent.click(screen.getByRole('button',{name:'刷新运行记录'}));expect(get).toHaveBeenCalledTimes(1)
  view.unmount();await act(async()=>{resolve(data());await vi.advanceTimersByTimeAsync(10000)});expect(get).toHaveBeenCalledTimes(1)
 })
-it('reports an unstarted task blocked by budget instead of claiming execution settled',async()=>{
+it('does not treat ordinary new admission blocking as an overall stopped outcome',async()=>{
  const s=data();s.runs=[{...run('not-started'),state:'idle',phase:'idle',epoch:0,receipt:undefined}];s.budget={revision:1,limits:{maxRuns:1},consumedRuns:1,legacyRuns:0,knownTokens:0,unknownRuns:0,inFlight:0,elapsedMs:0,blocked:{code:'runs',message:'轮次用完'}}
  render(<CollaborationSummary client={client(s)} sessionId="p" onOpen={()=>{}}/>);await act(async()=>{})
- expect(screen.getByRole('button').textContent).toContain('额度阻止继续执行')
+ expect(screen.getByRole('button').textContent).toContain('协作进行中')
  expect(screen.getByRole('button').textContent).not.toContain('执行已结算')
 })
 it('uses keyboard tabs and restores each session reading position without carrying it into another owner',async()=>{

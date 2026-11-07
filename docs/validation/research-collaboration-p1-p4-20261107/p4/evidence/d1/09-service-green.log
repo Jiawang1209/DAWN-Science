@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/context-observation.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:57:33
+   Duration  354ms (transform 130ms, setup 0ms, import 252ms, tests 28ms, environment 0ms)
+

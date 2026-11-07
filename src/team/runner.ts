@@ -1,3 +1,5 @@
+import {AgentContextMessageSchema} from '../protocol/agent-context-observation.js'
+import {bindExecutionContextRoute} from '../orchestration/execution-context.js'
 import {childDiagnostics} from '../subagent/diagnostics.js'
 import {TaskTraceSchema} from '../protocol/task-trace.js'
 import {TaskVersionsSchema} from '../protocol/file-versions.js'
@@ -51,6 +53,8 @@ export interface 跑一轮选项 {
 }
 
 export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promise<成员轮结果> {
+  const route={provider:规格.provider&&规格.model?规格.provider:opts.context.provider,model:规格.provider&&规格.model?规格.model:规格.definition.model??opts.context.model}
+  const reportContext=bindExecutionContextRoute(route)
   const cmd = opts.childOf({ definition: 规格.definition, agent: 规格.definition.name, task: 规格.prompt })
   return new Promise<成员轮结果>((resolve) => {
     if (opts.signal?.aborted) return resolve({ ok: false, output: "", error: "开始前已被中止" })
@@ -105,6 +109,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
         return
       }
       if(forced){if(m.type==='done')forced={...forced,...childDiagnostics(m)};return}
+      if(m.type==='context_observation'){const parsed=AgentContextMessageSchema.safeParse(m);if(parsed.success)reportContext(parsed.data.sample);return}
       if (m.type === "call") {
         const resource = m.name === "resource_search" || m.name === "resource_read"
         // Communication is a separate RPC path, so enforce the frozen scope here too.
@@ -165,8 +170,7 @@ export function 跑一轮(规格: 成员轮规格, opts: 跑一轮选项): Promi
       ...(ctx.authorize?{authorize:true as const}:{}),
       systemPrompt: 规格.systemPrompt,
       // 优先级：成员自己的 → 子 agent 定义里的 → 队长当前的
-      provider: 规格.provider && 规格.model ? 规格.provider : ctx.provider,
-      model: 规格.provider && 规格.model ? 规格.model : 规格.definition.model ?? ctx.model,
+      ...route,
       cwd: ctx.cwd,
       agentDir: 规格.agentDir,
       ...(规格.definition.tools ? { tools: 规格.definition.tools } : {}),

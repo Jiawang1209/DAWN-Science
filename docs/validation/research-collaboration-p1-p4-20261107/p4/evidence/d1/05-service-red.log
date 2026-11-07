@@ -1,0 +1,51 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/context-observation.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/context-observation.test.ts (3 tests | 3 failed) 19ms
+   × binds ordinary execution without taskSettings/steering and only invalidates observation 11ms
+   × isolates owner/child/epoch/route and rejects invalid, stale, late, out-of-order samples 3ms
+   × persists only bound history and refuses foreign durable identities; old schema stays compatible 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/context-observation.test.ts > binds ordinary execution without taskSettings/steering and only invalidates observation
+TypeError: report is not a function
+ ❯ tests/orchestration/context-observation.test.ts:18:2
+     16|  const running=service.run(child.id,async()=>{report=currentExecutionC…
+     17|  const before=store.get(child.id)!,budget=store.budget(),revision=serv…
+     18|  report(sample());const view=liveRunOverview(service).runs[0]!
+       |  ^
+     19|  expect(view.contextObservation).toMatchObject({current:true,reason:'c…
+     20|  expect(service.revision).toBe(revision);expect(service.observation.re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/orchestration/context-observation.test.ts > isolates owner/child/epoch/route and rejects invalid, stale, late, out-of-order samples
+TypeError: old is not a function
+ ❯ tests/orchestration/context-observation.test.ts:31:2
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/orchestration/context-observation.test.ts > persists only bound history and refuses foreign durable identities; old schema stays compatible
+AssertionError: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/context-observation.test.ts:41:99
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  23:56:46
+   Duration  359ms (transform 132ms, setup 0ms, import 257ms, tests 19ms, environment 0ms)
+

@@ -1,0 +1,2391 @@
+{
+  "wholeCommitWhitespaceExitCode": 2,
+  "rawEvidenceLocations": [
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 78,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 85,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 106,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 110,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 178,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 226,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 230,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 233,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 243,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 259,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 288,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 313,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 367,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 372,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 507,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 521,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+      "line": 713,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 78,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 85,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 106,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 110,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 178,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 226,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 230,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 233,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 243,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 259,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 288,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 313,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 367,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 372,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 507,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 521,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+      "line": 713,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/targeted-tests.stdout",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a-final-allowlist-tests.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a-reviewed-build.txt",
+      "line": 617,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-quality-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-quality-red.txt",
+      "line": 95,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-red.txt",
+      "line": 353,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-context-window-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-context-window-red.txt",
+      "line": 33,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-integration-red.txt",
+      "line": 694,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-manifest-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-manifest-red.txt",
+      "line": 24,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-post-drain-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-post-drain-red.txt",
+      "line": 28,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-reader-boundary-failure.txt",
+      "line": 44,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-reader-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-settings-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-settings-red.txt",
+      "line": 33,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-allowlist-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-allowlist-red.txt",
+      "line": 39,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-model-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-model-red.txt",
+      "line": 28,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/baseline-tests.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-spec/modify-RrdmGh/results/carbon-missing-single-Kqmt4B/single/settings.json",
+      "line": 14,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-spec/modify-RrdmGh/results/carbon-missing-single-Kqmt4B/single/settings.json",
+      "line": 14,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-final-build.txt",
+      "line": 617,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-final-node-ui.txt",
+      "line": 13,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-full-node-ui.txt",
+      "line": 86,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-recovery-fixture-tests.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-bindings-red.txt",
+      "line": 145,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-cold-binding-red.txt",
+      "line": 33,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-consumption-binding-red.txt",
+      "line": 73,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-consumption-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-draining-consumption-red.txt",
+      "line": 93,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-invariants-red.txt",
+      "line": 33,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-red.txt",
+      "line": 287,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-review-retry-final-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-review-retry-green.txt",
+      "line": 26,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-review-retry-red.txt",
+      "line": 27,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-contracts-final-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-contracts-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-ui-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-ui-red.txt",
+      "line": 242,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/orchestration-consumption-regression.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/desktop/recovery-red.txt",
+      "line": 16,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/desktop/recovery-red.txt",
+      "line": 54,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/aggregate-capacity-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/aggregate-capacity-red.txt",
+      "line": 50,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/aggregate-initial-red.txt",
+      "line": 32,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/b2-aggregate-regression.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/pipeline-red.txt",
+      "line": 103,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/policy-off-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/policy-off-red.txt",
+      "line": 26,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/recovery-parallel-corrected-red.txt",
+      "line": 26,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/recovery-parallel-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/recovery-parallel-red.txt",
+      "line": 43,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/service-red.txt",
+      "line": 78,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/terminal-reconcile-corrected-red.txt",
+      "line": 40,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/terminal-reconcile-green.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/terminal-reconcile-red.txt",
+      "line": 44,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/baseline.txt",
+      "line": 9,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/backend-source-green.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/core-green.txt",
+      "line": 31,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/dispose-first-red.txt",
+      "line": 49,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/expanded-green.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/final-focused-green.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/first-red.txt",
+      "line": 110,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/focused-green-3.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/host-green-1.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/late-attach-first-red.txt",
+      "line": 31,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/late-attach-red.txt",
+      "line": 53,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/late-team-effects-first-red.txt",
+      "line": 28,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/native-first-red.txt",
+      "line": 82,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/owner-proof-first-red.txt",
+      "line": 40,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/source-install-first-red.txt",
+      "line": 60,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/spec-p2-first-red.txt",
+      "line": 307,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/spec-p2-focused-green.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/quality/focused-tests.txt",
+      "line": 11,
+      "kind": "new blank line at EOF."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/ui-build-host-baseline.txt",
+      "line": 592,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final/playwright/collaboration-outcome-outc-191bc-on-and-readable-900px-views/error-context.md",
+      "line": 110,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final/playwright/collaboration-outcome-outc-98d04-on-and-readable-900px-views/error-context.md",
+      "line": 101,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/latest/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md",
+      "line": 292,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/push-stop/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md",
+      "line": 298,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined/playwright/collaboration-outcome-outc-191bc-on-and-readable-900px-views/error-context.md",
+      "line": 194,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined/playwright/collaboration-outcome-outc-98d04-on-and-readable-900px-views/error-context.md",
+      "line": 230,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/stable/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md",
+      "line": 292,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/first-electron/playwright/agent-observation-member-o-da817--owner-switches-and-restart/error-context.md",
+      "line": 139,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-critical.diff",
+      "line": 138,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-critical.diff",
+      "line": 172,
+      "kind": "trailing whitespace."
+    },
+    {
+      "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-critical.diff",
+      "line": 350,
+      "kind": "trailing whitespace."
+    }
+  ],
+  "productAndAuthoredDocChecks": [
+    {
+      "paths": [
+        "src",
+        "tests",
+        "scripts",
+        "e2e",
+        "docs/superpowers"
+      ],
+      "exitCode": 0
+    },
+    {
+      "paths": [
+        "docs/validation/research-collaboration-merge-review-20261108/README.md",
+        "docs/validation/research-collaboration-p1-p4-20261107/README.md"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "decision": "Keep original diff/context/test stdout and intentional settings-drift fixture bytes. No product source/test/config whitespace findings, no gitattributes/threshold/evidence changes.",
+  "commandSequencingError": "Shell continued to create local commit after raw evidence whitespace check exit; main had not been merged. Explicit classification and product checks completed before integration.",
+  "includingExplicitLogs": {
+    "exitCode": 2,
+    "rawLocations": [
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/acceptance-green-corrected.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/acceptance-green.log",
+        "line": 87,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/acceptance-red.log",
+        "line": 111,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/acceptance-targets.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/bot-acceptance-red.log",
+        "line": 51,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/build.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/full-node-ui.log",
+        "line": 13,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/logs/kernel.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 78,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 85,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 106,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 110,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 178,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 226,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 230,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 233,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 243,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 259,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 288,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 313,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 367,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 372,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 507,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 521,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review-final.diff",
+        "line": 713,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 78,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 85,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 106,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 110,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 178,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 226,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 230,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 233,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 243,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 259,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 288,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 313,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 367,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 372,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 507,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 521,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/review.diff",
+        "line": 713,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/budget/targeted-tests.stdout",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/isolation/focused-vitest.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/isolation/lifecycle-channel-vitest.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/usage/acceptance-regression-fixed.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/usage/native-subprocess.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-merge-review-20261108/reviews/usage/ui-observation.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a-final-allowlist-tests.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a-reviewed-build.txt",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-quality-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-quality-red.txt",
+        "line": 95,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a1-red.txt",
+        "line": 353,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-context-window-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-context-window-red.txt",
+        "line": 33,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-integration-red.txt",
+        "line": 694,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-manifest-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-manifest-red.txt",
+        "line": 24,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-post-drain-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-post-drain-red.txt",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-reader-boundary-failure.txt",
+        "line": 44,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-reader-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-settings-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-settings-red.txt",
+        "line": 33,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-allowlist-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-allowlist-red.txt",
+        "line": 39,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-model-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/a2-stage-model-red.txt",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/baseline-tests.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/green-focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-quality/focused-tests.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-quality/request-gate.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-spec/focused-tests.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-spec/gate-science-tests.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-spec/modify-RrdmGh/results/carbon-missing-single-Kqmt4B/single/settings.json",
+        "line": 14,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/independent-spec/modify-RrdmGh/results/carbon-missing-single-Kqmt4B/single/settings.json",
+        "line": 14,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/node-evaluation.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/red-drift.log",
+        "line": 30,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/red-manifest.log",
+        "line": 66,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p1/evidence/pilot-guard/red.log",
+        "line": 79,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-final-build.txt",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-final-node-ui.txt",
+        "line": 13,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-full-node-ui.txt",
+        "line": 86,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b-recovery-fixture-tests.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-bindings-red.txt",
+        "line": 145,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-cold-binding-red.txt",
+        "line": 33,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-consumption-binding-red.txt",
+        "line": 73,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-consumption-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-draining-consumption-red.txt",
+        "line": 93,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-invariants-red.txt",
+        "line": 33,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-red.txt",
+        "line": 287,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-review-retry-final-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-review-retry-green.txt",
+        "line": 26,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b1-review-retry-red.txt",
+        "line": 27,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-contracts-final-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-contracts-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-ui-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/b3-ui-red.txt",
+        "line": 242,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/budget-ui/orchestration-consumption-regression.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/desktop/recovery-red.txt",
+        "line": 16,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/desktop/recovery-red.txt",
+        "line": 54,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/aggregate-capacity-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/aggregate-capacity-red.txt",
+        "line": 50,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/aggregate-initial-red.txt",
+        "line": 32,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/b2-aggregate-regression.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/pipeline-red.txt",
+        "line": 103,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/policy-off-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/policy-off-red.txt",
+        "line": 26,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/recovery-parallel-corrected-red.txt",
+        "line": 26,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/recovery-parallel-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/recovery-parallel-red.txt",
+        "line": 43,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/service-red.txt",
+        "line": 78,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/terminal-reconcile-corrected-red.txt",
+        "line": 40,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/terminal-reconcile-green.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p2/evidence/pipeline/terminal-reconcile-red.txt",
+        "line": 44,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/batch-navigation-green-attempt.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/batch-navigation-host-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/batch-navigation-red.log",
+        "line": 56,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/batch-navigation-ui-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/boundary-red.log",
+        "line": 82,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/checkpoint-red.log",
+        "line": 30,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/completed-review-qualifier-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/completed-review-qualifier-red.log",
+        "line": 70,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/exact-final-identity-green-attempt.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/exact-final-identity-red.log",
+        "line": 70,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/exact-final-membership-host-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/exact-final-membership-red.log",
+        "line": 168,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/exact-final-membership-ui-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/explicit-unrelated-binding-red.log",
+        "line": 43,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/first-red.log",
+        "line": 57,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/host-protocol-green-final.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/host-protocol-green.log",
+        "line": 36,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/host-red.log",
+        "line": 36,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/legacy-membership-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/legacy-membership-red.log",
+        "line": 38,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/membership-bound-red.log",
+        "line": 33,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/mixed-red.log",
+        "line": 39,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/navigation-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/navigation-red.log",
+        "line": 133,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/producer-membership-green-attempt.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/producer-membership-host-batch-green-final.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/producer-membership-host-batch-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/producer-membership-red.log",
+        "line": 57,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/producer-membership-ui-green-final.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/producer-membership-ui-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/proof-red.log",
+        "line": 99,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/selector-green-attempt.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/selector-red.log",
+        "line": 375,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/spec-review-green-attempt.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/spec-review-green-final.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/spec-review-host-protocol.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/spec-review-red.log",
+        "line": 261,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/spec-selection-red.log",
+        "line": 62,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/summary-scope-red.log",
+        "line": 35,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/task-binding-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/task-binding-red.log",
+        "line": 62,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/ui-green-final.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/implementation/ui-green.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/quality/focused-tests.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/quality/rereview-tests.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c1/quality/scope-tests.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/baseline.txt",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/backend-source-green.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/core-green.txt",
+        "line": 31,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/dispose-first-red.txt",
+        "line": 49,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/expanded-green.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/final-focused-green.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/first-red.txt",
+        "line": 110,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/focused-green-3.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/host-green-1.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/late-attach-first-red.txt",
+        "line": 31,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/late-attach-red.txt",
+        "line": 53,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/late-team-effects-first-red.txt",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/native-first-red.txt",
+        "line": 82,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/owner-proof-first-red.txt",
+        "line": 40,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/source-install-first-red.txt",
+        "line": 60,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/spec-p2-first-red.txt",
+        "line": 307,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/implementation/spec-p2-focused-green.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/quality/focused-tests.txt",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/ui-build-host-baseline.txt",
+        "line": 592,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/01-red-client-hook.log",
+        "line": 231,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/02-red-binding.log",
+        "line": 522,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/03-red-notification-generation.log",
+        "line": 215,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/04-green-client-hook-binding.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/05-focused-ui.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/07-build-ui.log",
+        "line": 592,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/10-final-focused-ui.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/11-red-delayed-disk-hint.log",
+        "line": 49,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/12-green-delayed-disk-focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/implementation/14-build-ui-after-disk-fix.log",
+        "line": 592,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/spec/focused-fixed.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/spec/focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/spec/race-fixed.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2b/spec/race.log",
+        "line": 36,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-active-abort-final.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-active-abort-observation-green-corrected.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-active-abort-observation-green.log",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-active-abort-observation-red-corrected.log",
+        "line": 37,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-active-abort-observation-red.log",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-active-nav-red.log",
+        "line": 481,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-blocked-red.log",
+        "line": 209,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-final-candidate.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-final.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-freeze.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-latest.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-push-candidate.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-refined.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build-stable.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-build.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-cancel-status-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-cancel-status-red.log",
+        "line": 27,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-cta-target-red.log",
+        "line": 59,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-held-red.log",
+        "line": 27,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-narrow-red.log",
+        "line": 392,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-refinement-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-refinement-red.log",
+        "line": 323,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-retained-review-red.log",
+        "line": 49,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-review-task-nav-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-review-task-nav-red.log",
+        "line": 274,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-final-candidate.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-final-focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-freeze.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-green-first.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-latest.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-red.log",
+        "line": 3385,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-refined-final.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/c3-ui-stable.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final-electron.log",
+        "line": 57,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final-electron.log",
+        "line": 100,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final-electron.log",
+        "line": 144,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final-electron.log",
+        "line": 145,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final/playwright/collaboration-outcome-outc-191bc-on-and-readable-900px-views/error-context.md",
+        "line": 110,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/final/playwright/collaboration-outcome-outc-98d04-on-and-readable-900px-views/error-context.md",
+        "line": 101,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-node-ui-first.log",
+        "line": 5,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/c3-full-suite-remediation-build.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/c3-full-suite-remediation-focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/c3-full-suite-remediation-red.log",
+        "line": 1447,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/full-node-ui-first.log",
+        "line": 1430,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/full-node-ui-remediated.log",
+        "line": 13,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/independent-reviews/spec/dawn-c3-spec-review-remediation.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/independent-reviews/spec/dawn-c3-spec-review-service.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/independent-reviews/spec/dawn-c3-spec-review-ui.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/latest-electron.log",
+        "line": 59,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/latest-electron.log",
+        "line": 90,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/latest/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md",
+        "line": 292,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/push-stop-electron.log",
+        "line": 14,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/push-stop-electron.log",
+        "line": 45,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/push-stop/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md",
+        "line": 298,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined-electron-first.log",
+        "line": 51,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined-electron-first.log",
+        "line": 91,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined-electron-first.log",
+        "line": 123,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined-electron-first.log",
+        "line": 124,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined/playwright/collaboration-outcome-outc-191bc-on-and-readable-900px-views/error-context.md",
+        "line": 194,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/refined/playwright/collaboration-outcome-outc-98d04-on-and-readable-900px-views/error-context.md",
+        "line": 230,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/stable-electron.log",
+        "line": 59,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/stable-electron.log",
+        "line": 90,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/stable/playwright/collaboration-stopping-sho-4e783-t-claiming-an-artifact-lock/error-context.md",
+        "line": 292,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/01-sampler-red.log",
+        "line": 22,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/02-sampler-assertion-red.log",
+        "line": 121,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/03-sampler-green.log",
+        "line": 42,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/04-sampler-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/05-service-red.log",
+        "line": 51,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/06-service-green.log",
+        "line": 38,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/07-service-green.log",
+        "line": 37,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/09-service-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/10-native-adapter-red.log",
+        "line": 55,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/11-transport-red.log",
+        "line": 60,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/12-transport-adapter-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/14-observer-red.log",
+        "line": 50,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/15-observer-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/16-native-scope-check.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/17-dedupe-red.log",
+        "line": 30,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/18-dedupe-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/20-focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/21-rebind-reason-red.log",
+        "line": 34,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/22-rebind-reason-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/23-same-ms-red.log",
+        "line": 39,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/24-same-ms-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/25-full-build.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/26-focused-final.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/28-final-d1-targets.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/30-spec-duplicate-lease-red.log",
+        "line": 40,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/31-spec-duplicate-lease-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/33-spec-focused-final.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/34-spec-full-build.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d1/independent-reviews/quality/focused-tests.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/build-first.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/build-verified.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/final-d2-targets-fixture-error.log",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/final-d2-targets.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/green-backend-first.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/green-core-first.log",
+        "line": 71,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/green-core.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/green-focused-first.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/green-numeric-legacy.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/independent-reviews/quality/focused-tests.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/independent-reviews/spec/broad-107.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/independent-reviews/spec/focused.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-backend-diagnostic.log",
+        "line": 35,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-backend-no-settings-corrected.log",
+        "line": 28,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-backend.log",
+        "line": 35,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-built-continuation.log",
+        "line": 38,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-child.log",
+        "line": 47,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-legacy-meta.log",
+        "line": 40,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-native.log",
+        "line": 39,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-numeric-unknown-zero.log",
+        "line": 89,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-totals-corrected.log",
+        "line": 184,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/red-totals.log",
+        "line": 224,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/spec-build-verified.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/spec-final-d2-targets.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/spec-mixed-missing-green.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/spec-mixed-missing-red.log",
+        "line": 86,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/spec-targeted-full-final.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/spec-targeted-timer-cleanup-failure.log",
+        "line": 50,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/targeted-full-final.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d2/targeted-full-first.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/first-electron/playwright/agent-observation-member-o-da817--owner-switches-and-restart/error-context.md",
+        "line": 139,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-critical.diff",
+        "line": 138,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-critical.diff",
+        "line": 172,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-critical.diff",
+        "line": 350,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/cross-stage-probe-initial.log",
+        "line": 4,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/quality-final/focused-tests.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/independent-reviews/spec/independent-ui-stdout.log",
+        "line": 9,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-build-candidate-20261108.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-build-final-20261108.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-build-first-20261108.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-build-release-candidate-20261108.log",
+        "line": 617,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-date-boundary-green-20261108.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-date-boundary-red-20261108.log",
+        "line": 136,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-direct-epoch-green-20261108.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-direct-epoch-red-20261108.log",
+        "line": 35,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-electron-first-20261108.log",
+        "line": 15,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-electron-first-20261108.log",
+        "line": 55,
+        "kind": "trailing whitespace."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-first-red-20261108.log",
+        "line": 32,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-focused-ui-first-20261108.log",
+        "line": 39,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-focused-ui-green-20261108.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-full-node-ui-final-20261108.log",
+        "line": 13,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-full-node-ui-release-candidate-20261108.log",
+        "line": 13,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-future-epoch-red-20261108.log",
+        "line": 51,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-history-and-future-green-20261108.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-history-label-green-20261108.log",
+        "line": 37,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-history-label-red-20261108.log",
+        "line": 67,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-integration-green-20261108.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-integration-red-20261108.log",
+        "line": 55,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-projection-first-green-20261108.log",
+        "line": 11,
+        "kind": "new blank line at EOF."
+      },
+      {
+        "path": "docs/validation/research-collaboration-p1-p4-20261107/p4/evidence/d3/logs/dawn-d3-projection-red-20261108.log",
+        "line": 35,
+        "kind": "new blank line at EOF."
+      }
+    ]
+  }
+}

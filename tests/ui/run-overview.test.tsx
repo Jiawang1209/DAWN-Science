@@ -3,6 +3,7 @@ import {cleanup,render,screen,act,fireEvent} from '@testing-library/react'
 import {RunOverview} from '../../src/ui/run-overview.js'
 import type {WorkbenchClient} from '../../src/ui/client.js'
 import type {RunOverview as Snapshot} from '../../src/protocol/run-overview.js'
+import {WORKBENCH_PROTOCOL_VERSION} from '../../src/protocol/index.js'
 import {captureEvidenceHandoff} from '../../src/subagent/handoff-sources.js'
 import {handoffRouteLines} from '../../src/ui/handoff-route.js'
 afterEach(cleanup)
@@ -57,4 +58,35 @@ it('shows lock blockers and bounded host history without calling a historical ho
  render(<RunOverview client={client} sessionId="p"/>);await act(async()=>{})
  expect(screen.getByText(/历史阶段.*等待产物锁/)).toBeTruthy()
  expect(screen.queryByText(/^等待者当前被/)).toBeNull()
+})
+
+function bindingTeam(id:string,owner='binding'):import('../../src/protocol/index.js').TeamSnapshot{return{id,captainSessionId:owner,name:id,goal:'goal',createdAt:1,members:[],messages:[],taskSeq:1,tasks:[{id:'t1',subject:id+' task',status:'pending',dependencies:[],attempt:1,createdAt:1,updatedAt:1}]}}
+it('uses the authoritative same-snapshot team instead of a stale parent and explicitly clears it with null',async()=>{
+ const parent=bindingTeam('stale A'),owned=bindingTeam('owned B'),data={...snapshot('binding'),team:owned},get=vi.fn().mockResolvedValue(data)
+ const view=render(<RunOverview client={{get} as unknown as WorkbenchClient} sessionId="binding" team={parent}/>);await act(async()=>{})
+ expect(screen.queryByRole('button',{name:'stale A task'})).toBeNull();expect(screen.getByRole('button',{name:'owned B task'})).toBeTruthy()
+ fireEvent.click(screen.getByRole('button',{name:'owned B task'}));expect(view.container.querySelector('[data-task-detail="t1"]')).toBeTruthy()
+ get.mockResolvedValue({...data,team:null});fireEvent.click(screen.getByRole('button',{name:'刷新运行记录'}));await act(async()=>{})
+ expect(screen.queryByRole('button',{name:'owned B task'})).toBeNull();expect(screen.queryByRole('button',{name:'stale A task'})).toBeNull();expect(view.container.querySelector('[data-task-detail="t1"]')).toBeNull()
+})
+it('ignores foreign authoritative teams and only falls back to the parent when snapshot team is absent',async()=>{
+ const parent=bindingTeam('legacy A','binding-legacy'),get=vi.fn().mockResolvedValue({...snapshot('binding-legacy'),team:bindingTeam('foreign','other')})
+ render(<RunOverview client={{get} as unknown as WorkbenchClient} sessionId="binding-legacy" team={parent}/>);await act(async()=>{})
+ expect(screen.queryByRole('button',{name:'foreign task'})).toBeNull();expect(screen.queryByRole('button',{name:'legacy A task'})).toBeNull()
+ get.mockResolvedValue(snapshot('binding-legacy'));fireEvent.click(screen.getByRole('button',{name:'刷新运行记录'}));await act(async()=>{})
+ expect(screen.getByRole('button',{name:'legacy A task'})).toBeTruthy()
+})
+it('push refresh keeps the same snapshot projection, selected tab, expanded view and task inspection scoped to the owner',async()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};HTMLDialogElement.prototype.close=function(){this.removeAttribute('open')}
+ const owner='binding-refresh',team=bindingTeam('current',owner);let notify!:(e:import('../../src/protocol/index.js').RunOverviewChanged)=>void
+ const get=vi.fn().mockResolvedValue({...snapshot(owner),team,observation:{observerId:'A',revision:0}}),client={get,subscribeRunOverviewChanges:(cb:typeof notify)=>{notify=cb;return()=>{}}} as unknown as WorkbenchClient
+ const view=render(<RunOverview client={client} sessionId={owner} team={bindingTeam('stale',owner)}/>);await act(async()=>{})
+ fireEvent.click(screen.getByRole('button',{name:'current task'}));fireEvent.click(screen.getByRole('tab',{name:'记录'}));fireEvent.click(screen.getByRole('button',{name:'展开流程工作台'}));fireEvent.click(screen.getByRole('button',{name:'current task'}))
+ const close=screen.getByRole('button',{name:'收起检查面板'});expect(document.activeElement).toBe(close)
+ get.mockResolvedValue({...snapshot(owner),team:{...team,tasks:[{...team.tasks[0]!,subject:'updated current task'}]},observation:{observerId:'A',revision:1}})
+ act(()=>notify({type:'runOverviewChanged',ownerSessionId:owner,observerId:'A',revision:1,workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION} as import('../../src/protocol/index.js').RunOverviewChanged));await act(async()=>{})
+ expect(screen.getByRole('dialog',{name:'流程工作台'})).toBeTruthy();expect(screen.getByRole('tab',{name:'记录'}).getAttribute('aria-selected')).toBe('true');expect(document.activeElement).toBe(close)
+ expect(screen.getByRole('button',{name:'updated current task'}).getAttribute('aria-pressed')).toBe('true');expect(screen.queryByRole('button',{name:'stale task'})).toBeNull()
+ get.mockResolvedValue({...snapshot('binding-other'),team:null});view.rerender(<RunOverview client={client} sessionId="binding-other" team={team}/>);await act(async()=>{})
+ expect(screen.queryByRole('button',{name:'updated current task'})).toBeNull();expect(screen.queryByRole('dialog')).toBeNull();expect(screen.getByRole('tab',{name:'过程'}).getAttribute('aria-selected')).toBe('true')
 })

@@ -25,6 +25,7 @@ function 摆一段(o: { messages?: unknown[]; pi用量?: pi用量; 自动?: bool
     get messages(): unknown[] {
       return this.state.messages
     },
+    sessionManager:{getBranch:()=>pi.state.messages.map(message=>({type:'message',message}))},
     isCompacting: false,
     getContextUsage: (): pi用量 => o.pi用量,
     settingsManager: {
@@ -49,7 +50,7 @@ function 摆一段(o: { messages?: unknown[]; pi用量?: pi用量; 自动?: bool
 
 /** 一条真回复：`totalTokens` 就是 pi 判线用的那个数 */
 const 回复 = (ts: number, total: number, stopReason = "stop") => ({
-  role: "assistant",
+  role: "assistant",model:"m",provider:"p",
   timestamp: ts,
   stopReason,
   content: [],
@@ -163,9 +164,14 @@ describe("contextUsage()：数从 pi 来（spec §1 b / e）", () => {
     expect(u.usedTokens).toBeUndefined()
   })
 
-  it("pi 给不出（没上限）：退回最近一次真回复的数", () => {
+  it("pi 给不出：不把旧回复用量假充当前上下文", () => {
     const u = 摆一段({ messages: [{ role: "user", content: "你好" }, 回复(1, 20)], pi用量: undefined }).rt.contextUsage("s1" as never)!
-    expect(u.usedTokens).toBe(20)
+    expect(u.usedTokens).toBeUndefined()
+  })
+
+  it("切换模型后不能沿用旧模型的用量锚点",()=>{
+    const message={...回复(1,20),model:'old'}
+    expect(摆一段({messages:[message],pi用量:{tokens:20,contextWindow:128000,percent:0}}).rt.contextUsage('s1' as never)?.usedTokens).toBeUndefined()
   })
 
   it("自动压缩关着：不给线", () => {

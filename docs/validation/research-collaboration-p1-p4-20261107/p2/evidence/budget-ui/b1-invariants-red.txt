@@ -1,0 +1,33 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (22 tests | 1 failed) 101ms
+     × refuses consumed reservations without corresponding execution charges on cold read 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > refuses consumed reservations without corresponding execution charges on cold read
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:202:89
+    200|   const file=join(dir,'orchestration/state.json'),state=JSON.parse(rea…
+    201|   state.budget.reviewReservations[0].phase='consumed';state.budget.rev…
+    202|   writeFileSync(file,JSON.stringify(state));expect(()=>new Orchestrati…
+       |                                                                                         ^
+    203|  })
+    204|  it('owner and revision guards also apply to resume, release and setti…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 38 passed (39)
+   Start at  21:29:15
+   Duration  452ms (transform 362ms, setup 0ms, import 811ms, tests 188ms, environment 0ms)
+

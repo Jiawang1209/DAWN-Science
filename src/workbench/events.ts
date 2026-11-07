@@ -1,3 +1,4 @@
+import {RunOverviewChangedSchema,type RunOverviewChanged} from '../protocol/run-overview.js'
 import { SkillReadSchema } from "../protocol/skill-reads.js"
 import { ASK_USER_QUESTION } from "../protocol/questions.js"
 /**
@@ -185,6 +186,8 @@ export class SessionTranscripts {
    * 界面退订，通道就聋了。两个集合分开，谁都不替谁做决定。
    */
   private readonly pinned = new Set<SessionId>()
+  private readonly runOverviewListeners = new Set<(event:RunOverviewChanged)=>void>()
+  onRunOverviewChange(cb:(event:RunOverviewChanged)=>void):()=>void {this.runOverviewListeners.add(cb);return()=>{this.runOverviewListeners.delete(cb)}}
   private readonly listeners = new Set<(u: SessionUpdate) => void>()
   /**
    * **不受订阅门管的听众**（远程助理的通知，2026-08-21）：每一段会话的每一条更新都给。
@@ -400,6 +403,7 @@ export class SessionTranscripts {
     this.entries.clear()
     this.subscribed.clear()
     this.listeners.clear()
+    this.runOverviewListeners.clear()
     // pinned 与 全听 也要清(审查 debug F12):此前漏了这两个,微信/飞书注册的 onAnyUpdate 回调
     // 在 dispose 后还挂着——退出/重装配时旧通道回调仍会被后续事件触发,pinned 集也残留。
     this.pinned.clear()
@@ -459,6 +463,12 @@ export class SessionTranscripts {
 
   /** 把 runtime 的事件并进记录。 */
   ingest(sessionId: SessionId, event: AgentEvent): void {
+    if(event.kind==='run_overview_changed'){
+      if(event.sessionId!==sessionId)return
+      const parsed=RunOverviewChangedSchema.safeParse({type:'runOverviewChanged',ownerSessionId:sessionId,observerId:event.observerId,revision:event.revision,workbenchProtocolVersion:WORKBENCH_PROTOCOL_VERSION})
+      if(parsed.success)for(const cb of [...this.runOverviewListeners])try{cb(parsed.data)}catch{/* Independent read observers cannot affect transcript delivery. */}
+      return
+    }
     const e = this.entries.get(sessionId)
     if (!e) return
 

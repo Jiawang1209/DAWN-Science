@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/orchestration/service.test.ts(33,96): error TS2554: Expected 2-4 arguments, but got 5.
+tests/orchestration/service.test.ts(45,93): error TS2554: Expected 2-4 arguments, but got 5.
+tests/orchestration/service.test.ts(60,99): error TS2554: Expected 2-4 arguments, but got 5.
+tests/orchestration/service.test.ts(61,21): error TS2339: Property 'releaseReviewReservation' does not exist on type 'OrchestrationService'.
+tests/orchestration/service.test.ts(63,10): error TS2339: Property 'releaseReviewReservation' does not exist on type 'OrchestrationService'.

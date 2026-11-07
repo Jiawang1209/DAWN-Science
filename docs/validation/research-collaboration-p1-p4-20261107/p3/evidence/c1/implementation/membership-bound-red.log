@@ -1,0 +1,33 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/protocol/science-batch.test.ts (1 test | 1 failed) 7ms
+   × keeps legacy batch summaries valid and validates optional exact task membership strictly 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/science-batch.test.ts > keeps legacy batch summaries valid and validates optional exact task membership strictly
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/protocol/science-batch.test.ts:8:119
+      6|  expect(ScienceBatchSummarySchema.safeParse({...legacy,taskIds:['check…
+      7|  expect(ScienceBatchSummarySchema.safeParse({...legacy,taskIds:[]}).su…
+      8|  expect(ScienceBatchSummarySchema.safeParse({...legacy,taskIds:Array.f…
+       |                                                                                                                       ^
+      9|  for(const taskIds of [['same','same'],[''],[1],Array.from({length:289…
+     10|  expect(ScienceBatchSummarySchema.safeParse({...legacy,taskIds:['task'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  22:39:14
+   Duration  179ms (transform 48ms, setup 0ms, import 94ms, tests 7ms, environment 0ms)
+

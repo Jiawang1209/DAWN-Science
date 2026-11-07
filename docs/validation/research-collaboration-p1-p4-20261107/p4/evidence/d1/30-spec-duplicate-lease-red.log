@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/context-observation.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/context-observation.test.ts (5 tests | 1 failed) 45ms
+   × a fresh same-route reporter admits its equal-time duplicate as current without persistence or execution changes 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/context-observation.test.ts > a fresh same-route reporter admits its equal-time duplicate as current without persistence or execution changes
+AssertionError: expected { current: false, …(2) } to match object { current: true, reason: 'current' }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "current": true,
+-   "reason": "current",
++   "current": false,
++   "reason": "awaiting-sample",
+  }
+
+ ❯ tests/orchestration/context-observation.test.ts:73:48
+     71|   const file=join(dir,'orchestration/state.json'),bytes=readFileSync(f…
+     72|   stop=observeAgentContext(session,fresh)
+     73|   expect(service.contextObservation(child.id)).toMatchObject({current:…
+       |                                                ^
+     74|   expect(service.observation.revision).toBe(stamp+1);expect(service.re…
+     75|   now.mockReturnValue(11);listener({type:'turn_end'});await Promise.re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  00:09:24
+   Duration  679ms (transform 157ms, setup 0ms, import 551ms, tests 45ms, environment 0ms)
+

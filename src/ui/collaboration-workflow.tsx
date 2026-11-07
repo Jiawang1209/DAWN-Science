@@ -1,6 +1,7 @@
 import {三角图标} from './icons.js'
 import {useState} from 'react'
-import {CollaborationNetwork,usageLabel} from './collaboration-network.js'
+import {CollaborationNetwork} from './collaboration-network.js'
+import {AgentObservation} from './agent-observation-view.js'
 import {settledDuration} from './collaboration-model.js'
 import {色号} from './team-dag.js'
 import type {TeamSnapshot} from '../protocol/index.js'
@@ -34,7 +35,7 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
     <div className="collaboration-member-grid">
      {visible.map(run=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
       <span className="collaboration-node-name"><span className="collaboration-avatar" aria-hidden="true">{[...run.label][0]?.toUpperCase()??'?'}</span><strong data-authored="1">{run.label}</strong><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/></span>
-      <small>{runStatus(run,snapshot.source==='live')}</small><small>{run.reason??(run.contract?t("已冻结任务契约"):t("普通委派任务"))}</small><span className="collaboration-card-foot"><small>{usageLabel(run)}</small><small>{settledDuration(run)}</small><三角图标/></span>
+      <small>{runStatus(run,snapshot.source==='live')}</small><small>{run.kind==='bot'?'Bot':run.kind==='team'?t("团队成员"):t("子任务")}</small><AgentObservation snapshot={snapshot} run={run}/><span className="collaboration-card-foot"><small>{settledDuration(run)}</small><三角图标/></span>
      </Button>)}
     </div>
     {!visible.length?<p className="hint">{t("暂无匹配成员")}</p>:null}

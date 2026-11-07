@@ -1,0 +1,29 @@
+{
+  "changed_from_c1": [
+    "src/electron/main.ts",
+    "src/orchestration/run-overview.ts",
+    "src/orchestration/service.ts",
+    "src/orchestration/store.ts",
+    "src/protocol/index.ts",
+    "src/protocol/run-overview.ts",
+    "src/runtime/native.ts",
+    "src/runtime/types.ts",
+    "src/workbench/events.ts"
+  ],
+  "new_from_c1": [
+    "src/team/read-current-snapshot.ts"
+  ],
+  "ui_changed": [],
+  "sha256": {
+    "src/electron/main.ts": "ecebb56f02ab36e39a387980a69591a8a33e82dff8800f68a722ca56d7b19ce6",
+    "src/orchestration/run-overview.ts": "430aeeada9ac6f1ba9e7aa9340ea966d41e735b154030f6effdacffb97c615b6",
+    "src/orchestration/service.ts": "242894b2354bf1832180f3def60c2d6d353d1b19cb3a753b1234227bb7b429b4",
+    "src/orchestration/store.ts": "0dab723dc66967c1ea85bdf5f7cc58fb95b5a14c977c62d9b1dfb3947ed43bb3",
+    "src/protocol/index.ts": "93eec02bdcb6c6b7286c420071d06769178db1801cb34c8a01aa59d148adc0cc",
+    "src/protocol/run-overview.ts": "785fa10aa91add5db45d33ac72fe64b93fd8d426d270f6d435e9e9a213a34d1d",
+    "src/runtime/native.ts": "ee6f43b2bcdc18d788873912eef4b2d9437fd96180b4f7bcd9390660c88a9c1b",
+    "src/runtime/types.ts": "92a2258744bfb42fe9f0eda8e5522876a2cf0eb1e758d77be386ca8111d3b9ec",
+    "src/workbench/events.ts": "82208de9385e905f6720d5fa7955ba2d0d89e679017e5577a30c15432ef76db4",
+    "src/team/read-current-snapshot.ts": "a8aecd9e4e0def3cefba845b3e0c383439114b75b7c89c028e5a0b317ef82fe3"
+  }
+}

@@ -1,0 +1,375 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (22 tests | 19 failed) 18ms
+     × accepts only completed current host receipt versions and retains the version locator 6ms
+     × does not reuse accepted receipts while queued 1ms
+     × does not reuse accepted receipts while running 1ms
+     × waits for cancellation drain and then reports cancelled 0ms
+     × requires matching result epoch undefined 1ms
+     × requires matching result epoch 1 0ms
+     × never treats a failed execution with retained accepted receipt as accepted 0ms
+     × shows real blocked receipt feedback 0ms
+     × shows real invalid receipt feedback 1ms
+     × keeps completed freeform work inspectable without scientific acceptance 0ms
+     × does not show current acceptance from disk 0ms
+     × does not show current acceptance from unsupported 0ms
+     × uses own settled team task attempt even when its member moved to another run 0ms
+     × exposes accepted analysis only as stage artifacts until independent review settles 0ms
+     × requires completed checkpoint plus a valid host accepted passing review for final pipeline acceptance 0ms
+     × does not infer blocked pipeline from ordinary new admission budget 1ms
+     × does not report whole teams accepted when another task remains active 0ms
+     × does not report whole batches accepted from one completed item; summary requires own accepted versions 0ms
+     × keeps protocol optional fields backward compatible and strict 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > accepts only completed current host receipt versions and retains the version locator
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'accepted', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [
+-     "result.csv",
+-   ],
+-   "artifacts": [
+-     {
+-       "scope": "final",
+-       "selectionKey": "run",
+-       "version": {
+-         "bytes": 1,
+-         "path": "result.csv",
+-         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+-         "versionId": "retained-v1",
+-       },
+-     },
+-   ],
+-   "state": "accepted",
++   "acceptedPaths": [],
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:21:18
+     19|  it('accepts only completed current host receipt versions and retains …
+     20|   const result=selectCollaborationOutcome(snapshot(),'run')
+     21|   expect(result).toMatchObject({state:'accepted',acceptedPaths:[file.p…
+       |                  ^
+     22|   expect(selectCollaborationOutcome({...snapshot(),runs:[{...run,taskR…
+     23|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not reuse accepted receipts while queued
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not reuse accepted receipts while running
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'active', acceptedPaths: [] }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "state": "active",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:25:84
+     23|  })
+     24|  it.each(['queued','running'] as const)('does not reuse accepted recei…
+     25|   expect(selectCollaborationOutcome(snapshot([{...run,state:phase,phas…
+       |                                                                                    ^
+     26|  })
+     27|  it('waits for cancellation drain and then reports cancelled',()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > waits for cancellation drain and then reports cancelled
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'stopping', …(2) }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "wait-for-drain",
+-   "state": "stopping",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:28:101
+     26|  })
+     27|  it('waits for cancellation drain and then reports cancelled',()=>{
+     28|   expect(selectCollaborationOutcome(snapshot([{...run,state:'cancelled…
+       |                                                                                                     ^
+     29|   expect(selectCollaborationOutcome(snapshot([{...run,state:'cancelled…
+     30|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires matching result epoch undefined
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires matching result epoch 1
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'unverified', …(3) }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "inspect-artifacts",
+-   "inspectionArtifacts": [
+-     {
+-       "version": {
+-         "bytes": 1,
+-         "path": "result.csv",
+-         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+-         "versionId": "retained-v1",
+-       },
+-     },
+-   ],
+    "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:33:63
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > never treats a failed execution with retained accepted receipt as accepted
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'failed', acceptedPaths: [] }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "state": "failed",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:35:164
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > shows real blocked receipt feedback
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > shows real invalid receipt feedback
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'blocked', …(3) }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "inspect-feedback",
+-   "blocker": "Missing measurement units",
+-   "state": "blocked",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:38:59
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > keeps completed freeform work inspectable without scientific acceptance
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'unverified', …(2) }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "inspect-artifacts",
+    "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:40:161
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not show current acceptance from disk
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not show current acceptance from unsupported
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'history', …(2) }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "inspectionArtifacts": [
+-     {
+-       "version": {
+-         "bytes": 1,
+-         "path": "result.csv",
+-         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+-         "versionId": "retained-v1",
+-       },
+-     },
+-   ],
+-   "state": "history",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:41:159
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > uses own settled team task attempt even when its member moved to another run
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'accepted', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [
+-     "result.csv",
+-   ],
+-   "artifacts": [
+-     {
+-       "attemptId": "attempt-analysis",
+-       "selectionKey": "task:[\"team\",\"analysis\"]",
+-     },
+-   ],
+-   "state": "accepted",
++   "acceptedPaths": [],
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:45:91
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > exposes accepted analysis only as stage artifacts until independent review settles
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'active', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [
+-     "result.csv",
+-   ],
+-   "action": "inspect-findings",
+-   "artifacts": [
+-     {
+-       "scope": "stage",
+-       "selectionKey": "task:[\"team\",\"analysis\"]",
+-     },
+-   ],
+-   "pendingReview": true,
+-   "state": "active",
++   "acceptedPaths": [],
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:59:45
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires completed checkpoint plus a valid host accepted passing review for final pipeline acceptance
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'accepted', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [
+-     "result.csv",
+-   ],
+-   "artifacts": [
+-     {
+-       "scope": "final",
+-     },
+-   ],
+-   "pendingReview": false,
+-   "routeSync": "pending",
+-   "state": "accepted",
++   "acceptedPaths": [],
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:66:45
+     64|  it('requires completed checkpoint plus a valid host accepted passing …
+     65|   const value=withTeam({...team([task(),reviewed()]),pipeline:pipeline…
+     66|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'acce…
+       |                                             ^
+     67|   value.team!.pipeline!.routeSync='conflict'
+     68|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'acce…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not infer blocked pipeline from ordinary new admission budget
+AssertionError: expected 'unverified' to be 'active' // Object.is equality
+
+Expected: "active"
+Received: "unverified"
+
+ ❯ tests/ui/collaboration-outcome.test.ts:75:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not report whole teams accepted when another task remains active
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'active', acceptedPaths: [] }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "state": "active",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:77:182
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not report whole batches accepted from one completed item; summary requires own accepted versions
+AssertionError: expected { state: 'unverified', …(1) } to match object { state: 'active', acceptedPaths: [] }
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "state": "active",
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:80:45
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > keeps protocol optional fields backward compatible and strict
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/collaboration-outcome.test.ts:87:59
+     85|  })
+     86|  it('keeps protocol optional fields backward compatible and strict',()…
+     87|   expect(RunOverviewSchema.safeParse(snapshot()).success).toBe(true)
+       |                                                           ^
+     88|   expect(RunOverviewSchema.safeParse({...snapshot(),team:null,teamIssu…
+     89|   for(const observation of [{observerId:'host',revision:-1},{observerI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  19 failed | 3 passed (22)
+   Start at  22:16:24
+   Duration  939ms (transform 311ms, setup 471ms, import 10ms, tests 18ms, environment 326ms)
+

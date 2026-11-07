@@ -1,0 +1,66 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/evaluation/research-manifest.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-manifest.test.ts (5 tests | 1 failed) 10ms
+   × freezes the actual planned arm order, limits and input identities without claiming fixture enforcement 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-manifest.test.ts > freezes the actual planned arm order, limits and input identities without claiming fixture enforcement
+AssertionError: expected { …(3) } to match object { trialSettings: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "trialSettings": {
+-     "agent": {
+-       "cacheWarming": "off",
+-       "compaction": {
+-         "enabled": false,
+-       },
+-       "retry": {
+-         "enabled": false,
+-         "maxRetries": 0,
+-         "provider": {
+-           "maxRetries": 0,
+-         },
+-       },
+-     },
+-     "project": {
+-       "cacheWarming": "off",
+-       "compaction": {
+-         "enabled": false,
+-       },
+-       "retry": {
+-         "enabled": false,
+-         "maxRetries": 0,
+-         "provider": {
+-           "maxRetries": 0,
+-         },
+-       },
+-     },
+-   },
++   "maxRevisions": 0,
++   "permissionTier": "allow-all",
++   "tools": [
++     "read",
++     "write",
++     "bash",
++   ],
+  }
+
+ ❯ tests/evaluation/research-manifest.test.ts:40:22
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  00:40:30
+   Duration  143ms (transform 28ms, setup 0ms, import 39ms, tests 10ms, environment 0ms)
+

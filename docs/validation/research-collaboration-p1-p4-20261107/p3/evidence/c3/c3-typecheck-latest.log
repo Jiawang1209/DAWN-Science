@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+e2e/collaboration-outcome.spec.ts(14,12): error TS2322: Type '{ gitInit: true; sciencePipeline: "blocked" | "pass"; firstChunkDelayMs: number | undefined; }' is not assignable to type '[TestFixtureValue<DawnOptions, PlaywrightTestArgs & PlaywrightTestOptions & { dawnOptions: DawnOptions; dawn: DawnFixture; } & PlaywrightWorkerArgs & PlaywrightWorkerOptions>, { ...; }] | TestFixtureValue<...>'.
+  Type '{ gitInit: true; sciencePipeline: "blocked" | "pass"; firstChunkDelayMs: number | undefined; }' is not assignable to type 'DawnOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'firstChunkDelayMs' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.

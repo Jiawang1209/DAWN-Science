@@ -1,3 +1,7 @@
+import {BoundAgentContextSampleSchema,type BoundAgentContextSample} from '../protocol/agent-context-observation.js'
+import {AgentUsageTotalsSchema} from '../protocol/agent-usage-totals.js'
+import {initialUsageTotals,projectUsageTotals,settleUsageTotals} from './agent-usage-totals.js'
+import {USAGE_FIELDS} from '../protocol/agent-usage-totals.js'
 /** Durable, parent-scoped identities and execution facts. Pi remains the transcript owner. */
 import type {TaskAttemptBinding} from '../protocol/run-explanation.js'
 import {createHash, randomUUID} from 'node:crypto'
@@ -9,9 +13,10 @@ import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-c
 import {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
 export {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
 import {TaskObservationSchema} from '../protocol/task-observation.js'
-import {RunActivitySchema,RunTimingSchema,RunEventSchema,stageTimingKey,type ExecutionStage,type LockOwner,type RunEvent} from '../protocol/run-explanation.js'
-import {BudgetRecordSchema,initialBudget,budgetView,chargeObservation,setBudgetLimits} from './budget.js'
-import type {RunBudgetLimits} from '../protocol/run-budget.js'
+import {RunActivitySchema,RunTimingSchema,RunEventSchema,TaskAttemptBindingSchema,stageTimingKey,type ExecutionStage,type LockOwner,type RunEvent} from '../protocol/run-explanation.js'
+import {BudgetRecordSchema,initialBudget,budgetView,budgetBlock,heldReviewRuns,chargeObservation,setBudgetLimits,reviewReservationKey,ReviewRunAdmissionSchema,type ReviewRunAdmission} from './budget.js'
+import {ReviewReservationKeySchema,type RunBudgetLimits,type ReviewRunReservation} from '../protocol/run-budget.js'
+import {UserFacingError} from '../errors.js'
 
 export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
 export type ChildKind = z.infer<typeof ChildKindSchema>
@@ -24,9 +29,11 @@ const ChildSchema = z.object({
   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),
   resultEpoch:z.number().int().nonnegative().optional(),updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
   handoffSha256:z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
-  activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),
+  activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),contextObservation:BoundAgentContextSampleSchema.optional(),usageTotals:AgentUsageTotalsSchema.optional(),
 }).strict()
 export type ChildRecord = z.infer<typeof ChildSchema>
+/** Admission is distinct from persistence: a fresh reporter can re-observe an unchanged sample. */
+export type ContextObservationAdmission={accepted:false;changed:false}|{accepted:true;changed:boolean}
 const MessageSchema = z.object({
   id: z.string(), childId: z.string(), requestId: z.string().min(1).max(512), text: z.string().min(1).max(64 * 1024),
   mode: z.enum(['start', 'continue']), status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted']),
@@ -64,6 +71,8 @@ export function validateOrchestrationIdentity(state:State,ownerSessionId:string)
  if(state.ownerSessionId!==ownerSessionId)throw new Error('owner mismatch')
  const children=new Map<string,ChildRecord>()
  for(const child of state.children){if(child.id!==childIdentity(child.kind,child.address,ownerSessionId)||children.has(child.id))throw new Error('invalid or duplicate child identity');if(child.resultEpoch!==undefined&&(!child.result||child.resultEpoch>child.epoch))throw new Error('invalid result epoch binding');children.set(child.id,child)}
+ for(const child of state.children){const observation=child.contextObservation;if(observation&&(observation.ownerSessionId!==ownerSessionId||observation.childId!==child.id||observation.epoch>child.epoch))throw new Error('invalid context observation identity')}
+ for(const child of state.children)if(child.usageTotals?.lastSettledEpoch!==undefined&&child.usageTotals.lastSettledEpoch>child.epoch)throw new Error('invalid settled usage epoch')
  let sequence=0
  for(const event of state.events??[]){
   const child=event.childId?children.get(event.childId):undefined
@@ -72,8 +81,28 @@ export function validateOrchestrationIdentity(state:State,ownerSessionId:string)
   sequence=event.seq
  }
  const activeIds=new Set<string>()
- for(const active of state.budget?.active??[]){const child=children.get(active.childId);if(!child||child.epoch!==active.epoch||activeIds.has(active.childId))throw new Error('invalid budget execution identity');activeIds.add(active.childId)}
- if(state.budget&&(state.budget.active.length>state.budget.consumedRuns||state.budget.legacyRuns>state.budget.consumedRuns||state.budget.unknownRuns>state.budget.consumedRuns))throw new Error('invalid budget accounting')
+ const reservationKeys=new Set<string>()
+ for(const reservation of state.budget?.reviewReservations??[]){
+  if(JSON.parse(reservation.key)[0]!==ownerSessionId||reservationKeys.has(reservation.key))throw new Error('invalid review reservation identity')
+  reservationKeys.add(reservation.key)
+ }
+ if(state.budget&&heldReviewRuns(state.budget)>0&&state.budget.limits.maxRuns===undefined)throw new Error('review reservations require maxRuns')
+ const boundAttempts=new Set<string>(),boundEpochs=new Set<string>(),admittedReviews=new Map<string,number>()
+ for(const binding of state.budget?.reviewBindings??[]){
+  const child=children.get(binding.childId),identity=JSON.stringify([binding.childId,binding.taskAttempt.attemptId]),epochIdentity=JSON.stringify([binding.childId,binding.admittedEpoch])
+  if(!child||!matchesAttemptOwner(child,binding.taskAttempt)||!reservationKeys.has(binding.admission.key)||boundAttempts.has(identity)||binding.admittedEpoch!==undefined&&(binding.admittedEpoch>child.epoch||boundEpochs.has(epochIdentity)))throw new Error('invalid frozen review attempt binding')
+  boundAttempts.add(identity);if(binding.admittedEpoch!==undefined)boundEpochs.add(epochIdentity)
+  if(binding.admission.stage==='review'&&binding.admittedEpoch!==undefined)admittedReviews.set(binding.admission.key,(admittedReviews.get(binding.admission.key)??0)+1)
+ }
+ for(const reservation of state.budget?.reviewReservations??[])if((admittedReviews.get(reservation.key)??0)!==(reservation.phase==='consumed'?1:0))throw new Error('invalid review reservation accounting')
+ for(const active of state.budget?.active??[]){
+  const child=children.get(active.childId);if(!child||child.epoch!==active.epoch||activeIds.has(active.childId))throw new Error('invalid budget execution identity');activeIds.add(active.childId)
+  if(active.reviewAdmission){
+   const own=state.budget?.reviewReservations?.find(reservation=>reservation.key===active.reviewAdmission!.key),binding=state.budget?.reviewBindings?.find(binding=>binding.childId===active.childId&&binding.admittedEpoch===active.epoch)
+   if(!own||!binding||JSON.stringify(binding.admission)!==JSON.stringify(active.reviewAdmission)||(active.reviewAdmission.stage==='review'?own.phase!=='consumed':own.phase!=='held'&&own.phase!=='recovery-check'))throw new Error('invalid active review reservation binding')
+  }
+ }
+ if(state.budget&&(state.budget.active.length>state.budget.consumedRuns||state.budget.legacyRuns>state.budget.consumedRuns||state.budget.unknownRuns>state.budget.consumedRuns||(state.budget.reviewReservations??[]).filter(reservation=>reservation.phase==='consumed').length>state.budget.consumedRuns||boundEpochs.size>state.budget.consumedRuns))throw new Error('invalid budget accounting')
 }
 
 const matchesAttemptOwner=(child:ChildRecord,binding:TaskAttemptBinding)=>(child.kind==='team'||child.kind==='bot')&&child.address.length===3&&child.address[0]===binding.teamId
@@ -83,7 +112,7 @@ export class OrchestrationStore {
   private readonly directory: string
   private readonly file: string
 
-  constructor(sessionDir: string, readonly ownerSessionId: string) {
+  constructor(readonly sessionDir: string, readonly ownerSessionId: string) {
     this.directory = join(sessionDir, 'orchestration')
     this.file = join(this.directory, 'state.json')
     try {
@@ -107,9 +136,16 @@ export class OrchestrationStore {
       if(!child||receipt.epoch>child.epoch||steeringIds.has(receipt.id)||receipt.id!==expected||count>128)throw new Error('Cannot open orchestration state: invalid steering identity')
       steeringIds.add(receipt.id);steeringCounts.set(receipt.childId,count)
     }
-    if (this.state.budget?.active.length || this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
+    if (this.state.budget?.active.length || this.state.budget?.reviewReservations?.some(reservation=>reservation.phase==='held') || this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
       this.change(state => {
-        if(state.budget?.active.length){state.budget.unknownRuns+=state.budget.active.length;state.budget.active=[];state.budget.revision++}
+        if(state.budget?.active.length){
+          for(const active of state.budget.active){const child=state.children.find(child=>child.id===active.childId)!;child.usageTotals=settleUsageTotals(child.usageTotals,active.epoch)}
+          state.budget.unknownRuns+=state.budget.active.length;state.budget.active=[];state.budget.revision++
+        }
+        if(state.budget?.reviewReservations?.some(reservation=>reservation.phase==='held')){
+          for(const reservation of state.budget.reviewReservations)if(reservation.phase==='held')reservation.phase='recovery-check'
+          state.budget.revision++
+        }
         for (const receipt of state.steering) if(receipt.status==='accepted'){receipt.status='interrupted';receipt.reason='宿主重启，是否进入模型上下文未确认；未自动重放';receipt.updatedAt=Date.now()}
         for (const message of state.messages) if (message.status === 'running') {
           const owner = state.children.find(child => child.id === message.childId)
@@ -137,15 +173,90 @@ export class OrchestrationStore {
     this.change(state=>{const budget=state.budget??=initialBudget(state.children);setBudgetLimits(budget,limits,expectedRevision);appendEvent(state,{type:'budget-configured'})})
     return this.budget()
   }
+  /** Same ledger as admissions. The caller supplies a host-owned pipeline identity. */
+  reserveReviewRuns(pipelineId:string,revisionCycle:number,minimumRuns=3):ReviewRunReservation|undefined{
+    if(!Number.isSafeInteger(minimumRuns)||minimumRuns<1||minimumRuns>3)throw new Error('Invalid minimum pipeline runs')
+    const key=reviewReservationKey(this.ownerSessionId,pipelineId,revisionCycle),current=this.state.budget?.reviewReservations?.find(reservation=>reservation.key===key)
+    if(current){
+      if(current.phase==='consumed'||current.phase==='released')throw new UserFacingError('该流程周期的审阅预留已结束，不能重新持有')
+      return structuredClone(current)
+    }
+    if(!this.state.budget?.limits.reserveReviewRuns)return
+    this.change(state=>{
+      const budget=state.budget!,blocked=budgetBlock(budget,Date.now(),false)
+      if(blocked)throw new UserFacingError(blocked.message)
+      if(budget.limits.maxRuns===undefined||budget.limits.maxRuns-budget.consumedRuns-heldReviewRuns(budget)<minimumRuns)throw new UserFacingError(`委派预算不足以启动本周期；至少需要 ${minimumRuns} 个执行轮次（含独立审阅预留）`)
+      ;(budget.reviewReservations??=[]).push({key,stage:'review',remainingRuns:1,phase:'held'});budget.revision++
+    })
+    return structuredClone(this.state.budget!.reviewReservations!.find(reservation=>reservation.key===key)!)
+  }
+  admissionBlock(reviewAdmission?:ReviewRunAdmission,now=Date.now()){
+    const parsed=reviewAdmission?ReviewRunAdmissionSchema.parse(reviewAdmission):undefined
+    if(parsed)this.requireReservationOwner(parsed.key)
+    return budgetBlock(this.state.budget??initialBudget(this.state.children),now,true,parsed)
+  }
+  /** Durable admission proof, independent of the bounded diagnostic event history. */
+  reviewRunAdmitted(reviewAdmission:ReviewRunAdmission,taskAttempt:TaskAttemptBinding):boolean{
+    const admission=ReviewRunAdmissionSchema.parse(reviewAdmission),attempt=TaskAttemptBindingSchema.parse(taskAttempt)
+    this.requireReservationOwner(admission.key)
+    return this.state.budget?.reviewBindings?.some(binding=>binding.admittedEpoch!==undefined&&binding.admission.key===admission.key&&binding.admission.stage===admission.stage&&binding.taskAttempt.teamId===attempt.teamId&&binding.taskAttempt.taskId===attempt.taskId&&binding.taskAttempt.attemptId===attempt.attemptId&&binding.taskAttempt.attempt===attempt.attempt)??false
+  }
+  /** Freeze a host-owned task attempt, independent of the member's reusable child identity. */
+  bindReviewAdmission(childId:string,admission:ReviewRunAdmission,taskAttempt:TaskAttemptBinding):void{
+    const parsed=ReviewRunAdmissionSchema.parse(admission),attempt=TaskAttemptBindingSchema.parse(taskAttempt),child=this.get(childId)
+    this.requireReservationOwner(parsed.key)
+    if(!child||!matchesAttemptOwner(child,attempt))throw new Error('Review binding team owner mismatch')
+    const prior=this.state.budget?.reviewBindings?.find(binding=>binding.childId===childId&&binding.taskAttempt.attemptId===attempt.attemptId)
+    if(prior){if(JSON.stringify(prior.taskAttempt)!==JSON.stringify(attempt)||JSON.stringify(prior.admission)!==JSON.stringify(parsed))throw new Error('审阅执行绑定已冻结，不能替换流程或代次');return}
+    const reservation=this.state.budget?.reviewReservations?.find(reservation=>reservation.key===parsed.key)
+    if(!reservation||reservation.phase!=='held'&&reservation.phase!=='recovery-check')throw new Error('Unknown or ended review reservation binding')
+    this.change(state=>{const budget=state.budget!;(budget.reviewBindings??=[]).push({childId,taskAttempt:attempt,admission:parsed});budget.revision++})
+  }
+  /** Caller has reverified frozen versions; this never dispatches or resets consumption. */
+  resumeReviewReservation(key:string):void{
+    this.requireReservationOwner(key)
+    const current=this.state.budget?.reviewReservations?.find(reservation=>reservation.key===key)
+    if(!current)throw new Error('Unknown review reservation')
+    if(current.phase==='held')return
+    if(current.phase!=='recovery-check')throw new Error('Review reservation has ended')
+    this.change(state=>{const budget=state.budget!;budget.reviewReservations!.find(reservation=>reservation.key===key)!.phase='held';budget.revision++})
+  }
+  /** Only a drained pipeline can release its unused hold. Admitted turns are never refunded. */
+  releaseReviewReservation(key:string):void{
+    this.requireReservationOwner(key)
+    const budget=this.state.budget,current=budget?.reviewReservations?.find(reservation=>reservation.key===key)
+    if(!current)throw new Error('Unknown review reservation')
+    if(budget!.active.some(active=>active.reviewAdmission?.key===key))throw new Error('流程仍有在途执行，必须先排空才能释放预留')
+    if(current.phase==='released'||current.phase==='consumed')return
+    this.change(state=>{const budget=state.budget!,reservation=budget.reviewReservations!.find(reservation=>reservation.key===key)!;reservation.remainingRuns=0;reservation.phase='released';budget.revision++})
+  }
+  private requireReservationOwner(key:string):void{
+    const canonical=ReviewReservationKeySchema.parse(key)
+    if(JSON.parse(canonical)[0]!==this.ownerSessionId)throw new Error('Foreign review reservation owner')
+  }
   /** The epoch and its charge are one atomic write before dispatch. */
-  beginRun(id:string,taskAttempt?:TaskAttemptBinding):number{
+  beginRun(id:string,taskAttempt?:TaskAttemptBinding,reviewAdmission?:ReviewRunAdmission):number{
     let epoch=0
+    const admission=reviewAdmission?ReviewRunAdmissionSchema.parse(reviewAdmission):undefined
+    if(admission)this.requireReservationOwner(admission.key)
     this.change(state=>{
       const child=state.children.find(c=>c.id===id);if(!child)throw new Error('Unknown child')
       const budget=state.budget??=initialBudget(state.children)
       if(budget.active.some(active=>active.childId===id))throw new Error('Child is already budgeted in flight')
+      const attempt=taskAttempt?TaskAttemptBindingSchema.parse(taskAttempt):undefined,binding=attempt?budget.reviewBindings?.find(binding=>binding.childId===id&&binding.taskAttempt.attemptId===attempt.attemptId):undefined
+      if(admission||binding){
+        if(!binding||!attempt||!admission||JSON.stringify(binding.taskAttempt)!==JSON.stringify(attempt)||JSON.stringify(binding.admission)!==JSON.stringify(admission))throw new Error('缺少匹配的冻结审阅任务绑定 (binding)')
+        if(binding.admittedEpoch!==undefined)throw new Error('该任务代次已经准入 (admitted epoch)，不能重复计费或执行')
+      }
+      const blocked=budgetBlock(budget,Date.now(),true,admission)
+      if(blocked)throw new UserFacingError(blocked.message)
+      if(admission?.stage==='review'){
+        const reservation=budget.reviewReservations!.find(reservation=>reservation.key===admission.key)!
+        reservation.remainingRuns=0;reservation.phase='consumed'
+      }
       epoch=++child.epoch;child.state='running';child.reason='';child.updatedAt=Date.now()
-      budget.consumedRuns++;budget.startedAt??=Date.now();budget.active.push({childId:id,epoch});budget.revision++
+      if(binding)binding.admittedEpoch=epoch
+      budget.consumedRuns++;budget.startedAt??=Date.now();budget.active.push({childId:id,epoch,...(admission?{reviewAdmission:admission}:{})});budget.revision++
       appendEvent(state,{type:'started',childId:id,epoch,state:'running',...(taskAttempt&&matchesAttemptOwner(child,taskAttempt)?{taskAttempt}:{})})
     })
     return epoch
@@ -155,6 +266,7 @@ export class OrchestrationStore {
     this.change(state=>{
       const child=state.children.find(c=>c.id===id),budget=state.budget,index=budget?.active.findIndex(active=>active.childId===id&&active.epoch===epoch)??-1
       if(!child||child.epoch!==epoch||!budget||index<0)throw new Error('Stale or already settled budget epoch')
+      child.usageTotals=settleUsageTotals(child.usageTotals,epoch,outcome.observation)
       budget.active.splice(index,1);chargeObservation(budget,outcome.observation)
       finishActivity(child);child.state=cancelled?'cancelled':outcome.ok?'completed':'failed';child.result=outcome;child.resultEpoch=epoch;child.reason=outcome.error??'';child.updatedAt=Date.now()
       appendEvent(state,{type:'settled',childId:id,epoch,state:child.state,...(outcome.receipt?{receipt:outcome.receipt.state}:{})})
@@ -182,9 +294,16 @@ export class OrchestrationStore {
       if (existing.label !== label) throw new Error(`Child identity conflict: ${id}`)
       return existing
     }
-    const child = ChildSchema.parse({id, kind, address: [...address], label, state: 'idle', epoch: 0, updatedAt: Date.now()})
+    const child = ChildSchema.parse({id, kind, address: [...address], label, state: 'idle', epoch: 0, updatedAt: Date.now(),usageTotals:initialUsageTotals()})
     this.change(state => {state.children.push(child);appendEvent(state,{type:'registered',childId:child.id,epoch:0})})
     return structuredClone(child)
+  }
+
+  /** An external legacy resume proves earlier history, never its counts or token values. */
+  markUsageHistoryLegacy(id:string):void{
+    const child=this.get(id);if(!child)throw new Error('Unknown child')
+    if(child.usageTotals?.legacyHistory)return
+    this.change(state=>{const current=state.children.find(child=>child.id===id)!,totals=projectUsageTotals(current.usageTotals);current.usageTotals={...totals,legacyHistory:true,partial:[...USAGE_FIELDS]}})
   }
 
   /** Bind once, before admission; neither retries nor followups may widen a persisted task. */
@@ -209,6 +328,21 @@ export class OrchestrationStore {
       return
     }
     this.change(state=>{state.children.find(item=>item.id===id)!.handoffSha256=parsed})
+  }
+
+  /** Numeric history only. Does not mutate progress, timing, budgets, or execution state. */
+  observeContext(observation:BoundAgentContextSample):ContextObservationAdmission {
+    const parsed=BoundAgentContextSampleSchema.parse(observation),child=this.get(parsed.childId)
+    if(parsed.ownerSessionId!==this.ownerSessionId||!child||child.epoch!==parsed.epoch||child.state!=='running')return {accepted:false,changed:false}
+    const prior=child.contextObservation
+    // The same reporter/stdout stream is ordered. Date.now can repeat within a millisecond;
+    // equal-time semantic changes are valid, but exact duplicates and strictly older samples are not.
+    if(prior?.epoch===parsed.epoch){
+      if(prior.sample.observedAt>parsed.sample.observedAt)return {accepted:false,changed:false}
+      if(JSON.stringify(prior.sample)===JSON.stringify(parsed.sample))return {accepted:true,changed:false}
+    }
+    this.change(state=>{state.children.find(item=>item.id===parsed.childId)!.contextObservation=parsed})
+    return {accepted:true,changed:true}
   }
 
   update(id: string, patch: Partial<Pick<ChildRecord, 'state' | 'epoch' | 'reason' | 'result' | 'paused'>>, expectedEpoch?: number): ChildRecord {

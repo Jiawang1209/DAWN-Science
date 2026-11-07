@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (22 tests | 2 failed) 134ms
+   × shares metrics across roster, network, members and detail and preserves expand/return and owner switches 15ms
+   × never borrows a member new assignment context for a selected old task 64ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > shares metrics across roster, network, members and detail and preserves expand/return and owner switches
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ tests/ui/agent-observation.test.tsx:108:112
+    106|  const r=sampled(),s=snapshot(r),client={get:vi.fn().mockResolvedValue…
+    107|  const view=render(<Overview client={client} sessionId="owner"/>);awai…
+    108|  expect(view.container.querySelector('.collaboration-roster .agent-obs…
+       |                                                                                                                ^
+    109|  expect(view.container.querySelector('.collaboration-detail .agent-obs…
+    110|  fireEvent.click(screen.getByRole('button',{name:'展开流程工作台'}))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > never borrows a member new assignment context for a selected old task
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ tests/ui/agent-observation.test.tsx:127:84
+    125|  fireEvent.click(screen.getByRole('button',{name:'old task'}))
+    126|  const detail=()=>view.container.querySelector('[data-task-detail="old…
+    127|  expect(detail().querySelector('.agent-observation[data-context-curren…
+       |                                                                                    ^
+    128|  get.mockResolvedValue({...s,runs:[{...r,taskAttempt:{...binding,taskI…
+    129|  fireEvent.click(screen.getByRole('button',{name:'刷新运行记录'}));await act…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 20 passed (22)
+   Start at  00:54:05
+   Duration  1.40s (transform 454ms, setup 482ms, import 368ms, tests 134ms, environment 332ms)
+

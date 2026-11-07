@@ -1,0 +1,95 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-submissions.test.ts (65 tests | 13 failed) 2023ms
+   × rejects an adversarial SDK header within a bounded isolated subprocess 2008ms
+   × does not infer reliable zeros from missing or malformed entry types: {} 4ms
+   × does not infer reliable zeros from missing or malformed entry types: {"type":""} 1ms
+   × does not infer reliable zeros from missing or malformed entry types: {"type":"   "} 1ms
+   × does not infer reliable zeros from missing or malformed entry types: {"type":3} 1ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"system"} 1ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"user","content":[null]} 0ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"custom","content":"context"} 0ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"branchSummary"} 0ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"compactionSummary","summary":"summary"} 1ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"bashExecution","output":"output"} 0ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"toolResult","toolName":"read","toolCallId":"ordinary-read"} 0ms
+   × does not infer reliable zeros from malformed ordinary messages: {"role":"toolResult","toolName":"read","toolCallId":"ordinary-read","content":[null],"isError":false} 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > rejects an adversarial SDK header within a bounded isolated subprocess
+Error: Command failed: /Users/liuyue/.hermes/node/bin/node --import tsx --input-type=module -e import {researchSubmissionDiagnostics} from "file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/src/evaluation/research-submissions.ts";process.stdout.write(JSON.stringify(researchSubmissionDiagnostics({"hostAttempts":0,"hostRejected":0},[{"scopeId":"review","entries":[{"type":"message","message":{"role":"assistant","content":[{"type":"toolCall","id":"adversarial","name":"submit_task_result","arguments":{}}]}},{"type":"message","message":{"role":"toolResult","toolCallId":"adversarial","toolName":"submit_task_result","content":[{"type":"text","text":"Validation failed for tool \"submit_task_result\":\n  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - a\nX\n\nReceived arguments:\n{}"}],"isError":true}}],"complete":true}])))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from missing or malformed entry types: {}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from missing or malformed entry types: {"type":""}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from missing or malformed entry types: {"type":"   "}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from missing or malformed entry types: {"type":3}
+AssertionError: expected { hostAttempts: +0, …(5) } to deeply equal { hostAttempts: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "complete": false,
++   "complete": true,
+    "hostAttempts": 0,
+    "hostRejected": 0,
++   "outputLimitNotExecuted": 0,
++   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ unknown tests/evaluation/research-submissions.test.ts:17:19
+     15| const unknown=(entries:unknown[],complete=true)=>{
+     16|  const observed=researchSubmissionDiagnostics(host,[scope(entries,comp…
+     17|  expect(observed).toEqual({...host,source:'host-and-transcript',comple…
+       |                   ^
+     18| }
+     19|
+ ❯ tests/evaluation/research-submissions.test.ts:165:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"system"}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"user","content":[null]}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"custom","content":"context"}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"branchSummary"}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"compactionSummary","summary":"summary"}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"bashExecution","output":"output"}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"toolResult","toolName":"read","toolCallId":"ordinary-read"}
+ FAIL  |node| tests/evaluation/research-submissions.test.ts > does not infer reliable zeros from malformed ordinary messages: {"role":"toolResult","toolName":"read","toolCallId":"ordinary-read","content":[null],"isError":false}
+AssertionError: expected { hostAttempts: +0, …(5) } to deeply equal { hostAttempts: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+-   "complete": false,
++   "complete": true,
+    "hostAttempts": 0,
+    "hostRejected": 0,
++   "outputLimitNotExecuted": 0,
++   "sdkRejected": 0,
+    "source": "host-and-transcript",
+  }
+
+ ❯ unknown tests/evaluation/research-submissions.test.ts:17:19
+     15| const unknown=(entries:unknown[],complete=true)=>{
+     16|  const observed=researchSubmissionDiagnostics(host,[scope(entries,comp…
+     17|  expect(observed).toEqual({...host,source:'host-and-transcript',comple…
+       |                   ^
+     18| }
+     19|
+ ❯ tests/evaluation/research-submissions.test.ts:174:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 52 passed (65)
+   Start at  21:26:06
+   Duration  2.17s (transform 27ms, setup 0ms, import 37ms, tests 2.02s, environment 0ms)
+

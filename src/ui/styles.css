@@ -720,6 +720,9 @@ pre {
 .run-budget { padding: var(--dawn-space-2) 0; border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); overflow-wrap: anywhere; }
 .run-budget form { display: grid; gap: var(--dawn-space-2); }
 .run-budget input { min-width: 0; width: 100%; box-sizing: border-box; }
+.run-budget input[type="checkbox"] { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; }
+.run-budget label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: var(--dawn-space-2); }
+.run-budget-reserve { padding-inline-start: var(--dawn-space-3); border-inline-start: 2px solid var(--dawn-accent); }
 .run-history { padding: var(--dawn-space-2) 0; overflow-wrap: anywhere; }
 .run-activity { padding-left: var(--dawn-space-2); border-left: var(--dawn-hairline) solid var(--dawn-stroke-4); }
 .run-handoff pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
@@ -9500,7 +9503,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .collaboration-network path { stroke: var(--dawn-accent); stroke-width: 1.25; fill: none; opacity: 0.65; }
 .collaboration-network path[data-running="true"] { stroke-dasharray: 5 4; }
 .collaboration-root-node { position: absolute; width: 220px; min-height: 122px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--dawn-space-2); border: var(--dawn-hairline) solid var(--dawn-stroke-1); background: var(--dawn-surface-elevated); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-3); }
-.collaboration-network-node { position: absolute; width: 170px; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: var(--dawn-space-2); text-align: start; background: var(--dawn-surface-panel); }
+.collaboration-network-node { position: absolute; width: 210px; min-height: 226px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: var(--dawn-space-2); text-align: start; background: var(--dawn-surface-panel); }
 .collaboration-network-node small, .collaboration-member-card small { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
 .collaboration-node-name { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .collaboration-node-name strong { overflow-wrap: anywhere; min-width: 0; font-weight: var(--dawn-weight-semibold); }
@@ -9599,3 +9602,72 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .task-timeline time, .task-timeline li small { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-variant-numeric: tabular-nums; }
 .task-timeline-reason { overflow-wrap: anywhere; border-inline-start: 2px solid var(--dawn-warning); padding-inline-start: var(--dawn-space-2); }
 .task-timeline-context { margin-top: var(--dawn-space-3); }
+
+/* Result first, before the optional inspection workbench. Uses the existing Dawn palette. */
+.collaboration-outcome { display: grid; gap: var(--dawn-space-4); min-width: 0; padding: var(--dawn-space-4); border: var(--dawn-hairline) solid var(--dawn-stroke-2); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-panel); overflow-wrap: anywhere; }
+.collaboration-outcome h3, .collaboration-outcome h4, .collaboration-outcome p { margin: 0; }
+.collaboration-outcome h3 { font-size: var(--dawn-fs-title); line-height: 1.5; font-weight: var(--dawn-weight-medium); }
+.collaboration-outcome h4 { font-size: var(--dawn-fs-sub); line-height: 1.5; font-weight: var(--dawn-weight-semibold); }
+.collaboration-outcome-goal, .collaboration-outcome-result, .collaboration-outcome-artifacts { display: grid; gap: var(--dawn-space-2); min-width: 0; }
+.collaboration-stage { justify-self: start; border-radius: var(--dawn-radius-sm); padding: var(--dawn-space-1) var(--dawn-space-2); font-size: var(--dawn-fs-meta); background: var(--dawn-surface-input); color: var(--dawn-text-2); }
+.collaboration-outcome-blocker { border-inline-start: 2px solid var(--dawn-text-2); padding-inline-start: var(--dawn-space-3); display: grid; gap: var(--dawn-space-1); }
+.collaboration-outcome-next, .collaboration-outcome-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--dawn-space-3); }
+.collaboration-outcome-artifacts, .collaboration-outcome-footer { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); padding-top: var(--dawn-space-3); }
+.collaboration-outcome-files { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: var(--dawn-space-2); min-width: 0; }
+.collaboration-outcome-artifact.btn { display: grid; justify-content: stretch; text-align: start; white-space: normal; min-width: 0; gap: var(--dawn-space-1); padding: var(--dawn-space-3); }
+.collaboration-outcome-artifact-head { display: flex; justify-content: space-between; gap: var(--dawn-space-2); flex-wrap: wrap; }
+.collaboration-outcome-artifact code { font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; white-space: normal; }
+.collaboration-outcome-budget { font-variant-numeric: tabular-nums; line-height: 1.7; }
+.collaboration-outcome .btn { max-width: 100%; }
+.collaboration-outcome-next .btn { white-space: normal; }
+.collaboration-panel > .collaboration-source { font-size: var(--dawn-fs-meta); }
+.collaboration-outcome-file { min-width: 0; }
+.collaboration-outcome-file > .btn { width: 100%; }
+.collaboration-outcome-version { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); margin-top: var(--dawn-space-1); }
+.collaboration-outcome-version code { display: block; overflow-wrap: anywhere; white-space: normal; }
+.collaboration-outcome-version small { display: block; }
+.collaboration-outcome[data-compact="true"] { gap: var(--dawn-space-2); padding: var(--dawn-space-3); grid-template-columns: minmax(0,1fr) auto; align-items: start; }
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-goal { grid-column: 1; gap: var(--dawn-space-1); }
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-goal h3 { font-size: var(--dawn-fs-sub); }
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-goal .collaboration-eyebrow,
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-result > p { display: none; }
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-result { grid-column: 1; }
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-footer { grid-column: 2; grid-row: 1 / span 2; border: 0; padding: 0; display: grid; justify-items: end; max-width: 380px; }
+.collaboration-outcome[data-compact="true"] .collaboration-outcome-blocker,
+.collaboration-outcome[data-compact="true"] .collaboration-route-note,
+.collaboration-outcome-inspection { grid-column: 1 / -1; }
+.collaboration-outcome-inspection > summary { font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.collaboration-outcome-inspection[open] { display: grid; gap: var(--dawn-space-3); }
+@media (max-width: 700px) { .collaboration-outcome[data-compact="true"] { grid-template-columns: minmax(0,1fr); } .collaboration-outcome[data-compact="true"] .collaboration-outcome-footer { grid-column: 1; grid-row: auto; justify-items: start; } }
+.collaboration-panel { container-type: inline-size; }
+.collaboration-outcome-narrow-hint { display: none; }
+@container (max-width: 300px) {
+ .collaboration-outcome:not([data-compact="true"]) { gap: var(--dawn-space-2); padding: var(--dawn-space-3); }
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-goal h3 { font-size: var(--dawn-fs-sub); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-result > p,
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-next,
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-artifacts,
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-budget { display: none; }
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-narrow-hint { display: block; font-size: var(--dawn-fs-meta); }
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-blocker p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-footer { border: 0; padding: 0; }
+ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-footer > .btn { width: 100%; white-space: normal; }
+}
+
+/* Member context and settled accounting intentionally use separate reading rows. */
+.agent-observation { display: flex; flex-direction: column; gap: var(--dawn-space-2); min-width: 0; width: 100%; font-size: var(--dawn-fs-meta); font-weight: normal; line-height: 1.5; color: var(--dawn-text-2); white-space: normal; }
+.agent-observation-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--dawn-space-2); min-width: 0; }
+.agent-observation-number { color: var(--dawn-text-1); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.agent-context-bar { display: block; height: 3px; border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); overflow: hidden; }
+.agent-context-bar > span { display: block; height: 100%; background: var(--dawn-accent); }
+.agent-observation-details { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); padding-top: var(--dawn-space-2); }
+.agent-observation-details summary { cursor: pointer; color: var(--dawn-text-2); }
+.agent-observation-details[open] > span, .agent-composition > span { display: block; margin-top: var(--dawn-space-1); overflow-wrap: anywhere; }
+.agent-composition { padding-block: var(--dawn-space-2); }
+.agent-composition strong { font-weight: var(--dawn-weight-medium); }
+.collaboration-task-copy > .agent-observation { margin-top: var(--dawn-space-1); }
+.collaboration-network-node .agent-observation-row { flex-direction: column; }
+.collaboration-network-node .collaboration-node-name strong { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Keep the selected network card opaque over lineage edges; tint is an inset layer. */
+.collaboration-network-node[aria-pressed="true"] { background: var(--dawn-surface-panel); box-shadow: inset 0 0 0 999px var(--dawn-accent-soft); }

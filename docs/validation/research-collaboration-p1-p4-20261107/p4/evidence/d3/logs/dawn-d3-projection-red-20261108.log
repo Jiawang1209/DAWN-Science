@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx [ tests/ui/agent-observation.test.tsx ]
+Error: Failed to resolve import "../../src/ui/agent-observation-view.js" from "tests/ui/agent-observation.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/agent-observation.test.tsx:13:31
+  42 |  import { render, screen } from "@testing-library/react";
+  43 |  import { projectAgentObservation, exactTaskObservationRun } from "../../src/ui/agent-observation.js";
+  44 |  import { AgentObservation } from "../../src/ui/agent-observation-view.js";
+     |                                    ^
+  45 |  const sampled = (patch = {}) => ({
+  46 |  	...run,
+ ❯ TransformPluginContext._formatLog ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8803:39
+ ❯ TransformPluginContext.error ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8800:14
+ ❯ resolveId ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:26594:18
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:26693:23
+ ❯ TransformPluginContext.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:26666:4
+ ❯ EnvironmentPluginContainer.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8582:14
+ ❯ loadAndTransform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:20155:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  00:52:55
+   Duration  1.07s (transform 370ms, setup 564ms, import 0ms, tests 0ms, environment 344ms)
+

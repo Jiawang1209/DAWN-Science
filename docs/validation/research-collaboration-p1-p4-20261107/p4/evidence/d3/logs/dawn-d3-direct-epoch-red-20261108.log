@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project ui tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (26 tests | 1 failed) 418ms
+   × does not call a detached direct-run epoch current after the snapshot advanced 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > does not call a detached direct-run epoch current after the snapshot advanced
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/agent-observation.test.tsx:158:28
+    156|  const old=sampled(),advanced={...old,epoch:3}
+    157|  const p=projectAgentObservation(snapshot(advanced),old)
+    158|  expect(p.context.current).toBe(false);expect(p.context.percent).toBeU…
+       |                            ^
+    159| })
+    160|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 passed (26)
+   Start at  00:59:40
+   Duration  3.52s (transform 1.53s, setup 1.46s, import 740ms, tests 418ms, environment 714ms)
+

@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/collaboration-outcome-panel.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome-panel.test.tsx (16 tests | 2 failed) 259ms
+   × keeps the history explanation when an unfinished review is retained 5ms
+   × keeps the stopping explanation when an unfinished review is retained 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > keeps the history explanation when an unfinished review is retained
+AssertionError: expected '任务目标本会话协作历史记录，当前状态未核验已有阶段产物；本轮交付仍待独立审…' to contain '磁盘记录只读'
+
+Expected: "磁盘记录只读"
+Received: "任务目标本会话协作历史记录，当前状态未核验已有阶段产物；本轮交付仍待独立审阅通过。验收成果与版本尚无本轮已验收成果。执行额度尚未记录 · 费用未记录"
+
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:97:63
+     95|  const {CollaborationOutcomePanel}=await import('../../src/ui/collabor…
+     96|  render(<CollaborationOutcomePanel snapshot={base()} outcome={{state,p…
+     97|  expect(screen.getByRole('region',{name:'协作成果'}).textContent).toContai…
+       |                                                               ^
+     98| })
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > keeps the stopping explanation when an unfinished review is retained
+AssertionError: expected '任务目标本会话协作正在停止，等待执行排空已有阶段产物；本轮交付仍待独立审阅…' to contain '停止请求已接收'
+
+Expected: "停止请求已接收"
+Received: "任务目标本会话协作正在停止，等待执行排空已有阶段产物；本轮交付仍待独立审阅通过。验收成果与版本尚无本轮已验收成果。执行额度尚未记录 · 费用未记录"
+
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:97:63
+     95|  const {CollaborationOutcomePanel}=await import('../../src/ui/collabor…
+     96|  render(<CollaborationOutcomePanel snapshot={base()} outcome={{state,p…
+     97|  expect(screen.getByRole('region',{name:'协作成果'}).textContent).toContai…
+       |                                                               ^
+     98| })
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  23:26:13
+   Duration  1.41s (transform 446ms, setup 474ms, import 271ms, tests 259ms, environment 328ms)
+

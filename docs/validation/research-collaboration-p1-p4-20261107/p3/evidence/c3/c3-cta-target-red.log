@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/collaboration-outcome.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (58 tests | 2 failed) 24ms
+     × requires completed checkpoint plus a valid host accepted passing review for final pipeline acceptance 5ms
+     × targets the exact accepted artifact producer before a no-output accepted run 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > requires completed checkpoint plus a valid host accepted passing review for final pipeline acceptance
+AssertionError: expected { Object (selectionKey) } to deeply equal { Object (selectionKey) }
+
+- Expected
++ Received
+
+  {
+-   "selectionKey": "task:[\"team\",\"analysis\"]",
++   "selectionKey": "task:[\"team\",\"review\"]",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:72:58
+     70|   const value=withTeam({...pipelineTeam(reviewed()),pipeline:pipeline(…
+     71|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'acce…
+     72|   expect(selectCollaborationOutcome(value).actionTarget).toEqual({sele…
+       |                                                          ^
+     73|   value.team!.pipeline!.routeSync='conflict'
+     74|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'acce…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > targets the exact accepted artifact producer before a no-output accepted run
+AssertionError: expected { Object (selectionKey) } to deeply equal { selectionKey: 'run:run' }
+
+- Expected
++ Received
+
+  {
+-   "selectionKey": "run:run",
++   "selectionKey": "run:no-output-review",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:80:74
+     78|  it('targets the exact accepted artifact producer before a no-output a…
+     79|   const empty={...run,id:'no-output-review',taskReceipt:{...receipt,ve…
+     80|   expect(selectCollaborationOutcome(snapshot([empty,run])).actionTarge…
+       |                                                                          ^
+     81|  })
+     82|  it('does not infer blocked pipeline from ordinary new admission budge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 56 passed (58)
+   Start at  23:31:17
+   Duration  932ms (transform 328ms, setup 473ms, import 28ms, tests 24ms, environment 325ms)
+

@@ -1,0 +1,11 @@
+{
+  "scope": "Direct createLocalBashOperations diagnostic, not Electron UI proof",
+  "abortRequestedAfterMs": 500,
+  "settledAfterMs": 1204,
+  "settlement": "aborted",
+  "cleanupStartedMonotonicSeconds": 0.489645041,
+  "cleanupFinishedMonotonicSeconds": 1.166787625,
+  "cleanupElapsedMs": 677.142584,
+  "observation": "The bounded Python process can complete its cleanup through direct local SDK execution, but desktop subagent execution wraps that SDK in an owned CLI child. SubagentExecutor onAbort uses killOwnedProcessTree to SIGKILL the CLI and every known descendant/process group, so the Python cleanup cannot serve as a durable stopping screenshot fixture there.",
+  "hostPolicyChangedForFixture": false
+}

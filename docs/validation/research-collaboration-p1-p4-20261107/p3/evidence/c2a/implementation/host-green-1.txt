@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/runtime/orchestration.test.ts tests/orchestration/service.test.ts tests/orchestration/run-overview.test.ts tests/protocol/run-overview-changed.test.ts tests/workbench/events.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  119 passed (119)
+   Start at  22:50:30
+   Duration  1.78s (transform 1.04s, setup 0ms, import 2.40s, tests 714ms, environment 0ms)
+

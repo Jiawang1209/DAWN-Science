@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/integration/subagent-child.test.ts -t ordinary actual subprocess
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/integration/subagent-child.test.ts (9 tests | 1 failed | 8 skipped) 482ms
+     × ordinary actual subprocess continuations settle two per-epoch deltas through the host once 475ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/integration/subagent-child.test.ts > 真的起一个子 agent 进程 > ordinary actual subprocess continuations settle two per-epoch deltas through the host once
+AssertionError: expected undefined to match object { input: 12, output: 8 }
+
+- Expected:
+{
+  "input": 12,
+  "output": 8,
+}
+
++ Received:
+undefined
+
+ ❯ tests/integration/subagent-child.test.ts:111:40
+    109|       const first=(await executor.run({mode:'single',agent:'scout',tas…
+    110|       expect(first.ok,first.error).toBe(true)
+    111|       expect(first.observation?.usage).toMatchObject({input:12,output:…
+       |                                        ^
+    112|       const second=await executor.续问(0,'scout','One more short answer.…
+    113|       expect(second.ok,second.error).toBe(true);expect(second.observat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  00:22:19
+   Duration  1.21s (transform 205ms, setup 0ms, import 635ms, tests 482ms, environment 0ms)
+

@@ -1,0 +1,287 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (15 tests | 9 failed) 35ms
+     × holds the final review run while ordinary work uses its available runs 4ms
+     × blocks undersized and competing pipelines atomically before any run or reservation is created 1ms
+     × repeated holds are idempotent and cannot use an owner, pipeline or cycle without a live hold 1ms
+     × does not release a running cycle and never refunds an admitted execution 1ms
+     × retains holds through disabling and lowering limits while review respects the absolute run cap 0ms
+     × does not bypass token or elapsed constraints with a review hold 1ms
+     × recovery holds remain pending even without active children and are resumed explicitly once 1ms
+     × recovers an interrupted charge once and a later cycle needs fresh available runs 1ms
+     × rejects foreign and duplicate reservation keys on cold read without overwriting state 1ms
+ ❯ |node| tests/protocol/run-budget.test.ts (3 tests | 2 failed) 7ms
+   × review run protection is optional and requires an explicit execution-run limit 2ms
+   × reservation records require canonical scoped keys and matching remaining/phase state 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > holds the final review run while ordinary work uses its available runs
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:82:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > blocks undersized and competing pipelines atomically before any run or reservation is created
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:95:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > repeated holds are idempotent and cannot use an owner, pipeline or cycle without a live hold
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:104:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > does not release a running cycle and never refunds an admitted execution
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:111:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > retains holds through disabling and lowering limits while review respects the absolute run cap
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:119:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > does not bypass token or elapsed constraints with a review hold
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:129:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > recovery holds remain pending even without active children and are resumed explicitly once
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:135:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > recovers an interrupted charge once and a later cycle needs fresh available runs
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:146:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > rejects foreign and duplicate reservation keys on cold read without overwriting state
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ setBudgetLimits src/orchestration/budget.ts:42:38
+     40| export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLi…
+     41|  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本…
+     42|  record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
+       |                                      ^
+     43| }
+     44|
+ ❯ src/orchestration/store.ts:137:83
+ ❯ OrchestrationStore.change src/orchestration/store.ts:286:5
+ ❯ OrchestrationStore.configureBudget src/orchestration/store.ts:137:10
+ ❯ setup tests/orchestration/store.test.ts:78:80
+ ❯ tests/orchestration/store.test.ts:155:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  |node| tests/protocol/run-budget.test.ts > review run protection is optional and requires an explicit execution-run limit
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "reserveReviewRuns"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"reserveReviewRuns\""
+  }
+]
+ ❯ tests/protocol/run-budget.test.ts:14:31
+     12| it('review run protection is optional and requires an explicit executi…
+     13|  expect(RunBudgetLimitsSchema.parse({})).toEqual({})
+     14|  expect(RunBudgetLimitsSchema.parse({maxRuns:3,reserveReviewRuns:true}…
+       |                               ^
+     15|  expect(()=>RunBudgetLimitsSchema.parse({reserveReviewRuns:true})).toT…
+     16|  expect(RunBudgetLimitsSchema.parse({reserveReviewRuns:false})).toEqua…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  |node| tests/protocol/run-budget.test.ts > reservation records require canonical scoped keys and matching remaining/phase state
+TypeError: Cannot read properties of undefined (reading 'parse')
+ ❯ tests/protocol/run-budget.test.ts:20:36
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  11 failed | 21 passed (32)
+   Start at  21:27:30
+   Duration  404ms (transform 332ms, setup 0ms, import 746ms, tests 114ms, environment 0ms)
+

@@ -1,0 +1,9 @@
+malformed pipeline null {"teamId":"t"}
+malformed pipeline false {"teamId":"t"}
+malformed pipeline 0 {"teamId":"t"}
+malformed pipeline "" {"teamId":"t"}
+malformed scienceBatch null {"teamId":"t"}
+malformed scienceBatch false {"teamId":"t"}
+malformed scienceBatch 0 {"teamId":"t"}
+malformed scienceBatch "" {"teamId":"t"}
+stop projection {"before":"stopping-team","during":null,"source":"live","phase":"stopping","persistedPointer":"team-mw6j5eca","persistedTeam":"stopping-team"}

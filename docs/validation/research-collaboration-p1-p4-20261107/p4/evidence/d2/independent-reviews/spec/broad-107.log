@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/protocol tests/orchestration tests/subagent tests/team tests/bot tests/runtime/native.test.ts tests/runtime/native-turn-failed.test.ts tests/runtime/native-kernel-cleanup.test.ts tests/runtime/agent-context-native.test.ts tests/runtime/agent-context-sampler.test.ts tests/runtime/session-usage.test.ts tests/runtime/native-usage-observation.test.ts tests/runtime/bot-submission-schema.test.ts tests/runtime/subagent-follow-up.test.ts tests/workbench/bot-contract.test.ts tests/workbench/bot-usage.test.ts tests/workbench/bot-ops.test.ts tests/workbench/bot-science-acceptance.test.ts tests/integration/subagent-child.test.ts tests/integration/bot-native-session.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+
+ Test Files  107 passed (107)
+      Tests  914 passed (914)
+   Start at  00:34:46
+   Duration  23.49s (transform 4.58s, setup 0ms, import 57.05s, tests 91.75s, environment 6ms)
+

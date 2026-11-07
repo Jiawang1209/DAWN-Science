@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/evaluation/research-runner.test.ts -t invalidates settings drift
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (10 tests | 1 failed | 9 skipped) 3713ms
+   × invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm 3712ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/evaluation/research-runner.test.ts:57:37
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  00:40:59
+   Duration  4.52s (transform 275ms, setup 0ms, import 732ms, tests 3.71s, environment 0ms)
+

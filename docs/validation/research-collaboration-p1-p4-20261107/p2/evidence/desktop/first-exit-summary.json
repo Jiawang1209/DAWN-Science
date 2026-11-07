@@ -1,0 +1,34 @@
+{
+  "stage": "B first two Electron tests",
+  "events": [
+    {
+      "record": "results/run-explanation-budget-sci-186c7-s-consumption-after-restart/electron-exit/exit-14896.jsonl",
+      "pid": 14896,
+      "osExitMs": 139.689,
+      "closeReturnedMs": 140.946,
+      "exitCode": 0,
+      "diagnosticDelayEvents": []
+    },
+    {
+      "record": "results/run-explanation-budget-sci-186c7-s-consumption-after-restart/electron-exit/exit-15050.jsonl",
+      "pid": 15050,
+      "osExitMs": 141.996,
+      "closeReturnedMs": 142.53,
+      "exitCode": 0,
+      "diagnosticDelayEvents": []
+    },
+    {
+      "record": "results/run-explanation-budget-sci-955c0-tion-drains-actual-analysis/electron-exit/exit-15123.jsonl",
+      "pid": 15123,
+      "osExitMs": 158.896,
+      "closeReturnedMs": 159.577,
+      "exitCode": 0,
+      "diagnosticDelayEvents": []
+    }
+  ],
+  "historicalIntermittentTimeout": "OPEN; normal local exits do not establish historical root cause",
+  "previousObservedDelayedOsExitSeconds": [
+    7.35,
+    20.69
+  ]
+}

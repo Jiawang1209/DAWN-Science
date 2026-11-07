@@ -1,0 +1,43 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (57 tests | 1 failed) 24ms
+     × does not apply a batch scope to an unrelated standalone run 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not apply a batch scope to an unrelated standalone run
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'accepted', …(2) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptanceScope": "final",
++   "acceptanceScope": "stage",
+    "artifacts": [
+      {
+-       "scope": "final",
++       "scope": "stage",
+      },
+    ],
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:249:60
+    247|   expect.soft(selectCollaborationOutcome(value,'task:["team","standalo…
+    248|   value.runs=[{...run,kind:'team',address:['team','same-member','gener…
+    249|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+       |                                                            ^
+    250|   expect.soft(selectCollaborationOutcome(value,'task:["team","analysis…
+    251|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 56 passed (57)
+   Start at  22:38:47
+   Duration  932ms (transform 330ms, setup 477ms, import 27ms, tests 24ms, environment 323ms)
+

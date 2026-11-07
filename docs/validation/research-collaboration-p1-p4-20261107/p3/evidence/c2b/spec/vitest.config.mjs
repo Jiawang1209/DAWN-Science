@@ -1,0 +1,2 @@
+import {defineConfig} from '/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/node_modules/vitest/dist/config.js';
+export default defineConfig({root:"/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science",test:{environment:'jsdom',setupFiles:["/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/ui/setup.ts"],include:["/private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-c2b-spec-review-fop902yp/race.test.tsx"]}})

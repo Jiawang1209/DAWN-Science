@@ -1,0 +1,3 @@
+SDK empty-directory defaults {"retry":{"enabled":true,"maxRetries":3,"baseDelayMs":2000,"maxAgentDelayMs":60000},"providerRetry":{"maxRetryDelayMs":60000},"cacheWarming":"streaming","compaction":true}
+modify {"terminal":["accepted","not-run"],"requests":[4,0],"success":true,"inputPreserved":true,"comparisonEligible":false,"integrity":{"changed":["trial-settings"]},"policyFingerprinted":true,"output":"/tmp/dawn-pilot-guard-spec-3LasiuLd/modify-RrdmGh/results"}
+delete {"terminal":["accepted","not-run"],"requests":[4,0],"success":true,"inputPreserved":true,"comparisonEligible":false,"integrity":{"changed":["trial-settings"]},"policyFingerprinted":true,"output":"/tmp/dawn-pilot-guard-spec-3LasiuLd/delete-IHLuhv/results"}

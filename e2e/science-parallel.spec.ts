@@ -2,8 +2,8 @@ import {mkdirSync,writeFileSync,readFileSync,readdirSync,copyFileSync} from 'nod
 import {join,resolve} from 'node:path'
 import {test,expect,在项目里开会话,进坞} from './fixtures.js'
 test.use({dawnOptions:{scienceBatch:'parallel'}})
-test('two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary',async({dawn})=>{
- const {page,workspace}=dawn,out=resolve(process.env.DAWN_SCIENCE_DEMO_DIR??'docs/validation/live-parallel-20261105/stage-b')
+test('two independent science items use bounded checkpoints through the desktop protocol and deliver one host summary',async({dawn},testInfo)=>{
+ const {page,workspace}=dawn,out=resolve(process.env.DAWN_SCIENCE_DEMO_DIR??testInfo.outputPath('evidence'))
  mkdirSync(out,{recursive:true});mkdirSync(join(workspace,'.dawn','agents'),{recursive:true})
  for(const file of ['in.csv','other.csv'])writeFileSync(join(workspace,file),'x\n1\n2\n3\n4\n5\n')
  for(const stage of ['check','analyze','review'])writeFileSync(join(workspace,'.dawn','agents',`pipeline-${stage}.md`),`---\nname: pipeline-${stage}\ndescription: ${stage}\ntools: read, write, bash\n---\nUse frozen contract.`)

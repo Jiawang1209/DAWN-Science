@@ -1,0 +1,32 @@
+{
+  "capturedAt": "2026-11-07T17:28:23.785800+00:00",
+  "baseHEAD": "9cc757cc980a0385eba8d404d6b04fcb4a48a2cb",
+  "note": "Read-only isolation review; parent subsequently owns acceptance-cancellation diagnostic preservation changes in executor/scheduler/backend. No blanket final-adapter re-review is claimed.",
+  "sha256": {
+    "src/orchestration/service.ts": "f55bcd32f8d10a116633a434b258776bd355dc2ed2363f23dbc10e88df198deb",
+    "src/orchestration/store.ts": "7a4ec41f6ba3296ae4ba0699cea7378ada17e1732c4130334f3bdb1388545c53",
+    "src/orchestration/execution-context.ts": "cfd11c4ae1dc548d5ba67ad4e634364b101fc365943f64be45c027e87b297f65",
+    "src/orchestration/run-overview.ts": "52a2a04971faf282f6a3d26a9f80ba1008fde02dd27e3ec6807514d023b19a49",
+    "src/runtime/native.ts": "ece8bb801beb692f35f4ba9d1a4f89cc8db3e511f2d9a8c02f7c929ad7a00016",
+    "src/runtime/agent-context-sampler.ts": "1f4a31380070ac5686dda729500f9b2d17858986b90a57c74ca5645751b9e59e",
+    "src/protocol/agent-context-observation.ts": "52c6562ff221be2f1f7fd6684e5f854eb0cde59d20f0f38d3e427c748723d9cc",
+    "src/protocol/run-overview.ts": "5d6e0ca75f5d2dbb0d7aa5fbdb24fb9ea390dcbc2f2e5248a03621f422de4690",
+    "src/team/read-current-snapshot.ts": "a8aecd9e4e0def3cefba845b3e0c383439114b75b7c89c028e5a0b317ef82fe3",
+    "src/team/task-snapshot.ts": "ea47b8c4c3a435da34a984c455c7435e990a8a8715a3a8193cd641c4dcc5656f",
+    "src/team/runner.ts": "af76825c91eafd5093ccb32792d1ef52ad09d604d481949f11392e44bca0cd76",
+    "src/subagent/executor.ts": "1c7e3ceb09afa2ea4fdc5062f3a782775b2b50170c50a94b71faf693b67879c8",
+    "src/subagent/child.ts": "1268e35920d1fa5c48e2ffb92b10596ee8992e6f9d3ae92b5c65e244aa1cdd9f",
+    "src/ui/client.ts": "d84b4c033a0cd9562eb3addf1e4d131122321557416301803a70ac80c0c0c02a",
+    "src/ui/use-run-overview.ts": "d95b16d7ef75d73538d1d5b2609b4d1b64e70ba7efa1349234f0ea75059ebd93",
+    "src/ui/agent-observation.ts": "1573f22f987511c8de8be8472e358e7b77d072ad3b55d1daf55118d4711ccac0",
+    "src/ui/agent-observation-view.tsx": "ebfcf41f7387e4a58e77a40fc20ce4bba214a037677f5b7c94e79a052c28fdd9",
+    "src/ui/collaboration-task-detail.tsx": "c96c4f1c0b1a5a69c224a5ed25f8e21c39967344cf0b36210a5f41d47c7fa157",
+    "src/ui/run-overview.tsx": "b242076a16b43caecb9339770ebd4293b59267572640784da4c0e39e8b224fe0",
+    "src/ui/task-timeline.tsx": "a10506ffacbfdec88e93cd47cab455555b40e706b41d5c0bfdb9ae13e5e91ab4",
+    "src/ui/collaboration-workflow.tsx": "767bea34421ff93951a97f81f36314e503d5f50ee16afe5e3c91d51f99e39ea2",
+    "src/ui/collaboration-network.tsx": "a76433420224f9d8a0ece05ecbdc488a95fce540450de346517485b85d786a4d",
+    "src/workbench/events.ts": "82208de9385e905f6720d5fa7955ba2d0d89e679017e5577a30c15432ef76db4",
+    "src/workbench/backend.ts": "14f891636d4dbc1a093717e55d8b195918d576d310fd477406328a53b6854851",
+    "src/electron/main.ts": "ecebb56f02ab36e39a387980a69591a8a33e82dff8800f68a722ca56d7b19ce6"
+  }
+}

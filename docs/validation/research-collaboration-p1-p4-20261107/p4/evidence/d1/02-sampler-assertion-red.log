@@ -1,0 +1,121 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/agent-context-sampler.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/agent-context-sampler.test.ts (7 tests | 6 failed) 12ms
+     × uses SDK tokens with independent model capacity and explicit estimate provenance 5ms
+     × never borrows the latest SDK anchor from another route 1ms
+     × requires anchor after latest compaction even when retained old messages survive 1ms
+     × does not turn null or missing SDK readings into pseudo-zero or old receipt totals 0ms
+     × accepts actual SDK zero but omits unavailable capacity and percent 1ms
+     × counts retained public content only; private reasoning affects neither counts nor payload 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > uses SDK tokens with independent model capacity and explicit estimate provenance
+AssertionError: expected {} to match object { availability: 'available', …(5) }
+
+- Expected
++ Received
+
+- {
+-   "availability": "available",
+-   "contextWindow": 100,
+-   "contextWindowSource": "model-config",
+-   "observedAt": 10,
+-   "source": "sdk-estimate",
+-   "usedTokens": 20,
+- }
++ {}
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:7:131
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > never borrows the latest SDK anchor from another route
+AssertionError: expected {} to match object { availability: 'unknown', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "availability": "unknown",
+-   "reason": "no-current-route-anchor",
+- }
++ {}
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:8:129
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > requires anchor after latest compaction even when retained old messages survive
+AssertionError: expected {} to match object { availability: 'unknown', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "availability": "unknown",
+-   "reason": "after-compaction",
+- }
++ {}
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:9:208
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > does not turn null or missing SDK readings into pseudo-zero or old receipt totals
+AssertionError: expected undefined to be 'unknown' // Object.is equality
+
+- Expected:
+"unknown"
+
++ Received:
+undefined
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:10:229
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > accepts actual SDK zero but omits unavailable capacity and percent
+AssertionError: expected {} to match object { availability: 'available', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "availability": "available",
+-   "usedTokens": 0,
+- }
++ {}
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:11:168
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > numeric current context producer > counts retained public content only; private reasoning affects neither counts nor payload
+AssertionError: expected undefined to be 7 // Object.is equality
+
+- Expected:
+7
+
++ Received:
+undefined
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:12:523
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  23:55:35
+   Duration  152ms (transform 19ms, setup 0ms, import 50ms, tests 12ms, environment 0ms)
+

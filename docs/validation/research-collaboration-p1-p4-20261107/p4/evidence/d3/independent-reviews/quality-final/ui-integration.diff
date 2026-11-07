@@ -1,0 +1,282 @@
+diff --git a/src/ui/collaboration-network.tsx b/src/ui/collaboration-network.tsx
+index 4ca66334..168dfcce 100644
+--- a/src/ui/collaboration-network.tsx
++++ b/src/ui/collaboration-network.tsx
+@@ -2,27 +2,21 @@ import {useEffect,useRef,useState} from 'react'
+ import type {RunOverview} from '../protocol/run-overview.js'
+ import {Button} from './primitives.js'
+ import {t,tf} from './i18n/index.js'
+-import {runStatus,settledDuration,hasCurrentSettlement,type Run} from './collaboration-model.js'
++import {runStatus,settledDuration} from './collaboration-model.js'
+ import {色号} from './team-dag.js'
+-/** Observation tokens are cumulative usage, not current context occupancy. */
+-export function usageLabel(run:Run){
+- if(!hasCurrentSettlement(run))return t("本轮用量以会话额度记录为准")
+- const u=run.observation?.usage
+- if(u?.input===undefined&&u?.output===undefined&&u?.cacheRead===undefined)return t("用量未记录")
+- const sum=(u?.input??0)+(u?.output??0)+(u?.cacheRead??0)
+- return tf("累计 {0} tokens{1}",sum.toLocaleString(),u?.input===undefined||u?.output===undefined||u?.cacheRead===undefined||u.partial?.length?t("（部分）"):"")
+-}
++import {AgentObservation} from './agent-observation-view.js'
++export {usageLabel} from './agent-observation.js'
+ export function CollaborationNetwork({snapshot,selected,onSelect}:{snapshot:RunOverview;selected?:string|undefined;onSelect:(key:string,trigger:HTMLButtonElement)=>void}){
+  const viewport=useRef<HTMLDivElement>(null),[width,setWidth]=useState(760)
+  useEffect(()=>{const el=viewport.current;if(!el)return;const observer=new ResizeObserver(()=>setWidth(el.clientWidth));observer.observe(el);setWidth(el.clientWidth);return()=>observer.disconnect()},[])
+- const w=Math.max(360,width),columns=Math.min(4,Math.max(1,snapshot.runs.length),Math.max(1,Math.floor(w/190))),rows=Math.ceil(snapshot.runs.length/columns),h=190+rows*138
++ const w=Math.max(360,width),columns=Math.min(4,Math.max(1,snapshot.runs.length),Math.max(1,Math.floor(w/230))),rows=Math.ceil(snapshot.runs.length/columns),h=190+rows*252
+  const columnWidth=w/columns
+- const nodes=snapshot.runs.map((run,i)=>({run,x:columnWidth*(i%columns)+(columnWidth-170)/2,y:190+Math.floor(i/columns)*138}))
++ const nodes=snapshot.runs.map((run,i)=>({run,x:columnWidth*(i%columns)+(columnWidth-210)/2,y:190+Math.floor(i/columns)*252}))
+  return <div ref={viewport} className="collaboration-network-scroll" tabIndex={0} aria-label={t("Agent 网络，可滚动查看")}>
+   <div className="collaboration-network" style={{width:w,height:h}}>
+-   <svg width={w} height={h} aria-hidden="true">{nodes.map(({run,x,y})=><path key={run.id} data-lineage-edge={run.id} data-hue={色号(run.id)} data-running={snapshot.source==='live'&&(run.phase==='running'||run.phase==='stopping')} d={`M${w/2} 146 C${w/2} 186,${x+85} ${y-50},${x+85} ${y}`}/>)}</svg>
++   <svg width={w} height={h} aria-hidden="true">{nodes.map(({run,x,y})=><path key={run.id} data-lineage-edge={run.id} data-hue={色号(run.id)} data-running={snapshot.source==='live'&&(run.phase==='running'||run.phase==='stopping')} d={`M${w/2} 146 C${w/2} 186,${x+105} ${y-50},${x+105} ${y}`}/>)}</svg>
+    <div className="collaboration-root-node" style={{left:w/2-110,top:24}}><span className="collaboration-eyebrow">{t("当前会话")}</span><strong>{t("主助手")}</strong><span className="hint">{tf("直接编排 {0} 项执行",snapshot.runs.length)}</span><span>{t("拆解 · 派发 · 汇总")}</span></div>
+-   {nodes.map(({run,x,y})=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-network-node" style={{left:x,top:y}} data-hue={色号(run.id)} aria-label={tf("网络节点：{0}",run.label)} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}><span className="collaboration-node-name"><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/><strong data-authored="1">{run.label}</strong></span><small>{usageLabel(run)}</small><small>{runStatus(run,snapshot.source==='live')}</small><small>{settledDuration(run)}</small></Button>)}
++   {nodes.map(({run,x,y})=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-network-node" style={{left:x,top:y}} data-hue={色号(run.id)} aria-label={tf("网络节点：{0}",run.label)} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}><span className="collaboration-node-name"><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/><strong data-authored="1">{run.label}</strong></span><AgentObservation snapshot={snapshot} run={run}/><small>{runStatus(run,snapshot.source==='live')}</small><small>{settledDuration(run)}</small></Button>)}
+   </div>
+  </div>
+ }
+diff --git a/src/ui/collaboration-task-detail.tsx b/src/ui/collaboration-task-detail.tsx
+index 4a0f2261..77388484 100644
+--- a/src/ui/collaboration-task-detail.tsx
++++ b/src/ui/collaboration-task-detail.tsx
+@@ -1,3 +1,6 @@
++import type {RunOverview} from '../protocol/run-overview.js'
++import {exactTaskObservationRun} from './agent-observation.js'
++import {AgentObservation} from './agent-observation-view.js'
+ import {CollaborationEvidence} from './collaboration-evidence.js'
+ import type {WorkbenchClient} from './client.js'
+ import type {TeamSnapshot} from '../protocol/index.js'
+@@ -6,10 +9,11 @@ import {TaskTimeline,type TimelineDestination,type TimelineRun} from './task-tim
+ import {runStatus} from './collaboration-model.js'
+ import {t,tf} from './i18n/index.js'
+ type Task=TeamSnapshot['tasks'][number]
+-export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspectToolRecord,timeline,pendingDependencies,live,onInspect}:{timeline?:TimelineRun;pendingDependencies?:string[];live?:boolean;onInspect?:(destination:TimelineDestination)=>void;inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
++export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,snapshot,inspectToolRecord,timeline,pendingDependencies,live,onInspect}: {snapshot?:RunOverview;timeline?:TimelineRun;pendingDependencies?:string[];live?:boolean;onInspect?:(destination:TimelineDestination)=>void;inspectToolRecord?:boolean;teamId?:string|undefined;task:Task;tab:string;client?:WorkbenchClient|undefined;sessionId?:string|undefined}){
+  const settled=task.status==='completed'||task.status==='failed'
+  const receipt=settled?task.receipt:undefined
+  const current=timeline?.current
++ const observationRun=snapshot&&sessionId&&teamId?exactTaskObservationRun(snapshot,sessionId,{teamId,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt},current):undefined
+  const active=task.status==='claimed'||task.status==='in_progress'
+  const liveActivity=!!(live&&active&&current&&(current.phase==='running'||current.phase==='stopping'||current.phase==='queued'))
+  const status=receipt?.state==='blocked'?t("宿主验收阻塞"):liveActivity?runStatus(current!,true):
+@@ -18,6 +22,7 @@ export function CollaborationTaskDetail({task,tab,client,sessionId,teamId,inspec
+  const reason=receipt?.reason||(receipt?.result?.blockers.length?receipt.result.blockers.join('；'):undefined)||(task.status==='failed'?task.output:undefined)||(task.status==='pending'&&pendingDependencies?.length?tf("等待前置：{0}",pendingDependencies.join(' · ')):undefined)
+  return <div className="collaboration-team-task" data-task-detail={task.id}>
+   {tab==='process'?<>
++   {snapshot&&observationRun?<AgentObservation snapshot={snapshot} run={observationRun} owner={sessionId} details/>:<p className="hint">{t("本次任务没有可精确关联的成员观测")}</p>}
+    {onInspect?<TaskTimeline events={timeline?.events??[]} truncated={timeline?.truncated} historical={timeline?.historical} current={active?current:undefined} live={liveActivity}
+     status={status} reason={reason} toolCount={settled&&!timeline?.historical?task.trace?.records.length??0:0} versionCount={timeline?.historical?0:receipt?.versions?.outputs.length??0} onInspect={onInspect}/>:null}
+    <details className="task-timeline-context"><summary>{t("任务说明与回报")}</summary><p data-authored="1">{task.description??task.subject}</p>
+diff --git a/src/ui/collaboration-workflow.tsx b/src/ui/collaboration-workflow.tsx
+index 54314d45..fe680bae 100644
+--- a/src/ui/collaboration-workflow.tsx
++++ b/src/ui/collaboration-workflow.tsx
+@@ -1,6 +1,7 @@
+ import {三角图标} from './icons.js'
+ import {useState} from 'react'
+-import {CollaborationNetwork,usageLabel} from './collaboration-network.js'
++import {CollaborationNetwork} from './collaboration-network.js'
++import {AgentObservation} from './agent-observation-view.js'
+ import {settledDuration} from './collaboration-model.js'
+ import {色号} from './team-dag.js'
+ import type {TeamSnapshot} from '../protocol/index.js'
+@@ -34,7 +35,7 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
+     <div className="collaboration-member-grid">
+      {visible.map(run=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
+       <span className="collaboration-node-name"><span className="collaboration-avatar" aria-hidden="true">{[...run.label][0]?.toUpperCase()??'?'}</span><strong data-authored="1">{run.label}</strong><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/></span>
+-      <small>{runStatus(run,snapshot.source==='live')}</small><small>{run.reason??(run.contract?t("已冻结任务契约"):t("普通委派任务"))}</small><span className="collaboration-card-foot"><small>{usageLabel(run)}</small><small>{settledDuration(run)}</small><三角图标/></span>
++      <small>{runStatus(run,snapshot.source==='live')}</small><small>{run.kind==='bot'?'Bot':run.kind==='team'?t("团队成员"):t("子任务")}</small><AgentObservation snapshot={snapshot} run={run}/><span className="collaboration-card-foot"><small>{settledDuration(run)}</small><三角图标/></span>
+      </Button>)}
+     </div>
+     {!visible.length?<p className="hint">{t("暂无匹配成员")}</p>:null}
+diff --git a/src/ui/run-overview.tsx b/src/ui/run-overview.tsx
+index 0a2af825..c90f306f 100644
+--- a/src/ui/run-overview.tsx
++++ b/src/ui/run-overview.tsx
+@@ -1,3 +1,6 @@
++import {AgentObservation} from './agent-observation-view.js'
++import {CollaborationOutcomePanel} from './collaboration-outcome-panel.js'
++import {selectCollaborationOutcome,type OutcomeAction} from './collaboration-outcome.js'
+ import {CollaborationEvidence} from './collaboration-evidence.js'
+ import {useEffect,useId,useRef,useState} from 'react'
+ import type {RunOverview as Snapshot} from '../protocol/run-overview.js'
+@@ -30,7 +33,8 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
+   target?.focus()
+  }
+  const runs=current?.runs??[],run=runs.find(r=>selection===`run:${r.id}`)??runs.find(r=>r.phase==='running'||r.phase==='stopping')??runs[0]
+- const ownedTeam=team?.captainSessionId===sessionId?team:undefined
++ const projectedTeam=current?.team!==undefined?current.team??undefined:team
++ const ownedTeam=projectedTeam?.captainSessionId===sessionId?projectedTeam:undefined
+  const task=ownedTeam?.tasks.find(task=>selection===collaborationTaskKey(ownedTeam!.id,task.id))
+  const selected=task?collaborationTaskKey(ownedTeam!.id,task.id):run?`run:${run.id}`:undefined
+  const inspecting=!!(expanded&&inspection&&inspection.owner===sessionId&&inspection.key===selected)
+@@ -40,14 +44,31 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
+  },[expanded,inspection,inspecting])
+  const attempt=task&&task.attempt>0&&sessionId&&ownedTeam&&current?teamTaskTimeline(current,sessionId,{teamId:ownedTeam.id,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt}):{events:[]}
+  const dependencies=task&&ownedTeam?task.dependencies.filter(id=>ownedTeam.tasks.find(t=>t.id===id)?.status!=='completed').map(id=>ownedTeam.tasks.find(t=>t.id===id)?.subject??id):[]
++ const outcomeSnapshot=current?{...current,...(current.team===undefined&&ownedTeam?{team:ownedTeam}:{})}:undefined
++ const outcome=outcomeSnapshot?selectCollaborationOutcome(outcomeSnapshot):undefined
++ const historyRef=useRef<HTMLDetailsElement>(null)
++ const navigationOwner=useRef(sessionId),navigationFrame=useRef<number|undefined>(undefined)
++ navigationOwner.current=sessionId
++ useEffect(()=>()=>{if(navigationFrame.current!==undefined)cancelAnimationFrame(navigationFrame.current);navigationFrame.current=undefined},[sessionId])
++ const navigateOutcome=(key:string|undefined,action:OutcomeAction,trigger:HTMLButtonElement)=>{
++  const tab=outcome?.state==='active'&&!outcome.blocker&&(action==='inspect-feedback'||outcome.pendingReview&&action==='inspect-findings')?'process':action==='inspect-inputs'?'handoff':action==='inspect-artifacts'||action==='inspect-findings'?'artifacts':action==='inspect-feedback'?'records':'process'
++  if(!key){if(historyRef.current){historyRef.current.open=true;historyRef.current.querySelector('summary')?.focus()}return}
++  update({selection:key,tab})
++  if(expanded)setInspection({owner:sessionId,key,trigger})
++  const owner=sessionId
++  const frame=requestAnimationFrame(()=>{if(navigationOwner.current!==owner||navigationFrame.current!==frame)return;navigationFrame.current=undefined;tabsRef.current?.querySelector<HTMLButtonElement>(`[data-collaboration-tab="${tab}"]`)?.focus()})
++  navigationFrame.current=frame
++ }
+  const live=current?.source==='live'
+  const count=current?collaborationCounts(current):undefined
+  const content=<section className="run-overview collaboration-panel" data-expanded={expanded} data-inspecting={inspecting} aria-label={t("运行总览")}>
+-  <header className="collaboration-heading"><div><span className="collaboration-eyebrow">{t("对话协作台")}</span><h3>{expanded?t("流程工作台"):t("协作")}</h3></div><div className="collaboration-heading-actions"><Button variant="ghost" size="sm" onClick={refresh}>{t("刷新运行记录")}</Button><Button ref={expandTrigger} variant="outline" size="sm" aria-expanded={expanded} onClick={()=>{setInspection(undefined);update({expanded:!expanded})}}>{expanded?t("返回对话协作台"):t("展开流程工作台")}</Button></div></header>
++  <header className="collaboration-heading"><div><span className="collaboration-eyebrow">{t("对话协作台")}</span><h3>{expanded?t("流程工作台"):t("协作")}</h3></div><div className="collaboration-heading-actions"><Button variant="ghost" size="sm" onClick={refresh}>{t("刷新运行记录")}</Button></div></header>
+   {!sessionId?<p className="hint">{t("开始任务后查看运行记录")}</p>:error?<p role="alert">{error}</p>:!current?<p className="hint">{t("正在读取运行记录")}</p>:<>
+-   <p className="hint collaboration-source">{live?t("来自当前会话的统一编排；每两秒刷新"):t("磁盘记录只读；查看不会启动或恢复任务")}</p>
++   {outcome&&outcomeSnapshot?<CollaborationOutcomePanel snapshot={outcomeSnapshot} outcome={outcome} compact={expanded} onInspect={navigateOutcome}><Button ref={expandTrigger} variant="outline" size="sm" aria-expanded={expanded} onClick={()=>{setInspection(undefined);update({expanded:!expanded})}}>{expanded?t("返回对话协作台"):t("展开流程工作台")}</Button></CollaborationOutcomePanel>:null}
++   <p className="hint collaboration-source">{live?(current.team===undefined&&ownedTeam?t("团队单独读取；并非同一快照"):t("来自当前会话的统一编排；每两秒刷新")):t("磁盘记录只读；查看不会启动或恢复任务")}</p>
++   {current.teamIssue?<p role="alert" data-authored="1">{current.teamIssue}</p>:null}
+    {current.observationIssue?<p role="alert" data-authored="1">{current.observationIssue}</p>:null}
+-   {count&&count.total?<div className="collaboration-counts"><strong>{tf("{0} 项任务",count.total)}</strong><span>{tf("{0} 项验收通过",count.accepted)}</span><span>{tf("{0} 项活跃",count.active)}</span>{expanded?<><span>{tf("{0} 项执行完成",runs.filter(r=>r.state==='completed').length)}</span>{current.budget?<span>{tf("可核验 token {0} · 未知用量 {1} 轮",current.budget.knownTokens,current.budget.unknownRuns)}</span>:null}<span>{t("费用未记录")}</span><label className="collaboration-progress">{t("执行进度")}<progress aria-label={t("已执行完成比例")} max={count.total} value={runs.filter(r=>r.state==='completed').length}/><span>{runs.filter(r=>r.state==='completed').length}/{count.total}</span></label></>:null}</div>:null}
++   {count&&count.total?<div className="collaboration-counts"><strong>{tf("{0} 项任务",count.total)}</strong><span>{tf("{0} 项验收通过",count.accepted)}</span><span>{tf("{0} 项活跃",count.active)}</span>{expanded?<><span>{tf("{0} 项执行完成",runs.filter(r=>r.state==='completed').length)}</span>{current.budget?<span>{tf("可核验 token {0} · 未知用量 {1} 轮",current.budget.knownTokens,current.budget.unknownRuns)}</span>:null}<span>{t("费用未记录")}</span></>:null}</div>:null}
+    <div className="collaboration-body">
+    {expanded?<CollaborationWorkflow snapshot={current} team={ownedTeam} selected={selected} onSelect={(selection,trigger)=>{update({selection});setInspection({owner:sessionId,key:selection,trigger})}}/>:null}
+    {ownedTeam?.tasks.length&&!expanded?<div className="collaboration-task-board"><h4>{t("任务板")}</h4>{ownedTeam.tasks.map(task=><Button key={task.id} variant="ghost" size="menu-row" aria-pressed={selected===collaborationTaskKey(ownedTeam.id,task.id)} onClick={()=>update({selection:collaborationTaskKey(ownedTeam.id,task.id)})}>{task.subject}</Button>)}</div>:null}
+@@ -56,7 +77,7 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
+      {runs.map(r=><div className="run-overview-row collaboration-row" key={r.id} data-run={r.id} data-phase={live?r.phase:'unknown'} data-selected={selected===`run:${r.id}`}>
+       <Button variant="ghost" size="menu-row" className="collaboration-task" aria-label={r.label} aria-pressed={selected===`run:${r.id}`} onClick={()=>update({selection:`run:${r.id}`})}>
+        <span className="collaboration-avatar" aria-hidden="true">{[...r.label][0]?.toUpperCase()??'?'}</span>
+-       <span className="collaboration-task-copy"><strong data-authored="1">{r.label}</strong><small>{runStatus(r,live)}</small></span>
++       <span className="collaboration-task-copy"><strong data-authored="1">{r.label}</strong><small>{runStatus(r,live)}</small><AgentObservation snapshot={current} run={r} owner={sessionId}/></span>
+        <span className="collaboration-task-meta"><span className="collaboration-state" data-phase={live?r.phase:'unknown'}>{r.kind==='bot'?'Bot':r.kind==='team'?t("团队成员"):t("子任务")}</span><small>{settledDuration(r)}</small></span>
+       </Button>
+      </div>)}
+@@ -71,14 +92,15 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
+       }}><关闭图标/></Button>:null}
+      </header>
+      <nav ref={tabsRef} className="collaboration-tabs" role="tablist" aria-label={t("任务详情")} onKeyDown={event=>{const tabs=[...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];const at=tabs.indexOf(document.activeElement as HTMLButtonElement);const next=event.key==='ArrowRight'?(at+1)%tabs.length:event.key==='ArrowLeft'?(at+tabs.length-1)%tabs.length:event.key==='Home'?0:event.key==='End'?tabs.length-1:-1;if(next>=0){event.preventDefault();tabs[next]?.focus();tabs[next]?.click()}}}>
+-      <Button variant="ghost" size="sm" role="tab" id={`${tabId}-process`} aria-controls={`${tabId}-panel`} aria-selected={tab==='process'} tabIndex={tab==='process'?0:-1} onClick={()=>setTab('process')}>{t("过程")}</Button>
+-      <Button variant="ghost" size="sm" role="tab" id={`${tabId}-handoff`} aria-controls={`${tabId}-panel`} aria-selected={tab==='handoff'} tabIndex={tab==='handoff'?0:-1} onClick={()=>setTab('handoff')}>{t("交接")}</Button>
++      <Button variant="ghost" size="sm" role="tab" data-collaboration-tab="process" id={`${tabId}-process`} aria-controls={`${tabId}-panel`} aria-selected={tab==='process'} tabIndex={tab==='process'?0:-1} onClick={()=>setTab('process')}>{t("过程")}</Button>
++      <Button variant="ghost" size="sm" role="tab" data-collaboration-tab="handoff" id={`${tabId}-handoff`} aria-controls={`${tabId}-panel`} aria-selected={tab==='handoff'} tabIndex={tab==='handoff'?0:-1} onClick={()=>setTab('handoff')}>{t("交接")}</Button>
+       <Button variant="ghost" size="sm" role="tab" data-collaboration-tab="artifacts" id={`${tabId}-artifacts`} aria-controls={`${tabId}-panel`} aria-selected={tab==='artifacts'} tabIndex={tab==='artifacts'?0:-1} onClick={()=>setTab('artifacts')}>{t("产物")}</Button>
+       <Button variant="ghost" size="sm" role="tab" data-collaboration-tab="records" id={`${tabId}-records`} aria-controls={`${tabId}-panel`} aria-selected={tab==='records'} tabIndex={tab==='records'?0:-1} onClick={()=>setTab('records')}>{t("记录")}</Button>
+      </nav>
+      <div role="tabpanel" id={`${tabId}-panel`} aria-labelledby={`${tabId}-${tab}`}>
+-     {task?<CollaborationTaskDetail key={`${task.id}:${task.attemptId}`} task={task} timeline={attempt} pendingDependencies={dependencies} live={live} onInspect={inspect} teamId={ownedTeam?.id} inspectToolRecord={!!ownedTeam?.members.some(m=>m.name===task.assignee&&!m.botId)} tab={tab} client={client} sessionId={sessionId!}/>:run?<>
++     {task?<CollaborationTaskDetail key={`${task.id}:${task.attemptId}`} task={task} snapshot={current} timeline={attempt} pendingDependencies={dependencies} live={live} onInspect={inspect} teamId={ownedTeam?.id} inspectToolRecord={!!ownedTeam?.members.some(m=>m.name===task.assignee&&!m.botId)} tab={tab} client={client} sessionId={sessionId!}/>:run?<>
+      {tab==='process'?<>
++      <AgentObservation snapshot={current} run={run} owner={sessionId} details/>
+       <TaskTimeline key={JSON.stringify([sessionId,run.id,run.epoch])}
+        events={directTaskTimeline(current.history,run)} truncated={current.history?.truncated}
+        current={run} live={live} status={runStatus(run,live)}
+@@ -99,7 +121,7 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
+    </div>
+    <footer className="collaboration-footer">
+     {current.budget&&sessionId?<details><summary>{t("查看额度")}</summary><RunBudgetPanel key={sessionId} client={client} sessionId={sessionId} budget={current.budget} live={live} onSaved={refresh}/></details>:null}
+-    <details><summary>{t("会话完整执行记录")}</summary><RunHistory snapshot={current}/></details>
++    <details ref={historyRef}><summary>{t("会话完整执行记录")}</summary><RunHistory snapshot={current}/></details>
+    </footer>
+   </>}
+  </section>
+diff --git a/src/ui/styles.css b/src/ui/styles.css
+index 23a85cba..ddf52866 100644
+--- a/src/ui/styles.css
++++ b/src/ui/styles.css
+@@ -720,6 +720,9 @@ pre {
+ .run-budget { padding: var(--dawn-space-2) 0; border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); overflow-wrap: anywhere; }
+ .run-budget form { display: grid; gap: var(--dawn-space-2); }
+ .run-budget input { min-width: 0; width: 100%; box-sizing: border-box; }
++.run-budget input[type="checkbox"] { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; }
++.run-budget label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: var(--dawn-space-2); }
++.run-budget-reserve { padding-inline-start: var(--dawn-space-3); border-inline-start: 2px solid var(--dawn-accent); }
+ .run-history { padding: var(--dawn-space-2) 0; overflow-wrap: anywhere; }
+ .run-activity { padding-left: var(--dawn-space-2); border-left: var(--dawn-hairline) solid var(--dawn-stroke-4); }
+ .run-handoff pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+@@ -9500,7 +9503,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent);
+ .collaboration-network path { stroke: var(--dawn-accent); stroke-width: 1.25; fill: none; opacity: 0.65; }
+ .collaboration-network path[data-running="true"] { stroke-dasharray: 5 4; }
+ .collaboration-root-node { position: absolute; width: 220px; min-height: 122px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--dawn-space-2); border: var(--dawn-hairline) solid var(--dawn-stroke-1); background: var(--dawn-surface-elevated); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-3); }
+-.collaboration-network-node { position: absolute; width: 170px; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: var(--dawn-space-2); text-align: start; background: var(--dawn-surface-panel); }
++.collaboration-network-node { position: absolute; width: 210px; min-height: 226px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: var(--dawn-space-2); text-align: start; background: var(--dawn-surface-panel); }
+ .collaboration-network-node small, .collaboration-member-card small { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+ .collaboration-node-name { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
+ .collaboration-node-name strong { overflow-wrap: anywhere; min-width: 0; font-weight: var(--dawn-weight-semibold); }
+@@ -9599,3 +9602,72 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent);
+ .task-timeline time, .task-timeline li small { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-variant-numeric: tabular-nums; }
+ .task-timeline-reason { overflow-wrap: anywhere; border-inline-start: 2px solid var(--dawn-warning); padding-inline-start: var(--dawn-space-2); }
+ .task-timeline-context { margin-top: var(--dawn-space-3); }
++
++/* Result first, before the optional inspection workbench. Uses the existing Dawn palette. */
++.collaboration-outcome { display: grid; gap: var(--dawn-space-4); min-width: 0; padding: var(--dawn-space-4); border: var(--dawn-hairline) solid var(--dawn-stroke-2); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-panel); overflow-wrap: anywhere; }
++.collaboration-outcome h3, .collaboration-outcome h4, .collaboration-outcome p { margin: 0; }
++.collaboration-outcome h3 { font-size: var(--dawn-fs-title); line-height: 1.5; font-weight: var(--dawn-weight-medium); }
++.collaboration-outcome h4 { font-size: var(--dawn-fs-sub); line-height: 1.5; font-weight: var(--dawn-weight-semibold); }
++.collaboration-outcome-goal, .collaboration-outcome-result, .collaboration-outcome-artifacts { display: grid; gap: var(--dawn-space-2); min-width: 0; }
++.collaboration-stage { justify-self: start; border-radius: var(--dawn-radius-sm); padding: var(--dawn-space-1) var(--dawn-space-2); font-size: var(--dawn-fs-meta); background: var(--dawn-surface-input); color: var(--dawn-text-2); }
++.collaboration-outcome-blocker { border-inline-start: 2px solid var(--dawn-text-2); padding-inline-start: var(--dawn-space-3); display: grid; gap: var(--dawn-space-1); }
++.collaboration-outcome-next, .collaboration-outcome-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--dawn-space-3); }
++.collaboration-outcome-artifacts, .collaboration-outcome-footer { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); padding-top: var(--dawn-space-3); }
++.collaboration-outcome-files { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: var(--dawn-space-2); min-width: 0; }
++.collaboration-outcome-artifact.btn { display: grid; justify-content: stretch; text-align: start; white-space: normal; min-width: 0; gap: var(--dawn-space-1); padding: var(--dawn-space-3); }
++.collaboration-outcome-artifact-head { display: flex; justify-content: space-between; gap: var(--dawn-space-2); flex-wrap: wrap; }
++.collaboration-outcome-artifact code { font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; white-space: normal; }
++.collaboration-outcome-budget { font-variant-numeric: tabular-nums; line-height: 1.7; }
++.collaboration-outcome .btn { max-width: 100%; }
++.collaboration-outcome-next .btn { white-space: normal; }
++.collaboration-panel > .collaboration-source { font-size: var(--dawn-fs-meta); }
++.collaboration-outcome-file { min-width: 0; }
++.collaboration-outcome-file > .btn { width: 100%; }
++.collaboration-outcome-version { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); margin-top: var(--dawn-space-1); }
++.collaboration-outcome-version code { display: block; overflow-wrap: anywhere; white-space: normal; }
++.collaboration-outcome-version small { display: block; }
++.collaboration-outcome[data-compact="true"] { gap: var(--dawn-space-2); padding: var(--dawn-space-3); grid-template-columns: minmax(0,1fr) auto; align-items: start; }
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-goal { grid-column: 1; gap: var(--dawn-space-1); }
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-goal h3 { font-size: var(--dawn-fs-sub); }
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-goal .collaboration-eyebrow,
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-result > p { display: none; }
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-result { grid-column: 1; }
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-footer { grid-column: 2; grid-row: 1 / span 2; border: 0; padding: 0; display: grid; justify-items: end; max-width: 380px; }
++.collaboration-outcome[data-compact="true"] .collaboration-outcome-blocker,
++.collaboration-outcome[data-compact="true"] .collaboration-route-note,
++.collaboration-outcome-inspection { grid-column: 1 / -1; }
++.collaboration-outcome-inspection > summary { font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
++.collaboration-outcome-inspection[open] { display: grid; gap: var(--dawn-space-3); }
++@media (max-width: 700px) { .collaboration-outcome[data-compact="true"] { grid-template-columns: minmax(0,1fr); } .collaboration-outcome[data-compact="true"] .collaboration-outcome-footer { grid-column: 1; grid-row: auto; justify-items: start; } }
++.collaboration-panel { container-type: inline-size; }
++.collaboration-outcome-narrow-hint { display: none; }
++@container (max-width: 300px) {
++ .collaboration-outcome:not([data-compact="true"]) { gap: var(--dawn-space-2); padding: var(--dawn-space-3); }
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-goal h3 { font-size: var(--dawn-fs-sub); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-result > p,
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-next,
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-artifacts,
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-budget { display: none; }
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-narrow-hint { display: block; font-size: var(--dawn-fs-meta); }
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-blocker p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-footer { border: 0; padding: 0; }
++ .collaboration-outcome:not([data-compact="true"]) .collaboration-outcome-footer > .btn { width: 100%; white-space: normal; }
++}
++
++/* Member context and settled accounting intentionally use separate reading rows. */
++.agent-observation { display: flex; flex-direction: column; gap: var(--dawn-space-2); min-width: 0; width: 100%; font-size: var(--dawn-fs-meta); font-weight: normal; line-height: 1.5; color: var(--dawn-text-2); white-space: normal; }
++.agent-observation-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--dawn-space-2); min-width: 0; }
++.agent-observation-number { color: var(--dawn-text-1); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
++.agent-context-bar { display: block; height: 3px; border-radius: var(--dawn-radius-full); background: var(--dawn-stroke-3); overflow: hidden; }
++.agent-context-bar > span { display: block; height: 100%; background: var(--dawn-accent); }
++.agent-observation-details { border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); padding-top: var(--dawn-space-2); }
++.agent-observation-details summary { cursor: pointer; color: var(--dawn-text-2); }
++.agent-observation-details[open] > span, .agent-composition > span { display: block; margin-top: var(--dawn-space-1); overflow-wrap: anywhere; }
++.agent-composition { padding-block: var(--dawn-space-2); }
++.agent-composition strong { font-weight: var(--dawn-weight-medium); }
++.collaboration-task-copy > .agent-observation { margin-top: var(--dawn-space-1); }
++.collaboration-network-node .agent-observation-row { flex-direction: column; }
++.collaboration-network-node .collaboration-node-name strong { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
++
++/* Keep the selected network card opaque over lineage edges; tint is an inset layer. */
++.collaboration-network-node[aria-pressed="true"] { background: var(--dawn-surface-panel); box-shadow: inset 0 0 0 999px var(--dawn-accent-soft); }

@@ -1,0 +1,36 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+stdout | ../../../../../../private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-c2b-spec-review-fop902yp/race.test.tsx > C2b independent lifecycle contract > recovers current B when an ambiguous delayed disk hint follows an accepted B response
+after delayed disk hint {"snapshot":{"ownerSessionId":"p","source":"live","observation":{"observerId":"B","revision":0},"runs":[],"observationIssue":"B accepted"},"calls":3}
+
+stdout | ../../../../../../private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-c2b-spec-review-fop902yp/race.test.tsx > C2b independent lifecycle contract > recovers current B when an ambiguous delayed disk hint follows an accepted B response
+after B notice and three fallback polls {"snapshot":{"ownerSessionId":"p","source":"live","observation":{"observerId":"B","revision":0},"runs":[],"observationIssue":"B accepted"},"calls":6}
+
+ ❯ ../../../../../../private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-c2b-spec-review-fop902yp/race.test.tsx (2 tests | 1 failed) 20ms
+     × recovers current B when an ambiguous delayed disk hint follows an accepted B response 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../../../private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-c2b-spec-review-fop902yp/race.test.tsx > C2b independent lifecycle contract > recovers current B when an ambiguous delayed disk hint follows an accepted B response
+AssertionError: expected 'B accepted' to be 'B newer' // Object.is equality
+
+Expected: "B newer"
+Received: "B accepted"
+
+ ❯ ../../../../../../private/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-c2b-spec-review-fop902yp/race.test.tsx:25:58
+     23|   act(()=>h.emit('B',2));h.set(snap('B',2,'B newer'));await act(async(…
+     24|   console.log('after B notice and three fallback polls',JSON.stringify…
+     25|   expect(view.result.current.snapshot?.observationIssue).toBe('B newer…
+       |                                                          ^
+     26|  })
+     27|  it('still confirms genuine B close to disk and then accepts C',async(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:11:10
+   Duration  896ms (transform 303ms, setup 462ms, import 7ms, tests 20ms, environment 329ms)
+

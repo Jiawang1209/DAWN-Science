@@ -1,0 +1,625 @@
+PASS D1 sample produces valid-zero D3 current occupancy
+PASS D1 observation does not alter D2 totals or B budget/wait generation
+PASS C timeline exact attempt admits D3 task observation
+PASS D1 route replacement revokes D3 current occupancy retaining only history
+PASS Host-current unknown sample never creates D3 meter or value zero
+PASS D2 settlement sums input/output separate from B input/output/cache formula
+PASS C old task may not borrow D3 new assignment sample
+PASS B holds review admission despite ordinary remaining zero
+PASS C stopping simultaneously revokes D3 current and preserves D2 prior totals until settle
+PASS B prevents releasing held reservation while active prior stage drains
+PASS D2 cancelled known deltas settle once preserving cache lower bound and B unknown
+PASS B review consumes held reservation without refunding predecessor or duplicate ledger
+PASS C execution completion without contract receipt never becomes final scientific accepted
+PASS D2 duplicate old settlement is rejected atomically
+PASS D3 repeated live and disk projections never persist or charge
+PASS Restart history preserves settled totals and B counts without restoring D3 current
+PASS B recovery hold plus D2 unknown epoch survive first restore
+PASS B/D2 repeated recovery is idempotent and disk never current
+{
+  "status": "PASS",
+  "checks": 18,
+  "names": [
+    "D1 sample produces valid-zero D3 current occupancy",
+    "D1 observation does not alter D2 totals or B budget/wait generation",
+    "C timeline exact attempt admits D3 task observation",
+    "D1 route replacement revokes D3 current occupancy retaining only history",
+    "Host-current unknown sample never creates D3 meter or value zero",
+    "D2 settlement sums input/output separate from B input/output/cache formula",
+    "C old task may not borrow D3 new assignment sample",
+    "B holds review admission despite ordinary remaining zero",
+    "C stopping simultaneously revokes D3 current and preserves D2 prior totals until settle",
+    "B prevents releasing held reservation while active prior stage drains",
+    "D2 cancelled known deltas settle once preserving cache lower bound and B unknown",
+    "B review consumes held reservation without refunding predecessor or duplicate ledger",
+    "C execution completion without contract receipt never becomes final scientific accepted",
+    "D2 duplicate old settlement is rejected atomically",
+    "D3 repeated live and disk projections never persist or charge",
+    "Restart history preserves settled totals and B counts without restoring D3 current",
+    "B recovery hold plus D2 unknown epoch survive first restore",
+    "B/D2 repeated recovery is idempotent and disk never current"
+  ],
+  "snapshots": [
+    {
+      "ownerSessionId": "owner",
+      "source": "live",
+      "observation": {
+        "observerId": "36246d5e-66fb-4191-b5ce-af26f31ad623",
+        "revision": 23
+      },
+      "history": {
+        "events": [
+          {
+            "seq": 1,
+            "at": 1794071755737,
+            "type": "budget-configured"
+          },
+          {
+            "seq": 2,
+            "at": 1794071755741,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 3,
+            "at": 1794071755741,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 4,
+            "at": 1794071755743,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 5,
+            "at": 1794071755744,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "taskAttempt": {
+              "teamId": "team",
+              "taskId": "check",
+              "attemptId": "one",
+              "attempt": 1
+            },
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 6,
+            "at": 1794071755745,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 7,
+            "at": 1794071755768,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed"
+          },
+          {
+            "seq": 8,
+            "at": 1794071755770,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 9,
+            "at": 1794071755771,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "taskAttempt": {
+              "teamId": "team",
+              "taskId": "analyze",
+              "attemptId": "two",
+              "attempt": 1
+            },
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 10,
+            "at": 1794071755771,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 11,
+            "at": 1794071755773,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "type": "cancel-requested"
+          },
+          {
+            "seq": 12,
+            "at": 1794071755775,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "type": "settled",
+            "state": "cancelled"
+          },
+          {
+            "seq": 13,
+            "at": 1794071755778,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 14,
+            "at": 1794071755778,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 1,
+            "taskAttempt": {
+              "teamId": "team",
+              "taskId": "review",
+              "attemptId": "three",
+              "attempt": 1
+            },
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 15,
+            "at": 1794071755778,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 16,
+            "at": 1794071755779,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed"
+          }
+        ],
+        "truncated": false
+      },
+      "budget": {
+        "revision": 11,
+        "limits": {
+          "maxRuns": 3,
+          "reserveReviewRuns": true
+        },
+        "consumedRuns": 3,
+        "legacyRuns": 0,
+        "knownTokens": 21,
+        "unknownRuns": 1,
+        "inFlight": 0,
+        "startedAt": 1794071755744,
+        "elapsedMs": 44,
+        "blocked": {
+          "code": "runs",
+          "message": "委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动"
+        },
+        "reviewReservations": [
+          {
+            "key": "[\"owner\",\"pipeline\",0]",
+            "stage": "review",
+            "remainingRuns": 0,
+            "phase": "consumed"
+          }
+        ],
+        "ordinaryRemainingRuns": 0,
+        "reviewReservedRuns": 0,
+        "reviewRecoveryRuns": 0
+      },
+      "runs": [
+        {
+          "id": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+          "kind": "team",
+          "label": "worker",
+          "address": [
+            "team",
+            "worker",
+            "1"
+          ],
+          "state": "cancelled",
+          "epoch": 2,
+          "resultEpoch": 2,
+          "updatedAt": 1794071755775,
+          "phase": "drained",
+          "reason": "执行已中止",
+          "contract": false,
+          "inputVersions": 0,
+          "outputVersions": 0,
+          "contextObservation": {
+            "current": false,
+            "reason": "historical",
+            "sample": {
+              "ownerSessionId": "owner",
+              "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+              "epoch": 2,
+              "sample": {
+                "version": 1,
+                "observedAt": 3,
+                "provider": "p",
+                "model": "m",
+                "contextWindow": 100,
+                "contextWindowSource": "model-config",
+                "availability": "available",
+                "source": "sdk-estimate",
+                "usedTokens": 30
+              }
+            }
+          },
+          "usageTotals": {
+            "source": "host-epoch-deltas",
+            "input": 15,
+            "output": 5,
+            "cacheRead": 1,
+            "partial": [
+              "cacheRead"
+            ],
+            "settledEpochs": 2,
+            "unknownEpochs": 1,
+            "lastSettledEpoch": 2
+          },
+          "observation": {
+            "elapsedMs": 1,
+            "submissionAttempts": 0,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 5,
+              "output": 3
+            }
+          },
+          "timing": {
+            "executionMs": 27
+          }
+        },
+        {
+          "id": "child-5217d4f460ca43076ee9a4b804fb21fa",
+          "kind": "team",
+          "label": "reviewer",
+          "address": [
+            "team",
+            "reviewer",
+            "1"
+          ],
+          "state": "completed",
+          "epoch": 1,
+          "resultEpoch": 1,
+          "updatedAt": 1794071755779,
+          "phase": "drained",
+          "contract": false,
+          "inputVersions": 0,
+          "outputVersions": 0,
+          "contextObservation": {
+            "current": false,
+            "reason": "historical"
+          },
+          "usageTotals": {
+            "source": "host-epoch-deltas",
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "partial": [],
+            "settledEpochs": 1,
+            "unknownEpochs": 0,
+            "lastSettledEpoch": 1
+          },
+          "observation": {
+            "elapsedMs": 1,
+            "submissionAttempts": 0,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0
+            }
+          },
+          "timing": {
+            "executionMs": 1
+          }
+        }
+      ]
+    },
+    {
+      "ownerSessionId": "owner",
+      "source": "disk",
+      "team": null,
+      "observation": {
+        "observerId": "disk",
+        "revision": 0
+      },
+      "history": {
+        "events": [
+          {
+            "seq": 1,
+            "at": 1794071755737,
+            "type": "budget-configured"
+          },
+          {
+            "seq": 2,
+            "at": 1794071755741,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 3,
+            "at": 1794071755741,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 0,
+            "type": "registered"
+          },
+          {
+            "seq": 4,
+            "at": 1794071755743,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 5,
+            "at": 1794071755744,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "taskAttempt": {
+              "teamId": "team",
+              "taskId": "check",
+              "attemptId": "one",
+              "attempt": 1
+            },
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 6,
+            "at": 1794071755745,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 7,
+            "at": 1794071755768,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed"
+          },
+          {
+            "seq": 8,
+            "at": 1794071755770,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 1,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 9,
+            "at": 1794071755771,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "taskAttempt": {
+              "teamId": "team",
+              "taskId": "analyze",
+              "attemptId": "two",
+              "attempt": 1
+            },
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 10,
+            "at": 1794071755771,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 11,
+            "at": 1794071755773,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "type": "cancel-requested"
+          },
+          {
+            "seq": 12,
+            "at": 1794071755775,
+            "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+            "epoch": 2,
+            "type": "settled",
+            "state": "cancelled"
+          },
+          {
+            "seq": 13,
+            "at": 1794071755778,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 0,
+            "type": "queued",
+            "state": "queued"
+          },
+          {
+            "seq": 14,
+            "at": 1794071755778,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 1,
+            "taskAttempt": {
+              "teamId": "team",
+              "taskId": "review",
+              "attemptId": "three",
+              "attempt": 1
+            },
+            "type": "started",
+            "state": "running"
+          },
+          {
+            "seq": 15,
+            "at": 1794071755778,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 1,
+            "type": "stage",
+            "stage": "execution"
+          },
+          {
+            "seq": 16,
+            "at": 1794071755779,
+            "childId": "child-5217d4f460ca43076ee9a4b804fb21fa",
+            "epoch": 1,
+            "type": "settled",
+            "state": "completed"
+          }
+        ],
+        "truncated": false
+      },
+      "budget": {
+        "revision": 11,
+        "limits": {
+          "maxRuns": 3,
+          "reserveReviewRuns": true
+        },
+        "consumedRuns": 3,
+        "legacyRuns": 0,
+        "knownTokens": 21,
+        "unknownRuns": 1,
+        "inFlight": 0,
+        "startedAt": 1794071755744,
+        "elapsedMs": 45,
+        "blocked": {
+          "code": "runs",
+          "message": "委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动"
+        },
+        "reviewReservations": [
+          {
+            "key": "[\"owner\",\"pipeline\",0]",
+            "stage": "review",
+            "remainingRuns": 0,
+            "phase": "consumed"
+          }
+        ],
+        "ordinaryRemainingRuns": 0,
+        "reviewReservedRuns": 0,
+        "reviewRecoveryRuns": 0
+      },
+      "runs": [
+        {
+          "id": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+          "kind": "team",
+          "label": "worker",
+          "address": [
+            "team",
+            "worker",
+            "1"
+          ],
+          "state": "cancelled",
+          "epoch": 2,
+          "resultEpoch": 2,
+          "updatedAt": 1794071755775,
+          "phase": "unknown",
+          "reason": "执行已中止",
+          "contract": false,
+          "inputVersions": 0,
+          "outputVersions": 0,
+          "contextObservation": {
+            "current": false,
+            "reason": "historical",
+            "sample": {
+              "ownerSessionId": "owner",
+              "childId": "child-7c6de7fb418cbf32d1ac70f8210b58e6",
+              "epoch": 2,
+              "sample": {
+                "version": 1,
+                "observedAt": 3,
+                "provider": "p",
+                "model": "m",
+                "contextWindow": 100,
+                "contextWindowSource": "model-config",
+                "availability": "available",
+                "source": "sdk-estimate",
+                "usedTokens": 30
+              }
+            }
+          },
+          "usageTotals": {
+            "source": "host-epoch-deltas",
+            "input": 15,
+            "output": 5,
+            "cacheRead": 1,
+            "partial": [
+              "cacheRead"
+            ],
+            "settledEpochs": 2,
+            "unknownEpochs": 1,
+            "lastSettledEpoch": 2
+          },
+          "observation": {
+            "elapsedMs": 1,
+            "submissionAttempts": 0,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 5,
+              "output": 3
+            }
+          },
+          "timing": {
+            "executionMs": 27
+          }
+        },
+        {
+          "id": "child-5217d4f460ca43076ee9a4b804fb21fa",
+          "kind": "team",
+          "label": "reviewer",
+          "address": [
+            "team",
+            "reviewer",
+            "1"
+          ],
+          "state": "completed",
+          "epoch": 1,
+          "resultEpoch": 1,
+          "updatedAt": 1794071755779,
+          "phase": "unknown",
+          "contract": false,
+          "inputVersions": 0,
+          "outputVersions": 0,
+          "usageTotals": {
+            "source": "host-epoch-deltas",
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "partial": [],
+            "settledEpochs": 1,
+            "unknownEpochs": 0,
+            "lastSettledEpoch": 1
+          },
+          "observation": {
+            "elapsedMs": 1,
+            "submissionAttempts": 0,
+            "invalidSubmissions": 0,
+            "usage": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0
+            }
+          },
+          "timing": {
+            "executionMs": 1
+          }
+        }
+      ]
+    }
+  ]
+}

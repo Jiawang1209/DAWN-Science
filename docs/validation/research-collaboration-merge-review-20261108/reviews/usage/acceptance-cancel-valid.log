@@ -1,0 +1,44 @@
+preCancelReceipt accepted
+{
+  "acceptance": true,
+  "emittedUsage": {
+    "input": 10,
+    "output": 2,
+    "cacheRead": 1
+  },
+  "result": {
+    "results": [
+      {
+        "agent": "worker",
+        "task": "task",
+        "ok": false,
+        "output": "",
+        "error": "执行已中止",
+        "outputTruncated": false,
+        "outputBytes": 0
+      }
+    ]
+  },
+  "usageTotals": {
+    "source": "host-epoch-deltas",
+    "partial": [
+      "input",
+      "output",
+      "cacheRead"
+    ],
+    "settledEpochs": 1,
+    "unknownEpochs": 1,
+    "lastSettledEpoch": 1
+  },
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 0,
+    "unknownRuns": 1,
+    "inFlight": 0,
+    "startedAt": 1794072474626,
+    "elapsedMs": 38
+  }
+}

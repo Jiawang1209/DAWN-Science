@@ -1,0 +1,27 @@
+{
+  "manifestSha256": "f579bf5eef6922e2b7a95b1be0e7854568f3ee69fd0116eb8f9d2c018c15bf70",
+  "sourceCount": 630,
+  "manifestMatches": true,
+  "sourceUnchangedDuringReview": true,
+  "c3Changed": [
+    "src/orchestration/execution-context.ts",
+    "src/orchestration/run-overview.ts",
+    "src/orchestration/service.ts",
+    "src/orchestration/store.ts",
+    "src/protocol/index.ts",
+    "src/protocol/run-overview.ts",
+    "src/runtime/native.ts",
+    "src/subagent/child.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/protocol.ts",
+    "src/team/runner.ts"
+  ],
+  "c3Added": [
+    "src/protocol/agent-context-observation.ts",
+    "src/runtime/agent-context-sampler.ts"
+  ],
+  "c3Removed": [],
+  "c3UnchangedCount": 617,
+  "uiChanged": false,
+  "diffCheckExit": 0
+}

@@ -1,0 +1,489 @@
+{
+  "integrity": {
+    "src": {
+      "files": 628,
+      "mismatches": []
+    },
+    "build": {
+      "files": 624,
+      "mismatches": []
+    }
+  },
+  "osExitObservers": [
+    {
+      "file": "frozen/exit/exit-88590.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 88590,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": true,
+          "readableEnded": true,
+          "closed": true
+        },
+        "stderr": {
+          "destroyed": true,
+          "readableEnded": true,
+          "closed": true
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-88817.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 88817,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-88958.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 88958,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-89120.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 89120,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-89247.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 89247,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-89527.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 89527,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-89732.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 89732,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-89774.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 89774,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-89899.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 89899,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-90059.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 90059,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    },
+    {
+      "file": "frozen/exit/exit-90168.jsonl",
+      "osExit": {
+        "code": 0,
+        "signal": null,
+        "pid": 90168,
+        "exitCode": 0,
+        "signalCode": null,
+        "appClosed": false,
+        "contextClosed": false,
+        "stdout": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        },
+        "stderr": {
+          "destroyed": false,
+          "readableEnded": true,
+          "closed": false
+        }
+      },
+      "protocolClosed": true,
+      "closeReturned": true
+    }
+  ],
+  "applicationDiagnostics": [
+    {
+      "file": "frozen/exit/app-88590.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-88817.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-88958.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-89120.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-89247.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-89527.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-89732.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-89774.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-89899.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-90059.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    },
+    {
+      "file": "frozen/exit/app-90168.jsonl",
+      "events": [
+        "diagnostics-attached",
+        "contents-created",
+        "window-created",
+        "before-quit",
+        "window-close",
+        "contents-destroyed",
+        "window-closed",
+        "will-quit",
+        "shutdown-check",
+        "shutdown-sync-start",
+        "shutdown-sync-complete",
+        "process-exit",
+        "quit"
+      ],
+      "badEvents": []
+    }
+  ]
+}

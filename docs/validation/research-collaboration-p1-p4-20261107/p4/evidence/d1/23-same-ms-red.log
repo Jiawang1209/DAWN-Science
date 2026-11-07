@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/context-observation.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/context-observation.test.ts (4 tests | 1 failed) 36ms
+   × accepts changed samples within one millisecond in bound reporter order while duplicate and older readings do not write 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/context-observation.test.ts > accepts changed samples within one millisecond in bound reporter order while duplicate and older readings do not write
+AssertionError: expected { version: 1, observedAt: 10, …(5) } to match object { availability: 'available', …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "availability": "available",
+-   "usedTokens": 0,
++   "availability": "unknown",
+  }
+
+ ❯ tests/orchestration/context-observation.test.ts:50:77
+     48|  const running=service.run(child.id,async()=>{report=currentExecutionC…
+     49|  report({version:1,availability:'unknown',source:'unknown',observedAt:…
+     50|  report(sample(10));expect(store.get(child.id)?.contextObservation?.sa…
+       |                                                                             ^
+     51|  const file=join(dir,'orchestration/state.json'),bytes=readFileSync(fi…
+     52|  report(sample(10));report({...sample(9),usedTokens:999});expect(readF…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  00:03:31
+   Duration  369ms (transform 129ms, setup 0ms, import 252ms, tests 36ms, environment 0ms)
+

@@ -1,0 +1,224 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/orchestration/agent-usage-totals.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/agent-usage-totals.test.ts (7 tests | 7 failed) 33ms
+   × tracks two settled deltas once, keeps last result distinct, and charges the existing budget formula once 9ms
+   × preserves every known field and marks missing, partial, invalid and overflow deltas incomplete 7ms
+   × counts admitted failures/cancellation/unknown usage, but a queued cancellation has no settled usage 4ms
+   × recovers admitted unfinished epochs as unknown once in the same durable recovery and never counts queued work 3ms
+   × projects legacy history without migration or backfilling last result and distinguishes fresh tracked zero 2ms
+   × same generation accumulates assignments while a new generation starts empty 4ms
+   × context samples and pure overview reads do not change usage or budget 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > tracks two settled deltas once, keeps last result distinct, and charges the existing budget formula once
+AssertionError: expected undefined to deeply equal { source: 'host-epoch-deltas', …(3) }
+
+- Expected:
+{
+  "partial": [],
+  "settledEpochs": 0,
+  "source": "host-epoch-deltas",
+  "unknownEpochs": 0,
+}
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/agent-usage-totals.test.ts:14:75
+     12| const zero={source:'host-epoch-deltas',settledEpochs:0,unknownEpochs:0…
+     13| it('tracks two settled deltas once, keeps last result distinct, and ch…
+     14|  const{root,store,child}=setup();expect(store.get(child.id)?.usageTota…
+       |                                                                           ^
+     15|  const a=store.beginRun(child.id);store.settleRun(child.id,a,observed(…
+     16|  expect(()=>store.settleRun(child.id,a,observed({input:999}),false)).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > preserves every known field and marks missing, partial, invalid and overflow deltas incomplete
+AssertionError: expected undefined to deeply equal { source: 'host-epoch-deltas', …(7) }
+
+- Expected:
+{
+  "cacheRead": 2,
+  "input": 15,
+  "lastSettledEpoch": 4,
+  "output": 15,
+  "partial": [
+    "input",
+    "cacheRead",
+  ],
+  "settledEpochs": 4,
+  "source": "host-epoch-deltas",
+  "unknownEpochs": 4,
+}
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/agent-usage-totals.test.ts:31:43
+     29|   const epoch=store.beginRun(child.id);store.settleRun(child.id,epoch,…
+     30|  }
+     31|  expect(store.get(child.id)?.usageTotals).toEqual({source:'host-epoch-…
+       |                                           ^
+     32|  expect(store.get(child.id)?.state).toBe('completed')
+     33| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > counts admitted failures/cancellation/unknown usage, but a queued cancellation has no settled usage
+TypeError: service.cancel is not a function
+ ❯ tests/orchestration/agent-usage-totals.test.ts:39:16
+     37|  const run=service.run(child.id,async()=>{await gate;return{ok:false,o…
+     38|  const pending=service.run(queued.id,async()=>observed({input:99,outpu…
+     39|  await service.cancel(queued.id);release();await Promise.all([run,pend…
+       |                ^
+     40|  expect(store.get(child.id)?.usageTotals).toMatchObject({settledEpochs…
+     41|  expect(store.get(queued.id)?.usageTotals).toEqual(zero)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > recovers admitted unfinished epochs as unknown once in the same durable recovery and never counts queued work
+AssertionError: expected undefined to deeply equal { source: 'host-epoch-deltas', …(4) }
+
+- Expected:
+{
+  "lastSettledEpoch": 1,
+  "partial": [
+    "input",
+    "output",
+    "cacheRead",
+  ],
+  "settledEpochs": 1,
+  "source": "host-epoch-deltas",
+  "unknownEpochs": 1,
+}
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/agent-usage-totals.test.ts:49:15
+     47|  store.beginRun(child.id);store.update(queued.id,{state:'queued'})
+     48|  const recovered=new OrchestrationStore(root,'owner'),once=recovered.g…
+     49|  expect(once).toEqual({...zero,partial:['input','output','cacheRead'],…
+       |               ^
+     50|  expect(recovered.get(queued.id)?.usageTotals).toEqual(zero)
+     51|  expect(new OrchestrationStore(root,'owner').get(child.id)?.usageTotal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > projects legacy history without migration or backfilling last result and distinguishes fresh tracked zero
+AssertionError: expected undefined to deeply equal { source: 'host-epoch-deltas', …(4) }
+
+- Expected:
+{
+  "legacyHistory": true,
+  "partial": [
+    "input",
+    "output",
+    "cacheRead",
+  ],
+  "settledEpochs": 0,
+  "source": "host-epoch-deltas",
+  "unknownEpochs": 0,
+}
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/agent-usage-totals.test.ts:58:40
+     56|  delete old.children[0].usageTotals;old.children[0].epoch=4;old.childr…
+     57|  writeFileSync(file,JSON.stringify(old));const before=readFileSync(fil…
+     58|  expect(overview.runs[0]?.usageTotals).toEqual({...zero,partial:['inpu…
+       |                                        ^
+     59|  expect(readFileSync(file,'utf8')).toBe(before)
+     60|  const restored=new OrchestrationStore(root,'owner'),epoch=restored.be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > same generation accumulates assignments while a new generation starts empty
+AssertionError: expected undefined to match object { input: 4, output: 2, …(1) }
+
+- Expected:
+{
+  "input": 4,
+  "output": 2,
+  "settledEpochs": 2,
+}
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/agent-usage-totals.test.ts:67:39
+     65|  const{store}=setup(),a=store.register('team',['team','member','g1'],'…
+     66|  for(let i=0;i<2;i++){const same=store.register('team',['team','member…
+     67|  expect(store.get(a.id)?.usageTotals).toMatchObject({input:4,output:2,…
+       |                                       ^
+     68|  expect(store.register('team',['team','member','g2'],'member').usageTo…
+     69| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |node| tests/orchestration/agent-usage-totals.test.ts > context samples and pure overview reads do not change usage or budget
+ZodError: [
+  {
+    "code": "invalid_value",
+    "values": [
+      1
+    ],
+    "path": [
+      "sample",
+      "version"
+    ],
+    "message": "Invalid input: expected 1"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "sample",
+      "provider"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "sample",
+      "model"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  },
+  {
+    "code": "invalid_value",
+    "values": [
+      "unknown"
+    ],
+    "path": [
+      "sample",
+      "source"
+    ],
+    "message": "Invalid input: expected \"unknown\""
+  }
+]
+ ❯ OrchestrationStore.observeContext src/orchestration/store.ts:320:48
+    318|   /** Numeric history only. Does not mutate progress, timing, budgets,…
+    319|   observeContext(observation:BoundAgentContextSample):ContextObservati…
+    320|     const parsed=BoundAgentContextSampleSchema.parse(observation),chil…
+       |                                                ^
+    321|     if(parsed.ownerSessionId!==this.ownerSessionId||!child||child.epoc…
+    322|     const prior=child.contextObservation
+ ❯ tests/orchestration/agent-usage-totals.test.ts:73:8
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  00:18:23
+   Duration  373ms (transform 130ms, setup 0ms, import 251ms, tests 33ms, environment 0ms)
+

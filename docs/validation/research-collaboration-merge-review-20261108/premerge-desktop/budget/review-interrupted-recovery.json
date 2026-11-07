@@ -1,0 +1,195 @@
+{
+  "inference": "localhost-fixture",
+  "actualElectron": true,
+  "before": {
+    "revision": 7,
+    "limits": {
+      "maxRuns": 3,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 60,
+    "unknownRuns": 1,
+    "active": [
+      {
+        "childId": "child-fe43d772d1b604dc78838688864ba6f5",
+        "epoch": 1,
+        "reviewAdmission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "analyze"
+        }
+      }
+    ],
+    "reviewReservations": [
+      {
+        "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+        "stage": "review",
+        "remainingRuns": 1,
+        "phase": "held"
+      }
+    ],
+    "reviewBindings": [
+      {
+        "childId": "child-6dfb2a1727331a0bf015a399e71053fb",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-check-0-0",
+          "attemptId": "5cb96e37-c979-4485-b927-bd576032aa49",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "check"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-fe43d772d1b604dc78838688864ba6f5",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "c1ff980a-48c7-461d-b0b5-9fdbdd5158a3",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 1
+      }
+    ],
+    "startedAt": 1794072865143
+  },
+  "interrupted": {
+    "revision": 9,
+    "limits": {
+      "maxRuns": 3,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 60,
+    "unknownRuns": 2,
+    "startedAt": 1794072865143,
+    "reviewReservations": [
+      {
+        "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+        "stage": "review",
+        "remainingRuns": 1,
+        "phase": "recovery-check"
+      }
+    ],
+    "reviewBindings": [
+      {
+        "childId": "child-6dfb2a1727331a0bf015a399e71053fb",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-check-0-0",
+          "attemptId": "5cb96e37-c979-4485-b927-bd576032aa49",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "check"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-fe43d772d1b604dc78838688864ba6f5",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "c1ff980a-48c7-461d-b0b5-9fdbdd5158a3",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 1
+      }
+    ],
+    "active": []
+  },
+  "after": {
+    "revision": 17,
+    "limits": {
+      "maxRuns": 4,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 4,
+    "legacyRuns": 0,
+    "knownTokens": 140,
+    "unknownRuns": 4,
+    "startedAt": 1794072865143,
+    "reviewReservations": [
+      {
+        "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "consumed"
+      }
+    ],
+    "reviewBindings": [
+      {
+        "childId": "child-6dfb2a1727331a0bf015a399e71053fb",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-check-0-0",
+          "attemptId": "5cb96e37-c979-4485-b927-bd576032aa49",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "check"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-fe43d772d1b604dc78838688864ba6f5",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "c1ff980a-48c7-461d-b0b5-9fdbdd5158a3",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-fe43d772d1b604dc78838688864ba6f5",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-analyze-0-2",
+          "attemptId": "773b7c0a-a28a-42fa-9cb6-b5d9c71306eb",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 2
+      },
+      {
+        "childId": "child-730276b37b377dbe7e4355992adfad0e",
+        "taskAttempt": {
+          "teamId": "pipeline-761b0e5fce8284e98e63bed8",
+          "taskId": "p-review-0-3",
+          "attemptId": "e4a15f2e-8730-458a-be29-3675bec3037c",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"9b7c9d0a-c15e-4535-8fc0-d9b0cb4174b9\",\"pipeline-5c5218c493143b9844fc72d621841f1e3799a79113438586e7bb0da3056c1eba\",0]",
+          "stage": "review"
+        },
+        "admittedEpoch": 1
+      }
+    ],
+    "active": []
+  },
+  "scientificRound": 0
+}

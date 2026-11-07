@@ -1,0 +1,24 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-manifest.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-manifest.test.ts [ tests/evaluation/research-manifest.test.ts ]
+Error: Cannot find module '../../src/evaluation/research-manifest.js' imported from /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/evaluation/research-manifest.test.ts
+ ❯ tests/evaluation/research-manifest.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {researchModelDeclaration,researchManifest} from '../../src/eva…
+       | ^
+      3| import {researchTasks} from '../../src/evaluation/research-tasks.js'
+      4| it('records only declared inference settings and never copies endpoint…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  21:17:30
+   Duration  110ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

@@ -1,0 +1,274 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/collaboration-outcome-panel.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome-panel.test.tsx (19 tests | 1 failed) 297ms
+   × opens the current review process while independent review has not submitted findings 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome-panel.test.tsx > opens the current review process while independent review has not submitted findings
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "查看审阅任务"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review current outputs":
+  [36m<h3[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------heading:
+
+  Name "分析阶段已验收，等待独立审阅":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------status:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"collaboration-route-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "查看审阅产物":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------heading:
+
+  Name "验收成果与版本":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "reports/result.csv阶段产物SHA256 aaaaaaaaaaaa… · 12 字节":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-card-compact collaboration-outcome-artifact"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"collaboration-outcome-version"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  code:
+
+  Name "":
+  [36m<code[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint collaboration-outcome-narrow-hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint collaboration-outcome-budget"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "展开流程工作台":
+  [36m<button[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"协作成果"[39m
+  [33mclass[39m=[32m"collaboration-outcome"[39m
+  [33mdata-compact[39m=[32m"false"[39m
+  [33mdata-outcome[39m=[32m"active"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-goal"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"collaboration-eyebrow"[39m
+    [36m>[39m
+      [0m任务目标[0m
+    [36m</span>[39m
+    [36m<h3[39m
+      [33mdata-authored[39m=[32m"1"[39m
+    [36m>[39m
+      [0mReview current outputs[0m
+    [36m</h3>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"collaboration-stage"[39m
+    [36m>[39m
+      [0m当前阶段 · 独立审阅[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-result"[39m
+  [36m>[39m
+    [36m<h4>[39m
+      [0m分析阶段已验收，等待独立审阅[0m
+    [36m</h4>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"hint"[39m
+    [36m>[39m
+      [0m已有阶段产物；本轮交付仍待独立审阅通过。[0m
+    [36m</p>[39m
+  [36m</div>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"collaboration-route-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m>[39m
+    [0m路线回写待同步；与成果验收分别记录。[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-next"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"hint"[39m
+    [36m>[39m
+      [0m下一步 · 查看对应任务的证据与记录[0m
+    [36m</span>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m查看审阅产物[0m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-artifacts"[39m
+  [36m>[39m
+    [36m<h4>[39m
+      [0m验收成果与版本[0m
+    [36m</h4>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"collaboration-outcome-files"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-file"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-outline btn-card-compact collaboration-outcome-artifact"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-outcome-artifact-head"[39m
+          [36m>[39m
+            [36m<strong[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0mreports/result.csv[0m
+            [36m</strong>[39m
+            [36m<small>[39m
+              [0m阶段产物[0m
+            [36m</small>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mSHA256 [0m
+            [0maaaaaaaaaaaa[0m
+            [0m… · [0m
+            [0m12 字节[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"collaboration-outcome-version"[39m
+        [36m>[39m
+          [36m<summary>[39m
+            [0m版本定位详情[0m
+          [36m</summary>[39m
+          [36m<code[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mhost-v7[0m
+            [0m · SHA256 [0m
+            [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+          [36m</code>[39m
+          [36m<small[39m
+            [33mclass[39m=[32m"hint"[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0m任务 analysis · 尝试 analysis-attempt[0m
+          [36m</small>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"hint collaboration-outcome-narrow-hint"[39m
+  [36m>[39m
+    [0m窄面板显示摘要；展开可查看完整目标和成果版本。[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"collaboration-outcome-footer"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"hint collaboration-outcome-budget"[39m
+    [36m>[39m
+      [0m执行额度尚未记录[0m
+      [0m · [0m
+      [0m费用未记录[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33maria-expanded[39m=[32m"false"[39m
+      [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0m展开流程工作台[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/collaboration-outcome-panel.test.tsx:115:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  23:37:00
+   Duration  1.43s (transform 437ms, setup 470ms, import 261ms, tests 297ms, environment 322ms)
+

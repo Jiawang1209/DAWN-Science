@@ -26,6 +26,9 @@ import { CHILD_ENTRY, RUN_AS_NODE, type SubagentChildSpec } from "../../src/suba
 import {跑一轮} from '../../src/team/runner.js'
 import {resolveTaskSettings} from '../../src/subagent/task-tools.js'
 import {TaskContractSchema} from '../../src/orchestration/task-contract.js'
+import {SubagentExecutor} from '../../src/subagent/executor.js'
+import {OrchestrationStore} from '../../src/orchestration/store.js'
+import {OrchestrationService} from '../../src/orchestration/service.js'
 
 const ROOT = resolve(import.meta.dirname, "../..")
 const CHILD = join(ROOT, "dist", "electron", CHILD_ENTRY)
@@ -98,6 +101,23 @@ const lastDone = (out: string) =>
     .findLast((v) => v.type === "done")
 
 describe("真的起一个子 agent 进程", () => {
+  it('ordinary actual subprocess continuations settle two per-epoch deltas through the host once',async()=>{
+    const spec=specFor({task:'Say a short answer.'}),store=new OrchestrationStore(join(spec.agentDir,'parent'),'usage-owner'),service=new OrchestrationService(store)
+    const executor=new SubagentExecutor({context:{cwd:spec.cwd,provider:spec.provider,model:spec.model,...(spec.modelsPath?{modelsPath:spec.modelsPath}:{}),...(spec.credentials?{credentials:spec.credentials}:{}),agentDirOf:()=>spec.agentDir},childOf:()=>({command:electronPath,args:[CHILD],env:{[RUN_AS_NODE]:'1'}}),orchestration:{service,addressOf:()=>['same-call','0']}})
+    const definitions=[{name:'scout',description:'scout',systemPrompt:'Give one short answer.',filePath:'/unused'}]
+    try{
+      const first=(await executor.run({mode:'single',agent:'scout',task:spec.task},definitions)).results[0]!
+      expect(first.ok,first.error).toBe(true)
+      expect(first.observation?.usage).toMatchObject({input:12,output:8})
+      const second=await executor.续问(0,'scout','One more short answer.',definitions)
+      expect(second.ok,second.error).toBe(true);expect(second.observation?.usage).toEqual(first.observation?.usage)
+      const child=store.list()[0]!,a=first.observation!.usage!,b=second.observation!.usage!
+      expect(child.settings).toBeUndefined();expect(child.usageTotals).toMatchObject({input:24,output:16,settledEpochs:2,unknownEpochs:2,partial:['cacheRead']})
+      expect(child.usageTotals?.legacyHistory).toBeUndefined();expect(child.result?.observation?.usage?.input).toBe(12)
+      expect(service.budgetSnapshot()).toMatchObject({knownTokens:a.input!+a.output!+(a.cacheRead??0)+b.input!+b.output!+(b.cacheRead??0),consumedRuns:2,unknownRuns:2,inFlight:0})
+    }finally{await service.close()}
+  },120000)
+
   it.each(['read-only','workspace-write'] as const)('a real %s Team child cannot dispatch effects through peer messaging',async access=>{
     const mock=await startMockInferenceServer({toolCall:(body:{messages?:{role:string}[]})=>body.messages?.at(-1)?.role==='user'?{toolName:'team_send',args:{to:'writer',content:'overwrite results'}}:undefined})
     const spec=specFor();const modelsPath=join(spec.agentDir,'models.json');mkdirSync(spec.agentDir,{recursive:true});writeFileSync(modelsPath,JSON.stringify(mockModelsJson(mock.url)))

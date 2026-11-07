@@ -1,5 +1,6 @@
 /** Shareable representative tasks, independent answers and honest paired trial accounting. */
 import {createHash} from 'node:crypto'
+import type {SubmissionDiagnostics} from './research-submissions.js'
 import type {FileVersion} from '../protocol/file-versions.js'
 export interface ResearchTask {id:string;csv:string;column:string;unit?:string;missing:'drop'|'block';instructions:string;expected?:{n:number;unit:string;mean:number}}
 export function researchTasks():ResearchTask[]{
@@ -19,7 +20,7 @@ export function judgeResearch(task:ResearchTask,terminal:ResearchTerminal,actual
  const correctBlock=terminal==='blocked'&&actual===undefined&&blocking?.inputRead===true&&blocking.reasons.some(reason=>/单位.{0,12}(未提供|未知|缺失|不明)|(?:unknown|missing|unspecified|no)\s+units?\b|units?.{0,20}(?:unknown|missing|not provided)/i.test(reason))
  return{success:inputPreserved&&(e?terminal==='accepted'&&correct&&versionMatches:correctBlock),falseAcceptance:terminal==='accepted'&&(!inputPreserved||!e||!correct||!versionMatches),inputPreserved}
 }
-export interface ResearchRow {stageRequestBudgets?:Record<'work'|'review',{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number}>;requestBudget?:{reserved:number;forwarded:number;denied:number;limit:number};submissionAttempts?:number;invalidSubmissions?:number;caseId:string;mode:'single'|'multi';repeat:number;fingerprint:string;terminal:ResearchTerminal;success:boolean;falseAcceptance:boolean;inputPreserved:boolean|null;requests:number;elapsedMs:number;usage:{visibleTokens:number;unknownUsageTasks:number;partialUsage:boolean};versions:FileVersion[];reason?:string}
+export interface ResearchRow {submissionDiagnostics?:SubmissionDiagnostics;diagnosticReadIssues?:{scopeId:string;reason:string}[];stageRequestBudgets?:Record<'work'|'review',{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number}>;requestBudget?:{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number};submissionAttempts?:number;invalidSubmissions?:number;caseId:string;mode:'single'|'multi';repeat:number;fingerprint:string;terminal:ResearchTerminal;success:boolean;falseAcceptance:boolean;inputPreserved:boolean|null;requests:number;elapsedMs:number;usage:{visibleTokens:number;unknownUsageTasks:number;partialUsage:boolean};versions:FileVersion[];reason?:string}
 export function notRunResearch(task:ResearchTask,mode:ResearchRow['mode'],fingerprint:string):ResearchRow{
  return{caseId:task.id,mode,repeat:1,fingerprint,terminal:'not-run',success:false,falseAcceptance:false,inputPreserved:null,requests:0,elapsedMs:0,usage:{visibleTokens:0,unknownUsageTasks:0,partialUsage:false},versions:[],reason:'整轮请求上限或取消，未启动；输入核验和模型用量不适用'}
 }

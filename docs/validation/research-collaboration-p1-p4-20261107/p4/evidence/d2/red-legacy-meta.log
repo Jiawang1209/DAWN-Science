@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/subagent/task-recovery.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/subagent/task-recovery.test.ts (7 tests | 1 failed) 30ms
+   × rebuilds the new index from legacy run metadata without dropping the frozen task scope 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/subagent/task-recovery.test.ts > rebuilds the new index from legacy run metadata without dropping the frozen task scope
+AssertionError: expected { source: 'host-epoch-deltas', …(3) } to match object { legacyHistory: true, …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "legacyHistory": true,
+-   "partial": [
+-     "input",
+-     "output",
+-     "cacheRead",
+-   ],
++   "partial": [],
+    "settledEpochs": 0,
+    "unknownEpochs": 0,
+  }
+
+ ❯ tests/subagent/task-recovery.test.ts:21:47
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  00:21:28
+   Duration  736ms (transform 207ms, setup 0ms, import 627ms, tests 30ms, environment 0ms)
+

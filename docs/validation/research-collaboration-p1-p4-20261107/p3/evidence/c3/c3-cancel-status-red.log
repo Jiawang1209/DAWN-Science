@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/collaboration-model.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-model.test.ts (8 tests | 1 failed) 31ms
+   × labels cancelled execution drain only from a matching admitted current epoch 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-model.test.ts > labels cancelled execution drain only from a matching admitted current epoch
+AssertionError: expected '已取消并排空' to be '已取消，排空尚未核验' // Object.is equality
+
+Expected: "已取消，排空尚未核验"
+Received: "已取消并排空"
+
+ ❯ tests/ui/collaboration-model.test.ts:69:282
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  23:34:13
+   Duration  1.03s (transform 359ms, setup 474ms, import 114ms, tests 31ms, environment 326ms)
+

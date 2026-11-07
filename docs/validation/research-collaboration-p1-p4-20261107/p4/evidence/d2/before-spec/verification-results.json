@@ -1,0 +1,66 @@
+[
+  {
+    "name": "targeted-full-final",
+    "command": [
+      "npm",
+      "exec",
+      "vitest",
+      "run",
+      "--",
+      "--project",
+      "node",
+      "tests/protocol",
+      "tests/orchestration",
+      "tests/subagent",
+      "tests/team",
+      "tests/bot",
+      "tests/runtime/native.test.ts",
+      "tests/runtime/native-turn-failed.test.ts",
+      "tests/runtime/native-kernel-cleanup.test.ts",
+      "tests/runtime/agent-context-native.test.ts",
+      "tests/runtime/agent-context-sampler.test.ts",
+      "tests/runtime/session-usage.test.ts",
+      "tests/runtime/native-usage-observation.test.ts",
+      "tests/runtime/bot-submission-schema.test.ts",
+      "tests/runtime/subagent-follow-up.test.ts",
+      "tests/workbench/bot-contract.test.ts",
+      "tests/workbench/bot-usage.test.ts",
+      "tests/workbench/bot-ops.test.ts",
+      "tests/workbench/bot-science-acceptance.test.ts",
+      "tests/integration/subagent-child.test.ts",
+      "tests/integration/bot-native-session.test.ts"
+    ],
+    "started": "2026-11-08T00:25:58.564504+08:00",
+    "exitCode": 0
+  },
+  {
+    "name": "typecheck-verified",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "started": "2026-11-08T00:26:21.186607+08:00",
+    "exitCode": 0
+  },
+  {
+    "name": "build-verified",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "started": "2026-11-08T00:26:24.068180+08:00",
+    "exitCode": 0
+  },
+  {
+    "name": "diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "started": "2026-11-08T00:26:26.031323+08:00",
+    "exitCode": 0
+  }
+]

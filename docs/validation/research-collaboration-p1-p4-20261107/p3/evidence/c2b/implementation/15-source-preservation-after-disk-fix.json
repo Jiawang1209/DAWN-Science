@@ -1,0 +1,18 @@
+{
+  "baseline": "docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c2a/candidate-src-sha256.json",
+  "baseline_source_count": 627,
+  "current_source_count": 627,
+  "changed_source_files": [
+    "src/ui/client.ts",
+    "src/ui/run-overview.tsx",
+    "src/ui/use-run-overview.ts"
+  ],
+  "added_source_files": [],
+  "missing_source_files": [],
+  "allowed_changes": [
+    "src/ui/client.ts",
+    "src/ui/use-run-overview.ts",
+    "src/ui/run-overview.tsx"
+  ],
+  "pass": true
+}

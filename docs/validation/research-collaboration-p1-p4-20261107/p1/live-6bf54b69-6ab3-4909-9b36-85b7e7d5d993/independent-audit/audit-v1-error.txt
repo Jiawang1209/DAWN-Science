@@ -1,0 +1,1 @@
+Initial independent auditor aborted on host Python lacking sys.stdlib_module_names. No pilot code executed. Replaced that metadata API with an explicit standard-library import allowlist; audit-v1-python-compat.py retains original script.

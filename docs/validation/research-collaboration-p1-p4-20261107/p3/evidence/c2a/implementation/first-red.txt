@@ -1,0 +1,110 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run tests/orchestration/service.test.ts tests/orchestration/run-overview.test.ts tests/protocol/run-overview-changed.test.ts tests/workbench/events.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/protocol/run-overview-changed.test.ts (1 test | 1 failed) 2ms
+   × strictly carries only an owner and observation invalidation stamp 2ms
+ ❯ |node| tests/workbench/events.test.ts (79 tests | 1 failed) 35ms
+   × routes run observation changes independently of transcript tracking, revisions and notifications 4ms
+ ❯ |node| tests/orchestration/run-overview.test.ts (10 tests | 2 failed) 63ms
+   × includes stable live observation and active task proof without read mutations 6ms
+   × reads owned current teams without legacy migration even when orchestration state is absent 16ms
+ ❯ |node| tests/orchestration/service.test.ts (12 tests | 2 failed) 209ms
+   × keeps independent stable observation stamps and isolates persistent observer failures 3ms
+   × keeps only exact active admission task proof after bounded history truncation 132ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > includes stable live observation and active task proof without read mutations
+AssertionError: expected undefined to be 'a' // Object.is equality
+
+- Expected:
+"a"
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/run-overview.test.ts:102:116
+    100|  const run=service.run(child.id,async()=>{await new Promise<void>(r=>r…
+    101|  const a=liveRunOverview(service),b=liveRunOverview(service)
+    102|  expect(a.observation).toEqual(service.observation);expect(b).toEqual(…
+       |                                                                                                                    ^
+    103|  release();await run;await service.close()
+    104| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > reads owned current teams without legacy migration even when orchestration state is absent
+AssertionError: expected undefined to be 't' // Object.is equality
+
+- Expected:
+"t"
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/run-overview.test.ts:113:61
+    111|  mkdirSync(join(root,'teams','t'),{recursive:true});writeFileSync(join…
+    112|  const before=readFileSync(join(root,'teams','t','team.json'),'utf8'),…
+    113|  const view=readRunOverview(root,'p');expect(view.team?.id).toBe('t');…
+       |                                                             ^
+    114|  expect(readFileSync(join(root,'teams','t','team.json'),'utf8')).toBe(…
+    115|  expect(readRunOverview(root,'other')).toMatchObject({team:null,teamIs…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > keeps independent stable observation stamps and isolates persistent observer failures
+TypeError: service.subscribeObservation is not a function
+ ❯ tests/orchestration/service.test.ts:165:10
+    163|  const {service}=setup(),initial=service.observation,waitRevision=serv…
+    164|  expect(service.observation).toEqual(initial)
+    165|  service.subscribeObservation(()=>{throw Error('observer failure')})
+       |          ^
+    166|  const off=service.subscribeObservation(stamp=>seen.push(stamp.revisio…
+    167|  let woke=false;const abort=new AbortController(),waiting=service.wait…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > keeps only exact active admission task proof after bounded history truncation
+TypeError: service.currentTaskAttempt is not a function
+ ❯ tests/orchestration/service.test.ts:182:22
+    180|  for(let i=0;i<270;i++)store.recordEvent({type:'cancel-requested',chil…
+    181|  binding.attemptId='forged'
+    182|  const proof=service.currentTaskAttempt(child.id)!;expect(proof.attemp…
+       |                      ^
+    183|  expect(service.currentTaskAttempt(child.id)?.attemptId).toBe('attempt…
+    184|  store.update(child.id,{epoch:2});expect(service.currentTaskAttempt(ch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/protocol/run-overview-changed.test.ts > strictly carries only an owner and observation invalidation stamp
+TypeError: Cannot read properties of undefined (reading 'parse')
+ ❯ tests/protocol/run-overview-changed.test.ts:6:34
+      4| it('strictly carries only an owner and observation invalidation stamp'…
+      5|  const value={type:'runOverviewChanged',ownerSessionId:'p',observerId:…
+      6|  expect(RunOverviewChangedSchema.parse(value)).toEqual(value)
+       |                                  ^
+      7|  for(const field of ['team','prompt','transcript','sessionId'])expect(…
+      8|  expect(RunOverviewChangedSchema.safeParse({...value,revision:-1}).suc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |node| tests/workbench/events.test.ts > routes run observation changes independently of transcript tracking, revisions and notifications
+TypeError: h.onRunOverviewChange is not a function
+ ❯ tests/workbench/events.test.ts:1168:4
+    1166|  const h=hub(),seen:unknown[]=[],normal:unknown[]=[],any:unknown[]=[]
+    1167|  h.onUpdate(e=>normal.push(e));h.onAnyUpdate(e=>any.push(e))
+    1168|  h.onRunOverviewChange(()=>{throw Error('isolated')});const off=h.onRu…
+       |    ^
+    1169|  const event={kind:'run_overview_changed' as const,sessionId:'a',obser…
+    1170|  h.ingest('a',event);expect(seen).toHaveLength(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  6 failed | 96 passed (102)
+   Start at  22:48:42
+   Duration  550ms (transform 443ms, setup 0ms, import 849ms, tests 309ms, environment 0ms)
+

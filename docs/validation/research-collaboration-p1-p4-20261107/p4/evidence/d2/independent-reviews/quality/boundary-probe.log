@@ -1,0 +1,3 @@
+PASS atomic failed-write rollback, same-epoch retry, duplicate rejection and durable single charge
+PASS interleaved two-child completion, active cancellation plus queued same-child successor and reopen
+PASS deterministic 2000-epoch numeric/partial fuzz, 6000 monotone safe field checks; final={"source":"host-epoch-deltas","settledEpochs":2000,"unknownEpochs":1996,"partial":["input","output","cacheRead"],"input":9007199254740991,"cacheRead":56849,"lastSettledEpoch":2000,"output":53085}

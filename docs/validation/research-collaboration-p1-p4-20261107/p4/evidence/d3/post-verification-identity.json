@@ -1,0 +1,8 @@
+{
+  "srcManifestUnchanged": true,
+  "buildManifestUnchanged": true,
+  "sourceFiles": 634,
+  "buildFiles": 625,
+  "comparison": "Exact full path sets and SHA256 after all checks, not just pre-existing keys",
+  "childBuildSha256": "96b1f3e966c391d88fb45fa9524dbb61d4b0203da6ac4cbf69ae41f577d7063e"
+}

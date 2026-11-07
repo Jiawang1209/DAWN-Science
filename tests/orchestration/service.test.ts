@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {OrchestrationStore} from '../../src/orchestration/store.js'
 import {OrchestrationService} from '../../src/orchestration/service.js'
+import {reviewReservationKey} from '../../src/orchestration/budget.js'
 
 const roots: string[] = []
 afterEach(() => {for (const dir of roots.splice(0)) rmSync(dir, {recursive: true, force: true})})
@@ -14,6 +15,55 @@ function setup(capacity = 2) {
 }
 const tick = () => new Promise<void>(resolve => setImmediate(resolve))
 const gate = () => {let release!: () => void; const promise = new Promise<void>(resolve => {release = resolve}); return {promise, release}}
+
+it('admits its protected review after ordinary work has spent every unreserved execution run',async()=>{
+ const {store,service}=setup(1)
+ service.configureBudget({maxRuns:3,reserveReviewRuns:true},0)
+ const reservation=store.reserveReviewRuns('pipeline',0)!,key=reservation.key
+ for(const [index,stage] of (['check','analyze'] as const).entries()){
+  const child=store.register('team',['team',stage,'1'],stage),attempt={teamId:'team',taskId:stage,attemptId:'attempt-'+stage,attempt:1},admission={key,stage}
+  store.bindReviewAdmission(child.id,admission,attempt)
+  store.settleRun(child.id,store.beginRun(child.id,attempt,admission),{ok:true,output:'done'},false)
+  expect(store.budget().consumedRuns).toBe(index+1)
+ }
+ const ordinary=store.register('subagent',['ordinary'],'ordinary')
+ expect((await service.run(ordinary.id,async()=>({ok:true,output:'must not start'}))).ok).toBe(false)
+ const reviewer=store.register('team',['team','review','1'],'review'),attempt={teamId:'team',taskId:'review',attemptId:'attempt-review',attempt:1},admission={key,stage:'review' as const}
+ store.bindReviewAdmission(reviewer.id,admission,attempt)
+ expect(await service.run(reviewer.id,async()=>({ok:true,output:'reviewed'}),undefined,attempt,admission)).toMatchObject({ok:true,output:'reviewed'})
+ expect(store.budget()).toMatchObject({consumedRuns:3,reviewReservedRuns:0,inFlight:0})
+ await service.close()
+})
+it('keeps a queued protected review when lowering the limit blocks ordinary queued work',async()=>{
+ const {store,service}=setup(1)
+ service.configureBudget({maxRuns:4,reserveReviewRuns:true},0)
+ const key=store.reserveReviewRuns('pipeline',0)!.key,wait=gate(),busy=store.register('subagent',['busy'],'busy')
+ const active=service.run(busy.id,async()=>{await wait.promise;return{ok:true,output:'done'}})
+ const ordinary=store.register('subagent',['ordinary'],'ordinary'),queued=service.run(ordinary.id,async()=>({ok:true,output:'must not run'}))
+ const child=store.register('team',['team','review','1'],'review'),attempt={teamId:'team',taskId:'review',attemptId:'review',attempt:1},admission={key,stage:'review' as const}
+ store.bindReviewAdmission(child.id,admission,attempt)
+ const review=service.run(child.id,async()=>({ok:true,output:'reviewed'}),undefined,attempt,admission)
+ service.configureBudget({maxRuns:2,reserveReviewRuns:true},store.budget().revision)
+ expect((await queued).ok).toBe(false)
+ wait.release();await active
+ expect((await review).ok).toBe(true)
+ expect(store.budget().consumedRuns).toBe(2)
+ await service.close()
+})
+it('does not release an unused review hold until matching queued and cancelled work has drained',async()=>{
+ const {store,service}=setup(1)
+ service.configureBudget({maxRuns:4,reserveReviewRuns:true},0)
+ const key=store.reserveReviewRuns('pipeline',0)!.key,wait=gate(),busy=store.register('subagent',['busy'],'busy')
+ const active=service.run(busy.id,async()=>{await wait.promise;return{ok:true,output:'done'}})
+ const child=store.register('team',['team','analysis','1'],'analysis'),attempt={teamId:'team',taskId:'analysis',attemptId:'analysis',attempt:1},admission={key,stage:'analyze' as const},ctrl=new AbortController()
+ store.bindReviewAdmission(child.id,admission,attempt)
+ const queued=service.run(child.id,async()=>({ok:true,output:'must not run'}),ctrl.signal,attempt,admission)
+ expect(()=>service.releaseReviewReservation(key)).toThrow(/排空|queued|在途/)
+ ctrl.abort();await queued
+ service.releaseReviewReservation(key)
+ expect(store.budget()).toMatchObject({consumedRuns:1,reviewReservedRuns:0})
+ wait.release();await active;await service.close()
+})
 
 describe('shared execution ownership', () => {
   it('shares capacity across backends and serializes each child', async () => {
@@ -107,4 +157,60 @@ it.each(['abort','close'])('queued continuation %s cannot expose the prior activ
   expect(liveRunOverview(service).runs.find(r=>r.id===a.id)?.trace).toBeUndefined()
   expect(store.get(a.id)?.result?.trace).toEqual(trace)
  }finally{two.release();await blocker;await(closing??service.close())}
+})
+
+it('keeps independent stable observation stamps and isolates persistent observer failures',async()=>{
+ const {service}=setup(),initial=service.observation,waitRevision=service.revision,seen:number[]=[]
+ expect(service.observation).toEqual(initial)
+ service.subscribeObservation(()=>{throw Error('observer failure')})
+ const off=service.subscribeObservation(stamp=>seen.push(stamp.revision))
+ let woke=false;const abort=new AbortController(),waiting=service.wait(waitRevision,60000,abort.signal).then(()=>{woke=true})
+ service.invalidateObservation();await Promise.resolve()
+ expect(woke).toBe(false);expect(service.revision).toBe(waitRevision)
+ expect(service.observation).toEqual({observerId:initial.observerId,revision:initial.revision+1})
+ service.register('subagent',['a'],'a');expect(seen).toEqual([1,2]);off()
+ service.invalidateObservation();expect(seen).toEqual([1,2])
+ abort.abort();await waiting;await service.close()
+ expect(setup().service.observation.observerId).not.toBe(initial.observerId)
+})
+it('keeps only exact active admission task proof after bounded history truncation',async()=>{
+ const {service,store}=setup(),child=service.register('team',['team','member','1'],'member'),hold=gate()
+ const binding={teamId:'team',taskId:'task',attemptId:'attempt',attempt:1}
+ const run=service.run(child.id,async()=>{await hold.promise;return{ok:true,output:''}},undefined,binding)
+ for(let i=0;i<270;i++)store.recordEvent({type:'cancel-requested',childId:child.id,epoch:1})
+ expect(store.history()).toMatchObject({truncated:true});expect(store.history().events.some(e=>e.taskAttempt)).toBe(false)
+ binding.attemptId='forged'
+ const proof=service.currentTaskAttempt(child.id)!;expect(proof.attemptId).toBe('attempt');proof.attemptId='forged'
+ expect(service.currentTaskAttempt(child.id)?.attemptId).toBe('attempt')
+ store.update(child.id,{epoch:2});expect(service.currentTaskAttempt(child.id)).toBeUndefined();store.update(child.id,{epoch:1})
+ hold.release();await run;expect(service.currentTaskAttempt(child.id)).toBeUndefined();await service.close()
+})
+it('disposes observation listeners after final close settlement',async()=>{
+ const {service}=setup(),seen:number[]=[];service.subscribeObservation(s=>seen.push(s.revision))
+ await service.close();const count=seen.length;service.invalidateObservation();expect(seen).toHaveLength(count)
+})
+it('does not expose schema-valid task bindings rejected by child ownership projection',async()=>{
+ const {service}=setup(),hold=gate(),binding={teamId:'team',taskId:'task',attemptId:'attempt',attempt:1}
+ const ordinary=service.register('subagent',['call','0'],'ordinary'),foreign=service.register('team',['other','m','1'],'foreign')
+ const first=service.run(ordinary.id,async()=>{await hold.promise;return{ok:true,output:''}},undefined,binding)
+ const second=service.run(foreign.id,async()=>{await hold.promise;return{ok:true,output:''}},undefined,binding)
+ expect(service.currentTaskAttempt(ordinary.id)).toBeUndefined();expect(service.currentTaskAttempt(foreign.id)).toBeUndefined()
+ hold.release();await first;await second;await service.close()
+})
+it('publishes active external cancellation as stopping before cleanup drains without advancing wait revision',async()=>{
+ const {store,service}=setup(1),child=store.register('subagent',['cancel-observation'],'cancel observation'),controller=new AbortController(),cleanup=gate()
+ const work=service.run(child.id,async signal=>{await new Promise<void>(resolve=>signal.addEventListener('abort',()=>resolve(),{once:true}));await cleanup.promise;return{ok:true,output:'cleanup complete'}},controller.signal)
+ await tick()
+ const before=service.observation,revision=service.revision,seen:string[]=[]
+ const off=service.subscribeObservation(()=>seen.push(service.controlPhase(child.id)))
+ let woke=false;const waiter=service.wait(revision,1000).then(()=>{woke=true})
+ try{
+ controller.abort();await Promise.resolve()
+ expect(service.controlPhase(child.id)).toBe('stopping')
+ expect(seen).toEqual(['stopping'])
+ expect(service.observation).toEqual({observerId:before.observerId,revision:before.revision+1})
+ expect(service.revision).toBe(revision);expect(woke).toBe(false)
+ cleanup.release();await work;await waiter
+ expect(seen.at(-1)).toBe('drained');expect(woke).toBe(true)
+ }finally{controller.abort();cleanup.release();await work;await waiter;off();await service.close()}
 })

@@ -1,4 +1,5 @@
 import {scienceStepContext} from '../protocol/science-route-context.js'
+import {createHash} from 'node:crypto'
 /** Fixed scientific reducer over existing Team tasks; no second execution loop. */
 import {PipelineDefinitionSchema,SciencePipelineSchema,publicPipeline,stageContract,type PipelineDefinition,type PipelineStage,type SciencePipeline} from '../protocol/science-pipeline.js'
 import {TaskContractSchema,TaskSettingsSchema,type TaskContract,type TaskSettings} from '../orchestration/task-contract.js'
@@ -9,6 +10,17 @@ import type {团队,成员} from './types.js'
 export function pipelineStageContract(def:PipelineDefinition,stage:PipelineStage):TaskContract {
  return stageContract(def,stage)
 }
+/** Budget identity is host-owned and independent of the public batch display projection. */
+export function pipelineBudgetId(team:团队,p:SciencePipeline):string{return'pipeline-'+createHash('sha256').update(JSON.stringify([team.id,p.requestId,p.namespace??null,p.budgetGeneration??0])).digest('hex')}
+export function pipelineRemainingRuns(p:SciencePipeline):number{return p.stage==='check'?3:p.stage==='analyze'?2:1}
+export function scienceBudgetPipelines(team:团队):SciencePipeline[]{
+ const items=team.scienceBatch?.items.flatMap(item=>item.checkpoint?[item.checkpoint]:item.completed?[item.completed]:[])??[]
+ const candidates=team.scienceBatch?.concurrency===2?[...items,...(team.pipeline?[team.pipeline]:[])]:[...(team.pipeline?[team.pipeline]:[]),...items]
+ const found=new Map<string,SciencePipeline>()
+ for(const p of candidates){const id=pipelineBudgetId(team,p);if(!found.has(id))found.set(id,p)}
+ return[...found.values()]
+}
+export function blockPipelineBudget(p:SciencePipeline,reason:string,now=Date.now()):void{finish(p,'blocked',reason,now)}
 export function startPipeline(team:团队,requestId:string,raw:PipelineDefinition,freeze:(member:成员,contract:TaskContract)=>TaskSettings=(m,c)=>resolveTaskSettings(c,'ask-risky'),now=Date.now(),namespace?:string):void {
  const definition=PipelineDefinitionSchema.parse(raw)
  if(namespace){if(!team.scienceBatch||team.scienceBatch.items[team.scienceBatch.index]?.id!==namespace||team.pipeline?.status==='running')throw new 团队错误('批量内部阶段身份冲突')}

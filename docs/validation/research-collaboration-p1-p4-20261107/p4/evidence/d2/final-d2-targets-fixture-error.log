@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/orchestration/agent-usage-totals.test.ts tests/protocol/agent-usage-totals.test.ts tests/runtime/native-usage-observation.test.ts tests/runtime/session-usage.test.ts tests/subagent/task-recovery.test.ts tests/subagent/child-task.test.ts tests/workbench/bot-usage.test.ts tests/integration/subagent-child.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/native-usage-observation.test.ts (2 tests | 1 failed) 72ms
+   × restored team history outside the orchestration ledger is explicitly legacy, never fresh zero-history coverage 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/native-usage-observation.test.ts > restored team history outside the orchestration ledger is explicitly legacy, never fresh zero-history coverage
+TypeError: Cannot read properties of undefined (reading 'store')
+ ❯ tests/runtime/native-usage-observation.test.ts:38:134
+     36|  try{
+     37|   await runtime.start({sessionId:'owner',workspace:root,sessionDir,res…
+     38|   const service=(runtime as unknown as {orchestrations:Map<string,Orch…
+       |                                                                                                                                      ^
+     39|   expect(child.usageTotals).toEqual({source:'host-epoch-deltas',legacy…
+     40|   expect(service.budgetSnapshot().consumedRuns).toBe(0)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 63 passed (64)
+   Start at  00:24:55
+   Duration  5.67s (transform 2.50s, setup 0ms, import 6.23s, tests 5.72s, environment 0ms)
+

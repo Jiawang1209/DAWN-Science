@@ -1,0 +1,133 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (33 tests | 4 failed) 20ms
+     × accepts only completed current host receipt versions and retains the version locator 7ms
+     × supports existing prefixed run keys and returns a navigation-only action target 1ms
+     × keeps mixed runs active while surfacing the actual blocker and its navigation target 1ms
+     × keeps mixed team tasks active while surfacing the actual blocker and its navigation target 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > accepts only completed current host receipt versions and retains the version locator
+AssertionError: expected { state: 'accepted', …(4) } to match object { state: 'accepted', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -3,11 +3,11 @@
+      "result.csv",
+    ],
+    "artifacts": [
+      {
+        "scope": "final",
+-       "selectionKey": "run:run",
++       "selectionKey": "run",
+        "version": {
+          "bytes": 1,
+          "path": "result.csv",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "versionId": "retained-v1",
+
+ ❯ tests/ui/collaboration-outcome.test.ts:21:18
+     19|  it('accepts only completed current host receipt versions and retains …
+     20|   const result=selectCollaborationOutcome(snapshot(),'run')
+     21|   expect(result).toMatchObject({state:'accepted',acceptedPaths:[file.p…
+       |                  ^
+     22|   expect(selectCollaborationOutcome({...snapshot(),runs:[{...run,taskR…
+     23|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > supports existing prefixed run keys and returns a navigation-only action target
+AssertionError: expected { state: 'unverified', …(4) } to match object { state: 'accepted', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "actionTarget": {
+-     "selectionKey": "run:run",
+-   },
+-   "artifacts": [
+-     {
+-       "selectionKey": "run:run",
+-     },
+-   ],
+-   "state": "accepted",
++   "artifacts": [],
++   "state": "unverified",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:137:60
+    135|  })
+    136|  it('supports existing prefixed run keys and returns a navigation-only…
+    137|   expect(selectCollaborationOutcome(snapshot(),'run:run')).toMatchObje…
+       |                                                            ^
+    138|  })
+    139|  it('keeps mixed runs active while surfacing the actual blocker and it…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > keeps mixed runs active while surfacing the actual blocker and its navigation target
+AssertionError: expected { state: 'active', …(4) } to match object { state: 'active', …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+    "action": "inspect-feedback",
+-   "actionTarget": {
+-     "selectionKey": "run:blocked",
+-   },
+-   "blocker": "Missing units",
+    "state": "active",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:141:45
+    139|  it('keeps mixed runs active while surfacing the actual blocker and it…
+    140|   const value=snapshot([{...run,id:'busy',state:'running',phase:'runni…
+    141|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'acti…
+       |                                             ^
+    142|  })
+    143|  it('keeps mixed team tasks active while surfacing the actual blocker …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > keeps mixed team tasks active while surfacing the actual blocker and its navigation target
+AssertionError: expected { state: 'active', …(4) } to match object { state: 'active', …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+    "action": "inspect-feedback",
+-   "actionTarget": {
+-     "selectionKey": "task:[\"team\",\"blocked\"]",
+-   },
+-   "blocker": "Input mismatch",
+    "state": "active",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:145:45
+    143|  it('keeps mixed team tasks active while surfacing the actual blocker …
+    144|   const value=withTeam(team([{...task('busy'),status:'in_progress'},{.…
+    145|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'acti…
+       |                                             ^
+    146|  })
+    147|  it('keeps protocol optional fields backward compatible and strict',()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 29 passed (33)
+   Start at  22:20:41
+   Duration  960ms (transform 325ms, setup 481ms, import 22ms, tests 20ms, environment 346ms)
+

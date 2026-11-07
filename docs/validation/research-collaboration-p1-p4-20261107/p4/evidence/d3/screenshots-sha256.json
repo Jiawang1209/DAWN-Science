@@ -1,0 +1,402 @@
+{
+  "behavior-electron/budget/phase-a-history.png": {
+    "bytes": 328072,
+    "sha256": "753176f1693a18d8b4113664404e6dc71e9c61574e3018d984edd67717fb218c"
+  },
+  "behavior-electron/budget/phase-a-lock-wait.png": {
+    "bytes": 303176,
+    "sha256": "60197cfd2ae446937e1e35c0dea035d1b2c93c1b6bb8fc1ca92d2947e437074a"
+  },
+  "behavior-electron/budget/phase-b-elapsed-drained.png": {
+    "bytes": 303252,
+    "sha256": "44b6b20bd47692b218c56b2d4dc406b7b09e563d3e014d7e8bff58c71da3f0fc"
+  },
+  "behavior-electron/budget/phase-b-limit.png": {
+    "bytes": 343026,
+    "sha256": "729a1905d99fab51503d9d1cd154f115eb8c080369b00a0c6c345bb83ccaee2a"
+  },
+  "behavior-electron/budget/phase-b-recovery.png": {
+    "bytes": 309620,
+    "sha256": "9408c2a74f07948260eef51a478a7a3ea4f4ce9bb959cf946feb67d2a6465c39"
+  },
+  "behavior-electron/budget/review-cancel-drained.png": {
+    "bytes": 358031,
+    "sha256": "56f78c547ef33f575ce829a49ac38b23a879f540ade2030bfe21693ed88b0344"
+  },
+  "behavior-electron/budget/review-completed-at-three-runs.png": {
+    "bytes": 359301,
+    "sha256": "2109207a5e764325b935d67b7ec85d9aa739979e5ec2557c5fd2c449fba85499"
+  },
+  "behavior-electron/budget/review-explicit-recovery-completed.png": {
+    "bytes": 356885,
+    "sha256": "a422a49ac07dc74c33c57befa01bbd5c53d208625dfac1488563c5622338b5e6"
+  },
+  "behavior-electron/budget/review-held-before-review.png": {
+    "bytes": 359919,
+    "sha256": "9ef1ff03be1a4487417b5066a3d2873d77c96b78f84375be632ee02d76b3725f"
+  },
+  "behavior-electron/budget/review-interrupted-awaiting-verification.png": {
+    "bytes": 356983,
+    "sha256": "e7422740a76125e8b47bd8e627a75e46030b462315e72d6998f5088510863733"
+  },
+  "behavior-electron/budget/review-restart-preserved.png": {
+    "bytes": 356115,
+    "sha256": "944b4adac6c55e86c2db4dfebb391fa8a95652594414456ccea6d2ef85ce172b"
+  },
+  "behavior-electron/collaboration/phase-a-artifacts.png": {
+    "bytes": 348841,
+    "sha256": "1435e282287de52e8b7df709a10ced6dc52d8a34492cfe1cace7868b5677cbf2"
+  },
+  "behavior-electron/collaboration/phase-a-lock-wait.png": {
+    "bytes": 314649,
+    "sha256": "107da737f281209da2e095947abd06db9892e62e6ea73dd7a33835516c49b9ed"
+  },
+  "behavior-electron/collaboration/phase-b-conversation-dark.png": {
+    "bytes": 207806,
+    "sha256": "c9c5957cc8928814d54ae06ea59ebbd7adbee37921c31628c2eaf6964ab33f65"
+  },
+  "behavior-electron/collaboration/phase-b-conversation.png": {
+    "bytes": 326812,
+    "sha256": "9cb0e881278d02cd8a4ebcbbef4ae694bb553274e9b6c63238d3f157ccc0dedc"
+  },
+  "behavior-electron/collaboration/phase-b-network-dark-completed.png": {
+    "bytes": 435996,
+    "sha256": "a3ed61bfaf113b9862f3f8d4a214dc9527183285c7ff036b61af1a666677abdc"
+  },
+  "behavior-electron/collaboration/phase-b-network-dark-running.png": {
+    "bytes": 415847,
+    "sha256": "30a51839f20bfd3ca525dfb404407aedec9e42c6e2f221026d872a5d1290911f"
+  },
+  "behavior-electron/collaboration/phase-b-network-narrow.png": {
+    "bytes": 129614,
+    "sha256": "c1db8350b15af1104fc7fd4a77b756be7f3ebb76b7cdb897a65ffceb392c8067"
+  },
+  "behavior-electron/collaboration/phase-b-workflow.png": {
+    "bytes": 252920,
+    "sha256": "fb6741cda71c408c62bbec770d03dab17845bedaf5206778f8a451e0684092c6"
+  },
+  "behavior-electron/collaboration/phase-c-recovery.png": {
+    "bytes": 329085,
+    "sha256": "b574ac78b7491119d9ef4fafc2b9ecaff785b9c9b642a56420417874b4524000"
+  },
+  "behavior-electron/collaboration/session-a-restored.png": {
+    "bytes": 330244,
+    "sha256": "fd29ad0f584283b37d2d4ddbe15b115cf096dea1476f6bea1ec8b0ae42658147"
+  },
+  "behavior-electron/collaboration/session-b-isolated.png": {
+    "bytes": 314254,
+    "sha256": "29fce1b3ddb431775e8f568b4d2c1d3b4af6ed088bec8f924d14ad0d4849cf56"
+  },
+  "behavior-electron/evidence/members/current-known-1440-light.png": {
+    "bytes": 188027,
+    "sha256": "3f9f3d26915a5b2d6df21987ec2f31a3fc61e01a25e7171c44bc62a3f0191880"
+  },
+  "behavior-electron/evidence/members/current-unknown-light.png": {
+    "bytes": 313708,
+    "sha256": "8f92fbfb0823a704b2d0706a4a70da868f86b2ed20a08274e6cf0651e530b67b"
+  },
+  "behavior-electron/evidence/members/detail-current-900-light.png": {
+    "bytes": 97222,
+    "sha256": "69141bdfbd46eb26d047db49de13d971fc2eb803d76adf65fcc3c5c03e944d99"
+  },
+  "behavior-electron/evidence/members/expanded-current-1440-dark.png": {
+    "bytes": 142678,
+    "sha256": "1fe6e55a3603bb56503f5c8fdd9c4c1a2e77a7dbd3e1acdecb51faa5c91ae8ac"
+  },
+  "behavior-electron/evidence/members/expanded-current-1440-light.png": {
+    "bytes": 144704,
+    "sha256": "21fa8f1047f6ececa03d27be91f1d7911451277e56e92f51e659c9cc98bf1d99"
+  },
+  "behavior-electron/evidence/members/expanded-current-900-light.png": {
+    "bytes": 95562,
+    "sha256": "d717a55713c757c53a7da1b7e4d09c606b6e0bedacee50ca546667d509ba3e8f"
+  },
+  "behavior-electron/evidence/members/restarted-history-1440-dark.png": {
+    "bytes": 321581,
+    "sha256": "e9d6349c462555d73bb3b9dd59576b3f1a3f42c1d230fb70dacbdf9a78c020f5"
+  },
+  "behavior-electron/evidence/members/retired-disk-history-1440-dark.png": {
+    "bytes": 331071,
+    "sha256": "c1a371a6c375453859e9025963c252631e712a60c086e089d404b680c5e1a3ff"
+  },
+  "behavior-electron/evidence/members/settled-two-epochs-partial-1440-dark.png": {
+    "bytes": 194478,
+    "sha256": "3e570ba9ea70f41ae8ab34355052f7a288c9713d368a931412f516f09f43fd29"
+  },
+  "behavior-electron/evidence/members/summary-current-900-light.png": {
+    "bytes": 125463,
+    "sha256": "6042f7084f71220a72dfee1d4d721b2257c238bd3f80f0047102b41fc595025a"
+  },
+  "behavior-electron/outcome/blocked/expanded-light.png": {
+    "bytes": 138500,
+    "sha256": "44a59fc04f5e2d953e211a97aa13596d0a5c4c930104ac351fb94c81fe4c0306"
+  },
+  "behavior-electron/outcome/blocked/focused-900-light.png": {
+    "bytes": 92798,
+    "sha256": "bee67ff01ac994ff9e857d0839a325c25326daaa63e201d22e8cc8bb8ebab4e6"
+  },
+  "behavior-electron/outcome/blocked/main-900-dark-panel.png": {
+    "bytes": 25429,
+    "sha256": "1a62cc24460e4cb6d35f0af23ba48a9d6f317a1a409172f3dac16a980bce1735"
+  },
+  "behavior-electron/outcome/blocked/main-900-dark.png": {
+    "bytes": 139706,
+    "sha256": "801b08eceb09d7941d3ba308d50d8f54a1e323d122059daa7bf4479d308e3280"
+  },
+  "behavior-electron/outcome/blocked/main-900-light-panel.png": {
+    "bytes": 25762,
+    "sha256": "2e9d5bacb68b045ff85d3d0264f5b2111fc1f2b839f61d9e8cb90ec443ae284e"
+  },
+  "behavior-electron/outcome/blocked/main-900-light.png": {
+    "bytes": 141230,
+    "sha256": "a25c560b0669e605ead47480d383c63c756cd066b0d5253fe3ac7344d4cff52b"
+  },
+  "behavior-electron/outcome/blocked/main-light-panel.png": {
+    "bytes": 43470,
+    "sha256": "814f0ec456b7e01af4bc86ccbe0009c23e2042dd2536dcbe9cb894db5ff892e8"
+  },
+  "behavior-electron/outcome/blocked/main-light.png": {
+    "bytes": 192481,
+    "sha256": "cb987929f38408e784660a59cd37d5511856fe69284a0c8a4f9dd19ad484e030"
+  },
+  "behavior-electron/outcome/blocked/restart-live-dark-panel.png": {
+    "bytes": 96525,
+    "sha256": "2911a14cec92c974636cd5e526221f58a3ede97fcda5b0b5592696601aa193e4"
+  },
+  "behavior-electron/outcome/blocked/restart-live-dark.png": {
+    "bytes": 335561,
+    "sha256": "01210fb156d15d9bfc554851a077b5273c6293886264371a42e472c5754bfd0c"
+  },
+  "behavior-electron/outcome/blocked/retired-disk-history-dark-panel.png": {
+    "bytes": 84537,
+    "sha256": "0e45936c3684190a78b2259212b82c3249d21ce33b739f8759ac5a2123d7c1e3"
+  },
+  "behavior-electron/outcome/blocked/retired-disk-history-dark.png": {
+    "bytes": 336037,
+    "sha256": "c6c49c31df079a9ad092d3ef6fef9686d69a5ed8089d07ef94e64c85e08531a2"
+  },
+  "behavior-electron/outcome/cancellation/actual-cancelled-drained-panel.png": {
+    "bytes": 50422,
+    "sha256": "70fd4b9d5ce7a44eda60cf2c137c4690e9b3df5040fbb60091461444ab2f684f"
+  },
+  "behavior-electron/outcome/cancellation/actual-cancelled-drained.png": {
+    "bytes": 282861,
+    "sha256": "6ceebfc8fc43fdde84d4902ab93d5426ac2e12a6dfe362097377bad337dc7e3f"
+  },
+  "behavior-electron/outcome/pass/expanded-light.png": {
+    "bytes": 131678,
+    "sha256": "6686ae827645277f56400cc37850da9534c080ec01250d3c21ccdb51de56f3a1"
+  },
+  "behavior-electron/outcome/pass/focused-900-light.png": {
+    "bytes": 90249,
+    "sha256": "3501b5c2c785307ee3c1dc5e14b8969f3f54812926b72721cac7a683aa480faf"
+  },
+  "behavior-electron/outcome/pass/main-900-dark-panel.png": {
+    "bytes": 15725,
+    "sha256": "3479178a2f60ce4dd223da4b71d6e9f95207ef589e06180691a45edb7325572a"
+  },
+  "behavior-electron/outcome/pass/main-900-dark.png": {
+    "bytes": 129104,
+    "sha256": "e18d14d72164506b0b1e69c05c658be3befd10383518cf00a78c94ae0198c8a7"
+  },
+  "behavior-electron/outcome/pass/main-900-light-panel.png": {
+    "bytes": 16017,
+    "sha256": "127b96ed94d6466a328c99906e737e13c906e08982bb02b34b8ee5ebfdbe13b1"
+  },
+  "behavior-electron/outcome/pass/main-900-light.png": {
+    "bytes": 133443,
+    "sha256": "b946f6046f73dbd8fbe3f47515ff1cb0c914e28107f98cf4ab4807e8de981e81"
+  },
+  "behavior-electron/outcome/pass/main-light-panel.png": {
+    "bytes": 37672,
+    "sha256": "6a1eee5af679502f8784c883d8718fcb419f2787b43713a0d85bc8ed427db8b2"
+  },
+  "behavior-electron/outcome/pass/main-light.png": {
+    "bytes": 182087,
+    "sha256": "de78f5470038118b3d9cf9a41115566e1fea390def357a9a1e014310ab622ee5"
+  },
+  "behavior-electron/outcome/pass/restart-live-dark-panel.png": {
+    "bytes": 84649,
+    "sha256": "133375b899149a2d1bc84bbfd61c8ac22c34c356252165ebb28cab062041a738"
+  },
+  "behavior-electron/outcome/pass/restart-live-dark.png": {
+    "bytes": 322219,
+    "sha256": "cf9eb57c9f6f3c1cf243347b524ad024140bc22ac3b8cc815dfbbdea8993f4ad"
+  },
+  "behavior-electron/outcome/pass/retired-disk-history-dark-panel.png": {
+    "bytes": 80724,
+    "sha256": "eed1f00ec4c6a8279d4328a67d37f215ad41ce16ac47f2941470bb7d1f2c1728"
+  },
+  "behavior-electron/outcome/pass/retired-disk-history-dark.png": {
+    "bytes": 324015,
+    "sha256": "88678a97057e340db090316bfbb5bc047c468be2f7f583bbd2aceea888775683"
+  },
+  "behavior-electron/outcome/pass/review-pending-light-panel.png": {
+    "bytes": 98426,
+    "sha256": "730431d1bb024bb27dd5725db21e9a80dcaf45da9346a4ee28cc573512a56835"
+  },
+  "behavior-electron/outcome/pass/review-pending-light.png": {
+    "bytes": 356336,
+    "sha256": "fbd30cb0fcb8766df7f64b68eb752f4362d3e980888a1d527974d0589db4f9cc"
+  },
+  "behavior-electron/science-parallel/parallel-completed.png": {
+    "bytes": 325893,
+    "sha256": "9febd9b9f29ff26ed4025f6e97ee16a82781b8714044daedf770ac2ffbddc3e8"
+  },
+  "disk-ui-electron/evidence/members/current-known-1440-light.png": {
+    "bytes": 188618,
+    "sha256": "4d551209523931d006918222b34208deef925838ed88a48a8af60e11313580b6"
+  },
+  "disk-ui-electron/evidence/members/current-unknown-light.png": {
+    "bytes": 314304,
+    "sha256": "ea62c87987687cfddf8e6b9e4ee328fca0c134b7c5c8ddbd453c87f4bb93ab5e"
+  },
+  "disk-ui-electron/evidence/members/detail-current-900-light.png": {
+    "bytes": 97774,
+    "sha256": "bfa188627475710e57966dc1b8528965c6a88caa0c418597b502f8a5f992c482"
+  },
+  "disk-ui-electron/evidence/members/expanded-current-1440-dark.png": {
+    "bytes": 142980,
+    "sha256": "84388021561023e9464cd5360c74d5642aeb7724010484e2a299f47e9e104587"
+  },
+  "disk-ui-electron/evidence/members/expanded-current-1440-light.png": {
+    "bytes": 145048,
+    "sha256": "d1727daa35cc127ea91fe4d0bfa04939673cda79c273305ffe30398841c95ca1"
+  },
+  "disk-ui-electron/evidence/members/expanded-current-900-light.png": {
+    "bytes": 96048,
+    "sha256": "a79d499e70d1afbb73af3be89a147c9e94964451031b0565e58caeb443e57d34"
+  },
+  "disk-ui-electron/evidence/members/restarted-history-1440-dark.png": {
+    "bytes": 194697,
+    "sha256": "96789b96100c72aa9318875a24675e4d8b4f748f22d4908c12026a55cf0bb4b1"
+  },
+  "disk-ui-electron/evidence/members/retired-disk-history-1440-dark.png": {
+    "bytes": 204030,
+    "sha256": "6671da73e3cb74cc32c6877aeb5309f3f0af192c817aa52c4b4fc7fe3b407c9f"
+  },
+  "disk-ui-electron/evidence/members/settled-two-epochs-partial-1440-dark.png": {
+    "bytes": 194671,
+    "sha256": "be5c570094899e347613e8eed9e07d8bae9a97a3f86381ffd905953565ec2921"
+  },
+  "disk-ui-electron/evidence/members/summary-current-900-light.png": {
+    "bytes": 125619,
+    "sha256": "97eb718cd7f094e43696e82c94bac31bef45ae7f3f5856a25b573256abaff4a3"
+  },
+  "final-electron/collaboration/phase-a-artifacts.png": {
+    "bytes": 352431,
+    "sha256": "2f9dcf9d140e199ff8f6ef7c9b91c358e0f67df83902d4ce78cb104fbf7696c0"
+  },
+  "final-electron/collaboration/phase-a-lock-wait.png": {
+    "bytes": 314601,
+    "sha256": "847c0d8fc6144058fd89da16c0752415cd15823cf326cdbdbfecefb3bcea302d"
+  },
+  "final-electron/collaboration/phase-b-conversation-dark.png": {
+    "bytes": 207745,
+    "sha256": "ea1cd6db86c95fc484f48556cfa84a9dc0c512b5074e93de93fde3c778b3ed7f"
+  },
+  "final-electron/collaboration/phase-b-conversation.png": {
+    "bytes": 327364,
+    "sha256": "485af2bfbe0058e703939cfa16ae48ff6eb643cd0afcf01f6d507d39e4a6a46b"
+  },
+  "final-electron/collaboration/phase-b-network-dark-completed.png": {
+    "bytes": 433387,
+    "sha256": "e81b2a7e8db195d48f4fa56c9f3bb585c05bb46b598d11c8fdebcd191248e617"
+  },
+  "final-electron/collaboration/phase-b-network-dark-running.png": {
+    "bytes": 416317,
+    "sha256": "b599047351f04fc245e115b91287a38617c90b36dc20297d287c3d53c6268bbc"
+  },
+  "final-electron/collaboration/phase-b-network-narrow.png": {
+    "bytes": 129719,
+    "sha256": "79e91db4f5560cfe69888fc67a20f85ff580623128d259e28084ce2b345c7b05"
+  },
+  "final-electron/collaboration/phase-b-workflow.png": {
+    "bytes": 252754,
+    "sha256": "28757baab19b460b8020144adc9600c31e99c9774e1d22c01b42bbd06c34e2e9"
+  },
+  "final-electron/collaboration/phase-c-recovery.png": {
+    "bytes": 327969,
+    "sha256": "290015de20e8c1cf21b87401d3f80719cf03e4204782f7a148e029775cd1ec5a"
+  },
+  "final-electron/collaboration/session-a-restored.png": {
+    "bytes": 330284,
+    "sha256": "890582afceaaec8c5ffb87c9d04389ca74c4a31a56e65808e356f413a1af6ae5"
+  },
+  "final-electron/collaboration/session-b-isolated.png": {
+    "bytes": 308837,
+    "sha256": "1c90b1029510e21fb53a70114dec20eeb4e1221b3f1f98eac5f4862c414e012f"
+  },
+  "final-electron/evidence/members/current-known-1440-light.png": {
+    "bytes": 188464,
+    "sha256": "951afe9f7ced4baddcb20d37f14d7bf7066336acc73fc5feca7b63bdb9fedfbd"
+  },
+  "final-electron/evidence/members/current-unknown-light.png": {
+    "bytes": 313741,
+    "sha256": "10629673bad5ec5d792aa0c95f108ed5d2ad4e8b43223c89e61a0d291e6a144a"
+  },
+  "final-electron/evidence/members/detail-current-900-light.png": {
+    "bytes": 97679,
+    "sha256": "6840bb4d4c320651f7712f30504266e59b7b206fce746467b1f02f8f9c03ff2c"
+  },
+  "final-electron/evidence/members/expanded-current-1440-dark.png": {
+    "bytes": 142991,
+    "sha256": "d5e7dabc44ca1c191a40f16475262d47c0d72061041b63f7a202acbf75916ffb"
+  },
+  "final-electron/evidence/members/expanded-current-1440-light.png": {
+    "bytes": 145157,
+    "sha256": "49dc989dcf491b25444f4d16121ec7331201640c2e6411b7576a17fee4936e25"
+  },
+  "final-electron/evidence/members/expanded-current-900-light.png": {
+    "bytes": 96071,
+    "sha256": "66aa9ab47d77e238dc94ae1196731a9e016ba2f972042061f308731529a7916c"
+  },
+  "final-electron/evidence/members/restarted-history-1440-dark.png": {
+    "bytes": 194211,
+    "sha256": "3290f647b8460e7b9c1f34488c3f0266174e6785e94f0097c6358e337803e31b"
+  },
+  "final-electron/evidence/members/retired-disk-history-1440-dark.png": {
+    "bytes": 203602,
+    "sha256": "02a96d9789bd123345b1430b80ec5f4cce10ee0484a3702ab536f9443f674c6e"
+  },
+  "final-electron/evidence/members/settled-two-epochs-partial-1440-dark.png": {
+    "bytes": 194258,
+    "sha256": "2d01c53917b96642759caa2472a35d640f19e50da1b458d6e22ba5c5c1a2ab54"
+  },
+  "final-electron/evidence/members/summary-current-900-light.png": {
+    "bytes": 125700,
+    "sha256": "f714a875b0754f21c604ab2b1dc0b64060c16f54729edb21304beb7d55165f5f"
+  },
+  "first-electron/evidence/members/current-known-1440-light.png": {
+    "bytes": 189832,
+    "sha256": "977fe9b397a8b87a37500b36de5725d589d6171d6fed5dea562a2603107d7ea4"
+  },
+  "first-electron/evidence/members/current-unknown-light.png": {
+    "bytes": 314217,
+    "sha256": "9634b98495c218d931363fad94c0bc261403cad5409a81618ca73ec79de1bb51"
+  },
+  "first-electron/evidence/members/detail-current-900-light.png": {
+    "bytes": 97991,
+    "sha256": "d75a64fef4b7ed504046e907d55ceb0f36bcf331d02be7c251ce286a3a6522d1"
+  },
+  "first-electron/evidence/members/expanded-current-1440-dark.png": {
+    "bytes": 142856,
+    "sha256": "e7fc5bd35625149d5893f1aa25b7e72163bfc836a63aa13ee3af51c6f1b3a973"
+  },
+  "first-electron/evidence/members/expanded-current-1440-light.png": {
+    "bytes": 144607,
+    "sha256": "2d92f680f66f8c987f311b8801e7b2b1be3e0dc23bb617b59872dafa477435c2"
+  },
+  "first-electron/evidence/members/expanded-current-900-light.png": {
+    "bytes": 95842,
+    "sha256": "78f49828e0f73434b2461b26b4e497714515272491052ea521ce521d6bc9055f"
+  },
+  "first-electron/evidence/members/summary-current-900-light.png": {
+    "bytes": 125594,
+    "sha256": "b2ca8d5c1f409e1e87737af2bb52c653d6f09308061beda0cd33b242812c647a"
+  },
+  "first-electron/playwright/agent-observation-member-o-da817--owner-switches-and-restart/test-failed-1.png": {
+    "bytes": 191742,
+    "sha256": "1ccf27d1630cbbf6dc10d717dbe6d2a6bd075ffaf4512236dd067eb4023b579e"
+  }
+}

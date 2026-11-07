@@ -1,0 +1,231 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/client.test.ts tests/ui/use-run-overview.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/client.test.ts (19 tests | 3 failed) 16ms
+     × uses a dedicated raw subscription and cannot poison transcript revision or cause resync 2ms
+     × ignores other packets, rejects invalid notification and protocol, and contains callback failures 0ms
+     × normal subscription quietly ignores even malformed overview packets 2ms
+ ❯ |ui| tests/ui/use-run-overview.test.tsx (12 tests | 10 failed) 38ms
+     × shares one read, event subscription and settled polling timer between components 15ms
+     × coalesces notification and manual refresh while pending into one tail and rejects superseded response 4ms
+     × retains a manual refresh made during a read without any notification 1ms
+     × ignores duplicate, lower and foreign-owner notices and lower responses without spinning 2ms
+     × allows equal-stamp elapsed/file updates and a new service counter starting at zero 3ms
+     × rejects a pending old-service response after the new-service notice, then ignores retired service reads 4ms
+     × permits repeated disk/live transitions but rejects disk reads started before a new service notice 2ms
+     × allows legacy metadata-free backends from the start but refuses missing metadata after expecting a stamp 2ms
+     × isolates owner and client switches and invalidates late promises and captured refresh after last unsubscribe 1ms
+     × survives StrictMode mount cleanup and remount without accepting the first entry response 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/client.test.ts > 客户端 · 独立运行总览通知 > uses a dedicated raw subscription and cannot poison transcript revision or cause resync
+TypeError: c.subscribeRunOverviewChanges is not a function
+ ❯ tests/ui/client.test.ts:216:18
+    214|     const update=vi.fn(), resync=vi.fn(), problem=vi.fn(), changed=vi.…
+    215|     c.expectRevision('s1',1)
+    216|     const stop=c.subscribeRunOverviewChanges(changed,problem)
+       |                  ^
+    217|     const normal=c.subscribeUpdates({onUpdate:update,onResync:resync,o…
+    218|     for(const cb of listeners)cb(packet())
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |ui| tests/ui/client.test.ts > 客户端 · 独立运行总览通知 > ignores other packets, rejects invalid notification and protocol, and contains callback failures
+TypeError: c.subscribeRunOverviewChanges is not a function
+ ❯ tests/ui/client.test.ts:228:7
+    226|     let emit!:(raw:unknown)=>void
+    227|     const c=createClient(undefined,cb=>{emit=cb;return()=>{}}),changed…
+    228|     c.subscribeRunOverviewChanges(changed,problem)
+       |       ^
+    229|     emit({type:'bytes',sessionId:'s1',revision:1,data:'x',workbenchPro…
+    230|     expect(problem).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |ui| tests/ui/client.test.ts > 客户端 · 独立运行总览通知 > normal subscription quietly ignores even malformed overview packets
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 2 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "收到不合协议的会话更新，已丢弃：Invalid discriminator value. Expected 'item' | 'append' | 'dropItem' | 'artifactsChanged' | 'bytes' | 'state' | 'cwd' | 'title' | 'analysisRoute' | 'team' | 'kernels' | 'queued' | 'subagent' | 'snapshot'",
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      "收到不合协议的会话更新，已丢弃：Invalid discriminator value. Expected 'item' | 'append' | 'dropItem' | 'artifactsChanged' | 'bytes' | 'state' | 'cwd' | 'title' | 'analysisRoute' | 'team' | 'kernels' | 'queued' | 'subagent' | 'snapshot'",
+    ]
+
+
+Number of calls: 2
+
+ ❯ tests/ui/client.test.ts:241:25
+    239|     c.subscribeUpdates({onUpdate:update,onResync:resync,onProblem:prob…
+    240|     emit(packet({revision:-1}));emit(packet({workbenchProtocolVersion:…
+    241|     expect(problem).not.toHaveBeenCalled();expect(update).not.toHaveBe…
+       |                         ^
+    242|   })
+    243| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > shares one read, event subscription and settled polling timer between components
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ tests/ui/use-run-overview.test.tsx:21:121
+     19|  it('shares one read, event subscription and settled polling timer bet…
+     20|   const h=harness(),a=renderHook(()=>useRunOverview(h.client,'p')),b=r…
+     21|   expect(h.get).toHaveBeenCalledExactlyOnceWith('getRunOverview',{sess…
+       |                                                                                                                         ^
+     22|   expect(a.result.current.snapshot).toBe(b.result.current.snapshot)
+     23|   a.unmount();expect(h.unsubscribe).not.toHaveBeenCalled();b.unmount()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > coalesces notification and manual refresh while pending into one tail and rejects superseded response
+AssertionError: expected { ownerSessionId: 'p', …(4) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "observation": {
+    "observerId": "A",
+    "revision": 0,
+  },
+  "observationIssue": "old",
+  "ownerSessionId": "p",
+  "runs": [],
+  "source": "live",
+}
+
+ ❯ tests/ui/use-run-overview.test.tsx:31:40
+     29|   expect(h.get).toHaveBeenCalledTimes(1)
+     30|   await act(async()=>first.resolve(snapshot('p','A',0,'old')))
+     31|   expect(view.result.current.snapshot).toBeUndefined();expect(h.get).t…
+       |                                        ^
+     32|   await act(async()=>tail.resolve(snapshot('p','A',2,'new')))
+     33|   expect(view.result.current.snapshot?.observationIssue).toBe('new');e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > retains a manual refresh made during a read without any notification
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:39:17
+     37|   const view=renderHook(()=>useRunOverview(h.client,'p'));await flush(…
+     38|   await act(async()=>first.resolve(snapshot()))
+     39|   expect(h.get).toHaveBeenCalledTimes(2)
+       |                 ^
+     40|  })
+     41|  it('ignores duplicate, lower and foreign-owner notices and lower resp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > ignores duplicate, lower and foreign-owner notices and lower responses without spinning
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:45:17
+     43|   act(()=>{h.emit('A',5);h.emit('A',4);h.emit('A',99,'other')});await …
+     44|   h.get.mockResolvedValue(snapshot('p','A',4,'stale'));act(()=>h.emit(…
+     45|   expect(h.get).toHaveBeenCalledTimes(2);expect(view.result.current.sn…
+       |                 ^
+     46|   await act(async()=>vi.advanceTimersByTimeAsync(1999));expect(h.get).…
+     47|   await act(async()=>vi.advanceTimersByTimeAsync(1));expect(h.get).toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > allows equal-stamp elapsed/file updates and a new service counter starting at zero
+AssertionError: expected 'elapsed changed' to be 'new service' // Object.is equality
+
+Expected: "new service"
+Received: "elapsed changed"
+
+ ❯ tests/ui/use-run-overview.test.tsx:55:58
+     53|   expect(view.result.current.snapshot?.observationIssue).toBe('elapsed…
+     54|   h.get.mockResolvedValue(snapshot('p','B',0,'new service'));act(()=>h…
+     55|   expect(view.result.current.snapshot?.observationIssue).toBe('new ser…
+       |                                                          ^
+     56|   act(()=>h.emit('A',100));await flush();expect(h.get).toHaveBeenCalle…
+     57|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > rejects a pending old-service response after the new-service notice, then ignores retired service reads
+AssertionError: expected 'old A' to be 'B' // Object.is equality
+
+Expected: "B"
+Received: "old A"
+
+ ❯ tests/ui/use-run-overview.test.tsx:62:58
+     60|   const view=renderHook(()=>useRunOverview(h.client,'p'));await flush(…
+     61|   act(()=>h.emit('B',0));await act(async()=>old.resolve(snapshot('p','…
+     62|   expect(view.result.current.snapshot?.observationIssue).toBe('B');exp…
+       |                                                          ^
+     63|   h.get.mockResolvedValue(snapshot('p','A',100,'retired'));act(()=>vie…
+     64|   expect(view.result.current.snapshot?.observationIssue).toBe('B');exp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > permits repeated disk/live transitions but rejects disk reads started before a new service notice
+AssertionError: expected 'stale disk' to be 'A' // Object.is equality
+
+Expected: "A"
+Received: "stale disk"
+
+ ❯ tests/ui/use-run-overview.test.tsx:72:59
+     70|    act(()=>view.result.current.refresh());await flush();act(()=>h.emit…
+     71|    await act(async()=>oldDisk.resolve(snapshot('p','disk',0,'stale dis…
+     72|    expect(view.result.current.snapshot?.observationIssue).toBe(id)
+       |                                                           ^
+     73|    h.get.mockResolvedValue(snapshot('p','disk',0,'disk after '+id));ac…
+     74|    expect(view.result.current.snapshot?.observationIssue).toBe('disk a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > allows legacy metadata-free backends from the start but refuses missing metadata after expecting a stamp
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:83:124
+     81|   const h=harness();h.get.mockResolvedValue(snapshot('p',undefined,0,'…
+     82|   expect(view.result.current.snapshot?.observationIssue).toBe('legacy')
+     83|   act(()=>h.emit('A',1));await flush();expect(view.result.current.snap…
+       |                                                                                                                            ^
+     84|   h.get.mockResolvedValue(snapshot('p','A',1,'stamped'));act(()=>view.…
+     85|   h.get.mockResolvedValue(snapshot('p',undefined,0,'missing'));act(()=…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > isolates owner and client switches and invalidates late promises and captured refresh after last unsubscribe
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ tests/ui/use-run-overview.test.tsx:102:53
+    100|   await act(async()=>old.resolve(snapshot('p','A',99,'old')))
+    101|   expect(view.result.current.snapshot?.observationIssue).toBe('other c…
+    102|   act(()=>oldRefresh());await flush();expect(h.get).toHaveBeenCalledTi…
+       |                                                     ^
+    103|   const refresh=view.result.current.refresh;view.unmount();act(()=>ref…
+    104|   expect(other.get).toHaveBeenCalledTimes(1);expect(other.unsubscribe)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > survives StrictMode mount cleanup and remount without accepting the first entry response
+AssertionError: expected "vi.fn()" to be called 2 times, but got 0 times
+ ❯ tests/ui/use-run-overview.test.tsx:110:114
+    108|   const view=renderHook(()=>useRunOverview(h.client,'p'),{wrapper:Stri…
+    109|   await act(async()=>old.resolve(snapshot('p','A',99,'disposed')))
+    110|   expect(view.result.current.snapshot?.observationIssue).toBe('remount…
+       |                                                                                                                  ^
+    111|   view.unmount();expect(h.unsubscribe).toHaveBeenCalledTimes(2);expect…
+    112|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 18 passed (31)
+   Start at  23:06:08
+   Duration  1.37s (transform 666ms, setup 1.15s, import 26ms, tests 54ms, environment 1.30s)
+

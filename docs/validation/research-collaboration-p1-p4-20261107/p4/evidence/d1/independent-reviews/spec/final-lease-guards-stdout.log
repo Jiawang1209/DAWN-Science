@@ -1,0 +1,1 @@
+PASS: stale lease/older/wrong-route cannot admit; fresh exact duplicate becomes current once; repeated duplicate no write/invalidation/execution/budget change; ended scope rejects

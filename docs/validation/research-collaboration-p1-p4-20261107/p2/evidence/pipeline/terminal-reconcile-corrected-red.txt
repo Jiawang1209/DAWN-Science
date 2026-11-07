@@ -1,0 +1,40 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (13 tests | 1 failed | 12 skipped) 149ms
+   × reconciles a terminal drained hold on explicit repeated cancel after a release write failure and restart 148ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > reconciles a terminal drained hold on explicit repeated cancel after a release write failure and restart
+AssertionError: expected { Object (revision, limits, ...) } to match object { consumedRuns: 2, inFlight: +0, …(2) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "consumedRuns": 2,
+    "inFlight": 0,
+-   "reviewRecoveryRuns": 0,
+-   "reviewReservedRuns": 0,
++   "reviewRecoveryRuns": 1,
++   "reviewReservedRuns": 1,
+  }
+
+ ❯ tests/team/science-review-budget.test.ts:203:31
+    201|   expect(readFileSync(stateFile,'utf8')).toBe(state)
+    202|   expect((await next.cancel.execute('retry-cancel',{stateRevision:befo…
+    203|   expect(next.store.budget()).toMatchObject({consumedRuns:2,inFlight:0…
+       |                               ^
+    204|   expect(next.store.budget().reviewReservations?.[0]?.phase).toBe('rel…
+    205|   const settled=readFileSync(stateFile,'utf8')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  21:45:48
+   Duration  971ms (transform 252ms, setup 0ms, import 735ms, tests 149ms, environment 0ms)
+

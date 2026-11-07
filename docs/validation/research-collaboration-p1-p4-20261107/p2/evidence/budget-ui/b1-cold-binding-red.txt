@@ -1,0 +1,33 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (25 tests | 1 failed) 104ms
+     × rejects malformed, duplicated or uncharged frozen attempt bindings on cold read 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > rejects malformed, duplicated or uncharged frozen attempt bindings on cold read
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/store.test.ts:243:88
+    241|   }
+    242|   good.children[0].epoch=1;good.budget.reviewBindings[0].admittedEpoch…
+    243|   writeFileSync(file,JSON.stringify(good));expect(()=>new Orchestratio…
+       |                                                                                        ^
+    244|  })
+    245| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 24 passed (25)
+   Start at  21:31:43
+   Duration  422ms (transform 100ms, setup 0ms, import 228ms, tests 104ms, environment 0ms)
+

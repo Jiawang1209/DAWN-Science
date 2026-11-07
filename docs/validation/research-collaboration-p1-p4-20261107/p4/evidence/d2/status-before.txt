@@ -1,0 +1,83 @@
+ M e2e/run-explanation-budget.spec.ts
+ M e2e/science-parallel.spec.ts
+ M scripts/evaluate-current-api.ts
+ M scripts/evaluate-research.ts
+ M scripts/mock-science-pipeline.mjs
+ M scripts/research-trial-budget.ts
+ M src/electron/main.ts
+ M src/evaluation/research-tasks.ts
+ M src/orchestration/budget.ts
+ M src/orchestration/execution-context.ts
+ M src/orchestration/run-overview.ts
+ M src/orchestration/service.ts
+ M src/orchestration/store.ts
+ M src/protocol/index.ts
+ M src/protocol/run-budget.ts
+ M src/protocol/run-overview.ts
+ M src/protocol/science-batch.ts
+ M src/protocol/science-pipeline.ts
+ M src/runtime/native.ts
+ M src/runtime/types.ts
+ M src/subagent/child.ts
+ M src/subagent/executor.ts
+ M src/subagent/protocol.ts
+ M src/team/runner.ts
+ M src/team/scheduler.ts
+ M src/team/science-pipeline-tools.ts
+ M src/team/science-pipeline.ts
+ M src/team/task-snapshot.ts
+ M src/ui/client.ts
+ M src/ui/collaboration-model.ts
+ M src/ui/collaboration-summary.tsx
+ M src/ui/i18n/en.ts
+ M src/ui/run-budget.tsx
+ M src/ui/run-overview.tsx
+ M src/ui/styles.css
+ M src/ui/use-run-overview.ts
+ M src/workbench/events.ts
+ M tests/evaluation/research-runner.test.ts
+ M tests/orchestration/run-overview.test.ts
+ M tests/orchestration/service.test.ts
+ M tests/orchestration/store.test.ts
+ M tests/protocol/run-budget.test.ts
+ M tests/runtime/compaction.test.ts
+ M tests/runtime/orchestration.test.ts
+ M tests/team/science-batch.test.ts
+ M tests/ui/app-mvp.test.tsx
+ M tests/ui/client.test.ts
+ M tests/ui/collaboration-model.test.ts
+ M tests/ui/collaboration-workbench.test.tsx
+ M tests/ui/run-budget.test.tsx
+ M tests/ui/run-overview.test.tsx
+ M tests/workbench/events.test.ts
+ M tests/workbench/subagent-view-backend.test.ts
+?? docs/superpowers/plans/2026-11-07-research-collaboration-p1-delivery.md
+?? docs/superpowers/plans/2026-11-07-research-collaboration-p1-p4.md
+?? docs/superpowers/plans/2026-11-07-research-collaboration-p2-budget.md
+?? docs/superpowers/plans/2026-11-07-research-collaboration-p3-workbench.md
+?? docs/superpowers/plans/2026-11-07-research-collaboration-p4-observation.md
+?? docs/superpowers/specs/2026-11-07-research-collaboration-p1-p4-design.md
+?? docs/validation/research-collaboration-p1-p4-20261107/
+?? e2e/collaboration-outcome.spec.ts
+?? e2e/collaboration-stopping.spec.ts
+?? scripts/research-transcripts.ts
+?? src/evaluation/research-manifest.ts
+?? src/evaluation/research-submissions.ts
+?? src/protocol/agent-context-observation.ts
+?? src/runtime/agent-context-sampler.ts
+?? src/team/read-current-snapshot.ts
+?? src/ui/collaboration-outcome-panel.tsx
+?? src/ui/collaboration-outcome.ts
+?? tests/evaluation/research-manifest.test.ts
+?? tests/evaluation/research-submissions.test.ts
+?? tests/evaluation/research-transcripts.test.ts
+?? tests/orchestration/context-observation.test.ts
+?? tests/protocol/run-overview-changed.test.ts
+?? tests/protocol/science-batch.test.ts
+?? tests/runtime/agent-context-native.test.ts
+?? tests/runtime/agent-context-sampler.test.ts
+?? tests/subagent/context-observation.test.ts
+?? tests/team/science-review-budget.test.ts
+?? tests/ui/collaboration-outcome-panel.test.tsx
+?? tests/ui/collaboration-outcome.test.ts
+?? tests/ui/use-run-overview.test.tsx

@@ -1,0 +1,137 @@
+node_modules/@earendil-works/pi-coding-agent/dist/core/settings-manager.js
+55: export class FileSettingsStorage {
+56:     globalSettingsPath;
+57:     projectSettingsPath;
+58:     constructor(cwd, agentDir) {
+59:         const resolvedCwd = resolvePath(cwd);
+60:         const resolvedAgentDir = resolvePath(agentDir);
+61:         this.globalSettingsPath = join(resolvedAgentDir, "settings.json");
+62:         this.projectSettingsPath = join(resolvedCwd, CONFIG_DIR_NAME, "settings.json");
+63:     }
+64:     acquireLockSyncWithRetry(path) {
+65:         const maxAttempts = 10;
+605:     }
+606:     getRetryEnabled() {
+607:         return this.settings.retry?.enabled ?? true;
+608:     }
+609:     setRetryEnabled(enabled) {
+610:         if (!this.globalSettings.retry) {
+611:             this.globalSettings.retry = {};
+612:         }
+613:         this.globalSettings.retry.enabled = enabled;
+614:         this.markModified("retry", "enabled");
+615:         this.save();
+616:     }
+617:     getRetrySettings() {
+618:         return {
+619:             enabled: this.getRetryEnabled(),
+620:             maxRetries: this.settings.retry?.maxRetries ?? 3,
+621:             baseDelayMs: this.settings.retry?.baseDelayMs ?? 2000,
+622:             maxAgentDelayMs: this.settings.retry?.maxAgentDelayMs ?? DEFAULT_MAX_AGENT_RETRY_DELAY_MS,
+623:         };
+624:     }
+625:     getHttpIdleTimeoutMs() {
+626:         return parseTimeoutSetting(this.settings.httpIdleTimeoutMs, "httpIdleTimeoutMs") ?? DEFAULT_HTTP_IDLE_TIMEOUT_MS;
+627:     }
+628:     setHttpIdleTimeoutMs(timeoutMs) {
+629:         if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
+630:             throw new Error(`Invalid httpIdleTimeoutMs setting: ${String(timeoutMs)}`);
+631:         }
+632:         this.globalSettings.httpIdleTimeoutMs = Math.floor(timeoutMs);
+633:         this.markModified("httpIdleTimeoutMs");
+634:         this.save();
+635:     }
+636:     /** Read from global settings only because warming costs money. */
+637:     getCacheWarmingMode() {
+638:         const mode = this.globalSettings.cacheWarming;
+639:         return mode !== undefined && CACHE_WARMING_MODES.includes(mode) ? mode : "streaming";
+640:     }
+641:     setCacheWarmingMode(mode) {
+642:         this.globalSettings.cacheWarming = mode;
+643:         this.markModified("cacheWarming");
+644:         this.save();
+645:     }
+646:     getProviderRetrySettings() {
+647:         return {
+648:             timeoutMs: this.settings.retry?.provider?.timeoutMs,
+649:             maxRetries: this.settings.retry?.provider?.maxRetries,
+650:             maxRetryDelayMs: this.settings.retry?.provider?.maxRetryDelayMs ?? 60000,
+651:         };
+652:     }
+653:     getWebSocketConnectTimeoutMs() {
+
+node_modules/@earendil-works/pi-coding-agent/dist/core/sdk.js
+66:  */
+67: export async function createAgentSession(options = {}) {
+68:     const cwd = resolvePath(options.cwd ?? options.sessionManager?.getCwd() ?? process.cwd());
+69:     const agentDir = options.agentDir ? resolvePath(options.agentDir) : getDefaultAgentDir();
+70:     let resourceLoader = options.resourceLoader;
+71:     const authPath = options.agentDir ? join(agentDir, "auth.json") : undefined;
+72:     const modelsPath = options.agentDir ? join(agentDir, "models.json") : undefined;
+73:     const modelRuntime = options.modelRuntime ?? (await ModelRuntime.create({ authPath, modelsPath }));
+74:     const settingsManager = options.settingsManager ?? SettingsManager.create(cwd, agentDir);
+75:     const sessionManager = options.sessionManager ?? SessionManager.create(cwd, getDefaultSessionDir(cwd, agentDir));
+76:     if (!resourceLoader) {
+176:     };
+177:     const extensionRunnerRef = {};
+178:     const cacheWarmer = new CacheWarmer(modelRuntime, sessionManager, () => settingsManager.getCacheWarmingMode(), async (event) => extensionRunnerRef.current?.emitCacheWarmingDecision(event) ?? event.action);
+179:     const buildRequestOptions = (requestModel, options = {}) => {
+180:         const providerRetrySettings = settingsManager.getProviderRetrySettings();
+181:         const httpIdleTimeoutMs = settingsManager.getHttpIdleTimeoutMs();
+182:         const effectiveTimeoutMs = httpIdleTimeoutMs === 0 ? 2147483647 : httpIdleTimeoutMs;
+183:         const headerRunner = extensionRunnerRef.current;
+184:         return {
+185:             ...options,
+186:             timeoutMs: options.timeoutMs ?? providerRetrySettings.timeoutMs ?? effectiveTimeoutMs,
+187:             websocketConnectTimeoutMs: options.websocketConnectTimeoutMs ?? settingsManager.getWebSocketConnectTimeoutMs(),
+188:             maxRetries: options.maxRetries ?? providerRetrySettings.maxRetries,
+189:             maxRetryDelayMs: options.maxRetryDelayMs ?? providerRetrySettings.maxRetryDelayMs,
+190:             transformHeaders: async (requestHeaders) => {
+191:                 const headers = mergeProviderAttributionHeaders(requestModel, settingsManager, options.sessionId, requestHeaders);
+
+node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js
+2400:     async _prepareRetry(message) {
+2401:         const settings = this.settingsManager.getRetrySettings();
+2402:         if (!settings.enabled) {
+2403:             return false;
+2404:         }
+2405:         this._retryAttempt++;
+2406:         if (this._retryAttempt > settings.maxRetries) {
+2407:             // Preserve the completed attempt count so post-run handling can emit the final failure.
+2408:             this._retryAttempt--;
+2409:             return false;
+2410:         }
+2411:         const delayMs = retryDelayMs(settings, this._retryAttempt);
+2412:         this._emit({
+2413:             type: "auto_retry_start",
+
+src/subagent/child.ts
+140:     ...(spec.member ? 成员工具(spec.member.name).filter(tool=>!settings||!taskToolDenial(settings.scope,spec.cwd,tool.name,{})) : []),
+141:     ...(spec.resources ? createResourceTools(调父进程) : []),
+142:   ]
+143:   const customTools=[...(taskTools?.tools??[]),...(taskTools?taskTools.guardExtras(extras as never):extras)]
+144:   const { session } = await createAgentSession({
+145:     cwd: spec.cwd,
+146:     agentDir: spec.agentDir,
+147:     model,
+148:     modelRuntime,
+149:     resourceLoader,
+150:     ...(sessionManager ? { sessionManager } : {}),
+151:     // 定义里没写 tools 就用 pi 的默认工具集——**缺省不等于「不给工具」**
+
+src/team/scheduler.ts
+402:         } else {
+403:           const 成员目录 = join(this.dir(teamId), m.sessionDir)
+404:           return await 跑一轮(
+405:             {
+406:               ...(settings?{settings}:{}),
+407:               definition: def,
+408:               memberName: member,
+409:               teamId,
+410:               prompt,
+411:               systemPrompt: 成员人设(def.systemPrompt, team, m),
+412:               sessionDir: 成员目录,
+413:               resume: m.turns > 0,
+414:               agentDir: join(成员目录, "agent", String(m.turns)),
+415:               ...(m.provider && m.model ? { provider: m.provider, model: m.model } : {}),
+416:             },

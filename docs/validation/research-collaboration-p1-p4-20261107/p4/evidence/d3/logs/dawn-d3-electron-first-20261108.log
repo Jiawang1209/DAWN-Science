@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/agent-observation.spec.ts --output=/tmp/dawn-d3-electron-first-20261108/playwright
+
+Running 1 test using 1 worker
+
+(node:18339) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：成员观测两轮与来源，仅合」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52884/14f17448-6202-49a1-adef-43fbd8318e6f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/agent-observation.spec.ts:16:2 › member observation › keeps current SDK context separate from two settled epochs, history, owner switches and restart (46.5s)
+
+
+  1) e2e/agent-observation.spec.ts:16:2 › member observation › keeps current SDK context separate from two settled epochs, history, owner switches and restart 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('dialog', { name: '流程工作台', exact: true }).locator('.collaboration-detail')
+    Expected substring: "缓存读取：至少 0 tokens（单列）"
+    Received string:    "pipeline-analyze类型 team · 执行代次 2过程交接产物记录当前上下文 · SDK估算未知已结算累计80 tokens查看观测来源与覆盖当前执行已停止或不活跃deepseek / deepseek-flash采样时间：2026/11/8 00:56:56历史最后值 · 29 tokens（非当前）来源：SDK估算模型容量：128,000 tokens · 模型配置组成估算 · 保留内容字节系统 1,533 · 工具 4,613 · 消息 12,757 字节不含隐藏推理；不是 token 分解或真实请求字节。成员跨轮次、跨任务累计；仅已记录的结算输入与输出，不代表本任务费用。来源：宿主逐轮结算增量2 轮已结算 · 2 轮不完整输入：48 tokens · 输出：32 tokens缓存读取：未记录（单列）费用未记录任务轨迹执行完成00:56:53开始执行00:56:53核验冻结输入00:56:53后端执行00:56:56宿主验收00:56:56执行已结算宿主验收通过查看 1 条工具记录查看 1 个产物版本普通委派任务宿主验收通过"
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for getByRole('dialog', { name: '流程工作台', exact: true }).locator('.collaboration-detail')
+        53 × locator resolved to <div class="collaboration-detail" data-selected-run="child-26d5bbc3903ffa4e8d1df8f40e71bc1c">…</div>
+           - unexpected value "pipeline-analyze类型 team · 执行代次 2过程交接产物记录当前上下文 · SDK估算未知已结算累计80 tokens查看观测来源与覆盖当前执行已停止或不活跃deepseek / deepseek-flash采样时间：2026/11/8 00:56:56历史最后值 · 29 tokens（非当前）来源：SDK估算模型容量：128,000 tokens · 模型配置组成估算 · 保留内容字节系统 1,533 · 工具 4,613 · 消息 12,757 字节不含隐藏推理；不是 token 分解或真实请求字节。成员跨轮次、跨任务累计；仅已记录的结算输入与输出，不代表本任务费用。来源：宿主逐轮结算增量2 轮已结算 · 2 轮不完整输入：48 tokens · 输出：32 tokens缓存读取：未记录（单列）费用未记录任务轨迹执行完成00:56:53开始执行00:56:53核验冻结输入00:56:53后端执行00:56:56宿主验收00:56:56执行已结算宿主验收通过查看 1 条工具记录查看 1 个产物版本普通委派任务宿主验收通过"
+
+
+      53 |   expect(twice.usageTotals?.settledEpochs).toBe(2);expect(twice.usageTotals?.input).toBeGreaterThan(0);expect(twice.usageTotals?.output).toBeGreaterThan(0)
+      54 |   expect(twice.usageTotals?.partial).toContain('cacheRead');expect(twice.contextObservation?.current).toBe(false)
+    > 55 |   await dialog.locator(`[data-member-card="${twice.id}"]`).click();await dialog.locator('.collaboration-detail .agent-observation-details > summary').click();await dialog.locator('.collaboration-detail').scrollIntoViewIfNeeded();await expect(dialog.locator('.collaboration-detail')).toContainText('2 轮已结算');await expect(dialog.locator('.collaboration-detail')).toContainText('缓存读取：至少 0 tokens（单列）');await capture('settled-two-epochs-partial-1440-dark')
+         |                                                                                                                                                                                                                                                                                                                                                                          ^
+      56 |   await page.keyboard.press('Escape')
+      57 |   await 在项目里开会话(page);await 进坞(page,'团队');await expect(overview().locator('.agent-observation')).toHaveCount(0)
+      58 |   await page.getByRole('button',{name:/^科研流水线验收：成员观测/}).click();await 进坞(page,'团队');await expect(overview().locator('.agent-observation')).not.toHaveCount(0)
+        at /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/e2e/agent-observation.spec.ts:55:362
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-d3-electron-first-20261108/playwright/agent-observation-member-o-da817--owner-switches-and-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../../tmp/dawn-d3-electron-first-20261108/playwright/agent-observation-member-o-da817--owner-switches-and-restart/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../../tmp/dawn-d3-electron-first-20261108/playwright/agent-observation-member-o-da817--owner-switches-and-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../../tmp/dawn-d3-electron-first-20261108/playwright/agent-observation-member-o-da817--owner-switches-and-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/agent-observation.spec.ts:16:2 › member observation › keeps current SDK context separate from two settled epochs, history, owner switches and restart 

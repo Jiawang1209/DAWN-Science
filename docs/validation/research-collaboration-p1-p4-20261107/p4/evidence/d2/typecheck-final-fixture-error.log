@@ -1,0 +1,6 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/integration/subagent-child.test.ts(106,42): error TS2375: Type '{ cwd: string; provider: string; model: string; modelsPath: string | undefined; credentials: Record<string, string> | undefined; agentDirOf: () => string; }' is not assignable to type 'SubagentContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'modelsPath' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.

@@ -1,0 +1,29 @@
+{
+  "src": {
+    "changed": [
+      "src/runtime/session-usage.ts"
+    ],
+    "added": [],
+    "removed": []
+  },
+  "tests": {
+    "changed": [
+      "tests/orchestration/agent-usage-totals.test.ts",
+      "tests/runtime/session-usage.test.ts",
+      "tests/workbench/bot-contract.test.ts",
+      "tests/workbench/bot-usage.test.ts"
+    ],
+    "added": [],
+    "removed": []
+  },
+  "build": {
+    "changed": [
+      "dist/cli/main.js",
+      "dist/cli/main.js.map",
+      "dist/electron/main.js",
+      "dist/electron/subagent-child.js"
+    ],
+    "added": [],
+    "removed": []
+  }
+}

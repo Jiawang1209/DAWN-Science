@@ -1,0 +1,35 @@
+{
+  "verifiedAt": "2026-11-07T15:52:06.228704+00:00",
+  "worktree": "/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science",
+  "manifests": {
+    "src-sha256.json": {
+      "path": "/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/src-sha256.json",
+      "manifestSha256": "b8027076478637032512aeb3ecb8ce7a321ec88a0c2c8b68829698c2b0c79246",
+      "files": 628,
+      "currentMismatches": [],
+      "pathsChangedFromOriginalFreeze": [
+        "src/ui/styles.css"
+      ]
+    },
+    "build-sha256.json": {
+      "path": "/Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/docs/validation/research-collaboration-p1-p4-20261107/p3/evidence/c3/full-suite-remediation/build-sha256.json",
+      "manifestSha256": "5a535e8bed7ab347f5e9e62733af8a18b494676d0de3769d844b296e6157fb19",
+      "files": 624,
+      "currentMismatches": [],
+      "pathsChangedFromOriginalFreeze": [
+        "dist/ui/assets/draft-highlighter-B_o9QQso.js",
+        "dist/ui/assets/draft-highlighter-DFDmXdvx.js",
+        "dist/ui/assets/highlighted-body-JLMTFACH-BQoarVs-.js",
+        "dist/ui/assets/highlighted-body-JLMTFACH-DbQFCME7.js",
+        "dist/ui/assets/index-BV9s9_gv.js",
+        "dist/ui/assets/index-D4Xo9nSk.js",
+        "dist/ui/assets/index-D5RmY6nz.css",
+        "dist/ui/assets/index-x_iRUme9.css",
+        "dist/ui/assets/mermaid-WFAXDIZX-BRIu2Utx.js",
+        "dist/ui/assets/mermaid-WFAXDIZX-D_bzCij6.js",
+        "dist/ui/index.html"
+      ]
+    }
+  },
+  "exactTwoCssSubstitutionProof": true
+}

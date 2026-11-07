@@ -1,0 +1,22 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/agent-context-sampler.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/agent-context-sampler.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts [ tests/runtime/agent-context-sampler.test.ts ]
+Error: Cannot find module '../../src/runtime/agent-context-sampler.js' imported from /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science/tests/runtime/agent-context-sampler.test.ts
+ ❯ tests/runtime/agent-context-sampler.test.ts:2:1
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  23:55:22
+   Duration  99ms (transform 13ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

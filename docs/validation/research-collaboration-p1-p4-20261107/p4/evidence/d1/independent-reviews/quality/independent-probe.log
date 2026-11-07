@@ -1,0 +1,5 @@
+PASS concurrent child isolation, strict payload, older rejection, cancellation isolation, read-only bytes/revision/budget
+PASS pending microtask disposal and per-observer semantic reset
+ALL INDEPENDENT QUALITY PROBES PASS
+
+EXIT 0

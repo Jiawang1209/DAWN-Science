@@ -1,0 +1,215 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project ui tests/ui/use-run-overview.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/use-run-overview.test.tsx (14 tests | 12 failed) 36ms
+     × shares one read, event subscription and settled polling timer between components 14ms
+     × coalesces notification and manual refresh while pending into one tail and rejects superseded response 3ms
+     × accepts a pending live response that proves the latest notice while retaining one coalesced tail 1ms
+     × does not mistake an old disk stamp for a later disk lifecycle after intervening live notices 2ms
+     × retains a manual refresh made during a read without any notification 1ms
+     × ignores duplicate, lower and foreign-owner notices and lower responses without spinning 3ms
+     × allows equal-stamp elapsed/file updates and a new service counter starting at zero 2ms
+     × rejects a pending old-service response after the new-service notice, then ignores retired service reads 2ms
+     × permits repeated disk/live transitions but rejects disk reads started before a new service notice 2ms
+     × allows legacy metadata-free backends from the start but refuses missing metadata after expecting a stamp 1ms
+     × isolates owner and client switches and invalidates late promises and captured refresh after last unsubscribe 1ms
+     × survives StrictMode mount cleanup and remount without accepting the first entry response 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > shares one read, event subscription and settled polling timer between components
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ tests/ui/use-run-overview.test.tsx:21:121
+     19|  it('shares one read, event subscription and settled polling timer bet…
+     20|   const h=harness(),a=renderHook(()=>useRunOverview(h.client,'p')),b=r…
+     21|   expect(h.get).toHaveBeenCalledExactlyOnceWith('getRunOverview',{sess…
+       |                                                                                                                         ^
+     22|   expect(a.result.current.snapshot).toBe(b.result.current.snapshot)
+     23|   a.unmount();expect(h.unsubscribe).not.toHaveBeenCalled();b.unmount()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > coalesces notification and manual refresh while pending into one tail and rejects superseded response
+AssertionError: expected { ownerSessionId: 'p', …(4) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "observation": {
+    "observerId": "A",
+    "revision": 0,
+  },
+  "observationIssue": "old",
+  "ownerSessionId": "p",
+  "runs": [],
+  "source": "live",
+}
+
+ ❯ tests/ui/use-run-overview.test.tsx:31:40
+     29|   expect(h.get).toHaveBeenCalledTimes(1)
+     30|   await act(async()=>first.resolve(snapshot('p','A',0,'old')))
+     31|   expect(view.result.current.snapshot).toBeUndefined();expect(h.get).t…
+       |                                        ^
+     32|   await act(async()=>tail.resolve(snapshot('p','A',2,'new')))
+     33|   expect(view.result.current.snapshot?.observationIssue).toBe('new');e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > accepts a pending live response that proves the latest notice while retaining one coalesced tail
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:39:96
+     37|   const view=renderHook(()=>useRunOverview(h.client,'p'));await flush(…
+     38|   await act(async()=>first.resolve(snapshot('p','A',3,'already current…
+     39|   expect(view.result.current.snapshot?.observationIssue).toBe('already…
+       |                                                                                                ^
+     40|   await act(async()=>tail.resolve(snapshot('p','A',3,'tail elapsed')))
+     41|   expect(view.result.current.snapshot?.observationIssue).toBe('tail el…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > does not mistake an old disk stamp for a later disk lifecycle after intervening live notices
+AssertionError: expected { ownerSessionId: 'p', …(4) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "observation": {
+    "observerId": "disk",
+    "revision": 0,
+  },
+  "observationIssue": "old disk generation",
+  "ownerSessionId": "p",
+  "runs": [],
+  "source": "disk",
+}
+
+ ❯ tests/ui/use-run-overview.test.tsx:47:40
+     45|   const view=renderHook(()=>useRunOverview(h.client,'p'));await flush(…
+     46|   await act(async()=>old.resolve(snapshot('p','disk',0,'old disk gener…
+     47|   expect(view.result.current.snapshot).toBeUndefined();expect(h.get).t…
+       |                                        ^
+     48|   await act(async()=>tail.resolve(snapshot('p','disk',0,'new disk gene…
+     49|   expect(view.result.current.snapshot?.observationIssue).toBe('new dis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > retains a manual refresh made during a read without any notification
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:55:17
+     53|   const view=renderHook(()=>useRunOverview(h.client,'p'));await flush(…
+     54|   await act(async()=>first.resolve(snapshot()))
+     55|   expect(h.get).toHaveBeenCalledTimes(2)
+       |                 ^
+     56|  })
+     57|  it('ignores duplicate, lower and foreign-owner notices and lower resp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > ignores duplicate, lower and foreign-owner notices and lower responses without spinning
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:61:17
+     59|   act(()=>{h.emit('A',5);h.emit('A',4);h.emit('A',99,'other')});await …
+     60|   h.get.mockResolvedValue(snapshot('p','A',4,'stale'));act(()=>h.emit(…
+     61|   expect(h.get).toHaveBeenCalledTimes(2);expect(view.result.current.sn…
+       |                 ^
+     62|   await act(async()=>vi.advanceTimersByTimeAsync(1999));expect(h.get).…
+     63|   await act(async()=>vi.advanceTimersByTimeAsync(1));expect(h.get).toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > allows equal-stamp elapsed/file updates and a new service counter starting at zero
+AssertionError: expected 'elapsed changed' to be 'new service' // Object.is equality
+
+Expected: "new service"
+Received: "elapsed changed"
+
+ ❯ tests/ui/use-run-overview.test.tsx:71:58
+     69|   expect(view.result.current.snapshot?.observationIssue).toBe('elapsed…
+     70|   h.get.mockResolvedValue(snapshot('p','B',0,'new service'));act(()=>h…
+     71|   expect(view.result.current.snapshot?.observationIssue).toBe('new ser…
+       |                                                          ^
+     72|   act(()=>h.emit('A',100));await flush();expect(h.get).toHaveBeenCalle…
+     73|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > rejects a pending old-service response after the new-service notice, then ignores retired service reads
+AssertionError: expected 'old A' to be 'B' // Object.is equality
+
+Expected: "B"
+Received: "old A"
+
+ ❯ tests/ui/use-run-overview.test.tsx:78:58
+     76|   const view=renderHook(()=>useRunOverview(h.client,'p'));await flush(…
+     77|   act(()=>h.emit('B',0));await act(async()=>old.resolve(snapshot('p','…
+     78|   expect(view.result.current.snapshot?.observationIssue).toBe('B');exp…
+       |                                                          ^
+     79|   h.get.mockResolvedValue(snapshot('p','A',100,'retired'));act(()=>vie…
+     80|   expect(view.result.current.snapshot?.observationIssue).toBe('B');exp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > permits repeated disk/live transitions but rejects disk reads started before a new service notice
+AssertionError: expected 'stale disk' to be 'A' // Object.is equality
+
+Expected: "A"
+Received: "stale disk"
+
+ ❯ tests/ui/use-run-overview.test.tsx:88:59
+     86|    act(()=>view.result.current.refresh());await flush();act(()=>h.emit…
+     87|    await act(async()=>oldDisk.resolve(snapshot('p','disk',0,'stale dis…
+     88|    expect(view.result.current.snapshot?.observationIssue).toBe(id)
+       |                                                           ^
+     89|    h.get.mockResolvedValue(snapshot('p','disk',0,'disk after '+id));ac…
+     90|    expect(view.result.current.snapshot?.observationIssue).toBe('disk a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > allows legacy metadata-free backends from the start but refuses missing metadata after expecting a stamp
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ tests/ui/use-run-overview.test.tsx:99:124
+     97|   const h=harness();h.get.mockResolvedValue(snapshot('p',undefined,0,'…
+     98|   expect(view.result.current.snapshot?.observationIssue).toBe('legacy')
+     99|   act(()=>h.emit('A',1));await flush();expect(view.result.current.snap…
+       |                                                                                                                            ^
+    100|   h.get.mockResolvedValue(snapshot('p','A',1,'stamped'));act(()=>view.…
+    101|   h.get.mockResolvedValue(snapshot('p',undefined,0,'missing'));act(()=…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > isolates owner and client switches and invalidates late promises and captured refresh after last unsubscribe
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ tests/ui/use-run-overview.test.tsx:118:53
+    116|   await act(async()=>old.resolve(snapshot('p','A',99,'old')))
+    117|   expect(view.result.current.snapshot?.observationIssue).toBe('other c…
+    118|   act(()=>oldRefresh());await flush();expect(h.get).toHaveBeenCalledTi…
+       |                                                     ^
+    119|   const refresh=view.result.current.refresh;view.unmount();act(()=>ref…
+    120|   expect(other.get).toHaveBeenCalledTimes(1);expect(other.unsubscribe)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  |ui| tests/ui/use-run-overview.test.tsx > shared readonly overview observation > survives StrictMode mount cleanup and remount without accepting the first entry response
+AssertionError: expected "vi.fn()" to be called 2 times, but got 0 times
+ ❯ tests/ui/use-run-overview.test.tsx:126:114
+    124|   const view=renderHook(()=>useRunOverview(h.client,'p'),{wrapper:Stri…
+    125|   await act(async()=>old.resolve(snapshot('p','A',99,'disposed')))
+    126|   expect(view.result.current.snapshot?.observationIssue).toBe('remount…
+       |                                                                                                                  ^
+    127|   view.unmount();expect(h.unsubscribe).toHaveBeenCalledTimes(2);expect…
+    128|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)
+   Start at  23:06:58
+   Duration  917ms (transform 310ms, setup 469ms, import 10ms, tests 36ms, environment 321ms)
+

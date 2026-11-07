@@ -357,7 +357,7 @@ export interface MockToolCallSpec {
 
 export interface DawnOptions {
   scienceBatch?:boolean|'numeric-error'|'basic-error'|'incremental'|'parallel'
-  sciencePipeline?: 'pass'|'revise'|'blocked'|'interrupt'
+  sciencePipeline?: 'pass'|'revise'|'blocked'|'interrupt'|'observation'
 
   /**
    * 额外的环境变量（A2）。**盖不过隔离用的那几条**——见下面 `env` 的注释。

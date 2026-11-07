@@ -1,0 +1,26 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/team/science-review-budget.test.ts (12 tests | 1 failed | 10 skipped) 489ms
+   × allows an ordinary unlimited review retry after the reservation policy is disabled, preserving consumed history 217ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-review-budget.test.ts > allows an ordinary unlimited review retry after the reservation policy is disabled, preserving consumed history
+AssertionError: expected true not to be true // Object.is equality
+ ❯ tests/team/science-review-budget.test.ts:150:140
+    148|   next.service.configureBudget({},next.store.budget().revision)
+    149|   const before=next.scheduler.读(first.team.id)
+    150|   expect((await next.resume.execute('policy-off',{stateRevision:before…
+       |                                                                                                                                            ^
+    151|   await vi.waitFor(()=>expect(next.scheduler.读(first.team.id).pipeline…
+    152|   expect(next.calls).toHaveLength(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 10 skipped (12)
+   Start at  21:43:39
+   Duration  2.34s (transform 700ms, setup 0ms, import 1.70s, tests 489ms, environment 0ms)
+

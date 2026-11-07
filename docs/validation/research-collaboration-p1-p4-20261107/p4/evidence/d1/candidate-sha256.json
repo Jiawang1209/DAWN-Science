@@ -1,0 +1,23 @@
+{
+  "src/orchestration/execution-context.ts": "cfd11c4ae1dc548d5ba67ad4e634364b101fc365943f64be45c027e87b297f65",
+  "src/orchestration/run-overview.ts": "7dc548f6c150103c23bd73cd6a99effb209d362c4485c66f81389b94ab1bf321",
+  "src/orchestration/service.ts": "f55bcd32f8d10a116633a434b258776bd355dc2ed2363f23dbc10e88df198deb",
+  "src/orchestration/store.ts": "f0fba032aaeb9de3ede5dc043981420a4aa95359285268c536c63705946846fc",
+  "src/protocol/index.ts": "77c11ab2dfec0aedc45fb1bcb9daa0cbd3ea3664a8800d5ffb1cc945a80fdd79",
+  "src/protocol/run-overview.ts": "0c6dff0c3f97e4a1cbf24e812f01d903b9ca63ee98ecaa36da921fd0e30e703a",
+  "src/runtime/native.ts": "734345fc5dbccc54b037f9d33fec1cad2faac909c7d5994e9b489730c0d08dbd",
+  "src/subagent/child.ts": "1268e35920d1fa5c48e2ffb92b10596ee8992e6f9d3ae92b5c65e244aa1cdd9f",
+  "src/subagent/executor.ts": "0fa60ee6cdb04c622f9dc9aed1027cc3065dce77263d407c5ab788e2bf6e32b3",
+  "src/subagent/protocol.ts": "4580c23a5303512bd0a40239923058a563559d0009d6feb1cf3f9ad0e10142a1",
+  "src/team/runner.ts": "af76825c91eafd5093ccb32792d1ef52ad09d604d481949f11392e44bca0cd76",
+  "src/protocol/agent-context-observation.ts": "52c6562ff221be2f1f7fd6684e5f854eb0cde59d20f0f38d3e427c748723d9cc",
+  "src/runtime/agent-context-sampler.ts": "1f4a31380070ac5686dda729500f9b2d17858986b90a57c74ca5645751b9e59e",
+  "tests/runtime/agent-context-sampler.test.ts": "84365d0fc67c7124d0a68d74eb09d92af335b09bb138aaebd18501acc97fb0ff",
+  "tests/runtime/agent-context-native.test.ts": "3c09ab1eaf94b3861909c17049ace8f77df661558e39bb55753709fa9db7397b",
+  "tests/orchestration/context-observation.test.ts": "4c045e851ec6f460db235bbbfdde82839f0ce4f3bdd43d7d1ec37766f5d77b27",
+  "tests/subagent/context-observation.test.ts": "778a619a758f50026f178d08fea1c54ec7452c14eea7cda974163183a12dde20",
+  "tests/runtime/compaction.test.ts": "13d06cd9b3b5034760b01cc16a9a70bdaeb559c4f00d83e543edf181fb776f47",
+  "dist/electron/main.js": "24591e018db097b4c6e0dee69cc8fcca8663ec75ba5e3da360d58cdc9870b528",
+  "dist/electron/subagent-child.js": "71c81e735f36dd279db0733dc2a76e79201b9f6f3b2a134d728bbdb3966b7b1f",
+  "dist/ui/index.html": "a13aa8ab0dc55256f89c1910898223517efd0eba2e16484b72c54bc00a659d66"
+}

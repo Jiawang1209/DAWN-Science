@@ -1,0 +1,36 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/run-overview.test.ts (8 tests | 1 failed) 45ms
+   × projects settled resultEpoch so consumers can distinguish retained earlier results 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/run-overview.test.ts > projects settled resultEpoch so consumers can distinguish retained earlier results
+AssertionError: expected { …(14) } to match object { epoch: 2, resultEpoch: 1 }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "epoch": 2,
+-   "resultEpoch": 1,
+  }
+
+ ❯ tests/orchestration/run-overview.test.ts:93:43
+     91|  let release!:()=>void;const gate=new Promise<void>(r=>release=r)
+     92|  const rerun=service.run(child.id,async()=>{await gate;return{ok:true,…
+     93|  expect(liveRunOverview(service).runs[0]).toMatchObject({epoch:2,resul…
+       |                                           ^
+     94|  release();await rerun;await service.close()
+     95| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 48 passed (49)
+   Start at  22:19:15
+   Duration  363ms (transform 246ms, setup 0ms, import 485ms, tests 61ms, environment 0ms)
+

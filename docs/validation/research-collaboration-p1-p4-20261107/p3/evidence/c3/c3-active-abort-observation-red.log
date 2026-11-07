@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/orchestration/service.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/service.test.ts (15 tests | 1 failed) 303ms
+   × publishes active external cancellation as stopping before cleanup drains without advancing wait revision 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/service.test.ts > publishes active external cancellation as stopping before cleanup drains without advancing wait revision
+TypeError: service.waitForChange is not a function
+ ❯ tests/orchestration/service.test.ts:206:38
+    204|  const before=service.observation,revision=service.revision,seen:strin…
+    205|  const off=service.subscribeObservation(()=>seen.push(service.controlP…
+    206|  let woke=false;const waiter=service.waitForChange(revision,1000).then…
+       |                                      ^
+    207|  controller.abort();await Promise.resolve()
+    208|  expect(service.controlPhase(child.id)).toBe('stopping')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  23:32:06
+   Duration  619ms (transform 153ms, setup 0ms, import 231ms, tests 303ms, environment 0ms)
+

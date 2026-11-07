@@ -1,0 +1,27 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/orchestration/store.test.ts (26 tests | 1 failed | 25 skipped) 11ms
+     × can reserve one fresh review-only retry while default initial admission still needs three 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/store.test.ts > atomic review execution-run reservations > can reserve one fresh review-only retry while default initial admission still needs three
+Error: Invalid minimum pipeline runs
+ ❯ OrchestrationStore.reserveReviewRuns src/orchestration/store.ts:165:79
+    163|   /** Same ledger as admissions. The caller supplies a host-owned pipe…
+    164|   reserveReviewRuns(pipelineId:string,revisionCycle:number,minimumRuns…
+    165|     if(!Number.isSafeInteger(minimumRuns)||minimumRuns<2||minimumRuns>…
+       |                                                                               ^
+    166|     const key=reviewReservationKey(this.ownerSessionId,pipelineId,revi…
+    167|     if(current){
+ ❯ tests/orchestration/store.test.ts:84:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 skipped (26)
+   Start at  21:34:37
+   Duration  320ms (transform 98ms, setup 0ms, import 223ms, tests 11ms, environment 0ms)
+

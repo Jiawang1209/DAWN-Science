@@ -1,0 +1,28 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (8 tests | 1 failed | 7 skipped) 932ms
+   × samples final request counters after asynchronous lease cleanup, including cancelled arms 931ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > samples final request counters after asynchronous lease cleanup, including cancelled arms
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/evaluation/research-runner.test.ts:109:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  21:32:40
+   Duration  1.87s (transform 301ms, setup 0ms, import 850ms, tests 932ms, environment 0ms)
+

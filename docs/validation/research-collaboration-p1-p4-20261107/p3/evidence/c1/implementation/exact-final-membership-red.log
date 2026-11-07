@@ -1,0 +1,168 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (56 tests | 2 failed) 27ms
+     × finalizes only the exact analysis and review identified by the completed provenance chain 9ms
+     × does not apply a batch scope to an unrelated standalone run 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > finalizes only the exact analysis and review identified by the completed provenance chain
+AssertionError: expected { state: 'accepted', …(8) } to match object { state: 'accepted', …(2) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+-   "acceptanceScope": "stage",
++   "acceptanceScope": "final",
+    "artifacts": [
+      {
+-       "scope": "stage",
++       "scope": "final",
+        "version": {
+          "bytes": 1,
+          "path": "result.csv",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "versionId": "retained-v1",
+
+ ❯ tests/ui/collaboration-outcome.test.ts:232:83
+    230|   value.team!.tasks.push(older);value.team!.pipeline!.taskIds.push(old…
+    231|   expect.soft(selectCollaborationOutcome(value)).toMatchObject({state:…
+    232|   expect.soft(selectCollaborationOutcome(value,'task:["team","older-an…
+       |                                                                                   ^
+    233|   expect.soft(selectCollaborationOutcome(value,'task:["team","analysis…
+    234|   expect.soft(selectCollaborationOutcome(value,'task:["team","review"]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > finalizes only the exact analysis and review identified by the completed provenance chain
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'accepted', …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+-   "acceptanceScope": "stage",
++   "acceptanceScope": "final",
+    "artifacts": [
+      {
+-       "scope": "stage",
++       "scope": "final",
+        "version": {
+          "bytes": 1,
+          "path": "result.csv",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "versionId": "retained-v1",
+
+ ❯ tests/ui/collaboration-outcome.test.ts:236:60
+    234|   expect.soft(selectCollaborationOutcome(value,'task:["team","review"]…
+    235|   value.runs=[{...run,kind:'team',address:['team','same-member','gener…
+    236|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+       |                                                            ^
+    237|   value.runs[0]!.taskAttempt={teamId:'team',taskId:'analysis',attemptI…
+    238|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > finalizes only the exact analysis and review identified by the completed provenance chain
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'accepted', …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+-   "acceptanceScope": "stage",
++   "acceptanceScope": "final",
+    "artifacts": [
+      {
+-       "scope": "stage",
++       "scope": "final",
+        "version": {
+          "bytes": 1,
+          "path": "result.csv",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "versionId": "retained-v1",
+
+ ❯ tests/ui/collaboration-outcome.test.ts:238:60
+    236|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+    237|   value.runs[0]!.taskAttempt={teamId:'team',taskId:'analysis',attemptI…
+    238|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+       |                                                            ^
+    239|   value.runs[0]!.taskReceipt=analyzed().receipt
+    240|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not apply a batch scope to an unrelated standalone run
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'accepted', …(2) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptanceScope": "final",
++   "acceptanceScope": "stage",
+    "artifacts": [
+      {
+-       "scope": "final",
++       "scope": "stage",
+      },
+    ],
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:244:60
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not apply a batch scope to an unrelated standalone run
+AssertionError: expected true not to be true // Object.is equality
+ ❯ tests/ui/collaboration-outcome.test.ts:245:78
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not apply a batch scope to an unrelated standalone run
+AssertionError: expected { state: 'accepted', …(8) } to match object { state: 'accepted', …(2) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptanceScope": "final",
++   "acceptanceScope": "stage",
+    "artifacts": [
+      {
+-       "scope": "final",
++       "scope": "stage",
+      },
+    ],
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:247:79
+    245|   expect.soft(selectCollaborationOutcome(value,'run:run').pendingRevie…
+    246|   value.team!.tasks.push(task('standalone'))
+    247|   expect.soft(selectCollaborationOutcome(value,'task:["team","standalo…
+       |                                                                               ^
+    248|   expect.soft(selectCollaborationOutcome(value,'task:["team","analysis…
+    249|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 54 passed (56)
+   Start at  22:33:52
+   Duration  941ms (transform 327ms, setup 472ms, import 28ms, tests 27ms, environment 324ms)
+

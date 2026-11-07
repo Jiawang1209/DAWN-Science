@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/agent-context-sampler.test.ts --project node
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/runtime/agent-context-sampler.test.ts (10 tests | 1 failed) 13ms
+   × samples after SDK message persistence, coalesces boundaries, and never samples deltas 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/agent-context-sampler.test.ts > samples after SDK message persistence, coalesces boundaries, and never samples deltas
+AssertionError: expected [ { version: 1, …(9) }, …(2) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ tests/runtime/agent-context-sampler.test.ts:33:195
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  00:01:04
+   Duration  475ms (transform 26ms, setup 0ms, import 384ms, tests 13ms, environment 0ms)
+

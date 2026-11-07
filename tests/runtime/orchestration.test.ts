@@ -319,3 +319,163 @@ it('a denied scoped call invalidates previous evidence under a reused ID without
   expect(result.evidence.filter(e=>e.toolCallId==='fresh-read').map(e=>e.status)).toEqual(['done'])
  }finally{await runtime.stop('p')}
 })
+
+it('publishes independent owned team snapshots and coherent live to disk stamps across reopening',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-observer-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session')
+ const spec={sessionId:'p',workspace:root,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}}
+ const {readRunOverview,DISK_OBSERVATION}=await import('../../src/orchestration/run-overview.js')
+ let old:OrchestrationService|undefined,previousId:string|undefined
+ for(let cycle=0;cycle<2;cycle++){
+  await runtime.start({...spec,resume:cycle>0})
+  const events:import('../../src/runtime/types.js').AgentEvent[]=[];runtime.attach('p',e=>events.push(e))
+  const internal=runtime as unknown as {orchestrations:Map<string,OrchestrationService>;botTeams:Map<string,{current:{id?:string};scheduler:import('../../src/team/scheduler.js').团队调度器}>;sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean}>}}}>}
+  const service=internal.orchestrations.get('p')!,session=internal.sessions.get('p')!.session
+  expect(runtime.runOverview('p')?.observation?.observerId).not.toBe(previousId)
+  expect(runtime.runOverview('p')?.team).toBeNull()
+  if(old){const count=events.length;old.invalidateObservation();expect(events).toHaveLength(count)}
+  await session.getToolDefinition('team_create').execute('new',{name:'readonly',goal:'g',members:[]})
+  const control=internal.botTeams.get('p')!,snapshot=runtime.runOverview('p')!
+  expect(snapshot.team?.name).toBe('readonly');expect(snapshot.observation).toEqual(service.observation)
+  const revision=service.revision,observed=service.observation.revision
+  control.scheduler.改(control.current.id!,team=>{team.goal='changed without child state'})
+  expect(service.revision).toBe(revision);expect(service.observation.revision).toBeGreaterThan(observed)
+  expect(runtime.runOverview('p')?.team?.goal).toBe('changed without child state')
+  await session.getToolDefinition('team_finish').execute('finish',{})
+  expect(runtime.runOverview('p')?.team).toBeNull()
+  previousId=service.observation.observerId;old=service
+  await runtime.stop('p')
+  expect(events.filter(e=>e.kind==='run_overview_changed').at(-1)).toMatchObject({kind:'run_overview_changed',...DISK_OBSERVATION})
+  expect(readRunOverview(sessionDir,'p').observation).toEqual(DISK_OBSERVATION)
+  expect(readRunOverview(sessionDir,'p').runs.every(r=>r.phase==='unknown')).toBe(true)
+ }
+})
+it('late old coordinator cleanup cannot delete or notify for a replacement service',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-observer-replace-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session')
+ await runtime.start({sessionId:'p',workspace:root,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}})
+ const internal=runtime as unknown as {orchestrations:Map<string,OrchestrationService>;orchestrationControls:Map<string,unknown>}
+ const old=internal.orchestrations.get('p')!,child=old.register('subagent',['c'],'c');let release!:()=>void
+ const run=old.run(child.id,async()=>{await new Promise<void>(r=>release=r);return{ok:true,output:''}})
+ const events:import('../../src/runtime/types.js').AgentEvent[]=[];runtime.attach('p',e=>events.push(e))
+ const stopping=runtime.stop('p');await new Promise<void>(r=>setImmediate(r))
+ const {OrchestrationStore}=await import('../../src/orchestration/store.js'),{OrchestrationService}=await import('../../src/orchestration/service.js')
+ const replacement=new OrchestrationService(new OrchestrationStore(join(root,'replacement'),'p'))
+ const replacementControls={replacement:true};internal.orchestrations.set('p',replacement);internal.orchestrationControls.set('p',replacementControls)
+ const count=events.filter(e=>e.kind==='run_overview_changed').length;old.invalidateObservation()
+ expect(events.filter(e=>e.kind==='run_overview_changed')).toHaveLength(count)
+ release();await run;await stopping
+ expect(internal.orchestrations.get('p')).toBe(replacement);expect(internal.orchestrationControls.get('p')).toBe(replacementControls)
+ expect(events.filter(e=>e.kind==='run_overview_changed').at(-1)?.observerId).not.toBe('disk')
+ internal.orchestrations.delete('p');internal.orchestrationControls.delete('p');await replacement.close()
+})
+it('startup failure cleanup guards old controls and coordinator identities after awaiting close',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-observer-start-fail-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials}),{vi}=await import('vitest'),{OrchestrationStore}=await import('../../src/orchestration/store.js'),{OrchestrationService}=await import('../../src/orchestration/service.js')
+ const old=new OrchestrationService(new OrchestrationStore(join(root,'old'),'p')),replacement=new OrchestrationService(new OrchestrationStore(join(root,'new'),'p'))
+ let release!:()=>void;const gate=new Promise<void>(r=>release=r)
+ const internals=runtime as unknown as {启动一次(spec:unknown):Promise<never>;orchestrations:Map<string,OrchestrationService>;orchestrationControls:Map<string,unknown>;pipelineProjections:Map<string,unknown>}
+ const replacementControl={new:true},replacementProjection={new:true}
+ vi.spyOn(internals,'启动一次').mockImplementation(async()=>{
+  internals.orchestrations.set('p',old);internals.orchestrationControls.set('p',{delivery:{close(){}},mailbox:{close:()=>gate}});throw Error('startup failed')
+ })
+ const starting=runtime.start({sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
+ await new Promise<void>(r=>setImmediate(r));internals.orchestrations.set('p',replacement);internals.orchestrationControls.set('p',replacementControl);internals.pipelineProjections.set('p',replacementProjection)
+ release();await expect(starting).rejects.toThrow('startup failed')
+ expect(internals.orchestrations.get('p')).toBe(replacement);expect(internals.orchestrationControls.get('p')).toBe(replacementControl);expect(internals.pipelineProjections.get('p')).toBe(replacementProjection)
+ await replacement.close()
+})
+it('live current team reads stay pure, reject foreign/malformed pointers and only attach trusted live Bot owner context',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-owned-read-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session'),{vi}=await import('vitest')
+ let liveScope='scope'
+ runtime.configureBots({list:()=>[],ownerContext:()=>({key:liveScope,workspace:'/trusted'}),run:async()=>({ok:true,output:''}),result:async()=>{},recover:async()=>{}})
+ await runtime.start({sessionId:'p',workspace:root,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}})
+ const internal=runtime as unknown as {botTeams:Map<string,{current:{id?:string};scheduler:import('../../src/team/scheduler.js').团队调度器}>}
+ const control=internal.botTeams.get('p')!,team={...建团队({id:'owned',name:'owned',goal:'g',captainSessionId:'p'}),botOriginScopeKey:'scope',botOwnerContext:{key:'scope',workspace:'/imported-private'}}
+ mkdirSync(join(sessionDir,'teams','owned'),{recursive:true});writeFileSync(join(sessionDir,'teams','owned','team.json'),JSON.stringify(team));control.current.id='owned'
+ const read=vi.spyOn(control.scheduler,'读').mockImplementation(()=>{throw Error('mutable scheduler read forbidden')})
+ try{
+  expect(runtime.runOverview('p')?.team?.botOwnerContext).toEqual({key:'scope',workspace:'/trusted'})
+  liveScope='foreign';expect(runtime.runOverview('p')?.team?.botOwnerContext).toBeUndefined();expect(read).not.toHaveBeenCalled()
+  writeFileSync(join(sessionDir,'teams','owned','team.json'),JSON.stringify({...team,captainSessionId:'foreign'}))
+  expect(runtime.runOverview('p')).toMatchObject({team:null,teamIssue:expect.any(String)})
+  for(const id of ['../owned','a/b','a\\b','.','..','x\0y']){control.current.id=id;expect(runtime.runOverview('p')).toMatchObject({team:null,teamIssue:expect.any(String)})}
+ }finally{read.mockRestore();delete control.current.id;await runtime.stop('p')}
+})
+it('publishes a fresh live source stamp when an empty coordinator is installed',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-empty-start-observer-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),seen:import('../../src/runtime/types.js').AgentEvent[]=[]
+ runtime.attach('p',e=>seen.push(e))
+ await runtime.start({sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
+ try{expect(seen.filter(e=>e.kind==='run_overview_changed').at(-1)).toMatchObject({kind:'run_overview_changed',...runtime.runOverview('p')!.observation})}
+ finally{await runtime.stop('p')}
+})
+it('late event attachment receives the current live observation stamp without changing the observation',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-late-observer-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'})
+ await runtime.start({sessionId:'p',workspace:root,sessionDir:join(root,'session'),native:{provider:'deepseek',model:'deepseek-flash'}})
+ try{
+  const before=runtime.runOverview('p')!.observation,seen:import('../../src/runtime/types.js').AgentEvent[]=[]
+  const offBad=runtime.attach('p',()=>{throw Error('isolated observer')});offBad();const off=runtime.attach('p',e=>seen.push(e))
+  expect(seen).toEqual([{kind:'run_overview_changed',sessionId:'p',...before}]);expect(runtime.runOverview('p')!.observation).toEqual(before)
+  const second:unknown[]=[],foreign:unknown[]=[],offSecond=runtime.attach('p',e=>second.push(e)),offForeign=runtime.attach('other',e=>foreign.push(e))
+  expect(second).toEqual(seen);expect(seen).toHaveLength(1);expect(foreign).toEqual([])
+  off();offSecond();offForeign()
+  ;(runtime as unknown as {orchestrations:Map<string,OrchestrationService>}).orchestrations.get('p')!.invalidateObservation()
+  expect(seen).toHaveLength(1);expect(second).toHaveLength(1);expect(foreign).toEqual([])
+ }finally{await runtime.stop('p')}
+})
+it('a sessionless stop cannot remove replacement coordination maps after awaiting old cleanup',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-sessionless-replace-'));roots.push(root)
+ const {OrchestrationStore}=await import('../../src/orchestration/store.js'),{OrchestrationService}=await import('../../src/orchestration/service.js')
+ const runtime=new NativeRuntime({credentials}),old=new OrchestrationService(new OrchestrationStore(join(root,'old'),'p')),replacement=new OrchestrationService(new OrchestrationStore(join(root,'new'),'p'))
+ const internal=runtime as unknown as {orchestrations:Map<string,OrchestrationService>;orchestrationControls:Map<string,unknown>}
+ internal.orchestrations.set('p',old);const child=old.register('subagent',['c'],'c');let release!:()=>void
+ const run=old.run(child.id,async()=>{await new Promise<void>(r=>release=r);return{ok:true,output:''}})
+ const stopping=runtime.stop('p'),controls={new:true};internal.orchestrations.set('p',replacement);internal.orchestrationControls.set('p',controls)
+ release();await run;await stopping;expect(internal.orchestrations.get('p')).toBe(replacement);expect(internal.orchestrationControls.get('p')).toBe(controls)
+ internal.orchestrations.delete('p');internal.orchestrationControls.delete('p');await replacement.close()
+})
+it('late old team writes retain cancellation side effects without notifying or overwriting the new observer',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-old-team-observer-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session'),{vi}=await import('vitest')
+ const cancel=vi.fn(async()=>{})
+ runtime.configureBots({list:()=>[],run:async()=>({ok:true,output:''}),result:async()=>{},recover:async()=>{},cancel})
+ await runtime.start({sessionId:'p',workspace:root,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}})
+ const internal=runtime as unknown as {orchestrations:Map<string,OrchestrationService>;botTeams:Map<string,{current:{id?:string};scheduler:import('../../src/team/scheduler.js').团队调度器}>}
+ const old=internal.orchestrations.get('p')!,control=internal.botTeams.get('p')!,{加成员,加任务,取消任务}=await import('../../src/team/state.js')
+ const team=建团队({id:'owned',name:'owned',goal:'g',captainSessionId:'p'});加成员(team,{name:'m',agent:'bot-b',botId:'b',botScopeKey:'scope'});加任务(team,{id:'t',subject:'task',assignee:'m'})
+ 写团队(join(sessionDir,'teams','owned'),team);control.current.id='owned'
+ const {OrchestrationStore}=await import('../../src/orchestration/store.js'),{OrchestrationService}=await import('../../src/orchestration/service.js'),replacement=new OrchestrationService(new OrchestrationStore(join(root,'replacement'),'p'))
+ const seen:import('../../src/runtime/types.js').AgentEvent[]=[];const off=runtime.attach('p',event=>seen.push(event));seen.length=0
+ internal.orchestrations.set('p',replacement)
+ try{
+  control.scheduler.改('owned',team=>取消任务(team,'t'))
+  expect(cancel).toHaveBeenCalledTimes(1);expect(seen.filter(event=>event.kind==='run_overview_changed'||event.kind==='team_changed')).toEqual([])
+  expect(control.scheduler.读('owned').tasks[0]?.status).toBe('cancelled')
+ }finally{off();internal.orchestrations.set('p',old);await runtime.stop('p');await replacement.close()}
+})
+it('retains the owned persisted team while stopping children drain, while explicit live empty stays empty',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-native-stopping-owned-team-'));roots.push(root)
+ const runtime=new NativeRuntime({credentials,subagentChildEntry:'/unused.js'}),sessionDir=join(root,'session')
+ await runtime.start({sessionId:'p',workspace:root,sessionDir,native:{provider:'deepseek',model:'deepseek-flash'}})
+ const internal=runtime as unknown as {orchestrations:Map<string,OrchestrationService>;botTeams:Map<string,{current:{id:string|undefined}}>;sessions:Map<string,{session:{getToolDefinition(name:string):{execute(id:string,args:unknown):Promise<{isError?:boolean}>}}}>}
+ await internal.sessions.get('p')!.session.getToolDefinition('team_create').execute('create',{name:'stopping team',goal:'g',members:[]})
+ const current=internal.botTeams.get('p')!.current,teamId=current.id!
+ current.id=undefined;expect(runtime.runOverview('p')?.team).toBeNull();current.id=teamId
+ expect(runtime.runOverview('p')?.team?.id).toBe(teamId)
+ const service=internal.orchestrations.get('p')!,child=service.register('subagent',['deferred','0'],'deferred');let release!:()=>void
+ const running=service.run(child.id,async()=>{await new Promise<void>(r=>release=r);return{ok:true,output:''}})
+ const stopping=runtime.stop('p')
+ try{
+  await new Promise<void>(r=>setImmediate(r));expect(internal.botTeams.has('p')).toBe(false)
+  const view=runtime.runOverview('p')!
+  expect(view).toMatchObject({source:'live',team:{id:teamId,captainSessionId:'p'}})
+  expect(view.runs.find(run=>run.id===child.id)?.phase).toBe('stopping')
+ }finally{release();await running;await stopping;await runtime.stop('p')}
+ expect(runtime.runOverview('p')).toBeUndefined()
+ const {readRunOverview}=await import('../../src/orchestration/run-overview.js'),disk=readRunOverview(sessionDir,'p')
+ expect(disk).toMatchObject({source:'disk',team:{id:teamId},observation:{observerId:'disk',revision:0}})
+ expect(disk.runs.find(run=>run.id===child.id)?.phase).toBe('unknown')
+})

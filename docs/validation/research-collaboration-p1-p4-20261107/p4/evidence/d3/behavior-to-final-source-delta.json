@@ -1,0 +1,10 @@
+{
+  "onlyCssChanged": true,
+  "hostAndMetricsSourceUnchanged": true,
+  "changed": {
+    "src/ui/styles.css": {
+      "behavior": "b0706cd6ab5cae4901aff5b319ebeb6392c446310b4f91be98d19bbc46d8ca23",
+      "final": "dd0512d40484b844f202940e3e4177cceff667905bf5e356e2f9fa4a08ca4b5a"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "builtAt": "2026-11-07T16:43:26.106Z",
+  "output": "dist/evaluation/current-api-20261108.mjs",
+  "sha256": "9eef92318f77233f4284b300f158048ffbb70467a518f0836e1c4a3d19a30505",
+  "entrySha256": "a7e54924d561db308a792607325f86ca541f6ded97c64c3672d2556ab21d5de2",
+  "runnerSha256": "6f47e125f40df6efda09f4a93a34f0390307ae17b3e5c2ebfb954ebb622916f8",
+  "manifestSha256": "28b32c4fb945cbe28e979b281ae11f2f03fa90cc4c9748053f510f1d2bc4ef19",
+  "networkRequests": 0
+}

@@ -1161,3 +1161,15 @@ describe("记录中枢 · 只以一句报错收尾的一轮（2026-09-28 回归�
     expect(seen).toEqual([])
   })
 })
+
+it('routes run observation changes independently of transcript tracking, revisions and notifications',()=>{
+ const h=hub(),seen:unknown[]=[],normal:unknown[]=[],any:unknown[]=[]
+ h.onUpdate(e=>normal.push(e));h.onAnyUpdate(e=>any.push(e))
+ h.onRunOverviewChange(()=>{throw Error('isolated')});const off=h.onRunOverviewChange(e=>seen.push(e))
+ const event={kind:'run_overview_changed' as const,sessionId:'a',observerId:'observer',revision:3}
+ h.ingest('a',event);expect(seen).toHaveLength(1)
+ h.track('a','native');h.subscribe('a');h.ingest('a',event)
+ expect(h.subscribe('a').revision).toBe(0);expect(normal).toEqual([]);expect(any).toEqual([])
+ off();h.ingest('a',event);expect(seen).toHaveLength(2)
+ h.dispose();h.ingest('a',event);expect(seen).toHaveLength(2)
+})

@@ -1,0 +1,79 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/evaluation/research-runner.test.ts -t pins both arms|invalidates settings drift
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (10 tests | 2 failed | 8 skipped) 59600ms
+   × pins both arms to no automatic retries and sends each failed child scope to a localhost 500 provider once 29595ms
+   × invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm 30004ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > pins both arms to no automatic retries and sends each failed child scope to a localhost 500 provider once
+AssertionError: expected [ [ 'single', 'failed', 4 ], …(1) ] to deeply equal [ [ 'single', 'failed', 1 ], …(1) ]
+
+- Expected
++ Received
+
+  [
+    [
+      "single",
+      "failed",
+-     1,
++     4,
+    ],
+    [
+      "multi",
+      "failed",
+-     1,
++     4,
+    ],
+  ]
+
+ ❯ tests/evaluation/research-runner.test.ts:21:62
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/evaluation/research-runner.test.ts:42:1
+     40| },60000)
+     41|
+     42| it('invalidates settings drift and stops later arms while retaining th…
+       | ^
+     43|  const root=mkdtempSync(join(tmpdir(),'dawn-research-settings-drift-')…
+     44|  const out=join(root,'results'),scenario=researchScenario(researchTask…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-research-settings-drift-OebUT2/results/carbon-missing-single-M6bajX/.pi/settings.json'
+ ❯ readFileSync node:fs:440:20
+ ❯ Object.toolCall tests/evaluation/research-runner.test.ts:49:53
+ ❯ IncomingMessage.<anonymous> scripts/mock-inference-server.mjs:635:74
+ ❯ IncomingMessage.emit node:events:519:28
+ ❯ endReadableNT node:internal/streams/readable:1698:12
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:89:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-research-settings-drift-OebUT2/results/carbon-missing-single-M6bajX/.pi/settings.json' }
+This error originated in "tests/evaluation/research-runner.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 skipped (10)
+     Errors  1 error
+   Start at  00:39:49
+   Duration  60.76s (transform 305ms, setup 0ms, import 1.07s, tests 59.60s, environment 0ms)
+

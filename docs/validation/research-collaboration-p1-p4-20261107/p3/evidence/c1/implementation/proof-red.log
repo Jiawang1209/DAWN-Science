@@ -1,0 +1,99 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (28 tests | 3 failed) 19ms
+     × does not treat epoch zero or contradictory receipt summaries as current acceptance 5ms
+     × allows host accepted passing reviews to retain informational findings 1ms
+     × recognizes cancelled task drain after the host removes its attempt token 1ms
+ ❯ |ui| tests/ui/collaboration-model.test.ts (7 tests | 1 failed) 30ms
+   × does not count epoch zero or conflicting full receipts as accepted 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-model.test.ts > does not count epoch zero or conflicting full receipts as accepted
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/ui/collaboration-model.test.ts:65:311
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not treat epoch zero or contradictory receipt summaries as current acceptance
+AssertionError: expected { state: 'accepted', …(4) } to match object { state: 'unverified', …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptedPaths": [],
+-   "state": "unverified",
++   "acceptedPaths": [
++     "result.csv",
++   ],
++   "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:109:88
+    107|  })
+    108|  it('does not treat epoch zero or contradictory receipt summaries as c…
+    109|   expect(selectCollaborationOutcome(snapshot([{...run,epoch:0,resultEp…
+       |                                                                                        ^
+    110|   expect(selectCollaborationOutcome(snapshot([{...run,receipt:'blocked…
+    111|   expect(selectCollaborationOutcome(snapshot([{...run,taskReceipt:{...…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > allows host accepted passing reviews to retain informational findings
+AssertionError: expected 'unverified' to be 'accepted' // Object.is equality
+
+Expected: "accepted"
+Received: "unverified"
+
+ ❯ tests/ui/collaboration-outcome.test.ts:117:51
+    115|   const data=value.team!.tasks[1]!.receipt!.result!.data!
+    116|   if(data.kind==='review')data.findings=['Independent external validat…
+    117|   expect(selectCollaborationOutcome(value).state).toBe('accepted')
+       |                                                   ^
+    118|  })
+    119|  it('recognizes cancelled task drain after the host removes its attemp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > recognizes cancelled task drain after the host removes its attempt token
+AssertionError: expected { state: 'cancelled', …(6) } to match object { state: 'stopping', …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "wait-for-drain",
+-   "state": "stopping",
++   "action": "inspect-recovery",
++   "state": "cancelled",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:124:45
+    122|   value.runs=[{...run,kind:'team',phase:'stopping',state:'cancelled'}]
+    123|   value.history={truncated:false,events:[{seq:1,at:1,type:'started',ch…
+    124|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'stop…
+       |                                             ^
+    125|   value.runs[0]!.phase='drained'
+    126|   expect(selectCollaborationOutcome(value).state).toBe('cancelled')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 31 passed (35)
+   Start at  22:19:00
+   Duration  1.12s (transform 704ms, setup 998ms, import 147ms, tests 50ms, environment 771ms)
+

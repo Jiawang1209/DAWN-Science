@@ -1,0 +1,772 @@
+diff --git a/src/orchestration/budget.ts b/src/orchestration/budget.ts
+index 6f48fd65..5e083d0c 100644
+--- a/src/orchestration/budget.ts
++++ b/src/orchestration/budget.ts
+@@ -1,29 +1,50 @@
+ /** Accounting within the existing atomic orchestration state, not a scheduler. */
+ import {z} from 'zod'
+-import {RunBudgetLimitsSchema,type RunBudget,type RunBudgetLimits} from '../protocol/run-budget.js'
++import {RunBudgetLimitsSchema,ReviewRunReservationSchema,ReviewReservationKeySchema,ReviewReservationIdentitySchema,type RunBudget,type RunBudgetLimits} from '../protocol/run-budget.js'
+ import type {TaskObservation} from '../protocol/task-observation.js'
+ import {UserFacingError} from '../errors.js'
++import {TaskAttemptBindingSchema} from '../protocol/run-explanation.js'
+ const natural=z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
+-export const BudgetRecordSchema=z.object({revision:natural,limits:RunBudgetLimitsSchema,consumedRuns:natural,legacyRuns:natural,knownTokens:natural,unknownRuns:natural,startedAt:z.number().finite().optional(),active:z.array(z.object({childId:z.string(),epoch:z.number().int().positive()}).strict())}).strict()
++export const ReviewRunAdmissionSchema=z.object({key:ReviewReservationKeySchema,stage:z.enum(['check','analyze','review'])}).strict()
++export type ReviewRunAdmission=z.infer<typeof ReviewRunAdmissionSchema>
++const ReviewRunBindingSchema=z.object({childId:z.string(),taskAttempt:TaskAttemptBindingSchema,admission:ReviewRunAdmissionSchema,admittedEpoch:z.number().int().positive().optional()}).strict()
++export const BudgetRecordSchema=z.object({revision:natural,limits:RunBudgetLimitsSchema,consumedRuns:natural,legacyRuns:natural,knownTokens:natural,unknownRuns:natural,startedAt:z.number().finite().optional(),reviewReservations:z.array(ReviewRunReservationSchema).optional(),reviewBindings:z.array(ReviewRunBindingSchema).optional(),active:z.array(z.object({childId:z.string(),epoch:z.number().int().positive(),reviewAdmission:ReviewRunAdmissionSchema.optional()}).strict())}).strict()
+ export type BudgetRecord=z.infer<typeof BudgetRecordSchema>
++export function reviewReservationKey(ownerSessionId:string,pipelineId:string,revisionCycle:number):string{
++ return JSON.stringify(ReviewReservationIdentitySchema.parse([ownerSessionId,pipelineId,revisionCycle]))
++}
++export function heldReviewRuns(record:BudgetRecord):number{return(record.reviewReservations??[]).reduce((sum,reservation)=>sum+reservation.remainingRuns,0)}
+ export function initialBudget(children:readonly {epoch:number;result?:unknown}[]):BudgetRecord{
+  // Pre-orchestration transcripts may carry a completed result with epoch zero.
+  // That proves at least one turn, never zero-cost work; its full history is unknown.
+  const legacyRuns=children.reduce((n,child)=>n+Math.max(child.epoch,child.result?1:0),0)
+  return{revision:0,limits:{},consumedRuns:legacyRuns,legacyRuns,knownTokens:0,unknownRuns:legacyRuns,active:[]}
+ }
+-export function budgetBlock(record:BudgetRecord,now=Date.now(),admission=true):RunBudget['blocked']{
++export function budgetBlock(record:BudgetRecord,now=Date.now(),admission=true,reviewAdmission?:ReviewRunAdmission):RunBudget['blocked']{
+  const{limits}=record
+  if(limits.maxElapsedMs!==undefined&&record.startedAt!==undefined&&now-record.startedAt>=limits.maxElapsedMs)return{code:'elapsed',message:'委派预算总历时已到；新任务未启动'}
+  if(limits.maxTokens!==undefined){
+   if(record.knownTokens>=limits.maxTokens)return{code:'tokens',message:'委派预算已达到可核验 token 限额；在途请求可能仍有额外消耗'}
+   if(record.unknownRuns>0)return{code:'unknown-usage',message:'委派预算存在未知用量，无法按 token 限额继续；请核对记录或显式调整限制'}
+  }
+- if(admission&&limits.maxRuns!==undefined&&record.consumedRuns>=limits.maxRuns)return{code:'runs',message:'委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动'}
++ if(admission){
++  if(limits.maxRuns!==undefined&&record.consumedRuns>=limits.maxRuns)return{code:'runs',message:'委派预算执行轮次已用完；已有合法轮次继续，新轮次未启动'}
++  if(reviewAdmission){
++   const own=record.reviewReservations?.find(reservation=>reservation.key===reviewAdmission.key)
++   if(own?.phase==='recovery-check')return{code:'runs',message:'审阅预留处于恢复待核对状态；核验后才能继续'}
++   if(!own||own.phase!=='held'||own.remainingRuns!==1)return{code:'runs',message:'本流程周期没有可用的审阅预留；新轮次未启动'}
++   if(reviewAdmission.stage==='review'){
++    if(record.active.some(active=>active.reviewAdmission?.key===reviewAdmission.key))return{code:'runs',message:'本流程周期的前序执行仍未排空；独立审阅未启动'}
++    return
++   }
++  }
++  if(limits.maxRuns!==undefined&&record.consumedRuns+heldReviewRuns(record)>=limits.maxRuns)return{code:'runs',message:'剩余执行轮次已为独立审阅预留；普通阶段未启动'}
++ }
+ }
+ export function budgetView(record:BudgetRecord,now=Date.now()):RunBudget{
+  const{revision,limits,consumedRuns,legacyRuns,knownTokens,unknownRuns,startedAt}=record
+- return{revision,limits:structuredClone(limits),consumedRuns,legacyRuns,knownTokens,unknownRuns,inFlight:record.active.length,...(startedAt!==undefined?{startedAt}:{}),elapsedMs:startedAt===undefined?0:Math.max(0,now-startedAt),...(budgetBlock(record,now)?{blocked:budgetBlock(record,now)}:{})}
++ const reservations=record.reviewReservations??[],showReservations=limits.reserveReviewRuns||record.reviewReservations!==undefined
++ return{revision,limits:structuredClone(limits),consumedRuns,legacyRuns,knownTokens,unknownRuns,inFlight:record.active.length,...(startedAt!==undefined?{startedAt}:{}),elapsedMs:startedAt===undefined?0:Math.max(0,now-startedAt),...(budgetBlock(record,now)?{blocked:budgetBlock(record,now)}:{}),...(showReservations?{reviewReservations:structuredClone(reservations),reviewReservedRuns:heldReviewRuns(record),reviewRecoveryRuns:reservations.filter(reservation=>reservation.phase==='recovery-check').length,...(limits.maxRuns!==undefined?{ordinaryRemainingRuns:Math.max(0,limits.maxRuns-consumedRuns-heldReviewRuns(record))}:{})}:{})}
+ }
+ export function chargeObservation(record:BudgetRecord,observation?:TaskObservation):void{
+  const usage=observation?.usage,fields=['input','output','cacheRead'] as const
+@@ -39,5 +60,7 @@ export function chargeObservation(record:BudgetRecord,observation?:TaskObservati
+ }
+ export function setBudgetLimits(record:BudgetRecord,limits:RunBudgetLimits,expectedRevision:number):void{
+  if(record.revision!==expectedRevision)throw new UserFacingError('预算版本已变化 (revision conflict)，请刷新后重试')
+- record.limits=RunBudgetLimitsSchema.parse(limits);record.revision++
++ const parsed=RunBudgetLimitsSchema.parse(limits)
++ if(heldReviewRuns(record)>0&&parsed.maxRuns===undefined)throw new UserFacingError('仍有审阅预留，不能移除 maxRuns；请先排空并终止相应流程')
++ record.limits=parsed;record.revision++
+ }
+diff --git a/src/orchestration/service.ts b/src/orchestration/service.ts
+index 9ab7be9e..ce02d883 100644
+--- a/src/orchestration/service.ts
++++ b/src/orchestration/service.ts
+@@ -1,17 +1,23 @@
++import {AgentContextSampleSchema,ContextRouteSchema,type AgentContextObservation,type ContextRoute} from '../protocol/agent-context-observation.js'
+ /** Shared admission and cleanup ownership for existing DAWN child backends. */
+ import {OrchestrationStore, type Outcome, type ChildKind, type ChildRecord} from './store.js'
+ 
++import {randomUUID} from 'node:crypto'
+ import type {SteeringReceipt} from './store.js'
+ import {withExecutionContext,reportExecutionStage} from './execution-context.js'
+ import {TaskAttemptBindingSchema,type TaskAttemptBinding} from '../protocol/run-explanation.js'
+ import type {RunBudgetLimits} from '../protocol/run-budget.js'
++import {ReviewRunAdmissionSchema,type ReviewRunAdmission} from './budget.js'
+ 
+ type Work = (signal: AbortSignal) => Promise<Outcome>
+ interface Entry {
+   id: string
+   controller: AbortController
+   work: Work
++  contextBinding?:{route:ContextRoute;observed:boolean}
++  admittedEpoch?:number
+   taskAttempt?:TaskAttemptBinding
++  reviewAdmission?:ReviewRunAdmission
+   resolve: (outcome: Outcome) => void
+   reject: (error: unknown) => void
+   detach: () => void
+@@ -30,16 +36,76 @@ export class OrchestrationService {
+   private closed = false
+   private readonly listeners = new Set<() => void>()
+   private generation = 0
++  private readonly observerId = randomUUID()
++  private observationRevision = 0
++  private readonly observers = new Set<(stamp:{observerId:string;revision:number})=>void>()
+   private budgetTimer:ReturnType<typeof setTimeout>|undefined
+ 
+   constructor(readonly store: OrchestrationStore, readonly capacity = 4) {
+     if (!Number.isSafeInteger(capacity) || capacity < 1) throw new Error('Invalid orchestration capacity')
+   }
+ 
++  get observation(){return {observerId:this.observerId,revision:this.observationRevision}}
++  subscribeObservation(listener:(stamp:{observerId:string;revision:number})=>void):()=>void {
++    this.observers.add(listener);return()=>{this.observers.delete(listener)}
++  }
++  /** Read invalidation only: does not wake dispatch/wait or change its generation. */
++  invalidateObservation():void {
++    this.observationRevision++
++    for(const listener of [...this.observers])try{listener(this.observation)}catch{/* Observation must never interrupt execution/persistence. */}
++  }
++  disposeObservation():void {this.observers.clear()}
++  currentTaskAttempt(id:string):TaskAttemptBinding|undefined {
++    const entry=this.active.get(id),child=this.store.get(id)
++    return entry?.taskAttempt&&entry.admittedEpoch!==undefined&&child?.epoch===entry.admittedEpoch&&(child.kind==='team'||child.kind==='bot')&&child.address.length===3&&child.address[0]===entry.taskAttempt.teamId?{...entry.taskAttempt}:undefined
++  }
++  contextObservation(id:string):AgentContextObservation {
++    const entry=this.active.get(id),child=this.store.get(id),sample=child?.contextObservation,binding=entry?.contextBinding
++    const active=!!entry&&!entry.controller.signal.aborted&&entry.admittedEpoch===child?.epoch
++    const current=active&&!!binding?.observed&&!!sample&&sample.epoch===entry?.admittedEpoch&&sample.sample.provider===binding.route.provider&&sample.sample.model===binding.route.model
++    const routeChanged=active&&!!binding&&sample?.epoch===entry?.admittedEpoch&&!!sample&&(sample.sample.provider!==binding.route.provider||sample.sample.model!==binding.route.model)
++    return {current:!!current,reason:current?'current':routeChanged?'route-changed':active?'awaiting-sample':'historical',...(sample?{sample}:{})}
++  }
++  private bindContextRoute(entry:Entry,epoch:number,raw:ContextRoute):(raw:unknown)=>void {
++    const route=ContextRouteSchema.parse(raw)
++    if(this.active.get(entry.id)!==entry||entry.controller.signal.aborted||entry.admittedEpoch!==epoch)return()=>{}
++    const binding={route,observed:false};entry.contextBinding=binding;this.invalidateObservation()
++    return raw=>{
++      // Validate against host-owned execution identity and frozen route, never child-supplied identity.
++      if(this.active.get(entry.id)!==entry||entry.controller.signal.aborted||entry.contextBinding!==binding||this.store.get(entry.id)?.epoch!==epoch)return
++      const parsed=AgentContextSampleSchema.safeParse(raw)
++      if(!parsed.success||parsed.data.provider!==route.provider||parsed.data.model!==route.model)return
++      try{
++        const admission=this.store.observeContext({ownerSessionId:this.store.ownerSessionId,childId:entry.id,epoch,sample:parsed.data})
++        if(!admission.accepted)return
++        const becameCurrent=!binding.observed
++        binding.observed=true
++        if(admission.changed||becameCurrent)this.invalidateObservation()
++      }catch{/* Observer failures never abort execution or echo raw payloads. */}
++    }
++  }
+   get revision(): number {return this.generation}
+   get isClosed(): boolean {return this.closed}
+   get hasPendingWork():boolean {return this.active.size>0||this.queue.length>0}
+   budgetSnapshot(){return this.store.budget()}
++  reserveReviewRuns(pipelineId:string,cycle:number,minimumRuns=3){
++    if(this.closed)throw new Error('Orchestration service is closed')
++    const before=this.store.budget().revision,result=this.store.reserveReviewRuns(pipelineId,cycle,minimumRuns)
++    if(this.store.budget().revision!==before){this.enforceBudget();this.changed();this.drain()}
++    return result
++  }
++  resumeReviewReservation(key:string){
++    if(this.closed)throw new Error('Orchestration service is closed')
++    const before=this.store.budget().revision;this.store.resumeReviewReservation(key)
++    if(this.store.budget().revision!==before)this.changed()
++  }
++  hasReviewWork(key:string){return [...this.queue,...this.active.values()].some(entry=>entry.reviewAdmission?.key===key)}
++  hasTaskWork(teamId:string,taskIds:readonly string[]){return [...this.queue,...this.active.values()].some(entry=>entry.taskAttempt?.teamId===teamId&&taskIds.includes(entry.taskAttempt.taskId))}
++  releaseReviewReservation(key:string){
++    if(this.hasReviewWork(key))throw new Error('流程仍有排队或在途执行，必须先排空才能释放预留')
++    const before=this.store.budget().revision;this.store.releaseReviewReservation(key)
++    if(this.store.budget().revision!==before){this.changed();this.drain()}
++  }
+   configureBudget(limits:RunBudgetLimits,expectedRevision:number){
+     if(this.closed)throw new Error('Orchestration service is closed')
+     const result=this.store.configureBudget(limits,expectedRevision)
+@@ -55,26 +121,36 @@ export class OrchestrationService {
+     return child
+   }
+ 
+-  run(id: string, work: Work, signal?: AbortSignal,taskAttempt?:TaskAttemptBinding): Promise<Outcome> {
++  run(id: string, work: Work, signal?: AbortSignal,taskAttempt?:TaskAttemptBinding,reviewAdmission?:ReviewRunAdmission): Promise<Outcome> {
+     if (this.closed) return Promise.reject(new Error('Orchestration service is closed'))
+     const child = this.store.get(id)
+     if (!child) return Promise.reject(new Error(`Unknown child in this parent session: ${id}`))
+     if (signal?.aborted) return Promise.resolve(cancelled())
+-    const blocked=this.budgetSnapshot().blocked
++    const binding=taskAttempt?TaskAttemptBindingSchema.safeParse(taskAttempt):undefined
++    if(binding&&!binding.success)this.observationIssue='部分任务阶段无法关联；既有执行和验收继续生效'
++    const admission=reviewAdmission?ReviewRunAdmissionSchema.safeParse(reviewAdmission):undefined
++    if(admission&&(!admission.success||!binding?.success))return Promise.reject(new Error('审阅预留缺少有效的冻结任务绑定'))
++    const boundAdmission=admission?.success?admission.data:undefined
++    let blocked:ReturnType<OrchestrationStore['admissionBlock']>
++    try{
++      blocked=this.store.admissionBlock(boundAdmission)
++      if(!blocked&&boundAdmission&&binding?.success)this.store.bindReviewAdmission(id,boundAdmission,binding.data)
++    }catch(error){return Promise.reject(error)}
+     if(blocked){this.store.recordEvent({type:'budget-blocked',childId:id,epoch:child.epoch});this.changed();return Promise.resolve({ok:false,output:'',error:blocked.message})}
+     return new Promise<Outcome>((resolve, reject) => {
+       const controller = new AbortController()
+       let finish!: () => void
+       const finished = new Promise<void>(done => {finish = done})
+-      const binding=taskAttempt?TaskAttemptBindingSchema.safeParse(taskAttempt):undefined
+-      if(binding&&!binding.success)this.observationIssue='部分任务阶段无法关联；既有执行和验收继续生效'
+-      const entry: Entry = {id, work, ...(binding?.success?{taskAttempt:binding.data}:{}),controller, resolve, reject, finished, finish, detach: () => {}}
++      const entry: Entry = {id, work, ...(binding?.success?{taskAttempt:binding.data}:{}),...(boundAdmission?{reviewAdmission:boundAdmission}:{}),controller, resolve, reject, finished, finish, detach: () => {}}
+       const abort = () => {
+         if(this.active.get(id)===entry)this.interruptSteering(id)
+         this.observeCancellation(entry)
+         controller.abort(signal?.reason)
+         const index = this.queue.indexOf(entry)
+-        if (index < 0) return
++        if (index < 0) {
++          if(this.active.get(id)===entry)this.invalidateObservation()
++          return
++        }
+         this.queue.splice(index, 1)
+         try {
+           if (!this.active.has(id)) this.store.update(id, {state: 'cancelled', reason: '排队期间已中止'})
+@@ -179,7 +255,7 @@ export class OrchestrationService {
+     this.closing = Promise.all(active.map(entry => entry.finished)).then(() => {
+       errors.push(...this.controlErrors)
+       if (errors.length) throw new AggregateError(errors, 'Orchestration close persistence failed')
+-    })
++    }).finally(()=>this.disposeObservation())
+     return this.closing
+   }
+ 
+@@ -197,13 +273,12 @@ export class OrchestrationService {
+     })
+   }
+ 
+-  private changed(): void {this.generation++; for (const listener of [...this.listeners]) listener()}
++  private changed(): void {this.generation++; for (const listener of [...this.listeners]) listener();this.invalidateObservation()}
+ 
+   private drain(): void {
+     if (this.closed) return
+     this.enforceBudget()
+     while (this.active.size < this.capacity) {
+-      if(this.budgetSnapshot().blocked){this.enforceBudget();return}
+       const index = this.queue.findIndex(entry => !this.active.has(entry.id))
+       if (index < 0) return
+       const entry = this.queue.splice(index, 1)[0]!
+@@ -214,11 +289,13 @@ export class OrchestrationService {
+ 
+   private async execute(entry: Entry): Promise<void> {
+     try {
+-      const epoch = this.store.beginRun(entry.id,entry.taskAttempt)
++      const epoch = this.store.beginRun(entry.id,entry.taskAttempt,entry.reviewAdmission)
++      entry.admittedEpoch=epoch
+       this.refreshBudgetTimer()
+       this.changed()
+       let outcome: Outcome
+       try {outcome = await withExecutionContext({ownerSessionId:this.store.ownerSessionId,childId:entry.id,label:this.store.get(entry.id)!.label,epoch,
++        bindContextRoute:route=>this.bindContextRoute(entry,epoch,route),
+         report:(stage,blockers,unknown,resources)=>{if(this.store.observeStage(entry.id,epoch,stage,blockers,unknown,resources))this.changed()},
+         observationFailed:()=>{this.observationIssue='部分运行观察未能保存；不影响既有锁和排空规则'},
+       },()=>{reportExecutionStage('execution');return entry.work(entry.controller.signal)})}
+@@ -234,20 +311,25 @@ export class OrchestrationService {
+   }
+ 
+   private enforceBudget():void{
+-    const budget=this.budgetSnapshot(),blocked=budget.blocked
+-    if(!blocked)return
++    const blocked=this.budgetSnapshot().blocked
+     // Run-count admission limits allow the final legally admitted turn to settle.
+-    if(blocked.code!=='runs')for(const entry of this.active.values())if(!entry.controller.signal.aborted&&this.store.get(entry.id)?.state==='running'){
++    let changed=false
++    if(blocked&&blocked.code!=='runs')for(const entry of this.active.values())if(!entry.controller.signal.aborted&&this.store.get(entry.id)?.state==='running'){
+       this.interruptSteering(entry.id);this.observeCancellation(entry);entry.controller.abort(blocked.message)
++      changed=true
+     }
+-    for(const entry of this.queue.splice(0)){
++    const queued=this.queue.splice(0)
++    for(const entry of queued){
++      const entryBlock=this.store.admissionBlock(entry.reviewAdmission)
++      if(!entryBlock){this.queue.push(entry);continue}
+       try{
+-        if(!this.active.has(entry.id))this.store.update(entry.id,{state:'cancelled',reason:blocked.message})
++        if(!this.active.has(entry.id))this.store.update(entry.id,{state:'cancelled',reason:entryBlock.message})
+         this.store.recordEvent({type:'budget-blocked',childId:entry.id,epoch:this.store.get(entry.id)!.epoch})
+-        entry.resolve({ok:false,output:'',error:blocked.message})
++        entry.resolve({ok:false,output:'',error:entryBlock.message})
+       }catch(error){entry.reject(error)}finally{entry.detach();entry.finish()}
++      changed=true
+     }
+-    this.changed()
++    if(changed)this.changed()
+   }
+ 
+   private observeCancellation(entry:Entry):void{
+diff --git a/src/orchestration/store.ts b/src/orchestration/store.ts
+index fa47fe20..9058f7c0 100644
+--- a/src/orchestration/store.ts
++++ b/src/orchestration/store.ts
+@@ -1,3 +1,7 @@
++import {BoundAgentContextSampleSchema,type BoundAgentContextSample} from '../protocol/agent-context-observation.js'
++import {AgentUsageTotalsSchema} from '../protocol/agent-usage-totals.js'
++import {initialUsageTotals,projectUsageTotals,settleUsageTotals} from './agent-usage-totals.js'
++import {USAGE_FIELDS} from '../protocol/agent-usage-totals.js'
+ /** Durable, parent-scoped identities and execution facts. Pi remains the transcript owner. */
+ import type {TaskAttemptBinding} from '../protocol/run-explanation.js'
+ import {createHash, randomUUID} from 'node:crypto'
+@@ -9,9 +13,10 @@ import {TaskSettingsSchema, TaskReceiptSchema, type TaskSettings} from './task-c
+ import {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
+ export {SteeringReceiptSchema,type SteeringReceipt} from '../protocol/subagent-control.js'
+ import {TaskObservationSchema} from '../protocol/task-observation.js'
+-import {RunActivitySchema,RunTimingSchema,RunEventSchema,stageTimingKey,type ExecutionStage,type LockOwner,type RunEvent} from '../protocol/run-explanation.js'
+-import {BudgetRecordSchema,initialBudget,budgetView,chargeObservation,setBudgetLimits} from './budget.js'
+-import type {RunBudgetLimits} from '../protocol/run-budget.js'
++import {RunActivitySchema,RunTimingSchema,RunEventSchema,TaskAttemptBindingSchema,stageTimingKey,type ExecutionStage,type LockOwner,type RunEvent} from '../protocol/run-explanation.js'
++import {BudgetRecordSchema,initialBudget,budgetView,budgetBlock,heldReviewRuns,chargeObservation,setBudgetLimits,reviewReservationKey,ReviewRunAdmissionSchema,type ReviewRunAdmission} from './budget.js'
++import {ReviewReservationKeySchema,type RunBudgetLimits,type ReviewRunReservation} from '../protocol/run-budget.js'
++import {UserFacingError} from '../errors.js'
+ 
+ export const ChildKindSchema = z.enum(['subagent', 'team', 'bot'])
+ export type ChildKind = z.infer<typeof ChildKindSchema>
+@@ -24,9 +29,11 @@ const ChildSchema = z.object({
+   label: z.string().min(1), paused: z.boolean().optional(), state: RunStateSchema, epoch: z.number().int().nonnegative(),
+   resultEpoch:z.number().int().nonnegative().optional(),updatedAt: z.number().finite(), reason: z.string().optional(), result: OutcomeSchema.optional(), settings: TaskSettingsSchema.optional(),
+   handoffSha256:z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
+-  activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),
++  activity:RunActivitySchema.optional(),timing:RunTimingSchema.optional(),contextObservation:BoundAgentContextSampleSchema.optional(),usageTotals:AgentUsageTotalsSchema.optional(),
+ }).strict()
+ export type ChildRecord = z.infer<typeof ChildSchema>
++/** Admission is distinct from persistence: a fresh reporter can re-observe an unchanged sample. */
++export type ContextObservationAdmission={accepted:false;changed:false}|{accepted:true;changed:boolean}
+ const MessageSchema = z.object({
+   id: z.string(), childId: z.string(), requestId: z.string().min(1).max(512), text: z.string().min(1).max(64 * 1024),
+   mode: z.enum(['start', 'continue']), status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted']),
+@@ -64,6 +71,8 @@ export function validateOrchestrationIdentity(state:State,ownerSessionId:string)
+  if(state.ownerSessionId!==ownerSessionId)throw new Error('owner mismatch')
+  const children=new Map<string,ChildRecord>()
+  for(const child of state.children){if(child.id!==childIdentity(child.kind,child.address,ownerSessionId)||children.has(child.id))throw new Error('invalid or duplicate child identity');if(child.resultEpoch!==undefined&&(!child.result||child.resultEpoch>child.epoch))throw new Error('invalid result epoch binding');children.set(child.id,child)}
++ for(const child of state.children){const observation=child.contextObservation;if(observation&&(observation.ownerSessionId!==ownerSessionId||observation.childId!==child.id||observation.epoch>child.epoch))throw new Error('invalid context observation identity')}
++ for(const child of state.children)if(child.usageTotals?.lastSettledEpoch!==undefined&&child.usageTotals.lastSettledEpoch>child.epoch)throw new Error('invalid settled usage epoch')
+  let sequence=0
+  for(const event of state.events??[]){
+   const child=event.childId?children.get(event.childId):undefined
+@@ -72,8 +81,28 @@ export function validateOrchestrationIdentity(state:State,ownerSessionId:string)
+   sequence=event.seq
+  }
+  const activeIds=new Set<string>()
+- for(const active of state.budget?.active??[]){const child=children.get(active.childId);if(!child||child.epoch!==active.epoch||activeIds.has(active.childId))throw new Error('invalid budget execution identity');activeIds.add(active.childId)}
+- if(state.budget&&(state.budget.active.length>state.budget.consumedRuns||state.budget.legacyRuns>state.budget.consumedRuns||state.budget.unknownRuns>state.budget.consumedRuns))throw new Error('invalid budget accounting')
++ const reservationKeys=new Set<string>()
++ for(const reservation of state.budget?.reviewReservations??[]){
++  if(JSON.parse(reservation.key)[0]!==ownerSessionId||reservationKeys.has(reservation.key))throw new Error('invalid review reservation identity')
++  reservationKeys.add(reservation.key)
++ }
++ if(state.budget&&heldReviewRuns(state.budget)>0&&state.budget.limits.maxRuns===undefined)throw new Error('review reservations require maxRuns')
++ const boundAttempts=new Set<string>(),boundEpochs=new Set<string>(),admittedReviews=new Map<string,number>()
++ for(const binding of state.budget?.reviewBindings??[]){
++  const child=children.get(binding.childId),identity=JSON.stringify([binding.childId,binding.taskAttempt.attemptId]),epochIdentity=JSON.stringify([binding.childId,binding.admittedEpoch])
++  if(!child||!matchesAttemptOwner(child,binding.taskAttempt)||!reservationKeys.has(binding.admission.key)||boundAttempts.has(identity)||binding.admittedEpoch!==undefined&&(binding.admittedEpoch>child.epoch||boundEpochs.has(epochIdentity)))throw new Error('invalid frozen review attempt binding')
++  boundAttempts.add(identity);if(binding.admittedEpoch!==undefined)boundEpochs.add(epochIdentity)
++  if(binding.admission.stage==='review'&&binding.admittedEpoch!==undefined)admittedReviews.set(binding.admission.key,(admittedReviews.get(binding.admission.key)??0)+1)
++ }
++ for(const reservation of state.budget?.reviewReservations??[])if((admittedReviews.get(reservation.key)??0)!==(reservation.phase==='consumed'?1:0))throw new Error('invalid review reservation accounting')
++ for(const active of state.budget?.active??[]){
++  const child=children.get(active.childId);if(!child||child.epoch!==active.epoch||activeIds.has(active.childId))throw new Error('invalid budget execution identity');activeIds.add(active.childId)
++  if(active.reviewAdmission){
++   const own=state.budget?.reviewReservations?.find(reservation=>reservation.key===active.reviewAdmission!.key),binding=state.budget?.reviewBindings?.find(binding=>binding.childId===active.childId&&binding.admittedEpoch===active.epoch)
++   if(!own||!binding||JSON.stringify(binding.admission)!==JSON.stringify(active.reviewAdmission)||(active.reviewAdmission.stage==='review'?own.phase!=='consumed':own.phase!=='held'&&own.phase!=='recovery-check'))throw new Error('invalid active review reservation binding')
++  }
++ }
++ if(state.budget&&(state.budget.active.length>state.budget.consumedRuns||state.budget.legacyRuns>state.budget.consumedRuns||state.budget.unknownRuns>state.budget.consumedRuns||(state.budget.reviewReservations??[]).filter(reservation=>reservation.phase==='consumed').length>state.budget.consumedRuns||boundEpochs.size>state.budget.consumedRuns))throw new Error('invalid budget accounting')
+ }
+ 
+ const matchesAttemptOwner=(child:ChildRecord,binding:TaskAttemptBinding)=>(child.kind==='team'||child.kind==='bot')&&child.address.length===3&&child.address[0]===binding.teamId
+@@ -83,7 +112,7 @@ export class OrchestrationStore {
+   private readonly directory: string
+   private readonly file: string
+ 
+-  constructor(sessionDir: string, readonly ownerSessionId: string) {
++  constructor(readonly sessionDir: string, readonly ownerSessionId: string) {
+     this.directory = join(sessionDir, 'orchestration')
+     this.file = join(this.directory, 'state.json')
+     try {
+@@ -107,9 +136,16 @@ export class OrchestrationStore {
+       if(!child||receipt.epoch>child.epoch||steeringIds.has(receipt.id)||receipt.id!==expected||count>128)throw new Error('Cannot open orchestration state: invalid steering identity')
+       steeringIds.add(receipt.id);steeringCounts.set(receipt.childId,count)
+     }
+-    if (this.state.budget?.active.length || this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
++    if (this.state.budget?.active.length || this.state.budget?.reviewReservations?.some(reservation=>reservation.phase==='held') || this.state.steering.some(receipt=>receipt.status==='accepted') || this.state.messages.some(message => message.status === 'running') || this.state.children.some(child => child.state === 'running' || child.state === 'queued')) {
+       this.change(state => {
+-        if(state.budget?.active.length){state.budget.unknownRuns+=state.budget.active.length;state.budget.active=[];state.budget.revision++}
++        if(state.budget?.active.length){
++          for(const active of state.budget.active){const child=state.children.find(child=>child.id===active.childId)!;child.usageTotals=settleUsageTotals(child.usageTotals,active.epoch)}
++          state.budget.unknownRuns+=state.budget.active.length;state.budget.active=[];state.budget.revision++
++        }
++        if(state.budget?.reviewReservations?.some(reservation=>reservation.phase==='held')){
++          for(const reservation of state.budget.reviewReservations)if(reservation.phase==='held')reservation.phase='recovery-check'
++          state.budget.revision++
++        }
+         for (const receipt of state.steering) if(receipt.status==='accepted'){receipt.status='interrupted';receipt.reason='宿主重启，是否进入模型上下文未确认；未自动重放';receipt.updatedAt=Date.now()}
+         for (const message of state.messages) if (message.status === 'running') {
+           const owner = state.children.find(child => child.id === message.childId)
+@@ -137,15 +173,90 @@ export class OrchestrationStore {
+     this.change(state=>{const budget=state.budget??=initialBudget(state.children);setBudgetLimits(budget,limits,expectedRevision);appendEvent(state,{type:'budget-configured'})})
+     return this.budget()
+   }
++  /** Same ledger as admissions. The caller supplies a host-owned pipeline identity. */
++  reserveReviewRuns(pipelineId:string,revisionCycle:number,minimumRuns=3):ReviewRunReservation|undefined{
++    if(!Number.isSafeInteger(minimumRuns)||minimumRuns<1||minimumRuns>3)throw new Error('Invalid minimum pipeline runs')
++    const key=reviewReservationKey(this.ownerSessionId,pipelineId,revisionCycle),current=this.state.budget?.reviewReservations?.find(reservation=>reservation.key===key)
++    if(current){
++      if(current.phase==='consumed'||current.phase==='released')throw new UserFacingError('该流程周期的审阅预留已结束，不能重新持有')
++      return structuredClone(current)
++    }
++    if(!this.state.budget?.limits.reserveReviewRuns)return
++    this.change(state=>{
++      const budget=state.budget!,blocked=budgetBlock(budget,Date.now(),false)
++      if(blocked)throw new UserFacingError(blocked.message)
++      if(budget.limits.maxRuns===undefined||budget.limits.maxRuns-budget.consumedRuns-heldReviewRuns(budget)<minimumRuns)throw new UserFacingError(`委派预算不足以启动本周期；至少需要 ${minimumRuns} 个执行轮次（含独立审阅预留）`)
++      ;(budget.reviewReservations??=[]).push({key,stage:'review',remainingRuns:1,phase:'held'});budget.revision++
++    })
++    return structuredClone(this.state.budget!.reviewReservations!.find(reservation=>reservation.key===key)!)
++  }
++  admissionBlock(reviewAdmission?:ReviewRunAdmission,now=Date.now()){
++    const parsed=reviewAdmission?ReviewRunAdmissionSchema.parse(reviewAdmission):undefined
++    if(parsed)this.requireReservationOwner(parsed.key)
++    return budgetBlock(this.state.budget??initialBudget(this.state.children),now,true,parsed)
++  }
++  /** Durable admission proof, independent of the bounded diagnostic event history. */
++  reviewRunAdmitted(reviewAdmission:ReviewRunAdmission,taskAttempt:TaskAttemptBinding):boolean{
++    const admission=ReviewRunAdmissionSchema.parse(reviewAdmission),attempt=TaskAttemptBindingSchema.parse(taskAttempt)
++    this.requireReservationOwner(admission.key)
++    return this.state.budget?.reviewBindings?.some(binding=>binding.admittedEpoch!==undefined&&binding.admission.key===admission.key&&binding.admission.stage===admission.stage&&binding.taskAttempt.teamId===attempt.teamId&&binding.taskAttempt.taskId===attempt.taskId&&binding.taskAttempt.attemptId===attempt.attemptId&&binding.taskAttempt.attempt===attempt.attempt)??false
++  }
++  /** Freeze a host-owned task attempt, independent of the member's reusable child identity. */
++  bindReviewAdmission(childId:string,admission:ReviewRunAdmission,taskAttempt:TaskAttemptBinding):void{
++    const parsed=ReviewRunAdmissionSchema.parse(admission),attempt=TaskAttemptBindingSchema.parse(taskAttempt),child=this.get(childId)
++    this.requireReservationOwner(parsed.key)
++    if(!child||!matchesAttemptOwner(child,attempt))throw new Error('Review binding team owner mismatch')
++    const prior=this.state.budget?.reviewBindings?.find(binding=>binding.childId===childId&&binding.taskAttempt.attemptId===attempt.attemptId)
++    if(prior){if(JSON.stringify(prior.taskAttempt)!==JSON.stringify(attempt)||JSON.stringify(prior.admission)!==JSON.stringify(parsed))throw new Error('审阅执行绑定已冻结，不能替换流程或代次');return}
++    const reservation=this.state.budget?.reviewReservations?.find(reservation=>reservation.key===parsed.key)
++    if(!reservation||reservation.phase!=='held'&&reservation.phase!=='recovery-check')throw new Error('Unknown or ended review reservation binding')
++    this.change(state=>{const budget=state.budget!;(budget.reviewBindings??=[]).push({childId,taskAttempt:attempt,admission:parsed});budget.revision++})
++  }
++  /** Caller has reverified frozen versions; this never dispatches or resets consumption. */
++  resumeReviewReservation(key:string):void{
++    this.requireReservationOwner(key)
++    const current=this.state.budget?.reviewReservations?.find(reservation=>reservation.key===key)
++    if(!current)throw new Error('Unknown review reservation')
++    if(current.phase==='held')return
++    if(current.phase!=='recovery-check')throw new Error('Review reservation has ended')
++    this.change(state=>{const budget=state.budget!;budget.reviewReservations!.find(reservation=>reservation.key===key)!.phase='held';budget.revision++})
++  }
++  /** Only a drained pipeline can release its unused hold. Admitted turns are never refunded. */
++  releaseReviewReservation(key:string):void{
++    this.requireReservationOwner(key)
++    const budget=this.state.budget,current=budget?.reviewReservations?.find(reservation=>reservation.key===key)
++    if(!current)throw new Error('Unknown review reservation')
++    if(budget!.active.some(active=>active.reviewAdmission?.key===key))throw new Error('流程仍有在途执行，必须先排空才能释放预留')
++    if(current.phase==='released'||current.phase==='consumed')return
++    this.change(state=>{const budget=state.budget!,reservation=budget.reviewReservations!.find(reservation=>reservation.key===key)!;reservation.remainingRuns=0;reservation.phase='released';budget.revision++})
++  }
++  private requireReservationOwner(key:string):void{
++    const canonical=ReviewReservationKeySchema.parse(key)
++    if(JSON.parse(canonical)[0]!==this.ownerSessionId)throw new Error('Foreign review reservation owner')
++  }
+   /** The epoch and its charge are one atomic write before dispatch. */
+-  beginRun(id:string,taskAttempt?:TaskAttemptBinding):number{
++  beginRun(id:string,taskAttempt?:TaskAttemptBinding,reviewAdmission?:ReviewRunAdmission):number{
+     let epoch=0
++    const admission=reviewAdmission?ReviewRunAdmissionSchema.parse(reviewAdmission):undefined
++    if(admission)this.requireReservationOwner(admission.key)
+     this.change(state=>{
+       const child=state.children.find(c=>c.id===id);if(!child)throw new Error('Unknown child')
+       const budget=state.budget??=initialBudget(state.children)
+       if(budget.active.some(active=>active.childId===id))throw new Error('Child is already budgeted in flight')
++      const attempt=taskAttempt?TaskAttemptBindingSchema.parse(taskAttempt):undefined,binding=attempt?budget.reviewBindings?.find(binding=>binding.childId===id&&binding.taskAttempt.attemptId===attempt.attemptId):undefined
++      if(admission||binding){
++        if(!binding||!attempt||!admission||JSON.stringify(binding.taskAttempt)!==JSON.stringify(attempt)||JSON.stringify(binding.admission)!==JSON.stringify(admission))throw new Error('缺少匹配的冻结审阅任务绑定 (binding)')
++        if(binding.admittedEpoch!==undefined)throw new Error('该任务代次已经准入 (admitted epoch)，不能重复计费或执行')
++      }
++      const blocked=budgetBlock(budget,Date.now(),true,admission)
++      if(blocked)throw new UserFacingError(blocked.message)
++      if(admission?.stage==='review'){
++        const reservation=budget.reviewReservations!.find(reservation=>reservation.key===admission.key)!
++        reservation.remainingRuns=0;reservation.phase='consumed'
++      }
+       epoch=++child.epoch;child.state='running';child.reason='';child.updatedAt=Date.now()
+-      budget.consumedRuns++;budget.startedAt??=Date.now();budget.active.push({childId:id,epoch});budget.revision++
++      if(binding)binding.admittedEpoch=epoch
++      budget.consumedRuns++;budget.startedAt??=Date.now();budget.active.push({childId:id,epoch,...(admission?{reviewAdmission:admission}:{})});budget.revision++
+       appendEvent(state,{type:'started',childId:id,epoch,state:'running',...(taskAttempt&&matchesAttemptOwner(child,taskAttempt)?{taskAttempt}:{})})
+     })
+     return epoch
+@@ -155,6 +266,7 @@ export class OrchestrationStore {
+     this.change(state=>{
+       const child=state.children.find(c=>c.id===id),budget=state.budget,index=budget?.active.findIndex(active=>active.childId===id&&active.epoch===epoch)??-1
+       if(!child||child.epoch!==epoch||!budget||index<0)throw new Error('Stale or already settled budget epoch')
++      child.usageTotals=settleUsageTotals(child.usageTotals,epoch,outcome.observation)
+       budget.active.splice(index,1);chargeObservation(budget,outcome.observation)
+       finishActivity(child);child.state=cancelled?'cancelled':outcome.ok?'completed':'failed';child.result=outcome;child.resultEpoch=epoch;child.reason=outcome.error??'';child.updatedAt=Date.now()
+       appendEvent(state,{type:'settled',childId:id,epoch,state:child.state,...(outcome.receipt?{receipt:outcome.receipt.state}:{})})
+@@ -182,11 +294,18 @@ export class OrchestrationStore {
+       if (existing.label !== label) throw new Error(`Child identity conflict: ${id}`)
+       return existing
+     }
+-    const child = ChildSchema.parse({id, kind, address: [...address], label, state: 'idle', epoch: 0, updatedAt: Date.now()})
++    const child = ChildSchema.parse({id, kind, address: [...address], label, state: 'idle', epoch: 0, updatedAt: Date.now(),usageTotals:initialUsageTotals()})
+     this.change(state => {state.children.push(child);appendEvent(state,{type:'registered',childId:child.id,epoch:0})})
+     return structuredClone(child)
+   }
+ 
++  /** An external legacy resume proves earlier history, never its counts or token values. */
++  markUsageHistoryLegacy(id:string):void{
++    const child=this.get(id);if(!child)throw new Error('Unknown child')
++    if(child.usageTotals?.legacyHistory)return
++    this.change(state=>{const current=state.children.find(child=>child.id===id)!,totals=projectUsageTotals(current.usageTotals);current.usageTotals={...totals,legacyHistory:true,partial:[...USAGE_FIELDS]}})
++  }
++
+   /** Bind once, before admission; neither retries nor followups may widen a persisted task. */
+   bindTask(id: string, settings: TaskSettings): TaskSettings {
+     const parsed=TaskSettingsSchema.parse(settings), child=this.get(id)
+@@ -211,6 +330,21 @@ export class OrchestrationStore {
+     this.change(state=>{state.children.find(item=>item.id===id)!.handoffSha256=parsed})
+   }
+ 
++  /** Numeric history only. Does not mutate progress, timing, budgets, or execution state. */
++  observeContext(observation:BoundAgentContextSample):ContextObservationAdmission {
++    const parsed=BoundAgentContextSampleSchema.parse(observation),child=this.get(parsed.childId)
++    if(parsed.ownerSessionId!==this.ownerSessionId||!child||child.epoch!==parsed.epoch||child.state!=='running')return {accepted:false,changed:false}
++    const prior=child.contextObservation
++    // The same reporter/stdout stream is ordered. Date.now can repeat within a millisecond;
++    // equal-time semantic changes are valid, but exact duplicates and strictly older samples are not.
++    if(prior?.epoch===parsed.epoch){
++      if(prior.sample.observedAt>parsed.sample.observedAt)return {accepted:false,changed:false}
++      if(JSON.stringify(prior.sample)===JSON.stringify(parsed.sample))return {accepted:true,changed:false}
++    }
++    this.change(state=>{state.children.find(item=>item.id===parsed.childId)!.contextObservation=parsed})
++    return {accepted:true,changed:true}
++  }
++
+   update(id: string, patch: Partial<Pick<ChildRecord, 'state' | 'epoch' | 'reason' | 'result' | 'paused'>>, expectedEpoch?: number): ChildRecord {
+     const child = this.get(id)
+     if (!child) throw new Error(`Unknown child in this parent session: ${id}`)
+diff --git a/src/protocol/run-budget.ts b/src/protocol/run-budget.ts
+index e13a1cfc..7937e2ec 100644
+--- a/src/protocol/run-budget.ts
++++ b/src/protocol/run-budget.ts
+@@ -1,7 +1,13 @@
+ import {z} from 'zod'
+ const natural=z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
+-export const RunBudgetLimitsSchema=z.object({maxRuns:z.number().int().min(1).max(10000).optional(),maxElapsedMs:z.number().int().min(1).max(7*24*60*60*1000).optional(),maxTokens:z.number().int().min(1).max(1_000_000_000).optional()}).strict()
++export const RunBudgetLimitsSchema=z.object({maxRuns:z.number().int().min(1).max(10000).optional(),maxElapsedMs:z.number().int().min(1).max(7*24*60*60*1000).optional(),maxTokens:z.number().int().min(1).max(1_000_000_000).optional(),reserveReviewRuns:z.boolean().optional()}).strict().refine(limits=>!limits.reserveReviewRuns||limits.maxRuns!==undefined,'审阅执行轮次预留需要 maxRuns')
+ export type RunBudgetLimits=z.infer<typeof RunBudgetLimitsSchema>
++export const ReviewReservationIdentitySchema=z.tuple([z.string().min(1).max(512),z.string().min(1).max(512),natural])
++export const ReviewReservationKeySchema=z.string().max(4096).refine(key=>{
++ try{const identity=ReviewReservationIdentitySchema.safeParse(JSON.parse(key));return identity.success&&JSON.stringify(identity.data)===key}catch{return false}
++},'审阅预留标识必须是规范 owner/pipeline/cycle 元组')
++export const ReviewRunReservationSchema=z.object({key:ReviewReservationKeySchema,stage:z.literal('review'),remainingRuns:z.union([z.literal(0),z.literal(1)]),phase:z.enum(['held','consumed','released','recovery-check'])}).strict().refine(reservation=>reservation.remainingRuns===((reservation.phase==='held'||reservation.phase==='recovery-check')?1:0),'预留剩余轮次与状态不一致')
++export type ReviewRunReservation=z.infer<typeof ReviewRunReservationSchema>
+ export const BudgetBlockSchema=z.object({code:z.enum(['runs','elapsed','tokens','unknown-usage']),message:z.string()}).strict()
+-export const RunBudgetSchema=z.object({revision:natural,limits:RunBudgetLimitsSchema,consumedRuns:natural,legacyRuns:natural,knownTokens:natural,unknownRuns:natural,inFlight:natural,startedAt:z.number().finite().optional(),elapsedMs:z.number().nonnegative(),blocked:BudgetBlockSchema.optional()}).strict()
++export const RunBudgetSchema=z.object({revision:natural,limits:RunBudgetLimitsSchema,consumedRuns:natural,legacyRuns:natural,knownTokens:natural,unknownRuns:natural,inFlight:natural,startedAt:z.number().finite().optional(),elapsedMs:z.number().nonnegative(),blocked:BudgetBlockSchema.optional(),reviewReservations:z.array(ReviewRunReservationSchema).optional(),ordinaryRemainingRuns:natural.optional(),reviewReservedRuns:natural.optional(),reviewRecoveryRuns:natural.optional()}).strict()
+ export type RunBudget=z.infer<typeof RunBudgetSchema>
+diff --git a/src/team/scheduler.ts b/src/team/scheduler.ts
+index 6fb708bf..d54b0005 100644
+--- a/src/team/scheduler.ts
++++ b/src/team/scheduler.ts
+@@ -15,7 +15,8 @@ import {taskOutputReservation} from "../bot/output-locks.js"
+ import {reportExecutionStage} from '../orchestration/execution-context.js'
+ import {advanceScienceBatch,recoverScienceBatch} from './science-batch.js'
+ import {runScienceSummary} from './science-summary.js'
+-import {advancePipeline,recoverPipeline} from './science-pipeline.js'
++import {advancePipeline,recoverPipeline,pipelineBudgetId,pipelineRemainingRuns,scienceBudgetPipelines,blockPipelineBudget} from './science-pipeline.js'
++import {reviewReservationKey,type ReviewRunAdmission} from '../orchestration/budget.js'
+ import {recoverTeamExecution} from './recovery.js'
+ import { join } from "node:path"
+ import { randomUUID } from "node:crypto"
+@@ -109,6 +110,7 @@ export class 团队调度器 {
+       const exchange = team.collaboration?.find(x => x.id === (turn.handlingExchangeId ?? turn.collaboration!.exchangeId))
+       if (!exchange || exchange.status === "cancelled" || exchange.status === "interrupted" || !sourceIsCurrent(team, exchange)) this.跑着.get(key)?.abort()
+     }
++    this.releasePipelineReviewReservations(team)
+     this.opts.onChange(team)
+     for (const w of this.等着的) w()
+     this.等着的.clear()
+@@ -275,6 +277,7 @@ export class 团队调度器 {
+   private 派一轮(teamId: string): void {
+     const team = this.读(teamId)
+     if (team.finishedAt || this.stoppedTeams.has(teamId) || (team.scienceBatch?!['running','aggregating'].includes(team.scienceBatch.status):team.pipeline&&team.pipeline.status!=='running')) return
++    if(!this.preparePipelineReviewReservations(teamId))return
+     for (const m of team.members) {
+       if (m.status === "removed") continue
+       if (this.跑着.has(`${teamId}/${m.name}`)) continue
+@@ -448,7 +451,9 @@ export class 团队调度器 {
+         const coordinator = this.opts.orchestration
+         if (coordinator) {
+           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
+-          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal,任务&&assignment?.attemptId===任务.attemptId?{teamId,taskId:任务.taskId,attemptId:任务.attemptId,attempt:assignment.attempt}:undefined)
++          const taskAttempt=任务&&assignment?.attemptId===任务.attemptId?{teamId,taskId:任务.taskId,attemptId:任务.attemptId,attempt:assignment.attempt}:undefined
++          const admission=taskAttempt?this.pipelineReviewAdmission(team,taskAttempt.taskId):undefined
++          结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal,taskAttempt,admission)
+         } else 结果 = await execute(ctrl.signal)
+       } catch (error) {
+         结果 = {ok: false, output: "", error: error instanceof Error ? error.message : String(error)}
+@@ -554,6 +559,112 @@ export class 团队调度器 {
+       if (snapshot && !ended) this.opts.onTurn?.({runId, team: snapshot, member, taskId: 任务?.taskId, phase: "end", ok: false, error: reason})
+     } finally {
+       if (this.跑着.get(key) === ctrl) {this.跑着.delete(key); this.botTurns.delete(key)}
++      try{this.releasePipelineReviewReservations(this.读(teamId))}catch(error){
++        if(this.opts.orchestration)this.opts.orchestration.observationIssue='审阅预留收尾未能保存；已用额度保留，核对账本后再继续'
++        console.error('[团队] 审阅预留收尾失败',error)
++      }
++    }
++  }
++
++  private preparePipelineReviewReservations(teamId:string):boolean {
++    const coordinator=this.opts.orchestration
++    if(!coordinator)return true
++    const team=this.读(teamId),budget=coordinator.budgetSnapshot()
++    const cycles=scienceBudgetPipelines(team).filter(p=>p.status==='running').map(p=>{
++      const pipelineId=pipelineBudgetId(team,p),key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineId,p.round)
++      return{p,pipelineId,key,task:team.tasks.find(task=>task.id===p.currentTaskId),reservation:budget.reviewReservations?.find(r=>r.key===key)}
++    })
++    const pending=cycles.filter(cycle=>cycle.task?.status==='pending'&&(budget.limits.reserveReviewRuns||cycle.reservation?.remainingRuns===1))
++    if(!pending.length)return true
++    // A new cycle must fit beside the remaining work in every live checkpoint.
++    // Already admitted stages are charged in consumedRuns, including when diagnostic history was truncated.
++    const newCycles=pending.filter(cycle=>!cycle.reservation)
++    const assertCapacity=()=>{
++      if(!newCycles.length)return
++      const current=coordinator.budgetSnapshot()
++      let needed=0
++      for(const cycle of cycles){
++        const own=current.reviewReservations?.find(r=>r.key===cycle.key)
++        if(!current.limits.reserveReviewRuns&&own?.remainingRuns!==1)continue
++        const task=cycle.task
++        const admitted=!!task?.attemptId&&['claimed','in_progress'].includes(task.status)&&coordinator.store.reviewRunAdmitted({key:cycle.key,stage:cycle.p.stage},{teamId:team.id,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt})
++        needed+=Math.max(0,pipelineRemainingRuns(cycle.p)-(admitted?1:0)-(own?.remainingRuns??0))
++      }
++      const available=current.limits.maxRuns===undefined?Infinity:Math.max(0,current.limits.maxRuns-current.consumedRuns-(current.reviewReservedRuns??0))
++      if(available<needed)throw new 团队错误(`并行流程剩余阶段至少需要 ${needed} 个未预留执行轮次，当前仅 ${available} 个；新周期未启动`)
++    }
++    const failedPipelineId=(newCycles[0]??pending[0])!.pipelineId
++    try{
++      assertCapacity()
++      for(const {p,pipelineId} of pending){
++        const reservation=coordinator.reserveReviewRuns(pipelineId,p.round,pipelineRemainingRuns(p))
++        if(reservation&&reservation.phase!=='held')throw new 团队错误('审阅预留恢复待核对；请通过科研流程专用恢复入口核验后继续')
++      }
++      assertCapacity()
++    }catch(error){
++      this.改(teamId,saved=>{const current=scienceBudgetPipelines(saved).find(item=>pipelineBudgetId(saved,item)===failedPipelineId);if(current)blockPipelineBudget(current,error instanceof Error?error.message:String(error),this.now())})
++      return false
++    }
++    return true
++  }
++
++  private pipelineReviewAdmission(team:团队,taskId:string):ReviewRunAdmission|undefined {
++    const coordinator=this.opts.orchestration,p=scienceBudgetPipelines(team).find(p=>p.taskIds.includes(taskId))
++    if(!coordinator||!p)return
++    if(p.status!=='running'||p.currentTaskId!==taskId)throw new 团队错误('科研任务不是当前流程阶段，未启动')
++    const budget=coordinator.budgetSnapshot(),key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(team,p),p.round)
++    if(!budget.limits.reserveReviewRuns&&!budget.reviewReservations?.some(r=>r.key===key&&r.remainingRuns===1))return
++    const reservation=coordinator.reserveReviewRuns(pipelineBudgetId(team,p),p.round,pipelineRemainingRuns(p))
++    if(!reservation)return
++    if(reservation.phase!=='held')throw new 团队错误('本周期审阅预留尚未核验或已结束，未启动')
++    return{key:reservation.key,stage:p.stage}
++  }
++
++  private releasePipelineReviewReservations(team:团队):void {
++    const coordinator=this.opts.orchestration
++    if(!coordinator)return
++    const reservations=coordinator.budgetSnapshot().reviewReservations??[]
++    const batchTerminal=!!team.scienceBatch&&['blocked','completed','cancelled'].includes(team.scienceBatch.status)
++    for(const p of scienceBudgetPipelines(team)){
++      if(!batchTerminal&&!['blocked','completed','cancelled'].includes(p.status))continue
++      const key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(team,p),p.round)
++      if(!reservations.some(reservation=>reservation.key===key&&reservation.remainingRuns===1))continue
++      if(coordinator.hasReviewWork(key)||coordinator.hasTaskWork(team.id,p.taskIds))continue
++      if(team.tasks.some(task=>p.taskIds.includes(task.id)&&['claimed','in_progress'].includes(task.status)))continue
++      coordinator.releaseReviewReservation(key)
++    }
++  }
++
++  /** Explicit cancel retry may reconcile a persisted terminal checkpoint after a failed ledger write. */
++  reconcileTerminalPipelineReservations(teamId:string):void {
++    const team=this.读(teamId),status=team.scienceBatch?.status??team.pipeline?.status
++    if(!status||!['blocked','completed','cancelled'].includes(status))throw new 团队错误('流程尚未终结，不能释放审阅预留')
++    this.releasePipelineReviewReservations(team)
++  }
++
++  /** Called only by explicit recovery after frozen file versions and route/CAS have been verified. */
++  resumePipelineReservationsVerified(teamId:string):void {
++    const coordinator=this.opts.orchestration
++    if(!coordinator)return
++    const team=this.读(teamId),budget=coordinator.budgetSnapshot(),reservations=budget.reviewReservations??[]
++    const plans=scienceBudgetPipelines(team).filter(p=>p.status==='running').map(p=>{
++      const key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(team,p),p.round)
++      return{pipelineId:pipelineBudgetId(team,p),p,reservation:reservations.find(r=>r.key===key)}
++    }).filter(plan=>budget.limits.reserveReviewRuns||plan.reservation?.remainingRuns===1)
++    if(!plans.length)return
++    if(budget.blocked&&budget.blocked.code!=='runs')throw new 团队错误(budget.blocked.message)
++    const needed=plans.reduce((sum,plan)=>sum+pipelineRemainingRuns(plan.p)-(plan.reservation?.remainingRuns??0),0)
++    const available=budget.limits.maxRuns===undefined?0:budget.limits.maxRuns-budget.consumedRuns-(budget.reviewReservedRuns??0)
++    if(available<needed)throw new 团队错误(`恢复后剩余阶段至少需要 ${needed} 个未预留执行轮次；当前预算不足，未启动`)
++    if(plans.some(plan=>plan.reservation?.phase==='released'))throw new 团队错误('流程预留已释放，不能沿用旧恢复身份')
++    const retryIds=new Set(plans.filter(plan=>plan.reservation?.phase==='consumed').map(plan=>plan.pipelineId))
++    if(retryIds.size)this.改(teamId,saved=>{for(const p of scienceBudgetPipelines(saved))if(retryIds.has(pipelineBudgetId(saved,p))){p.budgetGeneration=(p.budgetGeneration??0)+1;p.stateRevision++;p.updatedAt=this.now()}})
++    const current=this.读(teamId)
++    for(const p of scienceBudgetPipelines(current).filter(p=>p.status==='running')){
++      const budget=coordinator.budgetSnapshot(),key=reviewReservationKey(coordinator.store.ownerSessionId,pipelineBudgetId(current,p),p.round)
++      if(!budget.limits.reserveReviewRuns&&!budget.reviewReservations?.some(r=>r.key===key&&r.remainingRuns===1))continue
++      const reservation=coordinator.reserveReviewRuns(pipelineBudgetId(current,p),p.round,pipelineRemainingRuns(p))
++      if(reservation?.phase==='recovery-check')coordinator.resumeReviewReservation(reservation.key)
+     }
+   }
+ 
+diff --git a/src/team/science-pipeline-tools.ts b/src/team/science-pipeline-tools.ts
+index 99a31273..23f5f5cf 100644
+--- a/src/team/science-pipeline-tools.ts
++++ b/src/team/science-pipeline-tools.ts
+@@ -35,7 +35,7 @@ interface Options extends 团队工具选项 {route:()=>AnalysisRoute|undefined;
+ export function createSciencePipelineTools(opts:Options){
+  const scheduler=opts.调度器
+  const owned=(requested?:string)=>{const id=requested??opts.当前.get();if(!id||!teamId.safeParse(id).success)throw new 团队错误('请先启动科研流程，或提供有效 teamId');const t=scheduler.读(id);if(t.captainSessionId!==opts.sessionId||!t.pipeline)throw new 团队错误('流程不属于当前主会话');return t}
+- const status=(t:ReturnType<typeof owned>)=>({teamId:t.id,...pipelineStatus(t),...(t.scienceBatch?{batch:publicScienceBatch(t.scienceBatch)}:{})})
++ const status=(t:ReturnType<typeof owned>)=>({teamId:t.id,...pipelineStatus(t),...(t.scienceBatch?{batch:publicScienceBatch(t.scienceBatch,t.pipeline)}:{})})
+  const make=<S extends z.ZodType>(name:string,description:string,schema:S,action:(args:z.output<S>,callId:string,signal?:AbortSignal)=>unknown)=>({
+   name,label:name,description,parameters:z.toJSONSchema(schema,{io:'input',unrepresentable:'any'}),
+   async execute(callId:string,raw:unknown,signal?:AbortSignal){
+@@ -142,7 +142,7 @@ export function createSciencePipelineTools(opts:Options){
+    if((scheduler.读(team.id).scienceBatch?.stateRevision??scheduler.读(team.id).pipeline?.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
+    let transitioned=false
+    try{
+-    scheduler.改(team.id,t=>{if(t.scienceBatch)resumeScienceBatch(t,args.acknowledgeInterrupted);else resumePipeline(t,args.acknowledgeInterrupted);transitioned=true});scheduler.resumeTeam(team.id);await scheduler.踢一下(team.id)
++    scheduler.改(team.id,t=>{if(t.scienceBatch)resumeScienceBatch(t,args.acknowledgeInterrupted);else resumePipeline(t,args.acknowledgeInterrupted);transitioned=true});scheduler.resumePipelineReservationsVerified(team.id);scheduler.resumeTeam(team.id);await scheduler.踢一下(team.id)
+    }catch(error){
+     if(!transitioned)throw error // Rejected preconditions must not interrupt valid live work.
+     // Pause live work first, even if a snapshot notification or disk write failed.
+@@ -156,7 +156,7 @@ export function createSciencePipelineTools(opts:Options){
+   }),
+   make('cancel_science_pipeline','取消科研流程并停止当前尝试；保留检查点和产物，不采用迟到结果。停止请求不等于清理已完成。',cancelSchema,args=>{
+    const team=owned(args.teamId),p=team.pipeline!
+-   if(['completed','cancelled'].includes(team.scienceBatch?.status??p.status))return status(team)
++   if(['completed','cancelled'].includes(team.scienceBatch?.status??p.status)){scheduler.reconcileTerminalPipelineReservations(team.id);return status(team)}
+    if((team.scienceBatch?.stateRevision??p.stateRevision)!==args.stateRevision)throw new Error('流程版本已变化，请先读取状态')
+    scheduler.中止全部(team.id)
+    scheduler.改(team.id,t=>{if(t.scienceBatch)cancelScienceBatch(t);else cancelPipeline(t);for(const task of t.tasks)if(!['completed','failed','cancelled'].includes(task.status))取消任务(t,task.id)})
+diff --git a/src/team/science-pipeline.ts b/src/team/science-pipeline.ts
+index ded5781b..66055e81 100644
+--- a/src/team/science-pipeline.ts
++++ b/src/team/science-pipeline.ts
+@@ -1,4 +1,5 @@
+ import {scienceStepContext} from '../protocol/science-route-context.js'
++import {createHash} from 'node:crypto'
+ /** Fixed scientific reducer over existing Team tasks; no second execution loop. */
+ import {PipelineDefinitionSchema,SciencePipelineSchema,publicPipeline,stageContract,type PipelineDefinition,type PipelineStage,type SciencePipeline} from '../protocol/science-pipeline.js'
+ import {TaskContractSchema,TaskSettingsSchema,type TaskContract,type TaskSettings} from '../orchestration/task-contract.js'
+@@ -9,6 +10,17 @@ import type {团队,成员} from './types.js'
+ export function pipelineStageContract(def:PipelineDefinition,stage:PipelineStage):TaskContract {
+  return stageContract(def,stage)
+ }
++/** Budget identity is host-owned and independent of the public batch display projection. */
++export function pipelineBudgetId(team:团队,p:SciencePipeline):string{return'pipeline-'+createHash('sha256').update(JSON.stringify([team.id,p.requestId,p.namespace??null,p.budgetGeneration??0])).digest('hex')}
++export function pipelineRemainingRuns(p:SciencePipeline):number{return p.stage==='check'?3:p.stage==='analyze'?2:1}
++export function scienceBudgetPipelines(team:团队):SciencePipeline[]{
++ const items=team.scienceBatch?.items.flatMap(item=>item.checkpoint?[item.checkpoint]:item.completed?[item.completed]:[])??[]
++ const candidates=team.scienceBatch?.concurrency===2?[...items,...(team.pipeline?[team.pipeline]:[])]:[...(team.pipeline?[team.pipeline]:[]),...items]
++ const found=new Map<string,SciencePipeline>()
++ for(const p of candidates){const id=pipelineBudgetId(team,p);if(!found.has(id))found.set(id,p)}
++ return[...found.values()]
++}
++export function blockPipelineBudget(p:SciencePipeline,reason:string,now=Date.now()):void{finish(p,'blocked',reason,now)}
+ export function startPipeline(team:团队,requestId:string,raw:PipelineDefinition,freeze:(member:成员,contract:TaskContract)=>TaskSettings=(m,c)=>resolveTaskSettings(c,'ask-risky'),now=Date.now(),namespace?:string):void {
+  const definition=PipelineDefinitionSchema.parse(raw)
+  if(namespace){if(!team.scienceBatch||team.scienceBatch.items[team.scienceBatch.index]?.id!==namespace||team.pipeline?.status==='running')throw new 团队错误('批量内部阶段身份冲突')}

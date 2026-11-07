@@ -1,0 +1,62 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (54 tests | 2 failed) 23ms
+     × preserves stage scope for a selected bound analysis run and a selected batch task 5ms
+     × does not verify individual cancellation drain from an unadmitted or unmatched settled epoch 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > preserves stage scope for a selected bound analysis run and a selected batch task
+AssertionError: expected { state: 'accepted', …(5) } to match object { state: 'accepted', …(3) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "acceptanceScope": "stage",
+    "artifacts": [
+      {
+-       "scope": "stage",
++       "scope": "final",
+      },
+    ],
+-   "pendingReview": true,
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:209:55
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not verify individual cancellation drain from an unadmitted or unmatched settled epoch
+AssertionError: expected { state: 'cancelled', …(6) } to match object { state: 'cancelled', …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "drainVerified": false,
++   "drainVerified": true,
+    "state": "cancelled",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:217:72
+    215|   const t={...task(),status:'cancelled' as const},value=withTeam(team(…
+    216|   value.runs=[{...run,epoch:0,resultEpoch:0,state:'cancelled',taskAtte…
+    217|   expect(selectCollaborationOutcome(value,'task:["team","analysis"]'))…
+       |                                                                        ^
+    218|   expect(selectCollaborationOutcome(value,'run:run')).toMatchObject({s…
+    219|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 52 passed (54)
+   Start at  22:28:22
+   Duration  939ms (transform 325ms, setup 474ms, import 26ms, tests 23ms, environment 332ms)
+

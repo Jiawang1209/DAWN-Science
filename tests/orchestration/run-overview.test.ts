@@ -83,3 +83,61 @@ it('records the exact Team attempt atomically at admission and leaves aborted qu
  expect(snapshot.history?.events.filter(event=>event.taskAttempt).map(event=>[event.type,event.epoch,event.taskAttempt?.attemptId])).toEqual([['started',1,'attempt-a'],['started',2,'resumed']])
  await service.close()
 })
+
+it('projects settled resultEpoch so consumers can distinguish retained earlier results',async()=>{
+ const {service}=setup(),child=service.register('subagent',['call','0'],'reader')
+ await service.run(child.id,async()=>({ok:true,output:'',receipt:{version:1,state:'accepted',summary:'done',deliverables:[]}}))
+ expect(liveRunOverview(service).runs[0]).toMatchObject({epoch:1,resultEpoch:1})
+ let release!:()=>void;const gate=new Promise<void>(r=>release=r)
+ const rerun=service.run(child.id,async()=>{await gate;return{ok:true,output:''}})
+ expect(liveRunOverview(service).runs[0]).toMatchObject({epoch:2})
+ expect(liveRunOverview(service).runs[0]?.resultEpoch).toBeUndefined()
+ release();await rerun;await service.close()
+})
+
+it('includes stable live observation and active task proof without read mutations',async()=>{
+ const {service}=setup(),child=service.register('team',['t','m','1'],'m');let release!:()=>void
+ const run=service.run(child.id,async()=>{await new Promise<void>(r=>release=r);return{ok:true,output:''}},undefined,{teamId:'t',taskId:'x',attemptId:'a',attempt:1})
+ const a=liveRunOverview(service),b=liveRunOverview(service)
+ expect(a.observation).toEqual(service.observation);expect(b).toEqual(a);expect(a.runs[0]?.taskAttempt?.attemptId).toBe('a')
+ release();await run;await service.close()
+})
+it('reads owned current teams without legacy migration even when orchestration state is absent',async()=>{
+ const {mkdirSync,readdirSync}=await import('node:fs'),{建团队,加成员}=await import('../../src/team/state.js')
+ const root=mkdtempSync(join(tmpdir(),'dawn-pure-team-'));roots.push(root)
+ const team=建团队({id:'t',name:'team',goal:'g',captainSessionId:'p'});加成员(team,{name:'m',agent:'a',botId:'bot',botScopeKey:'scope'})
+ delete team.botOriginScopeKey
+ const stamped={...team,botOwnerContext:{key:'forged',workspace:'/private'}}
+ mkdirSync(join(root,'teams','t'),{recursive:true});writeFileSync(join(root,'teams','current'),'t');writeFileSync(join(root,'teams','t','team.json'),JSON.stringify(stamped))
+ const before=readFileSync(join(root,'teams','t','team.json'),'utf8'),files=readdirSync(root,{recursive:true})
+ const view=readRunOverview(root,'p');expect(view.team?.id).toBe('t');expect(view.team?.botOwnerContext).toBeUndefined();expect(view.runs).toEqual([])
+ expect(readFileSync(join(root,'teams','t','team.json'),'utf8')).toBe(before);expect(readdirSync(root,{recursive:true})).toEqual(files)
+ expect(readRunOverview(root,'other')).toMatchObject({team:null,teamIssue:expect.any(String)})
+ for(const pointer of ['../t','a/b','a\\b','.', '..','x\0y']){writeFileSync(join(root,'teams','current'),pointer);expect(readRunOverview(root,'p')).toMatchObject({team:null,teamIssue:expect.any(String)})}
+ writeFileSync(join(root,'teams','current'),'t');writeFileSync(join(root,'teams','t','team.json'),'{private broken payload')
+ expect(readRunOverview(root,'p')).toMatchObject({team:null,teamIssue:expect.not.stringContaining('private')})
+})
+it('bounds current pointer leaves and treats malformed raw teams and pointer read failures as issues',async()=>{
+ const {mkdirSync}=await import('node:fs'),{readCurrentTeamSnapshot}=await import('../../src/team/read-current-snapshot.js')
+ const root=mkdtempSync(join(tmpdir(),'dawn-pure-invalid-team-'));roots.push(root);mkdirSync(join(root,'teams','t'),{recursive:true})
+ // The in-memory pointer is validated before attempting any disk team read.
+ expect(readCurrentTeamSnapshot(root,'p',{id:'x'.repeat(256)})).toMatchObject({team:null,teamIssue:expect.any(String)})
+ for(const raw of [null,1,'secret',[],{id:'other',captainSessionId:'p'},{id:'t',captainSessionId:'p',pipeline:{private:'invalid'}}]){
+  writeFileSync(join(root,'teams','current'),'t');writeFileSync(join(root,'teams','t','team.json'),JSON.stringify(raw))
+  const before=readFileSync(join(root,'teams','t','team.json'),'utf8')
+  expect(readRunOverview(root,'p')).toMatchObject({team:null,teamIssue:expect.any(String)})
+  expect(readFileSync(join(root,'teams','t','team.json'),'utf8')).toBe(before)
+ }
+ rmSync(join(root,'teams','current'));mkdirSync(join(root,'teams','current'))
+ expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,teamIssue:expect.any(String)})
+})
+for(const field of ['pipeline','scienceBatch'])for(const value of [null,false,0,''])it(`rejects explicitly malformed falsy ${field}=${JSON.stringify(value)} without rewriting the team`,async()=>{
+ const {mkdirSync,readdirSync}=await import('node:fs'),{建团队}=await import('../../src/team/state.js'),{readCurrentTeamSnapshot}=await import('../../src/team/read-current-snapshot.js')
+ const root=mkdtempSync(join(tmpdir(),'dawn-pure-falsy-team-'));roots.push(root);mkdirSync(join(root,'teams','t'),{recursive:true})
+ const base=建团队({id:'t',name:'legacy',goal:'g',captainSessionId:'p'}),file=join(root,'teams','t','team.json')
+ writeFileSync(join(root,'teams','current'),'t');writeFileSync(file,JSON.stringify(base))
+ expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:{id:'t'}})
+ writeFileSync(file,JSON.stringify({...base,[field]:value}));const before=readFileSync(file),files=readdirSync(root,{recursive:true})
+ expect(readCurrentTeamSnapshot(root,'p')).toMatchObject({team:null,teamIssue:'当前团队记录不可读取或身份不匹配'})
+ expect(readFileSync(file)).toEqual(before);expect(readdirSync(root,{recursive:true})).toEqual(files)
+})

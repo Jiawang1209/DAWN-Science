@@ -1,0 +1,70 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (57 tests | 1 failed) 28ms
+     × finalizes only the exact analysis and review identified by the completed provenance chain 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > finalizes only the exact analysis and review identified by the completed provenance chain
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'accepted', …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -9,8 +9,8 @@
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "versionId": "retained-v1",
+        },
+      },
+    ],
+-   "pendingReview": false,
++   "pendingReview": true,
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:236:60
+    234|   expect.soft(selectCollaborationOutcome(value,'task:["team","review"]…
+    235|   value.runs=[{...run,kind:'team',address:['team','same-member','gener…
+    236|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+       |                                                            ^
+    237|   value.runs[0]!.taskAttempt={teamId:'team',taskId:'analysis',attemptI…
+    238|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > finalizes only the exact analysis and review identified by the completed provenance chain
+AssertionError: expected { state: 'accepted', …(7) } to match object { state: 'accepted', …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -9,8 +9,8 @@
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "versionId": "retained-v1",
+        },
+      },
+    ],
+-   "pendingReview": false,
++   "pendingReview": true,
+    "state": "accepted",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:238:60
+    236|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+    237|   value.runs[0]!.taskAttempt={teamId:'team',taskId:'analysis',attemptI…
+    238|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+       |                                                            ^
+    239|   value.runs[0]!.taskReceipt=analyzed().receipt
+    240|   expect.soft(selectCollaborationOutcome(value,'run:run')).toMatchObje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 56 passed (57)
+   Start at  22:40:49
+   Duration  947ms (transform 330ms, setup 476ms, import 31ms, tests 28ms, environment 328ms)
+

@@ -19,6 +19,15 @@ it('keeps unavailable fields unknown, distinguishes actual zero and marks incomp
 it('does not turn failed or aborted placeholder messages into zero usage', () => {
   expect(sessionUsage([message({ input: 0, output: 0, cacheRead: 0 }, { stopReason: 'error' }), message(undefined, { stopReason: 'aborted' })])).toEqual({})
 })
+it.each([
+ {stopReason:'error',usage:{input:0,output:0,cacheRead:0}},
+ {stopReason:'aborted',usage:{input:0,output:0,cacheRead:0}},
+ {stopReason:'error',usage:undefined},{stopReason:'aborted',usage:undefined},
+])('retains known lower bounds and marks every field incomplete around a no-receipt $stopReason',({stopReason,usage})=>{
+ const known=message({input:10,output:2,cacheRead:1}),placeholder=message(usage,{stopReason})
+ for(const branch of [[known,placeholder],[placeholder,known]])expect(sessionUsage(branch,true)).toEqual({input:10,output:2,cacheRead:1,partial:['input','output','cacheRead']})
+ expect(sessionUsage([placeholder],true)).toEqual({})
+})
 it('includes actual usage of interrupted or failed requests, but treats SDK all-zero defaults as unavailable', () => {
   expect(sessionUsage([message({ input: 0, output: 0, cacheRead: 0 })])).toEqual({})
   expect(sessionUsage([message({ input: 30, output: 2, cacheRead: 0 }, { stopReason: 'aborted' }),
@@ -29,4 +38,8 @@ it('includes actual usage of interrupted or failed requests, but treats SDK all-
 it('does not claim a zero cache hit rate when the SDK may have filled a missing field with zero', () => {
   expect(sessionUsage([message({ input: 100, output: 8, cacheRead: 0 })], true))
     .toEqual({ input: 100, output: 8, cacheRead: 0, partial: ['cacheRead'] })
+})
+it('retains safe known fields when provider deltas are fractional, unsafe or overflow their sum',()=>{
+ expect(sessionUsage([message({input:2,output:3,cacheRead:1}),message({input:Number.MAX_SAFE_INTEGER,output:0.5,cacheRead:Infinity})],true)).toEqual({input:2,output:3,cacheRead:1,partial:['input','output','cacheRead']})
+ expect(sessionUsage([message({input:1e308,output:4,cacheRead:2}),message({input:1e308,output:2,cacheRead:3})],true)).toEqual({output:6,cacheRead:5})
 })

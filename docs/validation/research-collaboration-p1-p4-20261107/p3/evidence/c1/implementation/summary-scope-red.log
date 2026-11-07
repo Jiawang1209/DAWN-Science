@@ -1,0 +1,35 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-research-collaboration-p1-p4-20261107/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (54 tests | 1 failed) 24ms
+     × does not report whole batches accepted from one completed item; summary requires own accepted versions 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > collaboration outcome from one authoritative snapshot > does not report whole batches accepted from one completed item; summary requires own accepted versions
+AssertionError: expected { state: 'accepted', …(5) } to match object { state: 'accepted', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,6 @@
+  {
+-   "acceptanceScope": "final",
+    "acceptedPaths": [
+      "summary.csv",
+      "summary.md",
+    ],
+    "state": "accepted",
+
+ ❯ tests/ui/collaboration-outcome.test.ts:89:45
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 53 passed (54)
+   Start at  22:29:07
+   Duration  928ms (transform 324ms, setup 471ms, import 25ms, tests 24ms, environment 325ms)
+

@@ -1,0 +1,10 @@
+{
+  "sourcePathsChanged": [
+    "src/ui/styles.css"
+  ],
+  "testPathsChanged": [
+    "tests/ui/app-mvp.test.tsx"
+  ],
+  "productionEventSource": "src/electron/preload.ts:129-134; independent ipcRenderer listener/removal per subscription",
+  "productionEventTransportChanged": false
+}

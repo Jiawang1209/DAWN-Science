@@ -1,0 +1,44 @@
+{
+  "rawRoot": "/tmp/dawn-p14-a-offline-demo-gFYFTb",
+  "runId": "d392cb56-bb9f-4b0a-b2d1-7ead6956e79e",
+  "sourceFingerprint": "c7a954206b7401bd8945aa8668917f980b1487cfad5d43317ee9d28e2d2fe805",
+  "childBuildFingerprint": "3ef8e39b8bb1b1c61e9049289885ff04881fc7fc6a27c968354f55acb47c7e4b",
+  "comparisonEligible": true,
+  "rows": 16,
+  "qualifiedPairs": 8,
+  "delivery": {
+    "single": {
+      "qualifiedDeliveries": 6,
+      "correctBlocks": 2,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 28,
+      "elapsedMs": 8900,
+      "requestsPerDelivery": 4.666666666666667,
+      "msPerDelivery": 1483.3333333333333
+    },
+    "multi": {
+      "qualifiedDeliveries": 6,
+      "correctBlocks": 2,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 64,
+      "elapsedMs": 17342,
+      "requestsPerDelivery": 10.666666666666666,
+      "msPerDelivery": 2890.3333333333335
+    }
+  },
+  "diagnostic": {
+    "hostAttempts": 1,
+    "hostRejected": 1,
+    "sdkRejected": 1,
+    "outputLimitNotExecuted": 1,
+    "source": "host-and-transcript",
+    "complete": true
+  },
+  "actual": {
+    "n": 41,
+    "mean": 13.870731707317074,
+    "unit": "mg/g"
+  }
+}

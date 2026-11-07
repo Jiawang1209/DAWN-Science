@@ -1,0 +1,46 @@
+
+Running 10 tests using 1 worker
+
+(node:47384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已检查数据：[质量报告](results/quality.json) [检查说明](notes/data.md)
+[主进程] Debugger ending on ws://127.0.0.1:62867/d70dac8f-7864-4d45-86af-8a52134ae4da
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-team.spec.ts:11:1 › native captain selects configured Bots and delivers executed dependency results (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:62905/3bdc14d7-1d36-499d-b0f5-d146cc45cc4d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (5.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:62938/5fe7a234-040f-419f-bd39-7dc1d6721bcb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (5.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:62978/1e5c9f1e-3ce4-4429-b66f-313a71b98a07
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (4.0s)
+  ✓   5 e2e/submission-feedback.spec.ts:13:1 › declarative task matching accepts Pi text-array prompts across result turns (1ms)
+  ✓   6 e2e/submission-feedback.spec.ts:19:1 › fixture evidence references reject missing, forged and ambiguous labels (1ms)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62996/551e4d55-5c13-4cf1-947d-b58662ddb605
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/submission-feedback.spec.ts:27:1 › a real child corrects an invalid evidence reference using the host-visible label (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「结构化子任务验收」做完了 — {"summary":"已交付声明文件","blockers":[],"deliverables":[{"path":"results/contract.txt"}],"execution":{"state":"not_run","note…
+[主进程] Debugger ending on ws://127.0.0.1:63012/3eaef748-c214-4b90-9428-c27d62ab315e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/task-contract.spec.ts:10:1 › scoped child writes the declared output and returns a host-validated receipt through the existing UI (4.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63046/7545e978-4c05-43f2-8fd5-1196028155e1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/task-contract.spec.ts:66:2 › legacy Team contract adapter › Team dependency execution publishes an accepted receipt through the strict client protocol (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:63069/21cc5f49-de36-4228-b37a-095ca727596a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/task-contract.spec.ts:95:2 › input readiness admission › missing inputs produce a blocked durable receipt without starting the child or writing outputs (1.9s)
+
+  10 passed (32.2s)

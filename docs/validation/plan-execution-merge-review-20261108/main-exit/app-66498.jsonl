@@ -1,0 +1,13 @@
+{"seq":1,"event":"diagnostics-attached","pid":66498,"at":"2026-11-08T06:44:57.100Z","ms":0.1944580000000542,"resources":{"PipeWrap":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":2,"event":"contents-created","pid":66498,"at":"2026-11-08T06:44:57.251Z","ms":151.15041600000006,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":66498,"at":"2026-11-08T06:44:57.252Z","ms":151.47350000000006,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":4,"event":"before-quit","pid":66498,"at":"2026-11-08T06:45:02.119Z","ms":5019.2657500000005,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":5,"event":"window-close","pid":66498,"at":"2026-11-08T06:45:02.120Z","ms":5019.949125,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":6,"event":"contents-destroyed","pid":66498,"at":"2026-11-08T06:45:02.121Z","ms":5021.2046660000005,"resources":{"PipeWrap":3,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":7,"event":"window-closed","pid":66498,"at":"2026-11-08T06:45:02.122Z","ms":5021.609416,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":8,"event":"will-quit","pid":66498,"at":"2026-11-08T06:45:02.122Z","ms":5021.721291,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":9,"event":"shutdown-check","pid":66498,"at":"2026-11-08T06:45:02.122Z","ms":5021.809625,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":10,"event":"shutdown-sync-start","pid":66498,"at":"2026-11-08T06:45:02.122Z","ms":5022.028416,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":11,"event":"shutdown-sync-complete","pid":66498,"at":"2026-11-08T06:45:02.125Z","ms":5024.463708,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":12,"event":"process-exit","pid":66498,"at":"2026-11-08T06:45:02.128Z","ms":5027.271541,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}
+{"seq":13,"event":"quit","pid":66498,"at":"2026-11-08T06:45:02.128Z","ms":5027.372583,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}

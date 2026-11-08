@@ -1,0 +1,428 @@
+{
+  "thresholdsMs": [
+    1500,
+    4000
+  ],
+  "sampleCount": 59,
+  "maxCloseMs": 210.126,
+  "missingProcessExit": 0,
+  "nonzeroExits": 0,
+  "problems": 0,
+  "historicalStatus": "OPEN",
+  "ptyCleanupStatus": "OPEN",
+  "samples": [
+    {
+      "file": "exit/exit-75872.jsonl",
+      "closeMs": 129.278,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-74074.jsonl",
+      "closeMs": 132.497,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-74115.jsonl",
+      "closeMs": 129.217,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-82260.jsonl",
+      "closeMs": 151.873,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-73953.jsonl",
+      "closeMs": 150.759,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-72798.jsonl",
+      "closeMs": 148.115,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-75565.jsonl",
+      "closeMs": 120.667,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-81778.jsonl",
+      "closeMs": 129.404,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-77846.jsonl",
+      "closeMs": 210.126,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-82769.jsonl",
+      "closeMs": 117.952,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-78117.jsonl",
+      "closeMs": 112.623,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-80388.jsonl",
+      "closeMs": 103.563,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-73666.jsonl",
+      "closeMs": 126.931,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-80234.jsonl",
+      "closeMs": 159.15,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-79351.jsonl",
+      "closeMs": 130.731,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-77244.jsonl",
+      "closeMs": 153.665,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-76399.jsonl",
+      "closeMs": 121.219,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-73076.jsonl",
+      "closeMs": 113.778,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-74538.jsonl",
+      "closeMs": 166.498,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-85710.jsonl",
+      "closeMs": 122.321,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-78316.jsonl",
+      "closeMs": 131.699,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-82559.jsonl",
+      "closeMs": 134.396,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-74942.jsonl",
+      "closeMs": 116.391,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-73437.jsonl",
+      "closeMs": 142.834,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-78987.jsonl",
+      "closeMs": 118.952,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-83392.jsonl",
+      "closeMs": 129.981,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-84543.jsonl",
+      "closeMs": 124.084,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-80515.jsonl",
+      "closeMs": 132.764,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-76872.jsonl",
+      "closeMs": 135.313,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-77375.jsonl",
+      "closeMs": 135.58,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-78716.jsonl",
+      "closeMs": 115.512,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-77646.jsonl",
+      "closeMs": 113.369,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-79732.jsonl",
+      "closeMs": 104.721,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-79861.jsonl",
+      "closeMs": 160.263,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-82029.jsonl",
+      "closeMs": 144.072,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-79631.jsonl",
+      "closeMs": 104.277,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-77071.jsonl",
+      "closeMs": 118.962,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-73805.jsonl",
+      "closeMs": 157.168,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-82970.jsonl",
+      "closeMs": 129.442,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-75697.jsonl",
+      "closeMs": 94.356,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-72925.jsonl",
+      "closeMs": 125.365,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-76745.jsonl",
+      "closeMs": 135.219,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-78516.jsonl",
+      "closeMs": 123.58,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-80023.jsonl",
+      "closeMs": 138.186,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-73204.jsonl",
+      "closeMs": 122.821,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-81532.jsonl",
+      "closeMs": 123.717,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-75299.jsonl",
+      "closeMs": 87.875,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-81901.jsonl",
+      "closeMs": 126.813,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-72635.jsonl",
+      "closeMs": 143.91,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-76014.jsonl",
+      "closeMs": 134.202,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "exit/exit-80946.jsonl",
+      "closeMs": 120.239,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "final-exit/exit-64888.jsonl",
+      "closeMs": 125.276,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "final-exit/exit-64639.jsonl",
+      "closeMs": 139.35,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "final-exit/exit-64443.jsonl",
+      "closeMs": 134.023,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "final-exit/exit-64229.jsonl",
+      "closeMs": 126.764,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "main-exit/exit-66340.jsonl",
+      "closeMs": 161.827,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "main-exit/exit-66656.jsonl",
+      "closeMs": 119.577,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "main-exit/exit-66128.jsonl",
+      "closeMs": 147.99,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    },
+    {
+      "file": "main-exit/exit-66498.jsonl",
+      "closeMs": 126.867,
+      "exitCode": 0,
+      "problems": [],
+      "nativeDiagnostics": true
+    }
+  ]
+}

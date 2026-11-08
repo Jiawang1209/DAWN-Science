@@ -1,0 +1,1044 @@
+Updating 8ee42490..524b04fe
+Fast-forward
+ .../plans/2026-11-08-plan-execution-workbench.md   |   73 +
+ .../plan-execution-merge-review-20261108/README.md |   39 +
+ .../build-final.log                                |  622 +++++++
+ .../plan-execution-merge-review-20261108/build.log |  622 +++++++
+ .../desktop-final.log                              |   25 +
+ .../desktop.log                                    |  240 +++
+ .../desktop/stage-a-frozen-proposal.png            |  Bin 0 -> 132104 bytes
+ .../desktop/stage-b-executed.png                   |  Bin 0 -> 303812 bytes
+ .../desktop/stage-b-retired.png                    |  Bin 0 -> 309323 bytes
+ .../desktop/stage-b-stopped.png                    |  Bin 0 -> 316572 bytes
+ .../desktop/stage-c-records-panel.png              |  Bin 0 -> 55942 bytes
+ .../desktop/stage-c-restored.png                   |  Bin 0 -> 297544 bytes
+ .../desktop/stage-c-task-records.png               |  Bin 0 -> 242337 bytes
+ .../desktop/stage-c-workflow.png                   |  Bin 0 -> 225820 bytes
+ .../desktop/stop-request-kinds.json                |   22 +
+ .../evaluation/approved-execution.json             |  162 ++
+ .../exit-summary.json                              |  321 ++++
+ .../exit/app-72635.jsonl                           |   13 +
+ .../exit/app-72798.jsonl                           |   13 +
+ .../exit/app-72925.jsonl                           |   13 +
+ .../exit/app-73076.jsonl                           |   13 +
+ .../exit/app-73204.jsonl                           |   13 +
+ .../exit/app-73437.jsonl                           |   13 +
+ .../exit/app-73666.jsonl                           |   13 +
+ .../exit/app-73805.jsonl                           |   14 +
+ .../exit/app-73953.jsonl                           |   13 +
+ .../exit/app-74074.jsonl                           |   13 +
+ .../exit/app-74115.jsonl                           |   13 +
+ .../exit/app-74538.jsonl                           |   13 +
+ .../exit/app-74942.jsonl                           |   13 +
+ .../exit/app-75299.jsonl                           |   13 +
+ .../exit/app-75565.jsonl                           |   13 +
+ .../exit/app-75697.jsonl                           |   13 +
+ .../exit/app-75872.jsonl                           |   13 +
+ .../exit/app-76014.jsonl                           |   13 +
+ .../exit/app-76399.jsonl                           |   13 +
+ .../exit/app-76745.jsonl                           |   13 +
+ .../exit/app-76872.jsonl                           |   13 +
+ .../exit/app-77071.jsonl                           |   13 +
+ .../exit/app-77244.jsonl                           |   13 +
+ .../exit/app-77375.jsonl                           |   13 +
+ .../exit/app-77646.jsonl                           |   13 +
+ .../exit/app-77846.jsonl                           |   14 +
+ .../exit/app-78117.jsonl                           |   13 +
+ .../exit/app-78316.jsonl                           |   13 +
+ .../exit/app-78516.jsonl                           |   13 +
+ .../exit/app-78716.jsonl                           |   13 +
+ .../exit/app-78987.jsonl                           |   13 +
+ .../exit/app-79351.jsonl                           |   13 +
+ .../exit/app-79631.jsonl                           |   13 +
+ .../exit/app-79732.jsonl                           |   13 +
+ .../exit/app-79861.jsonl                           |   13 +
+ .../exit/app-80023.jsonl                           |   13 +
+ .../exit/app-80234.jsonl                           |   14 +
+ .../exit/app-80388.jsonl                           |   13 +
+ .../exit/app-80515.jsonl                           |   13 +
+ .../exit/app-80946.jsonl                           |   13 +
+ .../exit/app-81532.jsonl                           |   13 +
+ .../exit/app-81778.jsonl                           |   13 +
+ .../exit/app-81901.jsonl                           |   13 +
+ .../exit/app-82029.jsonl                           |   13 +
+ .../exit/app-82260.jsonl                           |   14 +
+ .../exit/app-82559.jsonl                           |   13 +
+ .../exit/app-82769.jsonl                           |   13 +
+ .../exit/app-82970.jsonl                           |   13 +
+ .../exit/app-83392.jsonl                           |   13 +
+ .../exit/app-83535.jsonl                           |   14 +
+ .../exit/app-84543.jsonl                           |   13 +
+ .../exit/app-84580.jsonl                           |   14 +
+ .../exit/app-85710.jsonl                           |   13 +
+ .../exit/exit-72635.jsonl                          |   14 +
+ .../exit/exit-72798.jsonl                          |   14 +
+ .../exit/exit-72925.jsonl                          |   14 +
+ .../exit/exit-73076.jsonl                          |   14 +
+ .../exit/exit-73204.jsonl                          |   14 +
+ .../exit/exit-73437.jsonl                          |   14 +
+ .../exit/exit-73666.jsonl                          |   14 +
+ .../exit/exit-73805.jsonl                          |   14 +
+ .../exit/exit-73953.jsonl                          |   14 +
+ .../exit/exit-74074.jsonl                          |   14 +
+ .../exit/exit-74115.jsonl                          |   14 +
+ .../exit/exit-74538.jsonl                          |   14 +
+ .../exit/exit-74942.jsonl                          |   14 +
+ .../exit/exit-75299.jsonl                          |   14 +
+ .../exit/exit-75565.jsonl                          |   14 +
+ .../exit/exit-75697.jsonl                          |   14 +
+ .../exit/exit-75872.jsonl                          |   14 +
+ .../exit/exit-76014.jsonl                          |   14 +
+ .../exit/exit-76399.jsonl                          |   14 +
+ .../exit/exit-76745.jsonl                          |   14 +
+ .../exit/exit-76872.jsonl                          |   14 +
+ .../exit/exit-77071.jsonl                          |   14 +
+ .../exit/exit-77244.jsonl                          |   14 +
+ .../exit/exit-77375.jsonl                          |   14 +
+ .../exit/exit-77646.jsonl                          |   14 +
+ .../exit/exit-77846.jsonl                          |   14 +
+ .../exit/exit-78117.jsonl                          |   14 +
+ .../exit/exit-78316.jsonl                          |   14 +
+ .../exit/exit-78516.jsonl                          |   14 +
+ .../exit/exit-78716.jsonl                          |   14 +
+ .../exit/exit-78987.jsonl                          |   14 +
+ .../exit/exit-79351.jsonl                          |   14 +
+ .../exit/exit-79631.jsonl                          |   14 +
+ .../exit/exit-79732.jsonl                          |   14 +
+ .../exit/exit-79861.jsonl                          |   14 +
+ .../exit/exit-80023.jsonl                          |   14 +
+ .../exit/exit-80234.jsonl                          |   14 +
+ .../exit/exit-80388.jsonl                          |   14 +
+ .../exit/exit-80515.jsonl                          |   14 +
+ .../exit/exit-80946.jsonl                          |   14 +
+ .../exit/exit-81532.jsonl                          |   14 +
+ .../exit/exit-81778.jsonl                          |   14 +
+ .../exit/exit-81901.jsonl                          |   14 +
+ .../exit/exit-82029.jsonl                          |   14 +
+ .../exit/exit-82260.jsonl                          |   14 +
+ .../exit/exit-82559.jsonl                          |   14 +
+ .../exit/exit-82769.jsonl                          |   14 +
+ .../exit/exit-82970.jsonl                          |   14 +
+ .../exit/exit-83392.jsonl                          |   14 +
+ .../exit/exit-83535.jsonl                          |   13 +
+ .../exit/exit-84543.jsonl                          |   14 +
+ .../exit/exit-84580.jsonl                          |   13 +
+ .../exit/exit-85710.jsonl                          |   14 +
+ .../final-desktop/stage-a-frozen-proposal.png      |  Bin 0 -> 132104 bytes
+ .../final-desktop/stage-b-executed.png             |  Bin 0 -> 301043 bytes
+ .../final-desktop/stage-b-retired.png              |  Bin 0 -> 315535 bytes
+ .../final-desktop/stage-b-stopped.png              |  Bin 0 -> 316612 bytes
+ .../final-desktop/stage-c-records-panel.png        |  Bin 0 -> 56080 bytes
+ .../final-desktop/stage-c-restored.png             |  Bin 0 -> 289117 bytes
+ .../final-desktop/stage-c-task-records.png         |  Bin 0 -> 242506 bytes
+ .../final-desktop/stage-c-workflow.png             |  Bin 0 -> 225497 bytes
+ .../final-desktop/stop-request-kinds.json          |   22 +
+ .../final-exit/app-64229.jsonl                     |   13 +
+ .../final-exit/app-64443.jsonl                     |   13 +
+ .../final-exit/app-64639.jsonl                     |   13 +
+ .../final-exit/app-64888.jsonl                     |   13 +
+ .../final-exit/exit-64229.jsonl                    |   14 +
+ .../final-exit/exit-64443.jsonl                    |   14 +
+ .../final-exit/exit-64639.jsonl                    |   14 +
+ .../final-exit/exit-64888.jsonl                    |   14 +
+ .../final-ui.log                                   |   11 +
+ .../focused.log                                    |   11 +
+ .../full-vitest-final.log                          |   13 +
+ .../full-vitest-label-attempt.log                  |   40 +
+ .../full-vitest.log                                |   13 +
+ .../green-runtime.log                              |   11 +
+ .../i18n-label-fixed.log                           |   11 +
+ .../legacy/auto/stage-a-auto-default.png           |  Bin 0 -> 224738 bytes
+ .../legacy/auto/stage-b-adjusted-result.png        |  Bin 0 -> 95304 bytes
+ .../legacy/auto/stage-b-adjusted.png               |  Bin 0 -> 382500 bytes
+ .../legacy/auto/stage-b-result-1.png               |  Bin 0 -> 59075 bytes
+ .../legacy/auto/stage-b-result-2.png               |  Bin 0 -> 90107 bytes
+ .../legacy/auto/stage-b-result-3.png               |  Bin 0 -> 132456 bytes
+ .../legacy/auto/stage-b-task-1.png                 |  Bin 0 -> 343852 bytes
+ .../legacy/auto/stage-b-task-2.png                 |  Bin 0 -> 362778 bytes
+ .../legacy/auto/stage-b-task-3.png                 |  Bin 0 -> 370320 bytes
+ .../legacy/auto/stage-c-restored.png               |  Bin 0 -> 388369 bytes
+ .../legacy/auto/stage-d-cancelled.png              |  Bin 0 -> 359566 bytes
+ .../legacy/auto/stage-e-cancelled-restored.png     |  Bin 0 -> 361740 bytes
+ .../legacy/auto/stage-f-approved-result.png        |  Bin 0 -> 98065 bytes
+ .../legacy/auto/stage-f-edited-approved.png        |  Bin 0 -> 358025 bytes
+ .../legacy/collaboration/phase-a-artifacts.png     |  Bin 0 -> 352512 bytes
+ .../legacy/collaboration/phase-a-lock-wait.png     |  Bin 0 -> 314748 bytes
+ .../phase-b-bound-version-workbench.png            |  Bin 0 -> 170184 bytes
+ .../collaboration/phase-b-conversation-dark.png    |  Bin 0 -> 207396 bytes
+ .../legacy/collaboration/phase-b-conversation.png  |  Bin 0 -> 327554 bytes
+ .../phase-b-network-dark-completed.png             |  Bin 0 -> 432500 bytes
+ .../collaboration/phase-b-network-dark-running.png |  Bin 0 -> 415269 bytes
+ .../collaboration/phase-b-network-narrow.png       |  Bin 0 -> 129842 bytes
+ .../legacy/collaboration/phase-b-workflow.png      |  Bin 0 -> 252972 bytes
+ .../collaboration/phase-c-pipeline-accepted.png    |  Bin 0 -> 277385 bytes
+ .../legacy/collaboration/phase-c-recovery.png      |  Bin 0 -> 302886 bytes
+ .../legacy/collaboration/session-a-restored.png    |  Bin 0 -> 330574 bytes
+ .../legacy/collaboration/session-b-isolated.png    |  Bin 0 -> 296508 bytes
+ .../collaboration/task-timeline-accepted.png       |  Bin 0 -> 153725 bytes
+ .../legacy/collaboration/task-timeline-blocked.png |  Bin 0 -> 313430 bytes
+ .../legacy/members/stage-b-conversation.png        |  Bin 0 -> 289545 bytes
+ .../legacy/members/stage-b-member.png              |  Bin 0 -> 293311 bytes
+ .../legacy/members/stage-b-return.png              |  Bin 0 -> 293361 bytes
+ .../legacy/members/stage-c-recovery.png            |  Bin 0 -> 307499 bytes
+ .../legacy/outcome/blocked/expanded-light.png      |  Bin 0 -> 142530 bytes
+ .../legacy/outcome/blocked/focused-900-light.png   |  Bin 0 -> 93456 bytes
+ .../legacy/outcome/blocked/main-900-dark-panel.png |  Bin 0 -> 25429 bytes
+ .../legacy/outcome/blocked/main-900-dark.json      |  953 ++++++++++
+ .../legacy/outcome/blocked/main-900-dark.png       |  Bin 0 -> 139654 bytes
+ .../outcome/blocked/main-900-light-panel.png       |  Bin 0 -> 25762 bytes
+ .../legacy/outcome/blocked/main-900-light.json     |  953 ++++++++++
+ .../legacy/outcome/blocked/main-900-light.png      |  Bin 0 -> 141673 bytes
+ .../legacy/outcome/blocked/main-light-panel.png    |  Bin 0 -> 43470 bytes
+ .../legacy/outcome/blocked/main-light.json         |  953 ++++++++++
+ .../legacy/outcome/blocked/main-light.png          |  Bin 0 -> 192504 bytes
+ .../outcome/blocked/restart-live-dark-panel.png    |  Bin 0 -> 96525 bytes
+ .../legacy/outcome/blocked/restart-live-dark.json  |  950 ++++++++++
+ .../legacy/outcome/blocked/restart-live-dark.png   |  Bin 0 -> 335544 bytes
+ .../blocked/retired-disk-history-dark-panel.png    |  Bin 0 -> 84537 bytes
+ .../outcome/blocked/retired-disk-history-dark.json |  942 ++++++++++
+ .../outcome/blocked/retired-disk-history-dark.png  |  Bin 0 -> 336209 bytes
+ .../actual-cancelled-drained-panel.png             |  Bin 0 -> 50422 bytes
+ .../cancellation/actual-cancelled-drained.png      |  Bin 0 -> 283174 bytes
+ .../legacy/outcome/cancellation/fixture.json       |  163 ++
+ .../legacy/outcome/pass/expanded-light.png         |  Bin 0 -> 138465 bytes
+ .../legacy/outcome/pass/focused-900-light.png      |  Bin 0 -> 91081 bytes
+ .../legacy/outcome/pass/main-900-dark-panel.png    |  Bin 0 -> 15725 bytes
+ .../legacy/outcome/pass/main-900-dark.json         | 1907 ++++++++++++++++++++
+ .../legacy/outcome/pass/main-900-dark.png          |  Bin 0 -> 130609 bytes
+ .../legacy/outcome/pass/main-900-light-panel.png   |  Bin 0 -> 16017 bytes
+ .../legacy/outcome/pass/main-900-light.json        | 1907 ++++++++++++++++++++
+ .../legacy/outcome/pass/main-900-light.png         |  Bin 0 -> 133876 bytes
+ .../legacy/outcome/pass/main-light-panel.png       |  Bin 0 -> 37672 bytes
+ .../legacy/outcome/pass/main-light.json            | 1907 ++++++++++++++++++++
+ .../legacy/outcome/pass/main-light.png             |  Bin 0 -> 182170 bytes
+ .../outcome/pass/restart-live-dark-panel.png       |  Bin 0 -> 84649 bytes
+ .../legacy/outcome/pass/restart-live-dark.json     | 1904 +++++++++++++++++++
+ .../legacy/outcome/pass/restart-live-dark.png      |  Bin 0 -> 318630 bytes
+ .../pass/retired-disk-history-dark-panel.png       |  Bin 0 -> 80724 bytes
+ .../outcome/pass/retired-disk-history-dark.json    | 1904 +++++++++++++++++++
+ .../outcome/pass/retired-disk-history-dark.png     |  Bin 0 -> 324792 bytes
+ .../outcome/pass/review-pending-light-panel.png    |  Bin 0 -> 98426 bytes
+ .../legacy/outcome/pass/review-pending-light.json  | 1650 +++++++++++++++++
+ .../legacy/outcome/pass/review-pending-light.png   |  Bin 0 -> 356600 bytes
+ .../legacy/shutdown/active-child-recovered.png     |  Bin 0 -> 201899 bytes
+ .../legacy/shutdown/active-child-shutdown.json     |  105 ++
+ .../offline-execution.log                          |    3 +
+ .../offline-launch-cjs-error.log                   |   21 +
+ .../offline-launch-eval-error.log                  |   13 +
+ .../prior-evidence-sha256.json                     |  254 +++
+ .../red-catalogue-label.log                        |  207 +++
+ .../red-runtime-2.log                              |  197 ++
+ .../red-runtime.log                                |  121 ++
+ .../red-start-reason.log                           |   32 +
+ .../source-core-tested.json                        |   57 +
+ .../source-label-attempt.json                      |   57 +
+ .../source-reviewed.json                           |   57 +
+ .../typecheck-final.log                            |    2 +
+ .../typecheck.log                                  |    2 +
+ .../plan-execution-workbench-20261108/README.md    |   73 +
+ .../desktop/stage-a-frozen-proposal.png            |  Bin 0 -> 132104 bytes
+ .../desktop/stage-b-executed.png                   |  Bin 0 -> 303822 bytes
+ .../desktop/stage-b-retired.png                    |  Bin 0 -> 307904 bytes
+ .../desktop/stage-b-stopped.png                    |  Bin 0 -> 316572 bytes
+ .../desktop/stage-c-records-panel.png              |  Bin 0 -> 56111 bytes
+ .../desktop/stage-c-restored.png                   |  Bin 0 -> 296741 bytes
+ .../desktop/stage-c-task-records.png               |  Bin 0 -> 242411 bytes
+ .../desktop/stage-c-workflow.png                   |  Bin 0 -> 225691 bytes
+ .../desktop/stop-request-kinds.json                |   22 +
+ .../evaluation-final/approved-execution.json       |  162 ++
+ .../evaluation/approved-execution.json             |  159 ++
+ .../exit-summary.json                              |  374 ++++
+ .../exit/app-41271.jsonl                           |   13 +
+ .../exit/app-42002.jsonl                           |   13 +
+ .../exit/app-42172.jsonl                           |   13 +
+ .../exit/app-45966.jsonl                           |   13 +
+ .../exit/app-46158.jsonl                           |   13 +
+ .../exit/app-46309.jsonl                           |   13 +
+ .../exit/app-46474.jsonl                           |   13 +
+ .../exit/app-46834.jsonl                           |   13 +
+ .../exit/app-48396.jsonl                           |   13 +
+ .../exit/app-49025.jsonl                           |   13 +
+ .../exit/app-50315.jsonl                           |   13 +
+ .../exit/app-72795.jsonl                           |   13 +
+ .../exit/app-72944.jsonl                           |   13 +
+ .../exit/app-73071.jsonl                           |   13 +
+ .../exit/app-73213.jsonl                           |   13 +
+ .../exit/app-87342.jsonl                           |   13 +
+ .../exit/app-87494.jsonl                           |   13 +
+ .../exit/app-87625.jsonl                           |   13 +
+ .../exit/app-87780.jsonl                           |   13 +
+ .../exit/app-87907.jsonl                           |   13 +
+ .../exit/app-88131.jsonl                           |   13 +
+ .../exit/app-88369.jsonl                           |   13 +
+ .../exit/app-88521.jsonl                           |   14 +
+ .../exit/app-88676.jsonl                           |   13 +
+ .../exit/app-88808.jsonl                           |   13 +
+ .../exit/app-88955.jsonl                           |   13 +
+ .../exit/app-89289.jsonl                           |   13 +
+ .../exit/app-89562.jsonl                           |   13 +
+ .../exit/app-89698.jsonl                           |   13 +
+ .../exit/app-89873.jsonl                           |   13 +
+ .../exit/app-90009.jsonl                           |   13 +
+ .../exit/app-90309.jsonl                           |   13 +
+ .../exit/app-90534.jsonl                           |   13 +
+ .../exit/app-90661.jsonl                           |   13 +
+ .../exit/app-90860.jsonl                           |   13 +
+ .../exit/app-91015.jsonl                           |   13 +
+ .../exit/app-91142.jsonl                           |   13 +
+ .../exit/app-91413.jsonl                           |   13 +
+ .../exit/app-91615.jsonl                           |   14 +
+ .../exit/app-91886.jsonl                           |   13 +
+ .../exit/app-92085.jsonl                           |   13 +
+ .../exit/app-92284.jsonl                           |   13 +
+ .../exit/app-92484.jsonl                           |   13 +
+ .../exit/app-92774.jsonl                           |   13 +
+ .../exit/app-93139.jsonl                           |   13 +
+ .../exit/app-93424.jsonl                           |   13 +
+ .../exit/app-93519.jsonl                           |   13 +
+ .../exit/app-93654.jsonl                           |   13 +
+ .../exit/app-93800.jsonl                           |   13 +
+ .../exit/app-93992.jsonl                           |   14 +
+ .../exit/app-94141.jsonl                           |   13 +
+ .../exit/exit-41271.jsonl                          |   14 +
+ .../exit/exit-42002.jsonl                          |   14 +
+ .../exit/exit-42172.jsonl                          |   14 +
+ .../exit/exit-45966.jsonl                          |   14 +
+ .../exit/exit-46158.jsonl                          |   14 +
+ .../exit/exit-46309.jsonl                          |   14 +
+ .../exit/exit-46474.jsonl                          |   14 +
+ .../exit/exit-46834.jsonl                          |   14 +
+ .../exit/exit-48396.jsonl                          |   14 +
+ .../exit/exit-49025.jsonl                          |   14 +
+ .../exit/exit-50315.jsonl                          |   14 +
+ .../exit/exit-72795.jsonl                          |   14 +
+ .../exit/exit-72944.jsonl                          |   14 +
+ .../exit/exit-73071.jsonl                          |   14 +
+ .../exit/exit-73213.jsonl                          |   14 +
+ .../exit/exit-87342.jsonl                          |   14 +
+ .../exit/exit-87494.jsonl                          |   14 +
+ .../exit/exit-87625.jsonl                          |   14 +
+ .../exit/exit-87780.jsonl                          |   14 +
+ .../exit/exit-87907.jsonl                          |   14 +
+ .../exit/exit-88131.jsonl                          |   14 +
+ .../exit/exit-88369.jsonl                          |   14 +
+ .../exit/exit-88521.jsonl                          |   14 +
+ .../exit/exit-88676.jsonl                          |   14 +
+ .../exit/exit-88808.jsonl                          |   14 +
+ .../exit/exit-88955.jsonl                          |   14 +
+ .../exit/exit-89289.jsonl                          |   14 +
+ .../exit/exit-89562.jsonl                          |   14 +
+ .../exit/exit-89698.jsonl                          |   14 +
+ .../exit/exit-89873.jsonl                          |   14 +
+ .../exit/exit-90009.jsonl                          |   14 +
+ .../exit/exit-90309.jsonl                          |   14 +
+ .../exit/exit-90534.jsonl                          |   14 +
+ .../exit/exit-90661.jsonl                          |   14 +
+ .../exit/exit-90860.jsonl                          |   14 +
+ .../exit/exit-91015.jsonl                          |   14 +
+ .../exit/exit-91142.jsonl                          |   14 +
+ .../exit/exit-91413.jsonl                          |   14 +
+ .../exit/exit-91615.jsonl                          |   14 +
+ .../exit/exit-91886.jsonl                          |   14 +
+ .../exit/exit-92085.jsonl                          |   14 +
+ .../exit/exit-92284.jsonl                          |   14 +
+ .../exit/exit-92484.jsonl                          |   14 +
+ .../exit/exit-92774.jsonl                          |   14 +
+ .../exit/exit-93139.jsonl                          |   14 +
+ .../exit/exit-93424.jsonl                          |   14 +
+ .../exit/exit-93519.jsonl                          |   14 +
+ .../exit/exit-93654.jsonl                          |   14 +
+ .../exit/exit-93800.jsonl                          |   14 +
+ .../exit/exit-93992.jsonl                          |   14 +
+ .../exit/exit-94141.jsonl                          |   14 +
+ .../failures/expanded-navigation/error-context.md  |  335 ++++
+ .../failures/expanded-navigation/playwright.log    |   53 +
+ .../failures/expanded-navigation/test-failed-1.png |  Bin 0 -> 190974 bytes
+ .../failures/expanded-navigation/trace.zip         |  Bin 0 -> 208480 bytes
+ .../reopen-request-counter/error-context.md        |  552 ++++++
+ .../failures/reopen-request-counter/playwright.log |   62 +
+ .../reopen-request-counter/test-failed-1.png       |  Bin 0 -> 317632 bytes
+ .../failures/reopen-request-counter/trace.zip      |  Bin 0 -> 643496 bytes
+ .../formal-profile-after.json                      |    7 +
+ .../formal-profile-before.json                     |    4 +
+ .../legacy/auto/stage-a-auto-default.png           |  Bin 0 -> 224738 bytes
+ .../legacy/auto/stage-b-adjusted-result.png        |  Bin 0 -> 95304 bytes
+ .../legacy/auto/stage-b-adjusted.png               |  Bin 0 -> 407443 bytes
+ .../legacy/auto/stage-b-result-1.png               |  Bin 0 -> 59075 bytes
+ .../legacy/auto/stage-b-result-2.png               |  Bin 0 -> 90107 bytes
+ .../legacy/auto/stage-b-result-3.png               |  Bin 0 -> 132456 bytes
+ .../legacy/auto/stage-b-task-1.png                 |  Bin 0 -> 341916 bytes
+ .../legacy/auto/stage-b-task-2.png                 |  Bin 0 -> 354074 bytes
+ .../legacy/auto/stage-b-task-3.png                 |  Bin 0 -> 390307 bytes
+ .../legacy/auto/stage-c-restored.png               |  Bin 0 -> 389241 bytes
+ .../legacy/auto/stage-d-cancelled.png              |  Bin 0 -> 359526 bytes
+ .../legacy/auto/stage-e-cancelled-restored.png     |  Bin 0 -> 361739 bytes
+ .../legacy/auto/stage-f-approved-result.png        |  Bin 0 -> 98065 bytes
+ .../legacy/auto/stage-f-edited-approved.png        |  Bin 0 -> 360917 bytes
+ .../legacy/collaboration/phase-a-artifacts.png     |  Bin 0 -> 352364 bytes
+ .../legacy/collaboration/phase-a-lock-wait.png     |  Bin 0 -> 314597 bytes
+ .../phase-b-bound-version-workbench.png            |  Bin 0 -> 170219 bytes
+ .../collaboration/phase-b-conversation-dark.png    |  Bin 0 -> 207555 bytes
+ .../legacy/collaboration/phase-b-conversation.png  |  Bin 0 -> 326556 bytes
+ .../phase-b-network-dark-completed.png             |  Bin 0 -> 430396 bytes
+ .../collaboration/phase-b-network-dark-running.png |  Bin 0 -> 408726 bytes
+ .../collaboration/phase-b-network-narrow.png       |  Bin 0 -> 129766 bytes
+ .../legacy/collaboration/phase-b-workflow.png      |  Bin 0 -> 253101 bytes
+ .../collaboration/phase-c-pipeline-accepted.png    |  Bin 0 -> 277505 bytes
+ .../legacy/collaboration/phase-c-recovery.png      |  Bin 0 -> 318899 bytes
+ .../legacy/collaboration/session-a-restored.png    |  Bin 0 -> 329745 bytes
+ .../legacy/collaboration/session-b-isolated.png    |  Bin 0 -> 296354 bytes
+ .../collaboration/task-timeline-accepted.png       |  Bin 0 -> 153173 bytes
+ .../legacy/collaboration/task-timeline-blocked.png |  Bin 0 -> 310735 bytes
+ .../legacy/members/stage-b-conversation.png        |  Bin 0 -> 289365 bytes
+ .../legacy/members/stage-b-member.png              |  Bin 0 -> 292912 bytes
+ .../legacy/members/stage-b-return.png              |  Bin 0 -> 293150 bytes
+ .../legacy/members/stage-c-recovery.png            |  Bin 0 -> 307968 bytes
+ .../legacy/outcome/blocked/expanded-light.png      |  Bin 0 -> 142469 bytes
+ .../legacy/outcome/blocked/focused-900-light.png   |  Bin 0 -> 93336 bytes
+ .../legacy/outcome/blocked/main-900-dark-panel.png |  Bin 0 -> 25429 bytes
+ .../legacy/outcome/blocked/main-900-dark.json      |  953 ++++++++++
+ .../legacy/outcome/blocked/main-900-dark.png       |  Bin 0 -> 139651 bytes
+ .../outcome/blocked/main-900-light-panel.png       |  Bin 0 -> 25762 bytes
+ .../legacy/outcome/blocked/main-900-light.json     |  953 ++++++++++
+ .../legacy/outcome/blocked/main-900-light.png      |  Bin 0 -> 141456 bytes
+ .../legacy/outcome/blocked/main-light-panel.png    |  Bin 0 -> 43470 bytes
+ .../legacy/outcome/blocked/main-light.json         |  953 ++++++++++
+ .../legacy/outcome/blocked/main-light.png          |  Bin 0 -> 192413 bytes
+ .../outcome/blocked/restart-live-dark-panel.png    |  Bin 0 -> 96525 bytes
+ .../legacy/outcome/blocked/restart-live-dark.json  |  950 ++++++++++
+ .../legacy/outcome/blocked/restart-live-dark.png   |  Bin 0 -> 335544 bytes
+ .../blocked/retired-disk-history-dark-panel.png    |  Bin 0 -> 84537 bytes
+ .../outcome/blocked/retired-disk-history-dark.json |  942 ++++++++++
+ .../outcome/blocked/retired-disk-history-dark.png  |  Bin 0 -> 337242 bytes
+ .../actual-cancelled-drained-panel.png             |  Bin 0 -> 50422 bytes
+ .../cancellation/actual-cancelled-drained.png      |  Bin 0 -> 283070 bytes
+ .../legacy/outcome/cancellation/fixture.json       |  163 ++
+ .../legacy/outcome/pass/expanded-light.png         |  Bin 0 -> 138521 bytes
+ .../legacy/outcome/pass/focused-900-light.png      |  Bin 0 -> 91098 bytes
+ .../legacy/outcome/pass/main-900-dark-panel.png    |  Bin 0 -> 15725 bytes
+ .../legacy/outcome/pass/main-900-dark.json         | 1907 ++++++++++++++++++++
+ .../legacy/outcome/pass/main-900-dark.png          |  Bin 0 -> 130069 bytes
+ .../legacy/outcome/pass/main-900-light-panel.png   |  Bin 0 -> 16017 bytes
+ .../legacy/outcome/pass/main-900-light.json        | 1907 ++++++++++++++++++++
+ .../legacy/outcome/pass/main-900-light.png         |  Bin 0 -> 133867 bytes
+ .../legacy/outcome/pass/main-light-panel.png       |  Bin 0 -> 37672 bytes
+ .../legacy/outcome/pass/main-light.json            | 1907 ++++++++++++++++++++
+ .../legacy/outcome/pass/main-light.png             |  Bin 0 -> 182153 bytes
+ .../outcome/pass/restart-live-dark-panel.png       |  Bin 0 -> 84649 bytes
+ .../legacy/outcome/pass/restart-live-dark.json     | 1904 +++++++++++++++++++
+ .../legacy/outcome/pass/restart-live-dark.png      |  Bin 0 -> 318180 bytes
+ .../pass/retired-disk-history-dark-panel.png       |  Bin 0 -> 80724 bytes
+ .../outcome/pass/retired-disk-history-dark.json    | 1904 +++++++++++++++++++
+ .../outcome/pass/retired-disk-history-dark.png     |  Bin 0 -> 324792 bytes
+ .../outcome/pass/review-pending-light-panel.png    |  Bin 0 -> 98426 bytes
+ .../legacy/outcome/pass/review-pending-light.json  | 1672 +++++++++++++++++
+ .../legacy/outcome/pass/review-pending-light.png   |  Bin 0 -> 356706 bytes
+ .../legacy/shutdown/active-child-recovered.png     |  Bin 0 -> 201095 bytes
+ .../legacy/shutdown/active-child-shutdown.json     |  105 ++
+ .../carbon-missing-multi-QKwZ0c/.pi/settings.json  |   13 +
+ .../carbon-missing-multi-QKwZ0c/approved-plan.json |   35 +
+ .../live-01/carbon-missing-multi-QKwZ0c/input.csv  |   49 +
+ .../results/analysis.py                            |  101 ++
+ .../carbon-missing-multi-QKwZ0c/results/report.md  |   77 +
+ .../results/result.json                            |    5 +
+ .../session/orchestration/state.json               |  541 ++++++
+ ...834Z_01a1b97a-bf9a-7128-b970-5eda63d39a32.jsonl |   12 +
+ .../members/member_1/agent/0/settings.json         |   13 +
+ ...839Z_01a1b97b-0207-746f-b4ce-f88b8b1b7724.jsonl |   25 +
+ .../members/member_2/agent/0/settings.json         |   13 +
+ .../members/member_3/agent/0/settings.json         |   13 +
+ .../teams/plan_22d5dd2e5971d0550cdc1d64/team.json  |  722 ++++++++
+ .../carbon-missing-single-M5RtW2/.pi/settings.json |   13 +
+ .../live-01/carbon-missing-single-M5RtW2/input.csv |   49 +
+ .../results/analysis.py                            |  132 ++
+ .../carbon-missing-single-M5RtW2/results/report.md |   80 +
+ .../results/result.json                            |    5 +
+ .../single/settings.json                           |   13 +
+ ...277Z_01a1b979-8cbb-7331-a27d-090957f1dd90.jsonl |   38 +
+ .../live-01/live-attempt.json                      |    1 +
+ .../live-01/request-gate.json                      |    7 +
+ .../live-01/research-manifest.json                 |  145 ++
+ .../live-01/research.json                          |  787 ++++++++
+ .../live-01/research.md                            |   32 +
+ .../live-credential-sample.txt                     | 1549 ++++++++++++++++
+ .../live-proposal.md                               |   10 +
+ .../logs/approval-cli-241.log                      |   11 +
+ .../logs/branch-stop-red.log                       |   33 +
+ .../logs/build-confirmed.log                       |  622 +++++++
+ .../logs/build.log                                 |  622 +++++++
+ .../logs/confirmed-build.log                       |  622 +++++++
+ .../logs/confirmed-typecheck.log                   |    2 +
+ .../logs/desktop-27.log                            |  156 ++
+ .../logs/development-full.log                      |  678 +++++++
+ .../logs/final-branch-stop-check.log               |   11 +
+ .../logs/final-build.log                           |  622 +++++++
+ .../logs/final-desktop-bound.log                   |   25 +
+ .../logs/final-full-after-pilot-fix.log            |   13 +
+ .../logs/final-full.log                            |   13 +
+ .../logs/final-software-evaluation.log             |    3 +
+ .../logs/final-typecheck.log                       |    2 +
+ .../logs/frozen-guidance-evaluation-tests.log      |   11 +
+ .../logs/frozen-mailbox-and-regression.log         |   11 +
+ .../logs/full-with-pty-cleanup-failure.log         |   37 +
+ .../logs/live-01.log                               |    5 +
+ .../logs/mailbox-red.log                           |   35 +
+ .../logs/remote-terminal-isolated.log              |   11 +
+ .../logs/software-evaluation.log                   |    3 +
+ .../logs/typecheck.log                             |    2 +
+ .../logs/verified-final-full.log                   |   13 +
+ .../source-final.json                              |   66 +
+ ...57\235-\346\200\216\344\271\210\347\224\250.md" |   28 +-
+ e2e/approved-plan-execution.spec.ts                |   85 +
+ scripts/evaluate-approved-plan.ts                  |   38 +
+ scripts/evaluate-current-api.ts                    |    7 +-
+ scripts/evaluate-research.ts                       |   44 +-
+ scripts/evaluate-science-pipeline.ts               |    4 +-
+ scripts/mock-approved-task.mjs                     |   14 +
+ scripts/mock-auto-arrangement.mjs                  |    6 +
+ scripts/mock-inference-server.mjs                  |    3 +-
+ scripts/research-cli.ts                            |    6 +-
+ scripts/research-trial-budget.ts                   |    7 +-
+ src/cli/agent.ts                                   |    3 +
+ src/cli/context.ts                                 |    2 +-
+ src/cli/desktop-client.ts                          |    2 +-
+ src/cli/planning.ts                                |    1 +
+ src/evaluation/research-manifest.ts                |    3 +-
+ src/protocol/approved-plan.ts                      |    9 +
+ src/protocol/events.ts                             |    5 +
+ src/protocol/operations.ts                         |    4 +-
+ src/protocol/plan.ts                               |    2 +
+ src/protocol/task-arrangement.ts                   |   16 +-
+ src/protocol/version.ts                            |    3 +-
+ src/runtime/native.ts                              |  159 +-
+ src/runtime/plan-book.ts                           |   26 +-
+ src/runtime/types.ts                               |    2 +-
+ src/session/manager.ts                             |    4 +-
+ src/team/approved-plan-budget.ts                   |   42 +
+ src/team/approved-plan.ts                          |   99 +
+ src/team/recovery.ts                               |    1 +
+ src/team/scheduler.ts                              |   26 +-
+ src/team/state.ts                                  |    8 +
+ src/team/tools.ts                                  |   10 +-
+ src/team/types.ts                                  |    3 +
+ src/tools/propose-plan.ts                          |    7 +-
+ src/ui/App.tsx                                     |    4 +-
+ src/ui/approved-plan-progress.tsx                  |   30 +
+ src/ui/collaboration-member-panel.tsx              |   10 +-
+ src/ui/collaboration-member.ts                     |    5 +
+ src/ui/collaboration-network.tsx                   |    5 +-
+ src/ui/collaboration-workflow.tsx                  |   12 +-
+ src/ui/i18n/en.ts                                  |   35 +
+ src/ui/plan-card.tsx                               |   10 +-
+ src/ui/run-overview.tsx                            |    2 +
+ src/ui/styles.css                                  |   16 +
+ src/ui/task-arrangement-view.tsx                   |    3 +-
+ src/ui/views.tsx                                   |   17 +-
+ src/workbench/backend.ts                           |    2 +-
+ tests/evaluation/research-runner.test.ts           |   22 +
+ tests/protocol/events.test.ts                      |    2 +-
+ tests/runtime/approved-plan.test.ts                |  209 +++
+ tests/team/approved-plan-budget.test.ts            |   27 +
+ tests/team/approved-plan.test.ts                   |   80 +
+ tests/ui/approved-plan-progress.test.tsx           |   15 +
+ tests/ui/collaboration-member-panel.test.tsx       |    6 +
+ tests/ui/collaboration-member.test.ts              |    6 +-
+ tests/ui/plan-card.test.tsx                        |   24 +
+ 543 files changed, 49652 insertions(+), 103 deletions(-)
+ create mode 100644 docs/superpowers/plans/2026-11-08-plan-execution-workbench.md
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/README.md
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/build-final.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/build.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop-final.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-a-frozen-proposal.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-b-executed.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-b-retired.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-b-stopped.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-c-records-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-c-restored.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-c-task-records.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stage-c-workflow.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/desktop/stop-request-kinds.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/evaluation/approved-execution.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit-summary.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-72635.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-72798.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-72925.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-73076.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-73204.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-73437.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-73666.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-73805.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-73953.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-74074.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-74115.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-74538.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-74942.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-75299.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-75565.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-75697.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-75872.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-76014.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-76399.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-76745.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-76872.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-77071.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-77244.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-77375.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-77646.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-77846.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-78117.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-78316.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-78516.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-78716.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-78987.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-79351.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-79631.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-79732.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-79861.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-80023.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-80234.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-80388.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-80515.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-80946.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-81532.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-81778.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-81901.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-82029.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-82260.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-82559.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-82769.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-82970.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-83392.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-83535.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-84543.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-84580.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/app-85710.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-72635.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-72798.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-72925.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-73076.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-73204.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-73437.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-73666.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-73805.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-73953.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-74074.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-74115.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-74538.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-74942.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-75299.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-75565.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-75697.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-75872.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-76014.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-76399.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-76745.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-76872.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-77071.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-77244.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-77375.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-77646.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-77846.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-78117.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-78316.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-78516.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-78716.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-78987.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-79351.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-79631.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-79732.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-79861.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-80023.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-80234.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-80388.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-80515.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-80946.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-81532.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-81778.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-81901.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-82029.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-82260.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-82559.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-82769.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-82970.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-83392.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-83535.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-84543.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-84580.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/exit/exit-85710.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-a-frozen-proposal.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-b-executed.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-b-retired.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-b-stopped.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-c-records-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-c-restored.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-c-task-records.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stage-c-workflow.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-desktop/stop-request-kinds.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/app-64229.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/app-64443.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/app-64639.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/app-64888.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/exit-64229.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/exit-64443.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/exit-64639.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-exit/exit-64888.jsonl
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/final-ui.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/focused.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/full-vitest-final.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/full-vitest-label-attempt.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/full-vitest.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/green-runtime.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/i18n-label-fixed.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-a-auto-default.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-adjusted-result.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-adjusted.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-result-1.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-result-2.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-result-3.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-task-1.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-task-2.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-b-task-3.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-c-restored.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-d-cancelled.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-e-cancelled-restored.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-f-approved-result.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/auto/stage-f-edited-approved.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-a-artifacts.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-a-lock-wait.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-bound-version-workbench.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-conversation-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-conversation.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-network-dark-completed.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-network-dark-running.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-network-narrow.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-b-workflow.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-c-pipeline-accepted.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/phase-c-recovery.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/session-a-restored.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/session-b-isolated.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/task-timeline-accepted.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/collaboration/task-timeline-blocked.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/members/stage-b-conversation.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/members/stage-b-member.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/members/stage-b-return.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/members/stage-c-recovery.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/expanded-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/focused-900-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-900-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-900-dark.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-900-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-900-light-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-900-light.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-900-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-light-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-light.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/main-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/restart-live-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/restart-live-dark.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/restart-live-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/retired-disk-history-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/retired-disk-history-dark.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/blocked/retired-disk-history-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/cancellation/actual-cancelled-drained-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/cancellation/actual-cancelled-drained.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/cancellation/fixture.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/expanded-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/focused-900-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-900-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-900-dark.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-900-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-900-light-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-900-light.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-900-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-light-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-light.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/main-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/restart-live-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/restart-live-dark.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/restart-live-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/retired-disk-history-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/retired-disk-history-dark.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/retired-disk-history-dark.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/review-pending-light-panel.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/review-pending-light.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/outcome/pass/review-pending-light.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/shutdown/active-child-recovered.png
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/legacy/shutdown/active-child-shutdown.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/offline-execution.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/offline-launch-cjs-error.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/offline-launch-eval-error.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/prior-evidence-sha256.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/red-catalogue-label.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/red-runtime-2.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/red-runtime.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/red-start-reason.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/source-core-tested.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/source-label-attempt.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/source-reviewed.json
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/typecheck-final.log
+ create mode 100644 docs/validation/plan-execution-merge-review-20261108/typecheck.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/README.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-a-frozen-proposal.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-b-executed.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-b-retired.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-b-stopped.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-c-records-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-c-restored.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-c-task-records.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stage-c-workflow.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/desktop/stop-request-kinds.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/evaluation-final/approved-execution.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/evaluation/approved-execution.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit-summary.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-41271.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-42002.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-42172.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-45966.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-46158.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-46309.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-46474.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-46834.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-48396.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-49025.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-50315.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-72795.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-72944.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-73071.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-73213.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-87342.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-87494.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-87625.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-87780.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-87907.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-88131.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-88369.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-88521.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-88676.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-88808.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-88955.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-89289.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-89562.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-89698.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-89873.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-90009.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-90309.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-90534.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-90661.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-90860.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-91015.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-91142.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-91413.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-91615.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-91886.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-92085.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-92284.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-92484.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-92774.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-93139.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-93424.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-93519.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-93654.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-93800.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-93992.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/app-94141.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-41271.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-42002.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-42172.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-45966.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-46158.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-46309.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-46474.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-46834.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-48396.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-49025.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-50315.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-72795.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-72944.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-73071.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-73213.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-87342.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-87494.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-87625.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-87780.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-87907.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-88131.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-88369.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-88521.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-88676.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-88808.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-88955.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-89289.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-89562.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-89698.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-89873.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-90009.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-90309.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-90534.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-90661.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-90860.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-91015.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-91142.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-91413.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-91615.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-91886.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-92085.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-92284.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-92484.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-92774.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-93139.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-93424.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-93519.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-93654.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-93800.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-93992.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/exit/exit-94141.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/expanded-navigation/error-context.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/expanded-navigation/playwright.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/expanded-navigation/test-failed-1.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/expanded-navigation/trace.zip
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/reopen-request-counter/error-context.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/reopen-request-counter/playwright.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/reopen-request-counter/test-failed-1.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/failures/reopen-request-counter/trace.zip
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/formal-profile-after.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/formal-profile-before.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-a-auto-default.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-adjusted-result.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-adjusted.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-result-1.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-result-2.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-result-3.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-task-1.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-task-2.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-b-task-3.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-c-restored.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-d-cancelled.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-e-cancelled-restored.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-f-approved-result.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/auto/stage-f-edited-approved.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-a-artifacts.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-a-lock-wait.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-bound-version-workbench.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-conversation-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-conversation.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-network-dark-completed.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-network-dark-running.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-network-narrow.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-b-workflow.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-c-pipeline-accepted.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/phase-c-recovery.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/session-a-restored.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/session-b-isolated.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/task-timeline-accepted.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/collaboration/task-timeline-blocked.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/members/stage-b-conversation.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/members/stage-b-member.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/members/stage-b-return.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/members/stage-c-recovery.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/expanded-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/focused-900-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-900-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-900-dark.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-900-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-900-light-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-900-light.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-900-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-light-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-light.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/main-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/restart-live-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/restart-live-dark.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/restart-live-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/retired-disk-history-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/retired-disk-history-dark.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/blocked/retired-disk-history-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/cancellation/actual-cancelled-drained-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/cancellation/actual-cancelled-drained.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/cancellation/fixture.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/expanded-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/focused-900-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-900-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-900-dark.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-900-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-900-light-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-900-light.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-900-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-light-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-light.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/main-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/restart-live-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/restart-live-dark.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/restart-live-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/retired-disk-history-dark-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/retired-disk-history-dark.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/retired-disk-history-dark.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/review-pending-light-panel.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/review-pending-light.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/outcome/pass/review-pending-light.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/shutdown/active-child-recovered.png
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/legacy/shutdown/active-child-shutdown.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/.pi/settings.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/approved-plan.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/input.csv
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/results/analysis.py
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/results/report.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/results/result.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/orchestration/state.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/teams/plan_22d5dd2e5971d0550cdc1d64/members/member_1/2026-11-08T04-46-31-834Z_01a1b97a-bf9a-7128-b970-5eda63d39a32.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/teams/plan_22d5dd2e5971d0550cdc1d64/members/member_1/agent/0/settings.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/teams/plan_22d5dd2e5971d0550cdc1d64/members/member_2/2026-11-08T04-46-48-839Z_01a1b97b-0207-746f-b4ce-f88b8b1b7724.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/teams/plan_22d5dd2e5971d0550cdc1d64/members/member_2/agent/0/settings.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/teams/plan_22d5dd2e5971d0550cdc1d64/members/member_3/agent/0/settings.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-multi-QKwZ0c/session/teams/plan_22d5dd2e5971d0550cdc1d64/team.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/.pi/settings.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/input.csv
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/results/analysis.py
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/results/report.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/results/result.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/single/settings.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/carbon-missing-single-M5RtW2/single/transcript/2026-11-08T04-45-13-277Z_01a1b979-8cbb-7331-a27d-090957f1dd90.jsonl
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/live-attempt.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/request-gate.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/research-manifest.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/research.json
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-01/research.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-credential-sample.txt
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/live-proposal.md
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/approval-cli-241.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/branch-stop-red.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/build-confirmed.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/build.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/confirmed-build.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/confirmed-typecheck.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/desktop-27.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/development-full.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-branch-stop-check.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-build.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-desktop-bound.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-full-after-pilot-fix.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-full.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-software-evaluation.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/final-typecheck.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/frozen-guidance-evaluation-tests.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/frozen-mailbox-and-regression.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/full-with-pty-cleanup-failure.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/live-01.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/mailbox-red.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/remote-terminal-isolated.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/software-evaluation.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/typecheck.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/logs/verified-final-full.log
+ create mode 100644 docs/validation/plan-execution-workbench-20261108/source-final.json
+ create mode 100644 e2e/approved-plan-execution.spec.ts
+ create mode 100644 scripts/evaluate-approved-plan.ts
+ create mode 100644 scripts/mock-approved-task.mjs
+ create mode 100644 src/protocol/approved-plan.ts
+ create mode 100644 src/team/approved-plan-budget.ts
+ create mode 100644 src/team/approved-plan.ts
+ create mode 100644 src/ui/approved-plan-progress.tsx
+ create mode 100644 tests/runtime/approved-plan.test.ts
+ create mode 100644 tests/team/approved-plan-budget.test.ts
+ create mode 100644 tests/team/approved-plan.test.ts
+ create mode 100644 tests/ui/approved-plan-progress.test.tsx

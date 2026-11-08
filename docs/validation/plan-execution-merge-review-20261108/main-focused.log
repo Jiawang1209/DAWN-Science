@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/approved-plan.test.ts tests/team/approved-plan.test.ts tests/team/approved-plan-budget.test.ts tests/ui/plan-card.test.tsx tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  75 passed (75)
+   Start at  14:44:26
+   Duration  4.64s (transform 4.29s, setup 2.18s, import 6.62s, tests 2.39s, environment 2.36s)
+

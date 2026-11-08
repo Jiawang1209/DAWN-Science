@@ -1,0 +1,14 @@
+{
+  "changedSinceInitialSuite": [
+    "e2e/approved-plan-execution.spec.ts",
+    "src/protocol/collaboration-outcome.ts",
+    "tests/ui/collaboration-outcome.test.ts"
+  ],
+  "noNewPaidModelRequests": true,
+  "review": "Independent readonly review: no P1/P2",
+  "historicExitAndPty": "OPEN",
+  "unchangedThresholdsMs": [
+    1500,
+    4000
+  ]
+}

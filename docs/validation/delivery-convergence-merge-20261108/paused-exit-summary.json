@@ -1,0 +1,46 @@
+{
+  "runs": [
+    {
+      "file": "exit-48430.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 145.286
+    },
+    {
+      "file": "exit-48985.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 167.409
+    },
+    {
+      "file": "exit-50544.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 141.989
+    },
+    {
+      "file": "exit-54543.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 122.916
+    },
+    {
+      "file": "exit-54674.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 88.727
+    },
+    {
+      "file": "exit-54913.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 114.482
+    },
+    {
+      "file": "exit-55040.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 85.574
+    },
+    {
+      "file": "exit-55204.jsonl",
+      "exitCode": 0,
+      "closeToExitMs": 120.252
+    }
+  ],
+  "maxCloseToExitMs": 167.409,
+  "historicStatus": "OPEN"
+}

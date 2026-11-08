@@ -221,6 +221,17 @@ function combineOutcomes(results:OutcomeView[]):OutcomeView|undefined {
  return key?target(result,key):result
 }
 function overallTeam(snapshot:RunOverview,team:TeamSnapshot):OutcomeView {
+ // Scheduling is paused even when downstream tasks remain pending. Only a
+ // current bound process can still be active or draining; pending is not proof.
+ if(team.approvedPlan&&team.approvedPlanPaused){
+  if(snapshot.source!=='live')return view('history','inspect-artifacts')
+  const tasks=team.tasks.filter(task=>team.approvedPlan!.tasks.some(binding=>binding.taskId===task.id))
+  for(const phase of ['stopping','running','queued'] as const){
+   const current=tasks.find(task=>taskRun(snapshot,team,task,phase))
+   if(current)return target(view(phase==='stopping'?'stopping':'active',phase==='stopping'?'wait-for-drain':'inspect-feedback'),collaborationTaskKey(team.id,current.id))
+  }
+  return view('blocked','inspect-recovery',team.approvedPlanPauseReason)
+ }
  if(team.scienceBatch)return batchOutcome(snapshot,team)
  if(team.pipeline)return pipelineOutcome(snapshot,team)
  return combineOutcomes(team.tasks.map(task=>taskOutcome(snapshot,team,task)))??view(snapshot.source==='live'?'unverified':'history','inspect-feedback')

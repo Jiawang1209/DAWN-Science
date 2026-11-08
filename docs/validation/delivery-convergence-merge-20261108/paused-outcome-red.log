@@ -1,0 +1,60 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/collaboration-outcome.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |ui| tests/ui/collaboration-outcome.test.ts (61 tests | 2 failed) 28ms
+     × does not call an explicitly paused arrangement active because downstream tasks remain pending 6ms
+     × still exposes an exact bound process stopping or running before it drains; foreign attempts cannot override pause 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > paused approved arrangement outcome > does not call an explicitly paused arrangement active because downstream tasks remain pending
+AssertionError: expected { state: 'active', …(5) } to match object { state: 'blocked', …(4) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "acceptedPaths": [],
+-   "action": "inspect-recovery",
++   "action": "inspect-feedback",
+    "artifacts": [],
+-   "blocker": "User stopped; inspect files before continuing",
+-   "state": "blocked",
++   "state": "active",
+  }
+
+ ❯ tests/ui/collaboration-outcome.test.ts:284:45
+    282|  it('does not call an explicitly paused arrangement active because dow…
+    283|   const value=paused(),before=structuredClone(value)
+    284|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'bloc…
+       |                                             ^
+    285|   expect(value).toEqual(before)
+    286|   expect(selectCollaborationOutcome(value,{kind:'task',teamId:value.te…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/collaboration-outcome.test.ts > paused approved arrangement outcome > still exposes an exact bound process stopping or running before it drains; foreign attempts cannot override pause
+AssertionError: expected 'active' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "active"
+
+ ❯ tests/ui/collaboration-outcome.test.ts:294:51
+    292|   expect(selectCollaborationOutcome(value).state).toBe('active')
+    293|   value.runs[0]!.taskAttempt!.attemptId='old-attempt'
+    294|   expect(selectCollaborationOutcome(value).state).toBe('blocked')
+       |                                                   ^
+    295|   value.runs[0]!.taskAttempt!.attemptId='attempt-analysis';value.runs[…
+    296|   expect(selectCollaborationOutcome(value)).toMatchObject({state:'bloc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 59 passed (61)
+   Start at  20:54:18
+   Duration  999ms (transform 349ms, setup 509ms, import 28ms, tests 28ms, environment 348ms)
+

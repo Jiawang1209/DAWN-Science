@@ -1,0 +1,41 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts e2e/collaboration-outcome.spec.ts
+
+Running 4 tests using 1 worker
+
+(node:48342) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49229/f27ad3aa-4e5f-4e5c-a7a2-e26978f4b01b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49264/70513ffb-e56a-46b2-89c2-e87a3a0c2eb7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (9.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49278/d19e4b64-2a18-4f95-ad89-9d553bdd96ea
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49301/be114e2a-8e58-4df2-8b58-8380b20a4154
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:72:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (9.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:49319/a6841f17-a503-473c-9485-fc9a5f0f04f5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49402/47440013-daa6-4676-a260-9429f4a5c1de
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/collaboration-outcome.spec.ts:15:2 › outcome pass › shows exact stage and final versions, compact expansion, and readable 900px views (21.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:49415/cb339560-9d04-4658-80c5-bbbff042d058
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49432/2e8909a8-047d-463e-bed3-38e35fbc33d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/collaboration-outcome.spec.ts:15:2 › outcome blocked › shows exact stage and final versions, compact expansion, and readable 900px views (6.3s)
+
+  4 passed (47.4s)

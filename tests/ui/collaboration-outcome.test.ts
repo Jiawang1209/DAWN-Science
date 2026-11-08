@@ -269,3 +269,36 @@ describe('collaboration outcome from one authoritative snapshot',()=>{
   expect(RunOverviewSchema.safeParse(snapshot([{...run,resultEpoch:-1}])).success).toBe(false)
  })
 })
+
+
+describe('paused approved arrangement outcome',()=>{
+ function paused(){
+  const stopped={...task('analysis'),status:'failed' as const,receipt:undefined},pending={...task('review'),status:'pending' as const,attempt:0,attemptId:undefined,receipt:undefined}
+  const t=team([stopped,pending]);t.id='plan_'+ 'a'.repeat(24)
+  t.approvedPlan={version:1,owner:'owner',planId:'p',planVersion:1,markdownHash:'b'.repeat(64),teamId:t.id,externalInputs:[],tasks:[{planTaskId:'analysis',taskId:stopped.id,memberName:'worker'},{planTaskId:'review',taskId:pending.id,memberName:'reviewer'}]}
+  t.approvedPlanPaused=true;t.approvedPlanPauseReason='User stopped; inspect files before continuing'
+  return{...snapshot([]),team:t}
+ }
+ it('does not call an explicitly paused arrangement active because downstream tasks remain pending',()=>{
+  const value=paused(),before=structuredClone(value)
+  expect(selectCollaborationOutcome(value)).toMatchObject({state:'blocked',action:'inspect-recovery',blocker:value.team.approvedPlanPauseReason,acceptedPaths:[],artifacts:[]})
+  expect(value).toEqual(before)
+  expect(selectCollaborationOutcome(value,{kind:'task',teamId:value.team.id,taskId:'review'}).state).toBe('active')
+ })
+ it('still exposes an exact bound process stopping or running before it drains; foreign attempts cannot override pause',()=>{
+  const value=paused();value.runs=[{...run,kind:'team',address:[value.team.id,'worker','analysis'],state:'cancelled',phase:'stopping',taskAttempt:{teamId:value.team.id,taskId:'analysis',attempt:1,attemptId:'attempt-analysis'}}]
+  expect(selectCollaborationOutcome(value)).toMatchObject({state:'stopping',action:'wait-for-drain',acceptedPaths:[]})
+  value.runs[0]!.phase='running';value.runs[0]!.state='running'
+  expect(selectCollaborationOutcome(value).state).toBe('active')
+  value.runs[0]!.taskAttempt!.attemptId='old-attempt'
+  expect(selectCollaborationOutcome(value).state).toBe('blocked')
+  value.runs[0]!.taskAttempt!.attemptId='attempt-analysis';value.runs[0]!.phase='drained';value.runs[0]!.state='cancelled'
+  expect(selectCollaborationOutcome(value)).toMatchObject({state:'blocked',acceptedPaths:[]})
+ })
+ it('does not promote restored records or another owner to a live paused outcome',()=>{
+  const value=paused()
+  expect(selectCollaborationOutcome({...value,source:'disk'})).toMatchObject({state:'history',acceptedPaths:[]})
+  value.team.captainSessionId='foreign'
+  expect(selectCollaborationOutcome(value)).toMatchObject({state:'unverified',acceptedPaths:[]})
+ })
+})

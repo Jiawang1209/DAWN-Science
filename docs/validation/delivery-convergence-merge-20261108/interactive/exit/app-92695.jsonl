@@ -1,0 +1,3 @@
+{"seq":1,"event":"diagnostics-attached","pid":92695,"at":"2026-11-08T13:01:09.645Z","ms":0.1510409999999638,"resources":{"PipeWrap":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":2,"event":"contents-created","pid":92695,"at":"2026-11-08T13:01:09.787Z","ms":141.97675000000004,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":92695,"at":"2026-11-08T13:01:09.788Z","ms":142.27520800000002,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}

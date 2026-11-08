@@ -1,0 +1,47 @@
+{
+  "implementationCommit": "3de8c0ed1e06cb27707acde3466ed3550e458121",
+  "inference": "localhost deterministic mock, not a paid model",
+  "paidRequests": 0,
+  "demoRoot": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-VJkSYq",
+  "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-VJkSYq/DAWN-协作验收-模拟模型",
+  "finalPid": 92695,
+  "asLaunchedSize": [
+    1280,
+    808
+  ],
+  "narrowSize": [
+    900,
+    840
+  ],
+  "narrowDialog": {
+    "clientWidth": 856,
+    "scrollWidth": 856
+  },
+  "finalSize": [
+    1600,
+    840
+  ],
+  "acceptedTaskReceipts": 3,
+  "acceptedFiles": 2,
+  "duplicateStartAddedRequests": 0,
+  "rawParametersVisible": true,
+  "rawHostSuffixAbsent": true,
+  "expandedReturnPreservesTab": true,
+  "contentCheck": [
+    "match",
+    "changed",
+    "restored-match"
+  ],
+  "emptySessionAcceptedFiles": 0,
+  "cancelledRunDrained": true,
+  "pausedOutcomeAfterRecovery": "blocked",
+  "cleanAppCloseMs": 172,
+  "taskCallsBeforeAndAfterCleanRestart": [
+    9,
+    9
+  ],
+  "mockRequestCount": 16,
+  "extraNonTaskRequests": "suggested next user message, not task execution",
+  "inputPreserved": true,
+  "historicExitAndPty": "OPEN"
+}

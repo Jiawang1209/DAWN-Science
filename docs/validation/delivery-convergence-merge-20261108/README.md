@@ -50,3 +50,19 @@ node /Users/liuyue/Desktop/Github_repos/dawn-science/docs/validation/delivery-co
 交互脚本环境/定位问题及中断如实保留在[运行说明](interactive-harness-notes.md)，不以错误选择器调整产品。
 
 补修后最终完整重跑：**705文件，7017通过、11跳过，退出0，174.29秒**（vitest-postpause-final.log）。相关桌面补充 **4/4通过**（47.4秒）；8个补充宿主退出码均0，完整计时最大167.409ms（paused-exit-summary.json）。这些是补修后最终证据；此前7014与41项保留为基线。
+
+## 最终main实际效果与交付
+
+本地main实现提交`3de8c0ed`（首批`db07895f`，随后暂停展示补修）。main重新构建退出0。
+
+[实际交互结果](interactive/result.json)：原生启动1280×808；自动安排样例生成3项，三项宿主验收通过，2份验收文件。完成后重复开始没有新增任务调用。原始read记录的参数/结果分栏，准确宿主尾部没有混入结果。展开返回保留记录页。核对文件依次显示一致、修改后不一致、恢复后一致。新会话无旧验收文件。
+
+实际取消后排空且pending下游未启动；重开显示“协作需要核对/执行已暂停”。正常关闭main开发版172ms，app诊断exitCode0；再次重开保留3个验收回执和暂停会话。契约任务调用前后都是9次，无自动重跑。总模拟调用还包含既有“建议下一句”请求，不把所有UI辅助调用误当作任务执行。900px宽窗口对话框clientWidth=scrollWidth=856，未发生横向溢出。
+
+最终窗口保留可操作，工作区明确名为“DAWN-协作验收-模拟模型”；模型为localhost夹具，Electron、文件工具、契约、宿主回执与内容核对是真实实现。不是新增真实模型复验。按Escape可返回对话协作台；关闭此演示窗口会关闭其独立宿主和本地模拟服务，保留自己的隔离证据。
+
+![main实际协作视图](interactive/13-main-final-demo.png)
+
+![当前文件与验收版本不同](interactive/05-artifact-changed.png)
+
+[最终保护核对](postmerge-integrity.json)：1710源文件候选与494份既有证据匹配，正式配置/凭证/数据库哈希未变；实现main干净。全部分支/工作树/原始证据保留。仅本地提交/快进，不推送、不发布、不替换正式App。历史退出与PTY问题OPEN，1500/4000ms阈值不变。

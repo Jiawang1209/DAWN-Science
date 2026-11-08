@@ -1,0 +1,20 @@
+{
+  "candidate-postpause-sha256": {
+    "count": 1710,
+    "changed": []
+  },
+  "previous-evidence-sha256": {
+    "count": 494,
+    "changed": []
+  },
+  "formalProfile": {
+    "changed": []
+  },
+  "implementationMain": {
+    "head": "3de8c0ed1e06cb27707acde3466ed3550e458121",
+    "status": ""
+  },
+  "newPaidModelRequests": 0,
+  "demoIntentionallyOpen": 92695,
+  "historicalExitAndPty": "OPEN"
+}

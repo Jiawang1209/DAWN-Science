@@ -174,3 +174,7 @@ expect(adviseMode({blocks:1,dependency:'independent',sharedWrites:false,independ
 ## 2026-11-08 用户纠正：默认自动安排
 
 用户明确指出任务块数量应由具体任务决定，不能让用户预填。本计划阶段 A 的手工结构表单交互被 [默认自动安排计划](2026-11-08-auto-arrangement.md) 替代；保留本文件及原验收作为历史，不将旧表单称为自动任务拆解。原阶段 B 成员入口与隔离/返回成果继续复用。
+
+## 后续授权集成
+
+2026-11-08 用户明确要求复审修复后本地提交并合并 main。代码 dacd7838 已快进 main，main 复验通过；前文未提交/未合并是首次交付时的历史状态。详见[本地集成记录](../../reviews/2026-11-08-auto-arrangement-merge-review.md)。不推送发布，历史偶发超时继续 OPEN。

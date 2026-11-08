@@ -1,0 +1,85 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/auto-arrangement.spec.ts e2e/mode-member-workspace.spec.ts e2e/side-session.spec.ts --output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-merge-review-20261108/playwright-main
+
+Running 15 tests using 1 worker
+
+(node:91517) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49306/943e4279-3efb-4506-b8d4-38201a543109
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49321/90306c56-14e7-4c4e-a4ee-60cf2fd968a3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 2 task blocks for 分别统计 east.csv 与 west.csv (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49338/d3b2d20f-a1c1-4b6f-a150-4a29837934e9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49352/f4182ff8-5f46-482e-b552-7382cb3a409e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49373/e44b418c-5ca6-44ea-a099-f11b932346b9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49386/a800b0be-ae98-4e40-ac0f-a34559dd871a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/auto-arrangement.spec.ts:65:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task (6.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49402/c9893dfe-7b3b-41c8-a5c1-021bce6310f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/mode-member-workspace.spec.ts:6:1 › automatic arrangement is the default and does not ask for a task count (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49413/bbc55ef7-90a2-45cf-915c-0f9a3ff684df
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49435/fb670fcc-4d28-465f-87f4-94d79f9e39ec
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/mode-member-workspace.spec.ts:14:1 › member process and continuation return to the exact expanded collaboration selection (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:49447/a6074915-6f59-4336-9ed1-c50c8748865c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/side-session.spec.ts:60:3 › 侧边对话 · native › **两段同时跑不串台**；坞里问进度真调到 read_main_session、读到的是主对话此刻的 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:49464/df2e45a0-2cb4-4bb4-9dec-8daa906ec337
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/side-session.spec.ts:97:3 › 侧边对话 · native › **坞里那段长得像主区**：输入卡看得出边、一行头（标题 + 用量 + 导出对话 + 换到主区 + ×）、刻度尺放得下才画 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:49478/2fac98cf-ff68-4c24-9c5d-2261e72f6858
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/side-session.spec.ts:166:3 › 侧边对话 · native › **换到主区 / 从坞里拿下**，三颗按钮都看得见（opacity 1） (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49494/50bdb26f-1c14-4744-a615-4e81dfd509f6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/side-session.spec.ts:215:3 › 侧边对话 · 临时会话 › 主区是临时会话：坞里「另开一段」看得见、建出一段临时会话，主区不动 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49510/d2471508-7b98-4586-89cd-de3640949be9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/side-session.spec.ts:264:3 › 侧边对话 · ACP › **ACP 那段挂进坞，直说它看不见主对话** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49524/90fcb884-b3d1-46f9-859e-3a84005a4475
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/side-session.spec.ts:309:3 › 侧边对话 · 团队 chip › **点坞里的团队 chip → 团队格是坞里那段的队，并写明来源；从标签栏进回到主区那段** (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49552/0ede714d-8058-495b-ac31-ddc9d834565f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/side-session.spec.ts:356:1 › **新建任务那一屏：坞里另开一段是普通对话，不带文件夹** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49560/efa0ad89-0a7f-4f63-b775-534c6d3235ac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/side-session.spec.ts:374:3 › **1280 宽：窄栏工具可分行，输入正文同高、底边对齐** (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49577/a1494d63-5cfe-4869-9b61-d6daeb35c66a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/side-session.spec.ts:374:3 › **1920 宽：窄栏工具可分行，输入正文同高、底边对齐** (2.4s)
+
+  15 passed (52.4s)

@@ -13,4 +13,10 @@
 - `member-final/`、`collaboration-final/`、`outcome-final/`、`playwright-final/`：原成员入口、展开返回、原团队/Bot、侧边会话与停止排空回归。
 - `exit-*/app-*.jsonl`、`exit-*/exit-*.jsonl`：应用侧与宿主/OS 关闭诊断。统计必须从 close-requested 相减，保持历史超时 OPEN。
 
-分支验收通过，无剩余阻塞，准备按授权本地提交并合并 main。最终桌面批次 33 次原生退出正常，最大 OS close 267.631ms；所有中间批次累计 39 次退出亦有完整正常诊断。663 源码、464 旧证据零漂移。集成后会追加真实提交与 main 复验；无推送、发布、正式 App 替换或付费请求。
+分支及 main 复验通过，无剩余阻塞，已本地提交并合并 main。最终桌面批次 33 次原生退出正常，最大 OS close 267.631ms；所有中间批次累计 39 次退出亦有完整正常诊断。663 源码、464 旧证据零漂移。真实提交与 main 复验见下文；无推送、发布、正式 App 替换或付费请求。
+
+## 本地 main 集成与实际效果
+
+代码 `dacd7838` 已快进 main；`main-checks.json` 四步均 exit 0，main 类型/构建、106 项定向、15 个真实 Electron 场景通过。`desktop-main/stage-f-approved-result.png` 展示实际手工修订后的 2 块安排；`stage-f-edited-approved.png` 为批准后的完整界面，`stage-e-cancelled-restored.png` 为取消后重启。模型为 localhost 确定性夹具，不是付费模型收益验证。
+
+`audit-integrated.json` 验证 663 源/脚本与主分支一致、464 旧证据无漂移；53 变更源码/测试指纹见 `source-tests-freeze.json`。最终计数和范围见 `final-summary.json`，证据指纹见 `evidence-sha256.json`，当前文档指纹见 `documentation-sha256.json`。专项 worktree 保留，main 验证后干净；未推送、发布或替换安装应用。历史偶发超时仍 OPEN。

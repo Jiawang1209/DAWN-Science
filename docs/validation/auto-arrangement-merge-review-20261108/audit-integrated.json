@@ -1,0 +1,302 @@
+{
+  "sourceFilesFrozen": 663,
+  "sourceDrift": [],
+  "priorEvidenceFilesChecked": 464,
+  "priorEvidenceDrift": [],
+  "mainHead": "dacd7838788d237d1604f40d965f9a6aed502c19",
+  "mainStatus": "",
+  "mainSourceDrift": [],
+  "integrated": true,
+  "exits": [
+    {
+      "path": "exit-final/exit-83293.jsonl",
+      "osCloseMs": 143.657,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-83516.jsonl",
+      "osCloseMs": 125.517,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-83745.jsonl",
+      "osCloseMs": 124.963,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-83881.jsonl",
+      "osCloseMs": 267.631,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-84139.jsonl",
+      "osCloseMs": 144.506,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-84261.jsonl",
+      "osCloseMs": 140.605,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-84328.jsonl",
+      "osCloseMs": 141.461,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-84671.jsonl",
+      "osCloseMs": 132.386,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-85107.jsonl",
+      "osCloseMs": 136.267,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-85444.jsonl",
+      "osCloseMs": 128.034,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-85740.jsonl",
+      "osCloseMs": 112.439,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-85948.jsonl",
+      "osCloseMs": 109.106,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-86109.jsonl",
+      "osCloseMs": 141.167,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-86253.jsonl",
+      "osCloseMs": 120.458,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-86534.jsonl",
+      "osCloseMs": 135.496,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-86756.jsonl",
+      "osCloseMs": 216.418,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-87069.jsonl",
+      "osCloseMs": 124.851,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-87282.jsonl",
+      "osCloseMs": 116.896,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-87493.jsonl",
+      "osCloseMs": 122.552,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-87697.jsonl",
+      "osCloseMs": 155.521,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-87998.jsonl",
+      "osCloseMs": 126.437,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-88361.jsonl",
+      "osCloseMs": 134.645,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-88650.jsonl",
+      "osCloseMs": 107.03,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-88740.jsonl",
+      "osCloseMs": 143.673,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-88903.jsonl",
+      "osCloseMs": 114.165,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-89063.jsonl",
+      "osCloseMs": 132.687,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-89225.jsonl",
+      "osCloseMs": 144.283,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-89401.jsonl",
+      "osCloseMs": 107.913,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-89641.jsonl",
+      "osCloseMs": 142.376,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-89842.jsonl",
+      "osCloseMs": 119.074,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-89939.jsonl",
+      "osCloseMs": 120.027,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-90101.jsonl",
+      "osCloseMs": 159.752,
+      "problems": []
+    },
+    {
+      "path": "exit-final/exit-90348.jsonl",
+      "osCloseMs": 114.711,
+      "problems": []
+    },
+    {
+      "path": "exit-green/exit-47406.jsonl",
+      "osCloseMs": 143.57,
+      "problems": []
+    },
+    {
+      "path": "exit-green/exit-47526.jsonl",
+      "osCloseMs": 120.67,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-91635.jsonl",
+      "osCloseMs": 134.005,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-91903.jsonl",
+      "osCloseMs": 137.305,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-92156.jsonl",
+      "osCloseMs": 137.552,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-92301.jsonl",
+      "osCloseMs": 223.215,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-92581.jsonl",
+      "osCloseMs": 147.813,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-92706.jsonl",
+      "osCloseMs": 126.579,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-92886.jsonl",
+      "osCloseMs": 113.784,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93119.jsonl",
+      "osCloseMs": 120.031,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93265.jsonl",
+      "osCloseMs": 142.232,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93312.jsonl",
+      "osCloseMs": 136.91,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93485.jsonl",
+      "osCloseMs": 140.074,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93652.jsonl",
+      "osCloseMs": 110.248,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93829.jsonl",
+      "osCloseMs": 112.785,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-93999.jsonl",
+      "osCloseMs": 123.338,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-94270.jsonl",
+      "osCloseMs": 139.184,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-94476.jsonl",
+      "osCloseMs": 124.248,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-94579.jsonl",
+      "osCloseMs": 120.06,
+      "problems": []
+    },
+    {
+      "path": "exit-main/exit-94745.jsonl",
+      "osCloseMs": 148.709,
+      "problems": []
+    },
+    {
+      "path": "exit-red/exit-46433.jsonl",
+      "osCloseMs": 147.674,
+      "problems": []
+    },
+    {
+      "path": "exit-red/exit-46554.jsonl",
+      "osCloseMs": 113.201,
+      "problems": []
+    },
+    {
+      "path": "exit-red2/exit-46951.jsonl",
+      "osCloseMs": 150.796,
+      "problems": []
+    },
+    {
+      "path": "exit-red2/exit-47076.jsonl",
+      "osCloseMs": 156.432,
+      "problems": []
+    }
+  ],
+  "historicalIntermittentTimeout": "OPEN",
+  "shutdownBudgetsMs": [
+    1500,
+    4000
+  ]
+}

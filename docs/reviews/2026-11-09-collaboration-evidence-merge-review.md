@@ -19,7 +19,7 @@ red/green日志位于docs/validation/collaboration-evidence-merge-review-2026110
 | 会话/执行代次 | requester显式owner与isCurrent检查；Advisor按sessionId挂载；工具详情按session/task/attemptId挂载；原始记录/任务结果继续沿既有宿主作用域。阶段用量按team/task/attempt/attemptId去重 |
 | 取消排空 | Runtime停止代在await前改变，批准流程signal+guard阻止迟到启动；新离线入口复用同一runner abort/drain，最终采样计数和usage后关闭门。Core取消/接收/用量回归和实际CLI SIGINT |
 | 恢复 | 批准方案恢复先暂停，已中断副作用不自动重放，继续前核对外部输入及前驱产物验收版本；持久记录核验期间变化会拒绝覆盖。tests/runtime/approved-plan、team/recovery、subagent/task-recovery |
-| 产物占用 | 未改BotOutputLocks或scheduler；冻结路径别名/嵌套/共写拒绝，实际锁等待与取消仍由原机制处理。42项相关Electron含锁等待、版本变化与恢复 |
+| 产物占用 | 未改BotOutputLocks或scheduler；冻结路径别名/嵌套/共写拒绝，实际锁等待与取消仍由原机制处理。56项相关Electron含锁等待、版本变化与恢复 |
 | 旧入口 | 普通方案、ACP拒绝原因、Bot协作/反问、subagent过程/续问、两种终端、旧CLI与新增统一CLI。新增修复对缺参/失败/取消不会伪报成功 |
 
 ## 验证与限制
@@ -33,3 +33,9 @@ red/green日志位于docs/validation/collaboration-evidence-merge-review-2026110
 ## 合并前最终验证
 
 712个Vitest文件7057通过/11跳过（4worker，266.19秒），typecheck/build退出0；56项相关Electron全部通过（4.6分钟），含MCP流取消、向导/旧状态、普通/ACP方案、Bot/subagent、版本/恢复与两类终端退出。全量后仅把新增CLI测试的路径断言改为平台原生basename，3项直接CLI用例再次通过；应用代码不变，差异与最终冻结另存。实际旧命令运行另留legacy-cli-demo，六题6合格配对。正式profile及main再次核对不变。历史退出/PTY与默认高并行长测试超时仍OPEN，阈值不变。
+
+## 本地集成及 main 复验
+
+代码提交 `e57d6b66` 已从 `899463dd` 快进到本地 main，无冲突。main 重新构建、类型检查退出 0，4 项 Electron 冒烟通过（17.1 秒），覆盖批准方案执行及展开返回、单块自动安排、旧跳过状态与可用模型入口。1666 个冻结源文件逐一核对无差异；正式配置、凭证、数据库哈希与基线一致。
+
+main 隔离演示使用 localhost 模拟模型（11 次模拟请求，0 次真实请求），Electron/文件工具/契约与版本验收实际执行：3 项宿主验收通过、clean.csv 与 model.csv 两个验收产物；展开流程工作台后 Escape 返回成功。实际截图为 main-approved-arrangement.png、main-expanded-overview.png、main-conversation-demo.png。未推送、发布或替换安装版；专项分支与 worktree 保留。历史偶发退出超时、Bot/MCP 长收尾、PTY 清理和默认高并行长测试超时继续 OPEN。

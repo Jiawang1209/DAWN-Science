@@ -1,3 +1,5 @@
+> 2026-11-09 集成更新：本批代码 e57d6b66 已本地快进 main；再次审查修复与 main 复验见 [复审证据](../collaboration-evidence-merge-review-20261109/README.md)。下文未提交/未合并描述保留为原阶段历史。未推送发布，历史退出/PTY继续 OPEN。
+
 # 协作台状态与自动安排评测：本轮实证
 
 工作区 `/Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science`；分支 `codex/collaboration-evidence-20261108`；起点 main `899463dd`。本批候选未提交、未合并、未推送、未发布，正式 App 未替换。

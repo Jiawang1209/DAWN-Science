@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts e2e/setup-entry.spec.ts e2e/auto-arrangement.spec.ts -g approved arrangement starts|旧跳过标记|automatically proposes 1
+
+Running 4 tests using 1 worker
+
+(node:71133) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49348/6e9795d6-d08a-4631-8230-e0b7ede13eae
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49389/809b8be2-1a2e-45e8-9b83-ca06958ef08a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (10.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49408/08022282-5266-4c79-b9ed-56b9e23e52bb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49421/23bc8103-27b8-4263-9e72-9b52f08a6280
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/setup-entry.spec.ts:15:3 › 无模型的首次引导入口 › 旧跳过标记不能掩盖新引导；新版主动跳过后不反复弹出，并可从首页重新进入 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49429/1cac7ed3-904d-4971-b595-d2f08ac8cc9f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/setup-entry.spec.ts:39:3 › 已有可用模型的兼容入口 › 旧跳过标记加可用模型时保留工作台，不强制重新引导 (1.5s)
+
+  4 passed (17.1s)

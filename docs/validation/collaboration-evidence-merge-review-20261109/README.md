@@ -20,3 +20,9 @@
 ## 合并前最终验证
 
 712个Vitest文件7057通过/11跳过（4worker，266.19秒），typecheck/build退出0；56项相关Electron全部通过（4.6分钟），含MCP流取消、向导/旧状态、普通/ACP方案、Bot/subagent、版本/恢复与两类终端退出。全量后仅把新增CLI测试的路径断言改为平台原生basename，3项直接CLI用例再次通过；应用代码不变，差异与最终冻结另存。实际旧命令运行另留legacy-cli-demo，六题6合格配对。正式profile及main再次核对不变。历史退出/PTY与默认高并行长测试超时仍OPEN，阈值不变。
+
+## 本地集成及 main 复验
+
+代码提交 `e57d6b66` 已从 `899463dd` 快进到本地 main，无冲突。main 重新构建、类型检查退出 0，4 项 Electron 冒烟通过（17.1 秒），覆盖批准方案执行及展开返回、单块自动安排、旧跳过状态与可用模型入口。1666 个冻结源文件逐一核对无差异；正式配置、凭证、数据库哈希与基线一致。
+
+main 隔离演示使用 localhost 模拟模型（11 次模拟请求，0 次真实请求），Electron/文件工具/契约与版本验收实际执行：3 项宿主验收通过、clean.csv 与 model.csv 两个验收产物；展开流程工作台后 Escape 返回成功。实际截图为 main-approved-arrangement.png、main-expanded-overview.png、main-conversation-demo.png。未推送、发布或替换安装版；专项分支与 worktree 保留。历史偶发退出超时、Bot/MCP 长收尾、PTY 清理和默认高并行长测试超时继续 OPEN。

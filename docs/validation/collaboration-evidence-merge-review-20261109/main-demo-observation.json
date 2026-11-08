@@ -1,0 +1,14 @@
+{
+  "mainCodeCommit": "e57d6b66",
+  "appRoot": "/Users/liuyue/Desktop/Github_repos/dawn-science",
+  "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-g0tEFY/DAWN-协作台新迭代-模拟模型",
+  "model": "localhost mock",
+  "requests": 11,
+  "paidModelRequests": 0,
+  "acceptedTasks": 3,
+  "acceptedArtifacts": [
+    "clean.csv",
+    "model.csv"
+  ],
+  "expandedReturnVerified": true
+}

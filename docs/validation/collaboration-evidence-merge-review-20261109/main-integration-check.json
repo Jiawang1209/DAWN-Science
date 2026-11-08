@@ -1,0 +1,34 @@
+{
+  "codeCommit": "e57d6b66df754fc5bbc7944ce5fb7d946910d078",
+  "merge": "fast-forward from 899463dd",
+  "sourceFiles": 1666,
+  "sourceMismatches": [],
+  "mainBuildExit": 0,
+  "mainTypecheckExit": 0,
+  "mainDesktop": {
+    "passed": 4,
+    "durationSeconds": 17.1
+  },
+  "reviewFullVitest": {
+    "passed": 7057,
+    "skipped": 11,
+    "files": 712,
+    "maxWorkers": 4
+  },
+  "reviewElectronPassed": 56,
+  "formalHashes": {
+    "providers.yaml": "4380a472e84b4205b9180bb7d790930c2b358e57f8d64303cd39e0cf44e8d9dc",
+    "credentials.json": "541e3d353636c9a2b42eb206f272fb49fe9899a2a417f80d3358cf2c1d709f4b",
+    "dawn.db": "e33ef101b1a2d6051ac032ad3e6eb1801bc3cdbccf09633b952c3b12289b647f"
+  },
+  "newPaidModelRequests": 0,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "shutdownThresholdsMs": [
+    1500,
+    4000
+  ],
+  "push": false,
+  "release": false,
+  "installedAppReplacement": false
+}

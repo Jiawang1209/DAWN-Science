@@ -19,3 +19,11 @@
 独立只读复核无P1/P2；按建议加强了footer同节点命中与真实点击检查。最终结果与截图确认后本地提交、快进到main并更新隔离演示；不推送、不发布、不替换正式App。无付费调用。历史偶发退出与PTY清理仍OPEN，1500/4000ms阈值不变。
 
 最终Electron **4/4通过，48.6秒**（desktop-final2.log）。typecheck-final2.log、build-final2.log退出0；两文件10项专项Vitest通过。最终画布与节点均75px，节点bottomOverflow全0；滚动区没有隐藏纵向溢出。900×640逐节点严格ratio=1、footer命中当前节点、点击显示相应详情均通过。
+
+## main与实际效果
+
+实现已在本地main `395cc4f7`，main构建退出0。原隔离演示重新加载后DOM已测得75px/overflow0，但旧宿主的截图出现失真、截取超时（旧原生截图保留old-renderer-capture.png），没有当作通过证据。正常关闭该隔离宿主后，以同一main构建重新启动新隔离root，重新跑本地模拟的三任务验收（11次localhost请求、0付费）。新窗口截屏正常，三张依赖卡片和代次完整可见，main-live-geometry.json再次确认75px、无溢出。没有修改产品绘制/截图逻辑，也不据此推断历史退出问题根因。
+
+![main实际完整依赖卡片](main-dependency-complete.png)
+
+新窗口保留可操作，旧隔离工作区与全部分支/证据保留。按Escape返回。正式配置/凭证/数据库哈希未变，无推送/发布/安装包替换。

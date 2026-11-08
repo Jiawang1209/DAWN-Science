@@ -1,0 +1,29 @@
+{
+  "actualMain": true,
+  "paidRequests": 0,
+  "inference": "localhost fixture",
+  "demoRoot": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-l0A7Fo",
+  "pid": 99963,
+  "geometry": {
+    "canvasHeight": 75,
+    "viewportHeight": 75,
+    "scrollHeight": 75,
+    "nodes": [
+      {
+        "text": "核查并清洗数据\n第 1 次",
+        "height": 75,
+        "bottomOverflow": 0
+      },
+      {
+        "text": "根据清洗结果建模\n第 1 次",
+        "height": 75,
+        "bottomOverflow": 0
+      },
+      {
+        "text": "独立审阅模型与证据\n第 1 次",
+        "height": 75,
+        "bottomOverflow": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/approved-plan.test.ts -t old team mutations
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science
+
+ ❯ |node| tests/team/approved-plan.test.ts (9 tests | 1 failed | 8 skipped) 34ms
+   × does not let old team mutations change a frozen assignment or extend its DAG 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/approved-plan.test.ts > does not let old team mutations change a frozen assignment or extend its DAG
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/team/approved-plan.test.ts:65:104
+     63|  expect(()=>加任务(team,{subject:'unapproved extra'})).toThrow(/批准/)
+     64|  expect(()=>加成员(team,{name:'extra',agent:'worker'})).toThrow(/批准/)
+     65|  expect(()=>发消息(team,{from:'captain',to:team.members[0]!.name,content:…
+       |                                                                                                        ^
+     66| })
+     67| it('hands off the approved method and units outside the arrangement se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  13:07:50
+   Duration  655ms (transform 137ms, setup 0ms, import 541ms, tests 34ms, environment 0ms)
+

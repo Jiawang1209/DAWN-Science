@@ -19,5 +19,6 @@ export async function executeApprovedPlan(sessionId: string, planId: string, cal
   const state = SessionPlanSchema.parse(await call('getSessionPlan', { sessionId }))
   const plan = state.plan
   if (!plan || plan.planId !== planId || plan.status !== 'approved' || !plan.savedPath || state.planning) throw new Error('方案状态已改变，请重新查看当前方案。')
+  if(plan.executionTeamId){await call('answerPlan',{sessionId,planId,action:'execute'});return}
   await call('writeToSession', { sessionId, as: 'user', data: 执行那句(plan.savedPath, Boolean(plan.edited)) })
 }

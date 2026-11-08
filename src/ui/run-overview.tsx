@@ -1,4 +1,5 @@
 import {collaborationMember} from './collaboration-member.js'
+import {ApprovedPlanProgress} from './approved-plan-progress.js'
 import {CollaborationMemberPanel} from './collaboration-member-panel.js'
 import {rememberCollaborationReturn} from './state/collaboration-return.js'
 import {exactTaskObservationRun} from './agent-observation.js'
@@ -106,6 +107,7 @@ export function RunOverview({client,sessionId,onView,team,onPrepare,onBot,autoAr
    {current.observationIssue?<p role="alert" data-authored="1">{current.observationIssue}</p>:null}
    {count&&count.total?<div className="collaboration-counts"><strong>{tf("{0} 项任务",count.total)}</strong><span>{tf("{0} 项验收通过",count.accepted)}</span><span>{tf("{0} 项活跃",count.active)}</span>{expanded?<><span>{tf("{0} 项执行完成",runs.filter(r=>r.state==='completed').length)}</span>{current.budget?<span>{tf("可核验 token {0} · 未知用量 {1} 轮",current.budget.knownTokens,current.budget.unknownRuns)}</span>:null}<span>{t("费用未记录")}</span></>:null}</div>:null}
    <div className="collaboration-body">
+   {ownedTeam&&sessionId?<ApprovedPlanProgress key={ownedTeam.id} team={ownedTeam} owner={sessionId} onFinish={live?async planId=>{await client.get("answerPlan",{sessionId,planId,action:"finish"});refresh()}:undefined} onStop={live?async planId=>{await client.get("answerPlan",{sessionId,planId,action:"stop"});refresh()}:undefined} onSelect={(id,trigger)=>{const selection=collaborationTaskKey(ownedTeam.id,id);update({selection,tab:'process'});if(expanded)setInspection({owner:sessionId,key:selection,trigger})}}/>:null}
    {expanded?<CollaborationWorkflow snapshot={current} team={ownedTeam} selected={selected} onSelect={(selection,trigger)=>{update({selection});setInspection({owner:sessionId,key:selection,trigger})}}/>:null}
    {ownedTeam?.tasks.length&&!expanded?<div className="collaboration-task-board"><h4>{t("任务板")}</h4>{ownedTeam.tasks.map(task=><Button key={task.id} variant="ghost" size="menu-row" aria-pressed={selected===collaborationTaskKey(ownedTeam.id,task.id)} onClick={()=>update({selection:collaborationTaskKey(ownedTeam.id,task.id)})}>{task.subject}</Button>)}</div>:null}
    {runs.length===0&&!ownedTeam?.tasks.length?<><p className="hint">{t("这段会话暂无子任务运行记录")}</p>{!ownedTeam?<p className="hint team-empty">{t("这段会话没有团队。对模型说「用团队分工做…」，或在输入框打 /team。")}</p>:null}</>:<>

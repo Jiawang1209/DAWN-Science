@@ -1,13 +1,16 @@
 /** Model-proposed task structure encoded in the existing plan Markdown, never execution state. */
 import {z} from 'zod'
 import {WorkspaceRelativePathSchema} from './analysis-route.js'
+import {TaskContractSchema} from './task-contract.js'
 export const autoArrangementRequestPrefix='请为以下具体任务自动安排。'
 const line=z.string().trim().min(1).max(2000).refine(s=>!/[\r\n\u0000]/.test(s),'字段必须是单行文本')
 const id=z.string().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/)
 const path=WorkspaceRelativePathSchema.pipe(line).refine(s=>s.length<=512)
-const task=z.object({id,title:line,goal:line,role:line,inputs:z.array(path).max(24),outputs:z.array(path).max(24),dependencies:z.array(id).max(12),acceptance:line,review:z.boolean()}).strict()
-export const TaskArrangementSchema=z.object({mode:z.enum(['single','parallel','chain','science']),rationale:line,independentReview:z.boolean(),tasks:z.array(task).min(1).max(12),questions:z.array(line).max(12)}).strict().superRefine((p,ctx)=>{
+const task=z.object({id,title:line,goal:line,role:line,inputs:z.array(path).max(24),outputs:z.array(path).max(24),dependencies:z.array(id).max(12),acceptance:line,review:z.boolean(),execution:z.object({agent:line,contract:TaskContractSchema}).strict().optional()}).strict()
+export const TaskArrangementSchema=z.object({dispatch:z.literal('team-v1').optional(),mode:z.enum(['single','parallel','chain','science']),rationale:line,independentReview:z.boolean(),tasks:z.array(task).min(1).max(12),questions:z.array(line).max(12)}).strict().superRefine((p,ctx)=>{
  const fail=(message:string)=>ctx.addIssue({code:'custom',message})
+ if(p.dispatch&&p.tasks.some(t=>!t.execution))fail('可执行安排必须为每个任务声明执行者与契约')
+ if(!p.dispatch&&p.tasks.some(t=>t.execution))fail('执行信息需要显式的可执行安排版本')
  if((p.mode==='science'||p.tasks.some(t=>t.review))&&!p.independentReview)fail('独立审阅标记与任务安排不一致')
  const ids=new Set(p.tasks.map(t=>t.id));if(ids.size!==p.tasks.length)fail('任务 ID 重复')
  for(const t of p.tasks){
@@ -34,9 +37,9 @@ const modes={single:'单任务',parallel:'并行委派',chain:'串行交接',sci
 /** Canonical readable fields are persisted with the original plan and its approval fingerprint. */
 export function serializeTaskArrangement(input:TaskArrangement):string{
  const p=TaskArrangementSchema.parse(input)
- return[arrangementHeading,`执行方式：${modes[p.mode]}`,`安排理由：${p.rationale}`,`保留独立审阅：${p.independentReview||p.mode==='science'?'是':'否'}`,
+ return[arrangementHeading,`执行方式：${modes[p.mode]}`,`安排理由：${p.rationale}`,`保留独立审阅：${p.independentReview||p.mode==='science'?'是':'否'}`,...(p.dispatch?[`执行绑定：${p.dispatch}`]:[]),
  ...p.questions.map(q=>`待确认：${q}`),
- ...p.tasks.flatMap(t=>['',`### ${t.id} · ${t.title}`,`- 目标：${t.goal}`,`- 分工：${t.role}`,...t.inputs.map(x=>`- 输入：${x}`),...t.outputs.map(x=>`- 输出：${x}`),...t.dependencies.map(x=>`- 依赖：${x}`),`- 验收：${t.acceptance}`,`- 独立审阅：${t.review?'是':'否'}`])].join('\n')
+ ...p.tasks.flatMap(t=>['',`### ${t.id} · ${t.title}`,`- 目标：${t.goal}`,`- 分工：${t.role}`,...t.inputs.map(x=>`- 输入：${x}`),...t.outputs.map(x=>`- 输出：${x}`),...t.dependencies.map(x=>`- 依赖：${x}`),`- 验收：${t.acceptance}`,`- 独立审阅：${t.review?'是':'否'}`,...(t.execution?[`- 执行者：${t.execution.agent}`,`- 执行契约：${JSON.stringify(t.execution.contract)}`]:[])])].join('\n')
 }
 export type ArrangementRead={state:'absent'}|{state:'invalid';reason:string}|{state:'valid';arrangement:TaskArrangement;start:number;end:number}
 /** Parsing displays/validates an existing proposal; it does not decide task semantics. */
@@ -68,15 +71,19 @@ export function parseTaskArrangement(markdown:string):ArrangementRead{
     if(l.startsWith('执行方式：')){const value=l.slice(5),mode=Object.entries(modes).find(([,name])=>name===value)?.[0];if(!mode)throw new Error('执行方式无效');put(fields,'mode',mode)}
     else if(l.startsWith('安排理由：'))put(fields,'rationale',l.slice(5))
     else if(l.startsWith('保留独立审阅：'))put(fields,'independentReview',bool(l.slice(7)))
+    else if(l.startsWith('执行绑定：'))put(fields,'dispatch',l.slice(5))
     else if(l.startsWith('待确认：'))questions.push(l.slice(4))
     else throw new Error('无法识别安排字段')
    }else{
+    if(l.startsWith('- 执行者：')){put(current,'agent',l.slice(6));continue}
+    if(l.startsWith('- 执行契约：')){put(current,'contract',JSON.parse(l.slice(7)));continue}
     const m=/^- (目标|分工|输入|输出|依赖|验收|独立审阅)：(.*)$/.exec(l);if(!m)throw new Error('无法识别任务字段')
     const keys:Record<string,string>={'目标':'goal','分工':'role','输入':'inputs','输出':'outputs','依赖':'dependencies','验收':'acceptance','独立审阅':'review'},key=keys[m[1]!]!,value=m[2]!
     if(['inputs','outputs','dependencies'].includes(key))(current[key] as string[]).push(value)
     else put(current,key,key==='review'?bool(value):value)
    }
   }
+  for(const task of tasks)if('agent' in task||'contract' in task){task.execution={agent:task.agent,contract:task.contract};delete task.agent;delete task.contract}
   const parsed=TaskArrangementSchema.safeParse(fields)
   if(!parsed.success)return{state:'invalid',reason:parsed.error.issues.map(i=>i.message).join('；')}
   return{state:'valid',arrangement:parsed.data,start,end}
@@ -86,6 +93,7 @@ export function validateArrangementEdit(original:string,edited:string):void{
  const before=parseTaskArrangement(original),after=parseTaskArrangement(edited)
  if(before.state==='valid'&&after.state!=='valid')throw new Error('请保留有效的任务安排；可修改任务内容、分工和依赖后再采纳')
  if(after.state==='invalid')throw new Error('任务安排无效：'+after.reason)
+ if(before.state==='valid'&&before.arrangement.dispatch&&after.state==='valid'&&!after.arrangement.dispatch)throw new Error('不能通过编辑删除已声明的执行绑定')
  if(before.state==='valid'&&before.arrangement.independentReview&&after.state==='valid'&&!after.arrangement.independentReview)throw new Error('不能通过修改方案取消原有独立审阅要求')
  if(after.state==='valid'&&after.arrangement.questions.length)throw new Error('请先补齐待确认项，再更新并采纳任务安排')
 }

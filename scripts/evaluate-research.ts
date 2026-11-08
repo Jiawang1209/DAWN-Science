@@ -1,3 +1,5 @@
+import {freezeApprovedPlan,materializeApprovedTeam} from '../src/team/approved-plan.js'
+import {serializeTaskArrangement,type TaskArrangement} from '../src/protocol/task-arrangement.js'
 /** Actual Pi / frozen Team execution; the caller supplies either a local fixture or capped live route. */
 import {mkdirSync,mkdtempSync,readFileSync,writeFileSync,existsSync,readdirSync} from 'node:fs'
 import {randomUUID} from 'node:crypto'
@@ -21,9 +23,9 @@ import {OrchestrationService} from '../src/orchestration/service.js'
 import {OrchestrationStore} from '../src/orchestration/store.js'
 import type {TaskObservation} from '../src/protocol/task-observation.js'
 export interface RequestBudget {reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number}
-export interface ResearchTrial {stageRoutes?:Record<'check'|'analyze'|'review',{provider:string;model:string;credential:string}>;stageStats?:()=>Record<'work'|'review',RequestBudget>;stageGuidance?:(stage:'check'|'analyze'|'review')=>string;credential:string;requests:()=>number;stats?:()=>{reserved:number;forwarded:number;denied:number;limit:number};close:()=>Promise<void>}
+export interface ResearchTrial {stageRoutes?:Record<'check'|'analyze'|'review',{provider:string;model:string;credential:string}>;stageStats?:()=>Record<'work'|'review',RequestBudget>;stageGuidance?:(stage:'check'|'analyze'|'review',frozen?:boolean)=>string;credential:string;requests:()=>number;stats?:()=>{reserved:number;forwarded:number;denied:number;limit:number};close:()=>Promise<void>}
 export interface ResearchOptions {repeats?:number;taskIds?:string[];perArmLimit?:number}
-export interface ResearchRoute {multiStageModels?:ResearchStageModels;multiStageLimits?:{work:number;review:number};beginTrial?:(limit:number,mode:'single'|'multi')=>ResearchTrial;provider:string;model:string;modelsPath:string;credential:string;requests:()=>number;signal?:AbortSignal;kind:'live'|'fixture'}
+export interface ResearchRoute {multiExecution?:'approved-plan';multiStageModels?:ResearchStageModels;multiStageLimits?:{work:number;review:number};beginTrial?:(limit:number,mode:'single'|'multi')=>ResearchTrial;provider:string;model:string;modelsPath:string;credential:string;requests:()=>number;signal?:AbortSignal;kind:'live'|'fixture'}
 export async function runResearchEvaluation(outputDir:string,route:ResearchRoute,options:ResearchOptions={}){
  route={...route,...(route.multiStageLimits?{multiStageLimits:structuredClone(route.multiStageLimits)}:{}),...(route.multiStageModels?{multiStageModels:structuredClone(route.multiStageModels)}:{})}
  mkdirSync(outputDir,{recursive:true})
@@ -40,7 +42,7 @@ export async function runResearchEvaluation(outputDir:string,route:ResearchRoute
  if(!!route.multiStageLimits!==!!route.multiStageModels)throw new Error('阶段模型与配额声明必须同时冻结')
  const stageModels=route.multiStageModels?researchStageDeclarations(modelConfig,route,route.multiStageModels):undefined
  if(route.kind==='live'&&(modelDeclaration.configuredReasoning===null||modelDeclaration.configuredMaxOutputTokens===null||modelDeclaration.configuredContextWindow===null||modelDeclaration.configuredApi!=='openai-completions'||modelDeclaration.unsupportedSettings))throw new Error('真实试验须先显式冻结受支持的模型推理、输出与请求设置')
- const manifest=researchManifest({runId:randomUUID(),generatedAt:new Date().toISOString(),inference:route.kind,provider:route.provider,model:route.model,modelDeclaration,tasks,repeats,perArmLimit,enforced:!!route.beginTrial,sourceFingerprint,childBuildFingerprint,...(route.multiStageLimits?{multiStageLimits:route.multiStageLimits}:{}),...(stageModels?{stageModels}:{})})
+ const manifest=researchManifest({runId:randomUUID(),generatedAt:new Date().toISOString(),inference:route.kind,provider:route.provider,model:route.model,modelDeclaration,tasks,repeats,perArmLimit,enforced:!!route.beginTrial,sourceFingerprint,childBuildFingerprint,...(route.multiExecution?{multiExecution:route.multiExecution}:{}),...(route.multiStageLimits?{multiStageLimits:route.multiStageLimits}:{}),...(stageModels?{stageModels}:{})})
  writeFileSync(join(outputDir,'research-manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'})
  const changed=new Set<string>(),trialSettingsFiles=new Map<string,string>()
  const prepareSettings=(path:string,scope:'project'|'agent')=>{
@@ -57,7 +59,7 @@ export async function runResearchEvaluation(outputDir:string,route:ResearchRoute
 
  const save=()=>{
   const summary=summarizeResearch(rows,!!route.beginTrial)
-  const report={version:2,runId:manifest.runId,manifestFingerprint:manifest.fingerprint,comparisonEligible:!changed.size,integrity:{changed:[...changed]},generatedAt:new Date().toISOString(),inference:route.kind,provider:route.provider,model:route.model,requestLimit:route.kind==='live'?30:null,requestAllocation:{perArmLimit:route.beginTrial?perArmLimit:null,repeats,enforced:!!route.beginTrial,plannedArms:tasks.length*2*repeats},sourceFiles,sourceFingerprint,childBuildFingerprint,tasks:tasks.map(({expected:_expected,...t})=>({...t,inputHash:researchFingerprint(t.csv)})),...summary,qualifiedPairs:changed.size?0:summary.qualifiedPairs}
+  const report={version:2,multiExecution:route.multiExecution??'pipeline',runId:manifest.runId,manifestFingerprint:manifest.fingerprint,comparisonEligible:!changed.size,integrity:{changed:[...changed]},generatedAt:new Date().toISOString(),inference:route.kind,provider:route.provider,model:route.model,requestLimit:route.kind==='live'?30:null,requestAllocation:{perArmLimit:route.beginTrial?perArmLimit:null,repeats,enforced:!!route.beginTrial,plannedArms:tasks.length*2*repeats},sourceFiles,sourceFingerprint,childBuildFingerprint,tasks:tasks.map(({expected:_expected,...t})=>({...t,inputHash:researchFingerprint(t.csv)})),...summary,qualifiedPairs:changed.size?0:summary.qualifiedPairs}
   writeFileSync(join(outputDir,'research.json'),JSON.stringify(report,null,2)+'\n')
   writeFileSync(join(outputDir,'research.md'),['# 代表性科研任务对照',`Run ${manifest.runId}；比较清单 ${manifest.fingerprint}；候选与配置保持冻结：${!changed.size}。`,`推理：${route.kind}；模型 ${route.provider}/${route.model}；${route.kind==='live'?'整轮最多 30 次请求':'离线夹具不消耗真实调用额度'}；每组上限 ${route.beginTrial?perArmLimit:'未强制'}；重复 ${repeats}；分区强制 ${!!route.beginTrial}。`,...report.limitations,'','| 任务 | 重复 | 模式 | 终态 | 独立验收 | 请求 | 宿主提交/退回 | 可见 token | 用量未知任务 | 耗时 ms |','|---|---|---|---|---|---|---|---|---|---|',...rows.map(r=>`| ${r.caseId} | ${r.repeat} | ${r.mode} | ${r.terminal} | ${r.success} | ${r.requests} | ${r.submissionAttempts??'未知'}/${r.invalidSubmissions??'未知'} | ${r.usage.visibleTokens} | ${r.usage.unknownUsageTasks} | ${r.elapsedMs} |`),`\n完整配对 ${report.completePairs}；不完整配对 ${report.incompletePairs}；两组均通过独立核验 ${report.qualifiedPairs}。`,'','| 模式 | 合格交付 | 正确阻塞 | 误验收 | 明确触发请求上限 | 请求 / 合格交付 | 毫秒 / 合格交付 |','|---|---|---|---|---|---|---|',...Object.entries(report.delivery).map(([mode,d])=>`| ${mode} | ${d.qualifiedDeliveries} | ${d.correctBlocks} | ${d.falseAcceptances} | ${route.beginTrial?d.exhausted:'不适用'} | ${d.requestsPerDelivery?.toFixed(2)??'不适用'} | ${d.msPerDelivery?.toFixed(0)??'不适用'} |`),'分子包含所有已运行试验的成本，包括失败和正确阻塞；离线结果只验证执行链。宿主提交/退回不含 SDK 拒绝和输出截断；它们须结合原始转录另行核查。','','## 独立审阅请求保留','',...rows.flatMap(r=>r.stageRequestBudgets?[`- ${r.caseId} / ${r.repeat} / ${r.mode}：核查+分析 ${r.stageRequestBudgets.work.forwarded}/${r.stageRequestBudgets.work.limit}，拒绝 ${r.stageRequestBudgets.work.denied}；独立审阅 ${r.stageRequestBudgets.review.forwarded}/${r.stageRequestBudgets.review.limit}，拒绝 ${r.stageRequestBudgets.review.denied}。保留额度不表示已完成审阅。`]:[]),'','## 提交诊断（与宿主计数分开）','','| 任务 | 重复 | 模式 | 宿主接收/退回 | SDK拒绝 | 输出上限未执行 | 记录完整 |','|---|---|---|---|---|---|---|',...rows.map(r=>`| ${r.caseId} | ${r.repeat} | ${r.mode} | ${r.submissionDiagnostics?`${r.submissionDiagnostics.hostAttempts}/${r.submissionDiagnostics.hostRejected}`:'未知'} | ${r.submissionDiagnostics?.sdkRejected??'未知'} | ${r.submissionDiagnostics?.outputLimitNotExecuted??'未知'} | ${r.submissionDiagnostics?.complete??false} |`),'SDK/截断计数仅在本轮每个作用域的完整转录与宿主已记录计数一致时报告；未知不是零。诊断不参与权限或科学验收。',...(changed.size?[`候选发生变化（${[...changed].join(', ')}），本轮不能用于收益比较，后续未启动。`]:[])].join('\n')+'\n')
   return report
@@ -89,12 +91,12 @@ async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route
  const routeRecord=AnalysisRouteSchema.parse({routeId:'research',revision:1,updatedAt:1,title:task.id,goal:task.instructions,dataContext:[],steps:[{id:'s',title:task.id,purpose:task.instructions,inputs:[input],outputs:recipe.outputs,dependencies:[],status:'pending',blockers:[],cases:[],deliverables:[],execution:{state:'not_run',note:'pending'},verification:{state:'unreviewed',note:'pending'},needsReview:true,notes:[]}]})
  const definition={route:routeRecord,stepId:'s',inputs:[input],outputs:recipe.outputs,initialVersions:versions,members:{check:'check',analyze:'analyze',review:'review'},instructions,requireExecution:true,maxRevisions:0,acceptance:recipe.acceptance}
  const context={cwd:root,provider:route.provider,model:route.model,modelsPath:route.modelsPath,credentials:{[route.provider]:lease?.credential??route.credential,...Object.fromEntries(Object.values(lease?.stageRoutes??{}).map(s=>[s.provider,s.credential]))}},entry=resolve('dist/electron/subagent-child.js'),childOf=()=>({command:process.execPath,args:[entry],env:{ELECTRON_RUN_AS_NODE:'1'}})
- const stageDefinitions=()=>['check','analyze','review'].map(name=>({name,description:'representative research',systemPrompt:'Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.'+(lease?.stageGuidance?.(name as 'check'|'analyze'|'review')??''),filePath:'/'+name,tools:['read','write','bash']}))
+ const stageDefinitions=()=>['check','analyze','review'].map(name=>({name,description:'representative research',systemPrompt:'Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.'+(lease?.stageGuidance?.(name as 'check'|'analyze'|'review',route.multiExecution==='approved-plan')??''),filePath:'/'+name,tools:['read','write','bash']}))
  const observations:(TaskObservation|undefined)[]=[],controller=new AbortController(),abort=()=>controller.abort()
  route.signal?.addEventListener('abort',abort,{once:true})
  if(route.signal?.aborted)controller.abort()
  const timeout=setTimeout(abort,180000);timeout.unref()
- let service:OrchestrationService|undefined,scheduler:团队调度器|undefined,terminal:ResearchTerminal='failed',reason:string|undefined
+ let executedTeamId:string|undefined,service:OrchestrationService|undefined,scheduler:团队调度器|undefined,terminal:ResearchTerminal='failed',reason:string|undefined
  let outputVersions:ResearchRow['versions']=[]
  let blocking:{reasons:string[];inputRead:boolean}|undefined
  try{
@@ -113,16 +115,30 @@ async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route
   }else{
    service=new OrchestrationService(new OrchestrationStore(join(root,'session'),'research'),1)
    scheduler=new 团队调度器({sessionDir:join(root,'session'),定义:stageDefinitions,跑:{context,childOf},orchestration:service,onChange:()=>{}})
-   const team=建团队({id:'research',name:'research',goal:instructions,captainSessionId:'research'})
+   let team
+   if(route.multiExecution==='approved-plan'){
+    const stages=['check','analyze','review'] as const
+    const arrangement:TaskArrangement={dispatch:'team-v1',mode:'science',rationale:'冻结同一科研任务的核查、分析和独立审阅以验证执行绑定；不是生产任务数量默认值。',independentReview:true,questions:[],tasks:stages.map((stage,index)=>{
+     const contract=stageContract(definition,stage)
+     return{id:stage,title:stage,goal:'按已批准方法完成当前阶段',role:stage,inputs:contract.inputs,outputs:contract.outputs,dependencies:index?[stages[index-1]!]:[],acceptance:'既有宿主契约、输入产物版本及独立真值核验',review:stage==='review',execution:{agent:stage,contract}}
+    })}
+    const snapshot=await freezeApprovedPlan({workspace:root,owner:'research',planId:'research-pilot',planVersion:1,markdown:instructions+'\n\n'+serializeTaskArrangement(arrangement),definitions:stageDefinitions(),tier:'allow-all',model:{provider:route.provider,model:route.model},...(lease?.stageRoutes?{modelsByAgent:lease.stageRoutes}:{}),signal:controller.signal})
+    team=materializeApprovedTeam(snapshot,'research')
+    writeFileSync(join(root,'approved-plan.json'),JSON.stringify(snapshot.binding,null,2)+'\n',{flag:'wx'})
+   }else{
+   team=建团队({id:'research',name:'research',goal:instructions,captainSessionId:'research'})
    for(const name of ['check','analyze','review'] as const){const selected=lease?.stageRoutes?.[name];加成员(team,{name,agent:name,...(selected?{provider:selected.provider,model:selected.model}:{})})}
-   startPipeline(team,'trial',definition,(_m,c)=>resolveTaskSettings(c,'allow-all',['read','write','bash']));写团队(scheduler.dir(team.id),team)
+   startPipeline(team,'trial',definition,(_m,c)=>resolveTaskSettings(c,'allow-all',['read','write','bash']));
+   }
+   写团队(scheduler.dir(team.id),team);executedTeamId=team.id
    for(const member of team.members)prepareSettings(join(scheduler.dir(team.id),member.sessionDir,'agent',String(member.turns),'settings.json'),'agent')
    await scheduler.踢一下(team.id)
-   while(scheduler.读(team.id).pipeline!.status==='running'&&!controller.signal.aborted)await new Promise(r=>setTimeout(r,20))
+   const pending=()=>{const latest=scheduler!.读(team.id);return latest.approvedPlan?!latest.approvedPlanPaused&&(scheduler!.hasActiveTeam(team.id)||latest.tasks.some(t=>t.status==='pending'&&t.dependencies.every(d=>latest.tasks.find(p=>p.id===d)?.status==='completed'))):latest.pipeline!.status==='running'}
+   while(pending()&&!controller.signal.aborted)await new Promise(r=>setTimeout(r,20))
    if(controller.signal.aborted)throw new Error('cancelled')
    while(scheduler.hasActiveTeam(team.id))await new Promise(r=>setTimeout(r,10))
    const final=scheduler.读(team.id)
-   terminal=final.pipeline!.status==='completed'?'accepted':final.tasks.some(t=>t.receipt?.state==='blocked')?'blocked':'failed'
+   terminal=(final.approvedPlan?final.tasks.every(t=>t.status==='completed'&&t.receipt?.state==='accepted'):final.pipeline!.status==='completed')?'accepted':final.tasks.some(t=>t.receipt?.state==='blocked')?'blocked':'failed'
    outputVersions=final.tasks.find(t=>t.contract?.resultType==='model-metrics')?.receipt?.versions?.outputs??[]
    const checked=final.tasks.find(t=>t.contract?.resultType==='data-summary'&&t.receipt?.state==='blocked')?.receipt?.result
    blocking={reasons:[...(checked?.blockers??[]),...(checked?.data?.kind==='data-summary'?checked.data.issues:[])],inputRead:checked?.verification.state==='reviewed'&&!!checked.verification.toolCallIds?.length}
@@ -131,15 +147,15 @@ async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route
  }catch{terminal=controller.signal.aborted?'cancelled':'failed';reason='执行取消或运行错误；未计为正确阻塞'}
  finally{
   clearTimeout(timeout);route.signal?.removeEventListener('abort',abort)
-  try{scheduler?.中止全部('research')}finally{await service?.close()}
-  if(scheduler){
+  try{if(executedTeamId)scheduler?.中止全部(executedTeamId)}finally{await service?.close()}
+  if(scheduler&&executedTeamId){
    // Read after drain on both success and cancellation; completed predecessors keep their known usage.
-   const final=scheduler.读('research')
+   const final=scheduler.读(executedTeamId)
    const attempted=final.tasks.filter(t=>t.attempt>0)
    observations.push(...attempted.map(t=>t.observation))
    for(const task of attempted){
     const member=final.members.find(m=>m.name===task.assignee)
-    transcriptBindings.push({scopeId:JSON.stringify([task.id,task.attempt,task.attemptId??null]),relativeDirectory:member?['session','teams','research',...member.sessionDir.split(/[\\/]/)].join('/'):'missing-scope'})
+    transcriptBindings.push({scopeId:JSON.stringify([task.id,task.attempt,task.attemptId??null]),relativeDirectory:member?['session','teams',executedTeamId,...member.sessionDir.split(/[\\/]/)].join('/'):'missing-scope'})
    }
    outputVersions=final.tasks.find(t=>t.contract?.resultType==='model-metrics')?.receipt?.versions?.outputs??[]
   }

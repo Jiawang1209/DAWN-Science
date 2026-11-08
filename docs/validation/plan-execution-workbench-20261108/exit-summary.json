@@ -1,0 +1,374 @@
+{
+  "thresholdsMs": [
+    1500,
+    4000
+  ],
+  "sampleCount": 51,
+  "maxCloseMs": 249.182,
+  "missingProcessExit": 0,
+  "nonzeroExits": 0,
+  "historicalStatus": "OPEN",
+  "historicalOsDelayMs": [
+    7350,
+    20690
+  ],
+  "samples": [
+    {
+      "file": "exit-49025.jsonl",
+      "closeMs": 192.73,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-41271.jsonl",
+      "closeMs": 131.845,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-73071.jsonl",
+      "closeMs": 124.353,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-50315.jsonl",
+      "closeMs": 206.953,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-91015.jsonl",
+      "closeMs": 160.792,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-90309.jsonl",
+      "closeMs": 129.275,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-46834.jsonl",
+      "closeMs": 216.818,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-73213.jsonl",
+      "closeMs": 129.914,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-94141.jsonl",
+      "closeMs": 97.891,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-92774.jsonl",
+      "closeMs": 119.795,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-87780.jsonl",
+      "closeMs": 121.6,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-87625.jsonl",
+      "closeMs": 124.57,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-93654.jsonl",
+      "closeMs": 149.301,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-45966.jsonl",
+      "closeMs": 235.678,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-88676.jsonl",
+      "closeMs": 141.618,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-90661.jsonl",
+      "closeMs": 134.972,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-42002.jsonl",
+      "closeMs": 139.399,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-93139.jsonl",
+      "closeMs": 127.137,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-46309.jsonl",
+      "closeMs": 186.606,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-92085.jsonl",
+      "closeMs": 128.142,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-92284.jsonl",
+      "closeMs": 127.521,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-93800.jsonl",
+      "closeMs": 145.488,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-90009.jsonl",
+      "closeMs": 125.497,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-88955.jsonl",
+      "closeMs": 114.854,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-72795.jsonl",
+      "closeMs": 132.168,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-90534.jsonl",
+      "closeMs": 136.943,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-91886.jsonl",
+      "closeMs": 121.37,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-89289.jsonl",
+      "closeMs": 100.102,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-90860.jsonl",
+      "closeMs": 121.172,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-88369.jsonl",
+      "closeMs": 136.541,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-88521.jsonl",
+      "closeMs": 151.827,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-89698.jsonl",
+      "closeMs": 109.071,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-93424.jsonl",
+      "closeMs": 111.281,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-46158.jsonl",
+      "closeMs": 249.182,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-89873.jsonl",
+      "closeMs": 119.565,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-42172.jsonl",
+      "closeMs": 175.532,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-93992.jsonl",
+      "closeMs": 163.445,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-46474.jsonl",
+      "closeMs": 164.684,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-87907.jsonl",
+      "closeMs": 139.084,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-91142.jsonl",
+      "closeMs": 125.538,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-93519.jsonl",
+      "closeMs": 123.97,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-89562.jsonl",
+      "closeMs": 124.653,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-91615.jsonl",
+      "closeMs": 236.313,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-72944.jsonl",
+      "closeMs": 173.616,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-88131.jsonl",
+      "closeMs": 131.523,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-92484.jsonl",
+      "closeMs": 127.299,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-87494.jsonl",
+      "closeMs": 144.46,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-48396.jsonl",
+      "closeMs": 163.484,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-87342.jsonl",
+      "closeMs": 130.21,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-88808.jsonl",
+      "closeMs": 137.291,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    },
+    {
+      "file": "exit-91413.jsonl",
+      "closeMs": 127.598,
+      "source": "child-exit",
+      "exitCode": 0,
+      "events": []
+    }
+  ]
+}

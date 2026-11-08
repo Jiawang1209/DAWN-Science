@@ -8,8 +8,10 @@
  * 簿里每一版比协议里的 `方案` 多两样（2026-09-28，D3 第二道）：批准时的 `sha256` 与存档位置 `存档`。
  * 它们只给运行时核对用，**不进事件**（`公开()` 摘掉）——界面要的只是「文件和批准时一不一样」（`fileChanged`）。
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, rmSync, writeFileSync,renameSync } from "node:fs"
+import {randomUUID} from 'node:crypto'
 import { dirname, join, posix } from "node:path"
+import {ApprovedPlanExecutionSchema,arrangementHash,type ApprovedPlanExecution} from '../team/approved-plan.js'
 import type { 方案 } from "../protocol/plan.js"
 import { 方案目录 } from "../policy/science-layout.js"
 import type { 已批准存档 } from "../policy/plan-mode.js"
@@ -23,7 +25,7 @@ export const 方案簿文件名 = "plans.json"
  * 簿里记的一版：协议里的 `方案` + 批准时的指纹与存档（只有本机会话批准的才有）
  * + `离枝`（2026-09-28）：批准过、但交它的那次 `propose_plan` 已经不在当前对话分支上（回退到它之前了）。见 `只留`。
  */
-export type 方案记录 = 方案 & { sha256?: string; 存档?: string; 离枝?: true }
+export type 方案记录 = 方案 & { sha256?: string; 存档?: string; 离枝?: true; executionSnapshot?:ApprovedPlanExecution }
 
 interface 簿内容 {
   阶段: "off" | "planning"
@@ -32,7 +34,7 @@ interface 簿内容 {
 
 /** 给事件、给 `history()` 的那一份：摘掉只给运行时用的几样 */
 export function 公开(p: 方案记录): 方案 {
-  const { sha256: _指纹, 存档: _存档, 离枝: _离枝, ...rest } = p
+  const { sha256: _指纹, 存档: _存档, 离枝: _离枝, executionSnapshot:_execution, ...rest } = p
   return { ...rest }
 }
 
@@ -57,6 +59,7 @@ export class 方案簿 {
     return this.内.阶段
   }
   设阶段(v: "off" | "planning"): void {
+    if(this.内.阶段===v)return
     this.内.阶段 = v
     this.存()
   }
@@ -104,13 +107,24 @@ export class 方案簿 {
     return 公开(p)
   }
 
-  批准(planId: string, o: { 正文: string; savedPath: string; 时刻: number; 改过: boolean; sha256?: string; 存档?: string }): 方案 {
+  执行快照(planId:string):ApprovedPlanExecution {
+    const p=this.内.方案们.find(p=>p.planId===planId)
+    if(!p||p.离枝||p.status!=='approved'||!p.executionSnapshot)throw new Error('当前分支没有已批准的执行安排')
+    const snapshot=ApprovedPlanExecutionSchema.parse(p.executionSnapshot)
+    if(snapshot.binding.planId!==p.planId||snapshot.binding.planVersion!==p.version||snapshot.binding.markdownHash!==arrangementHash(p.markdown)||snapshot.binding.teamId!==p.executionTeamId)throw new Error('批准方案与执行快照版本不一致')
+    return snapshot
+  }
+  批准(planId: string, o: { 正文: string; savedPath: string; 时刻: number; 改过: boolean; sha256?: string; 存档?: string; executionSnapshot?:ApprovedPlanExecution }): 方案 {
     this.可答(planId)
     const p = this.内.方案们.find((x) => x.planId === planId)!
+    const previous=structuredClone(p),previousPhase=this.内.阶段
+    try {
     p.status = "approved"
     p.markdown = o.正文
     p.savedPath = o.savedPath
     p.approvedAt = o.时刻
+    this.内.阶段='off'
+    if(o.executionSnapshot){p.executionSnapshot=ApprovedPlanExecutionSchema.parse(o.executionSnapshot);p.executionTeamId=p.executionSnapshot.binding.teamId}
     if (o.改过) p.edited = true
     if (o.sha256 && o.存档) {
       p.sha256 = o.sha256
@@ -118,6 +132,7 @@ export class 方案簿 {
     }
     this.存()
     return 公开(p)
+    }catch(error){this.内.方案们[this.内.方案们.indexOf(p)]=previous;this.内.阶段=previousPhase;throw error}
   }
 
   作废(planId: string): 方案 {
@@ -181,7 +196,8 @@ export class 方案簿 {
   private 存(): void {
     if (!this.文件) return
     mkdirSync(dirname(this.文件), { recursive: true })
-    writeFileSync(this.文件, JSON.stringify(this.内, null, 2))
+    const tmp=this.文件+'.'+randomUUID()+'.tmp'
+    try{writeFileSync(tmp,JSON.stringify(this.内,null,2));renameSync(tmp,this.文件)}finally{try{rmSync(tmp,{force:true})}catch{}}
   }
 }
 

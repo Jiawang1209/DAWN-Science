@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "source": "localhost deterministic model fixture + real NativeRuntime / Team / Pi child processes",
+  "limitations": [
+    "验证软件接线、文件版本和宿主提交路径；不代表真实模型质量或独立科学认证。",
+    "未使用正式 App 配置或网络 API 凭证。"
+  ],
+  "frozen": {
+    "binding": {
+      "version": 1,
+      "owner": "approved-evaluation",
+      "planId": "call_mock_1",
+      "planVersion": 1,
+      "markdownHash": "9468d168989893afbc77a5241ac71e608dad0dc80eea0bd1fa42ad61fb948b06",
+      "teamId": "plan_fcfd334d0d107030b0945860",
+      "externalInputs": [
+        {
+          "path": "input.csv",
+          "sha256": "4bf0e63035dd1fafdbe5915d64110833dacd4754cfbb5e70330440fd3bb5f53b",
+          "bytes": 8
+        }
+      ],
+      "tasks": [
+        {
+          "planTaskId": "clean",
+          "taskId": "plan_1",
+          "memberName": "member_1",
+          "review": false
+        },
+        {
+          "planTaskId": "model",
+          "taskId": "plan_2",
+          "memberName": "member_2",
+          "review": false
+        },
+        {
+          "planTaskId": "review",
+          "taskId": "plan_3",
+          "memberName": "member_3",
+          "review": true
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "planTaskId": "clean",
+        "taskId": "plan_1",
+        "member": "member_1",
+        "agent": "data-engineer",
+        "dependencies": [],
+        "access": "workspace-write",
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [
+          "clean.csv"
+        ]
+      },
+      {
+        "planTaskId": "model",
+        "taskId": "plan_2",
+        "member": "member_2",
+        "agent": "data-engineer",
+        "dependencies": [
+          "plan_1"
+        ],
+        "access": "workspace-write",
+        "inputs": [
+          "clean.csv"
+        ],
+        "outputs": [
+          "model.csv"
+        ]
+      },
+      {
+        "planTaskId": "review",
+        "taskId": "plan_3",
+        "member": "member_3",
+        "agent": "reviewer-two",
+        "dependencies": [
+          "plan_2"
+        ],
+        "access": "read-only",
+        "inputs": [
+          "input.csv",
+          "model.csv"
+        ],
+        "outputs": []
+      }
+    ]
+  },
+  "rows": [
+    {
+      "task": "plan_1",
+      "status": "completed",
+      "attempts": 1,
+      "receipt": "accepted",
+      "inputs": [
+        {
+          "path": "input.csv",
+          "sha256": "4bf0e63035dd1fafdbe5915d64110833dacd4754cfbb5e70330440fd3bb5f53b",
+          "bytes": 8
+        }
+      ],
+      "outputs": [
+        {
+          "path": "clean.csv",
+          "sha256": "2bb5ffa520e4bbe57b59ddc8f4a2bcc31e9d0c5fb2b261c7fd77721278f5a8c8",
+          "bytes": 8
+        }
+      ]
+    },
+    {
+      "task": "plan_2",
+      "status": "completed",
+      "attempts": 1,
+      "receipt": "accepted",
+      "inputs": [
+        {
+          "path": "clean.csv",
+          "sha256": "2bb5ffa520e4bbe57b59ddc8f4a2bcc31e9d0c5fb2b261c7fd77721278f5a8c8",
+          "bytes": 8
+        }
+      ],
+      "outputs": [
+        {
+          "path": "model.csv",
+          "sha256": "2bb5ffa520e4bbe57b59ddc8f4a2bcc31e9d0c5fb2b261c7fd77721278f5a8c8",
+          "bytes": 8
+        }
+      ]
+    },
+    {
+      "task": "plan_3",
+      "status": "completed",
+      "attempts": 1,
+      "receipt": "accepted",
+      "inputs": [
+        {
+          "path": "input.csv",
+          "sha256": "4bf0e63035dd1fafdbe5915d64110833dacd4754cfbb5e70330440fd3bb5f53b",
+          "bytes": 8
+        },
+        {
+          "path": "model.csv",
+          "sha256": "2bb5ffa520e4bbe57b59ddc8f4a2bcc31e9d0c5fb2b261c7fd77721278f5a8c8",
+          "bytes": 8
+        }
+      ],
+      "outputs": []
+    }
+  ],
+  "metrics": {
+    "planned": 3,
+    "mapped": 3,
+    "accepted": 3,
+    "duplicateStartRequests": 0,
+    "inputPreserved": true,
+    "fixtureModelRequests": 10,
+    "elapsedMs": 4032
+  }
+}

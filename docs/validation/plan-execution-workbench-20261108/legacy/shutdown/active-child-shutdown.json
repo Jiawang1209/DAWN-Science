@@ -1,0 +1,105 @@
+{
+  "owned": [
+    93992,
+    93993,
+    93994,
+    94005,
+    94094,
+    94095
+  ],
+  "allExited": true,
+  "meta": {
+    "agent": "scout",
+    "task": "子任务慢：运行慢工具后回报。",
+    "status": "error",
+    "startedAt": 1794113670559,
+    "handoffSha256": "cced2b79df3248909456ff675e15679b7b9afedc90a8210ad522fae08586251e",
+    "settings": {
+      "scope": {
+        "version": 1,
+        "tier": "allow-all",
+        "access": "workspace-exec",
+        "tools": [
+          "read",
+          "bash"
+        ],
+        "inputs": [],
+        "outputs": []
+      }
+    },
+    "error": "已中止",
+    "endedAt": 1794113671626
+  },
+  "children": [
+    {
+      "id": "child-72f83c3605753d1baa214a1f70b1d23b",
+      "kind": "subagent",
+      "address": [
+        "call_mock_104",
+        "0"
+      ],
+      "label": "scout",
+      "state": "cancelled",
+      "epoch": 1,
+      "updatedAt": 1794113671625,
+      "settings": {
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "inputs": [],
+          "outputs": []
+        }
+      },
+      "handoffSha256": "cced2b79df3248909456ff675e15679b7b9afedc90a8210ad522fae08586251e",
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "input",
+          "output",
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "lastSettledEpoch": 1
+      },
+      "reason": "执行已中止",
+      "timing": {
+        "executionMs": 1055,
+        "preflightMs": 1
+      },
+      "contextObservation": {
+        "ownerSessionId": "37096d9b-f708-4edd-8472-1755ed94c5d9",
+        "childId": "child-72f83c3605753d1baa214a1f70b1d23b",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794113671043,
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 516,
+            "toolBytes": 2000,
+            "messageBytes": 522,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "unknown",
+          "source": "unknown",
+          "reason": "no-current-route-anchor"
+        }
+      },
+      "result": {
+        "ok": false,
+        "output": "",
+        "error": "执行已中止"
+      },
+      "resultEpoch": 1
+    }
+  ]
+}

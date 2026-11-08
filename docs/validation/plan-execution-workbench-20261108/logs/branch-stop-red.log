@@ -1,0 +1,33 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/approved-plan.test.ts -t leaves the current branch
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science
+
+ ❯ |node| tests/runtime/approved-plan.test.ts (10 tests | 1 failed | 9 skipped) 99ms
+   × stopping remains available after a plan leaves the current branch, while restarting is refused 99ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > stopping remains available after a plan leaves the current branch, while restarting is refused
+AssertionError: promise rejected "Error: 当前分支没有已批准的执行安排" instead of resolving
+ ❯ tests/runtime/approved-plan.test.ts:82:57
+     80|  try{
+     81|   const a=await rt.answerPlan('owner','proposal','approve');await rt.a…
+     82|   await expect(rt.answerPlan('owner','proposal','stop')).resolves.toHa…
+       |                                                         ^
+     83|   expect(读团队(团队目录(spec.sessionDir,a.executionTeamId!))!.approvedPlanPa…
+     84|   await expect(rt.answerPlan('owner','proposal','execute')).rejects.to…
+
+Caused by: Error: 当前分支没有已批准的执行安排
+ ❯ 方案簿.执行快照 src/runtime/plan-book.ts:112:68
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4176:26
+ ❯ tests/runtime/approved-plan.test.ts:82:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  13:09:21
+   Duration  1.60s (transform 639ms, setup 0ms, import 1.41s, tests 99ms, environment 0ms)
+

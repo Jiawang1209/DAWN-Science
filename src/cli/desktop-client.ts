@@ -41,7 +41,7 @@ export async function connectDesktopCli(descriptor: DesktopDescriptor, workspace
     suggest: () => call<{ text: string }>('$suggest'),
     usage: () => call<CliUsage>('$usage'),
     planning: (enabled?: boolean) => call<SessionPlan>('$plan', enabled === undefined ? undefined : { action: 'set', enabled }),
-    answerPlan: (planId: string, decision: 'approve' | 'discard') => call<{ savedPath?: string }>('$plan', { action: 'answer', planId, decision }),
+    answerPlan: (planId: string, decision: 'approve' | 'discard') => call<{ savedPath?: string; executionTeamId?:string }>('$plan', { action: 'answer', planId, decision }),
     executePlan: (planId: string) => call('$plan', { action: 'execute', planId }),
     permissions: (value?: SessionPermissionValue) => call<SessionPermission>('$permissions', value === undefined ? undefined : { value }),
     attach: (sink: (event: DesktopCliEvent) => void) => { sinks.add(sink); return () => { sinks.delete(sink) } },

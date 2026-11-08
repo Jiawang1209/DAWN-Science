@@ -263,6 +263,22 @@ describe("对话里：附栏开关、带子、/plan、卡片接线", () => {
     expect(onAnswerPlan).toHaveBeenCalledTimes(1)
     expect(onSend).toHaveBeenCalledTimes(1)
   })
+  it('uses the bound execute action and never asks the model to reinterpret an approved arrangement',async()=>{
+    const onSend=vi.fn(),answer=vi.fn(async()=>({savedPath:'analysis/plans/bound.md',executionTeamId:'plan_fixture'}))
+    render(<ConversationView session={会话} items={[卡]} onSend={onSend} onAnswerPlan={answer}/>)
+    fireEvent.click(screen.getByRole('button',{name:'照这个做'}))
+    await waitFor(()=>expect(answer).toHaveBeenLastCalledWith(卡.planId,'execute'))
+    expect(answer).toHaveBeenCalledTimes(2);expect(onSend).not.toHaveBeenCalled()
+  })
+  it('switching conversations while approval is pending never auto-starts the previous arrangement',async()=>{
+    let finish!:(r:{savedPath:string;executionTeamId:string})=>void
+    const answer=vi.fn(()=>new Promise<{savedPath:string;executionTeamId:string}>(r=>finish=r)),onSend=vi.fn()
+    const view=render(<ConversationView session={会话} items={[卡]} onSend={onSend} onAnswerPlan={answer}/>)
+    fireEvent.click(screen.getByRole('button',{name:'照这个做'}))
+    view.rerender(<ConversationView session={{...会话,sessionId:'another'}} items={[]} onSend={onSend} onAnswerPlan={answer}/>)
+    await act(async()=>finish({savedPath:'analysis/plans/bound.md',executionTeamId:'plan_fixture'}))
+    expect(answer).toHaveBeenCalledTimes(1);expect(onSend).not.toHaveBeenCalled()
+  })
 
   it("只打 /plan：只开开关，不发", async () => {
     const onSetPlan = vi.fn(async () => {})
@@ -349,4 +365,12 @@ it('recomputes task counts from an edited proposal rather than retaining a store
  expect(screen.getByText('2 个任务块')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'改一改'}))
  fireEvent.change(screen.getByRole('textbox',{name:'方案原文'}),{target:{value:假方案.plan+'\n\n'+serializeTaskArrangement(one)}})
  expect(screen.getByText('1 个任务块')).toBeTruthy();expect(screen.queryByText('2 个任务块')).toBeNull()
+})
+
+it('bound plans distinguish artifact catalogue registration from accepted task outputs',()=>{
+ render(<方案卡 item={{...卡,status:'approved',savedPath:'plan.md',executionTeamId:'plan_fixture',approvedAt:1}} 能答 artifacts={{artifacts:[],unknown:[]}}/>)
+ expect(screen.getByText(/产物清单：计划 2 项 · 已登记 0 · 计划外 0/)).toBeTruthy()
+ expect(screen.getByText('未登记不代表未生成；请在任务产物中查看验收版本。')).toBeTruthy()
+ expect(screen.queryByText(/已生成 0/)).toBeNull()
+ fireEvent.click(screen.getByRole('button',{name:'看清单'}));expect(screen.getAllByText('（未登记）')).toHaveLength(2)
 })

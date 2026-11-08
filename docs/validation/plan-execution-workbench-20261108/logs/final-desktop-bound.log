@@ -1,0 +1,25 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:72707) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60781/b4a3d4b9-7fb4-4182-bfff-faf751af4d71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60816/d9576cbd-bd42-4458-a08f-20b1ad38d0c3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:7:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60828/1716b7ef-a51e-4146-8391-412d0128e293
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60852/171ebb92-3882-4eee-adff-4cc5f7ab5972
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:56:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (8.6s)
+
+  2 passed (17.8s)

@@ -9682,6 +9682,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .collaboration-member-entry header { display: flex; justify-content: space-between; gap: var(--dawn-space-2); flex-wrap: wrap; }
 .collaboration-member-entry p { margin: 0; overflow-wrap: anywhere; }
 .collaboration-member-entry ul { max-height: 240px; overflow: auto; }
+.collaboration-member-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(132px,1fr)); gap: 10px; margin: 4px 0; }
+.collaboration-member-facts > div { min-width: 0; border: 1px solid var(--dawn-stroke-4); border-radius: var(--dawn-radius-md); padding: 10px 12px; }
+.collaboration-member-facts dt { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); margin-bottom: 5px; }
+.collaboration-member-facts dd { margin: 0; font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.collaboration-member-note { font-size: var(--dawn-fs-meta); }
+.approved-plan-progress { min-width: 0; border: 1px solid var(--dawn-stroke-4); border-radius: var(--dawn-radius-lg); padding: 12px; margin-bottom: 14px; }
+.collaboration-panel[data-inspecting="true"] .approved-plan-progress { grid-column: 1 / -1; }
+.approved-plan-progress > header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.approved-plan-progress > header > span { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+.approved-plan-progress ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.approved-plan-progress li { min-width: 0; border-top: 1px solid var(--dawn-stroke-4); padding-top: 6px; }
+.approved-plan-progress li button { width: 100%; display: flex; align-items: start; justify-content: space-between; gap: 12px; white-space: normal; text-align: start; }
+.approved-plan-progress li button > span:first-child { display: grid; gap: 4px; min-width: 0; }
+.approved-plan-progress li small { font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); overflow-wrap: anywhere; }
+.approved-plan-progress li button > span:last-child { font-size: var(--dawn-fs-meta); max-width: 50%; overflow-wrap: anywhere; }
+.approved-plan-progress li > p { max-height: 4.5em; overflow: auto; white-space: pre-wrap; }
 
 .orchestration-advisor { display: grid; gap: var(--dawn-space-3); }
 .orchestration-advisor label { display: grid; gap: var(--dawn-space-2); }

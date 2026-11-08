@@ -4317,7 +4317,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (!sessions.supportsPlan(sessionId)) throw fault("invalid_request", "这类会话没有先出方案——只有 native 会话有")
       try {
         const r = await sessions.answerPlan(sessionId, planId, action, "user", text)
-        return r.savedPath ? { savedPath: r.savedPath } : {}
+        return r
       } catch (err) {
         const 消息 = err instanceof Error ? err.message : String(err)
         if (/未持有|租约/.test(消息)) throw fault原样("conflict", 消息)

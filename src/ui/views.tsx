@@ -4040,7 +4040,7 @@ export function ConversationView({
    */
   onSetPlan?: ((on: boolean) => Promise<void>) | undefined
   /** 回答一版方案（`answerPlan`）。回存档路径；执行那句由这里走 `onSend` 发（它是人的一条发言） */
-  onAnswerPlan?: ((planId: string, action: "approve" | "discard", text?: string) => Promise<{ savedPath?: string }>) | undefined
+  onAnswerPlan?: ((planId: string, action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string) => Promise<{ savedPath?: string; executionTeamId?:string }>) | undefined
   /**
    * 压缩这段的上下文（2026-09-27）。**只有 native 给**——`/compact`、仪表弹层「现在压缩」都走它。
    * 不给时 `/compact` 原样发出去（外部 agent 自己认这个命令），`/` 菜单里也不列那一条。
@@ -4071,7 +4071,10 @@ export function ConversationView({
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
   const onSend = useComposerCallback(onSendAction)
-  const onAbort = useComposerCallback(onAbortAction)
+  const planAnswerOwner=useRef({owner:session.sessionId,generation:0,mounted:true})
+  if(planAnswerOwner.current.owner!==session.sessionId){planAnswerOwner.current.owner=session.sessionId;planAnswerOwner.current.generation++}
+  useEffect(()=>{planAnswerOwner.current.mounted=true;return()=>{planAnswerOwner.current.mounted=false;planAnswerOwner.current.generation++}},[])
+  const onAbort = useComposerCallback(onAbortAction?()=>{planAnswerOwner.current.generation++;onAbortAction()}:undefined)
   const onSetPlan = useComposerCallback(onSetPlanAction)
   const onCompact = useComposerCallback(onCompactAction)
   // 附栏几行（2026-09-29，坞里的输入卡与主区同高，见 `footer-rows.ts`）：主区这张报、坞里那张读
@@ -4495,7 +4498,7 @@ export function ConversationView({
     onRewind: (_id: string) => {},
     确保可见: (_id: string) => {},
     onOpenSubagent: (_toolCallId: string, _index: number) => {},
-    onAnswerPlan: async (_planId: string, _action: "approve" | "discard", _text?: string) => {},
+    onAnswerPlan: async (_planId: string, _action: "approve" | "discard" | "execute" | "stop" | "finish", _text?: string) => {},
   })
   行回调最新.current = {
     nameOf: (id) => services?.find((sv) => sv.providerId === id)?.name,
@@ -4526,7 +4529,11 @@ export function ConversationView({
      */
     onAnswerPlan: async (planId, action, text) => {
       if (!onAnswerPlan) return
+      if(action==='stop')planAnswerOwner.current.generation++
+      const owner=session.sessionId,generation=planAnswerOwner.current.generation
       const r = await onAnswerPlan(planId, action, text)
+      if(!planAnswerOwner.current.mounted||planAnswerOwner.current.owner!==owner||planAnswerOwner.current.generation!==generation)return
+      if(action==='approve'&&r.executionTeamId){await onAnswerPlan(planId,'execute');return}
       if (action !== "approve" || !r.savedPath) return
       const 话 = 执行那句(r.savedPath, text !== undefined)
       // 回显（A1）：替人发的这句也是人的一条发言，按下「照这个做」就先画出来
@@ -4554,7 +4561,7 @@ export function ConversationView({
       onRewind: (id: string) => 行回调最新.current.onRewind(id),
       确保可见: (id: string) => 行回调最新.current.确保可见(id),
       onOpenSubagent: (toolCallId: string, index: number) => 行回调最新.current.onOpenSubagent(toolCallId, index),
-      onAnswerPlan: (planId: string, action: "approve" | "discard", text?: string) => 行回调最新.current.onAnswerPlan(planId, action, text),
+      onAnswerPlan: (planId: string, action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string) => 行回调最新.current.onAnswerPlan(planId, action, text),
     }),
     [],
   )
@@ -6018,7 +6025,7 @@ function TranscriptRowImpl({
   item: TranscriptItem
   agentId: string
   /** 方案卡的回答（2026-09-27，先出方案）。**不给 = 此刻不能答**——按钮照画、灰着 */
-  onAnswerPlan?: ((planId: string, action: "approve" | "discard", text?: string) => Promise<void>) | undefined
+  onAnswerPlan?: ((planId: string, action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string) => Promise<void>) | undefined
   /** 此刻能不能按方案卡上的按钮（agent 在说话 / 只读时 false） */
   planCanAnswer?: boolean | undefined
   /** 这段会话的产物清单：批准之后画「对照」（D8）。`$artifacts` 里的同一个对象，`行props相同` 只做身份比 */

@@ -1,4 +1,5 @@
 import {TaskTraceSchema} from '../protocol/task-trace.js'
+import {ApprovedPlanBindingSchema} from '../protocol/approved-plan.js'
 /**
  * 团队状态机（team-board，2026-08-22）。**纯函数 + 一份落盘**：每个变更都是「读 → 变 → 原子写」。
  *
@@ -43,6 +44,7 @@ export function 读团队(dir: string): 团队 | undefined {
   const f = join(dir, "team.json")
   if (!existsSync(f)) return undefined
   const team = JSON.parse(readFileSync(f, "utf8")) as 团队
+  if(team.approvedPlan)team.approvedPlan=ApprovedPlanBindingSchema.parse(team.approvedPlan)
   if(team.scienceBatch)team.scienceBatch=ScienceBatchSchema.parse(team.scienceBatch)
   if(team.pipeline)team.pipeline=SciencePipelineSchema.parse(team.pipeline)
   for(const task of team.tasks)if(task.trace)task.trace=TaskTraceSchema.parse(task.trace)
@@ -54,6 +56,7 @@ export function 读团队(dir: string): 团队 | undefined {
 
 /** 原子写：先写临时文件再改名，崩在半路也不会留下半份 */
 export function 写团队(dir: string, team: 团队): void {
+  if(team.approvedPlan)ApprovedPlanBindingSchema.parse(team.approvedPlan)
   if(team.scienceBatch)ScienceBatchSchema.parse(team.scienceBatch)
   if(team.pipeline)SciencePipelineSchema.parse(team.pipeline)
   const existing = join(dir, "team.json")
@@ -92,6 +95,7 @@ export function 建团队(input: {
 }
 
 export function 加成员(team: 团队, m: { name: string; agent: string; role?: string | undefined; provider?: string | undefined; model?: string | undefined; botScopeKey?: string | undefined; botId?: string | undefined; botInstructions?: string | undefined }, now = Date.now()): 成员 {
+  if(team.approvedPlan)throw new 团队错误('批准方案的成员已冻结；请修改安排并重新批准')
   if (m.botId && team.members.some(x => x.botId === m.botId && x.status !== "removed")) throw new 团队错误("同一个 Bot 不能重复加入团队。")
   const name = m.name.trim()
   if (!合法成员名.test(name)) throw new 团队错误(`成员名「${m.name}」不合规：只许字母、数字、下划线、连字符，1–40 个字符。`)
@@ -129,6 +133,7 @@ export function 加任务(
   t: { contract?: TaskContract | undefined; id?: string | undefined; subject: string; description?: string | undefined; assignee?: string | undefined; outputs?: readonly string[] | undefined; dependencies?: readonly string[] | undefined },
   now = Date.now(),
 ): 任务 {
+  if(team.approvedPlan)throw new 团队错误('批准方案的任务已冻结；请修改安排并重新批准')
   if (team.tasks.filter(task => !终态.includes(task.status)).length >= 团队上限.maxTasks) throw new 团队错误(`一支团队最多 ${团队上限.maxTasks} 个活动任务。`)
   const subject = t.subject.trim()
   if (!subject) throw new 团队错误("任务要有一句标题。")
@@ -252,6 +257,7 @@ function 验令牌(team: 团队, taskId: string, attemptId: string): 任务 {
  * 原成员迟到的结果对不上令牌，自然被拒。`captain` = 队长自己接手。
  */
 export function 转派(team: 团队, taskId: string, to: string | undefined, now = Date.now()): 任务 {
+  if(team.approvedPlan)throw new 团队错误('批准方案的执行者已冻结；请修改安排并重新批准')
   const t = team.tasks.find((x) => x.id === taskId)
   if (!t) throw new 团队错误(`没有任务「${taskId}」。`)
   if (终态.includes(t.status)) throw new 团队错误(`任务「${taskId}」已经是 ${t.status}，终态不能转派。`)
@@ -281,6 +287,7 @@ export function 发消息(team: 团队, m: { id?: string; from: string; to: stri
   const to = m.to.trim()
   if (to !== "captain" && !找成员(team, to)) throw new 团队错误(`没有叫「${to}」的收件人（成员名或 captain）。`)
   if (m.from !== "captain" && !找成员(team, m.from)) throw new 团队错误(`「${m.from}」不是这支团队的人。`)
+  if(team.approvedPlan&&to!=='captain')throw new 团队错误('批准方案分工已冻结；成员邮箱不能新增执行轮，请调整安排后重新批准')
   const content = m.content.trim()
   if (!content) throw new 团队错误("消息是空的。")
   const previous = m.id ? team.messages.find(message => message.id === m.id) : undefined
@@ -302,6 +309,7 @@ export function 标记送达(team: 团队, ids: readonly string[], now = Date.no
 }
 
 export function 移除成员(team: 团队, name: string, now = Date.now()): 成员 {
+  if(team.approvedPlan)throw new 团队错误('批准方案的成员已冻结；可停止任务，调整分工请重新批准')
   const m = 找成员(team, name)
   if (!m) throw new 团队错误(`没有叫「${name}」的成员。`)
   // 它手上的活回到共享池（令牌作废）

@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/approved-plan.test.ts -t a failure after publishing
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science
+
+ ❯ |node| tests/runtime/approved-plan.test.ts (23 tests | 1 failed | 22 skipped) 97ms
+   × a failure after publishing pauses the team and explicit retry kicks pending work exactly once 96ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > a failure after publishing pauses the team and explicit retry kicks pending work exactly once
+AssertionError: expected '用户已停止执行；等待旧任务排空后，核对产物再继续。' to contain 'fixture admission failure'
+
+Expected: "fixture admission failure"
+Received: "用户已停止执行；等待旧任务排空后，核对产物再继续。"
+
+ ❯ tests/runtime/approved-plan.test.ts:185:82
+    183|   const a=await rt.answerPlan('owner','proposal','approve');await expe…
+    184|   expect(读团队(团队目录(spec.sessionDir,a.executionTeamId!))!.approvedPlanPa…
+    185|   expect(读团队(团队目录(spec.sessionDir,a.executionTeamId!))!.approvedPlanPa…
+       |                                                                                  ^
+    186|   await rt.answerPlan('owner','proposal','execute');await rt.answerPla…
+    187|  }finally{await rt.stop('owner')}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 skipped (23)
+   Start at  14:27:49
+   Duration  2.00s (transform 649ms, setup 0ms, import 1.82s, tests 97ms, environment 0ms)
+

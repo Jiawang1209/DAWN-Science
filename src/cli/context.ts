@@ -64,7 +64,7 @@ export async function openCliContext(agentId?: string, resume?: string | true) {
         if (enabled !== undefined) await call('setSessionConfigOption', { sessionId: task.sessionId, configId: 'dawn.plan', value: enabled ? '1' : '' })
         return call<SessionPlan>('getSessionPlan', { sessionId: task.sessionId })
       },
-      answerPlan: (planId: string, action: 'approve' | 'discard') => call<{ savedPath?: string }>('answerPlan', { sessionId: task.sessionId, planId, action }),
+      answerPlan: (planId: string, action: 'approve' | 'discard') => call<{ savedPath?: string; executionTeamId?:string }>('answerPlan', { sessionId: task.sessionId, planId, action }),
       executePlan: (planId: string) => executeApprovedPlan(task.sessionId, planId, (op, input) => call(op as Op, input)),
       permissions: async (value?: SessionPermissionValue) => {
         if (value !== undefined) await call('setSessionConfigOption', { sessionId: task.sessionId, configId: 'dawn.permission', value })

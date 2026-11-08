@@ -11,6 +11,28 @@ import {startMockInferenceServer,mockModelsJson} from '../../scripts/mock-infere
 import {researchScenario} from '../../scripts/mock-research.mjs'
 const roots:string[]=[]
 const trialPolicy={retry:{enabled:false,maxRetries:0,provider:{maxRetries:0}},compaction:{enabled:false},cacheWarming:'off'}
+it('a frozen executor prompt never claims that its initial remaining request quota is still current',async()=>{
+ const{startEvaluationGate}=await import('../../scripts/evaluation-request-gate.js'),{researchBudgetTrial}=await import('../../scripts/research-trial-budget.js')
+ const gate=await startEvaluationGate({limit:30,forward:async()=>new Response('{}',{headers:{'content-type':'application/json'}})})
+ try{
+  const trial=researchBudgetTrial(gate.partition(15),'multi','fixture'),before=trial.stageGuidance!('analyze',true)
+  for(let i=0;i<2;i++)await fetch(gate.url+'/chat/completions',{method:'POST',headers:{authorization:'Bearer '+trial.stageRoutes!.analyze.credential,'content-type':'application/json'},body:'{}'})
+  expect(trial.stageGuidance!('analyze')).toContain('当前剩余 9 次')
+  expect(before).not.toContain('当前剩余 11 次')
+  expect(trial.stageGuidance!('analyze',true)).toBe(before)
+ }finally{await gate.close()}
+})
+it('compares the approved-plan adapter with the existing single executor under the same task and judge',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-research-approved-'));roots.push(root);const server=await startMockInferenceServer({scenario:researchScenario(researchTasks())})
+ try{
+  const modelsPath=join(root,'models.json'),out=join(root,'results');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))
+  const report=await runResearchEvaluation(out,{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:'offline',kind:'fixture',requests:()=>server.requests.length,multiExecution:'approved-plan'},{taskIds:['carbon-missing'],perArmLimit:15})
+  expect(report.qualifiedPairs).toBe(1)
+  const trial=join(out,readdirSync(out).find(p=>p.startsWith('carbon-missing-multi-'))!)
+  expect(existsSync(join(trial,'approved-plan.json'))).toBe(true)
+  expect(report.multiExecution).toBe('approved-plan')
+ }finally{await server.close()}
+},30000)
 afterEach(()=>{for(const r of roots.splice(0))rmSync(r,{recursive:true,force:true})})
 it('pins both arms to no automatic retries and sends each failed child scope to a localhost 500 provider once',async()=>{
  const root=mkdtempSync(join(tmpdir(),'dawn-research-no-retry-'));roots.push(root)

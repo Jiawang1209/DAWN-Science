@@ -1,0 +1,53 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts
+
+Running 1 test using 1 worker
+
+(node:41183) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60872/b9280b1b-9a87-480b-ae04-2feda24f332f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/approved-plan-execution.spec.ts:6:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (31.5s)
+
+
+  1) e2e/approved-plan-execution.spec.ts:6:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('region', { name: '运行总览', exact: true }).getByRole('tab', { name: '过程', exact: true })
+    Expected: "true"
+    Timeout: 25000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 25000ms
+      - waiting for getByRole('region', { name: '运行总览', exact: true }).getByRole('tab', { name: '过程', exact: true })
+
+
+      31 |  progress=overview.getByRole('region',{name:'批准方案执行进度',exact:true})
+      32 |  await progress.getByRole('button',{name:/根据清洗结果建模/}).click()
+    > 33 |  await expect(overview.getByRole('tab',{name:'过程',exact:true})).toHaveAttribute('aria-selected','true')
+         |                                                                 ^
+      34 |  await overview.getByRole('tab',{name:'记录',exact:true}).click()
+      35 |  await expect(overview.locator('.collaboration-detail')).toContainText('工具记录')
+      36 |  await page.screenshot({path:join(out,'stage-c-task-records.png')})
+        at /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/e2e/approved-plan-execution.spec.ts:33:65
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/approved-plan-execution.spec.ts:6:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 

@@ -1942,11 +1942,11 @@ export const OPERATIONS = {
       .object({
         sessionId: z.string().min(1),
         planId: z.string().min(1),
-        action: z.enum(["approve", "discard"]),
+        action: z.enum(["approve", "discard", "execute", "stop", "finish"]),
         text: z.string().min(1).optional(),
       })
       .strict(),
-    response: z.object({ savedPath: z.string().min(1).optional() }).strict(),
+    response: z.object({ savedPath: z.string().min(1).optional(),executionTeamId:z.string().min(1).optional() }).strict(),
     mutating: true,
   },
   getSessionPlan: {

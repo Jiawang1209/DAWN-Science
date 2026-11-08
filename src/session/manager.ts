@@ -709,10 +709,10 @@ export class SessionManager {
   async answerPlan(
     sessionId: SessionId,
     planId: string,
-    action: "approve" | "discard",
+    action: "approve" | "discard" | "execute" | "stop" | "finish",
     as: Holder,
     text?: string,
-  ): Promise<{ savedPath?: string }> {
+  ): Promise<{ savedPath?: string; executionTeamId?:string }> {
     const lease = this.leases.current(sessionId)
     if (!lease || lease.holder !== as) {
       throw new Error(`写入被拒：${as} 未持有会话 "${sessionId}" 的租约（当前持有者：${lease?.holder ?? "无"}）`)

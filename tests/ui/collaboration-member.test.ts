@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest'
-import {collaborationMember} from '../../src/ui/collaboration-member.js'
+import {collaborationMember,collaborationMemberPresentation} from '../../src/ui/collaboration-member.js'
 import type {RunOverview} from '../../src/protocol/run-overview.js'
 const run:RunOverview['runs'][number]={id:'c',kind:'subagent',label:'Reader',address:['call', '0'],epoch:1,phase:'drained',state:'completed',updatedAt:1,contract:false,inputVersions:0,outputVersions:0}
 const snapshot:RunOverview={ownerSessionId:'p',source:'live',runs:[run]}
@@ -14,6 +14,10 @@ function teamFixture(){
  const team:NonNullable<RunOverview['team']>={id:'t',captainSessionId:'p',name:'team',goal:'goal',createdAt:1,members:[{name:'alice',agent:'Reviewer',role:'Independent review',status:'idle',sessionDir:'unused',turns:1,joinedAt:1,orchestrationId:'new'}],messages:[{id:'m',from:'alice',to:'captain',content:'checked',ts:1}],tasks:[],taskSeq:0}
  return{r,s:{...snapshot,runs:[r],team}}
 }
+it('distinguishes a member responsibility from its reusable agent name and drops stale roles',()=>{
+ const{r,s}=teamFixture();expect(collaborationMemberPresentation(s,r)).toMatchObject({title:'Independent review',identity:'alice · Reader'})
+ s.team!.members[0]!.orchestrationId='later';expect(collaborationMemberPresentation(s,r)).toMatchObject({title:'Reader',identity:''})
+})
 it('binds team role and mailbox only to the exact current member generation',()=>{
  const{r,s}=teamFixture();expect(collaborationMember(s,r,'p')?.role).toBe('Independent review');expect(collaborationMember(s,r,'p')?.messages?.[0]?.content).toBe('checked')
  for(const patch of [{address:['t','alice','old']},{address:['foreign','alice','new']}]){const other={...r,...patch};expect(collaborationMember({...s,runs:[other]},other,'p')?.member).toBeUndefined()}

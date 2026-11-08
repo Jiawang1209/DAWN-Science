@@ -1,0 +1,13 @@
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+ReferenceError: require is not defined in ES module scope, you can use import instead
+    at file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/[eval1]:2:33
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:282:26)
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:278:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.0

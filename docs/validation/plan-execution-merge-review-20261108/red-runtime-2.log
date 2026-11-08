@@ -1,0 +1,197 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/approved-plan.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science
+
+ ❯ |node| tests/runtime/approved-plan.test.ts (19 tests | 8 failed) 926ms
+   × refuses team_remove_member before cancelling or changing a bound team 57ms
+   × refuses team_finish before cancelling or changing a bound team 50ms
+   × a failed initial current-team pointer write remains paused and can be explicitly retried 48ms
+   × refuses a team pointer change during asynchronous input verification 33ms
+   × refuses Bot dispatch while approved execution is verifying its inputs 33ms
+   × a pending Bot team creation blocks plan execution until it settles 51ms
+   × late Bot creation after abort cannot publish a team or launch work 33ms
+   × late Bot creation after restart cannot publish a team or launch work 37ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > refuses team_remove_member before cancelling or changing a bound team
+AssertionError: expected "中止" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st 中止 call:
+
+    Array [
+      "plan_794acf7da776e71460defd1b",
+      "member_1",
+    ]
+
+
+Number of calls: 1
+
+ ❯ tests/runtime/approved-plan.test.ts:104:54
+    102|   const tool=(rt as any).sessions.get('owner').session.getToolDefiniti…
+    103|   const result=await tool.execute('legacy',{name:'member_1',taskId:'pl…
+    104|   expect(result.isError).toBe(true);expect(stop).not.toHaveBeenCalled(…
+       |                                                      ^
+    105|   expect(readFileSync(join(团队目录(spec.sessionDir,a.executionTeamId!),'t…
+    106|  }finally{await rt.stop('owner')}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > refuses team_finish before cancelling or changing a bound team
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/runtime/approved-plan.test.ts:104:26
+    102|   const tool=(rt as any).sessions.get('owner').session.getToolDefiniti…
+    103|   const result=await tool.execute('legacy',{name:'member_1',taskId:'pl…
+    104|   expect(result.isError).toBe(true);expect(stop).not.toHaveBeenCalled(…
+       |                          ^
+    105|   expect(readFileSync(join(团队目录(spec.sessionDir,a.executionTeamId!),'t…
+    106|  }finally{await rt.stop('owner')}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > a failed initial current-team pointer write remains paused and can be explicitly retried
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/runtime/approved-plan.test.ts:115:77
+    113|   await expect(rt.answerPlan('owner','proposal','execute')).rejects.to…
+    114|   rmSync(join(spec.sessionDir,'teams/current'),{recursive:true})
+    115|   expect(读团队(团队目录(spec.sessionDir,a.executionTeamId!))!.approvedPlanPa…
+       |                                                                             ^
+    116|   expect(kick).not.toHaveBeenCalled()
+    117|   await rt.answerPlan('owner','proposal','execute')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > refuses a team pointer change during asynchronous input verification
+AssertionError: promise resolved "{ …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "executionTeamId": "plan_794acf7da776e71460defd1b",
++   "savedPath": "analysis/plans/2026-11-08-Frozen-assignment.md",
+  }
+
+ ❯ tests/runtime/approved-plan.test.ts:127:80
+    125|   const ready=new Promise<void>(r=>entered=r),wait=new Promise<void>(r…
+    126|   vi.spyOn(versions,'assertFileVersions').mockImplementationOnce(async…
+    127|   const start=rt.answerPlan('owner','proposal','execute'),failure=expe…
+       |                                                                                ^
+    128|   await ready;(rt as any).botTeams.get('owner').current.id='other-team…
+    129|   expect(kick).not.toHaveBeenCalled();expect(读团队(团队目录(spec.sessionDir,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > refuses Bot dispatch while approved execution is verifying its inputs
+AssertionError: expected [Function] to throw error matching /方案/ but got 'The "path" argument must be of type s…'
+
+- Expected:
+/方案/
+
++ Received:
+"The \"path\" argument must be of type string. Received undefined"
+
+ ❯ tests/runtime/approved-plan.test.ts:141:59
+    139|   const start=rt.answerPlan('owner','proposal','execute');await ready
+    140|   const control=(rt as any).botTeams.get('owner'),create=vi.spyOn(cont…
+    141|   try{await expect(rt.dispatchBotTask('owner','b','work')).rejects.toT…
+       |                                                           ^
+    142|  }finally{await rt.stop('owner')}
+    143| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > a pending Bot team creation blocks plan execution until it settles
+AssertionError: promise resolved "{ …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "executionTeamId": "plan_794acf7da776e71460defd1b",
++   "savedPath": "analysis/plans/2026-11-08-Frozen-assignment.md",
+  }
+
+ ❯ tests/runtime/approved-plan.test.ts:153:64
+    151|   vi.spyOn(rt as any,'runtime').mockImplementationOnce(async()=>{enter…
+    152|   const dispatch=rt.dispatchBotTask('owner','b','work');await ready
+    153|   try{await expect(rt.answerPlan('owner','proposal','execute')).reject…
+       |                                                                ^
+    154|  }finally{await rt.stop('owner')}
+    155| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > late Bot creation after abort cannot publish a team or launch work
+AssertionError: promise resolved "{ teamId: 'team-mw7g7vmi', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "taskId": "t1",
++   "teamId": "team-mw7g7vmi",
+  }
+
+ ❯ tests/runtime/approved-plan.test.ts:163:81
+    161|   const ready=new Promise<void>(r=>entered=r),wait=new Promise<void>(r…
+    162|   vi.spyOn(rt as any,'runtime').mockImplementationOnce(async()=>{enter…
+    163|   const dispatch=rt.dispatchBotTask('owner','b','work'),failure=expect…
+       |                                                                                 ^
+    164|   if(action==='abort')await rt.abort('owner');else{await rt.stop('owne…
+    165|   release();await failure
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |node| tests/runtime/approved-plan.test.ts > late Bot creation after restart cannot publish a team or launch work
+AssertionError: promise resolved "{ teamId: 'team-mw7g7vnf', …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "taskId": "t1",
++   "teamId": "team-mw7g7vnf",
+  }
+
+ ❯ tests/runtime/approved-plan.test.ts:163:81
+    161|   const ready=new Promise<void>(r=>entered=r),wait=new Promise<void>(r…
+    162|   vi.spyOn(rt as any,'runtime').mockImplementationOnce(async()=>{enter…
+    163|   const dispatch=rt.dispatchBotTask('owner','b','work'),failure=expect…
+       |                                                                                 ^
+    164|   if(action==='abort')await rt.abort('owner');else{await rt.stop('owne…
+    165|   release();await failure
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 11 passed (19)
+   Start at  14:25:47
+   Duration  2.42s (transform 624ms, setup 0ms, import 1.42s, tests 926ms, environment 0ms)
+

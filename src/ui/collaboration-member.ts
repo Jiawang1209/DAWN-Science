@@ -1,6 +1,11 @@
 import type {RunOverview} from '../protocol/run-overview.js'
 import {子转录id} from '../protocol/subagent-id.js'
 type Run=RunOverview['runs'][number]
+/** Readable responsibility plus exact identity; two uses of the same agent stay distinct. */
+export function collaborationMemberPresentation(snapshot:RunOverview,run:Run){
+ const member=collaborationMember(snapshot,run,snapshot.ownerSessionId)
+ return{title:member?.role?.trim()||run.label,identity:member?.member?`${member.label} · ${run.label}`:'',task:member?.task?.subject}
+}
 /** Identity projection only. Never infer member identity from a display label. */
 export function collaborationMember(snapshot:RunOverview,run:Run,owner:string){
  if(snapshot.ownerSessionId!==owner||!snapshot.runs.includes(run))return undefined

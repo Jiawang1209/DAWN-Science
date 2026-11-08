@@ -90,7 +90,9 @@ async function run(scenario:ScienceBaselineCase,mode:'single'|'multi',entry:stri
  }finally{if(scheduler&&teamId)scheduler.中止全部(teamId);await service?.close();await server.close();rmSync(root,{recursive:true,force:true})}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- if(process.argv[2]==='--auto-arrangement'){
+ if(process.argv[2]==='--approved-plan'){
+  import('./evaluate-approved-plan.js').then(m=>m.runApprovedPlanEvaluation(resolve(process.argv[3]??'docs/validation/plan-execution-workbench-20261108/evaluation'))).then(r=>console.log(JSON.stringify(r))).catch(error=>{console.error(error);process.exitCode=1})
+ }else if(process.argv[2]==='--auto-arrangement'){
   import('./evaluate-auto-arrangement.js').then(m=>console.log(JSON.stringify(m.runAutoArrangementEvaluation(resolve(process.argv[3]??'docs/validation/auto-arrangement-20261108/evaluation'))))).catch(error=>{console.error(error);process.exitCode=1})
  }else if(process.argv[2]==='--mode-advice'){
   const destination=resolve(process.argv[3]??'docs/validation/mode-member-workspace-20261108/evaluation')

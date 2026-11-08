@@ -1,0 +1,13 @@
+{"seq":1,"event":"diagnostics-attached","pid":87342,"at":"2026-11-08T04:52:02.943Z","ms":1.0605000000000473,"resources":{"PipeWrap":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":2,"event":"contents-created","pid":87342,"at":"2026-11-08T04:52:03.149Z","ms":205.483875,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":87342,"at":"2026-11-08T04:52:03.149Z","ms":205.72358399999996,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":4,"event":"before-quit","pid":87342,"at":"2026-11-08T04:52:08.763Z","ms":5819.30425,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":5,"event":"window-close","pid":87342,"at":"2026-11-08T04:52:08.763Z","ms":5819.8976250000005,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":6,"event":"contents-destroyed","pid":87342,"at":"2026-11-08T04:52:08.766Z","ms":5822.542834000001,"resources":{"PipeWrap":3,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":7,"event":"window-closed","pid":87342,"at":"2026-11-08T04:52:08.766Z","ms":5822.907792,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":8,"event":"will-quit","pid":87342,"at":"2026-11-08T04:52:08.766Z","ms":5823.024375,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":9,"event":"shutdown-check","pid":87342,"at":"2026-11-08T04:52:08.767Z","ms":5823.125709000001,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":10,"event":"shutdown-sync-start","pid":87342,"at":"2026-11-08T04:52:08.767Z","ms":5823.373750000001,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":11,"event":"shutdown-sync-complete","pid":87342,"at":"2026-11-08T04:52:08.770Z","ms":5826.828209,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":12,"event":"process-exit","pid":87342,"at":"2026-11-08T04:52:08.774Z","ms":5830.585584,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}
+{"seq":13,"event":"quit","pid":87342,"at":"2026-11-08T04:52:08.774Z","ms":5830.695250000001,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}

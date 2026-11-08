@@ -4450,8 +4450,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               client.get("setSessionConfigOption", { sessionId: s.sessionId, configId: "dawn.plan", value: on ? "1" : "" }).then(() => undefined),
           }
         : {}),
-      onAnswerPlan: (planId: string, action: "approve" | "discard", text?: string) =>
-        client.get<{ savedPath?: string }>("answerPlan", { sessionId: s.sessionId, planId, action, ...(text ? { text } : {}) }),
+      onAnswerPlan: (planId: string, action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string) =>
+        client.get<{ savedPath?: string; executionTeamId?:string }>("answerPlan", { sessionId: s.sessionId, planId, action, ...(text ? { text } : {}) }),
       onAnswerQuestion: (requestId, answer) => client.get("answerQuestion", { sessionId: s.sessionId, requestId, ...(answer ? { answer } : {}) }).then(() => undefined),
       onAnswerPermission: (requestId: string, optionId?: string) => {
         /**

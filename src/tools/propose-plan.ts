@@ -36,6 +36,7 @@ export const 方案期指引 = [
 export function createProposePlanTool(opts: {
   /** 交给运行时：记进方案簿、发 `plan` 事件。回第几版 */
   requireArrangement?:()=>boolean
+  executionAgents?:()=>{name:string;description:string;tools?:string[]}[]
   交: (toolCallId: string, 方案: { title: string; plan: string }) => { version: number }
 }) {
   return {
@@ -45,7 +46,10 @@ export function createProposePlanTool(opts: {
       "先出方案时，把分析方案交给用户审。用户批了才开始执行。" +
       `plan 是 markdown，必须有五个二级标题：${必填小节.join("、")}；「产物」一节里每个产物的路径写在反引号里。`,
     promptSnippet: "propose_plan：先出方案时把分析方案交给用户审",
-    promptGuidelines: 方案期指引,
+    promptGuidelines: [...方案期指引,...(opts.executionAgents?[
+      '自动安排应使用 dispatch="team-v1"，每项 execution={agent,contract}，最多 8 项。agent 必须来自下列名册；任务 inputs/outputs 与 contract 相同，contract.submission="tool"。只读使用 read-only，写声明产物使用 workspace-write，需要实际运行才使用 workspace-exec/requireExecution。独立审阅必须单独成员、只读 resultType="review" 且没有输出文件；报告写入交给执行任务。缺信息保留 questions，不能发明路径、科学阈值或扩大工具权限。',
+      '可用执行者：'+JSON.stringify(opts.executionAgents()),
+    ]:[])],
     parameters: Type.Object({
       title: Type.String({ description: "一句话标题，会成为存档文件名的一部分" }),
       plan: Type.String({ description: "方案全文（markdown，五个必填二级标题）" }),
@@ -69,6 +73,7 @@ export function createProposePlanTool(opts: {
       const parsed=parseTaskArrangement(plan)
       if(opts.requireArrangement?.()&&parsed.state==='absent')return text('自动安排请求必须提交 arrangement，任务块数由具体方案决定，不能省略分工与依赖。',true)
       if(parsed.state==='invalid')return text('任务安排无效：'+parsed.reason,true)
+      if(opts.executionAgents&&opts.requireArrangement?.()&&parsed.state==='valid'&&!parsed.arrangement.questions.length&&!parsed.arrangement.dispatch)return text('自动安排需要可执行绑定：dispatch=team-v1，并为每项提供名册中的 agent 和冻结 contract。',true)
       if(params.arrangement!==undefined&&parsed.state!=='valid')return text('任务安排未能保存到正文，请检查未闭合的 Markdown 代码块。',true)
       /**
        * 交不上（方案簿写盘失败等）要出声（规格 7.5）：原因原样回给模型，**不 terminate**——

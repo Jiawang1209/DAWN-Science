@@ -23,6 +23,8 @@ interface ToolResult {
 const text = (s: string, isError = false): ToolResult => ({ content: [{ type: "text", text: s }], ...(isError ? { isError: true } : {}), details: undefined })
 
 export interface 团队工具选项 {
+  /** Capture the owner/generation before asynchronous model resolution. */
+  beforeCreate?: () => () => void
   resolveBot?: (id: string) => RuntimeBot | undefined
   sessionId: string
   调度器: 团队调度器
@@ -84,7 +86,8 @@ export function createTeamTools(opts: 团队工具选项) {
       }),
       async execute(_id: string, p: { name: string; goal: string; members: { name: string; agent?: string; botId?: string; role?: string; model?: string }[]; tasks?: { id?: string; subject: string; description?: string; assignee?: string; outputs?: string[]; dependencies?: string[] }[] }) {
         return 跑(async () => {
-          if (opts.当前.get()) throw new 团队错误(`已经有一支活着的团队（${opts.当前.get()}），先 team_finish 再建新的。`)
+          const current=opts.当前.get(),guard=opts.beforeCreate?.()
+          if (current && !调.读(current).finishedAt) throw new 团队错误(`已经有一支活着的团队（${opts.当前.get()}），先 team_finish 再建新的。`)
           const 名册 = opts.定义()
           const team = 建团队({ name: p.name, goal: p.goal, captainSessionId: opts.sessionId })
           for (const m of p.members ?? []) {
@@ -100,12 +103,14 @@ export function createTeamTools(opts: 团队工具选项) {
             }
           }
           for (const t of p.tasks ?? []) 加任务(team, t)
+          guard?.()
+          if(opts.当前.get()!==current)throw new 团队错误("当前团队已改变，未创建新团队")
           写团队(调.dir(team.id), team)
           opts.当前.set(team.id)
           调.改(team.id, () => {})
           void 调.踢一下(team.id)
           return `团队「${team.name}」（${team.id}）建好了：${team.members.length} 个成员，${team.tasks.length} 个任务。就绪的任务已经派出去。\n\n${状态文本(调.读(team.id))}`
-        })
+        },true)
       },
     },
     {
@@ -247,6 +252,7 @@ export function createTeamTools(opts: 团队工具选项) {
       async execute() {
         return 跑(async () => {
           const id = 当前团队()
+          if(调.读(id).approvedPlan)调.assertExternalMutation(id)
           调.中止全部(id)
           调.改(id, (t) => {cancelScienceBatch(t);cancelPipeline(t);结束团队(t)})
           opts.当前.set(undefined)

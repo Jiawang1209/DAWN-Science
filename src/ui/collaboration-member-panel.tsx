@@ -3,6 +3,7 @@ import type {RunOverview} from '../protocol/run-overview.js'
 import {collaborationMember} from './collaboration-member.js'
 import {Button} from './primitives.js'
 import {t,tf} from './i18n/index.js'
+import {runStatus,hasCurrentAcceptance,hasCurrentSettlement} from './collaboration-model.js'
 export function CollaborationMemberPanel({snapshot,run,owner,onOpen,onBot,onPrepare}:{snapshot:RunOverview;run:RunOverview['runs'][number];owner:string;onOpen?:((id:string)=>void)|undefined;onBot?:((teamId:string,botId:string)=>Promise<void>)|undefined;onPrepare?:((owner:string,text:string)=>boolean)|undefined}){
  const member=collaborationMember(snapshot,run,owner)
  const[error,setError]=useState(''),[busy,setBusy]=useState(false),[prepared,setPrepared]=useState(false)
@@ -11,6 +12,13 @@ export function CollaborationMemberPanel({snapshot,run,owner,onOpen,onBot,onPrep
   <header><strong>{t("成员会话与操作")}</strong><span data-authored="1">{member.label}</span></header>
   {member.role?<p data-authored="1">{member.role}</p>:null}
   {member.task?<p data-authored="1">{tf("当前关联任务：{0}",member.task.subject)}</p>:null}
+  {member.member&&snapshot.team?.approvedPlan?<p className="hint">{t("分工已冻结；需要调整时请回到自动安排。")}</p>:null}
+  <dl className="collaboration-member-facts">
+   <div><dt>{t("当前状态")}</dt><dd>{runStatus(run,member.live)}</dd></div>
+   <div><dt>{t("验收")}</dt><dd>{hasCurrentAcceptance(run)?t("通过"):hasCurrentSettlement(run)&&run.receipt==='blocked'?t("阻塞"):t("等待本轮宿主结算")}</dd></div>
+   <div><dt>{t("文件版本")}</dt><dd>{hasCurrentSettlement(run)&&run.epoch>0&&run.resultEpoch===run.epoch?tf("输入 {0} · 产物 {1}",run.inputVersions,run.outputVersions):t("本轮尚未结算")}</dd></div>
+  </dl>
+  {run.reason?<details className="collaboration-member-note"><summary>{t("状态说明")}</summary><p data-authored="1">{run.reason}</p></details>:null}
   {member.transcriptId?<>
    <p className="hint">{t("续问、纠偏和停止由成员过程面板按宿主能力提供。")}</p>
    {onOpen?<Button variant="outline" size="sm" onClick={()=>onOpen(member.transcriptId!)}>{t("查看子任务过程")}</Button>:null}
@@ -19,7 +27,7 @@ export function CollaborationMemberPanel({snapshot,run,owner,onOpen,onBot,onPrep
     <details><summary>{t("成员邮箱记录")}</summary><p className="hint">{t("这是团队消息，不是完整的成员逐步转录。")}</p>
      {member.messages?.length?<ul>{member.messages.map(message=><li key={message.id}><small data-authored="1">{message.from} → {message.to}</small><p data-authored="1">{message.content}</p></li>)}</ul>:<p className="hint">{t("当前成员没有邮箱记录")}</p>}
     </details>
-    {onPrepare&&member.live?<Button variant="outline" size="sm" disabled={prepared} onClick={()=>{const ok=onPrepare(owner,tf("请协调团队「{0}」的成员「{1}」：请在这里补充目标；继续沿用当前任务契约，不要绕过验收或自动恢复中断任务。",member.teamId!,member.label));setPrepared(ok);setError(ok?'':t("会话已切换，未修改任何草稿。"))}}>{t("准备给队长的指令")}</Button>:null}
+    {onPrepare&&member.live&&!snapshot.team?.approvedPlan?<Button variant="outline" size="sm" disabled={prepared} onClick={()=>{const ok=onPrepare(owner,tf("请协调团队「{0}」的成员「{1}」：请在这里补充目标；继续沿用当前任务契约，不要绕过验收或自动恢复中断任务。",member.teamId!,member.label));setPrepared(ok);setError(ok?'':t("会话已切换，未修改任何草稿。"))}}>{t("准备给队长的指令")}</Button>:null}
     {prepared?<p role="status" className="hint">{t("已追加到所属会话草稿，请检查后发送。")}</p>:null}
    </>}
   </>:<p className="hint">{t("没有可精确关联的当前成员，不能借用同名成员的消息或会话。")}</p>}

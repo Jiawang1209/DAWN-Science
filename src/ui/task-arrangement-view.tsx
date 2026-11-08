@@ -9,10 +9,11 @@ export function TaskArrangementView({markdown}:{markdown:string}){
  return <section className="task-arrangement-result" aria-label={t("任务安排结果")}>
   <header><strong><output aria-label={t("任务块数")}>{tf("{0} 个任务块",plan.tasks.length)}</output></strong><span>{arrangementModeLabel(plan.mode)}</span></header>
   <p data-authored="1">{plan.rationale}</p>
-  <p className="hint">{t("这是方案中的任务划分，不代表已启动这些 Agent。")}</p>
+  <p className="hint">{plan.dispatch?t("采纳后按这些任务、执行者和契约启动；当前仍为待执行方案。"):t("这是方案中的任务划分，不代表已启动这些 Agent。")}</p>
   <ol>{plan.tasks.map(task=><li key={task.id} data-arrangement-task={task.id}>
    <header><strong data-authored="1">{task.title}</strong>{task.review?<span>{t("独立审阅")}</span>:null}</header>
    <p data-authored="1">{task.goal}</p><p><small>{t("分工")}：</small><span data-authored="1">{task.role}</span></p>
+   {task.execution?<p><small>{t("执行者")}：</small><span data-authored="1">{task.execution.agent}</span><span className="hint"> · {task.execution.contract.access==='read-only'?t("只读"):task.execution.contract.access==='workspace-write'?t("限定产物写入"):t("允许执行，受现有权限控制")}</span></p>:null}
    <small data-authored="1">{t("依赖")}：{task.dependencies.map(id=>plan.tasks.find(t=>t.id===id)?.title??id).join(' · ')||t("没有前置")}</small>
    <details><summary>{t("文件与验收条件")}</summary><dl>
     <dt>{t("输入")}</dt><dd data-authored="1">{task.inputs.join(' · ')||t("未声明文件")}</dd>

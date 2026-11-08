@@ -34,7 +34,7 @@ export function 方案卡({
   /** 此刻能不能按（agent 在说话 / 只读时 false）。按钮照画、灰着 */
   能答: boolean
   /** 批准（可带人改过的正文）/ 不做了。失败抛出来，卡片上说原因 */
-  onAnswer?: ((action: "approve" | "discard", text?: string) => Promise<void>) | undefined
+  onAnswer?: ((action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string) => Promise<void>) | undefined
   onOpenFile?: ((path: string) => void) | undefined
   /** 这段会话的产物清单（主区才给）。批准之后画对照 */
   artifacts?: ArtifactList | undefined
@@ -55,7 +55,7 @@ export function 方案卡({
   const 卡根 = useRef<HTMLElement>(null)
   /** 同一拍里按两下只算一次：`忙` 是 state，要等下一次渲染才灰；这把锁当场就上 */
   const 在答 = useRef(false)
-  const 答 = (action: "approve" | "discard", text?: string) => {
+  const 答 = (action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string) => {
     if (!onAnswer || 在答.current) return
     在答.current = true
     设忙(true)
@@ -159,6 +159,7 @@ export function 方案卡({
 
       {item.status === "approved" ? (
         <div className="plan-compare">
+          {item.executionTeamId?<><p className="hint">{t("任务与执行者已冻结；重复开始不会重放已有执行。中断后请先核对产物。")}</p><Button variant="outline" size="sm" disabled={灰} onClick={()=>答('execute')}>{t("开始或继续未执行任务")}</Button></>:null}
           {item.savedPath && onOpenFile ? (
             <Button variant="ghost" size="xs" onClick={() => onOpenFile(item.savedPath!)}>
               {t("打开方案文件")}
@@ -195,8 +196,9 @@ function 对照({
   return (
     <>
       <p className="plan-compare-sum">
-        {tf("对照：计划的产物 {0} 项 · 已生成 {1} · 计划外 {2}", 计划.length, 已生成, r.计划外.length)}
+        {item.executionTeamId?tf("产物清单：计划 {0} 项 · 已登记 {1} · 计划外 {2}", 计划.length, 已生成, r.计划外.length):tf("对照：计划的产物 {0} 项 · 已生成 {1} · 计划外 {2}", 计划.length, 已生成, r.计划外.length)}
       </p>
+      {item.executionTeamId?<p className="hint">{t("未登记不代表未生成；请在任务产物中查看验收版本。")}</p>:null}
       <Button variant="ghost" size="xs" aria-expanded={开} onClick={() => 设开(!开)}>
         {t("看清单")}
       </Button>
@@ -205,7 +207,7 @@ function 对照({
           {r.计划.map((x) => (
             <li key={x.路径} data-done={x.生成了.length > 0 ? "true" : "false"}>
               <code>{x.路径}</code>
-              <span className="hint"> {x.生成了.length > 0 ? t("（已生成）") : t("（还没有）")}</span>
+              <span className="hint"> {item.executionTeamId?(x.生成了.length > 0 ? t("（已登记）") : t("（未登记）")):(x.生成了.length > 0 ? t("（已生成）") : t("（还没有）"))}</span>
             </li>
           ))}
           {r.计划外.map((p) => (

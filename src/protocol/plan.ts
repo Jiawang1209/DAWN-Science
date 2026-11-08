@@ -35,6 +35,8 @@ export interface 方案 {
    * agent 在一轮里改的会被恢复、响亮地说，不走这一条。**只在 true 时出现**；远端会话核对不了，从不出现
    */
   fileChanged?: true
+  /** Bound Team identity; no private executor prompts. */
+  executionTeamId?: string
 }
 
 const 二级标题 = /^##\s+(.+?)\s*$/

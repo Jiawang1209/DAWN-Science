@@ -212,10 +212,13 @@ export async function runCliAgent(agentId?: string, resume?: string | true): Pro
           if (closing) return
           if (planCommand.action === 'approve') {
             if (!result.savedPath) throw Error('方案已处理，但没有收到存档路径，请返回会话核对。')
+            if(result.executionTeamId){await context.executePlan(planCommand.planId);say('已按冻结安排启动任务；通过团队状态查看进度，退出前请先停止未完成任务。')}
+            else{
             unsent = 执行那句(result.savedPath, false)
             view?.user(unsent); beginActivity(); sending = true
             try { await context.executePlan(planCommand.planId) }
             catch (error) { say('方案已批准，但执行消息没有发出。', true); throw error }
+            }
           } else say('这版方案没有采用，已退出方案期。')
         }
       } catch (error) {

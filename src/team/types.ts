@@ -132,6 +132,9 @@ export interface BotExchange {
 }
 
 export interface 团队 {
+  approvedPlan?:import('../protocol/approved-plan.js').ApprovedPlanBinding
+  approvedPlanPaused?:boolean
+  approvedPlanPauseReason?:string
   scienceBatch?:import('../protocol/science-batch.js').ScienceBatch
   pipeline?:import('../protocol/science-pipeline.js').SciencePipeline
   /** Scope captured on the first Bot binding; survives removal, ending and owner rehoming. */

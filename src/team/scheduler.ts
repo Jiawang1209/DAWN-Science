@@ -1,4 +1,6 @@
 import {taskTrace} from '../orchestration/task-trace.js'
+import {approvedTaskSettings} from './approved-plan.js'
+import {prepareApprovedReviewReservations,approvedReviewAdmission,resumeApprovedReviewReservations,releaseApprovedReviewReservations} from './approved-plan-budget.js'
 import {childDiagnostics} from '../subagent/diagnostics.js'
 import {versionInputReceipt,finalizeTaskVersions,validateVersionReceipt} from '../artifacts/task-versions.js'
 /**
@@ -84,7 +86,9 @@ export class 团队调度器 {
   }
 
   assertExternalMutation(teamId: string): void {
-    if(this.读(teamId).pipeline)throw new 团队错误('科研流程使用固定阶段；请使用专用状态/取消/恢复入口，后续任务请结束旧团队后另建团队')
+    const team=this.读(teamId)
+    if(team.approvedPlan)throw new 团队错误('批准方案的分工与权限已冻结；请使用方案的停止、继续或结束入口')
+    if(team.pipeline)throw new 团队错误('科研流程使用固定阶段；请使用专用状态/取消/恢复入口，后续任务请结束旧团队后另建团队')
   }
 
   /** 读 → 改 → 写 → 通知。所有变更都走这里 */
@@ -120,7 +124,9 @@ export class 团队调度器 {
 
   /** Called only from the managed Bot tool context while its original task turn is active. */
   requestBot(teamId: string, from: string, input: BotRequestInput): BotExchange {
-    if(this.读(teamId).pipeline)throw new 团队错误('科研流程使用固定阶段，不能递归委派；需要帮助时提交 blockers')
+    const team=this.读(teamId)
+    if(team.approvedPlan)throw new 团队错误('批准方案的分工与权限已冻结；请使用方案的停止、继续或结束入口')
+    if(team.pipeline)throw new 团队错误('科研流程使用固定阶段，不能递归委派；需要帮助时提交 blockers')
     const key = `${teamId}/${from}`
     const turn = this.botTurns.get(key)
     if (!turn || !this.跑着.has(key) || this.跑着.get(key)!.signal.aborted) throw new 团队错误("Bot 协作请求必须来自正在执行的活动 Bot 轮次。")
@@ -231,6 +237,10 @@ export class 团队调度器 {
   }
 
   /** Only a new, explicitly requested dispatch may reopen scheduling after a team-wide stop. */
+  resumeApprovedPlan(teamId:string):void {
+    if(this.hasActiveTeam(teamId))throw new 团队错误('旧执行尚未排空')
+    if(this.opts.orchestration)resumeApprovedReviewReservations(this.读(teamId),this.opts.orchestration)
+  }
   resumeTeam(teamId: string): void {
     if (this.读(teamId).finishedAt) throw new 团队错误("团队已经结束，不能恢复执行。")
     this.stoppedTeams.delete(teamId)
@@ -247,6 +257,7 @@ export class 团队调度器 {
       this.stoppedAttempts.add(`${teamId}/${task.id}/${task.attemptId}`)
     }
     this.改(teamId, team => {
+      if(team.approvedPlan){team.approvedPlanPaused=true;team.approvedPlanPauseReason='用户已停止执行；等待旧任务排空后，核对产物再继续。'}
       recoverScienceBatch(team,this.now())
       recoverPipeline(team,this.now(),'执行已停止，流程已暂停；核对产物后显式恢复，未自动重放')
       for (const turn of team.conversationTurns ?? []) if (["queued", "working"].includes(turn.status)) { turn.status = "cancelled"; turn.updatedAt = this.now() }
@@ -277,7 +288,9 @@ export class 团队调度器 {
 
   private 派一轮(teamId: string): void {
     const team = this.读(teamId)
+    if(team.approvedPlanPaused)return
     if (team.finishedAt || this.stoppedTeams.has(teamId) || (team.scienceBatch?!['running','aggregating'].includes(team.scienceBatch.status):team.pipeline&&team.pipeline.status!=='running')) return
+    if(team.approvedPlan&&this.opts.orchestration){try{prepareApprovedReviewReservations(team,this.opts.orchestration)}catch(error){this.改(teamId,t=>{t.approvedPlanPaused=true;t.approvedPlanPauseReason=String(error).slice(0,8000);发消息(t,{from:'captain',to:'captain',content:t.approvedPlanPauseReason},this.now())});return}}
     if(!this.preparePipelineReviewReservations(teamId))return
     for (const m of team.members) {
       if (m.status === "removed") continue
@@ -311,7 +324,7 @@ export class 团队调度器 {
         if (current.collaboration?.some(x => x.from === m.name && x.resumedAt === undefined && sourceIsCurrent(current, x))) continue
       }
       const 信 = 未送达的消息(current, m.name)
-      if (信.length > 0) {
+      if (信.length > 0&&!current.approvedPlan) {
         // 先送信：消息本身就是一轮的输入
         this.改(teamId, (t) => 标记送达(t, 信.map((x) => x.id), this.now()))
         void this.起一轮(teamId, m.name, undefined, 信件文本(信))
@@ -376,9 +389,9 @@ export class 团队调度器 {
       snapshot = team
       const m = 找成员(team, member)!
       const assignment=任务?team.tasks.find(t=>t.id===任务.taskId):undefined
-      const candidate=assignment?.settings??(!任务?m.taskSettings:undefined)??this.opts.prepareTask?.(m,assignment)
+      const candidate=team.approvedPlan&&assignment?approvedTaskSettings(team,assignment):assignment?.settings??(!任务?m.taskSettings:undefined)??this.opts.prepareTask?.(m,assignment)
       const settings=candidate?TaskSettingsSchema.parse(candidate):undefined
-      if(settings)team=this.改(teamId,t=>{const active=找成员(t,member)!;active.taskSettings=settings;if(任务){const task=t.tasks.find(x=>x.id===任务.taskId)!;task.settings??=settings}})
+      if(settings)team=this.改(teamId,t=>{const active=找成员(t,member)!;active.taskSettings=settings;if(任务){const task=t.tasks.find(x=>x.id===任务.taskId)!;if(t.approvedPlan)task.settings=settings;else task.settings??=settings}})
       const child = collaboration?.phase === "reply" ? team.collaboration?.find(x => x.id === collaboration.exchangeId) : undefined
       const handlingExchangeId = collaboration?.phase === "request" ? collaboration.exchangeId : child?.parentExchangeId
       const botTurn = m.botId ? { task: 任务, collaboration, conversation, handlingExchangeId, requested: new Set<string>(), botId: m.botId, scope: m.botScopeKey, sessionId: m.sessionId } : undefined
@@ -455,7 +468,7 @@ export class 团队调度器 {
         if (coordinator) {
           const child = coordinator.register(m.botId ? "bot" : "team", [teamId, member, memberGeneration(m)], m.agent)
           const taskAttempt=任务&&assignment?.attemptId===任务.attemptId?{teamId,taskId:任务.taskId,attemptId:任务.attemptId,attempt:assignment.attempt}:undefined
-          const admission=taskAttempt?this.pipelineReviewAdmission(team,taskAttempt.taskId):undefined
+          const admission=taskAttempt?(team.approvedPlan?approvedReviewAdmission(team,taskAttempt.taskId,coordinator):this.pipelineReviewAdmission(team,taskAttempt.taskId)):undefined
           结果 = await coordinator.run(child.id, async signal=>{const {evidence: _evidence,versions:_versions,...outcome}=await execute(signal);return {...outcome,...(_evidence?{trace:taskTrace(_evidence)}:{})}}, ctrl.signal,taskAttempt,admission)
         } else 结果 = await execute(ctrl.signal)
       } catch (error) {
@@ -626,6 +639,7 @@ export class 团队调度器 {
   private releasePipelineReviewReservations(team:团队):void {
     const coordinator=this.opts.orchestration
     if(!coordinator)return
+    releaseApprovedReviewReservations(team,coordinator)
     const reservations=coordinator.budgetSnapshot().reviewReservations??[]
     const batchTerminal=!!team.scienceBatch&&['blocked','completed','cancelled'].includes(team.scienceBatch.status)
     for(const p of scienceBudgetPipelines(team)){

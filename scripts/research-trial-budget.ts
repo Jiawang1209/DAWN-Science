@@ -12,10 +12,11 @@ export function researchBudgetTrial(arm:EvaluationQuota,mode:'single'|'multi',mo
  const workRoute={provider:RESEARCH_STAGE_PROVIDERS.work,model,credential:work.token}
  return{...base,stageRoutes:{check:workRoute,analyze:workRoute,review:{provider:RESEARCH_STAGE_PROVIDERS.review,model,credential:review.token}},
  stageStats:()=>({work:work.stats(),review:review.stats()}),
- stageGuidance:stage=>{
+ stageGuidance:(stage,frozen=false)=>{
   const quota=stage==='review'?review.stats():work.stats()
+  const remaining=frozen?'这是冻结额度说明；当前剩余额度以宿主账本为准':`当前剩余 ${Math.max(0,quota.limit-quota.reserved)} 次`
   return stage==='review'
-   ?`评测审阅独享最多 4 次模型请求，当前剩余 ${Math.max(0,quota.limit-quota.reserved)} 次。先真实读取全部声明输入，尽可能并行读取，再基于证据正式提交。不得省略独立审阅或猜测 ID。`
-   :`评测核查与分析共享最多 11 次模型请求，当前剩余 ${Math.max(0,quota.limit-quota.reserved)} 次；另 4 次只留给独立审阅，不可借用。只做本阶段契约要求的工作，避免读取未生成产物或重复无关检查。必要证据齐备后及时提交；不足时如实阻塞，不能伪造结果。`
+   ?`评测审阅独享最多 4 次模型请求，${remaining}。先真实读取全部声明输入，尽可能并行读取，再基于证据正式提交。不得省略独立审阅或猜测 ID。`
+   :`评测核查与分析共享最多 11 次模型请求，${remaining}；另 4 次只留给独立审阅，不可借用。只做本阶段契约要求的工作，避免读取未生成产物或重复无关检查。必要证据齐备后及时提交；不足时如实阻塞，不能伪造结果。`
  }}
 }

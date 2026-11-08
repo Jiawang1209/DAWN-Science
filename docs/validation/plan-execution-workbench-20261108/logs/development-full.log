@@ -1,0 +1,678 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science
+
+ ❯ |node| tests/team/approved-plan.test.ts (6 tests | 1 failed) 147ms
+   × does not let old team mutations change a frozen assignment or extend its DAG 28ms
+ ❯ |node| tests/protocol/events.test.ts (41 tests | 1 failed) 21ms
+     × 版本号与这份说明一致 4ms
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 1147ms
+     × border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量 25ms
+     × 文字字号只走令牌（2026-08-23 立四档，2026-09-11 补到七档并关掉 11/10/9px 的口子） 4ms
+ ❯ |ui| tests/ui/collaboration-workbench.test.tsx (15 tests | 1 failed) 804ms
+   × counts only accepted receipts and shares one polling source with the conversation summary 159ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 82ms
+     × **每一个 `t()` 的 msgid 在英文表里都有** 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/collaboration-workbench.test.tsx > counts only accepted receipts and shares one polling source with the conversation summary
+TestingLibraryElementError: Found multiple elements with the text: 宿主验收阻塞
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p>[39m
+  [0m宿主验收阻塞[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<dd>[39m
+  [0m宿主验收阻塞[0m
+[36m</dd>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"collaboration-summary"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"打开协作：2 项任务 · 1 项验收通过"[39m
+        [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"icon collaboration-mark"[39m
+          [33mfill[39m=[32m"currentColor"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"16"[39m
+          [33mviewBox[39m=[32m"0 0 16 16"[39m
+          [33mwidth[39m=[32m"16"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M8 2.5c3.3 0 5.8 2 5.8 4.7 0 2.6-2.5 4.7-5.8 4.7-.5 0-1-.1-1.5-.2l-2.9 1.3a.4.4 0 0 1-.5-.5l.7-1.9C2.7 9.8 2.2 8.7 2.2 7.2 2.2 4.5 4.7 2.5 8 2.5Z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<strong>[39m
+          [0m协作[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m当前成果尚未核验[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"collaboration-summary-count"[39m
+        [36m>[39m
+          [0m2 项任务 · 1 项验收通过[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0m›[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+      [33mdata-expanded[39m=[32m"false"[39m
+      [33mdata-inspecting[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-heading-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m刷新运行记录[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"协作成果"[39m
+        [33mclass[39m=[32m"collaboration-outcome"[39m
+        [33mdata-compact[39m=[32m"false"[39m
+        [33mdata-outcome[39m=[32m"unverified"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-outcome-goal"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m任务目标[0m
+          [36m</span>[39m
+          [36m<h3[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0m本会话协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-outcome-result"[39m
+        [36m>[39m
+          [36m<h4>[39m
+            [0m当前成果尚未核验[0m
+          [36m</h4>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m保留的记录不作为本轮验收通过。[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-outcome-next"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m下一步 · 查看对应任务的证据与记录[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m查看产物记录[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-outcome-artifacts"[39m
+        [36m>[39m
+          [36m<h4>[39m
+            [0m验收成果与版本[0m
+          [36m</h4>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint"[39m
+          [36m>[39m
+            [0m尚无本轮已验收成果。[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint collaboration-outcome-narrow-hint"[39m
+        [36m>[39m
+          [0m窄面板显示摘要；展开可查看完整目标和成果版本。[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-outcome-footer"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"hint collaboration-outcome-budget"[39m
+          [36m>[39m
+            [0m执行额度尚未记录[0m
+            [0m · [0m
+            [0m费用未记录[0m
+          [36m</p>[39m
+          [36m<button[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m展开流程工作台[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-source"[39m
+      [36m>[39m
+        [0m来自当前会话的统一编排；每两秒刷新[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-counts"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0m2 项任务[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0m1 项验收通过[0m
+        [36m</span>[39m
+        [36m<span>[39m
+          [0m0 项活跃[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"协作任务"[39m
+          [33mclass[39m=[32m"collaboration-roster"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+            [33mdata-phase[39m=[32m"drained"[39m
+            [33mdata-run[39m=[32m"one"[39m
+            [33mdata-selected[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"one"[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"collaboration-avatar"[39m
+              [36m>[39m
+                [0mO[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-task-copy"[39m
+              [36m>[39m
+                [36m<strong[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0mone[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0m执行完成[0m
+                [36m</small>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"agent-observation"[39m
+                  [33mdata-context-current[39m=[32m"false"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"agent-observation-row"[39m
+                  [36m>[39m
+                    [36m<span>[39m
+                      [0m当前上下文[0m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"agent-observation-number"[39m
+                    [36m>[39m
+                      [0m未知[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"agent-observation-row"[39m
+                  [36m>[39m
+                    [36m<span>[39m
+                      [0m已结算累计[0m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"agent-observation-number"[39m
+                    [36m>[39m
+                      [0m未记录[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-task-meta"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"collaboration-state"[39m
+                  [33mdata-phase[39m=[32m"drained"[39m
+                [36m>[39m
+                  [0m子任务[0m
+                [36m</span>[39m
+                [36m<small>[39m
+                  [0m耗时未知[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"run-overview-row collaboration-row"[39m
+            [33mdata-phase[39m=[32m"drained"[39m
+            [33mdata-run[39m=[32m"two"[39m
+            [33mdata-selected[39m=[32m"false"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"two"[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-menu-row collaboration-task"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"collaboration-avatar"[39m
+              [36m>[39m
+                [0mT[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-task-copy"[39m
+              [36m>[39m
+                [36m<strong[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0mtwo[0m
+                [36m</strong>[39m
+                [36m<small>[39m
+                  [0m执行完成[0m
+                [36m</small>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"agent-observation"[39m
+                  [33mdata-context-current[39m=[32m"false"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"agent-observation-row"[39m
+                  [36m>[39m
+                    [36m<span>[39m
+                      [0m当前上下文[0m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"agent-observation-number"[39m
+                    [36m>[39m
+                      [0m未知[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"agent-observation-row"[39m
+                  [36m>[39m
+                    [36m<span>[39m
+                      [0m已结算累计[0m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"agent-observation-number"[39m
+                    [36m>[39m
+                      [0m未记录[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"collaboration-task-meta"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"collaboration-state"[39m
+                  [33mdata-phase[39m=[32m"drained"[39m
+                [36m>[39m
+                  [0m子任务[0m
+                [36m</span>[39m
+                [36m<small>[39m
+                  [0m耗时未知[0m
+                [36m</small>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-detail"[39m
+          [33mdata-selected-run[39m=[32m"one"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"collaboration-detail-heading"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mone[0m
+              [36m</strong>[39m
+              [36m<small[39m
+                [33mclass[39m=[32m"hint"[39m
+              [36m>[39m
+                [0m类型 subagent · 执行代次 1[0m
+              [36m</small>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"任务详情"[39m
+            [33mclass[39m=[32m"collaboration-tabs"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_0_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mdata-collaboration-tab[39m=[32m"process"[39m
+              [33mid[39m=[32m"_r_0_-process"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m过程[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_0_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mdata-collaboration-tab[39m=[32m"handoff"[39m
+              [33mid[39m=[32m"_r_0_-handoff"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m交接[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_0_-panel"[39m
+              [33maria-selected[39m=[32m"true"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mdata-collaboration-tab[39m=[32m"artifacts"[39m
+              [33mid[39m=[32m"_r_0_-artifacts"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m产物[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_0_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mdata-collaboration-tab[39m=[32m"records"[39m
+              [33mid[39m=[32m"_r_0_-records"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m记录[0m
+            [36m</button>[39m
+          [36m</nav>[39m
+          [36m<div[39m
+            [33maria-labelledby[39m=[32m"_r_0_-artifacts"[39m
+            [33mid[39m=[32m"_r_0_-panel"[39m
+            [33mrole[39m=[32m"tabpanel"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0m宿主验收阻塞[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0m输入版本 1 · 产物版本 1[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"hint"[39m
+            [36m>[39m
+              [0m版本数量来自宿主回执；不代表文件当前内容已重新核验。[0m
+            [36m</p>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"任务证据与产物"[39m
+              [33mclass[39m=[32m"collaboration-evidence"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"hint"[39m
+              [36m>[39m
+                [0m验收指纹属于历史结算；预览读取当前文件，不代表已验收版本仍有效。[0m
+              [36m</p>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"成员会话与操作"[39m
+            [33mclass[39m=[32m"collaboration-member-entry"[39m
+          [36m>[39m
+            [36m<header>[39m
+              [36m<strong>[39m
+                [0m成员会话与操作[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0mone[0m
+              [36m</span>[39m
+            [36m</header>[39m
+            [36m<dl[39m
+              [33mclass[39m=[32m"collaboration-member-facts"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<dt>[39m
+                  [0m当前状态[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [0m执行完成[0m
+                [36m</dd>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<dt>[39m
+                  [0m验收[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [0m宿主验收阻塞[0m
+                [36m</dd>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<dt>[39m
+                  [0m文件版本[0m
+                [36m</dt>[39m
+                [36m<dd>[39m
+                  [0m输入 1 · 产物 1[0m
+                [36m</dd>[39m
+              [36m</div>[39m
+            [36m</dl>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"hint"[39m
+            [36m>[39m
+              [0m没有可精确关联的当前成员，不能借用同名成员的消息或会话。[0m
+            [36m</p>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"collaboration-footer"[39m
+      [36m>[39m
+        [36m<details>[39m
+          [36m<summary>[39m
+            [0m会话完整执行记录[0m
+          [36m</summary>[39m
+        [36m</details>[39m
+      [36m</footer>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/collaboration-workbench.test.tsx:20:69
+     18|  fireEvent.click(screen.getByRole('button',{name:/打开协作.*2 项.*1 项验收通过/}…
+     19|  expect(screen.getByRole('button',{name:'one'})).toBeTruthy()
+     20|  fireEvent.click(screen.getByRole('tab',{name:'产物'}));expect(screen.ge…
+       |                                                                     ^
+     21|  fireEvent.click(screen.getByRole('button',{name:'two'}));expect(scree…
+     22|  expect(screen.queryByText('宿主验收阻塞')).toBeNull()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9686: .collaboration-member-facts > div { min-width: 0; border: 1px solid var(--dawn-stroke-4); border-radius: 8px; padding: 10px 12px; }",
++   "9690: .approved-plan-progress { min-width: 0; border: 1px solid var(--dawn-stroke-4); border-radius: 10px; padding: 12px; margin-bottom: 14px; }",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:520:23
+    518|       (l) => /border-radius:/.test(l) && !/--dawn-radius-/.test(l) && …
+    519|     )
+    520|     expect(offenders).toEqual([])
+       |                       ^
+    521|   })
+    522|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > 文字字号只走令牌（2026-08-23 立四档，2026-09-11 补到七档并关掉 11/10/9px 的口子）
+AssertionError: 字号请归到 --dawn-fs-display / -title / -sub / -meta / -badge / -label 或 --dawn-ui-size: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9687: .collaboration-member-facts dt { font-size: 11px; color: var(--dawn-text-3); margin-bottom: 5px; }",
++   "9688: .collaboration-member-facts dd { margin: 0; font-size: 12px; overflow-wrap: anywhere; }",
++   "9689: .collaboration-member-note { font-size: 12px; }",
++   "9692: .approved-plan-progress > header > span { font-size: 11px; color: var(--dawn-text-3); }",
++   "9697: .approved-plan-progress li small { font-size: 10px; color: var(--dawn-text-3); overflow-wrap: anywhere; }",
++   "9698: .approved-plan-progress li button > span:last-child { font-size: 11px; max-width: 50%; overflow-wrap: anywhere; }",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:582:7
+    580|       offenders,
+    581|       "字号请归到 --dawn-fs-display / -title / -sub / -meta / -badge / -lab…
+    582|     ).toEqual([])
+       |       ^
+    583|   })
+    584|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **每一个 `t()` 的 msgid 在英文表里都有**
+AssertionError: 这些句子切到英文会原样显示中文——补进 i18n/en.ts: expected [ …(24) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "approved-plan-progress.tsx：\"批准方案执行进度\"",
++   "approved-plan-progress.tsx：\"批准方案执行进度\"",
++   "approved-plan-progress.tsx：\"第 {0} 版\"",
++   "approved-plan-progress.tsx：\"计划 {0} 项 · 已启动 {1} 项\"",
++   "approved-plan-progress.tsx：\"执行已暂停；核对产物后，只能显式继续未执行任务。\"",
++   "approved-plan-progress.tsx：\"任务映射缺失\"",
++   "approved-plan-progress.tsx：\"执行完成，验收待核对\"",
++   "approved-plan-progress.tsx：\"已领取\"",
++   "approved-plan-progress.tsx：\"前置任务未通过：{0}\"",
++   "approved-plan-progress.tsx：\"记录缺失\"",
++   "approved-plan-progress.tsx：\"查看记录确认失败原因\"",
++   "collaboration-member-panel.tsx：\"当前状态\"",
++   "collaboration-member-panel.tsx：\"等待本轮宿主结算\"",
++   "collaboration-member-panel.tsx：\"文件版本\"",
++   "collaboration-member-panel.tsx：\"输入 {0} · 产物 {1}\"",
++   "collaboration-member-panel.tsx：\"本轮尚未结算\"",
++   "collaboration-member-panel.tsx：\"状态说明\"",
++   "plan-card.tsx：\"任务与执行者已冻结；重复开始不会重放已有执行。中断后请先核对产物。\"",
++   "plan-card.tsx：\"开始或继续未执行任务\"",
++   "task-arrangement-view.tsx：\"采纳后按这些任务、执行者和契约启动；当前仍为待执行方案。\"",
++   "task-arrangement-view.tsx：\"执行者\"",
++   "task-arrangement-view.tsx：\"只读\"",
++   "task-arrangement-view.tsx：\"限定产物写入\"",
++   "task-arrangement-view.tsx：\"允许执行，受现有权限控制\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:105:50
+    103|       }
+    104|     }
+    105|     expect(缺的, "这些句子切到英文会原样显示中文——补进 i18n/en.ts").toEqual([])
+       |                                                  ^
+    106|   })
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/protocol/events.test.ts > 协议版本 · 5.5 > 版本号与这份说明一致
+AssertionError: expected '8.50' to be '8.49' // Object.is equality
+
+Expected: "8.49"
+Received: "8.50"
+
+ ❯ tests/protocol/events.test.ts:469:40
+    467|   // 8.40：团队任务增加可选契约与宿主回执，内部权限快照不进入客户端。
+    468|   it("版本号与这份说明一致", () => {
+    469|     expect(WORKBENCH_PROTOCOL_VERSION).toBe("8.50")
+       |                                        ^
+    470|   })
+    471|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |node| tests/team/approved-plan.test.ts > does not let old team mutations change a frozen assignment or extend its DAG
+AssertionError: expected [Function] to throw error matching /批准/ but got '严格契约任务不能转为队长文本结算；请转派给可执行并验收的成员。'
+
+- Expected:
+/批准/
+
++ Received:
+"严格契约任务不能转为队长文本结算；请转派给可执行并验收的成员。"
+
+ ❯ tests/team/approved-plan.test.ts:62:51
+     60| it('does not let old team mutations change a frozen assignment or exte…
+     61|  const{snapshot}=await freeze(),team=materializeApprovedTeam(snapshot,…
+     62|  expect(()=>转派(team,team.tasks[0]!.id,'captain')).toThrow(/批准/)
+       |                                                   ^
+     63|  expect(()=>加任务(team,{subject:'unapproved extra'})).toThrow(/批准/)
+     64|  expect(()=>加成员(team,{name:'extra',agent:'worker'})).toThrow(/批准/)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  5 failed | 693 passed (698)
+      Tests  6 failed | 6924 passed | 11 skipped (6941)
+   Start at  12:25:55
+   Duration  178.89s (transform 24.27s, setup 80.97s, import 284.55s, tests 629.94s, environment 144.59s)
+

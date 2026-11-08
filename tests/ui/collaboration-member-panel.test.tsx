@@ -14,6 +14,12 @@ it('does not expose unrelated team members or invented controls',()=>{
  expect(screen.getByText('没有可精确关联的当前成员，不能借用同名成员的消息或会话。')).toBeTruthy()
  expect(screen.queryByRole('button',{name:'查看子任务过程'})).toBeNull()
 })
+it('never presents retained version counts from an earlier epoch as this attempt versions',()=>{
+ const r={...run,epoch:2,resultEpoch:1,inputVersions:9,outputVersions:7}
+ render(<CollaborationMemberPanel snapshot={{ownerSessionId:'p',source:'live',runs:[r]}} run={r} owner="p"/>)
+ expect(screen.queryByText('输入 9 · 产物 7')).toBeNull()
+ expect(screen.getByText('本轮尚未结算')).toBeTruthy()
+})
 it('offers a matched Bot read-only route and reports host failure without inventing a result',async()=>{
  const{act}=await import('@testing-library/react')
  const r={...run,kind:'bot' as const,address:['t','alice','new']}

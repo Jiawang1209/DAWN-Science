@@ -1,0 +1,62 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:45877) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:64436/158712c5-b1d4-4f6f-bd86-6a7a5c6825cd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64468/3fb06dbd-ea3e-4f43-9354-deee1f3ef06f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:6:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (8.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:64489/2bbf6ee8-2cc8-4146-8b1e-8d2a2b2d8dfe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64520/aa310b88-86e9-4232-b7c3-6f4f0d926b54
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  2 e2e/approved-plan-execution.spec.ts:52:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (7.8s)
+
+
+  1) e2e/approved-plan-execution.spec.ts:52:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 2
+    Received: 3
+
+      70 |   await card.getByRole('button',{name:'开始或继续未执行任务',exact:true}).click()
+      71 |   await expect(card.getByRole('alert')).toContainText('副作用')
+    > 72 |   expect(dawn.requests.length).toBe(before)
+         |                                ^
+      73 |  })
+      74 | })
+      75 |
+        at /Users/liuyue/.codex/worktrees/dawn-plan-execution-20261108/dawn-science/e2e/approved-plan-execution.spec.ts:72:32
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/approved-plan-execution.spec.ts:52:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening 
+  1 passed (16.9s)

@@ -1,3 +1,4 @@
+import {collaborationMemberPresentation} from './collaboration-member.js'
 import {三角图标} from './icons.js'
 import {useState} from 'react'
 import {CollaborationNetwork} from './collaboration-network.js'
@@ -13,7 +14,8 @@ import {runStatus,collaborationTaskKey} from './collaboration-model.js'
 export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapshot:RunOverview;team?:TeamSnapshot|undefined;selected?:string|undefined;onSelect:(key:string,trigger:HTMLButtonElement)=>void}){
  const[query,setQuery]=useState(''),[filter,setFilter]=useState('all')
  const active=(run:RunOverview['runs'][number])=>snapshot.source==='live'&&(run.phase==='running'||run.phase==='queued'||run.phase==='stopping')
- const visible=snapshot.runs.filter(run=>run.label.toLocaleLowerCase().includes(query.toLocaleLowerCase())&&(filter==='all'||(filter==='active'?active(run):run.phase!=='unknown'&&snapshot.source==='live'&&!active(run)&&['completed','failed','cancelled','interrupted'].includes(run.state))))
+ const presentations=new Map(snapshot.runs.map(run=>[run.id,collaborationMemberPresentation(snapshot,run)]))
+ const visible=snapshot.runs.filter(run=>[run.label,presentations.get(run.id)?.title,presentations.get(run.id)?.identity,presentations.get(run.id)?.task].filter(Boolean).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase())&&(filter==='all'||(filter==='active'?active(run):run.phase!=='unknown'&&snapshot.source==='live'&&!active(run)&&['completed','failed','cancelled','interrupted'].includes(run.state))))
  const owned=team?.captainSessionId===snapshot.ownerSessionId?team:undefined
  const layout=分列布局(owned?.tasks??[])
  const scale=2
@@ -33,10 +35,10 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
      </div>
     </div>
     <div className="collaboration-member-grid">
-     {visible.map(run=><Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
-      <span className="collaboration-node-name"><span className="collaboration-avatar" aria-hidden="true">{[...run.label][0]?.toUpperCase()??'?'}</span><strong data-authored="1">{run.label}</strong><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/></span>
-      <small>{runStatus(run,snapshot.source==='live')}</small><small>{run.kind==='bot'?'Bot':run.kind==='team'?t("团队成员"):t("子任务")}</small><AgentObservation snapshot={snapshot} run={run}/><span className="collaboration-card-foot"><small>{settledDuration(run)}</small><三角图标/></span>
-     </Button>)}
+     {visible.map(run=>{const display=presentations.get(run.id)!;return <Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
+      <span className="collaboration-node-name"><span className="collaboration-avatar" aria-hidden="true">{[...run.label][0]?.toUpperCase()??'?'}</span><strong data-authored="1">{display.title}</strong><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/></span>
+      <small data-authored="1">{display.identity||display.task}</small><small>{runStatus(run,snapshot.source==='live')}</small><small>{run.kind==='bot'?'Bot':run.kind==='team'?t("团队成员"):t("子任务")}</small><AgentObservation snapshot={snapshot} run={run}/><span className="collaboration-card-foot"><small>{settledDuration(run)}</small><三角图标/></span>
+     </Button>})}
     </div>
     {!visible.length?<p className="hint">{t("暂无匹配成员")}</p>:null}
    </section>

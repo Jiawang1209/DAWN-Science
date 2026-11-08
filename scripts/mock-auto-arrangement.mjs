@@ -15,5 +15,11 @@ export function mockAutoArrangement(body,basePlan){
  }else{
   arrangement={mode:'single',rationale:'只需要完成一个明确的均值计算，不增加交接。',independentReview:false,tasks:[task('mean','计算指定数据的均值','统计执行者',['input.csv'],['mean.csv'])],questions:[]}
  }
+ arrangement.dispatch='team-v1'
+ for(const task of arrangement.tasks){
+  task.goal+='（本地自动安排夹具）'
+  if(task.review)task.outputs=[]
+  task.execution={agent:task.review?'reviewer-two':'data-engineer',contract:{version:1,inputs:task.inputs,outputs:task.outputs,access:task.review?'read-only':'workspace-write',submission:'tool',requireExecution:false,requireReview:false,...(task.review?{resultType:'review'}:{})}}
+ }
  return{toolName:'propose_plan',args:{...basePlan,title:'自动安排：完成当前数据任务',plan:['## 问题与假设','按用户目标安排任务，先规划、不执行。','## 数据与切分',...new Set(arrangement.tasks.flatMap(t=>t.inputs)),'## 统计检验与模型',arrangement.rationale,'## 图','按用户需要决定，不自动增加图形任务。','## 产物',...arrangement.tasks.flatMap(t=>t.outputs).map(p=>'`'+p+'`')].join('\n'),arrangement},say:'先提出任务划分，等待你调整或采纳。'}
 }

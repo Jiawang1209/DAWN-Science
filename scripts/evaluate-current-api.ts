@@ -11,7 +11,7 @@ import {researchBudgetTrial,RESEARCH_STAGE_PROVIDERS,RESEARCH_STAGE_LIMITS} from
 import {researchProxyModel} from './research-model-compat.js'
 import {runResearchEvaluation} from './evaluate-research.js'
 async function main(){
-const [outputArg,profileArg,provider,modelId]=process.argv.slice(2)
+const [outputArg,profileArg,provider,modelId,variant]=process.argv.slice(2)
 const scratch=mkdtempSync(join(tmpdir(),'dawn-research-host-'))
 app.setPath('userData',scratch)
 // safeStorage's macOS service name follows the host name; a standalone .js otherwise becomes Electron.
@@ -24,6 +24,7 @@ process.on('SIGINT',cancel);process.on('SIGTERM',cancel)
 let output:string|undefined,stage='preflight'
 try{
  if(!outputArg||!profileArg||!provider||!modelId)throw new Error('缺少明确输出目录、只读配置目录、provider 和 model')
+ if(variant!==undefined&&variant!=='approved-plan')throw new Error('不支持的真实复验候选')
  output=resolve(outputArg)
  const profile=resolve(profileArg),registry=loadRegistry(join(profile,'providers.yaml')),model=getBuiltinModel(provider,modelId)
  if(!model)throw new Error('当前模型不在本地目录；不会隐式替换模型')
@@ -36,7 +37,7 @@ try{
  const target=new URL((connection?.baseUrl??model.baseUrl).replace(/\/$/,'')+'/chat/completions')
  if(target.protocol!=='https:')throw new Error('联网试验要求 HTTPS 配置')
  mkdirSync(output,{recursive:true})
- writeFileSync(join(output,'live-attempt.json'),JSON.stringify({provider,model:modelId,limit:30,startedAt:new Date().toISOString()}),{flag:'wx'})
+ writeFileSync(join(output,'live-attempt.json'),JSON.stringify({provider,model:modelId,limit:30,multiExecution:variant??'pipeline',startedAt:new Date().toISOString()}),{flag:'wx'})
  stage='inference'
  gate=await startEvaluationGate({limit:30,forward:(body,path,signal)=>{
   if(path!=='/chat/completions')throw new Error('unsupported route')
@@ -47,7 +48,7 @@ try{
  const modelConfig={baseUrl:gate.url,api:'openai-completions',models:[proxyModel]}
  writeFileSync(modelsPath,JSON.stringify({providers:Object.fromEntries([provider,...Object.values(RESEARCH_STAGE_PROVIDERS)].map(name=>[name,modelConfig]))}))
  const workModel={provider:RESEARCH_STAGE_PROVIDERS.work,model:modelId},reviewModel={provider:RESEARCH_STAGE_PROVIDERS.review,model:modelId}
- const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',multiStageLimits:RESEARCH_STAGE_LIMITS,multiStageModels:{check:workModel,analyze:workModel,review:reviewModel},signal:controller.signal,beginTrial:(limit,mode)=>researchBudgetTrial(gate!.partition(limit),mode,modelId)},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
+ const report=await runResearchEvaluation(output,{provider,model:modelId,modelsPath,credential:gate.token,requests:()=>gate!.stats().forwarded,kind:'live',...(variant==='approved-plan'?{multiExecution:'approved-plan' as const}:{}),multiStageLimits:RESEARCH_STAGE_LIMITS,multiStageModels:{check:workModel,analyze:workModel,review:reviewModel},signal:controller.signal,beginTrial:(limit,mode)=>researchBudgetTrial(gate!.partition(limit),mode,modelId)},{taskIds:['carbon-missing'],repeats:1,perArmLimit:15})
  mkdirSync(output,{recursive:true});writeFileSync(join(output,'request-gate.json'),JSON.stringify(gate.stats(),null,2)+'\n')
  console.log(JSON.stringify({provider,model:modelId,forwarded:gate.stats().forwarded,completePairs:report.completePairs,incompletePairs:report.incompletePairs,rows:report.rows.map(r=>({caseId:r.caseId,mode:r.mode,terminal:r.terminal,success:r.success,requests:r.requests}))}))
 }catch{console.error(`真实 API 试验未完成（${stage}）；未输出凭证、端点或请求正文。查看隔离报告；不会自动重新联网。`);process.exitCode=1}

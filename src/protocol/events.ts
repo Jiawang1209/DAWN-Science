@@ -1,4 +1,5 @@
 import {TaskTraceSummarySchema} from './task-trace.js'
+import {ApprovedPlanBindingSchema} from './approved-plan.js'
 import {ScienceReuseSourceSchema} from './science-reuse.js'
 import {TaskContractSchema,TaskReceiptSchema} from "./task-contract.js"
 import {TaskObservationSchema} from './task-observation.js'
@@ -428,6 +429,7 @@ export const PlanItemSchema = z
     edited: z.literal(true).optional(),
     /** 工作区里那份此刻与批准时不一样：人在两轮之间自己改过（2026-09-28，D3）。**只在 true 时出现** */
     fileChanged: z.literal(true).optional(),
+    executionTeamId: z.string().min(1).optional(),
   })
   .strict()
 export type PlanItem = z.infer<typeof PlanItemSchema>
@@ -465,6 +467,9 @@ export const TeamSnapshotSchema = z
   .object({
     pipeline:PipelineSummarySchema.optional(),
     scienceBatch:ScienceBatchSummarySchema.optional(),
+    approvedPlan:ApprovedPlanBindingSchema.optional(),
+    approvedPlanPaused:z.boolean().optional(),
+    approvedPlanPauseReason:z.string().max(8000).optional(),
     id: z.string().min(1),
     name: z.string(),
     goal: z.string(),

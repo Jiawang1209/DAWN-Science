@@ -1,4 +1,6 @@
-import {autoArrangementRequestPrefix,validateArrangementEdit} from '../protocol/task-arrangement.js'
+import {autoArrangementRequestPrefix,validateArrangementEdit,parseTaskArrangement} from '../protocol/task-arrangement.js'
+import {freezeApprovedPlan,materializeApprovedTeam,arrangementHash} from '../team/approved-plan.js'
+import {assertFileVersions} from '../artifacts/task-versions.js'
 import {sampleAgentContext,contextUsageAnchor,observeAgentContext} from './agent-context-sampler.js'
 import {currentExecutionContext,bindExecutionContextRoute} from '../orchestration/execution-context.js'
 import {preservePiToolStatus} from './pi-tool-status.js'
@@ -36,7 +38,7 @@ import { AnalysisRouteActionRequestSchema, parseRouteActionMessage, routeActionM
 import { routeDeliverableEvidence } from './analysis-route-files.js'
 import { Type } from "typebox"
 import { botInstructions, type BotRuntimeBridge } from "../bot/runtime.js"
-import { memberGeneration, 加成员, 加任务, 找成员, 取消任务, 发消息, botTeamOriginScope } from "../team/state.js"
+import { memberGeneration, 加成员, 加任务, 找成员, 取消任务, 发消息, botTeamOriginScope,写团队,读团队,团队目录,结束团队 } from "../team/state.js"
 import { QuestionRequests } from "../questions/requests.js"
 import { createAskUserQuestionTool } from "../tools/ask-user-question.js"
 import { type QuestionAnswer } from "../protocol/questions.js"
@@ -642,6 +644,7 @@ export class NativeRuntime implements AgentRuntime {
   }
   private botBridge: BotRuntimeBridge | undefined
   private readonly botTeams = new Map<string, { scheduler: 团队调度器; current: { id: string | undefined }; create: (botId: string) => Promise<void> }>()
+  private readonly pendingBotDispatches = new Set<string>()
   configureBots(bridge: BotRuntimeBridge): void { this.botBridge = bridge }
   botBusy(sessionId: string): boolean { return (this.sessions.get(sessionId)?.inFlight ?? 0) > 0 }
   botArtifacts(owner: string, teamId: string, taskId: string, attemptId: string, artifacts: string[]): void {
@@ -754,24 +757,32 @@ export class NativeRuntime implements AgentRuntime {
     return 状态文本(control.scheduler.读(teamId), memberName)
   }
   async dispatchBotTask(sessionId: string, botId: string, instruction: string): Promise<{ teamId: string; taskId: string; memberSessionId?: string }> {
+    if(this.方案答中.has(sessionId))throw new UserFacingError('正在处理方案，处理完再委派 Bot')
+    if(this.pendingBotDispatches.has(sessionId))throw new UserFacingError('Bot 委派正在处理，请稍后')
+    const owner=this.sessions.get(sessionId),stopEpoch=owner?.停止代
+    if(!owner||this.停中.has(sessionId))throw new UserFacingError('主对话正在停止或不可用')
     if (this.configOptions(sessionId)?.find(o => o.id === "dawn.plan")?.current) throw new UserFacingError("先出方案期间不能启动 Bot 任务。")
     const control = this.botTeams.get(sessionId)
     const bot = this.botBridge?.list().find(b => b.id === botId && b.enabled && !b.archivedAt)
     if (!control || !bot) throw new UserFacingError("Bot 或主对话当前不可用。")
     if (!instruction.trim()) throw new UserFacingError("请填写 Bot 任务。")
-    if (!control.current.id || control.scheduler.读(control.current.id).finishedAt) await control.create(botId)
-    const teamId = control.current.id!
-    control.scheduler.assertExternalMutation(teamId)
-    let taskId = ""
-    control.scheduler.改(teamId, team => {
-      let member = team.members.find(m => m.botId === botId && m.status !== "removed")
-      if (!member) member = 加成员(team, { name: `bot_${bot.id.replace(/-/g, "").slice(0, 30)}`, agent: `bot-${bot.id}`, botId, botScopeKey: this.botBridge?.scopeKey?.(sessionId), role: bot.role, botInstructions: botInstructions(bot), ...(() => {const model = bot.model ?? this.botModel(sessionId);return model ? {provider: model.provider, model: model.model} : {}})() })
-      taskId = 加任务(team, { subject: instruction.trim().slice(0, 120), description: instruction, assignee: member.name }).id
-    })
-    control.scheduler.resumeTeam(teamId)
-    void control.scheduler.踢一下(teamId).catch(e => this.emit({ kind: "notice", sessionId, text: String(e), failed: true }))
-    const memberSessionId = control.scheduler.读(teamId).members.find(m => m.botId === botId)?.sessionId
-    return { teamId, taskId, ...(memberSessionId ? { memberSessionId } : {}) }
+    this.pendingBotDispatches.add(sessionId)
+    try{
+      if (!control.current.id || control.scheduler.读(control.current.id).finishedAt) await control.create(botId)
+      if(this.sessions.get(sessionId)!==owner||owner.停止代!==stopEpoch||this.botTeams.get(sessionId)!==control||this.停中.has(sessionId))throw new UserFacingError('Bot 委派已取消，未启动新执行')
+      const teamId = control.current.id!
+      control.scheduler.assertExternalMutation(teamId)
+      let taskId = ""
+      control.scheduler.改(teamId, team => {
+        let member = team.members.find(m => m.botId === botId && m.status !== "removed")
+        if (!member) member = 加成员(team, { name: `bot_${bot.id.replace(/-/g, "").slice(0, 30)}`, agent: `bot-${bot.id}`, botId, botScopeKey: this.botBridge?.scopeKey?.(sessionId), role: bot.role, botInstructions: botInstructions(bot), ...(() => {const model = bot.model ?? this.botModel(sessionId);return model ? {provider: model.provider, model: model.model} : {}})() })
+        taskId = 加任务(team, { subject: instruction.trim().slice(0, 120), description: instruction, assignee: member.name }).id
+      })
+      control.scheduler.resumeTeam(teamId)
+      void control.scheduler.踢一下(teamId).catch(e => this.emit({ kind: "notice", sessionId, text: String(e), failed: true }))
+      const memberSessionId = control.scheduler.读(teamId).members.find(m => m.botId === botId)?.sessionId
+      return { teamId, taskId, ...(memberSessionId ? { memberSessionId } : {}) }
+    }finally{this.pendingBotDispatches.delete(sessionId)}
   }
 
   private readonly sessions = new Map<SessionId, NativeSession>()
@@ -955,6 +966,9 @@ export class NativeRuntime implements AgentRuntime {
    * 第二次会在第一次写完文件、改簿之前通过 `可答`——留下一份簿里不认的 `…-2.md` 和存档。一段会话同时只答一次。
    */
   private readonly 方案答中 = new Set<SessionId>()
+  private readonly planExecutionControllers=new Map<string,AbortController>()
+  private readonly planExecutionPlanIds=new Map<string,string>()
+  private readonly planExecutionContexts=new Map<string,{definitions:()=>import('../subagent/definitions.js').SubagentDefinition[];model:{provider:string;model:string}}>()
   /** 每段本地会话一份影子存档（2026-09-27）。远端与关掉的不在表里——表里没有 = 「没有存档」 */
   private readonly 存档们 = new Map<SessionId, 检查点存档>()
   /**
@@ -1880,6 +1894,13 @@ export class NativeRuntime implements AgentRuntime {
     const 当前团队: { id: string | undefined } = { id: 读当前团队(spec.sessionDir) }
     const 团队工具 = createTeamTools({
       sessionId: spec.sessionId,
+      beforeCreate:()=>{
+        const owner=this.sessions.get(spec.sessionId),epoch=owner?.停止代
+        return()=>{
+          if(!owner||this.sessions.get(spec.sessionId)!==owner||owner.停止代!==epoch||this.停中.has(spec.sessionId)||orchestration.isClosed)throw new UserFacingError('团队创建已取消，未启动新执行')
+          if(this.方案答中.has(spec.sessionId))throw new UserFacingError('正在处理方案，未创建其他团队')
+        }
+      },
       调度器,
       定义,
       resolveBot: id => { const bot = this.botBridge?.list().find(b => b.id === id);return bot ? {...bot, scopeKey: this.botBridge?.scopeKey?.(spec.sessionId), model: bot.model ?? this.botModel(spec.sessionId) ?? {provider: native.provider, model: native.model}} : undefined },
@@ -1890,6 +1911,7 @@ export class NativeRuntime implements AgentRuntime {
       const result = await 团队工具.find(t => t.name === "team_create")!.execute("bot-dispatch", { name: "Bot Team", goal: "完成用户委派的科研任务", members: [{ name: `bot_${botId.replace(/-/g, "").slice(0, 30)}`, botId }] } as never)
       if (result.isError) throw new UserFacingError(result.content.map(c => c.text).join("\n"))
     } })
+    this.planExecutionContexts.set(spec.sessionId,{definitions:定义,model:{provider:native.provider,model:native.model}})
     if(this.orchestrations.get(spec.sessionId)===orchestration)orchestration.invalidateObservation()
     const 流程工具=createSciencePipelineTools({sessionId:spec.sessionId,调度器,定义,
       executorBuild:()=>{try{return createHash('sha256').update(readFileSync(entry)).digest('hex')}catch{return 'executor-unavailable'}},
@@ -2134,7 +2156,7 @@ export class NativeRuntime implements AgentRuntime {
     this.questionBooks.set(spec.sessionId, questions)
     const questionTool = createAskUserQuestionTool((id, qs, signal) => questions.ask(id, qs, signal))
     const 方案工具 = [
-      createProposePlanTool({ requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
+      createProposePlanTool({ ...(this.opts.subagentChildEntry&&!spec.bot&&!spec.remote?{executionAgents:()=>loadSubagentsFrom(this.子agent层(spec.workspace),{自带停用:this.opts.subagents?.自带停用}).agents.filter(a=>!a.disabled).map(({name,description,tools})=>({name,description,...(tools?{tools}:{})}))}:{}),requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
       ...(this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
         ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
         : []),
@@ -2552,6 +2574,7 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   async setConfigOption(sessionId: SessionId, configId: string, value: string): Promise<void> {
+    if(this.方案答中.has(sessionId))throw new UserFacingError('正在处理方案，处理完再修改配置')
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     if (configId === "dawn.permission") {
@@ -3067,6 +3090,7 @@ ${描述}`
     replyTerminal = this.replySource.getStore() === sessionId,
   ): Promise<void> | undefined {
     this.validateRouteMessage(sessionId, data)
+    if(this.方案答中.has(sessionId))throw new UserFacingError('正在处理方案，处理完再发送')
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     // Route actions are idle-only at both API and actual send time. They never
@@ -3639,6 +3663,7 @@ ${描述}`
   }
 
   async setModel(sessionId: SessionId, provider: string, modelId: string): Promise<void> {
+    if(this.方案答中.has(sessionId))throw new UserFacingError('正在处理方案，处理完再修改模型')
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动，无法换模型`)
     if (s.inFlight > 0) {
@@ -3774,6 +3799,7 @@ ${描述}`
   }
 
   async abort(sessionId: SessionId): Promise<void> {
+    this.planExecutionControllers.get(sessionId)?.abort()
     const projectionClosing=this.pipelineProjections.get(sessionId)?.cancelPending()
     this.orchestrationControls.get(sessionId)?.delivery.suspend()
     try {this.orchestrationControls.get(sessionId)?.mailbox.pauseAll()}
@@ -4158,25 +4184,97 @@ ${描述}`
    * 本机会话批准时还要在会话目录留一份存档、记指纹（D3 第二道，2026-09-28）：**存档失败 = 批准失败**，
    * 刚写的方案文件删掉（不留一份簿里不认的「已批准」文件），原样抛。远端会话没有这一道（spec §0 的限制）。
    */
-  async answerPlan(sessionId: SessionId, planId: string, action: "approve" | "discard", text?: string): Promise<{ savedPath?: string }> {
+  async answerPlan(sessionId: SessionId, planId: string, action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string): Promise<{ savedPath?: string; executionTeamId?:string }> {
     const s = this.sessions.get(sessionId)
     const 处 = this.方案簿们.get(sessionId)
     if (!s || !处) throw new Error(`会话 "${sessionId}" 未启动`)
+    if(action==='stop'||action==='finish'){
+      const control=this.botTeams.get(sessionId)
+      let binding:import('../protocol/approved-plan.js').ApprovedPlanBinding
+      try{binding=处.簿.执行快照(planId).binding}catch(error){
+        // Cancellation is not execution authorization. An off-branch plan must not strand owned work.
+        const current=control?.current.id?control.scheduler.读(control.current.id):undefined
+        if(!current?.approvedPlan||current.captainSessionId!==sessionId||current.approvedPlan.planId!==planId)throw error
+        binding=current.approvedPlan
+      }
+      if(binding.owner!==sessionId||!control)throw new UserFacingError('当前会话没有此方案的执行器')
+      if(action==='finish'){
+        if(this.方案答中.has(sessionId)||s.inFlight||s.中止中||s.回退中||control.scheduler.hasActiveTeam(binding.teamId))throw new UserFacingError('执行尚未排空，请先停止并等待后再结束安排')
+        if(control.current.id!==binding.teamId)throw new UserFacingError('当前团队已改变，未结束其他安排')
+        control.scheduler.改(binding.teamId,team=>{结束团队(team);team.approvedPlanPaused=false;delete team.approvedPlanPauseReason})
+        return{executionTeamId:binding.teamId}
+      }
+      const inFlight=this.planExecutionPlanIds.get(sessionId)===planId
+      if(inFlight)this.planExecutionControllers.get(sessionId)?.abort()
+      if(control.current.id===binding.teamId)control.scheduler.中止全部(binding.teamId)
+      else if(!inFlight&&读团队(团队目录(处.sessionDir,binding.teamId)))throw new UserFacingError('当前团队已改变，未停止其他执行')
+      return{...(处.簿.找(planId)?.savedPath?{savedPath:处.簿.找(planId)!.savedPath!}:{}),executionTeamId:binding.teamId}
+    }
     // 字眼以「这一版方案已经」开头：后端据它分成 conflict（与「已经批过」同一类）
     if (this.方案答中.has(sessionId)) throw new Error("这一版方案已经在处理了，稍等")
+    if(this.pendingBotDispatches.has(sessionId))throw new UserFacingError("Bot 委派正在处理，处理完再答方案")
     /**
      * **在跑、正在回退时不答**（2026-09-28 交叉审查）：一轮跑着的时候批准，方案文件落在这一轮的回退存档窗口里——
      * 之后「回退文件」会把它当 agent 新建的挪进废纸篓（存档那边另有一道：`在方案目录里`）。回退途中批准，簿与分支各说各的。
      * 措辞固定：后端按「还在跑」「正在回退」分成 conflict、译成英文。
      */
     if (s.回退中) throw new UserFacingError("正在回退，等它做完")
-    if (s.inFlight > 0 || s.转述中 > 0) throw new UserFacingError("agent 还在跑，这一轮做完再批方案")
+    if (s.inFlight > 0 || s.转述中 > 0||s.中止中||s.session.isStreaming||this.停中.has(sessionId)) throw new UserFacingError("agent 还在跑，这一轮做完再批方案")
     this.方案答中.add(sessionId)
+    const controller=new AbortController(),stopEpoch=s.停止代
+    this.planExecutionControllers.set(sessionId,controller)
+    this.planExecutionPlanIds.set(sessionId,planId)
+    const guard=()=>{if(controller.signal.aborted||this.sessions.get(sessionId)!==s||this.方案簿们.get(sessionId)!==处||s.停止代!==stopEpoch||this.停中.has(sessionId))throw new UserFacingError('方案处理已取消，未启动新执行')}
     try {
-      return await this.真答方案(sessionId, s, 处, planId, action, text)
+      if(action==='execute')return await this.executeApprovedArrangement(sessionId,处,planId,controller.signal,guard)
+      return await this.真答方案(sessionId, s, 处, planId, action, text,controller.signal,guard)
     } finally {
+      if(this.planExecutionControllers.get(sessionId)===controller){this.planExecutionControllers.delete(sessionId);this.planExecutionPlanIds.delete(sessionId)}
       this.方案答中.delete(sessionId)
     }
+  }
+
+  private async executeApprovedArrangement(sessionId:string,处:{簿:方案簿;workspace:string;sessionDir:string;远端?:RemoteLike|undefined},planId:string,signal:AbortSignal,guard:()=>void):Promise<{savedPath?:string;executionTeamId?:string}>{
+    if(处.远端)throw new UserFacingError('远端暂不支持批准方案的严格执行绑定')
+    const snapshot=处.簿.执行快照(planId),binding=snapshot.binding,control=this.botTeams.get(sessionId),p=处.簿.找(planId)!
+    if(binding.owner!==sessionId||!control||!p.savedPath)throw new UserFacingError('当前会话没有可用的方案执行器')
+    const archive=处.簿.已批准存档().find(p=>p.planId===planId)
+    if(!archive||createHash('sha256').update(readFileSync(join(处.workspace,p.savedPath))).digest('hex')!==archive.sha256||arrangementHash(p.markdown)!==binding.markdownHash)throw new UserFacingError('方案文件版本已变化，请重新查看并安排')
+    if(control.current.id&&control.current.id!==binding.teamId){const current=control.scheduler.读(control.current.id);if(!current.finishedAt&&(control.scheduler.hasActiveTeam(current.id)||current.tasks.some(t=>['pending','claimed','in_progress'].includes(t.status))))throw new UserFacingError('当前会话还有未结束的团队任务，请先完成或停止并处理')}
+    const currentId=control.current.id,persistedCurrent=读当前团队(处.sessionDir)
+    const dir=团队目录(处.sessionDir,binding.teamId),existing=读团队(dir),existingRecord=JSON.stringify(existing)
+    if(existing&&(existing.captainSessionId!==sessionId||JSON.stringify(existing.approvedPlan)!==JSON.stringify(binding)))throw new UserFacingError('已存在的团队不属于这份批准方案')
+    const result={savedPath:p.savedPath,executionTeamId:binding.teamId}
+    if(existing?.finishedAt)throw new UserFacingError('该安排已结束；重新执行请提交新方案')
+    if(existing&&!existing.approvedPlanPaused){guard();if(control.current.id!==binding.teamId)throw new UserFacingError('当前团队已改变，未启动其他执行');return result} // idempotent; never kick a live/settled execution twice
+    if(existing&&(control.scheduler.hasActiveTeam(existing.id)||existing.tasks.some(t=>['claimed','in_progress','failed','cancelled'].includes(t.status))))throw new UserFacingError('旧执行尚未排空或存在中断副作用；请核对产物后另提安排，未自动重放')
+    await assertFileVersions(处.workspace,binding.externalInputs,signal)
+    if(existing)for(const task of existing.tasks)if(task.status==='completed'){
+      if(task.receipt?.state!=='accepted'||!task.receipt.versions)throw new UserFacingError('已完成任务缺少验收版本，不能恢复')
+      await assertFileVersions(处.workspace,task.receipt.versions.outputs,signal)
+    }
+    guard()
+    if(this.botTeams.get(sessionId)!==control||control.current.id!==currentId||读当前团队(处.sessionDir)!==persistedCurrent||JSON.stringify(读团队(dir))!==existingRecord)throw new UserFacingError('核验期间团队状态已变化，请重新查看后继续')
+    if(createHash('sha256').update(readFileSync(join(处.workspace,p.savedPath))).digest('hex')!==archive.sha256)throw new UserFacingError('核验期间方案文件版本已变化，请重新查看')
+    const team=existing??materializeApprovedTeam(snapshot,sessionId)
+    // Persist a retryable prepared state before publishing the current-team pointer.
+    team.approvedPlanPaused=true
+    team.approvedPlanPauseReason='执行尚未发布；请显式继续尚未执行的任务。'
+    写团队(dir,team)
+    try{
+      记当前团队(处.sessionDir,team.id);control.current.id=team.id
+      if(existing)control.scheduler.resumeApprovedPlan(team.id)
+      control.scheduler.resumeTeam(team.id)
+      control.scheduler.改(team.id,t=>{t.approvedPlanPaused=false;delete t.approvedPlanPauseReason})
+      await control.scheduler.踢一下(team.id)
+      guard()
+      if(control.scheduler.读(team.id).approvedPlanPaused)throw new UserFacingError(control.scheduler.读(team.id).approvedPlanPauseReason??'批准方案执行已暂停')
+    }catch(error){
+      // Fence any child already admitted before a late start failure. Never touch another team.
+      try{control.scheduler.中止全部(team.id);control.scheduler.改(team.id,t=>{t.approvedPlanPauseReason=('启动未完成：'+(error instanceof Error?error.message:String(error))).slice(0,8000)})}catch(pauseError){console.error('[批准方案] 启动失败后的暂停未能保存',pauseError)}
+      throw error
+    }
+    return result
   }
 
   private async 真答方案(
@@ -4186,7 +4284,9 @@ ${描述}`
     planId: string,
     action: "approve" | "discard",
     text: string | undefined,
-  ): Promise<{ savedPath?: string }> {
+    signal:AbortSignal,
+    guard:()=>void,
+  ): Promise<{ savedPath?: string; executionTeamId?:string }> {
     const p = 处.簿.可答(planId)
     if (action === "discard") {
       const x = 处.簿.作废(planId)
@@ -4197,6 +4297,10 @@ ${描述}`
     }
     const 正文 = (text?.trim() || p.markdown).trim()
     validateArrangementEdit(p.markdown,正文)
+    const arrangement=parseTaskArrangement(正文),context=this.planExecutionContexts.get(sessionId)
+    if(arrangement.state==='valid'&&arrangement.arrangement.dispatch&&(!context||处.远端))throw new UserFacingError('当前会话不支持批准方案的严格执行绑定')
+    const activeModel=s.session.model,executionSnapshot=arrangement.state==='valid'&&arrangement.arrangement.dispatch?await freezeApprovedPlan({workspace:处.workspace,owner:sessionId,planId,planVersion:p.version,markdown:正文,definitions:context!.definitions(),tier:this.opts.permissionTier?.取(sessionId)??this.opts.permissionTier?.全局()??'ask-risky',model:activeModel?{provider:activeModel.provider,model:activeModel.id}:context!.model,signal}):undefined
+    guard()
     // 两头的空白不算改过（2026-09-28 审查）：模型交的原稿常带首尾换行，编辑框一 trim 就成了「你改过」
     const 改过 = 正文 !== p.markdown.trim()
     const 时刻 = new Date()
@@ -4207,22 +4311,23 @@ ${描述}`
       正文: 方案存档正文({ title: p.title, version: p.version, 正文, 改过, 时刻, sessionId, 模型: s.实际模型 ?? "" }),
     })
     /**
-     * **写下文件之后哪一步抛，都把写下的收拾掉**（2026-09-28 审查）：存档失败、簿存不下……
-     * 不留一份簿里不认的「已批准」文件，也不留一份没有主人的存档。原样抛。
+     * 批准事务落盘前失败时回收新文件/存档；已经提交的批准记录不因后续通知失败而删除产物。
      */
     let 指纹: { sha256: string; 存档: string } | undefined
+    let approved:ReturnType<方案簿['批准']>
     try {
       if (!处.远端) 指纹 = await 存档方案({ workspace: 处.workspace, 相对: savedPath, 会话目录: 处.sessionDir, planId })
-      const x = 处.簿.批准(planId, { 正文, savedPath, 时刻: 时刻.getTime(), 改过, ...(指纹 ?? {}) })
-      this.设方案期(sessionId, false)
-      this.emit({ kind: "plan", sessionId, plan: x })
+      guard()
+      approved = 处.簿.批准(planId, { 正文, savedPath, 时刻: 时刻.getTime(), 改过, ...(指纹 ?? {}),...(executionSnapshot?{executionSnapshot}:{}) })
     } catch (e) {
       await 删方案文件({ workspace: 处.workspace, 远端: 处.远端, 相对: savedPath })
       if (指纹) await rm(指纹.存档, { force: true }).catch(() => {})
       throw e
     }
+    this.设方案期(sessionId,false)
+    this.emit({kind:'plan',sessionId,plan:approved})
     this.发会话开关(sessionId)
-    return { savedPath }
+    return { savedPath,...(executionSnapshot?{executionTeamId:executionSnapshot.binding.teamId}:{}) }
   }
 
   /** 给一件工具套上「先拍开头」。执行时才按 id 取存档与 pi 的记录——装工具那一刻它们还没建出来 */
@@ -4682,6 +4787,7 @@ ${描述}`
   }
 
   private async 停止一次(sessionId: SessionId): Promise<void> {
+    this.planExecutionControllers.get(sessionId)?.abort()
     const projectionClosing=this.pipelineProjections.get(sessionId)?.close()
     this.pipelineProjections.delete(sessionId)
     // 在第一个 await 前取消旧 Notebook 启动/执行；模型会话不在也要回收名下内核。
@@ -4707,6 +4813,7 @@ ${描述}`
     this.interruptAnalysisRoute(sessionId, '会话已停止')
     this.sessions.delete(sessionId)
     this.botTeams.delete(sessionId)
+    this.planExecutionContexts.delete(sessionId)
     /**
      * **回退做到一半不拆**（Task 5 复审）：`navigateTree` / 留话做到一半就 `dispose`，对话那一半会停在半路。
      * 表里已经摘掉了——这期间谁也发不进话；等它做完（成败都行，它自己出声）再往下拆。

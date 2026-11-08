@@ -48,6 +48,7 @@ export function researchStageDeclarations(config:unknown,primary:{provider:strin
  })) as ResearchStageDeclarations
 }
 export interface ResearchManifestInput {
+ multiExecution?:'approved-plan'
  runId:string;generatedAt:string;inference:'fixture'|'live';provider:string;model:string;modelDeclaration:ResearchModelDeclaration
  tasks:readonly ResearchTask[];repeats:number;perArmLimit:number;enforced:boolean;multiStageLimits?:{work:number;review:number};stageModels?:ResearchStageDeclarations
  sourceFingerprint:string;childBuildFingerprint:string
@@ -62,6 +63,6 @@ export function researchManifest(input:ResearchManifestInput){
  const arms:{caseId:string;repeat:number;mode:'single'|'multi'}[]=[]
  for(let repeat=1;repeat<=repeats;repeat++)for(const [index,t] of input.tasks.entries())for(const mode of ((index+repeat-1)%2?['multi','single']:['single','multi']) as ('single'|'multi')[])arms.push({caseId:t.id,repeat,mode})
  const stable={inference,provider,model,modelDeclaration:structuredClone(modelDeclaration),tasks,repeats,requestAllocation,sourceFingerprint,childBuildFingerprint,
-  execution:{tools:['read','write','bash'],permissionTier:'allow-all',maxRevisions:0,trialSettings:{project:researchTrialSettings(),agent:researchTrialSettings()}},stageModels:input.stageModels?structuredClone(input.stageModels):null,arms}
+  execution:{multiExecution:input.multiExecution??'pipeline',tools:['read','write','bash'],permissionTier:'allow-all',maxRevisions:0,trialSettings:{project:researchTrialSettings(),agent:researchTrialSettings()}},stageModels:input.stageModels?structuredClone(input.stageModels):null,arms}
  return{version:2 as const,runId,generatedAt,fingerprint:researchFingerprint(stable),...stable}
 }

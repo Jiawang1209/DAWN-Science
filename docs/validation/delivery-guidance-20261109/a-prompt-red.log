@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-auto-arrangement.test.ts -t reference
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/evaluation/research-auto-arrangement.test.ts (8 tests | 1 failed | 7 skipped) 127ms
+   × records and validates actual model-generated planning: reference 126ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records and validates actual model-generated planning: reference
+AssertionError: expected '[{"role":"user","content":[{"type":"t…' not to contain '冻结科学契约：'
+
+Expected: "冻结科学契约："
+Received: "[{"role":"user","content":[{"type":"text","text":"请为以下具体任务自动安排。\n[research_automatic_arrangement]\none synthetic mean\n这是自制数据的同预算评测。由任务决定是否需要额外核查，不预设任务块数。保留独立只读审阅，必须覆盖分析依赖。方法、单位、正式提交及以下科学契约不可降低；可选核查使用 check 契约，唯一产物分析任务使用 analyze 契约，审阅使用 review 契约。不要执行任务，交给 propose_plan。\n冻结科学契约：{\"check\":{\"submission\":\"tool\",\"resultType\":\"data-summary\",\"version\":1,\"inputs\":[\"input.csv\"],\"outputs\":[],\"access\":\"read-only\",\"requireExecution\":false,\"requireReview\":false},\"analyze\":{\"submission\":\"tool\",\"resultType\":\"model-metrics\",\"version\":1,\"inputs\":[\"input.csv\"],\"outputs\":[\"result.json\"],\"access\":\"workspace-write\",\"requireExecution\":false,\"requireReview\":false},\"review\":{\"submission\":\"tool\",\"resultType\":\"review\",\"version\":1,\"inputs\":[\"result.json\"],\"outputs\":[],\"access\":\"read-only\",\"requireExecution\":false,\"requireReview\":false}}"}]}]"
+
+ ❯ tests/evaluation/research-auto-arrangement.test.ts:29:130
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  04:36:39
+   Duration  1.93s (transform 782ms, setup 0ms, import 1.71s, tests 127ms, environment 0ms)
+

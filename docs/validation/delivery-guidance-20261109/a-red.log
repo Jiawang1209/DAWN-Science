@@ -1,0 +1,80 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/plan-contract-bindings.test.ts tests/orchestration/task-delivery-guide.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/orchestration/task-delivery-guide.test.ts (2 tests | 2 failed) 6ms
+   × projects exact frozen scientific keys without inventing values or submitting 5ms
+   × chooses only unique successful evidence from the current instance, not failed or ambiguous IDs 1ms
+ ❯ |node| tests/tools/plan-contract-bindings.test.ts (2 tests | 1 failed) 9ms
+   × binds a host catalog reference to the exact full contract before persisting 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-delivery-guide.test.ts > projects exact frozen scientific keys without inventing values or submitting
+AssertionError: expected undefined to match object { …(4) }
+
+- Expected:
+{
+  "numeric": {
+    "dataMetricKeys": [
+      "mean",
+    ],
+    "metric": "mean",
+    "requiredKeys": [
+      "n",
+      "unit",
+      "mean",
+    ],
+    "resultPath": "result.json",
+    "unit": "m",
+  },
+  "outputs": [
+    "script.py",
+    "result.json",
+    "report.md",
+  ],
+  "resultType": "model-metrics",
+  "submitTool": "submit_task_result",
+}
+
++ Received:
+undefined
+
+ ❯ tests/orchestration/task-delivery-guide.test.ts:9:16
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/orchestration/task-delivery-guide.test.ts > chooses only unique successful evidence from the current instance, not failed or ambiguous IDs
+TypeError: Cannot read properties of undefined (reading 'references')
+ ❯ tests/orchestration/task-delivery-guide.test.ts:17:15
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/tools/plan-contract-bindings.test.ts > binds a host catalog reference to the exact full contract before persisting
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/plan-contract-bindings.test.ts:12:14
+     10|  const publish=vi.fn(()=>({version:1})),tool=createProposePlanTool({co…
+     11|  const ref=tool.promptGuidelines.join('\n').match(/analyze@[a-f0-9]{64…
+     12|  expect(ref).toBeTruthy()
+       |              ^
+     13|  const result=await tool.execute('p',{...假方案,arrangement:proposal(ref!…
+     14|  expect(result.isError).toBeUndefined();expect(publish).toHaveBeenCall…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 1 passed (4)
+   Start at  04:28:48
+   Duration  439ms (transform 207ms, setup 0ms, import 632ms, tests 15ms, environment 0ms)
+

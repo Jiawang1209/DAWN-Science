@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/ui/auto-arrangement-request.test.ts tests/ui/orchestration-entry.test.tsx tests/ui/run-overview.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (13 tests | 1 failed) 370ms
+   × allows retry after a clarification turn ends without a new proposal and retains its answers 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > allows retry after a clarification turn ends without a new proposal and retains its answers
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:102:61
+    100|  expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty(…
+    101|  expect(screen.getByRole('alert').textContent).toContain('本轮没有提交新的有效任务…
+    102|  view.unmount();expect(generate.mock.calls[0]?.[2].aborted).toBe(true)
+       |                                                             ^
+    103| })
+    104| it('retains clarification drafts across panel remounts and isolates ow…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 137 passed (138)
+   Start at  06:02:06
+   Duration  3.10s (transform 3.58s, setup 4.61s, import 1.70s, tests 2.19s, environment 5.64s)
+

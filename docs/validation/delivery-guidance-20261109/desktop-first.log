@@ -1,0 +1,66 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/delivery-guidance.spec.ts
+
+Running 1 test using 1 worker
+
+(node:88530) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58780/0012634b-f6a2-4db3-a95e-afef0e41a8e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58802/21244d9e-91cb-4f4c-8b3e-ce19a30c8609
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/delivery-guidance.spec.ts:6:1 › clarification survives restart, creates a new proposal and executes only after approval (35.7s)
+
+
+  1) e2e/delivery-guidance.spec.ts:6:1 › clarification survives restart, creates a new proposal and executes only after approval 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('region', { name: '自动安排', exact: true }).getByRole('button', { name: '补充后重新规划', exact: true })
+        - locator resolved to <button disabled type="button" class="btn btn-primary btn-sm">补充后重新规划</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+          - waiting 100ms
+        58 × waiting for element to be visible, enabled and stable
+           - element is not enabled
+         - retrying click action
+           - waiting 500ms
+
+
+      18 |  await expect(auto.getByRole('textbox',{name:'问题 1 的回答',exact:true})).toBeVisible()
+      19 |  await auto.getByRole('textbox',{name:'问题 1 的回答',exact:true}).fill('mg/g')
+    > 20 |  await auto.getByRole('button',{name:'补充后重新规划',exact:true}).click()
+         |                                                             ^
+      21 |  await expect(auto).toContainText('方案第 2 版')
+      22 |  await expect(auto.getByRole('region',{name:'补充待确认信息',exact:true})).toHaveCount(0)
+      23 |  expect(existsSync(join(workspace,'mean.csv'))).toBe(false)
+        at /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/e2e/delivery-guidance.spec.ts:20:61
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/delivery-guidance.spec.ts:6:1 › clarification survives restart, creates a new proposal and executes only after approval 

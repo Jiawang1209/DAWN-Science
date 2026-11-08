@@ -1,0 +1,12 @@
+{
+  "changed": [
+    "e2e/collaboration-outcome.spec.ts",
+    "src/ui/styles.css"
+  ],
+  "explanation": "Only narrow outcome CSS and its Electron assertions changed after the full-run freeze. Production TypeScript is identical. Fresh design/i18n/outcome tests and real Electron narrow states validate the delta.",
+  "fullTests": {
+    "files": 717,
+    "passed": 7083,
+    "skipped": 11
+  }
+}

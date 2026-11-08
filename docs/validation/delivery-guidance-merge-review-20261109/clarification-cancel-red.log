@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (13 tests | 1 failed) 304ms
+   × can cancel clarification before send acknowledgement and fences its late completion 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > can cancel clarification before send acknowledgement and fences its late completion
+AssertionError: expected <button type="button" …(1)></button> to have property "disabled" with value true
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:146:51
+    144|  fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{targe…
+    145|  fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'}))
+    146|  expect(screen.getByRole('button',{name:'重新安排'})).toHaveProperty('disa…
+       |                                                   ^
+    147|  fireEvent.click(screen.getByRole('button',{name:'中止规划'}))
+    148|  expect(generate.mock.calls[0]![2].aborted).toBe(true)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  06:01:51
+   Duration  1.59s (transform 493ms, setup 699ms, import 34ms, tests 304ms, environment 463ms)
+

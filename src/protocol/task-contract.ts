@@ -48,6 +48,11 @@ export function taskResultParameters(contract:TaskContract){
   paths.minItems=contract.inputs.length;paths.maxItems=contract.inputs.length;paths.uniqueItems=true
   if(contract.inputs.length)paths.items={type:'string',enum:[...contract.inputs]}
  }
+ if(contract.resultType==='model-metrics'&&contract.acceptance?.numeric){
+  const key=contract.acceptance.numeric.metric
+  const data=properties.data as {properties:Record<string,Record<string,unknown>>}
+  data.properties.metrics={...data.properties.metrics,properties:{[key]:{type:'number'}},description:`Frozen numeric key: ${key}; use the same value as result JSON. sampleCount equals n, unit is ${contract.acceptance.numeric.unit}.`}
+ }
  const execution=properties.execution as {properties:Record<string,Record<string,unknown>>}
  const verification=properties.verification as {properties:Record<string,Record<string,unknown>>}
  execution.properties.toolCallIds!.description='For completed execution use only actual bash/powershell/run_code IDs with host execution=ran. Never cite write, edit, read or failed calls as completed execution.'

@@ -16,6 +16,23 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "打开编排视图": "Open workflow view",
+  "编排视图": "Workflow view",
+  "返回 DAWN 对话": "Return to DAWN conversation",
+  "成果版本与执行额度": "Artifact versions and execution budget",
+  "审阅尚未正式提交": "Review not formally submitted",
+  "任务尚无正式提交": "Task has no formal submission",
+  "本次执行已结束，尚无正式提交回执；先检查过程和提交反馈，再决定后续安排。": "This execution ended without a formal submission receipt. Check its process and feedback before arranging further work.",
+
+  "补充内容过长，请精简后重新规划。": "The additional information is too long. Shorten it before planning again.",
+  "补充待确认信息": "Provide missing information",
+  "等待补充信息": "Waiting for information",
+  "补齐后先生成新方案，原方案不会直接执行。": "Your answers generate a new proposal; the original plan will not execute.",
+  "问题 {0} 的回答": "Answer to question {0}",
+  "补充后重新规划": "Plan again with answers",
+  "等待新方案，采纳后才执行。": "Waiting for a new proposal. Execution starts only after approval.",
+  "等待补充信息；当前方案不能执行。": "Waiting for information; this proposal cannot execute.",
+
   "验收来源详情": "Accepted source details",
 
   "当前 {0}": "Current {0}",

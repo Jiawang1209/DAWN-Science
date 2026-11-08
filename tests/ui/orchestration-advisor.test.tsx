@@ -52,3 +52,142 @@ it('passes approved status to the arrangement and explains revision without offe
  expect(view.container.textContent).toContain('原有任务不会自动重跑')
  expect(view.container.textContent).not.toContain('可在对话中的方案卡修改并采纳')
 })
+
+async function clarificationPlan(){
+ const {serializeTaskArrangement}=await import('../../src/protocol/task-arrangement.js')
+ return{type:'plan' as const,id:'i',planId:'clarify',version:1,title:'确认单位',status:'proposed' as const,markdown:serializeTaskArrangement({mode:'single',rationale:'缺单位',independentReview:false,questions:['carbon 的单位是什么？'],tasks:[{id:'inspect',title:'等待单位',goal:'先确认',role:'分析员',inputs:['in.csv'],outputs:[],dependencies:[],acceptance:'不猜单位',review:false}]})}
+}
+it('collects all questions and generates a new proposal without approving the old plan',async()=>{
+ const plan=await clarificationPlan(),onGenerate=vi.fn(async(_goal:string,_answers:string,_signal:AbortSignal)=>{})
+ render(<OrchestrationAdvisor task="计算均值" plan={plan} onGenerate={onGenerate}/>);
+ const button=screen.getByRole('button',{name:'补充后重新规划'})
+ expect(button).toHaveProperty('disabled',true)
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ await act(async()=>fireEvent.click(button))
+ expect(onGenerate).toHaveBeenCalledOnce();expect(onGenerate.mock.calls[0]).toEqual(['计算均值',expect.stringContaining('mg/g'),expect.any(AbortSignal)])
+ expect(onGenerate.mock.calls[0]?.[1]).toContain('clarify');expect(screen.getByText('等待新方案，采纳后才执行。')).toBeTruthy()
+})
+it('retains failed clarification answers and aborts their pending request when the proposal changes',async()=>{
+ const plan=await clarificationPlan(),generate=vi.fn(async()=>{throw Error('retry later')})
+ const view=render(<OrchestrationAdvisor task="计算均值" plan={plan} onGenerate={generate}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'})))
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','mg/g')
+ let signal:AbortSignal|undefined,finish!:()=>void
+ const pending=vi.fn((_goal:string,_answers:string,s:AbortSignal)=>{signal=s;return new Promise<void>(resolve=>{finish=resolve})})
+ view.rerender(<OrchestrationAdvisor task="计算均值" plan={plan} onGenerate={pending}/>);
+ fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'}))
+ view.rerender(<OrchestrationAdvisor task="计算均值" plan={{...plan,planId:'new',version:2}} onGenerate={pending}/>);
+ expect(signal?.aborted).toBe(true)
+ await act(async()=>finish())
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','')
+ expect(screen.queryByText('等待新方案，采纳后才执行。')).toBeNull()
+})
+it('can replan restored questions when the conversation composer draft is empty',async()=>{
+ const plan=await clarificationPlan(),generate=vi.fn(async()=>{})
+ render(<OrchestrationAdvisor task="" plan={plan} onGenerate={generate}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ expect(screen.getByRole('button',{name:'补充后重新规划'})).toHaveProperty('disabled',false)
+})
+
+it('allows retry after a clarification turn ends without a new proposal and retains its answers',async()=>{
+ const plan=await clarificationPlan(),generate=vi.fn(async(_g:string,_a:string,_s:AbortSignal)=>{})
+ const view=render(<OrchestrationAdvisor task="均值" plan={plan} replyVersion="old" onGenerate={generate}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'})))
+ view.rerender(<OrchestrationAdvisor task="均值" plan={plan} replyVersion="finished" onGenerate={generate}/>);
+ expect(screen.getByRole('button',{name:'补充后重新规划'})).toHaveProperty('disabled',false)
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','mg/g')
+ expect(screen.getByRole('alert').textContent).toContain('本轮没有提交新的有效任务安排')
+ view.unmount();expect(generate.mock.calls[0]?.[2].aborted).toBe(true)
+})
+it('retains clarification drafts across panel remounts and isolates owners and plan versions',async()=>{
+ const plan=await clarificationPlan(),generate=vi.fn(async()=>{})
+ const first=render(<OrchestrationAdvisor ownerSessionId="draft-a" task="均值" plan={plan} onGenerate={generate}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}});first.unmount()
+ const restored=render(<OrchestrationAdvisor ownerSessionId="draft-a" task="均值" plan={plan} onGenerate={generate}/>);
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','mg/g');restored.unmount()
+ const foreign=render(<OrchestrationAdvisor ownerSessionId="draft-b" task="均值" plan={plan} onGenerate={generate}/>);
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','');foreign.unmount()
+ render(<OrchestrationAdvisor ownerSessionId="draft-a" task="均值" plan={{...plan,version:2}} onGenerate={generate}/>);
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','')
+})
+it('keeps cancellation outside collapsed adjustment details when a proposal already exists',async()=>{
+ const plan=await clarificationPlan()
+ const view=render(<OrchestrationAdvisor task="均值" plan={plan} busy planning onGenerate={vi.fn(async()=>{})} onStop={vi.fn(async()=>{})}/>);
+ const stop=view.container.querySelector('button')?.textContent==='中止规划'?view.container.querySelector('button'):Array.from(view.container.querySelectorAll('button')).find(b=>b.textContent==='中止规划')
+ expect(stop).toBeTruthy();expect(stop!.closest('details')).toBeNull()
+})
+it('can answer legal long questions without copying their immutable text into the request',async()=>{
+ const {serializeTaskArrangement,parseTaskArrangement}=await import('../../src/protocol/task-arrangement.js')
+ const initial=await clarificationPlan(),read=parseTaskArrangement(initial.markdown)
+ if(read.state!=='valid')throw Error('invalid fixture')
+ const plan={...initial,markdown:serializeTaskArrangement({...read.arrangement,questions:['甲'.repeat(2000),'乙'.repeat(2000)]})}
+ const generate=vi.fn(async(_goal:string,_answers:string,_signal:AbortSignal)=>{})
+ render(<OrchestrationAdvisor ownerSessionId="long-questions" task="均值" plan={plan} onGenerate={generate}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 2 的回答'}),{target:{value:'全部行'}})
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'})))
+ expect(generate).toHaveBeenCalledOnce()
+ const adjustment=generate.mock.calls[0]![1]
+ expect(adjustment.length).toBeLessThanOrEqual(4000)
+ const payload=JSON.parse(adjustment.split('\n')[0]!.slice('[plan_clarification] '.length))
+ expect(payload).toEqual({planId:plan.planId,version:plan.version,answers:[{questionIndex:1,answer:'mg/g'},{questionIndex:2,answer:'全部行'}]})
+ expect(screen.queryByRole('alert')).toBeNull()
+})
+it('can cancel clarification before send acknowledgement and fences its late completion',async()=>{
+ const plan=await clarificationPlan()
+ let finish!:()=>void,finishStop!:()=>void
+ const generate=vi.fn((_goal:string,_answers:string,_signal:AbortSignal)=>new Promise<void>(resolve=>{finish=resolve}))
+ const stop=vi.fn(()=>new Promise<void>(resolve=>{finishStop=resolve}))
+ render(<OrchestrationAdvisor task="均值" plan={plan} onGenerate={generate} onStop={stop}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'}))
+ expect(screen.getByRole('button',{name:'重新安排'})).toHaveProperty('disabled',true)
+ fireEvent.click(screen.getByRole('button',{name:'中止规划'}))
+ expect(generate.mock.calls[0]![2].aborted).toBe(true)
+ expect(stop).toHaveBeenCalledOnce()
+ expect(screen.getByRole('button',{name:'补充后重新规划'})).toHaveProperty('disabled',true)
+ await act(async()=>finishStop())
+ await act(async()=>finish())
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','mg/g')
+ expect(screen.getByRole('button',{name:'补充后重新规划'})).toHaveProperty('disabled',false)
+ expect(screen.queryByText('等待新方案，采纳后才执行。')).toBeNull()
+})
+it.each(['read','acquire','enable'] as const)('does not send clarification after cancellation during %s',async(stage)=>{
+ const {createAutoArrangementRequester}=await import('../../src/ui/auto-arrangement-request.js')
+ const plan=await clarificationPlan(),send=vi.fn(async()=>{})
+ let release!:()=>void
+ const wait=()=>new Promise<void>(resolve=>{release=resolve})
+ const requester=createAutoArrangementRequester({read:async()=>{if(stage==='read')await wait();return{planning:false}},acquire:async()=>{if(stage==='acquire')await wait()},enable:async()=>{if(stage==='enable')await wait()},send,running:()=>false})
+ const generate=vi.fn((goal:string,answers:string,signal:AbortSignal)=>requester('cancel-owner',goal,answers,signal,()=>true))
+ render(<OrchestrationAdvisor ownerSessionId="cancel-owner" task="均值" plan={plan} onGenerate={generate} onStop={vi.fn(async()=>{})}/>);
+ fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{target:{value:'mg/g'}})
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'})))
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'中止规划'})))
+ await act(async()=>release())
+ expect(send).not.toHaveBeenCalled()
+ expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty('value','mg/g')
+ expect(screen.getByRole('button',{name:'补充后重新规划'})).toHaveProperty('disabled',false)
+ expect(screen.queryByRole('alert')).toBeNull()
+})
+it('keeps a new clarification locked when the cancelled generation acknowledges late',async()=>{
+ const plan=await clarificationPlan(),finishes:Array<()=>void>=[]
+ const generate=vi.fn((_goal:string,_answers:string,_signal:AbortSignal)=>new Promise<void>(resolve=>{finishes.push(resolve)}))
+ render(<OrchestrationAdvisor task="均值" plan={plan} onGenerate={generate} onStop={vi.fn(async()=>{})}/>);
+ const answer=screen.getByRole('textbox',{name:'问题 1 的回答'})
+ fireEvent.change(answer,{target:{value:'mg/g'}})
+ fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'}))
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'中止规划'})))
+ fireEvent.click(screen.getByRole('button',{name:'补充后重新规划'}))
+ expect(generate).toHaveBeenCalledTimes(2)
+ expect(generate.mock.calls[0]![2].aborted).toBe(true)
+ await act(async()=>finishes[0]!())
+ expect(generate.mock.calls[1]![2].aborted).toBe(false)
+ expect(answer).toHaveProperty('disabled',true)
+ expect(screen.getByRole('button',{name:'重新安排'})).toHaveProperty('disabled',true)
+ expect(screen.getByRole('button',{name:'中止规划'})).toBeTruthy()
+ expect(screen.queryByText('等待新方案，采纳后才执行。')).toBeNull()
+ await act(async()=>finishes[1]!())
+ expect(screen.getByText('等待新方案，采纳后才执行。')).toBeTruthy()
+})

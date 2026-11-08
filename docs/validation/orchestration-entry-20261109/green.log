@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-entry.test.tsx tests/ui/run-overview.test.tsx tests/ui/collaboration-outcome-panel.test.tsx tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-entry.test.tsx (2 tests | 1 failed) 103ms
+   × keeps a header entry while loading and ahead of a pending information form 79ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-entry.test.tsx > keeps a header entry while loading and ahead of a pending information form
+TypeError: resolve is not a function
+ ❯ tests/ui/orchestration-entry.test.tsx:17:21
+     15|  const view=render(<RunOverview client={{get} as unknown as WorkbenchC…
+     16|  expect(screen.getByRole('button',{name:'打开编排视图'}).closest('.collabora…
+     17|  await act(async()=>resolve(empty))
+       |                     ^
+     18|  const entry=screen.getByRole('button',{name:'打开编排视图'}),form=screen.ge…
+     19|  expect(entry.compareDocumentPosition(form)&Node.DOCUMENT_POSITION_FOL…
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../../../Desktop/Github_repos/dawn-science/node_modules/react/cjs/react.development.js:814:22
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ tests/ui/orchestration-entry.test.tsx:17:8
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 139 passed (140)
+   Start at  05:44:34
+   Duration  2.51s (transform 2.57s, setup 3.17s, import 1.64s, tests 1.73s, environment 3.88s)
+

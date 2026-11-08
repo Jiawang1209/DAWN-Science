@@ -1,0 +1,231 @@
+{
+  "version": 2,
+  "runId": "5245be29-dbbc-4214-87d9-476cc6e488b4",
+  "generatedAt": "2026-11-08T20:59:55.998Z",
+  "fingerprint": "f2e99e2161295fce83fa92c93392da8b5cc7a70d3f648fe731d10a915f4beed7",
+  "inference": "fixture",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "modelDeclaration": {
+    "configuredReasoning": null,
+    "configuredMaxOutputTokens": null,
+    "configuredContextWindow": null,
+    "configuredInput": [
+      "text",
+      "image"
+    ],
+    "configuredApi": "openai-completions",
+    "compatibilityFingerprint": null,
+    "configuredSampling": null,
+    "unsupportedSettings": false,
+    "sampling": "not-set-by-evaluator"
+  },
+  "tasks": [
+    {
+      "caseId": "carbon-missing",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568",
+      "taskFingerprint": "5b784c29f077c154d788ff6b80027e21d767db61ff43da1abd2b8bf7b676325f",
+      "expectedOutcome": "accepted"
+    },
+    {
+      "caseId": "unknown-unit",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be",
+      "taskFingerprint": "819c51a3a67a65742eeb59371bb13682f3f33b2e42d4208b28396f9261ff0f28",
+      "expectedOutcome": "blocked"
+    },
+    {
+      "caseId": "short-known-mean",
+      "inputHash": "bbd83677526400132d2a750cc4a3a53bd342b1eab54ded771327d4680016fb59",
+      "taskFingerprint": "edd6e68f44a700a4c399c67122019e0018b82204b306a02974f9dd863e0bfd69",
+      "expectedOutcome": "accepted"
+    },
+    {
+      "caseId": "moisture-strata",
+      "inputHash": "36e19776bc59073a5b82b240b603a9fcc900a5c6bec73ae2530d506b0d28cfce",
+      "taskFingerprint": "7537ed4576d70e984fb0262c5916b5373e04b3ace927f0942d2af7f582caccb1",
+      "expectedOutcome": "accepted"
+    },
+    {
+      "caseId": "negative-zero-mean",
+      "inputHash": "222a40199d454248d9c8dbadf6257d7bcf7972b49c93327dd83877b4c2022339",
+      "taskFingerprint": "79327ace7d9943486580245363d6bd63ec8a0f00089b4325d7c371164cb26f68",
+      "expectedOutcome": "accepted"
+    },
+    {
+      "caseId": "duplicate-sites",
+      "inputHash": "9ce248b8cec002514a9aad742d919cd2058e698b173b1bbe8aae26d739dfee2f",
+      "taskFingerprint": "30c11ef9f3b0c04dee4507fc0af80185f59e5f14ee24e2f5b00cc8b02117f167",
+      "expectedOutcome": "accepted"
+    }
+  ],
+  "repeats": 1,
+  "requestAllocation": {
+    "enforced": true,
+    "perArmLimit": 25,
+    "totalLimit": 300,
+    "multiStageLimits": {
+      "work": 18,
+      "review": 7
+    }
+  },
+  "sourceFingerprint": "91be825f1ba2b16df2df04dc463c0c0893c3a0cab48b17b34dcdc8cefe95fe35",
+  "childBuildFingerprint": "dbdb5d3d358816a70a68d6e740c65afa6379576b01b220d608fd46c1d72fb86b",
+  "execution": {
+    "perArmTimeoutMs": 300000,
+    "multiExecution": "automatic-plan",
+    "requestBudgetFeedback": "partition-live-v1",
+    "tools": [
+      "read",
+      "write",
+      "bash"
+    ],
+    "permissionTier": "allow-all",
+    "maxRevisions": 0,
+    "trialSettings": {
+      "project": {
+        "retry": {
+          "enabled": false,
+          "maxRetries": 0,
+          "provider": {
+            "maxRetries": 0
+          }
+        },
+        "compaction": {
+          "enabled": false
+        },
+        "cacheWarming": "off"
+      },
+      "agent": {
+        "retry": {
+          "enabled": false,
+          "maxRetries": 0,
+          "provider": {
+            "maxRetries": 0
+          }
+        },
+        "compaction": {
+          "enabled": false
+        },
+        "cacheWarming": "off"
+      }
+    }
+  },
+  "stageModels": {
+    "check": {
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "declaration": {
+        "configuredReasoning": null,
+        "configuredMaxOutputTokens": null,
+        "configuredContextWindow": null,
+        "configuredInput": [
+          "text",
+          "image"
+        ],
+        "configuredApi": "openai-completions",
+        "compatibilityFingerprint": null,
+        "configuredSampling": null,
+        "unsupportedSettings": false,
+        "sampling": "not-set-by-evaluator"
+      }
+    },
+    "analyze": {
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "declaration": {
+        "configuredReasoning": null,
+        "configuredMaxOutputTokens": null,
+        "configuredContextWindow": null,
+        "configuredInput": [
+          "text",
+          "image"
+        ],
+        "configuredApi": "openai-completions",
+        "compatibilityFingerprint": null,
+        "configuredSampling": null,
+        "unsupportedSettings": false,
+        "sampling": "not-set-by-evaluator"
+      }
+    },
+    "review": {
+      "provider": "dawn-evaluation-review",
+      "model": "deepseek-flash",
+      "declaration": {
+        "configuredReasoning": null,
+        "configuredMaxOutputTokens": null,
+        "configuredContextWindow": null,
+        "configuredInput": [
+          "text",
+          "image"
+        ],
+        "configuredApi": "openai-completions",
+        "compatibilityFingerprint": null,
+        "configuredSampling": null,
+        "unsupportedSettings": false,
+        "sampling": "not-set-by-evaluator"
+      }
+    }
+  },
+  "arms": [
+    {
+      "caseId": "carbon-missing",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "short-known-mean",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "short-known-mean",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "moisture-strata",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "moisture-strata",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "negative-zero-mean",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "negative-zero-mean",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "duplicate-sites",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "duplicate-sites",
+      "repeat": 1,
+      "mode": "single"
+    }
+  ]
+}

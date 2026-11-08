@@ -1,0 +1,14 @@
+{
+  "appRoot": "/Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science",
+  "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-p9zIsj/DAWN-协作台新迭代-模拟模型",
+  "model": "localhost mock",
+  "requests": 7,
+  "paidModelRequests": 0,
+  "answerAfterTabReturn": "mg/g",
+  "outputBeforeApproval": false,
+  "acceptedTasks": 1,
+  "acceptedArtifact": "mean.csv",
+  "expandedReturn": true,
+  "historyExit": "OPEN",
+  "historyPty": "OPEN"
+}

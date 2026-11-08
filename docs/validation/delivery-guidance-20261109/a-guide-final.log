@@ -1,0 +1,57 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/plan-contract-bindings.test.ts tests/orchestration/task-delivery-guide.test.ts tests/evaluation/research-auto-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/orchestration/task-delivery-guide.test.ts (3 tests | 1 failed) 10ms
+   × projects exact frozen scientific keys without inventing values or submitting 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-delivery-guide.test.ts > projects exact frozen scientific keys without inventing values or submitting
+AssertionError: expected { …(6) } to match object { properties: { data: { …(1) } } }
+(56 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "properties": {
+      "data": {
+        "properties": {
+          "metrics": {
+-           "required": [
+-             "mean",
+-           ],
++           "additionalProperties": {
++             "type": "number",
++           },
++           "description": "Frozen numeric key: mean; use the same value as result JSON. sampleCount equals n, unit is m.",
++           "properties": {
++             "mean": {
++               "type": "number",
++             },
++           },
++           "propertyNames": {
++             "maxLength": 100,
++             "minLength": 1,
++             "type": "string",
++           },
++           "type": "object",
+          },
+        },
+      },
+    },
+  }
+
+ ❯ tests/orchestration/task-delivery-guide.test.ts:11:41
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 12 passed (13)
+   Start at  04:32:42
+   Duration  2.06s (transform 882ms, setup 0ms, import 1.97s, tests 617ms, environment 0ms)
+

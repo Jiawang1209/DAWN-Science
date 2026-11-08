@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts -t counts real planning|keeps independently
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 14 skipped (16)
+   Start at  04:44:46
+   Duration  12.72s (transform 1.41s, setup 0ms, import 2.71s, tests 9.87s, environment 0ms)
+

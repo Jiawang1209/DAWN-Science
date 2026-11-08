@@ -1,0 +1,10 @@
+{
+  "appRoot": "/Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science",
+  "model": "localhost mock",
+  "paidModelRequests": 0,
+  "mockRequestsSoFar": 9,
+  "stopOutsideCollapsedDetails": true,
+  "answersRetained": true,
+  "canRetry": true,
+  "fileUnchanged": true
+}

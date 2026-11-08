@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/evaluation/research-fixture-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (8 tests | 1 failed) 194ms
+   × can replan restored questions when the conversation composer draft is empty 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > can replan restored questions when the conversation composer draft is empty
+AssertionError: expected <button type="button" …(2)></button> to have property "disabled" with value false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:90:54
+     88|  render(<OrchestrationAdvisor task="" plan={plan} onGenerate={generate…
+     89|  fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{targe…
+     90|  expect(screen.getByRole('button',{name:'补充后重新规划'})).toHaveProperty('d…
+       |                                                      ^
+     91| })
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 8 passed (9)
+   Start at  04:35:14
+   Duration  8.34s (transform 1.29s, setup 598ms, import 1.84s, tests 6.64s, environment 409ms)
+

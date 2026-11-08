@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/plan-contract-bindings.test.ts tests/tools/propose-plan.test.ts tests/orchestration/task-delivery-guide.test.ts tests/orchestration/task-submission.test.ts tests/evaluation/research-auto-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  29 passed (29)
+   Start at  04:29:29
+   Duration  2.64s (transform 1.30s, setup 0ms, import 3.32s, tests 731ms, environment 0ms)
+

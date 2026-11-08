@@ -1,0 +1,10 @@
+{
+  "purpose": "isolated delivery guidance candidate",
+  "branch": "codex/delivery-guidance-20261109",
+  "baseline": "38ba63ef",
+  "appRoot": "/Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science",
+  "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-p9zIsj/DAWN-协作台新迭代-模拟模型",
+  "paidModelRequests": 0,
+  "scientificValidation": false,
+  "acceptanceCoverage": "file contract and host content versions"
+}

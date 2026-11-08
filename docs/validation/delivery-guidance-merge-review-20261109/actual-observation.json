@@ -1,0 +1,9 @@
+{
+  "mockOnly": true,
+  "realModelRequests": 0,
+  "answerPreserved": "mg/g",
+  "cancelled": true,
+  "expandedReturn": true,
+  "oldAcceptedConversationPreserved": true,
+  "finalState": "DAWN conversation with visible workflow entry"
+}

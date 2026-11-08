@@ -39,6 +39,9 @@ export const TaskArrangementSchema=z.object({dispatch:z.literal('team-v1').optio
   if(reviews.some(t=>!t.dependencies.length))fail('独立审阅必须依赖待审结果')
  }
 })
+/** Input-only host references are expanded before the ordinary arrangement is persisted. */
+export const TaskArrangementInputSchema=z.object({...TaskArrangementSchema.shape,tasks:z.array(task.extend({execution:z.object({agent:line,contract:TaskContractSchema.optional(),contractRef:z.string().max(160).optional()}).strict().refine(e=>!!e.contract!==!!e.contractRef,'执行契约和引用必须且只能提供一个').optional()})).min(1).max(12)}).strict()
+export type TaskArrangementInput=z.infer<typeof TaskArrangementInputSchema>
 export type TaskArrangement=z.infer<typeof TaskArrangementSchema>
 export const arrangementHeading='## 任务安排（自动安排）'
 const modes={single:'单任务',parallel:'并行委派',chain:'串行交接',science:'科研流水线'} as const

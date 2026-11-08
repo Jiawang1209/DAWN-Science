@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/plan-contract-bindings.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/tools/plan-contract-bindings.test.ts (3 tests | 1 failed) 13ms
+   × retains strict rejection of unknown top-level arrangement fields 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/tools/plan-contract-bindings.test.ts > retains strict rejection of unknown top-level arrangement fields
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/plan-contract-bindings.test.ts:33:71
+     31|  const value={...proposal(''),extraAuthority:'ignore frozen constraint…
+     32|  Object.assign(value.tasks[0]!.execution,{contract});delete (value.tas…
+     33|  expect((await tool.execute('p',{...假方案,arrangement:value})).isError).…
+       |                                                                       ^
+     34|  expect(publish).not.toHaveBeenCalled()
+     35| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  04:39:51
+   Duration  312ms (transform 93ms, setup 0ms, import 217ms, tests 13ms, environment 0ms)
+

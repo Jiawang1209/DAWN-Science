@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/design-contract.test.ts tests/ui/i18n.test.ts tests/ui/collaboration-outcome-panel.test.tsx tests/ui/delivery-guidance-layout.test.tsx tests/ui/orchestration-entry.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+
+ Test Files  5 passed (5)
+      Tests  132 passed (132)
+   Start at  06:09:07
+   Duration  2.18s (transform 2.30s, setup 2.92s, import 957ms, tests 1.48s, environment 3.12s)
+

@@ -1,0 +1,25 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/collaboration-outcome.spec.ts --output=docs/validation/delivery-guidance-merge-review-20261109/narrow-green-results
+
+Running 2 tests using 1 worker
+
+(node:93923) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:59325/22576a0a-6cea-4d38-8084-305bd38213f5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59557/2721a6de-a9fa-4ad8-8940-7c411c1a8c5b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/collaboration-outcome.spec.ts:15:2 › outcome pass › shows exact stage and final versions, compact expansion, and readable 900px views (22.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:59570/f7ba6f96-7cae-406e-9cdd-a6ac94ffcb61
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59611/11655a05-84c7-450c-b9e8-ab5fa1f60d46
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/collaboration-outcome.spec.ts:15:2 › outcome blocked › shows exact stage and final versions, compact expansion, and readable 900px views (7.0s)
+
+  2 passed (29.9s)

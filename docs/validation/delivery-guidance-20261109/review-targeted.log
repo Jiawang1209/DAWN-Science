@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/plan-contract-bindings.test.ts tests/orchestration/task-delivery-guide.test.ts tests/evaluation/research-planning-questions.test.ts tests/ui/orchestration-advisor.test.tsx tests/ui/delivery-guidance-layout.test.tsx tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 875ms
+     × 组件里的 textarea / input / select 都带 control 类 16ms
+     × border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: plan-clarification.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "28: {questions.map((question,i)=><label key={i}><span data-authored=\"1\">{question}</span><textarea className=\"control\" rows={2} maxLength={1000} aria-label={tf(\"问题 {0} 的回答\",i+1)} value={answers[i]??''} disabled={state!=='idle'||disabled} onChange={event=>setAnswers(old=>questions.map((_,n)=>n===i?event.target.value:old[n]??''))}/></label>)}",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9741: .plan-clarification{border:1px solid var(--dawn-accent);border-radius:12px;padding:14px;display:grid;gap:12px;margin-block:12px}",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:520:23
+    518|       (l) => /border-radius:/.test(l) && !/--dawn-radius-/.test(l) && …
+    519|     )
+    520|     expect(offenders).toEqual([])
+       |                       ^
+    521|   })
+    522|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  2 failed | 120 passed (122)
+   Start at  04:40:01
+   Duration  3.49s (transform 3.21s, setup 2.09s, import 3.59s, tests 2.45s, environment 2.12s)
+

@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-planning-questions.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/evaluation/research-planning-questions.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-planning-questions.test.ts [ tests/evaluation/research-planning-questions.test.ts ]
+Error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] [0mExpected a semicolon or an implicit semicolon after a statement, but found none
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m tests/evaluation/research-planning-questions.test.ts:24:67 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m24 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mi[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249ms[0m[38;5;249mS[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m([0m[38;5;249mj[0m[38;5;249mo[0m[38;5;249mi[0m[38;5;249mn[0m[38;5;249m([0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mo[0m[38;5;249mt[0m[38;5;249m,[0m[38;5;249m'[0m[38;5;249mo[0m[38;5;249mu[0m[38;5;249mt[0m[38;5;249m/[0m[38;5;249mm[0m[38;5;249mu[0m[38;5;249ml[0m[38;5;249mt[0m[38;5;249mi[0m[38;5;249m-[0m[38;5;249m1[0m[38;5;249m/[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mu[0m[38;5;249ml[0m[38;5;249mt[0m[38;5;249ms[0m[38;5;249m/[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mu[0m[38;5;249ml[0m[38;5;249mt[0m[38;5;249m.[0m[38;5;249mj[0m[38;5;249ms[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m'[0m[38;5;249m)[0m[38;5;249m)[0m[38;5;249m)[0m[38;5;249m)[0m[38;5;249m.[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mB[0m[38;5;249me[0m[38;5;249m([0m[38;5;249mf[0m[38;5;249ma[0m[38;5;249ml[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249m)[0m
+ [38;5;240m   │[0m                                                                   │ 
+ [38;5;240m   │[0m                                                                   ╰─ 
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: Try inserting a semicolon here
+[38;5;246m────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/tests/evaluation/research-planning-questions.test.ts
+ ❯ transformWithOxc ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:7618:19
+ ❯ TransformPluginContext.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:7690:26
+ ❯ EnvironmentPluginContainer.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8582:51
+ ❯ loadAndTransform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:20155:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  04:37:24
+   Duration  123ms (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

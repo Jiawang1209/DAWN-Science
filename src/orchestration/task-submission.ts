@@ -105,7 +105,16 @@ export class TaskSubmission {
   }
   const reads=gaps(readRequirements,observedReads),{missing:unobserved,...outputCounts}=gaps(this.contract.outputs,observedOutputs)
   const hasReference=(kind:string)=>evidence.some(record=>bounded(record.toolCallId)===record.toolCallId&&ids.get(record.toolCallId)===1&&positiveReferenceKinds(record).includes(kind))
-  return{version:1,phase:feedback.phase,...(feedback.sealedState?{sealedState:feedback.sealedState}:{}),submissionPending:!this.committed,observation:this.observation(),contract:feedback.contract,
+  const numeric=this.contract.acceptance?.numeric
+  const guidePaths=(paths:readonly string[])=>paths.slice(0,catalogLimit).map(path=>bounded(path,128))
+  const guideOutputs=guidePaths(this.contract.outputs),guideReads=guidePaths(readRequirements)
+  const guideTruncated=(paths:readonly string[],values:string[])=>paths.length!==values.length||values.some((path,i)=>path!==paths[i])
+  const deliveryGuide={submitTool:'submit_task_result',resultType:this.contract.resultType??null,
+   outputs:guideOutputs,outputsOmitted:Math.max(0,this.contract.outputs.length-catalogLimit),reviewedPaths:guideReads,reviewedPathsOmitted:Math.max(0,readRequirements.length-catalogLimit),truncatedFields:[...(guideTruncated(this.contract.outputs,guideOutputs)?['outputs']:[]),...(guideTruncated(readRequirements,guideReads)?['reviewedPaths']:[])],
+   references:feedback.referenceChoices,
+   ...(numeric?{numeric:{resultPath:bounded(this.contract.acceptance!.resultPath),truncatedFields:[...(bounded(this.contract.acceptance!.resultPath)!==this.contract.acceptance!.resultPath?['resultPath']:[]),...(bounded(numeric.unit)!==numeric.unit?['unit']:[])],requiredKeys:['n','unit',numeric.metric],metric:numeric.metric,unit:bounded(numeric.unit),dataMetricKeys:[numeric.metric]}}:{}),
+   instruction:'这些是冻结字段与可用证据，不是提交或科学结论。数值、summary、method、verdict与findings须据真实分析填写；不要猜值或把观察当验收。'}
+  return{version:1,phase:feedback.phase,deliveryGuide,...(feedback.sealedState?{sealedState:feedback.sealedState}:{}),submissionPending:!this.committed,observation:this.observation(),contract:feedback.contract,
    readProgress:reads,outputObservation:{...outputCounts,unobserved},
    missingEvidence:[...(this.contract.requireExecution&&!hasReference('execution.completed')?['execution.completed']:[]),...((this.contract.requireReview||this.contract.resultType==='review')&&!hasReference('verification.reviewed')?['verification.reviewed']:[])],
    referenceChoices:feedback.referenceChoices,evidenceCatalog:feedback.evidenceCatalog,

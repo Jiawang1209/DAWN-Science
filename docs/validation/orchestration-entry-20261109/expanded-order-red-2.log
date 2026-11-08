@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-entry.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-entry.test.tsx (2 tests | 1 failed) 157ms
+   × keeps a header entry while loading and ahead of a pending information form 145ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-entry.test.tsx > keeps a header entry while loading and ahead of a pending information form
+AssertionError: expected +0 to be truthy
+
+- Expected:
+true
+
++ Received:
+0
+
+ ❯ tests/ui/orchestration-entry.test.tsx:21:158
+     19|  expect(entry.compareDocumentPosition(form)&Node.DOCUMENT_POSITION_FOL…
+     20|  fireEvent.click(entry);expect(screen.getByRole('dialog',{name:'流程工作台'…
+     21|  expect(screen.getByRole('heading',{name:'Agent 网络'}).compareDocumentP…
+       |                                                                                                                                                              ^
+     22|  fireEvent.click(screen.getByRole('button',{name:'返回协作概览'}))
+     23|  expect(screen.queryByRole('dialog')).toBeNull();expect(document.activ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  05:45:07
+   Duration  1.44s (transform 509ms, setup 525ms, import 312ms, tests 157ms, environment 356ms)
+

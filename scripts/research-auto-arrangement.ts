@@ -8,12 +8,15 @@ import {TaskContractSchema,type TaskContract} from '../src/protocol/task-contrac
 import {autoArrangementRequestPrefix,parseTaskArrangement,validateArrangementEdit,type TaskArrangement} from '../src/protocol/task-arrangement.js'
 import type {方案} from '../src/protocol/plan.js'
 import type {ResearchArrangementMetrics} from '../src/evaluation/research-tasks.js'
+export class PlanningInformationRequired extends Error {
+ constructor(readonly questions:string[]){super('方案待确认，尚未启动任务执行')}
+}
 export async function generateResearchArrangement(opts:{workspace:string;sessionDir:string;modelsPath:string;provider:string;model:string;credential:string;definitions:SubagentDefinition[];contracts:Record<'check'|'analyze'|'review',TaskContract>;instructions:string;requests:()=>number;prepareSettings:(path:string,scope:'project'|'agent')=>void;signal:AbortSignal}):Promise<{markdown:string;arrangement:TaskArrangement;metrics:ResearchArrangementMetrics}>{
  const scratch=mkdtempSync(join(tmpdir(),'dawn-research-planning-')),before=opts.requests()
  mkdirSync(opts.sessionDir,{recursive:true})
  const metrics:ResearchArrangementMetrics={requests:0,taskCount:0,valid:false,reviewCovered:false}
  let proposal:方案|undefined
- const rt=new NativeRuntime({modelsPath:opts.modelsPath,subagentChildEntry:resolve('dist/electron/subagent-child.js'),skills:{},subagents:{},
+ const rt=new NativeRuntime({planningContracts:()=>opts.contracts,modelsPath:opts.modelsPath,subagentChildEntry:resolve('dist/electron/subagent-child.js'),skills:{},subagents:{},
   credentials:{read:async()=>({type:'api_key' as const,key:opts.credential}),list:async()=>[],modify:async()=>undefined,delete:async()=>{}},
   gate:(tool,args)=>tool==='propose_plan'||tool==='read'&&typeof args.path==='string'&&opts.contracts.analyze.inputs.some(path=>resolve(scratch,path)===resolve(scratch,args.path as string))?{kind:'allow'}:{kind:'deny',reason:'评测规划只读已声明的自制输入，不访问其他文件或执行任务。'},
  })
@@ -30,12 +33,14 @@ export async function generateResearchArrangement(opts:{workspace:string;session
   if(opts.signal.aborted)throw new Error('自动安排已取消')
   await rt.setConfigOption('research-planner','dawn.plan','1')
   if(opts.signal.aborted)throw new Error('自动安排已取消')
-  rt.write('research-planner',autoArrangementRequestPrefix+'\n[research_automatic_arrangement]\n'+opts.instructions+'\n这是自制数据的同预算评测。由任务决定是否需要额外核查，不预设任务块数。保留独立只读审阅，必须覆盖分析依赖。方法、单位、正式提交及以下科学契约不可降低；可选核查使用 check 契约，唯一产物分析任务使用 analyze 契约，审阅使用 review 契约。不要执行任务，交给 propose_plan。\n冻结科学契约：'+JSON.stringify(opts.contracts))
+  rt.write('research-planner',autoArrangementRequestPrefix+'\n[research_automatic_arrangement]\n'+opts.instructions+'\n这是自制数据的同预算评测。由任务决定是否需要额外核查，不预设任务块数。保留独立只读审阅，必须覆盖分析依赖。方法、单位、正式提交及宿主科学契约不可降低；可选核查使用 check 契约，唯一产物分析任务使用 analyze 契约，审阅使用 review 契约。不要执行任务，交给 propose_plan。使用工具指引中的宿主契约目录，execution 选择 contractRef，不必手抄完整 acceptance。')
   await new Promise<void>(r=>setImmediate(r))
   while(rt.terminalBusy('research-planner')){if(opts.signal.aborted){cancel();throw new Error('自动安排已取消')}await new Promise(r=>setTimeout(r,20))}
   if(opts.signal.aborted)throw new Error('自动安排已取消')
   if(!proposal)throw new Error('模型未交付可批准的自动安排')
   writeFileSync(join(opts.sessionDir,'proposed-plan.json'),JSON.stringify(proposal,null,2)+'\n',{flag:'wx'})
+  const pending=parseTaskArrangement(proposal.markdown)
+  if(pending.state==='valid'&&pending.arrangement.questions.length){metrics.questions=[...pending.arrangement.questions];metrics.taskCount=pending.arrangement.tasks.length;throw new PlanningInformationRequired(metrics.questions)}
   validateArrangementEdit(proposal.markdown,proposal.markdown)
   const parsed=parseTaskArrangement(proposal.markdown)
   if(parsed.state!=='valid'||!parsed.arrangement.dispatch)throw new Error('自动安排缺少可执行绑定')

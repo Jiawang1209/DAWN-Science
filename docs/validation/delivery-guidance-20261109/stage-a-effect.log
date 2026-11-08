@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' docs/validation/delivery-guidance-20261109/stage-a-demo.ts
+{
+  "source": "actual host tool calls; no inference",
+  "modelRequests": 0,
+  "reference": "analyze@7c5a79525d95b66898d2eb87c664d1f3cbaef3717e8d6c545d755fcee47dba4a",
+  "published": true,
+  "persistedCompleteContract": true,
+  "guide": {
+    "submitTool": "submit_task_result",
+    "resultType": "model-metrics",
+    "outputs": [
+      "analysis.py",
+      "result.json",
+      "report.md"
+    ],
+    "reviewedPaths": [],
+    "truncatedFields": [],
+    "references": {
+      "executionCompleted": [],
+      "verificationReviewed": []
+    },
+    "numeric": {
+      "resultPath": "result.json",
+      "requiredKeys": [
+        "n",
+        "unit",
+        "mean"
+      ],
+      "metric": "mean",
+      "unit": "m",
+      "dataMetricKeys": [
+        "mean"
+      ]
+    },
+    "instruction": "这些是冻结字段与可用证据，不是提交或科学结论。数值、summary、method、verdict与findings须据真实分析填写；不要猜值或把观察当验收。"
+  }
+}

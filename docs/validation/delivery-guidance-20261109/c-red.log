@@ -1,0 +1,109 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/delivery-guidance-layout.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/delivery-guidance-layout.test.tsx (2 tests | 1 failed) 75ms
+   × keeps next action visible while secondary version and budget details are collapsed 73ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/delivery-guidance-layout.test.tsx > keeps next action visible while secondary version and budget details are collapsed
+TestingLibraryElementError: Unable to find an element with the text: 成果版本与执行额度. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"协作成果"[39m
+      [33mclass[39m=[32m"collaboration-outcome"[39m
+      [33mdata-compact[39m=[32m"false"[39m
+      [33mdata-outcome[39m=[32m"accepted"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-goal"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"collaboration-eyebrow"[39m
+        [36m>[39m
+          [0m任务目标[0m
+        [36m</span>[39m
+        [36m<h3[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0m本会话协作[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-result"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0m本轮成果已验收[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m验收对应宿主回执中的内容版本。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-next"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m下一步 · 查看对应任务的证据与记录[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m查看产物记录[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-artifacts"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0m验收成果与版本[0m
+        [36m</h4>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m尚无本轮已验收成果。[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint collaboration-outcome-narrow-hint"[39m
+      [36m>[39m
+        [0m窄面板显示摘要；展开可查看完整目标和成果版本。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"collaboration-outcome-footer"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint collaboration-outcome-budget"[39m
+        [36m>[39m
+          [0m执行额度尚未记录[0m
+          [0m · [0m
+          [0m费用未记录[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/delivery-guidance-layout.test.tsx:13:22
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  04:33:09
+   Duration  1.02s (transform 344ms, setup 515ms, import 13ms, tests 75ms, environment 338ms)
+

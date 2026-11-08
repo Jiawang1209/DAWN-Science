@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (12 tests | 1 failed) 272ms
+   × can answer legal long questions without copying their immutable text into the request 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > can answer legal long questions without copying their immutable text into the request
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ tests/ui/orchestration-advisor.test.tsx:131:19
+    129|  fireEvent.change(screen.getByRole('textbox',{name:'问题 2 的回答'}),{targe…
+    130|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'补…
+    131|  expect(generate).toHaveBeenCalledOnce()
+       |                   ^
+    132|  const adjustment=generate.mock.calls[0]![1]
+    133|  expect(adjustment.length).toBeLessThanOrEqual(4000)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  06:01:04
+   Duration  1.46s (transform 429ms, setup 620ms, import 31ms, tests 272ms, environment 447ms)
+

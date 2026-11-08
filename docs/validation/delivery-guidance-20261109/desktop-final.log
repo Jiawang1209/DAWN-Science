@@ -1,0 +1,352 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/delivery-guidance.spec.ts e2e/approved-plan-execution.spec.ts e2e/auto-arrangement.spec.ts e2e/mode-member-workspace.spec.ts e2e/plan-mode.spec.ts e2e/collaboration-workbench.spec.ts e2e/collaboration-network.spec.ts e2e/collaboration-outcome.spec.ts e2e/collaboration-stopping.spec.ts e2e/subagent-shutdown.spec.ts e2e/science-pipeline.spec.ts e2e/terminal-shutdown.spec.ts e2e/subagent-view.spec.ts e2e/subagent.spec.ts e2e/bot-collaboration.spec.ts e2e/task-arrangement-layout.spec.ts e2e/mcp-cancellation.spec.ts e2e/setup-wizard.spec.ts e2e/setup-entry.spec.ts
+
+Running 58 tests using 1 worker
+
+(node:77680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:51903/0abd4947-0c8d-469c-a7b0-1827264084ed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51958/86972ccb-fa7d-4571-b134-97325054bae6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (10.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:51973/0c693a65-ee88-4c0f-8415-a5eb6872e647
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52009/f99d912d-012b-4a03-ad1a-a96baad4918d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/approved-plan-execution.spec.ts:116:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (9.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52028/5ccdcb55-2cf3-4341-a976-1e62fee4cb43
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值 (2.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52045/81dd94b7-5bf7-4011-a8b7-304462b6b4fa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 2 task blocks for 分别统计 east.csv 与 west.csv (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52062/7f7eba92-fbc3-4eb7-97e3-780b33161488
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52081/43c20a12-1e0a-4b02-90fe-b74392472116
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52108/fe1f4d6f-6968-4747-a135-be75d636d96f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52123/aecf2ce5-0d3f-400f-83f1-33f3ecbb1106
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/auto-arrangement.spec.ts:65:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52146/bf192e4f-f744-437e-b6f0-e1708ebba8d1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (9.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:52183/127a4651-c0d7-47f3-8b09-20c609c79e67
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/bot-collaboration.spec.ts:228:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52219/825290c5-9412-45f9-9db9-523696a6fa06
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52310/b278710a-5364-48ea-8f1b-e51ab1850bd2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52423/d7487d9a-b0d6-40ad-8aaf-af5c91069e13
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/collaboration-outcome.spec.ts:15:2 › outcome pass › shows exact stage and final versions, compact expansion, and readable 900px views (22.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52441/a3d7ef53-47ed-46bb-bb21-4d9b039a3583
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52465/5b51b07d-3e56-4f7a-8d31-28c9e06ad3c0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/collaboration-outcome.spec.ts:15:2 › outcome blocked › shows exact stage and final versions, compact expansion, and readable 900px views (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52485/8e825eae-7952-4152-9447-562d12eb5684
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/collaboration-stopping.spec.ts:12:1 › shows host-verified cancellation after actual owned CLI termination; transient stopping is not a screenshot claim (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52502/3ac27414-222b-4c6d-af4c-3bc23aa2e8e9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52567/85663e75-39a9-4a72-bff1-bf47a1b17df6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (14.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52585/a1b4344d-fabf-419d-aa58-34340464b88c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:52595/a569e46c-c6a4-429b-8497-c6962a3a41b8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/delivery-guidance.spec.ts:6:1 › clarification survives restart, creates a new proposal and executes only after approval (7.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:52631/741e1556-2ad6-4dfc-bd75-1af7c45dd532
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  15 e2e/delivery-guidance.spec.ts:48:2 › pending clarification cancellation › stops the pending replan and retains answers without creating output (34.7s)
+(node:83086) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52810/21412536-9a43-4fa9-822f-6b3ffa705415
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/mcp-cancellation.spec.ts:11:1 › stopping an HTTP MCP stream after GC closes its response and the same session remains usable (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52842/f3aa7420-af74-43bd-8e12-82288eb6fbd8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/mode-member-workspace.spec.ts:6:1 › automatic arrangement is the default and does not ask for a task count (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52856/97408666-b452-4520-8131-5bee8c16380f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52886/0e9b168c-2ccb-42bd-80d5-945b2174c492
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/mode-member-workspace.spec.ts:14:1 › member process and continuation return to the exact expanded collaboration selection (6.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52902/f9d02ccf-c76d-4913-b46e-c8044b118105
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/plan-mode.spec.ts:140:3 › 先出方案 · 假模型 › **开关 → 方案卡 → 照这个做**：文件真存进 analysis/plans、开关关了、执行话进转录、对照 1 / 2 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52918/c940a624-dc4b-4283-b54d-3c46f0d8ff39
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/plan-mode.spec.ts:162:3 › 先出方案 · 假模型 › **方案期「偷跑」**：那次 write 被门拦下，磁盘上没有那个文件，理由说「先出方案」 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「分析一下吸烟和肺功能」做完了 — 我先出一份方案。
+[主进程] Debugger ending on ws://127.0.0.1:52939/edb31abb-9a44-45fb-8e66-a946b89d6f94
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/plan-mode.spec.ts:178:3 › 先出方案 · 假模型 › **改一改**：批的是改过的正文，文件里是改过的，执行那句说以文件为准 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「分析一下吸烟和肺功能」做完了 — 我先出一份方案。
+[主进程] Debugger ending on ws://127.0.0.1:52964/99d076d3-cac9-4811-9d62-968e7ba79051
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/plan-mode.spec.ts:194:3 › 先出方案 · 假模型 › **不做了**：什么都不存，开关关了，卡片写「没采用」 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52981/a275bed6-3de8-41c1-91d4-fd6b6797454a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/plan-mode.spec.ts:203:3 › 先出方案 · 假模型 › **`/plan 问题`**：不把 /plan 送给模型、开关打开、问题照发、方案卡出来 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52997/863f97de-e821-486b-bd1d-778ade52bedb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/plan-mode.spec.ts:215:3 › 先出方案 · 假模型 › 方案菜单可操作，三颗方案按钮常驻看得见（opacity 1） (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「分析一下吸烟和肺功能」做完了 — 我先出一份方案。
+[主进程] Debugger ending on ws://127.0.0.1:53014/8cc0ea2b-94f4-4ff0-bad9-c4c790159821
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/plan-mode.spec.ts:235:3 › 先出方案 · 假模型 › **人在两轮之间改了方案文件**：留着、卡片写「你改过」 (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53031/d9d3ef33-772f-4529-a459-071460cb285e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/plan-mode.spec.ts:267:3 › 先出方案 · agent 这一轮改了批准过的方案 › **恢复并出声**：文件回到批准时的样子，转录里一句「已从存档恢复」，卡片不写「你改过」 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53054/f5e4a192-2062-4bb8-bf2c-327eb0f67da5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/plan-mode.spec.ts:290:3 › 先出方案 · 坞里的对话 › **坞里方案菜单可操作、主侧隔离、方案卡与带子不撑破坞** (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53077/f9f9bf2f-0a0c-42d5-aaf2-05c7fabab8eb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/plan-mode.spec.ts:349:3 › 先出方案 · 不支持的会话 › **ACP 会话**：菜单开关禁用，同一项直接显示原因 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53085/d80e348a-8dfd-4184-bfe9-5aa499f1874d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53115/bb7326d1-5a8d-423b-be48-bbcb4f0ec532
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53146/5974c2ca-01a5-469b-8d73-3fa1b8d4d518
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53165/b0032281-f367-4794-a1ce-2b80c96e11e1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  32 e2e/setup-entry.spec.ts:15:3 › 无模型的首次引导入口 › 旧跳过标记不能掩盖新引导；新版主动跳过后不反复弹出，并可从首页重新进入 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53173/9daa0238-ff74-4e93-984f-d6add8989e28
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  33 e2e/setup-entry.spec.ts:39:3 › 已有可用模型的兼容入口 › 旧跳过标记加可用模型时保留工作台，不强制重新引导 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53182/37fe7ab8-3f6c-47d2-839b-dd1da729d1ed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/setup-wizard.spec.ts:40:3 › 首启向导 › 没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用 (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53210/bd8c547b-d421-49a6-9ab8-a08c18802287
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53221/0e609cf8-a81b-4ee2-aa03-cf1b8e3a90d7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  35 e2e/setup-wizard.spec.ts:78:3 › 首启向导 › 先跳过 → 回到普通首页，底部红字还在；点红字和重开后点红字均从第一页开始 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53235/893db934-1b36-4924-bcbb-14864ad8002f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  36 e2e/setup-wizard.spec.ts:97:3 › 首启向导 › 解释器路径保存失败在卡片内显示，未配置时仍可跳过 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53243/6114a3ae-176e-4340-84b6-e7a70e46303e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  37 e2e/setup-wizard.spec.ts:112:3 › 首启向导 › 密钥链接交给系统浏览器，默认 DeepSeek 地址无需重复填写 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53258/6873a887-ca2c-4e9c-875e-9979d4b70c38
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  38 e2e/setup-wizard.spec.ts:131:3 › 首启向导 › 服务商切换自动填写目录默认地址，手动改址仍可检测 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53267/37800b68-59b8-4f5e-b139-0b831464a50a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  39 e2e/setup-wizard.spec.ts:154:3 › 首启向导 › 引导覆盖整个 App 并虚化背景，卡片清晰且焦点不进入背景 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53275/f9cd4b5f-6cf6-40e8-98fc-505a8959f798
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  40 e2e/setup-wizard.spec.ts:176:3 › 首启向导 › 四步实机截图；语言选择立即传递到工作台；窄窗口可操作 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53308/15eaba22-1ebe-426d-a6eb-edbccb2647ee
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  41 e2e/setup-wizard.spec.ts:205:3 › 首启向导 › 自定义 URL：先检测失败再修正，检测不落盘；保存后能用同一服务对话 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53327/252c5e92-e118-4f1b-b6c4-3a45ca7834d1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  42 e2e/setup-wizard.spec.ts:249:3 › 首启向导 · 产品原样的默认配置 › 明确模型和协议在检测、保存验证、首次对话中一致 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53355/f558c240-bf0b-490e-b3c4-6852562dcbf9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  43 e2e/setup-wizard.spec.ts:277:3 › 首启向导 · 产品原样的默认配置 › **填完 key 一开口，走的是刚填的那家（native），不是 claude CLI**；「优化输入」在 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53373/331697df-48ab-4054-91df-79e0228d60bf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  44 e2e/setup-wizard.spec.ts:318:3 › 首启向导 · 混合协议目录 › 自动协议按所选目录模型检测、保存并对话 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53396/216d1ab2-2127-4719-9dbf-e1fb7a7a8f19
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53413/b04dfaa8-9eb0-4f5a-9574-b9a85f8a72ee
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  45 e2e/subagent-shutdown.spec.ts:7:1 › app quit drains an active delegated process before restart and retains the frozen context (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:53427/72af1bad-ab8a-4148-9122-ea20b3d88c87
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  46 e2e/subagent-view.spec.ts:36:3 › 子 agent 看得见 › 点 chip → 坞里那一格有它的过程与交回的结果；主转录里没有那条 read (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53454/3e03cbc7-936e-489b-8443-f565a6e1f04a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  47 e2e/subagent-view.spec.ts:53:3 › 子 agent 看得见 › 在跑时 chip 上有那一句、坞里那条 bash 在跑；跑完那一句消失 (17.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:53527/47514c70-6172-409b-946d-0a6522bd2b12
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  48 e2e/subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区 (4.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53546/b58b2193-ee0e-490c-bef3-6b6d6b753ca0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:53988/9ba38b2e-8442-48d5-bfae-4dfc2cae2868
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  49 e2e/subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子 (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55062/dc1525bf-6f9a-426c-87a6-53da4c13e38b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  50 e2e/subagent-view.spec.ts:124:3 › 子 agent 看得见 › 看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55088/59b66a05-04e3-427f-9084-52b98e185931
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  51 e2e/subagent-view.spec.ts:196:3 › 坞里那段对话派的子 agent：长长的一句不撑破坞 › chip 那一句很长：坞不出横向滚动，chip 不越过坞的右缘 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「找个子 agent 看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55110/d768d545-febd-4612-b3ac-6f2ea83ce182
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  52 e2e/subagent.spec.ts:60:3 › 子 agent 真的在独立进程里跑了一次 › 结果回到对话里，账本上留下三层链 (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55148/570402e8-16b0-42c6-abbb-f94e7059d30c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  53 e2e/subagent.spec.ts:145:3 › 定义写错时不会静静地消失 › **点名一个不存在的子 agent** —— 账本记 failed 并带原因 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55162/4ac93432-b2ed-44a8-9ea5-2963e17c1526
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  54 e2e/subagent.spec.ts:227:3 › parallel：两个独立进程，都挂在同一次工具调用下面 › 两个都跑完、都出 chip、账本上都挂到那次工具调用下 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派两个子 agent」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:55189/d5314a3f-e119-4daa-95b0-6596185b2a7d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  55 e2e/subagent.spec.ts:285:3 › chain：上一步的真实输出流进了下一步 › **`{previous}` 换成的是第一步的真输出**，不是占位符本身 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55219/af2ee190-8e02-467f-9399-0695e371abe1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  56 e2e/task-arrangement-layout.spec.ts:11:1 › preserves long task identities and expanded paths in a narrow real Electron view (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55233/38e6e788-3dba-4dc6-bb9f-fc489c496e96
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55282/cef0cbdc-250c-4ffb-9d8f-c9cd28a078b7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  57 e2e/terminal-shutdown.spec.ts:13:3 › quitting with two live Normal terminals exits cleanly and reopening retains the conversations (8.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55292/64b83dc2-acbf-4b27-bf4b-dc102306d7e5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [store] 已把 2 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:55358/d3544d8a-25a8-4d1e-a07e-903766968706
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  58 e2e/terminal-shutdown.spec.ts:13:3 › quitting with two live DAWN terminals exits cleanly and reopening retains the conversations (11.1s)
+
+
+  1) e2e/delivery-guidance.spec.ts:48:2 › pending clarification cancellation › stops the pending replan and retains answers without creating output 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('region', { name: '自动安排', exact: true }).getByRole('button', { name: '中止规划', exact: true })
+
+
+      54 |   await auto.getByRole('textbox',{name:'问题 1 的回答',exact:true}).fill('mg/g')
+      55 |   await auto.getByRole('button',{name:'补充后重新规划',exact:true}).click()
+    > 56 |   await auto.getByRole('button',{name:'中止规划',exact:true}).click()
+         |                                                           ^
+      57 |   await expect(auto.getByRole('button',{name:'补充后重新规划',exact:true})).toBeEnabled()
+      58 |   await expect(auto.getByRole('textbox',{name:'问题 1 的回答',exact:true})).toHaveValue('mg/g')
+      59 |   expect(existsSync(join(workspace,'mean.csv'))).toBe(false)
+        at /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/e2e/delivery-guidance.spec.ts:56:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/delivery-guidance-pending--6ad12-ers-without-creating-output/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/delivery-guidance-pending--6ad12-ers-without-creating-output/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/delivery-guidance-pending--6ad12-ers-without-creating-output/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/delivery-guidance-pending--6ad12-ers-without-creating-output/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/delivery-guidance.spec.ts:48:2 › pending clarification cancellation › stops the pending replan and retains answers without creating output 
+  57 passed (5.3m)

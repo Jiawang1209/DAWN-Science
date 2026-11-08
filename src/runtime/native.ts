@@ -208,6 +208,8 @@ export type ToolGate = (
 ) => import("../policy/permissions.js").门的决定
 
 export interface NativeRuntimeOptions {
+  /** Trusted host-owned planning contracts; never sourced from model JSON or other sessions. */
+  planningContracts?: (sessionId:string)=>Record<string,import('../protocol/task-contract.js').TaskContract>
   artifactCapture?: import('../artifacts/capture.js').ArtifactCapture
   terminals?: TerminalControl
   /**
@@ -2156,7 +2158,7 @@ export class NativeRuntime implements AgentRuntime {
     this.questionBooks.set(spec.sessionId, questions)
     const questionTool = createAskUserQuestionTool((id, qs, signal) => questions.ask(id, qs, signal))
     const 方案工具 = [
-      createProposePlanTool({ ...(this.opts.subagentChildEntry&&!spec.bot&&!spec.remote?{executionAgents:()=>loadSubagentsFrom(this.子agent层(spec.workspace),{自带停用:this.opts.subagents?.自带停用}).agents.filter(a=>!a.disabled).map(({name,description,tools})=>({name,description,...(tools?{tools}:{})}))}:{}),requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
+      createProposePlanTool({ ...(this.opts.planningContracts?{contracts:()=>this.opts.planningContracts!(spec.sessionId)}:{}),...(this.opts.subagentChildEntry&&!spec.bot&&!spec.remote?{executionAgents:()=>loadSubagentsFrom(this.子agent层(spec.workspace),{自带停用:this.opts.subagents?.自带停用}).agents.filter(a=>!a.disabled).map(({name,description,tools})=>({name,description,...(tools?{tools}:{})}))}:{}),requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
       ...(this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
         ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
         : []),

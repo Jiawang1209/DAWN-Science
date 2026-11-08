@@ -1,5 +1,7 @@
+import {bindPlanContracts,planContractCatalog} from './plan-contract-bindings.js'
+import type {TaskContract} from '../protocol/task-contract.js'
 import {z} from 'zod'
-import {TaskArrangementSchema,serializeTaskArrangement,parseTaskArrangement,type TaskArrangement} from '../protocol/task-arrangement.js'
+import {TaskArrangementSchema,TaskArrangementInputSchema,serializeTaskArrangement,parseTaskArrangement,type TaskArrangementInput} from '../protocol/task-arrangement.js'
 /**
  * `propose_plan`：先出方案时，agent 把分析方案交给人审（2026-09-27，spec `2026-09-27-先出方案-design.md` §4.3）。
  *
@@ -35,6 +37,7 @@ export const 方案期指引 = [
 
 export function createProposePlanTool(opts: {
   /** 交给运行时：记进方案簿、发 `plan` 事件。回第几版 */
+  contracts?:()=>Record<string,TaskContract>
   requireArrangement?:()=>boolean
   executionAgents?:()=>{name:string;description:string;tools?:string[]}[]
   交: (toolCallId: string, 方案: { title: string; plan: string }) => { version: number }
@@ -46,14 +49,14 @@ export function createProposePlanTool(opts: {
       "先出方案时，把分析方案交给用户审。用户批了才开始执行。" +
       `plan 是 markdown，必须有五个二级标题：${必填小节.join("、")}；「产物」一节里每个产物的路径写在反引号里。`,
     promptSnippet: "propose_plan：先出方案时把分析方案交给用户审",
-    promptGuidelines: [...方案期指引,...(opts.executionAgents?[
-      '自动安排应使用 dispatch="team-v1"，每项 execution={agent,contract}，最多 8 项。agent 必须来自下列名册；任务 inputs/outputs 与 contract 相同，contract.submission="tool"。只读使用 read-only，写声明产物使用 workspace-write，需要实际运行才使用 workspace-exec/requireExecution。独立审阅必须单独成员、只读 resultType="review" 且没有输出文件；报告写入交给执行任务。缺信息保留 questions，不能发明路径、科学阈值或扩大工具权限。',
+    promptGuidelines: [...方案期指引,...(opts.contracts?['宿主契约目录：'+JSON.stringify(planContractCatalog(opts.contracts())),'已有精确契约时使用 execution={agent,contractRef} 选择目录引用，宿主将展开完整冻结字段；不要同时提供contract，也不要猜测引用。没有目录契约时沿用完整contract。']:[]),...(opts.executionAgents?[
+      '自动安排应使用 dispatch="team-v1"，每项 execution={agent,contract}，存在宿主目录时也可用 execution={agent,contractRef}，最多 8 项。agent 必须来自下列名册；任务 inputs/outputs 与 contract 相同，contract.submission="tool"。只读使用 read-only，写声明产物使用 workspace-write，需要实际运行才使用 workspace-exec/requireExecution。独立审阅必须单独成员、只读 resultType="review" 且没有输出文件；报告写入交给执行任务。缺信息保留 questions，不能发明路径、科学阈值或扩大工具权限。',
       '可用执行者：'+JSON.stringify(opts.executionAgents()),
     ]:[])],
     parameters: Type.Object({
       title: Type.String({ description: "一句话标题，会成为存档文件名的一部分" }),
       plan: Type.String({ description: "方案全文（markdown，五个必填二级标题）" }),
-      arrangement: Type.Optional(Type.Unsafe<TaskArrangement>(z.toJSONSchema(TaskArrangementSchema))),
+      arrangement: Type.Optional(Type.Unsafe<TaskArrangementInput>(z.toJSONSchema(opts.contracts?TaskArrangementInputSchema:TaskArrangementSchema))),
     }),
     async execute(toolCallId: string, params: { title?: unknown; plan?: unknown; arrangement?:unknown }, signal?: AbortSignal): Promise<ToolResult> {
       if(signal?.aborted)return text('本轮已停止，方案未提交。',true)
@@ -65,7 +68,9 @@ export function createProposePlanTool(opts: {
         return text(`方案缺这几节：${缺.map((h) => `「## ${h}」`).join("")}。补齐再交（二级标题要一字不差）。`, true)
       }
       if(params.arrangement!==undefined){
-        const arrangement=TaskArrangementSchema.safeParse(params.arrangement)
+        let value:unknown
+        try{value=bindPlanContracts(params.arrangement,opts.contracts?.()??{})}catch(error){return text('任务安排无效：'+(error instanceof Error?error.message:String(error)),true)}
+        const arrangement=TaskArrangementSchema.safeParse(value)
         if(!arrangement.success)return text('任务安排无效：'+arrangement.error.issues.map(i=>i.message).join('；'),true)
         if(parseTaskArrangement(plan).state!=='absent')return text('请仅通过 arrangement 提交任务结构，不要在 plan 中重复任务安排节。',true)
         plan+='\n\n'+serializeTaskArrangement(arrangement.data)

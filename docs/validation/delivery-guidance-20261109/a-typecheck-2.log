@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/evaluation/research-auto-arrangement.test.ts(17,390): error TS2352: Conversion of type '{ agent: string; contractRef: string; }' to type '{ agent: string; contract: any; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'contract' is missing in type '{ agent: string; contractRef: string; }' but required in type '{ agent: string; contract: any; }'.
+tests/orchestration/task-delivery-guide.test.ts(11,15): error TS2352: Conversion of type 'ZodStandardJSONSchemaPayload<ZodObject<{ data: ZodOptional<ZodDiscriminatedUnion<[ZodObject<{ kind: ZodLiteral<"data-summary">; rows: ZodNumber; columns: ZodArray<ZodObject<{ name: ZodString; type: ZodOptional<ZodString>; unit: ZodOptional<...>; }, $strict>>; issues: ZodArray<...>; }, $strict>, ZodObject<...>, ZodOb...' to type '{ properties: { data: { properties: { metrics: { required: string[]; }; }; }; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'properties' are incompatible.
+    Property 'data' is missing in type 'Record<string, _JSONSchema>' but required in type '{ data: { properties: { metrics: { required: string[]; }; }; }; }'.

@@ -1,0 +1,81 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (11 tests | 1 failed) 248ms
+   × keeps cancellation outside collapsed adjustment details when a proposal already exists 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > keeps cancellation outside collapsed adjustment details when a proposal already exists
+AssertionError: expected <details>…(2)</details> to be null
+
+- Expected:
+null
+
++ Received:
+<details>
+  <summary>
+    调整任务与分工
+  </summary>
+  <div
+    class="auto-arrangement-form"
+  >
+    <label>
+      任务目标
+      <textarea
+        aria-label="任务目标"
+        class="control"
+        maxlength="16000"
+        rows="3"
+      >
+        均值
+      </textarea>
+    </label>
+    <label>
+      调整要求（可选）
+      <textarea
+        aria-label="调整要求（可选）"
+        class="control"
+        maxlength="4000"
+        placeholder="例如：合并前两步，保留独立审阅"
+        rows="2"
+      />
+    </label>
+    <div
+      class="orchestration-advisor-actions"
+    >
+      <button
+        class="btn btn-outline btn-sm"
+        disabled=""
+        type="button"
+      >
+        重新安排
+      </button>
+      <button
+        class="btn btn-ghost btn-sm"
+        type="button"
+      >
+        中止规划
+      </button>
+    </div>
+  </div>
+</details>
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:119:61
+    117|  const view=render(<OrchestrationAdvisor task="均值" plan={plan} busy pl…
+    118|  const stop=view.container.querySelector('button')?.textContent==='中止规…
+    119|  expect(stop).toBeTruthy();expect(stop!.closest('details')).toBeNull()
+       |                                                             ^
+    120| })
+    121|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  04:55:54
+   Duration  1.58s (transform 415ms, setup 653ms, import 28ms, tests 248ms, environment 556ms)
+

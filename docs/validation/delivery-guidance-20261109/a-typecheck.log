@@ -1,0 +1,7 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/protocol/task-arrangement.ts(43,75): error TS2322: Type 'ZodArray<ZodObject<{ id: ZodString; title: ZodString; goal: ZodString; role: ZodString; inputs: ZodArray<ZodPipe<ZodString, ZodString>>; ... 4 more ...; execution: ZodOptional<...>; }, $strict>>' is not assignable to type 'never'.
+tests/tools/plan-contract-bindings.test.ts(15,36): error TS2532: Object is possibly 'undefined'.
+tests/tools/plan-contract-bindings.test.ts(15,59): error TS2493: Tuple type '[]' of length '0' has no element at index '1'.
+tests/tools/plan-contract-bindings.test.ts(17,9): error TS2532: Object is possibly 'undefined'.
+tests/tools/plan-contract-bindings.test.ts(17,32): error TS2493: Tuple type '[]' of length '0' has no element at index '1'.

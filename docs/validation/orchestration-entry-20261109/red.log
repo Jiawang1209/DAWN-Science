@@ -1,0 +1,218 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-entry.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-entry.test.tsx (2 tests | 2 failed) 94ms
+   × keeps a header entry while loading and ahead of a pending information form 82ms
+   × keeps the original outcome entry and does not enable navigation without an owner 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-entry.test.tsx > keeps a header entry while loading and ahead of a pending information form
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "打开编排视图"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "运行总览":
+  [36m<section[39m
+    [33maria-label[39m=[32m"运行总览"[39m
+    [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [33mdata-expanded[39m=[32m"false"[39m
+    [33mdata-inspecting[39m=[32m"false"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"collaboration-heading"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "协作":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "刷新运行记录":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+      [33mdata-expanded[39m=[32m"false"[39m
+      [33mdata-inspecting[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-heading-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m刷新运行记录[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m正在读取运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-entry.test.tsx:16:16
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/orchestration-entry.test.tsx > keeps the original outcome entry and does not enable navigation without an owner
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "打开编排视图"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "运行总览":
+  [36m<section[39m
+    [33maria-label[39m=[32m"运行总览"[39m
+    [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+    [33mdata-expanded[39m=[32m"false"[39m
+    [33mdata-inspecting[39m=[32m"false"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"collaboration-heading"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "协作":
+  [36m<h3 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "刷新运行记录":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"运行总览"[39m
+      [33mclass[39m=[32m"run-overview collaboration-panel"[39m
+      [33mdata-expanded[39m=[32m"false"[39m
+      [33mdata-inspecting[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"collaboration-heading"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"collaboration-eyebrow"[39m
+          [36m>[39m
+            [0m对话协作台[0m
+          [36m</span>[39m
+          [36m<h3>[39m
+            [0m协作[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"collaboration-heading-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m刷新运行记录[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m开始任务后查看运行记录[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-entry.test.tsx:28:16
+     26|  const client={get:vi.fn().mockResolvedValue(empty)} as unknown as Wor…
+     27|  const view=render(<RunOverview client={client}/>);
+     28|  expect(screen.getByRole('button',{name:'打开编排视图'})).toHaveProperty('di…
+       |                ^
+     29|  view.rerender(<RunOverview client={client} sessionId="owner"/>);await…
+     30|  expect(screen.getByRole('button',{name:'展开流程工作台'})).toBeTruthy()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  05:44:04
+   Duration  1.69s (transform 496ms, setup 561ms, import 388ms, tests 94ms, environment 556ms)
+

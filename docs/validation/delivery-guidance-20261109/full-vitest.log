@@ -1,0 +1,87 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (16 tests | 2 failed) 130163ms
+   × counts real planning calls in the multi arm and compiles the model-selected task count with the same judge 30005ms
+   × keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan 30004ms
+ ❯ |node| tests/orchestration/task-checkpoint.test.ts (8 tests | 1 failed) 33ms
+   × keeps a worst-case checkpoint bounded across maximum file lists and a large evidence history 10ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts real planning calls in the multi arm and compiles the model-selected task count with the same judge
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/evaluation/research-runner.test.ts:224:1
+    222|  }finally{await server.close()}
+    223| },30000)
+    224| it('counts real planning calls in the multi arm and compiles the model…
+       | ^
+    225|  const root=mkdtempSync(join(tmpdir(),'dawn-research-auto-'));roots.pu…
+    226|  const ordinary=researchScenario(researchTasks())
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/evaluation/research-runner.test.ts:253:1
+    251|   expect(report.rows.find(r=>r.mode==='single')?.phaseUsage?.planning.…
+    252|  }finally{await server.close()}
+    253| },30000)
+       | ^
+    254|
+    255| it('keeps independently frozen check/analyze/review routes and guidanc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > keeps a worst-case checkpoint bounded across maximum file lists and a large evidence history
+AssertionError: expected 34401 to be less than 32768
+ ❯ tests/orchestration/task-checkpoint.test.ts:68:80
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of null (reading '1')
+ ❯ Object.toolCall tests/evaluation/research-runner.test.ts:232:63
+ ❯ IncomingMessage.<anonymous> scripts/mock-inference-server.mjs:638:74
+ ❯ IncomingMessage.emit node:events:519:28
+ ❯ endReadableNT node:internal/streams/readable:1698:12
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:89:21
+
+This error originated in "tests/evaluation/research-runner.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "counts real planning calls in the multi arm and compiles the model-selected task count with the same judge". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of null (reading '1')
+ ❯ Object.toolCall tests/evaluation/research-runner.test.ts:260:63
+ ❯ IncomingMessage.<anonymous> scripts/mock-inference-server.mjs:638:74
+ ❯ IncomingMessage.emit node:events:519:28
+ ❯ endReadableNT node:internal/streams/readable:1698:12
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:89:21
+
+This error originated in "tests/evaluation/research-runner.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed | 714 passed (716)
+      Tests  3 failed | 7071 passed | 11 skipped (7085)
+     Errors  2 errors
+   Start at  04:41:12
+   Duration  302.81s (transform 13.67s, setup 49.95s, import 196.53s, tests 658.16s, environment 95.18s)
+

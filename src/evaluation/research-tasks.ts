@@ -19,7 +19,7 @@ export function researchTasks():ResearchTask[]{
  {id:'duplicate-sites',csv:'site,carbon_mg_g\nA,1\nA,3\nB,5\nB,7\n',column:'carbon_mg_g',unit:'mg/g',missing:'block',instructions:'计算全部4行 carbon_mg_g 的算术均值，单位 mg/g。重复site表示重复观测，不得按site去重或只保留第一行；Python stdlib 脚本、result.json 和报告。',expected:{n:4,unit:'mg/g',mean:4}}]
 }
 export const researchFingerprint=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex')
-export type ResearchTerminal='accepted'|'blocked'|'failed'|'cancelled'|'not-run'
+export type ResearchTerminal='accepted'|'blocked'|'failed'|'cancelled'|'not-run'|'awaiting-info'
 /** Same path identity as host task-contract acceptance, over this trial's observed records only. */
 export function researchInputRead(workspace:string,input:string,evidence:readonly RouteToolEvidence[]|undefined):boolean {
  return !!evidence?.some(tool=>tool.name==='read'&&tool.status==='done'&&typeof tool.input==='object'&&tool.input!==null&&typeof (tool.input as {path?:unknown}).path==='string'&&resolve(workspace,(tool.input as {path:string}).path)===resolve(workspace,input))
@@ -30,7 +30,7 @@ export function judgeResearch(task:ResearchTask,terminal:ResearchTerminal,actual
  const correctBlock=terminal==='blocked'&&actual===undefined&&blocking?.inputRead===true&&blocking.reasons.some(reason=>/单位.{0,12}(未提供|未知|缺失|不明)|(?:unknown|missing|unspecified|no)\s+units?\b|units?.{0,20}(?:unknown|missing|not provided)/i.test(reason))
  return{success:inputPreserved&&(e?terminal==='accepted'&&correct&&versionMatches:correctBlock),falseAcceptance:terminal==='accepted'&&(!inputPreserved||!e||!correct||!versionMatches),inputPreserved}
 }
-export interface ResearchArrangementMetrics {usage?:SessionUsage;usageIssue?:'unavailable';requests:number;taskCount:number;valid:boolean;reviewCovered:boolean;compiled?:boolean;reason?:string}
+export interface ResearchArrangementMetrics {questions?:string[];usage?:SessionUsage;usageIssue?:'unavailable';requests:number;taskCount:number;valid:boolean;reviewCovered:boolean;compiled?:boolean;reason?:string}
 export interface ResearchRow {phaseUsage?:ResearchUsageBreakdown['phases'];totalUsage?:ResearchUsageSummary;usageIssues?:string[];arrangement?:ResearchArrangementMetrics;submissionDiagnostics?:SubmissionDiagnostics;diagnosticReadIssues?:{scopeId:string;reason:string}[];stageRequestBudgets?:Record<'work'|'review',{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number}>;requestBudget?:{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number};submissionAttempts?:number;invalidSubmissions?:number;caseId:string;mode:'single'|'multi';repeat:number;fingerprint:string;terminal:ResearchTerminal;success:boolean;falseAcceptance:boolean;inputPreserved:boolean|null;requests:number;elapsedMs:number;usage:{visibleTokens:number;unknownUsageTasks:number;partialUsage:boolean};versions:FileVersion[];reason?:string}
 export function notRunResearch(task:ResearchTask,mode:ResearchRow['mode'],fingerprint:string):ResearchRow{
  const attributed=summarizeResearchUsage([])

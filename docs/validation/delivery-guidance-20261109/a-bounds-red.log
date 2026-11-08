@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-delivery-guide.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/orchestration/task-delivery-guide.test.ts (4 tests | 1 failed) 8ms
+   × marks truncated numeric fields instead of returning an unbounded exact-looking path 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-delivery-guide.test.ts > marks truncated numeric fields instead of returning an unbounded exact-looking path
+AssertionError: expected 50784 to be less than 8000
+ ❯ tests/orchestration/task-delivery-guide.test.ts:27:51
+     25|  const huge='x'.repeat(50000),c=TaskContractSchema.parse({...contract,…
+     26|  const guide=new TaskSubmission(c,'/tmp',()=>[]).checkpoint().delivery…
+     27|  expect(Buffer.byteLength(JSON.stringify(guide))).toBeLessThan(8000)
+       |                                                   ^
+     28|  expect(guide.numeric?.truncatedFields).toContain('resultPath')
+     29| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  04:38:30
+   Duration  339ms (transform 107ms, setup 0ms, import 239ms, tests 8ms, environment 0ms)
+

@@ -1,0 +1,775 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/evaluation/research-auto-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (7 tests | 2 failed) 218ms
+   × collects all questions and generates a new proposal without approving the old plan 42ms
+   × retains failed clarification answers and aborts their pending request when the proposal changes 28ms
+ ❯ |node| tests/evaluation/research-auto-arrangement.test.ts (8 tests | 1 failed) 563ms
+   × records and validates actual model-generated planning: questions 124ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > collects all questions and generates a new proposal without approving the old plan
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "补充后重新规划"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "自动安排":
+  [36m<section[39m
+    [33maria-label[39m=[32m"自动安排"[39m
+    [33mclass[39m=[32m"orchestration-advisor"[39m
+  [36m/>[39m
+
+  Name "任务安排结果":
+  [36m<section[39m
+    [33maria-label[39m=[32m"任务安排结果"[39m
+    [33mclass[39m=[32m"task-arrangement-result"[39m
+    [33mdata-plan-status[39m=[32m"proposed"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "自动安排":
+  [36m<h4 />[39m
+
+  Name "待确认事项":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint task-arrangement-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header />[39m
+
+  Name "":
+  [36m<header />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "任务块数":
+  [36m<output[39m
+    [33maria-label[39m=[32m"任务块数"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ol />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mdata-arrangement-task[39m=[32m"inspect"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details />[39m
+
+  Name "":
+  [36m<details />[39m
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  [36m<dd[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<dd[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<dd[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "任务目标":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"任务目标"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"16000"[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  Name "调整要求（可选）":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"调整要求（可选）"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"4000"[39m
+    [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "重新安排":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"自动安排"[39m
+      [33mclass[39m=[32m"orchestration-advisor"[39m
+    [36m>[39m
+      [36m<h4>[39m
+        [0m自动安排[0m
+      [36m</h4>[39m
+      [36m<p>[39m
+        [0m方案第 1 版[0m
+        [0m · [0m
+        [0m等你看[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"任务安排结果"[39m
+        [33mclass[39m=[32m"task-arrangement-result"[39m
+        [33mdata-plan-status[39m=[32m"proposed"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong>[39m
+            [36m<output[39m
+              [33maria-label[39m=[32m"任务块数"[39m
+            [36m>[39m
+              [0m1 个任务块[0m
+            [36m</output>[39m
+          [36m</strong>[39m
+          [36m<span>[39m
+            [0m单任务[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<p[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0m缺单位[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint task-arrangement-state"[39m
+        [36m>[39m
+          [0m这是方案中的任务划分，不代表已启动这些 Agent。[0m
+        [36m</p>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mdata-arrangement-task[39m=[32m"inspect"[39m
+          [36m>[39m
+            [36m<header>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0m等待单位[0m
+              [36m</strong>[39m
+            [36m</header>[39m
+            [36m<p[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0m先确认[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [36m<small>[39m
+                [0m分工[0m
+                [0m：[0m
+              [36m</small>[39m
+              [36m<span[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0m分析员[0m
+              [36m</span>[39m
+            [36m</p>[39m
+            [36m<small[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0m依赖[0m
+              [0m：[0m
+              [0m没有前置[0m
+            [36m</small>[39m
+            [36m<details>[39m
+              [36m<summary>[39m
+                [0m文件与验收条件[0m
+              [36m</summary>[39m
+              [36m<dl>[39m
+                [36m<dt>[39m
+                  [0m输入[0m
+                [36m</dt>[39m
+                [36m<dd[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0min.csv[0m
+                [36m</dd>[39m
+                [36m<dt>[39m
+                  [0m输出[0m
+                [36m</dt>[39m
+                [36m<dd[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0m未声明文件[0m
+                [36m</dd>[39m
+                [36m<dt>[39m
+                  [0m验收[0m
+                [36m</dt>[39m
+                [36m<dd[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0m不猜单位[0m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</details>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+        [36m<h4>[39m
+          [0m待确认事项[0m
+        [36m</h4>[39m
+        [36m<ul>[39m
+          [36m<li[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mcarbon 的单位是什么？[0m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+      [36m<details>[39m
+        [36m<summary>[39m
+          [0m调整任务与分工[0m
+        [36m</summary>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"auto-arrangement-form"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m任务目标[0m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"任务目标"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mmaxlength[39m=[32m"16000"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m>[39m
+              [0m计算均值[0m
+            [36m</textarea>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0m调整要求（可选）[0m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"调整要求（可选）"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m重新安排[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</details>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m可在对话中的方案卡修改并采纳，或补充调整要求后重新安排。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m先出方案期间只读查看；采纳后才进入原有执行与验收流程。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-advisor.test.tsx:63:22
+     61|  const plan=await clarificationPlan(),onGenerate=vi.fn(async(_goal:str…
+     62|  render(<OrchestrationAdvisor task="计算均值" plan={plan} onGenerate={onGe…
+     63|  const button=screen.getByRole('button',{name:'补充后重新规划'})
+       |                      ^
+     64|  expect(button).toHaveProperty('disabled',true)
+     65|  fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{targe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > retains failed clarification answers and aborts their pending request when the proposal changes
+TestingLibraryElementError: Unable to find an accessible element with the role "textbox" and name "问题 1 的回答"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "自动安排":
+  [36m<section[39m
+    [33maria-label[39m=[32m"自动安排"[39m
+    [33mclass[39m=[32m"orchestration-advisor"[39m
+  [36m/>[39m
+
+  Name "任务安排结果":
+  [36m<section[39m
+    [33maria-label[39m=[32m"任务安排结果"[39m
+    [33mclass[39m=[32m"task-arrangement-result"[39m
+    [33mdata-plan-status[39m=[32m"proposed"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "自动安排":
+  [36m<h4 />[39m
+
+  Name "待确认事项":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint task-arrangement-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  [36m<header />[39m
+
+  Name "":
+  [36m<header />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "任务块数":
+  [36m<output[39m
+    [33maria-label[39m=[32m"任务块数"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ol />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mdata-arrangement-task[39m=[32m"inspect"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details />[39m
+
+  Name "":
+  [36m<details />[39m
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  Name "":
+  [36m<dt />[39m
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  [36m<dd[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<dd[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<dd[39m
+    [33mdata-authored[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "任务目标":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"任务目标"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"16000"[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  Name "调整要求（可选）":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"调整要求（可选）"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"4000"[39m
+    [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "重新安排":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"自动安排"[39m
+      [33mclass[39m=[32m"orchestration-advisor"[39m
+    [36m>[39m
+      [36m<h4>[39m
+        [0m自动安排[0m
+      [36m</h4>[39m
+      [36m<p>[39m
+        [0m方案第 1 版[0m
+        [0m · [0m
+        [0m等你看[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"任务安排结果"[39m
+        [33mclass[39m=[32m"task-arrangement-result"[39m
+        [33mdata-plan-status[39m=[32m"proposed"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<strong>[39m
+            [36m<output[39m
+              [33maria-label[39m=[32m"任务块数"[39m
+            [36m>[39m
+              [0m1 个任务块[0m
+            [36m</output>[39m
+          [36m</strong>[39m
+          [36m<span>[39m
+            [0m单任务[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<p[39m
+          [33mdata-authored[39m=[32m"1"[39m
+        [36m>[39m
+          [0m缺单位[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint task-arrangement-state"[39m
+        [36m>[39m
+          [0m这是方案中的任务划分，不代表已启动这些 Agent。[0m
+        [36m</p>[39m
+        [36m<ol>[39m
+          [36m<li[39m
+            [33mdata-arrangement-task[39m=[32m"inspect"[39m
+          [36m>[39m
+            [36m<header>[39m
+              [36m<strong[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0m等待单位[0m
+              [36m</strong>[39m
+            [36m</header>[39m
+            [36m<p[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0m先确认[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [36m<small>[39m
+                [0m分工[0m
+                [0m：[0m
+              [36m</small>[39m
+              [36m<span[39m
+                [33mdata-authored[39m=[32m"1"[39m
+              [36m>[39m
+                [0m分析员[0m
+              [36m</span>[39m
+            [36m</p>[39m
+            [36m<small[39m
+              [33mdata-authored[39m=[32m"1"[39m
+            [36m>[39m
+              [0m依赖[0m
+              [0m：[0m
+              [0m没有前置[0m
+            [36m</small>[39m
+            [36m<details>[39m
+              [36m<summary>[39m
+                [0m文件与验收条件[0m
+              [36m</summary>[39m
+              [36m<dl>[39m
+                [36m<dt>[39m
+                  [0m输入[0m
+                [36m</dt>[39m
+                [36m<dd[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0min.csv[0m
+                [36m</dd>[39m
+                [36m<dt>[39m
+                  [0m输出[0m
+                [36m</dt>[39m
+                [36m<dd[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0m未声明文件[0m
+                [36m</dd>[39m
+                [36m<dt>[39m
+                  [0m验收[0m
+                [36m</dt>[39m
+                [36m<dd[39m
+                  [33mdata-authored[39m=[32m"1"[39m
+                [36m>[39m
+                  [0m不猜单位[0m
+                [36m</dd>[39m
+              [36m</dl>[39m
+            [36m</details>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+        [36m<h4>[39m
+          [0m待确认事项[0m
+        [36m</h4>[39m
+        [36m<ul>[39m
+          [36m<li[39m
+            [33mdata-authored[39m=[32m"1"[39m
+          [36m>[39m
+            [0mcarbon 的单位是什么？[0m
+          [36m</li>[39m
+        [36m</ul>[39m
+      [36m</section>[39m
+      [36m<details>[39m
+        [36m<summary>[39m
+          [0m调整任务与分工[0m
+        [36m</summary>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"auto-arrangement-form"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m任务目标[0m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"任务目标"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mmaxlength[39m=[32m"16000"[39m
+              [33mrows[39m=[32m"3"[39m
+            [36m>[39m
+              [0m计算均值[0m
+            [36m</textarea>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0m调整要求（可选）[0m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"调整要求（可选）"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mmaxlength[39m=[32m"4000"[39m
+              [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m重新安排[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</details>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m可在对话中的方案卡修改并采纳，或补充调整要求后重新安排。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m先出方案期间只读查看；采纳后才进入原有执行与验收流程。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-advisor.test.tsx:73:26
+     71|  const plan=await clarificationPlan(),generate=vi.fn(async()=>{throw E…
+     72|  const view=render(<OrchestrationAdvisor task="计算均值" plan={plan} onGen…
+     73|  fireEvent.change(screen.getByRole('textbox',{name:'问题 1 的回答'}),{targe…
+       |                          ^
+     74|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'补…
+     75|  expect(screen.getByRole('textbox',{name:'问题 1 的回答'})).toHaveProperty(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records and validates actual model-generated planning: questions
+AssertionError: expected undefined to deeply equal [ '输入单位是什么？' ]
+
+- Expected:
+[
+  "输入单位是什么？",
+]
+
++ Received:
+undefined
+
+ ❯ tests/evaluation/research-auto-arrangement.test.ts:24:184
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 12 passed (15)
+   Start at  04:30:46
+   Duration  2.48s (transform 1.32s, setup 682ms, import 1.85s, tests 781ms, environment 643ms)
+

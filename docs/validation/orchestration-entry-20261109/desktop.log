@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/orchestration-entry.spec.ts --output=docs/validation/orchestration-entry-20261109/test-results
+
+Running 1 test using 1 worker
+
+(node:4185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65276/b6bd934a-ad01-4c1a-9acf-e7d4d86f8cf5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/orchestration-entry.spec.ts:7:1 › workflow entry stays visible above clarification and returns to the same conversation (4.1s)
+
+  1 passed (4.8s)

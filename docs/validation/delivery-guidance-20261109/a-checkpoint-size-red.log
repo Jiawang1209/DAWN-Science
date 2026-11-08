@@ -1,0 +1,23 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-checkpoint.test.ts -t worst-case
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/orchestration/task-checkpoint.test.ts (8 tests | 1 failed | 7 skipped) 15ms
+   × keeps a worst-case checkpoint bounded across maximum file lists and a large evidence history 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > keeps a worst-case checkpoint bounded across maximum file lists and a large evidence history
+AssertionError: expected 34401 to be less than 32768
+ ❯ tests/orchestration/task-checkpoint.test.ts:68:80
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  04:44:45
+   Duration  1.11s (transform 257ms, setup 0ms, import 981ms, tests 15ms, environment 0ms)
+

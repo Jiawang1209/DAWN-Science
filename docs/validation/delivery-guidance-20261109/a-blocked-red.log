@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-delivery-guide.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science
+
+ ❯ |node| tests/orchestration/task-delivery-guide.test.ts (3 tests | 1 failed) 7ms
+   × does not force fabricated metrics for a blocked submission 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-delivery-guide.test.ts > does not force fabricated metrics for a blocked submission
+AssertionError: expected [ 'mean' ] to be undefined
+
+- Expected:
+undefined
+
++ Received:
+[
+  "mean",
+]
+
+ ❯ tests/orchestration/task-delivery-guide.test.ts:22:27
+     20|  expect(taskResultParameters(contract)).toMatchObject({properties:{dat…
+     21|  const metrics=(taskResultParameters(contract).properties!.data as {pr…
+     22|  expect(metrics.required).toBeUndefined()
+       |                           ^
+     23| })
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  04:32:24
+   Duration  289ms (transform 89ms, setup 0ms, import 203ms, tests 7ms, environment 0ms)
+

@@ -1,3 +1,5 @@
+import {parseTaskArrangement} from '../protocol/task-arrangement.js'
+import {taskDeliveryNotice} from '../protocol/task-delivery-notice.js'
 import {collaborationMember} from './collaboration-member.js'
 import {ApprovedPlanProgress} from './approved-plan-progress.js'
 import {CollaborationMemberPanel} from './collaboration-member-panel.js'
@@ -27,6 +29,7 @@ import {TaskTimeline,directTaskTimeline,teamTaskTimeline,type TimelineDestinatio
 import {useCollaborationView} from './state/collaboration-view.js'
 export function RunOverview({client,sessionId,onView,team,onPrepare,onBot,autoArrangement}:{autoArrangement?:Omit<Parameters<typeof OrchestrationAdvisor>[0],'onGenerate'>&{onGenerate:Parameters<typeof OrchestrationAdvisor>[0]['onGenerate']}|undefined;onBot?:((owner:string,teamId:string,botId:string,isCurrent:()=>boolean)=>Promise<void>)|undefined;onPrepare?:((owner:string,text:string)=>boolean)|undefined;team?:TeamSnapshot|undefined;client:WorkbenchClient;sessionId?:string|undefined;onView?:((id:string)=>void)|undefined}){
  const tabId=useId(),tabsRef=useRef<HTMLElement>(null),expandTrigger=useRef<HTMLButtonElement>(null)
+ const topExpandTrigger=useRef<HTMLButtonElement>(null),openedFromTop=useRef(false)
  const[inspection,setInspection]=useState<{owner:string|undefined;key:string;trigger:HTMLButtonElement}>()
  const detailClose=useRef<HTMLButtonElement>(null)
  const{snapshot:current,error,refresh}=useRunOverview(client,sessionId)
@@ -93,15 +96,17 @@ export function RunOverview({client,sessionId,onView,team,onPrepare,onBot,autoAr
   const frame=requestAnimationFrame(()=>{if(navigationOwner.current!==owner||navigationFrame.current!==frame)return;navigationFrame.current=undefined;tabsRef.current?.querySelector<HTMLButtonElement>(`[data-collaboration-tab="${tab}"]`)?.focus()})
   navigationFrame.current=frame
  }
- const automatic=autoArrangement&&sessionId?<OrchestrationAdvisor key={sessionId} {...autoArrangement} busy={autoArrangement.busy||current?.source==='live'&&runs.some(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping')}/>:null
+ const arrangement=autoArrangement?.plan?parseTaskArrangement(autoArrangement.plan.markdown):undefined
+ const awaitingInformation=autoArrangement?.plan?.status==='proposed'&&arrangement?.state==='valid'&&arrangement.arrangement.questions.length>0
+ const automatic=autoArrangement&&sessionId?<OrchestrationAdvisor key={sessionId} {...autoArrangement} ownerSessionId={sessionId} busy={autoArrangement.busy||current?.source==='live'&&runs.some(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping')}/>:null
  const emptyWork=!runs.length&&!ownedTeam?.tasks.length
  const live=current?.source==='live'
  const count=current?collaborationCounts(current):undefined
  const content=<section ref={sectionRef} className="run-overview collaboration-panel" data-expanded={expanded} data-inspecting={inspecting} aria-label={t("运行总览")}>
-  <header className="collaboration-heading"><div><span className="collaboration-eyebrow">{t("对话协作台")}</span><h3>{expanded?t("流程工作台"):t("协作")}</h3></div><div className="collaboration-heading-actions"><Button variant="ghost" size="sm" onClick={refresh}>{t("刷新运行记录")}</Button></div></header>
+  <header className="collaboration-heading"><div><span className="collaboration-eyebrow">{t("对话协作台")}</span><h3>{expanded?t("流程工作台"):t("协作")}</h3></div><div className="collaboration-heading-actions"><Button ref={topExpandTrigger} variant="outline" size="sm" disabled={!sessionId} aria-label={expanded?t("返回 DAWN 对话"):t("打开编排视图")} aria-expanded={expanded} onClick={()=>{if(!expanded)openedFromTop.current=true;setInspection(undefined);update({expanded:!expanded})}}>{expanded?t("返回 DAWN 对话"):t("编排视图")}</Button><Button variant="ghost" size="sm" onClick={refresh}>{t("刷新运行记录")}</Button></div></header>
   {!sessionId?<p className="hint">{t("开始任务后查看运行记录")}</p>:error?<p role="alert">{error}</p>:!current?<p className="hint">{t("正在读取运行记录")}</p>:<>
-   {emptyWork?automatic:null}
-   {outcome&&outcomeSnapshot?<CollaborationOutcomePanel snapshot={outcomeSnapshot} outcome={outcome} compact={expanded} onInspect={navigateOutcome}><Button ref={expandTrigger} variant="outline" size="sm" aria-expanded={expanded} onClick={()=>{setInspection(undefined);update({expanded:!expanded})}}>{expanded?t("返回对话协作台"):t("展开流程工作台")}</Button></CollaborationOutcomePanel>:null}
+   {!expanded&&(emptyWork||awaitingInformation)?automatic:null}
+   {outcome&&outcomeSnapshot?<CollaborationOutcomePanel deliveryNotice={taskDeliveryNotice(outcomeSnapshot,outcome?.actionTarget?.selectionKey)} snapshot={outcomeSnapshot} outcome={outcome} compact={expanded} onInspect={navigateOutcome}><Button ref={expandTrigger} variant="outline" size="sm" aria-expanded={expanded} onClick={()=>{if(!expanded)openedFromTop.current=false;setInspection(undefined);update({expanded:!expanded})}}>{expanded?t("返回对话协作台"):t("展开流程工作台")}</Button></CollaborationOutcomePanel>:null}
    <p className="hint collaboration-source">{live?(current.team===undefined&&ownedTeam?t("团队单独读取；并非同一快照"):t("来自当前会话的统一编排；每两秒刷新")):t("磁盘记录只读；查看不会启动或恢复任务")}</p>
    {current.teamIssue?<p role="alert" data-authored="1">{current.teamIssue}</p>:null}
    {current.observationIssue?<p role="alert" data-authored="1">{current.observationIssue}</p>:null}
@@ -157,12 +162,12 @@ export function RunOverview({client,sessionId,onView,team,onPrepare,onBot,autoAr
     </div>:null}
    </>}
    </div>
-   {!emptyWork?automatic:null}
+   {expanded||!emptyWork&&!awaitingInformation?automatic:null}
    <footer className="collaboration-footer">
     {current.budget&&sessionId?<details><summary>{t("查看额度")}</summary><RunBudgetPanel key={sessionId} client={client} sessionId={sessionId} budget={current.budget} live={live} onSaved={refresh}/></details>:null}
     <details ref={historyRef}><summary>{t("会话完整执行记录")}</summary><RunHistory snapshot={current}/></details>
    </footer>
   </>}
  </section>
- return expanded?<CollaborationExpanded key={sessionId} onClose={()=>update({expanded:false})} onRestoreFocus={()=>expandTrigger.current?.focus({preventScroll:true})}>{content}</CollaborationExpanded>:content
+ return expanded?<CollaborationExpanded key={sessionId} onClose={()=>update({expanded:false})} onRestoreFocus={()=>(openedFromTop.current?topExpandTrigger.current:expandTrigger.current)?.focus({preventScroll:true})}>{content}</CollaborationExpanded>:content
 }

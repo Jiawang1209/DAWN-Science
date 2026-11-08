@@ -1,0 +1,79 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts e2e/collaboration-network.spec.ts e2e/collaboration-workbench.spec.ts
+
+Running 4 tests using 1 worker
+
+(node:96493) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:59664/8d131935-25f0-477e-97ee-65f9e0742d83
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (32.2s)
+(node:96885) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:59797/d933f7b5-1c31-4142-95bb-281487e70856
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59823/6b5aaf5e-cd3e-40fa-aa2e-aae630262939
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:96:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59837/0d574ec7-508a-40b4-951f-1cbceb5253c3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59909/c658db89-aa77-49d1-a97d-52e603033ad3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59953/210a8dbf-7339-4dfe-acf9-bd4309ba12f9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (13.8s)
+
+
+  1) e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 
+
+    Error: expect(locator).toBeInViewport() failed
+
+    Locator:  getByRole('region', { name: '运行总览', exact: true }).locator('.collaboration-graph-scroll').locator('.collaboration-graph-node').nth(2)
+    Expected: in viewport
+    Received: viewport ratio 0.9956521987915039
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toBeInViewport" with timeout 25000ms
+      - waiting for getByRole('region', { name: '运行总览', exact: true }).locator('.collaboration-graph-scroll').locator('.collaboration-graph-node').nth(2)
+        53 × locator resolved to <button type="button" aria-pressed="false" data-task-id="plan_3" data-state="completed" aria-label="独立审阅模型与证据" class="btn btn-outline btn-card-compact collaboration-graph-node">…</button>
+           - unexpected value "viewport ratio 0.9956521987915039"
+
+
+      72 |  for(const node of await dependencyGraph.locator('.collaboration-graph-node').all()){
+      73 |   await node.scrollIntoViewIfNeeded()
+    > 74 |   await expect(node).toBeInViewport({ratio:1})
+         |                      ^
+      75 |   const footerVisible=await node.locator('small').evaluate(el=>{const b=el.getBoundingClientRect();return document.elementFromPoint(b.x+b.width/2,b.bottom-2)?.closest('.collaboration-graph-node')===el.closest('.collaboration-graph-node')})
+      76 |   expect(footerVisible).toBe(true)
+      77 |  }
+        at /Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/e2e/approved-plan-execution.spec.ts:74:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 
+  3 passed (1.2m)

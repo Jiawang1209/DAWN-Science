@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts e2e/collaboration-network.spec.ts e2e/collaboration-workbench.spec.ts
+
+Running 4 tests using 1 worker
+
+(node:98329) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60208/feef2fff-032c-413a-8872-52f04cbb6e2b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60254/9c81aaf0-b2a9-4bea-996d-7caa3c42bb59
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (9.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60263/1a131751-7c17-46a2-bf27-b472c3194894
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60287/88621588-2842-4461-a0a8-d744e7fffc12
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:103:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (9.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60299/5befa5e3-b530-4f54-9e88-135b749a73b2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60368/737196f1-d236-48dd-96a9-35dd8b21d730
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60423/c25053f0-7217-4bb4-a376-6be2f07db4c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (13.8s)
+
+  4 passed (48.6s)

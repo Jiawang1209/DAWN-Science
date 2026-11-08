@@ -1,0 +1,19 @@
+{
+  "canvasHeight": 37.5,
+  "viewportHeight": 38,
+  "scrollHeight": 64,
+  "nodes": [
+    {
+      "height": 64,
+      "bottomOverflow": 26.5
+    },
+    {
+      "height": 64,
+      "bottomOverflow": 26.5
+    },
+    {
+      "height": 64,
+      "bottomOverflow": 26.5
+    }
+  ]
+}

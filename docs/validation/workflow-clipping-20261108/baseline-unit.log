@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/team-dag.test.ts tests/ui/collaboration-workflow.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  21:26:36
+   Duration  1.40s (transform 680ms, setup 1.12s, import 44ms, tests 143ms, environment 1.18s)
+

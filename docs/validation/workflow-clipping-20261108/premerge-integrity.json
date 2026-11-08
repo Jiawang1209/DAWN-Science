@@ -1,0 +1,12 @@
+{
+  "formalProfileChanged": [],
+  "sourceChanged": [
+    "src/ui/collaboration-workflow.tsx"
+  ],
+  "testChanged": [
+    "e2e/approved-plan-execution.spec.ts"
+  ],
+  "cssChanged": false,
+  "paidModelRequests": 0,
+  "historicExitAndPty": "OPEN"
+}

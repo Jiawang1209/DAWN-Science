@@ -18,7 +18,9 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
  const visible=snapshot.runs.filter(run=>[run.label,presentations.get(run.id)?.title,presentations.get(run.id)?.identity,presentations.get(run.id)?.task].filter(Boolean).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase())&&(filter==='all'||(filter==='active'?active(run):run.phase!=='unknown'&&snapshot.source==='live'&&!active(run)&&['completed','failed','cancelled','interrupted'].includes(run.state))))
  const owned=team?.captainSessionId===snapshot.ownerSessionId?team:undefined
  const layout=分列布局(owned?.tasks??[])
- const scale=1.25
+ // Title + attempt need the full card height (shared compact cards are at least 64px).
+ // Keep canvas, nodes and edges at the same scale; leave the legacy sidebar DAG unchanged.
+ const scale=2.5
  return <section className="collaboration-workflow" aria-label={t("流程工作台")}>
   <div className="collaboration-workflow-columns">
    <section className="collaboration-network-panel"><header><h4>{t("Agent 网络")}</h4><span className="hint">{t("宿主与直接委派关系 · 点击节点联动")}</span></header>

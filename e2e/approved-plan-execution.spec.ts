@@ -56,6 +56,37 @@ test('approved arrangement starts the frozen DAG, exposes real receipts and retu
  await page.screenshot({path:join(out,'stage-c-task-records.png')})
  await overview.locator('.collaboration-detail').screenshot({path:join(out,'stage-c-records-panel.png')})
  await overview.getByRole('button',{name:'收起检查面板',exact:true}).click()
+ const dependencyGraph=overview.locator('.collaboration-graph-scroll')
+ await dependencyGraph.scrollIntoViewIfNeeded()
+ const graphGeometry=await dependencyGraph.evaluate(el=>{
+  const graph=el.querySelector('.collaboration-graph')!.getBoundingClientRect()
+  return{canvasHeight:graph.height,viewportHeight:el.clientHeight,scrollHeight:el.scrollHeight,nodes:[...el.querySelectorAll('.collaboration-graph-node')].map(node=>({height:node.getBoundingClientRect().height,bottomOverflow:node.getBoundingClientRect().bottom-graph.bottom}))}
+ })
+ writeFileSync(join(out,'dependency-geometry.json'),JSON.stringify(graphGeometry,null,2))
+ await dependencyGraph.screenshot({path:join(out,'dependency-complete.png')})
+ expect(Math.max(...graphGeometry.nodes.map(node=>node.bottomOverflow))).toBeLessThanOrEqual(1)
+ expect(graphGeometry.scrollHeight).toBeLessThanOrEqual(graphGeometry.viewportHeight+1)
+ // The node footer must remain visible and clickable after scrolling in a short, narrow window.
+ await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setContentSize(900,640))
+ await dependencyGraph.scrollIntoViewIfNeeded()
+ for(const node of await dependencyGraph.locator('.collaboration-graph-node').all()){
+  await node.evaluate(el=>el.scrollIntoView({block:'center',inline:'center'}))
+  const intersection=await node.evaluate(el=>new Promise(resolve=>{
+   const observer=new IntersectionObserver(([entry])=>{
+    const parents=[];for(let n:Element|null=el;n;n=n.parentElement){const b=n.getBoundingClientRect(),s=getComputedStyle(n);parents.push({class:n.className,rect:b.toJSON(),clientWidth:n.clientWidth,scrollWidth:n.scrollWidth,scrollLeft:n.scrollLeft,overflow:s.overflow,clip:s.clipPath})}
+    resolve({ratio:entry!.intersectionRatio,bounds:entry!.boundingClientRect.toJSON(),intersection:entry!.intersectionRect.toJSON(),parents});observer.disconnect()
+   });observer.observe(el)
+  }))
+  writeFileSync(join(out,`narrow-${await node.getAttribute('data-task-id')}.json`),JSON.stringify(intersection,null,2))
+  await expect(node).toBeInViewport({ratio:1,timeout:2000})
+  const footerVisible=await node.locator('small').evaluate(el=>{const b=el.getBoundingClientRect();return document.elementFromPoint(b.x+b.width/2,b.bottom-2)?.closest('.collaboration-graph-node')===el.closest('.collaboration-graph-node')})
+  expect(footerVisible).toBe(true)
+ }
+ await page.screenshot({path:join(out,'dependency-narrow-complete.png')})
+ await dependencyGraph.locator('[data-task-id="plan_2"]').click()
+ await expect(overview.locator('.collaboration-detail:not([hidden]) > header')).toContainText('根据清洗结果建模')
+ await expect(dependencyGraph.locator('[data-task-id="plan_2"]')).toHaveAttribute('aria-pressed','true')
+ await overview.getByRole('button',{name:'收起检查面板',exact:true}).click()
  await overview.getByRole('region',{name:'流程工作台',exact:true}).scrollIntoViewIfNeeded()
  await page.screenshot({path:join(out,'stage-c-workflow.png')})
  await overview.getByRole('button',{name:'返回对话协作台',exact:true}).click()

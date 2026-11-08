@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts -g approved arrangement starts
+
+Running 1 test using 1 worker
+
+(node:97885) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:59999/c81334e0-57e9-4685-91a6-d0c4257ea6eb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (9.0s)
+
+
+  1) e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 
+
+    Error: expect(locator).toBeInViewport() failed
+
+    Locator:  getByRole('region', { name: '运行总览', exact: true }).locator('.collaboration-graph-scroll').locator('.collaboration-graph-node').nth(2)
+    Expected: in viewport
+    Received: viewport ratio 0.9956521987915039
+    Timeout:  2000ms
+
+    Call log:
+      - Expect "toBeInViewport" with timeout 2000ms
+      - waiting for getByRole('region', { name: '运行总览', exact: true }).locator('.collaboration-graph-scroll').locator('.collaboration-graph-node').nth(2)
+        20 × locator resolved to <button type="button" aria-pressed="false" data-task-id="plan_3" data-state="completed" aria-label="独立审阅模型与证据" class="btn btn-outline btn-card-compact collaboration-graph-node">…</button>
+           - unexpected value "viewport ratio 0.9956521987915039"
+
+
+      79 |   }))
+      80 |   writeFileSync(join(out,`narrow-${await node.getAttribute('data-task-id')}.json`),JSON.stringify(intersection,null,2))
+    > 81 |   await expect(node).toBeInViewport({ratio:1,timeout:2000})
+         |                      ^
+      82 |   const footerVisible=await node.locator('small').evaluate(el=>{const b=el.getBoundingClientRect();return document.elementFromPoint(b.x+b.width/2,b.bottom-2)?.closest('.collaboration-graph-node')===el.closest('.collaboration-graph-node')})
+      83 |   expect(footerVisible).toBe(true)
+      84 |  }
+        at /Users/liuyue/.codex/worktrees/dawn-workflow-clipping-20261108/dawn-science/e2e/approved-plan-execution.spec.ts:81:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 

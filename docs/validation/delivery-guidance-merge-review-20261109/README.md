@@ -30,3 +30,11 @@ actual-observation.json 记录真实候选窗口的补信息取消、答案保�
 关键日志、报告、截图和原始失败 trace 纳入本地提交；其他原始模拟转录、重复截图和测试目录继续原样保留在专项工作区 /Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/docs/validation/。未清理或改写旧证据。
 
 历史偶发退出超时和 PTY 清理继续 OPEN，正常退出观察不足以认定根因解决。1500/4000ms 原预算不变。本次仅本地提交/合并，不推送、不发布、不替换正式 App。
+
+## 本地集成完成
+
+代码提交 ad23c80fee21cec891903ef2507623f3432743e5 已快进进入本地 main。main 完整构建通过，222 项定向测试和 7 项 Electron 冒烟通过；对应 main-build.log / main-vitest.log / main-desktop.log。source-freeze-delivered.json 核对 1746 源文件一致及正式 profile 三文件哈希未变。
+
+exit-summary.json 记录本轮 72 次完整退出，最大 255.68ms、无非零退出或原生收尾错误；历史两项风险继续 OPEN。源码/人工文档 diff --check 通过；原始工具日志保留工具输出中的空白，未为消除日志空白告警改写原证据。
+
+final-chat-clean.png 展示可见编排入口、下一步及旧已验收任务；final-versions.png 展示主动展开的成果版本。候选窗口使用 localhost 模拟模型，与正式配置隔离，最后停在正常对话页。

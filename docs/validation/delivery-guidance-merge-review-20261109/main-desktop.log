@@ -1,0 +1,57 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/delivery-guidance.spec.ts e2e/orchestration-entry.spec.ts e2e/approved-plan-execution.spec.ts e2e/collaboration-outcome.spec.ts --output=/Users/liuyue/.codex/worktrees/dawn-delivery-guidance-20261109/dawn-science/docs/validation/delivery-guidance-merge-review-20261109/main-smoke-results
+
+Running 7 tests using 1 worker
+
+(node:96631) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60037/4b71c5ca-b6ac-4e3d-ae78-8214c64f8a03
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60076/25083260-2f56-481a-a793-54621fb653f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (10.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60088/97fa850c-62d8-46bc-b13f-2da59d8a5c94
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60117/7072d52f-e08d-4579-bcd0-983f62fe20d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:116:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (9.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60135/57b410cd-ab26-4062-a9f5-4873cc256437
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60211/35e8af94-6207-4939-8240-289eb7fcb349
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/collaboration-outcome.spec.ts:15:2 › outcome pass › shows exact stage and final versions, compact expansion, and readable 900px views (22.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:60223/730b12ea-2b40-4673-8247-2029035c45b4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60251/04ca43c1-937a-4c4d-ace2-4eccf3040951
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/collaboration-outcome.spec.ts:15:2 › outcome blocked › shows exact stage and final versions, compact expansion, and readable 900px views (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60264/d70a241e-e111-494d-96ae-737badbe4ed1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60279/5aab2fce-6707-4490-9d2c-406373bb025a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/delivery-guidance.spec.ts:6:1 › clarification survives restart, creates a new proposal and executes only after approval (7.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60305/14dc23ad-fe93-404a-bc8f-4d54527637f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/delivery-guidance.spec.ts:48:2 › pending clarification cancellation › stops the pending replan and retains answers without creating output (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60323/2dc3a4b0-af94-474b-a6c6-62f570f94434
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/orchestration-entry.spec.ts:7:1 › workflow entry stays visible above clarification and returns to the same conversation (2.6s)
+
+  7 passed (1.1m)

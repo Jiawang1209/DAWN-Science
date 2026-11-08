@@ -1,0 +1,447 @@
+{
+  "observedExits": 72,
+  "maximumMs": 255.68,
+  "nonzeroExits": [],
+  "nativeProblems": [],
+  "unobserved": [],
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "thresholdsMs": [
+    1500,
+    4000
+  ],
+  "rows": [
+    {
+      "file": "main-smoke-results/collaboration-outcome-outc-98d04-on-and-readable-900px-views/electron-exit/exit-97469.jsonl",
+      "closeToExitMs": 105.79,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/collaboration-outcome-outc-98d04-on-and-readable-900px-views/electron-exit/exit-97750.jsonl",
+      "closeToExitMs": 109.13,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-98944.jsonl",
+      "closeToExitMs": 104.63,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-96748.jsonl",
+      "closeToExitMs": 129.08,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-96918.jsonl",
+      "closeToExitMs": 119.32,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-97266.jsonl",
+      "closeToExitMs": 129.24,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-97082.jsonl",
+      "closeToExitMs": 131.47,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-98156.jsonl",
+      "closeToExitMs": 128.03,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-97907.jsonl",
+      "closeToExitMs": 111.97,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/delivery-guidance-pending--6ad12-ers-without-creating-output/electron-exit/exit-98674.jsonl",
+      "closeToExitMs": 136.77,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/electron-exit/exit-98491.jsonl",
+      "closeToExitMs": 146.77,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "main-smoke-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/electron-exit/exit-98313.jsonl",
+      "closeToExitMs": 124.32,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "narrow-green-results/collaboration-outcome-outc-98d04-on-and-readable-900px-views/electron-exit/exit-94034.jsonl",
+      "closeToExitMs": 124.0,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "narrow-green-results/collaboration-outcome-outc-98d04-on-and-readable-900px-views/electron-exit/exit-94483.jsonl",
+      "closeToExitMs": 124.99,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "narrow-green-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-94610.jsonl",
+      "closeToExitMs": 112.01,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "narrow-green-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-94800.jsonl",
+      "closeToExitMs": 128.48,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/auto-arrangement-automatic-49e0c-locks-for-\u53ea\u8ba1\u7b97-input-csv-\u7684\u5747\u503c/electron-exit/exit-54226.jsonl",
+      "closeToExitMs": 164.45,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-61391.jsonl",
+      "closeToExitMs": 116.17,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-56038.jsonl",
+      "closeToExitMs": 174.17,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-56303.jsonl",
+      "closeToExitMs": 149.89,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/auto-arrangement-automatic-fc1f8-or-\u5206\u522b\u7edf\u8ba1-east-csv-\u4e0e-west-csv/electron-exit/exit-54928.jsonl",
+      "closeToExitMs": 141.9,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-52633.jsonl",
+      "closeToExitMs": 126.22,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-52814.jsonl",
+      "closeToExitMs": 148.82,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-53024.jsonl",
+      "closeToExitMs": 143.88,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-53864.jsonl",
+      "closeToExitMs": 126.15,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-55476.jsonl",
+      "closeToExitMs": 135.64,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-55684.jsonl",
+      "closeToExitMs": 162.28,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/delivery-guidance-pending--6ad12-ers-without-creating-output/electron-exit/exit-60709.jsonl",
+      "closeToExitMs": 160.8,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/electron-exit/exit-59394.jsonl",
+      "closeToExitMs": 122.06,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/electron-exit/exit-59854.jsonl",
+      "closeToExitMs": 141.75,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/collaboration-workbench-sh-db743-rough-workflow-and-recovery/electron-exit/exit-57044.jsonl",
+      "closeToExitMs": 167.92,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "final-test-results/collaboration-workbench-sh-db743-rough-workflow-and-recovery/electron-exit/exit-58989.jsonl",
+      "closeToExitMs": 145.87,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-outcome-outc-98d04-on-and-readable-900px-views/electron-exit/exit-19183.jsonl",
+      "closeToExitMs": 116.33,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-outcome-outc-98d04-on-and-readable-900px-views/electron-exit/exit-30298.jsonl",
+      "closeToExitMs": 131.16,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/auto-arrangement-automatic-49e0c-locks-for-\u53ea\u8ba1\u7b97-input-csv-\u7684\u5747\u503c/electron-exit/exit-12537.jsonl",
+      "closeToExitMs": 129.77,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-46490.jsonl",
+      "closeToExitMs": 103.77,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/permission-\u95ee\u4e00\u53e5-\u5361\u5f39\u51fa\u6765\uff1b\u5141\u8bb8-\u2192-\u771f\u5220\u4e86\uff1b\u62d2\u7edd-\u2192-\u6ca1\u5220\u3001\u6a21\u578b\u62ff\u5230\u7406\u7531-/electron-exit/exit-48077.jsonl",
+      "closeToExitMs": 195.88,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-14855.jsonl",
+      "closeToExitMs": 158.28,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-15184.jsonl",
+      "closeToExitMs": 144.6,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-51171.jsonl",
+      "closeToExitMs": 145.36,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-del-07344-ion-across-Electron-restart/electron-exit/exit-50990.jsonl",
+      "closeToExitMs": 161.98,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-stopping-sho-14410-g-is-not-a-screenshot-claim/electron-exit/exit-39107.jsonl",
+      "closeToExitMs": 145.65,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-sci-955c0-tion-drains-actual-analysis/electron-exit/exit-49535.jsonl",
+      "closeToExitMs": 148.7,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/electron-exit/exit-49867.jsonl",
+      "closeToExitMs": 172.64,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/electron-exit/exit-50061.jsonl",
+      "closeToExitMs": 184.67,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/auto-arrangement-automatic-fc1f8-or-\u5206\u522b\u7edf\u8ba1-east-csv-\u4e0e-west-csv/electron-exit/exit-13197.jsonl",
+      "closeToExitMs": 146.08,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/permission-\u786c\u62d2-\u5168\u653e\u884c\u6863\u4e5f\u62d2-sudo-\uff0c\u4e0d\u5f39\u5361/electron-exit/exit-48499.jsonl",
+      "closeToExitMs": 181.87,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-ela-60dc3-ns-ownership-until-it-exits/electron-exit/exit-50586.jsonl",
+      "closeToExitMs": 154.08,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-10839.jsonl",
+      "closeToExitMs": 129.97,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-9886.jsonl",
+      "closeToExitMs": 133.69,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-11140.jsonl",
+      "closeToExitMs": 156.28,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-11982.jsonl",
+      "closeToExitMs": 129.22,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-38573.jsonl",
+      "closeToExitMs": 131.39,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-33268.jsonl",
+      "closeToExitMs": 139.0,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/session-recovery-\u540c\u5e93\u7b2c\u4e8c\u5b9e\u4f8b\u88ab\u62d2\u7edd\uff0c\u6b63\u5728\u804a\u7684\u8fdc\u7aef\u4f1a\u8bdd\u4ecd-alive-\u4e14\u53ef\u53d1\u9001/electron-exit/exit-51231.jsonl",
+      "closeToExitMs": 255.68,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/permission-\u7a7a\u6001\u5c4f\u4e0a\u6362\u4e00\u6863\uff0c\u8fdb\u4f1a\u8bdd\u518d\u56de\u6765\u8fd8\u662f\u90a3\u4e00\u6863-\u2014\u2014-\u5b58\u4e0b\u53bb\u4e86\uff0c\u4e0d\u662f\u53ea\u5728\u754c\u9762\u4e0a\u52a8\u4e86\u52a8/electron-exit/exit-47376.jsonl",
+      "closeToExitMs": 123.41,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-13791.jsonl",
+      "closeToExitMs": 137.83,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-14204.jsonl",
+      "closeToExitMs": 182.63,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/delivery-guidance-pending--6ad12-ers-without-creating-output/electron-exit/exit-45453.jsonl",
+      "closeToExitMs": 136.18,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/permission--\u9ed8\u8ba4\u662f\u5168\u653e\u884c-\u2014\u2014-\u4e0d\u5728\u6beb\u65e0\u9884\u5146\u7684\u60c5\u51b5\u4e0b\u8ba9\u4eba\u5f00\u59cb\u649e\u5899/electron-exit/exit-47267.jsonl",
+      "closeToExitMs": 143.46,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-run-efec7-g-and-retained-host-history/electron-exit/exit-50268.jsonl",
+      "closeToExitMs": 130.39,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/electron-exit/exit-44145.jsonl",
+      "closeToExitMs": 123.75,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/electron-exit/exit-44624.jsonl",
+      "closeToExitMs": 142.54,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/electron-exit/exit-15788.jsonl",
+      "closeToExitMs": 129.22,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/permission--\u83dc\u5355\u4e0d\u81ea\u79f0\u6c99\u7bb1-\uff0c\u5e76\u5199\u660e\u4e86\u786c\u62d2\u6e05\u5355\u4efb\u4f55\u6863\u90fd\u62d2/electron-exit/exit-47846.jsonl",
+      "closeToExitMs": 131.69,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-workbench-sh-db743-rough-workflow-and-recovery/electron-exit/exit-39794.jsonl",
+      "closeToExitMs": 146.86,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/collaboration-workbench-sh-db743-rough-workflow-and-recovery/electron-exit/exit-43155.jsonl",
+      "closeToExitMs": 130.7,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/session-recovery-\u8fdc\u7aef\u6062\u590d\u5931\u8d25\u663e\u793a\u771f\u539f\u56e0\uff0c\u670d\u52a1\u5668-ready-\u540e\u539f\u5bf9\u8bdd\u81ea\u52a8\u6062\u590d\u5e76\u4fdd\u7559\u8349\u7a3f/electron-exit/exit-51342.jsonl",
+      "closeToExitMs": 121.2,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/permission-\u8f93\u5165\u5361\u4e0a\u6709\u300c\u6743\u9650\u300d\u90a3\u9897\uff0c\u4e09\u6863\u90fd\u5728\uff0c\u4e14\u8bf4\u6e05\u4e86\u5404\u81ea\u610f\u5473\u7740\u4ec0\u4e48/electron-exit/exit-47073.jsonl",
+      "closeToExitMs": 156.2,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-sci-186c7-s-consumption-after-restart/electron-exit/exit-48776.jsonl",
+      "closeToExitMs": 185.29,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "test-results/run-explanation-budget-sci-186c7-s-consumption-after-restart/electron-exit/exit-49297.jsonl",
+      "closeToExitMs": 137.15,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "narrow-red-results/collaboration-outcome-outc-191bc-on-and-readable-900px-views/electron-exit/exit-93268.jsonl",
+      "closeToExitMs": 132.69,
+      "exitCode": 0,
+      "signal": null
+    }
+  ]
+}

@@ -38,3 +38,11 @@
 实际候选窗口复验：补信息发送后中止、答案 mg/g 保留、可明确重试，0 次真实模型请求；旧已验收会话记录仍在；展开后通过“返回 DAWN 对话”回同一聊天。候选配置与数据和正式安装版隔离。
 
 验证证据：docs/validation/delivery-guidance-merge-review-20261109/。本地集成结果随后追加；原始测试目录和旧失败现场保留在专项工作区，不清理正式数据。
+
+## 本地 main 集成结果
+
+代码提交 ad23c80fee21cec891903ef2507623f3432743e5 已快进合并本地 main；在 main 重新完整构建通过，13 文件 222 项定向测试和 7 项真实 Electron 冒烟全部通过。1746 个源文件与验收候选逐一哈希一致；正式 providers.yaml、credentials.json、dawn.db 哈希与开发前一致。main-build.log / main-vitest.log / main-desktop.log / source-freeze-delivered.json 为证据。
+
+72 次有完整起止的退出观察，最大 255.68ms，均退出码 0，无原生 shutdown timeout/fallback 事件；仅为本次样本，历史退出超时和 PTY 清理仍 OPEN。未推送、未发布，正式 App 未替换。专项工作区及原始证据保留。
+
+final-chat-clean.png / final-versions.png 为最后可见候选窗口实拍；它使用与 main 相同源代码和隔离模拟配置，已回到正常 DAWN 对话页。只读查看和返回没有启动旧任务。该截图不代表已升级正式安装版。

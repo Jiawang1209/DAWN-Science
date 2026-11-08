@@ -1,0 +1,35 @@
+{
+  "codeCommit": "ad23c80fee21cec891903ef2507623f3432743e5",
+  "mainCodeCommit": "ad23c80fee21cec891903ef2507623f3432743e5",
+  "mainCleanBeforeEvidence": true,
+  "sourceFileCount": 1746,
+  "sourceIdentical": true,
+  "formalProfileUnchanged": true,
+  "fullVitest": {
+    "files": 717,
+    "passed": 7083,
+    "skipped": 11
+  },
+  "mainVitest": {
+    "files": 13,
+    "passed": 222
+  },
+  "mainDesktop": {
+    "passed": 7
+  },
+  "earlierDesktop": {
+    "passed": 28
+  },
+  "clarificationRecheckDesktop": {
+    "passed": 10
+  },
+  "narrowRecheckDesktop": {
+    "passed": 2
+  },
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "pushed": false,
+  "published": false,
+  "installedAppReplaced": false,
+  "realModelRequests": 0
+}

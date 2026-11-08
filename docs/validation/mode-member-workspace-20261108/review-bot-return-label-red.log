@@ -1,0 +1,194 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/bot-pane.test.tsx -t does not label an ordinary
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/bot-pane.test.tsx (5 tests | 1 failed | 4 skipped) 116ms
+   × does not label an ordinary Bot conversation as a collaboration return 115ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/bot-pane.test.tsx > does not label an ordinary Bot conversation as a collaboration return
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Bot 清单"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"conv-head"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  img:
+
+  Name "统计助手的头像":
+  [36m<span[39m
+    [33maria-label[39m=[32m"统计助手的头像"[39m
+    [33mclass[39m=[32m"bot-avatar bot-avatar-bot"[39m
+    [33mdata-identity[39m=[32m"b"[39m
+    [33mdata-tone[39m=[32m"2"[39m
+    [33mrole[39m=[32m"img"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "统计助手":
+  [36m<h2[39m
+    [33mtitle[39m=[32m"统计助手"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"bot-chat-more"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "新对话":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "历史":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "返回协作台":
+  [36m<button[39m
+    [33maria-label[39m=[32m"返回协作台"[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"bot-pane bot-chat side-chat"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"conv-head"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"conv-head-text"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"bot-chat-title"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-label[39m=[32m"统计助手的头像"[39m
+              [33mclass[39m=[32m"bot-avatar bot-avatar-bot"[39m
+              [33mdata-identity[39m=[32m"b"[39m
+              [33mdata-tone[39m=[32m"2"[39m
+              [33mrole[39m=[32m"img"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"22"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.6"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"22"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mrx[39m=[32m"4"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mx[39m=[32m"4"[39m
+                  [33my[39m=[32m"6"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3v3M2 11v3m20-3v3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m7.5 12 1.5-1.5 1.5 1.5m3 0 1.5-1.5 1.5 1.5M10 15.5h4"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"18.5"[39m
+                  [33mcy[39m=[32m"5.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m"2"[39m
+                  [33mstroke[39m=[32m"none"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bot-chat-identity"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mtitle[39m=[32m"统计助手"[39m
+              [36m>[39m
+                [0m统计助手[0m
+              [36m</h2>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"bot-chat-more"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33maria-label[39m=[32m"更多操作"[39m
+          [36m>[39m
+            [0m…[0m
+          [36m</summary>[39m
+          [36m<div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m新对话[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m历史[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"返回协作台"[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m返回协作台[0m
+        [36m</button>[39m
+      [36m</header>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/bot-pane.test.tsx:68:16
+     66|  await screen.findByRole('button',{name:'与统计助手交流'})
+     67|  act(()=>state.selectBotSession({sessionId:'ordinary',kind:'native',st…
+     68|  expect(screen.getByRole('button',{name:'Bot 清单'})).toBeTruthy()
+       |                ^
+     69|  expect(screen.queryByRole('button',{name:'返回协作台'})).toBeNull()
+     70| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  08:22:43
+   Duration  1.68s (transform 746ms, setup 546ms, import 579ms, tests 116ms, environment 356ms)
+

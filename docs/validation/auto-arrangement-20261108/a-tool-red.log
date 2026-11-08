@@ -1,0 +1,52 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/propose-plan.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/tools/propose-plan.test.ts (7 tests | 2 failed) 47ms
+   × accepts model-chosen task structure and persists it in the original plan Markdown 43ms
+   × rejects invalid model arrangements before storing or terminating 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/tools/propose-plan.test.ts > accepts model-chosen task structure and persists it in the original plan Markdown
+AssertionError: expected 'absent' to be 'valid' // Object.is equality
+
+Expected: "valid"
+Received: "absent"
+
+ ❯ tests/tools/propose-plan.test.ts:58:77
+     56|  const r=await createProposePlanTool({交:(_id,p)=>{collected.push(p);re…
+     57|  expect(r.terminate).toBe(true);expect(collected).toHaveLength(1)
+     58|  const parsed=parseTaskArrangement(collected[0]!.plan);expect(parsed.s…
+       |                                                                             ^
+     59|  if(parsed.state==='valid')expect(parsed.arrangement.tasks).toHaveLeng…
+     60| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/tools/propose-plan.test.ts > rejects invalid model arrangements before storing or terminating
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/propose-plan.test.ts:64:20
+     62|  const stored=vi.fn(()=>({version:1}))
+     63|  const r=await createProposePlanTool({交:stored}).execute('a',{...假方案,a…
+     64|  expect(r.isError).toBe(true);expect(stored).not.toHaveBeenCalled();ex…
+       |                    ^
+     65| })
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  09:23:17
+   Duration  355ms (transform 79ms, setup 0ms, import 225ms, tests 47ms, environment 0ms)
+

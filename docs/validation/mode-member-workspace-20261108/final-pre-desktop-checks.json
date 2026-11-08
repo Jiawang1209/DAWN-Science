@@ -1,0 +1,34 @@
+[
+  {
+    "label": "final-typecheck3",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.437
+  },
+  {
+    "label": "final-build3",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.24
+  },
+  {
+    "label": "final-evaluation",
+    "command": [
+      "npx",
+      "tsx",
+      "scripts/evaluate-science-pipeline.ts",
+      "--mode-advice",
+      "/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/evaluation-final"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 1.764
+  }
+]

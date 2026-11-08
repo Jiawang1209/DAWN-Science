@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project node --project ui
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/auto-arrangement-request.test.ts (4 tests | 1 failed) 7ms
+   × a late stop read cannot abort a newer input, and a late acknowledgement cannot clear it 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/auto-arrangement-request.test.ts > a late stop read cannot abort a newer input, and a late acknowledgement cannot clear it
+TypeError: stopAutoArrangement is not a function
+ ❯ tests/ui/auto-arrangement-request.test.ts:26:12
+     24|  const abort=vi.fn(async()=>{}),acknowledge=vi.fn()
+     25|  const opts={input:()=>input,isCurrent:()=>true,running:()=>true,read:…
+     26|  const old=stopAutoArrangement(opts);input='u2';release();await old
+       |            ^
+     27|  expect(abort).not.toHaveBeenCalled();expect(acknowledge).not.toHaveBe…
+     28|  input='u3'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 682 passed (683)
+      Tests  1 failed | 6862 passed | 10 skipped (6873)
+   Start at  09:57:38
+   Duration  137.54s (transform 25.37s, setup 96.62s, import 291.81s, tests 566.15s, environment 191.54s)
+

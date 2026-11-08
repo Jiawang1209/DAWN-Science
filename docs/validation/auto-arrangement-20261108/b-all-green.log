@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/ui/task-arrangement-view.test.tsx tests/ui/auto-arrangement-request.test.ts tests/ui/plan-card.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 70ms
+     × 按钮文案之间没有子串关系 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 英文那一面也要守中文那边的规矩 > 按钮文案之间没有子串关系
+AssertionError: 按名字找就找不准了——换一个说法: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"Interrupt\" ⊂ \"Interrupt planning\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:209:51
+    207|       }
+    208|     }
+    209|     expect([...new Set(撞上的)], "按名字找就找不准了——换一个说法").toEqual([])
+       |                                                   ^
+    210|   })
+    211|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 144 passed (145)
+   Start at  09:29:06
+   Duration  2.84s (transform 2.84s, setup 3.79s, import 1.07s, tests 1.75s, environment 4.06s)
+

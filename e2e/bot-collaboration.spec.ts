@@ -105,6 +105,47 @@ test("Bot Team holds a continuous discussion with reverse questions and queued u
 
  await dock.getByRole("button",{name:"Bot 清单",exact:true}).click()
  await expect(dock.locator(".bot-collaboration li")).toHaveCount(rowCount)
+ // Unified collaboration entry must preserve the existing read-only member boundary.
+ await 进坞(page,"团队")
+ let overview=page.getByRole("region",{name:"运行总览",exact:true})
+ await expect(overview.locator('.collaboration-row')).not.toHaveCount(0)
+ await overview.locator('.collaboration-row').first().getByRole('button').click()
+ await overview.getByRole('button',{name:'展开流程工作台',exact:true}).click()
+ await overview.locator('[data-member-card]').first().click()
+ // Delay one real IPC response; switching members must retire its navigation intent.
+ await app.evaluate(({ipcMain})=>{
+  const handlers=(ipcMain as unknown as {_invokeHandlers:Map<string,(...args:unknown[])=>Promise<unknown>>})._invokeHandlers
+  const channel='dawn:workbench:invoke',original=handlers.get(channel)!
+  const state={pending:true,replied:false,release:undefined as undefined|(()=>void)}
+  ;(globalThis as unknown as {delayedMemberRead:typeof state}).delayedMemberRead=state
+  ipcMain.removeHandler(channel)
+  ipcMain.handle(channel,async(...args:unknown[])=>{
+   if(args[1]==='openBotMember'&&state.pending){state.pending=false;await new Promise<void>(resolve=>{state.release=resolve});const result=await original(...args);state.replied=true;return result}
+   return original(...args)
+  })
+ })
+ await overview.getByRole('button',{name:'打开成员只读对话',exact:true}).click()
+ await expect.poll(()=>app.evaluate(()=>(globalThis as unknown as {delayedMemberRead:{release?:()=>void}}).delayedMemberRead.release!==undefined)).toBe(true)
+ await overview.locator('[data-member-card]').nth(1).click()
+ await app.evaluate(()=>(globalThis as unknown as {delayedMemberRead:{release:()=>void}}).delayedMemberRead.release())
+ await expect.poll(()=>app.evaluate(()=>(globalThis as unknown as {delayedMemberRead:{replied:boolean}}).delayedMemberRead.replied)).toBe(true)
+ await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))))
+ await expect(page.getByRole('dialog',{name:'流程工作台',exact:true})).toBeVisible()
+ await expect(overview.locator('[data-member-card]').nth(1)).toHaveAttribute('aria-pressed','true')
+ await overview.locator('[data-member-card]').first().click()
+ await overview.getByRole('button',{name:'打开成员只读对话',exact:true}).click()
+ await expect(page.getByRole('dialog',{name:'流程工作台',exact:true})).toHaveCount(0)
+ await expect(dock.getByRole("textbox",{name:"协作执行对话，仅供查看"})).toBeDisabled()
+ await expect(dock.getByRole('button',{name:'返回协作台',exact:true})).toBeVisible()
+ await dock.screenshot({path:testInfo.outputPath('unified-member-readonly.png')})
+ await dock.getByRole('button',{name:'返回协作台',exact:true}).click()
+ overview=page.getByRole("region",{name:"运行总览",exact:true})
+ await expect(page.getByRole('dialog',{name:'流程工作台',exact:true})).toBeVisible()
+ await expect(overview.getByRole('button',{name:'收起检查面板',exact:true})).toBeFocused()
+ await page.keyboard.press('Escape')
+ const unifiedClaims=await app.evaluate(()=>(globalThis as unknown as {memberViewLeaseClaims:string[]}).memberViewLeaseClaims)
+ expect(unifiedClaims.filter(id=>team.members.some((m:{sessionId?:string})=>m.sessionId===id))).toEqual([])
+ await 进坞(page,"Bot")
  await 进坞(page,"文件");await 进坞(page,"Bot")
  await expect(dock.locator(".bot-collaboration li")).toHaveCount(rowCount)
  await expect(draft).toHaveValue("未发送草稿：继续检查图例")

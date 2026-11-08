@@ -1,3 +1,8 @@
+import {collaborationMember} from './collaboration-member.js'
+import {CollaborationMemberPanel} from './collaboration-member-panel.js'
+import {rememberCollaborationReturn} from './state/collaboration-return.js'
+import {exactTaskObservationRun} from './agent-observation.js'
+import {OrchestrationAdvisor} from './orchestration-advisor.js'
 import {AgentObservation} from './agent-observation-view.js'
 import {CollaborationOutcomePanel} from './collaboration-outcome-panel.js'
 import {selectCollaborationOutcome,type OutcomeAction} from './collaboration-outcome.js'
@@ -8,7 +13,6 @@ import type {WorkbenchClient} from './client.js'
 import {t,tf} from './i18n/index.js'
 import {Button} from './primitives.js'
 import {关闭图标} from './icons.js'
-import {子转录id} from '../protocol/subagent-id.js'
 import {RunHistory} from './run-explanation.js'
 import {RunBudgetPanel} from './run-budget.js'
 import {CollaborationHandoff} from './collaboration-handoff.js'
@@ -20,12 +24,12 @@ import {CollaborationWorkflow} from './collaboration-workflow.js'
 import {CollaborationTaskDetail} from './collaboration-task-detail.js'
 import {TaskTimeline,directTaskTimeline,teamTaskTimeline,type TimelineDestination} from './task-timeline.js'
 import {useCollaborationView} from './state/collaboration-view.js'
-export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|undefined;client:WorkbenchClient;sessionId?:string|undefined;onView?:((id:string)=>void)|undefined}){
+export function RunOverview({client,sessionId,onView,team,onPrepare,onBot,autoArrangement}:{autoArrangement?:Omit<Parameters<typeof OrchestrationAdvisor>[0],'onGenerate'>&{onGenerate:Parameters<typeof OrchestrationAdvisor>[0]['onGenerate']}|undefined;onBot?:((owner:string,teamId:string,botId:string,isCurrent:()=>boolean)=>Promise<void>)|undefined;onPrepare?:((owner:string,text:string)=>boolean)|undefined;team?:TeamSnapshot|undefined;client:WorkbenchClient;sessionId?:string|undefined;onView?:((id:string)=>void)|undefined}){
  const tabId=useId(),tabsRef=useRef<HTMLElement>(null),expandTrigger=useRef<HTMLButtonElement>(null)
  const[inspection,setInspection]=useState<{owner:string|undefined;key:string;trigger:HTMLButtonElement}>()
  const detailClose=useRef<HTMLButtonElement>(null)
  const{snapshot:current,error,refresh}=useRunOverview(client,sessionId)
- const{selection,tab,expanded,update}=useCollaborationView(sessionId)
+ const{selection,tab,expanded,reopenInspection,update}=useCollaborationView(sessionId)
  const setTab=(tab:import('./state/collaboration-view.js').CollaborationTab)=>update({tab})
  const inspect=(destination:TimelineDestination)=>{
   setTab(destination)
@@ -43,6 +47,35 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
   if(inspection){setInspection(undefined);if(expanded&&document.activeElement===document.body)expandTrigger.current?.focus()}
  },[expanded,inspection,inspecting])
  const attempt=task&&task.attempt>0&&sessionId&&ownedTeam&&current?teamTaskTimeline(current,sessionId,{teamId:ownedTeam.id,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt}):{events:[]}
+ const memberRun=task&&current&&sessionId&&ownedTeam?exactTaskObservationRun(current,sessionId,{teamId:ownedTeam.id,taskId:task.id,attemptId:task.attemptId,attempt:task.attempt},attempt.current):task?undefined:run
+ const mounted=useRef(true)
+ useEffect(()=>{mounted.current=true;return()=>{mounted.current=false}},[])
+ const navigation=useRef({key:'',version:0,snapshot:current,run:memberRun})
+ const navigationKey=JSON.stringify([sessionId,selected,memberRun?.id,memberRun?.epoch,memberRun?.address])
+ if(navigation.current.key!==navigationKey){navigation.current.key=navigationKey;navigation.current.version++}
+ navigation.current.snapshot=current;navigation.current.run=memberRun
+ const sectionRef=useRef<HTMLElement>(null)
+ useEffect(()=>{
+  if(!expanded||!reopenInspection||!current)return
+  const trigger=sectionRef.current?.querySelector<HTMLButtonElement>('[data-member-card][aria-pressed="true"], [data-task-id][aria-pressed="true"]')
+  if(trigger&&selected){setInspection({owner:sessionId,key:selected,trigger});update({reopenInspection:false})}
+ },[expanded,reopenInspection,current,selected,sessionId])
+ const openMember=(id:string)=>{
+  if(!sessionId||!onView)return
+  rememberCollaborationReturn({owner:sessionId,kind:'subagent',target:id,expanded,selection:selected,tab})
+  // The dock switch unmounts the modal; retain the owner's expanded preference for every return entry.
+  onView(id)
+ }
+ const openBot=onBot&&sessionId?async(teamId:string,botId:string)=>{
+  const version=navigation.current.version
+  const isCurrent=()=>{
+   const latest=navigation.current
+   const member=latest.snapshot&&latest.run?collaborationMember(latest.snapshot,latest.run,sessionId):undefined
+   return mounted.current&&latest.version===version&&member?.teamId===teamId&&member.botId===botId
+  }
+  await onBot(sessionId,teamId,botId,isCurrent)
+  rememberCollaborationReturn({owner:sessionId,kind:'bot',target:JSON.stringify([teamId,botId]),expanded,selection:selected,tab})
+ }:undefined
  const dependencies=task&&ownedTeam?task.dependencies.filter(id=>ownedTeam.tasks.find(t=>t.id===id)?.status!=='completed').map(id=>ownedTeam.tasks.find(t=>t.id===id)?.subject??id):[]
  const outcomeSnapshot=current?{...current,...(current.team===undefined&&ownedTeam?{team:ownedTeam}:{})}:undefined
  const outcome=outcomeSnapshot?selectCollaborationOutcome(outcomeSnapshot):undefined
@@ -59,11 +92,14 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
   const frame=requestAnimationFrame(()=>{if(navigationOwner.current!==owner||navigationFrame.current!==frame)return;navigationFrame.current=undefined;tabsRef.current?.querySelector<HTMLButtonElement>(`[data-collaboration-tab="${tab}"]`)?.focus()})
   navigationFrame.current=frame
  }
+ const automatic=autoArrangement&&sessionId?<OrchestrationAdvisor key={sessionId} {...autoArrangement} busy={autoArrangement.busy||current?.source==='live'&&runs.some(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping')}/>:null
+ const emptyWork=!runs.length&&!ownedTeam?.tasks.length
  const live=current?.source==='live'
  const count=current?collaborationCounts(current):undefined
- const content=<section className="run-overview collaboration-panel" data-expanded={expanded} data-inspecting={inspecting} aria-label={t("运行总览")}>
+ const content=<section ref={sectionRef} className="run-overview collaboration-panel" data-expanded={expanded} data-inspecting={inspecting} aria-label={t("运行总览")}>
   <header className="collaboration-heading"><div><span className="collaboration-eyebrow">{t("对话协作台")}</span><h3>{expanded?t("流程工作台"):t("协作")}</h3></div><div className="collaboration-heading-actions"><Button variant="ghost" size="sm" onClick={refresh}>{t("刷新运行记录")}</Button></div></header>
   {!sessionId?<p className="hint">{t("开始任务后查看运行记录")}</p>:error?<p role="alert">{error}</p>:!current?<p className="hint">{t("正在读取运行记录")}</p>:<>
+   {emptyWork?automatic:null}
    {outcome&&outcomeSnapshot?<CollaborationOutcomePanel snapshot={outcomeSnapshot} outcome={outcome} compact={expanded} onInspect={navigateOutcome}><Button ref={expandTrigger} variant="outline" size="sm" aria-expanded={expanded} onClick={()=>{setInspection(undefined);update({expanded:!expanded})}}>{expanded?t("返回对话协作台"):t("展开流程工作台")}</Button></CollaborationOutcomePanel>:null}
    <p className="hint collaboration-source">{live?(current.team===undefined&&ownedTeam?t("团队单独读取；并非同一快照"):t("来自当前会话的统一编排；每两秒刷新")):t("磁盘记录只读；查看不会启动或恢复任务")}</p>
    {current.teamIssue?<p role="alert" data-authored="1">{current.teamIssue}</p>:null}
@@ -115,10 +151,11 @@ export function RunOverview({client,sessionId,onView,team}:{team?:TeamSnapshot|u
      {(hasCurrentSettlement(run)||tab==='records'&&!!run.trace)&&sessionId&&(tab==='artifacts'||tab==='records')?<CollaborationEvidence key={`${sessionId}:${run.id}:${run.epoch}`} client={client} sessionId={sessionId} receipt={run.taskReceipt} trace={run.trace} observation={run.observation} tab={tab} target={run.kind==="subagent"&&run.address.length===2?{kind:"run",id:run.id,epoch:run.epoch}:undefined}/>:null}
      </>:null}
      </div>
-     {!task&&run&&run.kind==='subagent'&&run.address.length===2&&/^\d+$/.test(run.address[1]!)&&onView?<Button variant="text" size="sm" onClick={()=>onView(子转录id(sessionId!,run.address[0]!,Number(run.address[1]!)))}>{t("查看子任务过程")}</Button>:null}
+     {memberRun&&current&&sessionId?<CollaborationMemberPanel key={`${sessionId}:${memberRun.id}:${memberRun.epoch}`} snapshot={current} run={memberRun} owner={sessionId} onOpen={onView?openMember:undefined} onBot={openBot} onPrepare={onPrepare}/>:null}
     </div>:null}
    </>}
    </div>
+   {!emptyWork?automatic:null}
    <footer className="collaboration-footer">
     {current.budget&&sessionId?<details><summary>{t("查看额度")}</summary><RunBudgetPanel key={sessionId} client={client} sessionId={sessionId} budget={current.budget} live={live} onSaved={refresh}/></details>:null}
     <details ref={historyRef}><summary>{t("会话完整执行记录")}</summary><RunHistory snapshot={current}/></details>

@@ -1,0 +1,26 @@
+[
+  {
+    "label": "completion-node-ui",
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--project",
+      "node",
+      "--project",
+      "ui"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 137.442
+  },
+  {
+    "label": "completion-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 3.126
+  }
+]

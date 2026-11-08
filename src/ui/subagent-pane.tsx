@@ -87,6 +87,7 @@ export function SubagentPane(p: {
   groups: readonly 组[]
   agentNames?: Readonly<Record<string, string>> | undefined
   onPick: (toolCallId: string, index: number) => void
+  backLabel?:string|undefined
   onBack: () => void
   onControl?:Control|undefined
   onAsk: (text: string) => Promise<void>
@@ -140,7 +141,7 @@ export function SubagentPane(p: {
       <header className="subagent-header">
         <Button ref={回ref} variant="ghost" size="sm" className="subagent-back" onClick={p.onBack}>
           {/* 借「产物」详情页回名单那颗的原话（2026-09-27）：「全部子 agent」会让坞格名「子 agent」成了它的子串，按名字找就找不准 */}
-          <返回图标 />{t("回到清单")}
+          <返回图标 />{p.backLabel??t("回到清单")}
         </Button>
         {信息 ? <><h2 className="subagent-title" title={信息.agent}>{名称}</h2><span className="subagent-status" data-status={信息.status}>{记号[信息.status]} {信息.asking ? t("在答你的问题") : 状态词(信息.status)}</span></> : null}
       </header>
@@ -272,5 +273,5 @@ export function SubagentDock(p: Omit<Parameters<typeof SubagentPane>[0], "groups
     上次.current = 新
     return 新
   }, [条目])
-  return <SubagentPane groups={groups} agentNames={!id || 父 === p.mainSessionId ? p.agentNames : undefined} onPick={p.onPick} onBack={p.onBack} onAsk={p.onAsk} onControl={p.onControl} />
+  return <SubagentPane groups={groups} agentNames={!id || 父 === p.mainSessionId ? p.agentNames : undefined} onPick={p.onPick} onBack={p.onBack} backLabel={p.backLabel} onAsk={p.onAsk} onControl={p.onControl} />
 }

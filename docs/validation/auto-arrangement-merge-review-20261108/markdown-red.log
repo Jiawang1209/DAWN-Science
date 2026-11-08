@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/protocol/task-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/protocol/task-arrangement.test.ts (8 tests | 1 failed) 12ms
+   × does not turn indented Markdown code examples into task arrangements 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/task-arrangement.test.ts > does not turn indented Markdown code examples into task arrangements
+AssertionError: expected 'valid' to be 'absent' // Object.is equality
+
+Expected: "absent"
+Received: "valid"
+
+ ❯ tests/protocol/task-arrangement.test.ts:51:120
+     49| it('does not turn indented Markdown code examples into task arrangemen…
+     50|  const example=serializeTaskArrangement(plan)
+     51|  for(const indent of ['    ','\t'])expect(parseTaskArrangement(example…
+       |                                                                                                                        ^
+     52|  expect(parseTaskArrangement(example+'\n  ## 其他说明\n普通正文').state).toBe(…
+     53| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  11:43:16
+   Duration  163ms (transform 31ms, setup 0ms, import 66ms, tests 12ms, environment 0ms)
+

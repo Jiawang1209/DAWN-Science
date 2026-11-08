@@ -1,0 +1,52 @@
+[
+  {
+    "name": "final-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.182
+  },
+  {
+    "name": "final-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.298
+  },
+  {
+    "name": "final-evaluation",
+    "command": [
+      "npx",
+      "tsx",
+      "scripts/evaluate-science-pipeline.ts",
+      "--auto-arrangement",
+      "/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/evaluation-final"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.192
+  },
+  {
+    "name": "final-desktop",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/auto-arrangement.spec.ts",
+      "e2e/mode-member-workspace.spec.ts",
+      "e2e/plan-mode.spec.ts",
+      "e2e/collaboration-network.spec.ts",
+      "e2e/collaboration-stopping.spec.ts",
+      "e2e/subagent-steering-epoch.spec.ts",
+      "e2e/bot-collaboration.spec.ts",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-completion"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 137.494
+  }
+]

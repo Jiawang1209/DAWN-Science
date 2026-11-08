@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/protocol/task-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/protocol/task-arrangement.test.ts (6 tests | 1 failed) 11ms
+   × does not serialize inconsistent review flags into a different meaning 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/task-arrangement.test.ts > does not serialize inconsistent review flags into a different meaning
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/protocol/task-arrangement.test.ts:42:103
+     40|  expect(TaskArrangementSchema.safeParse({...plan,mode:'science'}).succ…
+     41|  const reviewer={...task('review'),review:true,dependencies:['one']}
+     42|  expect(TaskArrangementSchema.safeParse({...plan,mode:'chain',tasks:[t…
+       |                                                                                                       ^
+     43| })
+     44|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  09:34:14
+   Duration  170ms (transform 32ms, setup 0ms, import 70ms, tests 11ms, environment 0ms)
+

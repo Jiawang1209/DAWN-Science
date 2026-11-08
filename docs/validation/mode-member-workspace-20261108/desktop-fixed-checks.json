@@ -1,0 +1,34 @@
+[
+  {
+    "label": "desktop-fixed",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/mode-member-workspace.spec.ts",
+      "e2e/collaboration-workbench.spec.ts",
+      "e2e/collaboration-network.spec.ts",
+      "e2e/collaboration-stopping.spec.ts",
+      "e2e/subagent-steering-epoch.spec.ts",
+      "e2e/subagent-view.spec.ts",
+      "e2e/bot-collaboration.spec.ts",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/playwright-fixed"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 118.222
+  },
+  {
+    "label": "desktop-side-fixed",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/side-session.spec.ts",
+      "-g",
+      "\u70b9\u575e\u91cc\u7684\u56e2\u961f chip",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/playwright-side-fixed"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 5.818
+  }
+]

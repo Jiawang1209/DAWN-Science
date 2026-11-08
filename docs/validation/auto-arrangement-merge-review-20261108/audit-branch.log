@@ -1,0 +1,2 @@
+{"sourceFilesFrozen": 663, "sourceDrift": [], "priorEvidenceFilesChecked": 464, "priorEvidenceDrift": [], "mainHead": "d0b6ca78e40d0e051746df250978d3ecb06e9cb9", "mainStatus": "", "mainSourceDrift": [], "integrated": false, "historicalIntermittentTimeout": "OPEN", "shutdownBudgetsMs": [1500, 4000]}
+Exit observations: 39 max OS close ms: 267.631

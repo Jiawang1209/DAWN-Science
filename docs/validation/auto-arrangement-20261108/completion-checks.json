@@ -1,0 +1,12 @@
+[
+  {
+    "name": "completion-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 3.288
+  }
+]

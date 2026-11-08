@@ -1,0 +1,23 @@
+{
+  "nodeFiles": 683,
+  "nodeUiPassed": 6863,
+  "nodeUiSkipped": 10,
+  "electronPassed": 22,
+  "offlineCases": 4,
+  "paidModelRequests": 0,
+  "finalExits": {
+    "count": 24,
+    "maxOsCloseMs": 236.864,
+    "maxAppCloseMs": 237.136
+  },
+  "allExitObservations": 62,
+  "sourceFilesFrozen": 663,
+  "sourceDrift": [],
+  "historicTimeout": "OPEN",
+  "mainHead": "d0b6ca78e40d0e051746df250978d3ecb06e9cb9",
+  "mainStatus": "",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "released": false
+}

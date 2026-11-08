@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' scripts/evaluate-science-pipeline.ts --mode-advice /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/evaluation-completion
+{"destination":"/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/evaluation-completion","rows":12,"passed":12,"modelRequests":0}

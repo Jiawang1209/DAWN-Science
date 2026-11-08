@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/protocol/task-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/protocol/task-arrangement.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/task-arrangement.test.ts [ tests/protocol/task-arrangement.test.ts ]
+Error: Cannot find module '../../src/protocol/task-arrangement.js' imported from /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/tests/protocol/task-arrangement.test.ts
+ ❯ tests/protocol/task-arrangement.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {TaskArrangementSchema,serializeTaskArrangement,parseTaskArrang…
+       | ^
+      3| const task=(id:string)=>({id,title:id,goal:'Check the requested data',…
+      4| const plan:TaskArrangement={mode:'single',rationale:'A small task need…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  09:22:26
+   Duration  116ms (transform 15ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

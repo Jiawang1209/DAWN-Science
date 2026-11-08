@@ -1,3 +1,5 @@
+import {parseTaskArrangement,withoutTaskArrangement,validateArrangementEdit} from '../protocol/task-arrangement.js'
+import {TaskArrangementView} from './task-arrangement-view.js'
 /**
  * 方案卡与输入卡上的开关（先出方案，2026-09-27，spec `2026-09-27-先出方案-design.md` §2）。
  *
@@ -46,6 +48,9 @@ export function 方案卡({
   const 等着 = item.status === "proposed"
   const 灰 = !能答 || 忙 || !onAnswer
   const 长 = item.markdown.split("\n").length > 折起行数
+  const arrangement=parseTaskArrangement(改??item.markdown)
+  let arrangementIssue=''
+  try{validateArrangementEdit(item.markdown,改??item.markdown)}catch(e){arrangementIssue=e instanceof Error?e.message:String(e)}
   /** 卡片本身：答完之后那几颗按钮卸掉，焦点落回这里（不落到 `<body>`，读屏与键盘都还在原处） */
   const 卡根 = useRef<HTMLElement>(null)
   /** 同一拍里按两下只算一次：`忙` 是 state，要等下一次渲染才灰；这把锁当场就上 */
@@ -78,7 +83,7 @@ export function 方案卡({
           : t("没采用")
 
   return (
-    <section ref={卡根} tabIndex={-1} className="plan-card" data-status={item.status} aria-label={tf("方案第 {0} 版", item.version)}>
+    <section ref={卡根} tabIndex={-1} className="plan-card" data-plan-id={item.planId} data-status={item.status} aria-label={tf("方案第 {0} 版", item.version)}>
       <header className="plan-card-head">
         <span className="plan-card-kicker">
           <概览图标 />
@@ -92,6 +97,8 @@ export function 方案卡({
       </header>
       <h3 className="plan-card-title">{item.title}</h3>
 
+      <TaskArrangementView markdown={改??item.markdown}/>
+      {arrangementIssue?<p role="alert" data-authored="1">{arrangementIssue}</p>:null}
       {改 !== undefined ? (
         <textarea
           className="control plan-card-edit"
@@ -102,7 +109,7 @@ export function 方案卡({
         />
       ) : (
         <div className="plan-card-body" data-folded={长 && !全文 ? "true" : "false"}>
-          <AgentMarkdown text={item.markdown} streaming={false} />
+          <AgentMarkdown text={withoutTaskArrangement(item.markdown,arrangement)} streaming={false} />
         </div>
       )}
       {改 === undefined && 长 && !全文 ? (
@@ -115,7 +122,7 @@ export function 方案卡({
         <div className="plan-card-actions">
           {改 === undefined ? (
             <>
-              <Button variant="primary" size="sm" disabled={灰} onClick={() => 答("approve")}>
+              <Button variant="primary" size="sm" disabled={灰||!!arrangementIssue} onClick={() => 答("approve")}>
                 {t("照这个做")}
               </Button>
               <Button variant="secondary" size="sm" disabled={灰} onClick={() => 设改(item.markdown)}>
@@ -130,7 +137,7 @@ export function 方案卡({
               <Button
                 variant="primary"
                 size="sm"
-                disabled={灰}
+                disabled={灰||!!arrangementIssue}
                 onClick={() => 答("approve", 改.trim() !== item.markdown.trim() ? 改 : undefined)}
               >
                 {t("照改过的做")}

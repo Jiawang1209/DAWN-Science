@@ -1,3 +1,4 @@
+import {mockAutoArrangement} from './mock-auto-arrangement.mjs'
 import { scienceMockTool, scienceMockReply } from './mock-science.mjs'
 import { MATH_REPLY } from "./mock-markdown-math.mjs"
 import {analysisDeliveryMockReply, deliveryDemoTool, deliveryDemoReply} from './mock-analysis-delivery.mjs'
@@ -283,6 +284,7 @@ function 方案工具(body) {
   // Anthropic 形状的工具表是 `{ name }`，OpenAI 的是 `{ function: { name } }`——两种都认
   const 在方案期 = (body.tools ?? []).some((t) => (t?.function?.name ?? t?.name) === "propose_plan")
   if (在方案期) {
+    const auto=mockAutoArrangement(body,假方案);if(auto)return auto
     if (文.includes("偷跑")) return 偷跑
     if (文.includes("终端方案验收")) return { ...交方案, args: { ...假方案, title: '终端方案验收：分组比较' } }
     return 交方案

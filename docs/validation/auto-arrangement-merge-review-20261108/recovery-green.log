@@ -1,0 +1,16 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/auto-arrangement.spec.ts -g cancels a real pending --output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-merge-review-20261108/playwright-green
+
+Running 1 test using 1 worker
+
+(node:47318) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61487/9f774fe6-46a1-4ca3-b951-a5c09e213264
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61500/9cbcb761-429f-4027-82c2-97dd491aadd7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/auto-arrangement.spec.ts:49:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task (7.3s)
+
+  1 passed (7.8s)

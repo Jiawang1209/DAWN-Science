@@ -1,0 +1,15 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/side-session.spec.ts -g 点坞里的团队 chip --output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-side
+
+Running 1 test using 1 worker
+
+(node:81737) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60848/09a15605-0a73-4e16-9ffb-e1394f22aefd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/side-session.spec.ts:309:3 › 侧边对话 · 团队 chip › **点坞里的团队 chip → 团队格是坞里那段的队，并写明来源；从标签栏进回到主区那段** (5.2s)
+
+  1 passed (5.8s)

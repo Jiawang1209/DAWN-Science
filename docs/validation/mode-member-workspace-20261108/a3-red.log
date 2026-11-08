@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/mode-advice.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/mode-advice.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/mode-advice.test.ts [ tests/evaluation/mode-advice.test.ts ]
+Error: Cannot find module '../../src/evaluation/mode-advice.js' imported from /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/tests/evaluation/mode-advice.test.ts
+ ❯ tests/evaluation/mode-advice.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {evaluateModeAdvice} from '../../src/evaluation/mode-advice.js'
+       | ^
+      3| it('reports deterministic coverage, explicit conflicts, review preserv…
+      4|  const report=evaluateModeAdvice();expect(report.rows.length).toBeGrea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  08:05:39
+   Duration  110ms (transform 12ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

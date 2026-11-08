@@ -1,0 +1,439 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/ui/task-arrangement-view.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/task-arrangement-view.test.tsx (0 test)
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (2 tests | 2 failed) 119ms
+   × defaults to automatic arrangement and requests the concrete task without any count input 30ms
+   × keeps task text after failure and rejects empty or busy generation 89ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/task-arrangement-view.test.tsx [ tests/ui/task-arrangement-view.test.tsx ]
+Error: Failed to resolve import "../../src/ui/task-arrangement-view.js" from "tests/ui/task-arrangement-view.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/tests/ui/task-arrangement-view.test.tsx:3:34
+  1  |  import { expect, it } from "vitest";
+  2  |  import { render, screen } from "@testing-library/react";
+  3  |  import { TaskArrangementView } from "../../src/ui/task-arrangement-view.js";
+     |                                       ^
+  4  |  import { serializeTaskArrangement } from "../../src/protocol/task-arrangement.js";
+  5  |  var _jsxFileName = "/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/tests/ui/task-arr...
+ ❯ TransformPluginContext._formatLog ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8803:39
+ ❯ TransformPluginContext.error ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8800:14
+ ❯ resolveId ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:26594:18
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:26693:23
+ ❯ TransformPluginContext.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:26666:4
+ ❯ EnvironmentPluginContainer.transform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:8582:14
+ ❯ loadAndTransform ../../../../Desktop/Github_repos/dawn-science/node_modules/vite/dist/node/chunks/node.js:20155:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > defaults to automatic arrangement and requests the concrete task without any count input
+TestingLibraryElementError: Unable to find an element with the text: 自动安排. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"orchestration-advisor"[39m
+    [36m>[39m
+      [36m<summary>[39m
+        [0m如何安排任务[0m
+      [36m</summary>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m先说明任务结构，再决定是否分工。只准备草稿，不会启动或改动现有任务。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"orchestration-advisor-fields"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m任务块数[0m
+          [36m<input[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmax[39m=[32m"8"[39m
+            [33mmin[39m=[32m"1"[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m任务之间的关系[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"任务之间的关系"[39m
+            [33mclass[39m=[32m"control"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"unknown"[39m
+            [36m>[39m
+              [0m尚未说明[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"independent"[39m
+            [36m>[39m
+              [0m彼此独立[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"sequential"[39m
+            [36m>[39m
+              [0m前后依赖[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m写入同一目标[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m需要独立审阅[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m选用模式[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"选用模式"[39m
+            [33mclass[39m=[32m"control"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"recommended"[39m
+            [36m>[39m
+              [0m采用建议[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"single"[39m
+            [36m>[39m
+              [0m单任务[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"parallel"[39m
+            [36m>[39m
+              [0m并行委派[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"chain"[39m
+            [36m>[39m
+              [0m串行交接[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"science"[39m
+            [36m>[39m
+              [0m科研流水线[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [0m请说明 1–8 个任务块；更大的任务先分成可验收的阶段。[0m
+        [36m</li>[39m
+        [36m<li>[39m
+          [0m请先说明任务是否依赖前一步的结果。[0m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m放入任务草稿[0m
+      [36m</button>[39m
+    [36m</details>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-advisor.test.tsx:8:16
+      6|  const generate=vi.fn(async()=>{})
+      7|  const view=render(<OrchestrationAdvisor task="计算 input.csv 的均值" onGen…
+      8|  expect(screen.getByText('自动安排')).toBeTruthy();expect(view.container.q…
+       |                ^
+      9|  expect(screen.getByRole('textbox',{name:'任务目标'})).toHaveProperty('val…
+     10|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'生…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > keeps task text after failure and rejects empty or busy generation
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "生成安排"
+
+Here are the accessible roles:
+
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"orchestration-advisor"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "任务块数":
+  [36m<input[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmax[39m=[32m"8"[39m
+    [33mmin[39m=[32m"1"[39m
+    [33mstep[39m=[32m"1"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "任务之间的关系":
+  [36m<select[39m
+    [33maria-label[39m=[32m"任务之间的关系"[39m
+    [33mclass[39m=[32m"control"[39m
+  [36m/>[39m
+
+  Name "选用模式":
+  [36m<select[39m
+    [33maria-label[39m=[32m"选用模式"[39m
+    [33mclass[39m=[32m"control"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "尚未说明":
+  [36m<option[39m
+    [33mvalue[39m=[32m"unknown"[39m
+  [36m/>[39m
+
+  Name "彼此独立":
+  [36m<option[39m
+    [33mvalue[39m=[32m"independent"[39m
+  [36m/>[39m
+
+  Name "前后依赖":
+  [36m<option[39m
+    [33mvalue[39m=[32m"sequential"[39m
+  [36m/>[39m
+
+  Name "采用建议":
+  [36m<option[39m
+    [33mvalue[39m=[32m"recommended"[39m
+  [36m/>[39m
+
+  Name "单任务":
+  [36m<option[39m
+    [33mvalue[39m=[32m"single"[39m
+  [36m/>[39m
+
+  Name "并行委派":
+  [36m<option[39m
+    [33mvalue[39m=[32m"parallel"[39m
+  [36m/>[39m
+
+  Name "串行交接":
+  [36m<option[39m
+    [33mvalue[39m=[32m"chain"[39m
+  [36m/>[39m
+
+  Name "科研流水线":
+  [36m<option[39m
+    [33mvalue[39m=[32m"science"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "写入同一目标":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "需要独立审阅":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "放入任务草稿":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"orchestration-advisor"[39m
+    [36m>[39m
+      [36m<summary>[39m
+        [0m如何安排任务[0m
+      [36m</summary>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m先说明任务结构，再决定是否分工。只准备草稿，不会启动或改动现有任务。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"orchestration-advisor-fields"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m任务块数[0m
+          [36m<input[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmax[39m=[32m"8"[39m
+            [33mmin[39m=[32m"1"[39m
+            [33mstep[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m任务之间的关系[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"任务之间的关系"[39m
+            [33mclass[39m=[32m"control"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"unknown"[39m
+            [36m>[39m
+              [0m尚未说明[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"independent"[39m
+            [36m>[39m
+              [0m彼此独立[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"sequential"[39m
+            [36m>[39m
+              [0m前后依赖[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m写入同一目标[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m需要独立审阅[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m选用模式[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"选用模式"[39m
+            [33mclass[39m=[32m"control"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"recommended"[39m
+            [36m>[39m
+              [0m采用建议[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"single"[39m
+            [36m>[39m
+              [0m单任务[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"parallel"[39m
+            [36m>[39m
+              [0m并行委派[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"chain"[39m
+            [36m>[39m
+              [0m串行交接[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"science"[39m
+            [36m>[39m
+              [0m科研流水线[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [0m请说明 1–8 个任务块；更大的任务先分成可验收的阶段。[0m
+        [36m</li>[39m
+        [36m<li>[39m
+          [0m请先说明任务是否依赖前一步的结果。[0m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m放入任务草稿[0m
+      [36m</button>[39m
+    [36m</details>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-advisor.test.tsx:17:16
+     15|  const generate=vi.fn(async()=>{throw Error('owner changed')})
+     16|  const view=render(<OrchestrationAdvisor task="" onGenerate={generate}…
+     17|  expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disa…
+       |                ^
+     18|  fireEvent.change(screen.getByRole('textbox',{name:'任务目标'}),{target:{v…
+     19|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'生…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed (2)
+   Start at  09:25:39
+   Duration  1.49s (transform 731ms, setup 1.19s, import 49ms, tests 119ms, environment 1.27s)
+

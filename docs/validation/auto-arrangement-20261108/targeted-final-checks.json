@@ -1,0 +1,26 @@
+[
+  {
+    "name": "verified-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.333
+  },
+  {
+    "name": "verified-cancel",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/auto-arrangement.spec.ts",
+      "-g",
+      "cancels a real pending planning turn",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-cancel-final"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 28.666
+  }
+]

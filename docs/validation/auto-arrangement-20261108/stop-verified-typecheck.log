@@ -1,0 +1,4 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/ui/external-planning-stop.test.tsx(8,42): error TS2322: Type '{ type: "turn"; id: string; who: "user"; text: string; at: number; }' is not assignable to type '{ type: "turn"; id: string; who: "agent" | "user"; text: string; final: boolean; at?: number | undefined; by?: string | undefined; images?: string[] | undefined; thinking?: string | undefined; thinkingMs?: number | undefined; usage?: { ...; } | undefined; } | ... 7 more ... | { ...; }'.
+  Property 'final' is missing in type '{ type: "turn"; id: string; who: "user"; text: string; at: number; }' but required in type '{ type: "turn"; id: string; who: "agent" | "user"; text: string; final: boolean; at?: number | undefined; by?: string | undefined; images?: string[] | undefined; thinking?: string | undefined; thinkingMs?: number | undefined; usage?: { ...; } | undefined; }'.

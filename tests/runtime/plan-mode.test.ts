@@ -503,3 +503,40 @@ describe("审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只�
     await rt.stop("p1")
   })
 })
+it('validates edited automatic task structure before saving and persists an adjusted plan in the existing book',async()=>{
+ const {serializeTaskArrangement,parseTaskArrangement}=await import('../../src/protocol/task-arrangement.js')
+ const worker={id:'analyze',title:'分析数据',goal:'按给定数据完成分析',role:'分析执行者',inputs:['input.csv'],outputs:['result.csv'],dependencies:[],acceptance:'可复核',review:false}
+ const arrangement={mode:'science' as const,rationale:'先分析后独立审阅',independentReview:true,tasks:[{...worker,id:'check',title:'核对输入',role:'数据核查员',outputs:['clean.csv']},{...worker,inputs:['clean.csv'],dependencies:['check']},{...worker,id:'review',title:'独立审阅',role:'独立审阅员',inputs:['result.csv'],outputs:['review.md'],dependencies:['analyze'],review:true}],questions:[]}
+ const x=await 起()
+ try{
+  await x.rt.setConfigOption('p1','dawn.plan','1')
+  const r=await 跑(x.s,'propose_plan',{...假方案,arrangement},'auto-plan');expect(r.terminate).toBe(true)
+  await expect(x.rt.answerPlan('p1','auto-plan','approve',假方案.plan)).rejects.toThrow(/任务安排/)
+  expect(existsSync(join(x.spec.workspace,'analysis/plans'))).toBe(false)
+  expect(开关值(x.rt)).toBe('1')
+  const edited={...arrangement,tasks:[{...worker,title:'按用户修订合并核查和分析'},arrangement.tasks[2]!]}
+  const text=假方案.plan+'\n\n'+serializeTaskArrangement(edited)
+  const saved=await x.rt.answerPlan('p1','auto-plan','approve',text)
+  const accepted=JSON.parse(readFileSync(join(x.spec.sessionDir,'plans.json'),'utf8')).方案们[0]
+  const parsed=parseTaskArrangement(accepted.markdown);expect(parsed.state).toBe('valid');if(parsed.state==='valid')expect(parsed.arrangement.tasks).toHaveLength(2)
+  expect(accepted.markdown).toBe(text);expect(accepted.status).toBe('approved');expect(accepted.edited).toBe(true)
+  expect(parseTaskArrangement(readFileSync(join(x.spec.workspace,saved.savedPath!),'utf8')).state).toBe('valid')
+ }finally{await x.rt.stop('p1');rmSync(x.spec.workspace,{recursive:true,force:true})}
+})
+it('does not supersede a plan when cancellation arrives while the original plan baseline is pending',async()=>{
+ const x=await 起(),controller=new AbortController()
+ let release!:()=>void,entered!:()=>void
+ const waiting=new Promise<void>(r=>{entered=r})
+ try{
+  await x.rt.setConfigOption('p1','dawn.plan','1')
+  await 跑(x.s,'propose_plan',假方案,'current')
+  ;(x.rt as unknown as {用户消息们:()=>{id:string;文:string}[]}).用户消息们=()=>[{id:'u1',文:'调整方案'}]
+  const baseline=x.rt as unknown as {记轮基线:(id:string)=>Promise<unknown>}
+  vi.spyOn(baseline,'记轮基线').mockImplementation(()=>{entered();return new Promise<void>(r=>{release=r})})
+  const pending=x.s.getToolDefinition('propose_plan')!.execute('late',假方案,controller.signal,undefined,undefined)
+  await waiting;controller.abort();release()
+  expect((await pending).isError).toBe(true)
+  const rows=JSON.parse(readFileSync(join(x.spec.sessionDir,'plans.json'),'utf8')).方案们
+  expect(rows).toHaveLength(1);expect(rows[0]).toMatchObject({planId:'current',status:'proposed'})
+ }finally{release?.();await x.rt.stop('p1');rmSync(x.spec.workspace,{recursive:true,force:true})}
+})

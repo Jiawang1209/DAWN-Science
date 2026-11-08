@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/run-overview.test.tsx -t expires a pending Bot navigation
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/run-overview.test.tsx (10 tests | 1 failed | 9 skipped) 105ms
+   × expires a pending Bot navigation when selection changes before the host reply 104ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/run-overview.test.tsx > expires a pending Bot navigation when selection changes before the host reply
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ tests/ui/run-overview.test.tsx:113:23
+    111|  render(<RunOverview client={{get:vi.fn().mockResolvedValue(data)} as …
+    112|  fireEvent.click(screen.getByRole('button',{name:'打开成员只读对话'}))
+    113|  expect(typeof valid).toBe('function');expect(valid!()).toBe(true)
+       |                       ^
+    114|  fireEvent.click(screen.getByRole('button',{name:'bob',exact:true}));e…
+    115|  await act(async()=>resolve())
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  08:18:29
+   Duration  1.90s (transform 696ms, setup 754ms, import 463ms, tests 105ms, environment 467ms)
+

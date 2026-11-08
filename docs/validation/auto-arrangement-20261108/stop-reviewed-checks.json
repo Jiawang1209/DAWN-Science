@@ -1,0 +1,50 @@
+[
+  {
+    "name": "stop-reviewed-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.384
+  },
+  {
+    "name": "stop-reviewed-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.372
+  },
+  {
+    "name": "stop-reviewed-desktop",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/auto-arrangement.spec.ts",
+      "-g",
+      "cancels a real pending planning turn",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-stop-reviewed"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 6.734
+  },
+  {
+    "name": "stop-reviewed-side",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/side-session.spec.ts",
+      "-g",
+      "\u70b9\u575e\u91cc\u7684\u56e2\u961f chip",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-side-fixed"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 6.024
+  }
+]

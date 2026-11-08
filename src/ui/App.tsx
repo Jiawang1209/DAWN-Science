@@ -1,3 +1,6 @@
+import {createAutoArrangementRequester,stopAutoArrangement} from './auto-arrangement-request.js'
+import {$collaborationReturn,takeCollaborationReturn,clearCollaborationReturn,pruneCollaborationReturn} from './state/collaboration-return.js'
+import {restoreCollaborationView} from './state/collaboration-view.js'
 import { recentWorkspacePaths, type WorkspaceMenuData } from "./workspace-menu.js"
 import { $workspaceFolders, addWorkspaceFolder, removeWorkspaceFolder } from "./state/sidebar.js"
 import type { TerminalAgentState } from '../protocol/terminal.js'
@@ -2448,6 +2451,33 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const 子id = useStore($子转录id)
   const 团队格会话 = useStore($团队格会话)
+  const collaborationReturn=useStore($collaborationReturn)
+  const arrangeIdentity=useRef({main:sessionId,side:侧边id,client,version:0})
+  useStore(主槽.$stoppedInputId)
+  useStore(侧槽.$stoppedInputId)
+  if(arrangeIdentity.current.main!==sessionId||arrangeIdentity.current.side!==侧边id||arrangeIdentity.current.client!==client){arrangeIdentity.current={main:sessionId,side:侧边id,client,version:arrangeIdentity.current.version+1}}
+  const requestArrangement=useMemo(()=>createAutoArrangementRequester({
+    read:async owner=>{
+      const plan=await client.get<{planning:boolean}>('getSessionPlan',{sessionId:owner})
+      const overview=await client.get<import('../protocol/run-overview.js').RunOverview>('getRunOverview',{sessionId:owner})
+      if(overview.ownerSessionId!==owner)throw new Error(t("会话已切换或规划已取消，未发送到其他会话。"))
+      if(overview.source==='live'&&overview.runs.some(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping'))throw new Error(t("会话当前有任务运行，请等待完成或停止后再安排。"))
+      return plan
+    },
+    acquire:owner=>取写权(owner),
+    enable:owner=>client.get('setSessionConfigOption',{sessionId:owner,configId:'dawn.plan',value:'1'}),
+    send:(owner,text)=>写进去(owner,text),
+    running:owner=>$跑着的会话.get().has(owner),
+  }),[client,取写权,写进去])
+  useEffect(()=>{pruneCollaborationReturn(sessionId,侧边id)},[sessionId,侧边id])
+  const returnToCollaboration=(kind:'subagent'|'bot',target:string,owner:string)=>{
+    const visible=owner===$activeSessionId.get()||owner===$侧边会话id.get()
+    const origin=takeCollaborationReturn(kind,target,visible?owner:'')
+    if(!origin)return false
+    restoreCollaborationView(owner,{selection:origin.selection,tab:origin.tab,expanded:origin.expanded,reopenInspection:origin.expanded})
+    看团队(owner);setRightDockTenant("team");setRightDockOpen(true)
+    return true
+  }
   useEffect(() => {
     if (!ready || !子id) return
     void resyncSubagent(client, 子id)
@@ -2486,6 +2516,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 团队成员那一轮（`team:`）切到「团队」格（D4）：团队的任务、邮箱、产出都在那儿，成员轮的逐步过程本轮不做。
    */
   const 打开子agent = useCallback((transcriptId: string) => {
+    clearCollaborationReturn()
     坞上位()
     const 拆 = 拆子转录id(transcriptId)
     if (拆?.toolCallId.startsWith("team:")) {
@@ -4344,6 +4375,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     const currentServiceLabel = currentServiceLabelOf(s)
     const switchProblem = 换模型问题[s.sessionId]
     return {
+      stoppedInputId: 槽.$stoppedInputId.get(),
+      externalInputRunning: 跑着的会话.has(s.sessionId),
       allowBotDispatch: 槽 === 主槽 && s.kind === "native",
       // 主区那段用主区的根；坞里那段用它自己的（见 `坞引用文件`）
       护粘贴: 艾特设置.ignorePasted,
@@ -6128,9 +6161,15 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 agentNames={Object.fromEntries(子agent名册.filter(a => a.title).map(a => [a.name, a.title!]))}
                 onPick={(toolCallId, index) => {
                   const 父 = 拆子转录id($子转录id.get() ?? "")?.会话 ?? sessionId
-                  if (父) 看子agent(子转录id(父, toolCallId, index))
+                  if (父) {clearCollaborationReturn();看子agent(子转录id(父, toolCallId, index))}
                 }}
-                onBack={() => 看子agent(undefined)}
+                backLabel={collaborationReturn?.kind==='subagent'&&collaborationReturn.target===子id?t("返回协作台"):undefined}
+                onBack={() => {
+                  const id=$子转录id.get(),owner=id?拆子转录id(id)?.会话:undefined
+                  const returned=!!(id&&owner&&returnToCollaboration('subagent',id,owner))
+                  看子agent(undefined)
+                  if(!returned)clearCollaborationReturn()
+                }}
                 onControl={async control=>{
                   const transcriptId=$子转录id.get()
                   if(!transcriptId)return{canSteer:false,canInterrupt:false,receipts:[]}
@@ -6146,9 +6185,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }}
               />
             ) : rightDockTenant === "bot" ? (
-              <BotPane onPrepareDelivery={prepareAnalysisDelivery} client={client} ownerSessionId={sessionId} ownerScope={botOwnerScope} team={botTeam}
+              <BotPane returnLabel={collaborationReturn?.kind==='bot'?t("返回协作台"):undefined} onReturnToCollaboration={()=>{
+                const target=$botMemberView.get()
+                if(!target){clearCollaborationReturn();return false}
+                return returnToCollaboration('bot',JSON.stringify([target.teamId,target.botId]),target.ownerSessionId)
+              }} onPrepareDelivery={prepareAnalysisDelivery} client={client} ownerSessionId={sessionId} ownerScope={botOwnerScope} team={botTeam}
                 readArtifact={readBotArtifact}
                 onViewMember={async botId => {
+                  clearCollaborationReturn()
                   if (!sessionId || !botTeam || botTeam.captainSessionId !== sessionId) return
                   const target = {ownerSessionId: sessionId, teamId: botTeam.id, botId}
                   const r = await client.get<{session: SessionSummary}>("openBotMember", target)
@@ -6169,7 +6213,37 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 }} />
             ) : rightDockTenant === "team" ? (
               /** 按它画的那一段重挂（2026-09-29）：展开 / 收起的是那一段的成员与任务，换段不带过去 */
-              <TeamPanel key={团队格会话 ?? sessionId} client={client} onView={id=>{$rightDockTenant.set("subagent");$rightDockOpen.set(true);看子agent(id)}} />
+              <TeamPanel key={团队格会话 ?? sessionId} client={client} onArrange={async(owner,task,adjustment,signal)=>{
+                const version=arrangeIdentity.current.version
+                await requestArrangement(owner,task,adjustment,signal,()=>arrangeIdentity.current.version===version&&(owner===$activeSessionId.get()||owner===$侧边会话id.get()))
+              }} onStopArrange={async owner=>{
+                if(owner!==$activeSessionId.get()&&owner!==$侧边会话id.get())throw new Error(t("会话已切换或规划已取消，未发送到其他会话。"))
+                const version=arrangeIdentity.current.version
+                const slot=owner===$activeSessionId.get()?主槽:侧槽
+                await stopAutoArrangement({
+                  input:()=>{slot.flush();return slot.$items.get().findLast(i=>i.type==='turn'&&i.who==='user')?.id},
+                  isCurrent:()=>arrangeIdentity.current.version===version,
+                  running:()=>$跑着的会话.get().has(owner),
+                  read:()=>client.get<{planning:boolean}>('getSessionPlan',{sessionId:owner}),
+                  abort:async()=>{const result=await client.get<{withdrawn?:撤回的话[]}>('abortSession',{sessionId:owner});退回输入框(owner,result.withdrawn??[])},
+                  acknowledge:input=>{slot.$stoppedInputId.set(input);标记在跑(owner,false)},
+                })
+              }} onBot={async(owner,teamId,botId,isCurrent)=>{
+                if(owner!==$activeSessionId.get()||owner!==sessionId)throw new Error(t("当前成员不属于正在查看的主会话"))
+                if(!isCurrent())throw new Error(t("成员选择或执行代次已变化，未打开旧成员对话"))
+                const scope=$botOwnerScope.get()
+                const target={ownerSessionId:owner,teamId,botId}
+                const r=await client.get<{session:SessionSummary}>("openBotMember",target)
+                if($activeSessionId.get()!==owner||$botOwnerScope.get()!==scope)throw new Error(t("会话已切换，未打开成员对话"))
+                if(!isCurrent())throw new Error(t("成员选择或执行代次已变化，未打开旧成员对话"))
+                $botTask.set(undefined);selectBotSession(r.session,botId);$botMemberView.set(target)
+                $rightDockTenant.set("bot");$rightDockOpen.set(true)
+              }} onPrepare={(owner,text)=>{
+                if(owner!==$activeSessionId.get()&&owner!==$侧边会话id.get())return false
+                const previous=draftOf(owner)
+                setDraft(owner,previous?`${previous}\n\n${text}`:text)
+                return true
+              }} onView={id=>{$rightDockTenant.set("subagent");$rightDockOpen.set(true);看子agent(id)}} />
             ) : rightDockTenant === "route" ? (
               !session ? <EmptyState title={t("开始任务后查看路线")} description={t("每段会话保留自己的分析步骤和产物记录。")} /> : <AnalysisRoutePanel
                 onPrepareDelivery={prepareAnalysisDelivery}

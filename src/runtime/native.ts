@@ -1,3 +1,4 @@
+import {autoArrangementRequestPrefix,validateArrangementEdit} from '../protocol/task-arrangement.js'
 import {sampleAgentContext,contextUsageAnchor,observeAgentContext} from './agent-context-sampler.js'
 import {currentExecutionContext,bindExecutionContextRoute} from '../orchestration/execution-context.js'
 import {preservePiToolStatus} from './pi-tool-status.js'
@@ -2133,7 +2134,7 @@ export class NativeRuntime implements AgentRuntime {
     this.questionBooks.set(spec.sessionId, questions)
     const questionTool = createAskUserQuestionTool((id, qs, signal) => questions.ask(id, qs, signal))
     const 方案工具 = [
-      createProposePlanTool({ 交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
+      createProposePlanTool({ requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
       ...(this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
         ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
         : []),
@@ -4195,6 +4196,7 @@ ${描述}`
       return {}
     }
     const 正文 = (text?.trim() || p.markdown).trim()
+    validateArrangementEdit(p.markdown,正文)
     // 两头的空白不算改过（2026-09-28 审查）：模型交的原稿常带首尾换行，编辑框一 trim 就成了「你改过」
     const 改过 = 正文 !== p.markdown.trim()
     const 时刻 = new Date()

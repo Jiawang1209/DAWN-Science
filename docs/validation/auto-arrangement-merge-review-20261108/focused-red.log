@@ -1,0 +1,99 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/propose-plan.test.ts tests/ui/orchestration-advisor.test.tsx tests/ui/external-planning-stop.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/tools/propose-plan.test.ts (9 tests | 1 failed) 15ms
+   × cannot publish a late proposal when its tool signal was cancelled before execution 3ms
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (4 tests | 1 failed) 133ms
+   × locks regeneration and repeated stop while a stop acknowledgement is pending 10ms
+ ❯ |ui| tests/ui/external-planning-stop.test.tsx (2 tests | 1 failed) 191ms
+   × does not resurrect waiting from a restored automatic request but still waits for its live turn 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/external-planning-stop.test.tsx > does not resurrect waiting from a restored automatic request but still waits for its live turn
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-label="停止"
+  class="btn btn-primary btn-default send-btn stopping"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="icon"
+    fill="currentColor"
+    focusable="false"
+    height="16"
+    viewBox="0 0 16 16"
+    width="16"
+  >
+    <rect
+      height="8"
+      rx="1.6"
+      width="8"
+      x="4"
+      y="4"
+    />
+  </svg>
+</button>
+
+ ❯ tests/ui/external-planning-stop.test.tsx:27:51
+     25|  const props={session,onSend:vi.fn(),onAbort:vi.fn(),items}
+     26|  const r=render(<ConversationView {...props} externalInputRunning={fal…
+     27|  expect(screen.queryByRole('button',{name:'停止'})).toBeNull()
+       |                                                   ^
+     28|  r.rerender(<ConversationView {...props} externalInputRunning={true}/>)
+     29|  expect(screen.getByRole('button',{name:'停止'})).toBeTruthy()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > locks regeneration and repeated stop while a stop acknowledgement is pending
+AssertionError: expected <button type="button" …(1)></button> to have property "disabled" with value true
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:39:51
+     37|  fireEvent.click(screen.getByRole('button',{name:'中止规划'}))
+     38|  view.rerender(<OrchestrationAdvisor {...props} busy={false}/>)
+     39|  expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disa…
+       |                                                   ^
+     40|  const stop=screen.getByRole('button',{name:'中止规划'});expect(stop).toHa…
+     41|  fireEvent.click(stop);expect(onStop).toHaveBeenCalledOnce();expect(on…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/tools/propose-plan.test.ts > cannot publish a late proposal when its tool signal was cancelled before execution
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/propose-plan.test.ts:75:20
+     73|  controller.abort()
+     74|  const r=await createProposePlanTool({交:stored}).execute('late',假方案,co…
+     75|  expect(r.isError).toBe(true);expect(r.terminate).toBeUndefined();expe…
+       |                    ^
+     76| })
+     77|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  3 failed | 12 passed (15)
+   Start at  11:39:37
+   Duration  2.19s (transform 1.22s, setup 1.17s, import 961ms, tests 340ms, environment 1.33s)
+

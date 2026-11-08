@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/auto-arrangement.spec.ts -g cancels a real pending --output=docs/validation/auto-arrangement-merge-review-20261108/playwright-red2
+
+Running 1 test using 1 worker
+
+(node:46863) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61268/ceb639d9-80e8-4809-ac8e-092a19b10116
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61292/87de5aa0-6442-4bbd-be86-cc77b5338e1f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/auto-arrangement.spec.ts:49:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task (29.3s)
+
+
+  1) e2e/auto-arrangement.spec.ts:49:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('main.main').getByRole('button', { name: '停止', exact: true })
+    Expected: 0
+    Received: 1
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 25000ms
+      - waiting for locator('main.main').getByRole('button', { name: '停止', exact: true })
+        53 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      74 |   await page.getByRole('button',{name:/^规划取消恢复验收/}).click();await 进坞(page,'团队')
+      75 |   auto=page.getByRole('region',{name:'自动安排',exact:true})
+    > 76 |   await expect(page.locator('main.main').getByRole('button',{name:'停止',exact:true})).toHaveCount(0)
+         |                                                                                      ^
+      77 |   await page.screenshot({path:join(out,'stage-e-cancelled-restored.png')})
+      78 |   await auto.getByRole('textbox',{name:'任务目标',exact:true}).fill('只计算 input.csv 的均值')
+      79 |   await auto.getByRole('button',{name:'生成安排',exact:true}).click()
+        at /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/e2e/auto-arrangement.spec.ts:76:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/auto-arrangement-merge-review-20261108/playwright-red2/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/auto-arrangement-merge-review-20261108/playwright-red2/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/auto-arrangement-merge-review-20261108/playwright-red2/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/auto-arrangement-merge-review-20261108/playwright-red2/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/auto-arrangement-merge-review-20261108/playwright-red2/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/auto-arrangement.spec.ts:49:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task 

@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "rows": [
+    {
+      "id": "small",
+      "brief": {
+        "blocks": 1,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": false
+      },
+      "expected": "single",
+      "recommended": "single",
+      "selected": "single",
+      "reasons": [
+        "one-block"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "independent-two",
+      "brief": {
+        "blocks": 2,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": false
+      },
+      "expected": "parallel",
+      "recommended": "parallel",
+      "selected": "parallel",
+      "reasons": [
+        "independent-blocks"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "independent-eight",
+      "brief": {
+        "blocks": 8,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": false
+      },
+      "expected": "parallel",
+      "recommended": "parallel",
+      "selected": "parallel",
+      "reasons": [
+        "independent-blocks"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "dependent",
+      "brief": {
+        "blocks": 3,
+        "dependency": "sequential",
+        "sharedWrites": false,
+        "independentReview": false
+      },
+      "expected": "chain",
+      "recommended": "chain",
+      "selected": "chain",
+      "reasons": [
+        "ordered-steps"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "shared-output",
+      "brief": {
+        "blocks": 3,
+        "dependency": "independent",
+        "sharedWrites": true,
+        "independentReview": false
+      },
+      "expected": "chain",
+      "recommended": "chain",
+      "selected": "chain",
+      "reasons": [
+        "shared-writes"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "review",
+      "brief": {
+        "blocks": 3,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": true
+      },
+      "expected": "science",
+      "recommended": "science",
+      "selected": "science",
+      "reasons": [
+        "independent-review"
+      ],
+      "valid": true,
+      "reviewRequired": true,
+      "passed": true
+    },
+    {
+      "id": "explicit-single",
+      "brief": {
+        "blocks": 3,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": false,
+        "preferred": "single"
+      },
+      "expected": "parallel",
+      "recommended": "parallel",
+      "selected": "single",
+      "reasons": [
+        "independent-blocks"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "explicit-chain",
+      "brief": {
+        "blocks": 3,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": false,
+        "preferred": "chain"
+      },
+      "expected": "parallel",
+      "recommended": "parallel",
+      "selected": "chain",
+      "reasons": [
+        "independent-blocks"
+      ],
+      "valid": true,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "unsafe-parallel",
+      "brief": {
+        "blocks": 3,
+        "dependency": "independent",
+        "sharedWrites": true,
+        "independentReview": false,
+        "preferred": "parallel"
+      },
+      "expected": "chain",
+      "recommended": "chain",
+      "selected": "parallel",
+      "reasons": [
+        "shared-writes",
+        "parallel-conflict"
+      ],
+      "valid": false,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "review-cannot-downgrade",
+      "brief": {
+        "blocks": 3,
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": true,
+        "preferred": "single"
+      },
+      "expected": "science",
+      "recommended": "science",
+      "selected": "single",
+      "reasons": [
+        "independent-review",
+        "review-conflict"
+      ],
+      "valid": false,
+      "reviewRequired": true,
+      "passed": true
+    },
+    {
+      "id": "missing-blocks",
+      "brief": {
+        "dependency": "independent",
+        "sharedWrites": false,
+        "independentReview": false
+      },
+      "expected": "parallel",
+      "recommended": "parallel",
+      "selected": "parallel",
+      "reasons": [
+        "blocks-required",
+        "independent-blocks"
+      ],
+      "valid": false,
+      "reviewRequired": false,
+      "passed": true
+    },
+    {
+      "id": "missing-dependencies",
+      "brief": {
+        "blocks": 3,
+        "dependency": "unknown",
+        "sharedWrites": false,
+        "independentReview": false
+      },
+      "expected": "parallel",
+      "recommended": "parallel",
+      "selected": "parallel",
+      "reasons": [
+        "dependencies-required",
+        "independent-blocks",
+        "parallel-conflict"
+      ],
+      "valid": false,
+      "reviewRequired": false,
+      "passed": true
+    }
+  ],
+  "modelRequests": 0,
+  "limitations": [
+    "Deterministic planning-rule coverage only; no model execution or performance comparison.",
+    "Recommendations prepare a draft. Runtime tools and frozen contracts enforce execution.",
+    "Historical paid-model results and intermittent shutdown timeouts remain separate evidence."
+  ]
+}

@@ -9,6 +9,13 @@ import type { TranscriptItem } from "../../../src/protocol/index.js"
 const 说 = (id: string, text: string, final = false) => ({ type: "turn", id, who: "agent", text, final }) as TranscriptItem
 
 describe("创建转录槽", () => {
+  it("external stop presentation acknowledgement stays in its slot and resets on session change", () => {
+    const a=创建转录槽(),b=创建转录槽()
+    a.$stoppedInputId.set('u1')
+    expect(b.$stoppedInputId.get()).toBeUndefined()
+    a.reset()
+    expect(a.$stoppedInputId.get()).toBeUndefined()
+  })
   it("两个槽互不串", () => {
     const a = 创建转录槽(), b = 创建转录槽()
     a.upsertItem(说("1", "甲"))

@@ -1,0 +1,798 @@
+ docs/DEVELOPMENT_HISTORY.md                        |  21 +
+ .../2026-11-08-auto-arrangement-merge-review.md    |  38 ++
+ docs/reviews/2026-11-08-auto-arrangement.md        |  31 +
+ docs/reviews/2026-11-08-mode-member-workspace.md   |  38 ++
+ ...217\221\350\267\257\347\272\277\345\233\276.md" |  14 +
+ .../plans/2026-11-08-auto-arrangement.md           | 104 ++++
+ .../plans/2026-11-08-mode-member-workspace.md      | 176 ++++++
+ .../specs/2026-11-08-auto-arrangement-design.md    |  31 +
+ .../2026-11-08-mode-member-workspace-design.md     |  32 +
+ .../validation/auto-arrangement-20261108/README.md |  65 ++
+ .../auto-arrangement-20261108/a-contract-green.log |  11 +
+ .../auto-arrangement-20261108/a-contract-red.log   |  26 +
+ .../auto-arrangement-20261108/a-host-green.log     |  11 +
+ .../auto-arrangement-20261108/a-tool-red.log       |  52 ++
+ .../auto-arrangement-20261108/accepted-checks.json |  16 +
+ .../auto-arrangement-20261108/accepted-node-ui.log |  30 +
+ .../auto-arrangement-20261108/audit-final.log      |   2 +
+ .../auto-arrangement-20261108/audit.json           | 412 +++++++++++++
+ docs/validation/auto-arrangement-20261108/audit.py |  62 ++
+ .../auto-arrangement-20261108/b-all-green.log      |  37 ++
+ .../auto-arrangement-20261108/b-request-red.log    |  34 ++
+ .../auto-arrangement-20261108/b-typecheck.log      |   2 +
+ .../auto-arrangement-20261108/b-ui-contracts.log   | 123 ++++
+ .../auto-arrangement-20261108/b-ui-final.log       |  11 +
+ .../auto-arrangement-20261108/b-ui-green.log       |  39 ++
+ .../auto-arrangement-20261108/b-ui-red.log         | 439 ++++++++++++++
+ .../auto-arrangement-20261108/b-wiring-green.log   |  39 ++
+ .../auto-arrangement-20261108/c-build.log          | 622 +++++++++++++++++++
+ .../auto-arrangement-20261108/c-desktop-first.log  |  61 ++
+ .../auto-arrangement-20261108/c-evaluation-cli.log |   3 +
+ .../auto-arrangement-20261108/c-evaluation.log     |  11 +
+ .../auto-arrangement-20261108/c-typecheck.log      |   2 +
+ .../cancel-fix-typecheck.log                       |  15 +
+ .../cancel-fixed-checks.json                       |  12 +
+ .../cancel-fixed-typecheck.log                     |  15 +
+ .../cancel-waiting-green.log                       |  11 +
+ .../cancel-waiting-red.log                         |  57 ++
+ .../changed-files-sha256.json                      |  64 ++
+ .../auto-arrangement-20261108/checks.json          |  49 ++
+ .../phase-b-conversation-dark.png                  | Bin 0 -> 207704 bytes
+ .../phase-b-network-dark-completed.png             | Bin 0 -> 433126 bytes
+ .../phase-b-network-dark-running.png               | Bin 0 -> 414476 bytes
+ .../phase-b-network-narrow.png                     | Bin 0 -> 129857 bytes
+ .../phase-b-conversation-dark.png                  | Bin 0 -> 207357 bytes
+ .../phase-b-network-dark-completed.png             | Bin 0 -> 432961 bytes
+ .../phase-b-network-dark-running.png               | Bin 0 -> 414933 bytes
+ .../collaboration-final/phase-b-network-narrow.png | Bin 0 -> 129775 bytes
+ .../completion-checks.json                         |  12 +
+ .../completion-typecheck.log                       |   5 +
+ .../auto-arrangement-20261108/delivery-build.log   | 622 +++++++++++++++++++
+ .../auto-arrangement-20261108/delivery-checks.json |  80 +++
+ .../auto-arrangement-20261108/delivery-desktop.log | 116 ++++
+ .../delivery-evaluation.log                        |   3 +
+ .../auto-arrangement-20261108/delivery-node-ui.log |  13 +
+ .../auto-arrangement-20261108/delivery-side.log    |  15 +
+ .../delivery-typecheck.log                         |   2 +
+ .../desktop-delivery/stage-a-auto-default.png      | Bin 0 -> 224773 bytes
+ .../desktop-delivery/stage-b-adjusted-result.png   | Bin 0 -> 73765 bytes
+ .../desktop-delivery/stage-b-adjusted.png          | Bin 0 -> 342693 bytes
+ .../desktop-delivery/stage-b-result-1.png          | Bin 0 -> 46595 bytes
+ .../desktop-delivery/stage-b-result-2.png          | Bin 0 -> 66720 bytes
+ .../desktop-delivery/stage-b-result-3.png          | Bin 0 -> 100245 bytes
+ .../desktop-delivery/stage-b-task-1.png            | Bin 0 -> 356151 bytes
+ .../desktop-delivery/stage-b-task-2.png            | Bin 0 -> 336518 bytes
+ .../desktop-delivery/stage-b-task-3.png            | Bin 0 -> 336826 bytes
+ .../desktop-delivery/stage-c-restored.png          | Bin 0 -> 353171 bytes
+ .../desktop-delivery/stage-d-cancelled.png         | Bin 0 -> 359543 bytes
+ .../desktop-final/stage-a-auto-default.png         | Bin 0 -> 210772 bytes
+ .../desktop-final/stage-b-adjusted.png             | Bin 0 -> 296259 bytes
+ .../desktop-final/stage-b-task-1.png               | Bin 0 -> 334202 bytes
+ .../desktop-final/stage-b-task-2.png               | Bin 0 -> 315460 bytes
+ .../desktop-final/stage-b-task-3.png               | Bin 0 -> 298503 bytes
+ .../desktop-final/stage-c-restored.png             | Bin 0 -> 274991 bytes
+ .../desktop-result-first/stage-a-auto-default.png  | Bin 0 -> 224642 bytes
+ .../stage-b-adjusted-result.png                    | Bin 0 -> 73765 bytes
+ .../desktop-result-first/stage-b-adjusted.png      | Bin 0 -> 344116 bytes
+ .../desktop-result-first/stage-b-result-1.png      | Bin 0 -> 46595 bytes
+ .../desktop-result-first/stage-b-result-2.png      | Bin 0 -> 66720 bytes
+ .../desktop-result-first/stage-b-result-3.png      | Bin 0 -> 100245 bytes
+ .../desktop-result-first/stage-b-task-1.png        | Bin 0 -> 348521 bytes
+ .../desktop-result-first/stage-b-task-2.png        | Bin 0 -> 336935 bytes
+ .../desktop-result-first/stage-b-task-3.png        | Bin 0 -> 345320 bytes
+ .../desktop-result-first/stage-c-restored.png      | Bin 0 -> 354638 bytes
+ .../desktop-result-first/stage-d-cancelled.png     | Bin 0 -> 372316 bytes
+ .../desktop/stage-a-auto-default.png               | Bin 0 -> 210631 bytes
+ .../desktop/stage-b-adjusted.png                   | Bin 0 -> 311302 bytes
+ .../desktop/stage-b-task-1.png                     | Bin 0 -> 308452 bytes
+ .../desktop/stage-b-task-2.png                     | Bin 0 -> 322825 bytes
+ .../desktop/stage-b-task-3.png                     | Bin 0 -> 302514 bytes
+ .../evaluation-delivery/auto-arrangement.json      |  50 ++
+ .../evaluation-final/auto-arrangement.json         |  50 ++
+ .../evaluation/auto-arrangement.json               |  50 ++
+ .../auto-arrangement-20261108/evidence-sha256.json | 314 ++++++++++
+ .../exit-a/app-78165.jsonl                         |  13 +
+ .../exit-a/app-78391.jsonl                         |  13 +
+ .../exit-a/app-78616.jsonl                         |  13 +
+ .../exit-a/app-78760.jsonl                         |  13 +
+ .../exit-a/exit-78165.jsonl                        |  14 +
+ .../exit-a/exit-78391.jsonl                        |  14 +
+ .../exit-a/exit-78616.jsonl                        |  14 +
+ .../exit-a/exit-78760.jsonl                        |  14 +
+ .../exit-completion/app-52155.jsonl                |  13 +
+ .../exit-completion/app-52378.jsonl                |  13 +
+ .../exit-completion/app-52608.jsonl                |  13 +
+ .../exit-completion/app-52766.jsonl                |  13 +
+ .../exit-completion/app-52893.jsonl                |  13 +
+ .../exit-completion/app-53202.jsonl                |  13 +
+ .../exit-completion/app-53543.jsonl                |  13 +
+ .../exit-completion/app-53951.jsonl                |  13 +
+ .../exit-completion/app-54325.jsonl                |  13 +
+ .../exit-completion/app-54608.jsonl                |  13 +
+ .../exit-completion/app-54810.jsonl                |  13 +
+ .../exit-completion/app-54968.jsonl                |  13 +
+ .../exit-completion/app-55098.jsonl                |  13 +
+ .../exit-completion/app-55392.jsonl                |  13 +
+ .../exit-completion/app-55591.jsonl                |  14 +
+ .../exit-completion/app-55897.jsonl                |  13 +
+ .../exit-completion/app-56102.jsonl                |  13 +
+ .../exit-completion/app-56311.jsonl                |  13 +
+ .../exit-completion/app-56510.jsonl                |  13 +
+ .../exit-completion/app-56788.jsonl                |  13 +
+ .../exit-completion/app-57169.jsonl                |  13 +
+ .../exit-completion/app-57448.jsonl                |  13 +
+ .../exit-completion/app-57639.jsonl                |  13 +
+ .../exit-completion/exit-52155.jsonl               |  14 +
+ .../exit-completion/exit-52378.jsonl               |  14 +
+ .../exit-completion/exit-52608.jsonl               |  14 +
+ .../exit-completion/exit-52766.jsonl               |  14 +
+ .../exit-completion/exit-52893.jsonl               |  14 +
+ .../exit-completion/exit-53202.jsonl               |  14 +
+ .../exit-completion/exit-53543.jsonl               |  14 +
+ .../exit-completion/exit-53951.jsonl               |  14 +
+ .../exit-completion/exit-54325.jsonl               |  14 +
+ .../exit-completion/exit-54608.jsonl               |  14 +
+ .../exit-completion/exit-54810.jsonl               |  14 +
+ .../exit-completion/exit-54968.jsonl               |  14 +
+ .../exit-completion/exit-55098.jsonl               |  14 +
+ .../exit-completion/exit-55392.jsonl               |  14 +
+ .../exit-completion/exit-55591.jsonl               |  14 +
+ .../exit-completion/exit-55897.jsonl               |  14 +
+ .../exit-completion/exit-56102.jsonl               |  14 +
+ .../exit-completion/exit-56311.jsonl               |  14 +
+ .../exit-completion/exit-56510.jsonl               |  14 +
+ .../exit-completion/exit-56788.jsonl               |  14 +
+ .../exit-completion/exit-57169.jsonl               |  14 +
+ .../exit-completion/exit-57448.jsonl               |  14 +
+ .../exit-completion/exit-57639.jsonl               |  14 +
+ .../exit-delivery/app-28994.jsonl                  |  13 +
+ .../exit-delivery/app-29242.jsonl                  |  13 +
+ .../exit-delivery/app-29476.jsonl                  |  13 +
+ .../exit-delivery/app-29628.jsonl                  |  13 +
+ .../exit-delivery/app-29764.jsonl                  |  13 +
+ .../exit-delivery/app-29942.jsonl                  |  13 +
+ .../exit-delivery/app-30273.jsonl                  |  13 +
+ .../exit-delivery/app-30702.jsonl                  |  13 +
+ .../exit-delivery/app-31054.jsonl                  |  13 +
+ .../exit-delivery/app-31372.jsonl                  |  13 +
+ .../exit-delivery/app-31580.jsonl                  |  13 +
+ .../exit-delivery/app-31736.jsonl                  |  13 +
+ .../exit-delivery/app-31866.jsonl                  |  13 +
+ .../exit-delivery/app-32155.jsonl                  |  13 +
+ .../exit-delivery/app-32363.jsonl                  |  14 +
+ .../exit-delivery/app-32646.jsonl                  |  13 +
+ .../exit-delivery/app-32864.jsonl                  |  13 +
+ .../exit-delivery/app-33066.jsonl                  |  13 +
+ .../exit-delivery/app-33280.jsonl                  |  13 +
+ .../exit-delivery/app-33568.jsonl                  |  13 +
+ .../exit-delivery/app-33941.jsonl                  |  13 +
+ .../exit-delivery/app-34239.jsonl                  |  13 +
+ .../exit-delivery/app-34424.jsonl                  |  13 +
+ .../exit-delivery/app-34739.jsonl                  |  13 +
+ .../exit-delivery/exit-28994.jsonl                 |  14 +
+ .../exit-delivery/exit-29242.jsonl                 |  14 +
+ .../exit-delivery/exit-29476.jsonl                 |  14 +
+ .../exit-delivery/exit-29628.jsonl                 |  14 +
+ .../exit-delivery/exit-29764.jsonl                 |  14 +
+ .../exit-delivery/exit-29942.jsonl                 |  14 +
+ .../exit-delivery/exit-30273.jsonl                 |  14 +
+ .../exit-delivery/exit-30702.jsonl                 |  14 +
+ .../exit-delivery/exit-31054.jsonl                 |  14 +
+ .../exit-delivery/exit-31372.jsonl                 |  14 +
+ .../exit-delivery/exit-31580.jsonl                 |  14 +
+ .../exit-delivery/exit-31736.jsonl                 |  14 +
+ .../exit-delivery/exit-31866.jsonl                 |  14 +
+ .../exit-delivery/exit-32155.jsonl                 |  14 +
+ .../exit-delivery/exit-32363.jsonl                 |  14 +
+ .../exit-delivery/exit-32646.jsonl                 |  14 +
+ .../exit-delivery/exit-32864.jsonl                 |  14 +
+ .../exit-delivery/exit-33066.jsonl                 |  14 +
+ .../exit-delivery/exit-33280.jsonl                 |  14 +
+ .../exit-delivery/exit-33568.jsonl                 |  14 +
+ .../exit-delivery/exit-33941.jsonl                 |  14 +
+ .../exit-delivery/exit-34239.jsonl                 |  14 +
+ .../exit-delivery/exit-34424.jsonl                 |  14 +
+ .../exit-delivery/exit-34739.jsonl                 |  14 +
+ .../exit-final/app-80394.jsonl                     |  13 +
+ .../exit-final/app-80617.jsonl                     |  13 +
+ .../exit-final/app-80841.jsonl                     |  13 +
+ .../exit-final/app-81183.jsonl                     |  13 +
+ .../exit-final/app-81311.jsonl                     |  13 +
+ .../exit-final/app-81520.jsonl                     |  13 +
+ .../exit-final/app-81670.jsonl                     |  13 +
+ .../exit-final/app-81825.jsonl                     |  13 +
+ .../exit-final/exit-80394.jsonl                    |  14 +
+ .../exit-final/exit-80617.jsonl                    |  14 +
+ .../exit-final/exit-80841.jsonl                    |  14 +
+ .../exit-final/exit-81183.jsonl                    |  14 +
+ .../exit-final/exit-81311.jsonl                    |  14 +
+ .../exit-final/exit-81520.jsonl                    |  14 +
+ .../exit-final/exit-81670.jsonl                    |  14 +
+ .../exit-final/exit-81825.jsonl                    |  14 +
+ .../exit-stop-reviewed/app-59453.jsonl             |  13 +
+ .../exit-stop-reviewed/app-59683.jsonl             |  13 +
+ .../exit-stop-reviewed/exit-59453.jsonl            |  14 +
+ .../exit-stop-reviewed/exit-59683.jsonl            |  14 +
+ .../exit-targeted-final/app-57979.jsonl            |  13 +
+ .../exit-targeted-final/exit-57979.jsonl           |  14 +
+ .../auto-arrangement-20261108/final-build.log      | 622 +++++++++++++++++++
+ .../auto-arrangement-20261108/final-checks.json    |  52 ++
+ .../auto-arrangement-20261108/final-desktop.log    | 151 +++++
+ .../auto-arrangement-20261108/final-evaluation.log |   3 +
+ .../final-review-targeted.log                      |  11 +
+ .../auto-arrangement-20261108/final-summary.json   |  23 +
+ .../auto-arrangement-20261108/final-typecheck.log  |   2 +
+ .../auto-arrangement-20261108/focused-final.log    |  11 +
+ .../full-node-ui-final.log                         |  13 +
+ .../auto-arrangement-20261108/full-node-ui.log     |  90 +++
+ .../member-delivery/stage-b-conversation.png       | Bin 0 -> 288144 bytes
+ .../member-delivery/stage-b-member.png             | Bin 0 -> 294684 bytes
+ .../member-delivery/stage-b-return.png             | Bin 0 -> 295135 bytes
+ .../member-delivery/stage-c-recovery.png           | Bin 0 -> 307722 bytes
+ .../member-final/stage-b-conversation.png          | Bin 0 -> 289459 bytes
+ .../member-final/stage-b-member.png                | Bin 0 -> 293886 bytes
+ .../member-final/stage-b-return.png                | Bin 0 -> 293487 bytes
+ .../member-final/stage-c-recovery.png              | Bin 0 -> 311816 bytes
+ .../member-result-first/stage-b-conversation.png   | Bin 0 -> 288248 bytes
+ .../member-result-first/stage-b-member.png         | Bin 0 -> 293495 bytes
+ .../member-result-first/stage-b-return.png         | Bin 0 -> 293513 bytes
+ .../member-result-first/stage-c-recovery.png       | Bin 0 -> 311537 bytes
+ .../auto-arrangement-20261108/new-desktop.log      |  36 ++
+ .../actual-cancelled-drained-panel.png             | Bin 0 -> 50422 bytes
+ .../cancellation/actual-cancelled-drained.png      | Bin 0 -> 282843 bytes
+ .../outcome-delivery/cancellation/fixture.json     | 163 +++++
+ .../actual-cancelled-drained-panel.png             | Bin 0 -> 50422 bytes
+ .../cancellation/actual-cancelled-drained.png      | Bin 0 -> 281655 bytes
+ .../outcome-final/cancellation/fixture.json        | 163 +++++
+ .../playwright-a/.last-run.json                    |   6 +
+ .../error-context.md"                              | 175 ++++++
+ .../test-failed-1.png"                             | Bin 0 -> 295722 bytes
+ .../test-failed-2.png"                             | Bin 0 -> 166738 bytes
+ .../trace.zip"                                     | Bin 0 -> 466720 bytes
+ .../playwright-cancel-final/.last-run.json         |   6 +
+ .../error-context.md                               | 294 +++++++++
+ .../test-failed-1.png                              | Bin 0 -> 328647 bytes
+ .../trace.zip                                      | Bin 0 -> 348387 bytes
+ .../playwright-completion/.last-run.json           |   6 +
+ .../error-context.md                               | 322 ++++++++++
+ .../test-failed-1.png                              | Bin 0 -> 317941 bytes
+ .../trace.zip                                      | Bin 0 -> 336410 bytes
+ .../bot-collaboration-dark-280.png                 | Bin 0 -> 68257 bytes
+ .../bot-collaboration-light.png                    | Bin 0 -> 282358 bytes
+ .../bot-delivery-dark-280.png                      | Bin 0 -> 52373 bytes
+ .../bot-inline-script-dark-280.png                 | Bin 0 -> 78687 bytes
+ .../bot-inline-script-light-280.png                | Bin 0 -> 79808 bytes
+ .../bot-inline-script-light.png                    | Bin 0 -> 143449 bytes
+ .../bot-message-status-light.png                   | Bin 0 -> 127668 bytes
+ .../bot-overview-dark-280.png                      | Bin 0 -> 104086 bytes
+ .../bot-overview-returned.png                      | Bin 0 -> 135035 bytes
+ .../unified-member-readonly.png                    | Bin 0 -> 99896 bytes
+ .../bot-confirmed-deliveries.png                   | Bin 0 -> 81238 bytes
+ .../bot-overview-pending-question.png              | Bin 0 -> 120943 bytes
+ .../playwright-delivery/.last-run.json             |   4 +
+ .../bot-collaboration-dark-280.png                 | Bin 0 -> 68285 bytes
+ .../bot-collaboration-light.png                    | Bin 0 -> 282545 bytes
+ .../bot-delivery-dark-280.png                      | Bin 0 -> 52233 bytes
+ .../bot-inline-script-dark-280.png                 | Bin 0 -> 78687 bytes
+ .../bot-inline-script-light-280.png                | Bin 0 -> 79808 bytes
+ .../bot-inline-script-light.png                    | Bin 0 -> 143449 bytes
+ .../bot-message-status-light.png                   | Bin 0 -> 126598 bytes
+ .../bot-overview-dark-280.png                      | Bin 0 -> 104262 bytes
+ .../bot-overview-returned.png                      | Bin 0 -> 134768 bytes
+ .../unified-member-readonly.png                    | Bin 0 -> 99591 bytes
+ .../bot-confirmed-deliveries.png                   | Bin 0 -> 81238 bytes
+ .../bot-overview-pending-question.png              | Bin 0 -> 121002 bytes
+ .../playwright-new/.last-run.json                  |   4 +
+ .../playwright-side-delivery/.last-run.json        |   4 +
+ .../playwright-side-fixed/.last-run.json           |   4 +
+ .../playwright-side/.last-run.json                 |   4 +
+ .../playwright-stop-reviewed/.last-run.json        |   4 +
+ .../pre-cancel-fix-source-freeze.json              | 668 +++++++++++++++++++++
+ .../pre-review-source-freeze.json                  | 668 +++++++++++++++++++++
+ .../pre-stop-generation-source-freeze.json         | 668 +++++++++++++++++++++
+ .../auto-arrangement-20261108/result-first-ui.log  |  11 +
+ .../review-error-code-red.log                      |  38 ++
+ .../review-fences-red.log                          |  32 +
+ .../review-fixes-green.log                         |  11 +
+ .../auto-arrangement-20261108/review-flag-red.log  |  35 ++
+ .../auto-arrangement-20261108/review-focused.log   |  11 +
+ .../auto-arrangement-20261108/review-green.log     |  37 ++
+ .../review-missing-structure-red.log               |  35 ++
+ .../review-no-proposal-green.log                   |  11 +
+ .../review-no-proposal-red.log                     | 166 +++++
+ .../auto-arrangement-20261108/side-desktop.log     |  15 +
+ .../auto-arrangement-20261108/source-freeze.json   | 668 +++++++++++++++++++++
+ .../steering-delivery/epoch-applied.png            | Bin 0 -> 286910 bytes
+ .../steering-delivery/epoch-demo.json              |  18 +
+ .../steering-delivery/epoch-expired.png            | Bin 0 -> 281068 bytes
+ .../steering-final/epoch-applied.png               | Bin 0 -> 286910 bytes
+ .../steering-final/epoch-demo.json                 |  18 +
+ .../steering-final/epoch-expired.png               | Bin 0 -> 281068 bytes
+ .../stop-generation-green.log                      |  11 +
+ .../stop-generation-red.log                        |  28 +
+ .../stop-reviewed-build.log                        | 622 +++++++++++++++++++
+ .../stop-reviewed-checks.json                      |  50 ++
+ .../stop-reviewed-desktop.log                      |  13 +
+ .../stop-reviewed-side.log                         |  15 +
+ .../stop-reviewed-typecheck.log                    |   2 +
+ .../stop-verified-checks.json                      |  12 +
+ .../stop-verified-typecheck.log                    |   4 +
+ .../targeted-final-checks.json                     |  26 +
+ .../auto-arrangement-20261108/verified-cancel.log  |  54 ++
+ .../verified-typecheck.log                         |   2 +
+ .../README.md                                      |  16 +
+ .../audit-branch.json                              | 212 +++++++
+ .../audit-branch.log                               |   2 +
+ .../audit.py                                       |  40 ++
+ .../before-sha256.json                             | 528 ++++++++++++++++
+ .../branch-checks.json                             |  79 +++
+ .../branch-summary.json                            |  16 +
+ .../build.log                                      | 622 +++++++++++++++++++
+ .../phase-b-conversation-dark.png                  | Bin 0 -> 207306 bytes
+ .../phase-b-network-dark-completed.png             | Bin 0 -> 431184 bytes
+ .../phase-b-network-dark-running.png               | Bin 0 -> 410483 bytes
+ .../collaboration-final/phase-b-network-narrow.png | Bin 0 -> 129619 bytes
+ .../desktop-final/stage-a-auto-default.png         | Bin 0 -> 224773 bytes
+ .../desktop-final/stage-b-adjusted-result.png      | Bin 0 -> 73765 bytes
+ .../desktop-final/stage-b-adjusted.png             | Bin 0 -> 348092 bytes
+ .../desktop-final/stage-b-result-1.png             | Bin 0 -> 46595 bytes
+ .../desktop-final/stage-b-result-2.png             | Bin 0 -> 66720 bytes
+ .../desktop-final/stage-b-result-3.png             | Bin 0 -> 100245 bytes
+ .../desktop-final/stage-b-task-1.png               | Bin 0 -> 353629 bytes
+ .../desktop-final/stage-b-task-2.png               | Bin 0 -> 341830 bytes
+ .../desktop-final/stage-b-task-3.png               | Bin 0 -> 335435 bytes
+ .../desktop-final/stage-c-restored.png             | Bin 0 -> 352615 bytes
+ .../desktop-final/stage-d-cancelled.png            | Bin 0 -> 359828 bytes
+ .../desktop-final/stage-e-cancelled-restored.png   | Bin 0 -> 361739 bytes
+ .../desktop-final/stage-f-approved-result.png      | Bin 0 -> 76761 bytes
+ .../desktop-final/stage-f-edited-approved.png      | Bin 0 -> 343198 bytes
+ .../evaluation/auto-arrangement.json               |  50 ++
+ .../exit-final/app-83293.jsonl                     |  13 +
+ .../exit-final/app-83516.jsonl                     |  13 +
+ .../exit-final/app-83745.jsonl                     |  13 +
+ .../exit-final/app-83881.jsonl                     |  14 +
+ .../exit-final/app-84139.jsonl                     |  13 +
+ .../exit-final/app-84261.jsonl                     |  13 +
+ .../exit-final/app-84328.jsonl                     |  13 +
+ .../exit-final/app-84671.jsonl                     |  13 +
+ .../exit-final/app-85107.jsonl                     |  13 +
+ .../exit-final/app-85444.jsonl                     |  13 +
+ .../exit-final/app-85740.jsonl                     |  13 +
+ .../exit-final/app-85948.jsonl                     |  13 +
+ .../exit-final/app-86109.jsonl                     |  13 +
+ .../exit-final/app-86253.jsonl                     |  13 +
+ .../exit-final/app-86534.jsonl                     |  13 +
+ .../exit-final/app-86756.jsonl                     |  14 +
+ .../exit-final/app-87069.jsonl                     |  13 +
+ .../exit-final/app-87282.jsonl                     |  13 +
+ .../exit-final/app-87493.jsonl                     |  13 +
+ .../exit-final/app-87697.jsonl                     |  13 +
+ .../exit-final/app-87998.jsonl                     |  13 +
+ .../exit-final/app-88361.jsonl                     |  13 +
+ .../exit-final/app-88650.jsonl                     |  13 +
+ .../exit-final/app-88740.jsonl                     |  14 +
+ .../exit-final/app-88903.jsonl                     |  13 +
+ .../exit-final/app-89063.jsonl                     |  14 +
+ .../exit-final/app-89225.jsonl                     |  13 +
+ .../exit-final/app-89401.jsonl                     |  13 +
+ .../exit-final/app-89641.jsonl                     |  13 +
+ .../exit-final/app-89842.jsonl                     |  13 +
+ .../exit-final/app-89939.jsonl                     |  13 +
+ .../exit-final/app-90101.jsonl                     |  13 +
+ .../exit-final/app-90348.jsonl                     |  13 +
+ .../exit-final/exit-83293.jsonl                    |  14 +
+ .../exit-final/exit-83516.jsonl                    |  14 +
+ .../exit-final/exit-83745.jsonl                    |  14 +
+ .../exit-final/exit-83881.jsonl                    |  14 +
+ .../exit-final/exit-84139.jsonl                    |  14 +
+ .../exit-final/exit-84261.jsonl                    |  14 +
+ .../exit-final/exit-84328.jsonl                    |  14 +
+ .../exit-final/exit-84671.jsonl                    |  14 +
+ .../exit-final/exit-85107.jsonl                    |  14 +
+ .../exit-final/exit-85444.jsonl                    |  14 +
+ .../exit-final/exit-85740.jsonl                    |  14 +
+ .../exit-final/exit-85948.jsonl                    |  14 +
+ .../exit-final/exit-86109.jsonl                    |  14 +
+ .../exit-final/exit-86253.jsonl                    |  14 +
+ .../exit-final/exit-86534.jsonl                    |  14 +
+ .../exit-final/exit-86756.jsonl                    |  14 +
+ .../exit-final/exit-87069.jsonl                    |  14 +
+ .../exit-final/exit-87282.jsonl                    |  14 +
+ .../exit-final/exit-87493.jsonl                    |  14 +
+ .../exit-final/exit-87697.jsonl                    |  14 +
+ .../exit-final/exit-87998.jsonl                    |  14 +
+ .../exit-final/exit-88361.jsonl                    |  14 +
+ .../exit-final/exit-88650.jsonl                    |  14 +
+ .../exit-final/exit-88740.jsonl                    |  14 +
+ .../exit-final/exit-88903.jsonl                    |  14 +
+ .../exit-final/exit-89063.jsonl                    |  14 +
+ .../exit-final/exit-89225.jsonl                    |  14 +
+ .../exit-final/exit-89401.jsonl                    |  14 +
+ .../exit-final/exit-89641.jsonl                    |  14 +
+ .../exit-final/exit-89842.jsonl                    |  14 +
+ .../exit-final/exit-89939.jsonl                    |  14 +
+ .../exit-final/exit-90101.jsonl                    |  14 +
+ .../exit-final/exit-90348.jsonl                    |  14 +
+ .../exit-green/app-47406.jsonl                     |  13 +
+ .../exit-green/app-47526.jsonl                     |  13 +
+ .../exit-green/exit-47406.jsonl                    |  14 +
+ .../exit-green/exit-47526.jsonl                    |  14 +
+ .../exit-red/app-46433.jsonl                       |  13 +
+ .../exit-red/app-46554.jsonl                       |  13 +
+ .../exit-red/exit-46433.jsonl                      |  14 +
+ .../exit-red/exit-46554.jsonl                      |  14 +
+ .../exit-red2/app-46951.jsonl                      |  13 +
+ .../exit-red2/app-47076.jsonl                      |  13 +
+ .../exit-red2/exit-46951.jsonl                     |  14 +
+ .../exit-red2/exit-47076.jsonl                     |  14 +
+ .../final-build.log                                | 622 +++++++++++++++++++
+ .../final-desktop.log                              | 160 +++++
+ .../final-evaluation.log                           |   3 +
+ .../final-kernel.log                               |  11 +
+ .../final-node-ui.log                              |  13 +
+ .../final-typecheck.log                            |   2 +
+ .../focused-green.log                              |  11 +
+ .../focused-red.log                                |  99 +++
+ .../markdown-red.log                               |  32 +
+ .../member-final/stage-b-conversation.png          | Bin 0 -> 268503 bytes
+ .../member-final/stage-b-member.png                | Bin 0 -> 287285 bytes
+ .../member-final/stage-b-return.png                | Bin 0 -> 286480 bytes
+ .../member-final/stage-c-recovery.png              | Bin 0 -> 294928 bytes
+ .../actual-cancelled-drained-panel.png             | Bin 0 -> 48088 bytes
+ .../cancellation/actual-cancelled-drained.png      | Bin 0 -> 268587 bytes
+ .../outcome-final/cancellation/fixture.json        | 163 +++++
+ .../playwright-final/.last-run.json                |   4 +
+ .../bot-collaboration-dark-280.png                 | Bin 0 -> 68257 bytes
+ .../bot-collaboration-light.png                    | Bin 0 -> 282358 bytes
+ .../bot-delivery-dark-280.png                      | Bin 0 -> 52373 bytes
+ .../bot-inline-script-dark-280.png                 | Bin 0 -> 78687 bytes
+ .../bot-inline-script-light-280.png                | Bin 0 -> 79808 bytes
+ .../bot-inline-script-light.png                    | Bin 0 -> 143449 bytes
+ .../bot-message-status-light.png                   | Bin 0 -> 126038 bytes
+ .../bot-overview-dark-280.png                      | Bin 0 -> 103901 bytes
+ .../bot-overview-returned.png                      | Bin 0 -> 134534 bytes
+ .../unified-member-readonly.png                    | Bin 0 -> 99638 bytes
+ .../bot-confirmed-deliveries.png                   | Bin 0 -> 76416 bytes
+ .../bot-overview-pending-question.png              | Bin 0 -> 105210 bytes
+ .../playwright-green/.last-run.json                |   4 +
+ .../playwright-red/.last-run.json                  |   6 +
+ .../error-context.md                               | 212 +++++++
+ .../test-failed-1.png                              | Bin 0 -> 356990 bytes
+ .../test-failed-2.png                              | Bin 0 -> 164031 bytes
+ .../trace.zip                                      | Bin 0 -> 526755 bytes
+ .../playwright-red2/.last-run.json                 |   6 +
+ .../error-context.md                               | 311 ++++++++++
+ .../test-failed-1.png                              | Bin 0 -> 359556 bytes
+ .../test-failed-2.png                              | Bin 0 -> 316618 bytes
+ .../trace.zip                                      | Bin 0 -> 684116 bytes
+ .../recovery-green.log                             |  16 +
+ .../recovery-green/stage-d-cancelled.png           | Bin 0 -> 371844 bytes
+ .../recovery-green/stage-e-cancelled-restored.png  | Bin 0 -> 361396 bytes
+ .../recovery-red.log                               |  52 ++
+ .../recovery-red/stage-d-cancelled.png             | Bin 0 -> 393387 bytes
+ .../recovery-red2.log                              |  61 ++
+ .../recovery-red2/stage-d-cancelled.png            | Bin 0 -> 371343 bytes
+ .../review-final-green.log                         |  11 +
+ .../review-green.log                               |  29 +
+ .../source-freeze.json                             | 668 +++++++++++++++++++++
+ .../source-tests-freeze.json                       |  55 ++
+ .../steering-final/epoch-applied.png               | Bin 0 -> 260653 bytes
+ .../steering-final/epoch-demo.json                 |  18 +
+ .../steering-final/epoch-expired.png               | Bin 0 -> 269870 bytes
+ .../typecheck-after-e2e.log                        |   2 +
+ .../typecheck.log                                  |   2 +
+ .../mode-member-workspace-20261108/README.md       |  58 ++
+ .../mode-member-workspace-20261108/a-build.log     | 622 +++++++++++++++++++
+ .../mode-member-workspace-20261108/a-desktop.log   |  45 ++
+ .../mode-member-workspace-20261108/a-typecheck.log |   2 +
+ .../mode-member-workspace-20261108/a1-green.log    |  11 +
+ .../mode-member-workspace-20261108/a1-red.log      |  26 +
+ .../mode-member-workspace-20261108/a2-final.log    |  11 +
+ .../mode-member-workspace-20261108/a2-green.log    | 143 +++++
+ .../mode-member-workspace-20261108/a2-green2.log   | 102 ++++
+ .../mode-member-workspace-20261108/a2-red.log      |  35 ++
+ .../mode-member-workspace-20261108/a3-green.log    |  11 +
+ .../mode-member-workspace-20261108/a3-red.log      |  26 +
+ .../mode-member-workspace-20261108/ab-build.log    | 622 +++++++++++++++++++
+ .../mode-member-workspace-20261108/ab-desktop.log  |  18 +
+ .../mode-member-workspace-20261108/ab-targeted.log |  11 +
+ .../b-review-targeted.log                          |  11 +
+ .../mode-member-workspace-20261108/b-typecheck.log |   2 +
+ .../mode-member-workspace-20261108/b1-green.log    |  11 +
+ .../mode-member-workspace-20261108/b1-red.log      |  54 ++
+ .../mode-member-workspace-20261108/b2-green.log    |  11 +
+ .../mode-member-workspace-20261108/b2-red.log      |  35 ++
+ .../mode-member-workspace-20261108/baseline.log    |  11 +
+ .../collaboration-final/phase-a-artifacts.png      | Bin 0 -> 349897 bytes
+ .../collaboration-final/phase-a-lock-wait.png      | Bin 0 -> 314624 bytes
+ .../phase-b-conversation-dark.png                  | Bin 0 -> 207653 bytes
+ .../collaboration-final/phase-b-conversation.png   | Bin 0 -> 326673 bytes
+ .../phase-b-network-dark-completed.png             | Bin 0 -> 434556 bytes
+ .../phase-b-network-dark-running.png               | Bin 0 -> 416820 bytes
+ .../collaboration-final/phase-b-network-narrow.png | Bin 0 -> 129869 bytes
+ .../collaboration-final/phase-b-workflow.png       | Bin 0 -> 252561 bytes
+ .../collaboration-final/phase-c-recovery.png       | Bin 0 -> 305033 bytes
+ .../collaboration-final/session-a-restored.png     | Bin 0 -> 330097 bytes
+ .../collaboration-final/session-b-isolated.png     | Bin 0 -> 308999 bytes
+ .../collaboration-fixed/phase-a-artifacts.png      | Bin 0 -> 349760 bytes
+ .../collaboration-fixed/phase-a-lock-wait.png      | Bin 0 -> 314688 bytes
+ .../phase-b-conversation-dark.png                  | Bin 0 -> 207228 bytes
+ .../collaboration-fixed/phase-b-conversation.png   | Bin 0 -> 326627 bytes
+ .../phase-b-network-dark-completed.png             | Bin 0 -> 433418 bytes
+ .../phase-b-network-dark-running.png               | Bin 0 -> 416146 bytes
+ .../collaboration-fixed/phase-b-network-narrow.png | Bin 0 -> 129803 bytes
+ .../collaboration-fixed/phase-b-workflow.png       | Bin 0 -> 252526 bytes
+ .../collaboration-fixed/phase-c-recovery.png       | Bin 0 -> 304630 bytes
+ .../collaboration-fixed/session-a-restored.png     | Bin 0 -> 329766 bytes
+ .../collaboration-fixed/session-b-isolated.png     | Bin 0 -> 307092 bytes
+ .../completion-after-review-build.log              | 622 +++++++++++++++++++
+ .../completion-after-review-checks.json            |  47 ++
+ .../completion-after-review-desktop.log            |  41 ++
+ .../completion-after-review-evaluation.log         |   3 +
+ .../completion-after-review-targeted.log           |  11 +
+ .../completion-after-review-typecheck.log          |   2 +
+ .../completion-checks.json                         |  26 +
+ .../completion-node-ui.log                         |  13 +
+ .../completion-typecheck.log                       |   5 +
+ .../desktop-checks.json                            |  20 +
+ .../desktop-completion/stage-a-advice-panel.png    | Bin 0 -> 57941 bytes
+ .../desktop-completion/stage-a-advice.png          | Bin 0 -> 232053 bytes
+ .../desktop-completion/stage-a-draft.png           | Bin 0 -> 251245 bytes
+ .../desktop-completion/stage-b-conversation.png    | Bin 0 -> 289212 bytes
+ .../desktop-completion/stage-b-member.png          | Bin 0 -> 294107 bytes
+ .../desktop-completion/stage-b-return.png          | Bin 0 -> 293967 bytes
+ .../desktop-completion/stage-c-recovery.png        | Bin 0 -> 305383 bytes
+ .../desktop-final.log                              | 135 +++++
+ .../desktop-final/stage-a-advice-panel.png         | Bin 0 -> 57941 bytes
+ .../desktop-final/stage-a-advice.png               | Bin 0 -> 232053 bytes
+ .../desktop-final/stage-a-draft.png                | Bin 0 -> 251245 bytes
+ .../desktop-final/stage-b-conversation.png         | Bin 0 -> 288416 bytes
+ .../desktop-final/stage-b-member.png               | Bin 0 -> 294165 bytes
+ .../desktop-final/stage-b-return.png               | Bin 0 -> 294224 bytes
+ .../desktop-final/stage-c-recovery.png             | Bin 0 -> 308329 bytes
+ .../desktop-fixed-checks.json                      |  34 ++
+ .../desktop-fixed.log                              |  93 +++
+ .../desktop-fixed/stage-a-advice-panel.png         | Bin 0 -> 57941 bytes
+ .../desktop-fixed/stage-a-advice.png               | Bin 0 -> 232053 bytes
+ .../desktop-fixed/stage-a-draft.png                | Bin 0 -> 251245 bytes
+ .../desktop-fixed/stage-b-conversation.png         | Bin 0 -> 289577 bytes
+ .../desktop-fixed/stage-b-member.png               | Bin 0 -> 293964 bytes
+ .../desktop-fixed/stage-b-return.png               | Bin 0 -> 293550 bytes
+ .../desktop-fixed/stage-c-recovery.png             | Bin 0 -> 308380 bytes
+ .../desktop-side-fixed.log                         |  15 +
+ .../desktop/stage-a-advice.png                     | Bin 0 -> 244597 bytes
+ .../desktop/stage-a-draft.png                      | Bin 0 -> 251245 bytes
+ .../desktop/stage-b-conversation.png               | Bin 0 -> 285709 bytes
+ .../desktop/stage-b-member.png                     | Bin 0 -> 294146 bytes
+ .../desktop/stage-b-return.png                     | Bin 0 -> 294160 bytes
+ .../evaluation-completion/mode-advice.json         | 226 +++++++
+ .../evaluation-final/mode-advice.json              | 226 +++++++
+ .../evaluation/mode-advice.json                    | 235 ++++++++
+ .../evidence-sha256.json                           | 261 ++++++++
+ .../exit-a/app-81924.jsonl                         |  13 +
+ .../exit-a/exit-81924.jsonl                        |  14 +
+ .../exit-ab/app-83834.jsonl                        |  13 +
+ .../exit-ab/app-84041.jsonl                        |  13 +
+ .../exit-ab/exit-83834.jsonl                       |  14 +
+ .../exit-ab/exit-84041.jsonl                       |  14 +
+ .../exit-completion/app-67867.jsonl                |  13 +
+ .../exit-completion/app-68184.jsonl                |  13 +
+ .../exit-completion/app-68603.jsonl                |  13 +
+ .../exit-completion/app-68813.jsonl                |  13 +
+ .../exit-completion/app-69028.jsonl                |  13 +
+ .../exit-completion/exit-67867.jsonl               |  14 +
+ .../exit-completion/exit-68184.jsonl               |  14 +
+ .../exit-completion/exit-68603.jsonl               |  14 +
+ .../exit-completion/exit-68813.jsonl               |  14 +
+ .../exit-completion/exit-69028.jsonl               |  14 +
+ .../exit-final/app-21556.jsonl                     |  13 +
+ .../exit-final/app-21921.jsonl                     |  13 +
+ .../exit-final/app-22352.jsonl                     |  13 +
+ .../exit-final/app-23273.jsonl                     |  13 +
+ .../exit-final/app-23624.jsonl                     |  13 +
+ .../exit-final/app-23965.jsonl                     |  13 +
+ .../exit-final/app-24108.jsonl                     |  13 +
+ .../exit-final/app-24344.jsonl                     |  13 +
+ .../exit-final/app-24538.jsonl                     |  13 +
+ .../exit-final/app-24885.jsonl                     |  13 +
+ .../exit-final/app-25505.jsonl                     |  13 +
+ .../exit-final/app-25778.jsonl                     |  13 +
+ .../exit-final/app-26166.jsonl                     |  13 +
+ .../exit-final/app-26421.jsonl                     |  13 +
+ .../exit-final/app-26548.jsonl                     |  13 +
+ .../exit-final/app-26677.jsonl                     |  13 +
+ .../exit-final/app-26929.jsonl                     |  14 +
+ .../exit-final/exit-21556.jsonl                    |  14 +
+ .../exit-final/exit-21921.jsonl                    |  14 +
+ .../exit-final/exit-22352.jsonl                    |  14 +
+ .../exit-final/exit-23273.jsonl                    |  14 +
+ .../exit-final/exit-23624.jsonl                    |  14 +
+ .../exit-final/exit-23965.jsonl                    |  14 +
+ .../exit-final/exit-24108.jsonl                    |  14 +
+ .../exit-final/exit-24344.jsonl                    |  14 +
+ .../exit-final/exit-24538.jsonl                    |  14 +
+ .../exit-final/exit-24885.jsonl                    |  14 +
+ .../exit-final/exit-25505.jsonl                    |  14 +
+ .../exit-final/exit-25778.jsonl                    |  14 +
+ .../exit-final/exit-26166.jsonl                    |  14 +
+ .../exit-final/exit-26421.jsonl                    |  14 +
+ .../exit-final/exit-26548.jsonl                    |  14 +
+ .../exit-final/exit-26677.jsonl                    |  14 +
+ .../exit-final/exit-26929.jsonl                    |  14 +
+ .../exit-fixed/app-27470.jsonl                     |  13 +
+ .../exit-fixed/app-27792.jsonl                     |  13 +
+ .../exit-fixed/app-28184.jsonl                     |  13 +
+ .../exit-fixed/app-28552.jsonl                     |  13 +
+ .../exit-fixed/app-28850.jsonl                     |  13 +
+ .../exit-fixed/app-29085.jsonl                     |  13 +
+ .../exit-fixed/app-29217.jsonl                     |  13 +
+ .../exit-fixed/app-29427.jsonl                     |  13 +
+ .../exit-fixed/app-29613.jsonl                     |  13 +
+ .../exit-fixed/app-29761.jsonl                     |  13 +
+ .../exit-fixed/app-30233.jsonl                     |  13 +
+ .../exit-fixed/app-30475.jsonl                     |  13 +
+ .../exit-fixed/app-30902.jsonl                     |  13 +
+ .../exit-fixed/app-31238.jsonl                     |  13 +
+ .../exit-fixed/app-31383.jsonl                     |  13 +
+ .../exit-fixed/app-31589.jsonl                     |  13 +
+ .../exit-fixed/app-31842.jsonl                     |  14 +
+ .../exit-fixed/app-32230.jsonl                     |  13 +
+ .../exit-fixed/exit-27470.jsonl                    |  14 +
+ .../exit-fixed/exit-27792.jsonl                    |  14 +
+ .../exit-fixed/exit-28184.jsonl                    |  14 +
+ .../exit-fixed/exit-28552.jsonl                    |  14 +
+ .../exit-fixed/exit-28850.jsonl                    |  14 +
+ .../exit-fixed/exit-29085.jsonl                    |  14 +
+ .../exit-fixed/exit-29217.jsonl                    |  14 +
+ .../exit-fixed/exit-29427.jsonl                    |  14 +
+ .../exit-fixed/exit-29613.jsonl                    |  14 +
+ .../exit-fixed/exit-29761.jsonl                    |  14 +
+ .../exit-fixed/exit-30233.jsonl                    |  14 +
+ .../exit-fixed/exit-30475.jsonl                    |  14 +
+ .../exit-fixed/exit-30902.jsonl                    |  14 +
+ .../exit-fixed/exit-31238.jsonl                    |  14 +
+ .../exit-fixed/exit-31383.jsonl                    |  14 +
+ .../exit-fixed/exit-31589.jsonl                    |  14 +
+ .../exit-fixed/exit-31842.jsonl                    |  14 +
+ .../exit-fixed/exit-32230.jsonl                    |  14 +
+ .../exit-observations.json                         | 317 ++++++++++
+ .../mode-member-workspace-20261108/final-build.log | 622 +++++++++++++++++++
+ .../final-build2.log                               | 622 +++++++++++++++++++
+ .../final-build3.log                               | 622 +++++++++++++++++++
+ .../final-evaluation.log                           |   3 +
+ .../final-pre-desktop-checks.json                  |  34 ++
+ .../final-targeted.log                             |  11 +
+ .../final-typecheck.log                            |   2 +
+ .../final-typecheck2.log                           |   2 +
+ .../final-typecheck3.log                           |   2 +
+ .../mode-member-workspace-20261108/fixed-build.log | 622 +++++++++++++++++++
+ .../fixed-typecheck.log                            |   2 +
+ .../mode-member-workspace-20261108/full-kernel.log |  11 +
+ .../full-node-ui.log                               |  13 +
+ .../actual-cancelled-drained-panel.png             | Bin 0 -> 50422 bytes
+ .../cancellation/actual-cancelled-drained.png      | Bin 0 -> 283291 bytes
+ .../outcome-final/cancellation/fixture.json        | 163 +++++
+ .../actual-cancelled-drained-panel.png             | Bin 0 -> 50422 bytes
+ .../cancellation/actual-cancelled-drained.png      | Bin 0 -> 282261 bytes
+ .../outcome-fixed/cancellation/fixture.json        | 163 +++++
+ .../playwright-a/.last-run.json                    |   6 +
+ .../error-context.md                               | 264 ++++++++
+ .../test-failed-1.png                              | Bin 0 -> 244141 bytes
+ .../trace.zip                                      | Bin 0 -> 261037 bytes
+ .../playwright-ab/.last-run.json                   |   4 +
+ .../playwright-completion/.last-run.json           |   4 +
+ .../bot-collaboration-dark-280.png                 | Bin 0 -> 68257 bytes
+ .../bot-collaboration-light.png                    | Bin 0 -> 282358 bytes
+ .../bot-delivery-dark-280.png                      | Bin 0 -> 52373 bytes
+ .../bot-inline-script-dark-280.png                 | Bin 0 -> 78687 bytes
+ .../bot-inline-script-light-280.png                | Bin 0 -> 79808 bytes
+ .../bot-inline-script-light.png                    | Bin 0 -> 143449 bytes
+ .../bot-message-status-light.png                   | Bin 0 -> 127310 bytes
+ .../bot-overview-dark-280.png                      | Bin 0 -> 104137 bytes
+ .../bot-overview-returned.png                      | Bin 0 -> 134706 bytes
+ .../unified-member-readonly.png                    | Bin 0 -> 99637 bytes
+ .../bot-confirmed-deliveries.png                   | Bin 0 -> 81238 bytes
+ .../bot-overview-pending-question.png              | Bin 0 -> 120703 bytes
+ .../playwright-final/.last-run.json                |   6 +
+ .../bot-collaboration-dark-280.png                 | Bin 0 -> 68257 bytes
+ .../bot-collaboration-light.png                    | Bin 0 -> 282358 bytes
+ .../bot-delivery-dark-280.png                      | Bin 0 -> 52373 bytes
+ .../bot-inline-script-dark-280.png                 | Bin 0 -> 78745 bytes
+ .../bot-inline-script-light-280.png                | Bin 0 -> 79808 bytes
+ .../bot-inline-script-light.png                    | Bin 0 -> 143449 bytes
+ .../bot-message-status-light.png                   | Bin 0 -> 126692 bytes
+ .../bot-overview-dark-280.png                      | Bin 0 -> 104159 bytes
+ .../bot-overview-returned.png                      | Bin 0 -> 134596 bytes
+ .../unified-member-readonly.png                    | Bin 0 -> 99376 bytes
+ .../bot-confirmed-deliveries.png                   | Bin 0 -> 81238 bytes
+ .../bot-overview-pending-question.png              | Bin 0 -> 121152 bytes
+ .../error-context.md                               | 248 ++++++++
+ .../test-failed-1.png                              | Bin 0 -> 214933 bytes
+ .../trace.zip                                      | Bin 0 -> 241470 bytes
+ .../playwright-fixed/.last-run.json                |   4 +
+ .../bot-collaboration-dark-280.png                 | Bin 0 -> 68282 bytes
+ .../bot-collaboration-light.png                    | Bin 0 -> 282358 bytes
+ .../bot-delivery-dark-280.png                      | Bin 0 -> 52373 bytes
+ .../bot-inline-script-dark-280.png                 | Bin 0 -> 78687 bytes
+ .../bot-inline-script-light-280.png                | Bin 0 -> 79808 bytes
+ .../bot-inline-script-light.png                    | Bin 0 -> 143449 bytes
+ .../bot-message-status-light.png                   | Bin 0 -> 126648 bytes
+ .../bot-overview-dark-280.png                      | Bin 0 -> 104396 bytes
+ .../bot-overview-returned.png                      | Bin 0 -> 134612 bytes
+ .../unified-member-readonly.png                    | Bin 0 -> 99609 bytes
+ .../bot-confirmed-deliveries.png                   | Bin 0 -> 81238 bytes
+ .../bot-overview-pending-question.png              | Bin 0 -> 120785 bytes
+ .../playwright-side-fixed/.last-run.json           |   4 +
+ .../pre-label-source-freeze.json                   | 661 ++++++++++++++++++++
+ .../pre-nav-guard-source-freeze.json               | 661 ++++++++++++++++++++
+ .../pre-return-fix-source-freeze.json              | 661 ++++++++++++++++++++
+ .../review-bot-return-label-red.log                | 194 ++++++
+ .../review-incomplete-green.log                    |  11 +
+ .../review-incomplete-red.log                      |  30 +
+ .../review-late-bot-green.log                      |  11 +
+ .../review-late-bot-red.log                        |  32 +
+ .../review-return-green.log                        |  11 +
+ .../review-return-red.log                          | 630 +++++++++++++++++++
+ .../scope-audit.json                               |  45 ++
+ .../source-freeze.json                             | 661 ++++++++++++++++++++
+ .../steering-final/epoch-applied.png               | Bin 0 -> 286710 bytes
+ .../steering-final/epoch-demo.json                 |  18 +
+ .../steering-final/epoch-expired.png               | Bin 0 -> 280858 bytes
+ .../steering-fixed/epoch-applied.png               | Bin 0 -> 286710 bytes
+ .../steering-fixed/epoch-demo.json                 |  18 +
+ .../steering-fixed/epoch-expired.png               | Bin 0 -> 280858 bytes
+ ...57\235-\346\200\216\344\271\210\347\224\250.md" |  49 ++
+ e2e/auto-arrangement.spec.ts                       |  99 +++
+ e2e/bot-collaboration.spec.ts                      |  41 ++
+ e2e/mode-member-workspace.spec.ts                  |  57 ++
+ e2e/side-session.spec.ts                           |  13 +
+ scripts/evaluate-auto-arrangement.ts               |  12 +
+ scripts/evaluate-science-pipeline.ts               |  10 +-
+ scripts/mock-auto-arrangement.mjs                  |  19 +
+ scripts/mock-inference-server.mjs                  |   2 +
+ src/evaluation/auto-arrangement.ts                 |  10 +
+ src/evaluation/mode-advice.ts                      |  20 +
+ src/orchestration/mode-advice.ts                   |  24 +
+ src/protocol/task-arrangement.ts                   |  95 +++
+ src/runtime/native.ts                              |   4 +-
+ src/tools/propose-plan.ts                          |  20 +-
+ src/ui/App.tsx                                     |  82 ++-
+ src/ui/auto-arrangement-request.ts                 |  28 +
+ src/ui/bot-pane.tsx                                |   9 +-
+ src/ui/collaboration-member-panel.tsx              |  29 +
+ src/ui/collaboration-member.ts                     |  18 +
+ src/ui/i18n/en.ts                                  |  74 +++
+ src/ui/orchestration-advice-copy.ts                |  23 +
+ src/ui/orchestration-advisor.tsx                   |  56 ++
+ src/ui/plan-card.tsx                               |  15 +-
+ src/ui/run-overview.tsx                            |  47 +-
+ src/ui/state/auto-arrangement.ts                   |  12 +
+ src/ui/state/collaboration-return.ts               |  12 +
+ src/ui/state/collaboration-view.ts                 |   8 +-
+ src/ui/state/index.ts                              |   2 +
+ src/ui/state/transcript-slot.ts                    |   6 +-
+ src/ui/styles.css                                  |  25 +
+ src/ui/subagent-pane.tsx                           |   5 +-
+ src/ui/task-arrangement-view.tsx                   |  25 +
+ src/ui/team-panel.tsx                              |  12 +-
+ src/ui/views.tsx                                   |  17 +-
+ src/workbench/backend.ts                           |   1 +
+ tests/evaluation/auto-arrangement.test.ts          |  14 +
+ tests/evaluation/mode-advice.test.ts               |   9 +
+ tests/orchestration/mode-advice.test.ts            |  22 +
+ tests/protocol/task-arrangement.test.ts            |  53 ++
+ tests/runtime/plan-mode.test.ts                    |  37 ++
+ tests/tools/propose-plan.test.ts                   |  27 +-
+ tests/ui/auto-arrangement-request.test.ts          |  34 ++
+ tests/ui/bot-pane.test.tsx                         |   8 +
+ tests/ui/collaboration-member-panel.test.tsx       |  26 +
+ tests/ui/collaboration-member.test.ts              |  36 ++
+ tests/ui/collaboration-return.test.ts              |  17 +
+ tests/ui/external-planning-stop.test.tsx           |  30 +
+ tests/ui/orchestration-advisor.test.tsx            |  44 ++
+ tests/ui/plan-card.test.tsx                        |  10 +
+ tests/ui/run-overview.test.tsx                     |  24 +
+ tests/ui/state/transcript-slot.test.ts             |   7 +
+ tests/ui/task-arrangement-view.test.tsx            |  16 +
+ tests/workbench/plan-backend.test.ts               |   5 +
+ 797 files changed, 30966 insertions(+), 28 deletions(-)

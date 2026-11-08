@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/auto-arrangement.spec.ts --output=docs/validation/auto-arrangement-20261108/playwright-a
+
+Running 3 tests using 1 worker
+
+(node:78077) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59570/376673b2-112e-42f0-8522-e8b166be737a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值 (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59596/1907bf0b-edf9-4eec-bb93-00e2d197ae95
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 2 task blocks for 分别统计 east.csv 与 west.csv (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59610/2ac72005-7a19-4d8c-81cf-fad9d201e7e6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59625/3151b460-ad7c-448a-85dd-f47a4c24aee5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  3 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv (34.0s)
+
+
+  1) e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for locator('.session-list .sess-item .row').first()
+
+
+      29 |   await page.screenshot({path:join(out,'stage-b-adjusted.png')})
+      30 |   const reopened=await dawn.重开()
+    > 31 |   await reopened.locator('.session-list .sess-item .row').first().click();await 进坞(reopened,'团队')
+         |                                                                   ^
+      32 |   auto=reopened.getByRole('region',{name:'自动安排',exact:true})
+      33 |   await expect(auto.getByRole('status',{name:'任务块数',exact:true})).toHaveText('2 个任务块')
+      34 |   await expect(auto).toContainText('方案第 2 版')
+        at /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/e2e/auto-arrangement.spec.ts:31:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/auto-arrangement-20261108/playwright-a/auto-arrangement-automatic-2573b-ks-for-清洗、建模并独立审阅-input-csv/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/auto-arrangement-20261108/playwright-a/auto-arrangement-automatic-2573b-ks-for-清洗、建模并独立审阅-input-csv/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/auto-arrangement-20261108/playwright-a/auto-arrangement-automatic-2573b-ks-for-清洗、建模并独立审阅-input-csv/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/auto-arrangement-20261108/playwright-a/auto-arrangement-automatic-2573b-ks-for-清洗、建模并独立审阅-input-csv/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/auto-arrangement-20261108/playwright-a/auto-arrangement-automatic-2573b-ks-for-清洗、建模并独立审阅-input-csv/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv 
+  2 passed (41.6s)

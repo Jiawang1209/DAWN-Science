@@ -1,7 +1,7 @@
 import {atom} from 'nanostores'
 import {useStore} from '@nanostores/react'
 export type CollaborationTab='process'|'handoff'|'artifacts'|'records'
-type View={selection?:string;tab:CollaborationTab;expanded:boolean}
+type View={selection?:string|undefined;tab:CollaborationTab;expanded:boolean;reopenInspection?:boolean}
 const initial:View={tab:'process',expanded:false}
 const views=atom<ReadonlyMap<string,View>>(new Map())
 /** Window-only reading preferences, scoped by session. Never saved as execution state. */
@@ -14,6 +14,12 @@ export function useCollaborationView(owner?:string){
   views.set(next)
  }
  return{...current,update}
+}
+
+export function restoreCollaborationView(owner:string,patch:Partial<View>){
+ const next=new Map(views.get());next.delete(owner);next.set(owner,{...initial,...patch})
+ if(next.size>64)next.delete(next.keys().next().value!)
+ views.set(next)
 }
 
 export function resetCollaborationViews(){views.set(new Map())}

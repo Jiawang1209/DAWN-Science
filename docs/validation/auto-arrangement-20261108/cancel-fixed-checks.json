@@ -1,0 +1,12 @@
+[
+  {
+    "name": "cancel-fixed-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 2.977
+  }
+]

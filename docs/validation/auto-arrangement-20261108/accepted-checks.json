@@ -1,0 +1,16 @@
+[
+  {
+    "name": "accepted-node-ui",
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--project",
+      "node",
+      "--project",
+      "ui"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 138.022
+  }
+]

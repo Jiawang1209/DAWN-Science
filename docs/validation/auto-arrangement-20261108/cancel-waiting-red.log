@@ -1,0 +1,57 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/external-planning-stop.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/external-planning-stop.test.tsx (1 test | 1 failed) 126ms
+   × clears waiting for the acknowledged input only and waits again for a new external input 125ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/external-planning-stop.test.tsx > clears waiting for the acknowledged input only and waits again for a new external input
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-label="停止"
+  class="btn btn-primary btn-default send-btn stopping"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="icon"
+    fill="currentColor"
+    focusable="false"
+    height="16"
+    viewBox="0 0 16 16"
+    width="16"
+  >
+    <rect
+      height="8"
+      rx="1.6"
+      width="8"
+      x="4"
+      y="4"
+    />
+  </svg>
+</button>
+
+ ❯ tests/ui/external-planning-stop.test.tsx:18:62
+     16|  expect(screen.getByRole('button',{name:'停止',exact:true})).toBeTruthy()
+     17|  r.rerender(<ConversationView {...props} items={[input('u1')]} stopped…
+     18|  expect(screen.queryByRole('button',{name:'停止',exact:true})).toBeNull()
+       |                                                              ^
+     19|  r.rerender(<ConversationView {...props} items={[input('u1'),input('u2…
+     20|  expect(screen.getByRole('button',{name:'停止',exact:true})).toBeTruthy()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  09:55:39
+   Duration  1.90s (transform 705ms, setup 548ms, import 604ms, tests 126ms, environment 530ms)
+

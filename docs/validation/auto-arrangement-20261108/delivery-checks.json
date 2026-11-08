@@ -1,0 +1,80 @@
+[
+  {
+    "name": "delivery-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.336
+  },
+  {
+    "name": "delivery-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.309
+  },
+  {
+    "name": "delivery-evaluation",
+    "command": [
+      "npx",
+      "tsx",
+      "scripts/evaluate-science-pipeline.ts",
+      "--auto-arrangement",
+      "/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/evaluation-delivery"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.235
+  },
+  {
+    "name": "delivery-node-ui",
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--project",
+      "node",
+      "--project",
+      "ui"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 128.735
+  },
+  {
+    "name": "delivery-desktop",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/auto-arrangement.spec.ts",
+      "e2e/mode-member-workspace.spec.ts",
+      "e2e/plan-mode.spec.ts",
+      "e2e/collaboration-network.spec.ts",
+      "e2e/collaboration-stopping.spec.ts",
+      "e2e/subagent-steering-epoch.spec.ts",
+      "e2e/bot-collaboration.spec.ts",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-delivery"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 106.541
+  },
+  {
+    "name": "delivery-side",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/side-session.spec.ts",
+      "-g",
+      "\u70b9\u575e\u91cc\u7684\u56e2\u961f chip",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-side-delivery"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 6.096
+  }
+]

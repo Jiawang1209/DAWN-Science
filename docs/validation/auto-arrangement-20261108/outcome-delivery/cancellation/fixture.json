@@ -1,0 +1,163 @@
+{
+  "actualElectron": true,
+  "inference": "localhost-fixture",
+  "ownedPid": 31215,
+  "ownedProcessTree": [
+    31211,
+    31215
+  ],
+  "allOwnedExited": true,
+  "hostOverview": {
+    "ownerSessionId": "03a01b1f-47a5-4a1d-b34d-983b00ba528b",
+    "source": "live",
+    "team": null,
+    "observation": {
+      "observerId": "e0ae2397-04c9-4e1d-8c9f-59a95e057a89",
+      "revision": 15
+    },
+    "history": {
+      "events": [
+        {
+          "seq": 1,
+          "at": 1794103402093,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 0,
+          "type": "registered"
+        },
+        {
+          "seq": 2,
+          "at": 1794103402097,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 0,
+          "type": "queued",
+          "state": "queued"
+        },
+        {
+          "seq": 3,
+          "at": 1794103402098,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 1,
+          "type": "started",
+          "state": "running"
+        },
+        {
+          "seq": 4,
+          "at": 1794103402099,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 5,
+          "at": 1794103402101,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "preflight"
+        },
+        {
+          "seq": 6,
+          "at": 1794103402101,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 1,
+          "type": "stage",
+          "stage": "execution"
+        },
+        {
+          "seq": 7,
+          "at": 1794103403017,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 1,
+          "type": "cancel-requested"
+        },
+        {
+          "seq": 8,
+          "at": 1794103403051,
+          "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+          "epoch": 1,
+          "type": "settled",
+          "state": "cancelled"
+        }
+      ],
+      "truncated": false
+    },
+    "budget": {
+      "revision": 2,
+      "limits": {},
+      "consumedRuns": 1,
+      "legacyRuns": 0,
+      "knownTokens": 0,
+      "unknownRuns": 1,
+      "inFlight": 0,
+      "startedAt": 1794103402098,
+      "elapsedMs": 974
+    },
+    "runs": [
+      {
+        "id": "child-d321f56f8ec29b943a0e9404618e1968",
+        "kind": "subagent",
+        "label": "cleanup-agent",
+        "address": [
+          "call_mock_44",
+          "0"
+        ],
+        "state": "cancelled",
+        "epoch": 1,
+        "resultEpoch": 1,
+        "updatedAt": 1794103403051,
+        "phase": "drained",
+        "reason": "执行已中止",
+        "contract": false,
+        "handoffSha256": null,
+        "inputVersions": 0,
+        "outputVersions": 0,
+        "contextObservation": {
+          "current": false,
+          "reason": "historical",
+          "sample": {
+            "ownerSessionId": "03a01b1f-47a5-4a1d-b34d-983b00ba528b",
+            "childId": "child-d321f56f8ec29b943a0e9404618e1968",
+            "epoch": 1,
+            "sample": {
+              "version": 1,
+              "observedAt": 1794103402584,
+              "provider": "deepseek",
+              "model": "deepseek-flash",
+              "contextWindow": 128000,
+              "contextWindowSource": "model-config",
+              "composition": {
+                "systemBytes": 536,
+                "toolBytes": 1460,
+                "messageBytes": 62,
+                "source": "retained-bytes-estimate"
+              },
+              "availability": "unknown",
+              "source": "unknown",
+              "reason": "no-current-route-anchor"
+            }
+          }
+        },
+        "usageTotals": {
+          "source": "host-epoch-deltas",
+          "partial": [
+            "input",
+            "output",
+            "cacheRead"
+          ],
+          "settledEpochs": 1,
+          "unknownEpochs": 1,
+          "lastSettledEpoch": 1
+        },
+        "timing": {
+          "preflightMs": 0,
+          "executionMs": 952
+        }
+      }
+    ]
+  },
+  "script": "import os, time\nfrom pathlib import Path\nPath('owned-worker.pid').write_text(str(os.getpid()))\nprint('owned CLI worker ready', flush=True)\ntime.sleep(30)\n",
+  "scientificValidation": false,
+  "stoppingScreenshotCaptured": false,
+  "limitation": "CLI cancellation SIGKILLs the owned child process tree; stopping is transient. Gated host and UI tests cover the stopping state; longer-lived actual Bot/MCP drain is not exercised."
+}

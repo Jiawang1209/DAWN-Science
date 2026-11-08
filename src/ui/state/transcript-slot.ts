@@ -50,6 +50,9 @@ let 回显序号 = 0
 export function 创建转录槽() {
   /** 对话、工具调用、系统提示。**按顺序渲染，不重排** */
   const $items = atom<readonly TranscriptItem[]>([])
+  /** Presentation acknowledgement only: an external stop ended waiting for this input.
+   * Bound to the slot and exact input; never a persisted execution/drain status. */
+  const $stoppedInputId = atom<string | undefined>(undefined)
 
   /**
    * agent 正在问「能不能」（A2，只有 acp 会有）。
@@ -246,10 +249,11 @@ export function 创建转录槽() {
     setItems(留)
     $待答权限.set(undefined)
     $会话开关.set(undefined)
+    $stoppedInputId.set(undefined)
     setQueued(undefined)
   }
 
-  return { $items, $待答权限, $会话开关, $待发, flush, setItems, upsertItem, appendItem, dropItem, setQueued, applySnapshot, reset, 回显 }
+  return { $items, $stoppedInputId, $待答权限, $会话开关, $待发, flush, setItems, upsertItem, appendItem, dropItem, setQueued, applySnapshot, reset, 回显 }
 }
 
 export type 转录槽 = ReturnType<typeof 创建转录槽>

@@ -1,0 +1,49 @@
+[
+  {
+    "name": "final-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.151
+  },
+  {
+    "name": "final-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.164
+  },
+  {
+    "name": "new-desktop",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/auto-arrangement.spec.ts",
+      "e2e/mode-member-workspace.spec.ts",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-new"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 19.058
+  },
+  {
+    "name": "side-desktop",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/side-session.spec.ts",
+      "-g",
+      "\u70b9\u575e\u91cc\u7684\u56e2\u961f chip",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-20261108/playwright-side"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 6.327
+  }
+]

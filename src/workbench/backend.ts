@@ -4326,6 +4326,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         if (/正在回退/.test(消息)) throw fault("conflict", "正在回退，等它做完")
         if (/没有这一版方案|未在本进程|会话 ".*" 未启动/.test(消息)) throw fault原样("not_found", 消息)
         if (/这一版方案已经/.test(消息)) throw fault原样("conflict", 消息)
+        if (/任务安排|独立审阅|待确认/.test(消息)) throw fault("invalid_request", "任务安排需要修正：{0}", 消息)
         throw fault原样("internal_error", 消息)
       }
     },

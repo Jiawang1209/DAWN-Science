@@ -24,6 +24,8 @@ export function BotPane(p: {
   team?: TeamSnapshot | undefined
   onPrepareDelivery?:((paths:string[])=>void)|undefined
   readArtifact?: ReadBotArtifact | undefined
+  returnLabel?:string|undefined
+  onReturnToCollaboration?:(()=>boolean)|undefined
   onViewMember?: ((botId: string) => Promise<void>) | undefined
   models: readonly { provider?: string | undefined; model: string }[]
   conversation: (session: SessionSummary, state: 槽现值) => 坞格对话回调 | undefined
@@ -73,8 +75,8 @@ export function BotPane(p: {
   })} />
   return <div className={`bot-pane${session ? " bot-chat side-chat" : view === "collaboration" ? " bot-team-chat" : ""}`}>
     {error ? <p role="alert" className="bot-error">{error}</p> : null}
-    {session ? <BotConversation readOnly={!!memberView || (!!bot && (!bot.enabled || !!bot.archivedAt))} session={session} botId={bot?.id ?? selected ?? session.sessionId} name={bot?.name ?? session.title ?? "Bot"} projectLabel={p.projectLabel} conversation={p.conversation}
-      onBack={() => { const fromTeam=!!memberView||!!$botTask.get(); clearBotSession(); setHistory(undefined); if(fromTeam)setBotPage("collaboration") }}
+    {session ? <BotConversation backLabel={memberView?p.returnLabel:undefined} readOnly={!!memberView || (!!bot && (!bot.enabled || !!bot.archivedAt))} session={session} botId={bot?.id ?? selected ?? session.sessionId} name={bot?.name ?? session.title ?? "Bot"} projectLabel={p.projectLabel} conversation={p.conversation}
+      onBack={() => { const returned=p.onReturnToCollaboration?.(); const fromTeam=!!memberView||!!$botTask.get(); clearBotSession(); setHistory(undefined); if(returned)return; if(fromTeam)setBotPage("collaboration") }}
       onHistory={bot && !memberView && !$botTask.get() ? () => void perform(async () => {
         const ownerSessionId = p.ownerSessionId!
         const r = await p.client.get<{ sessions: SessionSummary[] }>("listBotSessions", { botId: bot.id, ownerSessionId })
@@ -123,6 +125,7 @@ export function BotPane(p: {
   </div>
 }
 function BotConversation(p: {
+  backLabel?:string|undefined
   readOnly: boolean; session: SessionSummary; botId: string; name: string; projectLabel: string | undefined
   conversation: Parameters<typeof BotPane>[0]["conversation"]
   onBack: () => void; onHistory: (() => void) | undefined; onNew: (() => void) | undefined
@@ -135,7 +138,7 @@ function BotConversation(p: {
       {p.onNew ? <Button variant="ghost" size="sm" onClick={p.onNew}>{t("新对话")}</Button> : null}
       {p.onHistory ? <Button variant="ghost" size="sm" onClick={p.onHistory}>{t("历史")}</Button> : null}
     </div></details> : null}
-    <Button variant="ghost" size="icon" aria-label={t("Bot 清单")} onClick={p.onBack}>×</Button>
+    <Button variant="ghost" size={p.backLabel?"sm":"icon"} aria-label={p.backLabel??t("Bot 清单")} onClick={p.onBack}>{p.backLabel??"×"}</Button>
   </> }
   return callbacks ? <ConversationView key={p.session.sessionId} session={p.session} items={items} 待发={queued} 紧凑 坞头={head} {...callbacks} disabled={p.readOnly || callbacks.disabled} allowBotDispatch={false} /> : <header className="conv-head"><div className="conv-head-text">{head.标题}</div>{head.动作}</header>
 }

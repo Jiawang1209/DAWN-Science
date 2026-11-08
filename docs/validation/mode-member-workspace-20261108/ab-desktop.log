@@ -1,0 +1,18 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/mode-member-workspace.spec.ts --output=docs/validation/mode-member-workspace-20261108/playwright-ab
+
+Running 2 tests using 1 worker
+
+(node:83746) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52169/015a84d9-8e96-4c3c-b2e6-eeca42c19deb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/mode-member-workspace.spec.ts:6:1 › advice explains structure and appends only to its owner draft without sending (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:52186/7b275758-60dc-4a82-a3a0-1188524acede
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/mode-member-workspace.spec.ts:24:1 › member process and continuation return to the exact expanded collaboration selection (4.5s)
+
+  2 passed (8.0s)

@@ -1,3 +1,6 @@
+import {$drafts} from './state/view.js'
+import {$跑着的会话,$sessions,$tempSessions} from './state/catalog.js'
+import {$mainArrangementPlan,$sideArrangementPlan,$mainArrangementPlanning,$sideArrangementPlanning,$mainArrangementReply,$sideArrangementReply} from './state/auto-arrangement.js'
 import {RunOverview} from './run-overview.js'
 import type {WorkbenchClient} from './client.js'
 import {$activeSessionId} from './state/view.js'
@@ -442,13 +445,18 @@ function LegacyTeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:st
 }
 
 /** Preserve team administration while the default surface is the unified collaboration view. */
-export function TeamPanel({client,onView}:{client?:WorkbenchClient;onView?:(id:string)=>void}={}){
+export function TeamPanel({client,onView,onPrepare,onBot,onArrange,onStopArrange}:{onArrange?:((owner:string,task:string,adjustment:string,signal:AbortSignal)=>Promise<void>)|undefined;onStopArrange?:((owner:string)=>Promise<void>)|undefined;onBot?:((owner:string,teamId:string,botId:string,isCurrent:()=>boolean)=>Promise<void>)|undefined;onPrepare?:((owner:string,text:string)=>boolean)|undefined;client?:WorkbenchClient;onView?:(id:string)=>void}={}){
  const team=useStore($团队格团队),source=useStore($团队格来源),main=useStore($activeSessionId),side=useStore($侧边会话id)
  const owner=source==='侧'?side:main
+ const drafts=useStore($drafts),running=useStore($跑着的会话),mainPlan=useStore($mainArrangementPlan),sidePlan=useStore($sideArrangementPlan),sessions=useStore($sessions),temporary=useStore($tempSessions)
+ const mainPlanning=useStore($mainArrangementPlanning),sidePlanning=useStore($sideArrangementPlanning)
+ const mainReply=useStore($mainArrangementReply),sideReply=useStore($sideArrangementReply)
+ const ownerSummary=[...sessions,...temporary].find(s=>s.sessionId===owner)
+ const autoArrangement=owner&&onArrange?{task:drafts[owner]??'',plan:source==='侧'?sidePlan:mainPlan,replyVersion:source==='侧'?sideReply:mainReply,busy:running.has(owner),planning:source==='侧'?sidePlanning:mainPlanning,unsupported:ownerSummary&&ownerSummary.kind!=='native'?t("当前运行时不支持只读自动安排，请使用内置模型会话。"):undefined,onGenerate:(task:string,adjustment:string,signal:AbortSignal)=>onArrange(owner,task,adjustment,signal),onStop:onStopArrange?()=>onStopArrange(owner):undefined}:undefined
  if(!client)return <LegacyTeamPanel/>
  return <div className="collaboration-team-surface">
   {source==='侧'?<p className="hint team-source" data-team-source="side">{t("坞里那段对话的团队")}</p>:null}
-  <RunOverview key={owner} client={client} sessionId={owner} team={team} onView={onView}/>
+  <RunOverview key={owner} client={client} sessionId={owner} team={team} onView={onView} onPrepare={onPrepare} onBot={owner===main?onBot:undefined} autoArrangement={autoArrangement}/>
   {team?.captainSessionId===owner?<details className="collaboration-legacy"><summary>{t("团队管理与原始记录")}</summary><LegacyTeamPanel/></details>:null}
  </div>
 }

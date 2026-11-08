@@ -1,0 +1,90 @@
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project node --project ui
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/workbench/fault-i18n.test.ts (10 tests | 1 failed) 242ms
+     × (c) fault原样 只出现在名单里，次数也对得上——多一处就是一次有意识的决定 19ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/fault-i18n.test.ts > 扫描 · 后端错误都译得了 > (c) fault原样 只出现在名单里，次数也对得上——多一处就是一次有意识的决定
+AssertionError: 原样透传的地方变了。现在有：
+workbench/backend.ts:1232：消息
+workbench/backend.ts:1233：消息
+workbench/backend.ts:1234：消息
+workbench/backend.ts:1506：err.message
+workbench/backend.ts:1642：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:2267：error instanceof Error ? error.message : String(error)
+workbench/backend.ts:2459：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:2817：没续上因为 ?? (err instanceof Error ? err.message : String(err))
+workbench/backend.ts:3208：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3221：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3327：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3340：e.message
+workbench/backend.ts:3353：e.message
+workbench/backend.ts:3381：e.message
+workbench/backend.ts:3405：e.message
+workbench/backend.ts:3420：e.message
+workbench/backend.ts:3645：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3735：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3781：r.why
+workbench/backend.ts:3785：r.why
+workbench/backend.ts:3859：r.why
+workbench/backend.ts:3947：消息
+workbench/backend.ts:4167：消息
+workbench/backend.ts:4170：消息
+workbench/backend.ts:4173：消息
+workbench/backend.ts:4174：消息
+workbench/backend.ts:4245：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:4262：消息
+workbench/backend.ts:4263：消息
+workbench/backend.ts:4264：消息
+workbench/backend.ts:4305：error instanceof Error ? error.message : String(error)
+workbench/backend.ts:4323：消息
+workbench/backend.ts:4327：消息
+workbench/backend.ts:4328：消息
+workbench/backend.ts:4329：消息
+workbench/backend.ts:4330：消息
+workbench/backend.ts:4461：消息
+workbench/backend.ts:4462：消息
+workbench/backend.ts:4463：消息
+workbench/backend.ts:4476：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:4578：消息
+workbench/backend.ts:4599：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:5099：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:5304：err.message
+workbench/backend.ts:5341：err.message
+workbench/backend.ts:5438：毛病
+workbench/backend.ts:5458：毛病
+workbench/backend.ts:5481：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:5612：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:5696：msg
+workbench/backend.ts:5736：e instanceof Error ? e.message : String(e): expected [ '"消息"：名单 19，实际 20' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"消息\"：名单 19，实际 20",
++ ]
+
+ ❯ tests/workbench/fault-i18n.test.ts:318:52
+    316|     for (const [签名, n] of 见到) if (原样透传名单[签名] !== n) 差异.push(`${JSON.st…
+    317|     for (const 签名 of Object.keys(原样透传名单)) if (!见到.has(签名)) 差异.push(`${…
+    318|     expect(差异, `原样透传的地方变了。现在有：\n${在哪.join("\n")}`).toEqual([])
+       |                                                    ^
+    319|   })
+    320| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 681 passed (682)
+      Tests  1 failed | 6858 passed | 10 skipped (6869)
+   Start at  09:41:13
+   Duration  133.61s (transform 24.49s, setup 83.41s, import 287.05s, tests 585.10s, environment 156.68s)
+

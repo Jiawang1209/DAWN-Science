@@ -1,0 +1,123 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/i18n.test.ts tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 2 failed) 73ms
+     × **每一个 `t()` 的 msgid 在英文表里都有** 25ms
+     × **英文表里没有谁也不用的孤儿** 23ms
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 810ms
+     × **`aria-label` 与按钮文案之间也没有子串关系** 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 只用形状表达含义是不够的 > **`aria-label` 与按钮文案之间也没有子串关系**
+AssertionError: 按名字找元素时子串会指向两个东西——换一个说法: expected [ '「停止」是「停止本轮规划」的一部分' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "「停止」是「停止本轮规划」的一部分",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:996:43
+    994|       }
+    995|     }
+    996|     expect(撞的, "按名字找元素时子串会指向两个东西——换一个说法").toEqual([])
+       |                                           ^
+    997|   })
+    998|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **每一个 `t()` 的 msgid 在英文表里都有**
+AssertionError: 这些句子切到英文会原样显示中文——补进 i18n/en.ts: expected [ …(30) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "App.tsx：\"会话已切换或规划已取消，未发送到其他会话。\"",
++   "auto-arrangement-request.ts：\"会话已切换或规划已取消，未发送到其他会话。\"",
++   "auto-arrangement-request.ts：\"会话当前有任务运行，请等待完成或停止后再安排。\"",
++   "auto-arrangement-request.ts：\"请提供有效的任务目标。\"",
++   "auto-arrangement-request.ts：\"本会话的规划请求正在提交。\"",
++   "orchestration-advisor.tsx：\"自动安排\"",
++   "orchestration-advisor.tsx：\"自动安排\"",
++   "orchestration-advisor.tsx：\"描述具体任务，DAWN 会根据目标、数据和依赖决定怎样拆分与分工。无需预先填写任务数量。\"",
++   "orchestration-advisor.tsx：\"调整要求（可选）\"",
++   "orchestration-advisor.tsx：\"调整要求（可选）\"",
++   "orchestration-advisor.tsx：\"例如：合并前两步，保留独立审阅\"",
++   "orchestration-advisor.tsx：\"重新安排\"",
++   "orchestration-advisor.tsx：\"生成安排\"",
++   "orchestration-advisor.tsx：\"停止本轮规划\"",
++   "orchestration-advisor.tsx：\"先出方案期间只读查看；采纳后才进入原有执行与验收流程。\"",
++   "orchestration-advisor.tsx：\"规划请求已发送；结果由模型提交后显示。\"",
++   "orchestration-advisor.tsx：\"会话当前有任务运行，请等待完成或停止后再安排。\"",
++   "orchestration-advisor.tsx：\"可在对话中的方案卡修改并采纳，或补充调整要求后重新安排。\"",
++   "task-arrangement-view.tsx：\"任务安排需要修正\"",
++   "task-arrangement-view.tsx：\"任务安排结果\"",
++   "task-arrangement-view.tsx：\"{0} 个任务块\"",
++   "task-arrangement-view.tsx：\"这是方案中的任务划分，不代表已启动这些 Agent。\"",
++   "task-arrangement-view.tsx：\"分工\"",
++   "task-arrangement-view.tsx：\"未声明文件\"",
++   "task-arrangement-view.tsx：\"输出\"",
++   "task-arrangement-view.tsx：\"未声明文件\"",
++   "task-arrangement-view.tsx：\"依赖\"",
++   "task-arrangement-view.tsx：\"验收\"",
++   "task-arrangement-view.tsx：\"待确认事项\"",
++   "team-panel.tsx：\"当前运行时不支持只读自动安排，请使用内置模型会话。\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:105:50
+    103|       }
+    104|     }
+    105|     expect(缺的, "这些句子切到英文会原样显示中文——补进 i18n/en.ts").toEqual([])
+       |                                                  ^
+    106|   })
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **英文表里没有谁也不用的孤儿**
+AssertionError: 没有任何调用点用它们——要么是原文改过了，要么该删: expected [ '如何安排任务', …(12) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "如何安排任务",
++   "先说明任务结构，再决定是否分工。只准备草稿，不会启动或改动现有任务。",
++   "任务之间的关系",
++   "尚未说明",
++   "彼此独立",
++   "前后依赖",
++   "写入同一目标",
++   "需要独立审阅",
++   "选用模式",
++   "采用建议",
++   "建议：{0}",
++   "选用：{0}",
++   "放入任务草稿",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:122:45
+    120|     for (const id of Object.values(通知文案)) 用到的.add(id)
+    121|     const 孤儿 = Object.keys(EN).filter((k) => !用到的.has(k))
+    122|     expect(孤儿, "没有任何调用点用它们——要么是原文改过了，要么该删").toEqual([])
+       |                                             ^
+    123|   })
+    124| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 106 passed (109)
+   Start at  09:28:22
+   Duration  2.20s (transform 943ms, setup 1.38s, import 92ms, tests 883ms, environment 1.10s)
+

@@ -1,0 +1,143 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/ui/i18n.test.ts tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 2 failed) 82ms
+     × **英文表里没有谁也不用的孤儿** 27ms
+     × 英文值里没有汉字 2ms
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 890ms
+     × 组件里的 textarea / input / select 都带 control 类 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: orchestration-advisor.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "14: <label>{t('任务块数')}<input className=\"control\" type=\"number\" min={1} max={8} step={1} value={brief.blocks??''} onChange={e=>change({blocks:e.target.value===''?undefined:Number(e.target.value)})}/></label>",
++   "15: <label>{t('任务之间的关系')}<select className=\"control\" value={brief.dependency} onChange={e=>change({dependency:e.target.value as ModeBrief['dependency']})}>",
++   "18: <label><input type=\"checkbox\" checked={brief.sharedWrites} onChange={e=>change({sharedWrites:e.target.checked})}/>{t('写入同一目标')}</label>",
++   "19: <label><input type=\"checkbox\" checked={brief.independentReview} onChange={e=>change({independentReview:e.target.checked})}/>{t('需要独立审阅')}</label>",
++   "20: <label>{t('选用模式')}<select className=\"control\" value={brief.preferred??'recommended'} onChange={e=>change({preferred:e.target.value==='recommended'?undefined:e.target.value as Mode})}>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **英文表里没有谁也不用的孤儿**
+AssertionError: 没有任何调用点用它们——要么是原文改过了，要么该删: expected [ '如何安排任务', …(38) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "如何安排任务",
++   "先说明任务结构，再决定是否分工。只准备草稿，不会启动或改动现有任务。",
++   "任务块数",
++   "任务之间的关系",
++   "尚未说明",
++   "彼此独立",
++   "前后依赖",
++   "写入同一目标",
++   "需要独立审阅",
++   "选用模式",
++   "采用建议",
++   "建议：{0}",
++   "选用：{0}",
++   "放入任务草稿",
++   "已追加到所属会话草稿，请检查后发送。",
++   "会话已切换，未修改任何草稿。",
++   "单任务",
++   "并行委派",
++   "串行交接",
++   "科研流水线",
++   "请说明 1–8 个任务块；更大的任务先分成可验收的阶段。",
++   "请先说明任务是否依赖前一步的结果。",
++   "需要独立审阅，采用已有核查、分析、审阅流水线。",
++   "一个任务块先单独完成，减少交接。",
++   "任务会写入同一目标，先串行交接以避免竞争。",
++   "后一步需要前一步结果，按顺序交接。",
++   "这些任务块彼此独立，可以并行委派。",
++   "独立审阅要求不能由手动选择取消，请选用科研流水线。",
++   "存在依赖或共用写入目标，当前不能选用并行委派。",
++   "任务安排建议",
++   "任务块数：{0}；选用：{1}。",
++   "各任务块互不依赖。",
++   "各任务块按前后依赖交接。",
++   "存在共用写入目标；沿用产物锁，避免并发写入。",
++   "各任务的写入目标分开。",
++   "必须保留独立审阅，沿用科研流水线和审阅预留，不能由分析执行者自审替代。",
++   "没有额外指定独立审阅；现有契约验收仍然适用。",
++   "请先明确每块任务的目标、输入、输出和验收判据，再复用已有编排、冻结契约、产物版本和恢复机制执行。",
++   "这是执行建议，不会自动切换模式；无法满足时请说明原因，不要静默降级。",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:122:45
+    120|     for (const id of Object.values(通知文案)) 用到的.add(id)
+    121|     const 孤儿 = Object.keys(EN).filter((k) => !用到的.has(k))
+    122|     expect(孤儿, "没有任何调用点用它们——要么是原文改过了，要么该删").toEqual([])
+       |                                             ^
+    123|   })
+    124| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 英文那一面也要守中文那边的规矩 > 英文值里没有汉字
+AssertionError: 这几条的英文没写完: expected [ …(20) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "先说明任务结构，再决定是否分工。只准备草稿，不会启动或改动现有任务。",
++   "请说明 1–8 个任务块；更大的任务先分成可验收的阶段。",
++   "请先说明任务是否依赖前一步的结果。",
++   "需要独立审阅，采用已有核查、分析、审阅流水线。",
++   "一个任务块先单独完成，减少交接。",
++   "任务会写入同一目标，先串行交接以避免竞争。",
++   "后一步需要前一步结果，按顺序交接。",
++   "这些任务块彼此独立，可以并行委派。",
++   "独立审阅要求不能由手动选择取消，请选用科研流水线。",
++   "存在依赖或共用写入目标，当前不能选用并行委派。",
++   "任务安排建议",
++   "任务块数：{0}；选用：{1}。",
++   "各任务块互不依赖。",
++   "各任务块按前后依赖交接。",
++   "存在共用写入目标；沿用产物锁，避免并发写入。",
++   "各任务的写入目标分开。",
++   "必须保留独立审阅，沿用科研流水线和审阅预留，不能由分析执行者自审替代。",
++   "没有额外指定独立审阅；现有契约验收仍然适用。",
++   "请先明确每块任务的目标、输入、输出和验收判据，再复用已有编排、冻结契约、产物版本和恢复机制执行。",
++   "这是执行建议，不会自动切换模式；无法满足时请说明原因，不要静默降级。",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:220:47
+    218|   it("英文值里没有汉字", () => {
+    219|     const 带汉字的 = Object.entries(EN).filter(([, v]) => /[一-鿿]/.test(v))
+    220|     expect(带汉字的.map(([k]) => k), "这几条的英文没写完").toEqual([])
+       |                                               ^
+    221|   })
+    222| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 108 passed (111)
+   Start at  08:04:55
+   Duration  2.08s (transform 1.13s, setup 1.69s, import 141ms, tests 1.10s, environment 1.45s)
+

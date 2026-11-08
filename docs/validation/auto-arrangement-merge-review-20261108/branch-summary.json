@@ -1,0 +1,16 @@
+{
+  "nodeUiPassed": 6868,
+  "nodeUiSkipped": 10,
+  "kernelPassed": 50,
+  "kernelSkipped": 1,
+  "electronPassed": 30,
+  "offlineCases": 4,
+  "paidModelRequests": 0,
+  "sourceFilesFrozen": 663,
+  "sourceDrift": [],
+  "priorEvidenceFilesChecked": 464,
+  "priorEvidenceDrift": [],
+  "branchFinalExits": 33,
+  "branchMaxOsCloseMs": 267.631,
+  "historicalTimeout": "OPEN"
+}

@@ -340,3 +340,13 @@ describe("空态", () => {
     expect(screen.getAllByText(/这个 agent 不归 DAWN 管工具，先出方案用不了/)).toHaveLength(2)
   })
 })
+it('recomputes task counts from an edited proposal rather than retaining a stored number',async()=>{
+ const {serializeTaskArrangement}=await import('../../src/protocol/task-arrangement.js')
+ const task={id:'one',title:'统计一份数据',goal:'统计',role:'执行者',inputs:['in.csv'],outputs:['out.csv'],dependencies:[],acceptance:'可核对',review:false}
+ const one={mode:'single' as const,rationale:'小任务',independentReview:false,tasks:[task],questions:[]}
+ const two={...one,mode:'parallel' as const,tasks:[task,{...task,id:'two',title:'另一份数据',outputs:['second.csv']}]}
+ render(<方案卡 item={{...卡,markdown:假方案.plan+'\n\n'+serializeTaskArrangement(two)}} 能答 onAnswer={vi.fn(async()=>{})}/>);
+ expect(screen.getByText('2 个任务块')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'改一改'}))
+ fireEvent.change(screen.getByRole('textbox',{name:'方案原文'}),{target:{value:假方案.plan+'\n\n'+serializeTaskArrangement(one)}})
+ expect(screen.getByText('1 个任务块')).toBeTruthy();expect(screen.queryByText('2 个任务块')).toBeNull()
+})

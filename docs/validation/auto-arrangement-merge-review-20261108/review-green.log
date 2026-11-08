@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/plan-mode.test.ts tests/tools/propose-plan.test.ts tests/ui/orchestration-advisor.test.tsx tests/ui/external-planning-stop.test.tsx tests/ui/auto-arrangement-request.test.ts tests/ui/plan-card.test.tsx tests/protocol/task-arrangement.test.ts tests/ui/collaboration-member.test.ts tests/ui/collaboration-member-panel.test.tsx tests/ui/collaboration-return.test.ts tests/ui/run-overview.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/runtime/plan-mode.test.ts (29 tests | 1 failed) 20346ms
+   × does not supersede a plan when cancellation arrives while the original tool archive is pending 20015ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > does not supersede a plan when cancellation arrives while the original tool archive is pending
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/runtime/plan-mode.test.ts:526:1
+    524|  }finally{await x.rt.stop('p1');rmSync(x.spec.workspace,{recursive:tru…
+    525| })
+    526| it('does not supersede a plan when cancellation arrives while the orig…
+       | ^
+    527|  const x=await 起(),controller=new AbortController()
+    528|  let release!:()=>void,entered!:()=>void
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 104 passed (105)
+   Start at  11:42:39
+   Duration  23.08s (transform 6.33s, setup 5.97s, import 5.59s, tests 21.92s, environment 7.71s)
+

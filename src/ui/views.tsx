@@ -1,3 +1,4 @@
+import {autoArrangementRequestPrefix} from '../protocol/task-arrangement.js'
 import { SkillReadSummary, SkillReadDetails } from "./skill-read-record.js"
 import { ServiceMark } from "./service-mark.js"
 import { WorkspaceMenu, type WorkspaceMenuData } from "./workspace-menu.js"
@@ -3805,6 +3806,8 @@ export function ConversationView({
   onEcho,
   onPickModel,
   onAbort: onAbortAction,
+  stoppedInputId,
+  externalInputRunning,
   onResume,
   recovery,
   onEditQueue,
@@ -3843,6 +3846,10 @@ export function ConversationView({
   /** App顶栏已有同处页签时不再重复画单标题；页签DOM不随会话卸载。 */
   headerHasTabs?: boolean
   session: SessionSummary
+  /** External stop acknowledgement for this slot's exact input, not a runtime state. */
+  stoppedInputId?: string | undefined
+  /** Live owner projection; restored automatic requests must not infer a running turn. */
+  externalInputRunning?: boolean | undefined
   /** 待发单（侧边对话，2026-09-24）。**缺省 = 读主槽 `$待发`**——与 `items` 同一个套路 */
   待发?: readonly QueuedMessage[] | undefined
   /**
@@ -4364,6 +4371,14 @@ export function ConversationView({
   useEffect(() => {
     // **新东西冒出来了就收**：`发出去时的条数 + 我自己那一条` 之后再多，就是对面动了
     const 最后 = items[items.length - 1]
+    if (externalInputRunning === false && 最后?.type === 'turn' && 最后.who === 'user' && 最后.text.startsWith(autoArrangementRequestPrefix)) {
+      设等回话(undefined)
+      return
+    }
+    if (stoppedInputId && items.findLast(i => i.type === 'turn' && i.who === 'user')?.id === stoppedInputId) {
+      设等回话(undefined)
+      return
+    }
     /**
      * **从转录推导「在不在等」**（2026-08-14 作者报的）。
      *
@@ -4417,7 +4432,7 @@ export function ConversationView({
      */
     // 判据住在 `state/transcript.ts` 的 `有回音了`（2026-09-28 挪出去，好单测）
     if (有回音了(items, 等回话)) 设等回话(undefined)
-  }, [items, 等回话, 喊停过])
+  }, [items, 等回话, 喊停过, stoppedInputId, externalInputRunning])
 
   /**
    * agent 还在说话（最后一条 turn 未收尾），**或者刚发出去还没回音**。

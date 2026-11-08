@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/plan-backend.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/workbench/plan-backend.test.ts (13 tests | 1 failed) 331ms
+   × reports an invalid edited task arrangement as correctable input rather than an internal failure 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/plan-backend.test.ts > reports an invalid edited task arrangement as correctable input rather than an internal failure
+AssertionError: expected Error: 任务安排无效：任务依赖不存在 { …(1) } to match object { workbenchCode: 'invalid_request' }
+
+- Expected
++ Received
+
+- {
+-   "workbenchCode": "invalid_request",
++ Error {
++   "workbenchCode": "internal_error",
+  }
+
+ ❯ tests/workbench/plan-backend.test.ts:151:93
+    149|  const runtime=new 会答方案的();runtime.答=async()=>{throw Error('任务安排无效：任务依…
+    150|  const ctx=make(runtime),sessionId=await ctx.开一段()
+    151|  await expect(ctx.backend.answerPlan({sessionId,planId:'p',action:'app…
+       |                                                                                             ^
+    152| })
+    153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  09:36:00
+   Duration  1.98s (transform 758ms, setup 0ms, import 1.56s, tests 331ms, environment 0ms)
+

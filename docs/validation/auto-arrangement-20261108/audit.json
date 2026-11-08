@@ -1,0 +1,412 @@
+{
+  "sourceFilesFrozen": 663,
+  "sourceDrift": [],
+  "priorSnapshotFileCount": 32,
+  "missingPriorFiles": [],
+  "priorFilesByteUnchanged": [
+    "docs/DEVELOPMENT_HISTORY.md",
+    "docs/reviews/2026-11-08-mode-member-workspace.md",
+    "docs/superpowers/specs/2026-11-08-mode-member-workspace-design.md",
+    "e2e/bot-collaboration.spec.ts",
+    "src/evaluation/mode-advice.ts",
+    "src/orchestration/mode-advice.ts",
+    "src/ui/bot-pane.tsx",
+    "src/ui/collaboration-member-panel.tsx",
+    "src/ui/collaboration-member.ts",
+    "src/ui/orchestration-advice-copy.ts",
+    "src/ui/state/collaboration-return.ts",
+    "src/ui/state/collaboration-view.ts",
+    "src/ui/state/index.ts",
+    "src/ui/subagent-pane.tsx",
+    "tests/evaluation/mode-advice.test.ts",
+    "tests/orchestration/mode-advice.test.ts",
+    "tests/ui/bot-pane.test.tsx",
+    "tests/ui/collaboration-member-panel.test.tsx",
+    "tests/ui/collaboration-member.test.ts",
+    "tests/ui/collaboration-return.test.ts",
+    "tests/ui/run-overview.test.tsx"
+  ],
+  "mainHead": "d0b6ca78e40d0e051746df250978d3ecb06e9cb9",
+  "mainStatus": "",
+  "worktreeHead": "d0b6ca78e40d0e051746df250978d3ecb06e9cb9",
+  "branch": "codex/mode-member-workspace-20261108",
+  "exits": [
+    {
+      "file": "exit-a/exit-78165.jsonl",
+      "osCloseMs": 140.192,
+      "appCloseMs": 140.538,
+      "problems": []
+    },
+    {
+      "file": "exit-a/exit-78391.jsonl",
+      "osCloseMs": 128.122,
+      "appCloseMs": 129.031,
+      "problems": []
+    },
+    {
+      "file": "exit-a/exit-78616.jsonl",
+      "osCloseMs": 134.37,
+      "appCloseMs": 134.578,
+      "problems": []
+    },
+    {
+      "file": "exit-a/exit-78760.jsonl",
+      "osCloseMs": 122.795,
+      "appCloseMs": 123.0,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-52155.jsonl",
+      "osCloseMs": 130.877,
+      "appCloseMs": 131.187,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-52378.jsonl",
+      "osCloseMs": 134.545,
+      "appCloseMs": 134.761,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-52608.jsonl",
+      "osCloseMs": 135.488,
+      "appCloseMs": 135.686,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-52766.jsonl",
+      "osCloseMs": 163.831,
+      "appCloseMs": 164.043,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-52893.jsonl",
+      "osCloseMs": 156.552,
+      "appCloseMs": 157.48,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-53202.jsonl",
+      "osCloseMs": 147.725,
+      "appCloseMs": 148.055,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-53543.jsonl",
+      "osCloseMs": 146.475,
+      "appCloseMs": 146.702,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-53951.jsonl",
+      "osCloseMs": 133.309,
+      "appCloseMs": 133.512,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-54325.jsonl",
+      "osCloseMs": 132.392,
+      "appCloseMs": 132.618,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-54608.jsonl",
+      "osCloseMs": 143.586,
+      "appCloseMs": 143.821,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-54810.jsonl",
+      "osCloseMs": 126.807,
+      "appCloseMs": 127.027,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-54968.jsonl",
+      "osCloseMs": 155.076,
+      "appCloseMs": 155.357,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-55098.jsonl",
+      "osCloseMs": 121.876,
+      "appCloseMs": 122.075,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-55392.jsonl",
+      "osCloseMs": 126.099,
+      "appCloseMs": 126.372,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-55591.jsonl",
+      "osCloseMs": 257.603,
+      "appCloseMs": 257.928,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-55897.jsonl",
+      "osCloseMs": 263.206,
+      "appCloseMs": 263.407,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-56102.jsonl",
+      "osCloseMs": 146.76,
+      "appCloseMs": 147.011,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-56311.jsonl",
+      "osCloseMs": 132.897,
+      "appCloseMs": 133.093,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-56510.jsonl",
+      "osCloseMs": 136.328,
+      "appCloseMs": 136.515,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-56788.jsonl",
+      "osCloseMs": 122.258,
+      "appCloseMs": 122.659,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-57169.jsonl",
+      "osCloseMs": 135.769,
+      "appCloseMs": 135.962,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-57448.jsonl",
+      "osCloseMs": 283.164,
+      "appCloseMs": 283.497,
+      "problems": []
+    },
+    {
+      "file": "exit-completion/exit-57639.jsonl",
+      "osCloseMs": 114.928,
+      "appCloseMs": 115.139,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-28994.jsonl",
+      "osCloseMs": 146.299,
+      "appCloseMs": 146.765,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-29242.jsonl",
+      "osCloseMs": 132.975,
+      "appCloseMs": 133.158,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-29476.jsonl",
+      "osCloseMs": 129.688,
+      "appCloseMs": 129.88,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-29628.jsonl",
+      "osCloseMs": 163.731,
+      "appCloseMs": 163.918,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-29764.jsonl",
+      "osCloseMs": 146.105,
+      "appCloseMs": 146.307,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-29942.jsonl",
+      "osCloseMs": 168.504,
+      "appCloseMs": 168.706,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-30273.jsonl",
+      "osCloseMs": 140.96,
+      "appCloseMs": 141.143,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-30702.jsonl",
+      "osCloseMs": 118.84,
+      "appCloseMs": 119.052,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-31054.jsonl",
+      "osCloseMs": 128.153,
+      "appCloseMs": 128.685,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-31372.jsonl",
+      "osCloseMs": 118.861,
+      "appCloseMs": 119.144,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-31580.jsonl",
+      "osCloseMs": 142.813,
+      "appCloseMs": 143.022,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-31736.jsonl",
+      "osCloseMs": 156.513,
+      "appCloseMs": 156.71,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-31866.jsonl",
+      "osCloseMs": 130.847,
+      "appCloseMs": 131.053,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-32155.jsonl",
+      "osCloseMs": 121.16,
+      "appCloseMs": 121.34,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-32363.jsonl",
+      "osCloseMs": 236.864,
+      "appCloseMs": 237.136,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-32646.jsonl",
+      "osCloseMs": 119.386,
+      "appCloseMs": 119.565,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-32864.jsonl",
+      "osCloseMs": 126.409,
+      "appCloseMs": 126.592,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-33066.jsonl",
+      "osCloseMs": 143.247,
+      "appCloseMs": 143.434,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-33280.jsonl",
+      "osCloseMs": 126.71,
+      "appCloseMs": 126.895,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-33568.jsonl",
+      "osCloseMs": 133.214,
+      "appCloseMs": 133.425,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-33941.jsonl",
+      "osCloseMs": 134.31,
+      "appCloseMs": 134.497,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-34239.jsonl",
+      "osCloseMs": 129.613,
+      "appCloseMs": 129.811,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-34424.jsonl",
+      "osCloseMs": 119.393,
+      "appCloseMs": 119.601,
+      "problems": []
+    },
+    {
+      "file": "exit-delivery/exit-34739.jsonl",
+      "osCloseMs": 132.759,
+      "appCloseMs": 133.028,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-80394.jsonl",
+      "osCloseMs": 138.28,
+      "appCloseMs": 138.592,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-80617.jsonl",
+      "osCloseMs": 134.984,
+      "appCloseMs": 135.909,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-80841.jsonl",
+      "osCloseMs": 137.913,
+      "appCloseMs": 138.12,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-81183.jsonl",
+      "osCloseMs": 171.775,
+      "appCloseMs": 171.972,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-81311.jsonl",
+      "osCloseMs": 145.687,
+      "appCloseMs": 145.975,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-81520.jsonl",
+      "osCloseMs": 107.37,
+      "appCloseMs": 107.575,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-81670.jsonl",
+      "osCloseMs": 144.343,
+      "appCloseMs": 144.531,
+      "problems": []
+    },
+    {
+      "file": "exit-final/exit-81825.jsonl",
+      "osCloseMs": 133.318,
+      "appCloseMs": 133.659,
+      "problems": []
+    },
+    {
+      "file": "exit-stop-reviewed/exit-59453.jsonl",
+      "osCloseMs": 154.438,
+      "appCloseMs": 154.726,
+      "problems": []
+    },
+    {
+      "file": "exit-stop-reviewed/exit-59683.jsonl",
+      "osCloseMs": 137.196,
+      "appCloseMs": 137.469,
+      "problems": []
+    },
+    {
+      "file": "exit-targeted-final/exit-57979.jsonl",
+      "osCloseMs": 158.065,
+      "appCloseMs": 158.343,
+      "problems": []
+    }
+  ],
+  "historicIntermittentTimeout": "OPEN",
+  "shutdownBudgetsMs": [
+    1500,
+    4000
+  ]
+}

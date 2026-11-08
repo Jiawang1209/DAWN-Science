@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/protocol/task-arrangement.test.ts tests/tools/propose-plan.test.ts tests/runtime/plan-mode.test.ts tests/ui/plan-card.test.tsx tests/ui/orchestration-advisor.test.tsx tests/ui/task-arrangement-view.test.tsx tests/ui/auto-arrangement-request.test.ts tests/ui/i18n.test.ts tests/ui/design-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 76ms
+     × **英文表里没有谁也不用的孤儿** 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **英文表里没有谁也不用的孤儿**
+AssertionError: 没有任何调用点用它们——要么是原文改过了，要么该删: expected [ '分工' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "分工",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:122:45
+    120|     for (const id of Object.values(通知文案)) 用到的.add(id)
+    121|     const 孤儿 = Object.keys(EN).filter((k) => !用到的.has(k))
+    122|     expect(孤儿, "没有任何调用点用它们——要么是原文改过了，要么该删").toEqual([])
+       |                                             ^
+    123|   })
+    124| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 187 passed (188)
+   Start at  09:34:21
+   Duration  3.22s (transform 4.60s, setup 4.19s, import 4.38s, tests 2.19s, environment 4.86s)
+

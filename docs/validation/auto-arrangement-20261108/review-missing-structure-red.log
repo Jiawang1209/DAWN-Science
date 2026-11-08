@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/propose-plan.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/tools/propose-plan.test.ts (8 tests | 1 failed) 15ms
+   × requires task structure for an explicit automatic-arrangement request while keeping legacy plans compatible 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/tools/propose-plan.test.ts > requires task structure for an explicit automatic-arrangement request while keeping legacy plans compatible
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/propose-plan.test.ts:69:20
+     67|  const stored=vi.fn(()=>({version:1}))
+     68|  const r=await createProposePlanTool({交:stored,requireArrangement:()=>…
+     69|  expect(r.isError).toBe(true);expect(r.terminate).toBeUndefined();expe…
+       |                    ^
+     70| })
+     71|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  09:32:51
+   Duration  315ms (transform 93ms, setup 0ms, import 213ms, tests 15ms, environment 0ms)
+

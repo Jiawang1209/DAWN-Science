@@ -1,0 +1,5 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+e2e/auto-arrangement.spec.ts(46,12): error TS2322: Type '{ gitInit: true; thinking: true; thinkingHoldMs: number; }' is not assignable to type '[TestFixtureValue<DawnOptions, PlaywrightTestArgs & PlaywrightTestOptions & { dawnOptions: DawnOptions; dawn: DawnFixture; } & PlaywrightWorkerArgs & PlaywrightWorkerOptions>, { ...; }] | TestFixtureValue<...>'.
+  Types of property 'thinking' are incompatible.
+    Type 'boolean' is not assignable to type 'string'.

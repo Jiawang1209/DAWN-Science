@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/mode-advice.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/mode-advice.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/mode-advice.test.ts [ tests/orchestration/mode-advice.test.ts ]
+Error: Cannot find module '../../src/orchestration/mode-advice.js' imported from /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/tests/orchestration/mode-advice.test.ts
+ ❯ tests/orchestration/mode-advice.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {adviseMode,type ModeBrief} from '../../src/orchestration/mode-…
+       | ^
+      3| const base:ModeBrief={blocks:3,dependency:'independent',sharedWrites:f…
+      4| it.each([[1,'single'],[2,'parallel'],[8,'parallel']] as const)('recomm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  08:03:46
+   Duration  122ms (transform 13ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

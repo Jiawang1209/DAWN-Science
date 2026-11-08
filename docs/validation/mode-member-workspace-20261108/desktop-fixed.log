@@ -1,0 +1,93 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/mode-member-workspace.spec.ts e2e/collaboration-workbench.spec.ts e2e/collaboration-network.spec.ts e2e/collaboration-stopping.spec.ts e2e/subagent-steering-epoch.spec.ts e2e/subagent-view.spec.ts e2e/bot-collaboration.spec.ts --output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/playwright-fixed
+
+Running 14 tests using 1 worker
+
+(node:27469) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] [桌面通知·假] #4 一段对话做完了 — 图已生成：figures/regression.svg；绘图脚本为 scripts/plot.py。图中标注来自实际模型，用户补充要求已从文件读取。
+[主进程] [桌面通知·假] #5 一段对话做完了 — 已核验数据核查、缺失值处理、模型及绘图交付。输入原始文件保持不变。可查看：`scripts/model.py`、`scripts/plot.py`、`results/model.csv`、`notes/data-check.md`、`not…
+[主进程] [桌面通知·假] #6 「Bot交流验收：组队分析 input.c」做完了 — 协作结果已返回。数据助手核查编码后向统计助手确认处理策略，统计助手收到清洗结果后完成拟合；绘图助手追问图形要求，再读取用户补充生成图形。请以团队总览中的实际任务状态和交付文件为准；演示数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:56106/0b0dd23f-56e7-4775-b80b-10a8fad56321
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/bot-collaboration.spec.ts:5:1 › Bot Team holds a continuous discussion with reverse questions and queued user intervention (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已发出协作请求，等待队友的实际回应后继续原任务。
+[主进程] [桌面通知·假] #2 一段对话做完了 — 本次是协作机制演示，请将缺失行排除后拟合，不做插补；保留 input.csv，在说明中记录依据和排除条数。
+[主进程] [桌面通知·假] #3 一段对话做完了 — 已确认缺失编码 -999，并按你确认的策略排除该行；清洗数据保存为 results/clean.csv，检查依据保存在 notes/data-check.md，input.csv 未改动。
+[主进程] Debugger ending on ws://127.0.0.1:56143/b6512506-c0cc-4d69-9988-593b3ec51215
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/bot-collaboration.spec.ts:207:1 › team attention opens a real pending question and the answered run resumes into verified deliveries (6.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56178/47a7f048-ed62-4cf3-ba76-3e7a1c335c12
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56269/24de529f-8fef-43f0-9999-4e1dbb9e16c4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/collaboration-stopping.spec.ts:12:1 › shows host-verified cancellation after actual owned CLI termination; transient stopping is not a screenshot claim (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56290/3722e8c1-aa82-4e80-8bf1-9306847c3f17
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56361/bd0906a1-0452-456d-8737-4a6b705f07d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (14.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56376/8f40153f-2679-40fa-a9d7-b76ec4d66589
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/mode-member-workspace.spec.ts:6:1 › advice explains structure and appends only to its owner draft without sending (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56391/979e04b6-33c1-4b49-97b8-a56c88401217
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56414/19177490-1525-4246-bae9-858acd42acc9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/mode-member-workspace.spec.ts:26:1 › member process and continuation return to the exact expanded collaboration selection (6.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent慢慢看」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56426/a146fff7-496e-47a7-9c81-8fadb45f2340
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/subagent-steering-epoch.spec.ts:6:1 › expired correction draft cannot cross a real child epoch and can be explicitly rewritten (20.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56550/21ec57d6-76cf-4bb2-b798-76244ba787ac
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/subagent-view.spec.ts:36:3 › 子 agent 看得见 › 点 chip → 坞里那一格有它的过程与交回的结果；主转录里没有那条 read (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56583/287dcc14-17a1-417e-b942-397cbb1734db
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/subagent-view.spec.ts:53:3 › 子 agent 看得见 › 在跑时 chip 上有那一句、坞里那条 bash 在跑；跑完那一句消失 (17.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56711/55352701-9d72-4b90-b9d8-4feb86fb4a09
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/subagent-view.spec.ts:70:3 › 子 agent 看得见 › 接着问：格里多一问一答，主转录一条不多、那一问那一答都不在主区 (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56733/13ab7eda-1c49-4955-8df2-3eb01dcaa6e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56746/19d870ec-3ea2-4a53-bc28-3410318680c1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/subagent-view.spec.ts:96:3 › 子 agent 看得见 › 关掉再开：chip 组还在，点开过程从盘上读回来、没有在跑的样子 (5.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「派子agent看看这个仓库」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:56763/aa4bfc5f-45ef-4782-849c-5780b6d5c6fb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/subagent-view.spec.ts:124:3 › 子 agent 看得见 › 看得见：chip、「接着问」、回清单都不是悬停才出现的；坞标签与更多菜单完整可达 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56784/dcea64ae-43a4-42b8-86d3-d4c1d5fbae5a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/subagent-view.spec.ts:196:3 › 坞里那段对话派的子 agent：长长的一句不撑破坞 › chip 那一句很长：坞不出横向滚动，chip 不越过坞的右缘 (3.4s)
+
+  14 passed (2.0m)

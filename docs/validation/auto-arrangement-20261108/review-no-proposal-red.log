@@ -1,0 +1,166 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (3 tests | 1 failed) 129ms
+   × reports a completed model turn without a new proposal rather than waiting forever 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > reports a completed model turn without a new proposal rather than waiting forever
+TestingLibraryElementError: Unable to find an accessible element with the role "alert"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "自动安排":
+  [36m<section[39m
+    [33maria-label[39m=[32m"自动安排"[39m
+    [33mclass[39m=[32m"orchestration-advisor"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "自动安排":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "任务目标":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"任务目标"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"16000"[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  Name "调整要求（可选）":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"调整要求（可选）"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"4000"[39m
+    [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "生成安排":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"自动安排"[39m
+      [33mclass[39m=[32m"orchestration-advisor"[39m
+    [36m>[39m
+      [36m<h4>[39m
+        [0m自动安排[0m
+      [36m</h4>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m描述具体任务，DAWN 会根据目标、数据和依赖决定怎样拆分与分工。无需预先填写任务数量。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"auto-arrangement-form"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m任务目标[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"任务目标"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"16000"[39m
+            [33mrows[39m=[32m"3"[39m
+          [36m>[39m
+            [0m计算均值[0m
+          [36m</textarea>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m调整要求（可选）[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"调整要求（可选）"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"4000"[39m
+            [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m生成安排[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m先出方案期间只读查看；采纳后才进入原有执行与验收流程。[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0m规划请求已发送；结果由模型提交后显示。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-advisor.test.tsx:30:16
+     28|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'生…
+     29|  view.rerender(<OrchestrationAdvisor {...props} replyVersion="new-comp…
+     30|  expect(screen.getByRole('alert').textContent).toContain('本轮没有提交新的有效任务…
+       |                ^
+     31| })
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  09:39:35
+   Duration  1.10s (transform 348ms, setup 514ms, import 17ms, tests 129ms, environment 348ms)
+

@@ -1,3 +1,4 @@
+import {evaluateModeAdvice} from '../src/evaluation/mode-advice.js'
 import {runContextHandoffEvaluation} from './evaluate-context-handoff.js'
 import {runRunBudgetEvaluation} from './evaluate-run-budget.js'
 import {runSubagentSteeringDemo} from './demo-subagent-steering.js'
@@ -89,7 +90,14 @@ async function run(scenario:ScienceBaselineCase,mode:'single'|'multi',entry:stri
  }finally{if(scheduler&&teamId)scheduler.中止全部(teamId);await service?.close();await server.close();rmSync(root,{recursive:true,force:true})}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- if(process.argv[2]==='--research-current-api'){
+ if(process.argv[2]==='--auto-arrangement'){
+  import('./evaluate-auto-arrangement.js').then(m=>console.log(JSON.stringify(m.runAutoArrangementEvaluation(resolve(process.argv[3]??'docs/validation/auto-arrangement-20261108/evaluation'))))).catch(error=>{console.error(error);process.exitCode=1})
+ }else if(process.argv[2]==='--mode-advice'){
+  const destination=resolve(process.argv[3]??'docs/validation/mode-member-workspace-20261108/evaluation')
+  const report=evaluateModeAdvice();mkdirSync(destination,{recursive:true});writeFileSync(join(destination,'mode-advice.json'),JSON.stringify(report,null,2)+'\n')
+  console.log(JSON.stringify({destination,rows:report.rows.length,passed:report.rows.filter(row=>row.passed).length,modelRequests:report.modelRequests}))
+  if(report.rows.some(row=>!row.passed))process.exitCode=1
+ }else if(process.argv[2]==='--research-current-api'){
   import('./research-cli.js').then(m=>m.runCurrentApiResearch(process.argv.slice(3))).catch(()=>{console.error('真实科研评测入口未完成；请检查隔离报告与参数，不会自动重试。');process.exitCode=1})
  }else{
  const destination=resolve(process.argv[2]??'docs/validation/incremental-science-20261105/evaluation')

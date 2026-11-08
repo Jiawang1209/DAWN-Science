@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/ui/task-arrangement-view.test.tsx tests/ui/plan-card.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |ui| tests/ui/task-arrangement-view.test.tsx (2 tests | 1 failed) 85ms
+   × does not present malformed or legacy plans as an automatically valid arrangement 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/task-arrangement-view.test.tsx > does not present malformed or legacy plans as an automatically valid arrangement
+TestingLibraryElementError: Unable to find an accessible element with the role "alert"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/task-arrangement-view.test.tsx:15:84
+     13| it('does not present malformed or legacy plans as an automatically val…
+     14|  const view=render(<TaskArrangementView markdown="## 原有方案\nunchanged"/…
+     15|  view.rerender(<TaskArrangementView markdown="## 任务安排（自动安排）\nbad"/>);e…
+       |                                                                                    ^
+     16| })
+     17|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 32 passed (33)
+   Start at  09:26:46
+   Duration  2.54s (transform 1.51s, setup 1.67s, import 802ms, tests 876ms, environment 1.40s)
+

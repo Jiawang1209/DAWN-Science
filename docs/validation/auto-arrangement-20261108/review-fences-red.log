@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/protocol/task-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/protocol/task-arrangement.test.ts (7 tests | 1 failed) 12ms
+   × ignores arrangement examples inside fenced Markdown code blocks 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/task-arrangement.test.ts > ignores arrangement examples inside fenced Markdown code blocks
+AssertionError: expected 'invalid' to be 'absent' // Object.is equality
+
+Expected: "absent"
+Received: "invalid"
+
+ ❯ tests/protocol/task-arrangement.test.ts:46:109
+     44| it('ignores arrangement examples inside fenced Markdown code blocks',(…
+     45|  const example=serializeTaskArrangement(plan)
+     46|  for(const fence of ['```','~~~'])expect(parseTaskArrangement(fence+'m…
+       |                                                                                                             ^
+     47|  expect(parseTaskArrangement('```markdown\n'+example+'\n```\n\n'+examp…
+     48| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  09:43:55
+   Duration  171ms (transform 33ms, setup 0ms, import 70ms, tests 12ms, environment 0ms)
+

@@ -1,0 +1,20 @@
+[
+  {
+    "label": "desktop-final",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/mode-member-workspace.spec.ts",
+      "e2e/collaboration-workbench.spec.ts",
+      "e2e/collaboration-network.spec.ts",
+      "e2e/collaboration-stopping.spec.ts",
+      "e2e/subagent-steering-epoch.spec.ts",
+      "e2e/subagent-view.spec.ts",
+      "e2e/bot-collaboration.spec.ts",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/mode-member-workspace-20261108/playwright-final"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 144.526
+  }
+]

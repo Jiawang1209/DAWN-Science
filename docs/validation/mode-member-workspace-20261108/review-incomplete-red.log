@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/mode-advice.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/mode-advice.test.ts (7 tests | 1 failed) 5ms
+   × does not invent structure for unknown input or invalid block counts 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/mode-advice.test.ts > does not invent structure for unknown input or invalid block counts
+AssertionError: expected 'parallel' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"parallel"
+
+ ❯ tests/orchestration/mode-advice.test.ts:19:146
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  08:13:32
+   Duration  119ms (transform 15ms, setup 0ms, import 23ms, tests 5ms, environment 0ms)
+

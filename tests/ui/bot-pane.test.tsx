@@ -60,3 +60,11 @@ it("same owner changing workspace scope immediately drops the selected old Bot v
  view.rerender(<BotPane {...p} ownerScope="workspace-B"/>)
  expect(state.$botSession.get()).toBeUndefined()
 })
+it('does not label an ordinary Bot conversation as a collaboration return',async()=>{
+ const {act}=await import('@testing-library/react'),state=await import('../../src/ui/state/bots.js')
+ render(<BotPane client={{get:vi.fn(async()=>({bots:[bot]}))} as unknown as WorkbenchClient} ownerSessionId="main" models={[]} conversation={()=>undefined} returnLabel="返回协作台"/>);
+ await screen.findByRole('button',{name:'与统计助手交流'})
+ act(()=>state.selectBotSession({sessionId:'ordinary',kind:'native',state:'alive',agentId:'native'} as never,bot.id))
+ expect(screen.getByRole('button',{name:'Bot 清单'})).toBeTruthy()
+ expect(screen.queryByRole('button',{name:'返回协作台'})).toBeNull()
+})

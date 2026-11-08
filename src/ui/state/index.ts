@@ -1,3 +1,4 @@
+import {clearCollaborationReturn} from './collaboration-return.js'
 import {resetCollaborationViews} from './collaboration-view.js'
 import {$deliveryViews} from './delivery.js'
 import { $routeViews } from "./route-navigation.js"
@@ -277,6 +278,7 @@ import { $sessionRecovery } from "./session-recovery.js"
  */
 export function resetAllState(): void {
   resetCollaborationViews()
+  clearCollaborationReturn()
   $deliveryViews.set(new Map())
   $routeViews.set(new Map())
   clearBotSession(); $bots.set([]); $botOwner.set(undefined); $botRooms.set({})

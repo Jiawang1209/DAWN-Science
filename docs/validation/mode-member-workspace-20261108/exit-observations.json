@@ -1,0 +1,317 @@
+{
+  "historicalStatus": "OPEN",
+  "historicalOsDelaysMs": [
+    7350,
+    20690
+  ],
+  "longBotMcpStopping": "not established by these short runs",
+  "budgetsMs": {
+    "appClose": 1500,
+    "osClose": 4000
+  },
+  "rows": [
+    {
+      "file": "exit-a/exit-81924.jsonl",
+      "appCloseMs": 138.349,
+      "osCloseMs": 138.07,
+      "osExitMs": 136.96,
+      "timeouts": []
+    },
+    {
+      "file": "exit-ab/exit-83834.jsonl",
+      "appCloseMs": 138.453,
+      "osCloseMs": 138.168,
+      "osExitMs": 137.431,
+      "timeouts": []
+    },
+    {
+      "file": "exit-ab/exit-84041.jsonl",
+      "appCloseMs": 116.851,
+      "osCloseMs": 116.658,
+      "osExitMs": 116.352,
+      "timeouts": []
+    },
+    {
+      "file": "exit-completion/exit-67867.jsonl",
+      "appCloseMs": 130.63,
+      "osCloseMs": 130.026,
+      "osExitMs": 129.261,
+      "timeouts": []
+    },
+    {
+      "file": "exit-completion/exit-68184.jsonl",
+      "appCloseMs": 154.714,
+      "osCloseMs": 154.506,
+      "osExitMs": 154.117,
+      "timeouts": []
+    },
+    {
+      "file": "exit-completion/exit-68603.jsonl",
+      "appCloseMs": 120.514,
+      "osCloseMs": 120.291,
+      "osExitMs": 119.906,
+      "timeouts": []
+    },
+    {
+      "file": "exit-completion/exit-68813.jsonl",
+      "appCloseMs": 126.014,
+      "osCloseMs": 125.701,
+      "osExitMs": 125.272,
+      "timeouts": []
+    },
+    {
+      "file": "exit-completion/exit-69028.jsonl",
+      "appCloseMs": 166.41,
+      "osCloseMs": 166.222,
+      "osExitMs": 165.843,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-21556.jsonl",
+      "appCloseMs": 135.044,
+      "osCloseMs": 134.773,
+      "osExitMs": 134.097,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-21921.jsonl",
+      "appCloseMs": 151.442,
+      "osCloseMs": 151.19,
+      "osExitMs": 150.804,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-22352.jsonl",
+      "appCloseMs": 104.441,
+      "osCloseMs": 104.246,
+      "osExitMs": 103.875,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-23273.jsonl",
+      "appCloseMs": 130.122,
+      "osCloseMs": 129.514,
+      "osExitMs": 128.698,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-23624.jsonl",
+      "appCloseMs": 143.269,
+      "osCloseMs": 143.0,
+      "osExitMs": 142.307,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-23965.jsonl",
+      "appCloseMs": 142.391,
+      "osCloseMs": 142.145,
+      "osExitMs": 141.633,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-24108.jsonl",
+      "appCloseMs": 143.765,
+      "osCloseMs": 143.455,
+      "osExitMs": 142.979,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-24344.jsonl",
+      "appCloseMs": 130.028,
+      "osCloseMs": 129.696,
+      "osExitMs": 129.349,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-24538.jsonl",
+      "appCloseMs": 201.44,
+      "osCloseMs": 201.191,
+      "osExitMs": 201.06,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-24885.jsonl",
+      "appCloseMs": 122.508,
+      "osCloseMs": 122.153,
+      "osExitMs": 121.616,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-25505.jsonl",
+      "appCloseMs": 154.637,
+      "osCloseMs": 154.435,
+      "osExitMs": 154.091,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-25778.jsonl",
+      "appCloseMs": 151.982,
+      "osCloseMs": 151.645,
+      "osExitMs": 151.22,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-26166.jsonl",
+      "appCloseMs": 136.84,
+      "osCloseMs": 136.646,
+      "osExitMs": 136.315,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-26421.jsonl",
+      "appCloseMs": 124.096,
+      "osCloseMs": 123.762,
+      "osExitMs": 123.345,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-26548.jsonl",
+      "appCloseMs": 130.994,
+      "osCloseMs": 130.806,
+      "osExitMs": 130.493,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-26677.jsonl",
+      "appCloseMs": 137.861,
+      "osCloseMs": 137.677,
+      "osExitMs": 137.38,
+      "timeouts": []
+    },
+    {
+      "file": "exit-final/exit-26929.jsonl",
+      "appCloseMs": 157.227,
+      "osCloseMs": 156.926,
+      "osExitMs": 156.479,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-27470.jsonl",
+      "appCloseMs": 146.409,
+      "osCloseMs": 145.639,
+      "osExitMs": 144.635,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-27792.jsonl",
+      "appCloseMs": 169.825,
+      "osCloseMs": 169.465,
+      "osExitMs": 168.897,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-28184.jsonl",
+      "appCloseMs": 120.091,
+      "osCloseMs": 119.858,
+      "osExitMs": 119.459,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-28552.jsonl",
+      "appCloseMs": 121.94,
+      "osCloseMs": 121.724,
+      "osExitMs": 121.364,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-28850.jsonl",
+      "appCloseMs": 152.321,
+      "osCloseMs": 152.109,
+      "osExitMs": 151.777,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-29085.jsonl",
+      "appCloseMs": 164.064,
+      "osCloseMs": 163.843,
+      "osExitMs": 163.488,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-29217.jsonl",
+      "appCloseMs": 136.338,
+      "osCloseMs": 136.142,
+      "osExitMs": 135.979,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-29427.jsonl",
+      "appCloseMs": 125.423,
+      "osCloseMs": 125.212,
+      "osExitMs": 124.766,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-29613.jsonl",
+      "appCloseMs": 160.198,
+      "osCloseMs": 159.967,
+      "osExitMs": 159.6,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-29761.jsonl",
+      "appCloseMs": 124.175,
+      "osCloseMs": 123.947,
+      "osExitMs": 123.609,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-30233.jsonl",
+      "appCloseMs": 140.56,
+      "osCloseMs": 140.275,
+      "osExitMs": 139.956,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-30475.jsonl",
+      "appCloseMs": 127.621,
+      "osCloseMs": 127.389,
+      "osExitMs": 127.018,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-30902.jsonl",
+      "appCloseMs": 145.919,
+      "osCloseMs": 145.712,
+      "osExitMs": 145.313,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-31238.jsonl",
+      "appCloseMs": 127.746,
+      "osCloseMs": 127.552,
+      "osExitMs": 127.227,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-31383.jsonl",
+      "appCloseMs": 136.125,
+      "osCloseMs": 135.926,
+      "osExitMs": 135.621,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-31589.jsonl",
+      "appCloseMs": 135.332,
+      "osCloseMs": 135.144,
+      "osExitMs": 134.84,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-31842.jsonl",
+      "appCloseMs": 169.218,
+      "osCloseMs": 168.83,
+      "osExitMs": 168.404,
+      "timeouts": []
+    },
+    {
+      "file": "exit-fixed/exit-32230.jsonl",
+      "appCloseMs": 341.528,
+      "osCloseMs": 341.214,
+      "osExitMs": 340.394,
+      "timeouts": []
+    }
+  ],
+  "maxAppCloseMs": 341.528,
+  "maxOsCloseMs": 341.214
+}

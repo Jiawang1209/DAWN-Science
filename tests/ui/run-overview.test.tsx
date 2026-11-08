@@ -90,3 +90,27 @@ it('push refresh keeps the same snapshot projection, selected tab, expanded view
  get.mockResolvedValue({...snapshot('binding-other'),team:null});view.rerender(<RunOverview client={client} sessionId="binding-other" team={team}/>);await act(async()=>{})
  expect(screen.queryByRole('button',{name:'updated current task'})).toBeNull();expect(screen.queryByRole('dialog')).toBeNull();expect(screen.getByRole('tab',{name:'过程'}).getAttribute('aria-selected')).toBe('true')
 })
+it('retains expanded preferences when a dock switch opens a member and the summary opens collaboration again',async()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};HTMLDialogElement.prototype.close=function(){this.removeAttribute('open')}
+ const owner='summary-return',client={get:vi.fn().mockResolvedValue(snapshot(owner))} as unknown as WorkbenchClient
+ const first=render(<RunOverview client={client} sessionId={owner} onView={()=>{}}/>);await act(async()=>{})
+ fireEvent.click(screen.getByRole('tab',{name:'产物'}));fireEvent.click(screen.getByRole('button',{name:'展开流程工作台'}))
+ fireEvent.click(screen.getByRole('button',{name:owner+' reader'}));fireEvent.click(screen.getByRole('button',{name:'查看子任务过程'}))
+ first.unmount()
+ render(<RunOverview client={client} sessionId={owner} onView={()=>{}}/>);await act(async()=>{})
+ expect(screen.getByRole('dialog',{name:'流程工作台'})).toBeTruthy()
+ fireEvent.click(screen.getByRole('button',{name:owner+' reader'}))
+ expect(screen.getByRole('tab',{name:'产物'}).getAttribute('aria-selected')).toBe('true')
+})
+it('expires a pending Bot navigation when selection changes before the host reply',async()=>{
+ const owner='late-bot',data=snapshot(owner)
+ data.team={id:'t',captainSessionId:owner,name:'Team',goal:'Goal',createdAt:1,taskSeq:0,tasks:[],messages:[],members:['alice','bob'].map(name=>({name,agent:name,botId:name,sessionId:name+'-session',status:'idle' as const,sessionDir:'unused',turns:1,joinedAt:1,orchestrationId:name+'-gen'}))}
+ data.runs=['alice','bob'].map(name=>({...data.runs[0]!,id:name,label:name,kind:'bot' as const,address:['t',name,name+'-gen']}))
+ let valid:undefined|(()=>boolean),resolve!:()=>void
+ const onBot=vi.fn((...args:unknown[])=>{valid=args[3] as ()=>boolean;return new Promise<void>(r=>{resolve=r})})
+ render(<RunOverview client={{get:vi.fn().mockResolvedValue(data)} as unknown as WorkbenchClient} sessionId={owner} onBot={onBot}/>);await act(async()=>{})
+ fireEvent.click(screen.getByRole('button',{name:'打开成员只读对话'}))
+ expect(typeof valid).toBe('function');expect(valid!()).toBe(true)
+ fireEvent.click(screen.getByRole('button',{name:'bob'}));expect(valid!()).toBe(false)
+ await act(async()=>resolve())
+})

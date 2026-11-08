@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "rows": [
+    {
+      "id": "small",
+      "expectedCount": 1,
+      "actualCount": 1,
+      "mode": "single",
+      "valid": true,
+      "roundtrip": true,
+      "independentReview": false,
+      "passed": true
+    },
+    {
+      "id": "independent",
+      "expectedCount": 2,
+      "actualCount": 2,
+      "mode": "parallel",
+      "valid": true,
+      "roundtrip": true,
+      "independentReview": false,
+      "passed": true
+    },
+    {
+      "id": "review",
+      "expectedCount": 3,
+      "actualCount": 3,
+      "mode": "science",
+      "valid": true,
+      "roundtrip": true,
+      "independentReview": true,
+      "passed": true
+    },
+    {
+      "id": "revised",
+      "expectedCount": 2,
+      "actualCount": 2,
+      "mode": "science",
+      "valid": true,
+      "roundtrip": true,
+      "independentReview": true,
+      "passed": true
+    }
+  ],
+  "modelRequests": 0,
+  "limitations": [
+    "Deterministic fixture coverage of model-tool-to-plan data flow, not a paid-model quality or performance comparison.",
+    "Task counts are proposal results. They do not indicate started agents or accepted scientific results."
+  ]
+}

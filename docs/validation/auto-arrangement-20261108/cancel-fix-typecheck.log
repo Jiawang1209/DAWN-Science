@@ -1,0 +1,15 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/ui/external-planning-stop.test.tsx(8,82): error TS2322: Type 'string' is not assignable to type 'number'.
+tests/ui/external-planning-stop.test.tsx(14,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/ui/external-planning-stop.test.tsx(16,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/ui/external-planning-stop.test.tsx(18,48): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/ui/external-planning-stop.test.tsx(20,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.

@@ -1,0 +1,79 @@
+[
+  {
+    "name": "final-typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 3.157
+  },
+  {
+    "name": "final-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 2.201
+  },
+  {
+    "name": "final-node-ui",
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--project",
+      "node",
+      "--project",
+      "ui"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 128.173
+  },
+  {
+    "name": "final-kernel",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "--project",
+      "kernel"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 49.186
+  },
+  {
+    "name": "final-evaluation",
+    "command": [
+      "npx",
+      "tsx",
+      "scripts/evaluate-science-pipeline.ts",
+      "--auto-arrangement",
+      "/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-merge-review-20261108/evaluation"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 1.96
+  },
+  {
+    "name": "final-desktop",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/auto-arrangement.spec.ts",
+      "e2e/mode-member-workspace.spec.ts",
+      "e2e/plan-mode.spec.ts",
+      "e2e/collaboration-network.spec.ts",
+      "e2e/collaboration-stopping.spec.ts",
+      "e2e/subagent-steering-epoch.spec.ts",
+      "e2e/bot-collaboration.spec.ts",
+      "e2e/side-session.spec.ts",
+      "--output=/Users/liuyue/.codex/worktrees/dawn-mode-member-workspace-20261108/dawn-science/docs/validation/auto-arrangement-merge-review-20261108/playwright-final"
+    ],
+    "exitCode": 0,
+    "elapsedSeconds": 136.915
+  }
+]

@@ -145,3 +145,8 @@ describe("中枢", () => {
     expect(hub.subscribe("s").items.at(-1)).toMatchObject({ type: "tool", name: "propose_plan", status: "error", result: "缺节" })
   })
 })
+it('reports an invalid edited task arrangement as correctable input rather than an internal failure',async()=>{
+ const runtime=new 会答方案的();runtime.答=async()=>{throw Error('任务安排无效：任务依赖不存在')}
+ const ctx=make(runtime),sessionId=await ctx.开一段()
+ await expect(ctx.backend.answerPlan({sessionId,planId:'p',action:'approve',text:'edited'})).rejects.toMatchObject({workbenchCode:'invalid_request'})
+})

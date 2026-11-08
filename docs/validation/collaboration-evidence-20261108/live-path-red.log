@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-tasks.test.ts tests/evaluation/research-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-tasks.test.ts (7 tests | 1 failed) 8ms
+   × recognizes an observed input read by absolute or normalized relative path, without admitting other workspaces or failed tools 3ms
+ ❯ |node| tests/evaluation/research-runner.test.ts (16 tests | 1 failed) 67413ms
+   × counts a correctly blocked single trial whose real input read used an absolute path 1684ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts a correctly blocked single trial whose real input read used an absolute path
+AssertionError: expected { phaseUsage: { …(3) }, …(17) } to match object { terminal: 'blocked', …(2) }
+(36 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "inputPreserved": true,
+-   "success": true,
++   "success": false,
+    "terminal": "blocked",
+  }
+
+ ❯ tests/evaluation/research-runner.test.ts:33:50
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/research-tasks.test.ts > recognizes an observed input read by absolute or normalized relative path, without admitting other workspaces or failed tools
+TypeError: researchInputRead is not a function
+ ❯ tests/evaluation/research-tasks.test.ts:8:19
+      6|  const read=(path:string)=>({toolCallId:'owned-read',name:'read',statu…
+      7|  for(const path of [input,'./input.csv',resolve(workspace,input)]){
+      8|   const inputRead=researchInputRead(workspace,input,[read(path)])
+       |                   ^
+      9|   expect(inputRead).toBe(true)
+     10|   expect(judgeResearch(task,'blocked',undefined,true,{reasons:['单位未提供'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 21 passed (23)
+   Start at  00:19:25
+   Duration  69.47s (transform 784ms, setup 0ms, import 2.01s, tests 67.42s, environment 0ms)
+

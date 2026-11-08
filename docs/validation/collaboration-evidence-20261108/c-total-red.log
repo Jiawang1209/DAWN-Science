@@ -1,0 +1,23 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts -t counts real planning calls
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (15 tests | 1 failed | 14 skipped) 3055ms
+   × counts real planning calls in the multi arm and compiles the model-selected task count with the same judge 3054ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts real planning calls in the multi arm and compiles the model-selected task count with the same judge
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ tests/evaluation/research-runner.test.ts:223:52
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  22:07:46
+   Duration  4.63s (transform 680ms, setup 0ms, import 1.49s, tests 3.05s, environment 0ms)
+

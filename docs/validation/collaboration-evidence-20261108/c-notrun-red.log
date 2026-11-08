@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-tasks.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-tasks.test.ts (6 tests | 1 failed) 8ms
+   × does not invent input verification or unknown executed tasks for a trial that never started 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-tasks.test.ts > does not invent input verification or unknown executed tasks for a trial that never started
+AssertionError: expected undefined to match object { state: 'not-run', …(1) }
+
+- Expected:
+{
+  "state": "not-run",
+  "visibleTokens": null,
+}
+
++ Received:
+undefined
+
+ ❯ tests/evaluation/research-tasks.test.ts:23:73
+     21| it('does not invent input verification or unknown executed tasks for a…
+     22|  expect(notRunResearch(researchTasks()[0]!,'single','same')).toMatchOb…
+     23|  expect(notRunResearch(researchTasks()[0]!,'single','same').totalUsage…
+       |                                                                         ^
+     24| })
+     25| it('counts wrong scientific acceptance and reports requests including …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  22:14:27
+   Duration  117ms (transform 20ms, setup 0ms, import 27ms, tests 8ms, environment 0ms)
+

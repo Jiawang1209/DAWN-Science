@@ -1,0 +1,14 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+scripts/evaluate-research.ts(127,54): error TS2322: Type '{ input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | "input" | "output")[] | undefined; } | undefined' is not assignable to type 'SessionUsage | undefined'.
+  Type '{ input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | "input" | "output")[] | undefined; }' is not assignable to type 'SessionUsage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | "input" | "output")[] | undefined; }' is not assignable to type 'Partial<Record<UsageField, number>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'cacheRead' are incompatible.
+        Type 'number | undefined' is not assignable to type 'number'.
+          Type 'undefined' is not assignable to type 'number'.
+scripts/evaluate-research.ts(185,165): error TS2322: Type '{ input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | "input" | "output")[] | undefined; } | undefined' is not assignable to type 'SessionUsage | undefined'.
+  Type '{ input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | "input" | "output")[] | undefined; }' is not assignable to type 'SessionUsage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ input?: number | undefined; output?: number | undefined; cacheRead?: number | undefined; partial?: ("cacheRead" | "input" | "output")[] | undefined; }' is not assignable to type 'Partial<Record<UsageField, number>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'cacheRead' are incompatible.
+        Type 'number | undefined' is not assignable to type 'number'.
+          Type 'undefined' is not assignable to type 'number'.

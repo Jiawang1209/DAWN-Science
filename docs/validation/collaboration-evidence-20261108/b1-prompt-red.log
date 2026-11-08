@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/auto-arrangement-request.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |ui| tests/ui/auto-arrangement-request.test.ts (4 tests | 1 failed) 9ms
+   × enables the existing read-only mode before sending a semantic planning request 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/auto-arrangement-request.test.ts > enables the existing read-only mode before sending a semantic planning request
+AssertionError: expected '请为以下具体任务自动安排。先只读理解目标、数据和已有会话约束，再用 pro…' to contain '简单单结果任务优先一个任务块'
+
+- Expected
++ Received
+
+- 简单单结果任务优先一个任务块
++ 请为以下具体任务自动安排。先只读理解目标、数据和已有会话约束，再用 propose_plan 的 arrangement 提交任务划分、分工、输入输出、依赖、验收与理由。
++
++ 任务数量是方案结果，由实际任务决定；简单任务可以一块，不能固定拆成三块，也不要让用户预填数字。并行仅用于独立任务且不能共写；用户要求独立审阅时必须保留不同执行角色的审阅任务。缺信息放入 questions，不编造数据或启动执行。
++
++ 任务目标：
++ 比较两份数据
++
++ 调整要求：
++ 保留独立审阅
++
++ 原有冻结契约、证据、产物版本、预算、产物锁和恢复要求继续适用。请交可调整的方案，等待用户采纳；这次只规划，不写科研产物、不派子 Agent。
+
+ ❯ Object.<anonymous> tests/ui/auto-arrangement-request.test.ts:4:172
+
+ ❯ src/ui/auto-arrangement-request.ts:25:15
+ ❯ tests/ui/auto-arrangement-request.test.ts:6:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  22:00:33
+   Duration  952ms (transform 353ms, setup 525ms, import 13ms, tests 9ms, environment 326ms)
+

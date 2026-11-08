@@ -19,6 +19,9 @@ test('approved arrangement starts the frozen DAG, exposes real receipts and retu
  const card=page.locator('main.main .plan-card')
  await card.getByRole('button',{name:'照这个做',exact:true}).click()
  await expect(card).toHaveAttribute('data-status','approved')
+ await expect(auto.locator('.task-arrangement-state')).toContainText('任务与执行范围已冻结')
+ await expect(auto).not.toContainText('当前仍为待执行方案')
+ await expect(card.locator('.task-arrangement-state')).toContainText('任务与执行范围已冻结')
  let overview=page.getByRole('region',{name:'运行总览',exact:true})
  let progress=overview.getByRole('region',{name:'批准方案执行进度',exact:true})
  await expect(progress).toContainText('计划 3 项 · 已启动 3 项')
@@ -45,6 +48,9 @@ test('approved arrangement starts the frozen DAG, exposes real receipts and retu
  writeFileSync(join(workspace,artifactPath),original)
  await 进坞(page,'团队');overview=page.getByRole('region',{name:'运行总览',exact:true})
  await overview.getByRole('button',{name:'展开流程工作台',exact:true}).click()
+ const expandedArrangement=overview.getByRole('region',{name:'自动安排',exact:true}).locator('.task-arrangement-result')
+ await expandedArrangement.evaluate(el=>el.scrollIntoView({block:'center'}))
+ await expandedArrangement.screenshot({path:join(out,'stage-a-approved-arrangement-wide.png')})
  progress=overview.getByRole('region',{name:'批准方案执行进度',exact:true})
  await progress.getByRole('button',{name:/根据清洗结果建模/}).click()
  await expect(overview.getByRole('tab',{name:'过程',exact:true})).toHaveAttribute('aria-selected','true')
@@ -68,6 +74,13 @@ test('approved arrangement starts the frozen DAG, exposes real receipts and retu
  expect(graphGeometry.scrollHeight).toBeLessThanOrEqual(graphGeometry.viewportHeight+1)
  // The node footer must remain visible and clickable after scrolling in a short, narrow window.
  await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setContentSize(900,640))
+ await dependencyGraph.scrollIntoViewIfNeeded()
+ const arrangementCards=auto.locator('[data-arrangement-task]')
+ for(const taskCard of await arrangementCards.all()){
+  await taskCard.scrollIntoViewIfNeeded()
+  expect(await taskCard.evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1)).toBe(true)
+ }
+ await page.screenshot({path:join(out,'stage-a-approved-arrangement-narrow.png')})
  await dependencyGraph.scrollIntoViewIfNeeded()
  for(const node of await dependencyGraph.locator('.collaboration-graph-node').all()){
   await node.evaluate(el=>el.scrollIntoView({block:'center',inline:'center'}))

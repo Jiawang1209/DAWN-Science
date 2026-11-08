@@ -1,0 +1,86 @@
+{
+  "geometry": {
+    "clientWidth": 144,
+    "scrollWidth": 144,
+    "paths": [
+      {
+        "clientWidth": 86,
+        "scrollWidth": 86
+      },
+      {
+        "clientWidth": 86,
+        "scrollWidth": 86
+      },
+      {
+        "clientWidth": 86,
+        "scrollWidth": 86
+      }
+    ]
+  },
+  "endpoints": [
+    {
+      "end": false,
+      "height": 484,
+      "scrollHeight": 484,
+      "visible": true,
+      "rect": {
+        "x": 763,
+        "y": 118.8359375,
+        "width": 3.140625,
+        "height": 15,
+        "top": 118.8359375,
+        "right": 766.140625,
+        "bottom": 133.8359375,
+        "left": 763
+      }
+    },
+    {
+      "end": true,
+      "height": 484,
+      "scrollHeight": 484,
+      "visible": true,
+      "rect": {
+        "x": 793.515625,
+        "y": 547.25,
+        "width": 6.9765625,
+        "height": 15,
+        "top": 547.25,
+        "right": 800.4921875,
+        "bottom": 562.25,
+        "left": 793.515625
+      }
+    },
+    {
+      "end": false,
+      "height": 484,
+      "scrollHeight": 484,
+      "visible": true,
+      "rect": {
+        "x": 763,
+        "y": 118.8984375,
+        "width": 4.6875,
+        "height": 15,
+        "top": 118.8984375,
+        "right": 767.6875,
+        "bottom": 133.8984375,
+        "left": 763
+      }
+    },
+    {
+      "end": true,
+      "height": 484,
+      "scrollHeight": 484,
+      "visible": true,
+      "rect": {
+        "x": 793.515625,
+        "y": 547.3125,
+        "width": 6.9765625,
+        "height": 15,
+        "top": 547.3125,
+        "right": 800.4921875,
+        "bottom": 562.3125,
+        "left": 793.515625
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "owner": "research",
+  "planId": "research-pilot",
+  "planVersion": 1,
+  "markdownHash": "3cf99354fee71072cc9e9485986cdd72a96a726d9de81e40fd8294cd7e5b70f2",
+  "teamId": "plan_8b3672388b80ff0f7da99619",
+  "externalInputs": [
+    {
+      "path": "input.csv",
+      "sha256": "212bbe32670b6f3b4477e74e87d32020f986e65e83119d02f196447b2b1fc83b",
+      "bytes": 39
+    }
+  ],
+  "tasks": [
+    {
+      "planTaskId": "check-input",
+      "taskId": "plan_1",
+      "memberName": "member_1",
+      "review": false
+    },
+    {
+      "planTaskId": "analyze-mean",
+      "taskId": "plan_2",
+      "memberName": "member_2",
+      "review": false
+    },
+    {
+      "planTaskId": "independent-review",
+      "taskId": "plan_3",
+      "memberName": "member_3",
+      "review": true
+    }
+  ]
+}

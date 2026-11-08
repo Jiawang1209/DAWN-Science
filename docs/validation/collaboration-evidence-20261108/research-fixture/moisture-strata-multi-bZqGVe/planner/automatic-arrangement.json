@@ -1,0 +1,16 @@
+{
+  "mode": "model-generated",
+  "requests": 1,
+  "taskCount": 2,
+  "valid": true,
+  "reviewCovered": true,
+  "usage": {
+    "input": 12,
+    "output": 8,
+    "cacheRead": 0,
+    "partial": [
+      "cacheRead"
+    ]
+  },
+  "compiled": true
+}

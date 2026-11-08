@@ -1,0 +1,415 @@
+{
+  "observedExits": 67,
+  "maximumMs": 197.14,
+  "nonzeroExits": [],
+  "nativeProblems": [],
+  "history": "OPEN",
+  "thresholdsMs": [
+    1500,
+    4000
+  ],
+  "rows": [
+    {
+      "file": "exit-57849.jsonl",
+      "closeToExitMs": 136.48,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-57373.jsonl",
+      "closeToExitMs": 141.37,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64993.jsonl",
+      "closeToExitMs": 152.27,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64048.jsonl",
+      "closeToExitMs": 152.2,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-67413.jsonl",
+      "closeToExitMs": 134.47,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64421.jsonl",
+      "closeToExitMs": 128.05,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-61245.jsonl",
+      "closeToExitMs": 112.48,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64809.jsonl",
+      "closeToExitMs": 128.59,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-57659.jsonl",
+      "closeToExitMs": 146.16,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-61728.jsonl",
+      "closeToExitMs": 197.14,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-59198.jsonl",
+      "closeToExitMs": 122.73,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-66244.jsonl",
+      "closeToExitMs": 143.29,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-56498.jsonl",
+      "closeToExitMs": 133.17,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-66004.jsonl",
+      "closeToExitMs": 115.98,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-57780.jsonl",
+      "closeToExitMs": 145.4,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64606.jsonl",
+      "closeToExitMs": 119.72,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-67636.jsonl",
+      "closeToExitMs": 112.26,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64460.jsonl",
+      "closeToExitMs": 101.95,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-58572.jsonl",
+      "closeToExitMs": 138.57,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64095.jsonl",
+      "closeToExitMs": 143.01,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64354.jsonl",
+      "closeToExitMs": 140.67,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-59551.jsonl",
+      "closeToExitMs": 141.76,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-63252.jsonl",
+      "closeToExitMs": 120.84,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-66770.jsonl",
+      "closeToExitMs": 143.66,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-62888.jsonl",
+      "closeToExitMs": 131.57,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64705.jsonl",
+      "closeToExitMs": 135.68,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-65154.jsonl",
+      "closeToExitMs": 108.68,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-56787.jsonl",
+      "closeToExitMs": 148.85,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64251.jsonl",
+      "closeToExitMs": 115.87,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64128.jsonl",
+      "closeToExitMs": 106.52,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-63781.jsonl",
+      "closeToExitMs": 158.44,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-62208.jsonl",
+      "closeToExitMs": 131.33,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64288.jsonl",
+      "closeToExitMs": 124.73,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-68741.jsonl",
+      "closeToExitMs": 131.13,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-60360.jsonl",
+      "closeToExitMs": 108.87,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-62003.jsonl",
+      "closeToExitMs": 117.52,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-56631.jsonl",
+      "closeToExitMs": 146.02,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64321.jsonl",
+      "closeToExitMs": 107.82,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-63649.jsonl",
+      "closeToExitMs": 115.82,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-65775.jsonl",
+      "closeToExitMs": 127.56,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-58177.jsonl",
+      "closeToExitMs": 162.62,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-62409.jsonl",
+      "closeToExitMs": 115.5,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-63942.jsonl",
+      "closeToExitMs": 153.45,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-57146.jsonl",
+      "closeToExitMs": 137.26,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-66991.jsonl",
+      "closeToExitMs": 115.79,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-60072.jsonl",
+      "closeToExitMs": 150.82,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-56921.jsonl",
+      "closeToExitMs": 126.13,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-60115.jsonl",
+      "closeToExitMs": 124.08,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-65517.jsonl",
+      "closeToExitMs": 131.07,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-57510.jsonl",
+      "closeToExitMs": 166.61,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-59390.jsonl",
+      "closeToExitMs": 126.88,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-70292.jsonl",
+      "closeToExitMs": 139.79,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64496.jsonl",
+      "closeToExitMs": 133.99,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-66464.jsonl",
+      "closeToExitMs": 152.3,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-59849.jsonl",
+      "closeToExitMs": 140.73,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-65285.jsonl",
+      "closeToExitMs": 141.21,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-67192.jsonl",
+      "closeToExitMs": 120.55,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-61527.jsonl",
+      "closeToExitMs": 139.74,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-62614.jsonl",
+      "closeToExitMs": 105.66,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-60932.jsonl",
+      "closeToExitMs": 119.2,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-59070.jsonl",
+      "closeToExitMs": 122.89,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-56338.jsonl",
+      "closeToExitMs": 130.86,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-66111.jsonl",
+      "closeToExitMs": 124.47,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-64387.jsonl",
+      "closeToExitMs": 150.16,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-63556.jsonl",
+      "closeToExitMs": 98.58,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-58869.jsonl",
+      "closeToExitMs": 135.6,
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "file": "exit-61116.jsonl",
+      "closeToExitMs": 142.73,
+      "exitCode": 0,
+      "signal": null
+    }
+  ]
+}

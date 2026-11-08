@@ -1,0 +1,914 @@
+{
+  "version": 1,
+  "ownerSessionId": "research",
+  "children": [
+    {
+      "id": "child-f04f2205df04879a55c44b06d931667a",
+      "kind": "team",
+      "address": [
+        "plan_c4dfcb7bb2901e9ff3720c2e",
+        "member_1",
+        "0ab4464d-d6dd-4d3a-bcfa-9efcbca0d09c"
+      ],
+      "label": "check",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794154366763,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 23207,
+        "output": 2949,
+        "cacheRead": 13056,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 18830,
+        "preflightMs": 17,
+        "acceptanceMs": 18
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-f04f2205df04879a55c44b06d931667a",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794154366736,
+          "provider": "dawn-evaluation-work",
+          "model": "deepseek-flash",
+          "contextWindow": 1000000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23174,
+            "toolBytes": 2916,
+            "messageBytes": 21222,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 15045
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 18433,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 23207,
+            "output": 2949,
+            "cacheRead": 13056,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"data-summary\",\"rows\":48,\"columns\":[{\"name\":\"site\",\"type\":\"string\",\"unit\":\"n/a\"},{\"name\":\"carbon_mg_g\",\"type\":\"float (7 literal NA = missing)\",\"unit\":\"mg/g\"},{\"name\":\"rain_mm\",\"type\":\"integer\",\"unit\":\"mm\"}],\"issues\":[]},\"summary\":\"只读核查完成（未计算/提交均值，未写任何文件）。input.csv 全文 49 行含表头 = 3 列 + 48 数据行，纯文本 CSV，无引号/无内嵌逗号/无 BOM 异常。\\n\\n列名与类型：\\n- site：字符串 ID（plot-1…plot-48，连续无重复）\\n- carbon_mg_g：浮点数值（含字面缺失记号 NA）\\n- rain_mm：整数（300–817，步长 11）\\n\\ncarbon_mg_g 解析性：48 个数据行中 41 个可解析为有限浮点（如 13.7、15、13、12），全部落在 [12, 15.6] 区间，无科学计数、无千分位、无空白包裹、无非有限值（未出现 NaN/Infinity）。缺失 7 个，缺失记号清单只有一种：「NA」（大写、无引号、无空格），位置 plot-1、8、15、22、29、36、43（等间隔，每 7 行一个）。无空串、无 null、无 -999 等其它占位符。\\n\\nrain_mm：48 行全部有值，无缺失（仅记录；按契约不参与筛选/分层/填补，本阶段也未用它做任何过滤）。\\n\\n单位证据：carbon_mg_g 的列名后缀 `_mg_g` 与声明单位 mg/g 一致（mg/g ≡ mg·g⁻¹），无冲突线索；rain_mm 后缀 mm 与降水量量纲相符。单位唯一证据来源是列名后缀，文件内没有独立单位声明行/元数据——只说明依据，不构成冲突。\\n\\n非数值/非有限值：无。\\n\\n方法可执行性：arithmetic mean + drop-NA-in-target-column-only 可无歧义执行——目标列只需区分「41 个有限数值」与「7 个字面 NA」，不存在需要填补才能计算的情形，也无需读取 rain_mm。预期有效 n = 41（最终以 analysis 脚本实计数为准）。\\n\\n结论：no blockers。未发现单位冲突、NA 以外的空洞、非数值/非有限值；未猜测单位、未填补、未改动数据。\\n\\n信息性提示（不阻塞，供 analysis/review 留意）：\\n1) 单位仅有列名后缀一处证据，报告应写明单位依据是列名约定而非文件内声明。\\n2) 缺失呈严格等间隔（每 7 行一次），属数据结构事实；本阶段不推断缺失机制，只按契约删除，可在报告局限中提及。\\n3) 有效值域窄（12–15.6），无明显离群；按契约不得缩尾/剔除，本阶段也未做。\\n4) NA 只代表缺失，不等于 0 或低于检出限，已作为方法前提。\\n本阶段无文件产物、无执行脚本，故 deliverables 为空、execution=not_run。\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"核查任务为纯只读数据摘要（requireExecution=false）；未运行脚本、未创建子进程、未写文件。\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"已用 read 逐行读取 input.csv 全文（49 行含表头，读取上限 60 行，无截断标记，truncatedFields 为空），据此统计列结构、行数、缺失记号与单位证据。\",\"toolCallIds\":[\"call_00_ET_qIQ2nuKKwxFZg3H5FzJJ6876\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "只读核查完成（未计算/提交均值，未写任何文件）。input.csv 全文 49 行含表头 = 3 列 + 48 数据行，纯文本 CSV，无引号/无内嵌逗号/无 BOM 异常。\n\n列名与类型：\n- site：字符串 ID（plot-1…plot-48，连续无重复）\n- carbon_mg_g：浮点数值（含字面缺失记号 NA）\n- rain_mm：整数（300–817，步长 11）\n\ncarbon_mg_g 解析性：48 个数据行中 41 个可解析为有限浮点（如 13.7、15、13、12），全部落在 [12, 15.6] 区间，无科学计数、无千分位、无空白包裹、无非有限值（未出现 NaN/Infinity）。缺失 7 个，缺失记号清单只有一种：「NA」（大写、无引号、无空格），位置 plot-1、8、15、22、29、36、43（等间隔，每 7 行一个）。无空串、无 null、无 -999 等其它占位符。\n\nrain_mm：48 行全部有值，无缺失（仅记录；按契约不参与筛选/分层/填补，本阶段也未用它做任何过滤）。\n\n单位证据：carbon_mg_g 的列名后缀 `_mg_g` 与声明单位 mg/g 一致（mg/g ≡ mg·g⁻¹），无冲突线索；rain_mm 后缀 mm 与降水量量纲相符。单位唯一证据来源是列名后缀，文件内没有独立单位声明行/元数据——只说明依据，不构成冲突。\n\n非数值/非有限值：无。\n\n方法可执行性：arithmetic mean + drop-NA-in-target-column-only 可无歧义执行——目标列只需区分「41 个有限数值」与「7 个字面 NA」，不存在需要填补才能计算的情形，也无需读取 rain_mm。预期有效 n = 41（最终以 analysis 脚本实计数为准）。\n\n结论：no blockers。未发现单位冲突、NA 以外的空洞、非数值/非有限值；未猜测单位、未填补、未改动数据。\n\n信息性提示（不阻塞，供 analysis/review 留意）：\n1) 单位仅有列名后缀一处证据，报告应写明单位依据是列名约定而非文件内声明。\n2) 缺失呈严格等间隔（每 7 行一次），属数据结构事实；本阶段不推断缺失机制，只按契约删除，可在报告局限中提及。\n3) 有效值域窄（12–15.6），无明显离群；按契约不得缩尾/剔除，本阶段也未做。\n4) NA 只代表缺失，不等于 0 或低于检出限，已作为方法前提。\n本阶段无文件产物、无执行脚本，故 deliverables 为空、execution=not_run。",
+          "result": {
+            "data": {
+              "kind": "data-summary",
+              "rows": 48,
+              "columns": [
+                {
+                  "name": "site",
+                  "type": "string",
+                  "unit": "n/a"
+                },
+                {
+                  "name": "carbon_mg_g",
+                  "type": "float (7 literal NA = missing)",
+                  "unit": "mg/g"
+                },
+                {
+                  "name": "rain_mm",
+                  "type": "integer",
+                  "unit": "mm"
+                }
+              ],
+              "issues": []
+            },
+            "summary": "只读核查完成（未计算/提交均值，未写任何文件）。input.csv 全文 49 行含表头 = 3 列 + 48 数据行，纯文本 CSV，无引号/无内嵌逗号/无 BOM 异常。\n\n列名与类型：\n- site：字符串 ID（plot-1…plot-48，连续无重复）\n- carbon_mg_g：浮点数值（含字面缺失记号 NA）\n- rain_mm：整数（300–817，步长 11）\n\ncarbon_mg_g 解析性：48 个数据行中 41 个可解析为有限浮点（如 13.7、15、13、12），全部落在 [12, 15.6] 区间，无科学计数、无千分位、无空白包裹、无非有限值（未出现 NaN/Infinity）。缺失 7 个，缺失记号清单只有一种：「NA」（大写、无引号、无空格），位置 plot-1、8、15、22、29、36、43（等间隔，每 7 行一个）。无空串、无 null、无 -999 等其它占位符。\n\nrain_mm：48 行全部有值，无缺失（仅记录；按契约不参与筛选/分层/填补，本阶段也未用它做任何过滤）。\n\n单位证据：carbon_mg_g 的列名后缀 `_mg_g` 与声明单位 mg/g 一致（mg/g ≡ mg·g⁻¹），无冲突线索；rain_mm 后缀 mm 与降水量量纲相符。单位唯一证据来源是列名后缀，文件内没有独立单位声明行/元数据——只说明依据，不构成冲突。\n\n非数值/非有限值：无。\n\n方法可执行性：arithmetic mean + drop-NA-in-target-column-only 可无歧义执行——目标列只需区分「41 个有限数值」与「7 个字面 NA」，不存在需要填补才能计算的情形，也无需读取 rain_mm。预期有效 n = 41（最终以 analysis 脚本实计数为准）。\n\n结论：no blockers。未发现单位冲突、NA 以外的空洞、非数值/非有限值；未猜测单位、未填补、未改动数据。\n\n信息性提示（不阻塞，供 analysis/review 留意）：\n1) 单位仅有列名后缀一处证据，报告应写明单位依据是列名约定而非文件内声明。\n2) 缺失呈严格等间隔（每 7 行一次），属数据结构事实；本阶段不推断缺失机制，只按契约删除，可在报告局限中提及。\n3) 有效值域窄（12–15.6），无明显离群；按契约不得缩尾/剔除，本阶段也未做。\n4) NA 只代表缺失，不等于 0 或低于检出限，已作为方法前提。\n本阶段无文件产物、无执行脚本，故 deliverables 为空、execution=not_run。",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "核查任务为纯只读数据摘要（requireExecution=false）；未运行脚本、未创建子进程、未写文件。"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "已用 read 逐行读取 input.csv 全文（49 行含表头，读取上限 60 行，无截断标记，truncatedFields 为空），据此统计列结构、行数、缺失记号与单位证据。",
+              "toolCallIds": [
+                "call_00_ET_qIQ2nuKKwxFZg3H5FzJJ6876"
+              ]
+            }
+          },
+          "deliverables": [],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "input.csv",
+                "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+                "bytes": 810
+              }
+            ],
+            "outputs": []
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_00_ET_qIQ2nuKKwxFZg3H5FzJJ6876",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "input.csv",
+              "transcriptRef": {
+                "file": "2026-11-08T16-12-28-319Z_01a1bbee-bf1e-743e-978c-abe35f728ab9.jsonl",
+                "callEntry": "ed5ca1d5",
+                "resultEntry": "207be54e",
+                "payloadSha256": "02a33f72dcb14774c20a13ece4e74aa6ed8581beaa3a3e8f7072e2b6efbc4b13",
+                "evidenceTagSha256": "d048e6bb36a544d03a25093899dac794f5af25c769fb96d99369b40ca0db9126"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    },
+    {
+      "id": "child-4bd67b60057fc49696dda4d1f60225be",
+      "kind": "team",
+      "address": [
+        "plan_c4dfcb7bb2901e9ff3720c2e",
+        "member_2",
+        "6a6096a1-1147-4b95-be96-a83a4b937858"
+      ],
+      "label": "analyze",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794154401623,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 64420,
+        "output": 5665,
+        "cacheRead": 32640,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 34717,
+        "preflightMs": 16,
+        "acceptanceMs": 117
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794154401498,
+          "provider": "dawn-evaluation-work",
+          "model": "deepseek-flash",
+          "contextWindow": 1000000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23187,
+            "toolBytes": 3753,
+            "messageBytes": 36760,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 20837
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 34317,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 64420,
+            "output": 5665,
+            "cacheRead": 32640,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"arithmetic mean of carbon_mg_g with drop-NA-in-target-column-only (no imputation, no rain_mm filtering, no trimming)\",\"metrics\":{\"mean\":13.870731707317074},\"sampleCount\":41,\"caveats\":[\"单位依据仅为列名后缀 _mg_g 与用户规则，文件内无独立单位声明。\",\"NA 仅按缺失处理，缺失机制未检验；NA 不等同 0 或低于检出限。\",\"rain_mm 未参与任何筛选、分层、加权或填补。\",\"单变量描述统计点估计，无假设检验/置信区间/模型拟合。\",\"每行(plot)视为一个观测，未加权；未做离群值剔除或缩尾。\"]},\"summary\":\"已按批准方法完成 carbon_mg_g 算术均值并交付三个产物。脚本 results/analysis.py（纯标准库 csv/json/math/statistics/pathlib/sys，无子进程、无网络、无第三方包、无绝对路径）在单一命令 `python3 -I results/analysis.py` 下运行成功（exit=0），仅丢弃目标列 7 个字面 NA、保留 41 个有效观测，不按 rain_mm 筛选、不填补、不改输入。结果：n=41，unit=mg/g，mean=13.870731707317074（写入 results/result.json 平铺对象）。双路径复算一致（math.fsum/n 与 statistics.fmean 差值 0.0 ≤ 1e-12），与独立 awk/Python 复算值一致；脚本重跑两次 result.json 与 report.md 哈希完全相同（确定性）。input.csv md5 运行前后均为 f52b2973126650e695569e0fdd961e03（未改动）。报告含输入、处理步骤、结果与局限（NA 机制未检验、rain_mm 未使用、单位依据仅列名后缀+用户规则、NA≠0/检出限、描述统计非推断）。上游 plan_1 核查为 no blockers，本次未发现单位/缺失规则冲突。\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/analysis.py\",\"note\":\"纯 stdlib 脚本；只读 input.csv，drop-NA-in-target-only，写 result.json 与 report.md\"},{\"path\":\"results/result.json\",\"note\":\"{\\\"n\\\": 41, \\\"unit\\\": \\\"mg/g\\\", \\\"mean\\\": 13.870731707317074}\"},{\"path\":\"results/report.md\",\"note\":\"输入、处理步骤、结果（含 min/max/SD 审计量）、局限与复现命令\"}],\"execution\":{\"state\":\"completed\",\"note\":\"在工作区根目录以单一命令 `python3 -I results/analysis.py` 实际运行成功（exit=0）：rows=48 valid_n=41 missing=7 mean=13.870731707317074；随后独立复算并重跑确认确定性（两个产物哈希一致）、input.csv md5 未变、静态扫描无 subprocess/socket/绝对路径。\",\"toolCallIds\":[\"call_00_wVV8Hui2a5vIZxHbeaZ18393\",\"call_00_ixR3EKdnM75QHKPGQJ7u2380\"]},\"verification\":{\"state\":\"reviewed\",\"note\":\"读取了生成的 results/report.md 全文核对其输入/步骤/结果/局限表述；并核对 result.json 内容为平铺 {n,unit,mean}、与脚本输出一致，且与独立重算的 41 值均值一致。\",\"toolCallIds\":[\"call_00_8OrvsXRv7du8yNg1eQ6y8097\",\"call_00_ixR3EKdnM75QHKPGQJ7u2380\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "已按批准方法完成 carbon_mg_g 算术均值并交付三个产物。脚本 results/analysis.py（纯标准库 csv/json/math/statistics/pathlib/sys，无子进程、无网络、无第三方包、无绝对路径）在单一命令 `python3 -I results/analysis.py` 下运行成功（exit=0），仅丢弃目标列 7 个字面 NA、保留 41 个有效观测，不按 rain_mm 筛选、不填补、不改输入。结果：n=41，unit=mg/g，mean=13.870731707317074（写入 results/result.json 平铺对象）。双路径复算一致（math.fsum/n 与 statistics.fmean 差值 0.0 ≤ 1e-12），与独立 awk/Python 复算值一致；脚本重跑两次 result.json 与 report.md 哈希完全相同（确定性）。input.csv md5 运行前后均为 f52b2973126650e695569e0fdd961e03（未改动）。报告含输入、处理步骤、结果与局限（NA 机制未检验、rain_mm 未使用、单位依据仅列名后缀+用户规则、NA≠0/检出限、描述统计非推断）。上游 plan_1 核查为 no blockers，本次未发现单位/缺失规则冲突。",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "arithmetic mean of carbon_mg_g with drop-NA-in-target-column-only (no imputation, no rain_mm filtering, no trimming)",
+              "metrics": {
+                "mean": 13.870731707317074
+              },
+              "sampleCount": 41,
+              "caveats": [
+                "单位依据仅为列名后缀 _mg_g 与用户规则，文件内无独立单位声明。",
+                "NA 仅按缺失处理，缺失机制未检验；NA 不等同 0 或低于检出限。",
+                "rain_mm 未参与任何筛选、分层、加权或填补。",
+                "单变量描述统计点估计，无假设检验/置信区间/模型拟合。",
+                "每行(plot)视为一个观测，未加权；未做离群值剔除或缩尾。"
+              ]
+            },
+            "summary": "已按批准方法完成 carbon_mg_g 算术均值并交付三个产物。脚本 results/analysis.py（纯标准库 csv/json/math/statistics/pathlib/sys，无子进程、无网络、无第三方包、无绝对路径）在单一命令 `python3 -I results/analysis.py` 下运行成功（exit=0），仅丢弃目标列 7 个字面 NA、保留 41 个有效观测，不按 rain_mm 筛选、不填补、不改输入。结果：n=41，unit=mg/g，mean=13.870731707317074（写入 results/result.json 平铺对象）。双路径复算一致（math.fsum/n 与 statistics.fmean 差值 0.0 ≤ 1e-12），与独立 awk/Python 复算值一致；脚本重跑两次 result.json 与 report.md 哈希完全相同（确定性）。input.csv md5 运行前后均为 f52b2973126650e695569e0fdd961e03（未改动）。报告含输入、处理步骤、结果与局限（NA 机制未检验、rain_mm 未使用、单位依据仅列名后缀+用户规则、NA≠0/检出限、描述统计非推断）。上游 plan_1 核查为 no blockers，本次未发现单位/缺失规则冲突。",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "results/analysis.py",
+                "note": "纯 stdlib 脚本；只读 input.csv，drop-NA-in-target-only，写 result.json 与 report.md"
+              },
+              {
+                "path": "results/result.json",
+                "note": "{\"n\": 41, \"unit\": \"mg/g\", \"mean\": 13.870731707317074}"
+              },
+              {
+                "path": "results/report.md",
+                "note": "输入、处理步骤、结果（含 min/max/SD 审计量）、局限与复现命令"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "在工作区根目录以单一命令 `python3 -I results/analysis.py` 实际运行成功（exit=0）：rows=48 valid_n=41 missing=7 mean=13.870731707317074；随后独立复算并重跑确认确定性（两个产物哈希一致）、input.csv md5 未变、静态扫描无 subprocess/socket/绝对路径。",
+              "toolCallIds": [
+                "call_00_wVV8Hui2a5vIZxHbeaZ18393",
+                "call_00_ixR3EKdnM75QHKPGQJ7u2380"
+              ]
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "读取了生成的 results/report.md 全文核对其输入/步骤/结果/局限表述；并核对 result.json 内容为平铺 {n,unit,mean}、与脚本输出一致，且与独立重算的 41 值均值一致。",
+              "toolCallIds": [
+                "call_00_8OrvsXRv7du8yNg1eQ6y8097",
+                "call_00_ixR3EKdnM75QHKPGQJ7u2380"
+              ]
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "results/analysis.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "results/result.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "results/report.md",
+              "state": "exists"
+            }
+          ],
+          "acceptance": {
+            "version": 1,
+            "ruleVersion": 1,
+            "specHash": "beecf73f240534ba278d043761fbe98b9a554709f18f2e650d3eea3e212d50df",
+            "state": "passed",
+            "numericChecked": true,
+            "checks": [
+              {
+                "id": "script.nonempty",
+                "state": "passed",
+                "expected": "非空脚本",
+                "actual": "非空"
+              },
+              {
+                "id": "report.nonempty",
+                "state": "passed",
+                "expected": "非空报告",
+                "actual": "非空"
+              },
+              {
+                "id": "result.sample-count",
+                "state": "passed",
+                "expected": "正整数 n",
+                "actual": "41"
+              },
+              {
+                "id": "result.unit",
+                "state": "passed",
+                "expected": "非空单位（无量纲可写 1）",
+                "actual": "mg/g"
+              },
+              {
+                "id": "result.declared-metric.mean",
+                "state": "passed",
+                "expected": "13.870731707317074",
+                "actual": "13.870731707317074"
+              },
+              {
+                "id": "result.declared-sample-count",
+                "state": "passed",
+                "expected": "41",
+                "actual": "41"
+              },
+              {
+                "id": "result.finite.mean",
+                "state": "passed",
+                "expected": "有限数值",
+                "actual": "13.870731707317074"
+              },
+              {
+                "id": "numeric.sample-count",
+                "state": "passed",
+                "expected": "41",
+                "actual": "41"
+              },
+              {
+                "id": "numeric.unit",
+                "state": "passed",
+                "expected": "mg/g",
+                "actual": "mg/g"
+              },
+              {
+                "id": "numeric.mean",
+                "state": "passed",
+                "expected": "13.870731707317074",
+                "actual": "13.870731707317074"
+              },
+              {
+                "id": "numeric.declared-mean",
+                "state": "passed",
+                "expected": "13.870731707317074",
+                "actual": "13.870731707317074"
+              }
+            ],
+            "files": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+                "bytes": 8577
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+                "bytes": 3521
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+                "bytes": 54
+              },
+              {
+                "path": "input.csv",
+                "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+                "bytes": 810
+              }
+            ]
+          },
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "input.csv",
+                "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+                "bytes": 810
+              }
+            ],
+            "outputs": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+                "bytes": 8577
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+                "bytes": 54
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+                "bytes": 3521
+              }
+            ]
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_00_ET_gz8zRAAo54XuNHQfjpVF9876",
+              "name": "bash",
+              "status": "done",
+              "execution": "ran",
+              "transcriptRef": {
+                "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+                "callEntry": "1e0fda85",
+                "resultEntry": "a150eb60",
+                "payloadSha256": "584e65f90d64f3e7826a1339720e47eaf6351643ff695dc64d4d8b8d810e42bd",
+                "evidenceTagSha256": "0669d838ab98d30ce59aa6ea8aeed452608581c4d1721fef693ae6ddd4cfaa6c"
+              }
+            },
+            {
+              "toolCallId": "call_00_h5z6vlOlu5K66L08NouW8725",
+              "name": "write",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "/Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/docs/validation/collaboration-evidence-20261108/live-01/carbon-missing-multi-VhyZYI/results/analysis.py",
+              "transcriptRef": {
+                "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+                "callEntry": "4f5e33c8",
+                "resultEntry": "ce613325",
+                "payloadSha256": "c2f73f29516d34a3362a67aeb62996c50c397a06ef1e3dc212fc14703a55c3c6",
+                "evidenceTagSha256": "3dfad7739111910aa3ff93272c828b4d39f66559f9b9d51cf89d2e7b9e806e20"
+              }
+            },
+            {
+              "toolCallId": "call_00_wVV8Hui2a5vIZxHbeaZ18393",
+              "name": "bash",
+              "status": "done",
+              "execution": "ran",
+              "transcriptRef": {
+                "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+                "callEntry": "f3b23c9d",
+                "resultEntry": "ae0cd760",
+                "payloadSha256": "6813208a0d6fa69497af12ace1ada20ae8ee5ec64dc29b5b06df204353a37a09",
+                "evidenceTagSha256": "08c014296f0ad04d48dc5bb48607c1ee5533b2a8d8542659ec8ea02829757b1b"
+              }
+            },
+            {
+              "toolCallId": "call_00_ixR3EKdnM75QHKPGQJ7u2380",
+              "name": "bash",
+              "status": "done",
+              "execution": "ran",
+              "transcriptRef": {
+                "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+                "callEntry": "f074f377",
+                "resultEntry": "68c8a8c4",
+                "payloadSha256": "e968ce119ca7047b9fe4e9900a7b25deb3b182cce4703efe4d6da8f0e71b04eb",
+                "evidenceTagSha256": "7b3cda5d8c8082a74657acc51eabe14598fa5b3a3986675dbb08c9c9064daa0c"
+              }
+            },
+            {
+              "toolCallId": "call_00_8OrvsXRv7du8yNg1eQ6y8097",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "/Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/docs/validation/collaboration-evidence-20261108/live-01/carbon-missing-multi-VhyZYI/results/report.md",
+              "transcriptRef": {
+                "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+                "callEntry": "d422a1ff",
+                "resultEntry": "11c693dc",
+                "payloadSha256": "45f0f6304fc859aa148e7ba2a78627144ef0e1088f5d91a33f34c70cf1241b4c",
+                "evidenceTagSha256": "ae40a6f8a8819d011f1ae95c17d5a9d87df1e995cd06af77327ec934107caac8"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    },
+    {
+      "id": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "kind": "team",
+      "address": [
+        "plan_c4dfcb7bb2901e9ff3720c2e",
+        "member_3",
+        "ce424840-8c85-46e3-96b4-f78df36c3538"
+      ],
+      "label": "review",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794154438053,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 45733,
+        "output": 6291,
+        "cacheRead": 19200,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 36327,
+        "preflightMs": 46,
+        "acceptanceMs": 47
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794154437996,
+          "provider": "dawn-evaluation-review",
+          "model": "deepseek-flash",
+          "contextWindow": 1000000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23078,
+            "toolBytes": 2937,
+            "messageBytes": 35657,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 22438
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 35821,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 45733,
+            "output": 6291,
+            "cacheRead": 19200,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"review\",\"verdict\":\"pass\",\"findings\":[\"PASS 方法一致性：analysis.py 第 118-131 行以 math.fsum(values)/n 为主算、statistics.fmean 为交叉校验，差值 >1e-12 即 SystemExit，符合 arithmetic mean 批准方法；report.md「方法：arithmetic mean」「## 2 处理步骤 第4条」。\",\"PASS 缺失规则：analysis.py load_values()（第 76-108 行）仅在 target 列遇缺失记号时 continue，未读取 rain_mm 参与任何筛选；report.md 第2步与「rain_mm 完全未使用」条目一致。input.csv 实际仅 7 个 NA（plot-1/8/15/22/29/36/43），符合 plan_1 核查。\",\"PASS 未填补：全脚本无 fill/interpolate/median/前向填充；report.md 明确「不做任何填补（均值/中位数/前向填充）」，结果文件中除 n/unit/mean 无派生填充量。\",\"PASS 单位：result.json unit=\\\"mg/g\\\"，与契约 unit 及列名后缀 _mg_g 一致；report.md 如实说明单位证据仅为列名约定+用户规则，文件内无独立单位元数据，未虚构声明。\",\"PASS n 与均值一致性：input.csv 48 数据行、7 个 NA → n=41；手工复算 Σ=568.7，568.7/41=13.87073170731707…，与 result.json mean=13.870731707317074 完全一致（远端差值 <1e-15，阈值 1e-9）；报告 min 12.0 / max 15.6 / SD 1.0621308540945003 亦经独立复算核验（Σx²=793341 路径得 1.06213）。\",\"PASS 脚本可复现性与执行边界：仅 import csv/json/math/statistics/pathlib/sys（纯 stdlib）；全文无 subprocess/socket/urllib/requests；无第三方包；无绝对路径字面（find_input 用相对 Path(\\\"input.csv\\\") 与 __file__ 派生的父目录回退）；输出固定写 analysis.py 同目录，输入只读、不重写。\",\"PASS 报告与结果一致：report.md 第3节表格、内嵌 json 代码块与 result.json 逐字一致（n=41、unit=mg/g、mean=13.870731707317074），缺失 7、行数 48 与输入核对一致；无四舍五入后数字冒充权威值。\",\"PASS 局限完整性：report.md 第4节覆盖缺失机制未检验（不主张 MCAR/MAR/MNAR）、rain_mm 完全未用、单位依据仅列名+用户规则、NA≠0/检出限、单变量描述统计非推断、每行 plot 为一观测未加权、未做缩尾/离群处理。\",\"PASS 分析依赖声明：契约 dataPath=input.csv、column=carbon_mg_g、metric=mean、unit=mg/g、missing=drop 均与脚本常量 TARGET_COLUMN/UNIT 及 EXPECTED_COLUMNS 表头强校验（含表头不等即失败退出）对应；执行方式记为单一命令 python3 -I results/analysis.py，报告复现段一致。\",\"NOTE（低风险，不需改结果）：MISSING_TOKENS 含 \\\"\\\"/na/n\\\\/a/nan/null/none，略宽于「字面 NA」。当前数据仅出现字面 NA，数值结果不受影响；若未来数据含 \\\"null\\\" 字面值，将被静默视为缺失而非报错，与「失败必须出声」精神略有张力。\",\"NOTE（低风险，不需改结果）：main() 先写 result.json、后 build_report 写 report.md，若报告阶段异常会留下与报告不同步的 result.json。当前运行与产物一致，仅作健壮性提示。\"],\"reviewedPaths\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"]},\"summary\":\"独立只读审阅三个契约输入并手工独立复算（额外读 input.csv 作核对背景，未列入 reviewedPaths）。结论 pass：方法为算术均值（fsum/n 主算 + fmean 交叉校验，差 >1e-12 即失败退出）；仅丢目标列缺失，未按 rain_mm 筛选、无填补；单位 mg/g 与列名后缀及用户规则一致；n=41 与均值自洽（48−7 NA=41，Σ=568.7，568.7/41=13.870731707317074，在 1e-9 容差内）；脚本纯 stdlib、无子进程/网络/第三方包/绝对路径，确定性可重跑；报告与 result.json 的 n/unit/mean 完全一致且局限披露完整。仅两处低风险备注（缺失记号集略宽于字面 NA；先写 result.json 再生成报告，非原子）。未写入/修改任何文件。\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读审阅，契约 requireExecution=false；未执行脚本、未写文件。均值/n/极值/SD 由本轮读取的 input.csv 全文手工独立复算核对。\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"逐字读取三个契约输入全文，并读 input.csv 48 数据行独立复算：7 个 NA、n=41、Σ=568.7→13.87073170731707…、min 12.0/max 15.6/SD 1.0621308541，与产物一致。\",\"toolCallIds\":[\"call_00_ET_uxAc1MtY5edWwM5yH1CI3481\",\"call_01_ET_IwXDsum4fdb966QGAwnV2080\",\"call_02_ET_2p4kFCIFVBjvWWqpD33m9726\",\"call_00_imfbwfQ1VP5SYKLUeZwB5919\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "独立只读审阅三个契约输入并手工独立复算（额外读 input.csv 作核对背景，未列入 reviewedPaths）。结论 pass：方法为算术均值（fsum/n 主算 + fmean 交叉校验，差 >1e-12 即失败退出）；仅丢目标列缺失，未按 rain_mm 筛选、无填补；单位 mg/g 与列名后缀及用户规则一致；n=41 与均值自洽（48−7 NA=41，Σ=568.7，568.7/41=13.870731707317074，在 1e-9 容差内）；脚本纯 stdlib、无子进程/网络/第三方包/绝对路径，确定性可重跑；报告与 result.json 的 n/unit/mean 完全一致且局限披露完整。仅两处低风险备注（缺失记号集略宽于字面 NA；先写 result.json 再生成报告，非原子）。未写入/修改任何文件。",
+          "result": {
+            "data": {
+              "kind": "review",
+              "verdict": "pass",
+              "findings": [
+                "PASS 方法一致性：analysis.py 第 118-131 行以 math.fsum(values)/n 为主算、statistics.fmean 为交叉校验，差值 >1e-12 即 SystemExit，符合 arithmetic mean 批准方法；report.md「方法：arithmetic mean」「## 2 处理步骤 第4条」。",
+                "PASS 缺失规则：analysis.py load_values()（第 76-108 行）仅在 target 列遇缺失记号时 continue，未读取 rain_mm 参与任何筛选；report.md 第2步与「rain_mm 完全未使用」条目一致。input.csv 实际仅 7 个 NA（plot-1/8/15/22/29/36/43），符合 plan_1 核查。",
+                "PASS 未填补：全脚本无 fill/interpolate/median/前向填充；report.md 明确「不做任何填补（均值/中位数/前向填充）」，结果文件中除 n/unit/mean 无派生填充量。",
+                "PASS 单位：result.json unit=\"mg/g\"，与契约 unit 及列名后缀 _mg_g 一致；report.md 如实说明单位证据仅为列名约定+用户规则，文件内无独立单位元数据，未虚构声明。",
+                "PASS n 与均值一致性：input.csv 48 数据行、7 个 NA → n=41；手工复算 Σ=568.7，568.7/41=13.87073170731707…，与 result.json mean=13.870731707317074 完全一致（远端差值 <1e-15，阈值 1e-9）；报告 min 12.0 / max 15.6 / SD 1.0621308540945003 亦经独立复算核验（Σx²=793341 路径得 1.06213）。",
+                "PASS 脚本可复现性与执行边界：仅 import csv/json/math/statistics/pathlib/sys（纯 stdlib）；全文无 subprocess/socket/urllib/requests；无第三方包；无绝对路径字面（find_input 用相对 Path(\"input.csv\") 与 __file__ 派生的父目录回退）；输出固定写 analysis.py 同目录，输入只读、不重写。",
+                "PASS 报告与结果一致：report.md 第3节表格、内嵌 json 代码块与 result.json 逐字一致（n=41、unit=mg/g、mean=13.870731707317074），缺失 7、行数 48 与输入核对一致；无四舍五入后数字冒充权威值。",
+                "PASS 局限完整性：report.md 第4节覆盖缺失机制未检验（不主张 MCAR/MAR/MNAR）、rain_mm 完全未用、单位依据仅列名+用户规则、NA≠0/检出限、单变量描述统计非推断、每行 plot 为一观测未加权、未做缩尾/离群处理。",
+                "PASS 分析依赖声明：契约 dataPath=input.csv、column=carbon_mg_g、metric=mean、unit=mg/g、missing=drop 均与脚本常量 TARGET_COLUMN/UNIT 及 EXPECTED_COLUMNS 表头强校验（含表头不等即失败退出）对应；执行方式记为单一命令 python3 -I results/analysis.py，报告复现段一致。",
+                "NOTE（低风险，不需改结果）：MISSING_TOKENS 含 \"\"/na/n\\/a/nan/null/none，略宽于「字面 NA」。当前数据仅出现字面 NA，数值结果不受影响；若未来数据含 \"null\" 字面值，将被静默视为缺失而非报错，与「失败必须出声」精神略有张力。",
+                "NOTE（低风险，不需改结果）：main() 先写 result.json、后 build_report 写 report.md，若报告阶段异常会留下与报告不同步的 result.json。当前运行与产物一致，仅作健壮性提示。"
+              ],
+              "reviewedPaths": [
+                "results/analysis.py",
+                "results/result.json",
+                "results/report.md"
+              ]
+            },
+            "summary": "独立只读审阅三个契约输入并手工独立复算（额外读 input.csv 作核对背景，未列入 reviewedPaths）。结论 pass：方法为算术均值（fsum/n 主算 + fmean 交叉校验，差 >1e-12 即失败退出）；仅丢目标列缺失，未按 rain_mm 筛选、无填补；单位 mg/g 与列名后缀及用户规则一致；n=41 与均值自洽（48−7 NA=41，Σ=568.7，568.7/41=13.870731707317074，在 1e-9 容差内）；脚本纯 stdlib、无子进程/网络/第三方包/绝对路径，确定性可重跑；报告与 result.json 的 n/unit/mean 完全一致且局限披露完整。仅两处低风险备注（缺失记号集略宽于字面 NA；先写 result.json 再生成报告，非原子）。未写入/修改任何文件。",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "只读审阅，契约 requireExecution=false；未执行脚本、未写文件。均值/n/极值/SD 由本轮读取的 input.csv 全文手工独立复算核对。"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "逐字读取三个契约输入全文，并读 input.csv 48 数据行独立复算：7 个 NA、n=41、Σ=568.7→13.87073170731707…、min 12.0/max 15.6/SD 1.0621308541，与产物一致。",
+              "toolCallIds": [
+                "call_00_ET_uxAc1MtY5edWwM5yH1CI3481",
+                "call_01_ET_IwXDsum4fdb966QGAwnV2080",
+                "call_02_ET_2p4kFCIFVBjvWWqpD33m9726",
+                "call_00_imfbwfQ1VP5SYKLUeZwB5919"
+              ]
+            }
+          },
+          "deliverables": [],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+                "bytes": 8577
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+                "bytes": 54
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+                "bytes": 3521
+              }
+            ],
+            "outputs": []
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_02_ET_2p4kFCIFVBjvWWqpD33m9726",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/report.md",
+              "transcriptRef": {
+                "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+                "callEntry": "9fd0d229",
+                "resultEntry": "c997f123",
+                "payloadSha256": "af59008c79755044081a9fb4b3c5094903d39126b39449ca27714078afeae179",
+                "evidenceTagSha256": "0a5427fa67bbb2d17e0a42cd471da7ddd885f1e264532c71f78f38b50ca27483"
+              }
+            },
+            {
+              "toolCallId": "call_01_ET_IwXDsum4fdb966QGAwnV2080",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/result.json",
+              "transcriptRef": {
+                "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+                "callEntry": "9fd0d229",
+                "resultEntry": "ae90153e",
+                "payloadSha256": "a6e5d9dd7cdda9279547a1679fb0fb7c827dad2c925b0fd95f0b04ffce1568b0",
+                "evidenceTagSha256": "4491fb8fb87f27f2b458d34214ff9b520eb1e827f8c68c118132bc1328a19a1e"
+              }
+            },
+            {
+              "toolCallId": "call_00_ET_uxAc1MtY5edWwM5yH1CI3481",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/analysis.py",
+              "transcriptRef": {
+                "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+                "callEntry": "9fd0d229",
+                "resultEntry": "5a2658ec",
+                "payloadSha256": "d3f3f81349edafdf3081da655c275b392f86b823472f72334a267d96f8912067",
+                "evidenceTagSha256": "1db998020e91acec5afec53fb36942dcda0aa3f126a339b75af7bd2ee7d6d464"
+              }
+            },
+            {
+              "toolCallId": "call_00_imfbwfQ1VP5SYKLUeZwB5919",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "input.csv",
+              "transcriptRef": {
+                "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+                "callEntry": "d9a7f907",
+                "resultEntry": "92732871",
+                "payloadSha256": "457d405d7669ecb337095afade11f510c41fee4ea583bdfa5cf72e653dfb827f",
+                "evidenceTagSha256": "6e91d0a86f12d6c409705045492e1bbc46a74cbb85062a49f41b65cbacca7d48"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 24,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1794154347896,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1794154347897,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1794154347897,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_c4dfcb7bb2901e9ff3720c2e",
+        "taskId": "plan_1",
+        "attemptId": "42d189fe-7140-46df-a393-774a638684ff",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1794154347898,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1794154347898,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1794154347915,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 7,
+      "at": 1794154366745,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 8,
+      "at": 1794154366763,
+      "childId": "child-f04f2205df04879a55c44b06d931667a",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    },
+    {
+      "seq": 9,
+      "at": 1794154366771,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 10,
+      "at": 1794154366772,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 11,
+      "at": 1794154366772,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_c4dfcb7bb2901e9ff3720c2e",
+        "taskId": "plan_2",
+        "attemptId": "91e52b92-1e82-46e8-aa69-26fc4b93a2ad",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 12,
+      "at": 1794154366773,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 13,
+      "at": 1794154366773,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 14,
+      "at": 1794154366789,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 15,
+      "at": 1794154401506,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 16,
+      "at": 1794154401623,
+      "childId": "child-4bd67b60057fc49696dda4d1f60225be",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    },
+    {
+      "seq": 17,
+      "at": 1794154401631,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 18,
+      "at": 1794154401632,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 19,
+      "at": 1794154401633,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_c4dfcb7bb2901e9ff3720c2e",
+        "taskId": "plan_3",
+        "attemptId": "f76bf11e-d359-4789-85ef-93476b8e01e4",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 20,
+      "at": 1794154401633,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 21,
+      "at": 1794154401634,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 22,
+      "at": 1794154401680,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 23,
+      "at": 1794154438006,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 24,
+      "at": 1794154438053,
+      "childId": "child-fbf4db7c56778cd5acb117181a5c39ea",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    }
+  ],
+  "budget": {
+    "revision": 6,
+    "limits": {},
+    "consumedRuns": 3,
+    "legacyRuns": 0,
+    "knownTokens": 213161,
+    "unknownRuns": 3,
+    "active": [],
+    "startedAt": 1794154347897
+  }
+}

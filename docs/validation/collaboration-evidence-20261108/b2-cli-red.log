@@ -1,0 +1,70 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-batch.test.ts tests/evaluation/research-cli-allocation.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-cli-allocation.test.ts (9 tests | 4 failed) 13ms
+   × validates batch file valid before host build and forwards a valid frozen batch 5ms
+   × validates batch file over-total before host build and forwards a valid frozen batch 2ms
+   × validates batch file unknown-task before host build and forwards a valid frozen batch 1ms
+   × validates batch file duplicate-task before host build and forwards a valid frozen batch 1ms
+ ❯ |node| tests/evaluation/research-batch.test.ts (9 tests | 1 failed) 8ms
+   × rejects invalid or silently lossy batch allocations before any model host: null 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-batch.test.ts > rejects invalid or silently lossy batch allocations before any model host: null
+AssertionError: expected [Function] to throw an error
+ ❯ tests/evaluation/research-batch.test.ts:18:49
+     16|  {taskIds:['carbon-missing'],repeats:1,perArmLimit:15,unexpected:true},
+     17| ])('rejects invalid or silently lossy batch allocations before any mod…
+     18|  expect(()=>researchBatchAllocation(batch,300)).toThrow()
+       |                                                 ^
+     19| })
+     20| it('returns a detached task list so later caller edits cannot change t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > validates batch file valid before host build and forwards a valid frozen batch
+AssertionError: expected [Function] to throw error including 'HOST_BUILD_REACHED' but got '用法：--research-current-api OUTPUT PROF…'
+
+Expected: "HOST_BUILD_REACHED"
+Received: "用法：--research-current-api OUTPUT PROFILE PROVIDER MODEL [approved-plan|automatic-plan] [TOTAL_LIMIT]（默认30，范围4..300）"
+
+ ❯ tests/evaluation/research-cli-allocation.test.ts:22:39
+     20|   const path=join(root,'batch.json');writeFileSync(path,JSON.stringify…
+     21|   const run=runCurrentApiResearch(['out','unused-profile','p','m','aut…
+     22|   if(kind==='valid'){await expect(run).rejects.toThrow('HOST_BUILD_REA…
+       |                                       ^
+     23|   else{await expect(run).rejects.toThrow(/批次/);expect(build).not.toHav…
+     24|  }finally{rmSync(root,{recursive:true,force:true})}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > validates batch file over-total before host build and forwards a valid frozen batch
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > validates batch file unknown-task before host build and forwards a valid frozen batch
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > validates batch file duplicate-task before host build and forwards a valid frozen batch
+AssertionError: expected [Function] to throw error matching /批次/ but got '用法：--research-current-api OUTPUT PROF…'
+
+- Expected:
+/批次/
+
++ Received:
+"用法：--research-current-api OUTPUT PROFILE PROVIDER MODEL [approved-plan|automatic-plan] [TOTAL_LIMIT]（默认30，范围4..300）"
+
+ ❯ tests/evaluation/research-cli-allocation.test.ts:23:25
+     21|   const run=runCurrentApiResearch(['out','unused-profile','p','m','aut…
+     22|   if(kind==='valid'){await expect(run).rejects.toThrow('HOST_BUILD_REA…
+     23|   else{await expect(run).rejects.toThrow(/批次/);expect(build).not.toHav…
+       |                         ^
+     24|  }finally{rmSync(root,{recursive:true,force:true})}
+     25| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 13 passed (18)
+   Start at  22:04:04
+   Duration  164ms (transform 51ms, setup 0ms, import 100ms, tests 21ms, environment 0ms)
+

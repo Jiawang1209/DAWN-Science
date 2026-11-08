@@ -1,7 +1,7 @@
 import {expect,it,vi} from 'vitest'
 import {createAutoArrangementRequester,stopAutoArrangement} from '../../src/ui/auto-arrangement-request.js'
 it('enables the existing read-only mode before sending a semantic planning request',async()=>{
- const calls:string[]=[],send=vi.fn(async(_owner:string,text:string)=>{calls.push('send');expect(text).toContain('比较两份数据');expect(text).toContain('不能固定拆成三块')})
+ const calls:string[]=[],send=vi.fn(async(_owner:string,text:string)=>{calls.push('send');expect(text).toContain('比较两份数据');expect(text).toContain('不能固定拆成三块');expect(text).toContain('简单单结果任务优先一个任务块');expect(text).toContain('解释额外分工的实际作用')})
  const request=createAutoArrangementRequester({read:async()=>({planning:false}),acquire:async()=>{calls.push('lease')},enable:async()=>{calls.push('readonly')},send,running:()=>false})
  await request('p','比较两份数据','保留独立审阅',new AbortController().signal,()=>true)
  expect(calls).toEqual(['lease','readonly','send'])

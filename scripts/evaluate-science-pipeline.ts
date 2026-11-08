@@ -94,11 +94,15 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   import('./evaluate-approved-plan.js').then(m=>m.runApprovedPlanEvaluation(resolve(process.argv[3]??'docs/validation/plan-execution-workbench-20261108/evaluation'))).then(r=>console.log(JSON.stringify(r))).catch(error=>{console.error(error);process.exitCode=1})
  }else if(process.argv[2]==='--auto-arrangement'){
   import('./evaluate-auto-arrangement.js').then(m=>console.log(JSON.stringify(m.runAutoArrangementEvaluation(resolve(process.argv[3]??'docs/validation/auto-arrangement-20261108/evaluation'))))).catch(error=>{console.error(error);process.exitCode=1})
+ }else if(process.argv[2]==='--arrangement-scenarios'){
+  import('./evaluate-arrangement-scenarios.js').then(m=>m.runArrangementScenarioEvaluation(resolve(process.argv[3]??'docs/validation/collaboration-evidence-20261108/arrangement-scenarios'))).then(r=>console.log(JSON.stringify(r))).catch(error=>{console.error(error);process.exitCode=1})
  }else if(process.argv[2]==='--mode-advice'){
   const destination=resolve(process.argv[3]??'docs/validation/mode-member-workspace-20261108/evaluation')
   const report=evaluateModeAdvice();mkdirSync(destination,{recursive:true});writeFileSync(join(destination,'mode-advice.json'),JSON.stringify(report,null,2)+'\n')
   console.log(JSON.stringify({destination,rows:report.rows.length,passed:report.rows.filter(row=>row.passed).length,modelRequests:report.modelRequests}))
   if(report.rows.some(row=>!row.passed))process.exitCode=1
+ }else if(process.argv[2]==='--research-fixture'){
+  import('./evaluate-research-fixture.js').then(m=>m.runResearchFixtureCommand(resolve(process.argv[3]??'docs/validation/collaboration-evidence-20261108/research-fixture'))).then(r=>console.log(JSON.stringify({inference:r.inference,pairs:r.completePairs,qualifiedPairs:r.qualifiedPairs}))).catch(error=>{console.error(error);process.exitCode=1})
  }else if(process.argv[2]==='--research-current-api'){
   import('./research-cli.js').then(m=>m.runCurrentApiResearch(process.argv.slice(3))).catch(()=>{console.error('真实科研评测入口未完成；请检查隔离报告与参数，不会自动重试。');process.exitCode=1})
  }else{

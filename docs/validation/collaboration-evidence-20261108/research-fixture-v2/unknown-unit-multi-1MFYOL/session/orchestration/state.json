@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "ownerSessionId": "research",
+  "children": [
+    {
+      "id": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "kind": "team",
+      "address": [
+        "plan_c17fb84f91a36f09dab025dc",
+        "member_1",
+        "96156d44-edae-4c07-aca8-dd2b972b2cba"
+      ],
+      "label": "check",
+      "state": "failed",
+      "epoch": 1,
+      "updatedAt": 1794148196251,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 24,
+        "output": 16,
+        "lastSettledEpoch": 1
+      },
+      "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+      "timing": {
+        "executionMs": 562,
+        "preflightMs": 20,
+        "acceptanceMs": 20
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794148196203,
+          "provider": "dawn-evaluation-work",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23142,
+            "toolBytes": 2916,
+            "messageBytes": 7039,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 39
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 110,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 24,
+            "output": 16,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": false,
+        "output": "{\"data\":{\"kind\":\"data-summary\",\"rows\":48,\"columns\":[{\"name\":\"carbon\"}],\"issues\":[\"单位未提供\"]},\"summary\":\"offline representative fixture\",\"blockers\":[\"单位未提供，必须先确认\"],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"fixture\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"read files\",\"toolCallIds\":[\"call_mock_15\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "blocked",
+          "summary": "offline representative fixture",
+          "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+          "result": {
+            "data": {
+              "kind": "data-summary",
+              "rows": 48,
+              "columns": [
+                {
+                  "name": "carbon"
+                }
+              ],
+              "issues": [
+                "单位未提供"
+              ]
+            },
+            "summary": "offline representative fixture",
+            "blockers": [
+              "单位未提供，必须先确认"
+            ],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "fixture"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "read files",
+              "toolCallIds": [
+                "call_mock_15"
+              ]
+            }
+          },
+          "deliverables": [],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "input.csv",
+                "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+                "bytes": 805
+              }
+            ],
+            "outputs": []
+          }
+        },
+        "error": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_mock_15",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "input.csv",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-56-112Z_01a1bb90-df0f-74d5-9c1e-7b587adb186a.jsonl",
+                "callEntry": "366c39b5",
+                "resultEntry": "6b798bf0",
+                "payloadSha256": "370bf4d8c681ca6567fb95475159cf63c3ffc6d42d56335432cd477bc4be95e6",
+                "evidenceTagSha256": "43f293a7cf289eebfe146b995832ecd623a3bf8f6fa2645a3288f762c3452ca3"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 8,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1794148195648,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1794148195649,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1794148195649,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_c17fb84f91a36f09dab025dc",
+        "taskId": "plan_1",
+        "attemptId": "6e0dee05-0836-4059-b5dd-ebf06790cf25",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1794148195649,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1794148195650,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1794148195670,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 7,
+      "at": 1794148196231,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 8,
+      "at": 1794148196251,
+      "childId": "child-400caef42fa3cf11f5ea78ba7e5cc1ec",
+      "epoch": 1,
+      "type": "settled",
+      "state": "failed",
+      "receipt": "blocked"
+    }
+  ],
+  "budget": {
+    "revision": 2,
+    "limits": {},
+    "consumedRuns": 1,
+    "legacyRuns": 0,
+    "knownTokens": 40,
+    "unknownRuns": 1,
+    "active": [],
+    "startedAt": 1794148195649
+  }
+}

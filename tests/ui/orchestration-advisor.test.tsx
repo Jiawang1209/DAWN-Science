@@ -42,3 +42,13 @@ it('locks regeneration and repeated stop while a stop acknowledgement is pending
  await act(async()=>done())
  expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disabled',false)
 })
+
+it('passes approved status to the arrangement and explains revision without offering to edit frozen work',async()=>{
+ const {serializeTaskArrangement}=await import('../../src/protocol/task-arrangement.js')
+ const markdown=serializeTaskArrangement({mode:'single',rationale:'one task',independentReview:false,questions:[],tasks:[{id:'mean',title:'mean',goal:'mean',role:'analyst',inputs:['in.csv'],outputs:['mean.csv'],dependencies:[],acceptance:'checked',review:false}]})
+ const plan={type:'plan' as const,id:'i',planId:'p',version:1,title:'mean',markdown,status:'approved' as const}
+ const view=render(<OrchestrationAdvisor task="mean" plan={plan} onGenerate={vi.fn(async()=>{})}/>);
+ expect(view.container.textContent).toContain('实际执行与验收以协作记录为准')
+ expect(view.container.textContent).toContain('原有任务不会自动重跑')
+ expect(view.container.textContent).not.toContain('可在对话中的方案卡修改并采纳')
+})

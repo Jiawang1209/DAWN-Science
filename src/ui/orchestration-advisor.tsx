@@ -43,9 +43,9 @@ export function OrchestrationAdvisor({task,plan,busy=false,planning=false,replyV
   {!plan?<p className="hint">{t("描述具体任务，DAWN 会根据目标、数据和依赖决定怎样拆分与分工。无需预先填写任务数量。")}</p>:null}
   {plan?<>
    <p>{tf("方案第 {0} 版",plan.version)} · {plan.status==='proposed'?t("等你看"):plan.status==='approved'?t("已批准"):plan.status==='discarded'?t("没采用"):t("已被新的一版取代")}</p>
-   <TaskArrangementView markdown={plan.markdown}/>
+   <TaskArrangementView markdown={plan.markdown} status={plan.status}/>
    <details><summary>{t("调整任务与分工")}</summary>{form}</details>
-   <p className="hint">{t("可在对话中的方案卡修改并采纳，或补充调整要求后重新安排。")}</p>
+   <p className="hint">{plan.status==='proposed'?t("可在对话中的方案卡修改并采纳，或补充调整要求后重新安排。"):t("如需调整分工，请补充调整要求并重新安排；原有任务不会自动重跑。")}</p>
   </>:form}
   <p className="hint">{t("先出方案期间只读查看；采纳后才进入原有执行与验收流程。")}</p>
   {unsupported?<p className="hint">{unsupported}</p>:null}

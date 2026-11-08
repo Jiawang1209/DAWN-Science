@@ -1,5 +1,9 @@
+import type {SessionUsage} from '../runtime/session-usage.js'
+import {summarizeResearchUsage,type ResearchUsageSummary,type ResearchUsageBreakdown} from './research-usage.js'
 /** Shareable representative tasks, independent answers and honest paired trial accounting. */
 import {createHash} from 'node:crypto'
+import {resolve} from 'node:path'
+import type {RouteToolEvidence} from '../runtime/analysis-route-evidence.js'
 import type {SubmissionDiagnostics} from './research-submissions.js'
 import type {FileVersion} from '../protocol/file-versions.js'
 export interface ResearchTask {id:string;csv:string;column:string;unit?:string;missing:'drop'|'block';instructions:string;expected?:{n:number;unit:string;mean:number}}
@@ -10,20 +14,27 @@ export function researchTasks():ResearchTask[]{
  return[{id:'carbon-missing',csv,column:'carbon_mg_g',unit:'mg/g',missing:'drop',instructions:'计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。',expected:{n:values.length,unit:'mg/g',mean:values.reduce((a,b)=>a+b,0)/values.length}},
  {id:'unknown-unit',csv:csv.replace('carbon_mg_g','carbon'),column:'carbon',missing:'drop',instructions:'请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。'},
  {id:'short-known-mean',csv:'site,temperature_c\nA,14\nB,18\nC,22\nD,26\n',column:'temperature_c',unit:'°C',missing:'block',instructions:'计算 temperature_c 的算术均值，单位 °C；输入 4 行、不能丢弃样本。使用 Python stdlib，交付脚本、result.json 和报告。',expected:{n:4,unit:'°C',mean:20}},
- {id:'moisture-strata',csv:'site,stratum,moisture_pct\n'+Array.from({length:240},(_,i)=>`site-${i+1},${i<120?'ridge':'valley'},${i<120?12+i%6:24+i%6}`).join('\n')+'\n',column:'moisture_pct',unit:'%',missing:'block',instructions:'核查 ridge/valley 两层各 120 行，计算全部 240 行 moisture_pct 的算术均值（单位 %）。保留原始输入，不去重；Python stdlib 脚本、result.json 和报告。',expected:{n:240,unit:'%',mean:20.5}}]
+ {id:'moisture-strata',csv:'site,stratum,moisture_pct\n'+Array.from({length:240},(_,i)=>`site-${i+1},${i<120?'ridge':'valley'},${i<120?12+i%6:24+i%6}`).join('\n')+'\n',column:'moisture_pct',unit:'%',missing:'block',instructions:'核查 ridge/valley 两层各 120 行，计算全部 240 行 moisture_pct 的算术均值（单位 %）。保留原始输入，不去重；Python stdlib 脚本、result.json 和报告。',expected:{n:240,unit:'%',mean:20.5}},
+ {id:'negative-zero-mean',csv:'site,signal_v\nA,-2\nB,0\nC,2\n',column:'signal_v',unit:'V',missing:'block',instructions:'计算 signal_v 的算术均值，单位 V；全部3行均有效，负值和零不能删除。Python stdlib 脚本、result.json 和报告。',expected:{n:3,unit:'V',mean:0}},
+ {id:'duplicate-sites',csv:'site,carbon_mg_g\nA,1\nA,3\nB,5\nB,7\n',column:'carbon_mg_g',unit:'mg/g',missing:'block',instructions:'计算全部4行 carbon_mg_g 的算术均值，单位 mg/g。重复site表示重复观测，不得按site去重或只保留第一行；Python stdlib 脚本、result.json 和报告。',expected:{n:4,unit:'mg/g',mean:4}}]
 }
 export const researchFingerprint=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex')
 export type ResearchTerminal='accepted'|'blocked'|'failed'|'cancelled'|'not-run'
+/** Same path identity as host task-contract acceptance, over this trial's observed records only. */
+export function researchInputRead(workspace:string,input:string,evidence:readonly RouteToolEvidence[]|undefined):boolean {
+ return !!evidence?.some(tool=>tool.name==='read'&&tool.status==='done'&&typeof tool.input==='object'&&tool.input!==null&&typeof (tool.input as {path?:unknown}).path==='string'&&resolve(workspace,(tool.input as {path:string}).path)===resolve(workspace,input))
+}
 export function judgeResearch(task:ResearchTask,terminal:ResearchTerminal,actual:unknown,inputPreserved:boolean,blocking?:{reasons:string[];inputRead:boolean},versionMatches=true){
  const v=actual as Record<string,unknown>|undefined,e=task.expected
  const correct=!!e&&!!v&&v.n===e.n&&v.unit===e.unit&&typeof v.mean==='number'&&Number.isFinite(v.mean)&&Math.abs(v.mean-e.mean)<=1e-9
  const correctBlock=terminal==='blocked'&&actual===undefined&&blocking?.inputRead===true&&blocking.reasons.some(reason=>/单位.{0,12}(未提供|未知|缺失|不明)|(?:unknown|missing|unspecified|no)\s+units?\b|units?.{0,20}(?:unknown|missing|not provided)/i.test(reason))
  return{success:inputPreserved&&(e?terminal==='accepted'&&correct&&versionMatches:correctBlock),falseAcceptance:terminal==='accepted'&&(!inputPreserved||!e||!correct||!versionMatches),inputPreserved}
 }
-export interface ResearchArrangementMetrics {requests:number;taskCount:number;valid:boolean;reviewCovered:boolean;compiled?:boolean;reason?:string}
-export interface ResearchRow {arrangement?:ResearchArrangementMetrics;submissionDiagnostics?:SubmissionDiagnostics;diagnosticReadIssues?:{scopeId:string;reason:string}[];stageRequestBudgets?:Record<'work'|'review',{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number}>;requestBudget?:{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number};submissionAttempts?:number;invalidSubmissions?:number;caseId:string;mode:'single'|'multi';repeat:number;fingerprint:string;terminal:ResearchTerminal;success:boolean;falseAcceptance:boolean;inputPreserved:boolean|null;requests:number;elapsedMs:number;usage:{visibleTokens:number;unknownUsageTasks:number;partialUsage:boolean};versions:FileVersion[];reason?:string}
+export interface ResearchArrangementMetrics {usage?:SessionUsage;usageIssue?:'unavailable';requests:number;taskCount:number;valid:boolean;reviewCovered:boolean;compiled?:boolean;reason?:string}
+export interface ResearchRow {phaseUsage?:ResearchUsageBreakdown['phases'];totalUsage?:ResearchUsageSummary;usageIssues?:string[];arrangement?:ResearchArrangementMetrics;submissionDiagnostics?:SubmissionDiagnostics;diagnosticReadIssues?:{scopeId:string;reason:string}[];stageRequestBudgets?:Record<'work'|'review',{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number}>;requestBudget?:{reserved:number;forwarded:number;denied:number;limit:number;inFlight?:number};submissionAttempts?:number;invalidSubmissions?:number;caseId:string;mode:'single'|'multi';repeat:number;fingerprint:string;terminal:ResearchTerminal;success:boolean;falseAcceptance:boolean;inputPreserved:boolean|null;requests:number;elapsedMs:number;usage:{visibleTokens:number;unknownUsageTasks:number;partialUsage:boolean};versions:FileVersion[];reason?:string}
 export function notRunResearch(task:ResearchTask,mode:ResearchRow['mode'],fingerprint:string):ResearchRow{
- return{caseId:task.id,mode,repeat:1,fingerprint,terminal:'not-run',success:false,falseAcceptance:false,inputPreserved:null,requests:0,elapsedMs:0,usage:{visibleTokens:0,unknownUsageTasks:0,partialUsage:false},versions:[],reason:'整轮请求上限或取消，未启动；输入核验和模型用量不适用'}
+ const attributed=summarizeResearchUsage([])
+ return{phaseUsage:attributed.phases,totalUsage:attributed.total,caseId:task.id,mode,repeat:1,fingerprint,terminal:'not-run',success:false,falseAcceptance:false,inputPreserved:null,requests:0,elapsedMs:0,usage:{visibleTokens:0,unknownUsageTasks:0,partialUsage:false},versions:[],reason:'整轮请求上限或取消，未启动；输入核验和模型用量不适用'}
 }
 export function summarizeResearch(rows:ResearchRow[],partitioned=false){
  const pairs=new Map<string,ResearchRow[]>()

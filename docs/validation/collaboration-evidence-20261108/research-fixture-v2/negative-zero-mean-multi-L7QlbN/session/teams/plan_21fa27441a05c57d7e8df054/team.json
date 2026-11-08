@@ -1,0 +1,749 @@
+{
+  "id": "plan_21fa27441a05c57d7e8df054",
+  "name": "批准方案 · 第 1 版",
+  "goal": "执行已批准任务安排",
+  "captainSessionId": "research",
+  "createdAt": 1794148204255,
+  "members": [
+    {
+      "orchestrationId": "ed2162b3-7276-4a9f-9213-f96f175cbff2",
+      "name": "member_1",
+      "agent": "analyze",
+      "role": "analyze",
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_1",
+      "turns": 1,
+      "joinedAt": 1794148204255,
+      "frozenAgentDefinition": {
+        "name": "analyze",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测核查与分析共享最多 18 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准；另 7 次只留给独立审阅，不可借用。只做本阶段契约要求的工作，避免读取未生成产物或重复无关检查。必要证据齐备后及时提交；不足时如实阻塞，不能伪造结果。",
+        "filePath": "/analyze",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      },
+      "taskSettings": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json",
+            "numeric": {
+              "version": 1,
+              "dataPath": "input.csv",
+              "column": "signal_v",
+              "metric": "mean",
+              "unit": "V",
+              "missing": "block",
+              "absoluteTolerance": 1e-9
+            }
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "95db93297d1507edef00e10858677194c6d55e2cac990162aae313d22e01ec11",
+              "bytes": 27
+            }
+          ]
+        }
+      }
+    },
+    {
+      "orchestrationId": "1ce4c84b-13db-4cac-b729-681b40c5e5fb",
+      "name": "member_2",
+      "agent": "review",
+      "role": "review",
+      "provider": "dawn-evaluation-review",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_2",
+      "turns": 1,
+      "joinedAt": 1794148204255,
+      "frozenAgentDefinition": {
+        "name": "review",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测审阅独享最多 7 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准。先真实读取全部声明输入，尽可能并行读取，再基于证据正式提交。不得省略独立审阅或猜测 ID。",
+        "filePath": "/review",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      },
+      "taskSettings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+              "bytes": 336
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+              "bytes": 34
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+              "bytes": 63
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "contract": {
+        "acceptance": {
+          "version": 1,
+          "kind": "tabular-ecology",
+          "scriptPath": "results/analysis.py",
+          "reportPath": "results/report.md",
+          "resultPath": "results/result.json",
+          "numeric": {
+            "version": 1,
+            "dataPath": "input.csv",
+            "column": "signal_v",
+            "metric": "mean",
+            "unit": "V",
+            "missing": "block",
+            "absoluteTolerance": 1e-9
+          }
+        },
+        "submission": "tool",
+        "resultType": "model-metrics",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [
+          "results/analysis.py",
+          "results/result.json",
+          "results/report.md"
+        ],
+        "access": "workspace-exec",
+        "requireExecution": true,
+        "requireReview": false
+      },
+      "id": "plan_1",
+      "subject": "analyze",
+      "description": "按冻结科学契约完成当前阶段\n分工：analyze\n验收条件：既有宿主证据与版本验收\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n计算 signal_v 的算术均值，单位 V；全部3行均有效，负值和零不能删除。Python stdlib 脚本、result.json 和报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：V。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"signal_v\",\"metric\":\"mean\",\"unit\":\"V\",\"missing\":\"block\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n自制科学任务\n## 数据与切分\ninput.csv\n## 统计检验与模型\n按原方法\n## 图\n未生成\n## 产物\n`results/analysis.py`\n`results/result.json`\n`results/report.md`",
+      "status": "completed",
+      "assignee": "member_1",
+      "dependencies": [],
+      "outputs": [
+        "results/analysis.py",
+        "results/result.json",
+        "results/report.md"
+      ],
+      "attempt": 1,
+      "createdAt": 1794148204255,
+      "updatedAt": 1794148205178,
+      "settings": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json",
+            "numeric": {
+              "version": 1,
+              "dataPath": "input.csv",
+              "column": "signal_v",
+              "metric": "mean",
+              "unit": "V",
+              "missing": "block",
+              "absoluteTolerance": 1e-9
+            }
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "95db93297d1507edef00e10858677194c6d55e2cac990162aae313d22e01ec11",
+              "bytes": 27
+            }
+          ]
+        }
+      },
+      "attemptId": "2fb77e5a-0d29-442d-84d7-01fe86042267",
+      "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"arithmetic mean\",\"metrics\":{\"mean\":0},\"sampleCount\":3,\"caveats\":[]},\"summary\":\"offline representative fixture\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/analysis.py\"},{\"path\":\"results/result.json\"},{\"path\":\"results/report.md\"}],\"execution\":{\"state\":\"completed\",\"note\":\"actual Python\",\"toolCallIds\":[\"call_mock_52\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"independent review pending\"}}",
+      "receipt": {
+        "acceptance": {
+          "version": 1,
+          "ruleVersion": 1,
+          "specHash": "198b7cd088094c2812021f7fa510a3b23a2b278a659569a76a6fbeaf0aacd022",
+          "state": "passed",
+          "numericChecked": true,
+          "checks": [
+            {
+              "id": "script.nonempty",
+              "state": "passed",
+              "expected": "非空脚本",
+              "actual": "非空"
+            },
+            {
+              "id": "report.nonempty",
+              "state": "passed",
+              "expected": "非空报告",
+              "actual": "非空"
+            },
+            {
+              "id": "result.sample-count",
+              "state": "passed",
+              "expected": "正整数 n",
+              "actual": "3"
+            },
+            {
+              "id": "result.unit",
+              "state": "passed",
+              "expected": "非空单位（无量纲可写 1）",
+              "actual": "V"
+            },
+            {
+              "id": "result.declared-metric.mean",
+              "state": "passed",
+              "expected": "0",
+              "actual": "0"
+            },
+            {
+              "id": "result.declared-sample-count",
+              "state": "passed",
+              "expected": "3",
+              "actual": "3"
+            },
+            {
+              "id": "result.finite.mean",
+              "state": "passed",
+              "expected": "有限数值",
+              "actual": "0"
+            },
+            {
+              "id": "numeric.sample-count",
+              "state": "passed",
+              "expected": "3",
+              "actual": "3"
+            },
+            {
+              "id": "numeric.unit",
+              "state": "passed",
+              "expected": "V",
+              "actual": "V"
+            },
+            {
+              "id": "numeric.mean",
+              "state": "passed",
+              "expected": "0",
+              "actual": "0"
+            },
+            {
+              "id": "numeric.declared-mean",
+              "state": "passed",
+              "expected": "0",
+              "actual": "0"
+            }
+          ],
+          "files": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+              "bytes": 336
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+              "bytes": 63
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+              "bytes": 34
+            },
+            {
+              "path": "input.csv",
+              "sha256": "95db93297d1507edef00e10858677194c6d55e2cac990162aae313d22e01ec11",
+              "bytes": 27
+            }
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "95db93297d1507edef00e10858677194c6d55e2cac990162aae313d22e01ec11",
+              "bytes": 27
+            }
+          ],
+          "outputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+              "bytes": 336
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+              "bytes": 34
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+              "bytes": 63
+            }
+          ]
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "offline representative fixture",
+        "result": {
+          "data": {
+            "kind": "model-metrics",
+            "method": "arithmetic mean",
+            "metrics": {
+              "mean": 0
+            },
+            "sampleCount": 3,
+            "caveats": []
+          },
+          "summary": "offline representative fixture",
+          "blockers": [],
+          "deliverables": [
+            {
+              "path": "results/analysis.py"
+            },
+            {
+              "path": "results/result.json"
+            },
+            {
+              "path": "results/report.md"
+            }
+          ],
+          "execution": {
+            "state": "completed",
+            "note": "actual Python",
+            "toolCallIds": [
+              "call_mock_52"
+            ]
+          },
+          "verification": {
+            "state": "unreviewed",
+            "note": "independent review pending"
+          }
+        },
+        "deliverables": [
+          {
+            "stepId": "task",
+            "path": "results/analysis.py",
+            "state": "observed"
+          },
+          {
+            "stepId": "task",
+            "path": "results/result.json",
+            "state": "exists"
+          },
+          {
+            "stepId": "task",
+            "path": "results/report.md",
+            "state": "exists"
+          }
+        ]
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_mock_50",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "input.csv",
+            "transcriptRef": {
+              "file": "2026-11-08T14-30-04-705Z_01a1bb91-00a1-771c-a121-6be30c01cd51.jsonl",
+              "callEntry": "d8acb5c4",
+              "resultEntry": "99c581d9",
+              "payloadSha256": "198ee99eaa30da4f07177e1386ad5a185f4c98bd11f5da066f3fc4b6b4673406",
+              "evidenceTagSha256": "c2bce8a9f06e75a2ab8d192be737b1746fe07723b17b6744a25674802ae7f40c"
+            }
+          },
+          {
+            "toolCallId": "call_mock_51",
+            "name": "write",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/analysis.py",
+            "transcriptRef": {
+              "file": "2026-11-08T14-30-04-705Z_01a1bb91-00a1-771c-a121-6be30c01cd51.jsonl",
+              "callEntry": "0dcd95bd",
+              "resultEntry": "65be379e",
+              "payloadSha256": "bff5267c5bfaf26259a367d65f2ced20cbe577017269837d40b155918e039a76",
+              "evidenceTagSha256": "7a22eebd17b3a43b76550d816cc29e6b33edf22358f07b38aa6be43ff277393c"
+            }
+          },
+          {
+            "toolCallId": "call_mock_52",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T14-30-04-705Z_01a1bb91-00a1-771c-a121-6be30c01cd51.jsonl",
+              "callEntry": "fc61a306",
+              "resultEntry": "2eb02d1f",
+              "payloadSha256": "fb29b20e0276c13b0ffd07d6ab28ac40558d51848a8d716ab4e2147bd56935ef",
+              "evidenceTagSha256": "3cf81d90da85239772fb77b64f3ec17fc9fef8e1d61a45743c417365f61ca9d2"
+            }
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 329,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        }
+      }
+    },
+    {
+      "contract": {
+        "submission": "tool",
+        "resultType": "review",
+        "version": 1,
+        "inputs": [
+          "results/analysis.py",
+          "results/result.json",
+          "results/report.md"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      },
+      "id": "plan_2",
+      "subject": "review",
+      "description": "按冻结科学契约完成当前阶段\n分工：review\n验收条件：既有宿主证据与版本验收\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n计算 signal_v 的算术均值，单位 V；全部3行均有效，负值和零不能删除。Python stdlib 脚本、result.json 和报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：V。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"signal_v\",\"metric\":\"mean\",\"unit\":\"V\",\"missing\":\"block\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n自制科学任务\n## 数据与切分\ninput.csv\n## 统计检验与模型\n按原方法\n## 图\n未生成\n## 产物\n`results/analysis.py`\n`results/result.json`\n`results/report.md`",
+      "status": "completed",
+      "assignee": "member_2",
+      "dependencies": [
+        "plan_1"
+      ],
+      "outputs": [],
+      "attempt": 1,
+      "createdAt": 1794148204255,
+      "updatedAt": 1794148205879,
+      "settings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+              "bytes": 336
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+              "bytes": 34
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+              "bytes": 63
+            }
+          ]
+        }
+      },
+      "attemptId": "3989bc86-2a82-4e06-be5b-f7237ae74ab6",
+      "output": "{\"data\":{\"kind\":\"review\",\"verdict\":\"pass\",\"findings\":[],\"reviewedPaths\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"]},\"summary\":\"offline representative fixture\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"fixture\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"read files\",\"toolCallIds\":[\"call_mock_54\",\"call_mock_55\",\"call_mock_56\"]}}",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+              "bytes": 336
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+              "bytes": 34
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+              "bytes": 63
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "offline representative fixture",
+        "result": {
+          "data": {
+            "kind": "review",
+            "verdict": "pass",
+            "findings": [],
+            "reviewedPaths": [
+              "results/analysis.py",
+              "results/result.json",
+              "results/report.md"
+            ]
+          },
+          "summary": "offline representative fixture",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "fixture"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "read files",
+            "toolCallIds": [
+              "call_mock_54",
+              "call_mock_55",
+              "call_mock_56"
+            ]
+          }
+        },
+        "deliverables": []
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_mock_54",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/analysis.py",
+            "transcriptRef": {
+              "file": "2026-11-08T14-30-05-672Z_01a1bb91-0468-76f0-a6d0-f6caa4c3f345.jsonl",
+              "callEntry": "c9579b69",
+              "resultEntry": "cc4ae6ca",
+              "payloadSha256": "74875bbc4393684d5371b892c060f743d620a2e963206386aac86ed17def1089",
+              "evidenceTagSha256": "a60754ed09930e1adb38a1e3ce84bd690595348b9edfb3d6ef48a37ab9628916"
+            }
+          },
+          {
+            "toolCallId": "call_mock_55",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/result.json",
+            "transcriptRef": {
+              "file": "2026-11-08T14-30-05-672Z_01a1bb91-0468-76f0-a6d0-f6caa4c3f345.jsonl",
+              "callEntry": "d3be0941",
+              "resultEntry": "02ca6b16",
+              "payloadSha256": "f33cbadb6adf94a2e0a1e7797d6b6c9a730ceeb39783b0c973876d81db82145e",
+              "evidenceTagSha256": "5fd0a98a33d4c6debf46909dd65be66a67e9cb7df18ad97bf62328c580d2fb94"
+            }
+          },
+          {
+            "toolCallId": "call_mock_56",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/report.md",
+            "transcriptRef": {
+              "file": "2026-11-08T14-30-05-672Z_01a1bb91-0468-76f0-a6d0-f6caa4c3f345.jsonl",
+              "callEntry": "328f771b",
+              "resultEntry": "1babd916",
+              "payloadSha256": "4c5de819d54c2f25644fd6ba1f45f18446a5370d6fcc7810008a02f27d7d5d72",
+              "evidenceTagSha256": "c9644b318499beb689bc8ed18f12df533e2394b166b20640bc3311185f3e574c"
+            }
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 158,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        }
+      }
+    }
+  ],
+  "messages": [],
+  "taskSeq": 0,
+  "approvedPlan": {
+    "version": 1,
+    "owner": "research",
+    "planId": "research-pilot",
+    "planVersion": 1,
+    "markdownHash": "548936750cae4f43241e7bb5adc136ca28738a39c5604658019bbe6b87489b04",
+    "teamId": "plan_21fa27441a05c57d7e8df054",
+    "externalInputs": [
+      {
+        "path": "input.csv",
+        "sha256": "95db93297d1507edef00e10858677194c6d55e2cac990162aae313d22e01ec11",
+        "bytes": 27
+      }
+    ],
+    "tasks": [
+      {
+        "planTaskId": "analyze",
+        "taskId": "plan_1",
+        "memberName": "member_1",
+        "review": false
+      },
+      {
+        "planTaskId": "review",
+        "taskId": "plan_2",
+        "memberName": "member_2",
+        "review": true
+      }
+    ]
+  },
+  "approvedPlanPaused": true,
+  "approvedPlanPauseReason": "用户已停止执行；等待旧任务排空后，核对产物再继续。"
+}

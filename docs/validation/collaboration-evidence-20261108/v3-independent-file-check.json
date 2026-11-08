@@ -1,0 +1,157 @@
+{
+  "independentFileCheck": "passed",
+  "trials": [
+    {
+      "case": "carbon-missing",
+      "mode": "single",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": null,
+        "execution": 80,
+        "review": null
+      },
+      "totalTokens": 80
+    },
+    {
+      "case": "carbon-missing",
+      "mode": "multi",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": 20,
+        "execution": 80,
+        "review": 80
+      },
+      "totalTokens": 180
+    },
+    {
+      "case": "unknown-unit",
+      "mode": "multi",
+      "terminal": "blocked",
+      "versionHashes": 0,
+      "phaseTokens": {
+        "planning": 20,
+        "execution": 40,
+        "review": null
+      },
+      "totalTokens": 60
+    },
+    {
+      "case": "unknown-unit",
+      "mode": "single",
+      "terminal": "blocked",
+      "versionHashes": 0,
+      "phaseTokens": {
+        "planning": null,
+        "execution": 40,
+        "review": null
+      },
+      "totalTokens": 40
+    },
+    {
+      "case": "short-known-mean",
+      "mode": "single",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": null,
+        "execution": 80,
+        "review": null
+      },
+      "totalTokens": 80
+    },
+    {
+      "case": "short-known-mean",
+      "mode": "multi",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": 20,
+        "execution": 80,
+        "review": 80
+      },
+      "totalTokens": 180
+    },
+    {
+      "case": "moisture-strata",
+      "mode": "multi",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": 20,
+        "execution": 80,
+        "review": 80
+      },
+      "totalTokens": 180
+    },
+    {
+      "case": "moisture-strata",
+      "mode": "single",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": null,
+        "execution": 80,
+        "review": null
+      },
+      "totalTokens": 80
+    },
+    {
+      "case": "negative-zero-mean",
+      "mode": "single",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": null,
+        "execution": 80,
+        "review": null
+      },
+      "totalTokens": 80
+    },
+    {
+      "case": "negative-zero-mean",
+      "mode": "multi",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": 20,
+        "execution": 80,
+        "review": 80
+      },
+      "totalTokens": 180
+    },
+    {
+      "case": "duplicate-sites",
+      "mode": "multi",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": 20,
+        "execution": 80,
+        "review": 80
+      },
+      "totalTokens": 180
+    },
+    {
+      "case": "duplicate-sites",
+      "mode": "single",
+      "terminal": "accepted",
+      "versionHashes": 3,
+      "phaseTokens": {
+        "planning": null,
+        "execution": 80,
+        "review": null
+      },
+      "totalTokens": 80
+    }
+  ],
+  "gate": {
+    "reserved": 70,
+    "forwarded": 70,
+    "denied": 0,
+    "inFlight": 0,
+    "limit": 300
+  },
+  "paidRequests": 0
+}

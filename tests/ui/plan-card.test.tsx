@@ -380,3 +380,11 @@ it('counts accepted Team versions alongside main-session registration without fo
  expect(screen.getByText(/任务验收 1 · 主会话登记 0/)).toBeTruthy()
  fireEvent.click(screen.getByRole('button',{name:'看清单'}));expect(screen.getByText('（任务验收）')).toBeTruthy()
 })
+
+it('keeps approved arrangement copy consistent with the plan card status',async()=>{
+ const {serializeTaskArrangement}=await import('../../src/protocol/task-arrangement.js')
+ const markdown=serializeTaskArrangement({mode:'single',rationale:'one task',independentReview:false,questions:[],tasks:[{id:'mean',title:'mean',goal:'mean',role:'analyst',inputs:['in.csv'],outputs:['mean.csv'],dependencies:[],acceptance:'checked',review:false}]})
+ const view=render(<方案卡 item={{...卡,markdown,status:'approved'}} 能答 onAnswer={vi.fn(async()=>{})}/>);
+ expect(view.container.textContent).toContain('实际执行与验收以协作记录为准')
+ expect(view.container.querySelector('.task-arrangement-result')?.getAttribute('data-plan-status')).toBe('approved')
+})

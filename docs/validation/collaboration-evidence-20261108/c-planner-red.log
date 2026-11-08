@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-auto-arrangement.test.ts -t two|three
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-auto-arrangement.test.ts (5 tests | 2 failed | 3 skipped) 159ms
+   × records and validates actual model-generated planning: two 111ms
+   × records and validates actual model-generated planning: three 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records and validates actual model-generated planning: two
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records and validates actual model-generated planning: three
+AssertionError: expected undefined to match object { input: Any<Number>, …(1) }
+
+- Expected:
+{
+  "input": Any<Number>,
+  "output": Any<Number>,
+}
+
++ Received:
+undefined
+
+ ❯ tests/evaluation/research-auto-arrangement.test.ts:31:30
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 skipped (5)
+   Start at  22:07:10
+   Duration  1.73s (transform 662ms, setup 0ms, import 1.48s, tests 159ms, environment 0ms)
+

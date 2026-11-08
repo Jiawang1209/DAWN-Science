@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-usage.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-usage.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-usage.test.ts [ tests/evaluation/research-usage.test.ts ]
+Error: Cannot find module '../../src/evaluation/research-usage.js' imported from /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/tests/evaluation/research-usage.test.ts
+ ❯ tests/evaluation/research-usage.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {summarizeResearchUsage} from '../../src/evaluation/research-us…
+       | ^
+      3| it('counts planning, execution and independent review once each and ke…
+      4|  const result=summarizeResearchUsage([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  22:06:16
+   Duration  97ms (transform 11ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

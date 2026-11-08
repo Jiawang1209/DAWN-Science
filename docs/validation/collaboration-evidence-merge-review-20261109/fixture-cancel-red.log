@@ -1,0 +1,38 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-fixture-cli.test.ts -t SIGINT drains
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-fixture-cli.test.ts (3 tests | 1 failed | 2 skipped) 1510ms
+   × SIGINT drains the actual detached executor and retains the cancelled batch 1510ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-cli.test.ts > SIGINT drains the actual detached executor and retains the cancelled batch
+AssertionError: expected [ null, 'SIGINT' ] to deeply equal [ 1, null ]
+
+- Expected
++ Received
+
+  [
+-   1,
+    null,
++   "SIGINT",
+  ]
+
+ ❯ tests/evaluation/research-fixture-cli.test.ts:36:24
+     34|   },{timeout:15000,interval:50}).toBeGreaterThan(0)
+     35|   child.kill('SIGINT')
+     36|   expect(await closed).toEqual([1,null])
+       |                        ^
+     37|   await expect.poll(()=>agents.filter(stillAgent),{timeout:5000}).toEq…
+     38|   const reports=(await import('node:fs')).readdirSync(root).filter(n=>…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  01:06:15
+   Duration  1.61s (transform 17ms, setup 0ms, import 25ms, tests 1.51s, environment 0ms)
+

@@ -1,0 +1,1 @@
+Arithmetic mean; unit mg/g; missing policy block; input preserved.

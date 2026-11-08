@@ -55,10 +55,14 @@ export async function generateResearchArrangement(opts:{workspace:string;session
  }catch(error){metrics.reason=error instanceof Error?error.message:String(error);throw error}
  finally{
   opts.signal.removeEventListener('abort',cancel)
-  try{await rt.stop('research-planner')}finally{
+  try{
+   // Abort/drain first, but read while the owning session still exists; stop removes it.
+   if(rt.terminalBusy('research-planner'))await rt.abort('research-planner')
+   try{metrics.usage=rt.sessionUsage('research-planner')}catch{metrics.usageIssue='unavailable'}
+  }finally{try{await rt.stop('research-planner')}finally{
    metrics.requests=opts.requests()-before
    try{writeFileSync(join(opts.sessionDir,'automatic-arrangement.json'),JSON.stringify({mode:'model-generated',...metrics},null,2)+'\n')}
    finally{rmSync(scratch,{recursive:true,force:true})}
-  }
+  }}
  }
 }

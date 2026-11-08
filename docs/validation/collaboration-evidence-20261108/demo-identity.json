@@ -1,0 +1,12 @@
+{
+  "pid": 56008,
+  "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-collaboration-review-KwOthl/DAWN-协作台新迭代-模拟模型",
+  "appRoot": "/Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science",
+  "branch": "codex/collaboration-evidence-20261108",
+  "model": "localhost deterministic fixture",
+  "mockRequests": 11,
+  "paidRequests": 0,
+  "approvedTasks": 3,
+  "hostAcceptedTasks": 3,
+  "escapeReturnObserved": true
+}

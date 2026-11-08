@@ -9704,7 +9704,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .orchestration-advisor-actions { display: flex; flex-wrap: wrap; gap: var(--dawn-space-2); }
 .task-arrangement-result { display: grid; gap: var(--dawn-space-2); min-width: 0; }
 .task-arrangement-result header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--dawn-space-2); }
-.task-arrangement-result ol { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: var(--dawn-space-3); padding-inline-start: var(--dawn-space-4); }
+.task-arrangement-result > ol { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: var(--dawn-space-3); padding: 0; margin: 0; list-style: none; }
+.task-arrangement-result > ol > li { display: grid; align-content: start; gap: var(--dawn-space-2); padding: var(--dawn-space-3); border: var(--dawn-hairline) solid var(--dawn-stroke-2); border-radius: var(--dawn-radius-md); background: var(--dawn-surface-input); }
+.task-arrangement-state { border-inline-start: 2px solid var(--dawn-stroke-accent); padding-inline-start: var(--dawn-space-3); }
 .task-arrangement-result li { min-width: 0; overflow-wrap: anywhere; }
 .task-arrangement-result dl { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: var(--dawn-space-2); }
 .task-arrangement-result dd { margin: 0; }

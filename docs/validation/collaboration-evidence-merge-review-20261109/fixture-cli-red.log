@@ -1,0 +1,84 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-fixture-cli.test.ts tests/evaluation/research-fixture-status.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-fixture-status.test.ts (1 test | 1 failed) 15ms
+   × a failed fixture report is retained but rejects the command instead of reporting success 14ms
+ ❯ |node| tests/evaluation/research-fixture-cli.test.ts (2 tests | 2 failed) 3160ms
+   × the legacy direct fixture CLI rejects a missing destination instead of silently succeeding 2008ms
+   × the legacy direct fixture CLI runs the real offline batch and prints a retained report path 1151ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-cli.test.ts > the legacy direct fixture CLI rejects a missing destination instead of silently succeeding
+AssertionError: promise resolved "{ stdout: '', stderr: '' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "stderr": "",
++   "stdout": "",
+  }
+
+ ❯ tests/evaluation/research-fixture-cli.test.ts:9:62
+      7| const run=promisify(execFile),entry=resolve('scripts/evaluate-research…
+      8| it('the legacy direct fixture CLI rejects a missing destination instea…
+      9|  await expect(run(process.execPath,['--import','tsx',entry])).rejects.…
+       |                                                              ^
+     10| })
+     11| it('the legacy direct fixture CLI runs the real offline batch and prin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-cli.test.ts > the legacy direct fixture CLI runs the real offline batch and prints a retained report path
+AssertionError: expected '' to match /research-fixture-[^/]+\/research\.…/]+\
+
+- Expected:
+/research-fixture-[^/]+\/research\.md$/
+
++ Received:
+""
+
+ ❯ tests/evaluation/research-fixture-cli.test.ts:16:22
+     14|   const{stdout}=await run(process.execPath,['--import','tsx',entry,roo…
+     15|   const reportPath=stdout.trim().split('\n').at(-1)!
+     16|   expect(reportPath).toMatch(/research-fixture-[^/]+\/research\.md$/)
+       |                      ^
+     17|   expect(readFileSync(reportPath,'utf8')).toContain('分阶段用量')
+     18|   const report=JSON.parse(readFileSync(join(reportPath,'../research.js…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-status.test.ts > a failed fixture report is retained but rejects the command instead of reporting success
+AssertionError: promise resolved "{ qualifiedPairs: +0, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "completePairs": 0,
++   "qualifiedPairs": 0,
+  }
+
+ ❯ tests/evaluation/research-fixture-status.test.ts:13:107
+     11|  const root=mkdtempSync(join(tmpdir(),'dawn-fixture-status-'))
+     12|  try{
+     13|   await expect(runResearchFixtureEvaluation(root,{taskIds:['short-know…
+       |                                                                                                           ^
+     14|   expect(JSON.parse(readFileSync(join(root,'research.json'),'utf8'))).…
+     15|   expect(JSON.parse(readFileSync(join(root,'request-gate.json'),'utf8'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed (3)
+   Start at  01:03:24
+   Duration  3.29s (transform 116ms, setup 0ms, import 202ms, tests 3.17s, environment 0ms)
+

@@ -71,5 +71,5 @@ it('freezes and executes both 150-request arms through the existing runner and r
 it('rejects invalid explicit CLI caps before building a host or reading any credential',async()=>{
  const {runCurrentApiResearch}=await import('../../scripts/research-cli.js')
  await expect(runCurrentApiResearch(['out','private-profile','p','m','automatic-plan','301'])).rejects.toThrow(/2\.\.300/)
- await expect(runCurrentApiResearch(['out','private-profile','p','m','automatic-plan','300','extra'])).rejects.toThrow(/用法/)
+ await expect(runCurrentApiResearch(['out','private-profile','p','m','automatic-plan','300','extra','extra2'])).rejects.toThrow(/用法/)
 })

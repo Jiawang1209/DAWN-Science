@@ -3,7 +3,16 @@ export function researchScenario(tasks){
  const text=v=>typeof v==='string'?v:Array.isArray(v)?v.map(b=>b.text??'').join(''):''
  const choose=body=>{
   const ms=body.messages??[];let start=-1;for(let i=ms.length-1;i>=0;i--)if(ms[i].role==='user'){start=i;break}
-  const prompt=text(ms[start]?.content),raw=/任务契约（范围已冻结）：([^\n]+)/.exec(prompt)?.[1];if(!raw)return
+  const prompt=text(ms[start]?.content)
+  if(prompt.includes('[research_automatic_arrangement]')){
+   if(ms.slice(start+1).some(m=>m.role==='tool'))return
+   const match=/冻结科学契约：(\{[^\n]+\})/.exec(prompt);if(!match)return
+   const contracts=JSON.parse(match[1]),task=tasks.find(t=>prompt.includes(t.instructions));if(!task)return
+   const stages=task.expected?['analyze','review']:['check','analyze','review']
+   const blocks=stages.map((stage,index)=>({id:stage,title:stage,goal:'按冻结科学契约完成当前阶段',role:stage,inputs:contracts[stage].inputs,outputs:contracts[stage].outputs,dependencies:index?[stages[index-1]]:[],acceptance:'既有宿主证据与版本验收',review:stage==='review',execution:{agent:stage,contract:contracts[stage]}}))
+   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{title:'Offline automatic scientific arrangement',plan:'## 问题与假设\n自制科学任务\n## 数据与切分\ninput.csv\n## 统计检验与模型\n按原方法\n## 图\n未生成\n## 产物\n'+contracts.analyze.outputs.map(p=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'保留独立审阅；单位不明时先核查，其他任务仅保留所需分析与审阅。',independentReview:true,questions:[],tasks:blocks}}}
+  }
+  const raw=/任务契约（范围已冻结）：([^\n]+)/.exec(prompt)?.[1];if(!raw)return
   const c=JSON.parse(raw),calls=ms.slice(start+1).flatMap(m=>m.role==='assistant'?m.tool_calls??[]:[]),named=name=>calls.filter(c=>c.function?.name===name)
   if(named('submit_task_result').length)return
   const reads=named('read'),paths=reads.map(c=>JSON.parse(c.function.arguments).path),next=c.inputs.find(p=>!paths.includes(p))

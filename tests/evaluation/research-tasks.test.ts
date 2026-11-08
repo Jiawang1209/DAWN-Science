@@ -1,5 +1,20 @@
 import {expect,it} from 'vitest'
-import {researchTasks,judgeResearch,summarizeResearch,notRunResearch,type ResearchRow} from '../../src/evaluation/research-tasks.js'
+import {researchTasks,judgeResearch,summarizeResearch,notRunResearch,researchInputRead,type ResearchRow} from '../../src/evaluation/research-tasks.js'
+import {resolve} from 'node:path'
+it('recognizes an observed input read by absolute or normalized relative path, without admitting other workspaces or failed tools',()=>{
+ const workspace=resolve('owned-research-trial'),input='input.csv',task=researchTasks().find(t=>t.id==='unknown-unit')!
+ const read=(path:string)=>({toolCallId:'owned-read',name:'read',status:'done' as const,result:'synthetic CSV',input:{path}})
+ for(const path of [input,'./input.csv',resolve(workspace,input)]){
+  const inputRead=researchInputRead(workspace,input,[read(path)])
+  expect(inputRead).toBe(true)
+  expect(judgeResearch(task,'blocked',undefined,true,{reasons:['单位未提供'],inputRead}).success).toBe(true)
+ }
+ expect(researchInputRead(workspace,input,[read(resolve('another-trial',input))])).toBe(false)
+ expect(researchInputRead(workspace,input,[{...read(input),status:'error'}])).toBe(false)
+ expect(researchInputRead(workspace,input,[{...read(input),name:'write'}])).toBe(false)
+ expect(researchInputRead(workspace,input,[{...read(input),input:{path:5}}])).toBe(false)
+ expect(researchInputRead(workspace,input,undefined)).toBe(false)
+})
 it('judges actual data independently of accepted claims and protects the complete input',()=>{
  const task=researchTasks()[0]!
  expect(judgeResearch(task,'accepted',task.expected,true).success).toBe(true)
@@ -20,6 +35,7 @@ it('refuses incomparable pairs and distinguishes incomplete trials from complete
 })
 it('does not invent input verification or unknown executed tasks for a trial that never started',()=>{
  expect(notRunResearch(researchTasks()[0]!,'single','same')).toMatchObject({terminal:'not-run',inputPreserved:null,requests:0,usage:{unknownUsageTasks:0,partialUsage:false}})
+ expect(notRunResearch(researchTasks()[0]!,'single','same').totalUsage).toMatchObject({state:'not-run',visibleTokens:null})
 })
 it('counts wrong scientific acceptance and reports requests including unsuccessful trials, without treating a correct block as a delivery',()=>{
  const [task,unknown]=researchTasks()
@@ -34,4 +50,13 @@ it('reports an exhausted review subquota even when the whole arm still has unuse
  expect(summarizeResearch([base],true).delivery.multi.exhausted).toBe(1)
  expect(summarizeResearch([{...base,terminal:'cancelled'}],true).delivery.multi.exhausted).toBe(0)
  expect(summarizeResearch([{...base,requestBudget:{...base.requestBudget!,denied:0},stageRequestBudgets:{...base.stageRequestBudgets!,review:{limit:4,reserved:4,forwarded:4,denied:0}}}],true).delivery.multi.exhausted).toBe(0)
+})
+it('covers zero means and duplicate site identifiers without dropping valid rows',()=>{
+ const tasks=researchTasks(),zero=tasks.find(t=>t.id==='negative-zero-mean')!,duplicates=tasks.find(t=>t.id==='duplicate-sites')!
+ expect(zero).toBeDefined();expect(duplicates).toBeDefined()
+ expect(zero.expected).toEqual({n:3,unit:'V',mean:0})
+ expect(judgeResearch(zero,'accepted',{n:3,unit:'V',mean:0},true).success).toBe(true)
+ expect(duplicates.expected).toEqual({n:4,unit:'mg/g',mean:4})
+ expect(duplicates.csv.split('\n').filter(line=>line.startsWith('A,')).length).toBe(2)
+ expect(judgeResearch(duplicates,'accepted',{n:2,unit:'mg/g',mean:4},true).falseAcceptance).toBe(true)
 })

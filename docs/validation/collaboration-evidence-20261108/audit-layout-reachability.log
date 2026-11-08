@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/task-arrangement-layout.spec.ts
+
+Running 1 test using 1 worker
+
+(node:57702) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60424/b2cadccc-0872-4b66-943a-c8d80ea472e2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/task-arrangement-layout.spec.ts:11:1 › preserves long task identities and expanded paths in a narrow real Electron view (2.6s)
+
+  1 passed (3.1s)

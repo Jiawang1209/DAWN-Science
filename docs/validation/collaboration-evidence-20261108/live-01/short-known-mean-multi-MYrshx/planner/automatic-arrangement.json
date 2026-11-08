@@ -1,0 +1,13 @@
+{
+  "mode": "model-generated",
+  "requests": 4,
+  "taskCount": 3,
+  "valid": true,
+  "reviewCovered": true,
+  "usage": {
+    "input": 62326,
+    "output": 8284,
+    "cacheRead": 11520
+  },
+  "compiled": true
+}

@@ -1,0 +1,15 @@
+{
+  "main": "899463dd17f50a5da83294b783d3fd540f86f9af",
+  "branch": "codex/collaboration-evidence-20261108",
+  "formalProfile": {
+    "providers.yaml": "4380a472e84b4205b9180bb7d790930c2b358e57f8d64303cd39e0cf44e8d9dc",
+    "credentials.json": "541e3d353636c9a2b42eb206f272fb49fe9899a2a417f80d3358cf2c1d709f4b",
+    "dawn.db": "e33ef101b1a2d6051ac032ad3e6eb1801bc3cdbccf09633b952c3b12289b647f"
+  },
+  "paidRequestsThisRound": 0,
+  "historyExitAndPty": "OPEN",
+  "exitThresholdsMs": [
+    1500,
+    4000
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "verifiedAt": "2026-11-09T00:33:42.921025+08:00",
+  "candidate": "v3",
+  "frozenFiles": 1668,
+  "frozenFilesUnchanged": true,
+  "originalLiveReportsUnchanged": true,
+  "mainAndFormalProfileUnchanged": true,
+  "featureUncommitted": true,
+  "modelRunCandidate": "v2",
+  "modelRequests": 148,
+  "authorizedLimit": 300,
+  "unusedAllowance": 152,
+  "batchClosed": true,
+  "additionalRequestsAfterEvaluatorFix": 0,
+  "inFlight": 0,
+  "validation": {
+    "vitestFiles": 710,
+    "passed": 7053,
+    "skipped": 11,
+    "maxWorkers": 4,
+    "durationSeconds": 272.62,
+    "defaultParallelRun": "one 24-arm case timed out at unchanged 60000ms; retained for tracking",
+    "electronPriorRunPassed": 41,
+    "electronAdditionalLayoutPassed": 1,
+    "typecheck": "exit 0",
+    "build": "exit 0"
+  },
+  "historyExitBotMcpPty": "OPEN",
+  "exitThresholdsMs": [
+    1500,
+    4000
+  ]
+}

@@ -1,0 +1,1 @@
+Arithmetic mean; unit °C; missing policy block; input preserved.

@@ -1,0 +1,630 @@
+{
+  "version": 1,
+  "ownerSessionId": "research",
+  "children": [
+    {
+      "id": "child-289a8f5567c61705f7764813e4fdea11",
+      "kind": "team",
+      "address": [
+        "plan_e30a37af8d670455782a49e1",
+        "member_1",
+        "32c7228a-e729-46fe-a451-9f2f8d662d77"
+      ],
+      "label": "analyze",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794148194683,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 48,
+        "output": 32,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 762,
+        "preflightMs": 20,
+        "acceptanceMs": 155
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-289a8f5567c61705f7764813e4fdea11",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794148194522,
+          "provider": "dawn-evaluation-work",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23146,
+            "toolBytes": 3753,
+            "messageBytes": 9322,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 29
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 338,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 48,
+            "output": 32,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"arithmetic mean\",\"metrics\":{\"mean\":13.870731707317074},\"sampleCount\":41,\"caveats\":[]},\"summary\":\"offline representative fixture\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/analysis.py\"},{\"path\":\"results/result.json\"},{\"path\":\"results/report.md\"}],\"execution\":{\"state\":\"completed\",\"note\":\"actual Python\",\"toolCallIds\":[\"call_mock_8\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"independent review pending\"}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "offline representative fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "arithmetic mean",
+              "metrics": {
+                "mean": 13.870731707317074
+              },
+              "sampleCount": 41,
+              "caveats": []
+            },
+            "summary": "offline representative fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "results/analysis.py"
+              },
+              {
+                "path": "results/result.json"
+              },
+              {
+                "path": "results/report.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python",
+              "toolCallIds": [
+                "call_mock_8"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "independent review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "results/analysis.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "results/result.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "results/report.md",
+              "state": "exists"
+            }
+          ],
+          "acceptance": {
+            "version": 1,
+            "ruleVersion": 1,
+            "specHash": "beecf73f240534ba278d043761fbe98b9a554709f18f2e650d3eea3e212d50df",
+            "state": "passed",
+            "numericChecked": true,
+            "checks": [
+              {
+                "id": "script.nonempty",
+                "state": "passed",
+                "expected": "非空脚本",
+                "actual": "非空"
+              },
+              {
+                "id": "report.nonempty",
+                "state": "passed",
+                "expected": "非空报告",
+                "actual": "非空"
+              },
+              {
+                "id": "result.sample-count",
+                "state": "passed",
+                "expected": "正整数 n",
+                "actual": "41"
+              },
+              {
+                "id": "result.unit",
+                "state": "passed",
+                "expected": "非空单位（无量纲可写 1）",
+                "actual": "mg/g"
+              },
+              {
+                "id": "result.declared-metric.mean",
+                "state": "passed",
+                "expected": "13.870731707317074",
+                "actual": "13.870731707317074"
+              },
+              {
+                "id": "result.declared-sample-count",
+                "state": "passed",
+                "expected": "41",
+                "actual": "41"
+              },
+              {
+                "id": "result.finite.mean",
+                "state": "passed",
+                "expected": "有限数值",
+                "actual": "13.870731707317074"
+              },
+              {
+                "id": "numeric.sample-count",
+                "state": "passed",
+                "expected": "41",
+                "actual": "41"
+              },
+              {
+                "id": "numeric.unit",
+                "state": "passed",
+                "expected": "mg/g",
+                "actual": "mg/g"
+              },
+              {
+                "id": "numeric.mean",
+                "state": "passed",
+                "expected": "13.870731707317074",
+                "actual": "13.870731707317074"
+              },
+              {
+                "id": "numeric.declared-mean",
+                "state": "passed",
+                "expected": "13.870731707317074",
+                "actual": "13.870731707317074"
+              }
+            ],
+            "files": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+                "bytes": 347
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+                "bytes": 65
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+                "bytes": 53
+              },
+              {
+                "path": "input.csv",
+                "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+                "bytes": 810
+              }
+            ]
+          },
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "input.csv",
+                "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+                "bytes": 810
+              }
+            ],
+            "outputs": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+                "bytes": 347
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+                "bytes": 53
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+                "bytes": 65
+              }
+            ]
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_mock_6",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "input.csv",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-54-203Z_01a1bb90-d79b-7210-a8b9-dc2342c381ec.jsonl",
+                "callEntry": "938592b6",
+                "resultEntry": "bc56c506",
+                "payloadSha256": "9a3a3de4f5bcae957bd7cc96690c57bec3e9cb72ab89064270932768d54a4e94",
+                "evidenceTagSha256": "7a01f41db9b295f55c5782ebf2e008cbd8fc1acd963e8fe1271d2f79cb7ead48"
+              }
+            },
+            {
+              "toolCallId": "call_mock_7",
+              "name": "write",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/analysis.py",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-54-203Z_01a1bb90-d79b-7210-a8b9-dc2342c381ec.jsonl",
+                "callEntry": "42de527b",
+                "resultEntry": "6052a569",
+                "payloadSha256": "6d67d89f45028b79537a7e2717153e142a50bb34c3f99f3d9ae0748d5182e1ba",
+                "evidenceTagSha256": "86083901339b5fe1b95fbad2ef6fbc393ad96aa2cdc08f0300f372e8126d591e"
+              }
+            },
+            {
+              "toolCallId": "call_mock_8",
+              "name": "bash",
+              "status": "done",
+              "execution": "ran",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-54-203Z_01a1bb90-d79b-7210-a8b9-dc2342c381ec.jsonl",
+                "callEntry": "29fe924e",
+                "resultEntry": "75490b99",
+                "payloadSha256": "8174d92086bce005149b6cfa0ed0bdf5866f92fdf4ec518e5791e16c5301edbc",
+                "evidenceTagSha256": "4f8046dac61544252d5a12cc318e5b8f7fb4c32b56ce4b57a4ba23bfe7eb95a2"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    },
+    {
+      "id": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "kind": "team",
+      "address": [
+        "plan_e30a37af8d670455782a49e1",
+        "member_2",
+        "91ed5234-88d5-4705-a8b3-b172b95b48a3"
+      ],
+      "label": "review",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794148195386,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 48,
+        "output": 32,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 582,
+        "preflightMs": 56,
+        "acceptanceMs": 57
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794148195322,
+          "provider": "dawn-evaluation-review",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23045,
+            "toolBytes": 2937,
+            "messageBytes": 8105,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 29
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 157,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 48,
+            "output": 32,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"review\",\"verdict\":\"pass\",\"findings\":[],\"reviewedPaths\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"]},\"summary\":\"offline representative fixture\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"fixture\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"read files\",\"toolCallIds\":[\"call_mock_10\",\"call_mock_11\",\"call_mock_12\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "offline representative fixture",
+          "result": {
+            "data": {
+              "kind": "review",
+              "verdict": "pass",
+              "findings": [],
+              "reviewedPaths": [
+                "results/analysis.py",
+                "results/result.json",
+                "results/report.md"
+              ]
+            },
+            "summary": "offline representative fixture",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "fixture"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "read files",
+              "toolCallIds": [
+                "call_mock_10",
+                "call_mock_11",
+                "call_mock_12"
+              ]
+            }
+          },
+          "deliverables": [],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+                "bytes": 347
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+                "bytes": 53
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+                "bytes": 65
+              }
+            ],
+            "outputs": []
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_mock_10",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/analysis.py",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-55-183Z_01a1bb90-db6f-74b5-b07a-2d364e396815.jsonl",
+                "callEntry": "972a5a1c",
+                "resultEntry": "d30d3a1d",
+                "payloadSha256": "6710f85bd77ea8c5253eeecd78dc8e54a243b304c121a32a5dc8f44d207ebde9",
+                "evidenceTagSha256": "7e150be5427a5b3b8174941fcf50ea4a897f20fd400f1a8b2728053f882fdc39"
+              }
+            },
+            {
+              "toolCallId": "call_mock_11",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/result.json",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-55-183Z_01a1bb90-db6f-74b5-b07a-2d364e396815.jsonl",
+                "callEntry": "56f9ea41",
+                "resultEntry": "eabbb3ac",
+                "payloadSha256": "4d5439141a47ee7a4c703b70505e05392f313a6281b2bcf35bfa2337f639d4a4",
+                "evidenceTagSha256": "f641e85f0da8af6c6871a6bc8384195618281c63e6daa3a4b3ce4b0720d82264"
+              }
+            },
+            {
+              "toolCallId": "call_mock_12",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/report.md",
+              "transcriptRef": {
+                "file": "2026-11-08T14-29-55-183Z_01a1bb90-db6f-74b5-b07a-2d364e396815.jsonl",
+                "callEntry": "16a34601",
+                "resultEntry": "28a8f2df",
+                "payloadSha256": "f9272dc47d884e000ed666c5dadf5b24ddb19ea2b4d52bcb35c1a7c04f3138a9",
+                "evidenceTagSha256": "a2d4fd81727691c3836a7937d25a576442750f78af51f0cbaec02a54cf1bfaa9"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 16,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1794148193743,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1794148193744,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1794148193745,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_e30a37af8d670455782a49e1",
+        "taskId": "plan_1",
+        "attemptId": "4d29e533-c016-45bb-982d-10f629f9b17e",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1794148193746,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1794148193747,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1794148193767,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 7,
+      "at": 1794148194528,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 8,
+      "at": 1794148194683,
+      "childId": "child-289a8f5567c61705f7764813e4fdea11",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    },
+    {
+      "seq": 9,
+      "at": 1794148194689,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 10,
+      "at": 1794148194690,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 11,
+      "at": 1794148194690,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_e30a37af8d670455782a49e1",
+        "taskId": "plan_2",
+        "attemptId": "7a999aef-0ccc-4814-93c5-4ce7bf0101e5",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 12,
+      "at": 1794148194691,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 13,
+      "at": 1794148194692,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 14,
+      "at": 1794148194748,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 15,
+      "at": 1794148195329,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 16,
+      "at": 1794148195386,
+      "childId": "child-60f3160adf4bee62f2dbee65da3a4c66",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    }
+  ],
+  "budget": {
+    "revision": 4,
+    "limits": {},
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 160,
+    "unknownRuns": 2,
+    "active": [],
+    "startedAt": 1794148193745
+  }
+}

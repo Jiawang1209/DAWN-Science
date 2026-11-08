@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts tests/evaluation/research-usage.test.ts tests/evaluation/research-budget-300.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-budget-300.test.ts (6 tests | 1 failed) 5741ms
+   × rejects invalid explicit CLI caps before building a host or reading any credential 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-budget-300.test.ts > rejects invalid explicit CLI caps before building a host or reading any credential
+AssertionError: expected [Function] to throw error matching /用法/ but got 'ENOENT: no such file or directory, st…'
+
+- Expected:
+/用法/
+
++ Received:
+"ENOENT: no such file or directory, stat 'extra'"
+
+ ❯ tests/evaluation/research-budget-300.test.ts:74:103
+     72|  const {runCurrentApiResearch}=await import('../../scripts/research-cl…
+     73|  await expect(runCurrentApiResearch(['out','private-profile','p','m','…
+     74|  await expect(runCurrentApiResearch(['out','private-profile','p','m','…
+       |                                                                                                       ^
+     75| })
+     76|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 24 passed (25)
+   Start at  22:10:09
+   Duration  63.70s (transform 1.24s, setup 0ms, import 2.01s, tests 67.40s, environment 0ms)
+

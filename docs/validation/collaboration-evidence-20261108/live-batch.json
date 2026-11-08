@@ -1,0 +1,9 @@
+{
+  "taskIds": [
+    "short-known-mean",
+    "carbon-missing",
+    "unknown-unit"
+  ],
+  "repeats": 2,
+  "perArmLimit": 25
+}

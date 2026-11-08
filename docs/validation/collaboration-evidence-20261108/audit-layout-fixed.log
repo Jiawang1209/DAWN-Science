@@ -1,0 +1,53 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/task-arrangement-layout.spec.ts
+
+Running 1 test using 1 worker
+
+(node:57059) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60037/dc800baf-cf99-4b12-a995-9a839cde37f8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/task-arrangement-layout.spec.ts:10:1 › preserves long task identities and expanded paths in a narrow real Electron view (27.2s)
+
+
+  1) e2e/task-arrangement-layout.spec.ts:10:1 › preserves long task identities and expanded paths in a narrow real Electron view 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: getByRole('region', { name: '自动安排', exact: true }).getByRole('status', { name: '任务块数', exact: true })
+    Expected: "1 个任务块"
+    Timeout: 25000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveText" with timeout 25000ms
+      - waiting for getByRole('region', { name: '自动安排', exact: true }).getByRole('status', { name: '任务块数', exact: true })
+
+
+      15 |  await auto.getByRole('textbox',{name:'任务目标',exact:true}).fill('长路径布局验收：先提出单任务方案，等待我确认，不执行。')
+      16 |  await auto.getByRole('button',{name:'生成安排',exact:true}).click()
+    > 17 |  await expect(auto.getByRole('status',{name:'任务块数',exact:true})).toHaveText('1 个任务块')
+         |                                                                  ^
+      18 |  const card=auto.locator('[data-arrangement-task="summary"]')
+      19 |  await expect(card).toContainText(title)
+      20 |  await card.getByText('文件与验收条件',{exact:true}).click()
+        at /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/e2e/task-arrangement-layout.spec.ts:17:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/task-arrangement-layout.spec.ts:10:1 › preserves long task identities and expanded paths in a narrow real Electron view 

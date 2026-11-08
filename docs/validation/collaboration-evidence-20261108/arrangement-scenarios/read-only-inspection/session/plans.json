@@ -1,0 +1,12 @@
+{
+  "阶段": "planning",
+  "方案们": [
+    {
+      "planId": "call_mock_6",
+      "version": 1,
+      "title": "read-only-inspection",
+      "markdown": "## 问题与假设\n隔离规划场景\n## 数据与切分\n自制输入\n## 统计检验与模型\n只规划不执行\n## 图\n未执行\n## 产物\n等待采纳\n\n## 任务安排（自动安排）\n执行方式：单任务\n安排理由：本地夹具按此场景的明确输入、依赖和审阅要求安排，不代表真实模型规划质量。\n保留独立审阅：否\n执行绑定：team-v1\n\n### read · read\n- 目标：read\n- 分工：read\n- 输入：notes.md\n- 验收：声明输入、输出及证据必须可核对\n- 独立审阅：否\n- 执行者：scenario-worker\n- 执行契约：{\"submission\":\"tool\",\"resultType\":\"data-summary\",\"version\":1,\"inputs\":[\"notes.md\"],\"outputs\":[],\"access\":\"read-only\",\"requireExecution\":false,\"requireReview\":false}",
+      "status": "proposed"
+    }
+  ]
+}

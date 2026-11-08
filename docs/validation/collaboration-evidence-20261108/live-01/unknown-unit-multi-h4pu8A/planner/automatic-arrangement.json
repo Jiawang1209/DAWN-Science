@@ -1,0 +1,14 @@
+{
+  "mode": "model-generated",
+  "requests": 5,
+  "taskCount": 0,
+  "valid": false,
+  "reviewCovered": false,
+  "reason": "请先补齐待确认项，再更新并采纳任务安排",
+  "usage": {
+    "input": 81215,
+    "output": 8832,
+    "cacheRead": 14464
+  },
+  "compiled": false
+}

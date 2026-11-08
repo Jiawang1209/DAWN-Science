@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "owner": "research",
+  "planId": "research-pilot",
+  "planVersion": 1,
+  "markdownHash": "b6937c1b405b6ac78c636b88b3a008ccc09490b87d32f17ea8d977dee472528b",
+  "teamId": "plan_91004c535302385ed7fdeb41",
+  "externalInputs": [
+    {
+      "path": "input.csv",
+      "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+      "bytes": 805
+    }
+  ],
+  "tasks": [
+    {
+      "planTaskId": "A1",
+      "taskId": "plan_1",
+      "memberName": "member_1",
+      "review": false
+    },
+    {
+      "planTaskId": "A2",
+      "taskId": "plan_2",
+      "memberName": "member_2",
+      "review": true
+    }
+  ]
+}

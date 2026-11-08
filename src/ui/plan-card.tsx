@@ -97,7 +97,7 @@ export function 方案卡({
       </header>
       <h3 className="plan-card-title">{item.title}</h3>
 
-      <TaskArrangementView markdown={改??item.markdown}/>
+      <TaskArrangementView markdown={改??item.markdown} status={item.status}/>
       {arrangementIssue?<p role="alert" data-authored="1">{arrangementIssue}</p>:null}
       {改 !== undefined ? (
         <textarea

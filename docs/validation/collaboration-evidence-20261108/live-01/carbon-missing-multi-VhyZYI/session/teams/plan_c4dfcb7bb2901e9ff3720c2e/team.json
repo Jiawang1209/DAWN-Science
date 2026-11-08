@@ -1,0 +1,1032 @@
+{
+  "id": "plan_c4dfcb7bb2901e9ff3720c2e",
+  "name": "批准方案 · 第 1 版",
+  "goal": "执行已批准任务安排",
+  "captainSessionId": "research",
+  "createdAt": 1794154347888,
+  "members": [
+    {
+      "orchestrationId": "0ab4464d-d6dd-4d3a-bcfa-9efcbca0d09c",
+      "name": "member_1",
+      "agent": "check",
+      "role": "check（只读数据摘要，不产出文件）",
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_1",
+      "turns": 1,
+      "joinedAt": 1794154347888,
+      "frozenAgentDefinition": {
+        "name": "check",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测核查与分析共享最多 18 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准；另 7 次只留给独立审阅，不可借用。只做本阶段契约要求的工作，避免读取未生成产物或重复无关检查。必要证据齐备后及时提交；不足时如实阻塞，不能伪造结果。",
+        "filePath": "/check",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      },
+      "taskSettings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "data-summary",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      }
+    },
+    {
+      "orchestrationId": "6a6096a1-1147-4b95-be96-a83a4b937858",
+      "name": "member_2",
+      "agent": "analyze",
+      "role": "analyze（唯一写产物的执行任务，workspace-exec）",
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_2",
+      "turns": 1,
+      "joinedAt": 1794154347889,
+      "frozenAgentDefinition": {
+        "name": "analyze",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测核查与分析共享最多 18 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准；另 7 次只留给独立审阅，不可借用。只做本阶段契约要求的工作，避免读取未生成产物或重复无关检查。必要证据齐备后及时提交；不足时如实阻塞，不能伪造结果。",
+        "filePath": "/analyze",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      },
+      "taskSettings": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json",
+            "numeric": {
+              "version": 1,
+              "dataPath": "input.csv",
+              "column": "carbon_mg_g",
+              "metric": "mean",
+              "unit": "mg/g",
+              "missing": "drop",
+              "absoluteTolerance": 1e-9
+            }
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      }
+    },
+    {
+      "orchestrationId": "ce424840-8c85-46e3-96b4-f78df36c3538",
+      "name": "member_3",
+      "agent": "review",
+      "role": "review（独立只读审阅，与执行者分离）",
+      "provider": "dawn-evaluation-review",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_3",
+      "turns": 1,
+      "joinedAt": 1794154347889,
+      "frozenAgentDefinition": {
+        "name": "review",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测审阅独享最多 7 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准。先真实读取全部声明输入，尽可能并行读取，再基于证据正式提交。不得省略独立审阅或猜测 ID。",
+        "filePath": "/review",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      },
+      "taskSettings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+              "bytes": 8577
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+              "bytes": 54
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+              "bytes": 3521
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "contract": {
+        "submission": "tool",
+        "resultType": "data-summary",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      },
+      "id": "plan_1",
+      "subject": "只读核查输入结构、方法适用条件与证据缺口",
+      "description": "核对 input.csv 的列结构、行数、carbon_mg_g 解析性、缺失记号种类与计数、单位证据，判断 arithmetic mean + drop-NA 规则是否可无歧义执行；如存在单位冲突、NA 以外的空洞或需要填补才能计算的情形，明确记为 blockers，不猜测单位、不填补、不改数据。\n分工：check（只读数据摘要，不产出文件）\n验收条件：给出：列名与类型、数据行数、carbon_mg_g 有效值数/缺失数及缺失记号清单、rain_mm 是否含缺失（仅作记录，明确不参与筛选）、单位证据（列名后缀与声明 mg/g 是否一致）、是否存在非数值或非有限值、以及明确的 blockers 或 no-blockers 结论；不计算并提交正式均值，不写任何文件。\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：mg/g。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"carbon_mg_g\",\"metric\":\"mean\",\"unit\":\"mg/g\",\"missing\":\"drop\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n\n- 目标量：`input.csv` 中 `carbon_mg_g` 列的**算术均值**，单位 mg/g（用户已批准方法 arithmetic mean、单位规则 mg/g）。\n- 假设 H0/操作性假设：该列可解析为有限数值；`NA` 仅表示缺失，不代表 0 或低于检出限。因此按契约只丢弃目标列缺失行，**不填补**。\n- 数据独立性假设：每行（plot）为一个观测单元，一行一值，不做加权、不按 `rain_mm` 分层或筛选。这一点不额外检验（单变量均值不依赖行间独立性推断），但会在报告局限中说明。\n- 只读核查已确认的事实（来自实际读取 `input.csv` 全文 49 行含表头）：3 列 `site,carbon_mg_g,rain_mm`；48 个数据行；`carbon_mg_g` 中字面 `NA` 出现 7 次（plot-1、8、15、22、29、36、43），故预期有效样本 n = 41；`rain_mm` 无缺失但**全程不参与计算**。\n- 证据缺口（待核查步骤确认，不预设结论）：列名后缀 `_mg_g` 与声明单位 mg/g 是否一致、是否存在 `NA` 以外的缺失记号（空串、`NaN`、`null`）、是否存在非数值或非有限值。若出现与声明单位或缺失规则冲突的证据（例如列名指示其它量纲、存在需要填补才能计算的空洞），**记为 blockers 上报，不猜测单位、不填补、不改数据**。\n\n## 数据与切分\n\n- 唯一输入：`input.csv`（不下载、不合成、不追加任何外部数据；`site`、`rain_mm` 列原样保留在输入文件中，不删列、不改写、不另存清洗副本）。\n- 缺失处理：仅对 `carbon_mg_g` 列做删除式处理——将字面 `NA`（以及核查中确认的其它缺失记号）判为缺失并整行不参与均值计算；**禁止**按 `rain_mm` 过滤、禁止插补（均值/中位数/前向填充）、禁止截断或缩尾、禁止剔除离群值。\n- 不做训练/测试切分：这是单变量描述统计，无模型、无调参、无交叉验证。\n- 计算口径：算术平均 = 全部 n 个有效观测之和 / n，float64 精度；n 为有效观测数（预期 41，最终以脚本实际计数为准）。结果保留全部有效数字写入 `result.json`，报告中另给四舍五入展示值并注明精度。\n\n## 统计检验与模型\n\n- 不做假设检验、不拟合模型、不给置信区间作为主结论（避免把描述统计包装成推断）。仅计算点估计：算术均值。\n- 主结果：`mean(carbon_mg_g)`，单位 mg/g，n 与均值同时报告（n 是均值可解释性的必要条件）。\n- 附带描述量（仅写入报告，用于审计，不改变主结果）：有效 n、缺失计数、min、max、样本标准差（仅作量级核对，不作为结论）。\n- 复算一致性：脚本内同时用 `statistics.fmean` 与基于 `math.fsum` 的求和/计数两条路径各算一次，二者差值须 ≤1e-12 才写出结果，否则以失败退出（防止累加误差或解析错误被当成结果）。\n- 受控执行方式（按契约）：单一命令 `python3 -I results/analysis.py`，宿主绕过 shell 启动隔离解释器；脚本**不创建任何子进程**，不访问网络，不依赖第三方包（仅 `csv`、`json`、`math`、`statistics`、`pathlib`、`sys`）。脚本以工作区相对路径解析 `input.csv`，路径不可写死为绝对路径；输出写入 `results/` 下三个声明产物，不改动 `input.csv`。\n- `result.json` 结构（与宿主验收及正式 data.metrics/sampleCount 对齐）：平铺对象 `{\"n\": <正整数>, \"unit\": \"mg/g\", \"mean\": <有限数值>}`；键名即契约中的指标名 `mean`，三键之外不塞嵌套结构；数值必须是有限浮点（禁止 NaN/Infinity/null）。\n- 验收对应：`dataPath=input.csv`、`column=carbon_mg_g`、`metric=mean`、`unit=mg/g`、`missing=drop`、`absoluteTolerance=1e-9`——即宿主用同一输入、同一缺失规则独立重算均值并与 `result.json` 的 `mean` 比对，容差 1e-9。\n\n## 图\n\n- 不产出图形文件：本任务是单一标量点估计，图形不增加证据，且契约要求的产物只有脚本、结果、报告三项。\n- 报告内以 Markdown 表格替代图形：输入字段与类型、缺失计数（按列）、有效 n、均值（mg/g）、min/max/SD 量级、以及\"未使用 `rain_mm` 筛选\"的显式声明。\n- 如需可视化，仅可作可选附加项并在报告中标注为\"非结论性辅助图\"，本次不生成。\n\n## 产物\n\n- `results/analysis.py`\n- `results/result.json`\n- `results/report.md`\n\n## 执行安排\n\n- 三块任务，链式推进：核查（只读）→ 分析（唯一写产物的任务）→ 独立只读审阅（覆盖分析依赖），审阅必须与执行者分离。\n- 详述与验收见结构化安排：核查结论回传后若出现单位/缺失规则冲突，分析任务须上报 blockers 而不修改契约；审阅发现问题则回报主会话，不自行改文件。",
+      "status": "completed",
+      "assignee": "member_1",
+      "dependencies": [],
+      "outputs": [],
+      "attempt": 1,
+      "createdAt": 1794154347888,
+      "updatedAt": 1794154366764,
+      "settings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "data-summary",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      },
+      "attemptId": "42d189fe-7140-46df-a393-774a638684ff",
+      "output": "{\"data\":{\"kind\":\"data-summary\",\"rows\":48,\"columns\":[{\"name\":\"site\",\"type\":\"string\",\"unit\":\"n/a\"},{\"name\":\"carbon_mg_g\",\"type\":\"float (7 literal NA = missing)\",\"unit\":\"mg/g\"},{\"name\":\"rain_mm\",\"type\":\"integer\",\"unit\":\"mm\"}],\"issues\":[]},\"summary\":\"只读核查完成（未计算/提交均值，未写任何文件）。input.csv 全文 49 行含表头 = 3 列 + 48 数据行，纯文本 CSV，无引号/无内嵌逗号/无 BOM 异常。\\n\\n列名与类型：\\n- site：字符串 ID（plot-1…plot-48，连续无重复）\\n- carbon_mg_g：浮点数值（含字面缺失记号 NA）\\n- rain_mm：整数（300–817，步长 11）\\n\\ncarbon_mg_g 解析性：48 个数据行中 41 个可解析为有限浮点（如 13.7、15、13、12），全部落在 [12, 15.6] 区间，无科学计数、无千分位、无空白包裹、无非有限值（未出现 NaN/Infinity）。缺失 7 个，缺失记号清单只有一种：「NA」（大写、无引号、无空格），位置 plot-1、8、15、22、29、36、43（等间隔，每 7 行一个）。无空串、无 null、无 -999 等其它占位符。\\n\\nrain_mm：48 行全部有值，无缺失（仅记录；按契约不参与筛选/分层/填补，本阶段也未用它做任何过滤）。\\n\\n单位证据：carbon_mg_g 的列名后缀 `_mg_g` 与声明单位 mg/g 一致（mg/g ≡ mg·g⁻¹），无冲突线索；rain_mm 后缀 mm 与降水量量纲相符。单位唯一证据来源是列名后缀，文件内没有独立单位声明行/元数据——只说明依据，不构成冲突。\\n\\n非数值/非有限值：无。\\n\\n方法可执行性：arithmetic mean + drop-NA-in-target-column-only 可无歧义执行——目标列只需区分「41 个有限数值」与「7 个字面 NA」，不存在需要填补才能计算的情形，也无需读取 rain_mm。预期有效 n = 41（最终以 analysis 脚本实计数为准）。\\n\\n结论：no blockers。未发现单位冲突、NA 以外的空洞、非数值/非有限值；未猜测单位、未填补、未改动数据。\\n\\n信息性提示（不阻塞，供 analysis/review 留意）：\\n1) 单位仅有列名后缀一处证据，报告应写明单位依据是列名约定而非文件内声明。\\n2) 缺失呈严格等间隔（每 7 行一次），属数据结构事实；本阶段不推断缺失机制，只按契约删除，可在报告局限中提及。\\n3) 有效值域窄（12–15.6），无明显离群；按契约不得缩尾/剔除，本阶段也未做。\\n4) NA 只代表缺失，不等于 0 或低于检出限，已作为方法前提。\\n本阶段无文件产物、无执行脚本，故 deliverables 为空、execution=not_run。\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"核查任务为纯只读数据摘要（requireExecution=false）；未运行脚本、未创建子进程、未写文件。\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"已用 read 逐行读取 input.csv 全文（49 行含表头，读取上限 60 行，无截断标记，truncatedFields 为空），据此统计列结构、行数、缺失记号与单位证据。\",\"toolCallIds\":[\"call_00_ET_qIQ2nuKKwxFZg3H5FzJJ6876\"]}}",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "只读核查完成（未计算/提交均值，未写任何文件）。input.csv 全文 49 行含表头 = 3 列 + 48 数据行，纯文本 CSV，无引号/无内嵌逗号/无 BOM 异常。\n\n列名与类型：\n- site：字符串 ID（plot-1…plot-48，连续无重复）\n- carbon_mg_g：浮点数值（含字面缺失记号 NA）\n- rain_mm：整数（300–817，步长 11）\n\ncarbon_mg_g 解析性：48 个数据行中 41 个可解析为有限浮点（如 13.7、15、13、12），全部落在 [12, 15.6] 区间，无科学计数、无千分位、无空白包裹、无非有限值（未出现 NaN/Infinity）。缺失 7 个，缺失记号清单只有一种：「NA」（大写、无引号、无空格），位置 plot-1、8、15、22、29、36、43（等间隔，每 7 行一个）。无空串、无 null、无 -999 等其它占位符。\n\nrain_mm：48 行全部有值，无缺失（仅记录；按契约不参与筛选/分层/填补，本阶段也未用它做任何过滤）。\n\n单位证据：carbon_mg_g 的列名后缀 `_mg_g` 与声明单位 mg/g 一致（mg/g ≡ mg·g⁻¹），无冲突线索；rain_mm 后缀 mm 与降水量量纲相符。单位唯一证据来源是列名后缀，文件内没有独立单位声明行/元数据——只说明依据，不构成冲突。\n\n非数值/非有限值：无。\n\n方法可执行性：arithmetic mean + drop-NA-in-target-column-only 可无歧义执行——目标列只需区分「41 个有限数值」与「7 个字面 NA」，不存在需要填补才能计算的情形，也无需读取 rain_mm。预期有效 n = 41（最终以 analysis 脚本实计数为准）。\n\n结论：no blockers。未发现单位冲突、NA 以外的空洞、非数值/非有限值；未猜测单位、未填补、未改动数据。\n\n信息性提示（不阻塞，供 analysis/review 留意）：\n1) 单位仅有列名后缀一处证据，报告应写明单位依据是列名约定而非文件内声明。\n2) 缺失呈严格等间隔（每 7 行一次），属数据结构事实；本阶段不推断缺失机制，只按契约删除，可在报告局限中提及。\n3) 有效值域窄（12–15.6），无明显离群；按契约不得缩尾/剔除，本阶段也未做。\n4) NA 只代表缺失，不等于 0 或低于检出限，已作为方法前提。\n本阶段无文件产物、无执行脚本，故 deliverables 为空、execution=not_run。",
+        "result": {
+          "data": {
+            "kind": "data-summary",
+            "rows": 48,
+            "columns": [
+              {
+                "name": "site",
+                "type": "string",
+                "unit": "n/a"
+              },
+              {
+                "name": "carbon_mg_g",
+                "type": "float (7 literal NA = missing)",
+                "unit": "mg/g"
+              },
+              {
+                "name": "rain_mm",
+                "type": "integer",
+                "unit": "mm"
+              }
+            ],
+            "issues": []
+          },
+          "summary": "只读核查完成（未计算/提交均值，未写任何文件）。input.csv 全文 49 行含表头 = 3 列 + 48 数据行，纯文本 CSV，无引号/无内嵌逗号/无 BOM 异常。\n\n列名与类型：\n- site：字符串 ID（plot-1…plot-48，连续无重复）\n- carbon_mg_g：浮点数值（含字面缺失记号 NA）\n- rain_mm：整数（300–817，步长 11）\n\ncarbon_mg_g 解析性：48 个数据行中 41 个可解析为有限浮点（如 13.7、15、13、12），全部落在 [12, 15.6] 区间，无科学计数、无千分位、无空白包裹、无非有限值（未出现 NaN/Infinity）。缺失 7 个，缺失记号清单只有一种：「NA」（大写、无引号、无空格），位置 plot-1、8、15、22、29、36、43（等间隔，每 7 行一个）。无空串、无 null、无 -999 等其它占位符。\n\nrain_mm：48 行全部有值，无缺失（仅记录；按契约不参与筛选/分层/填补，本阶段也未用它做任何过滤）。\n\n单位证据：carbon_mg_g 的列名后缀 `_mg_g` 与声明单位 mg/g 一致（mg/g ≡ mg·g⁻¹），无冲突线索；rain_mm 后缀 mm 与降水量量纲相符。单位唯一证据来源是列名后缀，文件内没有独立单位声明行/元数据——只说明依据，不构成冲突。\n\n非数值/非有限值：无。\n\n方法可执行性：arithmetic mean + drop-NA-in-target-column-only 可无歧义执行——目标列只需区分「41 个有限数值」与「7 个字面 NA」，不存在需要填补才能计算的情形，也无需读取 rain_mm。预期有效 n = 41（最终以 analysis 脚本实计数为准）。\n\n结论：no blockers。未发现单位冲突、NA 以外的空洞、非数值/非有限值；未猜测单位、未填补、未改动数据。\n\n信息性提示（不阻塞，供 analysis/review 留意）：\n1) 单位仅有列名后缀一处证据，报告应写明单位依据是列名约定而非文件内声明。\n2) 缺失呈严格等间隔（每 7 行一次），属数据结构事实；本阶段不推断缺失机制，只按契约删除，可在报告局限中提及。\n3) 有效值域窄（12–15.6），无明显离群；按契约不得缩尾/剔除，本阶段也未做。\n4) NA 只代表缺失，不等于 0 或低于检出限，已作为方法前提。\n本阶段无文件产物、无执行脚本，故 deliverables 为空、execution=not_run。",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "核查任务为纯只读数据摘要（requireExecution=false）；未运行脚本、未创建子进程、未写文件。"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "已用 read 逐行读取 input.csv 全文（49 行含表头，读取上限 60 行，无截断标记，truncatedFields 为空），据此统计列结构、行数、缺失记号与单位证据。",
+            "toolCallIds": [
+              "call_00_ET_qIQ2nuKKwxFZg3H5FzJJ6876"
+            ]
+          }
+        },
+        "deliverables": []
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_00_ET_qIQ2nuKKwxFZg3H5FzJJ6876",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "input.csv",
+            "transcriptRef": {
+              "file": "2026-11-08T16-12-28-319Z_01a1bbee-bf1e-743e-978c-abe35f728ab9.jsonl",
+              "callEntry": "ed5ca1d5",
+              "resultEntry": "207be54e",
+              "payloadSha256": "02a33f72dcb14774c20a13ece4e74aa6ed8581beaa3a3e8f7072e2b6efbc4b13",
+              "evidenceTagSha256": "d048e6bb36a544d03a25093899dac794f5af25c769fb96d99369b40ca0db9126"
+            }
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 18433,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 23207,
+          "output": 2949,
+          "cacheRead": 13056,
+          "partial": [
+            "cacheRead"
+          ]
+        }
+      }
+    },
+    {
+      "contract": {
+        "acceptance": {
+          "version": 1,
+          "kind": "tabular-ecology",
+          "scriptPath": "results/analysis.py",
+          "reportPath": "results/report.md",
+          "resultPath": "results/result.json",
+          "numeric": {
+            "version": 1,
+            "dataPath": "input.csv",
+            "column": "carbon_mg_g",
+            "metric": "mean",
+            "unit": "mg/g",
+            "missing": "drop",
+            "absoluteTolerance": 1e-9
+          }
+        },
+        "submission": "tool",
+        "resultType": "model-metrics",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [
+          "results/analysis.py",
+          "results/result.json",
+          "results/report.md"
+        ],
+        "access": "workspace-exec",
+        "requireExecution": true,
+        "requireReview": false
+      },
+      "id": "plan_2",
+      "subject": "执行算术均值并交付脚本、result.json 与报告",
+      "description": "在核查无阻塞前提下手写纯 Python stdlib 脚本 results/analysis.py，仅丢弃 carbon_mg_g 缺失行，计算算术均值（mg/g），写出 results/result.json 与 results/report.md；保留 input.csv 原样不改。\n分工：analyze（唯一写产物的执行任务，workspace-exec）\n验收条件：以单一命令 python3 -I results/analysis.py 可确定性复现；脚本不创建子进程、不联网、不依赖第三方包、不硬编码绝对路径；result.json 为平铺对象 {n:正整数, unit:\"mg/g\", mean:有限数值} 且与正式 data.metrics/sampleCount 一致；n 等于 carbon_mg_g 非缺失计数；未按 rain_mm 筛选、未填补、未改输入；报告含输入、处理步骤、结果与局限（含 NA 机制未检验、rain_mm 未使用、单位依据为列名与用户规则）。\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：mg/g。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"carbon_mg_g\",\"metric\":\"mean\",\"unit\":\"mg/g\",\"missing\":\"drop\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n\n- 目标量：`input.csv` 中 `carbon_mg_g` 列的**算术均值**，单位 mg/g（用户已批准方法 arithmetic mean、单位规则 mg/g）。\n- 假设 H0/操作性假设：该列可解析为有限数值；`NA` 仅表示缺失，不代表 0 或低于检出限。因此按契约只丢弃目标列缺失行，**不填补**。\n- 数据独立性假设：每行（plot）为一个观测单元，一行一值，不做加权、不按 `rain_mm` 分层或筛选。这一点不额外检验（单变量均值不依赖行间独立性推断），但会在报告局限中说明。\n- 只读核查已确认的事实（来自实际读取 `input.csv` 全文 49 行含表头）：3 列 `site,carbon_mg_g,rain_mm`；48 个数据行；`carbon_mg_g` 中字面 `NA` 出现 7 次（plot-1、8、15、22、29、36、43），故预期有效样本 n = 41；`rain_mm` 无缺失但**全程不参与计算**。\n- 证据缺口（待核查步骤确认，不预设结论）：列名后缀 `_mg_g` 与声明单位 mg/g 是否一致、是否存在 `NA` 以外的缺失记号（空串、`NaN`、`null`）、是否存在非数值或非有限值。若出现与声明单位或缺失规则冲突的证据（例如列名指示其它量纲、存在需要填补才能计算的空洞），**记为 blockers 上报，不猜测单位、不填补、不改数据**。\n\n## 数据与切分\n\n- 唯一输入：`input.csv`（不下载、不合成、不追加任何外部数据；`site`、`rain_mm` 列原样保留在输入文件中，不删列、不改写、不另存清洗副本）。\n- 缺失处理：仅对 `carbon_mg_g` 列做删除式处理——将字面 `NA`（以及核查中确认的其它缺失记号）判为缺失并整行不参与均值计算；**禁止**按 `rain_mm` 过滤、禁止插补（均值/中位数/前向填充）、禁止截断或缩尾、禁止剔除离群值。\n- 不做训练/测试切分：这是单变量描述统计，无模型、无调参、无交叉验证。\n- 计算口径：算术平均 = 全部 n 个有效观测之和 / n，float64 精度；n 为有效观测数（预期 41，最终以脚本实际计数为准）。结果保留全部有效数字写入 `result.json`，报告中另给四舍五入展示值并注明精度。\n\n## 统计检验与模型\n\n- 不做假设检验、不拟合模型、不给置信区间作为主结论（避免把描述统计包装成推断）。仅计算点估计：算术均值。\n- 主结果：`mean(carbon_mg_g)`，单位 mg/g，n 与均值同时报告（n 是均值可解释性的必要条件）。\n- 附带描述量（仅写入报告，用于审计，不改变主结果）：有效 n、缺失计数、min、max、样本标准差（仅作量级核对，不作为结论）。\n- 复算一致性：脚本内同时用 `statistics.fmean` 与基于 `math.fsum` 的求和/计数两条路径各算一次，二者差值须 ≤1e-12 才写出结果，否则以失败退出（防止累加误差或解析错误被当成结果）。\n- 受控执行方式（按契约）：单一命令 `python3 -I results/analysis.py`，宿主绕过 shell 启动隔离解释器；脚本**不创建任何子进程**，不访问网络，不依赖第三方包（仅 `csv`、`json`、`math`、`statistics`、`pathlib`、`sys`）。脚本以工作区相对路径解析 `input.csv`，路径不可写死为绝对路径；输出写入 `results/` 下三个声明产物，不改动 `input.csv`。\n- `result.json` 结构（与宿主验收及正式 data.metrics/sampleCount 对齐）：平铺对象 `{\"n\": <正整数>, \"unit\": \"mg/g\", \"mean\": <有限数值>}`；键名即契约中的指标名 `mean`，三键之外不塞嵌套结构；数值必须是有限浮点（禁止 NaN/Infinity/null）。\n- 验收对应：`dataPath=input.csv`、`column=carbon_mg_g`、`metric=mean`、`unit=mg/g`、`missing=drop`、`absoluteTolerance=1e-9`——即宿主用同一输入、同一缺失规则独立重算均值并与 `result.json` 的 `mean` 比对，容差 1e-9。\n\n## 图\n\n- 不产出图形文件：本任务是单一标量点估计，图形不增加证据，且契约要求的产物只有脚本、结果、报告三项。\n- 报告内以 Markdown 表格替代图形：输入字段与类型、缺失计数（按列）、有效 n、均值（mg/g）、min/max/SD 量级、以及\"未使用 `rain_mm` 筛选\"的显式声明。\n- 如需可视化，仅可作可选附加项并在报告中标注为\"非结论性辅助图\"，本次不生成。\n\n## 产物\n\n- `results/analysis.py`\n- `results/result.json`\n- `results/report.md`\n\n## 执行安排\n\n- 三块任务，链式推进：核查（只读）→ 分析（唯一写产物的任务）→ 独立只读审阅（覆盖分析依赖），审阅必须与执行者分离。\n- 详述与验收见结构化安排：核查结论回传后若出现单位/缺失规则冲突，分析任务须上报 blockers 而不修改契约；审阅发现问题则回报主会话，不自行改文件。",
+      "status": "completed",
+      "assignee": "member_2",
+      "dependencies": [
+        "plan_1"
+      ],
+      "outputs": [
+        "results/analysis.py",
+        "results/result.json",
+        "results/report.md"
+      ],
+      "attempt": 1,
+      "createdAt": 1794154347889,
+      "updatedAt": 1794154401624,
+      "settings": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json",
+            "numeric": {
+              "version": 1,
+              "dataPath": "input.csv",
+              "column": "carbon_mg_g",
+              "metric": "mean",
+              "unit": "mg/g",
+              "missing": "drop",
+              "absoluteTolerance": 1e-9
+            }
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        }
+      },
+      "attemptId": "91e52b92-1e82-46e8-aa69-26fc4b93a2ad",
+      "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"arithmetic mean of carbon_mg_g with drop-NA-in-target-column-only (no imputation, no rain_mm filtering, no trimming)\",\"metrics\":{\"mean\":13.870731707317074},\"sampleCount\":41,\"caveats\":[\"单位依据仅为列名后缀 _mg_g 与用户规则，文件内无独立单位声明。\",\"NA 仅按缺失处理，缺失机制未检验；NA 不等同 0 或低于检出限。\",\"rain_mm 未参与任何筛选、分层、加权或填补。\",\"单变量描述统计点估计，无假设检验/置信区间/模型拟合。\",\"每行(plot)视为一个观测，未加权；未做离群值剔除或缩尾。\"]},\"summary\":\"已按批准方法完成 carbon_mg_g 算术均值并交付三个产物。脚本 results/analysis.py（纯标准库 csv/json/math/statistics/pathlib/sys，无子进程、无网络、无第三方包、无绝对路径）在单一命令 `python3 -I results/analysis.py` 下运行成功（exit=0），仅丢弃目标列 7 个字面 NA、保留 41 个有效观测，不按 rain_mm 筛选、不填补、不改输入。结果：n=41，unit=mg/g，mean=13.870731707317074（写入 results/result.json 平铺对象）。双路径复算一致（math.fsum/n 与 statistics.fmean 差值 0.0 ≤ 1e-12），与独立 awk/Python 复算值一致；脚本重跑两次 result.json 与 report.md 哈希完全相同（确定性）。input.csv md5 运行前后均为 f52b2973126650e695569e0fdd961e03（未改动）。报告含输入、处理步骤、结果与局限（NA 机制未检验、rain_mm 未使用、单位依据仅列名后缀+用户规则、NA≠0/检出限、描述统计非推断）。上游 plan_1 核查为 no blockers，本次未发现单位/缺失规则冲突。\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/analysis.py\",\"note\":\"纯 stdlib 脚本；只读 input.csv，drop-NA-in-target-only，写 result.json 与 report.md\"},{\"path\":\"results/result.json\",\"note\":\"{\\\"n\\\": 41, \\\"unit\\\": \\\"mg/g\\\", \\\"mean\\\": 13.870731707317074}\"},{\"path\":\"results/report.md\",\"note\":\"输入、处理步骤、结果（含 min/max/SD 审计量）、局限与复现命令\"}],\"execution\":{\"state\":\"completed\",\"note\":\"在工作区根目录以单一命令 `python3 -I results/analysis.py` 实际运行成功（exit=0）：rows=48 valid_n=41 missing=7 mean=13.870731707317074；随后独立复算并重跑确认确定性（两个产物哈希一致）、input.csv md5 未变、静态扫描无 subprocess/socket/绝对路径。\",\"toolCallIds\":[\"call_00_wVV8Hui2a5vIZxHbeaZ18393\",\"call_00_ixR3EKdnM75QHKPGQJ7u2380\"]},\"verification\":{\"state\":\"reviewed\",\"note\":\"读取了生成的 results/report.md 全文核对其输入/步骤/结果/局限表述；并核对 result.json 内容为平铺 {n,unit,mean}、与脚本输出一致，且与独立重算的 41 值均值一致。\",\"toolCallIds\":[\"call_00_8OrvsXRv7du8yNg1eQ6y8097\",\"call_00_ixR3EKdnM75QHKPGQJ7u2380\"]}}",
+      "receipt": {
+        "acceptance": {
+          "version": 1,
+          "ruleVersion": 1,
+          "specHash": "beecf73f240534ba278d043761fbe98b9a554709f18f2e650d3eea3e212d50df",
+          "state": "passed",
+          "numericChecked": true,
+          "checks": [
+            {
+              "id": "script.nonempty",
+              "state": "passed",
+              "expected": "非空脚本",
+              "actual": "非空"
+            },
+            {
+              "id": "report.nonempty",
+              "state": "passed",
+              "expected": "非空报告",
+              "actual": "非空"
+            },
+            {
+              "id": "result.sample-count",
+              "state": "passed",
+              "expected": "正整数 n",
+              "actual": "41"
+            },
+            {
+              "id": "result.unit",
+              "state": "passed",
+              "expected": "非空单位（无量纲可写 1）",
+              "actual": "mg/g"
+            },
+            {
+              "id": "result.declared-metric.mean",
+              "state": "passed",
+              "expected": "13.870731707317074",
+              "actual": "13.870731707317074"
+            },
+            {
+              "id": "result.declared-sample-count",
+              "state": "passed",
+              "expected": "41",
+              "actual": "41"
+            },
+            {
+              "id": "result.finite.mean",
+              "state": "passed",
+              "expected": "有限数值",
+              "actual": "13.870731707317074"
+            },
+            {
+              "id": "numeric.sample-count",
+              "state": "passed",
+              "expected": "41",
+              "actual": "41"
+            },
+            {
+              "id": "numeric.unit",
+              "state": "passed",
+              "expected": "mg/g",
+              "actual": "mg/g"
+            },
+            {
+              "id": "numeric.mean",
+              "state": "passed",
+              "expected": "13.870731707317074",
+              "actual": "13.870731707317074"
+            },
+            {
+              "id": "numeric.declared-mean",
+              "state": "passed",
+              "expected": "13.870731707317074",
+              "actual": "13.870731707317074"
+            }
+          ],
+          "files": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+              "bytes": 8577
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+              "bytes": 3521
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+              "bytes": 54
+            },
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+              "bytes": 810
+            }
+          ],
+          "outputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+              "bytes": 8577
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+              "bytes": 54
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+              "bytes": 3521
+            }
+          ]
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "已按批准方法完成 carbon_mg_g 算术均值并交付三个产物。脚本 results/analysis.py（纯标准库 csv/json/math/statistics/pathlib/sys，无子进程、无网络、无第三方包、无绝对路径）在单一命令 `python3 -I results/analysis.py` 下运行成功（exit=0），仅丢弃目标列 7 个字面 NA、保留 41 个有效观测，不按 rain_mm 筛选、不填补、不改输入。结果：n=41，unit=mg/g，mean=13.870731707317074（写入 results/result.json 平铺对象）。双路径复算一致（math.fsum/n 与 statistics.fmean 差值 0.0 ≤ 1e-12），与独立 awk/Python 复算值一致；脚本重跑两次 result.json 与 report.md 哈希完全相同（确定性）。input.csv md5 运行前后均为 f52b2973126650e695569e0fdd961e03（未改动）。报告含输入、处理步骤、结果与局限（NA 机制未检验、rain_mm 未使用、单位依据仅列名后缀+用户规则、NA≠0/检出限、描述统计非推断）。上游 plan_1 核查为 no blockers，本次未发现单位/缺失规则冲突。",
+        "result": {
+          "data": {
+            "kind": "model-metrics",
+            "method": "arithmetic mean of carbon_mg_g with drop-NA-in-target-column-only (no imputation, no rain_mm filtering, no trimming)",
+            "metrics": {
+              "mean": 13.870731707317074
+            },
+            "sampleCount": 41,
+            "caveats": [
+              "单位依据仅为列名后缀 _mg_g 与用户规则，文件内无独立单位声明。",
+              "NA 仅按缺失处理，缺失机制未检验；NA 不等同 0 或低于检出限。",
+              "rain_mm 未参与任何筛选、分层、加权或填补。",
+              "单变量描述统计点估计，无假设检验/置信区间/模型拟合。",
+              "每行(plot)视为一个观测，未加权；未做离群值剔除或缩尾。"
+            ]
+          },
+          "summary": "已按批准方法完成 carbon_mg_g 算术均值并交付三个产物。脚本 results/analysis.py（纯标准库 csv/json/math/statistics/pathlib/sys，无子进程、无网络、无第三方包、无绝对路径）在单一命令 `python3 -I results/analysis.py` 下运行成功（exit=0），仅丢弃目标列 7 个字面 NA、保留 41 个有效观测，不按 rain_mm 筛选、不填补、不改输入。结果：n=41，unit=mg/g，mean=13.870731707317074（写入 results/result.json 平铺对象）。双路径复算一致（math.fsum/n 与 statistics.fmean 差值 0.0 ≤ 1e-12），与独立 awk/Python 复算值一致；脚本重跑两次 result.json 与 report.md 哈希完全相同（确定性）。input.csv md5 运行前后均为 f52b2973126650e695569e0fdd961e03（未改动）。报告含输入、处理步骤、结果与局限（NA 机制未检验、rain_mm 未使用、单位依据仅列名后缀+用户规则、NA≠0/检出限、描述统计非推断）。上游 plan_1 核查为 no blockers，本次未发现单位/缺失规则冲突。",
+          "blockers": [],
+          "deliverables": [
+            {
+              "path": "results/analysis.py",
+              "note": "纯 stdlib 脚本；只读 input.csv，drop-NA-in-target-only，写 result.json 与 report.md"
+            },
+            {
+              "path": "results/result.json",
+              "note": "{\"n\": 41, \"unit\": \"mg/g\", \"mean\": 13.870731707317074}"
+            },
+            {
+              "path": "results/report.md",
+              "note": "输入、处理步骤、结果（含 min/max/SD 审计量）、局限与复现命令"
+            }
+          ],
+          "execution": {
+            "state": "completed",
+            "note": "在工作区根目录以单一命令 `python3 -I results/analysis.py` 实际运行成功（exit=0）：rows=48 valid_n=41 missing=7 mean=13.870731707317074；随后独立复算并重跑确认确定性（两个产物哈希一致）、input.csv md5 未变、静态扫描无 subprocess/socket/绝对路径。",
+            "toolCallIds": [
+              "call_00_wVV8Hui2a5vIZxHbeaZ18393",
+              "call_00_ixR3EKdnM75QHKPGQJ7u2380"
+            ]
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "读取了生成的 results/report.md 全文核对其输入/步骤/结果/局限表述；并核对 result.json 内容为平铺 {n,unit,mean}、与脚本输出一致，且与独立重算的 41 值均值一致。",
+            "toolCallIds": [
+              "call_00_8OrvsXRv7du8yNg1eQ6y8097",
+              "call_00_ixR3EKdnM75QHKPGQJ7u2380"
+            ]
+          }
+        },
+        "deliverables": [
+          {
+            "stepId": "task",
+            "path": "results/analysis.py",
+            "state": "observed"
+          },
+          {
+            "stepId": "task",
+            "path": "results/result.json",
+            "state": "exists"
+          },
+          {
+            "stepId": "task",
+            "path": "results/report.md",
+            "state": "exists"
+          }
+        ]
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_00_ET_gz8zRAAo54XuNHQfjpVF9876",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+              "callEntry": "1e0fda85",
+              "resultEntry": "a150eb60",
+              "payloadSha256": "584e65f90d64f3e7826a1339720e47eaf6351643ff695dc64d4d8b8d810e42bd",
+              "evidenceTagSha256": "0669d838ab98d30ce59aa6ea8aeed452608581c4d1721fef693ae6ddd4cfaa6c"
+            }
+          },
+          {
+            "toolCallId": "call_00_h5z6vlOlu5K66L08NouW8725",
+            "name": "write",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "/Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/docs/validation/collaboration-evidence-20261108/live-01/carbon-missing-multi-VhyZYI/results/analysis.py",
+            "transcriptRef": {
+              "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+              "callEntry": "4f5e33c8",
+              "resultEntry": "ce613325",
+              "payloadSha256": "c2f73f29516d34a3362a67aeb62996c50c397a06ef1e3dc212fc14703a55c3c6",
+              "evidenceTagSha256": "3dfad7739111910aa3ff93272c828b4d39f66559f9b9d51cf89d2e7b9e806e20"
+            }
+          },
+          {
+            "toolCallId": "call_00_wVV8Hui2a5vIZxHbeaZ18393",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+              "callEntry": "f3b23c9d",
+              "resultEntry": "ae0cd760",
+              "payloadSha256": "6813208a0d6fa69497af12ace1ada20ae8ee5ec64dc29b5b06df204353a37a09",
+              "evidenceTagSha256": "08c014296f0ad04d48dc5bb48607c1ee5533b2a8d8542659ec8ea02829757b1b"
+            }
+          },
+          {
+            "toolCallId": "call_00_ixR3EKdnM75QHKPGQJ7u2380",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+              "callEntry": "f074f377",
+              "resultEntry": "68c8a8c4",
+              "payloadSha256": "e968ce119ca7047b9fe4e9900a7b25deb3b182cce4703efe4d6da8f0e71b04eb",
+              "evidenceTagSha256": "7b3cda5d8c8082a74657acc51eabe14598fa5b3a3986675dbb08c9c9064daa0c"
+            }
+          },
+          {
+            "toolCallId": "call_00_8OrvsXRv7du8yNg1eQ6y8097",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "/Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/docs/validation/collaboration-evidence-20261108/live-01/carbon-missing-multi-VhyZYI/results/report.md",
+            "transcriptRef": {
+              "file": "2026-11-08T16-12-47-197Z_01a1bbef-08dc-76b0-8261-cd8ff4f7326a.jsonl",
+              "callEntry": "d422a1ff",
+              "resultEntry": "11c693dc",
+              "payloadSha256": "45f0f6304fc859aa148e7ba2a78627144ef0e1088f5d91a33f34c70cf1241b4c",
+              "evidenceTagSha256": "ae40a6f8a8819d011f1ae95c17d5a9d87df1e995cd06af77327ec934107caac8"
+            }
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 34317,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 64420,
+          "output": 5665,
+          "cacheRead": 32640,
+          "partial": [
+            "cacheRead"
+          ]
+        }
+      }
+    },
+    {
+      "contract": {
+        "submission": "tool",
+        "resultType": "review",
+        "version": 1,
+        "inputs": [
+          "results/analysis.py",
+          "results/result.json",
+          "results/report.md"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      },
+      "id": "plan_3",
+      "subject": "独立只读审阅实际文件、方法一致性与分析依赖",
+      "description": "逐字读取 results/analysis.py、results/result.json、results/report.md，核对：方法确为算术均值、仅丢 carbon_mg_g 缺失且未按 rain_mm 筛选、未填补、单位与声明一致、n 与缺失规则自洽、脚本可复现且未越权（无子进程/网络/第三方包/绝对路径）、报告与结果文件一致并如实列出局限；同时核查分析依赖（输入、执行方式、验收参数）是否被正确声明与满足。不写入任何文件，不改结果。\n分工：review（独立只读审阅，与执行者分离）\n验收条件：逐项给出 pass/fail 与文件内证据位置；对每个 fail 写明问题、影响与修复建议（交主会话决定，不自行修改）；结论须覆盖方法一致性、缺失规则、单位、n 与均值一致性、脚本可复现性与执行边界、报告完整性与局限；不产出任何文件。\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：mg/g。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\",\"numeric\":{\"version\":1,\"dataPath\":\"input.csv\",\"column\":\"carbon_mg_g\",\"metric\":\"mean\",\"unit\":\"mg/g\",\"missing\":\"drop\",\"absoluteTolerance\":1e-9}}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n\n- 目标量：`input.csv` 中 `carbon_mg_g` 列的**算术均值**，单位 mg/g（用户已批准方法 arithmetic mean、单位规则 mg/g）。\n- 假设 H0/操作性假设：该列可解析为有限数值；`NA` 仅表示缺失，不代表 0 或低于检出限。因此按契约只丢弃目标列缺失行，**不填补**。\n- 数据独立性假设：每行（plot）为一个观测单元，一行一值，不做加权、不按 `rain_mm` 分层或筛选。这一点不额外检验（单变量均值不依赖行间独立性推断），但会在报告局限中说明。\n- 只读核查已确认的事实（来自实际读取 `input.csv` 全文 49 行含表头）：3 列 `site,carbon_mg_g,rain_mm`；48 个数据行；`carbon_mg_g` 中字面 `NA` 出现 7 次（plot-1、8、15、22、29、36、43），故预期有效样本 n = 41；`rain_mm` 无缺失但**全程不参与计算**。\n- 证据缺口（待核查步骤确认，不预设结论）：列名后缀 `_mg_g` 与声明单位 mg/g 是否一致、是否存在 `NA` 以外的缺失记号（空串、`NaN`、`null`）、是否存在非数值或非有限值。若出现与声明单位或缺失规则冲突的证据（例如列名指示其它量纲、存在需要填补才能计算的空洞），**记为 blockers 上报，不猜测单位、不填补、不改数据**。\n\n## 数据与切分\n\n- 唯一输入：`input.csv`（不下载、不合成、不追加任何外部数据；`site`、`rain_mm` 列原样保留在输入文件中，不删列、不改写、不另存清洗副本）。\n- 缺失处理：仅对 `carbon_mg_g` 列做删除式处理——将字面 `NA`（以及核查中确认的其它缺失记号）判为缺失并整行不参与均值计算；**禁止**按 `rain_mm` 过滤、禁止插补（均值/中位数/前向填充）、禁止截断或缩尾、禁止剔除离群值。\n- 不做训练/测试切分：这是单变量描述统计，无模型、无调参、无交叉验证。\n- 计算口径：算术平均 = 全部 n 个有效观测之和 / n，float64 精度；n 为有效观测数（预期 41，最终以脚本实际计数为准）。结果保留全部有效数字写入 `result.json`，报告中另给四舍五入展示值并注明精度。\n\n## 统计检验与模型\n\n- 不做假设检验、不拟合模型、不给置信区间作为主结论（避免把描述统计包装成推断）。仅计算点估计：算术均值。\n- 主结果：`mean(carbon_mg_g)`，单位 mg/g，n 与均值同时报告（n 是均值可解释性的必要条件）。\n- 附带描述量（仅写入报告，用于审计，不改变主结果）：有效 n、缺失计数、min、max、样本标准差（仅作量级核对，不作为结论）。\n- 复算一致性：脚本内同时用 `statistics.fmean` 与基于 `math.fsum` 的求和/计数两条路径各算一次，二者差值须 ≤1e-12 才写出结果，否则以失败退出（防止累加误差或解析错误被当成结果）。\n- 受控执行方式（按契约）：单一命令 `python3 -I results/analysis.py`，宿主绕过 shell 启动隔离解释器；脚本**不创建任何子进程**，不访问网络，不依赖第三方包（仅 `csv`、`json`、`math`、`statistics`、`pathlib`、`sys`）。脚本以工作区相对路径解析 `input.csv`，路径不可写死为绝对路径；输出写入 `results/` 下三个声明产物，不改动 `input.csv`。\n- `result.json` 结构（与宿主验收及正式 data.metrics/sampleCount 对齐）：平铺对象 `{\"n\": <正整数>, \"unit\": \"mg/g\", \"mean\": <有限数值>}`；键名即契约中的指标名 `mean`，三键之外不塞嵌套结构；数值必须是有限浮点（禁止 NaN/Infinity/null）。\n- 验收对应：`dataPath=input.csv`、`column=carbon_mg_g`、`metric=mean`、`unit=mg/g`、`missing=drop`、`absoluteTolerance=1e-9`——即宿主用同一输入、同一缺失规则独立重算均值并与 `result.json` 的 `mean` 比对，容差 1e-9。\n\n## 图\n\n- 不产出图形文件：本任务是单一标量点估计，图形不增加证据，且契约要求的产物只有脚本、结果、报告三项。\n- 报告内以 Markdown 表格替代图形：输入字段与类型、缺失计数（按列）、有效 n、均值（mg/g）、min/max/SD 量级、以及\"未使用 `rain_mm` 筛选\"的显式声明。\n- 如需可视化，仅可作可选附加项并在报告中标注为\"非结论性辅助图\"，本次不生成。\n\n## 产物\n\n- `results/analysis.py`\n- `results/result.json`\n- `results/report.md`\n\n## 执行安排\n\n- 三块任务，链式推进：核查（只读）→ 分析（唯一写产物的任务）→ 独立只读审阅（覆盖分析依赖），审阅必须与执行者分离。\n- 详述与验收见结构化安排：核查结论回传后若出现单位/缺失规则冲突，分析任务须上报 blockers 而不修改契约；审阅发现问题则回报主会话，不自行改文件。",
+      "status": "completed",
+      "assignee": "member_3",
+      "dependencies": [
+        "plan_2"
+      ],
+      "outputs": [],
+      "attempt": 1,
+      "createdAt": 1794154347889,
+      "updatedAt": 1794154438055,
+      "settings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": []
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+              "bytes": 8577
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+              "bytes": 54
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+              "bytes": 3521
+            }
+          ]
+        }
+      },
+      "attemptId": "f76bf11e-d359-4789-85ef-93476b8e01e4",
+      "output": "{\"data\":{\"kind\":\"review\",\"verdict\":\"pass\",\"findings\":[\"PASS 方法一致性：analysis.py 第 118-131 行以 math.fsum(values)/n 为主算、statistics.fmean 为交叉校验，差值 >1e-12 即 SystemExit，符合 arithmetic mean 批准方法；report.md「方法：arithmetic mean」「## 2 处理步骤 第4条」。\",\"PASS 缺失规则：analysis.py load_values()（第 76-108 行）仅在 target 列遇缺失记号时 continue，未读取 rain_mm 参与任何筛选；report.md 第2步与「rain_mm 完全未使用」条目一致。input.csv 实际仅 7 个 NA（plot-1/8/15/22/29/36/43），符合 plan_1 核查。\",\"PASS 未填补：全脚本无 fill/interpolate/median/前向填充；report.md 明确「不做任何填补（均值/中位数/前向填充）」，结果文件中除 n/unit/mean 无派生填充量。\",\"PASS 单位：result.json unit=\\\"mg/g\\\"，与契约 unit 及列名后缀 _mg_g 一致；report.md 如实说明单位证据仅为列名约定+用户规则，文件内无独立单位元数据，未虚构声明。\",\"PASS n 与均值一致性：input.csv 48 数据行、7 个 NA → n=41；手工复算 Σ=568.7，568.7/41=13.87073170731707…，与 result.json mean=13.870731707317074 完全一致（远端差值 <1e-15，阈值 1e-9）；报告 min 12.0 / max 15.6 / SD 1.0621308540945003 亦经独立复算核验（Σx²=793341 路径得 1.06213）。\",\"PASS 脚本可复现性与执行边界：仅 import csv/json/math/statistics/pathlib/sys（纯 stdlib）；全文无 subprocess/socket/urllib/requests；无第三方包；无绝对路径字面（find_input 用相对 Path(\\\"input.csv\\\") 与 __file__ 派生的父目录回退）；输出固定写 analysis.py 同目录，输入只读、不重写。\",\"PASS 报告与结果一致：report.md 第3节表格、内嵌 json 代码块与 result.json 逐字一致（n=41、unit=mg/g、mean=13.870731707317074），缺失 7、行数 48 与输入核对一致；无四舍五入后数字冒充权威值。\",\"PASS 局限完整性：report.md 第4节覆盖缺失机制未检验（不主张 MCAR/MAR/MNAR）、rain_mm 完全未用、单位依据仅列名+用户规则、NA≠0/检出限、单变量描述统计非推断、每行 plot 为一观测未加权、未做缩尾/离群处理。\",\"PASS 分析依赖声明：契约 dataPath=input.csv、column=carbon_mg_g、metric=mean、unit=mg/g、missing=drop 均与脚本常量 TARGET_COLUMN/UNIT 及 EXPECTED_COLUMNS 表头强校验（含表头不等即失败退出）对应；执行方式记为单一命令 python3 -I results/analysis.py，报告复现段一致。\",\"NOTE（低风险，不需改结果）：MISSING_TOKENS 含 \\\"\\\"/na/n\\\\/a/nan/null/none，略宽于「字面 NA」。当前数据仅出现字面 NA，数值结果不受影响；若未来数据含 \\\"null\\\" 字面值，将被静默视为缺失而非报错，与「失败必须出声」精神略有张力。\",\"NOTE（低风险，不需改结果）：main() 先写 result.json、后 build_report 写 report.md，若报告阶段异常会留下与报告不同步的 result.json。当前运行与产物一致，仅作健壮性提示。\"],\"reviewedPaths\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"]},\"summary\":\"独立只读审阅三个契约输入并手工独立复算（额外读 input.csv 作核对背景，未列入 reviewedPaths）。结论 pass：方法为算术均值（fsum/n 主算 + fmean 交叉校验，差 >1e-12 即失败退出）；仅丢目标列缺失，未按 rain_mm 筛选、无填补；单位 mg/g 与列名后缀及用户规则一致；n=41 与均值自洽（48−7 NA=41，Σ=568.7，568.7/41=13.870731707317074，在 1e-9 容差内）；脚本纯 stdlib、无子进程/网络/第三方包/绝对路径，确定性可重跑；报告与 result.json 的 n/unit/mean 完全一致且局限披露完整。仅两处低风险备注（缺失记号集略宽于字面 NA；先写 result.json 再生成报告，非原子）。未写入/修改任何文件。\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"只读审阅，契约 requireExecution=false；未执行脚本、未写文件。均值/n/极值/SD 由本轮读取的 input.csv 全文手工独立复算核对。\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"逐字读取三个契约输入全文，并读 input.csv 48 数据行独立复算：7 个 NA、n=41、Σ=568.7→13.87073170731707…、min 12.0/max 15.6/SD 1.0621308541，与产物一致。\",\"toolCallIds\":[\"call_00_ET_uxAc1MtY5edWwM5yH1CI3481\",\"call_01_ET_IwXDsum4fdb966QGAwnV2080\",\"call_02_ET_2p4kFCIFVBjvWWqpD33m9726\",\"call_00_imfbwfQ1VP5SYKLUeZwB5919\"]}}",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "results/analysis.py",
+              "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+              "bytes": 8577
+            },
+            {
+              "path": "results/result.json",
+              "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+              "bytes": 54
+            },
+            {
+              "path": "results/report.md",
+              "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+              "bytes": 3521
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "accepted",
+        "summary": "独立只读审阅三个契约输入并手工独立复算（额外读 input.csv 作核对背景，未列入 reviewedPaths）。结论 pass：方法为算术均值（fsum/n 主算 + fmean 交叉校验，差 >1e-12 即失败退出）；仅丢目标列缺失，未按 rain_mm 筛选、无填补；单位 mg/g 与列名后缀及用户规则一致；n=41 与均值自洽（48−7 NA=41，Σ=568.7，568.7/41=13.870731707317074，在 1e-9 容差内）；脚本纯 stdlib、无子进程/网络/第三方包/绝对路径，确定性可重跑；报告与 result.json 的 n/unit/mean 完全一致且局限披露完整。仅两处低风险备注（缺失记号集略宽于字面 NA；先写 result.json 再生成报告，非原子）。未写入/修改任何文件。",
+        "result": {
+          "data": {
+            "kind": "review",
+            "verdict": "pass",
+            "findings": [
+              "PASS 方法一致性：analysis.py 第 118-131 行以 math.fsum(values)/n 为主算、statistics.fmean 为交叉校验，差值 >1e-12 即 SystemExit，符合 arithmetic mean 批准方法；report.md「方法：arithmetic mean」「## 2 处理步骤 第4条」。",
+              "PASS 缺失规则：analysis.py load_values()（第 76-108 行）仅在 target 列遇缺失记号时 continue，未读取 rain_mm 参与任何筛选；report.md 第2步与「rain_mm 完全未使用」条目一致。input.csv 实际仅 7 个 NA（plot-1/8/15/22/29/36/43），符合 plan_1 核查。",
+              "PASS 未填补：全脚本无 fill/interpolate/median/前向填充；report.md 明确「不做任何填补（均值/中位数/前向填充）」，结果文件中除 n/unit/mean 无派生填充量。",
+              "PASS 单位：result.json unit=\"mg/g\"，与契约 unit 及列名后缀 _mg_g 一致；report.md 如实说明单位证据仅为列名约定+用户规则，文件内无独立单位元数据，未虚构声明。",
+              "PASS n 与均值一致性：input.csv 48 数据行、7 个 NA → n=41；手工复算 Σ=568.7，568.7/41=13.87073170731707…，与 result.json mean=13.870731707317074 完全一致（远端差值 <1e-15，阈值 1e-9）；报告 min 12.0 / max 15.6 / SD 1.0621308540945003 亦经独立复算核验（Σx²=793341 路径得 1.06213）。",
+              "PASS 脚本可复现性与执行边界：仅 import csv/json/math/statistics/pathlib/sys（纯 stdlib）；全文无 subprocess/socket/urllib/requests；无第三方包；无绝对路径字面（find_input 用相对 Path(\"input.csv\") 与 __file__ 派生的父目录回退）；输出固定写 analysis.py 同目录，输入只读、不重写。",
+              "PASS 报告与结果一致：report.md 第3节表格、内嵌 json 代码块与 result.json 逐字一致（n=41、unit=mg/g、mean=13.870731707317074），缺失 7、行数 48 与输入核对一致；无四舍五入后数字冒充权威值。",
+              "PASS 局限完整性：report.md 第4节覆盖缺失机制未检验（不主张 MCAR/MAR/MNAR）、rain_mm 完全未用、单位依据仅列名+用户规则、NA≠0/检出限、单变量描述统计非推断、每行 plot 为一观测未加权、未做缩尾/离群处理。",
+              "PASS 分析依赖声明：契约 dataPath=input.csv、column=carbon_mg_g、metric=mean、unit=mg/g、missing=drop 均与脚本常量 TARGET_COLUMN/UNIT 及 EXPECTED_COLUMNS 表头强校验（含表头不等即失败退出）对应；执行方式记为单一命令 python3 -I results/analysis.py，报告复现段一致。",
+              "NOTE（低风险，不需改结果）：MISSING_TOKENS 含 \"\"/na/n\\/a/nan/null/none，略宽于「字面 NA」。当前数据仅出现字面 NA，数值结果不受影响；若未来数据含 \"null\" 字面值，将被静默视为缺失而非报错，与「失败必须出声」精神略有张力。",
+              "NOTE（低风险，不需改结果）：main() 先写 result.json、后 build_report 写 report.md，若报告阶段异常会留下与报告不同步的 result.json。当前运行与产物一致，仅作健壮性提示。"
+            ],
+            "reviewedPaths": [
+              "results/analysis.py",
+              "results/result.json",
+              "results/report.md"
+            ]
+          },
+          "summary": "独立只读审阅三个契约输入并手工独立复算（额外读 input.csv 作核对背景，未列入 reviewedPaths）。结论 pass：方法为算术均值（fsum/n 主算 + fmean 交叉校验，差 >1e-12 即失败退出）；仅丢目标列缺失，未按 rain_mm 筛选、无填补；单位 mg/g 与列名后缀及用户规则一致；n=41 与均值自洽（48−7 NA=41，Σ=568.7，568.7/41=13.870731707317074，在 1e-9 容差内）；脚本纯 stdlib、无子进程/网络/第三方包/绝对路径，确定性可重跑；报告与 result.json 的 n/unit/mean 完全一致且局限披露完整。仅两处低风险备注（缺失记号集略宽于字面 NA；先写 result.json 再生成报告，非原子）。未写入/修改任何文件。",
+          "blockers": [],
+          "deliverables": [],
+          "execution": {
+            "state": "not_run",
+            "note": "只读审阅，契约 requireExecution=false；未执行脚本、未写文件。均值/n/极值/SD 由本轮读取的 input.csv 全文手工独立复算核对。"
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "逐字读取三个契约输入全文，并读 input.csv 48 数据行独立复算：7 个 NA、n=41、Σ=568.7→13.87073170731707…、min 12.0/max 15.6/SD 1.0621308541，与产物一致。",
+            "toolCallIds": [
+              "call_00_ET_uxAc1MtY5edWwM5yH1CI3481",
+              "call_01_ET_IwXDsum4fdb966QGAwnV2080",
+              "call_02_ET_2p4kFCIFVBjvWWqpD33m9726",
+              "call_00_imfbwfQ1VP5SYKLUeZwB5919"
+            ]
+          }
+        },
+        "deliverables": []
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_02_ET_2p4kFCIFVBjvWWqpD33m9726",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/report.md",
+            "transcriptRef": {
+              "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+              "callEntry": "9fd0d229",
+              "resultEntry": "c997f123",
+              "payloadSha256": "af59008c79755044081a9fb4b3c5094903d39126b39449ca27714078afeae179",
+              "evidenceTagSha256": "0a5427fa67bbb2d17e0a42cd471da7ddd885f1e264532c71f78f38b50ca27483"
+            }
+          },
+          {
+            "toolCallId": "call_01_ET_IwXDsum4fdb966QGAwnV2080",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/result.json",
+            "transcriptRef": {
+              "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+              "callEntry": "9fd0d229",
+              "resultEntry": "ae90153e",
+              "payloadSha256": "a6e5d9dd7cdda9279547a1679fb0fb7c827dad2c925b0fd95f0b04ffce1568b0",
+              "evidenceTagSha256": "4491fb8fb87f27f2b458d34214ff9b520eb1e827f8c68c118132bc1328a19a1e"
+            }
+          },
+          {
+            "toolCallId": "call_00_ET_uxAc1MtY5edWwM5yH1CI3481",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/analysis.py",
+            "transcriptRef": {
+              "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+              "callEntry": "9fd0d229",
+              "resultEntry": "5a2658ec",
+              "payloadSha256": "d3f3f81349edafdf3081da655c275b392f86b823472f72334a267d96f8912067",
+              "evidenceTagSha256": "1db998020e91acec5afec53fb36942dcda0aa3f126a339b75af7bd2ee7d6d464"
+            }
+          },
+          {
+            "toolCallId": "call_00_imfbwfQ1VP5SYKLUeZwB5919",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "input.csv",
+            "transcriptRef": {
+              "file": "2026-11-08T16-13-22-190Z_01a1bbef-918e-71ec-9d49-0938c16dff9c.jsonl",
+              "callEntry": "d9a7f907",
+              "resultEntry": "92732871",
+              "payloadSha256": "457d405d7669ecb337095afade11f510c41fee4ea583bdfa5cf72e653dfb827f",
+              "evidenceTagSha256": "6e91d0a86f12d6c409705045492e1bbc46a74cbb85062a49f41b65cbacca7d48"
+            }
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 35821,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 45733,
+          "output": 6291,
+          "cacheRead": 19200,
+          "partial": [
+            "cacheRead"
+          ]
+        }
+      }
+    }
+  ],
+  "messages": [],
+  "taskSeq": 0,
+  "approvedPlan": {
+    "version": 1,
+    "owner": "research",
+    "planId": "research-pilot",
+    "planVersion": 1,
+    "markdownHash": "b29ea5e8ceb43741b157e80fca473ddbea62151445d7d5d0947ac2b9bb5d6c57",
+    "teamId": "plan_c4dfcb7bb2901e9ff3720c2e",
+    "externalInputs": [
+      {
+        "path": "input.csv",
+        "sha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+        "bytes": 810
+      }
+    ],
+    "tasks": [
+      {
+        "planTaskId": "T1_check",
+        "taskId": "plan_1",
+        "memberName": "member_1",
+        "review": false
+      },
+      {
+        "planTaskId": "T2_analyze",
+        "taskId": "plan_2",
+        "memberName": "member_2",
+        "review": false
+      },
+      {
+        "planTaskId": "T3_review",
+        "taskId": "plan_3",
+        "memberName": "member_3",
+        "review": true
+      }
+    ]
+  },
+  "approvedPlanPaused": true,
+  "approvedPlanPauseReason": "用户已停止执行；等待旧任务排空后，核对产物再继续。"
+}

@@ -1,0 +1,523 @@
+{
+  "id": "plan_91004c535302385ed7fdeb41",
+  "name": "批准方案 · 第 1 版",
+  "goal": "执行已批准任务安排",
+  "captainSessionId": "research",
+  "createdAt": 1794154482547,
+  "members": [
+    {
+      "orchestrationId": "7c1a33ce-c383-48fa-90f3-88f7b504569e",
+      "name": "member_1",
+      "agent": "analyze",
+      "role": "分析执行（唯一产物任务）",
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_1",
+      "turns": 1,
+      "joinedAt": 1794154482547,
+      "frozenAgentDefinition": {
+        "name": "analyze",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测核查与分析共享最多 18 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准；另 7 次只留给独立审阅，不可借用。只做本阶段契约要求的工作，避免读取未生成产物或重复无关检查。必要证据齐备后及时提交；不足时如实阻塞，不能伪造结果。",
+        "filePath": "/analyze",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      },
+      "taskSettings": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json"
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+              "bytes": 805
+            }
+          ]
+        }
+      }
+    },
+    {
+      "orchestrationId": "c33d77ed-55a7-4fa0-bcb4-487f1a935886",
+      "name": "member_2",
+      "agent": "review",
+      "role": "独立审阅",
+      "provider": "dawn-evaluation-review",
+      "model": "deepseek-flash",
+      "status": "idle",
+      "sessionDir": "members/member_2",
+      "turns": 0,
+      "joinedAt": 1794154482547,
+      "frozenAgentDefinition": {
+        "name": "review",
+        "description": "representative research",
+        "systemPrompt": "Follow the approved method. Use real file tools, cite actual call IDs and submit_task_result. Do not guess missing units. Batch independent tool calls when possible.评测审阅独享最多 7 次模型请求，这是冻结额度说明；当前剩余额度以宿主账本为准。先真实读取全部声明输入，尽可能并行读取，再基于证据正式提交。不得省略独立审阅或猜测 ID。",
+        "filePath": "/review",
+        "tools": [
+          "read",
+          "write",
+          "bash"
+        ]
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "contract": {
+        "acceptance": {
+          "version": 1,
+          "kind": "tabular-ecology",
+          "scriptPath": "results/analysis.py",
+          "reportPath": "results/report.md",
+          "resultPath": "results/result.json"
+        },
+        "submission": "tool",
+        "resultType": "model-metrics",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [
+          "results/analysis.py",
+          "results/result.json",
+          "results/report.md"
+        ],
+        "access": "workspace-exec",
+        "requireExecution": true,
+        "requireReview": false
+      },
+      "id": "plan_1",
+      "subject": "按 arithmetic mean 计算 carbon 均值并正式登记单位缺失 blockers",
+      "description": "只读 input.csv（site,carbon,rain_mm，48 行，carbon 含 NA），仅对 carbon 列 drop NA 后计算算术均值，写可复现脚本、result.json 与报告；单位未提供必须作为正式 blockers 登记，unit 字段只写 not_provided，绝不推断单位或借用 rain_mm，不插补、不改原始文件。\n分工：分析执行（唯一产物任务）\n验收条件：results/analysis.py 一次性读入 input.csv 并显式处理 NA；result.json 为平铺 {n, unit, mean_carbon}，n 为正整数、mean_carbon 有限、unit 为 not_provided；report.md 列输入、处理、结果、blockers 与局限；原始 input.csv 未被修改；报告中无任何具体计量单位被赋予 carbon。\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：未提供，必须阻塞，不能猜测。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\"}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n\n**任务**：报告 carbon 的均值，且必须带单位。已批准方法 arithmetic mean；缺失值规则为「仅对目标列 drop NA」。\n\n**输入事实**（只读核对 `input.csv`）：3 列 `site,carbon,rain_mm`，48 条数据行；`carbon` 为数值列且含字面量 `NA`；`rain_mm` 是降雨毫米，不构成 carbon 的单位来源。\n\n**假设与判定**\n1. 目标变量为 `carbon`；`site` 仅作标识，不参与计算。\n2. `NA` 为缺失标记；按批准规则只对 `carbon` 做 drop-NA，不填补、不换算、不删改其他列。\n3. 单位信息在全部已声明输入中不存在：文件头无单位字段，也没有任何元数据/说明文件被声明为输入。从数值量级或邻列反推单位属于禁止的猜测，本方案不做。\n4. 结论是「可计算、不可交付」：算术均值可算并留证，但「带单位」的交付条件不成立，必须正式提交 blockers，不得输出带推断单位的结果。\n5. 成功标准：脚本可复现；报告写明输入/处理/结果/局限；`result.json` 通过宿主 schema；单位缺口以 blockers 形式如实登记；不改原始文件、不编造单位、缺失值或数据行。\n\n## 数据与切分\n\n- 数据仅 `input.csv`，只读，保留原文件；不在 `data/raw/` 或别处写入，产物只落 `results/`。\n- 全样本描述性汇总，**无切分**：不设训练/测试集、不做交叉验证（非预测建模）。\n- 有效样本量 n = `carbon` 非缺失值个数；报告 n 与剔除条数，若与结构核查不符则停止并说明。\n- 不做单位换算或依赖单位的量级变换（未知单位即不可换算）；`rain_mm` 保持原样、不参与计算、不作单位线索。\n\n## 统计检验与模型\n\n- 点估计：对 `carbon` 非缺失值取 arithmetic mean，等权、无截尾、无插补、无变换。\n- 附带纯描述量：n、剔除数、min/max/median/sd，同样标注「单位未提供」，仅作数据面貌说明。\n- 不做显著性检验、不拟合模型、不声称区间估计。\n- **方法适用性**：算术平均要求可加尺度的数值，该列解析为数值且连续，方法可执行；单位未知属交付层阻塞而非算法层错误，报告分开陈述。\n- **正式 blockers**：BLOCK-1 `input.csv` 无单位字段；BLOCK-2 已声明输入中无任何单位元数据；BLOCK-3 后果——无法产出合规的「带单位均值」，不猜单位、不借用 `rain_mm`、不写「g C m⁻²」类常见默认。处理约定：`result.json` 仍按宿主 schema 平铺 `{n, unit, mean_carbon}`，`unit` 只写客观状态字符串（如 `not_provided`），不写具体计量单位；报告开头即声明交付阻塞。\n- **可复现与校验**：脚本一次性读入 `input.csv`、显式声明 NA 识别、输出 n/均值/剔除数；审阅方独立从原始文件重算 n 与均值，并核对脚本未引入单位字符串、未插补、未改原始数据。\n- **执行环境**：不申请受控环境复用证明（无已知 fingerprint），按普通执行运行；不使用需 `python3 -I` 单一命令的同步隔离模式（该模式禁子进程且未在此声明本地脚本），故不扩大 `inputs`。\n\n## 图\n\n不产出图。单位缺口未解决时，任何以 carbon 为纵轴的图都是无单位刻度，读者容易默认某种单位，反而制造误导；图形也不改变 blockers 结论。用户补齐单位后可在单独任务补描述性分布图，不在本次范围。\n\n## 产物\n\n- `results/analysis.py` — 只读加载 `input.csv`，按「仅目标列 drop NA」算 arithmetic mean，输出 n、剔除数、均值与单位状态；不写原始数据、不含推断单位。\n- `results/result.json` — 平铺对象 `{n: 正整数, unit: \"not_provided\", mean_carbon: 有限数值}`，与报告数字及宿主 `data.metrics`/`sampleCount` 一致。\n- `results/report.md` — 输入与结构核查、处理方法与 NA 规则、n 与均值、单位缺失的正式 blockers、局限（不可物理解释、不可跨数据集比较）。",
+      "status": "failed",
+      "assignee": "member_1",
+      "dependencies": [],
+      "outputs": [
+        "results/analysis.py",
+        "results/result.json",
+        "results/report.md"
+      ],
+      "attempt": 1,
+      "createdAt": 1794154482547,
+      "updatedAt": 1794154521281,
+      "settings": {
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/analysis.py",
+            "reportPath": "results/report.md",
+            "resultPath": "results/result.json"
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "workspace-exec",
+          "tools": [
+            "read",
+            "write",
+            "bash"
+          ],
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ]
+        },
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+              "bytes": 805
+            }
+          ]
+        }
+      },
+      "attemptId": "ff924f49-ad88-4dab-b0ab-e606a27a2ed1",
+      "output": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+      "receipt": {
+        "versions": {
+          "version": 1,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+              "bytes": 805
+            }
+          ],
+          "outputs": []
+        },
+        "version": 1,
+        "state": "blocked",
+        "summary": "按批准方法（arithmetic mean，仅对目标列 carbon drop NA）完成计算并交付三份产物。input.csv 48 数据行，carbon 缺失 7 条 → n=41，算术均值 13.8707317073（min 12.0 / median 13.9 / max 15.6 / sd 1.0621308541）。单位在全部已声明输入中不存在，故按冻结契约以 blockers 正式登记，result.json 中 unit 只写 not_provided，未推断单位、未借用 rain_mm、未插补、未修改原始文件（SHA-256 仍为 d52f087d…90190b6，与批准方案一致）。方法上可计算、交付上不可完成：13.8707317073 只有数值确定，物理量纲不确定。",
+        "reason": "存在阻塞、执行/审阅问题或缺少契约要求的证据，未放行下游",
+        "result": {
+          "data": {
+            "kind": "model-metrics",
+            "method": "arithmetic mean of carbon after dropping missing (NA/empty) values in the target column only; no imputation, no transformation, no unit conversion",
+            "metrics": {
+              "mean_carbon": 13.8707317073
+            },
+            "sampleCount": 41,
+            "caveats": [
+              "单位未在任何已声明输入中提供，unit 记为 not_provided；均值不可解释为任何具体物理量，不可跨数据集比较。",
+              "48 行中 7 条 carbon 为 NA 被剔除（仅目标列），缺失机制未知，drop-NA 均值仅代表观测到的 41 条记录，不保证对总体无偏。",
+              "未借用 rain_mm 或数值量级推断单位；未换算、未插补、未修改原始 input.csv。",
+              "仅点估计与描述量，无区间估计/显著性检验/建模；未出图。"
+            ]
+          },
+          "summary": "按批准方法（arithmetic mean，仅对目标列 carbon drop NA）完成计算并交付三份产物。input.csv 48 数据行，carbon 缺失 7 条 → n=41，算术均值 13.8707317073（min 12.0 / median 13.9 / max 15.6 / sd 1.0621308541）。单位在全部已声明输入中不存在，故按冻结契约以 blockers 正式登记，result.json 中 unit 只写 not_provided，未推断单位、未借用 rain_mm、未插补、未修改原始文件（SHA-256 仍为 d52f087d…90190b6，与批准方案一致）。方法上可计算、交付上不可完成：13.8707317073 只有数值确定，物理量纲不确定。",
+          "blockers": [
+            "BLOCK-1：input.csv 无单位字段（表头仅 site,carbon,rain_mm），无承载 carbon 单位的列。",
+            "BLOCK-2：冻结契约 inputs 仅 input.csv，无数据字典/README/方法说明等任何单位元数据。",
+            "BLOCK-3：单位是交付必要条件，缺失导致无法产出「带单位均值」；已如实登记，不猜单位、不借用 rain_mm、不套常见默认单位。"
+          ],
+          "deliverables": [
+            {
+              "path": "results/analysis.py",
+              "note": "一次性读入 input.csv，显式声明 NA/空字段为缺失标记，仅对 carbon drop NA 后取算术均值；输出 n、剔除数、均值与单位状态，只写 results/result.json，不含任何计量单位字符串。"
+            },
+            {
+              "path": "results/result.json",
+              "note": "平铺 {n:41, unit:\"not_provided\", mean_carbon:13.8707317073}；n 为正整数、均值有限、unit 为非单位的状态字符串。"
+            },
+            {
+              "path": "results/report.md",
+              "note": "含输入与结构核查、处理方法与 NA 规则、n 与均值及描述量、BLOCK-1/2/3、局限（无量纲解释、不可跨数据集比较、缺失机制未知、不出图）与复现命令。"
+            }
+          ],
+          "execution": {
+            "state": "completed",
+            "note": "python3 results/analysis.py 运行成功（exit=0），读入 48 行、确认 7 条缺失、写出 result.json；另以 awk 从 input.csv 独立重算得 n=41、mean=13.8707317073，与脚本输出一致，并校验 input.csv SHA-256 未变。",
+            "toolCallIds": [
+              "call_00_YqtIHLmnLkpQsaSYZiaA8316",
+              "call_00_Z9liZjMUHTcnBnUvQBHG1637"
+            ]
+          },
+          "verification": {
+            "state": "reviewed",
+            "note": "实际读取 input.csv（3 列 48 行，carbon 含字面量 NA）、results/report.md、results/result.json；核对 result.json 键为 n/unit/mean_carbon、n=41 正整数、均值有限、unit=not_provided，数值与报告及独立重算一致；检索确认三份产物中无任何计量单位被赋予 carbon（仅出现列名 rain_mm 与格式化符号），原始文件校验和未变化。",
+            "toolCallIds": [
+              "call_00_tRrgV5zBJNcpiHi2adL90966",
+              "call_00_7fNNnM0Ja3nTvbd5Jpwb4278",
+              "call_01_Jhy7bx87Rs2UUEho7Ntk5410",
+              "call_00_Z9liZjMUHTcnBnUvQBHG1637"
+            ]
+          }
+        },
+        "deliverables": [
+          {
+            "stepId": "task",
+            "path": "results/analysis.py",
+            "state": "observed"
+          },
+          {
+            "stepId": "task",
+            "path": "results/result.json",
+            "state": "exists"
+          },
+          {
+            "stepId": "task",
+            "path": "results/report.md",
+            "state": "observed"
+          }
+        ]
+      },
+      "trace": {
+        "records": [
+          {
+            "toolCallId": "call_00_ET_VVeBix28D4g3EmCwxw406632",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "34778dd7",
+              "resultEntry": "4ac4cd03",
+              "payloadSha256": "2e6616917fecc5a31d575adf353950118ea5e26da65188e59791c3eacc3c545a",
+              "evidenceTagSha256": "ddc7229d241fef6a521dbd96dd85be61cd57ccf1c21ec9bf557b742448f92827"
+            }
+          },
+          {
+            "toolCallId": "call_00_tRrgV5zBJNcpiHi2adL90966",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "input.csv",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "d992444c",
+              "resultEntry": "910e1f6d",
+              "payloadSha256": "f66fd9086127c02351fc2d05026b0c29280350b07ca65bef4d4ae09ddd04c434",
+              "evidenceTagSha256": "770d206d38a891cda21ff6344e264ad9dc69c1d7f5150bee4fba4fd63f0f543a"
+            }
+          },
+          {
+            "toolCallId": "call_01_TTFsxscfw8GBdiC2ZFSs5759",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "d992444c",
+              "resultEntry": "ef6b9785",
+              "payloadSha256": "67af91b10b6348e34d920211133c6d97e4b63e2335d26edfc276cb15e937be00",
+              "evidenceTagSha256": "ef4df2de15aede832f45c4aa1ab8fdf827b4401505101846253bc96c7c7482d3"
+            }
+          },
+          {
+            "toolCallId": "call_00_Ha9BAsHZEohcZQXUe3uu5845",
+            "name": "write",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/analysis.py",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "162f523c",
+              "resultEntry": "9a0d52ec",
+              "payloadSha256": "b1000c9ec8e6c4441eccbff5fdaac397c1c314d1c1629d79751a33a996e2c2fd",
+              "evidenceTagSha256": "2505797dbb75e3de7dfaecc15c9d3ec80440fe74657054c247ede681157488d7"
+            }
+          },
+          {
+            "toolCallId": "call_00_YqtIHLmnLkpQsaSYZiaA8316",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "3f5cd5ba",
+              "resultEntry": "67e49288",
+              "payloadSha256": "d764a94bd4e7b89271b34aa19588cc64d02108fb48b2e8bcf676c7d4f53134a1",
+              "evidenceTagSha256": "dd889b4508b1b34574c2feba407acc2e2004de5479424f384ef94bb928da69ca"
+            }
+          },
+          {
+            "toolCallId": "call_00_lW9ySlKBlJdlb4oOfPKG7665",
+            "name": "write",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/report.md",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "3d1d47ac",
+              "resultEntry": "d94bf579",
+              "payloadSha256": "daa2bf6e3bb3214db8748f6379f3fea01913d93fadf43bc53c7bacbef4b2392a",
+              "evidenceTagSha256": "822389db85c806382979e58718cc7168ffbabb47da8986387cfd488a55f2fbd8"
+            }
+          },
+          {
+            "toolCallId": "call_00_Z9liZjMUHTcnBnUvQBHG1637",
+            "name": "bash",
+            "status": "done",
+            "execution": "ran",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "82f1f09c",
+              "resultEntry": "c5df523b",
+              "payloadSha256": "3e75129ded643ddc1523056ca02aa6f4795ccd08c9e522beeeef530fb17e65c2",
+              "evidenceTagSha256": "403e5ddcdab7cc15b6df76c125b40783fd4b6c1d73e45eb336bc2b73e459808e"
+            }
+          },
+          {
+            "toolCallId": "call_00_7fNNnM0Ja3nTvbd5Jpwb4278",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/report.md",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "218a535e",
+              "resultEntry": "4e6f562a",
+              "payloadSha256": "2327e47aad845427dfdd289ccc88eddf81cb0a0e497b1b459c67ca8ae1de1452",
+              "evidenceTagSha256": "b2a2170f74c44c9c84fd0c8e15b9e3b427a126fec5522e0dc011d8a2ca298133"
+            }
+          },
+          {
+            "toolCallId": "call_01_Jhy7bx87Rs2UUEho7Ntk5410",
+            "name": "read",
+            "status": "done",
+            "execution": "not_observed",
+            "path": "results/result.json",
+            "transcriptRef": {
+              "file": "2026-11-08T16-14-43-003Z_01a1bbf0-cd3b-71ec-8845-6f2c9559c293.jsonl",
+              "callEntry": "218a535e",
+              "resultEntry": "55cd1f0b",
+              "payloadSha256": "5f57a6989c10c4a69313d9d6247ad9d4247bec185c3b00268a7d1dbe19a03c0b",
+              "evidenceTagSha256": "25439bdaa192204a827bac8a4e5957f5a2167717f419d2c971ac1c75ec359545"
+            }
+          }
+        ],
+        "omitted": 0
+      },
+      "observation": {
+        "elapsedMs": 38263,
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0,
+        "usage": {
+          "input": 73716,
+          "output": 5612,
+          "cacheRead": 45696,
+          "partial": [
+            "cacheRead"
+          ]
+        }
+      }
+    },
+    {
+      "contract": {
+        "submission": "tool",
+        "resultType": "review",
+        "version": 1,
+        "inputs": [
+          "results/analysis.py",
+          "results/result.json",
+          "results/report.md"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      },
+      "id": "plan_2",
+      "subject": "独立只读审阅：核对文件、方法一致性与未推断单位",
+      "description": "只读审阅 results/analysis.py、results/result.json、results/report.md，并从 input.csv 独立重算 n 与算术均值；确认方法为 arithmetic mean、NA 仅从 carbon 剔除、单位缺口以 blockers 记录且全文未赋予 carbon 具体单位、原始文件未被改动。\n分工：独立审阅\n验收条件：给出独立重算的 n 与均值并与 result.json 比对；逐项判定方法一致性、NA 规则、单位未推断、原始文件完整；结论为通过或列出具体问题。\n整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。\n请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。\n科研模板 tabular-ecology@1；语言 python；用户已批准方法：arithmetic mean。\n单位规则：未提供，必须阻塞，不能猜测。缺失值规则：drop NA in target column only。\n核查输入结构、方法适用条件及证据缺口；条件不足须 blockers，不猜测单位、填补缺失或编造数据。\n需要受控环境复用时，Python 使用 python3 -I 声明脚本路径 的单一命令；宿主绕过 shell 启动隔离解释器，等待非守护线程与退出回调收尾。该同步模式禁止创建子进程；本地代码/数据须列入 inputs，未声明文件或外部依赖不签发复用证明。需要子进程时交还主会话选择普通执行，不能自动改命令重试。R 沿用普通执行与验收，暂不签发依赖及生命周期未完整核实的复用证明。\n按约定方法执行并保留可复现脚本；报告须列输入、处理、结果及局限。独立审阅核查实际文件及方法一致性。输出：results/analysis.py、results/result.json、results/report.md\n宿主验收规则：{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\"}；result.json 使用平铺对象 {n:正整数,unit:单位字符串,指标名:有限数值}，须与正式 data.metrics 和 sampleCount 一致。\n\n## 问题与假设\n\n**任务**：报告 carbon 的均值，且必须带单位。已批准方法 arithmetic mean；缺失值规则为「仅对目标列 drop NA」。\n\n**输入事实**（只读核对 `input.csv`）：3 列 `site,carbon,rain_mm`，48 条数据行；`carbon` 为数值列且含字面量 `NA`；`rain_mm` 是降雨毫米，不构成 carbon 的单位来源。\n\n**假设与判定**\n1. 目标变量为 `carbon`；`site` 仅作标识，不参与计算。\n2. `NA` 为缺失标记；按批准规则只对 `carbon` 做 drop-NA，不填补、不换算、不删改其他列。\n3. 单位信息在全部已声明输入中不存在：文件头无单位字段，也没有任何元数据/说明文件被声明为输入。从数值量级或邻列反推单位属于禁止的猜测，本方案不做。\n4. 结论是「可计算、不可交付」：算术均值可算并留证，但「带单位」的交付条件不成立，必须正式提交 blockers，不得输出带推断单位的结果。\n5. 成功标准：脚本可复现；报告写明输入/处理/结果/局限；`result.json` 通过宿主 schema；单位缺口以 blockers 形式如实登记；不改原始文件、不编造单位、缺失值或数据行。\n\n## 数据与切分\n\n- 数据仅 `input.csv`，只读，保留原文件；不在 `data/raw/` 或别处写入，产物只落 `results/`。\n- 全样本描述性汇总，**无切分**：不设训练/测试集、不做交叉验证（非预测建模）。\n- 有效样本量 n = `carbon` 非缺失值个数；报告 n 与剔除条数，若与结构核查不符则停止并说明。\n- 不做单位换算或依赖单位的量级变换（未知单位即不可换算）；`rain_mm` 保持原样、不参与计算、不作单位线索。\n\n## 统计检验与模型\n\n- 点估计：对 `carbon` 非缺失值取 arithmetic mean，等权、无截尾、无插补、无变换。\n- 附带纯描述量：n、剔除数、min/max/median/sd，同样标注「单位未提供」，仅作数据面貌说明。\n- 不做显著性检验、不拟合模型、不声称区间估计。\n- **方法适用性**：算术平均要求可加尺度的数值，该列解析为数值且连续，方法可执行；单位未知属交付层阻塞而非算法层错误，报告分开陈述。\n- **正式 blockers**：BLOCK-1 `input.csv` 无单位字段；BLOCK-2 已声明输入中无任何单位元数据；BLOCK-3 后果——无法产出合规的「带单位均值」，不猜单位、不借用 `rain_mm`、不写「g C m⁻²」类常见默认。处理约定：`result.json` 仍按宿主 schema 平铺 `{n, unit, mean_carbon}`，`unit` 只写客观状态字符串（如 `not_provided`），不写具体计量单位；报告开头即声明交付阻塞。\n- **可复现与校验**：脚本一次性读入 `input.csv`、显式声明 NA 识别、输出 n/均值/剔除数；审阅方独立从原始文件重算 n 与均值，并核对脚本未引入单位字符串、未插补、未改原始数据。\n- **执行环境**：不申请受控环境复用证明（无已知 fingerprint），按普通执行运行；不使用需 `python3 -I` 单一命令的同步隔离模式（该模式禁子进程且未在此声明本地脚本），故不扩大 `inputs`。\n\n## 图\n\n不产出图。单位缺口未解决时，任何以 carbon 为纵轴的图都是无单位刻度，读者容易默认某种单位，反而制造误导；图形也不改变 blockers 结论。用户补齐单位后可在单独任务补描述性分布图，不在本次范围。\n\n## 产物\n\n- `results/analysis.py` — 只读加载 `input.csv`，按「仅目标列 drop NA」算 arithmetic mean，输出 n、剔除数、均值与单位状态；不写原始数据、不含推断单位。\n- `results/result.json` — 平铺对象 `{n: 正整数, unit: \"not_provided\", mean_carbon: 有限数值}`，与报告数字及宿主 `data.metrics`/`sampleCount` 一致。\n- `results/report.md` — 输入与结构核查、处理方法与 NA 规则、n 与均值、单位缺失的正式 blockers、局限（不可物理解释、不可跨数据集比较）。",
+      "status": "pending",
+      "assignee": "member_2",
+      "dependencies": [
+        "plan_1"
+      ],
+      "outputs": [],
+      "attempt": 0,
+      "createdAt": 1794154482547,
+      "updatedAt": 1794154482547,
+      "settings": {
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        },
+        "scope": {
+          "version": 1,
+          "tier": "allow-all",
+          "access": "read-only",
+          "tools": [
+            "read"
+          ],
+          "inputs": [
+            "results/analysis.py",
+            "results/result.json",
+            "results/report.md"
+          ],
+          "outputs": []
+        }
+      }
+    }
+  ],
+  "messages": [],
+  "taskSeq": 0,
+  "approvedPlan": {
+    "version": 1,
+    "owner": "research",
+    "planId": "research-pilot",
+    "planVersion": 1,
+    "markdownHash": "b6937c1b405b6ac78c636b88b3a008ccc09490b87d32f17ea8d977dee472528b",
+    "teamId": "plan_91004c535302385ed7fdeb41",
+    "externalInputs": [
+      {
+        "path": "input.csv",
+        "sha256": "d52f087d6ee5fbdbb8d799d6bd562366654793803e6e4bd590e0ad6de90190b6",
+        "bytes": 805
+      }
+    ],
+    "tasks": [
+      {
+        "planTaskId": "A1",
+        "taskId": "plan_1",
+        "memberName": "member_1",
+        "review": false
+      },
+      {
+        "planTaskId": "A2",
+        "taskId": "plan_2",
+        "memberName": "member_2",
+        "review": true
+      }
+    ]
+  },
+  "approvedPlanPaused": true,
+  "approvedPlanPauseReason": "用户已停止执行；等待旧任务排空后，核对产物再继续。"
+}

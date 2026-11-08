@@ -1,0 +1,43 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-batch.test.ts tests/evaluation/research-tasks.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-batch.test.ts (0 test)
+ ❯ |node| tests/evaluation/research-tasks.test.ts (6 tests | 1 failed) 8ms
+   × covers zero means and duplicate site identifiers without dropping valid rows 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-batch.test.ts [ tests/evaluation/research-batch.test.ts ]
+Error: Cannot find module '../../src/evaluation/research-batch.js' imported from /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/tests/evaluation/research-batch.test.ts
+ ❯ tests/evaluation/research-batch.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {researchBatchAllocation} from '../../src/evaluation/research-b…
+       | ^
+      3| it('preserves the legacy one-pair default and freezes a 300-request si…
+      4|  expect(researchBatchAllocation(undefined,30)).toEqual({taskIds:['carb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-tasks.test.ts > covers zero means and duplicate site identifiers without dropping valid rows
+AssertionError: expected undefined to be defined
+ ❯ tests/evaluation/research-tasks.test.ts:40:15
+     38| it('covers zero means and duplicate site identifiers without dropping …
+     39|  const tasks=researchTasks(),zero=tasks.find(t=>t.id==='negative-zero-…
+     40|  expect(zero).toBeDefined();expect(duplicates).toBeDefined()
+       |               ^
+     41|  expect(zero.expected).toEqual({n:3,unit:'V',mean:0})
+     42|  expect(judgeResearch(zero,'accepted',{n:3,unit:'V',mean:0},true).succ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 5 passed (6)
+   Start at  22:03:21
+   Duration  130ms (transform 43ms, setup 0ms, import 35ms, tests 8ms, environment 0ms)
+

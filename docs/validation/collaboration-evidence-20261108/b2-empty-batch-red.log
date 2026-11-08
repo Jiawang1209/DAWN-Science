@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-cli-allocation.test.ts -t explicitly empty
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-cli-allocation.test.ts (10 tests | 1 failed | 9 skipped) 6ms
+   × rejects an explicitly empty batch filename rather than silently running the legacy single task 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > rejects an explicitly empty batch filename rather than silently running the legacy single task
+AssertionError: expected [Function] to throw error matching /用法|批次/ but got 'HOST_BUILD_REACHED'
+
+- Expected:
+/用法|批次/
+
++ Received:
+"HOST_BUILD_REACHED"
+
+ ❯ tests/evaluation/research-cli-allocation.test.ts:27:97
+     25| })
+     26| it('rejects an explicitly empty batch filename rather than silently ru…
+     27|  await expect(runCurrentApiResearch(['out','unused-profile','p','m','a…
+       |                                                                                                 ^
+     28|  expect(build).not.toHaveBeenCalled()
+     29| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  22:15:53
+   Duration  162ms (transform 36ms, setup 0ms, import 75ms, tests 6ms, environment 0ms)
+

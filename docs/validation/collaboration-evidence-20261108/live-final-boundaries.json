@@ -1,0 +1,21 @@
+{
+  "sourceFiles": 1664,
+  "changed": [],
+  "mainHead": "899463dd17f50a5da83294b783d3fd540f86f9af",
+  "mainClean": true,
+  "formalUnchanged": true,
+  "requestGate": {
+    "reserved": 148,
+    "forwarded": 148,
+    "denied": 0,
+    "inFlight": 0,
+    "limit": 300
+  },
+  "paidRequests": 148,
+  "comparisonEligible": true,
+  "historyStatus": "OPEN",
+  "exitThresholdsMs": [
+    1500,
+    4000
+  ]
+}

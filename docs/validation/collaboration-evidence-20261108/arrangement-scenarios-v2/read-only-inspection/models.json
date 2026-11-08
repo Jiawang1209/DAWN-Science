@@ -1,0 +1,1 @@
+{"providers":{"deepseek":{"baseUrl":"http://127.0.0.1:59665/v1","apiKey":"mock-key-not-a-real-secret","api":"openai-completions","models":[{"id":"deepseek-flash","name":"Mock deepseek-flash","api":"openai-completions","input":["text","image"]},{"id":"deepseek-v4-deep","name":"Mock deepseek-v4-deep","api":"openai-completions","input":["text","image"]}]}}}

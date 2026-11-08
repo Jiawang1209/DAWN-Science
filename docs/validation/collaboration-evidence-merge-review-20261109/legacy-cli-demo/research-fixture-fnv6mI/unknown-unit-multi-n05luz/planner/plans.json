@@ -1,0 +1,12 @@
+{
+  "阶段": "planning",
+  "方案们": [
+    {
+      "planId": "call_mock_14",
+      "version": 1,
+      "title": "Offline automatic scientific arrangement",
+      "markdown": "## 问题与假设\n自制科学任务\n## 数据与切分\ninput.csv\n## 统计检验与模型\n按原方法\n## 图\n未生成\n## 产物\n`results/analysis.py`\n`results/result.json`\n`results/report.md`\n\n## 任务安排（自动安排）\n执行方式：科研流水线\n安排理由：保留独立审阅；单位不明时先核查，其他任务仅保留所需分析与审阅。\n保留独立审阅：是\n执行绑定：team-v1\n\n### check · check\n- 目标：按冻结科学契约完成当前阶段\n- 分工：check\n- 输入：input.csv\n- 验收：既有宿主证据与版本验收\n- 独立审阅：否\n- 执行者：check\n- 执行契约：{\"submission\":\"tool\",\"resultType\":\"data-summary\",\"version\":1,\"inputs\":[\"input.csv\"],\"outputs\":[],\"access\":\"read-only\",\"requireExecution\":false,\"requireReview\":true}\n\n### analyze · analyze\n- 目标：按冻结科学契约完成当前阶段\n- 分工：analyze\n- 输入：input.csv\n- 输出：results/analysis.py\n- 输出：results/result.json\n- 输出：results/report.md\n- 依赖：check\n- 验收：既有宿主证据与版本验收\n- 独立审阅：否\n- 执行者：analyze\n- 执行契约：{\"acceptance\":{\"version\":1,\"kind\":\"tabular-ecology\",\"scriptPath\":\"results/analysis.py\",\"reportPath\":\"results/report.md\",\"resultPath\":\"results/result.json\"},\"submission\":\"tool\",\"resultType\":\"model-metrics\",\"version\":1,\"inputs\":[\"input.csv\"],\"outputs\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"],\"access\":\"workspace-exec\",\"requireExecution\":true,\"requireReview\":false}\n\n### review · review\n- 目标：按冻结科学契约完成当前阶段\n- 分工：review\n- 输入：results/analysis.py\n- 输入：results/result.json\n- 输入：results/report.md\n- 依赖：analyze\n- 验收：既有宿主证据与版本验收\n- 独立审阅：是\n- 执行者：review\n- 执行契约：{\"submission\":\"tool\",\"resultType\":\"review\",\"version\":1,\"inputs\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"],\"outputs\":[],\"access\":\"read-only\",\"requireExecution\":false,\"requireReview\":true}",
+      "status": "proposed"
+    }
+  ]
+}

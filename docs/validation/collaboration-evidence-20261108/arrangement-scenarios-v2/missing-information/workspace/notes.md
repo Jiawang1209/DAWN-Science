@@ -1,0 +1,2 @@
+# Synthetic notes
+Read only.

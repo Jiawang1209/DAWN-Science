@@ -11,6 +11,29 @@ import {startMockInferenceServer,mockModelsJson} from '../../scripts/mock-infere
 import {researchScenario} from '../../scripts/mock-research.mjs'
 const roots:string[]=[]
 const trialPolicy={retry:{enabled:false,maxRetries:0,provider:{maxRetries:0}},compaction:{enabled:false},cacheWarming:'off'}
+it('counts a correctly blocked single trial whose real input read used an absolute path',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-research-absolute-read-'));roots.push(root)
+ const out=join(root,'results'),task=researchTasks().find(t=>t.id==='unknown-unit')!,base=researchScenario(researchTasks())
+ const server=await startMockInferenceServer({scenario:{...base,toolCall:(body:any)=>{
+  const messages=body.messages??[],content=messages.findLast((m:any)=>m.role==='user')?.content
+  const prompt=typeof content==='string'?content:(content??[]).map((c:any)=>c.text??'').join('')
+  const contractText=/任务契约（范围已冻结）：([^\n]+)/.exec(prompt)?.[1]
+  if(contractText&&JSON.parse(contractText).resultType==='model-metrics'){
+   const calls=messages.flatMap((m:any)=>m.role==='assistant'?m.tool_calls??[]:[])
+   if(calls.some((c:any)=>c.function?.name==='submit_task_result'))return undefined
+   const read=calls.find((c:any)=>c.function?.name==='read')
+   if(!read){const dir=readdirSync(out).find(n=>n.startsWith('unknown-unit-single-'))!;return{toolName:'read',args:{path:join(out,dir,'input.csv')}}}
+   return{toolName:'submit_task_result',args:{summary:'缺少单位，保留输入且不交付推断结果',blockers:['单位未提供'],deliverables:[],execution:{state:'not_run',note:'unit unavailable'},verification:{state:'reviewed',note:'read actual input',toolCallIds:[read.id]},data:{kind:'model-metrics',method:'arithmetic mean',metrics:{},caveats:['unit unknown']}}}
+  }
+  return base.toolCall(body)
+ }}})
+ try{
+  const modelsPath=join(root,'models.json');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))
+  const report=await runResearchEvaluation(out,{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:'localhost-only',kind:'fixture',requests:()=>server.requests.length},{taskIds:[task.id],perArmLimit:10})
+  expect(report.rows.find(r=>r.mode==='single')).toMatchObject({terminal:'blocked',success:true,inputPreserved:true})
+  expect(report.delivery.single.correctBlocks).toBe(1)
+ }finally{await server.close()}
+},30000)
 it('a frozen executor prompt never claims that its initial remaining request quota is still current',async()=>{
  const{startEvaluationGate}=await import('../../scripts/evaluation-request-gate.js'),{researchBudgetTrial}=await import('../../scripts/research-trial-budget.js')
  const gate=await startEvaluationGate({limit:30,forward:async()=>new Response('{}',{headers:{'content-type':'application/json'}})})
@@ -95,13 +118,13 @@ it('runs paired scientific tasks through actual Pi, files, host acceptance and t
   const manifest=JSON.parse(readFileSync(join(root,'results/research-manifest.json'),'utf8'))
   expect(manifest.runId).toBe(report.runId)
   expect(manifest.fingerprint).toBe(report.manifestFingerprint)
-  expect(manifest.arms).toHaveLength(16)
+  expect(manifest.arms).toHaveLength(24)
   expect(report.comparisonEligible).toBe(true)
-  expect(report.completePairs,JSON.stringify(report.rows)).toBe(8)
-  expect(report.rows.filter(r=>r.repeat===2)).toHaveLength(8)
-  expect(report.qualifiedPairs).toBe(8)
-  expect(report.delivery.single).toMatchObject({qualifiedDeliveries:6,correctBlocks:2,falseAcceptances:0})
-  expect(report.delivery.multi).toMatchObject({qualifiedDeliveries:6,correctBlocks:2,falseAcceptances:0})
+  expect(report.completePairs,JSON.stringify(report.rows)).toBe(12)
+  expect(report.rows.filter(r=>r.repeat===2)).toHaveLength(12)
+  expect(report.qualifiedPairs).toBe(12)
+  expect(report.delivery.single).toMatchObject({qualifiedDeliveries:10,correctBlocks:2,falseAcceptances:0})
+  expect(report.delivery.multi).toMatchObject({qualifiedDeliveries:10,correctBlocks:2,falseAcceptances:0})
   expect(report.requestLimit).toBeNull()
   expect(report.requestAllocation.enforced).toBe(false)
   expect(report.rows.every(r=>r.success),JSON.stringify(report.rows)).toBe(true)
@@ -208,7 +231,7 @@ it('counts real planning calls in the multi arm and compiles the model-selected 
    if((body.messages??[]).some((m:any)=>m.role==='tool'))return undefined
    const contracts=JSON.parse(/冻结科学契约：(\{[^\n]+\})/.exec(text)![1]!)
    const block=(id:string,contract:any,review:boolean)=>({id,title:id,goal:'same synthetic method',role:id,inputs:contract.inputs,outputs:contract.outputs,dependencies:review?['analyze']:[],acceptance:'unchanged host judge',review,execution:{agent:'analyze',contract}})
-   return{toolName:'propose_plan',args:{title:'model arranged',plan:'## 问题与假设\nsynthetic mean\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'Only analysis and independent review are needed',independentReview:true,questions:[],tasks:[block('analyze',contracts.analyze,false),block('review',contracts.review,true)]}}}
+   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{title:'model arranged',plan:'## 问题与假设\nsynthetic mean\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'Only analysis and independent review are needed',independentReview:true,questions:[],tasks:[block('analyze',contracts.analyze,false),block('review',contracts.review,true)]}}}
   }
   return ordinary.toolCall(body)
  }}
@@ -220,6 +243,10 @@ it('counts real planning calls in the multi arm and compiles the model-selected 
   const multi=report.rows.find(row=>row.mode==='multi')!
   expect(multi.arrangement).toMatchObject({taskCount:2,valid:true,reviewCovered:true,compiled:true});expect(multi.arrangement!.requests).toBeGreaterThan(0);expect(multi.requests).toBeGreaterThan(multi.arrangement!.requests)
   expect(report.multiExecution).toBe('automatic-plan')
+  expect(multi.phaseUsage?.planning.visibleTokens).toBeGreaterThan(0)
+  expect(multi.phaseUsage?.review.scopes).toBe(1)
+  expect(multi.totalUsage?.visibleTokens).toBe(multi.usage.visibleTokens+multi.phaseUsage!.planning.visibleTokens!)
+  expect(report.rows.find(r=>r.mode==='single')?.phaseUsage?.planning.state).toBe('not-run')
  }finally{await server.close()}
 },30000)
 
@@ -232,7 +259,7 @@ it('keeps independently frozen check/analyze/review routes and guidance for a th
    if((body.messages??[]).some((m:any)=>m.role==='tool'))return undefined
    const contracts=JSON.parse(/冻结科学契约：(\{[^\n]+\})/.exec(text)![1]!)
    const tasks=['check','analyze','review'].map((id,i)=>({id,title:id,goal:'same frozen method',role:id,inputs:contracts[id].inputs,outputs:contracts[id].outputs,dependencies:i?[i===1?'check':'analyze']:[],acceptance:'same original judge',review:id==='review',execution:{agent:'analyze',contract:contracts[id]}}))
-   return{toolName:'propose_plan',args:{title:'three-task plan',plan:'## 问题与假设\noriginal\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'include an input check',independentReview:true,questions:[],tasks}}}
+   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{title:'three-task plan',plan:'## 问题与假设\noriginal\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'include an input check',independentReview:true,questions:[],tasks}}}
   }
   return ordinary.toolCall(body)
  }}})
@@ -250,3 +277,8 @@ it('keeps independently frozen check/analyze/review routes and guidance for a th
   for(const task of team.tasks){const stage=task.contract.resultType==='review'?'review':task.contract.resultType==='data-summary'?'check':'analyze',member=team.members.find((m:any)=>m.name===task.assignee);expect(member.provider).toBe(stage+'-route');expect(member.frozenAgentDefinition.systemPrompt).toContain(`[budget-${stage}]`)}
  }finally{await gate.close();await server.close()}
 },30000)
+
+it('rejects unknown and duplicate task selection rather than silently narrowing the batch',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-batch-invalid-'));roots.push(root)
+ for(const taskIds of [['carbon-missing','not-a-task'],['carbon-missing','carbon-missing']])await expect(runResearchEvaluation(join(root,String(taskIds.length)+taskIds.join('-')),{provider:'p',model:'m',modelsPath:'unused',credential:'offline',kind:'fixture',requests:()=>0},{taskIds})).rejects.toThrow(/task selection/)
+})

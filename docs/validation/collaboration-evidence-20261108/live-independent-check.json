@@ -1,0 +1,367 @@
+{
+  "independentCheck": "passed",
+  "limitations": [
+    "CSV arithmetic and exact accepted version bytes are recomputed without executing generated scripts.",
+    "When repeated runs have identical version bytes, directory-to-repeat identity is ambiguous; each matched directory is consumed only once.",
+    "Blocked formal receipt semantics remain host evidence; this independent check verifies absent inferred result and preserved input."
+  ],
+  "qualifiedRowsMatched": [
+    {
+      "case": "short-known-mean",
+      "repeat": 1,
+      "mode": "single",
+      "terminal": "accepted",
+      "directory": "short-known-mean-single-W2LaSC",
+      "distinctMatches": 1
+    },
+    {
+      "case": "short-known-mean",
+      "repeat": 1,
+      "mode": "multi",
+      "terminal": "accepted",
+      "directory": "short-known-mean-multi-MYrshx",
+      "distinctMatches": 1
+    },
+    {
+      "case": "short-known-mean",
+      "repeat": 2,
+      "mode": "single",
+      "terminal": "accepted",
+      "directory": "short-known-mean-single-LjcBRT",
+      "distinctMatches": 1
+    },
+    {
+      "case": "carbon-missing",
+      "repeat": 2,
+      "mode": "single",
+      "terminal": "accepted",
+      "directory": "carbon-missing-single-dK58Ca",
+      "distinctMatches": 1
+    },
+    {
+      "case": "carbon-missing",
+      "repeat": 2,
+      "mode": "multi",
+      "terminal": "accepted",
+      "directory": "carbon-missing-multi-VhyZYI",
+      "distinctMatches": 1
+    }
+  ],
+  "trialArtifacts": {
+    "short-known-mean-single-LjcBRT": {
+      "case": "short-known-mean",
+      "mode": "single",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "numericCorrectIfKnownUnit": true,
+      "files": {
+        "results/report.md": {
+          "sha256": "8b033ce0939a3860ad578d41f73f36efc340447c0c19421a8dda6a135955eda0",
+          "bytes": 4982
+        },
+        "results/analysis.py": {
+          "sha256": "085ff397aff422a643f45c621349232fb2a966086ec23a78b5f31c83e02bb212",
+          "bytes": 5370
+        },
+        "results/result.json": {
+          "sha256": "35a2657a090cd6cfaf32c63d53a6f6573f37579469ee6cd49ad1f5c530e0374a",
+          "bytes": 46
+        }
+      }
+    },
+    "short-known-mean-single-W2LaSC": {
+      "case": "short-known-mean",
+      "mode": "single",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "numericCorrectIfKnownUnit": true,
+      "files": {
+        "results/report.md": {
+          "sha256": "32bcf414273c04e6df9391bc122f89f17aaee594442520a234aa6f8a42e57e21",
+          "bytes": 3955
+        },
+        "results/analysis.py": {
+          "sha256": "543176c9e0f21674985e7d0dec33a8888570cee7df427138aeba1773f4f1c520",
+          "bytes": 11524
+        },
+        "results/result.json": {
+          "sha256": "35a2657a090cd6cfaf32c63d53a6f6573f37579469ee6cd49ad1f5c530e0374a",
+          "bytes": 46
+        }
+      }
+    },
+    "short-known-mean-multi-MYrshx": {
+      "case": "short-known-mean",
+      "mode": "multi",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "numericCorrectIfKnownUnit": true,
+      "files": {
+        "results/report.md": {
+          "sha256": "111b36525892b341a249bfe46513b00f6f314d60292dd888aa027c574d88da71",
+          "bytes": 2238
+        },
+        "results/analysis.py": {
+          "sha256": "9fd05d1ac067195cf9d757145beda5573431181088ba987938e4975c56ad838e",
+          "bytes": 7757
+        },
+        "results/result.json": {
+          "sha256": "35a2657a090cd6cfaf32c63d53a6f6573f37579469ee6cd49ad1f5c530e0374a",
+          "bytes": 46
+        }
+      }
+    },
+    "short-known-mean-multi-qYj6i1": {
+      "case": "short-known-mean",
+      "mode": "multi",
+      "inputPreserved": true,
+      "resultExists": false,
+      "resultParseError": null,
+      "actualResult": null,
+      "numericCorrectIfKnownUnit": null,
+      "files": {}
+    },
+    "carbon-missing-single-dK58Ca": {
+      "case": "carbon-missing",
+      "mode": "single",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "numericCorrectIfKnownUnit": true,
+      "files": {
+        "results/report.md": {
+          "sha256": "3d838adca4b88085723fe16e0ae6d71491921643b799915225f523bac39b601d",
+          "bytes": 3381
+        },
+        "results/analysis.py": {
+          "sha256": "e22a40f0b8ced555deb1aa07165d1add2255db3d61a483709aef5d0c20e197b6",
+          "bytes": 8784
+        },
+        "results/result.json": {
+          "sha256": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+          "bytes": 62
+        }
+      }
+    },
+    "carbon-missing-single-ql8rES": {
+      "case": "carbon-missing",
+      "mode": "single",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 41,
+        "unit": "mg/g",
+        "carbon_mg_g_mean": 13.870731707317074
+      },
+      "numericCorrectIfKnownUnit": false,
+      "files": {
+        "results/report.md": {
+          "sha256": "6666b50f4dcb33d0cf08413bd9ba46d5ed3cfa8bb3675be6a6e0c2b175c41dc9",
+          "bytes": 7573
+        },
+        "results/analysis.py": {
+          "sha256": "e597a35787c28daf6ed51b7046128704e6d4724240e328077e4324b9a7cfa6c7",
+          "bytes": 5097
+        },
+        "results/result.json": {
+          "sha256": "1d314dc100763cb05394e4bd7ffa090057a4bae584c7789025409c6bf6cc21ee",
+          "bytes": 74
+        }
+      }
+    },
+    "carbon-missing-multi-OzLfgM": {
+      "case": "carbon-missing",
+      "mode": "multi",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "numericCorrectIfKnownUnit": true,
+      "files": {
+        "results/report.md": {
+          "sha256": "18d45a61cffcdad012b379714c97ab9df689e66f220425dc88746a23969b6091",
+          "bytes": 3899
+        },
+        "results/analysis.py": {
+          "sha256": "5ba0ebc93c5b621ec5236d9d6b93bbf8ca842afca3adb390dbff29b9df3c0f34",
+          "bytes": 9716
+        },
+        "results/result.json": {
+          "sha256": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+          "bytes": 62
+        }
+      }
+    },
+    "carbon-missing-multi-VhyZYI": {
+      "case": "carbon-missing",
+      "mode": "multi",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "numericCorrectIfKnownUnit": true,
+      "files": {
+        "results/report.md": {
+          "sha256": "aae9409f67b1b234d6850b8e38c3d5292595dcc5772bfdf89eaed348d33c0517",
+          "bytes": 3521
+        },
+        "results/analysis.py": {
+          "sha256": "21ab0301e2a8aaeec7d2c0745bfcf410f8c580b0b5b99f98ab7a9ba62f61a357",
+          "bytes": 8577
+        },
+        "results/result.json": {
+          "sha256": "b0b1c0613c7a54c6fc7a757d24bbf1959f61fec46b340919309b935ca2b1d853",
+          "bytes": 54
+        }
+      }
+    },
+    "unknown-unit-single-3wzHXG": {
+      "case": "unknown-unit",
+      "mode": "single",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "status": "blocked",
+        "blocker": "unit_not_provided",
+        "reason": "Requested deliverable is a mean WITH a unit. Neither the input file nor the request supplies a unit for column 'carbon', and a unit cannot be derived from the numbers or from neighbouring columns. The unit is never guessed, so the deliverable is withheld instead of inferred.",
+        "n": 41,
+        "unit": null,
+        "mean_carbon": null,
+        "method": "arithmetic mean",
+        "template": "tabular-ecology@1",
+        "input": "input.csv",
+        "target_column": "carbon",
+        "na_rule": "drop NA in target column only",
+        "na_dropped_in_target": 7,
+        "na_dropped_rows": [
+          "line 2 (plot-1)",
+          "line 9 (plot-8)",
+          "line 16 (plot-15)",
+          "line 23 (plot-22)",
+          "line 30 (plot-29)",
+          "line 37 (plot-36)",
+          "line 44 (plot-43)"
+        ],
+        "other_columns_missing_counts": {},
+        "diagnostics": {
+          "mean_carbon_unitless": 13.870732,
+          "sum_carbon_unitless": 568.7,
+          "min_carbon_unitless": 12.0,
+          "max_carbon_unitless": 15.6,
+          "note": "Unitless raw-scale figures on the input's own scale. NOT the requested metric; must not be reported as a carbon mean because the unit is unknown."
+        }
+      },
+      "numericCorrectIfKnownUnit": null,
+      "files": {
+        "results/report.md": {
+          "sha256": "f9b4b2adf5e69b0065ebce6e1f7d97a6ed47adf926307f7c7ddfb0c1a1e61108",
+          "bytes": 6766
+        },
+        "results/analysis.py": {
+          "sha256": "87a8349382ec61fec13dab207306cdbbbd2b96773740ab40c5508ddadaed0f07",
+          "bytes": 5360
+        },
+        "results/result.json": {
+          "sha256": "542a5a976f0e9c9691c6a73dddf1da86d37b78f9301d9d53ace4d79e55ee800a",
+          "bytes": 1154
+        }
+      }
+    },
+    "unknown-unit-single-y5lXmn": {
+      "case": "unknown-unit",
+      "mode": "single",
+      "inputPreserved": true,
+      "resultExists": false,
+      "resultParseError": null,
+      "actualResult": null,
+      "numericCorrectIfKnownUnit": null,
+      "files": {
+        "results/report.md": {
+          "sha256": "d7d4acad9374c5de667f4705c6428e5269d3339f3cdaafe9d3dcf135a15aa5fe",
+          "bytes": 4455
+        },
+        "results/analysis.py": {
+          "sha256": "48ac1e65601766647d511505ac6ed59ccc1006a0c4e9e3dc271613a78aee4de9",
+          "bytes": 4847
+        }
+      }
+    },
+    "unknown-unit-multi-h4pu8A": {
+      "case": "unknown-unit",
+      "mode": "multi",
+      "inputPreserved": true,
+      "resultExists": false,
+      "resultParseError": null,
+      "actualResult": null,
+      "numericCorrectIfKnownUnit": null,
+      "files": {}
+    },
+    "unknown-unit-multi-pQPc3J": {
+      "case": "unknown-unit",
+      "mode": "multi",
+      "inputPreserved": true,
+      "resultExists": true,
+      "resultParseError": null,
+      "actualResult": {
+        "n": 41,
+        "unit": "not_provided",
+        "mean_carbon": 13.8707317073
+      },
+      "numericCorrectIfKnownUnit": null,
+      "files": {
+        "results/report.md": {
+          "sha256": "a4ad3ab7c49f9f6391ff0d673eb678d96ad9a8e1dc77aa77071618a0daf2ee3f",
+          "bytes": 4202
+        },
+        "results/analysis.py": {
+          "sha256": "2b84adb6e3db478542b5974f624a85785497a1a84de017836ad4176145fdd367",
+          "bytes": 3358
+        },
+        "results/result.json": {
+          "sha256": "34bda5c527dc02bf476fdbf0ed608d7ea5256ab165b313d3d0512e614a773715",
+          "bytes": 72
+        }
+      }
+    }
+  },
+  "requestGate": {
+    "reserved": 148,
+    "forwarded": 148,
+    "denied": 0,
+    "inFlight": 0,
+    "limit": 300
+  }
+}

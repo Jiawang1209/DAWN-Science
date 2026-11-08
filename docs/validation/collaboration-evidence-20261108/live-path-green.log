@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-tasks.test.ts tests/evaluation/research-runner.test.ts -t recognizes an observed input|counts a correctly blocked single
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  2 passed | 21 skipped (23)
+   Start at  00:20:49
+   Duration  4.90s (transform 1.30s, setup 0ms, import 3.12s, tests 1.72s, environment 0ms)
+

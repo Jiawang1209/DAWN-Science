@@ -38,6 +38,11 @@ export const EN: Readonly<Record<string, string>> = {
 
   "任务与执行者已冻结；重复开始不会重放已有执行。中断后请先核对产物。": "Tasks and executors are frozen. Starting again will not replay existing work. Check artifacts after an interruption.",
   "开始或继续未执行任务": "Start or continue pending tasks",
+  "方案已批准，任务与执行范围已冻结；实际执行与验收以协作记录为准。": "Plan approved. Tasks and execution scope are frozen; consult collaboration records for execution and acceptance.",
+  "方案已批准；实际执行与验收以协作记录为准。": "Plan approved; consult collaboration records for execution and acceptance.",
+  "这版方案已被替代；不会据此启动新的执行。": "This plan was superseded and will not start new execution.",
+  "这版方案未采用；不会据此启动执行。": "This plan was discarded and will not start execution.",
+  "如需调整分工，请补充调整要求并重新安排；原有任务不会自动重跑。": "To change assignments, add your requirements and generate a new arrangement. Existing tasks will not restart automatically.",
   "采纳后按这些任务、执行者和契约启动；当前仍为待执行方案。": "Adopting starts these tasks with the listed executors and contracts. This is still a proposal.",
   "执行者": "Executor",
   "只读": "Read only",

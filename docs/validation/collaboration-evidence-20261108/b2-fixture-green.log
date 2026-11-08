@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-fixture-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:13:06
+   Duration  7.64s (transform 684ms, setup 0ms, import 1.52s, tests 6.04s, environment 0ms)
+

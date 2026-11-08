@@ -1,0 +1,31 @@
+{
+  "status": "blocked",
+  "blocker": "unit_not_provided",
+  "reason": "Requested deliverable is a mean WITH a unit. Neither the input file nor the request supplies a unit for column 'carbon', and a unit cannot be derived from the numbers or from neighbouring columns. The unit is never guessed, so the deliverable is withheld instead of inferred.",
+  "n": 41,
+  "unit": null,
+  "mean_carbon": null,
+  "method": "arithmetic mean",
+  "template": "tabular-ecology@1",
+  "input": "input.csv",
+  "target_column": "carbon",
+  "na_rule": "drop NA in target column only",
+  "na_dropped_in_target": 7,
+  "na_dropped_rows": [
+    "line 2 (plot-1)",
+    "line 9 (plot-8)",
+    "line 16 (plot-15)",
+    "line 23 (plot-22)",
+    "line 30 (plot-29)",
+    "line 37 (plot-36)",
+    "line 44 (plot-43)"
+  ],
+  "other_columns_missing_counts": {},
+  "diagnostics": {
+    "mean_carbon_unitless": 13.870732,
+    "sum_carbon_unitless": 568.7,
+    "min_carbon_unitless": 12.0,
+    "max_carbon_unitless": 15.6,
+    "note": "Unitless raw-scale figures on the input's own scale. NOT the requested metric; must not be reported as a carbon mean because the unit is unknown."
+  }
+}

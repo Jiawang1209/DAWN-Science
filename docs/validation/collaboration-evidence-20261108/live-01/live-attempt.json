@@ -1,0 +1,1 @@
+{"provider":"deepseek","model":"deepseek-flash","limit":300,"batch":{"taskIds":["short-known-mean","carbon-missing","unknown-unit"],"repeats":2,"perArmLimit":25},"perArmLimit":25,"stageLimits":{"work":18,"review":7},"perArmTimeoutMs":300000,"multiExecution":"automatic-plan","startedAt":"2026-11-08T15:59:34.866Z"}

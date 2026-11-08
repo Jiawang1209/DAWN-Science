@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts e2e/collaboration-network.spec.ts
+
+Running 3 tests using 1 worker
+
+(node:4108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:65085/d76de2fe-e9ac-4371-a3ee-e3cdcb0e236d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65127/79bf2444-2ffe-40ea-8c8e-fb64bf6c8763
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (10.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:65139/65f1d9cf-9bd9-4e75-af9e-e0cc08663305
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:65162/a83c171b-80cb-4289-926b-17a22d0d4c6f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:113:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (8.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65175/aac2b737-c6eb-47c7-8cf8-0b5150f7c68d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.1s)
+
+  3 passed (35.1s)

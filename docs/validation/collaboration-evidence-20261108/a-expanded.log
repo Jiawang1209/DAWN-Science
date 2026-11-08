@@ -1,0 +1,17 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts -g approved arrangement starts
+
+Running 1 test using 1 worker
+
+(node:5106) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49260/c3e9e936-6e10-4ab0-ab37-40eb272b75bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49292/93e192b9-bef4-4fa6-9cdc-930b5f3cff44
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (9.4s)
+
+  1 passed (9.9s)

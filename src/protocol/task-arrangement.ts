@@ -3,6 +3,14 @@ import {z} from 'zod'
 import {WorkspaceRelativePathSchema} from './analysis-route.js'
 import {TaskContractSchema} from './task-contract.js'
 export const autoArrangementRequestPrefix='请为以下具体任务自动安排。'
+/** Shared planning request for the UI and isolated scenario evaluation. No execution authority. */
+export function autoArrangementPrompt(task:string,adjustment=''):string {
+ return[autoArrangementRequestPrefix+'先只读理解目标、数据和已有会话约束，再用 propose_plan 的 arrangement 提交任务划分、分工、输入输出、依赖、验收与理由。',
+  '任务数量是方案结果，由实际任务决定；简单单结果任务优先一个任务块，不能固定拆成三块，也不要让用户预填数字。只有依赖、独立输入、权限边界或明确审阅要求才增加分工；请在理由里解释额外分工的实际作用。并行仅用于独立任务且不能共写；用户要求独立审阅时必须保留不同执行角色的审阅任务。缺信息放入 questions，不编造数据或启动执行。',
+  '任务目标：\n'+task.trim(),adjustment.trim()?'调整要求：\n'+adjustment.trim():'',
+  '原有冻结契约、证据、产物版本、预算、产物锁和恢复要求继续适用。请交可调整的方案，等待用户采纳；这次只规划，不写科研产物、不派子 Agent。'].filter(Boolean).join('\n\n')
+}
+
 const line=z.string().trim().min(1).max(2000).refine(s=>!/[\r\n\u0000]/.test(s),'字段必须是单行文本')
 const id=z.string().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/)
 const path=WorkspaceRelativePathSchema.pipe(line).refine(s=>s.length<=512)

@@ -1,0 +1,47 @@
+{
+  "kind": "post-hoc-evaluator-path-fix",
+  "modelRequestsAdded": 0,
+  "originalReport": "live-01/research.json",
+  "originalManifestFingerprint": "8ec91ed30e3a212c8e38325ab52ab00fbcc8435bde5a96eec0c523bd75e2e340",
+  "sourceCandidateOfModelRun": "v2",
+  "correctedEvaluatorCandidate": "v3",
+  "caseId": "unknown-unit",
+  "repeat": 2,
+  "mode": "single",
+  "hostReceiptState": "blocked",
+  "originalInputRead": false,
+  "normalizedInputRead": true,
+  "originalSuccess": false,
+  "correctedSuccess": true,
+  "matchedAssistantRequests": 10,
+  "derivedSummary": {
+    "completePairs": 3,
+    "qualifiedPairs": 2,
+    "delivery": {
+      "single": {
+        "qualifiedDeliveries": 3,
+        "correctBlocks": 1,
+        "falseAcceptances": 0,
+        "exhausted": 0,
+        "requests": 76,
+        "elapsedMs": 442968,
+        "requestsPerDelivery": 25.333333333333332,
+        "msPerDelivery": 147656
+      },
+      "multi": {
+        "qualifiedDeliveries": 2,
+        "correctBlocks": 0,
+        "falseAcceptances": 0,
+        "exhausted": 0,
+        "requests": 72,
+        "elapsedMs": 565850,
+        "requestsPerDelivery": 36,
+        "msPerDelivery": 282925
+      }
+    }
+  },
+  "limitations": [
+    "Original frozen report is retained unchanged; this is an offline metric correction, not a rerun or evidence of a newly improved model.",
+    "The complete successful-pair count remains two. Unknown-unit placeholder artifacts and unanswered planning questions retain their original classifications."
+  ]
+}

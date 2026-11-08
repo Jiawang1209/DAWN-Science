@@ -1,0 +1,7 @@
+{
+  "changed": [
+    "tests/evaluation/research-fixture-cli.test.ts"
+  ],
+  "change": "portable filename assertion, no application code changes",
+  "verification": "fixture-portable-path.log: all three direct CLI tests"
+}

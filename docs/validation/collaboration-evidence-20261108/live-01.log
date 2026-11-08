@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 evaluate:science
+npm notice run npm run build:electron && tsx scripts/evaluate-science-pipeline.ts --research-current-api docs/validation/collaboration-evidence-20261108/live-01 /Users/liuyue/Library/Application Support/dawn-science deepseek deepseek-flash automatic-plan 300 docs/validation/collaboration-evidence-20261108/live-batch.json
+npm notice run dawn-science@0.0.44 build:electron
+npm notice run node scripts/build-electron.mjs
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:338:17:
+      338 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval
+
+build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/
+build-electron: 自带技能已拷进 dist/skills
+build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:338:17:
+      338 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval
+
+research-host-ready
+[98841:1108/235935.070707:ERROR:content/browser/network_service_instance_impl.cc:721] Network service crashed or was terminated, restarting service.
+{"provider":"deepseek","model":"deepseek-flash","forwarded":148,"completePairs":3,"incompletePairs":3,"rows":[{"caseId":"short-known-mean","mode":"single","terminal":"accepted","success":true,"requests":13},{"caseId":"short-known-mean","mode":"multi","terminal":"accepted","success":true,"requests":15},{"caseId":"carbon-missing","mode":"multi","terminal":"failed","success":false,"requests":18},{"caseId":"carbon-missing","mode":"single","terminal":"blocked","success":false,"requests":17},{"caseId":"unknown-unit","mode":"single","terminal":"blocked","success":false,"requests":12},{"caseId":"unknown-unit","mode":"multi","terminal":"failed","success":false,"requests":5},{"caseId":"short-known-mean","mode":"multi","terminal":"failed","success":false,"requests":4},{"caseId":"short-known-mean","mode":"single","terminal":"accepted","success":true,"requests":14},{"caseId":"carbon-missing","mode":"single","terminal":"accepted","success":true,"requests":10},{"caseId":"carbon-missing","mode":"multi","terminal":"accepted","success":true,"requests":17},{"caseId":"unknown-unit","mode":"multi","terminal":"blocked","success":false,"requests":13},{"caseId":"unknown-unit","mode":"single","terminal":"blocked","success":false,"requests":10}]}

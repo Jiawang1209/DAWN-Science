@@ -1,0 +1,2138 @@
+{
+  "version": 2,
+  "multiExecution": "automatic-plan",
+  "runId": "43d8045a-0977-4733-9c01-ae519b5ca80e",
+  "manifestFingerprint": "e635ddf3300f9e65be41d9a0e8825047e2f45c64d3320b216d64110407964fbd",
+  "comparisonEligible": true,
+  "integrity": {
+    "changed": []
+  },
+  "generatedAt": "2026-11-08T14:21:19.870Z",
+  "inference": "fixture",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestLimit": null,
+  "requestAllocation": {
+    "perArmLimit": 25,
+    "repeats": 1,
+    "enforced": true,
+    "plannedArms": 12,
+    "perArmTimeoutMs": 300000
+  },
+  "sourceFiles": [
+    "package-lock.json",
+    "package.json",
+    "scripts/evaluate-current-api.ts",
+    "scripts/evaluate-research.ts",
+    "scripts/evaluation-request-gate.ts",
+    "scripts/mock-research.mjs",
+    "scripts/research-auto-arrangement.ts",
+    "scripts/research-model-compat.ts",
+    "scripts/research-transcripts.ts",
+    "scripts/research-trial-budget.ts",
+    "src/acp/gateway.ts",
+    "src/acp/kernel.ts",
+    "src/acp/skill-read-history.ts",
+    "src/acp/tools.ts",
+    "src/artifacts/blobs.ts",
+    "src/artifacts/capture.ts",
+    "src/artifacts/model.ts",
+    "src/artifacts/operations.ts",
+    "src/artifacts/retention.ts",
+    "src/artifacts/store.ts",
+    "src/artifacts/task-versions.ts",
+    "src/bot/collaboration.ts",
+    "src/bot/context.ts",
+    "src/bot/delivery.ts",
+    "src/bot/output-locks.ts",
+    "src/bot/recovery.ts",
+    "src/bot/runtime.ts",
+    "src/bot/service.ts",
+    "src/bot/team-runner.ts",
+    "src/bot/types.ts",
+    "src/cases/results.ts",
+    "src/channels/feishu/channel.ts",
+    "src/channels/feishu/sdk.ts",
+    "src/channels/weixin/channel.ts",
+    "src/channels/weixin/ilink.ts",
+    "src/cli.ts",
+    "src/cli/agent.ts",
+    "src/cli/code-highlighting.ts",
+    "src/cli/context.ts",
+    "src/cli/desktop-client.ts",
+    "src/cli/desktop-host.ts",
+    "src/cli/desktop-images.ts",
+    "src/cli/desktop-wire.ts",
+    "src/cli/history-picker.ts",
+    "src/cli/input-history.ts",
+    "src/cli/next-prompt.ts",
+    "src/cli/permissions.ts",
+    "src/cli/planning.ts",
+    "src/cli/presentation.ts",
+    "src/cli/tui-transcript.ts",
+    "src/cli/tui.ts",
+    "src/cli/usage.ts",
+    "src/cli/workspace.ts",
+    "src/config/loader.ts",
+    "src/config/mcp-writer.ts",
+    "src/config/models-json.ts",
+    "src/config/schema.ts",
+    "src/config/writer.ts",
+    "src/delivery/comparison-table.ts",
+    "src/delivery/numbers.ts",
+    "src/delivery/report.ts",
+    "src/delivery/service.ts",
+    "src/delivery/text.ts",
+    "src/delivery/verify.ts",
+    "src/electron/credential-handoff.ts",
+    "src/electron/credentials.ts",
+    "src/electron/desktop-notify.ts",
+    "src/electron/exit-diagnostics.ts",
+    "src/electron/ipc.ts",
+    "src/electron/login-shell-path.ts",
+    "src/electron/main.ts",
+    "src/electron/migrate-userdata.ts",
+    "src/electron/onboarding-installation.ts",
+    "src/electron/preload.ts",
+    "src/electron/single-instance.ts",
+    "src/electron/tray-icon.ts",
+    "src/electron/web-preview.ts",
+    "src/electron/wiring.ts",
+    "src/enhance/clean.ts",
+    "src/enhance/enhance.ts",
+    "src/enhance/prompts.ts",
+    "src/enhance/retrieve.ts",
+    "src/env/probe.ts",
+    "src/env/snapshot.ts",
+    "src/errors.ts",
+    "src/evaluation/arrangement-scenarios.ts",
+    "src/evaluation/auto-arrangement.ts",
+    "src/evaluation/mode-advice.ts",
+    "src/evaluation/research-batch.ts",
+    "src/evaluation/research-budget.ts",
+    "src/evaluation/research-manifest.ts",
+    "src/evaluation/research-submissions.ts",
+    "src/evaluation/research-tasks.ts",
+    "src/evaluation/research-usage.ts",
+    "src/evaluation/run-budget.ts",
+    "src/evaluation/science-pipeline.ts",
+    "src/files/access.ts",
+    "src/files/attachments.ts",
+    "src/files/file-kind.ts",
+    "src/files/mentions.ts",
+    "src/files/paths.ts",
+    "src/files/search.ts",
+    "src/files/table-diff.ts",
+    "src/files/table.ts",
+    "src/format/tokens.ts",
+    "src/kernel/channel.ts",
+    "src/kernel/environment.ts",
+    "src/kernel/heartbeat.ts",
+    "src/kernel/outputs.ts",
+    "src/kernel/probe.ts",
+    "src/kernel/shortcuts.ts",
+    "src/kernel/specs.ts",
+    "src/kernel/types.ts",
+    "src/kernel/variables.ts",
+    "src/kernel/挂载.ts",
+    "src/literature/client.ts",
+    "src/literature/crossref.ts",
+    "src/literature/model.ts",
+    "src/literature/request.ts",
+    "src/literature/save.ts",
+    "src/literature/tools.ts",
+    "src/mcp/readonly-compat.ts",
+    "src/mcp/request-fetch.ts",
+    "src/mcp/requests.ts",
+    "src/mcp/results.ts",
+    "src/mcp/名单.ts",
+    "src/mcp/客户端.ts",
+    "src/memory/pending-skills.ts",
+    "src/memory/queue.ts",
+    "src/memory/snapshot.ts",
+    "src/memory/store.ts",
+    "src/orchestration/accepted-artifacts.ts",
+    "src/orchestration/agent-usage-totals.ts",
+    "src/orchestration/budget.ts",
+    "src/orchestration/delivery.ts",
+    "src/orchestration/execution-context.ts",
+    "src/orchestration/mailbox.ts",
+    "src/orchestration/mode-advice.ts",
+    "src/orchestration/run-overview.ts",
+    "src/orchestration/service.ts",
+    "src/orchestration/store.ts",
+    "src/orchestration/task-contract.ts",
+    "src/orchestration/task-submission.ts",
+    "src/orchestration/task-trace.ts",
+    "src/orchestration/tool-record.ts",
+    "src/orchestration/tools.ts",
+    "src/policy/artifacts.ts",
+    "src/policy/execution-boundary.ts",
+    "src/policy/local-url.ts",
+    "src/policy/permissions.ts",
+    "src/policy/plan-mode.ts",
+    "src/policy/science-layout.ts",
+    "src/policy/tool-selection.ts",
+    "src/project/checkpoints.ts",
+    "src/project/fs-facts.ts",
+    "src/project/git-facts.ts",
+    "src/project/manager.ts",
+    "src/project/run-recorder.ts",
+    "src/project/table-review.ts",
+    "src/protocol/agent-context-observation.ts",
+    "src/protocol/agent-usage-totals.ts",
+    "src/protocol/analysis-route.ts",
+    "src/protocol/approved-plan.ts",
+    "src/protocol/artifact-history.ts",
+    "src/protocol/cases.ts",
+    "src/protocol/collaboration-outcome.ts",
+    "src/protocol/collaboration-settlement.ts",
+    "src/protocol/context-handoff.ts",
+    "src/protocol/delivery.ts",
+    "src/protocol/entities.ts",
+    "src/protocol/events.ts",
+    "src/protocol/fault-i18n.ts",
+    "src/protocol/file-content.ts",
+    "src/protocol/file-versions.ts",
+    "src/protocol/index.ts",
+    "src/protocol/kernel-package.ts",
+    "src/protocol/notebook-cells.ts",
+    "src/protocol/operations.ts",
+    "src/protocol/permissions.ts",
+    "src/protocol/plan.ts",
+    "src/protocol/planning.ts",
+    "src/protocol/questions.ts",
+    "src/protocol/remote-capable.ts",
+    "src/protocol/run-budget.ts",
+    "src/protocol/run-explanation.ts",
+    "src/protocol/run-overview.ts",
+    "src/protocol/science-acceptance.ts",
+    "src/protocol/science-batch.ts",
+    "src/protocol/science-check-label.ts",
+    "src/protocol/science-pipeline.ts",
+    "src/protocol/science-reuse.ts",
+    "src/protocol/science-route-context.ts",
+    "src/protocol/science-template.ts",
+    "src/protocol/search-match.ts",
+    "src/protocol/skill-discovery.ts",
+    "src/protocol/skill-management.ts",
+    "src/protocol/skill-reads.ts",
+    "src/protocol/subagent-control.ts",
+    "src/protocol/subagent-id.ts",
+    "src/protocol/task-arrangement.ts",
+    "src/protocol/task-artifacts.ts",
+    "src/protocol/task-contract.ts",
+    "src/protocol/task-observation.ts",
+    "src/protocol/task-trace.ts",
+    "src/protocol/terminal.ts",
+    "src/protocol/tool-record.ts",
+    "src/protocol/version.ts",
+    "src/questions/requests.ts",
+    "src/remote/connections.ts",
+    "src/remote/fake-ssh-kernel.ts",
+    "src/remote/fake-ssh.ts",
+    "src/remote/interpreters.ts",
+    "src/remote/kernel-launch.ts",
+    "src/remote/ssh.ts",
+    "src/remote/tools.ts",
+    "src/remote/transfer-batches.ts",
+    "src/remote/transfer-io.ts",
+    "src/remote/transfer-types.ts",
+    "src/remote/tunnel.ts",
+    "src/runtime/acp/hands.ts",
+    "src/runtime/acp/launch.ts",
+    "src/runtime/acp/models.ts",
+    "src/runtime/acp/runtime.ts",
+    "src/runtime/agent-context-sampler.ts",
+    "src/runtime/analysis-route-book.ts",
+    "src/runtime/analysis-route-evidence.ts",
+    "src/runtime/analysis-route-files.ts",
+    "src/runtime/child-resources.ts",
+    "src/runtime/cli/claude-translate.ts",
+    "src/runtime/cli/claude.ts",
+    "src/runtime/cli/codex-translate.ts",
+    "src/runtime/cli/codex.ts",
+    "src/runtime/cli/models.ts",
+    "src/runtime/cli/runtime.ts",
+    "src/runtime/fake.ts",
+    "src/runtime/family.ts",
+    "src/runtime/history.ts",
+    "src/runtime/kernel.ts",
+    "src/runtime/native.ts",
+    "src/runtime/no-tool-download.ts",
+    "src/runtime/orchestration-receipt.ts",
+    "src/runtime/pi-record.ts",
+    "src/runtime/pi-resume.ts",
+    "src/runtime/pi-tool-status.ts",
+    "src/runtime/plan-book.ts",
+    "src/runtime/process-tree.ts",
+    "src/runtime/provenance.ts",
+    "src/runtime/pty-environment.ts",
+    "src/runtime/pty.ts",
+    "src/runtime/remote-terminal.ts",
+    "src/runtime/rewind-note.ts",
+    "src/runtime/route-evidence-rules.ts",
+    "src/runtime/science-pipeline-projection.ts",
+    "src/runtime/science-pipeline-route.ts",
+    "src/runtime/session-dir.ts",
+    "src/runtime/session-usage.ts",
+    "src/runtime/skill-resources.ts",
+    "src/runtime/stuck-guard.ts",
+    "src/runtime/task-observation.ts",
+    "src/runtime/terminal-reply-style.ts",
+    "src/runtime/tool-output.ts",
+    "src/runtime/types.ts",
+    "src/runtime/vision.ts",
+    "src/schedule/domain.ts",
+    "src/schedule/recurrence.ts",
+    "src/schedule/scheduler.ts",
+    "src/science/geo.ts",
+    "src/science/model.ts",
+    "src/science/ncbi.ts",
+    "src/science/request.ts",
+    "src/science/save.ts",
+    "src/science/sra.ts",
+    "src/science/tools.ts",
+    "src/science/uniprot.ts",
+    "src/session/auto-title.ts",
+    "src/session/export-notebook.ts",
+    "src/session/export.ts",
+    "src/session/lease.ts",
+    "src/session/manager.ts",
+    "src/session/stream.ts",
+    "src/session/title.ts",
+    "src/shared/session-activity.ts",
+    "src/skills/catalog.ts",
+    "src/skills/discovery-install.ts",
+    "src/skills/discovery-package.ts",
+    "src/skills/discovery.ts",
+    "src/skills/import.ts",
+    "src/skills/installed.ts",
+    "src/skills/invocation.ts",
+    "src/skills/project-install-root.ts",
+    "src/skills/prompt.ts",
+    "src/skills/request.ts",
+    "src/store/bots.ts",
+    "src/store/connections.ts",
+    "src/store/environments.ts",
+    "src/store/projects.ts",
+    "src/store/runs.ts",
+    "src/store/schedules.ts",
+    "src/store/schema.ts",
+    "src/store/sessions.ts",
+    "src/store/settings.ts",
+    "src/store/tasks.ts",
+    "src/store/usage.ts",
+    "src/subagent/activity.ts",
+    "src/subagent/child-events.ts",
+    "src/subagent/child-task.ts",
+    "src/subagent/child.ts",
+    "src/subagent/clip.ts",
+    "src/subagent/context-handoff.ts",
+    "src/subagent/definitions.ts",
+    "src/subagent/diagnostics.ts",
+    "src/subagent/executor.ts",
+    "src/subagent/handoff-sources.ts",
+    "src/subagent/orchestration.ts",
+    "src/subagent/protocol.ts",
+    "src/subagent/resource-search.ts",
+    "src/subagent/resource-tools.ts",
+    "src/subagent/resources.ts",
+    "src/subagent/run-dir.ts",
+    "src/subagent/steering.ts",
+    "src/subagent/task-tools.ts",
+    "src/subagent/tool.ts",
+    "src/suggestions/next-prompt.ts",
+    "src/team/approved-plan-budget.ts",
+    "src/team/approved-plan.ts",
+    "src/team/read-current-snapshot.ts",
+    "src/team/recovery.ts",
+    "src/team/runner.ts",
+    "src/team/scheduler.ts",
+    "src/team/science-acceptance.ts",
+    "src/team/science-batch-facts.ts",
+    "src/team/science-batch-paths.ts",
+    "src/team/science-batch.ts",
+    "src/team/science-environment.ts",
+    "src/team/science-execution.ts",
+    "src/team/science-pipeline-tools.ts",
+    "src/team/science-pipeline-versions.ts",
+    "src/team/science-pipeline.ts",
+    "src/team/science-python-bootstrap.ts",
+    "src/team/science-reuse.ts",
+    "src/team/science-summary.ts",
+    "src/team/science-templates.ts",
+    "src/team/state.ts",
+    "src/team/task-snapshot.ts",
+    "src/team/tools.ts",
+    "src/team/types.ts",
+    "src/terminal/commands.ts",
+    "src/terminal/control.ts",
+    "src/terminal/replies.ts",
+    "src/terminal/request.ts",
+    "src/terminal/screen.ts",
+    "src/tools/analysis-route.ts",
+    "src/tools/ask-user-question.ts",
+    "src/tools/browser/index.ts",
+    "src/tools/browser/session.ts",
+    "src/tools/browser/tools.ts",
+    "src/tools/inspect-data.ts",
+    "src/tools/look-at-image.ts",
+    "src/tools/mcp-tool.ts",
+    "src/tools/memory/index.ts",
+    "src/tools/office/docx.ts",
+    "src/tools/office/excel-audit.ts",
+    "src/tools/office/excel.ts",
+    "src/tools/office/fontkit.d.ts",
+    "src/tools/office/fonts.ts",
+    "src/tools/office/index.ts",
+    "src/tools/office/pdf-ops.ts",
+    "src/tools/office/pdf.ts",
+    "src/tools/office/ppt.ts",
+    "src/tools/office/shape.ts",
+    "src/tools/plugins.ts",
+    "src/tools/propose-plan.ts",
+    "src/tools/read-main-session.ts",
+    "src/tools/run-code.ts",
+    "src/tools/skills.ts",
+    "src/tools/terminal.ts",
+    "src/ui/App.tsx",
+    "src/ui/ErrorBoundary.tsx",
+    "src/ui/Settings.tsx",
+    "src/ui/agent-browser.tsx",
+    "src/ui/agent-groups.ts",
+    "src/ui/agent-observation-view.tsx",
+    "src/ui/agent-observation.ts",
+    "src/ui/agent-order.ts",
+    "src/ui/analysis-delivery.tsx",
+    "src/ui/analysis-route-map.tsx",
+    "src/ui/analysis-route-step.tsx",
+    "src/ui/analysis-route.tsx",
+    "src/ui/ansi-text.tsx",
+    "src/ui/ansi.ts",
+    "src/ui/app-statusbar.tsx",
+    "src/ui/appearance-color-control.tsx",
+    "src/ui/approved-plan-progress.tsx",
+    "src/ui/archived.tsx",
+    "src/ui/artifact-history.tsx",
+    "src/ui/artifact-list.ts",
+    "src/ui/artifact-source.tsx",
+    "src/ui/artifacts.tsx",
+    "src/ui/assets.d.ts",
+    "src/ui/at-file.ts",
+    "src/ui/at-menu.tsx",
+    "src/ui/at-settings.tsx",
+    "src/ui/attach-panel.tsx",
+    "src/ui/auto-arrangement-request.ts",
+    "src/ui/back-to-bottom.tsx",
+    "src/ui/bot-artifact-preview.tsx",
+    "src/ui/bot-avatar.tsx",
+    "src/ui/bot-collaboration.tsx",
+    "src/ui/bot-member-view.ts",
+    "src/ui/bot-pane.tsx",
+    "src/ui/bot-task-card.tsx",
+    "src/ui/bot-team-overview.tsx",
+    "src/ui/bot-team-scope.ts",
+    "src/ui/bot-team-summary.ts",
+    "src/ui/case-cards-view.tsx",
+    "src/ui/case-cards.ts",
+    "src/ui/client.ts",
+    "src/ui/code-block-visibility.ts",
+    "src/ui/code-languages.ts",
+    "src/ui/collaboration-evidence.tsx",
+    "src/ui/collaboration-expanded.tsx",
+    "src/ui/collaboration-handoff.tsx",
+    "src/ui/collaboration-member-panel.tsx",
+    "src/ui/collaboration-member.ts",
+    "src/ui/collaboration-model.ts",
+    "src/ui/collaboration-network.tsx",
+    "src/ui/collaboration-outcome-panel.tsx",
+    "src/ui/collaboration-outcome.ts",
+    "src/ui/collaboration-summary.tsx",
+    "src/ui/collaboration-task-detail.tsx",
+    "src/ui/collaboration-tool-records.tsx",
+    "src/ui/collaboration-workflow.tsx",
+    "src/ui/color-panel.tsx",
+    "src/ui/commands.ts",
+    "src/ui/compaction-row.tsx",
+    "src/ui/composer-field.tsx",
+    "src/ui/composer-highlight.tsx",
+    "src/ui/composer-input-surface.tsx",
+    "src/ui/composer-paste.ts",
+    "src/ui/composer-usage-space.ts",
+    "src/ui/confirm.tsx",
+    "src/ui/connection.tsx",
+    "src/ui/content-search.tsx",
+    "src/ui/context-meter.tsx",
+    "src/ui/conversation-actions.tsx",
+    "src/ui/conversation-search.tsx",
+    "src/ui/desktop-notify-panel.tsx",
+    "src/ui/diff.ts",
+    "src/ui/dock-tabs.ts",
+    "src/ui/dock.tsx",
+    "src/ui/draft-highlighter.ts",
+    "src/ui/enhance.tsx",
+    "src/ui/env.d.ts",
+    "src/ui/eyedropper.tsx",
+    "src/ui/failed-notice.tsx",
+    "src/ui/file-kind.ts",
+    "src/ui/file-upload-menu.tsx",
+    "src/ui/files.tsx",
+    "src/ui/footer-rows.ts",
+    "src/ui/format.ts",
+    "src/ui/generated-strip.tsx",
+    "src/ui/handoff-route.ts",
+    "src/ui/hover-card.tsx",
+    "src/ui/i18n/en.ts",
+    "src/ui/i18n/index.ts",
+    "src/ui/icons.tsx",
+    "src/ui/ime-trace.ts",
+    "src/ui/ime.ts",
+    "src/ui/installed-skill-detail.tsx",
+    "src/ui/interpreter-picker.tsx",
+    "src/ui/main.tsx",
+    "src/ui/markdown-files.tsx",
+    "src/ui/markdown.tsx",
+    "src/ui/memory-panel.tsx",
+    "src/ui/mouse-stuck.ts",
+    "src/ui/next-prompt.ts",
+    "src/ui/notebook.tsx",
+    "src/ui/open-session-route.ts",
+    "src/ui/orchestration-advice-copy.ts",
+    "src/ui/orchestration-advisor.tsx",
+    "src/ui/palette.tsx",
+    "src/ui/pane-boundary.tsx",
+    "src/ui/panels.tsx",
+    "src/ui/pdf-canvas.tsx",
+    "src/ui/pdf-engine.ts",
+    "src/ui/permission-card.tsx",
+    "src/ui/permission-pill.tsx",
+    "src/ui/plan-card.tsx",
+    "src/ui/preview-close-button.tsx",
+    "src/ui/primitives.tsx",
+    "src/ui/project-actions.tsx",
+    "src/ui/project-file-picker.tsx",
+    "src/ui/question-card.tsx",
+    "src/ui/question-drafts.ts",
+    "src/ui/queued-strip.tsx",
+    "src/ui/remote-assistant.tsx",
+    "src/ui/remote.tsx",
+    "src/ui/review.tsx",
+    "src/ui/rewind.tsx",
+    "src/ui/right-submenu.tsx",
+    "src/ui/route-map-model.ts",
+    "src/ui/run-budget.tsx",
+    "src/ui/run-explanation.tsx",
+    "src/ui/run-overview.tsx",
+    "src/ui/sash.tsx",
+    "src/ui/schedule.tsx",
+    "src/ui/science-acceptance-status.tsx",
+    "src/ui/science-pipeline-status.tsx",
+    "src/ui/science-reuse-status.tsx",
+    "src/ui/script-highlighter.ts",
+    "src/ui/script-preview.tsx",
+    "src/ui/search-jump.ts",
+    "src/ui/search-panel.tsx",
+    "src/ui/server-navigation.ts",
+    "src/ui/server-sidebar.tsx",
+    "src/ui/service-mark-assets.ts",
+    "src/ui/service-mark-catalog.ts",
+    "src/ui/service-mark.tsx",
+    "src/ui/session-menu-items.tsx",
+    "src/ui/session-tabs.tsx",
+    "src/ui/settings-column.tsx",
+    "src/ui/setup-endpoint.ts",
+    "src/ui/setup-wizard.tsx",
+    "src/ui/shortcut-panel.tsx",
+    "src/ui/side-chat.tsx",
+    "src/ui/skill-discovery.tsx",
+    "src/ui/skill-read-record.tsx",
+    "src/ui/skills.tsx",
+    "src/ui/slash-menu.tsx",
+    "src/ui/state/accent.ts",
+    "src/ui/state/analysis-route.ts",
+    "src/ui/state/ask-in-dock.ts",
+    "src/ui/state/auto-arrangement.ts",
+    "src/ui/state/background.ts",
+    "src/ui/state/bot-room.ts",
+    "src/ui/state/bots.ts",
+    "src/ui/state/catalog.ts",
+    "src/ui/state/chat-size.ts",
+    "src/ui/state/collaboration-return.ts",
+    "src/ui/state/collaboration-view.ts",
+    "src/ui/state/connection.ts",
+    "src/ui/state/delivery.ts",
+    "src/ui/state/dock.ts",
+    "src/ui/state/files-memory.ts",
+    "src/ui/state/guard.ts",
+    "src/ui/state/identity.ts",
+    "src/ui/state/index.ts",
+    "src/ui/state/rewind.ts",
+    "src/ui/state/right-dock.ts",
+    "src/ui/state/route-activity.ts",
+    "src/ui/state/route-navigation.ts",
+    "src/ui/state/session-recovery.ts",
+    "src/ui/state/settings-column.ts",
+    "src/ui/state/side-chat.ts",
+    "src/ui/state/sidebar.ts",
+    "src/ui/state/subagent-view.ts",
+    "src/ui/state/sync.ts",
+    "src/ui/state/team-view.ts",
+    "src/ui/state/theme.ts",
+    "src/ui/state/transcript-slot.ts",
+    "src/ui/state/transcript.ts",
+    "src/ui/state/view.ts",
+    "src/ui/state/work-steps.ts",
+    "src/ui/status-notices.tsx",
+    "src/ui/subagent-pane.tsx",
+    "src/ui/subagent-presentation.ts",
+    "src/ui/task-arrangement-view.tsx",
+    "src/ui/task-artifacts.tsx",
+    "src/ui/task-timeline.tsx",
+    "src/ui/team-dag.ts",
+    "src/ui/team-panel.tsx",
+    "src/ui/terminal-context-decoration.ts",
+    "src/ui/terminal-context-meter.tsx",
+    "src/ui/terminal-control.tsx",
+    "src/ui/terminal-conversation-actions.tsx",
+    "src/ui/terminal-find.tsx",
+    "src/ui/terminal-image-decorations.ts",
+    "src/ui/terminal-images.tsx",
+    "src/ui/terminal-keys.ts",
+    "src/ui/terminal-permissions.tsx",
+    "src/ui/terminal-viewport-images.ts",
+    "src/ui/terminal.tsx",
+    "src/ui/thinking-summary.ts",
+    "src/ui/tool-group.ts",
+    "src/ui/transcript-budget.ts",
+    "src/ui/transfer-batches.tsx",
+    "src/ui/transfer-confirmation.tsx",
+    "src/ui/turn-navigator.tsx",
+    "src/ui/turn-process.ts",
+    "src/ui/update-panel.tsx",
+    "src/ui/usage.tsx",
+    "src/ui/use-run-overview.ts",
+    "src/ui/use-settings-transition.ts",
+    "src/ui/views.tsx",
+    "src/ui/visual-file-preview.tsx",
+    "src/ui/web.tsx",
+    "src/ui/workspace-menu.tsx",
+    "src/update/下载.ts",
+    "src/update/交接.ts",
+    "src/update/发布源.ts",
+    "src/update/换包.ts",
+    "src/update/服务.ts",
+    "src/update/本机安装器.ts",
+    "src/update/机器id.ts",
+    "src/update/检查.ts",
+    "src/update/版本.ts",
+    "src/update/状态.ts",
+    "src/update/状态存储.ts",
+    "src/update/资源.ts",
+    "src/workbench/backend.ts",
+    "src/workbench/credential-store.ts",
+    "src/workbench/desktop-notify.ts",
+    "src/workbench/events.ts",
+    "src/workbench/export-dir.ts",
+    "src/workbench/key-validate.ts",
+    "src/workbench/restored-items.ts",
+    "src/workbench/rewind-notice.ts",
+    "src/workbench/server.ts",
+    "src/workbench/session-input-context.ts",
+    "src/workbench/session-search.ts",
+    "src/workbench/side-session.ts",
+    "src/workbench/tool-record.ts",
+    "src/workbench/本机图片.ts"
+  ],
+  "sourceFingerprint": "4987c99bba111e143a3493ffad1ea6c91c3c99322772318597b460ee1d207d3e",
+  "childBuildFingerprint": "27b20497eab6c7aa22e7c68e4d3dd623a7b29ff84b58c6a4505182b9eaf96b36",
+  "tasks": [
+    {
+      "id": "carbon-missing",
+      "csv": "site,carbon_mg_g,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "drop",
+      "instructions": "计算 carbon_mg_g 的算术均值；单位 mg/g。仅丢弃该列 NA，不能按 rain_mm 筛选或填补。保留全部输入；Python stdlib 脚本、result.json 和说明报告。",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568"
+    },
+    {
+      "id": "unknown-unit",
+      "csv": "site,carbon,rain_mm\nplot-1,NA,300\nplot-2,13.7,311\nplot-3,15.4,322\nplot-4,13.4,333\nplot-5,15.1,344\nplot-6,13.1,355\nplot-7,14.8,366\nplot-8,NA,377\nplot-9,14.5,388\nplot-10,12.5,399\nplot-11,14.2,410\nplot-12,12.2,421\nplot-13,13.9,432\nplot-14,15.6,443\nplot-15,NA,454\nplot-16,15.3,465\nplot-17,13.3,476\nplot-18,15,487\nplot-19,13,498\nplot-20,14.7,509\nplot-21,12.7,520\nplot-22,NA,531\nplot-23,12.4,542\nplot-24,14.1,553\nplot-25,12.1,564\nplot-26,13.8,575\nplot-27,15.5,586\nplot-28,13.5,597\nplot-29,NA,608\nplot-30,13.2,619\nplot-31,14.9,630\nplot-32,12.9,641\nplot-33,14.6,652\nplot-34,12.6,663\nplot-35,14.3,674\nplot-36,NA,685\nplot-37,14,696\nplot-38,12,707\nplot-39,13.7,718\nplot-40,15.4,729\nplot-41,13.4,740\nplot-42,15.1,751\nplot-43,NA,762\nplot-44,14.8,773\nplot-45,12.8,784\nplot-46,14.5,795\nplot-47,12.5,806\nplot-48,14.2,817\n",
+      "column": "carbon",
+      "missing": "drop",
+      "instructions": "请求报告 carbon 的带单位均值，但原始文件和用户均没有提供单位。单位是交付必要条件；不能从数值或邻列猜测。条件不足须正式提交 blockers，不能交付推断结果。保留原始文件。",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be"
+    },
+    {
+      "id": "short-known-mean",
+      "csv": "site,temperature_c\nA,14\nB,18\nC,22\nD,26\n",
+      "column": "temperature_c",
+      "unit": "°C",
+      "missing": "block",
+      "instructions": "计算 temperature_c 的算术均值，单位 °C；输入 4 行、不能丢弃样本。使用 Python stdlib，交付脚本、result.json 和报告。",
+      "inputHash": "bbd83677526400132d2a750cc4a3a53bd342b1eab54ded771327d4680016fb59"
+    },
+    {
+      "id": "moisture-strata",
+      "csv": "site,stratum,moisture_pct\nsite-1,ridge,12\nsite-2,ridge,13\nsite-3,ridge,14\nsite-4,ridge,15\nsite-5,ridge,16\nsite-6,ridge,17\nsite-7,ridge,12\nsite-8,ridge,13\nsite-9,ridge,14\nsite-10,ridge,15\nsite-11,ridge,16\nsite-12,ridge,17\nsite-13,ridge,12\nsite-14,ridge,13\nsite-15,ridge,14\nsite-16,ridge,15\nsite-17,ridge,16\nsite-18,ridge,17\nsite-19,ridge,12\nsite-20,ridge,13\nsite-21,ridge,14\nsite-22,ridge,15\nsite-23,ridge,16\nsite-24,ridge,17\nsite-25,ridge,12\nsite-26,ridge,13\nsite-27,ridge,14\nsite-28,ridge,15\nsite-29,ridge,16\nsite-30,ridge,17\nsite-31,ridge,12\nsite-32,ridge,13\nsite-33,ridge,14\nsite-34,ridge,15\nsite-35,ridge,16\nsite-36,ridge,17\nsite-37,ridge,12\nsite-38,ridge,13\nsite-39,ridge,14\nsite-40,ridge,15\nsite-41,ridge,16\nsite-42,ridge,17\nsite-43,ridge,12\nsite-44,ridge,13\nsite-45,ridge,14\nsite-46,ridge,15\nsite-47,ridge,16\nsite-48,ridge,17\nsite-49,ridge,12\nsite-50,ridge,13\nsite-51,ridge,14\nsite-52,ridge,15\nsite-53,ridge,16\nsite-54,ridge,17\nsite-55,ridge,12\nsite-56,ridge,13\nsite-57,ridge,14\nsite-58,ridge,15\nsite-59,ridge,16\nsite-60,ridge,17\nsite-61,ridge,12\nsite-62,ridge,13\nsite-63,ridge,14\nsite-64,ridge,15\nsite-65,ridge,16\nsite-66,ridge,17\nsite-67,ridge,12\nsite-68,ridge,13\nsite-69,ridge,14\nsite-70,ridge,15\nsite-71,ridge,16\nsite-72,ridge,17\nsite-73,ridge,12\nsite-74,ridge,13\nsite-75,ridge,14\nsite-76,ridge,15\nsite-77,ridge,16\nsite-78,ridge,17\nsite-79,ridge,12\nsite-80,ridge,13\nsite-81,ridge,14\nsite-82,ridge,15\nsite-83,ridge,16\nsite-84,ridge,17\nsite-85,ridge,12\nsite-86,ridge,13\nsite-87,ridge,14\nsite-88,ridge,15\nsite-89,ridge,16\nsite-90,ridge,17\nsite-91,ridge,12\nsite-92,ridge,13\nsite-93,ridge,14\nsite-94,ridge,15\nsite-95,ridge,16\nsite-96,ridge,17\nsite-97,ridge,12\nsite-98,ridge,13\nsite-99,ridge,14\nsite-100,ridge,15\nsite-101,ridge,16\nsite-102,ridge,17\nsite-103,ridge,12\nsite-104,ridge,13\nsite-105,ridge,14\nsite-106,ridge,15\nsite-107,ridge,16\nsite-108,ridge,17\nsite-109,ridge,12\nsite-110,ridge,13\nsite-111,ridge,14\nsite-112,ridge,15\nsite-113,ridge,16\nsite-114,ridge,17\nsite-115,ridge,12\nsite-116,ridge,13\nsite-117,ridge,14\nsite-118,ridge,15\nsite-119,ridge,16\nsite-120,ridge,17\nsite-121,valley,24\nsite-122,valley,25\nsite-123,valley,26\nsite-124,valley,27\nsite-125,valley,28\nsite-126,valley,29\nsite-127,valley,24\nsite-128,valley,25\nsite-129,valley,26\nsite-130,valley,27\nsite-131,valley,28\nsite-132,valley,29\nsite-133,valley,24\nsite-134,valley,25\nsite-135,valley,26\nsite-136,valley,27\nsite-137,valley,28\nsite-138,valley,29\nsite-139,valley,24\nsite-140,valley,25\nsite-141,valley,26\nsite-142,valley,27\nsite-143,valley,28\nsite-144,valley,29\nsite-145,valley,24\nsite-146,valley,25\nsite-147,valley,26\nsite-148,valley,27\nsite-149,valley,28\nsite-150,valley,29\nsite-151,valley,24\nsite-152,valley,25\nsite-153,valley,26\nsite-154,valley,27\nsite-155,valley,28\nsite-156,valley,29\nsite-157,valley,24\nsite-158,valley,25\nsite-159,valley,26\nsite-160,valley,27\nsite-161,valley,28\nsite-162,valley,29\nsite-163,valley,24\nsite-164,valley,25\nsite-165,valley,26\nsite-166,valley,27\nsite-167,valley,28\nsite-168,valley,29\nsite-169,valley,24\nsite-170,valley,25\nsite-171,valley,26\nsite-172,valley,27\nsite-173,valley,28\nsite-174,valley,29\nsite-175,valley,24\nsite-176,valley,25\nsite-177,valley,26\nsite-178,valley,27\nsite-179,valley,28\nsite-180,valley,29\nsite-181,valley,24\nsite-182,valley,25\nsite-183,valley,26\nsite-184,valley,27\nsite-185,valley,28\nsite-186,valley,29\nsite-187,valley,24\nsite-188,valley,25\nsite-189,valley,26\nsite-190,valley,27\nsite-191,valley,28\nsite-192,valley,29\nsite-193,valley,24\nsite-194,valley,25\nsite-195,valley,26\nsite-196,valley,27\nsite-197,valley,28\nsite-198,valley,29\nsite-199,valley,24\nsite-200,valley,25\nsite-201,valley,26\nsite-202,valley,27\nsite-203,valley,28\nsite-204,valley,29\nsite-205,valley,24\nsite-206,valley,25\nsite-207,valley,26\nsite-208,valley,27\nsite-209,valley,28\nsite-210,valley,29\nsite-211,valley,24\nsite-212,valley,25\nsite-213,valley,26\nsite-214,valley,27\nsite-215,valley,28\nsite-216,valley,29\nsite-217,valley,24\nsite-218,valley,25\nsite-219,valley,26\nsite-220,valley,27\nsite-221,valley,28\nsite-222,valley,29\nsite-223,valley,24\nsite-224,valley,25\nsite-225,valley,26\nsite-226,valley,27\nsite-227,valley,28\nsite-228,valley,29\nsite-229,valley,24\nsite-230,valley,25\nsite-231,valley,26\nsite-232,valley,27\nsite-233,valley,28\nsite-234,valley,29\nsite-235,valley,24\nsite-236,valley,25\nsite-237,valley,26\nsite-238,valley,27\nsite-239,valley,28\nsite-240,valley,29\n",
+      "column": "moisture_pct",
+      "unit": "%",
+      "missing": "block",
+      "instructions": "核查 ridge/valley 两层各 120 行，计算全部 240 行 moisture_pct 的算术均值（单位 %）。保留原始输入，不去重；Python stdlib 脚本、result.json 和报告。",
+      "inputHash": "36e19776bc59073a5b82b240b603a9fcc900a5c6bec73ae2530d506b0d28cfce"
+    },
+    {
+      "id": "negative-zero-mean",
+      "csv": "site,signal_v\nA,-2\nB,0\nC,2\n",
+      "column": "signal_v",
+      "unit": "V",
+      "missing": "block",
+      "instructions": "计算 signal_v 的算术均值，单位 V；全部3行均有效，负值和零不能删除。Python stdlib 脚本、result.json 和报告。",
+      "inputHash": "222a40199d454248d9c8dbadf6257d7bcf7972b49c93327dd83877b4c2022339"
+    },
+    {
+      "id": "duplicate-sites",
+      "csv": "site,carbon_mg_g\nA,1\nA,3\nB,5\nB,7\n",
+      "column": "carbon_mg_g",
+      "unit": "mg/g",
+      "missing": "block",
+      "instructions": "计算全部4行 carbon_mg_g 的算术均值，单位 mg/g。重复site表示重复观测，不得按site去重或只保留第一行；Python stdlib 脚本、result.json 和报告。",
+      "inputHash": "9ce248b8cec002514a9aad742d919cd2058e698b173b1bbe8aae26d739dfee2f"
+    }
+  ],
+  "delivery": {
+    "single": {
+      "qualifiedDeliveries": 5,
+      "correctBlocks": 1,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 22,
+      "elapsedMs": 5622,
+      "requestsPerDelivery": 4.4,
+      "msPerDelivery": 1124.4
+    },
+    "multi": {
+      "qualifiedDeliveries": 5,
+      "correctBlocks": 1,
+      "falseAcceptances": 0,
+      "exhausted": 0,
+      "requests": 48,
+      "elapsedMs": 9745,
+      "requestsPerDelivery": 9.6,
+      "msPerDelivery": 1949
+    }
+  },
+  "kind": "representative-research-pilot",
+  "completePairs": 6,
+  "incompletePairs": 0,
+  "qualifiedPairs": 6,
+  "rows": [
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 48,
+        "output": 32,
+        "cacheRead": 0,
+        "visibleTokens": 80,
+        "scopes": 1,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 1
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "59e5396ae473cbfc7bbb054475325f0be0c26450a4ee0a60fe8cd2861761cb29",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 4,
+        "forwarded": 4,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "elapsedMs": 1021,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+          "bytes": 347
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "visibleTokens": 20,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        }
+      },
+      "totalUsage": {
+        "input": 108,
+        "output": 72,
+        "cacheRead": 0,
+        "visibleTokens": 180,
+        "scopes": 3,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 3
+      },
+      "arrangement": {
+        "requests": 1,
+        "taskCount": 2,
+        "valid": true,
+        "reviewCovered": true,
+        "usage": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        },
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 2,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "59e5396ae473cbfc7bbb054475325f0be0c26450a4ee0a60fe8cd2861761cb29",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 9,
+      "submissionAttempts": 2,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 9,
+        "forwarded": 9,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 5,
+          "forwarded": 5,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 18
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 7
+        }
+      },
+      "elapsedMs": 1889,
+      "usage": {
+        "visibleTokens": 160,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2",
+          "bytes": 347
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544",
+          "bytes": 53
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "visibleTokens": 20,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "execution": {
+          "input": 24,
+          "output": 16,
+          "cacheRead": 0,
+          "visibleTokens": 40,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 36,
+        "output": 24,
+        "cacheRead": 0,
+        "visibleTokens": 60,
+        "scopes": 2,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 2
+      },
+      "arrangement": {
+        "requests": 1,
+        "taskCount": 3,
+        "valid": true,
+        "reviewCovered": true,
+        "usage": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        },
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "1b427d5795661dc61321c8cfd2fbe9096aaf9258388d22001a4eee0b8a46f08c",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 3,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 3,
+        "forwarded": 3,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 3,
+          "forwarded": 3,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 18
+        },
+        "review": {
+          "reserved": 0,
+          "forwarded": 0,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 7
+        }
+      },
+      "elapsedMs": 700,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        },
+        "execution": {
+          "input": 24,
+          "output": 16,
+          "cacheRead": 0,
+          "visibleTokens": 40,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 24,
+        "output": 16,
+        "cacheRead": 0,
+        "visibleTokens": 40,
+        "scopes": 1,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 1
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "1b427d5795661dc61321c8cfd2fbe9096aaf9258388d22001a4eee0b8a46f08c",
+      "terminal": "blocked",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 2,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 2,
+        "forwarded": 2,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "elapsedMs": 610,
+      "usage": {
+        "visibleTokens": 40,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": []
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 48,
+        "output": 32,
+        "cacheRead": 0,
+        "visibleTokens": 80,
+        "scopes": 1,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 1
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "short-known-mean",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "7624204ef51e7f9febe1b7e2124b264a3aad6351f1660cb6129e42eea313a1d0",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 4,
+        "forwarded": 4,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "elapsedMs": 994,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+          "bytes": 350
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+          "bytes": 41
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "visibleTokens": 20,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        }
+      },
+      "totalUsage": {
+        "input": 108,
+        "output": 72,
+        "cacheRead": 0,
+        "visibleTokens": 180,
+        "scopes": 3,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 3
+      },
+      "arrangement": {
+        "requests": 1,
+        "taskCount": 2,
+        "valid": true,
+        "reviewCovered": true,
+        "usage": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        },
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 2,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "short-known-mean",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "7624204ef51e7f9febe1b7e2124b264a3aad6351f1660cb6129e42eea313a1d0",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 9,
+      "submissionAttempts": 2,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 9,
+        "forwarded": 9,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 5,
+          "forwarded": 5,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 18
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 7
+        }
+      },
+      "elapsedMs": 1769,
+      "usage": {
+        "visibleTokens": 160,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+          "bytes": 350
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+          "bytes": 41
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+          "bytes": 65
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "visibleTokens": 20,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        }
+      },
+      "totalUsage": {
+        "input": 108,
+        "output": 72,
+        "cacheRead": 0,
+        "visibleTokens": 180,
+        "scopes": 3,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 3
+      },
+      "arrangement": {
+        "requests": 1,
+        "taskCount": 2,
+        "valid": true,
+        "reviewCovered": true,
+        "usage": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        },
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 2,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "moisture-strata",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "df0ea959e05e7d0a5b7801edd113063b587be92e4377abdc50b785dc9183d938",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 9,
+      "submissionAttempts": 2,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 9,
+        "forwarded": 9,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 5,
+          "forwarded": 5,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 18
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 7
+        }
+      },
+      "elapsedMs": 1807,
+      "usage": {
+        "visibleTokens": 160,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "70e5298a662e7798446c4c0d9d857f267cfc36048f042292d4b16c01d8dee10e",
+          "bytes": 344
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "fbcadfa717d9620e64b9a0abde134c55f7410b79b1778880b28805eda229414a",
+          "bytes": 37
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "929e713a93be043b49d2c6cba7432de9b22c2e526b1b62311a5250f3f8b16d60",
+          "bytes": 63
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 48,
+        "output": 32,
+        "cacheRead": 0,
+        "visibleTokens": 80,
+        "scopes": 1,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 1
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "moisture-strata",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "df0ea959e05e7d0a5b7801edd113063b587be92e4377abdc50b785dc9183d938",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 4,
+        "forwarded": 4,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "elapsedMs": 995,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "70e5298a662e7798446c4c0d9d857f267cfc36048f042292d4b16c01d8dee10e",
+          "bytes": 344
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "fbcadfa717d9620e64b9a0abde134c55f7410b79b1778880b28805eda229414a",
+          "bytes": 37
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "929e713a93be043b49d2c6cba7432de9b22c2e526b1b62311a5250f3f8b16d60",
+          "bytes": 63
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 48,
+        "output": 32,
+        "cacheRead": 0,
+        "visibleTokens": 80,
+        "scopes": 1,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 1
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "negative-zero-mean",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "28dcd40cd199432a21222201c42340c18139eb27f112eabe613abd5245251c42",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 4,
+        "forwarded": 4,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "elapsedMs": 1002,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+          "bytes": 336
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+          "bytes": 34
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+          "bytes": 63
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "visibleTokens": 20,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        }
+      },
+      "totalUsage": {
+        "input": 108,
+        "output": 72,
+        "cacheRead": 0,
+        "visibleTokens": 180,
+        "scopes": 3,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 3
+      },
+      "arrangement": {
+        "requests": 1,
+        "taskCount": 2,
+        "valid": true,
+        "reviewCovered": true,
+        "usage": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        },
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 2,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "negative-zero-mean",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "28dcd40cd199432a21222201c42340c18139eb27f112eabe613abd5245251c42",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 9,
+      "submissionAttempts": 2,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 9,
+        "forwarded": 9,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 5,
+          "forwarded": 5,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 18
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 7
+        }
+      },
+      "elapsedMs": 1812,
+      "usage": {
+        "visibleTokens": 160,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779",
+          "bytes": 336
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3",
+          "bytes": 34
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b",
+          "bytes": 63
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "visibleTokens": 20,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        }
+      },
+      "totalUsage": {
+        "input": 108,
+        "output": 72,
+        "cacheRead": 0,
+        "visibleTokens": 180,
+        "scopes": 3,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 3
+      },
+      "arrangement": {
+        "requests": 1,
+        "taskCount": 2,
+        "valid": true,
+        "reviewCovered": true,
+        "usage": {
+          "input": 12,
+          "output": 8,
+          "cacheRead": 0,
+          "partial": [
+            "cacheRead"
+          ]
+        },
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 2,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "duplicate-sites",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "761ea8943497e75d701dd2a2b550d35fdd16d37c00f2050f340b6a7b5ac5bd40",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 9,
+      "submissionAttempts": 2,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 9,
+        "forwarded": 9,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 5,
+          "forwarded": 5,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 18
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 7
+        }
+      },
+      "elapsedMs": 1768,
+      "usage": {
+        "visibleTokens": 160,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "2dedab6d4c4a46da64db9890e093a2a130b872a3ad0cf133c6b6413be40cceeb",
+          "bytes": 348
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "c6494e15d915a8bf4b19d62cf63ccf65e6a302594189a68c879a8d74b486624f",
+          "bytes": 37
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "0175bb51db8aabafb039186d099ccd59c7835d9ef9c232d4b05fa4fc924ef9cc",
+          "bytes": 66
+        }
+      ]
+    },
+    {
+      "phaseUsage": {
+        "planning": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        },
+        "execution": {
+          "input": 48,
+          "output": 32,
+          "cacheRead": 0,
+          "visibleTokens": 80,
+          "scopes": 1,
+          "state": "partial",
+          "partialUsage": true,
+          "partialFields": [
+            "cacheRead"
+          ],
+          "unknownScopes": 1
+        },
+        "review": {
+          "input": null,
+          "output": null,
+          "cacheRead": null,
+          "visibleTokens": null,
+          "scopes": 0,
+          "state": "not-run",
+          "partialUsage": false,
+          "partialFields": [],
+          "unknownScopes": 0
+        }
+      },
+      "totalUsage": {
+        "input": 48,
+        "output": 32,
+        "cacheRead": 0,
+        "visibleTokens": 80,
+        "scopes": 1,
+        "state": "partial",
+        "partialUsage": true,
+        "partialFields": [
+          "cacheRead"
+        ],
+        "unknownScopes": 1
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 1,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "duplicate-sites",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "761ea8943497e75d701dd2a2b550d35fdd16d37c00f2050f340b6a7b5ac5bd40",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 4,
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 4,
+        "forwarded": 4,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 25
+      },
+      "elapsedMs": 1000,
+      "usage": {
+        "visibleTokens": 80,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "2dedab6d4c4a46da64db9890e093a2a130b872a3ad0cf133c6b6413be40cceeb",
+          "bytes": 348
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "c6494e15d915a8bf4b19d62cf63ccf65e6a302594189a68c879a8d74b486624f",
+          "bytes": 37
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "0175bb51db8aabafb039186d099ccd59c7835d9ef9c232d4b05fa4fc924ef9cc",
+          "bytes": 66
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "代表性自制数据、小样本试验；不是用户真实项目或普遍模型质量结论。",
+    "accepted 仍由独立实际文件真值复核；blocked、失败与未运行分开记录。",
+    "各组独立等额请求上限，未用额度不借给另一组；额度用尽与科学错误分开，不完整配对不形成质量或费用收益结论。",
+    "缺失或部分用量不作零费用；无价格换算；未运行的输入核验和用量不适用。"
+  ]
+}

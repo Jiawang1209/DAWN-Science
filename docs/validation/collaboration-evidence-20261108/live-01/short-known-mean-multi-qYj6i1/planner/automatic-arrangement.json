@@ -1,0 +1,14 @@
+{
+  "mode": "model-generated",
+  "requests": 4,
+  "taskCount": 3,
+  "valid": false,
+  "reviewCovered": false,
+  "reason": "自动安排改变了冻结科学契约",
+  "usage": {
+    "input": 59944,
+    "output": 6038,
+    "cacheRead": 11520
+  },
+  "compiled": false
+}

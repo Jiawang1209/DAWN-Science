@@ -1,0 +1,70 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/arrangement-scenarios.test.ts tests/evaluation/arrangement-scenario-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/arrangement-scenarios.test.ts (7 tests | 1 failed) 12ms
+   × reports review coverage separately from overall validity without inventing a review for other tasks 4ms
+ ❯ |node| tests/evaluation/arrangement-scenario-runner.test.ts (1 test | 1 failed) 239ms
+   × uses actual propose_plan with the shared task-driven prompt for six offline cases, without starting tasks 239ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/arrangement-scenario-runner.test.ts > uses actual propose_plan with the shared task-driven prompt for six offline cases, without starting tasks
+AssertionError: expected { …(9) } to match object { reviewCovered: true }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reviewCovered": true,
++   "findings": [],
++   "mode": "chain",
++   "modelRequests": 1,
++   "passed": true,
++   "proposalRecorded": true,
++   "scenarioId": "independent-review",
++   "taskCount": 2,
++   "tasksExecuted": 0,
++   "validStructure": true,
+  }
+
+ ❯ tests/evaluation/arrangement-scenario-runner.test.ts:16:68
+     14|   expect(report.rows.find(r=>r.scenarioId==='independent-inputs')?.mod…
+     15|   expect(report.rows.find(r=>r.scenarioId==='independent-review')?.tas…
+     16|   expect(report.rows.find(r=>r.scenarioId==='independent-review')).toM…
+       |                                                                    ^
+     17|   expect(report.rows.find(r=>r.scenarioId==='simple-result')).toMatchO…
+     18|   expect(readFileSync(join(root,'arrangement-scenarios.md'),'utf8')).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/arrangement-scenarios.test.ts > reports review coverage separately from overall validity without inventing a review for other tasks
+AssertionError: expected { …(6) } to match object { passed: true, reviewCovered: true }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "passed": true,
+-   "reviewCovered": true,
+  }
+
+ ❯ tests/evaluation/arrangement-scenarios.test.ts:34:79
+     32| it('reports review coverage separately from overall validity without i…
+     33|  const scenarios=arrangementScenarios(),review=scenarios.find(s=>s.id=…
+     34|  expect(evaluateArrangement(review,validScenarioPlans['independent-rev…
+       |                                                                               ^
+     35|  const unchecked=structuredClone(validScenarioPlans['independent-revie…
+     36|  expect(evaluateArrangement(review,unchecked)).toMatchObject({validStr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 6 passed (8)
+   Start at  22:28:03
+   Duration  1.74s (transform 690ms, setup 0ms, import 1.56s, tests 251ms, environment 0ms)
+

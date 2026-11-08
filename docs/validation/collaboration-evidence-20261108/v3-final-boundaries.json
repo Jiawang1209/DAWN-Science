@@ -1,0 +1,20 @@
+{
+  "candidate": "v3",
+  "branch": "codex/collaboration-evidence-20261108",
+  "candidateHead": "899463dd17f50a5da83294b783d3fd540f86f9af",
+  "uncommitted": true,
+  "frozenFiles": 1668,
+  "changedSinceFreeze": [],
+  "originalLiveReportsChanged": [],
+  "mainHead": "899463dd17f50a5da83294b783d3fd540f86f9af",
+  "mainClean": true,
+  "formalUnchanged": true,
+  "paidRequests": 148,
+  "inFlight": 0,
+  "newPaidRequestsAfterEvaluatorFix": 0,
+  "historyStatus": "OPEN",
+  "exitThresholdsMs": [
+    1500,
+    4000
+  ]
+}

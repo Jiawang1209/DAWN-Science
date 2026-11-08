@@ -1,0 +1,13 @@
+{
+  "authorizedOn": "2026-11-08",
+  "source": "User answered the pending round-specific request: 新增最多 300 次请求",
+  "requestLimit": 300,
+  "taskIds": ["short-known-mean", "carbon-missing", "unknown-unit"],
+  "repeats": 2,
+  "perArmLimit": 25,
+  "multiStageLimits": {"workIncludingPlanning": 18, "review": 7},
+  "automaticRetries": false,
+  "carryPreviousAllowance": false,
+  "candidate": "candidate-v2-sha256.json",
+  "output": "live-01"
+}

@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/task-arrangement-layout.spec.ts
+
+Running 1 test using 1 worker
+
+(node:57381) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — （没有文字回复）
+[主进程] Debugger ending on ws://127.0.0.1:60195/267128f1-586b-4427-a2f1-d43850f1a8e2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/task-arrangement-layout.spec.ts:11:1 › preserves long task identities and expanded paths in a narrow real Electron view (27.3s)
+
+
+  1) e2e/task-arrangement-layout.spec.ts:11:1 › preserves long task identities and expanded paths in a narrow real Electron view 
+
+    Error: expect(locator).toBeInViewport() failed
+
+    Locator:  getByRole('region', { name: '自动安排', exact: true }).locator('[data-arrangement-task="summary"]').getByText('results/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/保留完整单位的统计结果.csv', { exact: true })
+    Expected: in viewport
+    Received: viewport ratio 0.9273943305015564
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toBeInViewport" with timeout 25000ms
+      - waiting for getByRole('region', { name: '自动安排', exact: true }).locator('[data-arrangement-task="summary"]').getByText('results/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/validated-summary-0123456789/保留完整单位的统计结果.csv', { exact: true })
+        53 × locator resolved to <dd data-authored="1">results/validated-summary-0123456789/validated-su…</dd>
+           - unexpected value "viewport ratio 0.9273943305015564"
+
+
+      26 |  for(const path of geometry.paths)expect(path.scrollWidth).toBeLessThanOrEqual(path.clientWidth+1)
+      27 |  await card.getByText(longOutput,{exact:true}).scrollIntoViewIfNeeded()
+    > 28 |  await expect(card.getByText(longOutput,{exact:true})).toBeInViewport({ratio:1})
+         |                                                        ^
+      29 |  await expect(page.locator('main.main .chip-group .chip')).toHaveCount(0)
+      30 |  const out=resolve(process.env.DAWN_ARRANGEMENT_LAYOUT_EVIDENCE_DIR??testInfo.outputPath('long-arrangement'))
+      31 |  mkdirSync(out,{recursive:true});await card.screenshot({path:join(out,'long-path-card.png')})
+        at /Users/liuyue/.codex/worktrees/dawn-collaboration-evidence-20261108/dawn-science/e2e/task-arrangement-layout.spec.ts:28:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/task-arrangement-layout-pr-67f7c-a-narrow-real-Electron-view/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/task-arrangement-layout.spec.ts:11:1 › preserves long task identities and expanded paths in a narrow real Electron view 

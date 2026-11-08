@@ -1,0 +1,14 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/ui/task-artifacts.test.tsx(11,109): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/ui/task-artifacts.test.tsx(21,63): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+tests/workbench/backend.test.ts(231,12): error TS18046: 'list' is of type 'unknown'.
+tests/workbench/backend.test.ts(231,47): error TS18046: 'list' is of type 'unknown'.
+tests/workbench/backend.test.ts(232,72): error TS18046: 'list' is of type 'unknown'.
+tests/workbench/backend.test.ts(234,72): error TS18046: 'list' is of type 'unknown'.
+tests/workbench/backend.test.ts(236,12): error TS2571: Object is of type 'unknown'.
+tests/workbench/backend.test.ts(237,72): error TS18046: 'list' is of type 'unknown'.

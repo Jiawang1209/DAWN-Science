@@ -70,6 +70,8 @@ export const $provenance = atom<ProvenanceLink | undefined>(undefined)
 
 /** `listArtifacts` 的返回：本会话的产物清单，外加认不出的那几次工具调用 */
 export interface ArtifactList {
+  taskArtifactsIssue?:string
+  taskArtifacts?:readonly import("../../protocol/task-artifacts.js").TaskArtifact[]
   observedArtifacts?: readonly import("../../protocol/entities.js").ObservedArtifact[]
   artifacts: readonly Artifact[]
   routeArtifacts?: readonly RouteArtifact[]

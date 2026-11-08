@@ -1,0 +1,37 @@
+{
+  "authorizedNewRequests": 30,
+  "actualForwarded": 26,
+  "actualReserved": 26,
+  "localDeniedNotForwarded": 1,
+  "inFlightAfterDrain": 0,
+  "single": {
+    "reserved": 15,
+    "forwarded": 15,
+    "denied": 0,
+    "inFlight": 0,
+    "limit": 15
+  },
+  "multi": {
+    "work": {
+      "reserved": 11,
+      "forwarded": 11,
+      "denied": 1,
+      "inFlight": 0,
+      "limit": 11
+    },
+    "review": {
+      "reserved": 0,
+      "forwarded": 0,
+      "denied": 0,
+      "inFlight": 0,
+      "limit": 4
+    }
+  },
+  "planningRequestsIncludedInWork": 2,
+  "modelTrialRetries": 0,
+  "credentialRecoveryBeforeFirstModelRequest": 1,
+  "completePairs": 0,
+  "incompletePairs": 1,
+  "qualifiedPairs": 0,
+  "comparisonEligible": true
+}

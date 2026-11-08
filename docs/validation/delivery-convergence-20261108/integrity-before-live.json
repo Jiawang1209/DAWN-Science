@@ -1,0 +1,13 @@
+{
+  "stage": "waiting-keychain; no API request yet",
+  "oldEvidenceCount": 510,
+  "oldEvidenceChanged": [],
+  "candidateFiles": 1707,
+  "candidateChanged": [],
+  "formalProfileChanged": [],
+  "formalDbChanged": false,
+  "mainHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+  "mainStatus": "",
+  "featureHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+  "originMainRef": "43dd7bdca97eec7c4e5d0328c9c4b4aac4c53e40"
+}

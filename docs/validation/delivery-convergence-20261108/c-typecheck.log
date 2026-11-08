@@ -1,0 +1,4 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+e2e/approved-plan-execution.spec.ts(31,121): error TS2571: Object is of type 'unknown'.
+e2e/approved-plan-execution.spec.ts(32,22): error TS18046: 'artifactResponse' is of type 'unknown'.

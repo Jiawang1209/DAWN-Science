@@ -1,3 +1,4 @@
+import {projectAcceptedArtifacts,checkAcceptedArtifact} from '../orchestration/accepted-artifacts.js'
 import {readToolRecord} from './tool-record.js'
 import {childDiagnostics} from '../subagent/diagnostics.js'
 import {readHandoff} from '../subagent/context-handoff.js'
@@ -2690,8 +2691,19 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * `远端` 时本机 `lstat` 查不了那台机器的文件系统，**不给 `exists`**（缺省 = 不知道），
      * 不许静默说「不在了」。
      */
+    checkTaskArtifact:async({sessionId,artifact})=>{
+      const record=sessions.get(sessionId)
+      if(!record||record.connectionId)return{state:'unavailable' as const,checkedAt:new Date().toISOString(),reason:'当前会话或本地文件核对不可用'}
+      return checkAcceptedArtifact(record.workspace,sessionId,artifact,()=>sessions.runtimeOf(sessionId)?.runOverview?.(sessionId)??readRunOverview(record.sessionDir,sessionId))
+    },
     listArtifacts: async ({ sessionId }) => {
       const 会话 = sessions.get(sessionId)
+      let taskArtifacts:import('../protocol/task-artifacts.js').TaskArtifact[]=[],taskArtifactsIssue:string|undefined
+      if(会话)try{
+        const taskSnapshot=sessions.runtimeOf(sessionId)?.runOverview?.(sessionId)??readRunOverview(会话.sessionDir,sessionId)
+        if(taskSnapshot.ownerSessionId!==sessionId)throw new Error('task artifact owner mismatch')
+        taskArtifacts=projectAcceptedArtifacts(taskSnapshot,sessionId)
+      }catch{taskArtifactsIssue='任务执行记录暂不可用；原主会话产物仍可查看。'}
       const { artifacts, unknown } = runs.artifactsOf(sessionId)
       const 远端 = Boolean(会话?.connectionId)
       const route = 会话 ? sessions.getAnalysisRoute(sessionId).route : undefined
@@ -2707,6 +2719,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         }
       }
       return {
+        ...(taskArtifacts.length?{taskArtifacts}:{}),
+        ...(taskArtifactsIssue?{taskArtifactsIssue}:{}),
         artifacts: artifacts.map((a) => ({
           ...a,
           kind: 产物类型(a.path),

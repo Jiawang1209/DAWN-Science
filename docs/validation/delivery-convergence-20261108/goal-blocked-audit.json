@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-11-08T08:06:06.710808+00:00",
+  "goalStatus": "blocked",
+  "blockingCondition": "same existing helper waits inside macOS SecItemCopyMatching; user system interaction required",
+  "consecutiveGoalTurnsWithBlocker": 3,
+  "helperPid": 28615,
+  "execSessionId": 46253,
+  "modelRequestsForwarded": 0,
+  "authorizationCap": 30,
+  "restarted": false,
+  "localWorkComplete": true,
+  "sample": "live-credential-sample-continuation-02.txt",
+  "candidateSourceFrozen": true,
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN"
+}

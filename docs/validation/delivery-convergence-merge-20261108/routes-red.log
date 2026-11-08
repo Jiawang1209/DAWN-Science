@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts -t independently frozen check
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (14 tests | 1 failed | 13 skipped) 3741ms
+   × keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan 3740ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan
+AssertionError: expected 'analyze-route' to be 'check-route' // Object.is equality
+
+Expected: "check-route"
+Received: "analyze-route"
+
+ ❯ tests/evaluation/research-runner.test.ts:250:232
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  20:34:43
+   Duration  5.71s (transform 726ms, setup 0ms, import 1.88s, tests 3.74s, environment 0ms)
+

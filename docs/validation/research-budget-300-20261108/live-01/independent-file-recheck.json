@@ -1,0 +1,61 @@
+{
+  "source": "independent Python csv + math.fsum, no product judge import",
+  "sameScientificTaskAndModelDeclarationAsPrior": true,
+  "checks": [
+    {
+      "mode": "single",
+      "rows": 48,
+      "excluded": 7,
+      "expected": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "actual": {
+        "mean": 13.870731707317074,
+        "n": 41,
+        "unit": "mg/g"
+      },
+      "acceptedVersionCount": 3,
+      "acceptedVersionsMatch": true,
+      "rawInputSha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789"
+    },
+    {
+      "mode": "multi",
+      "rows": 48,
+      "excluded": 7,
+      "expected": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "actual": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "acceptedVersionCount": 3,
+      "acceptedVersionsMatch": true,
+      "rawInputSha256": "568eaee367b769dcdc3f93ae1434266124d6147bf597dfa586dc65e883aaf789",
+      "reviewInputVersionsExactlyMatchAnalysis": true,
+      "reviewVerdict": "pass",
+      "tasks": [
+        {
+          "subject": "\u53ea\u8bfb\u6838\u67e5 input.csv \u7ed3\u6784\u4e0e\u8bc1\u636e\u7f3a\u53e3",
+          "status": "completed",
+          "receipt": "accepted"
+        },
+        {
+          "subject": "\u5b9e\u73b0\u5e76\u8fd0\u884c\u5747\u503c\u811a\u672c\uff0c\u4ea7\u51fa\u4e09\u4efd\u6587\u4ef6",
+          "status": "completed",
+          "receipt": "accepted"
+        },
+        {
+          "subject": "\u72ec\u7acb\u53ea\u8bfb\u5ba1\u9605\u6587\u4ef6\u4e0e\u65b9\u6cd5\u4e00\u81f4\u6027",
+          "status": "completed",
+          "receipt": "accepted"
+        }
+      ]
+    }
+  ]
+}

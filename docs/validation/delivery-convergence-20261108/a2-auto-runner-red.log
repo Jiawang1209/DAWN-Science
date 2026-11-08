@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts -t counts real planning calls
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (13 tests | 1 failed | 12 skipped) 3599ms
+   × counts real planning calls in the multi arm and compiles the model-selected task count with the same judge 3598ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts real planning calls in the multi arm and compiles the model-selected task count with the same judge
+AssertionError: expected undefined to match object { taskCount: 2, valid: true, …(2) }
+
+- Expected:
+{
+  "compiled": true,
+  "reviewCovered": true,
+  "taskCount": 2,
+  "valid": true,
+}
+
++ Received:
+undefined
+
+ ❯ tests/evaluation/research-runner.test.ts:221:29
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  15:30:46
+   Duration  4.44s (transform 311ms, setup 0ms, import 758ms, tests 3.60s, environment 0ms)
+

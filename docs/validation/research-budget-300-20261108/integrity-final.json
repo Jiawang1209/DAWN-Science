@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-11-08T12:01:28.081145+00:00",
+  "candidateFiles": 1709,
+  "candidateChanged": [],
+  "oldEvidenceFiles": 432,
+  "oldEvidenceChanged": [],
+  "formalProfileChanged": [],
+  "mainHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+  "mainStatus": "",
+  "featureHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+  "featureBranch": "codex/delivery-convergence-20261108",
+  "hostStillPresent": false
+}

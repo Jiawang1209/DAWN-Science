@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-auto-arrangement.test.ts tests/orchestration/accepted-artifacts.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  15:40:38
+   Duration  1.97s (transform 711ms, setup 0ms, import 1.63s, tests 498ms, environment 0ms)
+

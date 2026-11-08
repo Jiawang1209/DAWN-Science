@@ -1,0 +1,1 @@
+{"provider":"deepseek","model":"deepseek-flash","limit":300,"perArmLimit":150,"stageLimits":{"work":110,"review":40},"perArmTimeoutMs":1800000,"multiExecution":"automatic-plan","startedAt":"2026-11-08T11:56:33.904Z"}

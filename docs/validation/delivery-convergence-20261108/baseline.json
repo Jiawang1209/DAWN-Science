@@ -1,0 +1,11 @@
+{
+  "main": "646bcc1aa7153dfa03f112d879033141dfea299a",
+  "branch": "codex/delivery-convergence-20261108",
+  "previousEvidenceFiles": 510,
+  "paidRequestsAuthorized": true,
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN",
+  "maxNewModelRequests": 30,
+  "paidRequestsUsed": 26,
+  "liveTerminal": "single-qualified; multi-work-budget-exhausted"
+}

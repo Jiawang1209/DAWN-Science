@@ -1,0 +1,44 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/tool-record.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/tool-record.test.ts (4 tests | 1 failed) 9ms
+   × separates the verified host suffix including the new delivery reminder, preserving identical marker text in actual stdout 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/tool-record.test.ts > separates the verified host suffix including the new delivery reminder, preserving identical marker text in actual stdout
+AssertionError: expected { state: 'available', …(3) } to match object { state: 'available', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "evidenceTag": "[task_tool_evidence] {\"toolCallId\":\"same-call\",\"name\":\"read\",\"status\":\"done\",\"execution\":\"not_observed\",\"references\":[\"verification.reviewed\"],\"path\":\"data\",\"truncatedFields\":[]}
+- [task_delivery_status] {\"submissionPending\":true,\"requiredReadsRemaining\":0}",
+    "output": "tool output
+- [task_delivery_status] {\"user\":\"this is tool content\"}",
++ [task_delivery_status] {\"user\":\"this is tool content\"}
++ [task_tool_evidence] {\"toolCallId\":\"same-call\",\"name\":\"read\",\"status\":\"done\",\"execution\":\"not_observed\",\"references\":[\"verification.reviewed\"],\"path\":\"data\",\"truncatedFields\":[]}
++ [task_delivery_status] {\"submissionPending\":true,\"requiredReadsRemaining\":0}",
+    "state": "available",
+  }
+
+ ❯ tests/orchestration/tool-record.test.ts:44:41
+     42|  result.message.content.push({type:'text',text:marker},{type:'text',te…
+     43|  const [bound]=bindToolRecords([host],fresh,'x.jsonl',true)
+     44|  expect(selectToolRecord(fresh,bound!)).toMatchObject({state:'availabl…
+       |                                         ^
+     45|  const [withoutTag]=bindToolRecords([host],fresh,'x.jsonl',false)
+     46|  expect(selectToolRecord(fresh,withoutTag!)).toMatchObject({state:'ava…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  15:54:00
+   Duration  288ms (transform 89ms, setup 0ms, import 200ms, tests 9ms, environment 0ms)
+

@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/agent-observation.test.tsx tests/ui/collaboration-workflow.test.tsx tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  15:23:30
+   Duration  1.62s (transform 1.27s, setup 1.72s, import 380ms, tests 401ms, environment 1.33s)
+

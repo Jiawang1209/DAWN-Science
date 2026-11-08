@@ -1,0 +1,199 @@
+{
+  "source": "real local file tools; no model/API",
+  "before": {
+    "version": 1,
+    "phase": "correctable",
+    "submissionPending": true,
+    "observation": {
+      "submissionAttempts": 0,
+      "invalidSubmissions": 0
+    },
+    "contract": {
+      "access": "read-only",
+      "resultType": "review",
+      "requireExecution": false,
+      "requireReview": true,
+      "inputs": [
+        "in.csv"
+      ],
+      "outputs": [],
+      "readRequirements": [
+        "in.csv"
+      ],
+      "inputsOmitted": 0,
+      "outputsOmitted": 0,
+      "readRequirementsOmitted": 0,
+      "truncatedFields": []
+    },
+    "readProgress": {
+      "observed": [],
+      "omitted": 0,
+      "observedOmitted": 0,
+      "truncated": false,
+      "missing": [
+        "in.csv"
+      ],
+      "total": 1
+    },
+    "outputObservation": {
+      "observed": [],
+      "omitted": 0,
+      "observedOmitted": 0,
+      "truncated": false,
+      "total": 0,
+      "unobserved": []
+    },
+    "missingEvidence": [
+      "verification.reviewed"
+    ],
+    "referenceChoices": {
+      "executionCompleted": [],
+      "verificationReviewed": []
+    },
+    "evidenceCatalog": {
+      "entries": [],
+      "total": 0,
+      "omitted": 0
+    },
+    "instruction": "观察记录不是文件现状或科学验收。工具排空后按冻结契约正式 submit_task_result；未解决问题如实阻塞。未观察到写入不代表文件不存在。"
+  },
+  "observed": {
+    "version": 1,
+    "phase": "correctable",
+    "submissionPending": true,
+    "observation": {
+      "submissionAttempts": 0,
+      "invalidSubmissions": 0
+    },
+    "contract": {
+      "access": "read-only",
+      "resultType": "review",
+      "requireExecution": false,
+      "requireReview": true,
+      "inputs": [
+        "in.csv"
+      ],
+      "outputs": [],
+      "readRequirements": [
+        "in.csv"
+      ],
+      "inputsOmitted": 0,
+      "outputsOmitted": 0,
+      "readRequirementsOmitted": 0,
+      "truncatedFields": []
+    },
+    "readProgress": {
+      "observed": [
+        "in.csv"
+      ],
+      "omitted": 0,
+      "observedOmitted": 0,
+      "truncated": false,
+      "missing": [],
+      "total": 1
+    },
+    "outputObservation": {
+      "observed": [],
+      "omitted": 0,
+      "observedOmitted": 0,
+      "truncated": false,
+      "total": 0,
+      "unobserved": []
+    },
+    "missingEvidence": [],
+    "referenceChoices": {
+      "executionCompleted": [],
+      "verificationReviewed": [
+        "actual-read"
+      ]
+    },
+    "evidenceCatalog": {
+      "entries": [
+        {
+          "toolCallId": "actual-read",
+          "name": "read",
+          "status": "done",
+          "execution": "not_observed",
+          "references": [
+            "verification.reviewed"
+          ],
+          "path": "in.csv",
+          "truncatedFields": []
+        }
+      ],
+      "total": 1,
+      "omitted": 0
+    },
+    "instruction": "观察记录不是文件现状或科学验收。工具排空后按冻结契约正式 submit_task_result；未解决问题如实阻塞。未观察到写入不代表文件不存在。"
+  },
+  "sealed": {
+    "version": 1,
+    "phase": "sealed",
+    "sealedState": "accepted",
+    "submissionPending": false,
+    "observation": {
+      "submissionAttempts": 1,
+      "invalidSubmissions": 0
+    },
+    "contract": {
+      "access": "read-only",
+      "resultType": "review",
+      "requireExecution": false,
+      "requireReview": true,
+      "inputs": [
+        "in.csv"
+      ],
+      "outputs": [],
+      "readRequirements": [
+        "in.csv"
+      ],
+      "inputsOmitted": 0,
+      "outputsOmitted": 0,
+      "readRequirementsOmitted": 0,
+      "truncatedFields": []
+    },
+    "readProgress": {
+      "observed": [
+        "in.csv"
+      ],
+      "omitted": 0,
+      "observedOmitted": 0,
+      "truncated": false,
+      "missing": [],
+      "total": 1
+    },
+    "outputObservation": {
+      "observed": [],
+      "omitted": 0,
+      "observedOmitted": 0,
+      "truncated": false,
+      "total": 0,
+      "unobserved": []
+    },
+    "missingEvidence": [],
+    "referenceChoices": {
+      "executionCompleted": [],
+      "verificationReviewed": [
+        "actual-read"
+      ]
+    },
+    "evidenceCatalog": {
+      "entries": [
+        {
+          "toolCallId": "actual-read",
+          "name": "read",
+          "status": "done",
+          "execution": "not_observed",
+          "references": [
+            "verification.reviewed"
+          ],
+          "path": "in.csv",
+          "truncatedFields": []
+        }
+      ],
+      "total": 1,
+      "omitted": 0
+    },
+    "instruction": "本轮已封存；只读检查不改变正式结果。"
+  }
+}

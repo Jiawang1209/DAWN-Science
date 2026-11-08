@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/agent-observation.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (27 tests | 1 failed) 206ms
+   × uses a compact truthful summary while preserving the full observation inspector 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > uses a compact truthful summary while preserving the full observation inspector
+AssertionError: expected null not to be null
+ ❯ tests/ui/agent-observation.test.tsx:162:73
+    160| it('uses a compact truthful summary while preserving the full observat…
+    161|  const view=render(<AgentObservation snapshot={snapshot(run)} run={run…
+    162|  expect(view.container.querySelector('.agent-observation-compact')).no…
+       |                                                                         ^
+    163|  expect(view.container.querySelectorAll('.agent-observation-row')).toH…
+    164|  expect(screen.getByText(/累计 20 tokens/)).toBeTruthy()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+   Start at  15:22:08
+   Duration  1.50s (transform 526ms, setup 538ms, import 320ms, tests 206ms, environment 350ms)
+

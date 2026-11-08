@@ -5,6 +5,8 @@ import type {TaskSettings} from '../protocol/task-contract.js'
 import {acceptTaskResult,TaskResultSchema,taskResultParameters,type TaskContract,type TaskResult,type TaskReceipt} from './task-contract.js'
 import type {RouteToolEvidence} from '../runtime/analysis-route-evidence.js'
 import {ZodError} from 'zod'
+import {Type} from 'typebox'
+import {resolve} from 'node:path'
 const catalogLimit=8,pathLimit=16,fieldLimit=256
 /** Budget JSON-escaped UTF-8 bytes, including control characters and Unicode. */
 const bounded=(value:string,limit=fieldLimit)=>{
@@ -84,6 +86,42 @@ export class TaskSubmission {
    contract,referenceChoices,evidenceCatalog:{entries:evidence.slice(-catalogLimit).map(taskEvidenceMetadata),total:evidence.length,omitted:Math.max(0,evidence.length-catalogLimit)},
    instruction:phase==='sealed'?'本轮已有正式结果，工具已冻结；不能再次提交或追加执行。':phase==='cancelled'?'当前调用已取消，不能在已停止的调用中重试；交还主 agent 核对。':phase==='validating'?'已有提交正在核验，请等待本次提交结束，不要重复提交。':phase==='draining'?'等待所有工具执行排空后再修正提交；不能并发追加提交。':'修正后可在本轮再次提交；仅引用本任务实际证据中未截断的 toolCallId。截断字段不完整；原冻结契约仍为准。工具完成不代表科学结论正确。'}
  }
+ /** Read-only delivery observations. This neither submits nor proves scientific acceptance/current file bytes. */
+ checkpoint(aborted=false){
+  const feedback=this.feedback(new Error(''),aborted),evidence=this.proof??this.evidence()
+  const readRequirements=this.contract.resultType==='review'||this.contract.resultType==='data-summary'&&this.contract.requireReview?this.contract.inputs:[]
+  const readPaths=new Set<string>(),outputPaths=new Set<string>(),ids=new Map<string,number>()
+  for(const record of evidence){
+   ids.set(record.toolCallId,(ids.get(record.toolCallId)??0)+1)
+   if(record.status!=='done')continue
+   if(record.name==='read'&&typeof record.input==='object'&&record.input!==null&&typeof (record.input as {path?:unknown}).path==='string')readPaths.add(resolve(this.workspace,(record.input as {path:string}).path))
+   for(const file of record.filesWritten??[])outputPaths.add(resolve(this.workspace,file))
+  }
+  const observedReads=readRequirements.filter(path=>readPaths.has(resolve(this.workspace,path)))
+  const observedOutputs=this.contract.outputs.filter(path=>outputPaths.has(resolve(this.workspace,path))||readPaths.has(resolve(this.workspace,path)))
+  const gaps=(all:readonly string[],observed:readonly string[])=>{
+   const missing=all.filter(path=>!observed.includes(path)),selected=missing.slice(0,pathLimit).map(path=>bounded(path,128))
+   return{observed:observed.slice(0,pathLimit).map(path=>bounded(path,128)),omitted:Math.max(0,missing.length-pathLimit),observedOmitted:Math.max(0,observed.length-pathLimit),truncated:selected.some((path,i)=>path!==missing[i])||observed.slice(0,pathLimit).some(path=>bounded(path,128)!==path),missing:selected,total:all.length}
+  }
+  const reads=gaps(readRequirements,observedReads),{missing:unobserved,...outputCounts}=gaps(this.contract.outputs,observedOutputs)
+  const hasReference=(kind:string)=>evidence.some(record=>bounded(record.toolCallId)===record.toolCallId&&ids.get(record.toolCallId)===1&&positiveReferenceKinds(record).includes(kind))
+  return{version:1,phase:feedback.phase,...(feedback.sealedState?{sealedState:feedback.sealedState}:{}),submissionPending:!this.committed,observation:this.observation(),contract:feedback.contract,
+   readProgress:reads,outputObservation:{...outputCounts,unobserved},
+   missingEvidence:[...(this.contract.requireExecution&&!hasReference('execution.completed')?['execution.completed']:[]),...((this.contract.requireReview||this.contract.resultType==='review')&&!hasReference('verification.reviewed')?['verification.reviewed']:[])],
+   referenceChoices:feedback.referenceChoices,evidenceCatalog:feedback.evidenceCatalog,
+   instruction:this.committed?'本轮已封存；只读检查不改变正式结果。':aborted?'当前查询已取消，不能据此继续执行。':'观察记录不是文件现状或科学验收。工具排空后按冻结契约正式 submit_task_result；未解决问题如实阻塞。未观察到写入不代表文件不存在。'}
+ }
+ private lastDeliveryProgress:string|undefined
+ /** Compact reminder only on meaningful progress or a failed tool; not part of authoritative evidence. */
+ deliveryHint(record:RouteToolEvidence):string|undefined {
+  if(this.committed)return
+  const status=this.checkpoint(),key=JSON.stringify([status.readProgress.missing,status.readProgress.omitted,status.outputObservation.unobserved,status.outputObservation.omitted,status.missingEvidence])
+  if(key===this.lastDeliveryProgress&&record.status!=='error')return
+  this.lastDeliveryProgress=key
+  return '[task_delivery_status] '+JSON.stringify({submissionPending:true,requiredReadsRemaining:status.readProgress.missing.length+status.readProgress.omitted,declaredOutputsUnobserved:status.outputObservation.unobserved.length+status.outputObservation.omitted,missingEvidence:status.missingEvidence,
+   instruction:'需要交付缺口与近期证据时查询 get_task_status。观察不是验收；工具排空且满足契约后及时正式提交，未解决问题如实阻塞。不要为消除未观察写入提示重复计算或覆盖产物。'})
+ }
+ checkpointTool(){return{name:'get_task_status',label:'get_task_status',description:'只读查看本任务的交付缺口、真实证据和提交状态；不提交，不扩大权限，不代表科学验收。',parameters:Type.Object({}, {additionalProperties:false}),execute:async(_id:string,_args:unknown,signal?:AbortSignal)=>({content:[{type:'text' as const,text:JSON.stringify(this.checkpoint(signal?.aborted??false))}],details:undefined})}}
  result():TaskResult|undefined{return this.committed?structuredClone(this.committed.result):undefined}
  receipt():TaskReceipt|undefined{return this.committed?structuredClone(this.committed.receipt):undefined}
  sealedEvidence():RouteToolEvidence[]|undefined{return this.proof?structuredClone(this.proof):undefined}

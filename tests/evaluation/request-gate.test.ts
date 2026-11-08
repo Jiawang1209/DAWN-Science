@@ -139,3 +139,44 @@ it.each(['parent-close','deadline'] as const)('drains a backpressured response o
   expect(work.stats().forwarded).toBe(1);expect(single.stats().reserved).toBe(0)
  }finally{response?.destroy();client?.destroy();await gate.close()}
 })
+it('projects current partition request balance without changing caps or leaking credentials',async()=>{
+ const bodies:unknown[]=[],gate=await startEvaluationGate({limit:3,forward:async(body)=>{bodies.push(JSON.parse(body.toString()));return new Response('ok')}})
+ try{
+  const arm=gate.partition(3);arm.setRequestGuidance('same-budget trial')
+  const body=JSON.stringify({model:'fixture',messages:[{role:'user',content:'task'}]})
+  for(let i=0;i<2;i++)await fetch(gate.url+'/chat/completions',{method:'POST',headers:{authorization:`Bearer ${arm.token}`},body})
+  const notices=bodies.map((b:any)=>b.messages.find((m:any)=>m.role==='system').content)
+  expect(notices[0]).toContain('本次之后最多还能接纳 2 次');expect(notices[1]).toContain('本次之后最多还能接纳 1 次')
+  expect(notices.join('')).not.toContain(arm.token);expect(JSON.parse(body).messages).toHaveLength(1)
+  expect(arm.stats()).toMatchObject({reserved:2,forwarded:2,limit:3});expect(()=>arm.setRequestGuidance('late change')).toThrow(/已开始/)
+ }finally{await gate.close()}
+})
+it('keeps parallel request admission ordered and preserves review-exclusive guidance and capacity',async()=>{
+ const seen:string[]=[],gate=await startEvaluationGate({limit:4,forward:async(body)=>{seen.push(JSON.parse(body.toString()).messages.find((m:any)=>m.role==='system').content);return new Response('ok')}})
+ try{
+  const arm=gate.partition(4),work=arm.partition(3),review=arm.partition(1);work.setRequestGuidance('work');review.setRequestGuidance('review-only')
+  const call=(token:string)=>fetch(gate.url+'/chat/completions',{method:'POST',headers:{authorization:`Bearer ${token}`},body:'{"messages":[]}'})
+  await Promise.all([call(work.token),call(work.token),call(work.token)]);expect((await call(work.token)).status).toBe(429)
+  expect(review.stats().reserved).toBe(0);await call(review.token);expect(seen.at(-1)).toContain('review-only')
+  expect(seen.slice(0,3).map(text=>Number(/本次为本分区第 (\d+) 次/.exec(text)![1])).sort()).toEqual([1,2,3])
+ }finally{await gate.close()}
+})
+it.each(['/responses','/messages'])('supports the existing %s instruction surface without altering the caller body',async path=>{
+ let seen:any;const gate=await startEvaluationGate({limit:1,forward:async body=>{seen=JSON.parse(body.toString());return new Response('ok')}})
+ try{
+  const arm=gate.partition(1);arm.setRequestGuidance('fixture')
+  const body=path==='/responses'?{instructions:'original',input:'task'}:{system:[{type:'text',text:'original'}],messages:[]}
+  await fetch(gate.url+path,{method:'POST',headers:{authorization:`Bearer ${arm.token}`},body:JSON.stringify(body)})
+  expect(JSON.stringify(seen)).toContain('本次之后最多还能接纳 0 次');expect(JSON.stringify(body)).not.toContain('本次之后')
+ }finally{await gate.close()}
+})
+it('keeps one existing system message and preserves its content when adding current quota',async()=>{
+ let seen:any;const gate=await startEvaluationGate({limit:1,forward:async body=>{seen=JSON.parse(body.toString());return new Response('ok')}})
+ try{
+  const arm=gate.partition(1);arm.setRequestGuidance('fixture')
+  await fetch(gate.url+'/chat/completions',{method:'POST',headers:{authorization:`Bearer ${arm.token}`},body:JSON.stringify({messages:[{role:'system',content:'Frozen scientific method'},{role:'user',content:'task'}]})})
+  expect(seen.messages.filter((m:any)=>m.role==='system')).toHaveLength(1)
+  expect(seen.messages[0].content).toContain('Frozen scientific method');expect(seen.messages[0].content).toContain('[evaluation_request_budget]')
+  expect(seen.messages.at(-1)).toEqual({role:'user',content:'task'})
+ }finally{await gate.close()}
+})

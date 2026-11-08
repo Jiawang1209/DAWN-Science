@@ -1,0 +1,143 @@
+{
+  "totalCap": 300,
+  "perArmCap": 150,
+  "gate": {
+    "reserved": 30,
+    "forwarded": 30,
+    "denied": 0,
+    "inFlight": 0,
+    "limit": 300
+  },
+  "rows": [
+    {
+      "submissionDiagnostics": {
+        "hostAttempts": 2,
+        "hostRejected": 1,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 0,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "repeat": 1,
+      "fingerprint": "1b8a9beb0450dbbac8f69c81fd7157faedaeefeb43abe424745def5c7a13a4b0",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 12,
+      "submissionAttempts": 2,
+      "invalidSubmissions": 1,
+      "requestBudget": {
+        "reserved": 12,
+        "forwarded": 12,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 150
+      },
+      "elapsedMs": 62395,
+      "usage": {
+        "visibleTokens": 107987,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "edf048e7365745e96c4fe7aeb906ca226fae72d30c4e9b7b41ec9ea2e6bd4859",
+          "bytes": 4203
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "17c5d65dda0b9fc0b548cfcf617a99564863ee7a8f488686763b69f97db1a0d3",
+          "bytes": 62
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "54d62f72bf0ef17ec2ef70c08e6ea40828a16fec1606a01e404e69193e554abf",
+          "bytes": 4748
+        }
+      ]
+    },
+    {
+      "arrangement": {
+        "requests": 4,
+        "taskCount": 3,
+        "valid": true,
+        "reviewCovered": true,
+        "compiled": true
+      },
+      "submissionDiagnostics": {
+        "hostAttempts": 3,
+        "hostRejected": 0,
+        "sdkRejected": 0,
+        "outputLimitNotExecuted": 1,
+        "source": "host-and-transcript",
+        "complete": true
+      },
+      "diagnosticReadIssues": [],
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "repeat": 1,
+      "fingerprint": "1b8a9beb0450dbbac8f69c81fd7157faedaeefeb43abe424745def5c7a13a4b0",
+      "terminal": "accepted",
+      "success": true,
+      "falseAcceptance": false,
+      "inputPreserved": true,
+      "requests": 18,
+      "submissionAttempts": 3,
+      "invalidSubmissions": 0,
+      "requestBudget": {
+        "reserved": 18,
+        "forwarded": 18,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 150
+      },
+      "stageRequestBudgets": {
+        "work": {
+          "reserved": 14,
+          "forwarded": 14,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 110
+        },
+        "review": {
+          "reserved": 4,
+          "forwarded": 4,
+          "denied": 0,
+          "inFlight": 0,
+          "limit": 40
+        }
+      },
+      "elapsedMs": 114646,
+      "usage": {
+        "visibleTokens": 166020,
+        "unknownUsageTasks": 0,
+        "partialUsage": false
+      },
+      "versions": [
+        {
+          "path": "results/analysis.py",
+          "sha256": "cce07199705e433072d636b6f1c34376fa8cfc1973d81afbb76cc80236c81ddb",
+          "bytes": 8779
+        },
+        {
+          "path": "results/result.json",
+          "sha256": "b2b8410955d283f642857edd59e98210f78081f2755307896e13a11e68597aec",
+          "bytes": 62
+        },
+        {
+          "path": "results/report.md",
+          "sha256": "b2aa6ac4309c7c48de6315b2b5de6406780041135a0ee0e1a6c5a2adb73bb593",
+          "bytes": 3534
+        }
+      ]
+    }
+  ],
+  "completePairs": 1,
+  "qualifiedPairs": 1,
+  "noAutomaticRetry": true
+}

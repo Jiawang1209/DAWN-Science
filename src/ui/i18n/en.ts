@@ -16,6 +16,26 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "验收来源详情": "Accepted source details",
+
+  "当前 {0}": "Current {0}",
+  "上下文未知": "Context unknown",
+  "累计 {0}": "Total {0}",
+
+  "（任务验收）": "(task accepted)",
+  "任务验收": "Task acceptance",
+  "任务验收版本": "Task accepted versions",
+  "历史验收记录": "Historical acceptance record",
+  "当前内容未核对": "Current content not checked",
+  "正在核对当前内容": "Checking current content",
+  "本次核对与验收内容一致": "Content matched the accepted version at this check",
+  "当前内容与验收版本不同": "Current content differs from the accepted version",
+  "当前内容无法核对": "Current content could not be checked",
+  "核对当前内容": "Check current content",
+  "核对当前内容：{0} · {1}": "Check current content: {0} · {1}",
+  "核对时间：{0}": "Checked at: {0}",
+  "验收记录属于历史结算；预览读取当前工作区内容。": "Acceptance is a recorded settlement; this preview reads the current workspace file.",
+
   "任务与执行者已冻结；重复开始不会重放已有执行。中断后请先核对产物。": "Tasks and executors are frozen. Starting again will not replay existing work. Check artifacts after an interruption.",
   "开始或继续未执行任务": "Start or continue pending tasks",
   "采纳后按这些任务、执行者和契约启动；当前仍为待执行方案。": "Adopting starts these tasks with the listed executors and contracts. This is still a proposal.",
@@ -2785,7 +2805,7 @@ export const EN: Readonly<Record<string, string>> = {
   "远端会话的产物记不下来，对照不了": "Files made in remote sessions aren't tracked, so there's nothing to compare",
   "产物清单取不到，对照不了：{0}": "Couldn't load the generated files, so there's nothing to compare: {0}",
   "方案的「产物」一节里没有写路径，没什么可对照的": "The plan's outputs section lists no paths, so there's nothing to compare",
-  "产物清单：计划 {0} 项 · 已登记 {1} · 计划外 {2}": "Artifact catalogue: planned {0} · registered {1} · unplanned {2}",
+  "产物清单：计划 {0} 项 · 任务验收 {1} · 主会话登记 {2} · 计划外 {3}": "Outputs: planned {0} · task accepted {1} · main registered {2} · unplanned {3}",
   "未登记不代表未生成；请在任务产物中查看验收版本。": "Unregistered does not mean absent. See task artifacts for accepted versions.",
   "（已登记）": "(registered)",
   "（未登记）": "(unregistered)",

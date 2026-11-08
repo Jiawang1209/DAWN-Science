@@ -109,3 +109,14 @@ describe("loadArtifacts —— 失败要落成状态", () => {
     expect($artifacts.get()).toBe(B清单)
   })
 })
+
+it.each([false,true])('keeps the latest artifact refresh when an older same-session request arrives late (failure=%s)',async failed=>{
+ const {loadArtifacts}=await import('../../src/ui/state/sync.js')
+ const {$artifacts,setArtifacts}=await import('../../src/ui/state/catalog.js')
+ $activeSessionId.set('A');setArtifacts(undefined)
+ let release!:()=>void;const waiting=new Promise<void>(r=>{release=r})
+ const old=loadArtifacts({get:async()=>{await waiting;if(failed)throw new Error('old failure');return{artifacts:[],unknown:['old']}}} as never,'A')
+ await loadArtifacts({get:async()=>({artifacts:[],unknown:['current']})} as never,'A')
+ release();await old
+ expect($artifacts.get()?.unknown).toEqual(['current'])
+})

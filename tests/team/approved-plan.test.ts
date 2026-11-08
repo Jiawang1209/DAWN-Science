@@ -78,3 +78,8 @@ it('cannot approve output paths that escape through a workspace symlink',async()
  const p=plan();p.tasks[0]!.outputs=['alias/result.csv'];p.tasks[0]!.execution!.contract.outputs=['alias/result.csv'];p.tasks.pop();p.mode='single'
  await expect(freezeApprovedPlan({workspace,owner:'owner',planId:'p',planVersion:1,markdown:serializeTaskArrangement(p),definitions:[definition],tier:'ask-risky',model:{provider:'p',model:'m'}})).rejects.toThrow(/工作/)
 })
+it('can freeze task-specific declared model routes even when tasks reuse one executor definition',async()=>{
+ const {workspace,markdown}=await freeze()
+ const snapshot=await freezeApprovedPlan({workspace,owner:'owner',planId:'p',planVersion:1,markdown,definitions:[definition],tier:'ask-risky',model:{provider:'base',model:'local'},modelsByTask:{check:{provider:'reserved-review',model:'local'}}})
+ expect(snapshot.frozenTasks.map(t=>t.provider)).toEqual(['base','reserved-review'])
+})

@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/collaboration-network.spec.ts
+
+Running 1 test using 1 worker
+
+(node:98243) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:65079/871ef4cf-dadf-4f80-bd77-1ebe801c9ef8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (39.6s)
+
+
+  1) e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters 
+
+    Error: expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 2
+    Received:    16.5
+
+    Call Log:
+    - Timeout 25000ms exceeded while waiting on the predicate
+
+      35 |  await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight})
+      36 |  const heading=dialog.locator('.collaboration-heading')
+    > 37 |  await expect.poll(async()=>{const h=await heading.boundingBox(),d=await dialog.boundingBox();return h!.y-d!.y}).toBeLessThanOrEqual(2)
+         |                                                                                                                  ^
+      38 |  await expect(heading.getByRole('button',{name:'返回对话协作台',exact:true})).toBeInViewport()
+      39 |  await page.screenshot({path:join(evidence,'stage-c-sticky-header.png')})
+      40 |  await dialog.evaluate(el=>{el.scrollTop=0})
+        at /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/e2e/collaboration-network.spec.ts:37:114
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/collaboration-network-rend-05ccc-inked-selection-and-filters/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters 

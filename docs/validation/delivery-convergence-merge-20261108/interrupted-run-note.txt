@@ -1,0 +1,1 @@
+The first full suite was explicitly stopped with SIGINT (exit130) before final P3 CLI preflight changes. It is not a passing or failing final validation. Final full results use vitest-final.log. No source changes occurred during an active research trial.

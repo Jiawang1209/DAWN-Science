@@ -369,8 +369,14 @@ it('recomputes task counts from an edited proposal rather than retaining a store
 
 it('bound plans distinguish artifact catalogue registration from accepted task outputs',()=>{
  render(<方案卡 item={{...卡,status:'approved',savedPath:'plan.md',executionTeamId:'plan_fixture',approvedAt:1}} 能答 artifacts={{artifacts:[],unknown:[]}}/>)
- expect(screen.getByText(/产物清单：计划 2 项 · 已登记 0 · 计划外 0/)).toBeTruthy()
+ expect(screen.getByText(/产物清单：计划 2 项 · 任务验收 0 · 主会话登记 0 · 计划外 0/)).toBeTruthy()
  expect(screen.getByText('未登记不代表未生成；请在任务产物中查看验收版本。')).toBeTruthy()
  expect(screen.queryByText(/已生成 0/)).toBeNull()
  fireEvent.click(screen.getByRole('button',{name:'看清单'}));expect(screen.getAllByText('（未登记）')).toHaveLength(2)
+})
+it('counts accepted Team versions alongside main-session registration without forging main artifacts',()=>{
+ const path='results/tables/mock_summary.csv'
+ render(<方案卡 item={{...卡,status:'approved',savedPath:'plan.md',executionTeamId:'plan_fixture',approvedAt:1}} 能答 artifacts={{artifacts:[],unknown:[],taskArtifacts:[{path,kind:'table',ownerSessionId:'owner',target:{kind:'task',teamId:'plan_fixture',id:'t1',attemptId:'a'},version:{path,sha256:'a'.repeat(64),bytes:3},source:'live',acceptance:'accepted',scope:'stage'}]}}/>)
+ expect(screen.getByText(/任务验收 1 · 主会话登记 0/)).toBeTruthy()
+ fireEvent.click(screen.getByRole('button',{name:'看清单'}));expect(screen.getByText('（任务验收）')).toBeTruthy()
 })

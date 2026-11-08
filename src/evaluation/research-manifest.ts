@@ -1,3 +1,4 @@
+import {researchRequestLimit,researchTrialTimeoutMs} from './research-budget.js'
 /** Frozen, credential-free identity for a representative research experiment. */
 import {researchFingerprint,type ResearchTask} from './research-tasks.js'
 const object=(v:unknown):Record<string,unknown>|undefined=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:undefined
@@ -48,21 +49,24 @@ export function researchStageDeclarations(config:unknown,primary:{provider:strin
  })) as ResearchStageDeclarations
 }
 export interface ResearchManifestInput {
- multiExecution?:'approved-plan'
+ requestLimit?:number
+ multiExecution?:'approved-plan'|'automatic-plan'
+ requestBudgetFeedback?:'partition-live-v1'
  runId:string;generatedAt:string;inference:'fixture'|'live';provider:string;model:string;modelDeclaration:ResearchModelDeclaration
  tasks:readonly ResearchTask[];repeats:number;perArmLimit:number;enforced:boolean;multiStageLimits?:{work:number;review:number};stageModels?:ResearchStageDeclarations
  sourceFingerprint:string;childBuildFingerprint:string
 }
 export function researchManifest(input:ResearchManifestInput){
+ const requestLimit=researchRequestLimit(input.requestLimit)
  const {runId,generatedAt,inference,provider,model,modelDeclaration,repeats,perArmLimit,enforced,sourceFingerprint,childBuildFingerprint}=input
  if(!input.tasks.length||new Set(input.tasks.map(t=>t.id)).size!==input.tasks.length||!positive(repeats)||repeats>4)throw new Error('Invalid research task allocation')
- if(inference==='live'&&!enforced||!positive(perArmLimit)||enforced&&perArmLimit*input.tasks.length*2*repeats>30)throw new Error('Invalid research quota allocation')
+ if(inference==='live'&&!enforced||!positive(perArmLimit)||enforced&&perArmLimit*input.tasks.length*2*repeats>requestLimit)throw new Error('Invalid research quota allocation')
  if(input.multiStageLimits&&(!enforced||!positive(input.multiStageLimits.work)||!positive(input.multiStageLimits.review)||input.multiStageLimits.work+input.multiStageLimits.review!==perArmLimit))throw new Error('Invalid stage quota allocation')
  const tasks=input.tasks.map(t=>({caseId:t.id,inputHash:researchFingerprint(t.csv),taskFingerprint:researchFingerprint(t),expectedOutcome:t.expected?'accepted' as const:'blocked' as const}))
- const requestAllocation={enforced,perArmLimit:enforced?perArmLimit:null,totalLimit:enforced?30:null,multiStageLimits:input.multiStageLimits?{...input.multiStageLimits}:null}
+ const requestAllocation={enforced,perArmLimit:enforced?perArmLimit:null,totalLimit:enforced?requestLimit:null,multiStageLimits:input.multiStageLimits?{...input.multiStageLimits}:null}
  const arms:{caseId:string;repeat:number;mode:'single'|'multi'}[]=[]
  for(let repeat=1;repeat<=repeats;repeat++)for(const [index,t] of input.tasks.entries())for(const mode of ((index+repeat-1)%2?['multi','single']:['single','multi']) as ('single'|'multi')[])arms.push({caseId:t.id,repeat,mode})
  const stable={inference,provider,model,modelDeclaration:structuredClone(modelDeclaration),tasks,repeats,requestAllocation,sourceFingerprint,childBuildFingerprint,
-  execution:{multiExecution:input.multiExecution??'pipeline',tools:['read','write','bash'],permissionTier:'allow-all',maxRevisions:0,trialSettings:{project:researchTrialSettings(),agent:researchTrialSettings()}},stageModels:input.stageModels?structuredClone(input.stageModels):null,arms}
+  execution:{perArmTimeoutMs:researchTrialTimeoutMs(perArmLimit),multiExecution:input.multiExecution??'pipeline',requestBudgetFeedback:input.requestBudgetFeedback??null,tools:['read','write','bash'],permissionTier:'allow-all',maxRevisions:0,trialSettings:{project:researchTrialSettings(),agent:researchTrialSettings()}},stageModels:input.stageModels?structuredClone(input.stageModels):null,arms}
  return{version:2 as const,runId,generatedAt,fingerprint:researchFingerprint(stable),...stable}
 }

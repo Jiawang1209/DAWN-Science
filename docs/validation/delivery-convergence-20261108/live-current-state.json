@@ -1,0 +1,15 @@
+{
+  "state": "completed",
+  "hostExitCode": 0,
+  "gate": {
+    "reserved": 26,
+    "forwarded": 26,
+    "denied": 1,
+    "inFlight": 0,
+    "limit": 30
+  },
+  "completePairs": 0,
+  "incompletePairs": 1,
+  "comparisonEligible": true,
+  "noRetry": true
+}

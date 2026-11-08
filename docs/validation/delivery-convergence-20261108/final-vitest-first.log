@@ -1,0 +1,42 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/protocol/operations.test.ts (51 tests | 1 failed) 39ms
+     × 操作齐全（含 ACP 模型目录，… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 4 + 全文搜索 1 + 先出方案 1 + 模型服务测试 1） 7ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/protocol/operations.test.ts > 操作注册表 > 操作齐全（含 ACP 模型目录，… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 4 + 全文搜索 1 + 先出方案 1 + 模型服务测试 1）
+AssertionError: expected [ 'abortSession', …(221) ] to deeply equal [ 'abortSession', …(220) ]
+
+- Expected
++ Received
+
+@@ -17,10 +17,11 @@
+    "cancelTransfer",
+    "cancelTransferBatch",
+    "cancelUpdate",
+    "captureAndRetainCurrent",
+    "checkArtifactCurrent",
++   "checkTaskArtifact",
+    "checkUpdate",
+    "compactSession",
+    "connectRemote",
+    "controlSubagent",
+    "createAnalysisDelivery",
+
+ ❯ tests/protocol/operations.test.ts:24:37
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 702 passed (703)
+      Tests  1 failed | 7000 passed | 11 skipped (7012)
+   Start at  15:42:29
+   Duration  175.97s (transform 22.90s, setup 81.19s, import 271.33s, tests 612.24s, environment 148.45s)
+

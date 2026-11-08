@@ -1,3 +1,4 @@
+import type {ResponseOf} from '../src/protocol/index.js'
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs'
 import {join,resolve} from 'node:path'
 import {test,expect,在项目里开会话,进坞} from './fixtures.js'
@@ -28,6 +29,21 @@ test('approved arrangement starts the frozen DAG, exposes real receipts and retu
  await expect(card.getByRole('button',{name:'开始或继续未执行任务',exact:true})).toBeEnabled()
  expect(dawn.requests.length).toBe(before)
  await progress.scrollIntoViewIfNeeded();await page.screenshot({path:join(out,'stage-b-executed.png')})
+ const artifactResponse=await page.evaluate(async()=>{const tasks=await window.dawn!.invoke('listTasks',{});if(!tasks.ok)throw new Error(tasks.error?.message);const sessionId=(tasks.data as ResponseOf<'listTasks'>)[0]?.sessionId;if(!sessionId)throw new Error('fixture session missing');const result=await window.dawn!.invoke('listArtifacts',{sessionId});if(!result.ok)throw new Error(result.error?.message);return result.data as ResponseOf<'listArtifacts'>})
+ const acceptedFiles=artifactResponse.taskArtifacts!.filter((file)=>file.acceptance==='accepted')
+ expect(new Set(acceptedFiles.map((file)=>file.path)).size).toBe(2)
+ await expect(card).toContainText('任务验收 2 · 主会话登记 0')
+ await page.locator('[data-dock-tab="artifacts"]').click()
+ const artifactPath=acceptedFiles[0]!.path,original=readFileSync(join(workspace,artifactPath))
+ await page.getByRole('button',{name:artifactPath,exact:true}).click()
+ const versions=page.getByRole('region',{name:'任务验收版本',exact:true})
+ await versions.getByRole('button',{name:/核对当前内容/}).first().click();await expect(versions).toContainText('本次核对与验收内容一致')
+ await page.screenshot({path:join(out,'stage-b-unified-artifact.png')})
+ writeFileSync(join(workspace,artifactPath),Buffer.concat([original,Buffer.from('changed')]))
+ await versions.getByRole('button',{name:/核对当前内容/}).first().click();await expect(versions).toContainText('当前内容与验收版本不同')
+ await page.screenshot({path:join(out,'stage-b-version-changed.png')})
+ writeFileSync(join(workspace,artifactPath),original)
+ await 进坞(page,'团队');overview=page.getByRole('region',{name:'运行总览',exact:true})
  await overview.getByRole('button',{name:'展开流程工作台',exact:true}).click()
  progress=overview.getByRole('region',{name:'批准方案执行进度',exact:true})
  await progress.getByRole('button',{name:/根据清洗结果建模/}).click()

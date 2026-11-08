@@ -16,7 +16,7 @@ it('a frozen executor prompt never claims that its initial remaining request quo
  const gate=await startEvaluationGate({limit:30,forward:async()=>new Response('{}',{headers:{'content-type':'application/json'}})})
  try{
   const trial=researchBudgetTrial(gate.partition(15),'multi','fixture'),before=trial.stageGuidance!('analyze',true)
-  for(let i=0;i<2;i++)await fetch(gate.url+'/chat/completions',{method:'POST',headers:{authorization:'Bearer '+trial.stageRoutes!.analyze.credential,'content-type':'application/json'},body:'{}'})
+  for(let i=0;i<2;i++)expect((await fetch(gate.url+'/chat/completions',{method:'POST',headers:{authorization:'Bearer '+trial.stageRoutes!.analyze.credential,'content-type':'application/json'},body:'{"messages":[]}'})).status).toBe(200)
   expect(trial.stageGuidance!('analyze')).toContain('当前剩余 9 次')
   expect(before).not.toContain('当前剩余 11 次')
   expect(trial.stageGuidance!('analyze',true)).toBe(before)
@@ -197,4 +197,56 @@ it('invalidates a comparison if its declared model config changes during a trial
   expect(report.rows[1]!.terminal).toBe('not-run')
   expect(report.qualifiedPairs).toBe(0)
  }finally{await server.close()}
+},30000)
+it('counts real planning calls in the multi arm and compiles the model-selected task count with the same judge',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'dawn-research-auto-'));roots.push(root)
+ const ordinary=researchScenario(researchTasks())
+ const scenario={reply:ordinary.reply,toolCall(body:any){
+  const prompt=(body.messages??[]).filter((m:any)=>m.role==='user').at(-1)?.content
+  const text=typeof prompt==='string'?prompt:Array.isArray(prompt)?prompt.map((part:any)=>part.text??'').join(''):''
+  if(text.includes('[research_automatic_arrangement]')){
+   if((body.messages??[]).some((m:any)=>m.role==='tool'))return undefined
+   const contracts=JSON.parse(/冻结科学契约：(\{[^\n]+\})/.exec(text)![1]!)
+   const block=(id:string,contract:any,review:boolean)=>({id,title:id,goal:'same synthetic method',role:id,inputs:contract.inputs,outputs:contract.outputs,dependencies:review?['analyze']:[],acceptance:'unchanged host judge',review,execution:{agent:'analyze',contract}})
+   return{toolName:'propose_plan',args:{title:'model arranged',plan:'## 问题与假设\nsynthetic mean\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'Only analysis and independent review are needed',independentReview:true,questions:[],tasks:[block('analyze',contracts.analyze,false),block('review',contracts.review,true)]}}}
+  }
+  return ordinary.toolCall(body)
+ }}
+ const server=await startMockInferenceServer({scenario})
+ try{
+  const modelsPath=join(root,'models.json'),out=join(root,'results');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))
+  const report=await runResearchEvaluation(out,{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:'offline',kind:'fixture',requests:()=>server.requests.length,multiExecution:'automatic-plan'},{taskIds:['carbon-missing'],perArmLimit:15})
+  expect(report.qualifiedPairs,JSON.stringify({rows:report.rows,integrity:report.integrity})).toBe(1)
+  const multi=report.rows.find(row=>row.mode==='multi')!
+  expect(multi.arrangement).toMatchObject({taskCount:2,valid:true,reviewCovered:true,compiled:true});expect(multi.arrangement!.requests).toBeGreaterThan(0);expect(multi.requests).toBeGreaterThan(multi.arrangement!.requests)
+  expect(report.multiExecution).toBe('automatic-plan')
+ }finally{await server.close()}
+},30000)
+
+it('keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan',async()=>{
+ const {startEvaluationGate}=await import('../../scripts/evaluation-request-gate.js'),{researchBudgetTrial}=await import('../../scripts/research-trial-budget.js')
+ const root=mkdtempSync(join(tmpdir(),'dawn-auto-stage-routes-'));roots.push(root);const ordinary=researchScenario(researchTasks())
+ const server=await startMockInferenceServer({scenario:{reply:ordinary.reply,toolCall(body:any){
+  const content=(body.messages??[]).filter((m:any)=>m.role==='user').at(-1)?.content,text=typeof content==='string'?content:Array.isArray(content)?content.map((part:any)=>part.text??'').join(''):''
+  if(text.includes('[research_automatic_arrangement]')){
+   if((body.messages??[]).some((m:any)=>m.role==='tool'))return undefined
+   const contracts=JSON.parse(/冻结科学契约：(\{[^\n]+\})/.exec(text)![1]!)
+   const tasks=['check','analyze','review'].map((id,i)=>({id,title:id,goal:'same frozen method',role:id,inputs:contracts[id].inputs,outputs:contracts[id].outputs,dependencies:i?[i===1?'check':'analyze']:[],acceptance:'same original judge',review:id==='review',execution:{agent:'analyze',contract:contracts[id]}}))
+   return{toolName:'propose_plan',args:{title:'three-task plan',plan:'## 问题与假设\noriginal\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'include an input check',independentReview:true,questions:[],tasks}}}
+  }
+  return ordinary.toolCall(body)
+ }}})
+ const gate=await startEvaluationGate({limit:30,forward:(body,path,signal)=>fetch(server.url+path,{method:'POST',headers:{authorization:'Bearer offline','content-type':'application/json'},body:new Uint8Array(body),signal})})
+ try{
+  const modelsPath=join(root,'models.json'),models=mockModelsJson(gate.url)
+  for(const alias of ['check-route','analyze-route','review-route'])models.providers[alias]=structuredClone(models.providers.deepseek)
+  writeFileSync(modelsPath,JSON.stringify(models));const route=(stage:string)=>({provider:stage+'-route',model:'deepseek-flash'}),out=join(root,'results')
+  const report=await runResearchEvaluation(out,{provider:'deepseek',model:'deepseek-flash',modelsPath,credential:gate.token,kind:'fixture',requests:()=>gate.stats().forwarded,multiExecution:'automatic-plan',multiStageLimits:{work:11,review:4},multiStageModels:{check:route('check'),analyze:route('analyze'),review:route('review')},beginTrial:(limit,mode)=>{
+   const trial=researchBudgetTrial(gate.partition(limit),mode,'deepseek-flash');if(mode==='single')return trial
+   return{...trial,stageRoutes:Object.fromEntries(['check','analyze','review'].map(stage=>[stage,{...trial.stageRoutes![stage as 'check'],...route(stage)}])) as NonNullable<typeof trial.stageRoutes>,stageGuidance:(stage,frozen)=>`[budget-${stage}]`+trial.stageGuidance!(stage,frozen)}
+  }},{taskIds:['carbon-missing'],perArmLimit:15})
+  expect(report.qualifiedPairs).toBe(1)
+  const dir=join(out,readdirSync(out).find(name=>name.includes('-multi-'))!,'session','teams'),team=JSON.parse(readFileSync(join(dir,readdirSync(dir)[0]!,'team.json'),'utf8'))
+  for(const task of team.tasks){const stage=task.contract.resultType==='review'?'review':task.contract.resultType==='data-summary'?'check':'analyze',member=team.members.find((m:any)=>m.name===task.assignee);expect(member.provider).toBe(stage+'-route');expect(member.frozenAgentDefinition.systemPrompt).toContain(`[budget-${stage}]`)}
+ }finally{await gate.close();await server.close()}
 },30000)

@@ -199,7 +199,9 @@ export const loadRuns = (c: WorkbenchClient, projectId: string, sessionId?: stri
 /**
  * 当前会话的产物（spec 2026-08-26-产物）。没有会话就清空，不发请求。
  */
+let artifactLoadGeneration=0
 export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined): Promise<void> => {
+  const generation=++artifactLoadGeneration
   if (!sessionId) {
     setArtifacts(undefined)
     return Promise.resolve()
@@ -208,13 +210,13 @@ export const loadArtifacts = (c: WorkbenchClient, sessionId: string | undefined)
     .get<ArtifactList>("listArtifacts", { sessionId })
     .then((v) => {
       // 身份守卫：回来晚了不许覆盖已切走的会话
-      if (sessionId !== $activeSessionId.get()) return
+      if (generation!==artifactLoadGeneration||sessionId !== $activeSessionId.get()) return
       setArtifacts(v)
     })
     .catch((e: unknown) => {
       fail(e)
       // **失败也要落成一个状态**：留着 undefined 面板会一直转圈，那是把「取不到」说成「还在取」
-      if (sessionId !== $activeSessionId.get()) return
+      if (generation!==artifactLoadGeneration||sessionId !== $activeSessionId.get()) return
       setArtifacts({ artifacts: [], unknown: [], error: e instanceof Error ? e.message : String(e) })
     })
 }

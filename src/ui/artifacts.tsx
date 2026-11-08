@@ -1,3 +1,4 @@
+import {TaskArtifactVersions,type CheckTaskArtifact} from './task-artifacts.js'
 /**
  * 坞的「产物」格（spec 2026-08-26-产物 §5）：本会话生成了什么，实时列出来，点一个能看。
  * 保留清单和预览；保留/来源控件由父级注入，不替换结果预览。
@@ -71,6 +72,7 @@ function ArtifactThumb({ a, dir, onOpen, loadThumb, refreshToken }: { a: Display
         <span className="artifact-thumb-img">{显缩略 ? <img src={缩略} alt="" onError={() => 设失败(true)} /> : null}</span>
         <span className="name">{a.path.slice(dir.length)}</span>
         {'routeId' in a ? <span className="artifact-source">{t("路线登记")}</span> : null}
+                    {('target' in a)?<span className="artifact-source">{t("任务验收")}</span>:null}
         {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
       </Button>
     </li>
@@ -79,6 +81,7 @@ function ArtifactThumb({ a, dir, onOpen, loadThumb, refreshToken }: { a: Display
 
 export function ArtifactsPanel({
   data,
+  checkTaskArtifact,
   readFile,
   loadThumb,
   onOpenInFiles,
@@ -90,6 +93,7 @@ export function ArtifactsPanel({
   refreshToken = 0,
   hideRefreshAction = false,
 }: {
+  checkTaskArtifact?:CheckTaskArtifact|undefined
   data: ArtifactList | undefined
   renderPreviewActions?: ((path: string) => ReactNode) | undefined
   readFile: (path: string) => Promise<FileContent>
@@ -145,7 +149,7 @@ export function ArtifactsPanel({
     </Button>
   </div> : null
   const refreshNotice = refreshError || (data?.error && lastData.current ? data.error : undefined)
-  const refreshStatus = refreshNotice ? <p className="caveat" role="alert">{refreshNotice}</p> : null
+  const refreshStatus = <>{refreshNotice ? <p className="caveat" role="alert">{refreshNotice}</p> : null}{catalog?.taskArtifactsIssue?<p className="hint" role="status" data-authored="1">{catalog.taskArtifactsIssue}</p>:null}</>
   const listRoot = useRef<HTMLDivElement>(null)
   const previewRoot = useRef<HTMLDivElement>(null)
   const focusedClose = useRef<HTMLElement | null>(null)
@@ -247,6 +251,7 @@ export function ArtifactsPanel({
         onFocusCapture={e => { focusedClose.current = e.target.closest<HTMLElement>('.preview-close-button') }}
         onBlurCapture={e => { if (e.target.isConnected) focusedClose.current = null }}>
         {refreshAction}{refreshStatus}
+        <TaskArtifactVersions artifacts={catalog.taskArtifacts?.filter(a=>a.path===看的)??[]} check={checkTaskArtifact}/>
         {renderPreviewActions?.(看的)}
         <ul className="artifacts-compact" aria-label={t("产物")} hidden={readingExpanded}>
           {entries.map(a => <li key={a.path} className={a.path === 看的 ? "current" : undefined}>
@@ -255,6 +260,7 @@ export function ArtifactsPanel({
               <span className="name">{a.path.split("/").pop()}</span>
               <span className="kind-tag">{a.kind.toUpperCase()}</span>
               {'routeId' in a ? <span className="artifact-source">{t("路线登记")}</span> : null}
+                    {('target' in a||catalog.taskArtifacts?.some(file=>file.path===a.path))?<span className="artifact-source">{t("任务验收")}</span>:null}
               {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
             </Button>
           </li>)}
@@ -345,6 +351,7 @@ export function ArtifactsPanel({
                     <span className="name">{a.path.slice(dir.length)}</span>
                     <span className="kind-tag">{a.kind.toUpperCase()}</span>
                     {'routeId' in a ? <span className="artifact-source">{t("路线登记")}</span> : null}
+                    {('target' in a||catalog.taskArtifacts?.some(file=>file.path===a.path))?<span className="artifact-source">{t("任务验收")}</span>:null}
                     {a.exists === false ? <span className="caveat">{t("已不存在")}</span> : null}
                   </Button>
                   <span className="artifact-actions">

@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-11-08T11:19:53.960940+00:00",
+  "resumedBlockedAuditTurns": 3,
+  "process": "38789 38785 03:13 S    /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+  "attemptCreated": false,
+  "gate": null,
+  "reportCreated": false,
+  "sameBlockingCondition": "macOS system keychain input required before inference",
+  "goalStatus": "blocked",
+  "modelRequestsForwarded": 0,
+  "noFurtherSafeWork": "implementation, local regression, review and completion audit are finished; real comparison requires system keychain interaction"
+}

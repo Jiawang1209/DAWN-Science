@@ -789,7 +789,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           })
         }
         // 团队变了（team-board）：整份换掉
-        if (u.type === "team") setTeam(u.team)
+        if (u.type === "team") {setTeam(u.team);if(u.sessionId===$activeSessionId.get())void loadArtifacts(client,u.sessionId)}
         // 内核状态变了（笔记本，2026-08-26）：与 team 同一条纪律，整份换掉
         if (u.type === "kernels") setKernelsAtom(u.kernels)
         // 待发单变了（2026-09-23）：同一条纪律，整份换掉
@@ -6302,6 +6302,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 sessionId={sessionId}
                 scopeKey={botOwnerScope}
                 data={artifacts}
+                checkTaskArtifact={artifact=>client.get("checkTaskArtifact",{sessionId,artifact})}
                 focus={产物焦点 && 产物焦点.sessionId === sessionId ? { path: 产物焦点.path, nonce: 产物焦点.nonce } : undefined}
                 readFile={读产物}
                 loadThumb={读产物缩略}

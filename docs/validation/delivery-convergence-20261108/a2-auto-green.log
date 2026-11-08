@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-auto-arrangement.test.ts tests/team/approved-plan.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-auto-arrangement.test.ts (2 tests | 2 failed) 161ms
+   × records actual model-generated planning and accepts optional check stage: false 112ms
+   × records actual model-generated planning and accepts optional check stage: true 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records actual model-generated planning and accepts optional check stage: false
+AssertionError: expected { requests: 1, taskCount: 2, …(2) } to match object { taskCount: 2, valid: true, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reviewCovered": true,
++   "reviewCovered": false,
+    "taskCount": 2,
+    "valid": true,
+  }
+
+ ❯ tests/evaluation/research-auto-arrangement.test.ts:20:86
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records actual model-generated planning and accepts optional check stage: true
+AssertionError: expected { requests: 1, taskCount: 3, …(2) } to match object { taskCount: 3, valid: true, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reviewCovered": true,
++   "reviewCovered": false,
+    "taskCount": 3,
+    "valid": true,
+  }
+
+ ❯ tests/evaluation/research-auto-arrangement.test.ts:20:86
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 10 passed (12)
+   Start at  15:28:48
+   Duration  1.74s (transform 777ms, setup 0ms, import 2.14s, tests 346ms, environment 0ms)
+

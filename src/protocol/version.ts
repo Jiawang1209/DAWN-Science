@@ -608,7 +608,8 @@
 /** 8.48: on-demand, execution-bound original tool record inspection. */
 /** 8.49: bind existing run history to the corresponding Team task attempt. */
 /** 8.50 (2026-11-08): approved automatic arrangements bind to frozen Team tasks; answerPlan adds explicit execute/stop/finish; snapshots expose plan mapping and pause state. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.50"
+/** 8.51: accepted task artifact sources and explicit content checks. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.51"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

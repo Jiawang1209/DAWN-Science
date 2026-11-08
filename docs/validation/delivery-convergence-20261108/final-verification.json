@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-11-08T11:41:17.373923+00:00",
+  "typecheckExit": 0,
+  "buildExit": 0,
+  "planCheckedItems": 30,
+  "planUncheckedItems": 0,
+  "candidateFilesChecked": 1707,
+  "candidateChanged": [],
+  "oldEvidenceFilesChecked": 510,
+  "oldEvidenceChanged": [],
+  "finalTests": {
+    "files": 703,
+    "passed": 7002,
+    "skipped": 11
+  },
+  "finalTargetedDesktopPassed": 6,
+  "paidRequests": 26,
+  "requestCap": 30,
+  "inFlight": 0,
+  "completePairs": 0,
+  "incompletePairs": 1,
+  "modelTrialRetries": 0,
+  "brokenReportLinks": [],
+  "mainClean": true,
+  "formalProfileUnchanged": true,
+  "commitsMade": 0,
+  "mergesMade": 0,
+  "pushesMade": 0,
+  "releasesMade": 0,
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN",
+  "completionAudit": "passed"
+}

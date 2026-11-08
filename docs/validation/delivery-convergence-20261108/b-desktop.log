@@ -1,0 +1,63 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/approved-plan-execution.spec.ts
+
+Running 2 tests using 1 worker
+
+(node:80508) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60321/000ac247-82ab-4383-8bb1-5eff1ebd7b74
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/approved-plan-execution.spec.ts:7:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (6.9s)
+(node:80758) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60354/a96a8cc7-df49-46ff-898c-55a7cc0b6aed
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60377/1554bad8-7de4-467d-af8e-0ee32ec65142
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:71:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (8.7s)
+
+
+  1) e2e/approved-plan-execution.spec.ts:7:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 
+
+    Error: locator.click: Error: strict mode violation: getByRole('tab', { name: '产物', exact: true }) resolved to 2 elements:
+        1) <button role="tab" tabindex="0" type="button" aria-label="产物" aria-selected="false" data-dock-tab="artifacts" class="btn btn-ghost btn-sm dock-tab-btn">…</button> aka getByLabel('产物')
+        2) <button role="tab" type="button" tabindex="-1" id="_r_4_-artifacts" aria-selected="false" aria-controls="_r_4_-panel" class="btn btn-ghost btn-sm" data-collaboration-tab="artifacts">产物</button> aka getByLabel('任务详情').getByRole('tab', { name: '产物' })
+
+    Call log:
+      - waiting for getByRole('tab', { name: '产物', exact: true })
+
+
+       at fixtures.ts:239
+
+      237 |   const label = 房客
+      238 |   const tab = page.getByRole("tab", { name: label, exact: true })
+    > 239 |   if (await tab.count()) await tab.click()
+          |                                    ^
+      240 |   else {
+      241 |     await page.getByRole("button", { name: "更多面板", exact: true }).click()
+      242 |     await page.getByRole("menuitem", { name: label, exact: true }).click()
+        at 进坞 (/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/e2e/fixtures.ts:239:36)
+        at /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/e2e/approved-plan-execution.spec.ts:35:2
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/approved-plan-execution.spec.ts:7:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view 
+  1 passed (16.6s)

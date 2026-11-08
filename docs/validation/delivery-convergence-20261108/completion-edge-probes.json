@@ -1,0 +1,30 @@
+{
+  "source": "actual current candidate and real isolated local files; no model",
+  "submission": {
+    "duringPhase": "validating",
+    "sealedPhase": "sealed",
+    "counts": [
+      {
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0
+      },
+      {
+        "submissionAttempts": 1,
+        "invalidSubmissions": 0
+      }
+    ]
+  },
+  "content": {
+    "beforeDeletion": {
+      "state": "matches",
+      "checkedAt": "2026-11-08T08:03:51.096Z"
+    },
+    "afterDeletion": {
+      "state": "unavailable",
+      "checkedAt": "2026-11-08T08:03:51.113Z",
+      "reason": "当前文件不存在、越界或无法在限制内核对"
+    },
+    "receiptRetained": true
+  },
+  "passed": true
+}

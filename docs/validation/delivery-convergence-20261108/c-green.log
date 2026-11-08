@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/agent-observation.test.tsx tests/ui/collaboration-workflow.test.tsx tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |ui| tests/ui/agent-observation.test.tsx (27 tests | 1 failed) 194ms
+   × uses a compact truthful summary while preserving the full observation inspector 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/agent-observation.test.tsx > uses a compact truthful summary while preserving the full observation inspector
+TestingLibraryElementError: Unable to find an element with the text: /累计 20 tokens/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"agent-observation agent-observation-compact"[39m
+      [33mdata-context-current[39m=[32m"false"[39m
+      [33mtitle[39m=[32m"样本身份或执行代次已失效"[39m
+    [36m>[39m
+      [36m<span>[39m
+        [0m上下文未知[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+      [36m>[39m
+        [0m · [0m
+      [36m</span>[39m
+      [36m<span>[39m
+        [0m累计 输入或输出未记录[0m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/agent-observation.test.tsx:164:16
+    162|  expect(view.container.querySelector('.agent-observation-compact')).no…
+    163|  expect(view.container.querySelectorAll('.agent-observation-row')).toH…
+    164|  expect(screen.getByText(/累计 20 tokens/)).toBeTruthy()
+       |                ^
+    165|  expect(screen.queryByText('0 tokens')).toBeNull()
+    166|  view.rerender(<AgentObservation snapshot={snapshot(run)} run={run} de…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 35 passed (36)
+   Start at  15:22:56
+   Duration  1.61s (transform 1.26s, setup 1.66s, import 394ms, tests 400ms, environment 1.32s)
+

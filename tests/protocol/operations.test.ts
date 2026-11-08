@@ -68,7 +68,7 @@ describe("操作注册表", () => {
         "askSubagent",
         "controlSubagent",
         "acquireLease",
-        "listArtifacts",
+        "listArtifacts", "checkTaskArtifact",
         "runInKernel",
         "interruptKernel",
         "fakeSshControl",

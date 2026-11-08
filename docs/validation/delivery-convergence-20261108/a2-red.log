@@ -1,0 +1,56 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/request-gate.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/request-gate.test.ts (15 tests | 4 failed) 413ms
+   × projects current partition request balance without changing caps or leaking credentials 3ms
+   × keeps parallel request admission ordered and preserves review-exclusive guidance and capacity 0ms
+   × supports the existing /responses instruction surface without altering the caller body 0ms
+   × supports the existing /messages instruction surface without altering the caller body 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > projects current partition request balance without changing caps or leaking credentials
+TypeError: arm.setRequestGuidance is not a function
+ ❯ tests/evaluation/request-gate.test.ts:145:35
+    143|  const bodies:unknown[]=[],gate=await startEvaluationGate({limit:3,for…
+    144|  try{
+    145|   const arm=gate.partition(3);arm.setRequestGuidance('same-budget tria…
+       |                                   ^
+    146|   const body=JSON.stringify({model:'fixture',messages:[{role:'user',co…
+    147|   for(let i=0;i<2;i++)await fetch(gate.url+'/chat/completions',{method…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > keeps parallel request admission ordered and preserves review-exclusive guidance and capacity
+TypeError: work.setRequestGuidance is not a function
+ ❯ tests/evaluation/request-gate.test.ts:157:82
+    155|  const seen:string[]=[],gate=await startEvaluationGate({limit:4,forwar…
+    156|  try{
+    157|   const arm=gate.partition(4),work=arm.partition(3),review=arm.partiti…
+       |                                                                                  ^
+    158|   const call=(token:string)=>fetch(gate.url+'/chat/completions',{metho…
+    159|   await Promise.all([call(work.token),call(work.token),call(work.token…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/evaluation/request-gate.test.ts > supports the existing /responses instruction surface without altering the caller body
+ FAIL  |node| tests/evaluation/request-gate.test.ts > supports the existing /messages instruction surface without altering the caller body
+TypeError: arm.setRequestGuidance is not a function
+ ❯ tests/evaluation/request-gate.test.ts:167:35
+    165|  let seen:any;const gate=await startEvaluationGate({limit:1,forward:as…
+    166|  try{
+    167|   const arm=gate.partition(1);arm.setRequestGuidance('fixture')
+       |                                   ^
+    168|   const body=path==='/responses'?{instructions:'original',input:'task'…
+    169|   await fetch(gate.url+path,{method:'POST',headers:{authorization:`Bea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+   Start at  15:12:19
+   Duration  546ms (transform 31ms, setup 0ms, import 49ms, tests 413ms, environment 0ms)
+

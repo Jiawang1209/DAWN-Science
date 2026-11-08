@@ -1,0 +1,18 @@
+{
+  "candidate-source-sha256": {
+    "count": 1710,
+    "changed": []
+  },
+  "previous-evidence-sha256": {
+    "count": 494,
+    "changed": []
+  },
+  "formalProfile": {
+    "changed": []
+  },
+  "mainBeforeMerge": {
+    "head": "646bcc1aa7153dfa03f112d879033141dfea299a",
+    "status": ""
+  },
+  "newPaidModelRequests": 0
+}

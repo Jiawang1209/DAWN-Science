@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-cli-allocation.test.ts tests/evaluation/research-budget-300.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  20:38:05
+   Duration  5.34s (transform 692ms, setup 0ms, import 103ms, tests 5.20s, environment 0ms)
+

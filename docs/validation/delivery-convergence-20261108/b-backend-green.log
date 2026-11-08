@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/accepted-artifacts.test.ts tests/ui/collaboration-outcome.test.ts tests/workbench/backend.test.ts tests/protocol/ui-boundary.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+
+ Test Files  4 passed (4)
+      Tests  121 passed (121)
+   Start at  15:17:41
+   Duration  10.32s (transform 1.39s, setup 658ms, import 2.00s, tests 8.60s, environment 374ms)
+

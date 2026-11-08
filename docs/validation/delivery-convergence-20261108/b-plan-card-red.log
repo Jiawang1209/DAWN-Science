@@ -1,0 +1,207 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/plan-card.test.tsx -t counts accepted Team versions
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |ui| tests/ui/plan-card.test.tsx (34 tests | 1 failed | 33 skipped) 68ms
+   × counts accepted Team versions alongside main-session registration without forging main artifacts 67ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/plan-card.test.tsx > counts accepted Team versions alongside main-session registration without forging main artifacts
+TestingLibraryElementError: Unable to find an element with the text: /任务验收 1 · 主会话登记 0/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"方案第 2 版"[39m
+      [33mclass[39m=[32m"plan-card"[39m
+      [33mdata-plan-id[39m=[32m"c1"[39m
+      [33mdata-status[39m=[32m"approved"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"plan-card-head"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"plan-card-kicker"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"icon"[39m
+            [33mfill[39m=[32m"currentColor"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mviewBox[39m=[32m"0 0 16 16"[39m
+            [33mwidth[39m=[32m"16"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M2.6 8.4c0-.5.4-.9.9-.9s.9.4.9.9v4.2a.9.9 0 0 1-1.8 0V8.4ZM7.1 4.2c0-.5.4-.9.9-.9s.9.4.9.9v8.4a.9.9 0 0 1-1.8 0V4.2ZM11.6 6.6c0-.5.4-.9.9-.9s.9.4.9.9v6a.9.9 0 0 1-1.8 0v-6Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m方案 · 第 2 版[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"plan-card-status"[39m
+        [36m>[39m
+          [0m已批准 1/1/1970, 8:00:00 AM[0m
+        [36m</span>[39m
+      [36m</header>[39m
+      [36m<h3[39m
+        [33mclass[39m=[32m"plan-card-title"[39m
+      [36m>[39m
+        [0m吸烟与肺功能：分组比较[0m
+      [36m</h3>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"plan-card-body"[39m
+        [33mdata-folded[39m=[32m"false"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 whitespace-normal [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"mt-6 mb-2 font-semibold text-2xl"[39m
+              [33mdata-streamdown[39m=[32m"heading-2"[39m
+            [36m>[39m
+              [0m问题与假设[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [0m吸烟者的 FEV1 是否低于不吸烟者（假设：低）。[0m
+            [36m</p>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"mt-6 mb-2 font-semibold text-2xl"[39m
+              [33mdata-streamdown[39m=[32m"heading-2"[39m
+            [36m>[39m
+              [0m数据与切分[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [36m<code[39m
+                [33mclass[39m=[32m"rounded bg-muted px-1.5 py-0.5 font-mono text-sm"[39m
+                [33mdata-streamdown[39m=[32m"inline-code"[39m
+              [36m>[39m
+                [0mdata/raw/lung.csv[0m
+              [36m</code>[39m
+              [0m，全部样本，不切分。[0m
+            [36m</p>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"mt-6 mb-2 font-semibold text-2xl"[39m
+              [33mdata-streamdown[39m=[32m"heading-2"[39m
+            [36m>[39m
+              [0m统计检验与模型[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [0mWelch t 检验；线性模型 FEV1 ~ smoking + age + sex。[0m
+            [36m</p>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"mt-6 mb-2 font-semibold text-2xl"[39m
+              [33mdata-streamdown[39m=[32m"heading-2"[39m
+            [36m>[39m
+              [0m图[0m
+            [36m</h2>[39m
+            [36m<p>[39m
+              [0m分组箱线图。[0m
+            [36m</p>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"mt-6 mb-2 font-semibold text-2xl"[39m
+              [33mdata-streamdown[39m=[32m"heading-2"[39m
+            [36m>[39m
+              [0m产物[0m
+            [36m</h2>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"list-inside list-disc whitespace-normal [li_&]:pl-6"[39m
+              [33mdata-streamdown[39m=[32m"unordered-list"[39m
+            [36m>[39m
+              [0m
+[0m
+              [36m<li[39m
+                [33mclass[39m=[32m"py-1 [&>p]:inline"[39m
+                [33mdata-streamdown[39m=[32m"list-item"[39m
+              [36m>[39m
+                [36m<code[39m
+                  [33mclass[39m=[32m"rounded bg-muted px-1.5 py-0.5 font-mono text-sm"[39m
+                  [33mdata-streamdown[39m=[32m"inline-code"[39m
+                [36m>[39m
+                  [0mresults/tables/mock_summary.csv[0m
+                [36m</code>[39m
+                [0m —— 分组汇总[0m
+              [36m</li>[39m
+              [0m
+[0m
+              [36m<li[39m
+                [33mclass[39m=[32m"py-1 [&>p]:inline"[39m
+                [33mdata-streamdown[39m=[32m"list-item"[39m
+              [36m>[39m
+                [36m<code[39m
+                  [33mclass[39m=[32m"rounded bg-muted px-1.5 py-0.5 font-mono text-sm"[39m
+                  [33mdata-streamdown[39m=[32m"inline-code"[39m
+                [36m>[39m
+                  [0mfigures/fev1_by_smoking.png[0m
+                [36m</code>[39m
+                [0m —— 箱线图[0m
+              [36m</li>[39m
+              [0m
+[0m
+            [36m</ul>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"plan-compare"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m任务与执行者已冻结；重复开始不会重放已有执行。中断后请先核对产物。[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m开始或继续未执行任务[0m
+        [36m</button>[39m
+        [36m<code[39m
+          [33mclass[39m=[32m"plan-compare-path"[39m
+        [36m>[39m
+          [0mplan.md[0m
+        [36m</code>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"plan-compare-sum"[39m
+        [36m>[39m
+          [0m产物清单：计划 2 项 · 已登记 0 · 计划外 0[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m未登记不代表未生成；请在任务产物中查看验收版本。[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-xs"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m看清单[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/plan-card.test.tsx:380:16
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 33 skipped (34)
+   Start at  15:19:10
+   Duration  1.56s (transform 716ms, setup 505ms, import 569ms, tests 68ms, environment 335ms)
+

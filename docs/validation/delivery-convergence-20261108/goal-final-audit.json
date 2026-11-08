@@ -1,0 +1,76 @@
+{
+  "requirementsSource": "docs/superpowers/plans/2026-11-08-delivery-convergence.md",
+  "allPlanItemsChecked": true,
+  "codeChangesFrozen": true,
+  "typecheck": "passed",
+  "build": "passed",
+  "fullTests": {
+    "files": 703,
+    "passed": 7002,
+    "skipped": 11
+  },
+  "desktop": {
+    "initialTotal": 41,
+    "initialPassed": 39,
+    "initialFailed": 2,
+    "repairedTargetedPassed": 6,
+    "repairedTargetedFailed": 0
+  },
+  "live": {
+    "authorizedNewRequests": 30,
+    "actualForwarded": 26,
+    "actualReserved": 26,
+    "localDeniedNotForwarded": 1,
+    "inFlightAfterDrain": 0,
+    "single": {
+      "reserved": 15,
+      "forwarded": 15,
+      "denied": 0,
+      "inFlight": 0,
+      "limit": 15
+    },
+    "multi": {
+      "work": {
+        "reserved": 11,
+        "forwarded": 11,
+        "denied": 1,
+        "inFlight": 0,
+        "limit": 11
+      },
+      "review": {
+        "reserved": 0,
+        "forwarded": 0,
+        "denied": 0,
+        "inFlight": 0,
+        "limit": 4
+      }
+    },
+    "planningRequestsIncludedInWork": 2,
+    "modelTrialRetries": 0,
+    "credentialRecoveryBeforeFirstModelRequest": 1,
+    "completePairs": 0,
+    "incompletePairs": 1,
+    "qualifiedPairs": 0,
+    "comparisonEligible": true
+  },
+  "protection": {
+    "checkedAt": "2026-11-08T11:36:22.450421+00:00",
+    "candidateFilesChecked": 1707,
+    "candidateChanged": [],
+    "priorEvidenceFilesChecked": 510,
+    "priorEvidenceChanged": [],
+    "formalConfigChanged": [],
+    "formalDbChangedSinceOriginal": false,
+    "formalProfileChangedSinceResume": [],
+    "mainHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+    "mainStatus": "",
+    "featureHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+    "featureBranch": "codex/delivery-convergence-20261108",
+    "originMainRef": "43dd7bdca97eec7c4e5d0328c9c4b4aac4c53e40",
+    "liveHostStillPresent": false
+  },
+  "review": "single-line self-review; no independent reviewer",
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN",
+  "readyForGoalCompletion": true
+}

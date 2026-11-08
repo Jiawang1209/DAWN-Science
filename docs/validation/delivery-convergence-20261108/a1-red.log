@@ -1,0 +1,101 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-checkpoint.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/task-checkpoint.test.ts (6 tests | 6 failed) 17ms
+   × reads delivery gaps without submitting, inventing evidence or checking arbitrary paths 5ms
+   × isolates evidence and only proposes unique complete IDs 1ms
+   × reflects draining, cancellation and sealed state without changing submission counters 0ms
+   × exposes the internal checkpoint only for contracted tasks, including read-only scopes 2ms
+   × adds bounded progress guidance when evidence advances, without contaminating authoritative evidence 6ms
+   × bounds long paths and counts omitted gaps without presenting truncated values as complete 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > reads delivery gaps without submitting, inventing evidence or checking arbitrary paths
+ZodError: [
+  {
+    "code": "custom",
+    "message": "Required execution needs workspace-exec capability",
+    "path": []
+  }
+]
+ ❯ tests/orchestration/task-checkpoint.test.ts:14:91
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > isolates evidence and only proposes unique complete IDs
+TypeError: a.checkpoint is not a function
+ ❯ tests/orchestration/task-checkpoint.test.ts:26:11
+     24|  const evidence:RouteToolEvidence[]=[{toolCallId:'dup',name:'bash',sta…
+     25|  const a=new TaskSubmission(TaskContractSchema.parse({submission:'tool…
+     26|  expect(a.checkpoint().referenceChoices.executionCompleted).toEqual([]…
+       |           ^
+     27| })
+     28| it('reflects draining, cancellation and sealed state without changing …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > reflects draining, cancellation and sealed state without changing submission counters
+TypeError: s.checkpoint is not a function
+ ❯ tests/orchestration/task-checkpoint.test.ts:30:11
+     28| it('reflects draining, cancellation and sealed state without changing …
+     29|  const s=new TaskSubmission(TaskContractSchema.parse({submission:'tool…
+     30|  expect(s.checkpoint().phase).toBe('draining');release();expect(s.chec…
+       |           ^
+     31|  await s.submit(value);const before=s.observation();expect(s.checkpoin…
+     32| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > exposes the internal checkpoint only for contracted tasks, including read-only scopes
+AssertionError: expected undefined to be defined
+ ❯ tests/orchestration/task-checkpoint.test.ts:35:86
+     33| it('exposes the internal checkpoint only for contracted tasks, includi…
+     34|  const cwd=root(),task=createTaskTools(cwd,resolveTaskSettings(TaskCon…
+     35|  const checkpoint=task.tools.find(t=>t.name==='get_task_status')!;expe…
+       |                                                                                      ^
+     36|  const result=await checkpoint.execute('status',{});expect(JSON.parse(…
+     37|  await task.tools.find(t=>t.name==='submit_task_result')!.execute('sub…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > adds bounded progress guidance when evidence advances, without contaminating authoritative evidence
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/orchestration/task-checkpoint.test.ts:45:79
+     43|  const task=createTaskTools(cwd,resolveTaskSettings(TaskContractSchema…
+     44|  const read=task.tools.find(t=>t.name==='read')!,first=await read.exec…
+     45|  expect(first.content.some(c=>c.text?.startsWith('[task_delivery_statu…
+       |                                                                               ^
+     46|  expect(again.content.some(c=>c.text?.startsWith('[task_delivery_statu…
+     47|  expect(task.evidence().every(e=>!e.result.includes('[task_delivery_st…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > bounds long paths and counts omitted gaps without presenting truncated values as complete
+TypeError: s.checkpoint is not a function
+ ❯ tests/orchestration/task-checkpoint.test.ts:51:17
+     49| it('bounds long paths and counts omitted gaps without presenting trunc…
+     50|  const inputs=Array.from({length:40},(_,i)=>`${i}-${'数'.repeat(200)}`)…
+     51|  const status=s.checkpoint();expect(status.readProgress.omitted).toBe(…
+       |                 ^
+     52| })
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  15:10:13
+   Duration  606ms (transform 109ms, setup 0ms, import 505ms, tests 17ms, environment 0ms)
+

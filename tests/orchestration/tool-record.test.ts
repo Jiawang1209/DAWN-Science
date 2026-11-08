@@ -32,3 +32,17 @@ it('separates only the exact appended host tag from stdout, preserving marker-li
  const [withoutTag]=bindToolRecords([host],fresh,'x.jsonl',false)
  expect(selectToolRecord(fresh,withoutTag!)).toMatchObject({state:'available',output:data+'\n'+marker})
 })
+
+it('separates the verified host suffix including the new delivery reminder, preserving identical marker text in actual stdout',()=>{
+ const data='tool output\n[task_delivery_status] {"user":"this is tool content"}'
+ const fresh=entries('new',data)
+ const result=fresh[1] as unknown as {message:{content:{type:string;text:string}[]}}
+ const marker='[task_tool_evidence] {"toolCallId":"same-call","name":"read","status":"done","execution":"not_observed","references":["verification.reviewed"],"path":"data","truncatedFields":[]}'
+ const hint='[task_delivery_status] {"submissionPending":true,"requiredReadsRemaining":0}'
+ result.message.content.push({type:'text',text:marker},{type:'text',text:hint})
+ const [bound]=bindToolRecords([host],fresh,'x.jsonl',true)
+ expect(selectToolRecord(fresh,bound!)).toMatchObject({state:'available',output:data,evidenceTag:marker+'\n'+hint})
+ const [withoutTag]=bindToolRecords([host],fresh,'x.jsonl',false)
+ expect(selectToolRecord(fresh,withoutTag!)).toMatchObject({state:'available',output:data+'\n'+marker+'\n'+hint})
+ result.message.content[2]!.text+='tampered';expect(selectToolRecord(fresh,bound!)).toEqual({state:'unavailable'})
+})

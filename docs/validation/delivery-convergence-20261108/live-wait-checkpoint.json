@@ -1,0 +1,15 @@
+{
+  "state": "waiting-system-keychain",
+  "modelRequestsForwarded": 0,
+  "newAuthorization": 30,
+  "perArmLimit": 15,
+  "workIncludingPlanning": 11,
+  "independentReview": 4,
+  "automaticRetry": false,
+  "helperPid": 28615,
+  "execSessionId": 46253,
+  "log": "live-01.log",
+  "output": "live-01",
+  "goal": "blocked; system keychain interaction required; resume the existing process",
+  "localDevelopment": "typecheck/build and 7002 tests passed; desktop first39/41 plus repaired6/6 passed"
+}

@@ -1,0 +1,465 @@
+{
+  "samples": 75,
+  "timedSamples": 73,
+  "untimedSamples": 2,
+  "maximumCloseToActualChildExitMs": 204.60529199999291,
+  "problems": [],
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN",
+  "thresholdsMs": [
+    1500,
+    4000
+  ],
+  "runs": [
+    {
+      "file": "b-exit/exit-80608.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 157.50595900000008
+    },
+    {
+      "file": "b-exit/exit-80849.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 141.24670800000058
+    },
+    {
+      "file": "b-exit/exit-81005.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 121.77420900000106
+    },
+    {
+      "file": "b-exit/exit-81232.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 166.50087500000518
+    },
+    {
+      "file": "b-exit/exit-81596.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 131.88724999999977
+    },
+    {
+      "file": "b-exit/exit-81745.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 121.10475000000042
+    },
+    {
+      "file": "b-exit/exit-82125.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 155.25437500000044
+    },
+    {
+      "file": "b-exit/exit-82295.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 171.49566699999923
+    },
+    {
+      "file": "c-exit/exit-83540.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 137.03983299999982
+    },
+    {
+      "file": "c-exit/exit-83713.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 169.47662499999933
+    },
+    {
+      "file": "c-exit/exit-83840.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 137.113292
+    },
+    {
+      "file": "c-exit/exit-83982.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 128.98137500000303
+    },
+    {
+      "file": "c-exit/exit-84110.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 124.60633300000336
+    },
+    {
+      "file": "layout-red-exit/exit-98331.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 176.74095800000214
+    },
+    {
+      "file": "exit/exit-72544.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 181.44908399999986
+    },
+    {
+      "file": "exit/exit-72695.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 126.23904200000106
+    },
+    {
+      "file": "exit/exit-72823.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 146.47649999999885
+    },
+    {
+      "file": "exit/exit-72985.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 135.36225000000195
+    },
+    {
+      "file": "exit/exit-73128.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 129.23329100000046
+    },
+    {
+      "file": "exit/exit-73355.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 140.93920799999978
+    },
+    {
+      "file": "exit/exit-73578.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 139.53791699999783
+    },
+    {
+      "file": "exit/exit-73736.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 175.39687499999854
+    },
+    {
+      "file": "exit/exit-73917.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 151.22516699999687
+    },
+    {
+      "file": "exit/exit-74037.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 154.95570800000132
+    },
+    {
+      "file": "exit/exit-74081.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 142.00091599999723
+    },
+    {
+      "file": "exit/exit-74391.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 159.19674999999552
+    },
+    {
+      "file": "exit/exit-74783.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 140.18116599999485
+    },
+    {
+      "file": "exit/exit-75113.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 114.68720800000301
+    },
+    {
+      "file": "exit/exit-75315.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 125.58612499999799
+    },
+    {
+      "file": "exit/exit-75442.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 117.74712499999805
+    },
+    {
+      "file": "exit/exit-75621.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 131.70116699999926
+    },
+    {
+      "file": "exit/exit-75761.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 111.74695799999608
+    },
+    {
+      "file": "exit/exit-76048.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 143.0445000000036
+    },
+    {
+      "file": "exit/exit-76289.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 135.38945799999783
+    },
+    {
+      "file": "exit/exit-76435.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 123.7302090000012
+    },
+    {
+      "file": "exit/exit-76636.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 128.23891600000206
+    },
+    {
+      "file": "exit/exit-76774.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 140.39508399999613
+    },
+    {
+      "file": "exit/exit-76901.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 132.04241699999693
+    },
+    {
+      "file": "exit/exit-77173.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 118.2721659999952
+    },
+    {
+      "file": "exit/exit-77373.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 204.60529199999291
+    },
+    {
+      "file": "exit/exit-77648.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 123.70270900000469
+    },
+    {
+      "file": "exit/exit-77848.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 117.28129199999967
+    },
+    {
+      "file": "exit/exit-78047.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 135.67291699998896
+    },
+    {
+      "file": "exit/exit-78246.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 124.00329200000851
+    },
+    {
+      "file": "exit/exit-78520.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 150.81545800001186
+    },
+    {
+      "file": "exit/exit-78880.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 114.01570800000627
+    },
+    {
+      "file": "exit/exit-79174.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 104.00683300000674
+    },
+    {
+      "file": "exit/exit-79265.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 151.75224999999045
+    },
+    {
+      "file": "exit/exit-79435.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 159.17179100000067
+    },
+    {
+      "file": "exit/exit-79580.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 177.76391700000022
+    },
+    {
+      "file": "exit/exit-79776.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 165.2559169999986
+    },
+    {
+      "file": "exit/exit-79926.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 117.79662500000086
+    },
+    {
+      "file": "exit/exit-80053.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 130.77529200000208
+    },
+    {
+      "file": "exit/exit-80269.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 131.18158299999777
+    },
+    {
+      "file": "exit/exit-80521.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 145.9921250000043
+    },
+    {
+      "file": "exit/exit-80758.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 137.892875000005
+    },
+    {
+      "file": "exit/exit-80869.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 119.64716699999553
+    },
+    {
+      "file": "exit/exit-80997.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 150.70887499999662
+    },
+    {
+      "file": "exit/exit-81235.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 143.92237500000192
+    },
+    {
+      "file": "exit/exit-81535.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 137.57670900000085
+    },
+    {
+      "file": "exit/exit-81743.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 131.9277080000029
+    },
+    {
+      "file": "exit/exit-81944.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 115.76050000000396
+    },
+    {
+      "file": "exit/exit-82177.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 134.60537499999919
+    },
+    {
+      "file": "exit/exit-82307.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "timing": "no fixture close-requested marker; excluded from latency maximum"
+    },
+    {
+      "file": "exit/exit-83270.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 143.602040999991
+    },
+    {
+      "file": "exit/exit-83302.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "timing": "no fixture close-requested marker; excluded from latency maximum"
+    },
+    {
+      "file": "exit/exit-84418.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 121.52945800000452
+    },
+    {
+      "file": "exit-fixed/exit-27206.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 170.76383299999998
+    },
+    {
+      "file": "exit-fixed/exit-27382.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 136.5696250000001
+    },
+    {
+      "file": "exit-fixed/exit-27509.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 127.64516600000024
+    },
+    {
+      "file": "exit-fixed/exit-27661.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 131.61962499999936
+    },
+    {
+      "file": "exit-fixed/exit-27788.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 113.73862499999814
+    },
+    {
+      "file": "exit-fixed/exit-27998.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 114.91841700000077
+    },
+    {
+      "file": "exit-fixed/exit-28136.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 155.12562500000058
+    },
+    {
+      "file": "exit-fixed/exit-28286.jsonl",
+      "actualExitObserved": true,
+      "code": 0,
+      "closeToActualExitMs": 150.11883300000045
+    }
+  ]
+}

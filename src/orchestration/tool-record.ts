@@ -22,13 +22,23 @@ export function bindToolRecords(records:readonly RouteToolEvidence[],entries:rea
  return records.map(record=>{
   const call=calls.get(record.toolCallId),result=results.get(record.toolCallId)
   if(counts.get(record.toolCallId)!==1||!call||!result||call.index>=result.index||call.name!==record.name||result.name!==record.name||result.error!==(record.status==='error'))return record
-  const ref=ToolRecordRefSchema.safeParse({file:basename(file),callEntry:call.id,resultEntry:result.id,payloadSha256:payloadFingerprint(call.input,result.content),...(hasHostTags?{evidenceTagSha256:sha256(taskEvidenceTag(record))}:{})})
+  const ref=ToolRecordRefSchema.safeParse({file:basename(file),callEntry:call.id,resultEntry:result.id,payloadSha256:payloadFingerprint(call.input,result.content),...(hasHostTags?{evidenceTagSha256:sha256(hostSuffix(result.content,taskEvidenceTag(record)))}:{})})
   return ref.success?{...record,transcriptRef:ref.data}:record
  })
 }
 
 const sha256=(text:string)=>createHash('sha256').update(text).digest('hex')
 const payloadFingerprint=(input:unknown,content:unknown)=>sha256(JSON.stringify([input,content]))
+/** Only the wrapper's exact evidence tag may authorize the adjacent reminder as host text. */
+function hostSuffix(content:unknown,tag:string):string {
+ if(!Array.isArray(content))return tag
+ const last=content.at(-1),previous=content.at(-2)
+ if(previous?.type==='text'&&previous.text===tag&&last?.type==='text'&&typeof last.text==='string'&&last.text.startsWith('[task_delivery_status] ')){
+  const suffix=tag+'\n'+last.text
+  if(suffix.length<=4096)return suffix
+ }
+ return tag
+}
 const unavailable={state:'unavailable'} as const
 export function selectToolRecord(entries:readonly FileEntry[],record:{toolCallId:string;name:string;status:'done'|'error';transcriptRef?:ToolRecordRef|undefined}):ToolRecordResponse{
  const ref=record.transcriptRef
@@ -43,8 +53,10 @@ export function selectToolRecord(entries:readonly FileEntry[],record:{toolCallId
  if(blocks.length!==1||blocks[0]?.type!=='toolCall'||blocks[0].name!==record.name)return unavailable
  if(ref.payloadSha256!==payloadFingerprint(blocks[0].arguments,result.content))return unavailable
  const last=result.content.at(-1)
- const evidenceTag=last?.type==='text'&&last.text.length<=4096&&ref.evidenceTagSha256===sha256(last.text)?last.text:undefined
- const body=evidenceTag===undefined?result.content:result.content.slice(0,-1)
+ const previous=result.content.at(-2)
+ const candidates=[...(last?.type==='text'?[{count:1,text:last.text}]:[]),...(last?.type==='text'&&previous?.type==='text'?[{count:2,text:previous.text+'\n'+last.text}]:[])]
+ const suffix=candidates.find(candidate=>candidate.text.length<=4096&&ref.evidenceTagSha256===sha256(candidate.text)),evidenceTag=suffix?.text
+ const body=suffix?result.content.slice(0,-suffix.count):result.content
  const input=JSON.stringify(blocks[0].arguments,null,2)??'',output=body.flatMap(block=>block.type==='text'?[block.text]:[]).join('\n')
  return{state:'available',input:input.slice(0,8192),output:output.slice(0,16384),...(evidenceTag===undefined?{}:{evidenceTag}),clipped:input.length>8192||output.length>16384||body.some(b=>b.type!=='text')}
 }

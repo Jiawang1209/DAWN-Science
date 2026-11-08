@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-auto-arrangement.test.ts tests/team/approved-plan.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  15:29:35
+   Duration  1.73s (transform 769ms, setup 0ms, import 2.16s, tests 339ms, environment 0ms)
+

@@ -1,0 +1,22 @@
+{
+  "authorization": {
+    "newRequestLimit": 300,
+    "singleLimit": 150,
+    "multiLimit": 150,
+    "workIncludingPlanning": 110,
+    "independentReview": 40
+  },
+  "priorRealRequests": 26,
+  "modelTrialRepeats": 1,
+  "modelRetry": false,
+  "mainHead": "646bcc1aa7153dfa03f112d879033141dfea299a",
+  "mainStatus": "",
+  "protectedProfile": {
+    "providers.yaml": "4380a472e84b4205b9180bb7d790930c2b358e57f8d64303cd39e0cf44e8d9dc",
+    "credentials.json": "541e3d353636c9a2b42eb206f272fb49fe9899a2a417f80d3358cf2c1d709f4b",
+    "dawn.db": "e33ef101b1a2d6051ac032ad3e6eb1801bc3cdbccf09633b952c3b12289b647f"
+  },
+  "priorEvidenceFiles": 432,
+  "paidRequestsUsed": 30,
+  "liveStatus": "both accepted, qualifiedPairs=1"
+}

@@ -1,0 +1,25 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-checkpoint.test.ts tests/workbench/backend.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/workbench/backend.test.ts (50 tests | 1 failed) 6919ms
+     × keeps legacy main artifacts visible when the task execution snapshot cannot be read 189ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/backend.test.ts > 真实后端 · 经服务端端到端 > keeps legacy main artifacts visible when the task execution snapshot cannot be read
+Error: fixture corrupt snapshot
+ ❯ Object.runOverview tests/workbench/backend.test.ts:245:80
+
+ ❯ Object.listArtifacts src/workbench/backend.ts:2701:61
+ ❯ tests/workbench/backend.test.ts:247:74
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 57 passed (58)
+   Start at  15:35:54
+   Duration  8.59s (transform 895ms, setup 0ms, import 2.20s, tests 7.13s, environment 0ms)
+

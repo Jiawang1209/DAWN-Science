@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-runner.test.ts -t counts real planning calls
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (13 tests | 1 failed | 12 skipped) 1428ms
+   × counts real planning calls in the multi arm and compiles the model-selected task count with the same judge 1427ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts real planning calls in the multi arm and compiles the model-selected task count with the same judge
+AssertionError: {"rows":[{"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"carbon-missing","mode":"single","repeat":1,"fingerprint":"cab68981e1adb07126f84b8c09113a6fb5b9c08f88672fcddad32844f4cfc2b5","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":994,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2","bytes":347},{"path":"results/result.json","sha256":"51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544","bytes":53},{"path":"results/report.md","sha256":"98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447","bytes":65}]},{"arrangement":{"mode":"model-generated","requests":1,"taskCount":0,"valid":false,"reviewCovered":false,"reason":"模型未交付可批准的自动安排","compiled":false},"submissionDiagnostics":{"hostAttempts":0,"hostRejected":0,"source":"host-only","complete":false},"diagnosticReadIssues":[],"caseId":"carbon-missing","mode":"multi","repeat":1,"fingerprint":"cab68981e1adb07126f84b8c09113a6fb5b9c08f88672fcddad32844f4cfc2b5","terminal":"failed","success":false,"falseAcceptance":false,"inputPreserved":true,"requests":1,"submissionAttempts":0,"invalidSubmissions":0,"elapsedMs":116,"usage":{"visibleTokens":0,"unknownUsageTasks":1,"partialUsage":true},"versions":[],"reason":"执行取消或运行错误；未计为正确阻塞"}],"integrity":{"changed":[]}}: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/evaluation/research-runner.test.ts:219:95
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  15:32:23
+   Duration  3.46s (transform 731ms, setup 0ms, import 1.94s, tests 1.43s, environment 0ms)
+

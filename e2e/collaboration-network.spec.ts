@@ -2,7 +2,7 @@ import {mkdirSync,writeFileSync} from 'node:fs'
 import {join,resolve} from 'node:path'
 import {test,expect,在项目里开会话} from './fixtures.js'
 const evidence=resolve(process.env.DAWN_COLLABORATION_EVIDENCE_DIR??'docs/validation/collaboration-workbench-20261107/desktop')
-const names=['数据核查','统计分析','方法审阅','图表复核','文献核对','单位检查','报告整理','独立审阅']
+const names=['数据核查与输入完整性验证：包含长中文职责名称的成员','统计分析','方法审阅','图表复核','文献核对','单位检查','报告整理','独立审阅']
 test.use({dawnOptions:{gitInit:true,toolCall:[
  {when:'展示八项真实委派',toolName:'subagent',args:{tasks:names.map((agent,i)=>({agent,task:i===0?'锁演示持有任务，等待工具完成。':`协作台演示任务${i}，用一句话确认。`}))},once:true},
  {when:'锁演示持有任务',toolName:'bash',args:{command:'sleep 8'},once:true},
@@ -31,6 +31,13 @@ test('renders a complete dark workflow workbench from eight real child execution
  await dialog.getByRole('searchbox',{name:'搜索协作成员'}).fill('审阅');await expect(dialog.locator('[data-member-card]')).toHaveCount(2)
  await dialog.getByRole('searchbox',{name:'搜索协作成员'}).fill('');await dialog.getByRole('button',{name:'只看活跃成员'}).click();await expect(dialog.locator('[data-member-card]')).toHaveCount(0)
  await dialog.getByRole('button',{name:'显示全部成员'}).click();await expect(dialog.locator('[data-member-card]')).toHaveCount(8)
+ await expect.poll(async()=>Math.max(...await dialog.locator('[data-member-card]').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().height)))).toBeLessThan(200)
+ await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight})
+ const heading=dialog.locator('.collaboration-heading')
+ await expect.poll(async()=>{const h=await heading.boundingBox(),d=await dialog.boundingBox();return h!.y-d!.y}).toBeLessThanOrEqual(2)
+ await expect(heading.getByRole('button',{name:'刷新运行记录',exact:true})).toBeInViewport()
+ await page.screenshot({path:join(evidence,'stage-c-sticky-header.png')})
+ await dialog.evaluate(el=>{el.scrollTop=0})
  await page.screenshot({path:join(evidence,'phase-b-network-dark-completed.png')})
  await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setContentSize(900,640))
  await expect(dialog.getByRole('button',{name:'返回对话协作台',exact:true})).toBeVisible()

@@ -145,6 +145,7 @@ function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
       throw new Error("未实现")
     },
     getProvenance: async () => ({ resourceId: "a1", provenanceComplete: true }),
+    checkTaskArtifact:async()=>({state:'unavailable' as const,checkedAt:new Date().toISOString()}),
     listArtifacts: async () => ({ artifacts: [], unknown: [] }),
     subscribeSession: async () => ({
       sessionId: "s1", kind: "native" as const, revision: 0, items: [],

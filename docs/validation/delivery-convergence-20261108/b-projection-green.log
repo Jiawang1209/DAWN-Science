@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/accepted-artifacts.test.ts tests/ui/collaboration-outcome.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/accepted-artifacts.test.ts (9 tests | 1 failed) 72ms
+   × retains two different versions of the same path and binds Team evidence to its own attempt 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/accepted-artifacts.test.ts > retains two different versions of the same path and binds Team evidence to its own attempt
+ZodError: [
+  {
+    "code": "custom",
+    "message": "Read-only tasks cannot declare writes",
+    "path": []
+  }
+]
+ ❯ tests/orchestration/accepted-artifacts.test.ts:28:262
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 66 passed (67)
+   Start at  15:16:07
+   Duration  981ms (transform 409ms, setup 491ms, import 164ms, tests 94ms, environment 353ms)
+

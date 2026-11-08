@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+
+ Test Files  15 passed (15)
+      Tests  136 passed (136)
+   Start at  19:52:25
+   Duration  46.03s (transform 2.68s, setup 0ms, import 6.35s, tests 50.85s, environment 1ms)
+

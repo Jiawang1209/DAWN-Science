@@ -1,3 +1,4 @@
+import {TaskArtifactSchema,TaskArtifactCheckSchema} from './task-artifacts.js'
 import {ToolRecordRequestSchema,ToolRecordResponseSchema} from './tool-record.js'
 import {RunOverviewSchema} from './run-overview.js'
 import {SubagentControlActionSchema,SubagentControlStateSchema} from './subagent-control.js'
@@ -402,11 +403,18 @@ export const OPERATIONS = {
    * `unknown` 是 `filesCreated` 缺省的那几次工具调用——界面必须把它数出来说
    * 「另有 N 次运行产出未知」，不许把「不知道」画成「没有」。
    */
+  checkTaskArtifact:{
+    request:z.object({sessionId:z.string().min(1),artifact:TaskArtifactSchema}).strict(),
+    response:TaskArtifactCheckSchema,
+    mutating:false,
+  },
   listArtifacts: {
     request: z.object({ sessionId: z.string().min(1) }).strict(),
     response: z
       .object({
         artifacts: z.array(ArtifactSchema),
+        taskArtifacts:z.array(TaskArtifactSchema).optional(),
+        taskArtifactsIssue:z.string().max(1000).optional(),
         observedArtifacts: z.array(ObservedArtifactSchema).optional(),
         routeArtifacts: z.array(RouteArtifactSchema).optional(),
         unknown: z.array(z.object({ runId: z.string().min(1), toolCallId: z.string().min(1).optional() }).strict()),

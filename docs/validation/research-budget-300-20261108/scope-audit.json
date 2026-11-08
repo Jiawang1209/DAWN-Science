@@ -1,0 +1,24 @@
+{
+  "changedSincePreviousFrozenCandidate": [
+    "scripts/evaluate-current-api.ts",
+    "scripts/evaluate-research.ts",
+    "scripts/evaluation-request-gate.ts",
+    "scripts/research-cli.ts",
+    "scripts/research-trial-budget.ts",
+    "src/evaluation/research-manifest.ts"
+  ],
+  "allowedChanges": [
+    "dist/electron/subagent-child.js",
+    "scripts/evaluate-current-api.ts",
+    "scripts/evaluate-research.ts",
+    "scripts/evaluation-request-gate.ts",
+    "scripts/research-cli.ts",
+    "scripts/research-trial-budget.ts",
+    "src/evaluation/research-manifest.ts"
+  ],
+  "newCode": [
+    "src/evaluation/research-budget.ts",
+    "tests/evaluation/research-budget-300.test.ts"
+  ],
+  "productionOrchestrationUiChange": false
+}

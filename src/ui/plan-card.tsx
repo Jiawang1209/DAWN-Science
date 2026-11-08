@@ -192,11 +192,13 @@ function 对照({
   const 计划 = 方案产物(item.markdown)
   if (计划.length === 0) return <p className="hint plan-compare-sum">{t("方案的「产物」一节里没有写路径，没什么可对照的")}</p>
   const r = 方案对照(计划, artifacts.artifacts, item.approvedAt ?? 0)
+  const accepted=new Set(artifacts.taskArtifacts?.filter(a=>a.acceptance==='accepted'&&a.target.kind==='task'&&a.target.teamId===item.executionTeamId).map(a=>a.path)??[])
+  const 已验收=计划.filter(path=>accepted.has(path)).length
   const 已生成 = r.计划.filter((x) => x.生成了.length > 0).length
   return (
     <>
       <p className="plan-compare-sum">
-        {item.executionTeamId?tf("产物清单：计划 {0} 项 · 已登记 {1} · 计划外 {2}", 计划.length, 已生成, r.计划外.length):tf("对照：计划的产物 {0} 项 · 已生成 {1} · 计划外 {2}", 计划.length, 已生成, r.计划外.length)}
+        {item.executionTeamId?tf("产物清单：计划 {0} 项 · 任务验收 {1} · 主会话登记 {2} · 计划外 {3}", 计划.length, 已验收, 已生成, r.计划外.length):tf("对照：计划的产物 {0} 项 · 已生成 {1} · 计划外 {2}", 计划.length, 已生成, r.计划外.length)}
       </p>
       {item.executionTeamId?<p className="hint">{t("未登记不代表未生成；请在任务产物中查看验收版本。")}</p>:null}
       <Button variant="ghost" size="xs" aria-expanded={开} onClick={() => 设开(!开)}>
@@ -207,7 +209,7 @@ function 对照({
           {r.计划.map((x) => (
             <li key={x.路径} data-done={x.生成了.length > 0 ? "true" : "false"}>
               <code>{x.路径}</code>
-              <span className="hint"> {item.executionTeamId?(x.生成了.length > 0 ? t("（已登记）") : t("（未登记）")):(x.生成了.length > 0 ? t("（已生成）") : t("（还没有）"))}</span>
+              <span className="hint"> {item.executionTeamId?(accepted.has(x.路径)?t("（任务验收）"):x.生成了.length > 0 ? t("（已登记）") : t("（未登记）")):(x.生成了.length > 0 ? t("（已生成）") : t("（还没有）"))}</span>
             </li>
           ))}
           {r.计划外.map((p) => (

@@ -13,11 +13,8 @@ export function runStatus(run:Run,live:boolean){
  if(run.state==='completed')return t("执行完成")
  return t("尚未执行")
 }
-/** A retained previous result is not a receipt for queued, active or interrupted work. */
-export function hasCurrentSettlement(run:Run){return(run.state==='completed'||run.state==='failed')&&!['queued','running','stopping'].includes(run.phase)}
-/** Acceptance needs current epoch proof; failed receipts remain inspectable diagnostics. */
-export function hasCurrentAcceptance(run:Run){return hasCurrentSettlement(run)&&run.state==='completed'&&run.epoch>0&&run.phase!=='unknown'&&run.resultEpoch!==undefined&&run.resultEpoch===run.epoch&&run.receipt==='accepted'&&(!run.taskReceipt||run.taskReceipt.state==='accepted')}
-export function collaborationTaskKey(teamId:string,taskId:string){return `task:${JSON.stringify([teamId,taskId])}`}
+export {hasCurrentSettlement,hasCurrentAcceptance,collaborationTaskKey} from '../protocol/collaboration-settlement.js'
+import {hasCurrentSettlement,hasCurrentAcceptance} from '../protocol/collaboration-settlement.js'
 export function acceptance(run:Run){if(!hasCurrentSettlement(run))return t("暂无宿主验收回执");return run.receipt==='accepted'?(hasCurrentAcceptance(run)?t("宿主验收通过"):t("暂无宿主验收回执")):run.receipt==='blocked'?t("宿主验收阻塞"):run.receipt==='invalid'?t("宿主验收未通过"):t("暂无宿主验收回执")}
 export function collaborationCounts(snapshot:RunOverview){
  return{total:snapshot.runs.length,accepted:snapshot.source==='live'?snapshot.runs.filter(hasCurrentAcceptance).length:0,active:snapshot.source==='live'?snapshot.runs.filter(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping').length:0}

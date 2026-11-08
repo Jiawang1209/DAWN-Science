@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/accepted-artifacts.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/accepted-artifacts.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/accepted-artifacts.test.ts [ tests/orchestration/accepted-artifacts.test.ts ]
+Error: Cannot find module '../../src/orchestration/accepted-artifacts.js' imported from /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/tests/orchestration/accepted-artifacts.test.ts
+ ❯ tests/orchestration/accepted-artifacts.test.ts:6:1
+      4| import {join} from 'node:path'
+      5| import {createHash} from 'node:crypto'
+      6| import {projectAcceptedArtifacts,checkAcceptedArtifact} from '../../sr…
+       | ^
+      7| import type {RunOverview} from '../../src/protocol/run-overview.js'
+      8| import {TaskContractSchema} from '../../src/protocol/task-contract.js'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:15:06
+   Duration  110ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

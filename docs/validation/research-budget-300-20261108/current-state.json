@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-11-08T12:03:40.955950+00:00",
+  "workStatus": "complete",
+  "requestCap": 300,
+  "actualForwarded": 30,
+  "single": {
+    "requests": 12,
+    "cap": 150,
+    "accepted": true
+  },
+  "multi": {
+    "requests": 18,
+    "cap": 150,
+    "accepted": true,
+    "work": 14,
+    "workCap": 110,
+    "planningIncluded": 4,
+    "review": 4,
+    "reviewCap": 40
+  },
+  "inFlight": 0,
+  "hostExitCode": 0,
+  "pairedQualified": 1,
+  "modelTrialRetries": 0,
+  "sourceDrift": [],
+  "oldEvidenceDrift": [],
+  "typecheckExit": 0,
+  "buildExit": 0,
+  "evaluationTestsPassed": 136,
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "released": false,
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN"
+}

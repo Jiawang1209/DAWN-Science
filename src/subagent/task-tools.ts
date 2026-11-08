@@ -46,7 +46,11 @@ export interface TaskTool {name:string;label:string;description:string;parameter
 export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(name:string,params:Record<string,unknown>,signal?:AbortSignal)=>Promise<string|undefined>){
  const records:RouteToolEvidence[]=[]
  const submission=settings.contract?new TaskSubmission(settings.contract,cwd,()=>records,settings.versions):undefined
- const labeled=<T extends {content:{type:string;text?:string}[]}>(result:T,record:RouteToolEvidence):T=>submission?appendTaskEvidence(result,record):result
+ const labeled=<T extends {content:{type:string;text?:string}[]}>(result:T,record:RouteToolEvidence):T=>{
+  if(!submission)return result
+  const labeled=appendTaskEvidence(result,record),hint=submission.deliveryHint(record)
+  return hint?{...labeled,content:[...labeled.content,{type:'text',text:hint}]}:labeled
+ }
  const shell=createLocalBashOperations()
  const definitions=[createReadToolDefinition(cwd),createWriteToolDefinition(cwd),createEditToolDefinition(cwd),createBashToolDefinition(cwd,{exposeSessionEnvironment:false}),createLsToolDefinition(cwd),不自己下载(createGrepToolDefinition(cwd),'rg'),不自己下载(createFindToolDefinition(cwd),'fd')] as TaskTool[]
  const wrap=(def:TaskTool,observe=true):TaskTool=>({...def,async execute(id:string,params:Record<string,unknown>,signal?:AbortSignal,onUpdate?:unknown,ctx?:unknown){
@@ -78,6 +82,6 @@ export function createTaskTools(cwd:string,settings:TaskSettings,authorize?:(nam
   }finally{release()}
  }})
  const tools:TaskTool[]=definitions.filter(t=>settings.scope.tools.includes('*')||settings.scope.tools.includes(t.name)).map(def=>wrap(def))
- if(submission)tools.push(submission.tool() as TaskTool)
+ if(submission)tools.push(submission.tool() as TaskTool,submission.checkpointTool() as TaskTool)
  return{tools,submission,evidence:()=>submission?.sealedEvidence()??structuredClone(records),guardExtras:(extra:TaskTool[])=>extra.map(def=>wrap(def,false))}
 }

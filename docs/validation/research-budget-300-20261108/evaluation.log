@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-budget-300.test.ts (6 tests | 1 failed) 5911ms
+   × freezes and executes both 150-request arms through the existing runner and real per-arm timeout 5606ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-budget-300.test.ts > freezes and executes both 150-request arms through the existing runner and real per-arm timeout
+AssertionError: expected [ [ [Function abort], 1800000 ], …(4) ] to have a length of 2 but got 5
+
+- Expected
++ Received
+
+- 2
++ 5
+
+ ❯ tests/evaluation/research-budget-300.test.ts:66:54
+     64|   const manifest=JSON.parse(readFileSync(join(out,'research-manifest.j…
+     65|   expect(manifest.requestAllocation).toMatchObject({totalLimit:300,per…
+     66|   expect(timer.mock.calls.filter(c=>c[1]===1800000)).toHaveLength(2)
+       |                                                      ^
+     67|   expect(report.rows.find(r=>r.mode==='multi')!.stageRequestBudgets).t…
+     68|   expect(gate.stats().forwarded).toBeLessThan(300)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 14 passed (15)
+      Tests  1 failed | 135 passed (136)
+   Start at  19:49:53
+   Duration  45.97s (transform 2.83s, setup 0ms, import 6.85s, tests 50.93s, environment 1ms)
+

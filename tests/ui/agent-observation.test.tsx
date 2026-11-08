@@ -157,3 +157,13 @@ it('does not call a detached direct-run epoch current after the snapshot advance
  const p=projectAgentObservation(snapshot(advanced),old)
  expect(p.context.current).toBe(false);expect(p.context.percent).toBeUndefined()
 })
+it('uses a compact truthful summary while preserving the full observation inspector',()=>{
+ const current={...run,usageTotals:{...run.usageTotals!,input:12,output:8,partial:[] as ('input'|'output'|'cacheRead')[]}}
+ const view=render(<AgentObservation snapshot={snapshot(current)} run={current} compact/>)
+ expect(view.container.querySelector('.agent-observation-compact')).not.toBeNull()
+ expect(view.container.querySelectorAll('.agent-observation-row')).toHaveLength(0)
+ expect(screen.getByText(/累计 20 tokens/)).toBeTruthy()
+ expect(screen.queryByText('0 tokens')).toBeNull()
+ view.rerender(<AgentObservation snapshot={snapshot(current)} run={current} details/>)
+ expect(screen.getByText('查看观测来源与覆盖')).toBeTruthy()
+})

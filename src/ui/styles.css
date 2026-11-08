@@ -9485,7 +9485,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .collaboration-mark { color: var(--dawn-accent); }
 .collaboration-summary-count { margin-left: auto; color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 
-.collaboration-expanded { width: calc(100vw - var(--dawn-space-8)); height: calc(100vh - var(--dawn-space-8)); max-width: none; max-height: none; box-sizing: border-box; margin: auto; padding: var(--dawn-space-4); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-panel); color: var(--dawn-text-1); box-shadow: var(--dawn-shadow-float); overflow: auto; }
+.collaboration-expanded { width: calc(100vw - var(--dawn-space-8)); height: calc(100vh - var(--dawn-space-8)); max-width: none; max-height: none; box-sizing: border-box; margin: auto; padding: 0 var(--dawn-space-4) var(--dawn-space-4); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-panel); color: var(--dawn-text-1); box-shadow: var(--dawn-shadow-float); overflow: auto; }
 .collaboration-expanded::backdrop { background: var(--dawn-surface-overlay); }
 .collaboration-panel[data-expanded="true"] { min-height: 100%; position: relative; }
 .collaboration-panel[data-expanded="true"] > .collaboration-heading { position: sticky; top: 0; z-index: var(--z-sibling-lift); background: var(--dawn-surface-panel); padding-block: var(--dawn-space-2); }
@@ -9502,8 +9502,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .collaboration-network > svg { position: absolute; inset: 0; pointer-events: none; }
 .collaboration-network path { stroke: var(--dawn-accent); stroke-width: 1.25; fill: none; opacity: 0.65; }
 .collaboration-network path[data-running="true"] { stroke-dasharray: 5 4; }
-.collaboration-root-node { position: absolute; width: 220px; min-height: 122px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--dawn-space-2); border: var(--dawn-hairline) solid var(--dawn-stroke-1); background: var(--dawn-surface-elevated); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-3); }
-.collaboration-network-node { position: absolute; width: 210px; min-height: 226px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: var(--dawn-space-2); text-align: start; background: var(--dawn-surface-panel); }
+.collaboration-root-node { position: absolute; width: 220px; height: 90px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--dawn-space-2); border: var(--dawn-hairline) solid var(--dawn-stroke-1); background: var(--dawn-surface-elevated); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-3); }
+.collaboration-network-node { position: absolute; width: 196px; height: 154px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: var(--dawn-space-2); text-align: start; background: var(--dawn-surface-panel); }
 .collaboration-network-node small, .collaboration-member-card small { color: var(--dawn-text-2); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
 .collaboration-node-name { display: flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .collaboration-node-name strong { overflow-wrap: anywhere; min-width: 0; font-weight: var(--dawn-weight-semibold); }
@@ -9712,3 +9712,25 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 .orchestration-advisor h4, .orchestration-advisor p, .task-arrangement-result p { margin: 0; }
 .auto-arrangement-form { display: grid; gap: var(--dawn-space-3); }
+
+/* Compact execution cards retain full facts in the existing inspection panel. */
+.collaboration-member-card[data-compact="true"] { gap: var(--dawn-space-1); padding: var(--dawn-space-3); }
+.collaboration-member-card .collaboration-avatar { width: 26px; height: 26px; min-width: 26px; border-radius: var(--dawn-radius-sm); }
+.collaboration-member-identity, .collaboration-member-task { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.collaboration-member-card .collaboration-node-name strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.collaboration-member-status { display: flex; gap: var(--dawn-space-2); align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.collaboration-accepted { color: var(--dawn-accent); }
+.agent-observation-compact { display: block; font-size: var(--dawn-fs-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collaboration-network-node { gap: var(--dawn-space-1); justify-content: flex-start; overflow: hidden; }
+.collaboration-network-node > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.collaboration-network-node > small:last-child { margin-top: auto; }
+.collaboration-member-card .collaboration-card-foot { margin-top: auto; }
+.task-artifact-versions { border: var(--dawn-hairline) solid var(--dawn-stroke-2); border-radius: var(--dawn-radius-md); padding: var(--dawn-space-3); margin-block: var(--dawn-space-2); }
+.task-artifact-version { display: grid; gap: var(--dawn-space-1); border-top: var(--dawn-hairline) solid var(--dawn-stroke-2); padding-block: var(--dawn-space-2); min-width: 0; }
+.task-artifact-version > div:first-child { display: flex; justify-content: space-between; gap: var(--dawn-space-2); flex-wrap: wrap; }
+.task-artifact-version code, .task-artifact-version small { font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.task-artifact-check { display: flex; justify-content: space-between; align-items: center; gap: var(--dawn-space-2); flex-wrap: wrap; }
+
+.task-artifact-fingerprint { display: flex; justify-content: space-between; gap: var(--dawn-space-2); flex-wrap: wrap; color: var(--dawn-text-2); }
+.task-artifact-version details { font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
+.task-artifact-version details > code, .task-artifact-version details > small { display: block; margin-top: var(--dawn-space-1); }

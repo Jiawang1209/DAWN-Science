@@ -1,0 +1,33 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/approved-plan.test.ts -t task-specific
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/team/approved-plan.test.ts (10 tests | 1 failed | 9 skipped) 55ms
+   × can freeze task-specific declared model routes even when tasks reuse one executor definition 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/approved-plan.test.ts > can freeze task-specific declared model routes even when tasks reuse one executor definition
+AssertionError: expected [ 'base', 'base' ] to deeply equal [ 'base', 'reserved-review' ]
+
+- Expected
++ Received
+
+  [
+    "base",
+-   "reserved-review",
++   "base",
+  ]
+
+ ❯ tests/team/approved-plan.test.ts:84:50
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  15:28:08
+   Duration  832ms (transform 141ms, setup 0ms, import 695ms, tests 55ms, environment 0ms)
+

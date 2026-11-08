@@ -1,0 +1,111 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/request-gate.test.ts tests/evaluation/research-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (12 tests | 10 failed) 642ms
+   × compares the approved-plan adapter with the existing single executor under the same task and judge 71ms
+   × pins both arms to no automatic retries and sends each failed child scope to a localhost 500 provider once 63ms
+   × invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm 63ms
+   × runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline 60ms
+   × records cancellation during a live single child as cancelled, not a failed scientific result 60ms
+   × retains settled check-stage usage when the analysis stage is cancelled and drained 60ms
+   × runs a full paired task with staged credentials and leaves a hard review reserve under the same arm cap 60ms
+   × rejects a staged model declaration with a different effective setting before any inference 60ms
+   × samples final request counters after asynchronous lease cleanup, including cancelled arms 58ms
+   × invalidates a comparison if its declared model config changes during a trial and never starts the next arm 58ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > compares the approved-plan adapter with the existing single executor under the same task and judge
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:29:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > pins both arms to no automatic retries and sends each failed child scope to a localhost 500 provider once
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:42:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > invalidates settings drift and stops later arms while retaining the scientific acceptance of the completed arm
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:77:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:90:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > records cancellation during a live single child as cancelled, not a failed scientific result
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:118:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > retains settled check-stage usage when the analysis stage is cancelled and drained
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:133:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs a full paired task with staged credentials and leaves a hard review reserve under the same arm cap
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:149:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > rejects a staged model declaration with a different effective setting before any inference
+AssertionError: expected [Function] to throw error matching /阶段.*(?:模型|配置)/ but got 'ENOENT: no such file or directory, op…'
+
+- Expected:
+/阶段.*(?:模型|配置)/
+
++ Received:
+"ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'"
+
+ ❯ tests/evaluation/research-runner.test.ts:170:488
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > samples final request counters after asynchronous lease cleanup, including cancelled arms
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:179:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > invalidates a comparison if its declared model config changes during a trial and never starts the next arm
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:40:136
+
+ ❯ tests/evaluation/research-runner.test.ts:194:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  10 failed | 17 passed (27)
+   Start at  15:12:43
+   Duration  1.57s (transform 363ms, setup 0ms, import 894ms, tests 1.04s, environment 0ms)
+

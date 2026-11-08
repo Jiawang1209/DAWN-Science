@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/sync-guard.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |ui| tests/ui/sync-guard.test.ts (9 tests | 2 failed) 9ms
+   × keeps the latest artifact refresh when an older same-session request arrives late (failure=false) 3ms
+   × keeps the latest artifact refresh when an older same-session request arrives late (failure=true) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/sync-guard.test.ts > keeps the latest artifact refresh when an older same-session request arrives late (failure=false)
+AssertionError: expected [ 'old' ] to deeply equal [ 'current' ]
+
+- Expected
++ Received
+
+  [
+-   "current",
++   "old",
+  ]
+
+ ❯ tests/ui/sync-guard.test.ts:121:36
+    119|  await loadArtifacts({get:async()=>({artifacts:[],unknown:['current']}…
+    120|  release();await old
+    121|  expect($artifacts.get()?.unknown).toEqual(['current'])
+       |                                    ^
+    122| })
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/sync-guard.test.ts > keeps the latest artifact refresh when an older same-session request arrives late (failure=true)
+AssertionError: expected [] to deeply equal [ 'current' ]
+
+- Expected
++ Received
+
+- [
+-   "current",
+- ]
++ []
+
+ ❯ tests/ui/sync-guard.test.ts:121:36
+    119|  await loadArtifacts({get:async()=>({artifacts:[],unknown:['current']}…
+    120|  release();await old
+    121|  expect($artifacts.get()?.unknown).toEqual(['current'])
+       |                                    ^
+    122| })
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  15:41:53
+   Duration  978ms (transform 333ms, setup 515ms, import 5ms, tests 9ms, environment 363ms)
+

@@ -1,0 +1,7 @@
+{
+  "source": "latest persisted model_change; session DB immutable read-only",
+  "timestamp": "2026-11-07T06:24:27.770Z",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "walPresentAtVerification": false
+}

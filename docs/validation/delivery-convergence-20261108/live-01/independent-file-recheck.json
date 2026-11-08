@@ -1,0 +1,45 @@
+{
+  "source": "Python stdlib CSV + math.fsum; no product judge import, no new model requests",
+  "records": [
+    {
+      "mode": "multi",
+      "inputRows": 48,
+      "excludedNA": 7,
+      "expected": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "actual": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "arithmeticMatches": true,
+      "formalTerminal": "failed",
+      "independentReviewStarted": false,
+      "acceptedOutputVersionsMatch": null,
+      "countsAsQualifiedDelivery": false
+    },
+    {
+      "mode": "single",
+      "inputRows": 48,
+      "excludedNA": 7,
+      "expected": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "actual": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "arithmeticMatches": true,
+      "formalTerminal": "accepted",
+      "independentReviewStarted": null,
+      "acceptedOutputVersionsMatch": true,
+      "countsAsQualifiedDelivery": true
+    }
+  ]
+}

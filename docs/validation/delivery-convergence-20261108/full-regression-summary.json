@@ -1,0 +1,10 @@
+{
+  "filesPassed": 703,
+  "testsPassed": 7002,
+  "testsSkipped": 11,
+  "failures": 0,
+  "durationSeconds": 174.68,
+  "includes": "node, ui, serial kernel integration",
+  "candidateSourceChanged": [],
+  "log": "final-vitest.log"
+}

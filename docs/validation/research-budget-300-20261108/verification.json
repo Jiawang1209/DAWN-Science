@@ -1,0 +1,23 @@
+{
+  "typecheckExit": 0,
+  "buildExit": 0,
+  "evaluationFilesPassed": 15,
+  "evaluationTestsPassed": 136,
+  "evaluationFailures": 0,
+  "durationSeconds": 46.03,
+  "budgetSpecificTestsPassed": 6,
+  "oldDefaultLimit": 30,
+  "explicitNewLimit": 300,
+  "singleLimit": 150,
+  "multiLimit": 150,
+  "multiStages": {
+    "workIncludingPlanning": 110,
+    "independentReview": 40
+  },
+  "perArmTimeoutMs": 1800000,
+  "singleRequestTimeoutMs": 90000,
+  "productionOrchestrationUiNewChange": false,
+  "selfReview": "single-line; no independent reviewer",
+  "historicalExit": "OPEN",
+  "ptyCleanup": "OPEN"
+}

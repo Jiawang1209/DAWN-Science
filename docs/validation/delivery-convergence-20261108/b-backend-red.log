@@ -1,0 +1,45 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/backend.test.ts -t exposes accepted child versions
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/workbench/backend.test.ts (49 tests | 1 failed | 48 skipped) 236ms
+     × listArtifacts exposes accepted child versions without forging a main run and checks their current bytes 235ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/backend.test.ts > 真实后端 · 经服务端端到端 > listArtifacts exposes accepted child versions without forging a main run and checks their current bytes
+AssertionError: expected undefined to match object [ { path: 'child.csv', …(2) } ]
+
+- Expected:
+[
+  {
+    "ownerSessionId": "d22f3ad0-b181-4aca-888d-106223d29fa6",
+    "path": "child.csv",
+    "version": {
+      "bytes": 3,
+      "path": "child.csv",
+      "sha256": "fdf47ec21a8fde0c236a774a7ea50f3cce1da97fde32f1beb535a4dbe00b9974",
+    },
+  },
+]
+
++ Received:
+undefined
+
+ ❯ tests/workbench/backend.test.ts:231:67
+    229|     vi.spyOn(ctx.sessions,'runtimeOf').mockReturnValue({runOverview:()…
+    230|     const list=await ctx.backend.listArtifacts({sessionId:sid})
+    231|     expect(list.artifacts).toEqual([]);expect(list.taskArtifacts).toMa…
+       |                                                                   ^
+    232|     expect(await ctx.backend.checkTaskArtifact({sessionId:sid,artifact…
+    233|     writeFileSync(join(ws,'child.csv'),'x\n2')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 48 skipped (49)
+   Start at  15:17:04
+   Duration  2.05s (transform 783ms, setup 0ms, import 1.73s, tests 236ms, environment 0ms)
+

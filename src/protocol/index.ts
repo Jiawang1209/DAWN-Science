@@ -141,3 +141,6 @@ export {AgentContextSampleSchema,BoundAgentContextSampleSchema,AgentContextObser
 export type {AgentContextSample,BoundAgentContextSample,AgentContextObservation,ContextRoute} from './agent-context-observation.js'
 export {AgentUsageTotalsSchema} from './agent-usage-totals.js'
 export type {AgentUsageTotals} from './agent-usage-totals.js'
+
+export {TaskArtifactSchema,TaskArtifactCheckSchema} from './task-artifacts.js'
+export type {TaskArtifact,TaskArtifactCheck} from './task-artifacts.js'

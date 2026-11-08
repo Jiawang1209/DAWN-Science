@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-cli-allocation.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-cli-allocation.test.ts (5 tests | 2 failed) 6ms
+   × rejects staged total 2 before building or spawning a credential host 4ms
+   × rejects staged total 3 before building or spawning a credential host 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > rejects staged total 2 before building or spawning a credential host
+ FAIL  |node| tests/evaluation/research-cli-allocation.test.ts > rejects staged total 3 before building or spawning a credential host
+AssertionError: expected [Function] to throw error matching /科研分组额度/ but got 'HOST_BUILD_REACHED'
+
+- Expected:
+/科研分组额度/
+
++ Received:
+"HOST_BUILD_REACHED"
+
+ ❯ tests/evaluation/research-cli-allocation.test.ts:7:94
+      5| beforeEach(()=>vi.clearAllMocks())
+      6| it.each(['2','3'])('rejects staged total %s before building or spawnin…
+      7|  await expect(runCurrentApiResearch(['out','unused-profile','p','m','a…
+       |                                                                                              ^
+      8|  expect(build).not.toHaveBeenCalled()
+      9| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  20:37:59
+   Duration  134ms (transform 23ms, setup 0ms, import 35ms, tests 6ms, environment 0ms)
+

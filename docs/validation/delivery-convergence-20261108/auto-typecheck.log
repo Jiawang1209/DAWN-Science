@@ -1,0 +1,5 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+e2e/approved-plan-execution.spec.ts(37,21): error TS2532: Object is possibly 'undefined'.
+scripts/research-auto-arrangement.ts(16,154): error TS2353: Object literal may only specify known properties, and 'enabled' does not exist in type '{ keepRecentTokens?: number; reserveTokens?: number; }'.
+scripts/research-auto-arrangement.ts(28,63): error TS2739: Type '方案' is missing the following properties from type '{ type: "plan"; id: string; planId: string; version: number; title: string; markdown: string; status: "approved" | "discarded" | "proposed" | "superseded"; savedPath?: string | undefined; approvedAt?: number | undefined; edited?: true | undefined; fileChanged?: true | undefined; executionTeamId?: string | undefined; }': type, id

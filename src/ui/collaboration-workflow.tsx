@@ -10,7 +10,7 @@ import type {RunOverview} from '../protocol/run-overview.js'
 import {分列布局,节点宽,节点高,任务的态} from './team-dag.js'
 import {Button} from './primitives.js'
 import {t,tf} from './i18n/index.js'
-import {runStatus,collaborationTaskKey} from './collaboration-model.js'
+import {runStatus,collaborationTaskKey,hasCurrentAcceptance} from './collaboration-model.js'
 export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapshot:RunOverview;team?:TeamSnapshot|undefined;selected?:string|undefined;onSelect:(key:string,trigger:HTMLButtonElement)=>void}){
  const[query,setQuery]=useState(''),[filter,setFilter]=useState('all')
  const active=(run:RunOverview['runs'][number])=>snapshot.source==='live'&&(run.phase==='running'||run.phase==='queued'||run.phase==='stopping')
@@ -18,7 +18,7 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
  const visible=snapshot.runs.filter(run=>[run.label,presentations.get(run.id)?.title,presentations.get(run.id)?.identity,presentations.get(run.id)?.task].filter(Boolean).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase())&&(filter==='all'||(filter==='active'?active(run):run.phase!=='unknown'&&snapshot.source==='live'&&!active(run)&&['completed','failed','cancelled','interrupted'].includes(run.state))))
  const owned=team?.captainSessionId===snapshot.ownerSessionId?team:undefined
  const layout=分列布局(owned?.tasks??[])
- const scale=2
+ const scale=1.25
  return <section className="collaboration-workflow" aria-label={t("流程工作台")}>
   <div className="collaboration-workflow-columns">
    <section className="collaboration-network-panel"><header><h4>{t("Agent 网络")}</h4><span className="hint">{t("宿主与直接委派关系 · 点击节点联动")}</span></header>
@@ -35,9 +35,13 @@ export function CollaborationWorkflow({snapshot,team,selected,onSelect}:{snapsho
      </div>
     </div>
     <div className="collaboration-member-grid">
-     {visible.map(run=>{const display=presentations.get(run.id)!;return <Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
+     {visible.map(run=>{const display=presentations.get(run.id)!;return <Button key={run.id} variant="outline" size="card-compact" className="collaboration-member-card" data-member-card={run.id} data-compact="true" data-hue={色号(run.id)} aria-label={run.label} aria-pressed={selected===`run:${run.id}`} onClick={event=>onSelect(`run:${run.id}`,event.currentTarget)}>
       <span className="collaboration-node-name"><span className="collaboration-avatar" aria-hidden="true">{[...run.label][0]?.toUpperCase()??'?'}</span><strong data-authored="1">{display.title}</strong><span className="collaboration-status-dot" data-phase={snapshot.source==='live'?run.phase:'unknown'}/></span>
-      <small data-authored="1">{display.identity||display.task}</small><small>{runStatus(run,snapshot.source==='live')}</small><small>{run.kind==='bot'?'Bot':run.kind==='team'?t("团队成员"):t("子任务")}</small><AgentObservation snapshot={snapshot} run={run}/><span className="collaboration-card-foot"><small>{settledDuration(run)}</small><三角图标/></span>
+      <small className="collaboration-member-identity" title={display.identity||run.label} data-authored="1">{display.identity||run.label}</small>
+      {display.task?<small className="collaboration-member-task" title={display.task} data-authored="1">{display.task}</small>:null}
+      <span className="collaboration-member-status"><small>{runStatus(run,snapshot.source==='live')}</small>{snapshot.source==='live'&&hasCurrentAcceptance(run)?<small className="collaboration-accepted">{t("宿主验收通过")}</small>:null}</span>
+      {run.reason?<small className="collaboration-member-task" title={run.reason} data-authored="1">{run.reason}</small>:null}
+      <AgentObservation snapshot={snapshot} run={run} compact/><span className="collaboration-card-foot"><small>{settledDuration(run)}</small><三角图标/></span>
      </Button>})}
     </div>
     {!visible.length?<p className="hint">{t("暂无匹配成员")}</p>:null}

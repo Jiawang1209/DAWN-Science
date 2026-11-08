@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/orchestration/task-checkpoint.test.ts tests/orchestration/task-submission.test.ts tests/subagent/task-tools.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/orchestration/task-checkpoint.test.ts (6 tests | 1 failed) 47ms
+   × reads delivery gaps without submitting, inventing evidence or checking arbitrary paths 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/orchestration/task-checkpoint.test.ts > reads delivery gaps without submitting, inventing evidence or checking arbitrary paths
+ZodError: [
+  {
+    "code": "custom",
+    "message": "Required execution needs workspace-exec capability",
+    "path": []
+  }
+]
+ ❯ tests/orchestration/task-checkpoint.test.ts:14:91
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  15:11:03
+   Duration  1.12s (transform 584ms, setup 0ms, import 2.31s, tests 401ms, environment 0ms)
+

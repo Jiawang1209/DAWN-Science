@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-11-08T11:16:52.292665+00:00",
+  "goalStatus": "blocked",
+  "originalHelperMissing": true,
+  "originalForwarded": 0,
+  "resumeAuthorization": "user set goal active",
+  "helperPid": 38789,
+  "execSessionId": 23405,
+  "requestLimit": 30,
+  "output": "live-01",
+  "log": "live-resume-01.log",
+  "modelRetry": false,
+  "resumedBlockedAuditTurns": 3,
+  "modelRequestsForwarded": 0
+}

@@ -220,6 +220,34 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(u.entries.join("\n")).toContain("偏好设计讨论")
   })
 
+  it('listArtifacts exposes accepted child versions without forging a main run and checks their current bytes',async()=>{
+    const ws=newRepo(),sid=await 开一段(ws)
+    const {createHash}=await import('node:crypto')
+    writeFileSync(join(ws,'child.csv'),'x\n1')
+    const version={path:'child.csv',sha256:createHash('sha256').update('x\n1').digest('hex'),bytes:3}
+    const snapshot={ownerSessionId:sid,source:'live',runs:[{id:'child',kind:'subagent',label:'analysis',address:['call','0'],state:'completed',phase:'drained',epoch:1,resultEpoch:1,updatedAt:1,contract:true,inputVersions:0,outputVersions:1,receipt:'accepted',taskReceipt:{version:1,state:'accepted',summary:'ok',deliverables:[],versions:{version:1,inputs:[],outputs:[version]}}}]}
+    vi.spyOn(ctx.sessions,'runtimeOf').mockReturnValue({runOverview:()=>snapshot} as never)
+    const {OPERATIONS}=await import('../../src/protocol/operations.js')
+    const list=OPERATIONS.listArtifacts.response.parse(await ctx.backend.listArtifacts({sessionId:sid}))
+    expect(list.artifacts).toEqual([]);expect(list.taskArtifacts).toMatchObject([{path:'child.csv',ownerSessionId:sid,version}])
+    expect(await ctx.backend.checkTaskArtifact({sessionId:sid,artifact:list.taskArtifacts![0]!})).toMatchObject({state:'matches'})
+    writeFileSync(join(ws,'child.csv'),'x\n2')
+    expect(await ctx.backend.checkTaskArtifact({sessionId:sid,artifact:list.taskArtifacts![0]!})).toMatchObject({state:'changed'})
+    snapshot.runs[0]!.resultEpoch=0
+    expect(OPERATIONS.listArtifacts.response.parse(await ctx.backend.listArtifacts({sessionId:sid})).taskArtifacts??[]).toEqual([])
+    expect(await ctx.backend.checkTaskArtifact({sessionId:sid,artifact:list.taskArtifacts![0]!})).toMatchObject({state:'unavailable'})
+  })
+
+  it('keeps legacy main artifacts visible when the task execution snapshot cannot be read',async()=>{
+    const ws=newRepo(),sid=await 开一段(ws),pid=ctx.sessionStore.get(sid)!.projectId!
+    writeFileSync(join(ws,'main.csv'),'x')
+    ctx.runStore.insert({runId:'main-artifact',projectId:pid,sessionId:sid,origin:'agent',requestType:'tool_call:write',status:'completed',startedAt:'2026-08-26T10:00:00.000Z',finishedAt:'2026-08-26T10:00:01.000Z',hasError:false,filesCreated:['main.csv']})
+    vi.spyOn(ctx.sessions,'runtimeOf').mockReturnValue({runOverview:()=>{throw new Error('fixture corrupt snapshot')}} as never)
+    const {OPERATIONS}=await import('../../src/protocol/operations.js')
+    const list=OPERATIONS.listArtifacts.response.parse(await ctx.backend.listArtifacts({sessionId:sid}))
+    expect(list.artifacts.map(file=>file.path)).toEqual(['main.csv']);expect(list.taskArtifactsIssue).toBeTruthy()
+  })
+
   it("listArtifacts：从账本推导，exists 查实，unknown 数得出（2026-08-26 产物）", async () => {
     const ws = newRepo()
     const sid = await 开一段(ws)

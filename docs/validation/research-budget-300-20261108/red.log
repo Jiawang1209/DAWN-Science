@@ -1,0 +1,65 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-budget-300.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science
+
+ ❯ |node| tests/evaluation/research-budget-300.test.ts (4 tests | 4 failed) 9ms
+   × caps 301 parallel arrivals at exactly 300 forwarded requests and drains all of them 3ms
+   × keeps work/planning110 and review40 isolated inside the 150-request multi arm 0ms
+   × requires an explicit 300 limit in the frozen manifest and pins a 30-minute per-arm timeout 1ms
+   × preserves default30 and15-arm semantics and rejects noninteger or excessive overrides 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-budget-300.test.ts > caps 301 parallel arrivals at exactly 300 forwarded requests and drains all of them
+Error: 评测请求上限须为 1..30
+ ❯ startEvaluationGate scripts/evaluation-request-gate.ts:12:74
+     10| }
+     11| export async function startEvaluationGate(opts:{limit:number;timeoutMs…
+     12|  if(!Number.isSafeInteger(opts.limit)||opts.limit<1||opts.limit>30)thr…
+       |                                                                          ^
+     13|  const timeoutMs=opts.timeoutMs??90000
+     14|  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>90000)thr…
+ ❯ tests/evaluation/research-budget-300.test.ts:9:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/evaluation/research-budget-300.test.ts > keeps work/planning110 and review40 isolated inside the 150-request multi arm
+Error: 评测请求上限须为 1..30
+ ❯ startEvaluationGate scripts/evaluation-request-gate.ts:12:74
+     10| }
+     11| export async function startEvaluationGate(opts:{limit:number;timeoutMs…
+     12|  if(!Number.isSafeInteger(opts.limit)||opts.limit<1||opts.limit>30)thr…
+       |                                                                          ^
+     13|  const timeoutMs=opts.timeoutMs??90000
+     14|  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>90000)thr…
+ ❯ tests/evaluation/research-budget-300.test.ts:17:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/evaluation/research-budget-300.test.ts > requires an explicit 300 limit in the frozen manifest and pins a 30-minute per-arm timeout
+Error: Invalid research quota allocation
+ ❯ researchManifest src/evaluation/research-manifest.ts:60:120
+
+ ❯ tests/evaluation/research-budget-300.test.ts:31:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/evaluation/research-budget-300.test.ts > preserves default30 and15-arm semantics and rejects noninteger or excessive overrides
+Error: Cannot find module '/src/evaluation/research-budget.js' imported from /Users/liuyue/.codex/worktrees/dawn-delivery-convergence-20261108/dawn-science/tests/evaluation/research-budget-300.test.ts
+ ❯ tests/evaluation/research-budget-300.test.ts:38:10
+     36| })
+     37| it('preserves default30 and15-arm semantics and rejects noninteger or …
+     38|  const b=await import('../../src/evaluation/research-budget.js')
+       |          ^
+     39|  expect(b.researchRequestLimit()).toBe(30);expect(b.researchRequestLim…
+     40|  for(const bad of [0,1,301,Infinity,NaN,1.5])expect(()=>b.researchRequ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  19:48:12
+   Duration  164ms (transform 38ms, setup 0ms, import 59ms, tests 9ms, environment 0ms)
+

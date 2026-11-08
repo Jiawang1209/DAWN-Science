@@ -2,8 +2,11 @@ import type {RunOverview} from '../protocol/run-overview.js'
 import {projectAgentObservation} from './agent-observation.js'
 import {t,tf} from './i18n/index.js'
 /** Shared metrics only; deliberately cannot fetch or compact any session. */
-export function AgentObservation({snapshot,run,owner,details=false}:{snapshot:RunOverview;run:RunOverview['runs'][number];owner?:string|undefined;details?:boolean}){
+export function AgentObservation({snapshot,run,owner,details=false,compact=false}:{snapshot:RunOverview;run:RunOverview['runs'][number];owner?:string|undefined;details?:boolean;compact?:boolean}){
  const {context:c,usage:u}=projectAgentObservation(snapshot,run,owner),s=c.sample
+ if(compact)return <span className="agent-observation agent-observation-compact" data-context-current={c.current} title={c.reason}>
+  <span>{c.current?tf("当前 {0}",c.value):t("上下文未知")}</span><span aria-hidden="true"> · </span><span>{u.recorded?tf("累计 {0}",u.value):t("用量未记录")}</span>
+ </span>
  return <span className="agent-observation" data-context-current={c.current}>
   <span className="agent-observation-row"><span>{c.label}</span><span className="agent-observation-number">{c.value}</span></span>
   {c.percent!==undefined?<span className="agent-context-bar" role="meter" aria-label={t("当前上下文估算占比")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={c.percent}><span style={{width:`${c.percent}%`}}/></span>:null}

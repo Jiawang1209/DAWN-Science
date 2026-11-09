@@ -1,5 +1,5 @@
 {
-  "status": "authorized",
+  "status": "closed-evaluation-complete",
   "clientDate": "2026-11-09",
   "userAnswer": "新增最多 300 次请求（推荐）",
   "maximumRequests": 300,
@@ -22,5 +22,8 @@
   "automaticRetry": false,
   "oldQuotaRollsOver": false,
   "startOnlyAfterFrozenCandidate": true,
-  "realModelRequestsSoFar": 0
+  "realModelRequestsSoFar": 126,
+  "remainingRequestsNotReused": 174,
+  "resumedClientDate": "2026-11-10",
+  "runId": "7d5b2305-ca06-4013-bf8e-1d4ee4857cad"
 }

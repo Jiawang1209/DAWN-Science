@@ -1,0 +1,131 @@
+{
+  "runId": "7d5b2305-ca06-4013-bf8e-1d4ee4857cad",
+  "mainHead": "e2d64ebd0031bc4f251e23179653ab650d221cdd",
+  "requests": 126,
+  "inFlight": 0,
+  "remainingNotReused": 174,
+  "metrics": {
+    "single": {
+      "started": 6,
+      "numericStarted": 4,
+      "numericQualified": 4,
+      "correctBlocks": 0,
+      "awaitingInfo": 0,
+      "failed": 0,
+      "cancelled": 0,
+      "falseAcceptances": 0,
+      "requests": 64,
+      "submissionAttempts": 8,
+      "hostRejected": 2,
+      "diagnosticsComplete": true,
+      "arrangementRecorded": 0,
+      "validArrangements": 0,
+      "compiledArrangements": 0,
+      "sdkRejectedKnownLowerBound": 0,
+      "diagnosticsIncompleteTrials": 0
+    },
+    "multi": {
+      "started": 6,
+      "numericStarted": 4,
+      "numericQualified": 3,
+      "correctBlocks": 0,
+      "awaitingInfo": 2,
+      "failed": 1,
+      "cancelled": 0,
+      "falseAcceptances": 0,
+      "requests": 62,
+      "submissionAttempts": 9,
+      "hostRejected": 0,
+      "diagnosticsComplete": false,
+      "arrangementRecorded": 6,
+      "validArrangements": 4,
+      "compiledArrangements": 3,
+      "sdkRejectedKnownLowerBound": 2,
+      "diagnosticsIncompleteTrials": 3
+    }
+  },
+  "pairs": [
+    {
+      "caseId": "short-known-mean",
+      "repeat": 1,
+      "qualifiedDeliveryPair": true,
+      "singleRequests": 9,
+      "multiRequests": 14,
+      "requestDelta": 5,
+      "singleMs": 34664,
+      "multiMs": 78494,
+      "elapsedDeltaMs": 43830
+    },
+    {
+      "caseId": "short-known-mean",
+      "repeat": 2,
+      "qualifiedDeliveryPair": true,
+      "singleRequests": 10,
+      "multiRequests": 19,
+      "requestDelta": 9,
+      "singleMs": 36491,
+      "multiMs": 108510,
+      "elapsedDeltaMs": 72019
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 1,
+      "qualifiedDeliveryPair": false,
+      "singleRequests": 11,
+      "multiRequests": 5,
+      "requestDelta": null,
+      "singleMs": 39638,
+      "multiMs": 26664,
+      "elapsedDeltaMs": null
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 2,
+      "qualifiedDeliveryPair": true,
+      "singleRequests": 12,
+      "multiRequests": 16,
+      "requestDelta": 4,
+      "singleMs": 45766,
+      "multiMs": 97421,
+      "elapsedDeltaMs": 51655
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "qualifiedDeliveryPair": false,
+      "singleRequests": 12,
+      "multiRequests": 4,
+      "requestDelta": null,
+      "singleMs": 62411,
+      "multiMs": 27082,
+      "elapsedDeltaMs": null
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 2,
+      "qualifiedDeliveryPair": false,
+      "singleRequests": 10,
+      "multiRequests": 4,
+      "requestDelta": null,
+      "singleMs": 51242,
+      "multiMs": 31618,
+      "elapsedDeltaMs": null
+    }
+  ],
+  "independentVerificationCompleted": true,
+  "allIndependentFileChecksPassed": false,
+  "independentFileFailures": [
+    "unknown-unit-single-goZhsZ",
+    "unknown-unit-single-udeYeQ"
+  ],
+  "candidateUnchanged": true,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "qualifiedDeliveryPairTotals": {
+    "singleRequests": 31,
+    "multiRequests": 49,
+    "singleMs": 116921,
+    "multiMs": 284425,
+    "pairs": 3
+  }
+}

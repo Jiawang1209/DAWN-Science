@@ -1,0 +1,13 @@
+{
+  "time": "2026-11-09T20:40:04.380074+00:00",
+  "mainHead": "e2d64ebd0031bc4f251e23179653ab650d221cdd",
+  "sourceMismatch": [],
+  "sourceFilesVerified": 1758,
+  "mainClean": true,
+  "childBuildUnchanged": true,
+  "hostBundleUnchanged": true,
+  "formalProfileHashesUnchanged": true,
+  "observedProcessesStillRunning": [],
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

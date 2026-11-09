@@ -1,0 +1,240 @@
+{
+  "kind": "independent Python CSV recomputation and SHA256; no model code executed",
+  "association": "one-to-one case/mode and accepted version set; identical repeats do not imply timing identity",
+  "allChecksPassed": false,
+  "checks": [
+    {
+      "directory": "short-known-mean-single-CdYPS9",
+      "caseId": "short-known-mean",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "actual": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "short-known-mean-single-NDOfSu",
+      "caseId": "short-known-mean",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "actual": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "short-known-mean-multi-Tu0EeP",
+      "caseId": "short-known-mean",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "actual": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "short-known-mean-multi-VeGBnT",
+      "caseId": "short-known-mean",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "actual": {
+        "n": 4,
+        "unit": "°C",
+        "mean": 20.0
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "carbon-missing-single-K3rs5G",
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "mean": 13.870731707317074,
+        "n": 41,
+        "unit": "mg/g"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "carbon-missing-single-rAwlgv",
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "carbon-missing-multi-Gy9SzL",
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "n": 41,
+        "unit": "mg/g",
+        "mean": 13.870731707317074
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "carbon-missing-multi-PzekvO",
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "terminal": "awaiting-info",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": null,
+      "expected": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "actual": null,
+      "verifiedVersions": 0,
+      "passed": true
+    },
+    {
+      "directory": "unknown-unit-single-goZhsZ",
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "terminal": "blocked",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": false,
+      "expected": null,
+      "actual": {
+        "status": "blocked",
+        "blockers": [
+          "unit for column 'carbon' is not provided by the raw file or the user; a unit-bearing mean cannot be delivered",
+          "unit is not inferable from values or from neighbour column 'rain_mm' (different quantity)"
+        ],
+        "requested_metric": "carbon_mean",
+        "n": 41,
+        "unit": null,
+        "value": 13.870731707317074,
+        "note": "value is a diagnostic from the approved arithmetic mean only; it is NOT a valid unit-bearing deliverable"
+      },
+      "verifiedVersions": 0,
+      "passed": false
+    },
+    {
+      "directory": "unknown-unit-single-udeYeQ",
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "terminal": "blocked",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": false,
+      "expected": null,
+      "actual": {
+        "status": "blocked",
+        "blocked_reason": "unit not provided by input file or user; guessing is forbidden",
+        "n": 41,
+        "unit": null,
+        "carbon_mean": 13.870731707317074
+      },
+      "verifiedVersions": 0,
+      "passed": false
+    },
+    {
+      "directory": "unknown-unit-multi-El0Ttn",
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "terminal": "failed",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": true,
+      "expected": null,
+      "actual": null,
+      "verifiedVersions": 0,
+      "passed": true
+    },
+    {
+      "directory": "unknown-unit-multi-nf6T4j",
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "terminal": "awaiting-info",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": true,
+      "expected": null,
+      "actual": null,
+      "verifiedVersions": 0,
+      "passed": true
+    }
+  ]
+}

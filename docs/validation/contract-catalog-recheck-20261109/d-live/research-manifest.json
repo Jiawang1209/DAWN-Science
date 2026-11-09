@@ -1,0 +1,210 @@
+{
+  "version": 2,
+  "runId": "7d5b2305-ca06-4013-bf8e-1d4ee4857cad",
+  "generatedAt": "2026-11-09T20:28:51.731Z",
+  "fingerprint": "22021bdac08722058c1811e79c08c8abc0be5db5e8581343162fc1a5006c800a",
+  "inference": "live",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "modelDeclaration": {
+    "configuredReasoning": false,
+    "configuredMaxOutputTokens": 4096,
+    "configuredContextWindow": 1000000,
+    "configuredInput": [
+      "text"
+    ],
+    "configuredApi": "openai-completions",
+    "compatibilityFingerprint": "6e1927715d038c1e28524ef434c5c96143a2b17d33da1240d7e2322b0534deb6",
+    "configuredSampling": null,
+    "unsupportedSettings": false,
+    "sampling": "not-set-by-evaluator"
+  },
+  "tasks": [
+    {
+      "caseId": "short-known-mean",
+      "inputHash": "bbd83677526400132d2a750cc4a3a53bd342b1eab54ded771327d4680016fb59",
+      "taskFingerprint": "edd6e68f44a700a4c399c67122019e0018b82204b306a02974f9dd863e0bfd69",
+      "expectedOutcome": "accepted"
+    },
+    {
+      "caseId": "carbon-missing",
+      "inputHash": "4bd947f7dd208b9205d52946124d68a0766d96385152048211126469eba87568",
+      "taskFingerprint": "5b784c29f077c154d788ff6b80027e21d767db61ff43da1abd2b8bf7b676325f",
+      "expectedOutcome": "accepted"
+    },
+    {
+      "caseId": "unknown-unit",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be",
+      "taskFingerprint": "819c51a3a67a65742eeb59371bb13682f3f33b2e42d4208b28396f9261ff0f28",
+      "expectedOutcome": "blocked"
+    }
+  ],
+  "repeats": 2,
+  "requestAllocation": {
+    "enforced": true,
+    "perArmLimit": 25,
+    "totalLimit": 300,
+    "multiStageLimits": {
+      "work": 18,
+      "review": 7
+    }
+  },
+  "sourceFingerprint": "c3820cae6a9c163ea049587ebc91c52da64d1654068503fc029badacdd1c8d6c",
+  "childBuildFingerprint": "38452e642600800da717ccb77c6ba7992fadb1d50f136e8449052d9f7d14b678",
+  "execution": {
+    "perArmTimeoutMs": 300000,
+    "multiExecution": "automatic-plan",
+    "planningCatalog": "confirmed-product-known-units-v1",
+    "requestBudgetFeedback": "partition-live-v1",
+    "tools": [
+      "read",
+      "write",
+      "bash"
+    ],
+    "permissionTier": "allow-all",
+    "maxRevisions": 0,
+    "trialSettings": {
+      "project": {
+        "retry": {
+          "enabled": false,
+          "maxRetries": 0,
+          "provider": {
+            "maxRetries": 0
+          }
+        },
+        "compaction": {
+          "enabled": false
+        },
+        "cacheWarming": "off"
+      },
+      "agent": {
+        "retry": {
+          "enabled": false,
+          "maxRetries": 0,
+          "provider": {
+            "maxRetries": 0
+          }
+        },
+        "compaction": {
+          "enabled": false
+        },
+        "cacheWarming": "off"
+      }
+    }
+  },
+  "stageModels": {
+    "check": {
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "declaration": {
+        "configuredReasoning": false,
+        "configuredMaxOutputTokens": 4096,
+        "configuredContextWindow": 1000000,
+        "configuredInput": [
+          "text"
+        ],
+        "configuredApi": "openai-completions",
+        "compatibilityFingerprint": "6e1927715d038c1e28524ef434c5c96143a2b17d33da1240d7e2322b0534deb6",
+        "configuredSampling": null,
+        "unsupportedSettings": false,
+        "sampling": "not-set-by-evaluator"
+      }
+    },
+    "analyze": {
+      "provider": "dawn-evaluation-work",
+      "model": "deepseek-flash",
+      "declaration": {
+        "configuredReasoning": false,
+        "configuredMaxOutputTokens": 4096,
+        "configuredContextWindow": 1000000,
+        "configuredInput": [
+          "text"
+        ],
+        "configuredApi": "openai-completions",
+        "compatibilityFingerprint": "6e1927715d038c1e28524ef434c5c96143a2b17d33da1240d7e2322b0534deb6",
+        "configuredSampling": null,
+        "unsupportedSettings": false,
+        "sampling": "not-set-by-evaluator"
+      }
+    },
+    "review": {
+      "provider": "dawn-evaluation-review",
+      "model": "deepseek-flash",
+      "declaration": {
+        "configuredReasoning": false,
+        "configuredMaxOutputTokens": 4096,
+        "configuredContextWindow": 1000000,
+        "configuredInput": [
+          "text"
+        ],
+        "configuredApi": "openai-completions",
+        "compatibilityFingerprint": "6e1927715d038c1e28524ef434c5c96143a2b17d33da1240d7e2322b0534deb6",
+        "configuredSampling": null,
+        "unsupportedSettings": false,
+        "sampling": "not-set-by-evaluator"
+      }
+    }
+  },
+  "arms": [
+    {
+      "caseId": "short-known-mean",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "short-known-mean",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "mode": "multi"
+    },
+    {
+      "caseId": "short-known-mean",
+      "repeat": 2,
+      "mode": "multi"
+    },
+    {
+      "caseId": "short-known-mean",
+      "repeat": 2,
+      "mode": "single"
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 2,
+      "mode": "single"
+    },
+    {
+      "caseId": "carbon-missing",
+      "repeat": 2,
+      "mode": "multi"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 2,
+      "mode": "multi"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 2,
+      "mode": "single"
+    }
+  ]
+}

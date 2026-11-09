@@ -1,10 +1,18 @@
 {
-  "stage": "cancelled-before-inference",
-  "reason": "Review requested; SIGINT could not drain synchronous keychain wait. Stopped only the verified isolated host after SIGTERM.",
-  "hostPid": 50341,
-  "requestsForwarded": 0,
+  "stage": "evaluation-complete",
+  "modelTrialsAllQualified": false,
+  "runId": "7d5b2305-ca06-4013-bf8e-1d4ee4857cad",
+  "mainAtRun": "e2d64ebd0031bc4f251e23179653ab650d221cdd",
+  "requestsForwarded": 126,
+  "inFlight": 0,
   "limit": 300,
+  "remainingNotReused": 174,
+  "armsCompleted": 12,
   "automaticRetry": false,
+  "allIndependentFileChecksPassed": false,
+  "independentFileFailures": 2,
+  "falseAcceptances": 0,
   "historicalExitTimeout": "OPEN",
-  "historicalPtyCleanup": "OPEN"
+  "historicalPtyCleanup": "OPEN",
+  "rawEvidence": "/Users/liuyue/.codex/tmp/dawn-contract-catalog-goal-20261110/resumed-live"
 }

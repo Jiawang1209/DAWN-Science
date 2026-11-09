@@ -1,0 +1,48 @@
+{
+  "sourceCommit": "ce3afbb474cae46f02e4520b204beef07f16f82d",
+  "mainAtValidation": "ce3afbb474cae46f02e4520b204beef07f16f82d",
+  "integration": "fast-forward only; no remote commands",
+  "sourceIdentityMatched": true,
+  "mainCleanAtValidation": true,
+  "mainTypecheck": "passed",
+  "mainBuild": "passed",
+  "mainTargeted": {
+    "files": 7,
+    "passed": 60,
+    "failed": 0
+  },
+  "mainElectron": {
+    "passed": 2,
+    "failed": 0
+  },
+  "profileHashesUnchanged": {
+    "providers.yaml": true,
+    "credentials.json": true,
+    "dawn.db": true
+  },
+  "realRequests": 0,
+  "realModelBenefit": "not validated; old preflight stopped",
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "mainExitObservations": [
+    {
+      "file": "main-desktop-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-96810.jsonl",
+      "closeMs": 117.83,
+      "errors": []
+    },
+    {
+      "file": "main-desktop-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-97197.jsonl",
+      "closeMs": 129.92,
+      "errors": []
+    },
+    {
+      "file": "main-desktop-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-97052.jsonl",
+      "closeMs": 132.72,
+      "errors": []
+    }
+  ],
+  "mainRawExitArchive": "/Users/liuyue/.codex/tmp/dawn-contract-catalog-review-20261110/raw-validation/docs/validation/contract-catalog-review-20261110/main-desktop-results",
+  "push": false,
+  "publish": false,
+  "installedAppReplaced": false
+}

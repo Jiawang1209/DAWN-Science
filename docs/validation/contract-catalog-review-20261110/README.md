@@ -13,3 +13,5 @@
 最终结果、main快进和正式profile核对在本地集成后补记。历史偶发退出超时和PTY清理继续OPEN，不改变预算。
 
 最终合并前：729文件/7144通过/11跳过，类型与构建通过，23项相关Electron通过；源码/构建身份未变化。结论pre-merge-verdict.json，退出exit-summary.json。
+
+本地main：源码提交 `ce3afbb4` 已快进合并，main类型/构建、60项关键测试和2项Electron复核通过，逐文件源码身份匹配，正式profile哈希未变。完整记录main-integration.json；实际main效果main-desktop/source/。原始退出跟踪仍完整保留在本机归档，见mainRawExitArchive。

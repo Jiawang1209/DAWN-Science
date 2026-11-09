@@ -218,3 +218,7 @@ function buildPlanningContractContext(source: ConfirmedPlanningSource): {
 审查发现方案写盘回滚、重复调用标识、非默认容差、未确认反馈和连接/取消代次等遗漏，均补红测后修复。旧候选的钥匙串等待宿主0请求，已停止，避免源码修改期间恢复联网；不自动重启。D真实收益复验尚未完成，原goal不能因本地合并而标complete。
 
 当前固定候选和最终验证移至docs/validation/contract-catalog-review-20261110/。本轮代码验证与真实收益待办分开记录；历史超时/PTY仍OPEN。
+
+### 本地集成记录
+
+2026-11-10：源码 ce3afbb4 已按用户授权快进合并main。复审后完整729文件/7144通过/11跳过，23项桌面通过；main再验60项关键测试、2项桌面及类型/构建通过。主分支源码身份、正式profile哈希一致。只补证据收口，不推送发布；D真实复验仍0/300且旧宿主已停止，原goal仍未完成，历史超时/PTY继续OPEN。

@@ -27,3 +27,5 @@
 2026-11-10用户已授权复审通过后本地提交并合并main；当前集成进度见 `docs/validation/contract-catalog-review-20261110/`。不推送、发布或替换正式App。正式profile三文件哈希仍与基线一致。
 
 复审前派生宿主和失败追踪zip已完整迁到本机独立归档，位置和SHA见 `docs/validation/contract-catalog-review-20261110/local-derived-archive.json`，不入本地提交。恢复真实复验时须从新的main源码重建并重新记录候选身份，不能复用这个旧包。可审阅的错误日志、截图和摘要纳入提交。
+
+复审源码 `ce3afbb4` 已本地合并main；最终审查、main实机截图及验证见 `docs/validation/contract-catalog-review-20261110/`。未推送、发布、替换正式App；真实模型复验0/300，旧等待宿主已停止。

@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-contract-source.spec.ts
+
+Running 1 test using 1 worker
+
+(node:18661) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:61694/2a58a9f0-5039-4be4-b280-aecf1c0a3b32
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61727/cde5eb48-bfb0-453d-a707-c179d37f8192
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance (8.1s)
+
+
+  1) e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance
+
+    Error: electronApplication.evaluate: Target page, context or browser has been closed
+
+      31 |  const reopened=await dawn.重开();await reopened.getByRole('button',{name:/^请为以下具体任务自动安排/}).click();await 进坞(reopened,'团队')
+      32 |  const restored=reopened.locator('.planning-contract-source');await restored.locator('summary').click();await expect(restored.getByRole('textbox',{name:'数据单位',exact:true})).toHaveValue('m');await expect(restored.getByRole('status')).toContainText('已确认第 1 版')
+    > 33 |  await dawn.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0]!.setContentSize(900,640));await restored.getByRole('button',{name:'确认约束',exact:true}).scrollIntoViewIfNeeded();await expect(restored.getByRole('button',{name:'确认约束',exact:true})).toBeInViewport();await reopened.screenshot({path:join(out,'restored-narrow.png')})
+         |                 ^
+      34 | })
+      35 |
+        at /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/e2e/planning-contract-source.spec.ts:33:17
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance

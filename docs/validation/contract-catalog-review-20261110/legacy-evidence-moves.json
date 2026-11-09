@@ -1,0 +1,167 @@
+[
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-b-adjusted-result.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-b-adjusted-result.png",
+    "sha256": "388482b910b49d076a4edf092a41cb115e9aacef951656976dabaa84630745b8"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-b-result-1.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-b-result-1.png",
+    "sha256": "6879f1c9f862d86b45e561ac6189037e80242e480e115502cc13879df706496d"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-b-result-2.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-b-result-2.png",
+    "sha256": "8909da3b07d37711d377cd0d02a08b011263ebafbc7c1757a50033c8b38095eb"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-b-result-3.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-b-result-3.png",
+    "sha256": "54f91ab5bac7888a706b5d520e30581e8b1967b14299865d44a9e73c4dd6a7fe"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-c-restored.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-c-restored.png",
+    "sha256": "b29ab237e3bbfaae5551fdc4fe322fa617dd05f12aafd54983980c46ff064c08"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-d-cancelled.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-d-cancelled.png",
+    "sha256": "69cdc47825ebeb7f0b524ad9c6445998b05cf5f0f1e900da8e84eea23f5f4ec3"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-e-cancelled-restored.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-e-cancelled-restored.png",
+    "sha256": "91ccc2b2368e1d8077401bc31878e322ed375f75d40927f56cc021bf1d514efa"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-f-approved-result.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-f-approved-result.png",
+    "sha256": "1a499d9cfaeedbd5bd522676492ef6a03d743b6dcd3e73b223213735ffe30525"
+  },
+  {
+    "from": "docs/validation/auto-arrangement-20261108/desktop/stage-f-edited-approved.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/auto-arrangement-20261108/desktop/stage-f-edited-approved.png",
+    "sha256": "333c6a8a76f76d3de09b57c1bd7b9bac2cb32d7a2121e7420fdb10fb7ce149bb"
+  },
+  {
+    "from": "docs/validation/collaboration-workbench-20261107/desktop/phase-b-bound-version-workbench.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/collaboration-workbench-20261107/desktop/phase-b-bound-version-workbench.png",
+    "sha256": "cc5e3e564b0e4d78c3395c88da8e06aee59ee013864490e0361f972592bb092d"
+  },
+  {
+    "from": "docs/validation/collaboration-workbench-20261107/desktop/session-a-restored.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/collaboration-workbench-20261107/desktop/session-a-restored.png",
+    "sha256": "b98bd89aed60dffb062bf1b1d6c9298282d0729d8c7472e1b577b1d476449df3"
+  },
+  {
+    "from": "docs/validation/collaboration-workbench-20261107/desktop/session-b-isolated.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/collaboration-workbench-20261107/desktop/session-b-isolated.png",
+    "sha256": "26ef2fb029902afae08aa1dbb30c5f8fc74a320697e8075fa64a4f3b29c557b3"
+  },
+  {
+    "from": "docs/validation/delivery-guidance-20261109/desktop/clarification-requests.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/delivery-guidance-20261109/desktop/clarification-requests.json",
+    "sha256": "c6c042d5edcbf95e6431829bf6ba3a6e8c9a61be44791c3600eea6b6ee370802"
+  },
+  {
+    "from": "docs/validation/orchestration-entry-20261109/desktop/navigation-request-audit.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/orchestration-entry-20261109/desktop/navigation-request-audit.json",
+    "sha256": "8758d17c9c37a1714b01c8cecb49b65e6a1bee311a1e3097e5ec925ae977321d"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/dependency-complete.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/dependency-complete.png",
+    "sha256": "a7c1f1d5d76a16c3afbf6e54e53297d5fb7d9413be4109f6b321ed78e2f0ab60"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/dependency-geometry.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/dependency-geometry.json",
+    "sha256": "cade4b3ba783b51ae99b34888f589ec4aeb0c1d2069a30b808dbd98fbaa01215"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/dependency-narrow-complete.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/dependency-narrow-complete.png",
+    "sha256": "a405b95dde51734857faac45be92490f1879ac5bf36d7a1ae2ea2db42dac0f42"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/narrow-plan_1.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/narrow-plan_1.json",
+    "sha256": "0f973fa19fbdca56bc07de7f89194158d91427616550dfb36d2478fc8f5413fc"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/narrow-plan_2.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/narrow-plan_2.json",
+    "sha256": "d1dd26087e6cf735ca20905deb31183801c48dec4756a892fe6a01a6641c395b"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/narrow-plan_3.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/narrow-plan_3.json",
+    "sha256": "4b39325ac879ccb4516303b5b4bcff73431f0bcd5f54f3ef63c03ce0a61c760e"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/stage-a-approved-arrangement-narrow.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/stage-a-approved-arrangement-narrow.png",
+    "sha256": "d9e2eafe40e1eab1c27d0a3d824a20ae86f928f407c89037cbab34ee563172da"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/stage-a-approved-arrangement-wide.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/stage-a-approved-arrangement-wide.png",
+    "sha256": "53e2a0a03f0f7a1cad2b17945faa3e7eacdb7ef871c69dfb9695d4befecc6dbc"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/stage-b-unified-artifact.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/stage-b-unified-artifact.png",
+    "sha256": "e328039bcf5b3dd861eff1683f96b2685b66e602a2d81de73d878c7335fc9369"
+  },
+  {
+    "from": "docs/validation/plan-execution-workbench-20261108/desktop/stage-b-version-changed.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/plan-execution-workbench-20261108/desktop/stage-b-version-changed.png",
+    "sha256": "2632bd8d6d1f85c900d34008c3a63edd1b6b798af25c3752a364b3b95bf6fb93"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-cancel-drained.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-cancel-drained.json",
+    "sha256": "69bbd926f6f728ff5ebeb397aa100e4129860aee08efa1d820a04c826f5b9877"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-cancel-drained.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-cancel-drained.png",
+    "sha256": "1e2e640f78462e5f8393ea920bb500bd8441aeff7505a957f5537b06e8ca94f9"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-completed-at-three-runs.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-completed-at-three-runs.png",
+    "sha256": "a2e2f7d49a1f2a4da06ccbf1109e1c06e83c48ce18e3d03c4a666096b1b6df73"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-explicit-recovery-completed.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-explicit-recovery-completed.png",
+    "sha256": "7c436109c0e5491bcee05d307153a7554be2d665dd49462e1ab248dc49b5516d"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-held-before-review.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-held-before-review.png",
+    "sha256": "7bc68ed75a3d2ea7a951c89e9ad21129298cd6c947f462cc18bb67d51e56af41"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-interrupted-awaiting-verification.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-interrupted-awaiting-verification.png",
+    "sha256": "36b415e19fd6de4cf97633984e62b73df807ac8cf1fd308365b7160b6fc3ef3a"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-interrupted-recovery.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-interrupted-recovery.json",
+    "sha256": "ea0a272a706dd3fed78435f3d421515230138b2b5b5ffbf0775a2f334703115c"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-reservation-ledger.json",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-reservation-ledger.json",
+    "sha256": "9023d72133f4ca392e1929673c92604c44f74581355cd9193c86318b9f766d30"
+  },
+  {
+    "from": "docs/validation/run-explanation-budget-20261106/review-restart-preserved.png",
+    "to": "docs/validation/contract-catalog-recheck-20261109/legacy-extra-generated/docs/validation/run-explanation-budget-20261106/review-restart-preserved.png",
+    "sha256": "46fcb585a1e8816812e41aa4949318d38544c2bfb9def1472c8178965a8fe8cb"
+  }
+]

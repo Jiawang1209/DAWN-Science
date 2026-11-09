@@ -1,0 +1,94 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-book.test.ts tests/tools/get-plan-contracts.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/tools/get-plan-contracts.test.ts (0 test)
+ ❯ |node| tests/runtime/planning-contract-book.test.ts (5 tests | 5 failed) 8ms
+   × persists confirmed context in the existing book and binds only a host-authored proposal 3ms
+   × invalidates old proposals after replace or clear without changing approved records 1ms
+   × does not approve a proposal made before a source was confirmed and keeps legacy books usable 2ms
+   × retains corrupt context as an explicit issue while preserving previous approved plans 1ms
+   × does not publish a replacement source if the existing atomic write fails 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/tools/get-plan-contracts.test.ts [ tests/tools/get-plan-contracts.test.ts ]
+Error: Cannot find module '../../src/tools/get-plan-contracts.js' imported from /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/tests/tools/get-plan-contracts.test.ts
+ ❯ tests/tools/get-plan-contracts.test.ts:2:1
+      1| import {expect,it,vi} from 'vitest'
+      2| import {createGetPlanContractsTool} from '../../src/tools/get-plan-con…
+       | ^
+      3| import {ConfirmedPlanningSourceSchema} from '../../src/protocol/planni…
+      4| import {buildPlanningContractContext} from '../../src/runtime/planning…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > persists confirmed context in the existing book and binds only a host-authored proposal
+TypeError: book.planningSourceState is not a function
+ ❯ tests/runtime/planning-contract-book.test.ts:13:14
+     11| it('persists confirmed context in the existing book and binds only a h…
+     12|  const path=file(),book=new 方案簿(path)
+     13|  expect(book.planningSourceState('owner')).toEqual({revision:0})
+       |              ^
+     14|  const confirmed=book.confirmPlanningSource('owner',selection(),0,1)
+     15|  expect(confirmed).toMatchObject({revision:1,source:{ownerSessionId:'o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > invalidates old proposals after replace or clear without changing approved records
+TypeError: book.confirmPlanningSource is not a function
+ ❯ tests/runtime/planning-contract-book.test.ts:24:38
+     22| })
+     23| it('invalidates old proposals after replace or clear without changing …
+     24|  const book=new 方案簿(file()),one=book.confirmPlanningSource('owner',sel…
+       |                                      ^
+     25|  book.收('old','test','markdown',{revision:one.revision,fingerprint:one…
+     26|  book.批准('old',{正文:'markdown',savedPath:'analysis/plans/p.md',时刻:2,改过:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > does not approve a proposal made before a source was confirmed and keeps legacy books usable
+TypeError: book.assertPlanningSource is not a function
+ ❯ tests/runtime/planning-contract-book.test.ts:41:14
+     39|  const path=file();writeFileSync(path,JSON.stringify({阶段:'off',方案们:[]}…
+     40|  const book=new 方案簿(path);book.收('legacy','test','markdown')
+     41|  expect(book.assertPlanningSource('legacy','owner')).toBeUndefined()
+       |              ^
+     42|  book.confirmPlanningSource('owner',selection(),0,1)
+     43|  expect(()=>book.assertPlanningSource('legacy','owner')).toThrow(/重新安排…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > retains corrupt context as an explicit issue while preserving previous approved plans
+TypeError: restored.planningSourceState is not a function
+ ❯ tests/runtime/planning-contract-book.test.ts:50:18
+     48|  const raw=JSON.parse(readFileSync(path,'utf8'));raw.planningContext={…
+     49|  const restored=new 方案簿(path)
+     50|  expect(restored.planningSourceState('owner')).toMatchObject({revision…
+       |                  ^
+     51|  expect(restored.找('approved')).toMatchObject({status:'approved',saved…
+     52|  expect(()=>restored.assertPlanningSource('approved','owner')).toThrow…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > does not publish a replacement source if the existing atomic write fails
+TypeError: book.confirmPlanningSource is not a function
+ ❯ tests/runtime/planning-contract-book.test.ts:58:51
+     56| })
+     57| it('does not publish a replacement source if the existing atomic write…
+     58|  const path=file(),book=new 方案簿(path),before=book.confirmPlanningSourc…
+       |                                                   ^
+     59|  rmSync(path);mkdirSync(path)
+     60|  expect(()=>book.confirmPlanningSource('owner',selection(),1,2)).toThr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed (5)
+   Start at  23:16:50
+   Duration  669ms (transform 173ms, setup 0ms, import 568ms, tests 8ms, environment 0ms)

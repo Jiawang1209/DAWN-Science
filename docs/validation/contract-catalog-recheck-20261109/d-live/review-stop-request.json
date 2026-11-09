@@ -1,0 +1,7 @@
+{
+  "pid": 50341,
+  "reason": "User requested code review and possible fixes; preserve candidate identity before changing source",
+  "signal": "SIGINT",
+  "forwardedBeforeStop": 0,
+  "automaticRestart": false
+}

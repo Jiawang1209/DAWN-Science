@@ -1,0 +1,23 @@
+{
+  "state": "reviewed; no local code merge blockers",
+  "base": "5e64595b07d5cddfd4e167412ae410a887f1bd30",
+  "sourceIdentityMatched": true,
+  "buildIdentityMatched": true,
+  "vitest": {
+    "filesPassed": 729,
+    "testsPassed": 7144,
+    "skipped": 11,
+    "failed": 0,
+    "workers": 4
+  },
+  "electron": {
+    "passed": 23,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "liveRequests": 0,
+  "realModelBenefit": "not validated; isolated old keychain host stopped",
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

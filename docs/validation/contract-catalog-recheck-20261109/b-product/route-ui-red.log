@@ -1,0 +1,64 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (3 tests | 1 failed) 196ms
+   × does not silently remove a stored route binding when route metadata is unavailable 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > does not silently remove a stored route binding when route metadata is unavailable
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "independentReview": false,
+        "inputs": Array [
+          "input.csv",
+        ],
+        "outputRoot": "results",
+        "requireExecution": true,
+        "template": Object {
+          "id": "tabular-ecology",
+          "language": "python",
+          "method": "mean",
+          "missingValues": "block",
+          "units": "m",
+          "version": 1,
+        },
+      },
+      1,
+      AbortSignal {
+        Symbol(kEvents): Map {},
+        Symbol(events.maxEventTargetListeners): 0,
+        Symbol(events.maxEventTargetListenersWarned): false,
+        Symbol(kHandlers): Map {},
+        Symbol(kAborted): false,
+        Symbol(kReason): undefined,
+        Symbol(kComposite): false,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:39:100
+     37|  const get=vi.fn(async(operation:string)=>{if(operation==='getAnalysis…
+     38|  render(<PlanningContractSourceForm client={mockClient(get)} ownerSess…
+     39|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确…
+       |                                                                                                    ^
+     40| })
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  23:37:02
+   Duration  1.20s (transform 372ms, setup 555ms, import 11ms, tests 196ms, environment 351ms)

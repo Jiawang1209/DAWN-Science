@@ -1,0 +1,3 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'tsx' docs/validation/contract-catalog-recheck-20261109/product-fixture.ts
+{"qualifiedPairs":6,"realModelRequests":0}

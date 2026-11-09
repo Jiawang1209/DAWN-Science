@@ -9,6 +9,8 @@
 export const 出方案工具名 = "propose_plan"
 /** 方案期看数据结构的工具名 */
 export const 看数据工具名 = "inspect_data"
+/** Only reads a host-confirmed planning catalog; never confirms or executes it. */
+export const 科研契约目录工具名 = 'get_plan_contracts'
 
 /**
  * 方案必须有的五节（spec §2.3）。**顺序就是点名的顺序**。

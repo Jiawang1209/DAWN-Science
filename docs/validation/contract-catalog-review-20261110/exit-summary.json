@@ -1,0 +1,920 @@
+{
+  "observations": 35,
+  "maxCloseMs": 169.17,
+  "errorEvents": 0,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "budgetsChanged": false,
+  "rows": [
+    {
+      "file": "desktop-exit/collaboration-outcome-outc-98d04-on-and-readable-900px-views/exit-91686.jsonl",
+      "closeMs": 108.56,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 91686,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/collaboration-outcome-outc-98d04-on-and-readable-900px-views/exit-91875.jsonl",
+      "closeMs": 129.02,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 91875,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/auto-arrangement-automatic-49e0c-locks-for-\u53ea\u8ba1\u7b97-input-csv-\u7684\u5747\u503c/exit-90677.jsonl",
+      "closeMs": 125.68,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 90677,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/exit-93168.jsonl",
+      "closeMs": 98.94,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 93168,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/science-batch-batch-versio-7ac23-ual-strict-desktop-protocol/exit-95233.jsonl",
+      "closeMs": 147.3,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 95233,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/exit-93516.jsonl",
+      "closeMs": 123.48,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 93516,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/exit-93376.jsonl",
+      "closeMs": 132.37,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 93376,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/exit-91541.jsonl",
+      "closeMs": 126.25,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 91541,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/exit-91418.jsonl",
+      "closeMs": 153.93,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 91418,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-del-07344-ion-across-Electron-restart/exit-95062.jsonl",
+      "closeMs": 124.16,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 95062,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-del-07344-ion-across-Electron-restart/exit-95193.jsonl",
+      "closeMs": 137.64,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 95193,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-sci-955c0-tion-drains-actual-analysis/exit-93939.jsonl",
+      "closeMs": 144.97,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 93939,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/exit-94267.jsonl",
+      "closeMs": 169.17,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 94267,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-sci-cccd2-r-an-explicit-budget-change/exit-94419.jsonl",
+      "closeMs": 129.77,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 94419,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/science-pipeline-pass-scie-555d8-the-strict-desktop-protocol/exit-95514.jsonl",
+      "closeMs": 117.8,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 95514,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/auto-arrangement-automatic-fc1f8-or-\u5206\u522b\u7edf\u8ba1-east-csv-\u4e0e-west-csv/exit-90901.jsonl",
+      "closeMs": 120.88,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 90901,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/science-pipeline-revise-sc-97aec-the-strict-desktop-protocol/exit-95641.jsonl",
+      "closeMs": 157.22,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 95641,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-ela-60dc3-ns-ownership-until-it-exits/exit-94792.jsonl",
+      "closeMs": 152.47,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 94792,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/exit-90097.jsonl",
+      "closeMs": 122.44,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 90097,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/exit-90247.jsonl",
+      "closeMs": 122.19,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 90247,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/approved-plan-execution-st-d0988--replays-it-after-reopening/exit-90519.jsonl",
+      "closeMs": 134.94,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 90519,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/approved-plan-execution-st-d0988--replays-it-after-reopening/exit-90374.jsonl",
+      "closeMs": 130.41,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 90374,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/collaboration-outcome-outc-191bc-on-and-readable-900px-views/exit-92165.jsonl",
+      "closeMs": 131.16,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92165,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/collaboration-outcome-outc-191bc-on-and-readable-900px-views/exit-92004.jsonl",
+      "closeMs": 117.17,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92004,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/exit-91262.jsonl",
+      "closeMs": 168.61,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 91262,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/exit-91126.jsonl",
+      "closeMs": 142.59,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 91126,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/delivery-guidance-pending--6ad12-ers-without-creating-output/exit-92941.jsonl",
+      "closeMs": 140.76,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92941,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-run-efec7-g-and-retained-host-history/exit-94566.jsonl",
+      "closeMs": 138.42,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 94566,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/exit-92670.jsonl",
+      "closeMs": 117.32,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92670,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/delivery-guidance-clarific-c45d4-xecutes-only-after-approval/exit-92802.jsonl",
+      "closeMs": 148.31,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92802,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          },
+          "stderr": {
+            "destroyed": true,
+            "readableEnded": true,
+            "closed": true
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/collaboration-workbench-sh-db743-rough-workflow-and-recovery/exit-92543.jsonl",
+      "closeMs": 134.02,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92543,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/collaboration-workbench-sh-db743-rough-workflow-and-recovery/exit-92294.jsonl",
+      "closeMs": 128.42,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 92294,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/science-pipeline-blocked-s-9f57c-the-strict-desktop-protocol/exit-95789.jsonl",
+      "closeMs": 138.21,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 95789,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-sci-186c7-s-consumption-after-restart/exit-93645.jsonl",
+      "closeMs": 124.53,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 93645,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    },
+    {
+      "file": "desktop-exit/run-explanation-budget-sci-186c7-s-consumption-after-restart/exit-93812.jsonl",
+      "closeMs": 133.63,
+      "exitDetails": [
+        {
+          "code": 0,
+          "signal": null,
+          "pid": 93812,
+          "exitCode": 0,
+          "signalCode": null,
+          "appClosed": false,
+          "contextClosed": false,
+          "stdout": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          },
+          "stderr": {
+            "destroyed": false,
+            "readableEnded": true,
+            "closed": false
+          }
+        }
+      ],
+      "errorEvents": []
+    }
+  ]
+}

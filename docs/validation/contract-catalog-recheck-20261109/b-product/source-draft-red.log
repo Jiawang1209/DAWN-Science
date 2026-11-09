@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (4 tests | 1 failed) 221ms
+   × preserves unconfirmed fields and open state through expansion remounts but isolates owners 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > preserves unconfirmed fields and open state through expansion remounts but isolates owners
+AssertionError: expected <input class="control" …(3)></input> to have property "value" with value '计算均值'
+
+- Expected
++ Received
+
+- 计算均值
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:45:52
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  23:48:48
+   Duration  1.18s (transform 344ms, setup 519ms, import 10ms, tests 221ms, environment 348ms)

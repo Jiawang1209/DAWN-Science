@@ -23,7 +23,7 @@ export const ApprovedPlanExecutionSchema=z.object({binding:ApprovedPlanBindingSc
 })
 export type ApprovedPlanExecution=z.infer<typeof ApprovedPlanExecutionSchema>
 export const arrangementHash=(markdown:string)=>createHash('sha256').update(markdown.trim()).digest('hex')
-export async function freezeApprovedPlan(opts:{workspace:string;owner:string;planId:string;planVersion:number;markdown:string;definitions:SubagentDefinition[];tier:'allow-all'|'ask-risky'|'deny-risky';model:{provider:string;model:string};modelsByAgent?:Record<string,{provider:string;model:string}>;modelsByTask?:Record<string,{provider:string;model:string}>;signal?:AbortSignal}):Promise<ApprovedPlanExecution>{
+export async function freezeApprovedPlan(opts:{planningInstructions?:string;workspace:string;owner:string;planId:string;planVersion:number;markdown:string;definitions:SubagentDefinition[];tier:'allow-all'|'ask-risky'|'deny-risky';model:{provider:string;model:string};modelsByAgent?:Record<string,{provider:string;model:string}>;modelsByTask?:Record<string,{provider:string;model:string}>;signal?:AbortSignal}):Promise<ApprovedPlanExecution>{
  const read=parseTaskArrangement(opts.markdown)
  if(read.state!=='valid'||!read.arrangement.dispatch)throw new Error('方案没有有效的执行绑定')
  const p=read.arrangement
@@ -64,7 +64,7 @@ export async function freezeApprovedPlan(opts:{workspace:string;owner:string;pla
   if(contract.access==='workspace-write'&&contract.outputs.length&&!tools.some(t=>['*','write','edit'].includes(t)))throw new Error('所选执行者没有契约需要的写入工具')
   if(contract.requireExecution&&!tools.some(t=>['*','bash','powershell','run_code'].includes(t)))throw new Error('所选执行者没有契约需要的执行工具')
   const m=mapping.find(m=>m.planTaskId===t.id)!,model=opts.modelsByTask?.[t.id]??opts.modelsByAgent?.[definition.name]??{provider:opts.model.provider,model:definition.model??opts.model.model}
-  return{planTaskId:m.planTaskId,taskId:m.taskId,memberName:m.memberName,subject:t.title,description:[t.goal,`分工：${t.role}`,`验收条件：${t.acceptance}`,'整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。',withoutTaskArrangement(opts.markdown,read)].join('\n'),dependencies:t.dependencies.map(d=>mapping.find(m=>m.planTaskId===d)!.taskId),definition:structuredClone(definition),settings,provider:model.provider,model:model.model}
+  return{planTaskId:m.planTaskId,taskId:m.taskId,memberName:m.memberName,subject:t.title,description:[t.goal,`分工：${t.role}`,`验收条件：${t.acceptance}`,'整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。',...(opts.planningInstructions?[opts.planningInstructions]:[]),withoutTaskArrangement(opts.markdown,read)].join('\n'),dependencies:t.dependencies.map(d=>mapping.find(m=>m.planTaskId===d)!.taskId),definition:structuredClone(definition),settings,provider:model.provider,model:model.model}
  })
  const externalInputs=await captureFileVersions(opts.workspace,[...external],opts.signal)
  return ApprovedPlanExecutionSchema.parse({binding:{version:1,owner:opts.owner,planId:opts.planId,planVersion:opts.planVersion,markdownHash,teamId,externalInputs,tasks:mapping},frozenTasks})

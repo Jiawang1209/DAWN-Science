@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx tests/ui/orchestration-advisor.test.tsx tests/ui/run-overview.test.tsx tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (4 tests | 1 failed) 264ms
+   × preserves unconfirmed fields and open state through expansion remounts but isolates owners 42ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > preserves unconfirmed fields and open state through expansion remounts but isolates owners
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:46:139
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 140 passed (141)
+   Start at  23:49:08
+   Duration  2.24s (transform 2.33s, setup 3.09s, import 802ms, tests 2.01s, environment 2.89s)

@@ -1,0 +1,25 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-context.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/planning-contract-context.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/planning-contract-context.test.ts [ tests/runtime/planning-contract-context.test.ts ]
+Error: Cannot find module '../../src/protocol/planning-contract-source.js' imported from /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/tests/runtime/planning-contract-context.test.ts
+ ❯ tests/runtime/planning-contract-context.test.ts:2:1
+      1| import {expect,it} from 'vitest'
+      2| import {ConfirmedPlanningSourceSchema,PlanningContractSelectionSchema}…
+       | ^
+      3| import {buildPlanningContractContext,resolvePlanningContractContext} f…
+      4| import {scienceTemplate} from '../../src/team/science-templates.js'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  23:14:22
+   Duration  107ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)

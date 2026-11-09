@@ -1,0 +1,164 @@
+{
+  "kind": "localhost deterministic fixture; not live benefit",
+  "realModelRequests": 0,
+  "baselineQualifiedPairs": 6,
+  "candidateQualifiedPairs": 6,
+  "rows": [
+    {
+      "task": "carbon-missing",
+      "mode": "single",
+      "baseline": {
+        "requests": 4,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 4,
+        "terminal": "accepted",
+        "catalogSource": null
+      }
+    },
+    {
+      "task": "carbon-missing",
+      "mode": "multi",
+      "baseline": {
+        "requests": 9,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 10,
+        "terminal": "accepted",
+        "catalogSource": "confirmed-product"
+      }
+    },
+    {
+      "task": "unknown-unit",
+      "mode": "multi",
+      "baseline": {
+        "requests": 3,
+        "terminal": "blocked"
+      },
+      "candidate": {
+        "requests": 3,
+        "terminal": "blocked",
+        "catalogSource": "legacy-injected"
+      }
+    },
+    {
+      "task": "unknown-unit",
+      "mode": "single",
+      "baseline": {
+        "requests": 2,
+        "terminal": "blocked"
+      },
+      "candidate": {
+        "requests": 2,
+        "terminal": "blocked",
+        "catalogSource": null
+      }
+    },
+    {
+      "task": "short-known-mean",
+      "mode": "single",
+      "baseline": {
+        "requests": 4,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 4,
+        "terminal": "accepted",
+        "catalogSource": null
+      }
+    },
+    {
+      "task": "short-known-mean",
+      "mode": "multi",
+      "baseline": {
+        "requests": 9,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 10,
+        "terminal": "accepted",
+        "catalogSource": "confirmed-product"
+      }
+    },
+    {
+      "task": "moisture-strata",
+      "mode": "multi",
+      "baseline": {
+        "requests": 9,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 10,
+        "terminal": "accepted",
+        "catalogSource": "confirmed-product"
+      }
+    },
+    {
+      "task": "moisture-strata",
+      "mode": "single",
+      "baseline": {
+        "requests": 4,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 4,
+        "terminal": "accepted",
+        "catalogSource": null
+      }
+    },
+    {
+      "task": "negative-zero-mean",
+      "mode": "single",
+      "baseline": {
+        "requests": 4,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 4,
+        "terminal": "accepted",
+        "catalogSource": null
+      }
+    },
+    {
+      "task": "negative-zero-mean",
+      "mode": "multi",
+      "baseline": {
+        "requests": 9,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 10,
+        "terminal": "accepted",
+        "catalogSource": "confirmed-product"
+      }
+    },
+    {
+      "task": "duplicate-sites",
+      "mode": "multi",
+      "baseline": {
+        "requests": 9,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 10,
+        "terminal": "accepted",
+        "catalogSource": "confirmed-product"
+      }
+    },
+    {
+      "task": "duplicate-sites",
+      "mode": "single",
+      "baseline": {
+        "requests": 4,
+        "terminal": "accepted"
+      },
+      "candidate": {
+        "requests": 4,
+        "terminal": "accepted",
+        "catalogSource": null
+      }
+    }
+  ]
+}

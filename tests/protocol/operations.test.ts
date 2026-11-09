@@ -109,7 +109,7 @@ describe("操作注册表", () => {
         "answerPermission",
         "setSessionConfigOption",
         "getSessionPermission",
-        "getSessionPlan",
+        "getSessionPlan", "getPlanningContractSource", "confirmPlanningContractSource",
         "getUsage",
         "connectRemote",
         "createRemoteSession",
@@ -752,4 +752,13 @@ it('subagent realtime controls require explicit action and bounded idempotent re
  expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'steer',expectedEpoch:1,text:'correct'}}).success).toBe(false)
  expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'steer',expectedEpoch:1,requestId:'fixed',text:'x'.repeat(17000)}}).success).toBe(false)
  expect(OPERATIONS.controlSubagent.request.safeParse({transcriptId:'s#sub:c:0',control:{action:'inspect',text:'injected'}}).success).toBe(false)
+})
+
+it('keeps confirmed planning owner identity host-owned and separates read/write operations',()=>{
+  expect(isMutating('getPlanningContractSource')).toBe(false)
+  expect(isMutating('confirmPlanningContractSource')).toBe(true)
+  const selection={template:{id:'tabular-ecology',version:1,language:'python',method:'mean',units:'m',missingValues:'block'},inputs:['input.csv'],outputRoot:'results',requireExecution:true,independentReview:false}
+  expect(OPERATIONS.confirmPlanningContractSource.request.safeParse({sessionId:'a',expectedRevision:0,selection}).success).toBe(true)
+  for(const extra of [{ownerSessionId:'b'},{revision:99},{confirmedAt:1}])expect(OPERATIONS.confirmPlanningContractSource.request.safeParse({sessionId:'a',expectedRevision:0,selection:{...selection,...extra}}).success).toBe(false)
+  expect(OPERATIONS.confirmPlanningContractSource.request.safeParse({sessionId:'a',expectedRevision:-1,selection}).success).toBe(false)
 })

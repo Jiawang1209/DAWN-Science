@@ -1,0 +1,9 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/electron/ipc.test.ts(14,3): error TS2739: Type '{ getArtifactHistory: ({ sessionId, path, offset, }: { sessionId: string; path: string; offset?: number | undefined; }) => Promise<{ supported: boolean; observations: { projectId: string; workspace: string; sessionId: string; ... 10 more ...; gaps: string[]; }[]; reason?: never; } | { ...; }>; ... 219 more ...; getU...' is missing the following properties from type 'WorkbenchBackend': confirmPlanningContractSource, getPlanningContractSource
+tests/workbench/planning-contract-source.test.ts(40,14): error TS18046: 'a' is of type 'unknown'.
+tests/workbench/planning-contract-source.test.ts(40,32): error TS18046: 'b' is of type 'unknown'.
+tests/workbench/planning-contract-source.test.ts(47,9): error TS18046: 'confirmed' is of type 'unknown'.
+tests/workbench/planning-contract-source.test.ts(54,60): error TS18046: 'task' is of type 'unknown'.
+tests/workbench/server.test.ts(54,3): error TS2322: Type '{ getArtifactHistory: (request: { sessionId: string; path: string; offset?: number | undefined; }) => Promise<unknown>; getArtifactSource: (request: { sessionId: string; observationId: string; }) => Promise<...>; ... 220 more ...; getPlanningContractSource?: (request: { ...; }) => Promise<...>; }' is not assignable to type 'WorkbenchBackend'.
+  Property 'confirmPlanningContractSource' is optional in type '{ getArtifactHistory: (request: { sessionId: string; path: string; offset?: number | undefined; }) => Promise<unknown>; getArtifactSource: (request: { sessionId: string; observationId: string; }) => Promise<...>; ... 220 more ...; getPlanningContractSource?: (request: { ...; }) => Promise<...>; }' but required in type 'WorkbenchBackend'.

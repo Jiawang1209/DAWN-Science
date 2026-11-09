@@ -1,0 +1,10 @@
+{
+  "stage": "cancelled-before-inference",
+  "reason": "Review requested; SIGINT could not drain synchronous keychain wait. Stopped only the verified isolated host after SIGTERM.",
+  "hostPid": 50341,
+  "requestsForwarded": 0,
+  "limit": 300,
+  "automaticRetry": false,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

@@ -1,0 +1,43 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-contract-source.spec.ts
+
+Running 1 test using 1 worker
+
+(node:17834) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:61495/1b572044-3d89-430f-b93e-105e0d64ae0b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance (6.9s)
+
+
+  1) e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance
+
+    TypeError: Cannot read properties of undefined (reading 'mean')
+
+      25 |  const card=page.locator('main.main .plan-card');await card.getByRole('button',{name:'照这个做',exact:true}).click();await expect(card).toHaveAttribute('data-status','approved')
+      26 |  const progress=page.getByRole('region',{name:'批准方案执行进度',exact:true});await expect(progress.getByText('宿主验收通过',{exact:true})).toHaveCount(2)
+    > 27 |  expect(JSON.parse(readFileSync(join(workspace,'results/result.json'),'utf8')).metrics.mean).toBe(2)
+         |                                                                                       ^
+      28 |  expect(readFileSync(join(workspace,'input.csv'),'utf8')).toBe('x\n1\n2\n3\n')
+      29 |  await progress.scrollIntoViewIfNeeded();await page.screenshot({path:join(out,'executed-scientific-receipts.png')})
+      30 |  await page.getByRole('button',{name:'打开编排视图',exact:true}).click();const dialog=page.getByRole('dialog',{name:'流程工作台',exact:true});await expect(dialog).toBeVisible();await page.screenshot({path:join(out,'expanded-workflow.png')});await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0)
+        at /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/e2e/planning-contract-source.spec.ts:27:87
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance

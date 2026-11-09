@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/planning-contract-source.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/workbench/planning-contract-source.test.ts (2 tests | 2 failed) 104ms
+   × requires user write ownership only for confirmation and isolates both sessions 76ms
+   × reports unsupported runtimes rather than making an empty usable catalog 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/planning-contract-source.test.ts > requires user write ownership only for confirmation and isolates both sessions
+TypeError: backend.getPlanningContractSource is not a function
+ ❯ tests/workbench/planning-contract-source.test.ts:41:23
+     39|  const a=await backend.createTask({agentId:'a',workspace:root}),b=awai…
+     40|  const owner=a.sessionId,other=b.sessionId
+     41|  expect(await backend.getPlanningContractSource({sessionId:owner})).to…
+       |                       ^
+     42|  sessions.leases.release(owner)
+     43|  await expect(backend.confirmPlanningContractSource({sessionId:owner,e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/workbench/planning-contract-source.test.ts > reports unsupported runtimes rather than making an empty usable catalog
+TypeError: backend.getPlanningContractSource is not a function
+ ❯ tests/workbench/planning-contract-source.test.ts:54:23
+     52| it('reports unsupported runtimes rather than making an empty usable ca…
+     53|  const{backend,root}=setup(new FakeRuntime()),task=await backend.creat…
+     54|  await expect(backend.getPlanningContractSource({sessionId:task.sessio…
+       |                       ^
+     55| })
+     56|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  23:28:59
+   Duration  1.97s (transform 888ms, setup 0ms, import 1.78s, tests 104ms, environment 0ms)

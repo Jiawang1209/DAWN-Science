@@ -9743,3 +9743,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .collaboration-outcome-next{align-items:center}
 .collaboration-outcome-inspection{border-top:1px solid var(--dawn-stroke-2);padding-top:10px}
 .collaboration-delivery-notice{padding:10px;border-left:3px solid var(--dawn-accent)}
+
+/* Confirmed planning context shares the advisor surface and remains usable in narrow windows. */
+.planning-contract-source { margin: 12px 0; padding: 12px; border: 1px solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-md); }
+.planning-contract-source summary { cursor: pointer; font-weight: var(--dawn-weight-semibold); }
+.planning-contract-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: 10px; margin: 12px 0; }
+.planning-contract-grid label { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.planning-contract-grid .control { width: 100%; box-sizing: border-box; }
+.planning-contract-options { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0; }
+.planning-contract-source p { overflow-wrap:anywhere; }
+.planning-contract-source > label, .planning-contract-options label { display:inline-flex; align-items:center; gap:6px; }
+.planning-contract-source input[type="checkbox"] { width:auto; flex:none; margin:0; }

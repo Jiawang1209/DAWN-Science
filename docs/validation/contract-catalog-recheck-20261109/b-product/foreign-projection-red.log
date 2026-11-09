@@ -1,0 +1,53 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-book.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/planning-contract-book.test.ts (7 tests | 1 failed) 43ms
+   × does not project a foreign owner source even when its on-disk fields are valid 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > does not project a foreign owner source even when its on-disk fields are valid
+AssertionError: expected { template: { …(6) }, …(8) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "confirmedAt": 1794238782097,
+  "independentReview": true,
+  "inputs": [
+    "input.csv",
+  ],
+  "outputRoot": "results/study",
+  "ownerSessionId": "other",
+  "requireExecution": true,
+  "revision": 1,
+  "template": {
+    "id": "tabular-ecology",
+    "language": "python",
+    "method": "mean",
+    "missingValues": "block",
+    "units": "m",
+    "version": 1,
+  },
+  "version": 1,
+}
+
+ ❯ tests/runtime/planning-contract-book.test.ts:77:57
+     75|  book.confirmPlanningSource('other',selection(),0)
+     76|  const view=book.planningSourceState('owner')
+     77|  expect(view.issue).toMatch(/当前会话/);expect(view.source).toBeUndefined(…
+       |                                                         ^
+     78| })
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  23:39:40
+   Duration  2.04s (transform 847ms, setup 0ms, import 1.81s, tests 43ms, environment 0ms)

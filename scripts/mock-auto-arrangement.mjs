@@ -3,6 +3,23 @@ export function mockAutoArrangement(body,basePlan){
  const text=[...body.messages??[]].reverse().find(m=>m.role==='user')?.content
  const message=typeof text==='string'?text:Array.isArray(text)?text.filter(x=>x.type==='text').map(x=>x.text).join('\n'):''
  if(!message.includes('请为以下具体任务自动安排。'))return undefined
+ const messages=body.messages??[],last=messages.at(-1)
+ const queryAvailable=(body.tools??[]).some(tool=>(tool.function?.name??tool.name)==='get_plan_contracts')
+ const lastCall=messages.findLast(m=>m.role==='assistant'&&m.tool_calls?.length)?.tool_calls?.find(c=>c.id===last?.tool_call_id)?.function?.name
+ if(queryAvailable&&last?.role==='user')return{toolName:'get_plan_contracts',args:{},say:'先查看本会话已确认的科研约束。'}
+ if(last?.role==='tool'){
+  if(lastCall!=='get_plan_contracts')return undefined
+  let catalog
+  try{catalog=JSON.parse(String(last.content).split('\n[task_tool_evidence]')[0].trim())}catch{return undefined}
+  if(catalog.available){
+   const analyze=catalog.catalog.find(entry=>entry.contract.resultType==='model-metrics'),review=catalog.catalog.find(entry=>entry.contract.resultType==='review')
+   if(!analyze||catalog.independentReview&&!review)return undefined
+   const node=(id,title,entry,dependencies,reviewer=false)=>({id,title,goal:title+'（本地科研契约夹具）',role:reviewer?'独立审阅员':'统计分析员',inputs:entry.contract.inputs,outputs:entry.contract.outputs,dependencies,acceptance:'遵守已确认的科学合同，提交原始证据和版本供宿主验收',review:reviewer,execution:{agent:reviewer?'reviewer-two':'data-engineer',contractRef:entry.reference}})
+   const tasks=[node('analyze','按确认约束完成分析',analyze,[])]
+   if(catalog.independentReview)tasks.push(node('review','独立审阅分析与证据',review,['analyze'],true))
+   return{toolName:'propose_plan',args:{...basePlan,title:'按科研约束自动安排',plan:'## 问题与假设\n按本会话已确认的科学约束分析。\n## 数据与切分\n保留声明输入。\n## 统计检验与模型\n严格沿用宿主合同。\n## 图\n不额外增加图形任务。\n## 产物\n交付合同声明的脚本、结果和报告。',catalogFingerprint:catalog.fingerprint,arrangement:{mode:catalog.independentReview?'science':'single',dispatch:'team-v1',rationale:'使用当前已确认契约，按需独立审阅。',independentReview:catalog.independentReview,tasks,questions:[]}},say:'已引用当前约束；等待你采纳后才执行。'}
+  }
+ }
  const task=(id,title,role,inputs,outputs,dependencies=[],review=false)=>({id,title,role,goal:title,inputs,outputs,dependencies,acceptance:'输入保留、结果可核对，并提供实际依据',review})
  let arrangement
  if(message.includes('清洗、建模并独立审阅 input.csv')){

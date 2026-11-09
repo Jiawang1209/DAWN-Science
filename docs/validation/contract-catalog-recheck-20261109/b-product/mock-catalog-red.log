@@ -1,0 +1,102 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/mock-product-catalog.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/evaluation/mock-product-catalog.test.ts (2 tests | 2 failed) 7ms
+   × queries the live product catalog then copies the fingerprint and references without changing contracts 4ms
+   × keeps unconfirmed legacy fixtures and never re-queries after proposing 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/mock-product-catalog.test.ts > queries the live product catalog then copies the fingerprint and references without changing contracts
+AssertionError: expected 'propose_plan' to be 'get_plan_contracts' // Object.is equality
+
+Expected: "get_plan_contracts"
+Received: "propose_plan"
+
+ ❯ tests/evaluation/mock-product-catalog.test.ts:11:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/mock-product-catalog.test.ts > keeps unconfirmed legacy fixtures and never re-queries after proposing
+AssertionError: expected { toolName: 'propose_plan', …(2) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "args": {
+    "arrangement": {
+      "dispatch": "team-v1",
+      "independentReview": false,
+      "mode": "single",
+      "questions": [],
+      "rationale": "只需要完成一个明确的均值计算，不增加交接。",
+      "tasks": [
+        {
+          "acceptance": "输入保留、结果可核对，并提供实际依据",
+          "dependencies": [],
+          "execution": {
+            "agent": "data-engineer",
+            "contract": {
+              "access": "workspace-write",
+              "inputs": [
+                "input.csv",
+              ],
+              "outputs": [
+                "mean.csv",
+              ],
+              "requireExecution": false,
+              "requireReview": false,
+              "submission": "tool",
+              "version": 1,
+            },
+          },
+          "goal": "计算指定数据的均值（本地自动安排夹具）",
+          "id": "mean",
+          "inputs": [
+            "input.csv",
+          ],
+          "outputs": [
+            "mean.csv",
+          ],
+          "review": false,
+          "role": "统计执行者",
+          "title": "计算指定数据的均值",
+        },
+      ],
+    },
+    "plan": "## 问题与假设
+按用户目标安排任务，先规划、不执行。
+## 数据与切分
+input.csv
+## 统计检验与模型
+只需要完成一个明确的均值计算，不增加交接。
+## 图
+按用户需要决定，不自动增加图形任务。
+## 产物
+`mean.csv`",
+    "title": "自动安排：完成当前数据任务",
+  },
+  "say": "先提出任务划分，等待你调整或采纳。",
+  "toolName": "propose_plan",
+}
+
+ ❯ tests/evaluation/mock-product-catalog.test.ts:20:181
+     18|  const messages=[user,{role:'assistant',tool_calls:[{id:'q',function:{…
+     19|  expect(mockAutoArrangement({messages,tools},{}).args.arrangement.task…
+     20|  expect(mockAutoArrangement({messages:[...messages,{role:'assistant',t…
+       |                                                                                                                                                                                     ^
+     21| })
+     22|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  23:33:41
+   Duration  721ms (transform 174ms, setup 0ms, import 623ms, tests 7ms, environment 0ms)

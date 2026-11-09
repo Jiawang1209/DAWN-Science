@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-product-catalog.test.ts tests/evaluation/research-auto-arrangement.test.ts tests/ui/planning-contract-source-form.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (3 tests | 1 failed) 196ms
+   × ignores late owner reads and cancels a confirmation waiting across an owner switch 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > ignores late owner reads and cancels a confirmation waiting across an owner switch
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ tests/ui/planning-contract-source-form.test.tsx:31:76
+     29|  const pending=vi.fn((_s:unknown,_r:number,s:AbortSignal)=>{signal=s;r…
+     30|  view.rerender(<PlanningContractSourceForm client={mockClient()} owner…
+     31|  fireEvent.click(screen.getByRole('button',{name:'确认约束'}));expect(pend…
+       |                                                                            ^
+     32|  view.rerender(<PlanningContractSourceForm client={mockClient()} owner…
+     33|  expect(signal?.aborted).toBe(true);await act(async()=>resolve());expe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 11 passed (12)
+   Start at  23:37:44
+   Duration  2.66s (transform 2.19s, setup 700ms, import 3.88s, tests 976ms, environment 421ms)

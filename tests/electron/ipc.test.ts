@@ -226,6 +226,8 @@ function backend(): WorkbenchBackend {
     initScienceLayout: async () => ({ created: [], instructions: "written" as const, file: "AGENTS.md" }),
     getPermissionMode: async () => ({ mode: "allow-all" as const }),
     getSessionPermission: async () => ({ current: 'inherit', effective: 'allow-all' }),
+    getPlanningContractSource: async () => ({revision:0}),
+    confirmPlanningContractSource: async () => ({revision:1}),
     getSessionPlan: async () => ({ planning: false }),
     getAtFileSettings: async () => ({ ignorePasted: true, globalRules: [] }),
     setAtFileSettings: async () => ({ ignorePasted: true, globalRules: [] }),

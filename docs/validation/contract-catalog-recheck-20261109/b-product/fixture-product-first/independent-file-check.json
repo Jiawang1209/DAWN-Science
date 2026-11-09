@@ -1,0 +1,243 @@
+{
+  "kind": "independent Python CSV recomputation and SHA256; no model code executed",
+  "association": "one-to-one case/mode and accepted version set; identical repeats do not imply timing identity",
+  "allChecksPassed": true,
+  "checks": [
+    {
+      "directory": "carbon-missing-single-SYQfrc",
+      "caseId": "carbon-missing",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "carbon-missing-multi-xzEdif",
+      "caseId": "carbon-missing",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "n": 41,
+        "mean": 13.870731707317074,
+        "unit": "mg/g"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "unknown-unit-single-OKyP9i",
+      "caseId": "unknown-unit",
+      "mode": "single",
+      "terminal": "blocked",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": true,
+      "expected": null,
+      "actual": null,
+      "verifiedVersions": 0,
+      "passed": true
+    },
+    {
+      "directory": "unknown-unit-multi-7l8L54",
+      "caseId": "unknown-unit",
+      "mode": "multi",
+      "terminal": "blocked",
+      "inputPreserved": true,
+      "numericChecked": false,
+      "scientificCheck": true,
+      "expected": null,
+      "actual": null,
+      "verifiedVersions": 0,
+      "passed": true
+    },
+    {
+      "directory": "short-known-mean-single-rIwS2L",
+      "caseId": "short-known-mean",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "actual": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "short-known-mean-multi-5XsGki",
+      "caseId": "short-known-mean",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "actual": {
+        "n": 4,
+        "mean": 20.0,
+        "unit": "°C"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "moisture-strata-single-ILjdPC",
+      "caseId": "moisture-strata",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 240,
+        "mean": 20.5,
+        "unit": "%"
+      },
+      "actual": {
+        "n": 240,
+        "mean": 20.5,
+        "unit": "%"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "moisture-strata-multi-fPb8OO",
+      "caseId": "moisture-strata",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 240,
+        "mean": 20.5,
+        "unit": "%"
+      },
+      "actual": {
+        "n": 240,
+        "mean": 20.5,
+        "unit": "%"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "negative-zero-mean-single-cWa88n",
+      "caseId": "negative-zero-mean",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 3,
+        "mean": 0.0,
+        "unit": "V"
+      },
+      "actual": {
+        "n": 3,
+        "mean": 0.0,
+        "unit": "V"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "negative-zero-mean-multi-pnJFSH",
+      "caseId": "negative-zero-mean",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 3,
+        "mean": 0.0,
+        "unit": "V"
+      },
+      "actual": {
+        "n": 3,
+        "mean": 0.0,
+        "unit": "V"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "duplicate-sites-single-ZATZzJ",
+      "caseId": "duplicate-sites",
+      "mode": "single",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 4.0,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "n": 4,
+        "mean": 4.0,
+        "unit": "mg/g"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    },
+    {
+      "directory": "duplicate-sites-multi-323p7c",
+      "caseId": "duplicate-sites",
+      "mode": "multi",
+      "terminal": "accepted",
+      "inputPreserved": true,
+      "numericChecked": true,
+      "scientificCheck": true,
+      "expected": {
+        "n": 4,
+        "mean": 4.0,
+        "unit": "mg/g"
+      },
+      "actual": {
+        "n": 4,
+        "mean": 4.0,
+        "unit": "mg/g"
+      },
+      "verifiedVersions": 3,
+      "passed": true
+    }
+  ]
+}

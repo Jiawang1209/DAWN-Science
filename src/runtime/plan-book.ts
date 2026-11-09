@@ -17,6 +17,9 @@ import { 方案目录 } from "../policy/science-layout.js"
 import type { 已批准存档 } from "../policy/plan-mode.js"
 import { 单引号 } from "../remote/ssh.js"
 import type { RemoteLike } from "./types.js"
+import {ConfirmedPlanningSourceSchema,PlanningContractSelectionSchema,PlanningSourceBindingSchema,type PlanningSourceBinding,type PlanningSourceState} from '../protocol/planning-contract-source.js'
+import {resolvePlanningContractContext} from './planning-contract-context.js'
+import type {AnalysisRoute} from '../protocol/analysis-route.js'
 
 /** 方案簿在会话目录里的文件名。运行时读写它、全文搜索只读它（`pi-record.ts` 的 `读方案们`） */
 export const 方案簿文件名 = "plans.json"
@@ -25,16 +28,20 @@ export const 方案簿文件名 = "plans.json"
  * 簿里记的一版：协议里的 `方案` + 批准时的指纹与存档（只有本机会话批准的才有）
  * + `离枝`（2026-09-28）：批准过、但交它的那次 `propose_plan` 已经不在当前对话分支上（回退到它之前了）。见 `只留`。
  */
-export type 方案记录 = 方案 & { sha256?: string; 存档?: string; 离枝?: true; executionSnapshot?:ApprovedPlanExecution }
+export type 方案记录 = 方案 & { sha256?: string; 存档?: string; 离枝?: true; executionSnapshot?:ApprovedPlanExecution; planningBinding?:PlanningSourceBinding }
 
 interface 簿内容 {
   阶段: "off" | "planning"
   方案们: 方案记录[]
+  // Preserve invalid metadata on unrelated book writes so corruption cannot silently
+  // turn a confirmed planning source into the unrestricted legacy path on restart.
+  planningContext?:unknown
+  planningContextRevision?:unknown
 }
 
 /** 给事件、给 `history()` 的那一份：摘掉只给运行时用的几样 */
 export function 公开(p: 方案记录): 方案 {
-  const { sha256: _指纹, 存档: _存档, 离枝: _离枝, executionSnapshot:_execution, ...rest } = p
+  const { sha256: _指纹, 存档: _存档, 离枝: _离枝, executionSnapshot:_execution,planningBinding:_planning, ...rest } = p
   return { ...rest }
 }
 
@@ -47,7 +54,7 @@ export class 方案簿 {
     if (!文件) return
     try {
       const 原 = JSON.parse(readFileSync(文件, "utf8")) as Partial<簿内容>
-      this.内 = { 阶段: 原.阶段 === "planning" ? "planning" : "off", 方案们: Array.isArray(原.方案们) ? 原.方案们 : [] }
+      this.内 = { 阶段: 原.阶段 === "planning" ? "planning" : "off", 方案们: Array.isArray(原.方案们) ? 原.方案们 : [],...(原.planningContext!==undefined?{planningContext:原.planningContext}:{}),...(原.planningContextRevision!==undefined?{planningContextRevision:原.planningContextRevision}:{}) }
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
         this.读坏了 = `方案记录（${文件}）读不出来，这段会话的方案从空的开始：${e instanceof Error ? e.message : String(e)}`
@@ -67,6 +74,53 @@ export class 方案簿 {
     const p = this.内.方案们.find((x) => x.planId === planId)
     return p ? 公开(p) : undefined
   }
+  private planningRevision():number {
+    const positive=(value:unknown)=>typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?value:0
+    const raw=this.内.planningContext
+    const sourceRevision=raw&&typeof raw==='object'&&'revision' in raw?positive(raw.revision):0
+    return this.内.方案们.reduce((revision,p)=>Math.max(revision,positive(p.planningBinding?.revision)),Math.max(positive(this.内.planningContextRevision),sourceRevision))
+  }
+  planningSourceState(ownerSessionId:string,currentRoute?:AnalysisRoute):PlanningSourceState {
+    const revision=this.planningRevision()
+    let source:import('../protocol/planning-contract-source.js').ConfirmedPlanningSource|undefined
+    try{
+      const stored=this.内.planningContextRevision
+      if(stored!==undefined&&(typeof stored!=='number'||!Number.isSafeInteger(stored)||stored<revision))throw Error('科研约束版本记录异常，请重新确认')
+      if(this.内.planningContext===undefined){
+        if(stored===undefined&&revision>0)throw Error('科研约束来源记录丢失，请重新确认')
+        return{revision}
+      }
+      source=ConfirmedPlanningSourceSchema.parse(this.内.planningContext)
+      if(source.revision!==revision)throw Error('科研约束版本记录不一致，请重新确认')
+      const context=resolvePlanningContractContext(ownerSessionId,source,currentRoute)!
+      return{revision,source,fingerprint:context.fingerprint}
+    }catch(error){return{revision,...(source?.ownerSessionId===ownerSessionId?{source}:{}),issue:(error instanceof Error?error.message:String(error)).slice(0,2000)}}
+  }
+  confirmPlanningSource(ownerSessionId:string,value:unknown,expectedRevision:number,now=Date.now(),currentRoute?:AnalysisRoute):PlanningSourceState {
+    const revision=this.planningRevision()
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision!==revision)throw Error('科研约束版本已变化，请重新读取后确认')
+    const next=revision+1
+    if(!Number.isSafeInteger(next))throw Error('科研约束版本超过安全范围')
+    const source=value===null?undefined:ConfirmedPlanningSourceSchema.parse({version:1,ownerSessionId,revision:next,confirmedAt:now,...PlanningContractSelectionSchema.parse(value)})
+    if(source)resolvePlanningContractContext(ownerSessionId,source,currentRoute)
+    const previous=this.内
+    this.内={...previous,planningContextRevision:next,...(source?{planningContext:source}:{})}
+    if(!source)delete this.内.planningContext
+    try{this.存()}catch(error){this.内=previous;throw error}
+    return this.planningSourceState(ownerSessionId,currentRoute)
+  }
+  assertPlanningSource(planId:string,ownerSessionId:string,currentRoute?:AnalysisRoute){
+    const plan=this.内.方案们.find(p=>p.planId===planId)
+    if(!plan)throw Error('没有这一版方案：'+planId)
+    const state=this.planningSourceState(ownerSessionId,currentRoute)
+    if(state.issue)throw Error(state.issue)
+    const binding=plan.planningBinding===undefined?undefined:PlanningSourceBindingSchema.parse(plan.planningBinding)
+    // Legacy books without a source history remain compatible. Once a source has
+    // changed, even an explicit clear has a generation and cannot revive old plans.
+    if(!binding&&state.revision===0&&!state.source)return undefined
+    if(!binding||binding.fingerprint!==(state.fingerprint??null)||binding.revision!==state.revision)throw Error('科研约束来源已变化，请重新安排后再采纳')
+    return resolvePlanningContractContext(ownerSessionId,state.source,currentRoute)
+  }
   /** 门要保护的那几份。**离枝的不算**（2026-09-28）：对话里已经没有它，那份文件就是你项目里的一份普通文件 */
   已批准路径(): string[] {
     return this.内.方案们.flatMap((p) => (p.status === "approved" && !p.离枝 && p.savedPath ? [p.savedPath] : []))
@@ -82,7 +136,11 @@ export class 方案簿 {
    * 收一版。之前还在等的那版标「已被取代」——**只有最新那版能答**。
    * 版本号 = 已有的最大版本 + 1（不是条数 + 1：回退会摘掉簿里的几版，见 `只留`）。
    */
-  收(planId: string, title: string, markdown: string): { 新: 方案; 被取代: 方案[] } {
+  收(planId: string, title: string, markdown: string,planningBinding?:PlanningSourceBinding): { 新: 方案; 被取代: 方案[] } {
+    const binding=planningBinding===undefined?undefined:PlanningSourceBindingSchema.parse(planningBinding)
+    if(this.内.方案们.some(plan=>plan.planId===planId))throw new Error('方案标识重复，未覆盖旧方案；请使用新的工具调用重新提交')
+    const previous=this.内
+    this.内={...previous,方案们:previous.方案们.map(plan=>({...plan}))}
     const 被取代: 方案[] = []
     for (const p of this.内.方案们) {
       if (p.status === "proposed") {
@@ -91,9 +149,9 @@ export class 方案簿 {
       }
     }
     const 最大 = this.内.方案们.reduce((m, p) => Math.max(m, p.version), 0)
-    const 新: 方案记录 = { planId, version: 最大 + 1, title, markdown, status: "proposed" }
+    const 新: 方案记录 = { planId, version: 最大 + 1, title, markdown, status: "proposed",...(binding?{planningBinding:binding}:{}) }
     this.内.方案们.push(新)
-    this.存()
+    try{this.存()}catch(error){this.内=previous;throw error}
     return { 新: 公开(新), 被取代 }
   }
 

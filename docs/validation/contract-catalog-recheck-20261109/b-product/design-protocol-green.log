@@ -1,0 +1,62 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/design-contract.test.ts tests/protocol/operations.test.ts tests/ui/planning-contract-source-form.test.tsx tests/ui/orchestration-advisor.test.tsx tests/evaluation/research-manifest.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 2 failed) 1462ms
+     × 组件里的 textarea / input / select 都带 control 类 20ms
+     × styles.css 里每个 --dawn-* 都在 tokens.css 里定义过 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: planning-contract-source-form.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "39: const field=(name:string,value:string,set:(value:string)=>void,multiline=false)=><label>{t(name)}{multiline?<textarea className=\"control\" aria-label={t(name)} rows={2} value={value} onChange={e=>set(e.target.value)} disabled={locked}/>:<input className=\"control\" aria-label={t(name)} value={value} maxLength={2000} onChange={e=>set(e.target.value)} disabled={locked}/>}</label>",
++   "44: {route?<label>{t('关联分析路线步骤')}<select className=\"control\" aria-label={t('关联分析路线步骤')} value={step} disabled={locked} onChange={e=>{setStep(e.target.value);const chosen=route.steps.find(s=>s.id===e.target.value);if(chosen)setInputs(chosen.inputs.join('\\n'))}}><option value=\"\">{t('不关联路线')}</option>{route.steps.filter(s=>s.status!=='skipped').map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></label>:null}",
++   "48: <label><input className=\"control\" type=\"checkbox\" checked={numeric} disabled={locked} onChange={e=>setNumeric(e.target.checked)}/>{t('增加独立数值核验')}</label>",
++   "49: {numeric?<div className=\"planning-contract-grid\">{field('核验数据文件',dataPath,setDataPath)}{field('核验列名',column,setColumn)}<label>{t('核验指标')}<select className=\"control\" aria-label={t('核验指标')} value={metric} disabled={locked} onChange={e=>setMetric(e.target.value as typeof metric)}>{['mean','sum','min','max'].map(s=><option key={s}>{s}</option>)}</select></label><label>{t('数值缺失规则')}<select className=\"control\" aria-label={t('数值缺失规则')} value={missingRule} disabled={locked} onChange={e=>setMissingRule(e.target.value as typeof missingRule)}><option value=\"\">{t('请选择')}</option><option value=\"block\">{t('遇到缺失时停止')}</option><option value=\"drop\">{t('排除缺失值后计算')}</option></select></label></div>:null}",
++   "50: <div className=\"planning-contract-options\"><label><input className=\"control\" type=\"checkbox\" checked={execute} disabled={locked} onChange={e=>setExecute(e.target.checked)}/>{t('要求真实执行证据')}</label><label><input className=\"control\" type=\"checkbox\" checked={review} disabled={locked} onChange={e=>setReview(e.target.checked)}/>{t('要求独立审阅')}</label></div>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 引用的令牌必须真的存在 > styles.css 里每个 --dawn-* 都在 tokens.css 里定义过
+AssertionError: styles.css 引用了 tokens.css 里没有的令牌：--dawn-border: expected [ '--dawn-border' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "--dawn-border",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:1249:78
+    1247|     const used = new Set(styles.match(/var\(\s*(--dawn-[a-z0-9-]+)/g)?…
+    1248|     const missing = [...used].filter((t) => !defined.has(t))
+    1249|     expect(missing, `styles.css 引用了 tokens.css 里没有的令牌：${missing.join("…
+       |                                                                              ^
+    1250|   })
+    1251| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 179 passed (181)
+   Start at  23:41:30
+   Duration  4.48s (transform 4.32s, setup 4.75s, import 1.32s, tests 2.61s, environment 3.42s)

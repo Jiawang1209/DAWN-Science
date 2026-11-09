@@ -1,0 +1,15 @@
+{
+  "mainClean": true,
+  "protectedProfileHashesMatch": {
+    "providers.yaml": true,
+    "credentials.json": true,
+    "dawn.db": true
+  },
+  "liveAttemptRecorded": false,
+  "requestsForwarded": 0,
+  "goal": "active; awaiting system keychain",
+  "committed": false,
+  "merged": false,
+  "pushed": false,
+  "published": false
+}

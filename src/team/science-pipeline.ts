@@ -1,13 +1,13 @@
 import {scienceStepContext} from '../protocol/science-route-context.js'
 import {createHash} from 'node:crypto'
 /** Fixed scientific reducer over existing Team tasks; no second execution loop. */
-import {PipelineDefinitionSchema,SciencePipelineSchema,publicPipeline,stageContract,type PipelineDefinition,type PipelineStage,type SciencePipeline} from '../protocol/science-pipeline.js'
+import {PipelineDefinitionSchema,SciencePipelineSchema,publicPipeline,stageContract,type PipelineContractDefinition,type PipelineDefinition,type PipelineStage,type SciencePipeline} from '../protocol/science-pipeline.js'
 import {TaskContractSchema,TaskSettingsSchema,type TaskContract,type TaskSettings} from '../orchestration/task-contract.js'
 import {resolveTaskSettings} from '../subagent/task-tools.js'
 import {加任务,团队错误} from './state.js'
 import type {团队,成员} from './types.js'
 
-export function pipelineStageContract(def:PipelineDefinition,stage:PipelineStage):TaskContract {
+export function pipelineStageContract(def:PipelineContractDefinition,stage:PipelineStage):TaskContract {
  return stageContract(def,stage)
 }
 /** Budget identity is host-owned and independent of the public batch display projection. */

@@ -1,0 +1,17 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-contract-source.spec.ts
+
+Running 1 test using 1 worker
+
+(node:25498) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:62792/66f5fab4-65fa-463d-97d7-6c5a7016efc8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62938/61aa2a62-98d9-4d4b-aa32-d94f0e123396
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance (16.2s)
+
+  1 passed (18.4s)

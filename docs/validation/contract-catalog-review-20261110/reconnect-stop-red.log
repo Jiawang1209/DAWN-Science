@@ -1,0 +1,44 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (20 tests | 2 failed) 451ms
+   × releases the shared confirmation admission on a same-owner connection change without a late write to the old client 48ms
+   × does not let an old stop callback change the replacement connection state 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > releases the shared confirmation admission on a same-owner connection change without a late write to the old client
+AssertionError: expected <button type="button" …(2)></button> to have property "disabled" with value false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:219:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > does not let an old stop callback change the replacement connection state
+AssertionError: expected <button type="button" …(2)></button> to have property "disabled" with value false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:227:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  00:13:01
+   Duration  1.39s (transform 355ms, setup 497ms, import 36ms, tests 451ms, environment 325ms)

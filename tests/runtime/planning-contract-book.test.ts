@@ -1,0 +1,86 @@
+import {afterEach,expect,it} from 'vitest'
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,mkdirSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {方案簿} from '../../src/runtime/plan-book.js'
+const dirs:string[]=[]
+afterEach(()=>{for(const dir of dirs.splice(0))rmSync(dir,{recursive:true,force:true})})
+function file(){const dir=mkdtempSync(join(tmpdir(),'dawn-planning-context-book-'));dirs.push(dir);return join(dir,'plans.json')}
+const selection=()=>({template:{id:'tabular-ecology' as const,version:1 as const,language:'python' as const,method:'mean',units:'m',missingValues:'block'},inputs:['input.csv'],outputRoot:'results/study',requireExecution:true,independentReview:true})
+
+it('persists confirmed context in the existing book and binds only a host-authored proposal',()=>{
+ const path=file(),book=new 方案簿(path)
+ expect(book.planningSourceState('owner')).toEqual({revision:0})
+ const confirmed=book.confirmPlanningSource('owner',selection(),0,1)
+ expect(confirmed).toMatchObject({revision:1,source:{ownerSessionId:'owner',confirmedAt:1}})
+ book.收('p','test','markdown',{revision:confirmed.revision,fingerprint:confirmed.fingerprint!})
+ expect(book.找('p')).not.toHaveProperty('planningBinding')
+ const restored=new 方案簿(path)
+ expect(restored.planningSourceState('owner')).toEqual(confirmed)
+ expect(restored.assertPlanningSource('p','owner')?.fingerprint).toBe(confirmed.fingerprint)
+ expect(()=>restored.assertPlanningSource('p','other-owner')).toThrow(/会话/)
+})
+it('invalidates old proposals after replace or clear without changing approved records',()=>{
+ const book=new 方案簿(file()),one=book.confirmPlanningSource('owner',selection(),0,1)
+ book.收('old','test','markdown',{revision:one.revision,fingerprint:one.fingerprint!})
+ book.批准('old',{正文:'markdown',savedPath:'analysis/plans/p.md',时刻:2,改过:false})
+ const approved=book.找('old')
+ const two=book.confirmPlanningSource('owner',{...selection(),template:{...selection().template,units:'cm'}},1,3)
+ expect(two.revision).toBe(2);expect(()=>book.assertPlanningSource('old','owner')).toThrow(/变化/)
+ expect(book.找('old')).toEqual(approved)
+ const cleared=book.confirmPlanningSource('owner',null,2,4)
+ expect(cleared).toEqual({revision:3})
+ expect(()=>book.assertPlanningSource('old','owner')).toThrow(/变化/)
+ const again=book.confirmPlanningSource('owner',selection(),3,5)
+ expect(again.revision).toBe(4)
+ expect(()=>book.confirmPlanningSource('owner',selection(),1,6)).toThrow(/版本/)
+})
+it('does not approve a proposal made before a source was confirmed and keeps legacy books usable',()=>{
+ const path=file();writeFileSync(path,JSON.stringify({阶段:'off',方案们:[]}))
+ const book=new 方案簿(path);book.收('legacy','test','markdown')
+ expect(book.assertPlanningSource('legacy','owner')).toBeUndefined()
+ book.confirmPlanningSource('owner',selection(),0,1)
+ expect(()=>book.assertPlanningSource('legacy','owner')).toThrow(/重新安排/)
+})
+it('retains corrupt context as an explicit issue while preserving previous approved plans',()=>{
+ const path=file(),book=new 方案簿(path);book.收('approved','test','markdown')
+ book.批准('approved',{正文:'markdown',savedPath:'analysis/plans/p.md',时刻:1,改过:false})
+ const raw=JSON.parse(readFileSync(path,'utf8'));raw.planningContext={ownerSessionId:'owner',revision:7,bad:true};raw.planningContextRevision=7;writeFileSync(path,JSON.stringify(raw))
+ const restored=new 方案簿(path)
+ expect(restored.planningSourceState('owner')).toMatchObject({revision:7,issue:expect.any(String)})
+ expect(restored.找('approved')).toMatchObject({status:'approved',savedPath:'analysis/plans/p.md'})
+ expect(()=>restored.assertPlanningSource('approved','owner')).toThrow()
+ restored.设阶段('planning')
+ expect(new 方案簿(path).planningSourceState('owner').issue).toBeTruthy()
+ expect(restored.confirmPlanningSource('owner',selection(),7,2).revision).toBe(8)
+})
+it('does not publish a replacement source if the existing atomic write fails',()=>{
+ const path=file(),book=new 方案簿(path),before=book.confirmPlanningSource('owner',selection(),0,1)
+ rmSync(path);mkdirSync(path)
+ expect(()=>book.confirmPlanningSource('owner',selection(),1,2)).toThrow()
+ expect(book.planningSourceState('owner')).toEqual(before)
+})
+it('does not resurrect an old unbound proposal after a confirmed source is cleared',()=>{
+ const book=new 方案簿(file());book.收('old','old','markdown')
+ book.confirmPlanningSource('owner',selection(),0,1)
+ const cleared=book.confirmPlanningSource('owner',null,1,2)
+ expect(()=>book.assertPlanningSource('old','owner')).toThrow(/重新安排/)
+ book.收('new','new','markdown',{revision:cleared.revision,fingerprint:null})
+ expect(book.assertPlanningSource('new','owner')).toBeUndefined()
+ book.confirmPlanningSource('owner',selection(),cleared.revision,3)
+ expect(()=>book.assertPlanningSource('new','owner')).toThrow(/变化/)
+})
+it('does not project a foreign owner source even when its on-disk fields are valid',()=>{
+ const book=new 方案簿(undefined)
+ book.confirmPlanningSource('other',selection(),0)
+ const view=book.planningSourceState('owner')
+ expect(view.issue).toMatch(/当前会话/);expect(view.source).toBeUndefined();expect(view.fingerprint).toBeUndefined()
+})
+it('requires re-confirmation if bound proposal history survives but source metadata is missing',()=>{
+ const path=file(),book=new 方案簿(path),state=book.confirmPlanningSource('owner',selection(),0,1)
+ book.收('p','proposal','body',{revision:state.revision,fingerprint:state.fingerprint!})
+ const raw=JSON.parse(readFileSync(path,'utf8'));delete raw.planningContext;delete raw.planningContextRevision;writeFileSync(path,JSON.stringify(raw))
+ const restored=new 方案簿(path)
+ expect(restored.planningSourceState('owner').issue).toMatch(/丢失|重新确认/)
+ expect(restored.confirmPlanningSource('owner',selection(),1,2).revision).toBe(2)
+})

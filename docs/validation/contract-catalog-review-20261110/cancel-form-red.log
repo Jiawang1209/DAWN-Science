@@ -1,0 +1,385 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (20 tests | 1 failed) 476ms
+   × shares planning admission and prevents confirmation after a cancelled lease acknowledgement 78ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > shares planning admission and prevents confirmation after a cancelled lease acknowledgement
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "确认约束"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "自动安排":
+  [36m<section[39m
+    [33maria-label[39m=[32m"自动安排"[39m
+    [33mclass[39m=[32m"orchestration-advisor"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "自动安排":
+  [36m<h4 />[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"planning-contract-source"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "重新读取约束":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "正在保存…":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "生成安排":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "输入文件（每行一个）":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"输入文件（每行一个）"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  Name "产物目录":
+  [36m<input[39m
+    [33maria-label[39m=[32m"产物目录"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"results"[39m
+  [36m/>[39m
+
+  Name "分析方法":
+  [36m<input[39m
+    [33maria-label[39m=[32m"分析方法"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"mean"[39m
+  [36m/>[39m
+
+  Name "数据单位":
+  [36m<input[39m
+    [33maria-label[39m=[32m"数据单位"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"m"[39m
+  [36m/>[39m
+
+  Name "缺失值处理":
+  [36m<input[39m
+    [33maria-label[39m=[32m"缺失值处理"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"block"[39m
+  [36m/>[39m
+
+  Name "任务目标":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"任务目标"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"16000"[39m
+    [33mrows[39m=[32m"3"[39m
+  [36m/>[39m
+
+  Name "调整要求（可选）":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"调整要求（可选）"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mmaxlength[39m=[32m"4000"[39m
+    [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "增加独立数值核验":
+  [36m<input[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "要求真实执行证据":
+  [36m<input[39m
+    [33mchecked[39m=[32m""[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "要求独立审阅":
+  [36m<input[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<p[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"自动安排"[39m
+      [33mclass[39m=[32m"orchestration-advisor"[39m
+    [36m>[39m
+      [36m<h4>[39m
+        [0m自动安排[0m
+      [36m</h4>[39m
+      [36m<details[39m
+        [33mclass[39m=[32m"planning-contract-source"[39m
+        [33mopen[39m=[32m""[39m
+      [36m>[39m
+        [36m<summary>[39m
+          [0m科研任务约束[0m
+        [36m</summary>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m表格科研 · Python。确认方法、单位和交付要求后，模型可查询可信契约目录；任务数量仍由具体任务决定。[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m重新读取约束[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"planning-contract-grid"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [0m输入文件（每行一个）[0m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"输入文件（每行一个）"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mrows[39m=[32m"2"[39m
+            [36m>[39m
+              [0minput.csv[0m
+            [36m</textarea>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0m产物目录[0m
+            [36m<input[39m
+              [33maria-label[39m=[32m"产物目录"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mmaxlength[39m=[32m"2000"[39m
+              [33mvalue[39m=[32m"results"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0m分析方法[0m
+            [36m<input[39m
+              [33maria-label[39m=[32m"分析方法"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mmaxlength[39m=[32m"2000"[39m
+              [33mvalue[39m=[32m"mean"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0m数据单位[0m
+            [36m<input[39m
+              [33maria-label[39m=[32m"数据单位"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mmaxlength[39m=[32m"2000"[39m
+              [33mvalue[39m=[32m"m"[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<label>[39m
+            [0m缺失值处理[0m
+            [36m<input[39m
+              [33maria-label[39m=[32m"缺失值处理"[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mmaxlength[39m=[32m"2000"[39m
+              [33mvalue[39m=[32m"block"[39m
+            [36m/>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m增加独立数值核验[0m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"planning-contract-options"[39m
+        [36m>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mchecked[39m=[32m""[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0m要求真实执行证据[0m
+          [36m</label>[39m
+          [36m<label>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"control"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [0m要求独立审阅[0m
+          [36m</label>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"hint"[39m
+        [36m>[39m
+          [0m产物：analysis.py、result.json、report.md，保存在指定目录。确认只保存约束，不运行任务。[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m正在保存…[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m约束草稿尚未确认，普通自动安排不会采用这些字段。[0m
+        [36m</p>[39m
+      [36m</details>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m描述具体任务，DAWN 会根据目标、数据和依赖决定怎样拆分与分工。无需预先填写任务数量。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"auto-arrangement-form"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m任务目标[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"任务目标"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"16000"[39m
+            [33mrows[39m=[32m"3"[39m
+          [36m>[39m
+            [0mmean[0m
+          [36m</textarea>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m调整要求（可选）[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"调整要求（可选）"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"4000"[39m
+            [33mplaceholder[39m=[32m"例如：合并前两步，保留独立审阅"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m生成安排[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m先出方案期间只读查看；采纳后才进入原有执行与验收流程。[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/orchestration-advisor.test.tsx:205:16
+    203|  expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disa…
+    204|  fireEvent.click(screen.getByRole('button',{name:'中止规划'}));await act(a…
+    205|  expect(screen.getByRole('button',{name:'确认约束'})).toHaveProperty('disa…
+       |                ^
+    206|  await act(async()=>release({}))
+    207|  expect(get.mock.calls.some(([name])=>name==='confirmPlanningContractS…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  00:13:54
+   Duration  1.42s (transform 354ms, setup 497ms, import 36ms, tests 476ms, environment 332ms)

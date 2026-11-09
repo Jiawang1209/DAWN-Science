@@ -1,0 +1,26 @@
+{
+  "status": "authorized",
+  "clientDate": "2026-11-09",
+  "userAnswer": "新增最多 300 次请求（推荐）",
+  "maximumRequests": 300,
+  "taskIds": [
+    "short-known-mean",
+    "carbon-missing",
+    "unknown-unit"
+  ],
+  "repeats": 2,
+  "arms": [
+    "single",
+    "multi"
+  ],
+  "perArmLimit": 25,
+  "multiStageLimits": {
+    "work": 18,
+    "review": 7
+  },
+  "model": "DAWN current locally supported API model",
+  "automaticRetry": false,
+  "oldQuotaRollsOver": false,
+  "startOnlyAfterFrozenCandidate": true,
+  "realModelRequestsSoFar": 0
+}

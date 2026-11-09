@@ -1,0 +1,925 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/evaluation/research-fixture-cli.test.ts (3 tests | 1 failed) 30555ms
+   × the legacy direct fixture CLI runs the real offline batch and prints a retained report path 20517ms
+ ❯ |node| tests/runtime/plan-mode.test.ts (29 tests | 20 failed) 583ms
+     × propose_plan：发 plan 事件（第 1 版，等你看），terminate；批准：写文件、阶段回 off、开关事件、卡片已批准 66ms
+     × 改过的正文：存的是改过的、卡片 edited；不做了：什么都不存 28ms
+     × 存不下来：原样抛，卡片不变、开关不动 42ms
+     × 一轮里被改（门看不见的写法）→ 收尾恢复，并响亮地说 21ms
+     × 人在两轮之间改 → 留着、不出通知；卡片记「你改过」；下一轮 agent 再改 → 恢复成人改的那份 12ms
+     × 这一轮没跑工具：不拍底、不恢复；但「你改过」照样核对 12ms
+     × 停了再起（同一个会话目录）：阶段、已批准文件的保护都还在 12ms
+     × 排队的一句送进这一轮（queue_delivered）→ 刷新底：人在这一轮里改、再说「照我改的做」，收尾不恢复 12ms
+     × 刷新之后 agent 再改 → 恢复成人改的那份，话里带「如果这是你改的」 10ms
+     × 调整方向停下这一步之前刷新底：人在这一轮里改、Cmd+回车「照我改的做」，被停下那一轮的收尾不恢复 13ms
+     × answerPlan 双击批准：一次成、一次说「在处理」；只写一份文件、一份存档 10ms
+     × 批准与不做了挤在一起：后来的那个说「在处理」，不留孤儿文件 12ms
+     × 写完文件之后哪一步抛（簿存不下）：写下的方案文件与存档都删掉，原样抛 22ms
+     × 改过：两头空白不算改过 12ms
+     × 停止：等这一轮的收尾核对做完再扔底——停下时 agent 改了的照样恢复 10ms
+     × 轮基线按 planId 存（不按方案文件名） 17ms
+     × 在跑时 / 正在回退时不许答方案（2026-09-28）：说「还在跑」「正在回退」，簿里那版照旧能答 12ms
+     × 这一轮开头没能留底：出声但**不是 failed**（M-1，2026-09-28）——它是提醒，不收掉「正在等回话」、不报「出错」 35ms
+   × validates edited automatic task structure before saving and persists an adjusted plan in the existing book 14ms
+   × does not supersede a plan when cancellation arrives while the original plan baseline is pending 10ms
+ ❯ |node| tests/evaluation/arrangement-scenario-runner.test.ts (1 test | 1 failed) 387ms
+   × uses actual propose_plan with the shared task-driven prompt for six offline cases, without starting tasks 386ms
+ ❯ |node| tests/workbench/fault-i18n.test.ts (10 tests | 2 failed) 270ms
+     × (a) fault( 的 msgid 不许带 `${}`、不许是变量——插值走 args，别人的话走 fault原样 65ms
+     × (c) fault原样 只出现在名单里，次数也对得上——多一处就是一次有意识的决定 18ms
+ ❯ |node| tests/integration/plan-mode.test.ts (8 tests | 7 failed) 20475ms
+     × 方案期说一句 → 模型交方案 → 这一轮停下，只请求了一次 20073ms
+     × 批准之后：agent 这一轮改了方案 → 收尾恢复并出声；人两轮之间改的 → 留着、不出声、卡片记「你改过」 45ms
+     × 方案期里压缩一次：方案期还在，压完再说一句照样交方案 111ms
+     × 回退一轮方案：那一版从方案簿里摘掉（答不了、版本号接得上），上一版回到「等你看」；方案期照旧 63ms
+     × 搜索 × 方案（2026-09-28）：批准过的方案卡与之后那句都搜得到，按 id、按 nth 都跳到对的那一条 56ms
+     × 回退 × 方案（2026-09-28）：批准之后回到交方案之前 → 那版离枝：人改文件、下一轮 agent 再改，都不追加卡片、不恢复、不出声 46ms
+     × 回退 × 方案（总计划交叉点）：批准（这一轮停下之后）→ 下一轮 agent 改别的文件 → 只回退文件：方案文件一字不动 35ms
+ ❯ |node| tests/protocol/operations.test.ts (51 tests | 1 failed) 41ms
+     × 操作齐全（含 ACP 模型目录，… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 4 + 全文搜索 1 + 先出方案 1 + 模型服务测试 1） 7ms
+ ❯ |node| tests/runtime/planning-contract-book.test.ts (7 tests | 1 failed) 51ms
+   × does not project a foreign owner source even when its on-disk fields are valid 6ms
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 4 failed) 950ms
+     × 组件里的 textarea / input / select 都带 control 类 21ms
+     × 不使用 window.prompt / alert / confirm —— Electron 里它们直接抛错 12ms
+     × border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量 3ms
+     × font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家 3ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |node| tests/evaluation/research-runner.test.ts (16 tests | 3 failed) 136378ms
+   × runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline 41648ms
+   × counts real planning calls in the multi arm and compiles the model-selected task count with the same judge 30007ms
+   × keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan 30006ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 97ms
+     × **英文表里没有谁也不用的孤儿** 35ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 41 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: planning-contract-source-form.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "39: const field=(name:string,value:string,set:(value:string)=>void,multiline=false)=><label>{t(name)}{multiline?<textarea className=\"control\" aria-label={t(name)} rows={2} value={value} onChange={e=>set(e.target.value)} disabled={locked}/>:<input className=\"control\" aria-label={t(name)} value={value} maxLength={2000} onChange={e=>set(e.target.value)} disabled={locked}/>}</label>",
++   "44: {route?<label>{t('关联分析路线步骤')}<select className=\"control\" aria-label={t('关联分析路线步骤')} value={step} disabled={locked} onChange={e=>{setStep(e.target.value);const chosen=route.steps.find(s=>s.id===e.target.value);if(chosen)setInputs(chosen.inputs.join('\\n'))}}><option value=\"\">{t('不关联路线')}</option>{route.steps.filter(s=>s.status!=='skipped').map(s=><option key={s.id} value={s.id}>{s.title}</option>)}</select></label>:null}",
++   "48: <label><input type=\"checkbox\" checked={numeric} disabled={locked} onChange={e=>setNumeric(e.target.checked)}/>{t('增加独立数值核验')}</label>",
++   "49: {numeric?<div className=\"planning-contract-grid\">{field('核验数据文件',dataPath,setDataPath)}{field('核验列名',column,setColumn)}<label>{t('核验指标')}<select className=\"control\" aria-label={t('核验指标')} value={metric} disabled={locked} onChange={e=>setMetric(e.target.value as typeof metric)}>{['mean','sum','min','max'].map(s=><option key={s}>{s}</option>)}</select></label><label>{t('数值缺失规则')}<select className=\"control\" aria-label={t('数值缺失规则')} value={missingRule} disabled={locked} onChange={e=>setMissingRule(e.target.value as typeof missingRule)}><option value=\"\">{t('请选择')}</option><option value=\"block\">{t('遇到缺失时停止')}</option><option value=\"drop\">{t('排除缺失值后计算')}</option></select></label></div>:null}",
++   "50: <div className=\"planning-contract-options\"><label><input type=\"checkbox\" checked={execute} disabled={locked} onChange={e=>setExecute(e.target.checked)}/>{t('要求真实执行证据')}</label><label><input type=\"checkbox\" checked={review} disabled={locked} onChange={e=>setReview(e.target.checked)}/>{t('要求独立审阅')}</label></div>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/41]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 已经踩过的坑 > 不使用 window.prompt / alert / confirm —— Electron 里它们直接抛错
+AssertionError: planning-contract-source-form.tsx：用应用内对话框或 pickDirectory 这类原生桥接: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "52: <div className=\"orchestration-advisor-actions\"><Button size=\"sm\" variant=\"outline\" disabled={locked} onClick={()=>{void confirm()}}>{pending?t('正在保存…'):t('确认约束')}</Button>{state&&state.revision>0?<Button size=\"sm\" variant=\"ghost\" disabled={locked} onClick={()=>{void confirm(true)}}>{t('清除约束')}</Button>:null}</div>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:451:58
+    449|     for (const f of tsxFiles()) {
+    450|       const hits = findLines(read(f), (l) => /\b(window\.)?(prompt|ale…
+    451|       expect(hits, `${f}：用应用内对话框或 pickDirectory 这类原生桥接`).toEqual([])
+       |                                                          ^
+    452|     }
+    453|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/41]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > border-radius 一律走 --dawn-radius-* —— `999px` 这种字面量会绕过全局圆角标量
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9748: .planning-contract-source { margin: 12px 0; padding: 12px; border: 1px solid var(--border); border-radius: 10px; }",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:520:23
+    518|       (l) => /border-radius:/.test(l) && !/--dawn-radius-/.test(l) && …
+    519|     )
+    520|     expect(offenders).toEqual([])
+       |                       ^
+    521|   })
+    522|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/41]⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 几何只从令牌来 > font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "9749: .planning-contract-source summary { cursor: pointer; font-weight: 600; }",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:685:23
+    683|   it("font-weight 只走 --dawn-weight-* —— `600` 与 semibold 令牌是同一个数的两个家",…
+    684|     const offenders = findLines(read("styles.css"), (l) => /font-weigh…
+    685|     expect(offenders).toEqual([])
+       |                       ^
+    686|   })
+    687|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/41]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **英文表里没有谁也不用的孤儿**
+AssertionError: 没有任何调用点用它们——要么是原文改过了，要么该删: expected [ '科研任务约束', …(29) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "科研任务约束",
++   "表格科研 · Python。确认方法、单位和交付要求后，模型可查询可信契约目录；任务数量仍由具体任务决定。",
++   "仍可使用普通自动安排。",
++   "关联分析路线步骤",
++   "不关联路线",
++   "输入文件（每行一个）",
++   "产物目录",
++   "分析方法",
++   "数据单位",
++   "缺失值处理",
++   "增加独立数值核验",
++   "核验数据文件",
++   "核验列名",
++   "核验指标",
++   "数值缺失规则",
++   "遇到缺失时停止",
++   "排除缺失值后计算",
++   "要求真实执行证据",
++   "要求独立审阅",
++   "产物：analysis.py、result.json、report.md，保存在指定目录。确认只保存约束，不运行任务。",
++   "正在保存…",
++   "确认约束",
++   "清除约束",
++   "约束已保存，请重新安排；旧方案需重新生成，已批准任务保持原冻结快照。",
++   "已确认第 {0} 版约束。生成安排后，仍需单独采纳方案。",
++   "请补齐输入、产物目录、方法、单位和缺失值处理；数值核验还需要数据文件、列名和规则。",
++   "会话正在处理，请稍后确认约束。",
++   "约束确认已取消；请重新查看当前会话状态。",
++   "重新读取约束",
++   "关联路线暂不可用，请重新读取并核对；不会自动取消路线绑定。",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:122:45
+    120|     for (const id of Object.values(通知文案)) 用到的.add(id)
+    121|     const 孤儿 = Object.keys(EN).filter((k) => !用到的.has(k))
+    122|     expect(孤儿, "没有任何调用点用它们——要么是原文改过了，要么该删").toEqual([])
+       |                                             ^
+    123|   })
+    124| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/41]⎯
+
+ FAIL  |node| tests/evaluation/arrangement-scenario-runner.test.ts > uses actual propose_plan with the shared task-driven prompt for six offline cases, without starting tasks
+Error: 本地自动安排场景存在失败；查看保留报告
+ ❯ runArrangementScenarioEvaluation scripts/evaluate-arrangement-scenarios.ts:62:56
+
+ ❯ tests/evaluation/arrangement-scenario-runner.test.ts:9:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/41]⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-cli.test.ts > the legacy direct fixture CLI runs the real offline batch and prints a retained report path
+Error: Command failed: /Users/liuyue/.hermes/node/bin/node --import tsx /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/scripts/evaluate-research-fixture.ts /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-fixture-cli-upsEdn
+Error: 本地科研评测未通过；保留原始报告，不覆盖或重跑
+    at runResearchFixtureEvaluation (/Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/scripts/evaluate-research-fixture.ts:29:71)
+    at async runResearchFixtureCommand (/Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/scripts/evaluate-research-fixture.ts:40:13)
+    at async <anonymous> (/Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/scripts/evaluate-research-fixture.ts:50:3)
+
+ ❯ runResearchFixtureEvaluation scripts/evaluate-research-fixture.ts:29:71
+
+ ❯ runResearchFixtureCommand scripts/evaluate-research-fixture.ts:40:13
+ ❯ <anonymous> scripts/evaluate-research-fixture.ts:50:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/41]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline
+AssertionError: [{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"carbon-missing","mode":"single","repeat":1,"fingerprint":"d0b713705f19473e2b8c273e981bd58f0982f2196f36ffb374b40dfbbed20246","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":2804,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2","bytes":347},{"path":"results/result.json","sha256":"51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544","bytes":53},{"path":"results/report.md","sha256":"98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447","bytes":65}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":72,"output":48,"cacheRead":0,"visibleTokens":120,"scopes":2,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":2},"review":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1}},"totalUsage":{"input":120,"output":80,"cacheRead":0,"visibleTokens":200,"scopes":3,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":3},"submissionDiagnostics":{"hostAttempts":3,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"carbon-missing","mode":"multi","repeat":1,"fingerprint":"d0b713705f19473e2b8c273e981bd58f0982f2196f36ffb374b40dfbbed20246","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"submissionAttempts":3,"invalidSubmissions":0,"elapsedMs":6571,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2","bytes":347},{"path":"results/result.json","sha256":"51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544","bytes":53},{"path":"results/report.md","sha256":"98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447","bytes":65}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":24,"output":16,"cacheRead":0,"visibleTokens":40,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":24,"output":16,"cacheRead":0,"visibleTokens":40,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"unknown-unit","mode":"multi","repeat":1,"fingerprint":"f47bf7662f0cc4e961271aba61656aef778ae342164f168ca7c7867cde355f5e","terminal":"blocked","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":2,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":1567,"usage":{"visibleTokens":40,"unknownUsageTasks":0,"partialUsage":false},"versions":[]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":24,"output":16,"cacheRead":0,"visibleTokens":40,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":24,"output":16,"cacheRead":0,"visibleTokens":40,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"unknown-unit","mode":"single","repeat":1,"fingerprint":"f47bf7662f0cc4e961271aba61656aef778ae342164f168ca7c7867cde355f5e","terminal":"blocked","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":2,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":1376,"usage":{"visibleTokens":40,"unknownUsageTasks":0,"partialUsage":false},"versions":[]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"short-known-mean","mode":"single","repeat":1,"fingerprint":"5ac1c559eab35989d3795271bc162de4ef5ecc0af986220e53b5df4625ce008a","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":1691,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf","bytes":350},{"path":"results/result.json","sha256":"ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d","bytes":41},{"path":"results/report.md","sha256":"5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80","bytes":65}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":72,"output":48,"cacheRead":0,"visibleTokens":120,"scopes":2,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":2},"review":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1}},"totalUsage":{"input":120,"output":80,"cacheRead":0,"visibleTokens":200,"scopes":3,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":3},"submissionDiagnostics":{"hostAttempts":3,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"short-known-mean","mode":"multi","repeat":1,"fingerprint":"5ac1c559eab35989d3795271bc162de4ef5ecc0af986220e53b5df4625ce008a","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"submissionAttempts":3,"invalidSubmissions":0,"elapsedMs":3584,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf","bytes":350},{"path":"results/result.json","sha256":"ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d","bytes":41},{"path":"results/report.md","sha256":"5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80","bytes":65}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":72,"output":48,"cacheRead":0,"visibleTokens":120,"scopes":2,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":2},"review":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1}},"totalUsage":{"input":120,"output":80,"cacheRead":0,"visibleTokens":200,"scopes":3,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":3},"submissionDiagnostics":{"hostAttempts":3,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"moisture-strata","mode":"multi","repeat":1,"fingerprint":"a248438a4a07c3d2fbbaee8e08cf403fb9f218960c702863ad3225017dc9b4d4","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"submissionAttempts":3,"invalidSubmissions":0,"elapsedMs":3190,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"70e5298a662e7798446c4c0d9d857f267cfc36048f042292d4b16c01d8dee10e","bytes":344},{"path":"results/result.json","sha256":"fbcadfa717d9620e64b9a0abde134c55f7410b79b1778880b28805eda229414a","bytes":37},{"path":"results/report.md","sha256":"929e713a93be043b49d2c6cba7432de9b22c2e526b1b62311a5250f3f8b16d60","bytes":63}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"moisture-strata","mode":"single","repeat":1,"fingerprint":"a248438a4a07c3d2fbbaee8e08cf403fb9f218960c702863ad3225017dc9b4d4","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":1304,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"70e5298a662e7798446c4c0d9d857f267cfc36048f042292d4b16c01d8dee10e","bytes":344},{"path":"results/result.json","sha256":"fbcadfa717d9620e64b9a0abde134c55f7410b79b1778880b28805eda229414a","bytes":37},{"path":"results/report.md","sha256":"929e713a93be043b49d2c6cba7432de9b22c2e526b1b62311a5250f3f8b16d60","bytes":63}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"negative-zero-mean","mode":"single","repeat":1,"fingerprint":"a056b00079912c124d9405cedbfc75cf73bf6e3bf3f3c63ebf50e7cce9fc01d1","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":1352,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779","bytes":336},{"path":"results/result.json","sha256":"68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3","bytes":34},{"path":"results/report.md","sha256":"1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b","bytes":63}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":72,"output":48,"cacheRead":0,"visibleTokens":120,"scopes":2,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":2},"review":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1}},"totalUsage":{"input":120,"output":80,"cacheRead":0,"visibleTokens":200,"scopes":3,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":3},"submissionDiagnostics":{"hostAttempts":3,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"negative-zero-mean","mode":"multi","repeat":1,"fingerprint":"a056b00079912c124d9405cedbfc75cf73bf6e3bf3f3c63ebf50e7cce9fc01d1","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"submissionAttempts":3,"invalidSubmissions":0,"elapsedMs":4030,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"efa3515f2022c98eada8b5725189d63f1d0242e847433b70c68c1638c541f779","bytes":336},{"path":"results/result.json","sha256":"68b621f7c3b5b6a43f0831df9c0209db5fe2ea48e19930bbaf78988d37fd4fe3","bytes":34},{"path":"results/report.md","sha256":"1d2ea9c3b99768618395ab973b4f23cf7cd539b562c3ba88c8d2397c60d5f92b","bytes":63}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":72,"output":48,"cacheRead":0,"visibleTokens":120,"scopes":2,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":2},"review":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1}},"totalUsage":{"input":120,"output":80,"cacheRead":0,"visibleTokens":200,"scopes":3,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":3},"submissionDiagnostics":{"hostAttempts":3,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"duplicate-sites","mode":"multi","repeat":1,"fingerprint":"252562cce05a8afc44904cc2305013956f9894a7be0f28ea2684b91ffa0c9ee6","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"submissionAttempts":3,"invalidSubmissions":0,"elapsedMs":3582,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"2dedab6d4c4a46da64db9890e093a2a130b872a3ad0cf133c6b6413be40cceeb","bytes":348},{"path":"results/result.json","sha256":"c6494e15d915a8bf4b19d62cf63ccf65e6a302594189a68c879a8d74b486624f","bytes":37},{"path":"results/report.md","sha256":"0175bb51db8aabafb039186d099ccd59c7835d9ef9c232d4b05fa4fc924ef9cc","bytes":66}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1},"submissionDiagnostics":{"hostAttempts":1,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"duplicate-sites","mode":"single","repeat":1,"fingerprint":"252562cce05a8afc44904cc2305013956f9894a7be0f28ea2684b91ffa0c9ee6","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":4,"submissionAttempts":1,"invalidSubmissions":0,"elapsedMs":1604,"usage":{"visibleTokens":80,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"2dedab6d4c4a46da64db9890e093a2a130b872a3ad0cf133c6b6413be40cceeb","bytes":348},{"path":"results/result.json","sha256":"c6494e15d915a8bf4b19d62cf63ccf65e6a302594189a68c879a8d74b486624f","bytes":37},{"path":"results/report.md","sha256":"0175bb51db8aabafb039186d099ccd59c7835d9ef9c232d4b05fa4fc924ef9cc","bytes":66}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":72,"output":48,"cacheRead":0,"visibleTokens":120,"scopes":2,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":2},"review":{"input":48,"output":32,"cacheRead":0,"visibleTokens":80,"scopes":1,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":1}},"totalUsage":{"input":120,"output":80,"cacheRead":0,"visibleTokens":200,"scopes":3,"state":"partial","partialUsage":true,"partialFields":["cacheRead"],"unknownScopes":3},"submissionDiagnostics":{"hostAttempts":3,"hostRejected":0,"sdkRejected":0,"outputLimitNotExecuted":0,"source":"host-and-transcript","complete":true},"diagnosticReadIssues":[],"caseId":"carbon-missing","mode":"multi","repeat":2,"fingerprint":"1dba2fd01086c0a0282a5b39b851ece25af63d372518824d0506dcbbe72450ff","terminal":"accepted","success":true,"falseAcceptance":false,"inputPreserved":true,"requests":10,"submissionAttempts":3,"invalidSubmissions":0,"elapsedMs":4467,"usage":{"visibleTokens":200,"unknownUsageTasks":0,"partialUsage":false},"versions":[{"path":"results/analysis.py","sha256":"a7945da56392b7d3c1d6b818221b2ebb3b46164f62affdc1e10781961c0b66d2","bytes":347},{"path":"results/result.json","sha256":"51f5022eca19cbcaeabfcf16290400bf775eaf7938a0ccaa76886deebe9a2544","bytes":53},{"path":"results/report.md","sha256":"98d9a882a215dbecd368db2cbae88abf048beb77bf37eb823a4915c4cd700447","bytes":65}]},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"carbon-missing","mode":"single","repeat":2,"fingerprint":"1dba2fd01086c0a0282a5b39b851ece25af63d372518824d0506dcbbe72450ff","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"unknown-unit","mode":"single","repeat":2,"fingerprint":"cdf7abcdde07eed9a549a590ff3a78eac99702dca53b6988e5d2a2e16acee071","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"unknown-unit","mode":"multi","repeat":2,"fingerprint":"cdf7abcdde07eed9a549a590ff3a78eac99702dca53b6988e5d2a2e16acee071","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"short-known-mean","mode":"multi","repeat":2,"fingerprint":"f61c67f9f36a3f896e6f19408105739b03af50b646433bfa50212bf6d5f75330","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"short-known-mean","mode":"single","repeat":2,"fingerprint":"f61c67f9f36a3f896e6f19408105739b03af50b646433bfa50212bf6d5f75330","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"moisture-strata","mode":"single","repeat":2,"fingerprint":"59ad722044917dacfd12f78356aa571054b8d73facc3b0987ef2f0042659d124","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"moisture-strata","mode":"multi","repeat":2,"fingerprint":"59ad722044917dacfd12f78356aa571054b8d73facc3b0987ef2f0042659d124","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"negative-zero-mean","mode":"multi","repeat":2,"fingerprint":"aab65cceef703338b94241435ceb6481c836f347bc027de0eeccf067ee4c53a2","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"negative-zero-mean","mode":"single","repeat":2,"fingerprint":"aab65cceef703338b94241435ceb6481c836f347bc027de0eeccf067ee4c53a2","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"duplicate-sites","mode":"single","repeat":2,"fingerprint":"50c293ddc1ddf4fb75a8247d1eb08989109da21218a2f2013ccae1152547fc83","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"},{"phaseUsage":{"planning":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"execution":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"review":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0}},"totalUsage":{"input":null,"output":null,"cacheRead":null,"visibleTokens":null,"scopes":0,"state":"not-run","partialUsage":false,"partialFields":[],"unknownScopes":0},"caseId":"duplicate-sites","mode":"multi","repeat":2,"fingerprint":"50c293ddc1ddf4fb75a8247d1eb08989109da21218a2f2013ccae1152547fc83","terminal":"not-run","success":false,"falseAcceptance":false,"inputPreserved":null,"requests":0,"elapsedMs":0,"usage":{"visibleTokens":0,"unknownUsageTasks":0,"partialUsage":false},"versions":[],"reason":"候选或模型配置变化，未启动"}]: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/evaluation/research-runner.test.ts:116:95
+    114|   expect(report.version).toBe(2)
+    115|   expect('submissionDiagnostics' in report).toBe(false) // observation…
+    116|   expect(report.rows.every(r=>r.submissionDiagnostics?.complete),JSON.…
+       |                                                                                               ^
+    117|   expect(report.rows.every(r=>r.submissionDiagnostics?.sdkRejected===0…
+    118|   const manifest=JSON.parse(readFileSync(join(root,'results/research-m…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/41]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts real planning calls in the multi arm and compiles the model-selected task count with the same judge
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/evaluation/research-runner.test.ts:224:1
+    222|  }finally{await server.close()}
+    223| },30000)
+    224| it('counts real planning calls in the multi arm and compiles the model…
+       | ^
+    225|  const root=mkdtempSync(join(tmpdir(),'dawn-research-auto-'));roots.pu…
+    226|  const ordinary=researchScenario(researchTasks())
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/41]⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/evaluation/research-runner.test.ts:255:1
+    253| },30000)
+    254|
+    255| it('keeps independently frozen check/analyze/review routes and guidanc…
+       | ^
+    256|  const {startEvaluationGate}=await import('../../scripts/evaluation-re…
+    257|  const root=mkdtempSync(join(tmpdir(),'dawn-auto-stage-routes-'));root…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 方案期说一句 → 模型交方案 → 这一轮停下，只请求了一次
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ vi.waitFor.timeout tests/integration/plan-mode.test.ts:57:72
+     55|       const 之前 = server.requests.length
+     56|       runtime.write("s-plan", "分析一下吸烟和肺功能")
+     57|       await vi.waitFor(() => expect(事件.some((e) => e.kind === "plan"))…
+       |                                                                        ^
+     58|       await runtime.waitForIdle("s-plan")
+     59|       expect(server.requests.length - 之前, "交完方案还又问了模型一次——terminate 没穿过…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 批准之后：agent 这一轮改了方案 → 收尾恢复并出声；人两轮之间改的 → 留着、不出声、卡片记「你改过」
+TypeError: Cannot read properties of undefined (reading 'plan')
+ ❯ tests/integration/plan-mode.test.ts:89:64
+     87|       await 说("分析一下吸烟和肺功能")
+     88|       const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEven…
+     89|       const { savedPath } = await runtime.answerPlan("s-d3", 卡.plan.pl…
+       |                                                                ^
+     90|       const 文件 = join(workspace, savedPath!)
+     91|       const 原文 = readFileSync(文件, "utf8")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 方案期里压缩一次：方案期还在，压完再说一句照样交方案
+AssertionError: expected undefined to match object { plan: { version: 3, …(1) } }
+
+- Expected:
+{
+  "plan": {
+    "status": "proposed",
+    "version": 3,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/integration/plan-mode.test.ts:132:58
+    130|       expect(runtime.configOptions("s-compact")!.find((o) => o.id === …
+    131|       await 说("第三句")
+    132|       expect(事件.filter((e) => e.kind === "plan").at(-1)).toMatchObject…
+       |                                                          ^
+    133|     } finally {
+    134|       await runtime.stop("s-compact")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 回退一轮方案：那一版从方案簿里摘掉（答不了、版本号接得上），上一版回到「等你看」；方案期照旧
+AssertionError: expected [] to deeply equal [ 1, 2 ]
+
+- Expected
++ Received
+
+- [
+-   1,
+-   2,
+- ]
++ []
+
+ ❯ tests/integration/plan-mode.test.ts:145:39
+    143|       await 说("重写一版")
+    144|       const 版 = 事件.flatMap((e) => (e.kind === "plan" && e.plan.status …
+    145|       expect(版.map((p) => p.version)).toEqual([1, 2])
+       |                                       ^
+    146|       const r = await runtime.rewind("s-rewind", { 倒数第几句: 1, 文: "重写一版"…
+    147|       expect(r.conversationError).toBeUndefined()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 搜索 × 方案（2026-09-28）：批准过的方案卡与之后那句都搜得到，按 id、按 nth 都跳到对的那一条
+TypeError: Cannot read properties of undefined (reading 'plan')
+ ❯ tests/integration/plan-mode.test.ts:168:36
+    166|     await 说("分析一下吸烟和肺功能")
+    167|     const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEvent,…
+    168|     await runtime.answerPlan(id, 卡.plan.planId, "approve")
+       |                                    ^
+    169|     await 说("FEV1 再看一眼")
+    170|     await runtime.stop(id)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 回退 × 方案（2026-09-28）：批准之后回到交方案之前 → 那版离枝：人改文件、下一轮 agent 再改，都不追加卡片、不恢复、不出声
+TypeError: Cannot read properties of undefined (reading 'plan')
+ ❯ tests/integration/plan-mode.test.ts:208:60
+    206|       await 说("分析一下吸烟和肺功能")
+    207|       const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEven…
+    208|       const { savedPath } = await runtime.answerPlan(id, 卡.plan.planId…
+       |                                                            ^
+    209|       const 文件 = join(workspace, savedPath!)
+    210|       await 说(执行那句(savedPath!, false))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/41]⎯
+
+ FAIL  |node| tests/integration/plan-mode.test.ts > 先出方案 · 真 pi > 回退 × 方案（总计划交叉点）：批准（这一轮停下之后）→ 下一轮 agent 改别的文件 → 只回退文件：方案文件一字不动
+TypeError: Cannot read properties of undefined (reading 'plan')
+ ❯ tests/integration/plan-mode.test.ts:239:60
+    237|       await 说("分析一下吸烟和肺功能")
+    238|       const 卡 = 事件.find((e) => e.kind === "plan") as Extract<AgentEven…
+    239|       const { savedPath } = await runtime.answerPlan(id, 卡.plan.planId…
+       |                                                            ^
+    240|       const 文件 = join(workspace, savedPath!)
+    241|       const 原文 = readFileSync(文件, "utf8")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 交方案 → 批准 > propose_plan：发 plan 事件（第 1 版，等你看），terminate；批准：写文件、阶段回 off、开关事件、卡片已批准
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/runtime/plan-mode.test.ts:189:25
+    187|     await rt.setConfigOption("p1", "dawn.plan", "1")
+    188|     const r = await 跑(s, "propose_plan", 假方案, "c1")
+    189|     expect(r.terminate).toBe(true)
+       |                         ^
+    190|     expect(事件.filter((e) => e.kind === "plan").at(-1)).toMatchObject({…
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 交方案 → 批准 > 改过的正文：存的是改过的、卡片 edited；不做了：什么都不存
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ tests/runtime/plan-mode.test.ts:222:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 交方案 → 批准 > 存不下来：原样抛，卡片不变、开关不动
+AssertionError: expected [Function] to not throw an error but 'Error: 没有这一版方案：c1' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"Error: 没有这一版方案：c1"
+
+ ❯ tests/runtime/plan-mode.test.ts:242:109
+    240|     await expect(rt.answerPlan!("p1", "c1", "approve")).rejects.toThro…
+    241|     expect(开关值(rt)).toBe("1")
+    242|     expect(() => (rt as unknown as { 方案簿(id: string): { 可答(p: string):…
+       |                                                                                                             ^
+    243|     await rt.stop("p1")
+    244|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > D3：已批准的方案——agent 这一轮改的恢复，人两轮之间改的留着（2026-09-28 定案） > 一轮里被改（门看不见的写法）→ 收尾恢复，并响亮地说
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:252:38
+ ❯ tests/runtime/plan-mode.test.ts:258:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > D3：已批准的方案——agent 这一轮改的恢复，人两轮之间改的留着（2026-09-28 定案） > 人在两轮之间改 → 留着、不出通知；卡片记「你改过」；下一轮 agent 再改 → 恢复成人改的那份
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:252:38
+ ❯ tests/runtime/plan-mode.test.ts:268:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > D3：已批准的方案——agent 这一轮改的恢复，人两轮之间改的留着（2026-09-28 定案） > 这一轮没跑工具：不拍底、不恢复；但「你改过」照样核对
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:252:38
+ ❯ tests/runtime/plan-mode.test.ts:289:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 续接 > 停了再起（同一个会话目录）：阶段、已批准文件的保护都还在
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ tests/runtime/plan-mode.test.ts:312:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 排队的一句送进这一轮（queue_delivered）→ 刷新底：人在这一轮里改、再说「照我改的做」，收尾不恢复
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:329:38
+ ❯ tests/runtime/plan-mode.test.ts:342:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 刷新之后 agent 再改 → 恢复成人改的那份，话里带「如果这是你改的」
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:329:38
+ ❯ tests/runtime/plan-mode.test.ts:359:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 调整方向停下这一步之前刷新底：人在这一轮里改、Cmd+回车「照我改的做」，被停下那一轮的收尾不恢复
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:329:38
+ ❯ tests/runtime/plan-mode.test.ts:375:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > answerPlan 双击批准：一次成、一次说「在处理」；只写一份文件、一份存档
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/runtime/plan-mode.test.ts:400:55
+    398|     await 跑(s, "propose_plan", 假方案, "c1")
+    399|     const r = await Promise.allSettled([rt.answerPlan!("p1", "c1", "ap…
+    400|     expect(r.filter((x) => x.status === "fulfilled")).toHaveLength(1)
+       |                                                       ^
+    401|     expect(String((r.find((x) => x.status === "rejected") as PromiseRe…
+    402|     expect(readdirSync(join(spec.workspace, "analysis", "plans"))).toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 批准与不做了挤在一起：后来的那个说「在处理」，不留孤儿文件
+AssertionError: expected 'rejected' to be 'fulfilled' // Object.is equality
+
+Expected: "fulfilled"
+Received: "rejected"
+
+ ❯ tests/runtime/plan-mode.test.ts:412:26
+    410|     await 跑(s, "propose_plan", 假方案, "c1")
+    411|     const r = await Promise.allSettled([rt.answerPlan!("p1", "c1", "ap…
+    412|     expect(r[0]!.status).toBe("fulfilled")
+       |                          ^
+    413|     expect(r[1]!.status).toBe("rejected")
+    414|     expect(readdirSync(join(spec.workspace, "analysis", "plans"))).toH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 写完文件之后哪一步抛（簿存不下）：写下的方案文件与存档都删掉，原样抛
+AssertionError: expected [Function] to throw error matching /plans\.json/ but got '没有这一版方案：c1'
+
+- Expected:
+/plans\.json/
+
++ Received:
+"没有这一版方案：c1"
+
+ ❯ tests/runtime/plan-mode.test.ts:427:56
+    425|       throw new Error("plans.json 写不进去")
+    426|     }
+    427|     await expect(rt.answerPlan!("p1", "c1", "approve")).rejects.toThro…
+       |                                                        ^
+    428|     expect(readdirSync(join(spec.workspace, "analysis", "plans"))).toH…
+    429|     expect(existsSync(join(spec.sessionDir, "plans")) ? readdirSync(jo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 改过：两头空白不算改过
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ tests/runtime/plan-mode.test.ts:437:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 停止：等这一轮的收尾核对做完再扔底——停下时 agent 改了的照样恢复
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:329:38
+ ❯ tests/runtime/plan-mode.test.ts:443:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 轮基线按 planId 存（不按方案文件名）
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:329:38
+ ❯ tests/runtime/plan-mode.test.ts:460:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 在跑时 / 正在回退时不许答方案（2026-09-28）：说「还在跑」「正在回退」，簿里那版照旧能答
+AssertionError: expected [Function] to not throw an error but 'Error: 没有这一版方案：c1' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"Error: 没有这一版方案：c1"
+
+ ❯ tests/runtime/plan-mode.test.ts:481:109
+    479|     await expect(rt.answerPlan!("p1", "c1", "approve")).rejects.toThro…
+    480|     会.回退中 = false
+    481|     expect(() => (rt as unknown as { 方案簿(id: string): { 可答(p: string):…
+       |                                                                                                             ^
+    482|     await rt.stop("p1")
+    483|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > 审查 09-28：轮基线跟着人的话刷新、answerPlan 一次只答一次、停止不抢在恢复前面 > 这一轮开头没能留底：出声但**不是 failed**（M-1，2026-09-28）——它是提醒，不收掉「正在等回话」、不报「出错」
+Error: 没有这一版方案：c1
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:155:19
+    153|   可答(planId: string): 方案 {
+    154|     const p = this.内.方案们.find((x) => x.planId === planId)
+    155|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+       |                   ^
+    156|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    157|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+ ❯ NativeRuntime.真答方案 src/runtime/native.ts:4314:19
+ ❯ NativeRuntime.answerPlan src/runtime/native.ts:4254:25
+ ❯ 批一份 tests/runtime/plan-mode.test.ts:329:38
+ ❯ tests/runtime/plan-mode.test.ts:495:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > validates edited automatic task structure before saving and persists an adjusted plan in the existing book
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/runtime/plan-mode.test.ts:513:92
+    511|  try{
+    512|   await x.rt.setConfigOption('p1','dawn.plan','1')
+    513|   const r=await 跑(x.s,'propose_plan',{...假方案,arrangement},'auto-plan')…
+       |                                                                                            ^
+    514|   await expect(x.rt.answerPlan('p1','auto-plan','approve',假方案.plan)).r…
+    515|   expect(existsSync(join(x.spec.workspace,'analysis/plans'))).toBe(fal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/41]⎯
+
+ FAIL  |node| tests/runtime/plan-mode.test.ts > does not supersede a plan when cancellation arrives while the original plan baseline is pending
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/runtime/plan-mode.test.ts:540:16
+    538|   expect((await pending).isError).toBe(true)
+    539|   const rows=JSON.parse(readFileSync(join(x.spec.sessionDir,'plans.jso…
+    540|   expect(rows).toHaveLength(1);expect(rows[0]).toMatchObject({planId:'…
+       |                ^
+    541|  }finally{release?.();await x.rt.stop('p1');rmSync(x.spec.workspace,{r…
+    542| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/41]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > does not project a foreign owner source even when its on-disk fields are valid
+AssertionError: expected { template: { …(6) }, …(8) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "confirmedAt": 1794238844898,
+  "independentReview": true,
+  "inputs": [
+    "input.csv",
+  ],
+  "outputRoot": "results/study",
+  "ownerSessionId": "other",
+  "requireExecution": true,
+  "revision": 1,
+  "template": {
+    "id": "tabular-ecology",
+    "language": "python",
+    "method": "mean",
+    "missingValues": "block",
+    "units": "m",
+    "version": 1,
+  },
+  "version": 1,
+}
+
+ ❯ tests/runtime/planning-contract-book.test.ts:77:57
+     75|  book.confirmPlanningSource('other',selection(),0)
+     76|  const view=book.planningSourceState('owner')
+     77|  expect(view.issue).toMatch(/当前会话/);expect(view.source).toBeUndefined(…
+       |                                                         ^
+     78| })
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/41]⎯
+
+ FAIL  |node| tests/protocol/operations.test.ts > 操作注册表 > 操作齐全（含 ACP 模型目录，… + 远端连接 5 + 远端会话 1 + 任务 4 + 技能 1 + 默认工作目录 2 + 权限 2 + MCP 6 + 视觉 3 + 用量 1 + ACP 权限 1 + ACP 开关 1 + ACP 适配器 3 + 下载目录 2 + 传输 3 + 微信 8 + 增强 2 + 文件搜索 1 + 技能管理 3 + 归档 3 + 定时 6 + 子 agent 名册 3 + 导出 1 + @ 引用设置 2 + 插件 2 + 浏览器旁观 2 + 记忆 5 + 飞书 7 + 产物 1 + 笔记本 2 + 远程内核 1 + 假服务器开关 1 + 应用内更新 6 + 本机取图 1 + 待发 1 + 侧边 1 + 压缩 1 + 回退 2 + 子 agent 看得见 2 + 桌面通知 4 + 全文搜索 1 + 先出方案 1 + 模型服务测试 1）
+AssertionError: expected [ 'abortSession', …(223) ] to deeply equal [ 'abortSession', …(221) ]
+
+- Expected
++ Received
+
+@@ -20,10 +20,11 @@
+    "captureAndRetainCurrent",
+    "checkArtifactCurrent",
+    "checkTaskArtifact",
+    "checkUpdate",
+    "compactSession",
++   "confirmPlanningContractSource",
+    "connectRemote",
+    "controlSubagent",
+    "createAnalysisDelivery",
+    "createBot",
+    "createRemoteSession",
+@@ -72,10 +73,11 @@
+    "getDefaultWorkspace",
+    "getDownloadDir",
+    "getEnvironment",
+    "getInterpreters",
+    "getPermissionMode",
++   "getPlanningContractSource",
+    "getProvenance",
+    "getProviders",
+    "getRun",
+    "getRunOverview",
+    "getSessionPermission",
+
+ ❯ tests/protocol/operations.test.ts:24:37
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/41]⎯
+
+ FAIL  |node| tests/workbench/fault-i18n.test.ts > 扫描 · 后端错误都译得了 > (a) fault( 的 msgid 不许带 `${}`、不许是变量——插值走 args，别人的话走 fault原样
+AssertionError: msgid 必须是字面中文，插值用 {0} 放进第三个实参起；原样透传改用 fault原样: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "workbench/backend.ts:4323：'没有这段会话：{0}'",
++   "workbench/backend.ts:4328：'没有这段会话：{0}'",
++ ]
+
+ ❯ tests/workbench/fault-i18n.test.ts:278:65
+    276|       }
+    277|     }
+    278|     expect(违规, "msgid 必须是字面中文，插值用 {0} 放进第三个实参起；原样透传改用 fault原样").toEqua…
+       |                                                                 ^
+    279|   })
+    280|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/41]⎯
+
+ FAIL  |node| tests/workbench/fault-i18n.test.ts > 扫描 · 后端错误都译得了 > (c) fault原样 只出现在名单里，次数也对得上——多一处就是一次有意识的决定
+AssertionError: 原样透传的地方变了。现在有：
+workbench/backend.ts:1233：消息
+workbench/backend.ts:1234：消息
+workbench/backend.ts:1235：消息
+workbench/backend.ts:1507：err.message
+workbench/backend.ts:1643：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:2268：error instanceof Error ? error.message : String(error)
+workbench/backend.ts:2460：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:2831：没续上因为 ?? (err instanceof Error ? err.message : String(err))
+workbench/backend.ts:3222：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3235：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3341：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3354：e.message
+workbench/backend.ts:3367：e.message
+workbench/backend.ts:3395：e.message
+workbench/backend.ts:3419：e.message
+workbench/backend.ts:3434：e.message
+workbench/backend.ts:3659：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3749：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:3795：r.why
+workbench/backend.ts:3799：r.why
+workbench/backend.ts:3873：r.why
+workbench/backend.ts:3961：消息
+workbench/backend.ts:4181：消息
+workbench/backend.ts:4184：消息
+workbench/backend.ts:4187：消息
+workbench/backend.ts:4188：消息
+workbench/backend.ts:4259：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:4276：消息
+workbench/backend.ts:4277：消息
+workbench/backend.ts:4278：消息
+workbench/backend.ts:4319：error instanceof Error ? error.message : String(error)
+workbench/backend.ts:4325：error instanceof Error ? error.message : String(error)
+workbench/backend.ts:4332：message
+workbench/backend.ts:4350：消息
+workbench/backend.ts:4354：消息
+workbench/backend.ts:4355：消息
+workbench/backend.ts:4357：消息
+workbench/backend.ts:4488：消息
+workbench/backend.ts:4489：消息
+workbench/backend.ts:4490：消息
+workbench/backend.ts:4503：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:4605：消息
+workbench/backend.ts:4626：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:5126：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:5331：err.message
+workbench/backend.ts:5368：err.message
+workbench/backend.ts:5465：毛病
+workbench/backend.ts:5485：毛病
+workbench/backend.ts:5508：e instanceof Error ? e.message : String(e)
+workbench/backend.ts:5639：err instanceof Error ? err.message : String(err)
+workbench/backend.ts:5723：msg
+workbench/backend.ts:5763：e instanceof Error ? e.message : String(e): expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"error instanceof Error ? error.message : String(error)\"：名单 2，实际 3",
++   "\"message\"：名单 0，实际 1",
++ ]
+
+ ❯ tests/workbench/fault-i18n.test.ts:318:52
+    316|     for (const [签名, n] of 见到) if (原样透传名单[签名] !== n) 差异.push(`${JSON.st…
+    317|     for (const 签名 of Object.keys(原样透传名单)) if (!见到.has(签名)) 差异.push(`${…
+    318|     expect(差异, `原样透传的地方变了。现在有：\n${在哪.join("\n")}`).toEqual([])
+       |                                                    ^
+    319|   })
+    320| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/41]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of null (reading '1')
+ ❯ Object.toolCall tests/evaluation/research-runner.test.ts:233:64
+ ❯ IncomingMessage.<anonymous> scripts/mock-inference-server.mjs:638:74
+ ❯ IncomingMessage.emit node:events:519:28
+ ❯ endReadableNT node:internal/streams/readable:1698:12
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:89:21
+
+This error originated in "tests/evaluation/research-runner.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "counts real planning calls in the multi arm and compiles the model-selected task count with the same judge". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of null (reading '1')
+ ❯ Object.toolCall tests/evaluation/research-runner.test.ts:263:64
+ ❯ IncomingMessage.<anonymous> scripts/mock-inference-server.mjs:638:74
+ ❯ IncomingMessage.emit node:events:519:28
+ ❯ endReadableNT node:internal/streams/readable:1698:12
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:89:21
+
+This error originated in "tests/evaluation/research-runner.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "keeps independently frozen check/analyze/review routes and guidance for a three-task automatic plan". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  10 failed | 718 passed (728)
+      Tests  41 failed | 7091 passed | 11 skipped (7143)
+     Errors  2 errors
+   Start at  23:38:55
+   Duration  215.15s (transform 30.76s, setup 92.51s, import 330.05s, tests 870.66s, environment 160.50s)

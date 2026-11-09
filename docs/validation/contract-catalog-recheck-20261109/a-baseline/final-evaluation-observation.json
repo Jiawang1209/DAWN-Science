@@ -1,0 +1,17 @@
+{
+  "inference": "localhost fixture",
+  "paidModelRequests": 0,
+  "complete": {
+    "qualifiedPairs": 6,
+    "completePairs": 6
+  },
+  "clarification": {
+    "terminal": "awaiting-info",
+    "questions": [
+      "输入单位是什么？"
+    ],
+    "successfulDelivery": false,
+    "correctBlocks": 0,
+    "executionStarted": false
+  }
+}

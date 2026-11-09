@@ -4319,6 +4319,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         throw fault原样(workbenchCode, error instanceof Error ? error.message : String(error), { code })
       }
     },
+    getPlanningContractSource: async ({sessionId}) => {
+      if (!sessions.get(sessionId)) throw fault("not_found","没有这段会话：{0}",sessionId)
+      try { return sessions.planningSource(sessionId) }
+      catch(error) { throw fault("invalid_request","科研任务约束不可用：{0}",error instanceof Error ? error.message : String(error)) }
+    },
+    confirmPlanningContractSource: async ({sessionId,selection,expectedRevision}) => {
+      if (!sessions.get(sessionId)) throw fault("not_found","没有这段会话：{0}",sessionId)
+      try { return sessions.confirmPlanningSource(sessionId,selection,expectedRevision,'user') }
+      catch(error) {
+        const message=error instanceof Error ? error.message : String(error)
+        if(/租约|版本|还在|正在|排空|修订/.test(message))throw fault("conflict","科研任务约束未更新：{0}",message)
+        throw fault("invalid_request","科研任务约束未更新：{0}",message)
+      }
+    },
     getSessionPlan: async ({ sessionId }) => {
       const option = sessions.configOptions(sessionId)?.find(o => o.id === 'dawn.plan')
       if (!option || (option.current !== '' && option.current !== '1')) throw fault("invalid_request", "这类会话没有先出方案——只有 native 会话有")

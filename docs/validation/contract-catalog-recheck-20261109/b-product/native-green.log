@@ -1,0 +1,39 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/product-planning-source.test.ts tests/runtime/approved-plan.test.ts tests/runtime/plan-mode.test.ts tests/tools/product-plan-contracts.test.ts tests/policy/plan-mode.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/policy/plan-mode.test.ts (51 tests | 1 failed) 65ms
+     × 只读的几件放（含 pi 的 ls / grep / find：不过 shell） 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/policy/plan-mode.test.ts > 方案期：名单 > 只读的几件放（含 pi 的 ls / grep / find：不过 shell）
+AssertionError: expected [ 'ask_user_question', …(28) ] to deeply equal [ 'ask_user_question', …(27) ]
+
+- Expected
++ Received
+
+@@ -4,10 +4,11 @@
+    "crossref_search",
+    "find",
+    "geo_get_series",
+    "geo_search",
+    "get_analysis_route",
++   "get_plan_contracts",
+    "grep",
+    "inspect_data",
+    "list_subagents",
+    "look_at_image",
+    "ls",
+
+ ❯ tests/policy/plan-mode.test.ts:37:31
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 109 passed (110)
+   Start at  23:26:21
+   Duration  3.48s (transform 2.57s, setup 0ms, import 7.10s, tests 2.10s, environment 0ms)

@@ -697,6 +697,22 @@ export class SessionManager {
     return runtime.actOnAnalysisRoute(sessionId, request)
   }
 
+  planningSource(sessionId:SessionId) {
+    if (!this.store.get(sessionId)) throw new Error('没有这段会话')
+    const runtime=this.bound.get(sessionId)
+    if (!runtime?.planningSource) throw new Error('此活动会话不支持科研任务约束')
+    return runtime.planningSource(sessionId)
+  }
+
+  confirmPlanningSource(sessionId:SessionId,value:unknown,expectedRevision:number,as:Holder) {
+    const lease=this.leases.current(sessionId)
+    if (!lease || lease.holder!==as) throw new Error('未持有当前会话的写入租约')
+    if (!this.store.get(sessionId)) throw new Error('没有这段会话')
+    const runtime=this.bound.get(sessionId)
+    if (!runtime?.confirmPlanningSource) throw new Error('此活动会话不支持科研任务约束')
+    return runtime.confirmPlanningSource(sessionId,value,expectedRevision)
+  }
+
   /** 这段会话有没有先出方案（2026-09-27）。**只有 native 有，有无即判据** */
   supportsPlan(sessionId: SessionId): boolean {
     return typeof this.bound.get(sessionId)?.answerPlan === "function"

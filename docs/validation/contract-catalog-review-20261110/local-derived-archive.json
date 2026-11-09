@@ -1,0 +1,20 @@
+{
+  "purpose": "Keep derived old host and failure trace archives locally; do not commit obsolete executable bundle",
+  "files": [
+    {
+      "original": "docs/validation/contract-catalog-recheck-20261109/b-product/desktop-first-failure/trace.zip",
+      "archive": "/Users/liuyue/.codex/tmp/dawn-contract-catalog-review-20261110/docs/validation/contract-catalog-recheck-20261109/b-product/desktop-first-failure/trace.zip",
+      "sha256": "a36d68f8f8f5f3fa75a849408f6a55102997820c2fa559dfbf9578f434fa1c19"
+    },
+    {
+      "original": "docs/validation/contract-catalog-recheck-20261109/c-frozen/navigation-first-failure/trace.zip",
+      "archive": "/Users/liuyue/.codex/tmp/dawn-contract-catalog-review-20261110/docs/validation/contract-catalog-recheck-20261109/c-frozen/navigation-first-failure/trace.zip",
+      "sha256": "6a2112acbad744db272f75c5361a3c92f7d80072dd80edf52d387e33b0ab4022"
+    },
+    {
+      "original": "docs/validation/contract-catalog-recheck-20261109/c-frozen/current-api-host.mjs",
+      "archive": "/Users/liuyue/.codex/tmp/dawn-contract-catalog-review-20261110/docs/validation/contract-catalog-recheck-20261109/c-frozen/current-api-host.mjs",
+      "sha256": "b99e600b24c9fc58aafa7db7da1af797733dda73696d8f1f42ef936b15698759"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/ui/planning-contract-source-form.test.tsx(8,173): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '{ name: string | undefined; }' is not assignable to parameter of type 'ByRoleOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'name' are incompatible.
+        Type 'string | undefined' is not assignable to type 'string | RegExp | ((accessibleName: string, element: Element) => boolean)'.
+          Type 'undefined' is not assignable to type 'string | RegExp | ((accessibleName: string, element: Element) => boolean)'.

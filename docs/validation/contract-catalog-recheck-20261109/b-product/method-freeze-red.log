@@ -1,0 +1,49 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/product-planning-source.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/product-planning-source.test.ts (3 tests | 1 failed) 135ms
+   × rejects an old proposal after source revision changes but keeps an already approved snapshot executable 53ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/product-planning-source.test.ts > rejects an old proposal after source revision changes but keeps an already approved snapshot executable
+AssertionError: expected 'mean\n分工：analyst\n验收条件：host checks\n整…' to contain '用户已批准方法：mean after confirmed checks'
+
+- Expected
++ Received
+
+- 用户已批准方法：mean after confirmed checks
++ mean
++ 分工：analyst
++ 验收条件：host checks
++ 整体方案用于保持方法、单位和约束；只执行当前任务的冻结契约，其他阶段由其他成员完成。
++ ## 问题与假设
++ 吸烟者的 FEV1 是否低于不吸烟者（假设：低）。
++ ## 数据与切分
++ `data/raw/lung.csv`，全部样本，不切分。
++ ## 统计检验与模型
++ Welch t 检验；线性模型 FEV1 ~ smoking + age + sex。
++ ## 图
++ 分组箱线图。
++ ## 产物
++ - `results/tables/mock_summary.csv` —— 分组汇总
++ - `figures/fev1_by_smoking.png` —— 箱线图
++
+
+ ❯ tests/runtime/product-planning-source.test.ts:55:47
+     53|   const approved=await rt.answerPlan('owner','new','approve')
+     54|   const snapshot=JSON.parse(readFileSync(join(spec.sessionDir,'plans.j…
+     55|   expect(snapshot.frozenTasks[0].description).toContain('用户已批准方法：mean …
+       |                                               ^
+     56|   expect(snapshot.frozenTasks[0].description).toContain('单位规则：m')
+     57|   rt.confirmPlanningSource('owner',null,2)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  23:38:33
+   Duration  1.80s (transform 727ms, setup 0ms, import 1.58s, tests 135ms, environment 0ms)

@@ -1,0 +1,29 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/orchestration-advisor.test.tsx (19 tests | 1 failed) 443ms
+   × releases the shared confirmation admission on a same-owner connection change without a late write to the old client 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/orchestration-advisor.test.tsx > releases the shared confirmation admission on a same-owner connection change without a late write to the old client
+AssertionError: expected <button type="button" …(2)></button> to have property "disabled" with value false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ui/orchestration-advisor.test.tsx:219:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  00:12:31
+   Duration  1.41s (transform 378ms, setup 523ms, import 36ms, tests 443ms, environment 327ms)

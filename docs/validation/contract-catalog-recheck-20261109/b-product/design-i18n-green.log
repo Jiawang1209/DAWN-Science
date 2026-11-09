@@ -1,0 +1,59 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/design-contract.test.ts tests/ui/i18n.test.ts tests/workbench/fault-i18n.test.ts tests/protocol/operations.test.ts tests/ui/planning-contract-source-form.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 2 failed) 70ms
+     × **每一个 `t()` 的 msgid 在英文表里都有** 22ms
+     × 按钮文案之间没有子串关系 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **每一个 `t()` 的 msgid 在英文表里都有**
+AssertionError: 这些句子切到英文会原样显示中文——补进 i18n/en.ts: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "planning-contract-source-form.tsx：\"请选择\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:105:50
+    103|       }
+    104|     }
+    105|     expect(缺的, "这些句子切到英文会原样显示中文——补进 i18n/en.ts").toEqual([])
+       |                                                  ^
+    106|   })
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 英文那一面也要守中文那边的规矩 > 按钮文案之间没有子串关系
+AssertionError: 按名字找就找不准了——换一个说法: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "\"Clear\" ⊂ \"Clear constraints\"",
++   "\"Reload\" ⊂ \"Reload constraints\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:209:51
+    207|       }
+    208|     }
+    209|     expect([...new Set(撞上的)], "按名字找就找不准了——换一个说法").toEqual([])
+       |                                                   ^
+    210|   })
+    211|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 172 passed (174)
+   Start at  23:42:21
+   Duration  2.06s (transform 1.49s, setup 1.65s, import 882ms, tests 1.33s, environment 1.67s)

@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/planning-contract-arrangement.test.ts (11 tests | 1 failed) 22ms
+   × does not let an additional review depend only on input checking while a valid review masks it 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/planning-contract-arrangement.test.ts > does not let an additional review depend only on input checking while a valid review masks it
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/runtime/planning-contract-arrangement.test.ts:43:45
+     41|  p.tasks.unshift({id:'check',title:'check',goal:'check',role:'check',i…
+     42|  p.tasks.push({...structuredClone(p.tasks[2]!),id:'early-review',role:…
+     43|  expect(()=>assertPlanningArrangement(c,p)).toThrow(/审阅/)
+       |                                             ^
+     44| })
+     45|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  23:21:46
+   Duration  1.01s (transform 379ms, setup 0ms, import 888ms, tests 22ms, environment 0ms)

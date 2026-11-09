@@ -1,0 +1,34 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/policy/planning-contract-read.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/policy/planning-contract-read.test.ts (1 test | 1 failed) 5ms
+   × allows only metadata querying through read-only gates, without granting code or writes 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/policy/planning-contract-read.test.ts > allows only metadata querying through read-only gates, without granting code or writes
+AssertionError: expected '当前按用户要求只讨论 / 提供代码，尚未恢复执行，不能调用 get_pla…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"当前按用户要求只讨论 / 提供代码，尚未恢复执行，不能调用 get_plan_contracts。请用文字回答，不要换用其他工具绕过；用户明确要求开始或继续执行后，在已授权任务内连续完成，不必逐步询问。"
+
+ ❯ tests/policy/planning-contract-read.test.ts:9:39
+      7|  expect(方案期判(科研契约目录工具名,{}, {方案期:true,已批准:[],workspace:'/w'}).kind).toB…
+      8|  const discussion=[{type:'message',message:{role:'user',content:'先别运行，…
+      9|  expect(讨论拒绝理由(科研契约目录工具名,discussion)).toBeUndefined()
+       |                                       ^
+     10|  expect(讨论拒绝理由('write',discussion)).toBeTruthy()
+     11|  const view=[{type:'message',message:{role:'user',content:'[analysis_r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  23:27:14
+   Duration  234ms (transform 69ms, setup 0ms, import 130ms, tests 5ms, environment 0ms)

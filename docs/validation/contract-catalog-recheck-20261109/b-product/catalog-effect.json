@@ -1,0 +1,201 @@
+{
+  "kind": "actual pure host functions",
+  "realModelRequests": 0,
+  "executionStarted": false,
+  "source": {
+    "template": {
+      "id": "tabular-ecology",
+      "version": 1,
+      "language": "python",
+      "method": "arithmetic mean",
+      "units": "m",
+      "missingValues": "block",
+      "validation": {
+        "version": 1,
+        "column": "x",
+        "metric": "mean",
+        "unit": "m",
+        "missing": "block",
+        "absoluteTolerance": 1e-9
+      }
+    },
+    "inputs": [
+      "input.csv"
+    ],
+    "outputRoot": "results/study",
+    "dataPath": "input.csv",
+    "requireExecution": true,
+    "independentReview": false,
+    "version": 1,
+    "ownerSessionId": "isolated-demo",
+    "revision": 1,
+    "confirmedAt": 1
+  },
+  "context": {
+    "ownerSessionId": "isolated-demo",
+    "revision": 1,
+    "source": {
+      "template": {
+        "id": "tabular-ecology",
+        "version": 1,
+        "language": "python",
+        "method": "arithmetic mean",
+        "units": "m",
+        "missingValues": "block",
+        "validation": {
+          "version": 1,
+          "column": "x",
+          "metric": "mean",
+          "unit": "m",
+          "missing": "block",
+          "absoluteTolerance": 1e-9
+        }
+      },
+      "inputs": [
+        "input.csv"
+      ],
+      "outputRoot": "results/study",
+      "dataPath": "input.csv",
+      "requireExecution": true,
+      "independentReview": false,
+      "version": 1,
+      "ownerSessionId": "isolated-demo",
+      "revision": 1,
+      "confirmedAt": 1
+    },
+    "contracts": {
+      "check": {
+        "submission": "tool",
+        "resultType": "data-summary",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      },
+      "analyze": {
+        "acceptance": {
+          "version": 1,
+          "kind": "tabular-ecology",
+          "scriptPath": "results/study/analysis.py",
+          "reportPath": "results/study/report.md",
+          "resultPath": "results/study/result.json",
+          "numeric": {
+            "version": 1,
+            "dataPath": "input.csv",
+            "column": "x",
+            "metric": "mean",
+            "unit": "m",
+            "missing": "block",
+            "absoluteTolerance": 1e-9
+          }
+        },
+        "submission": "tool",
+        "resultType": "model-metrics",
+        "version": 1,
+        "inputs": [
+          "input.csv"
+        ],
+        "outputs": [
+          "results/study/analysis.py",
+          "results/study/result.json",
+          "results/study/report.md"
+        ],
+        "access": "workspace-exec",
+        "requireExecution": true,
+        "requireReview": false
+      },
+      "review": {
+        "submission": "tool",
+        "resultType": "review",
+        "version": 1,
+        "inputs": [
+          "results/study/analysis.py",
+          "results/study/result.json",
+          "results/study/report.md"
+        ],
+        "outputs": [],
+        "access": "read-only",
+        "requireExecution": false,
+        "requireReview": true
+      }
+    },
+    "catalog": [
+      {
+        "reference": "check@8672d3cc8e653f68269aac7141a30900ab0af0376b6147591477ec145cb5ae25",
+        "contract": {
+          "submission": "tool",
+          "resultType": "data-summary",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        }
+      },
+      {
+        "reference": "analyze@e0345eee3c51f67ca3e7e4c4c837b4d0f990f5f1a54eebb57744d6860a695058",
+        "contract": {
+          "acceptance": {
+            "version": 1,
+            "kind": "tabular-ecology",
+            "scriptPath": "results/study/analysis.py",
+            "reportPath": "results/study/report.md",
+            "resultPath": "results/study/result.json",
+            "numeric": {
+              "version": 1,
+              "dataPath": "input.csv",
+              "column": "x",
+              "metric": "mean",
+              "unit": "m",
+              "missing": "block",
+              "absoluteTolerance": 1e-9
+            }
+          },
+          "submission": "tool",
+          "resultType": "model-metrics",
+          "version": 1,
+          "inputs": [
+            "input.csv"
+          ],
+          "outputs": [
+            "results/study/analysis.py",
+            "results/study/result.json",
+            "results/study/report.md"
+          ],
+          "access": "workspace-exec",
+          "requireExecution": true,
+          "requireReview": false
+        }
+      },
+      {
+        "reference": "review@c64ff588300873107a0684435ed528f4cccad2f0dccfa86c54cb9cab7c4a5a23",
+        "contract": {
+          "submission": "tool",
+          "resultType": "review",
+          "version": 1,
+          "inputs": [
+            "results/study/analysis.py",
+            "results/study/result.json",
+            "results/study/report.md"
+          ],
+          "outputs": [],
+          "access": "read-only",
+          "requireExecution": false,
+          "requireReview": true
+        }
+      }
+    ],
+    "fingerprint": "4752a8114d5191ce66f0e41d9c2004801f41571da763d39056ccf7defb644d83"
+  },
+  "taskCount": 1,
+  "mode": "single",
+  "independentReviewRequired": false,
+  "description": "三个可选目录条目，不强制三个任务；完整合同仍由原pipelineStageContract生成。"
+}

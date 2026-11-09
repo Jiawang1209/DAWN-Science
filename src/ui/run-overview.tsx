@@ -98,7 +98,7 @@ export function RunOverview({client,sessionId,onView,team,onPrepare,onBot,autoAr
  }
  const arrangement=autoArrangement?.plan?parseTaskArrangement(autoArrangement.plan.markdown):undefined
  const awaitingInformation=autoArrangement?.plan?.status==='proposed'&&arrangement?.state==='valid'&&arrangement.arrangement.questions.length>0
- const automatic=autoArrangement&&sessionId?<OrchestrationAdvisor key={sessionId} {...autoArrangement} ownerSessionId={sessionId} busy={autoArrangement.busy||current?.source==='live'&&runs.some(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping')}/>:null
+ const automatic=autoArrangement&&sessionId?<OrchestrationAdvisor key={sessionId} {...autoArrangement} client={client} ownerSessionId={sessionId} busy={autoArrangement.busy||current?.source==='live'&&runs.some(r=>r.phase==='running'||r.phase==='queued'||r.phase==='stopping')}/>:null
  const emptyWork=!runs.length&&!ownedTeam?.tasks.length
  const live=current?.source==='live'
  const count=current?collaborationCounts(current):undefined

@@ -46,6 +46,7 @@ import {
 } from "./entities.js"
 import { SessionSnapshotSchema } from "./events.js"
 import { SessionPermissionSchema } from './permissions.js'
+import {PlanningContractSelectionSchema,PlanningSourceStateSchema} from './planning-contract-source.js'
 import { SessionPlanSchema } from './planning.js'
 import { 够长 } from "./search-match.js"
 
@@ -1944,6 +1945,14 @@ export const OPERATIONS = {
   actOnAnalysisRoute: {
     request:AnalysisRouteActionRequestSchema.safeExtend({sessionId:z.string().min(1)}),
     response:AnalysisRouteActionResultSchema,mutating:true,
+  },
+  getPlanningContractSource: {
+    request:z.object({sessionId:z.string().min(1)}).strict(),
+    response:PlanningSourceStateSchema,mutating:false,
+  },
+  confirmPlanningContractSource: {
+    request:z.object({sessionId:z.string().min(1),expectedRevision:z.number().int().nonnegative(),selection:PlanningContractSelectionSchema.nullable()}).strict(),
+    response:PlanningSourceStateSchema,mutating:true,
   },
   answerPlan: {
     request: z

@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/workbench/planning-contract-source.test.ts tests/protocol/events.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  43 passed (43)
+   Start at  23:31:31
+   Duration  1.65s (transform 837ms, setup 0ms, import 1.76s, tests 100ms, environment 0ms)

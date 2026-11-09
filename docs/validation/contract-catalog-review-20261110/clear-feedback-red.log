@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (8 tests | 1 failed) 334ms
+   × reports a cleared source explicitly and returns edited fields to draft status 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > reports a cleared source explicitly and returns edited fields to draft status
+AssertionError: expected '约束已保存，请重新安排；旧方案需重新生成，已批准任务保持原冻结快照。' to contain '已清除'
+
+Expected: "已清除"
+Received: "约束已保存，请重新安排；旧方案需重新生成，已批准任务保持原冻结快照。"
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:73:127
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  00:14:36
+   Duration  1.24s (transform 330ms, setup 493ms, import 12ms, tests 334ms, environment 323ms)

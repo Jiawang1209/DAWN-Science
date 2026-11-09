@@ -1,0 +1,372 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-review.test.ts tests/ui/planning-contract-source-form.test.tsx
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/planning-contract-review.test.ts (2 tests | 2 failed) 14ms
+   × rolls back in-memory supersession and version allocation when a bound proposal cannot persist 11ms
+   × refuses reused model call identifiers without superseding or selecting an older plan 3ms
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (7 tests | 3 failed) 319ms
+   × preserves the confirmed numeric tolerance instead of silently replacing it with the default 19ms
+   × labels edited fields as unconfirmed rather than the active frozen source 15ms
+   × releases cancelled form admission when the client changes for the same owner and ignores the old acknowledgement 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > preserves the confirmed numeric tolerance instead of silently replacing it with the default
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…}, 1, Any{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "template": ObjectContaining {
+-       "validation": ObjectContaining {
+-         "absoluteTolerance": 0.000001,
++   {
++     "dataPath": "input.csv",
++     "independentReview": false,
++     "inputs": [
++       "input.csv",
++     ],
++     "outputRoot": "results",
++     "requireExecution": true,
++     "template": {
++       "id": "tabular-ecology",
++       "language": "python",
++       "method": "mean",
++       "missingValues": "block",
++       "units": "m",
++       "validation": {
++         "absoluteTolerance": 1e-9,
++         "column": "x",
++         "metric": "mean",
++         "missing": "block",
++         "unit": "m",
++         "version": 1,
+        },
++       "version": 1,
+      },
+    },
+    1,
+-   Any<AbortSignal>,
++   AbortSignal {
++     Symbol(kEvents): Map {},
++     Symbol(events.maxEventTargetListeners): 0,
++     Symbol(events.maxEventTargetListenersWarned): false,
++     Symbol(kHandlers): Map {},
++     Symbol(kAborted): false,
++     Symbol(kReason): undefined,
++     Symbol(kComposite): false,
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:54:18
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > labels edited fields as unconfirmed rather than the active frozen source
+AssertionError: expected '已确认第 1 版约束。生成安排后，仍需单独采纳方案。' to contain '尚未确认'
+
+Expected: "尚未确认"
+Received: "已确认第 1 版约束。生成安排后，仍需单独采纳方案。"
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:59:49
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > releases cancelled form admission when the client changes for the same owner and ignores the old acknowledgement
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "确认约束"
+
+Here are the accessible roles:
+
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"planning-contract-source"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "重新读取约束":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "正在保存…":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "输入文件（每行一个）":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"输入文件（每行一个）"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mrows[39m=[32m"2"[39m
+  [36m/>[39m
+
+  Name "产物目录":
+  [36m<input[39m
+    [33maria-label[39m=[32m"产物目录"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"results/study"[39m
+  [36m/>[39m
+
+  Name "分析方法":
+  [36m<input[39m
+    [33maria-label[39m=[32m"分析方法"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"计算均值"[39m
+  [36m/>[39m
+
+  Name "数据单位":
+  [36m<input[39m
+    [33maria-label[39m=[32m"数据单位"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"m"[39m
+  [36m/>[39m
+
+  Name "缺失值处理":
+  [36m<input[39m
+    [33maria-label[39m=[32m"缺失值处理"[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mvalue[39m=[32m"遇到缺失时停止"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "增加独立数值核验":
+  [36m<input[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "要求真实执行证据":
+  [36m<input[39m
+    [33mchecked[39m=[32m""[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  Name "要求独立审阅":
+  [36m<input[39m
+    [33mclass[39m=[32m"control"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"planning-contract-source"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<summary>[39m
+        [0m科研任务约束[0m
+      [36m</summary>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m表格科研 · Python。确认方法、单位和交付要求后，模型可查询可信契约目录；任务数量仍由具体任务决定。[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m重新读取约束[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-grid"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m输入文件（每行一个）[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"输入文件（每行一个）"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m>[39m
+            [0minput.csv[0m
+          [36m</textarea>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m产物目录[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"产物目录"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"results/study"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m分析方法[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"分析方法"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"计算均值"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m数据单位[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"数据单位"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"m"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m缺失值处理[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"缺失值处理"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"遇到缺失时停止"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"control"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"checkbox"[39m
+        [36m/>[39m
+        [0m增加独立数值核验[0m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-options"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m要求真实执行证据[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m要求独立审阅[0m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m产物：analysis.py、result.json、report.md，保存在指定目录。确认只保存约束，不运行任务。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m正在保存…[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</details>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/planning-contract-source-form.test.tsx:66:51
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-review.test.ts > rolls back in-memory supersession and version allocation when a bound proposal cannot persist
+Error: 这一版方案已经不是最新的了，看最新那一版
+ ❯ 方案簿.可答 src/runtime/plan-book.ts:160:42
+    158|     if (!p) throw new Error(`没有这一版方案：${planId}`)
+    159|     if (p.status === "approved") throw new Error("这一版方案已经批过了")
+    160|     if (p.status === "superseded") throw new Error("这一版方案已经不是最新的了，看最新那…
+       |                                          ^
+    161|     if (p.status === "discarded") throw new Error("这一版方案已经说过不做了")
+    162|     return 公开(p)
+ ❯ tests/runtime/planning-contract-review.test.ts:15:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-review.test.ts > refuses reused model call identifiers without superseding or selecting an older plan
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/runtime/planning-contract-review.test.ts:21:54
+     19| it('refuses reused model call identifiers without superseding or selec…
+     20|  const{path,book}=setup();book.收('reused','old','old body');const pers…
+     21|  expect(()=>book.收('reused','different','new body')).toThrow(/标识|重复/)
+       |                                                      ^
+     22|  expect(book.可答('reused')).toMatchObject({version:1,markdown:'old body…
+     23| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 4 passed (9)
+   Start at  00:07:33
+   Duration  1.44s (transform 508ms, setup 511ms, import 728ms, tests 334ms, environment 506ms)

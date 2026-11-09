@@ -1,8 +1,11 @@
+import {researchScenario} from './mock-research.mjs'
+const catalogFixture=researchScenario([{instructions:'本地科研契约夹具',csv:'x\n1\n2\n3\n',column:'x',unit:'m',missing:'block',expected:{mean:2,n:3}}])
 /** Local software-path fixture only; no production import and no model-quality claim. */
 export function mockApprovedTask(body){
  const text=v=>typeof v==='string'?v:Array.isArray(v)?v.map(x=>x.text??'').join(''):''
  const ms=body.messages??[];let start=-1;for(let i=ms.length-1;i>=0;i--)if(ms[i].role==='user'){start=i;break}
  const prompt=text(ms[start]?.content)
+ if(prompt.includes('本地科研契约夹具'))return catalogFixture.toolCall(body)
  if(!prompt.includes('本地自动安排夹具'))return undefined
  const raw=/任务契约（范围已冻结）：([^\n]+)/.exec(prompt)?.[1];if(!raw)return undefined
  const contract=JSON.parse(raw),calls=ms.slice(start+1).flatMap(m=>m.role==='assistant'?m.tool_calls??[]:[])

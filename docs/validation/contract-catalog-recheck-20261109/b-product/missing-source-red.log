@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-book.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/planning-contract-book.test.ts (8 tests | 1 failed) 34ms
+   × requires re-confirmation if bound proposal history survives but source metadata is missing 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/planning-contract-book.test.ts > requires re-confirmation if bound proposal history survives but source metadata is missing
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ tests/runtime/planning-contract-book.test.ts:84:54
+     82|  const raw=JSON.parse(readFileSync(path,'utf8'));delete raw.planningCo…
+     83|  const restored=new 方案簿(path)
+     84|  expect(restored.planningSourceState('owner').issue).toMatch(/丢失|重新确认/)
+       |                                                      ^
+     85|  expect(restored.confirmPlanningSource('owner',selection(),1,2).revisi…
+     86| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  23:43:48
+   Duration  757ms (transform 184ms, setup 0ms, import 637ms, tests 34ms, environment 0ms)

@@ -1,0 +1,53 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/product-planning-source.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/product-planning-source.test.ts (3 tests | 3 failed) 76ms
+   × changes a live product catalog without session reload and preserves it through restart 45ms
+   × rejects an old proposal after source revision changes but keeps an already approved snapshot executable 18ms
+   × does not replace constraints while approval is awaiting input versions or while cancellation drains 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/product-planning-source.test.ts > changes a live product catalog without session reload and preserves it through restart
+TypeError: rt.planningSource is not a function
+ ❯ tests/runtime/product-planning-source.test.ts:32:13
+     30|  const{rt,root,spec}=await setup()
+     31|  try{
+     32|   expect(rt.planningSource('owner')).toEqual({revision:0})
+       |             ^
+     33|   expect((await tool(rt,'owner','get_plan_contracts').execute('off',{}…
+     34|   rt.confirmPlanningSource('owner',selection(),0)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/runtime/product-planning-source.test.ts > rejects an old proposal after source revision changes but keeps an already approved snapshot executable
+TypeError: rt.confirmPlanningSource is not a function
+ ❯ tests/runtime/product-planning-source.test.ts:49:6
+     47|  const{rt}=await setup()
+     48|  try{
+     49|   rt.confirmPlanningSource('owner',selection(),0);await rt.setConfigOp…
+       |      ^
+     50|   rt.confirmPlanningSource('owner',{...selection(),template:{...select…
+     51|   await expect(rt.answerPlan('owner','p','approve')).rejects.toThrow(/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/runtime/product-planning-source.test.ts > does not replace constraints while approval is awaiting input versions or while cancellation drains
+TypeError: rt.confirmPlanningSource is not a function
+ ❯ tests/runtime/product-planning-source.test.ts:64:6
+     62|  const ready=new Promise<void>(r=>{entered=r}),wait=new Promise<void>(…
+     63|  try{
+     64|   rt.confirmPlanningSource('owner',selection(),0);await rt.setConfigOp…
+       |      ^
+     65|   const real=versions.captureFileVersions
+     66|   vi.spyOn(versions,'captureFileVersions').mockImplementationOnce(asyn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  23:24:36
+   Duration  1.87s (transform 819ms, setup 0ms, import 1.70s, tests 76ms, environment 0ms)

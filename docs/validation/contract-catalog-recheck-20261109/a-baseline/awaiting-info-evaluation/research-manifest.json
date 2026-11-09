@@ -1,0 +1,93 @@
+{
+  "version": 2,
+  "runId": "3b400d0b-07ac-415d-b541-8dc0e9b27577",
+  "generatedAt": "2026-11-09T15:13:40.547Z",
+  "fingerprint": "97024a403ee31e09cb16d27319865c058363d046dcf06bb7c0ee24569a95ee3e",
+  "inference": "fixture",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "modelDeclaration": {
+    "configuredReasoning": null,
+    "configuredMaxOutputTokens": null,
+    "configuredContextWindow": null,
+    "configuredInput": [
+      "text",
+      "image"
+    ],
+    "configuredApi": "openai-completions",
+    "compatibilityFingerprint": null,
+    "configuredSampling": null,
+    "unsupportedSettings": false,
+    "sampling": "not-set-by-evaluator"
+  },
+  "tasks": [
+    {
+      "caseId": "unknown-unit",
+      "inputHash": "6633b30277ec9205e3d2c50e6f8a4df3f3370504ee60c4c72c7909ca14a040be",
+      "taskFingerprint": "819c51a3a67a65742eeb59371bb13682f3f33b2e42d4208b28396f9261ff0f28",
+      "expectedOutcome": "blocked"
+    }
+  ],
+  "repeats": 1,
+  "requestAllocation": {
+    "enforced": false,
+    "perArmLimit": null,
+    "totalLimit": null,
+    "multiStageLimits": null
+  },
+  "sourceFingerprint": "61f4cdcb6deb838ac11b6853f423b8fe3a0553d3f3c92947a39196a2300aa846",
+  "childBuildFingerprint": "dbdb5d3d358816a70a68d6e740c65afa6379576b01b220d608fd46c1d72fb86b",
+  "execution": {
+    "perArmTimeoutMs": 300000,
+    "multiExecution": "automatic-plan",
+    "requestBudgetFeedback": null,
+    "tools": [
+      "read",
+      "write",
+      "bash"
+    ],
+    "permissionTier": "allow-all",
+    "maxRevisions": 0,
+    "trialSettings": {
+      "project": {
+        "retry": {
+          "enabled": false,
+          "maxRetries": 0,
+          "provider": {
+            "maxRetries": 0
+          }
+        },
+        "compaction": {
+          "enabled": false
+        },
+        "cacheWarming": "off"
+      },
+      "agent": {
+        "retry": {
+          "enabled": false,
+          "maxRetries": 0,
+          "provider": {
+            "maxRetries": 0
+          }
+        },
+        "compaction": {
+          "enabled": false
+        },
+        "cacheWarming": "off"
+      }
+    }
+  },
+  "stageModels": null,
+  "arms": [
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "mode": "single"
+    },
+    {
+      "caseId": "unknown-unit",
+      "repeat": 1,
+      "mode": "multi"
+    }
+  ]
+}

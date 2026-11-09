@@ -1,0 +1,60 @@
+{
+  "inference": "localhost-fixture",
+  "owned": [
+    94077
+  ],
+  "allExited": true,
+  "budget": {
+    "revision": 9,
+    "limits": {
+      "maxRuns": 3,
+      "maxElapsedMs": 6000,
+      "reserveReviewRuns": true
+    },
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 60,
+    "unknownRuns": 2,
+    "active": [],
+    "reviewReservations": [
+      {
+        "key": "[\"26257f91-d8e5-4587-8110-4bbc5a4edd8d\",\"pipeline-87c2203e1cabdb5cd6d255e17ca514153f8597b0b7d7a68c8e56b1d75bc9b1f3\",0]",
+        "stage": "review",
+        "remainingRuns": 0,
+        "phase": "released"
+      }
+    ],
+    "reviewBindings": [
+      {
+        "childId": "child-ed38a579a976d6a6fef104eb216bde3b",
+        "taskAttempt": {
+          "teamId": "pipeline-36e63b33921b3be8b31436b4",
+          "taskId": "p-check-0-0",
+          "attemptId": "09dae943-beeb-4e3b-8846-f8ed5edf7cd7",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"26257f91-d8e5-4587-8110-4bbc5a4edd8d\",\"pipeline-87c2203e1cabdb5cd6d255e17ca514153f8597b0b7d7a68c8e56b1d75bc9b1f3\",0]",
+          "stage": "check"
+        },
+        "admittedEpoch": 1
+      },
+      {
+        "childId": "child-1c516170d7fa4e1f146e5db3c4595157",
+        "taskAttempt": {
+          "teamId": "pipeline-36e63b33921b3be8b31436b4",
+          "taskId": "p-analyze-0-1",
+          "attemptId": "ffc0cd4d-1d44-4da9-a83a-cd7395b42465",
+          "attempt": 1
+        },
+        "admission": {
+          "key": "[\"26257f91-d8e5-4587-8110-4bbc5a4edd8d\",\"pipeline-87c2203e1cabdb5cd6d255e17ca514153f8597b0b7d7a68c8e56b1d75bc9b1f3\",0]",
+          "stage": "analyze"
+        },
+        "admittedEpoch": 1
+      }
+    ],
+    "startedAt": 1794241372214
+  },
+  "pipelineStatus": "blocked"
+}

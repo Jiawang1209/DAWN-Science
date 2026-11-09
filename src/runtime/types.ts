@@ -645,6 +645,8 @@ export interface AgentRuntime {
    * `approve`：存档、结束方案期，回存档路径；`discard`：结束方案期、什么都不存。
    * @throws 没有这一版 / 不是最新 / 已经答过 / 存不下来（原样）
    */
+  planningSource?(sessionId:SessionId):import('../protocol/planning-contract-source.js').PlanningSourceState
+  confirmPlanningSource?(sessionId:SessionId,value:unknown,expectedRevision:number):import('../protocol/planning-contract-source.js').PlanningSourceState
   answerPlan?(sessionId: SessionId, planId: string, action: "approve" | "discard" | "execute" | "stop" | "finish", text?: string): Promise<{ savedPath?: string; executionTeamId?:string }>
   /**
    * 接着问一个跑完的子 agent（2026-09-27）。**只有 native 有，有无即判据**。起一轮就返回——过程与结果经 `subagent_event` 出来。

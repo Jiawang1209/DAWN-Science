@@ -1,0 +1,30 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (16 tests | 1 failed) 110269ms
+   × runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline 60099ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > runs paired scientific tasks through actual Pi, files, host acceptance and the existing Team pipeline
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/evaluation/research-runner.test.ts:108:1
+    106|  }finally{await server.close()}
+    107| },30000)
+    108| it('runs paired scientific tasks through actual Pi, files, host accept…
+       | ^
+    109|  const root=mkdtempSync(join(tmpdir(),'dawn-research-test-'));roots.pu…
+    110|  const server=await startMockInferenceServer({scenario:researchScenari…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 727 passed (728)
+      Tests  1 failed | 7133 passed | 11 skipped (7145)
+   Start at  23:44:39
+   Duration  209.80s (transform 30.29s, setup 93.54s, import 343.32s, tests 805.82s, environment 167.26s)

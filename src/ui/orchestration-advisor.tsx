@@ -1,3 +1,6 @@
+import {PlanningContractSourceForm} from './planning-contract-source-form.js'
+import type {WorkbenchClient} from './client.js'
+import type {PlanningContractSelection} from '../protocol/planning-contract-source.js'
 import {PlanClarification} from './plan-clarification.js'
 import {parseTaskArrangement} from '../protocol/task-arrangement.js'
 import {useEffect,useRef,useState} from 'react'
@@ -6,20 +9,34 @@ import {TaskArrangementView} from './task-arrangement-view.js'
 import {Button} from './primitives.js'
 import {t,tf} from './i18n/index.js'
 type Plan=Extract<TranscriptItem,{type:'plan'}>
-export function OrchestrationAdvisor({task,plan,busy=false,planning=false,replyVersion,unsupported,onGenerate,onStop,ownerSessionId}:{ownerSessionId?:string|undefined;task:string;plan?:Plan|undefined;busy?:boolean;planning?:boolean;replyVersion?:string|undefined;unsupported?:string|undefined;onGenerate:(task:string,adjustment:string,signal:AbortSignal)=>Promise<void>;onStop?:(()=>Promise<void>)|undefined}){
+export function OrchestrationAdvisor({task,plan,busy=false,planning=false,replyVersion,unsupported,onGenerate,onStop,ownerSessionId,client}:{client?:WorkbenchClient|undefined;ownerSessionId?:string|undefined;task:string;plan?:Plan|undefined;busy?:boolean;planning?:boolean;replyVersion?:string|undefined;unsupported?:string|undefined;onGenerate:(task:string,adjustment:string,signal:AbortSignal)=>Promise<void>;onStop?:(()=>Promise<void>)|undefined}){
  const[goal,setGoal]=useState(task),[adjustment,setAdjustment]=useState(''),[sending,setSending]=useState(false),[stopping,setStopping]=useState(false),[sent,setSent]=useState(false),[error,setError]=useState('')
  const[cancelVersion,setCancelVersion]=useState(0)
- const stopPending=useRef(false)
+ const stopPending=useRef(false),scope=useRef(0)
  const edited=useRef(false),request=useRef<AbortController|undefined>(undefined)
  const baseline=useRef<{reply:string|undefined;plan:string|undefined}|undefined>(undefined)
  useEffect(()=>{if(!edited.current)setGoal(task)},[task])
- useEffect(()=>()=>request.current?.abort(),[])
+ useEffect(()=>{
+  scope.current++;stopPending.current=false;setStopping(false);setSending(false);setSent(false);setError('');baseline.current=undefined
+  return()=>{scope.current++;request.current?.abort();request.current=undefined}
+ },[client,ownerSessionId])
  useEffect(()=>{
   if(baseline.current&&plan?.planId!==baseline.current.plan&&parseTaskArrangement(plan?.markdown??'').state==='valid'){
    setSent(false);setError(previous=>previous===t("本轮没有提交新的有效任务安排，请查看对话中的原因后重试。")?'':previous);return
   }
   if(sent&&!busy&&baseline.current&&replyVersion!==baseline.current.reply&&(plan?.planId===baseline.current.plan||parseTaskArrangement(plan?.markdown??'').state!=='valid')){setSent(false);setError(t("本轮没有提交新的有效任务安排，请查看对话中的原因后重试。"))}
  },[sent,busy,replyVersion,plan])
+ const confirmSource=async(selection:PlanningContractSelection|null,revision:number,signal:AbortSignal)=>{
+  if(!client||!ownerSessionId||signal.aborted||request.current||stopPending.current||busy||unsupported)throw Error(t("会话正在处理，请稍后确认约束。"))
+  const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener('abort',abort,{once:true})
+  request.current=controller;setSending(true);setError('')
+  const active=()=>{if(controller.signal.aborted)throw Error(t("约束确认已取消；请重新查看当前会话状态。"))}
+  try{
+   active();await client.get('acquireLease',{sessionId:ownerSessionId,holder:'user'});active()
+   const state=await client.get<import('../protocol/planning-contract-source.js').PlanningSourceState>('confirmPlanningContractSource',{sessionId:ownerSessionId,expectedRevision:revision,selection});active()
+   return state
+  }finally{signal.removeEventListener('abort',abort);if(request.current===controller){request.current=undefined;setSending(false)}}
+ }
  const generate=async()=>{
   if(request.current||stopPending.current||busy||unsupported||!goal.trim())return
   baseline.current={reply:replyVersion,plan:plan?.planId}
@@ -39,7 +56,7 @@ export function OrchestrationAdvisor({task,plan,busy=false,planning=false,replyV
   try{await onGenerate(task,answers,controller.signal)}
   finally{if(request.current===controller){request.current=undefined;setSending(false)}}
  }
- const stop=async()=>{if(stopPending.current)return;stopPending.current=true;setCancelVersion(v=>v+1);setStopping(true);baseline.current=undefined;request.current?.abort();request.current=undefined;setSending(false);setSent(false);setError('');try{await onStop?.()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{stopPending.current=false;setStopping(false)}}
+ const stop=async()=>{if(stopPending.current)return;const generation=scope.current;stopPending.current=true;setCancelVersion(v=>v+1);setStopping(true);baseline.current=undefined;request.current?.abort();request.current=undefined;setSending(false);setSent(false);setError('');try{await onStop?.()}catch(e){if(scope.current===generation)setError(e instanceof Error?e.message:String(e))}finally{if(scope.current===generation){stopPending.current=false;setStopping(false)}}}
  const arrangement=plan?parseTaskArrangement(plan.markdown):undefined
  const awaiting=plan?.status==='proposed'&&arrangement?.state==='valid'&&arrangement.arrangement.questions.length>0
  const form=<div className="auto-arrangement-form">
@@ -56,6 +73,7 @@ export function OrchestrationAdvisor({task,plan,busy=false,planning=false,replyV
  return <section className="orchestration-advisor" aria-label={t("自动安排")}>
   <h4>{t("自动安排")}</h4>
    {(sending||stopping||busy&&planning)&&onStop?<Button variant="ghost" size="sm" disabled={stopping} onClick={()=>{void stop()}}>{t("中止规划")}</Button>:null}
+  {client&&ownerSessionId?<PlanningContractSourceForm cancelVersion={cancelVersion} client={client} ownerSessionId={ownerSessionId} disabled={sending||stopping||busy||!!unsupported} onConfirm={confirmSource}/>:null}
   {!plan?<p className="hint">{t("描述具体任务，DAWN 会根据目标、数据和依赖决定怎样拆分与分工。无需预先填写任务数量。")}</p>:null}
   {plan?<>
    <p>{tf("方案第 {0} 版",plan.version)} · {plan.status==='proposed'?t("等你看"):plan.status==='approved'?t("已批准"):plan.status==='discarded'?t("没采用"):t("已被新的一版取代")}</p>

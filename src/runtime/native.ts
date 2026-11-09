@@ -8,6 +8,9 @@ import {captureEvidenceHandoff,handoffSources} from '../subagent/handoff-sources
 import {readCurrentTeamSnapshot} from '../team/read-current-snapshot.js'
 import {DISK_OBSERVATION,liveRunOverview} from '../orchestration/run-overview.js'
 import {createHash} from 'node:crypto'
+import {createGetPlanContractsTool} from '../tools/get-plan-contracts.js'
+import {resolvePlanningContractContext,assertPlanningArrangement} from './planning-contract-context.js'
+import type {PlanningSourceState} from '../protocol/planning-contract-source.js'
 import {runControlledScience} from '../team/science-execution.js'
 import {taskTeamSnapshot} from "../team/task-snapshot.js"
 import type { ResponseOf } from "../protocol/index.js"
@@ -145,7 +148,7 @@ import { createInspectDataTool } from "../tools/inspect-data.js"
 import { 关掉pi自己下载, 不自己下载 } from "./no-tool-download.js"
 import { 方案期判, 方案指纹, 方案存档名, 存档方案, 核对方案, 核对并恢复, type 已批准存档 } from "../policy/plan-mode.js"
 import { 方案簿, 方案簿文件名, 写方案文件, 删方案文件, 方案存档正文 } from "./plan-book.js"
-import { 出方案工具名, 看数据工具名, 方案文件名 } from "../protocol/plan.js"
+import { 出方案工具名, 看数据工具名, 方案文件名,科研契约目录工具名 } from "../protocol/plan.js"
 import type { 对话内核 } from "../kernel/挂载.js"
 import { RUN_AS_NODE } from "../subagent/protocol.js"
 import type { CredentialStore, ThinkingLevel } from "@earendil-works/pi-ai"
@@ -948,6 +951,24 @@ export class NativeRuntime implements AgentRuntime {
   private readonly 方案簿们 = new Map<SessionId, { 簿: 方案簿; workspace: string; sessionDir: string; 远端?: RemoteLike | undefined }>()
   private 方案簿(sessionId: SessionId): 方案簿 {
     return this.方案簿们.get(sessionId)?.簿 ?? new 方案簿(undefined)
+  }
+  planningSource(sessionId:SessionId):PlanningSourceState {
+    const entry=this.routeBooks.get(sessionId)
+    if(!entry||entry.spec.bot||entry.spec.remote||!this.opts.subagentChildEntry||this.opts.planningContracts)throw new UserFacingError('当前会话不支持本地科研约束目录')
+    return this.方案簿(sessionId).planningSourceState(sessionId,entry.book?.read())
+  }
+  private planningContext(sessionId:SessionId){
+    const state=this.planningSource(sessionId)
+    if(state.issue)throw new UserFacingError(state.issue)
+    return resolvePlanningContractContext(sessionId,state.source,this.routeBooks.get(sessionId)?.book?.read())
+  }
+  confirmPlanningSource(sessionId:SessionId,value:unknown,expectedRevision:number):PlanningSourceState {
+    const s=this.sessions.get(sessionId),entry=this.routeBooks.get(sessionId)
+    if(!s||!entry||entry.spec.bot||entry.spec.remote||!this.opts.subagentChildEntry||this.opts.planningContracts)throw new UserFacingError('当前会话不支持本地科研约束目录')
+    const orchestration=this.orchestrations.get(sessionId)
+    const active=orchestration?.store.list().some(child=>['queued','running','stopping'].includes(orchestration.controlPhase(child.id)))
+    if(this.方案答中.has(sessionId)||this.pendingBotDispatches.has(sessionId)||s.inFlight||s.转述中||s.中止中||s.回退中||s.session.isStreaming||this.停中.has(sessionId)||active)throw new UserFacingError('方案或执行仍在处理，请先停止并等待排空后再确认科研约束')
+    return this.方案簿(sessionId).confirmPlanningSource(sessionId,value,expectedRevision,Date.now(),entry.book?.read())
   }
   /**
    * 这一轮开头已批准方案的样子（2026-09-28，D3 定案：**人改的不恢复，agent 这一轮改的恢复**）。
@@ -2158,7 +2179,8 @@ export class NativeRuntime implements AgentRuntime {
     this.questionBooks.set(spec.sessionId, questions)
     const questionTool = createAskUserQuestionTool((id, qs, signal) => questions.ask(id, qs, signal))
     const 方案工具 = [
-      createProposePlanTool({ ...(this.opts.planningContracts?{contracts:()=>this.opts.planningContracts!(spec.sessionId)}:{}),...(this.opts.subagentChildEntry&&!spec.bot&&!spec.remote?{executionAgents:()=>loadSubagentsFrom(this.子agent层(spec.workspace),{自带停用:this.opts.subagents?.自带停用}).agents.filter(a=>!a.disabled).map(({name,description,tools})=>({name,description,...(tools?{tools}:{})}))}:{}),requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
+      createProposePlanTool({ ...(this.opts.planningContracts?{contracts:()=>this.opts.planningContracts!(spec.sessionId)}:this.opts.subagentChildEntry&&!spec.bot&&!spec.remote?{planningContext:()=>this.planningContext(spec.sessionId)}:{}),...(this.opts.subagentChildEntry&&!spec.bot&&!spec.remote?{executionAgents:()=>loadSubagentsFrom(this.子agent层(spec.workspace),{自带停用:this.opts.subagents?.自带停用}).agents.filter(a=>!a.disabled).map(({name,description,tools})=>({name,description,...(tools?{tools}:{})}))}:{}),requireArrangement:()=>{const current=this.sessions.get(spec.sessionId);return !!current&&!!this.用户消息们(current).at(-1)?.文.startsWith(autoArrangementRequestPrefix)},交: (toolCallId, p) => this.收方案(spec.sessionId, toolCallId, p) }),
+      ...(this.opts.subagentChildEntry&&!this.opts.planningContracts&&!spec.bot&&!spec.remote?[createGetPlanContractsTool({isPlanning:()=>this.方案簿(spec.sessionId).阶段==='planning',context:()=>this.planningContext(spec.sessionId)})]:[]),
       ...(this.opts.kernels && (!spec.remote || this.opts.kernels.能起远端())
         ? [createInspectDataTool({ 对话: spec.sessionId, 内核: this.opts.kernels })]
         : []),
@@ -4300,9 +4322,12 @@ ${描述}`
     const 正文 = (text?.trim() || p.markdown).trim()
     validateArrangementEdit(p.markdown,正文)
     const arrangement=parseTaskArrangement(正文),context=this.planExecutionContexts.get(sessionId)
+    const planningContext=处.簿.assertPlanningSource(planId,sessionId,this.routeBooks.get(sessionId)?.book?.read())
+    if(planningContext)assertPlanningArrangement(planningContext,arrangement.state==='valid'?arrangement.arrangement:undefined)
     if(arrangement.state==='valid'&&arrangement.arrangement.dispatch&&(!context||处.远端))throw new UserFacingError('当前会话不支持批准方案的严格执行绑定')
-    const activeModel=s.session.model,executionSnapshot=arrangement.state==='valid'&&arrangement.arrangement.dispatch?await freezeApprovedPlan({workspace:处.workspace,owner:sessionId,planId,planVersion:p.version,markdown:正文,definitions:context!.definitions(),tier:this.opts.permissionTier?.取(sessionId)??this.opts.permissionTier?.全局()??'ask-risky',model:activeModel?{provider:activeModel.provider,model:activeModel.id}:context!.model,signal}):undefined
+    const activeModel=s.session.model,executionSnapshot=arrangement.state==='valid'&&arrangement.arrangement.dispatch?await freezeApprovedPlan({...(planningContext?{planningInstructions:planningContext.instructions}:{}),workspace:处.workspace,owner:sessionId,planId,planVersion:p.version,markdown:正文,definitions:context!.definitions(),tier:this.opts.permissionTier?.取(sessionId)??this.opts.permissionTier?.全局()??'ask-risky',model:activeModel?{provider:activeModel.provider,model:activeModel.id}:context!.model,signal}):undefined
     guard()
+    处.簿.assertPlanningSource(planId,sessionId,this.routeBooks.get(sessionId)?.book?.read())
     // 两头的空白不算改过（2026-09-28 审查）：模型交的原稿常带首尾换行，编辑框一 trim 就成了「你改过」
     const 改过 = 正文 !== p.markdown.trim()
     const 时刻 = new Date()
@@ -4320,6 +4345,7 @@ ${描述}`
     try {
       if (!处.远端) 指纹 = await 存档方案({ workspace: 处.workspace, 相对: savedPath, 会话目录: 处.sessionDir, planId })
       guard()
+      处.簿.assertPlanningSource(planId,sessionId,this.routeBooks.get(sessionId)?.book?.read())
       approved = 处.簿.批准(planId, { 正文, savedPath, 时刻: 时刻.getTime(), 改过, ...(指纹 ?? {}),...(executionSnapshot?{executionSnapshot}:{}) })
     } catch (e) {
       await 删方案文件({ workspace: 处.workspace, 远端: 处.远端, 相对: savedPath })
@@ -4658,7 +4684,9 @@ ${描述}`
 
   /** `propose_plan` 交上来的一版：记进簿，被取代的与新的都发 `plan` 事件 */
   private 收方案(sessionId: SessionId, toolCallId: string, p: { title: string; plan: string }): { version: number } {
-    const { 新, 被取代 } = this.方案簿(sessionId).收(toolCallId, p.title, p.plan)
+    const book=this.方案簿(sessionId),state=book.planningSourceState(sessionId,this.routeBooks.get(sessionId)?.book?.read())
+    if(state.issue)throw new Error(state.issue)
+    const { 新, 被取代 } = book.收(toolCallId, p.title, p.plan,{revision:state.revision,fingerprint:state.fingerprint??null})
     for (const x of 被取代) this.emit({ kind: "plan", sessionId, plan: x })
     this.emit({ kind: "plan", sessionId, plan: 新 })
     return { version: 新.version }
@@ -4878,7 +4906,7 @@ function 记当前团队(sessionDir: string, id: string | undefined): void {
 }
 
 /** 方案期才启用的那几件（先出方案）。`按标记设方案工具` 只动其中这段会话真装了的 */
-const 方案期工具 = [出方案工具名, 看数据工具名, "ls", "grep", "find"]
+const 方案期工具 = [出方案工具名, 看数据工具名, 科研契约目录工具名, "ls", "grep", "find"]
 
 /** 给权限卡看的一句：工具名 + 主参数 */
 function 摘要(name: string, params: Record<string, unknown>): string {

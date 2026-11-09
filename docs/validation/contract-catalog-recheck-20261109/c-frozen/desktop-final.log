@@ -1,0 +1,184 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-contract-source.spec.ts e2e/delivery-guidance.spec.ts e2e/orchestration-entry.spec.ts e2e/approved-plan-execution.spec.ts e2e/auto-arrangement.spec.ts e2e/collaboration-outcome.spec.ts e2e/collaboration-workbench.spec.ts e2e/science-pipeline.spec.ts e2e/science-batch.spec.ts e2e/run-explanation-budget.spec.ts
+
+Running 23 tests using 1 worker
+
+(node:62333) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49907/d0414c60-e89c-438f-ac51-3d3664b75bce
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50033/08ad5963-bce1-4dc8-a4e8-b4351729631f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (14.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:50078/e72a7ed3-bc58-40c4-a49b-d89a26c0ccd0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50184/77b12be0-4e82-4eea-9b55-82d9862294c7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/approved-plan-execution.spec.ts:116:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (13.9s)
+[主进程] Debugger ending on ws://127.0.0.1:50230/cc56e213-3ad0-4668-bad8-b4a3881673c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值 (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50325/33456a21-5e55-4c29-a860-8533793b2493
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 2 task blocks for 分别统计 east.csv 与 west.csv (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50373/efa53cb5-3ade-4eb3-ab59-e54fade765d6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50411/df84a3e7-7587-486d-a95a-057882234689
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv (8.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50481/a39090d6-1f74-4822-90a4-ab4e80131356
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50938/f8307f40-cef0-4320-ab18-074a827b887a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/auto-arrangement.spec.ts:65:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task (10.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:51013/7ad8cf74-7a52-44d4-bbbc-1c4a2da47eb7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51313/3b600eeb-8bba-4cfd-b8ef-784b56bb6102
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/collaboration-outcome.spec.ts:15:2 › outcome pass › shows exact stage and final versions, compact expansion, and readable 900px views (25.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：协作成果分层界面验收，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:51424/86a5ea7c-91c2-4617-b2e2-f1fb5a9cd445
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] Debugger ending on ws://127.0.0.1:51490/4e795726-6a10-4246-8e55-63db32682969
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/collaboration-outcome.spec.ts:15:2 › outcome blocked › shows exact stage and final versions, compact expansion, and readable 900px views (10.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「演示协作台锁等待」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:51513/d3986391-b5fc-4d9e-b596-51e33a06e509
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51687/912b1f76-56a7-4375-a42f-27e0fc41815e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/collaboration-workbench.spec.ts:9:1 › shows real collaboration facts with selected details and preserves them through workflow and recovery (16.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51702/b9b2b743-31f0-4ae2-a3f9-3ac3254a2f67
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:51724/46dc0a8c-0b9d-4224-ab9e-2fd8b5065a84
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/delivery-guidance.spec.ts:6:1 › clarification survives restart, creates a new proposal and executes only after approval (9.6s)
+[主进程] Debugger ending on ws://127.0.0.1:51751/e1ef04f8-d95f-4db8-bb7b-4ab89caed4b2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/delivery-guidance.spec.ts:48:2 › pending clarification cancellation › stops the pending replan and retains answers without creating output (7.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51796/1480aaf9-d710-4d04-85eb-75ce42121399
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  12 e2e/orchestration-entry.spec.ts:7:1 › workflow entry stays visible above clarification and returns to the same conversation (3.6s)
+(node:2138) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:51818/407a4dc6-dd9b-4296-a995-3d4da14a6e6e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51866/6aedd9ce-c844-4678-98f4-8df1f732ede5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance (12.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：演示审阅执行轮次预留，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:51886/987aa9a9-adbf-40a9-9a2a-92a2291736f9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52006/80f33cfe-b91f-423b-a4f8-09d93477b1e8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/run-explanation-budget.spec.ts:23:2 › scientific review reservation › reserves independent review under three actual runs and preserves consumption after restart (23.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：演示审阅执行轮次预留，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52075/5e5ecf52-90d8-41d6-8064-9caa177fc391
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/run-explanation-budget.spec.ts:55:2 › scientific reservation cancellation › releases an unused review hold only after elapsed cancellation drains actual analysis (9.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：演示审阅执行轮次预留，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52365/8a40e81e-9f32-455d-ab85-49be8f871ec3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：演示审阅执行轮次预留，使」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52444/997b121c-f8e5-4293-951d-3ab5ab6252b3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/run-explanation-budget.spec.ts:82:2 › scientific reservation recovery › keeps an interrupted hold for verification across restart and resumes only after an explicit budget change (8.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52505/548e4bd9-a74b-4d13-a547-939795d76045
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/run-explanation-budget.spec.ts:119:2 › run explanation › explains actual shared lock waiting and retained host history (11.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52678/993b7e0c-373a-412a-aa6a-48fd2a3dba7f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/run-explanation-budget.spec.ts:147:2 › elapsed budget › elapsed limit cancels a real slow process and retains ownership until it exits (8.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52802/8e3c809c-c922-4379-9bbf-7b1a01c89052
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:52880/22ed2419-1ded-43ee-8dc9-cedd0315c240
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/run-explanation-budget.spec.ts:171:2 › delegation budget › sets real limits, rejects a third Pi child, and retains consumption across Electron restart (6.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：按已确认方法分别核查、分析」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:52910/05638667-cc45-47af-a60d-dcab41ebb312
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/science-batch.spec.ts:4:1 › batch versions, host summary and progress cross the actual strict desktop protocol (9.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:52998/d8e7c3b5-a310-43c3-9a5a-3d2b30087d5f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/science-pipeline.spec.ts:7:2 › pass › scientific pipeline persists receipts and projects through the strict desktop protocol (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53032/cd070733-578c-41e7-adb8-4f2fa8e2de26
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/science-pipeline.spec.ts:7:2 › revise › scientific pipeline persists receipts and projects through the strict desktop protocol (6.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研流水线验收：按已确认方法执行合成数据」做完了 — 科研流程状态与回执已记录；交付以宿主验收和实际文件为准，合成数据不支持科研推断。
+[主进程] Debugger ending on ws://127.0.0.1:53068/74db072b-df93-4a2c-9b04-05280ebc4d93
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/science-pipeline.spec.ts:7:2 › blocked › scientific pipeline persists receipts and projects through the strict desktop protocol (3.1s)
+
+
+  1) e2e/orchestration-entry.spec.ts:7:1 › workflow entry stays visible above clarification and returns to the same conversation
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 2
+    Received: 3
+
+      30 |  await expect(dialog).toHaveCount(0);await expect(entry).toBeFocused()
+      31 |  await expect(page.getByRole('button',{name:'展开流程工作台',exact:true})).toHaveCount(1)
+    > 32 |  expect(dawn.requests.length).toBe(before);expect(existsSync(join(workspace,'mean.csv'))).toBe(false)
+         |                               ^
+      33 |  await page.screenshot({path:join(out,'back-to-chat.png')})
+      34 | })
+      35 |
+        at /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science/e2e/orchestration-entry.spec.ts:32:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/orchestration-entry.spec.ts:7:1 › workflow entry stays visible above clarification and returns to the same conversation
+  22 passed (3.9m)

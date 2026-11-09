@@ -1,0 +1,5 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+src/ui/i18n/en.ts(3049,3): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/evaluation/research-product-catalog.test.ts(21,155): error TS7006: Parameter 'm' implicitly has an 'any' type.
+tests/evaluation/research-product-catalog.test.ts(22,21): error TS7006: Parameter 'c' implicitly has an 'any' type.

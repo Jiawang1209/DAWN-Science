@@ -1,0 +1,187 @@
+{
+  "ratio": 1,
+  "bounds": {
+    "x": 40.5,
+    "y": 282.4140625,
+    "width": 230,
+    "height": 75,
+    "top": 282.4140625,
+    "right": 270.5,
+    "bottom": 357.4140625,
+    "left": 40.5
+  },
+  "intersection": {
+    "x": 40.5,
+    "y": 282.4140625,
+    "width": 230,
+    "height": 75,
+    "top": 282.4140625,
+    "right": 270.5,
+    "bottom": 357.4140625,
+    "left": 40.5
+  },
+  "parents": [
+    {
+      "class": "btn btn-outline btn-card-compact collaboration-graph-node",
+      "rect": {
+        "x": 40.5,
+        "y": 282.4140625,
+        "width": 230,
+        "height": 75,
+        "top": 282.4140625,
+        "right": 270.5,
+        "bottom": 357.4140625,
+        "left": 40.5
+      },
+      "clientWidth": 228,
+      "scrollWidth": 228,
+      "scrollLeft": 0,
+      "overflow": "hidden",
+      "clip": "none"
+    },
+    {
+      "class": "collaboration-graph",
+      "rect": {
+        "x": 40.5,
+        "y": 282.4140625,
+        "width": 820,
+        "height": 75,
+        "top": 282.4140625,
+        "right": 860.5,
+        "bottom": 357.4140625,
+        "left": 40.5
+      },
+      "clientWidth": 820,
+      "scrollWidth": 820,
+      "scrollLeft": 0,
+      "overflow": "visible",
+      "clip": "none"
+    },
+    {
+      "class": "collaboration-graph-scroll",
+      "rect": {
+        "x": 40.5,
+        "y": 282.4140625,
+        "width": 808,
+        "height": 86,
+        "top": 282.4140625,
+        "right": 848.5,
+        "bottom": 368.4140625,
+        "left": 40.5
+      },
+      "clientWidth": 808,
+      "scrollWidth": 820,
+      "scrollLeft": 0,
+      "overflow": "auto",
+      "clip": "none"
+    },
+    {
+      "class": "collaboration-workflow",
+      "rect": {
+        "x": 40.5,
+        "y": -462.3828125,
+        "width": 808,
+        "height": 830.796875,
+        "top": -462.3828125,
+        "right": 848.5,
+        "bottom": 368.4140625,
+        "left": 40.5
+      },
+      "clientWidth": 808,
+      "scrollWidth": 808,
+      "scrollLeft": 0,
+      "overflow": "visible",
+      "clip": "none"
+    },
+    {
+      "class": "collaboration-body",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "clientWidth": 0,
+      "scrollWidth": 0,
+      "scrollLeft": 0,
+      "overflow": "visible",
+      "clip": "none"
+    },
+    {
+      "class": "run-overview collaboration-panel",
+      "rect": {
+        "x": 32.5,
+        "y": -1106,
+        "width": 824,
+        "height": 2116.8125,
+        "top": -1106,
+        "right": 856.5,
+        "bottom": 1010.8125,
+        "left": 32.5
+      },
+      "clientWidth": 824,
+      "scrollWidth": 824,
+      "scrollLeft": 0,
+      "overflow": "visible",
+      "clip": "none"
+    },
+    {
+      "class": "collaboration-expanded",
+      "rect": {
+        "x": 16,
+        "y": 16,
+        "width": 868,
+        "height": 608,
+        "top": 16,
+        "right": 884,
+        "bottom": 624,
+        "left": 16
+      },
+      "clientWidth": 856,
+      "scrollWidth": 856,
+      "scrollLeft": 0,
+      "overflow": "auto",
+      "clip": "none"
+    },
+    {
+      "class": "",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 900,
+        "height": 640,
+        "top": 0,
+        "right": 900,
+        "bottom": 640,
+        "left": 0
+      },
+      "clientWidth": 900,
+      "scrollWidth": 900,
+      "scrollLeft": 0,
+      "overflow": "visible",
+      "clip": "none"
+    },
+    {
+      "class": "dawn-dark",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 900,
+        "height": 640,
+        "top": 0,
+        "right": 900,
+        "bottom": 640,
+        "left": 0
+      },
+      "clientWidth": 900,
+      "scrollWidth": 900,
+      "scrollLeft": 0,
+      "overflow": "visible",
+      "clip": "none"
+    }
+  ]
+}

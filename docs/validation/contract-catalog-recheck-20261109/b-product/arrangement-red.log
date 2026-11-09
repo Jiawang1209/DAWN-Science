@@ -1,0 +1,54 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/planning-contract-arrangement.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/runtime/planning-contract-arrangement.test.ts (10 tests | 2 failed) 18ms
+   × uses the same exact contracts for full-contract input and keeps a simple task at one block 10ms
+   × allows waiting questions without execution but requires a fresh valid plan before execution 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/planning-contract-arrangement.test.ts > uses the same exact contracts for full-contract input and keeps a simple task at one block
+AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_2__…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"TypeError: (0 , __vite_ssr_import_2__.assertPlanningArrangement) is not a function"
+
+ ❯ tests/runtime/planning-contract-arrangement.test.ts:12:69
+     10| }
+     11| it('uses the same exact contracts for full-contract input and keeps a …
+     12|  expect(()=>assertPlanningArrangement(context(),arrangement())).not.to…
+       |                                                                     ^
+     13|  const c=context(false),single=arrangement(c)
+     14|  expect(single.tasks).toHaveLength(1);expect(()=>assertPlanningArrange…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/planning-contract-arrangement.test.ts > allows waiting questions without execution but requires a fresh valid plan before execution
+AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_2__…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"TypeError: (0 , __vite_ssr_import_2__.assertPlanningArrangement) is not a function"
+
+ ❯ tests/runtime/planning-contract-arrangement.test.ts:30:49
+     28|  const c=context(),p=arrangement(c)
+     29|  p.questions=['确认补充资料'];p.independentReview=false;p.mode='single';p.ta…
+     30|  expect(()=>assertPlanningArrangement(c,p)).not.toThrow()
+       |                                                 ^
+     31|  p.questions=[];expect(()=>assertPlanningArrangement(c,p)).toThrow()
+     32| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:20:56
+   Duration  734ms (transform 177ms, setup 0ms, import 625ms, tests 18ms, environment 0ms)

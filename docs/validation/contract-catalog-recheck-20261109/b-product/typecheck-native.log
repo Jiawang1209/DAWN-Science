@@ -1,0 +1,5 @@
+npm notice run dawn-science@0.0.44 typecheck
+npm notice run tsc --noEmit
+tests/runtime/product-planning-source.test.ts(19,76): error TS2741: Property '设' is missing in type '{ 取: () => "allow-all"; 全局: () => "allow-all"; }' but required in type '{ 取: (sessionId: string) => "allow-all" | "ask-risky" | "deny-risky" | undefined; 设: (sessionId: string, 档: "allow-all" | "ask-risky" | "deny-risky" | undefined) => void; 全局: () => "allow-all" | ... 1 more ... | "deny-risky"; }'.
+tests/tools/product-plan-contracts.test.ts(31,63): error TS2339: Property 'contract' does not exist on type '{ agent: string; contractRef: string; } | { agent: string; contract: { acceptance?: { version: 1; kind: "figure-reproduction" | "tabular-ecology"; scriptPath: string; reportPath: string; resultPath: string; ... 5 more ...; targetFigure?: string | undefined; } | undefined; ... 7 more ...; requireReview: boolean; }; }'.
+  Property 'contract' does not exist on type '{ agent: string; contractRef: string; }'.

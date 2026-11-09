@@ -142,7 +142,7 @@ async function runTrial(out:string,task:ResearchTask,mode:'single'|'multi',route
     let markdown=instructions+'\n\n'+serializeTaskArrangement(arrangement)
     if(route.multiExecution==='automatic-plan'){
      const plannerRoute=lease?.stageRoutes?.analyze??{provider:route.provider,model:route.model,credential:lease?.credential??route.credential}
-     const generated=await generateResearchArrangement({workspace:root,sessionDir:join(root,'planner'),modelsPath:route.modelsPath,...plannerRoute,definitions:stageDefinitions(),contracts:{check:stageContract(definition,'check'),analyze:stageContract(definition,'analyze'),review:stageContract(definition,'review')},instructions,requests,prepareSettings,signal:controller.signal})
+     const generated=await generateResearchArrangement({...(task.unit?{planningSource:{template,inputs:[input],outputRoot:'results',dataPath:input,requireExecution:true,independentReview:true}}:{}),workspace:root,sessionDir:join(root,'planner'),modelsPath:route.modelsPath,...plannerRoute,definitions:stageDefinitions(),contracts:{check:stageContract(definition,'check'),analyze:stageContract(definition,'analyze'),review:stageContract(definition,'review')},instructions,requests,prepareSettings,signal:controller.signal})
      arrangement=generated.arrangement;markdown=instructions+'\n\n'+generated.markdown;writeFileSync(join(root,'planner','approved-execution-plan.md'),markdown+'\n',{flag:'wx'});arrangementMetrics={...generated.metrics,compiled:false}
     }
     const modelsByTask=route.multiExecution==='automatic-plan'&&lease?.stageRoutes?Object.fromEntries(arrangement.tasks.map(task=>[task.id,lease.stageRoutes![stageForResult(task.execution?.contract.resultType)]])):undefined

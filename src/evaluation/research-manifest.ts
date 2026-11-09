@@ -67,6 +67,6 @@ export function researchManifest(input:ResearchManifestInput){
  const arms:{caseId:string;repeat:number;mode:'single'|'multi'}[]=[]
  for(let repeat=1;repeat<=repeats;repeat++)for(const [index,t] of input.tasks.entries())for(const mode of ((index+repeat-1)%2?['multi','single']:['single','multi']) as ('single'|'multi')[])arms.push({caseId:t.id,repeat,mode})
  const stable={inference,provider,model,modelDeclaration:structuredClone(modelDeclaration),tasks,repeats,requestAllocation,sourceFingerprint,childBuildFingerprint,
-  execution:{perArmTimeoutMs:researchTrialTimeoutMs(perArmLimit),multiExecution:input.multiExecution??'pipeline',requestBudgetFeedback:input.requestBudgetFeedback??null,tools:['read','write','bash'],permissionTier:'allow-all',maxRevisions:0,trialSettings:{project:researchTrialSettings(),agent:researchTrialSettings()}},stageModels:input.stageModels?structuredClone(input.stageModels):null,arms}
+  execution:{perArmTimeoutMs:researchTrialTimeoutMs(perArmLimit),multiExecution:input.multiExecution??'pipeline',planningCatalog:input.multiExecution==='automatic-plan'?'confirmed-product-known-units-v1':null,requestBudgetFeedback:input.requestBudgetFeedback??null,tools:['read','write','bash'],permissionTier:'allow-all',maxRevisions:0,trialSettings:{project:researchTrialSettings(),agent:researchTrialSettings()}},stageModels:input.stageModels?structuredClone(input.stageModels):null,arms}
  return{version:2 as const,runId,generatedAt,fingerprint:researchFingerprint(stable),...stable}
 }

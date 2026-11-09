@@ -1,0 +1,69 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/product-plan-contracts.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+ ❯ |node| tests/tools/product-plan-contracts.test.ts (4 tests | 3 failed) 22ms
+   × queries the current product source and saves an ordinary complete contract without tool/schema reload 12ms
+   × rejects stale source identity even when changing method text leaves contract references identical 5ms
+   × does not bypass scientific constraints through a full contract or an absent task structure 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/tools/product-plan-contracts.test.ts > queries the current product source and saves an ordinary complete contract without tool/schema reload
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ tests/tools/product-plan-contracts.test.ts:16:25
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| tests/tools/product-plan-contracts.test.ts > rejects stale source identity even when changing method text leaves contract references identical
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/product-plan-contracts.test.ts:27:25
+     25|  expect(context.catalog).toEqual(old.catalog)
+     26|  const result=await tool.execute('p',{...假方案,catalogFingerprint:old.fi…
+     27|  expect(result.isError).toBe(true);expect(publish).not.toHaveBeenCalle…
+       |                         ^
+     28| })
+     29| it('does not bypass scientific constraints through a full contract or …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| tests/tools/product-plan-contracts.test.ts > does not bypass scientific constraints through a full contract or an absent task structure
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/product-plan-contracts.test.ts:32:109
+     30|  const context=buildPlanningContractContext(source()),publish=vi.fn(()…
+     31|  const weak=proposal(context);delete weak.tasks[0]!.execution.contract…
+     32|  expect((await tool.execute('p',{...假方案,catalogFingerprint:context.fin…
+       |                                                                                                             ^
+     33|  expect((await tool.execute('p',{...假方案,catalogFingerprint:context.fin…
+     34|  expect((await tool.execute('p',{...假方案,arrangement:proposal(context)}…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  23:22:56
+   Duration  844ms (transform 247ms, setup 0ms, import 733ms, tests 22ms, environment 0ms)

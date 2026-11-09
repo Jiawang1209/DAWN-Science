@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/orchestration-advisor.test.tsx tests/ui/planning-contract-source-form.test.tsx tests/ui/run-overview.test.tsx tests/runtime/planning-contract-review.test.ts tests/runtime/product-planning-source.test.ts tests/ui/design-contract.test.ts tests/ui/i18n.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-contract-catalog-recheck-20261109/dawn-science
+
+
+ Test Files  7 passed (7)
+      Tests  152 passed (152)
+   Start at  00:13:19
+   Duration  2.47s (transform 3.94s, setup 3.57s, import 4.14s, tests 2.31s, environment 3.21s)

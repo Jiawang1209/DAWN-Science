@@ -1,5 +1,6 @@
 /** Route records are validated against actual main-session results. Model prose,
  * denied calls and metadata mutations are never scientific execution evidence. */
+import {科研契约目录工具名} from '../protocol/plan.js'
 import {executionEvidenceTool,verificationEvidenceTool} from './route-evidence-rules.js'
 import { 从工具结果收案例 } from '../cases/results.js'
 import { parseRouteActionMessage, type AnalysisRoute, type AnalysisRouteDraft } from '../protocol/analysis-route.js'
@@ -134,7 +135,7 @@ export function latestRouteUserText(branch: readonly BranchEntry[]): string {
 export function routeTurnDenial(name: string, branch: readonly BranchEntry[], mcpReadOnly = false): string | undefined {
   const action = parseRouteActionMessage(latestRouteUserText(branch))
   if (!action || action.action === 'continue') return undefined
-  const reads = new Set(['science_pipeline_status', 'read', 'ls', 'grep', 'find', 'look_at_image', 'read_main_session', 'openalex_search', 'openalex_lookup_doi', 'crossref_search', 'crossref_lookup_doi', 'geo_search', 'geo_get_series', 'sra_search', 'sra_get_accession', 'uniprot_search', 'uniprot_get_accession', 'get_analysis_route', 'ask_user_question'])
+  const reads = new Set([科研契约目录工具名,'science_pipeline_status', 'read', 'ls', 'grep', 'find', 'look_at_image', 'read_main_session', 'openalex_search', 'openalex_lookup_doi', 'crossref_search', 'crossref_lookup_doi', 'geo_search', 'geo_get_series', 'sra_search', 'sra_get_accession', 'uniprot_search', 'uniprot_get_accession', 'get_analysis_route', 'ask_user_question'])
   if (reads.has(name) || mcpReadOnly || action.action === 'search' && name === 'update_analysis_route') return undefined
   return `路线${action.action === 'view' ? '查看' : '检索'}仅授权本轮读取，不可调用 ${name}；不能借先前执行授权写入或运行。`
 }

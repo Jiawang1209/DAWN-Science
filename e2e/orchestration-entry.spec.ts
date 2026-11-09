@@ -17,6 +17,7 @@ test('workflow entry stays visible above clarification and returns to the same c
  const entry=page.getByRole('button',{name:'打开编排视图',exact:true})
  await expect(entry).toBeInViewport()
  await answer.scrollIntoViewIfNeeded();await expect(entry).toBeInViewport()
+ await expect(page.locator('main.main').getByRole('button',{name:'停止',exact:true})).toHaveCount(0)
  const before=dawn.requests.length
  await entry.click()
  const dialog=page.getByRole('dialog',{name:'流程工作台',exact:true})
@@ -29,6 +30,7 @@ test('workflow entry stays visible above clarification and returns to the same c
  await entry.click();await page.getByRole('button',{name:'返回 DAWN 对话',exact:true}).click()
  await expect(dialog).toHaveCount(0);await expect(entry).toBeFocused()
  await expect(page.getByRole('button',{name:'展开流程工作台',exact:true})).toHaveCount(1)
+ writeFileSync(join(out,'navigation-request-audit.json'),JSON.stringify({before,after:dawn.requests.length,requests:(dawn.requests as {body?:{messages?:{role:string}[]}}[]).map(r=>({lastRole:r.body?.messages?.at(-1)?.role,followup:JSON.stringify(r.body?.messages).includes('为用户建议下一句')}))},null,2))
  expect(dawn.requests.length).toBe(before);expect(existsSync(join(workspace,'mean.csv'))).toBe(false)
  await page.screenshot({path:join(out,'back-to-chat.png')})
 })

@@ -1,3 +1,5 @@
+import type {PlanningContractSelection} from '../src/protocol/planning-contract-source.js'
+import {buildPlanningContractContext} from '../src/runtime/planning-contract-context.js'
 /** Isolated synthetic-task planning through the product's real propose_plan path. */
 import {mkdtempSync,mkdirSync,writeFileSync,copyFileSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -11,14 +13,14 @@ import type {ResearchArrangementMetrics} from '../src/evaluation/research-tasks.
 export class PlanningInformationRequired extends Error {
  constructor(readonly questions:string[]){super('方案待确认，尚未启动任务执行')}
 }
-export async function generateResearchArrangement(opts:{workspace:string;sessionDir:string;modelsPath:string;provider:string;model:string;credential:string;definitions:SubagentDefinition[];contracts:Record<'check'|'analyze'|'review',TaskContract>;instructions:string;requests:()=>number;prepareSettings:(path:string,scope:'project'|'agent')=>void;signal:AbortSignal}):Promise<{markdown:string;arrangement:TaskArrangement;metrics:ResearchArrangementMetrics}>{
+export async function generateResearchArrangement(opts:{planningSource?:PlanningContractSelection;workspace:string;sessionDir:string;modelsPath:string;provider:string;model:string;credential:string;definitions:SubagentDefinition[];contracts:Record<'check'|'analyze'|'review',TaskContract>;instructions:string;requests:()=>number;prepareSettings:(path:string,scope:'project'|'agent')=>void;signal:AbortSignal}):Promise<{markdown:string;arrangement:TaskArrangement;metrics:ResearchArrangementMetrics}>{
  const scratch=mkdtempSync(join(tmpdir(),'dawn-research-planning-')),before=opts.requests()
  mkdirSync(opts.sessionDir,{recursive:true})
- const metrics:ResearchArrangementMetrics={requests:0,taskCount:0,valid:false,reviewCovered:false}
+ const metrics:ResearchArrangementMetrics={requests:0,taskCount:0,valid:false,reviewCovered:false,catalogSource:opts.planningSource?'confirmed-product':'legacy-injected'}
  let proposal:方案|undefined
- const rt=new NativeRuntime({planningContracts:()=>opts.contracts,modelsPath:opts.modelsPath,subagentChildEntry:resolve('dist/electron/subagent-child.js'),skills:{},subagents:{},
+ const rt=new NativeRuntime({...(!opts.planningSource?{planningContracts:()=>opts.contracts}:{}),modelsPath:opts.modelsPath,subagentChildEntry:resolve('dist/electron/subagent-child.js'),skills:{},subagents:{},
   credentials:{read:async()=>({type:'api_key' as const,key:opts.credential}),list:async()=>[],modify:async()=>undefined,delete:async()=>{}},
-  gate:(tool,args)=>tool==='propose_plan'||tool==='read'&&typeof args.path==='string'&&opts.contracts.analyze.inputs.some(path=>resolve(scratch,path)===resolve(scratch,args.path as string))?{kind:'allow'}:{kind:'deny',reason:'评测规划只读已声明的自制输入，不访问其他文件或执行任务。'},
+  gate:(tool,args)=>tool==='propose_plan'||tool==='get_plan_contracts'||tool==='read'&&typeof args.path==='string'&&opts.contracts.analyze.inputs.some(path=>resolve(scratch,path)===resolve(scratch,args.path as string))?{kind:'allow'}:{kind:'deny',reason:'评测规划只读已声明的自制输入，不访问其他文件或执行任务。'},
  })
  const cancel=()=>{void rt.abort('research-planner')}
  opts.signal.addEventListener('abort',cancel,{once:true})
@@ -31,9 +33,14 @@ export async function generateResearchArrangement(opts:{workspace:string;session
   rt.attach('research-planner',event=>{if(event.kind==='plan')proposal=event.plan})
   await rt.start({sessionId:'research-planner',workspace:scratch,sessionDir:opts.sessionDir,native:{provider:opts.provider,model:opts.model}})
   if(opts.signal.aborted)throw new Error('自动安排已取消')
+  if(opts.planningSource){
+   const source=rt.confirmPlanningSource('research-planner',opts.planningSource,0).source!
+   const context=buildPlanningContractContext(source)
+   for(const stage of ['check','analyze','review'] as const)if(JSON.stringify(context.contracts[stage])!==JSON.stringify(TaskContractSchema.parse(opts.contracts[stage])))throw new Error('生产确认来源与冻结科学契约不一致')
+  }
   await rt.setConfigOption('research-planner','dawn.plan','1')
   if(opts.signal.aborted)throw new Error('自动安排已取消')
-  rt.write('research-planner',autoArrangementRequestPrefix+'\n[research_automatic_arrangement]\n'+opts.instructions+'\n这是自制数据的同预算评测。由任务决定是否需要额外核查，不预设任务块数。保留独立只读审阅，必须覆盖分析依赖。方法、单位、正式提交及宿主科学契约不可降低；可选核查使用 check 契约，唯一产物分析任务使用 analyze 契约，审阅使用 review 契约。不要执行任务，交给 propose_plan。使用工具指引中的宿主契约目录，execution 选择 contractRef，不必手抄完整 acceptance。')
+  rt.write('research-planner',autoArrangementRequestPrefix+'\n[research_automatic_arrangement]\n'+opts.instructions+'\n这是自制数据的同预算评测。由任务决定是否需要额外核查，不预设任务块数。保留独立只读审阅，必须覆盖分析依赖。方法、单位、正式提交及宿主科学契约不可降低；可选核查使用 check 契约，唯一产物分析任务使用 analyze 契约，审阅使用 review 契约。不要执行任务，交给 propose_plan。'+(opts.planningSource?'先调用get_plan_contracts查询本会话已确认目录，propose_plan携带当前catalogFingerprint，execution选择contractRef，不必手抄完整acceptance。':'使用工具指引中的宿主契约目录，execution选择contractRef，不必手抄完整acceptance。'))
   await new Promise<void>(r=>setImmediate(r))
   while(rt.terminalBusy('research-planner')){if(opts.signal.aborted){cancel();throw new Error('自动安排已取消')}await new Promise(r=>setTimeout(r,20))}
   if(opts.signal.aborted)throw new Error('自动安排已取消')

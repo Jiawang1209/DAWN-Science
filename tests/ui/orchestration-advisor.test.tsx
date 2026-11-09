@@ -191,3 +191,41 @@ it('keeps a new clarification locked when the cancelled generation acknowledges 
  await act(async()=>finishes[1]!())
  expect(screen.getByText('等待新方案，采纳后才执行。')).toBeTruthy()
 })
+
+it('shares planning admission and prevents confirmation after a cancelled lease acknowledgement',async()=>{
+ let release!:(value:unknown)=>void
+ const get=vi.fn((operation:string)=>operation==='getPlanningContractSource'?Promise.resolve({revision:0}):operation==='getAnalysisRoute'?Promise.resolve({}):new Promise(resolve=>{release=resolve}))
+ const client={get} as unknown as import('../../src/ui/client.js').WorkbenchClient
+ render(<OrchestrationAdvisor client={client} ownerSessionId="owner" task="mean" onGenerate={vi.fn()} onStop={vi.fn(async()=>{})}/>);await act(async()=>{})
+ fireEvent.click(screen.getByText('科研任务约束'))
+ for(const[name,value]of [['输入文件（每行一个）','input.csv'],['产物目录','results'],['分析方法','mean'],['数据单位','m'],['缺失值处理','block']] as const)fireEvent.change(screen.getByRole('textbox',{name}),{target:{value}})
+ fireEvent.click(screen.getByRole('button',{name:'确认约束'}));expect(get).toHaveBeenCalledWith('acquireLease',{sessionId:'owner',holder:'user'})
+ expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disabled',true)
+ fireEvent.click(screen.getByRole('button',{name:'中止规划'}));await act(async()=>{})
+ expect(screen.getByRole('button',{name:'确认约束'})).toHaveProperty('disabled',false)
+ await act(async()=>release({}))
+ expect(get.mock.calls.some(([name])=>name==='confirmPlanningContractSource')).toBe(false)
+ expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disabled',false)
+})
+
+it('releases the shared confirmation admission on a same-owner connection change without a late write to the old client',async()=>{
+ let release!:(value:unknown)=>void
+ const oldGet=vi.fn((operation:string)=>operation==='getPlanningContractSource'?Promise.resolve({revision:0}):operation==='getAnalysisRoute'?Promise.resolve({}):new Promise(resolve=>{release=resolve}))
+ const oldClient={get:oldGet} as unknown as import('../../src/ui/client.js').WorkbenchClient
+ const newGet=vi.fn(async(_operation:string)=>({revision:0})),newClient={get:newGet} as unknown as import('../../src/ui/client.js').WorkbenchClient
+ const generate=vi.fn(async()=>{}),stop=vi.fn(async()=>{})
+ const view=render(<OrchestrationAdvisor client={oldClient} ownerSessionId="reconnect-owner" task="mean" onGenerate={generate} onStop={stop}/>);await act(async()=>{});fireEvent.click(screen.getByText('科研任务约束'))
+ for(const[name,value]of [['输入文件（每行一个）','input.csv'],['产物目录','results'],['分析方法','mean'],['数据单位','m'],['缺失值处理','block']] as const)fireEvent.change(screen.getByRole('textbox',{name}),{target:{value}})
+ fireEvent.click(screen.getByRole('button',{name:'确认约束'}))
+ view.rerender(<OrchestrationAdvisor client={newClient} ownerSessionId="reconnect-owner" task="mean" onGenerate={generate} onStop={stop}/>);await act(async()=>{})
+ expect(screen.getByRole('button',{name:'确认约束'})).toHaveProperty('disabled',false);expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disabled',false)
+ await act(async()=>release({}));expect(oldGet.mock.calls.some(([name])=>name==='confirmPlanningContractSource')).toBe(false);expect(newGet.mock.calls.some(([name])=>name==='confirmPlanningContractSource')).toBe(false)
+})
+it('does not let an old stop callback change the replacement connection state',async()=>{
+ const clientA={get:vi.fn(async()=>({revision:0}))} as unknown as import('../../src/ui/client.js').WorkbenchClient,clientB={get:vi.fn(async()=>({revision:0}))} as unknown as import('../../src/ui/client.js').WorkbenchClient
+ let reject!:(error:Error)=>void;const stop=vi.fn(()=>new Promise<void>((_r,no)=>{reject=no})),generate=vi.fn(async()=>{})
+ const view=render(<OrchestrationAdvisor client={clientA} ownerSessionId="stop-reconnect" task="mean" busy planning onGenerate={generate} onStop={stop}/>);await act(async()=>{});fireEvent.click(screen.getByRole('button',{name:'中止规划'}))
+ view.rerender(<OrchestrationAdvisor client={clientB} ownerSessionId="stop-reconnect" task="mean" busy={false} planning={false} onGenerate={generate} onStop={stop}/>);await act(async()=>{})
+ expect(screen.getByRole('button',{name:'生成安排'})).toHaveProperty('disabled',false)
+ await act(async()=>reject(Error('old transport failed')));expect(screen.queryByText('old transport failed')).toBeNull()
+})

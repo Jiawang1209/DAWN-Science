@@ -228,12 +228,13 @@ it('counts real planning calls in the multi arm and compiles the model-selected 
   const prompt=(body.messages??[]).filter((m:any)=>m.role==='user').at(-1)?.content
   const text=typeof prompt==='string'?prompt:Array.isArray(prompt)?prompt.map((part:any)=>part.text??'').join(''):''
   if(text.includes('[research_automatic_arrangement]')){
-   if((body.messages??[]).some((m:any)=>m.role==='tool'))return undefined
-   const content=(body.messages??[]).map((m:any)=>typeof m.content==='string'?m.content:(m.content??[]).map((p:any)=>p.text??'').join('')).join('\n')
-   const catalog=JSON.parse(/宿主契约目录：(\[[^\n]+\])/.exec(content)![1]!) as {reference:string;contract:any}[]
+   const generated=ordinary.toolCall(body)
+   if(!generated||generated.toolName!=='propose_plan')return generated
+   const result=(body.messages??[]).find((m:any)=>m.role==='tool')
+   const catalog=JSON.parse(result.content.split('\n[task_tool_evidence]')[0]).catalog as {reference:string;contract:any}[]
    const contracts=Object.fromEntries(catalog.map(entry=>[entry.reference.split('@')[0]!,entry.contract]))
    const block=(id:string,contract:any,review:boolean)=>({id,title:id,goal:'same synthetic method',role:id,inputs:contract.inputs,outputs:contract.outputs,dependencies:review?['analyze']:[],acceptance:'unchanged host judge',review,execution:{agent:'analyze',contract}})
-   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{title:'model arranged',plan:'## 问题与假设\nsynthetic mean\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'Only analysis and independent review are needed',independentReview:true,questions:[],tasks:[block('analyze',contracts.analyze,false),block('review',contracts.review,true)]}}}
+   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{...generated.args,title:'model arranged',plan:'## 问题与假设\nsynthetic mean\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'Only analysis and independent review are needed',independentReview:true,questions:[],tasks:[block('analyze',contracts.analyze,false),block('review',contracts.review,true)]}}}
   }
   return ordinary.toolCall(body)
  }}
@@ -258,12 +259,13 @@ it('keeps independently frozen check/analyze/review routes and guidance for a th
  const server=await startMockInferenceServer({scenario:{reply:ordinary.reply,toolCall(body:any){
   const content=(body.messages??[]).filter((m:any)=>m.role==='user').at(-1)?.content,text=typeof content==='string'?content:Array.isArray(content)?content.map((part:any)=>part.text??'').join(''):''
   if(text.includes('[research_automatic_arrangement]')){
-   if((body.messages??[]).some((m:any)=>m.role==='tool'))return undefined
-   const content=(body.messages??[]).map((m:any)=>typeof m.content==='string'?m.content:(m.content??[]).map((p:any)=>p.text??'').join('')).join('\n')
-   const catalog=JSON.parse(/宿主契约目录：(\[[^\n]+\])/.exec(content)![1]!) as {reference:string;contract:any}[]
+   const generated=ordinary.toolCall(body)
+   if(!generated||generated.toolName!=='propose_plan')return generated
+   const result=(body.messages??[]).find((m:any)=>m.role==='tool')
+   const catalog=JSON.parse(result.content.split('\n[task_tool_evidence]')[0]).catalog as {reference:string;contract:any}[]
    const contracts=Object.fromEntries(catalog.map(entry=>[entry.reference.split('@')[0]!,entry.contract]))
    const tasks=['check','analyze','review'].map((id,i)=>({id,title:id,goal:'same frozen method',role:id,inputs:contracts[id].inputs,outputs:contracts[id].outputs,dependencies:i?[i===1?'check':'analyze']:[],acceptance:'same original judge',review:id==='review',execution:{agent:'analyze',contract:contracts[id]}}))
-   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{title:'three-task plan',plan:'## 问题与假设\noriginal\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'include an input check',independentReview:true,questions:[],tasks}}}
+   return{toolName:'propose_plan',usage:{prompt_tokens:7,completion_tokens:3,total_tokens:10},args:{...generated.args,title:'three-task plan',plan:'## 问题与假设\noriginal\n## 数据与切分\ninput.csv\n## 统计检验与模型\narithmetic mean\n## 图\nnone\n## 产物\n'+contracts.analyze.outputs.map((p:string)=>'`'+p+'`').join('\n'),arrangement:{dispatch:'team-v1',mode:'science',rationale:'include an input check',independentReview:true,questions:[],tasks}}}
   }
   return ordinary.toolCall(body)
  }}})

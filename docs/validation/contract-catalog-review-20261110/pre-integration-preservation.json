@@ -1,0 +1,13 @@
+{
+  "profileHashesMatch": {
+    "providers.yaml": true,
+    "credentials.json": true,
+    "dawn.db": true
+  },
+  "mainHead": "5e64595b07d5cddfd4e167412ae410a887f1bd30",
+  "mainClean": true,
+  "liveRequests": 0,
+  "oldLiveHostStopped": true,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

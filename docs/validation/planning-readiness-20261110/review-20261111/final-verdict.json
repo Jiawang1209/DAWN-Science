@@ -1,5 +1,5 @@
 {
-  "status": "candidate verified; authorized local commit and fast-forward pending",
+  "status": "candidate and local main verified",
   "base": "baaa2c5fa8a57fbdb019cdaa614348a45ea28218",
   "sourceFingerprint": "e8467ccbd2db04db8ef4ce00f19137775bd5854e14502d59637b8a0aa5d866e7",
   "sourceAndBuildUnchanged": true,
@@ -43,5 +43,10 @@
     "No full desktop or cross-platform run.",
     "No new live-model benefit evaluation.",
     "CLI process cancellation does not prove long Bot/MCP or PTY cleanup fixed."
-  ]
+  ],
+  "integration": {
+    "status": "fast-forward merged and main rechecked",
+    "implementationCommit": "eea8d7cac83e8840b7d13b0d553ff94ab60600f3",
+    "record": "local-main/verdict.json"
+  }
 }

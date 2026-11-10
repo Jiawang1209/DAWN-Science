@@ -38,3 +38,13 @@
 - [退出观察](exit-summary.json)
 
 main 本地集成和复验结果将在 local-main/verdict.json 留存。
+
+## main 实际效果
+
+实现提交 `eea8d7cac83e8840b7d13b0d553ff94ab60600f3` 已快进合入本地 main。main 重新类型检查、构建通过，57 项关键测试和 2 项桌面复验通过，源码身份与候选一致。
+
+[main 验收记录](local-main/verdict.json) · [main 实际结果](local-main/desktop/actual-result.json) · [缺单位反馈](local-main/desktop/missing-unit-confirmed.png) · [补齐后双验收](local-main/desktop/new-confirmed-proposal-accepted.png)
+
+![main 补齐后分析与审阅均通过](local-main/desktop/new-confirmed-proposal-accepted.png)
+
+本轮真实模型请求 0；模型使用本地夹具，Python、文件及宿主验收实际执行。未推送、未发布、未替换安装版；历史退出超时与 PTY 继续 OPEN。

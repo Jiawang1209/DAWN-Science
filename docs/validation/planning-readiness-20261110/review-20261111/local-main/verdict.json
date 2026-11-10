@@ -1,0 +1,50 @@
+{
+  "status": "verified local main",
+  "implementationCommit": "eea8d7cac83e8840b7d13b0d553ff94ab60600f3",
+  "branch": "main",
+  "sourceFilesMatched": 1770,
+  "sourceFingerprint": "e8467ccbd2db04db8ef4ce00f19137775bd5854e14502d59637b8a0aa5d866e7",
+  "typecheck": "passed",
+  "build": "passed",
+  "targeted": {
+    "files": 5,
+    "passed": 57,
+    "failed": 0
+  },
+  "desktop": {
+    "recheckedTests": 2,
+    "passed": 2,
+    "failed": 0
+  },
+  "actualResult": {
+    "n": 3,
+    "mean": 2.0,
+    "unit": "m"
+  },
+  "publicBatchUnitProbe": "passed with real writer lock held; no discovery, child or published team",
+  "exitSamples": [
+    {
+      "file": "desktop-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-96021.jsonl",
+      "closeMs": 119.27,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-96437.jsonl",
+      "closeMs": 128.5,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-96285.jsonl",
+      "closeMs": 126.9,
+      "exitCode": 0
+    }
+  ],
+  "maxCloseMs": 128.5,
+  "diagnosticAlerts": [],
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "realModelRequests": 0,
+  "push": false,
+  "publish": false,
+  "installedAppReplaced": false
+}

@@ -1,0 +1,70 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/team/science-batch-tools.test.ts -t known missing unit --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/team/science-batch-tools.test.ts (3 tests | 2 failed | 1 skipped) 245ms
+   × rejects a known missing unit before environment discovery or lock wait (held=false), then permits a corrected new batch 38ms
+   × rejects a known missing unit before environment discovery or lock wait (held=true), then permits a corrected new batch 206ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/team/science-batch-tools.test.ts > rejects a known missing unit before environment discovery or lock wait (held=false), then permits a corrected new batch
+AssertionError: expected { content: [ { …(2) } ], …(2) } to match object { Object (isError, content) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "content": [
+      {
+-       "text": StringContaining "单位",
++       "text": "unexpected environment discovery",
+      },
+    ],
+    "isError": true,
+  }
+
+ ❯ tests/team/science-batch-tools.test.ts:27:18
+     25|   pending=start.execute('missing',args,controller.signal)
+     26|   const result=await Promise.race([pending,new Promise(resolve=>{timer…
+     27|   expect(result).toMatchObject({isError:true,content:[{text:expect.str…
+       |                  ^
+     28|   expect(probe).not.toHaveBeenCalled();expect(catalog).not.toHaveBeenC…
+     29|   expect(readFileSync(join(root,'in.csv'),'utf8')).toBe('x\n1\n')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/team/science-batch-tools.test.ts > rejects a known missing unit before environment discovery or lock wait (held=true), then permits a corrected new batch
+AssertionError: expected 'waiting-for-lock' to match object { Object (isError, content) }
+
+- Expected:
+{
+  "content": [
+    {
+      "text": StringContaining "单位",
+    },
+  ],
+  "isError": true,
+}
+
++ Received:
+"waiting-for-lock"
+
+ ❯ tests/team/science-batch-tools.test.ts:27:18
+     25|   pending=start.execute('missing',args,controller.signal)
+     26|   const result=await Promise.race([pending,new Promise(resolve=>{timer…
+     27|   expect(result).toMatchObject({isError:true,content:[{text:expect.str…
+       |                  ^
+     28|   expect(probe).not.toHaveBeenCalled();expect(catalog).not.toHaveBeenC…
+     29|   expect(readFileSync(join(root,'in.csv'),'utf8')).toBe('x\n1\n')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 skipped (3)
+   Start at  02:05:06
+   Duration  1.46s (transform 294ms, setup 0ms, import 1.11s, tests 245ms, environment 0ms)
+

@@ -7,11 +7,12 @@ import {DOMParser} from '@xmldom/xmldom'
 import {fileIdentity} from '../artifacts/blobs.js'
 import {读成表} from '../files/table.js'
 import type {TaskContract,TaskReceipt} from '../protocol/task-contract.js'
-import {ScienceAcceptanceSchema,ScienceAcceptanceReceiptSchema,type ScienceAcceptanceReceipt,type ScienceAcceptance} from '../protocol/science-acceptance.js'
+import {ScienceAcceptanceSchema,ScienceAcceptanceReceiptSchema,scienceReadinessIssue,type ScienceAcceptanceReceipt,type ScienceAcceptance} from '../protocol/science-acceptance.js'
 export const ACCEPTANCE_LIMITS={tableBytes:8*1024*1024,fileBytes:2*1024*1024,totalBytes:16*1024*1024,rows:100000,physicalLines:200000}
 export const scienceAcceptanceHash=(spec:ScienceAcceptance)=>createHash('sha256').update(JSON.stringify(ScienceAcceptanceSchema.parse(spec))).digest('hex')
 export async function validateScienceAcceptance(contract:TaskContract|undefined,receipt:TaskReceipt,workspace:string,signal?:AbortSignal,evidence:readonly RouteToolEvidence[]=[]):Promise<TaskReceipt>{
  if(!contract?.acceptance||receipt.state!=='accepted')return receipt
+ const readiness=scienceReadinessIssue(contract.acceptance);if(readiness)return{version:1,state:'blocked',summary:'科研任务信息尚未就绪',reason:readiness,deliverables:[]}
  const spec=ScienceAcceptanceSchema.parse(contract.acceptance),checks:ScienceAcceptanceReceipt['checks']=[],files:ScienceAcceptanceReceipt['files']=[];let environment:ScienceAcceptanceReceipt['environment'];let numericChecked=false,bytes=0
  const stopped=()=>{if(signal?.aborted)throw new Error('验收已取消')}
  const add=(id:string,ok:boolean,expected?:unknown,actual?:unknown)=>{checks.push({id,state:ok?'passed':'blocked',...(expected!==undefined?{expected:String(expected).slice(0,2000)}:{}),...(actual!==undefined?{actual:String(actual).slice(0,2000)}:{})})}
@@ -77,6 +78,7 @@ export async function validateScienceAcceptance(contract:TaskContract|undefined,
 }
 export function validateAcceptanceReceipt(contract:TaskContract|undefined,receipt:TaskReceipt):TaskReceipt {
  if(!contract?.acceptance||receipt.state!=='accepted')return receipt
+ const readiness=scienceReadinessIssue(contract.acceptance);if(readiness)return{version:1,state:'blocked',summary:'科研任务信息尚未就绪',reason:readiness,deliverables:[]}
  const result=ScienceAcceptanceReceiptSchema.safeParse(receipt.acceptance)
  const paths=[contract.acceptance.scriptPath,contract.acceptance.reportPath,contract.acceptance.resultPath,...(contract.acceptance.numeric?[contract.acceptance.numeric.dataPath]:[])]
  if(!result.success||result.data.files.length!==paths.length||paths.some(path=>!result.data.files.some(f=>f.path===path))||result.data.checks.some(c=>c.state==='blocked')||result.data.specHash!==scienceAcceptanceHash(contract.acceptance)||result.data.state!=='passed'||contract.acceptance.environment?.state==='known'&&(result.data.environment?.state!=='known'||result.data.environment.fingerprint!==contract.acceptance.environment.fingerprint)||contract.acceptance.numeric&&!result.data.numericChecked)return{version:1,state:'blocked',summary:'宿主验收证明缺失或不匹配',reason:'后端未提供当前冻结规则的可执行验收证明',deliverables:[]}

@@ -1,7 +1,7 @@
 import {ToolRecordRefSchema} from './tool-record.js'
 /** Client-safe task contracts and host receipt vocabulary. No execution or filesystem imports. */
 import {z} from 'zod'
-import {ScienceAcceptanceSchema,ScienceAcceptanceReceiptSchema} from './science-acceptance.js'
+import {ScienceAcceptanceSchema,ScienceAcceptanceReceiptSchema,scienceReadinessIssue} from './science-acceptance.js'
 import {FileVersionSchema,TaskInputVersionsSchema,TaskVersionsSchema} from './file-versions.js'
 import {RouteExecutionSchema,RouteVerificationSchema,WorkspaceRelativePathSchema} from './analysis-route.js'
 const paths = z.array(WorkspaceRelativePathSchema).max(64)
@@ -72,6 +72,8 @@ export const TaskScopeSchema=z.object({version:z.literal(1),tier:z.enum(['allow-
   access:TaskAccessSchema,tools:z.array(z.string()).max(64),inputs:paths,outputs:paths}).strict()
 export type TaskScope=z.infer<typeof TaskScopeSchema>
 export const TaskSettingsSchema=z.object({contract:TaskContractSchema.optional(),scope:TaskScopeSchema,versions:TaskInputVersionsSchema.optional()}).strict().superRefine(({contract,scope,versions},ctx)=>{
+  const readiness=scienceReadinessIssue(contract?.acceptance)
+  if(readiness)ctx.addIssue({code:'custom',message:readiness})
   if(versions&&(!contract||versions.inputs.length!==contract.inputs.length||contract.inputs.some(p=>!versions.inputs.some(v=>v.path===p))||contract.inputs.length+contract.outputs.length>64))ctx.addIssue({code:'custom',message:'内容版本须覆盖全部契约输入，阶段文件总数不能超过 64'})
   if(contract&&(contract.access!==scope.access||JSON.stringify(contract.inputs)!==JSON.stringify(scope.inputs)||JSON.stringify(contract.outputs)!==JSON.stringify(scope.outputs)))ctx.addIssue({code:'custom',message:'Frozen scope contradicts task contract'})
   if(scope.access!=='workspace-exec'&&scope.tools.some(t=>!['read','ls','grep','find','resource_read','resource_search','team_status','bot_say',...(scope.access==='workspace-write'?['write','edit']:[])].includes(t)))ctx.addIssue({code:'custom',message:'Tools exceed frozen task access'})

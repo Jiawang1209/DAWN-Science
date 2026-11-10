@@ -1,0 +1,32 @@
+{
+  "status": "verified; worktree retained uncommitted",
+  "base": "baaa2c5fa8a57fbdb019cdaa614348a45ea28218",
+  "branch": "codex/planning-readiness-20261110",
+  "sourceSnapshotMatched": true,
+  "sourceFileCount": 1697,
+  "mainCleanAndUnchanged": true,
+  "formalProfileHashesUnchanged": true,
+  "childBuildUnchanged": true,
+  "typecheck": "passed",
+  "build": "passed",
+  "vitest": {
+    "files": 733,
+    "passed": 7166,
+    "skipped": 11,
+    "failed": 0
+  },
+  "electron": {
+    "relatedUniqueTests": 9,
+    "finalStaticChangeRechecks": 2,
+    "failed": 0
+  },
+  "realModelRequests": 0,
+  "previousQuotaUsed": false,
+  "commit": false,
+  "merge": false,
+  "push": false,
+  "publish": false,
+  "installedAppReplaced": false,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

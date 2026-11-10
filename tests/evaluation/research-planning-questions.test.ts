@@ -11,8 +11,8 @@ import {researchScenario} from '../../scripts/mock-research.mjs'
 it('records actual planning questions as awaiting-info without running or counting a successful block',async()=>{
  const root=mkdtempSync(join(tmpdir(),'dawn-plan-questions-')),tasks=researchTasks(),base=researchScenario(tasks)
  const server=await startMockInferenceServer({scenario:{...base,toolCall(body:{tools?:{function?:{name:string}}[]}){
-  if(body.tools?.some(t=>t.function?.name==='propose_plan'))return{toolName:'propose_plan',args:{title:'确认单位',plan:'## 问题与假设\n待确认\n## 数据与切分\ninput.csv\n## 统计检验与模型\n待确认\n## 图\n无\n## 产物\n无',arrangement:{mode:'single',rationale:'缺少单位',independentReview:false,questions:['输入单位是什么？'],tasks:[{id:'inspect',title:'确认',goal:'不猜单位',role:'核查',inputs:['input.csv'],outputs:[],dependencies:[],acceptance:'已确认单位',review:false}]}}}
-  return base.toolCall(body)
+  const call=base.toolCall(body);if(call?.toolName==='propose_plan')call.args.arrangement.questions=['输入单位是什么？'];return call
+
  }}})
  try{
   const modelsPath=join(root,'models.json');writeFileSync(modelsPath,JSON.stringify(mockModelsJson(server.url)))

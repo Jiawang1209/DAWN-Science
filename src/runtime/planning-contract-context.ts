@@ -43,6 +43,7 @@ export function assertPlanningArrangement(context:PlanningContractContext,value:
  }
  // Questions cannot pass the existing approval gate; they are a read-only request
  // for another proposal, not an exception that authorizes partial execution.
+ if(context.source.template.unitStatus==='missing'&&!plan.questions.length)throw Error('数据单位尚未提供，请在questions中请求补齐；不能提交可执行方案')
  if(plan.questions.length)return
  if(plan.dispatch!=='team-v1')throw Error('科研约束需要有效执行绑定，不能省略后直接执行')
  const writers=plan.tasks.filter(task=>task.execution?.contract.resultType==='model-metrics')

@@ -15,9 +15,9 @@ export function mockAutoArrangement(body,basePlan){
    const analyze=catalog.catalog.find(entry=>entry.contract.resultType==='model-metrics'),review=catalog.catalog.find(entry=>entry.contract.resultType==='review')
    if(!analyze||catalog.independentReview&&!review)return undefined
    const node=(id,title,entry,dependencies,reviewer=false)=>({id,title,goal:title+'（本地科研契约夹具）',role:reviewer?'独立审阅员':'统计分析员',inputs:entry.contract.inputs,outputs:entry.contract.outputs,dependencies,acceptance:'遵守已确认的科学合同，提交原始证据和版本供宿主验收',review:reviewer,execution:{agent:reviewer?'reviewer-two':'data-engineer',contractRef:entry.reference}})
-   const tasks=[node('analyze','按确认约束完成分析',analyze,[])]
+    const tasks=[node('analyze','按确认约束完成分析',analyze,[])]
    if(catalog.independentReview)tasks.push(node('review','独立审阅分析与证据',review,['analyze'],true))
-   return{toolName:'propose_plan',args:{...basePlan,title:'按科研约束自动安排',plan:'## 问题与假设\n按本会话已确认的科学约束分析。\n## 数据与切分\n保留声明输入。\n## 统计检验与模型\n严格沿用宿主合同。\n## 图\n不额外增加图形任务。\n## 产物\n交付合同声明的脚本、结果和报告。',catalogFingerprint:catalog.fingerprint,arrangement:{mode:catalog.independentReview?'science':'single',dispatch:'team-v1',rationale:'使用当前已确认契约，按需独立审阅。',independentReview:catalog.independentReview,tasks,questions:[]}},say:'已引用当前约束；等待你采纳后才执行。'}
+    return{toolName:'propose_plan',args:{...basePlan,title:'按科研约束自动安排',plan:'## 问题与假设\n按本会话已确认的科学约束分析。\n## 数据与切分\n保留声明输入。\n## 统计检验与模型\n严格沿用宿主合同。\n## 图\n不额外增加图形任务。\n## 产物\n交付合同声明的脚本、结果和报告。',catalogFingerprint:catalog.fingerprint,arrangement:{mode:catalog.independentReview?'science':'single',dispatch:'team-v1',rationale:'使用当前已确认契约，按需独立审阅。',independentReview:catalog.independentReview,tasks,questions:catalog.missingFacts?.includes('units')?['请补充目标列的数据单位，再确认约束并生成新方案。']:[]}},say:'已引用当前约束；等待你采纳后才执行。'}
   }
  }
  const task=(id,title,role,inputs,outputs,dependencies=[],review=false)=>({id,title,role,goal:title,inputs,outputs,dependencies,acceptance:'输入保留、结果可核对，并提供实际依据',review})

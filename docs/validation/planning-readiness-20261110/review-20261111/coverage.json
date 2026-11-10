@@ -1,0 +1,46 @@
+{
+  "kind": "review checklist and existing test coverage, not a test result",
+  "scopes": {
+    "binding": [
+      "tests/runtime/approved-plan.test.ts",
+      "tests/team/approved-plan.test.ts",
+      "tests/runtime/planning-contract-arrangement.test.ts"
+    ],
+    "frozen_permissions": [
+      "tests/runtime/approved-plan.test.ts: executor definitions and tool scope remain the approved snapshot after on-disk edits",
+      "tests/team/approved-plan.test.ts"
+    ],
+    "owner_and_epoch": [
+      "tests/runtime/approved-plan.test.ts: late abort, restart, current-team and persisted-team changes",
+      "tests/runtime/planning-contract-book.test.ts",
+      "tests/ui/planning-contract-source-form.test.tsx"
+    ],
+    "cancel_and_drain": [
+      "tests/subagent/task-executor.test.ts",
+      "tests/subagent/task-recovery.test.ts",
+      "tests/team/science-batch-parallel.test.ts",
+      "e2e/collaboration-stopping.spec.ts"
+    ],
+    "recovery": [
+      "tests/team/recovery.test.ts",
+      "tests/team/science-batch-recovery.test.ts",
+      "tests/runtime/unit-readiness.test.ts",
+      "e2e/planning-readiness.spec.ts"
+    ],
+    "legacy_entries": [
+      "e2e/auto-arrangement.spec.ts",
+      "e2e/approved-plan-execution.spec.ts",
+      "e2e/science-batch.spec.ts",
+      "e2e/orchestration-entry.spec.ts"
+    ],
+    "new_regression": [
+      "tests/team/science-batch-tools.test.ts: missing unit held=false/true; no environment/model discovery or task start; corrected batch remains valid"
+    ]
+  },
+  "fullDesktopSuiteRun": false,
+  "liveModelRequests": 0,
+  "history": {
+    "exitTimeout": "OPEN",
+    "ptyCleanup": "OPEN"
+  }
+}

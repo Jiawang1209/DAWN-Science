@@ -1,0 +1,89 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/planning-readiness.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/tools/planning-readiness.test.ts (6 tests | 5 failed) 21ms
+   × rejects dependency before saving a proposal, then accepts its corrected version 10ms
+   × rejects contract before saving a proposal, then accepts its corrected version 2ms
+   × rejects nested before saving a proposal, then accepts its corrected version 1ms
+   × grounds clarification in current missing information and confirmed facts across both entry points 3ms
+   × reports confirmed requirements explicitly without making them execution approval 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/tools/planning-readiness.test.ts > rejects dependency before saving a proposal, then accepts its corrected version
+ FAIL  |node| tests/tools/planning-readiness.test.ts > rejects contract before saving a proposal, then accepts its corrected version
+ FAIL  |node| tests/tools/planning-readiness.test.ts > rejects nested before saving a proposal, then accepts its corrected version
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tools/planning-readiness.test.ts:19:22
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |node| tests/tools/planning-readiness.test.ts > grounds clarification in current missing information and confirmed facts across both entry points
+AssertionError: expected '请为以下具体任务自动安排。先只读理解目标、数据和已有会话约束，再用 pro…' to contain '已确认'
+
+- Expected
++ Received
+
+- 已确认
++ 请为以下具体任务自动安排。先只读理解目标、数据和已有会话约束，再用 propose_plan 的 arrangement 提交任务划分、分工、输入输出、依赖、验收与理由。
++
++ 任务数量是方案结果，由实际任务决定；简单单结果任务优先一个任务块，不能固定拆成三块，也不要让用户预填数字。只有依赖、独立输入、权限边界或明确审阅要求才增加分工；请在理由里解释额外分工的实际作用。并行仅用于独立任务且不能共写；用户要求独立审阅时必须保留不同执行角色的审阅任务。缺信息放入 questions，不编造数据或启动执行。
++
++ 任务目标：
++ mean
++
++ 原有冻结契约、证据、产物版本、预算、产物锁和恢复要求继续适用。请交可调整的方案，等待用户采纳；这次只规划，不写科研产物、不派子 Agent。
+
+ ❯ tests/tools/planning-readiness.test.ts:30:16
+     28| it('grounds clarification in current missing information and confirmed…
+     29|  for(const text of [autoArrangementPrompt('mean'),createProposePlanToo…
+     30|   expect(text).toContain('已确认');expect(text).toContain('假设性');expect(t…
+       |                ^
+     31|  }
+     32| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |node| tests/tools/planning-readiness.test.ts > reports confirmed requirements explicitly without making them execution approval
+AssertionError: expected undefined to match object { method: 'mean', units: 'mg/g', …(3) }
+
+- Expected:
+{
+  "inputs": [
+    "in.csv",
+  ],
+  "method": "mean",
+  "missingValues": "drop NA",
+  "outputRoot": "results",
+  "units": "mg/g",
+}
+
++ Received:
+undefined
+
+ ❯ tests/tools/planning-readiness.test.ts:37:31
+     35|  const r=await createGetPlanContractsTool({isPlanning:()=>true,context…
+     36|  const facts=JSON.parse(r.content[0]!.text)
+     37|  expect(facts.confirmedFacts).toMatchObject({method:'mean',units:'mg/g…
+       |                               ^
+     38|  expect(facts.missingFacts).toEqual([]);expect(facts.instruction).toCo…
+     39| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  05:16:46
+   Duration  694ms (transform 164ms, setup 0ms, import 589ms, tests 21ms, environment 0ms)
+

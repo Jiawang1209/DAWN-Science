@@ -2,6 +2,7 @@
 import {Type} from 'typebox'
 import type {PlanningContractContext} from '../runtime/planning-contract-context.js'
 import {科研契约目录工具名} from '../protocol/plan.js'
+import {planningClarificationGuidance} from '../protocol/task-arrangement.js'
 
 export function createGetPlanContractsTool(opts:{isPlanning:()=>boolean;context:()=>PlanningContractContext|undefined}){
  const text=(value:unknown,isError=false)=>({content:[{type:'text' as const,text:JSON.stringify(value)}],...(isError?{isError:true}:{}),details:undefined})
@@ -12,7 +13,9 @@ export function createGetPlanContractsTool(opts:{isPlanning:()=>boolean;context:
    try{
     const context=opts.context()
     if(!context)return text({available:false,reason:'尚无用户确认的科研约束；普通任务沿用完整contract，不猜测目录引用。'})
-    return text({available:true,revision:context.revision,fingerprint:context.fingerprint,template:context.source.template,instructions:context.instructions,independentReview:context.source.independentReview,catalog:context.catalog,
+    const s=context.source
+    return text({available:true,revision:context.revision,fingerprint:context.fingerprint,template:s.template,instructions:context.instructions,independentReview:s.independentReview,catalog:context.catalog,
+     confirmedFacts:{method:s.template.method,units:s.template.unitStatus==='missing'?null:s.template.units,missingValues:s.template.missingValues,inputs:s.inputs,outputRoot:s.outputRoot,independentReview:s.independentReview},missingFacts:s.template.unitStatus==='missing'?['units']:[],clarificationPolicy:planningClarificationGuidance,
      instruction:'目录不是任务数或执行批准。依据实际任务选择；保留已确认科学约束。提交propose_plan时带上catalogFingerprint=fingerprint核对来源；使用完整引用，不同时提交contract。'})
    }catch(error){return text({available:false,reason:(error instanceof Error?error.message:String(error)).slice(0,2000)},true)}
   },

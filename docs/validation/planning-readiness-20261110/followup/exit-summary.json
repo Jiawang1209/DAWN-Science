@@ -1,0 +1,80 @@
+{
+  "samples": [
+    {
+      "file": "desktop-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-18725.jsonl",
+      "closeMs": 132.33,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-18905.jsonl",
+      "closeMs": 168.92,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-19048.jsonl",
+      "closeMs": 125.09,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-19257.jsonl",
+      "closeMs": 130.07,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-19845.jsonl",
+      "closeMs": 148.18,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-19995.jsonl",
+      "closeMs": 182.01,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-49e0c-locks-for-\u53ea\u8ba1\u7b97-input-csv-\u7684\u5747\u503c/electron-exit/exit-19386.jsonl",
+      "closeMs": 131.03,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-fc1f8-or-\u5206\u522b\u7edf\u8ba1-east-csv-\u4e0e-west-csv/electron-exit/exit-19620.jsonl",
+      "closeMs": 128.74,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-20148.jsonl",
+      "closeMs": 170.58,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-20270.jsonl",
+      "closeMs": 130.37,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-20436.jsonl",
+      "closeMs": 116.19,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-20590.jsonl",
+      "closeMs": 158.29,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-20740.jsonl",
+      "closeMs": 126.66,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-20863.jsonl",
+      "closeMs": 127.91,
+      "exitCode": 0
+    }
+  ],
+  "sampleCount": 14,
+  "maxCloseMs": 182.01,
+  "diagnosticAlerts": [],
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "limitation": "Normal related-test exits do not reproduce or close historical long Bot/MCP teardown or PTY cleanup defects."
+}

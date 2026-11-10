@@ -1,4 +1,5 @@
 import {probeScienceEnvironment} from './science-environment.js'
+import {scienceReadinessIssue} from '../protocol/science-acceptance.js'
 import {reuseContext,reuseEligibility,revalidateReusableItem,scienceReuseBuild} from './science-reuse.js'
 import {assertFileVersions} from '../artifacts/task-versions.js'
 import type {任务} from './types.js'
@@ -128,7 +129,13 @@ export function createSciencePipelineTools(opts:Options){
  const batchStart=PipelineStartRequestSchema.omit({inputs:true,outputs:true}).extend(ScienceBatchRequestSchema.shape)
  const tools=[
   make('start_science_pipeline','按已确认路线启动版本绑定的核查→分析→独立审阅流程；未知失败不自动重试。',PipelineStartRequestSchema,start),
-  make('start_science_batch','用 tabular-ecology@1 或 figure-reproduction@1 模板逐项执行 1–8 项；默认串行，concurrency:2 可让两项独立推进；共享成员和工作区执行锁仍串行，失败即停、固定宿主汇总已验收事实；reuseFrom 显式派生新批次，仅复用完整且内容/规则/权限/环境一致的已验收项。',batchStart,(args,callId,signal)=>start({...args,inputs:args.items[0]!.inputs,outputs:scienceTemplate(args.template,`${args.outputRoot}/placeholder`,args.items[0]!.inputs,args.items[0]!.dataPath).outputs},callId,signal,ScienceBatchRequestSchema.parse({template:args.template,items:args.items,outputRoot:args.outputRoot,...(args.reuseFrom?{reuseFrom:args.reuseFrom}:{}),...(args.concurrency?{concurrency:args.concurrency}:{})}))),
+  make('start_science_batch','用 tabular-ecology@1 或 figure-reproduction@1 模板逐项执行 1–8 项；默认串行，concurrency:2 可让两项独立推进；共享成员和工作区执行锁仍串行，失败即停、固定宿主汇总已验收事实；reuseFrom 显式派生新批次，仅复用完整且内容/规则/权限/环境一致的已验收项。',batchStart,(args,callId,signal)=>{
+   const batch=ScienceBatchRequestSchema.parse({template:args.template,items:args.items,outputRoot:args.outputRoot,...(args.reuseFrom?{reuseFrom:args.reuseFrom}:{}),...(args.concurrency?{concurrency:args.concurrency}:{})})
+   const recipe=scienceTemplate(args.template,`${args.outputRoot}/placeholder`,args.items[0]!.inputs,args.items[0]!.dataPath)
+   // Known missing facts must stop before locks, input discovery or interpreter probes.
+   const readiness=scienceReadinessIssue(recipe.acceptance);if(readiness)throw new Error(readiness)
+   return start({...args,inputs:args.items[0]!.inputs,outputs:recipe.outputs},callId,signal,batch)
+  }),
   make('science_pipeline_status','读取科研流程检查点、阶段宿主回执、修正次数和轻量观测；不启动执行。',statusSchema,args=>{const t=owned(args.teamId);return status(t)}),
   make('resume_science_pipeline','显式恢复 interrupted 流程，已验收阶段不重跑；未知副作用必须核对后 acknowledgeInterrupted。blocked 不自动重试。',resumeSchema,async(args,_callId,signal)=>{
    const team=owned(args.teamId),p=team.pipeline!,route=opts.route()

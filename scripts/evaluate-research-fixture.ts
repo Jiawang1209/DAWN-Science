@@ -1,5 +1,5 @@
 /** Reproducible automatic-plan paired evaluation using only localhost inference and synthetic CSV. */
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync,existsSync} from 'node:fs'
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync,existsSync,readdirSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -26,7 +26,12 @@ export async function runResearchFixtureEvaluation(output:string,options?:Resear
   writeFileSync(modelsPath,JSON.stringify(config))
   const work={provider:RESEARCH_STAGE_PROVIDERS.work,model:'deepseek-flash'},review={provider:RESEARCH_STAGE_PROVIDERS.review,model:'deepseek-flash'}
   const report=await runResearchEvaluation(output,{requestLimit:300,provider:'deepseek',model:'deepseek-flash',modelsPath,credential:quota.token,kind:'fixture',requests:()=>quota.stats().forwarded,multiExecution:'automatic-plan',multiStageLimits:researchStageLimits(batch.perArmLimit),multiStageModels:{check:work,analyze:work,review},requestBudgetFeedback:'partition-live-v1',beginTrial:(limit,mode)=>researchBudgetTrial(quota.partition(limit),mode,'deepseek-flash'),...(signal?{signal}:{})},batch)
-  if(report.qualifiedPairs!==batch.taskIds.length*batch.repeats)throw new Error('本地科研评测未通过；保留原始报告，不覆盖或重跑')
+  if(!Array.isArray(report.rows)||report.rows.length!==batch.taskIds.length*batch.repeats*2)throw new Error('本地科研评测未通过；报告结构不完整，保留原始证据')
+  const known=researchTasks().filter(t=>batch.taskIds.includes(t.id)&&t.expected).length*batch.repeats
+  const unknown=report.rows.filter(r=>!researchTasks().find(t=>t.id===r.caseId)!.expected)
+  const unknownReady=unknown.every(r=>r.terminal==='awaiting-info'&&r.readiness?.missing[0]==='units'&&r.readiness.executionStarted===false&&r.versions.length===0)
+  const noUnknownResults=readdirSync(output).filter(n=>n.startsWith('unknown-unit-')).every(n=>['analysis.py','result.json','report.md'].every(file=>!existsSync(join(output,n,'results',file))))
+  if(report.qualifiedPairs!==known||!unknownReady||!noUnknownResults)throw new Error('本地科研评测未通过；保留原始报告，不覆盖或重跑')
   return report
  }finally{
   try{await gate?.close();if(gate){mkdirSync(output,{recursive:true});writeFileSync(join(output,'request-gate.json'),JSON.stringify(gate.stats(),null,2)+'\n',{flag:'wx'})}}

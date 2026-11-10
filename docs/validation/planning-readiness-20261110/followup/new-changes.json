@@ -1,0 +1,17 @@
+{
+  "relativeTo": "followup/baseline.json",
+  "changedExistingSourceFiles": {
+    "e2e/planning-readiness.spec.ts": {
+      "before": "fe913072afb8670c0d99a8cf5af9adcfd05252ad41f98b12b1e7d98b5c992d8c",
+      "after": "e819121da3f959d524c398fc8f5b30eaf0f060286efb4210642c152494ee3f69"
+    },
+    "src/ui/planning-contract-source-form.tsx": {
+      "before": "21bc495de44a7fb60496f8d14ca81413da2e48fecd0dcd102ec9e18594c0bb08",
+      "after": "6edaba54788d43079497e1349b4c7d166938db2091bfc35289251fbe4ef83419"
+    },
+    "tests/ui/planning-contract-source-form.test.tsx": {
+      "before": "e4a26a44ad6ca2572ea07bdbc7dece8d629fb8d29b85625b2166d704b44c5cf3",
+      "after": "a717e6803d3a996c07d7681488c63396f1eca2a8ecfdc533c44ac1d16804cf1c"
+    }
+  }
+}

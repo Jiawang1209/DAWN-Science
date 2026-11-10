@@ -1,0 +1,21 @@
+{
+  "mode": "model-generated",
+  "requests": 2,
+  "taskCount": 3,
+  "valid": false,
+  "reviewCovered": false,
+  "catalogSource": "confirmed-product",
+  "questions": [
+    "输入单位是什么？"
+  ],
+  "reason": "方案待确认，尚未启动任务执行",
+  "usage": {
+    "input": 24,
+    "output": 16,
+    "cacheRead": 0,
+    "partial": [
+      "cacheRead"
+    ]
+  },
+  "compiled": false
+}

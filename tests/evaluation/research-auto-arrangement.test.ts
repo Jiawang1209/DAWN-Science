@@ -1,5 +1,5 @@
 import {afterEach,expect,it} from 'vitest'
-import {mkdtempSync,writeFileSync,rmSync,mkdirSync,readFileSync} from 'node:fs'
+import {mkdtempSync,writeFileSync,rmSync,mkdirSync,readFileSync,existsSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {generateResearchArrangement} from '../../scripts/research-auto-arrangement.js'
@@ -20,9 +20,10 @@ it.each(['questions','reference','two','three','unknown-usage','cancel','tamper'
   const definitions=['check','analyze','review'].map(name=>({name,description:name,systemPrompt:'original role',tools:['read','write'],filePath:'/'+name}))
   const pending=generateResearchArrangement({workspace:root,sessionDir:join(root,'planner'),modelsPath,provider:'deepseek',model:'deepseek-flash',credential:'offline',definitions,contracts:{check,analyze:analysis,review},instructions:'one synthetic mean',requests:()=>server.requests.length,prepareSettings:(path)=>{mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,JSON.stringify({retry:{enabled:false,maxRetries:0,provider:{maxRetries:0}},compaction:{enabled:false},cacheWarming:'off'}))},signal:controller.signal})
   if(mode==='questions'||mode==='cancel'||mode==='pre-abort'||mode==='tamper'){
-   await expect(pending).rejects.toThrow(mode==='questions'?'待确认':mode==='tamper'?'冻结科学契约':'取消')
+   await expect(pending).rejects.toThrow(mode==='questions'?'待确认':mode==='tamper'?'未交付可批准':'取消')
    const recorded=JSON.parse(readFileSync(join(root,'planner/automatic-arrangement.json'),'utf8'));expect(recorded.valid).toBe(false);if(mode==='questions')expect(recorded.questions).toEqual(['输入单位是什么？'])
    if(mode==='pre-abort')expect(server.requests).toHaveLength(0)
+   if(mode==='tamper'){expect(existsSync(join(root,'planner/proposed-plan.json'))).toBe(false);expect(JSON.stringify(server.requests)).toContain('文件声明与执行契约不一致')}
    const count=server.requests.length;await new Promise(r=>setTimeout(r,50));expect(server.requests).toHaveLength(count);return
   }
   const plan=await pending

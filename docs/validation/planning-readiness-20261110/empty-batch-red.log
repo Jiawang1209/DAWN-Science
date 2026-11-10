@@ -1,0 +1,40 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-fixture-status.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/evaluation/research-fixture-status.test.ts (2 tests | 1 failed) 19ms
+   × does not accept an empty unknown-unit batch as successful preflight evidence 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-status.test.ts > does not accept an empty unknown-unit batch as successful preflight evidence
+AssertionError: promise resolved "{ qualifiedPairs: +0, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "completePairs": 0,
++   "qualifiedPairs": 0,
++   "rows": [],
+  }
+
+ ❯ tests/evaluation/research-fixture-status.test.ts:22:106
+     20| it('does not accept an empty unknown-unit batch as successful prefligh…
+     21|  const root=mkdtempSync(join(tmpdir(),'dawn-fixture-empty-'));fake.val…
+     22|  try{await expect(runResearchFixtureEvaluation(root,{taskIds:['unknown…
+       |                                                                                                          ^
+     23|  finally{rmSync(root,{recursive:true,force:true})}
+     24| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  05:33:51
+   Duration  267ms (transform 94ms, setup 0ms, import 158ms, tests 19ms, environment 0ms)
+

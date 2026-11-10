@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-readiness.spec.ts --output=docs/validation/planning-readiness-20261110/desktop-diagnostic-results
+
+Running 1 test using 1 worker
+
+(node:24581) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56760/63a921bc-5fa4-487b-b26b-528ed920bab7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56783/2d817326-5f87-4662-a715-3d3ebdc145e1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python (30.2s)
+
+
+  1) e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python 
+
+    Error: expect(locator).not.toBeChecked() failed
+
+    Locator:  getByRole('region', { name: '自动安排', exact: true }).locator('.planning-contract-source').getByLabel('单位尚未提供', { exact: true })
+    Expected: not checked
+    Received: checked
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "not toBeChecked" with timeout 25000ms
+      - waiting for getByRole('region', { name: '自动安排', exact: true }).locator('.planning-contract-source').getByLabel('单位尚未提供', { exact: true })
+        53 × locator resolved to <input class="control" type="checkbox"/>
+           - unexpected value "checked"
+
+
+      22 |  auto=page.getByRole('region',{name:'自动安排',exact:true});source=auto.locator('.planning-contract-source');await source.locator('summary').click();await expect(source.getByLabel('单位尚未提供',{exact:true})).toBeChecked();await expect(source.getByRole('status')).toContainText('不能执行')
+      23 |  await page.getByRole('button',{name:'打开编排视图',exact:true}).click();await source.scrollIntoViewIfNeeded();await source.screenshot({path:join(out,'restored-missing-unit.png')});await page.keyboard.press('Escape');await expect(page.getByRole('dialog',{name:'流程工作台',exact:true})).toHaveCount(0)
+    > 24 |  await source.getByLabel('单位尚未提供',{exact:true}).uncheck();writeFileSync(join(out,'uncheck-immediate.json'),JSON.stringify(await source.evaluate(el=>({html:el.outerHTML})),null,2));await expect(source.getByLabel('单位尚未提供',{exact:true})).not.toBeChecked();await expect(source.getByRole('textbox',{name:'数据单位',exact:true})).toBeEnabled({timeout:1500});await source.getByRole('textbox',{name:'数据单位',exact:true}).fill('°C')
+         |                                                                                                                                                                                                                                                ^
+      25 |  await source.getByLabel('增加独立数值核验',{exact:true}).check();await source.getByRole('textbox',{name:'核验数据文件',exact:true}).fill('input.csv');await source.getByRole('textbox',{name:'核验列名',exact:true}).fill('x');await source.getByRole('combobox',{name:'数值缺失规则',exact:true}).selectOption('block')
+      26 |  await source.getByRole('button',{name:'确认约束',exact:true}).click();await expect(source.getByRole('status')).toContainText('约束已保存');await source.locator('summary').click()
+      27 |  await auto.getByText('调整任务与分工',{exact:true}).click();await auto.getByRole('button',{name:'重新安排',exact:true}).click();const ready=page.locator('main.main .plan-card').last();await expect(ready.getByRole('button',{name:'照这个做',exact:true})).toBeEnabled();await ready.getByRole('button',{name:'照这个做',exact:true}).click()
+        at /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/e2e/planning-readiness.spec.ts:24:240
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/planning-readiness-20261110/desktop-diagnostic-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/planning-readiness-20261110/desktop-diagnostic-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/planning-readiness-20261110/desktop-diagnostic-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/planning-readiness-20261110/desktop-diagnostic-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/planning-readiness-20261110/desktop-diagnostic-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python 

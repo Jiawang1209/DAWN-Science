@@ -1,0 +1,94 @@
+{
+  "samples": [
+    {
+      "file": "desktop-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-90294.jsonl",
+      "closeMs": 113.1,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-90502.jsonl",
+      "closeMs": 175.23,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-90651.jsonl",
+      "closeMs": 139.79,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-90856.jsonl",
+      "closeMs": 133.43,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-91499.jsonl",
+      "closeMs": 134.77,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-91663.jsonl",
+      "closeMs": 157.52,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-49e0c-locks-for-\u53ea\u8ba1\u7b97-input-csv-\u7684\u5747\u503c/electron-exit/exit-91026.jsonl",
+      "closeMs": 129.12,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-automatic-fc1f8-or-\u5206\u522b\u7edf\u8ba1-east-csv-\u4e0e-west-csv/electron-exit/exit-91272.jsonl",
+      "closeMs": 145.35,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-91877.jsonl",
+      "closeMs": 167.75,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-92004.jsonl",
+      "closeMs": 126.28,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/collaboration-stopping-sho-14410-g-is-not-a-screenshot-claim/electron-exit/exit-92276.jsonl",
+      "closeMs": 131.66,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-92633.jsonl",
+      "closeMs": 112.78,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-92862.jsonl",
+      "closeMs": 121.1,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-93055.jsonl",
+      "closeMs": 149.71,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-93206.jsonl",
+      "closeMs": 126.19,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-93370.jsonl",
+      "closeMs": 138.41,
+      "exitCode": 0
+    },
+    {
+      "file": "desktop-results/science-batch-batch-versio-7ac23-ual-strict-desktop-protocol/electron-exit/exit-93488.jsonl",
+      "closeMs": 161.87,
+      "exitCode": 0
+    }
+  ],
+  "count": 17,
+  "maxCloseMs": 175.23,
+  "diagnosticAlerts": [],
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

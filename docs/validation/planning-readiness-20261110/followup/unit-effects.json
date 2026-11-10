@@ -1,0 +1,16 @@
+{
+  "inference": "none",
+  "realModelRequests": 0,
+  "receipt": {
+    "version": 1,
+    "state": "blocked",
+    "summary": "科研任务信息尚未就绪",
+    "reason": "数据单位尚未提供；请补齐单位、重新确认约束并生成新方案，当前不执行或写入结果文件。",
+    "deliverables": []
+  },
+  "childSpawns": 0,
+  "otherWriterLockStillHeld": true,
+  "lockWaitAborted": false,
+  "newScientificFiles": [],
+  "inputUnchanged": true
+}

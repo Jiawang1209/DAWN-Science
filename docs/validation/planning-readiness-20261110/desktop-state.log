@@ -1,0 +1,66 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-readiness.spec.ts --output=docs/validation/planning-readiness-20261110/desktop-state-results
+
+Running 1 test using 1 worker
+
+(node:25063) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:56968/cda389da-3fbc-4854-8e93-4399dc40c520
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:57409/02816c33-4d9a-49bd-8150-bdd4038fe8f4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python (35.9s)
+
+
+  1) e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python 
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('region', { name: '自动安排', exact: true }).getByRole('button', { name: '重新安排', exact: true })
+        - locator resolved to <button disabled type="button" class="btn btn-outline btn-sm">重新安排</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+          - waiting 100ms
+        58 × waiting for element to be visible, enabled and stable
+           - element is not enabled
+         - retrying click action
+           - waiting 500ms
+
+
+      25 |  await source.getByLabel('增加独立数值核验',{exact:true}).check();await source.getByRole('textbox',{name:'核验数据文件',exact:true}).fill('input.csv');await source.getByRole('textbox',{name:'核验列名',exact:true}).fill('x');await source.getByRole('combobox',{name:'数值缺失规则',exact:true}).selectOption('block')
+      26 |  await source.getByRole('button',{name:'确认约束',exact:true}).click();await expect(source.getByRole('status')).toContainText('约束已保存');await source.locator('summary').click()
+    > 27 |  await auto.getByText('调整任务与分工',{exact:true}).click();await auto.getByRole('button',{name:'重新安排',exact:true}).click();const ready=page.locator('main.main .plan-card').last();await expect(ready.getByRole('button',{name:'照这个做',exact:true})).toBeEnabled();await ready.getByRole('button',{name:'照这个做',exact:true}).click()
+         |                                                                                                               ^
+      28 |  const progress=page.getByRole('region',{name:'批准方案执行进度',exact:true});await expect(progress.getByText('宿主验收通过',{exact:true})).toHaveCount(2)
+      29 |  expect(JSON.parse(readFileSync(join(workspace,'results/result.json'),'utf8'))).toMatchObject({n:4,mean:20,unit:'°C'});expect(readFileSync(join(workspace,'input.csv'),'utf8')).toBe('x\n14\n18\n22\n26\n')
+      30 |  writeFileSync(join(out,'actual-result.json'),readFileSync(join(workspace,'results/result.json')))
+        at /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/e2e/planning-readiness.spec.ts:27:111
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/planning-readiness-20261110/desktop-state-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/validation/planning-readiness-20261110/desktop-state-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs/validation/planning-readiness-20261110/desktop-state-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/validation/planning-readiness-20261110/desktop-state-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/validation/planning-readiness-20261110/desktop-state-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python 

@@ -3054,6 +3054,8 @@ export const EN: Readonly<Record<string, string>> = {
   "产物目录": "Output directory",
   "分析方法": "Analysis method",
   "数据单位": "Data units",
+  "单位尚未提供": "Units not provided",
+  "单位尚未提供，当前方案不能执行；请补齐单位、确认新约束并重新生成方案。": "Units are missing, so this plan cannot run. Supply units, confirm updated constraints, and generate a new plan.",
   "缺失值处理": "Missing value handling",
   "增加独立数值核验": "Add independent numeric validation",
   "核验数据文件": "Validation data file",

@@ -1,0 +1,75 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx -t newly supplied unit --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (12 tests | 2 failed | 10 skipped) 239ms
+   × requires a newly supplied unit after marking a previous value missing (remount=false) 162ms
+   × requires a newly supplied unit after marking a previous value missing (remount=true) 76ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > requires a newly supplied unit after marking a previous value missing (remount=false)
+AssertionError: expected <input class="control" …(3)></input> to have property "value" with value ''
+
+- Expected
++ Received
+
++ m
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:37:52
+     35|  if(remount){view.unmount();view=render(<PlanningContractSourceForm cl…
+     36|  fireEvent.click(screen.getByLabelText('单位尚未提供'))
+     37|  expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('val…
+       |                                                    ^
+     38|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确…
+     39|  expect(confirm).toHaveBeenCalledTimes(1);expect(screen.getByRole('ale…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > requires a newly supplied unit after marking a previous value missing (remount=true)
+AssertionError: expected last "vi.fn()" call to have been called with [ ObjectContaining{…}, +0, Any{…} ]
+
+- Expected
++ Received
+
+@@ -1,9 +1,21 @@
+  [
+    {
++     "independentReview": false,
++     "inputs": [
++       "input.csv",
++     ],
++     "outputRoot": "results/study",
++     "requireExecution": true,
+      "template": {
+-       "units": "cm",
++       "id": "tabular-ecology",
++       "language": "python",
++       "method": "计算均值",
++       "missingValues": "遇到缺失时停止",
++       "unitStatus": "missing",
++       "units": "",
++       "version": 1,
+      },
+    },
+    0,
+    AbortSignal {
+      Symbol(kEvents): Map {},
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:42:18
+     40|  fireEvent.change(screen.getByRole('textbox',{name:'数据单位'}),{target:{v…
+     41|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确…
+     42|  expect(confirm).toHaveBeenLastCalledWith(expect.objectContaining({tem…
+       |                  ^
+     43|  expect((confirm.mock.calls.at(-1)![0] as {template:object}).template)…
+     44| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  22:03:21
+   Duration  1.55s (transform 368ms, setup 600ms, import 16ms, tests 239ms, environment 607ms)
+

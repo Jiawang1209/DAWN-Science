@@ -1,0 +1,52 @@
+{
+  "status": "verified; isolated candidate retained uncommitted",
+  "recordedAt": "2026-11-10T22:11:06.968560+08:00",
+  "base": "baaa2c5fa8a57fbdb019cdaa614348a45ea28218",
+  "branch": "codex/planning-readiness-20261110",
+  "scope": [
+    "confirmed facts and clarification guidance",
+    "shared proposal/approval dependency validation",
+    "explicit missing-unit execution readiness"
+  ],
+  "newFix": "Clear superseded units when marked missing and when restoring missing-unit drafts; require explicit replacement.",
+  "newRegressionTests": 3,
+  "red": "unit-reentry-red-final.log: 3 failed on retained m",
+  "typecheck": "passed",
+  "build": "passed",
+  "vitest": {
+    "files": 733,
+    "passed": 7169,
+    "skipped": 11,
+    "failed": 0
+  },
+  "electron": {
+    "relatedTests": 8,
+    "passed": 8,
+    "failed": 0
+  },
+  "sourceAndBuildUnchangedDuringVerification": true,
+  "sourceFingerprint": "2deacb58ac6495173b525a568dd65baa52acb565cf1bdfb835943a0ec5eac682",
+  "mainCleanAndUnchanged": true,
+  "formalAppReplaced": false,
+  "realModelRequests": 0,
+  "previousQuotaUsed": false,
+  "actualResult": {
+    "n": 3,
+    "mean": 2.0,
+    "unit": "m"
+  },
+  "exitSamples": 14,
+  "maxCloseMs": 182.01,
+  "diagnosticAlertCount": 0,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "commit": false,
+  "merge": false,
+  "push": false,
+  "publish": false,
+  "limitations": [
+    "No new real-model evaluation: no claim of reduced clarification rate or API cost.",
+    "Related desktop paths only; full desktop suite and cross-platform not rerun.",
+    "Historical exit/PTY causes remain under tracking."
+  ]
+}

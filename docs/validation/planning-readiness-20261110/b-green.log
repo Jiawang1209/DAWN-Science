@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/tools/planning-readiness.test.ts tests/tools/propose-plan.test.ts tests/team/approved-plan.test.ts tests/protocol/task-arrangement.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  05:17:23
+   Duration  1.28s (transform 297ms, setup 0ms, import 1.72s, tests 225ms, environment 0ms)
+

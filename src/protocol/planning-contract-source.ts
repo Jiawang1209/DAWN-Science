@@ -5,7 +5,7 @@ import {ScienceTemplateSchema} from './science-template.js'
 
 const identity=z.string().trim().min(1).max(512).refine(value=>!/[\r\n\0]/.test(value),'身份必须为单行文本')
 const path=WorkspaceRelativePathSchema.refine(value=>value.length<=512,'路径不能超过512字符')
-const tabular=ScienceTemplateSchema.options[0].extend({language:z.literal('python')})
+const tabular=ScienceTemplateSchema.options[0].safeExtend({language:z.literal('python')})
 export const PlanningContractSelectionSchema=z.object({
  template:tabular,inputs:z.array(path).min(1).max(24),outputRoot:path,dataPath:path.optional(),
  requireExecution:z.boolean(),independentReview:z.boolean(),

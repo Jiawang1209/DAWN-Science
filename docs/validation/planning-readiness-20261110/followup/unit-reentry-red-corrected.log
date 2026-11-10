@@ -1,0 +1,36 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx -t newly supplied unit --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (12 tests | 2 failed | 10 skipped) 222ms
+   × requires a newly supplied unit after marking a previous value missing (remount=false) 160ms
+   × requires a newly supplied unit after marking a previous value missing (remount=true) 60ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > requires a newly supplied unit after marking a previous value missing (remount=false)
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > requires a newly supplied unit after marking a previous value missing (remount=true)
+AssertionError: expected <input class="control" …(3)></input> to have property "value" with value ''
+
+- Expected
++ Received
+
++ m
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:38:52
+     36|  if(remount){view.unmount();view=render(<PlanningContractSourceForm cl…
+     37|  fireEvent.click(screen.getByLabelText('单位尚未提供'))
+     38|  expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('val…
+       |                                                    ^
+     39|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确…
+     40|  expect(confirm).toHaveBeenCalledTimes(1);expect(screen.getByRole('ale…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  22:03:33
+   Duration  1.22s (transform 363ms, setup 540ms, import 18ms, tests 222ms, environment 349ms)
+

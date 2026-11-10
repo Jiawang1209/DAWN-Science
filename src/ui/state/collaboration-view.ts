@@ -1,7 +1,7 @@
 import {atom} from 'nanostores'
 import {useStore} from '@nanostores/react'
 export type CollaborationTab='process'|'handoff'|'artifacts'|'records'
-export type PlanningConstraintDraft={absoluteTolerance?:string;revision:number;inputs:string;root:string;method:string;units:string;missing:string;execute:boolean;review:boolean;numeric:boolean;dataPath:string;column:string;metric:'mean'|'sum'|'min'|'max';missingRule:''|'drop'|'block';step:string}
+export type PlanningConstraintDraft={absoluteTolerance?:string;unitMissing?:boolean;revision:number;inputs:string;root:string;method:string;units:string;missing:string;execute:boolean;review:boolean;numeric:boolean;dataPath:string;column:string;metric:'mean'|'sum'|'min'|'max';missingRule:''|'drop'|'block';step:string}
 type View={planningConstraints?:{open?:boolean;draft?:PlanningConstraintDraft}|undefined;selection?:string|undefined;tab:CollaborationTab;expanded:boolean;reopenInspection?:boolean;clarification?:{key:string;answers:string[]}|undefined}
 const initial:View={tab:'process',expanded:false}
 const views=atom<ReadonlyMap<string,View>>(new Map())

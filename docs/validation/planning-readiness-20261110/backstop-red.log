@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/unit-readiness.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/runtime/unit-readiness.test.ts (7 tests | 1 failed) 24ms
+   × never falls through to ordinary execution or accepts files when a known missing unit reaches the scientific backstop 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > never falls through to ordinary execution or accepts files when a known missing unit reaches the scientific backstop
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ tests/runtime/unit-readiness.test.ts:48:105
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  05:28:09
+   Duration  781ms (transform 220ms, setup 0ms, import 671ms, tests 24ms, environment 0ms)
+

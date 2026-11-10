@@ -1,5 +1,5 @@
 import {PlanningSourceStateSchema} from '../../src/protocol/planning-contract-source.js'
-import {resetCollaborationViews} from '../../src/ui/state/collaboration-view.js'
+import {resetCollaborationViews,restoreCollaborationView} from '../../src/ui/state/collaboration-view.js'
 import {afterEach,expect,it,vi} from 'vitest'
 import {act,cleanup,fireEvent,render,screen} from '@testing-library/react'
 import {PlanningContractSourceForm} from '../../src/ui/planning-contract-source-form.js'
@@ -9,6 +9,47 @@ function mockClient(get:unknown=vi.fn(async()=>({revision:0}))){return{get} as u
 async function fill(){
  for(const[name,value]of [['输入文件（每行一个）','input.csv'],['产物目录','results/study'],['分析方法','计算均值'],['数据单位','m'],['缺失值处理','遇到缺失时停止']] as const)fireEvent.change(screen.getByRole('textbox',{name}),{target:{value}})
 }
+it('records a real missing unit without a placeholder, removes numeric validation and explains that execution is blocked',async()=>{
+ const confirm=vi.fn(async(s:unknown,_r:number,_signal:AbortSignal)=>PlanningSourceStateSchema.parse({revision:1,source:{...(s as object),version:1,ownerSessionId:'a',revision:1,confirmedAt:1}}))
+ render(<PlanningContractSourceForm client={mockClient()} ownerSessionId="a" disabled={false} onConfirm={confirm}/>);await act(async()=>{});fireEvent.click(screen.getByText('科研任务约束'));await fill()
+ fireEvent.click(screen.getByLabelText('增加独立数值核验'))
+ fireEvent.click(screen.getByLabelText('单位尚未提供'))
+ expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('disabled',true);expect(screen.queryByRole('textbox',{name:'核验列名'})).toBeNull()
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确认约束'})))
+ expect(confirm).toHaveBeenCalledWith(expect.objectContaining({template:expect.objectContaining({units:'',unitStatus:'missing'})}),0,expect.any(AbortSignal))
+ expect((confirm.mock.calls[0]![0] as {template:object}).template).not.toHaveProperty('validation')
+ expect(screen.getByRole('status').textContent).toContain('不能执行')
+ fireEvent.click(screen.getByLabelText('单位尚未提供'))
+ expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('disabled',false)
+})
+it('restores a missing-unit draft on remount but never applies it to another session',async()=>{
+ const client=mockClient(),confirm=vi.fn(async()=>({revision:1})),first=render(<PlanningContractSourceForm client={client} ownerSessionId="draft-unit" disabled={false} onConfirm={confirm}/>);await act(async()=>{});fireEvent.click(screen.getByText('科研任务约束'));await fill();fireEvent.click(screen.getByLabelText('单位尚未提供'));first.unmount()
+ const next=render(<PlanningContractSourceForm client={client} ownerSessionId="draft-unit" disabled={false} onConfirm={confirm}/>);await act(async()=>{});expect(screen.getByLabelText('单位尚未提供')).toHaveProperty('checked',true)
+ next.rerender(<PlanningContractSourceForm client={client} ownerSessionId="other-unit" disabled={false} onConfirm={confirm}/>);await act(async()=>{});fireEvent.click(screen.getByText('科研任务约束'));expect(screen.getByLabelText('单位尚未提供')).toHaveProperty('checked',false)
+})
+it.each([false,true])('requires a newly supplied unit after marking a previous value missing (remount=%s)',async remount=>{
+ let state:ReturnType<typeof PlanningSourceStateSchema.parse>={revision:0}
+ const confirm=vi.fn(async(s:unknown,r:number,_signal:AbortSignal)=>state=PlanningSourceStateSchema.parse({revision:r+1,source:{...(s as object),version:1,ownerSessionId:'a',revision:r+1,confirmedAt:1}})),client=mockClient(vi.fn(async()=>state))
+ let view=render(<PlanningContractSourceForm client={client} ownerSessionId="a" disabled={false} onConfirm={confirm}/>);await act(async()=>{});fireEvent.click(screen.getByText('科研任务约束'));await fill()
+ fireEvent.click(screen.getByLabelText('单位尚未提供'))
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确认约束'})))
+ if(remount){view.unmount();view=render(<PlanningContractSourceForm client={client} ownerSessionId="a" disabled={false} onConfirm={confirm}/>);await act(async()=>{})}
+ fireEvent.click(screen.getByLabelText('单位尚未提供'))
+ expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('value','')
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确认约束'})))
+ expect(confirm).toHaveBeenCalledTimes(1);expect(screen.getByRole('alert').textContent).toContain('请补齐')
+ fireEvent.change(screen.getByRole('textbox',{name:'数据单位'}),{target:{value:'cm'}})
+ await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确认约束'})))
+ expect(confirm).toHaveBeenLastCalledWith(expect.objectContaining({template:expect.objectContaining({units:'cm'})}),1,expect.any(AbortSignal))
+ expect((confirm.mock.calls.at(-1)![0] as {template:object}).template).not.toHaveProperty('unitStatus')
+})
+it('does not restore a superseded unit from an older missing-unit draft',async()=>{
+ restoreCollaborationView('old-draft',{planningConstraints:{open:true,draft:{revision:0,inputs:'input.csv',root:'results',method:'mean',units:'m',unitMissing:true,missing:'block',execute:true,review:false,numeric:false,dataPath:'',column:'',metric:'mean',missingRule:'',step:''}}})
+ render(<PlanningContractSourceForm client={mockClient()} ownerSessionId="old-draft" disabled={false} onConfirm={vi.fn()}/>);await act(async()=>{})
+ expect(screen.getByLabelText('单位尚未提供')).toHaveProperty('checked',true)
+ fireEvent.click(screen.getByLabelText('单位尚未提供'))
+ expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('value','')
+})
 it('requires explicit scientific values, confirms metadata only and separates approval',async()=>{
  const confirm=vi.fn(async(_s:unknown,_r:number,_signal:AbortSignal)=>({revision:1,fingerprint:'a'.repeat(64)}))
  render(<PlanningContractSourceForm client={mockClient()} ownerSessionId="a" disabled={false} onConfirm={confirm}/>);await act(async()=>{})

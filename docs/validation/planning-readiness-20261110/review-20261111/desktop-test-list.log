@@ -1,0 +1,15 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-readiness.spec.ts e2e/planning-contract-source.spec.ts e2e/approved-plan-execution.spec.ts e2e/auto-arrangement.spec.ts e2e/orchestration-entry.spec.ts e2e/science-batch.spec.ts e2e/collaboration-stopping.spec.ts --list
+Listing tests:
+  approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view
+  approved-plan-execution.spec.ts:116:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening
+  auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值
+  auto-arrangement.spec.ts:7:2 › automatically proposes 2 task blocks for 分别统计 east.csv 与 west.csv
+  auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv
+  auto-arrangement.spec.ts:65:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task
+  collaboration-stopping.spec.ts:12:1 › shows host-verified cancellation after actual owned CLI termination; transient stopping is not a screenshot claim
+  orchestration-entry.spec.ts:7:1 › workflow entry stays visible above clarification and returns to the same conversation
+  planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance
+  planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python
+  science-batch.spec.ts:4:1 › batch versions, host summary and progress cross the actual strict desktop protocol
+Total: 11 tests in 7 files

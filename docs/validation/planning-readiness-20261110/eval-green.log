@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-unit-readiness.test.ts tests/evaluation/research-planning-questions.test.ts tests/runtime/unit-readiness.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/runtime/unit-readiness.test.ts (5 tests | 1 failed) 20ms
+   × persists the missing fact through the existing book, isolates owners and invalidates the old proposal when units are filled 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > persists the missing fact through the existing book, isolates owners and invalidates the old proposal when units are filled
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/runtime/unit-readiness.test.ts:47:186
+     45|  const dir=mkdtempSync(join(tmpdir(),'dawn-unit-book-'));roots.push(di…
+     46|  const first=book.confirmPlanningSource('a',selection(),0,1);book.收('m…
+     47|  const restored=new 方案簿(path);expect(restored.planningSourceState('a')…
+       |                                                                                                                                                                                          ^
+     48|  restored.confirmPlanningSource('a',{...selection(),template:{...templ…
+     49|  expect(()=>restored.assertPlanningSource('missing','a')).toThrow(/变化/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 6 passed (7)
+   Start at  05:22:48
+   Duration  2.85s (transform 1.45s, setup 0ms, import 3.83s, tests 1.07s, environment 0ms)
+

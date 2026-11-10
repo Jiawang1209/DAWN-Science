@@ -1,0 +1,25 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-readiness.spec.ts e2e/planning-contract-source.spec.ts --output=docs/validation/planning-readiness-20261110/desktop-final-static-results
+
+Running 2 tests using 1 worker
+
+(node:68502) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:62414/9442c864-a311-4ba7-ae31-c0cfac91144e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62445/ea79fb25-746d-4ba3-82da-2e05b4a7545d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance (9.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62455/a918b1aa-4c59-4f82-898b-12af104c7898
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:62467/d212f895-98c4-4f25-ba46-c03a54a6f09f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python (8.9s)
+
+  2 passed (18.5s)

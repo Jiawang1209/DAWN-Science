@@ -1,0 +1,27 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/unit-readiness.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/runtime/unit-readiness.test.ts (6 tests | 1 failed) 126ms
+   × does not wait for another writer lock when the frozen unit is already known to be missing 108ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > does not wait for another writer lock when the frozen unit is already known to be missing
+AssertionError: expected 'waiting-for-lock' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "waiting-for-lock"
+
+ ❯ tests/runtime/unit-readiness.test.ts:66:152
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  05:24:08
+   Duration  891ms (transform 239ms, setup 0ms, import 682ms, tests 126ms, environment 0ms)
+

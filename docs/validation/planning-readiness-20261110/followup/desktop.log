@@ -1,0 +1,63 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/planning-readiness.spec.ts e2e/planning-contract-source.spec.ts e2e/approved-plan-execution.spec.ts e2e/auto-arrangement.spec.ts --workers=1 --output=docs/validation/planning-readiness-20261110/followup/desktop-results
+
+Running 8 tests using 1 worker
+
+(node:18637) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49284/8cac0d53-57c6-4f51-b406-5295906070fe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49324/554e1c18-9bfb-47e1-a1d5-9c20865dba15
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (10.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:49336/d4f1bc59-b56c-423e-bcf7-7b86bd188f2c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49373/02faa742-842d-46c6-8ef8-9f4813849772
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/approved-plan-execution.spec.ts:116:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (10.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49389/c16e8b49-af60-4c7a-8bd9-83d90e3d54a2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 1 task blocks for 只计算 input.csv 的均值 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49407/b9c18e98-e485-410a-a888-6186a55a813d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 2 task blocks for 分别统计 east.csv 与 west.csv (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49426/3a42f8ed-f744-41cd-9130-d1d720c24803
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49443/bb1febdf-ca2f-45bd-bb59-6db4b642011b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/auto-arrangement.spec.ts:7:2 › automatically proposes 3 task blocks for 清洗、建模并独立审阅 input.csv (6.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49465/006d8a8f-709f-4760-9a63-037a1be7ce21
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49481/b641d86f-ef47-4ad3-9a66-9b032be9a326
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/auto-arrangement.spec.ts:65:2 › cancel automatic planning › cancels a real pending planning turn without running an analysis task (8.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:49521/fce51fcc-76c5-4c05-a8d1-392270f19add
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49553/3af7bf94-9675-4eb7-a2bb-10bf3acb7263
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/planning-contract-source.spec.ts:6:1 › confirms source, plans from live catalog and executes through original scientific acceptance (8.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:49564/f6e6d4d5-a2b5-4094-837f-ab1372269861
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 已引用当前约束；等待你采纳后才执行。
+[主进程] Debugger ending on ws://127.0.0.1:49587/f0caf83e-da11-4d14-9406-36ac60f77742
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  8 e2e/planning-readiness.spec.ts:6:1 › missing unit survives restart, cannot execute, then a new confirmed proposal executes real Python (9.0s)
+
+  8 passed (1.0m)

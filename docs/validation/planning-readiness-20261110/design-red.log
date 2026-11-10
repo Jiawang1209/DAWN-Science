@@ -1,0 +1,37 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/design-contract.test.ts --maxWorkers=1
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 1000ms
+     × 组件里的 textarea / input / select 都带 control 类 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: planning-contract-source-form.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "70: <div className=\"planning-contract-options\"><label><input className=\"control\" type=\"checkbox\" checked={unitMissing} disabled={locked} onChange={e=>{setUnitMissing(e.currentTarget.checked);if(e.currentTarget.checked)setNumeric(false)}}/>{t(\"单位尚未提供\")}</label>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 102 passed (103)
+   Start at  05:38:11
+   Duration  2.31s (transform 509ms, setup 708ms, import 48ms, tests 1000ms, environment 462ms)
+

@@ -1,0 +1,55 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx -t newly supplied unit|superseded unit --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (13 tests | 3 failed | 10 skipped) 236ms
+   × requires a newly supplied unit after marking a previous value missing (remount=false) 160ms
+   × requires a newly supplied unit after marking a previous value missing (remount=true) 62ms
+   × does not restore a superseded unit from an older missing-unit draft 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > requires a newly supplied unit after marking a previous value missing (remount=false)
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > requires a newly supplied unit after marking a previous value missing (remount=true)
+AssertionError: expected <input class="control" …(3)></input> to have property "value" with value ''
+
+- Expected
++ Received
+
++ m
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:38:52
+     36|  if(remount){view.unmount();view=render(<PlanningContractSourceForm cl…
+     37|  fireEvent.click(screen.getByLabelText('单位尚未提供'))
+     38|  expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('val…
+       |                                                    ^
+     39|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确…
+     40|  expect(confirm).toHaveBeenCalledTimes(1);expect(screen.getByRole('ale…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > does not restore a superseded unit from an older missing-unit draft
+AssertionError: expected <input class="control" …(3)></input> to have property "value" with value ''
+
+- Expected
++ Received
+
++ m
+
+ ❯ tests/ui/planning-contract-source-form.test.tsx:51:52
+     49|  expect(screen.getByLabelText('单位尚未提供')).toHaveProperty('checked',true)
+     50|  fireEvent.click(screen.getByLabelText('单位尚未提供'))
+     51|  expect(screen.getByRole('textbox',{name:'数据单位'})).toHaveProperty('val…
+       |                                                    ^
+     52| })
+     53| it('requires explicit scientific values, confirms metadata only and se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 10 skipped (13)
+   Start at  22:03:44
+   Duration  1.24s (transform 360ms, setup 537ms, import 16ms, tests 236ms, environment 357ms)
+

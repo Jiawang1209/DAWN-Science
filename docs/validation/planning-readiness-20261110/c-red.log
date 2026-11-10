@@ -1,0 +1,116 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/unit-readiness.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/runtime/unit-readiness.test.ts (4 tests | 4 failed) 10ms
+   × records an explicit missing unit without inventing a unit and cannot combine it with numerical acceptance 6ms
+   × keeps missing units in the same source revision and catalog identity and requires a new proposal after filling them 2ms
+   × prevents executable settings and gives a host blocked receipt before any file is read 1ms
+   × spawns no child and creates no placeholder outputs, even for direct execution with prebuilt settings, then releases its lock 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > records an explicit missing unit without inventing a unit and cannot combine it with numerical acceptance
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/runtime/unit-readiness.test.ts:22:73
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > keeps missing units in the same source revision and catalog identity and requires a new proposal after filling them
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "template",
+      "units"
+    ],
+    "message": "Too small: expected string to have >=1 characters"
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "unitStatus"
+    ],
+    "path": [
+      "template"
+    ],
+    "message": "Unrecognized key: \"unitStatus\""
+  }
+]
+ ❯ tests/runtime/unit-readiness.test.ts:28:40
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > prevents executable settings and gives a host blocked receipt before any file is read
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "units"
+    ],
+    "message": "Too small: expected string to have >=1 characters"
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "unitStatus"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"unitStatus\""
+  }
+]
+ ❯ contract tests/runtime/unit-readiness.test.ts:20:72
+
+ ❯ tests/runtime/unit-readiness.test.ts:40:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/runtime/unit-readiness.test.ts > spawns no child and creates no placeholder outputs, even for direct execution with prebuilt settings, then releases its lock
+ZodError: [
+  {
+    "origin": "string",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "units"
+    ],
+    "message": "Too small: expected string to have >=1 characters"
+  },
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "unitStatus"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"unitStatus\""
+  }
+]
+ ❯ contract tests/runtime/unit-readiness.test.ts:20:72
+
+ ❯ tests/runtime/unit-readiness.test.ts:46:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  05:18:10
+   Duration  748ms (transform 204ms, setup 0ms, import 650ms, tests 10ms, environment 0ms)
+

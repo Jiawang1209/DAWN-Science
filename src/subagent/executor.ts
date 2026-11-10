@@ -2,6 +2,7 @@ import {AgentContextMessageSchema} from '../protocol/agent-context-observation.j
 import {bindExecutionContextRoute} from '../orchestration/execution-context.js'
 import {childDiagnostics} from './diagnostics.js'
 import {TaskTraceSchema,type TaskTrace} from '../protocol/task-trace.js'
+import {scienceReadinessIssue} from '../protocol/science-acceptance.js'
 import {taskTrace} from '../orchestration/task-trace.js'
 import {handoffPrompt} from './context-handoff.js'
 import type {HandoffSelection,ContextHandoff} from '../protocol/context-handoff.js'
@@ -325,6 +326,12 @@ export class SubagentExecutor {
     let preparedHandoff:ContextHandoff|undefined
     try {settings=this.prepareTask?.(index,task,definition);preparedHandoff=this.context.handoffOf?.(index)} catch(error){return fail(task,message(error))}
     const execute=async (runSignal:AbortSignal):Promise<SubagentResult>=>{
+      if(runSignal.aborted)return fail(task,'已中止')
+      if(settings?.contract&&scienceReadinessIssue(settings.contract.acceptance)){
+        reportExecutionStage('preflight')
+        const receipt=taskInputReceipt(settings.contract,this.context.cwd)!
+        return{...fail(task,receipt.reason??receipt.summary),receipt}
+      }
       const release=settings?await taskOutputReservation(this.context.cwd,settings,runSignal):()=>{}
       let diagnostics:ReturnType<typeof childDiagnostics>={}
       try {

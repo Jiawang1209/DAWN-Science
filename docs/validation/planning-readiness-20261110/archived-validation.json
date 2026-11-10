@@ -1,0 +1,122 @@
+[
+  {
+    "original": "desktop-first-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-first-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "f2bea3e96ca40122b2984c673b0e03b579d32ba1b77fe425fc6919e7a345c6cd",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "deda6116d56099b356abf13fa92fff08d35be0d47a741a7e1669349acc1f983a",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "29bd80be45aa18a2a59c2b36eed69edd49bc1b71c36e7dcb31b867b3e65cf612",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "03e1dbc6d09f288bec535bafaa105a9601a8aed4aad9d28d17bba25dedde33e0",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-23399.jsonl": "b68fbf681e59b3362e10ba1b4833550435bf636663faa0e71c7ca01e84f3d079",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-23399.jsonl": "d611075392db08cdce5b04e68e46a80085eb5da193a5d95217b1a373c809993b",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-23521.jsonl": "9e661bad702dcccd86c155243d52f9e107e18a6975a2632de90ea3fb64dca422",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-23521.jsonl": "42428664fcafdc03dd380fb013f6f329e0b6ef83129115e9182baf404babb989"
+    }
+  },
+  {
+    "original": "desktop-return-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-return-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "f2bea3e96ca40122b2984c673b0e03b579d32ba1b77fe425fc6919e7a345c6cd",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "41c607e086899967580758ac44dd29e34cd233114abf3df209a35fc58f945b1c",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "188f39d1badb85cc6c84e79a0a10593afebe4a542ad11b852a45629cc579045b",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "a66b63fced0dec6d1affcf0c87f5475c2d68b47792c1e0c8a314d13ae27c1e31",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-23884.jsonl": "99ececae0cbdb47e9d122214c4954026bf6a58f27c4753e4ae266ca3e7d9a5c1",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-23884.jsonl": "feabc91e1359c19912f26956feea3c32d73ae81998ad4f63c8b15704e8a4eb6e",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-24005.jsonl": "8b070c5ff7b211eebfc3e9825d3af73e848f13a419351d25934cc686d8bf6473",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-24005.jsonl": "15d0bd2e08d9f26671428f1220100f90cfdec317f9d67b57e401e01c9940263c"
+    }
+  },
+  {
+    "original": "desktop-diagnostic-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-diagnostic-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "f2bea3e96ca40122b2984c673b0e03b579d32ba1b77fe425fc6919e7a345c6cd",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "1208a39b3382e553df1c8af237aaff83d266a0b7236d571e02405201de0c03ef",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "d5e56afcaef2307996926a46d85240dbe523ca2cc44304810a3e2e3b2c3e0e1e",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "1260d553474969fd2504101fa5bddff1745609012c62f8f16f6247a625f9ed6b",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-24804.jsonl": "93330980740cebbb24fad0a6a8b70d739679543a1c45b067a8796440597f32ce",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-24804.jsonl": "284844e6da6556241a7dc8cd37b49d49f112374841e5058a4e03051cc46e9742",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-24684.jsonl": "1e2008addee0dc766f797140d7e00aa137f4910211f800c63fe3c1e4f72497b4",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-24684.jsonl": "5a79540d631704ac9a800a2817e71ff5e9ee07e6db7699478e2d037f830a5f3e"
+    }
+  },
+  {
+    "original": "desktop-state-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-state-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "e2c578ce98345b5e7d0c20b7a43f0f3143b1dad5e786f591c5908ec953f3243b",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "00e4791aa09e3b0673d3ee93c464d3a5a3399bfab8b5592f31d3ee15a0a1562a",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "ffbe3185f35b13ab3d11c4ebd1191b90b25dc2ae3fa990fd3670f76cb626db4d",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "6428dbccb65044b0f3562ef1de88549a9a2cfa149d564b44ee4a47eef90b7612",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-25162.jsonl": "b97a05baa3be046f0ffa05c58f58bf65a359f7592452e867583e4d592565d3e2",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-25162.jsonl": "7e38568f44051dabbbb80cbc11930e396ac09ef65014db30ded67ea175703d98",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-25310.jsonl": "b6eaf7146788f6a18f618d2c666ccb7bcedbe29ab3d00f5838f0b10a68187083",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-25310.jsonl": "99c58f9c4f7be1fb32e4bc78337943bc74029683f30e09d0c2a92da9cfc5fb8d"
+    }
+  },
+  {
+    "original": "desktop-ready-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-ready-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "f2bea3e96ca40122b2984c673b0e03b579d32ba1b77fe425fc6919e7a345c6cd",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "1208a39b3382e553df1c8af237aaff83d266a0b7236d571e02405201de0c03ef",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "9676c5e6ec94cd349d72a4c0a589ad792a17369ff9aea72d59426f80e2011662",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "5b6fd106c8f5f431e47aea1b8c371ae69832256bbbdb3919705fde87fe5414db",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-26773.jsonl": "67ea3059912d40aea694a9f677d97266f5107ac10f98f420d3fc91ca279c5314",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-26653.jsonl": "63a40738db0f6155c8b904661cb6b082021c3fcd991635262e5b9e7356e01674",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-26773.jsonl": "c0934b84c225eeacdddc809a1a45215f40ea98006ac29788c5037278431eb69d",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-26653.jsonl": "872a03c8c5dd4f2c324e824f35d8d178f49976cff9d015ffe5856f5cec7bdfba"
+    }
+  },
+  {
+    "original": "desktop-events-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-events-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "f2bea3e96ca40122b2984c673b0e03b579d32ba1b77fe425fc6919e7a345c6cd",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "d44687d349d0702f378846e856cdbccc4c72645ab1f48127f174bc58143c243d",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "ac55f6773c09547e0cb3fcf10a2bde6c4fd937ae1caba6a38c28dc9362bcb52c",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "c06bcc9e3a5656fbe8a980e51ccb5b43827a59dff82522c92a8ba2c6925aa353",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-27148.jsonl": "74c75f89364fb1cce80b272b843ffbafd4a5f0f5b20671ac5d506dba9a7d3e7e",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-27148.jsonl": "9c2664009e5c0778f3c55b16b3adde34840d4985bcbb4f24728948c3134e79a8",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-27271.jsonl": "7f5152e9f4f55510578d33bcaa9b0d209bbc61c1be0cfe21534d9644a2b4d64c",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-27271.jsonl": "7163d80994b03f8e5f1e28460c604e8959e195d97ab10dc2cb62adc2f65091b5"
+    }
+  },
+  {
+    "original": "desktop-rehydrated-results",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/desktop-rehydrated-results",
+    "files": {
+      ".last-run.json": "23eb468e8ebe6ebe64c1810e679ee788538dee9be13f37fc2ef909488623d2ec",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-2.png": "0da6f265d5c3bc607e31db19cd2c9f73a22aaab0c4cf2aa5f90d05809b4cb1c2",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/test-failed-1.png": "dcacda4fb3cc0b85e1a2d45ac0ba45af7a1a78aef3eaa4867d048fd102bc7460",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/trace.zip": "faa0a85271182a20d8d612cd2af1f3b506c9d54bd539b4ca7eaa6a0cb3822044",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/error-context.md": "0b22e6bc96cce0f05c3da627d85b04a941bf10a535eae77a5bf224f40010db07",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-27757.jsonl": "a71045d730576558357f62e3f2243205c46046962045cb3c5a00740ef0e6a127",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-27757.jsonl": "0935bc0aec1d7fdb7835feaf793e19bad0e8bbc31e6a4d1ee43d4364a3d834ee",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-27637.jsonl": "1e8d6763c67f480b97adecf18608d253ef05a5f3e9d9bce93ac9f0ce29bd51ab",
+      "planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/app-27637.jsonl": "dad5435121e5c6bff3fd04eeaddf563e8c6a11d5d837b769d4a9df687f775d38"
+    }
+  },
+  {
+    "original": "desktop/ui-diagnostic.txt",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/ui-diagnostic.txt",
+    "sha256": "602b7db8c12372088d01c874747f0148ec07ec055903341a98d834a534af07b2"
+  },
+  {
+    "original": "desktop/unit-events.txt",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/unit-events.txt",
+    "sha256": "78c635884863519a5080e6285afb5a209e7d79006590796e80c34445ad791b86"
+  },
+  {
+    "original": "desktop/uncheck-immediate.json",
+    "retainedAt": "/Users/liuyue/.codex/tmp/dawn-planning-readiness-20261110/raw-desktop/uncheck-immediate.json",
+    "sha256": "071fb7bbd24615edbfe753138167cfff367e5a6f2b8662cc09e022a1ce7612c9"
+  }
+]

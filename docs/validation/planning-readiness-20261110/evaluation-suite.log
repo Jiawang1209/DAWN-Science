@@ -1,0 +1,48 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation tests/runtime/unit-readiness.test.ts tests/subagent/task-executor.test.ts tests/runtime/planning-contract-book.test.ts --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |node| tests/evaluation/research-auto-arrangement.test.ts (8 tests | 1 failed) 565ms
+   × records and validates actual model-generated planning: tamper 49ms
+ ❯ |node| tests/evaluation/research-fixture-status.test.ts (1 test | 1 failed) 15ms
+   × a failed fixture report is retained but rejects the command instead of reporting success 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-auto-arrangement.test.ts > records and validates actual model-generated planning: tamper
+AssertionError: expected [Function] to throw error including '冻结科学契约' but got '模型未交付可批准的自动安排'
+
+Expected: "冻结科学契约"
+Received: "模型未交付可批准的自动安排"
+
+ ❯ tests/evaluation/research-auto-arrangement.test.ts:23:25
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/evaluation/research-fixture-status.test.ts > a failed fixture report is retained but rejects the command instead of reporting success
+AssertionError: expected [Function] to throw error matching /未通过/ but got 'Cannot read properties of undefined (…'
+
+- Expected:
+/未通过/
+
++ Received:
+"Cannot read properties of undefined (reading 'filter')"
+
+ ❯ tests/evaluation/research-fixture-status.test.ts:13:107
+     11|  const root=mkdtempSync(join(tmpdir(),'dawn-fixture-status-'))
+     12|  try{
+     13|   await expect(runResearchFixtureEvaluation(root,{taskIds:['short-know…
+       |                                                                                                           ^
+     14|   expect(JSON.parse(readFileSync(join(root,'research.json'),'utf8'))).…
+     15|   expect(JSON.parse(readFileSync(join(root,'request-gate.json'),'utf8'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 28 passed (30)
+      Tests  2 failed | 207 passed (209)
+   Start at  05:26:48
+   Duration  69.45s (transform 2.26s, setup 0ms, import 12.68s, tests 109.16s, environment 2ms)
+

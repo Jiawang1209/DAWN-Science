@@ -1,0 +1,137 @@
+{
+  "samples": [
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/auto-arrangement-automatic-49e0c-locks-for-\u53ea\u8ba1\u7b97-input-csv-\u7684\u5747\u503c/electron-exit/exit-28885.jsonl",
+      "closeMs": 124.74,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/orchestration-entry-workfl-2feee-ns-to-the-same-conversation/electron-exit/exit-30322.jsonl",
+      "closeMs": 114.87,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-30549.jsonl",
+      "closeMs": 128.87,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-30732.jsonl",
+      "closeMs": 118.99,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-29986.jsonl",
+      "closeMs": 147.28,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/auto-arrangement-cancel-au-52b17-ut-running-an-analysis-task/electron-exit/exit-30162.jsonl",
+      "closeMs": 124.39,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/auto-arrangement-automatic-fc1f8-or-\u5206\u522b\u7edf\u8ba1-east-csv-\u4e0e-west-csv/electron-exit/exit-29109.jsonl",
+      "closeMs": 120.68,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-28461.jsonl",
+      "closeMs": 130.75,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/approved-plan-execution-ap-00f55-urns-from-the-expanded-view/electron-exit/exit-28310.jsonl",
+      "closeMs": 120.47,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-28757.jsonl",
+      "closeMs": 132.06,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/approved-plan-execution-st-d0988--replays-it-after-reopening/electron-exit/exit-28589.jsonl",
+      "closeMs": 138.02,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-29474.jsonl",
+      "closeMs": 137.72,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/auto-arrangement-automatic-2573b-ks-for-\u6e05\u6d17\u3001\u5efa\u6a21\u5e76\u72ec\u7acb\u5ba1\u9605-input-csv/electron-exit/exit-29336.jsonl",
+      "closeMs": 145.75,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-31029.jsonl",
+      "closeMs": 131.94,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-results",
+      "file": "desktop-final-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-30865.jsonl",
+      "closeMs": 135.19,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-static-results",
+      "file": "desktop-final-static-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-68590.jsonl",
+      "closeMs": 126.78,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-static-results",
+      "file": "desktop-final-static-results/planning-contract-source-c-7d1ee-ginal-scientific-acceptance/electron-exit/exit-68730.jsonl",
+      "closeMs": 119.2,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-static-results",
+      "file": "desktop-final-static-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-68978.jsonl",
+      "closeMs": 130.26,
+      "exitCode": 0
+    },
+    {
+      "phase": "desktop-final-static-results",
+      "file": "desktop-final-static-results/planning-readiness-missing-ce8ac-oposal-executes-real-Python/electron-exit/exit-68858.jsonl",
+      "closeMs": 128.38,
+      "exitCode": 0
+    }
+  ],
+  "eventKinds": [
+    "app-protocol-close",
+    "attached",
+    "child-close",
+    "child-exit",
+    "close-call-returned",
+    "close-requested",
+    "context-close",
+    "inspector-ending",
+    "observer-ready",
+    "page-close",
+    "stderr-close",
+    "stderr-end",
+    "stdout-close",
+    "stdout-end"
+  ],
+  "maxCloseMs": 147.28,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN"
+}

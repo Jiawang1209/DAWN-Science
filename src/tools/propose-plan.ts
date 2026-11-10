@@ -2,7 +2,8 @@ import {bindPlanContracts,planContractCatalog} from './plan-contract-bindings.js
 import type {TaskContract} from '../protocol/task-contract.js'
 import {assertPlanningArrangement,type PlanningContractContext} from '../runtime/planning-contract-context.js'
 import {z} from 'zod'
-import {TaskArrangementSchema,TaskArrangementInputSchema,serializeTaskArrangement,parseTaskArrangement,type TaskArrangementInput} from '../protocol/task-arrangement.js'
+import {TaskArrangementSchema,TaskArrangementInputSchema,serializeTaskArrangement,parseTaskArrangement,planningClarificationGuidance,type TaskArrangementInput} from '../protocol/task-arrangement.js'
+import {validateExecutableArrangement} from '../protocol/executable-arrangement.js'
 /**
  * `propose_plan`：先出方案时，agent 把分析方案交给人审（2026-09-27，spec `2026-09-27-先出方案-design.md` §4.3）。
  *
@@ -28,6 +29,7 @@ const text = (s: string, isError = false): ToolResult => ({
 })
 
 export const 方案期指引 = [
+  planningClarificationGuidance,
   "现在是「先出方案」：你只能看、不能改。写文件、run_code、装包、派子 agent 都会被拒——被拒了不要换个办法再试，把那一步写进方案。",
   "要了解数据：read 看小的文本文件；inspect_data 看表格的结构（行列数、列类型、缺失、前几行、单变量分布）。不做相关、不拟合模型——定方案之前不看结果。",
   `想清楚之后调用 propose_plan 交方案。方案是 markdown，必须有这五个二级标题：${必填小节.map((h) => `「## ${h}」`).join("")}。`,
@@ -86,6 +88,7 @@ export function createProposePlanTool(opts: {
       const parsed=parseTaskArrangement(plan)
       if(opts.requireArrangement?.()&&parsed.state==='absent')return text('自动安排请求必须提交 arrangement，任务块数由具体方案决定，不能省略分工与依赖。',true)
       if(parsed.state==='invalid')return text('任务安排无效：'+parsed.reason,true)
+      if(parsed.state==='valid'&&!parsed.arrangement.questions.length)try{validateExecutableArrangement(parsed.arrangement)}catch(error){return text('任务安排无效：'+(error instanceof Error?error.message:String(error))+'；请修正 arrangement 后重新提交，当前方案未保存。',true)}
       if(opts.executionAgents&&opts.requireArrangement?.()&&parsed.state==='valid'&&!parsed.arrangement.questions.length&&!parsed.arrangement.dispatch)return text('自动安排需要可执行绑定：dispatch=team-v1，并为每项提供名册中的 agent 和冻结 contract。',true)
       if(params.arrangement!==undefined&&parsed.state!=='valid')return text('任务安排未能保存到正文，请检查未闭合的 Markdown 代码块。',true)
       if(context)try{assertPlanningArrangement(context,parsed.state==='valid'?parsed.arrangement:undefined)}catch(error){return text('任务安排无效：'+(error instanceof Error?error.message:String(error)),true)}

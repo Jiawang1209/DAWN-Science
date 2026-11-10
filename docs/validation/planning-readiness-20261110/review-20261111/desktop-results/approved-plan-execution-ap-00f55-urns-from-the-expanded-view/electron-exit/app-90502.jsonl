@@ -1,0 +1,13 @@
+{"seq":1,"event":"diagnostics-attached","pid":90502,"at":"2026-11-10T18:11:45.644Z","ms":0.1634999999999991,"resources":{"PipeWrap":2},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":2,"event":"contents-created","pid":90502,"at":"2026-11-10T18:11:45.796Z","ms":152.82549999999992,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":3,"event":"window-created","pid":90502,"at":"2026-11-10T18:11:45.797Z","ms":153.2138339999999,"resources":{"PipeWrap":5,"ProcessWrap":1,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":4,"event":"before-quit","pid":90502,"at":"2026-11-10T18:11:46.816Z","ms":1172.621959,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":5,"event":"window-close","pid":90502,"at":"2026-11-10T18:11:46.817Z","ms":1173.322125,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":6,"event":"contents-destroyed","pid":90502,"at":"2026-11-10T18:11:46.818Z","ms":1174.6654999999998,"resources":{"PipeWrap":3,"Timeout":1},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":7,"event":"window-closed","pid":90502,"at":"2026-11-10T18:11:46.818Z","ms":1174.9926249999999,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"id":1}}
+{"seq":8,"event":"will-quit","pid":90502,"at":"2026-11-10T18:11:46.819Z","ms":1175.181834,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":9,"event":"shutdown-check","pid":90502,"at":"2026-11-10T18:11:46.819Z","ms":1175.284834,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":10,"event":"shutdown-sync-start","pid":90502,"at":"2026-11-10T18:11:46.819Z","ms":1175.527375,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":11,"event":"shutdown-sync-complete","pid":90502,"at":"2026-11-10T18:11:46.824Z","ms":1180.493125,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{}}
+{"seq":12,"event":"process-exit","pid":90502,"at":"2026-11-10T18:11:46.828Z","ms":1184.050084,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}
+{"seq":13,"event":"quit","pid":90502,"at":"2026-11-10T18:11:46.828Z","ms":1184.192292,"resources":{"PipeWrap":3},"resourceSnapshotAvailable":true,"detail":{"exitCode":0}}

@@ -4,10 +4,11 @@ import {killOwnedProcessTree} from '../runtime/process-tree.js'
 import {randomUUID} from 'node:crypto'
 import {spawn} from 'node:child_process'
 import {fileIdentity} from '../artifacts/blobs.js'
-import type {ScienceAcceptance} from '../protocol/science-acceptance.js'
+import {scienceReadinessIssue,type ScienceAcceptance} from '../protocol/science-acceptance.js'
 import type {RouteToolEvidence} from '../runtime/analysis-route-evidence.js'
 import {probeScienceEnvironment,isolatedScriptCommand} from './science-environment.js'
 export async function runControlledScience(spec:ScienceAcceptance|undefined,cwd:string,params:Record<string,unknown>,signal?:AbortSignal,declaredPaths:readonly string[]=[]):Promise<{content:{type:string;text:string}[];isError?:boolean;details?:unknown;scienceExecution?:RouteToolEvidence['scienceExecution']}|undefined>{
+ const readiness=scienceReadinessIssue(spec);if(readiness)throw new Error(readiness)
  if(spec?.environment?.language==='r')return // Ordinary R execution remains available; no unverified reuse proof.
  if(!spec?.environment||!isolatedScriptCommand(spec.environment.language,spec.scriptPath,params.command))return
  if(signal?.aborted)throw new Error('受控执行已取消')

@@ -1,0 +1,1 @@
+Arithmetic mean; unit %; missing policy block; input preserved.

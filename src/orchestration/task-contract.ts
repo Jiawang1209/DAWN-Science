@@ -6,6 +6,7 @@ import {TaskResultSchema,type TaskContract,type TaskReceipt} from '../protocol/t
 export * from '../protocol/task-contract.js'
 import {validateRouteEvidence,type RouteToolEvidence} from '../runtime/analysis-route-evidence.js'
 import {routeDeliverableEvidence} from '../runtime/analysis-route-files.js'
+import {scienceReadinessIssue} from '../protocol/science-acceptance.js'
 export function taskPrompt(task:string,contract?:TaskContract):string {
   if(!contract)return task
   const referenceGuidance='若交付缺口不明确且工具列表提供 get_task_status，可只读查询 deliveryGuide 获取精确产物、审阅路径和科学指标字段；无须每步查询或重复执行/写入。该查询不正式提交，也不保证科学正确。证据引用分开填写：execution.state=completed 只引用实际运行成功（execution=ran）的 bash/powershell/run_code；write/edit/read 不是执行证据。verification.state=reviewed 只引用本轮成功 read/look_at_image 或可核对的代码工具，失败读取不能作为已审阅证据；写入不是审阅。标签 references 表示可用的正向声明字段，不是科学认证。正式提交请简洁填写 summary、note 和关键 findings，不要在各字段重复整份报告，以免参数输出被截断；完整细节保留在产物。review 的 data.reviewedPaths 必填且恰好等于冻结契约 inputs（顺序不限），额外读过的背景文件只在 summary/findings 说明，不加入 reviewedPaths。'
@@ -14,6 +15,8 @@ export function taskPrompt(task:string,contract?:TaskContract):string {
 }
 /** Declared inputs must be existing in-workspace files; this is readiness, not a read snapshot. */
 export function taskInputReceipt(contract:TaskContract,workspace:string):TaskReceipt|undefined {
+  const readiness=scienceReadinessIssue(contract.acceptance)
+  if(readiness)return{version:1,state:'blocked',summary:'科研任务信息尚未就绪',reason:readiness,deliverables:[]}
   const route:AnalysisRoute={routeId:'inputs',revision:1,updatedAt:Date.now(),title:'inputs',goal:'inputs',dataContext:[],steps:[{
     id:'task',title:'inputs',purpose:'input readiness',inputs:contract.inputs,outputs:[],dependencies:[],status:'pending',blockers:[],cases:[],
     deliverables:contract.inputs.map(path=>({path})),execution:{state:'not_run',note:'preflight'},verification:{state:'unreviewed',note:'preflight'},needsReview:true,notes:[],

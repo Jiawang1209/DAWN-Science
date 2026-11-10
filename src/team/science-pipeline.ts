@@ -1,3 +1,4 @@
+import {scienceReadinessIssue} from '../protocol/science-acceptance.js'
 import {scienceStepContext} from '../protocol/science-route-context.js'
 import {createHash} from 'node:crypto'
 /** Fixed scientific reducer over existing Team tasks; no second execution loop. */
@@ -23,6 +24,7 @@ export function scienceBudgetPipelines(team:团队):SciencePipeline[]{
 export function blockPipelineBudget(p:SciencePipeline,reason:string,now=Date.now()):void{finish(p,'blocked',reason,now)}
 export function startPipeline(team:团队,requestId:string,raw:PipelineDefinition,freeze:(member:成员,contract:TaskContract)=>TaskSettings=(m,c)=>resolveTaskSettings(c,'ask-risky'),now=Date.now(),namespace?:string):void {
  const definition=PipelineDefinitionSchema.parse(raw)
+ const readiness= scienceReadinessIssue(definition.acceptance);if(readiness)throw new 团队错误(readiness)
  if(namespace){if(!team.scienceBatch||team.scienceBatch.items[team.scienceBatch.index]?.id!==namespace||team.pipeline?.status==='running')throw new 团队错误('批量内部阶段身份冲突')}
  else if(team.pipeline){if(team.pipeline.requestId===requestId&&JSON.stringify(team.pipeline.definition)===JSON.stringify(definition))return;throw new 团队错误('流程身份已存在，不能修改或覆盖')}
  if(team.tasks.length&&!namespace)throw new 团队错误('科研流程使用独立团队，不能覆盖已有任务')

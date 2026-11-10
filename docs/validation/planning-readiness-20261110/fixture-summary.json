@@ -1,0 +1,39 @@
+{
+  "inference": "localhost deterministic fixture",
+  "realModelRequests": 0,
+  "researchReport": "docs/validation/planning-readiness-20261110/fixture/research-fixture-d3fFJI/research.md",
+  "qualifiedNumericPairs": 5,
+  "incompletePairs": 1,
+  "fixtureRequests": 72,
+  "inFlight": 0,
+  "inputAndFileChecks": 12,
+  "allIndependentFileChecksPassed": true,
+  "unknownUnit": [
+    {
+      "mode": "multi",
+      "terminal": "awaiting-info",
+      "success": false,
+      "requests": 2,
+      "readiness": {
+        "missing": [
+          "units"
+        ],
+        "executionStarted": false
+      },
+      "versions": []
+    },
+    {
+      "mode": "single",
+      "terminal": "awaiting-info",
+      "success": false,
+      "requests": 0,
+      "readiness": {
+        "missing": [
+          "units"
+        ],
+        "executionStarted": false
+      },
+      "versions": []
+    }
+  ]
+}

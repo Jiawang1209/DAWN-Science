@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/evaluation/research-fixture-status.test.ts tests/evaluation/research-auto-arrangement.test.ts --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  05:34:04
+   Duration  2.34s (transform 847ms, setup 0ms, import 1.83s, tests 639ms, environment 0ms)
+

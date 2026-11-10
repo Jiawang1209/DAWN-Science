@@ -1,0 +1,360 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/planning-contract-source-form.test.tsx --maxWorkers=2
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |ui| tests/ui/planning-contract-source-form.test.tsx (10 tests | 2 failed) 436ms
+   × records a real missing unit without a placeholder, removes numeric validation and explains that execution is blocked 147ms
+   × restores a missing-unit draft on remount but never applies it to another session 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > records a real missing unit without a placeholder, removes numeric validation and explains that execution is blocked
+TestingLibraryElementError: Unable to find a label with the text of: 单位尚未提供
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"planning-contract-source"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<summary>[39m
+        [0m科研任务约束[0m
+      [36m</summary>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m表格科研 · Python。确认方法、单位和交付要求后，模型可查询可信契约目录；任务数量仍由具体任务决定。[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m重新读取约束[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-grid"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m输入文件（每行一个）[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"输入文件（每行一个）"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m>[39m
+            [0minput.csv[0m
+          [36m</textarea>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m产物目录[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"产物目录"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"results/study"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m分析方法[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"分析方法"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"计算均值"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m数据单位[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"数据单位"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"m"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m缺失值处理[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"缺失值处理"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"遇到缺失时停止"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"control"[39m
+          [33mtype[39m=[32m"checkbox"[39m
+        [36m/>[39m
+        [0m增加独立数值核验[0m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-grid"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m核验数据文件[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"核验数据文件"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m核验列名[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"核验列名"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m数值绝对误差上限[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"数值绝对误差上限"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"1e-9"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m核验指标[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"核验指标"[39m
+            [33mclass[39m=[32m"control"[39m
+          [36m>[39m
+            [36m<option>[39m
+              [0mmean[0m
+            [36m</option>[39m
+            [36m<option>[39m
+              [0msum[0m
+            [36m</option>[39m
+            [36m<option>[39m
+              [0mmin[0m
+            [36m</option>[39m
+            [36m<option>[39m
+              [0mmax[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m数值缺失规则[0m
+          [36m<select[39m
+            [33maria-label[39m=[32m"数值缺失规则"[39m
+            [33mclass[39m=[32m"control"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m""[39m
+            [36m>[39m
+              [0m请选择[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"block"[39m
+            [36m>[39m
+              [0m遇到缺失时停止[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"drop"[39m
+            [36m>[39m
+              [0m排除缺失值后计算[0m
+            [36m</option>[39m
+          [36m</select>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-options"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m要求真实执行证据[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m要求独立审阅[0m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m产物：analysis.py、result.json、report.md，保存在指定目录。确认只保存约束，不运行任务。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m确认约束[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0m约束草稿尚未确认，普通自动安排不会采用这些字段。[0m
+      [36m</p>[39m
+    [36m</details>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/planning-contract-source-form.test.tsx:16:25
+     14|  render(<PlanningContractSourceForm client={mockClient()} ownerSession…
+     15|  fireEvent.click(screen.getByLabelText('增加独立数值核验'))
+     16|  fireEvent.click(screen.getByLabelText('单位尚未提供'))
+       |                         ^
+     17|  expect(screen.getByRole('textbox',{name:'数据单位'})).toBeDisabled();expe…
+     18|  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'确…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/planning-contract-source-form.test.tsx > restores a missing-unit draft on remount but never applies it to another session
+TestingLibraryElementError: Unable to find a label with the text of: 单位尚未提供
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<details[39m
+      [33mclass[39m=[32m"planning-contract-source"[39m
+      [33mopen[39m=[32m""[39m
+    [36m>[39m
+      [36m<summary>[39m
+        [0m科研任务约束[0m
+      [36m</summary>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m表格科研 · Python。确认方法、单位和交付要求后，模型可查询可信契约目录；任务数量仍由具体任务决定。[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn-ghost btn-sm"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m重新读取约束[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-grid"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [0m输入文件（每行一个）[0m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"输入文件（每行一个）"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mrows[39m=[32m"2"[39m
+          [36m>[39m
+            [0minput.csv[0m
+          [36m</textarea>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m产物目录[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"产物目录"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"results/study"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m分析方法[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"分析方法"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"计算均值"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m数据单位[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"数据单位"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"m"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0m缺失值处理[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"缺失值处理"[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mmaxlength[39m=[32m"2000"[39m
+            [33mvalue[39m=[32m"遇到缺失时停止"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"control"[39m
+          [33mtype[39m=[32m"checkbox"[39m
+        [36m/>[39m
+        [0m增加独立数值核验[0m
+      [36m</label>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"planning-contract-options"[39m
+      [36m>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m要求真实执行证据[0m
+        [36m</label>[39m
+        [36m<label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"control"[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [0m要求独立审阅[0m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"hint"[39m
+      [36m>[39m
+        [0m产物：analysis.py、result.json、report.md，保存在指定目录。确认只保存约束，不运行任务。[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"orchestration-advisor-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn-outline btn-sm"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0m确认约束[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0m约束草稿尚未确认，普通自动安排不会采用这些字段。[0m
+      [36m</p>[39m
+    [36m</details>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../../Desktop/Github_repos/dawn-science/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/ui/planning-contract-source-form.test.tsx:24:295
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  05:19:17
+   Duration  1.45s (transform 358ms, setup 545ms, import 15ms, tests 436ms, environment 376ms)
+

@@ -1,0 +1,47 @@
+{
+  "status": "candidate verified; authorized local commit and fast-forward pending",
+  "base": "baaa2c5fa8a57fbdb019cdaa614348a45ea28218",
+  "sourceFingerprint": "e8467ccbd2db04db8ef4ce00f19137775bd5854e14502d59637b8a0aa5d866e7",
+  "sourceAndBuildUnchanged": true,
+  "newFindings": [
+    {
+      "priority": "P2",
+      "issue": "Public batch admission waited for locks and probed the interpreter before rejecting known missing units.",
+      "resolution": "Shared readiness check moved before all model/member/input/environment discovery and reservation."
+    }
+  ],
+  "newRegressionTests": 2,
+  "typecheck": "passed",
+  "build": "passed",
+  "targetedTests": 129,
+  "vitest": {
+    "files": 733,
+    "passed": 7171,
+    "skipped": 11,
+    "failed": 0
+  },
+  "electron": {
+    "relatedTests": 11,
+    "passed": 11,
+    "failed": 0
+  },
+  "actualResult": {
+    "n": 3,
+    "mean": 2.0,
+    "unit": "m"
+  },
+  "actualOwnedCliCancellationDrained": true,
+  "exitSamples": 17,
+  "maxCloseMs": 175.23,
+  "historicalExitTimeout": "OPEN",
+  "historicalPtyCleanup": "OPEN",
+  "realModelRequests": 0,
+  "push": false,
+  "publish": false,
+  "installedAppReplaced": false,
+  "limitations": [
+    "No full desktop or cross-platform run.",
+    "No new live-model benefit evaluation.",
+    "CLI process cancellation does not prove long Bot/MCP or PTY cleanup fixed."
+  ]
+}

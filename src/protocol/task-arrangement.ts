@@ -3,11 +3,12 @@ import {z} from 'zod'
 import {WorkspaceRelativePathSchema} from './analysis-route.js'
 import {TaskContractSchema} from './task-contract.js'
 export const autoArrangementRequestPrefix='请为以下具体任务自动安排。'
+export const planningClarificationGuidance='已确认的方法、单位、缺失值规则、输入和交付要求直接采用，不重复请求确认。questions只询问会改变当前方案的真实缺失信息或冲突，并点明缺少哪项及其影响；假设性文件缺失、未来失败或已约定的异常处理不追加确认，交给原输入预检和blockers。不得猜测缺失单位、替用户修改科学方法或把已有确认当执行批准。'
 /** Shared planning request for the UI and isolated scenario evaluation. No execution authority. */
 export function autoArrangementPrompt(task:string,adjustment=''):string {
  return[autoArrangementRequestPrefix+'先只读理解目标、数据和已有会话约束，再用 propose_plan 的 arrangement 提交任务划分、分工、输入输出、依赖、验收与理由。',
   '任务数量是方案结果，由实际任务决定；简单单结果任务优先一个任务块，不能固定拆成三块，也不要让用户预填数字。只有依赖、独立输入、权限边界或明确审阅要求才增加分工；请在理由里解释额外分工的实际作用。并行仅用于独立任务且不能共写；用户要求独立审阅时必须保留不同执行角色的审阅任务。缺信息放入 questions，不编造数据或启动执行。',
-  '任务目标：\n'+task.trim(),adjustment.trim()?'调整要求：\n'+adjustment.trim():'',
+  planningClarificationGuidance,'任务目标：\n'+task.trim(),adjustment.trim()?'调整要求：\n'+adjustment.trim():'',
   '原有冻结契约、证据、产物版本、预算、产物锁和恢复要求继续适用。请交可调整的方案，等待用户采纳；这次只规划，不写科研产物、不派子 Agent。'].filter(Boolean).join('\n\n')
 }
 

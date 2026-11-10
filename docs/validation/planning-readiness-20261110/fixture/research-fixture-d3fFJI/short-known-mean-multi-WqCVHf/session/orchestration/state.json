@@ -1,0 +1,630 @@
+{
+  "version": 1,
+  "ownerSessionId": "research",
+  "children": [
+    {
+      "id": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "kind": "team",
+      "address": [
+        "plan_2a94dd6f374a717c16a9c33c",
+        "member_1",
+        "a5437276-564d-4555-a1cb-6b740b235b4a"
+      ],
+      "label": "analyze",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794260467963,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 48,
+        "output": 32,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 780,
+        "preflightMs": 18,
+        "acceptanceMs": 133
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794260467823,
+          "provider": "dawn-evaluation-work",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23148,
+            "toolBytes": 3883,
+            "messageBytes": 8587,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 29
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 346,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 48,
+            "output": 32,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"model-metrics\",\"method\":\"arithmetic mean\",\"metrics\":{\"mean\":20},\"sampleCount\":4,\"caveats\":[]},\"summary\":\"offline representative fixture\",\"blockers\":[],\"deliverables\":[{\"path\":\"results/analysis.py\"},{\"path\":\"results/result.json\"},{\"path\":\"results/report.md\"}],\"execution\":{\"state\":\"completed\",\"note\":\"actual Python\",\"toolCallIds\":[\"call_mock_25\"]},\"verification\":{\"state\":\"unreviewed\",\"note\":\"independent review pending\"}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "offline representative fixture",
+          "result": {
+            "data": {
+              "kind": "model-metrics",
+              "method": "arithmetic mean",
+              "metrics": {
+                "mean": 20
+              },
+              "sampleCount": 4,
+              "caveats": []
+            },
+            "summary": "offline representative fixture",
+            "blockers": [],
+            "deliverables": [
+              {
+                "path": "results/analysis.py"
+              },
+              {
+                "path": "results/result.json"
+              },
+              {
+                "path": "results/report.md"
+              }
+            ],
+            "execution": {
+              "state": "completed",
+              "note": "actual Python",
+              "toolCallIds": [
+                "call_mock_25"
+              ]
+            },
+            "verification": {
+              "state": "unreviewed",
+              "note": "independent review pending"
+            }
+          },
+          "deliverables": [
+            {
+              "stepId": "task",
+              "path": "results/analysis.py",
+              "state": "observed"
+            },
+            {
+              "stepId": "task",
+              "path": "results/result.json",
+              "state": "exists"
+            },
+            {
+              "stepId": "task",
+              "path": "results/report.md",
+              "state": "exists"
+            }
+          ],
+          "acceptance": {
+            "version": 1,
+            "ruleVersion": 1,
+            "specHash": "c40d6ecb2404b88098079f33819a3a268d5ba3dcb1dbc8bbed3d6cc8e827609d",
+            "state": "passed",
+            "numericChecked": true,
+            "checks": [
+              {
+                "id": "script.nonempty",
+                "state": "passed",
+                "expected": "非空脚本",
+                "actual": "非空"
+              },
+              {
+                "id": "report.nonempty",
+                "state": "passed",
+                "expected": "非空报告",
+                "actual": "非空"
+              },
+              {
+                "id": "result.sample-count",
+                "state": "passed",
+                "expected": "正整数 n",
+                "actual": "4"
+              },
+              {
+                "id": "result.unit",
+                "state": "passed",
+                "expected": "非空单位（无量纲可写 1）",
+                "actual": "°C"
+              },
+              {
+                "id": "result.declared-metric.mean",
+                "state": "passed",
+                "expected": "20",
+                "actual": "20"
+              },
+              {
+                "id": "result.declared-sample-count",
+                "state": "passed",
+                "expected": "4",
+                "actual": "4"
+              },
+              {
+                "id": "result.finite.mean",
+                "state": "passed",
+                "expected": "有限数值",
+                "actual": "20"
+              },
+              {
+                "id": "numeric.sample-count",
+                "state": "passed",
+                "expected": "4",
+                "actual": "4"
+              },
+              {
+                "id": "numeric.unit",
+                "state": "passed",
+                "expected": "°C",
+                "actual": "°C"
+              },
+              {
+                "id": "numeric.mean",
+                "state": "passed",
+                "expected": "20",
+                "actual": "20"
+              },
+              {
+                "id": "numeric.declared-mean",
+                "state": "passed",
+                "expected": "20",
+                "actual": "20"
+              }
+            ],
+            "files": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+                "bytes": 350
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+                "bytes": 65
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+                "bytes": 41
+              },
+              {
+                "path": "input.csv",
+                "sha256": "212bbe32670b6f3b4477e74e87d32020f986e65e83119d02f196447b2b1fc83b",
+                "bytes": 39
+              }
+            ]
+          },
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "input.csv",
+                "sha256": "212bbe32670b6f3b4477e74e87d32020f986e65e83119d02f196447b2b1fc83b",
+                "bytes": 39
+              }
+            ],
+            "outputs": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+                "bytes": 350
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+                "bytes": 41
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+                "bytes": 65
+              }
+            ]
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_mock_23",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "input.csv",
+              "transcriptRef": {
+                "file": "2026-11-09T21-41-07-495Z_01a1c241-ff27-76a0-9650-755ee9cd802e.jsonl",
+                "callEntry": "710cd499",
+                "resultEntry": "d5672ff3",
+                "payloadSha256": "597b4450c3861c52b307e5aa1d2bc6071792f925a84c5a5116292dce9a33eb31",
+                "evidenceTagSha256": "99cbecd49f64fe5c5129e944324558c460ba165b65c2b51850a9c50786239f78"
+              }
+            },
+            {
+              "toolCallId": "call_mock_24",
+              "name": "write",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/analysis.py",
+              "transcriptRef": {
+                "file": "2026-11-09T21-41-07-495Z_01a1c241-ff27-76a0-9650-755ee9cd802e.jsonl",
+                "callEntry": "da10eade",
+                "resultEntry": "69768ea6",
+                "payloadSha256": "181e1be45f4c4379f5985eaa6d5f4e973ba6667fa803b7bdb6b7892b6dc468e3",
+                "evidenceTagSha256": "67bf1682eb7c0da1b1b49d624747537999ecb8e5883b2632f6674bbe34759182"
+              }
+            },
+            {
+              "toolCallId": "call_mock_25",
+              "name": "bash",
+              "status": "done",
+              "execution": "ran",
+              "transcriptRef": {
+                "file": "2026-11-09T21-41-07-495Z_01a1c241-ff27-76a0-9650-755ee9cd802e.jsonl",
+                "callEntry": "fc7ca680",
+                "resultEntry": "e898b9ec",
+                "payloadSha256": "31ee8bd14eee10a988bef0dd91fc9fa93519c7b29d5d87df663fe448f89dc4f0",
+                "evidenceTagSha256": "3c27bd42368d8484ea10449c334bb5efe512429126a63d740354b4e22f4c684a"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    },
+    {
+      "id": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "kind": "team",
+      "address": [
+        "plan_2a94dd6f374a717c16a9c33c",
+        "member_2",
+        "50ac9cf3-17f7-4148-902f-47a2e1a4babd"
+      ],
+      "label": "review",
+      "state": "completed",
+      "epoch": 1,
+      "updatedAt": 1794260468652,
+      "usageTotals": {
+        "source": "host-epoch-deltas",
+        "partial": [
+          "cacheRead"
+        ],
+        "settledEpochs": 1,
+        "unknownEpochs": 1,
+        "input": 48,
+        "output": 32,
+        "lastSettledEpoch": 1
+      },
+      "reason": "",
+      "timing": {
+        "executionMs": 583,
+        "preflightMs": 49,
+        "acceptanceMs": 51
+      },
+      "contextObservation": {
+        "ownerSessionId": "research",
+        "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+        "epoch": 1,
+        "sample": {
+          "version": 1,
+          "observedAt": 1794260468594,
+          "provider": "dawn-evaluation-review",
+          "model": "deepseek-flash",
+          "contextWindow": 128000,
+          "contextWindowSource": "model-config",
+          "composition": {
+            "systemBytes": 23047,
+            "toolBytes": 2937,
+            "messageBytes": 8118,
+            "source": "retained-bytes-estimate"
+          },
+          "availability": "available",
+          "source": "sdk-estimate",
+          "usedTokens": 29
+        }
+      },
+      "result": {
+        "observation": {
+          "elapsedMs": 156,
+          "submissionAttempts": 1,
+          "invalidSubmissions": 0,
+          "usage": {
+            "input": 48,
+            "output": 32,
+            "cacheRead": 0,
+            "partial": [
+              "cacheRead"
+            ]
+          }
+        },
+        "ok": true,
+        "output": "{\"data\":{\"kind\":\"review\",\"verdict\":\"pass\",\"findings\":[],\"reviewedPaths\":[\"results/analysis.py\",\"results/result.json\",\"results/report.md\"]},\"summary\":\"offline representative fixture\",\"blockers\":[],\"deliverables\":[],\"execution\":{\"state\":\"not_run\",\"note\":\"fixture\"},\"verification\":{\"state\":\"reviewed\",\"note\":\"read files\",\"toolCallIds\":[\"call_mock_27\",\"call_mock_28\",\"call_mock_29\"]}}",
+        "receipt": {
+          "version": 1,
+          "state": "accepted",
+          "summary": "offline representative fixture",
+          "result": {
+            "data": {
+              "kind": "review",
+              "verdict": "pass",
+              "findings": [],
+              "reviewedPaths": [
+                "results/analysis.py",
+                "results/result.json",
+                "results/report.md"
+              ]
+            },
+            "summary": "offline representative fixture",
+            "blockers": [],
+            "deliverables": [],
+            "execution": {
+              "state": "not_run",
+              "note": "fixture"
+            },
+            "verification": {
+              "state": "reviewed",
+              "note": "read files",
+              "toolCallIds": [
+                "call_mock_27",
+                "call_mock_28",
+                "call_mock_29"
+              ]
+            }
+          },
+          "deliverables": [],
+          "versions": {
+            "version": 1,
+            "inputs": [
+              {
+                "path": "results/analysis.py",
+                "sha256": "6735c7c078e123e8aa6c9554bf71425a210aea7a9fd7bcba3d950e52b27a4edf",
+                "bytes": 350
+              },
+              {
+                "path": "results/result.json",
+                "sha256": "ded9de9e78142d1ad42a9612826ec15b34cce71356a5c34956bf158bdbbec80d",
+                "bytes": 41
+              },
+              {
+                "path": "results/report.md",
+                "sha256": "5d811ad4a68a72a2b65a8635fa8a3c90ac3b47807529a30fcbcda73990e52f80",
+                "bytes": 65
+              }
+            ],
+            "outputs": []
+          }
+        },
+        "trace": {
+          "omitted": 0,
+          "records": [
+            {
+              "toolCallId": "call_mock_27",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/analysis.py",
+              "transcriptRef": {
+                "file": "2026-11-09T21-41-08-456Z_01a1c242-02e8-7578-bcdd-2c68987a7197.jsonl",
+                "callEntry": "6c3d59d0",
+                "resultEntry": "daa39380",
+                "payloadSha256": "e9ed768ed0f214d90f4baa443ad942ec565c16152583c42766768c938228f522",
+                "evidenceTagSha256": "1d449881e6e271e2c7805b66ef8ac816937ec6b7ce3730ac3727345b196429c8"
+              }
+            },
+            {
+              "toolCallId": "call_mock_28",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/result.json",
+              "transcriptRef": {
+                "file": "2026-11-09T21-41-08-456Z_01a1c242-02e8-7578-bcdd-2c68987a7197.jsonl",
+                "callEntry": "bcaf823e",
+                "resultEntry": "fa2a00f4",
+                "payloadSha256": "22a5d608502eba7cb718883454d5e77853e0fa9e782f5a4999b800bbfcaa52ed",
+                "evidenceTagSha256": "35ee9301a7dac5999036ed22fc58e16a28d2bf543e7f602be78cdf97ae129242"
+              }
+            },
+            {
+              "toolCallId": "call_mock_29",
+              "name": "read",
+              "status": "done",
+              "execution": "not_observed",
+              "path": "results/report.md",
+              "transcriptRef": {
+                "file": "2026-11-09T21-41-08-456Z_01a1c242-02e8-7578-bcdd-2c68987a7197.jsonl",
+                "callEntry": "f429853d",
+                "resultEntry": "c65968e4",
+                "payloadSha256": "dca77ef9b1b5260c4dfe672782b9b3b09fb930aaa72915c3504c8fe6ff81a9a3",
+                "evidenceTagSha256": "50bc26a799c5646c50fce6e15075d5bb7cd36bee4de84dfe6aac62820b8ee916"
+              }
+            }
+          ]
+        }
+      },
+      "resultEpoch": 1
+    }
+  ],
+  "messages": [],
+  "steering": [],
+  "eventSequence": 16,
+  "events": [
+    {
+      "seq": 1,
+      "at": 1794260467031,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 2,
+      "at": 1794260467031,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 3,
+      "at": 1794260467031,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_2a94dd6f374a717c16a9c33c",
+        "taskId": "plan_1",
+        "attemptId": "3e7f4c49-62f3-41df-827c-0b2481b1e440",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 4,
+      "at": 1794260467032,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 5,
+      "at": 1794260467032,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 6,
+      "at": 1794260467050,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 7,
+      "at": 1794260467830,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 8,
+      "at": 1794260467963,
+      "childId": "child-3fdac9749a8fdd1eb54534d3222269a4",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    },
+    {
+      "seq": 9,
+      "at": 1794260467967,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 0,
+      "type": "registered"
+    },
+    {
+      "seq": 10,
+      "at": 1794260467968,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 0,
+      "type": "queued",
+      "state": "queued"
+    },
+    {
+      "seq": 11,
+      "at": 1794260467968,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 1,
+      "taskAttempt": {
+        "teamId": "plan_2a94dd6f374a717c16a9c33c",
+        "taskId": "plan_2",
+        "attemptId": "4d511c1e-5187-4ad7-9df6-5cce70e3d0cc",
+        "attempt": 1
+      },
+      "type": "started",
+      "state": "running"
+    },
+    {
+      "seq": 12,
+      "at": 1794260467969,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 13,
+      "at": 1794260467970,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "preflight"
+    },
+    {
+      "seq": 14,
+      "at": 1794260468019,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "execution"
+    },
+    {
+      "seq": 15,
+      "at": 1794260468601,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 1,
+      "type": "stage",
+      "stage": "acceptance"
+    },
+    {
+      "seq": 16,
+      "at": 1794260468652,
+      "childId": "child-1b2af43c7a40a457bfd2054f2a716ca4",
+      "epoch": 1,
+      "type": "settled",
+      "state": "completed",
+      "receipt": "accepted"
+    }
+  ],
+  "budget": {
+    "revision": 4,
+    "limits": {},
+    "consumedRuns": 2,
+    "legacyRuns": 0,
+    "knownTokens": 160,
+    "unknownRuns": 2,
+    "active": [],
+    "startedAt": 1794260467031
+  }
+}

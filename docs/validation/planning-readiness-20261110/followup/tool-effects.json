@@ -1,0 +1,54 @@
+{
+  "kind": "actual tool calls with synthetic input; no model inference or task execution",
+  "realModelRequests": 0,
+  "rejected": {
+    "content": [
+      {
+        "type": "text",
+        "text": "任务安排无效：任务 review 读取产物 result.csv 必须声明生产任务 analyze 的前置依赖；请修正 arrangement 后重新提交，当前方案未保存。"
+      }
+    ],
+    "isError": true,
+    "stored": 0
+  },
+  "corrected": {
+    "content": [
+      {
+        "type": "text",
+        "text": "方案第 1 版已交给用户。这一轮到此为止——等用户看；用户要改就改完再交一版。"
+      }
+    ],
+    "terminate": true,
+    "stored": 1
+  },
+  "confirmed": {
+    "confirmedFacts": {
+      "method": "arithmetic mean",
+      "units": "mg/g",
+      "missingValues": "drop NA",
+      "inputs": [
+        "input.csv"
+      ],
+      "outputRoot": "results",
+      "independentReview": true
+    },
+    "missingFacts": [],
+    "clarificationPolicy": "已确认的方法、单位、缺失值规则、输入和交付要求直接采用，不重复请求确认。questions只询问会改变当前方案的真实缺失信息或冲突，并点明缺少哪项及其影响；假设性文件缺失、未来失败或已约定的异常处理不追加确认，交给原输入预检和blockers。不得猜测缺失单位、替用户修改科学方法或把已有确认当执行批准。"
+  },
+  "missingUnit": {
+    "confirmedFacts": {
+      "method": "arithmetic mean",
+      "units": null,
+      "missingValues": "drop NA",
+      "inputs": [
+        "input.csv"
+      ],
+      "outputRoot": "results",
+      "independentReview": true
+    },
+    "missingFacts": [
+      "units"
+    ],
+    "clarificationPolicy": "已确认的方法、单位、缺失值规则、输入和交付要求直接采用，不重复请求确认。questions只询问会改变当前方案的真实缺失信息或冲突，并点明缺少哪项及其影响；假设性文件缺失、未来失败或已约定的异常处理不追加确认，交给原输入预检和blockers。不得猜测缺失单位、替用户修改科学方法或把已有确认当执行批准。"
+  }
+}

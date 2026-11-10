@@ -1,0 +1,17 @@
+{
+  "mode": "model-generated",
+  "requests": 2,
+  "taskCount": 2,
+  "valid": true,
+  "reviewCovered": true,
+  "catalogSource": "confirmed-product",
+  "usage": {
+    "input": 24,
+    "output": 16,
+    "cacheRead": 0,
+    "partial": [
+      "cacheRead"
+    ]
+  },
+  "compiled": true
+}

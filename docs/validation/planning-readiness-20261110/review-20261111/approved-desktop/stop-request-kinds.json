@@ -1,0 +1,32 @@
+[
+  {
+    "contractRequest": false,
+    "maxTokens": 16384,
+    "messageCount": 2
+  },
+  {
+    "contractRequest": false,
+    "maxTokens": 16384,
+    "messageCount": 4
+  },
+  {
+    "contractRequest": false,
+    "maxTokens": 180,
+    "messageCount": 2
+  },
+  {
+    "contractRequest": false,
+    "maxTokens": 180,
+    "messageCount": 2
+  },
+  {
+    "contractRequest": true,
+    "maxTokens": 16384,
+    "messageCount": 2
+  },
+  {
+    "contractRequest": false,
+    "maxTokens": 180,
+    "messageCount": 2
+  }
+]

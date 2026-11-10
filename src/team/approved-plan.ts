@@ -6,6 +6,7 @@ import {z} from 'zod'
 import {ApprovedPlanBindingSchema} from '../protocol/approved-plan.js'
 import {TaskSettingsSchema,type TaskSettings} from '../protocol/task-contract.js'
 import {parseTaskArrangement,withoutTaskArrangement} from '../protocol/task-arrangement.js'
+import {validateExecutableArrangement} from '../protocol/executable-arrangement.js'
 import {captureFileVersions} from '../artifacts/task-versions.js'
 import {canonicalOutputPaths} from '../bot/output-locks.js'
 import {resolveTaskSettings} from '../subagent/task-tools.js'
@@ -28,11 +29,8 @@ export async function freezeApprovedPlan(opts:{planningInstructions?:string;work
  if(read.state!=='valid'||!read.arrangement.dispatch)throw new Error('方案没有有效的执行绑定')
  const p=read.arrangement
  if(p.questions.length)throw new Error('请先补齐待确认项')
- if(p.tasks.length>8)throw new Error('现有团队最多支持 8 个执行成员，请调整安排后再批准')
- const ordered:typeof p.tasks=[],remaining=[...p.tasks]
- while(remaining.length){const i=remaining.findIndex(t=>t.dependencies.every(d=>ordered.some(a=>a.id===d)));if(i<0)throw new Error('任务依赖存在环');ordered.push(remaining.splice(i,1)[0]!)}
+ const ordered=validateExecutableArrangement(p)
  const ancestors=(id:string):Set<string>=>{const task=ordered.find(t=>t.id===id)!;return new Set(task.dependencies.flatMap(d=>[d,...ancestors(d)]))}
- if(p.independentReview&&ordered.filter(t=>!t.review).some(worker=>!ordered.some(t=>t.review&&ancestors(t.id).has(worker.id))))throw new Error('独立审阅必须覆盖全部执行任务的依赖链')
  const root=realpathSync(opts.workspace),canonicalPath=(path:string)=>{
   const canonical=canonicalOutputPaths([path],opts.workspace)?.[0]
   if(!canonical)throw new Error('工作区文件路径无法核验')
@@ -55,11 +53,6 @@ export async function freezeApprovedPlan(opts:{planningInstructions?:string;work
   const execution=t.execution!,definition=opts.definitions.find(d=>d.name===execution.agent&&!d.disabled)
   if(!definition)throw new Error(`执行者「${execution.agent}」当前不可用，请调整方案`)
   const contract=execution.contract
-  if(contract.submission!=='tool')throw new Error('可执行任务必须正式 submit_task_result 提交')
-  const same=(a:string[],b:string[])=>JSON.stringify([...a].sort())===JSON.stringify([...b].sort())
-  if(!same(t.inputs,contract.inputs)||!same(t.outputs,contract.outputs))throw new Error('任务文件声明与执行契约不一致')
-  if(t.review&&(contract.access!=='read-only'||contract.resultType!=='review'||contract.outputs.length))throw new Error('独立审阅须采用只读 review 契约')
-  if(t.review&&t.dependencies.flatMap(d=>ordered.find(t=>t.id===d)!.outputs).some(path=>!t.inputs.includes(path)))throw new Error('独立审阅须声明读取直接前置任务的全部产物')
   const settings=TaskSettingsSchema.parse(resolveTaskSettings(contract,opts.tier,definition.tools)),tools=settings.scope.tools
   if(contract.access==='workspace-write'&&contract.outputs.length&&!tools.some(t=>['*','write','edit'].includes(t)))throw new Error('所选执行者没有契约需要的写入工具')
   if(contract.requireExecution&&!tools.some(t=>['*','bash','powershell','run_code'].includes(t)))throw new Error('所选执行者没有契约需要的执行工具')

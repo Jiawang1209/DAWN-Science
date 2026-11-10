@@ -1,0 +1,63 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-planning-readiness-20261110/dawn-science
+
+ ❯ |ui| tests/ui/design-contract.test.ts (103 tests | 1 failed) 820ms
+     × 组件里的 textarea / input / select 都带 control 类 16ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ❯ |ui| tests/ui/i18n.test.ts (6 tests | 1 failed) 70ms
+     × **每一个 `t()` 的 msgid 在英文表里都有** 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/design-contract.test.ts > 设计契约 · 表单控件一律走 .control > 组件里的 textarea / input / select 都带 control 类
+AssertionError: planning-contract-source-form.tsx：表单控件必须带 className="control"，否则聚焦环不跟主题: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "70: <div className=\"planning-contract-options\"><label><input className=\"control\" type=\"checkbox\" checked={unitMissing} disabled={locked} onChange={e=>{setUnitMissing(e.currentTarget.checked);if(e.currentTarget.checked)setNumeric(false)}}/>{t(\"单位尚未提供\")}</label>",
++ ]
+
+ ❯ tests/ui/design-contract.test.ts:382:65
+    380|         if (!/className=["'][^"']*\bcontrol\b/.test(head)) bad.push(`$…
+    381|       })
+    382|       expect(bad, `${f}：表单控件必须带 className="control"，否则聚焦环不跟主题`).toEqua…
+       |                                                                 ^
+    383|     }
+    384|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |ui| tests/ui/i18n.test.ts > 双语 · 目录不许与调用点脱节 > **每一个 `t()` 的 msgid 在英文表里都有**
+AssertionError: 这些句子切到英文会原样显示中文——补进 i18n/en.ts: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "planning-contract-source-form.tsx：\"单位尚未提供\"",
++   "planning-contract-source-form.tsx：\"单位尚未提供，当前方案不能执行；请补齐单位、确认新约束并重新生成方案。\"",
++ ]
+
+ ❯ tests/ui/i18n.test.ts:105:50
+    103|       }
+    104|     }
+    105|     expect(缺的, "这些句子切到英文会原样显示中文——补进 i18n/en.ts").toEqual([])
+       |                                                  ^
+    106|   })
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 731 passed (733)
+      Tests  2 failed | 7164 passed | 11 skipped (7177)
+   Start at  05:34:33
+   Duration  274.33s (transform 11.62s, setup 46.84s, import 184.88s, tests 562.72s, environment 93.86s)
+

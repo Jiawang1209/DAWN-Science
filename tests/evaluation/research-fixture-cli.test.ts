@@ -19,7 +19,8 @@ it('the legacy direct fixture CLI runs the real offline batch and prints a retai
   expect(basename(reportPath)).toBe('research.md')
   expect(readFileSync(reportPath,'utf8')).toContain('分阶段用量')
   const report=JSON.parse(readFileSync(join(dirname(reportPath),'research.json'),'utf8'))
-  expect(report).toMatchObject({inference:'fixture',completePairs:6,qualifiedPairs:6})
+  expect(report).toMatchObject({inference:'fixture',completePairs:5,qualifiedPairs:5,incompletePairs:1})
+  expect(report.rows.filter((r:any)=>r.caseId==='unknown-unit').every((r:any)=>r.terminal==='awaiting-info'&&r.readiness?.executionStarted===false)).toBe(true)
  }finally{rmSync(root,{recursive:true,force:true})}
 },60000)
 it.skipIf(process.platform==='win32')('SIGINT drains the actual detached executor and retains the cancelled batch',async()=>{

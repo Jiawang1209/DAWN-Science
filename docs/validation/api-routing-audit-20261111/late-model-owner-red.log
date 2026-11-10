@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/model-routing-audit.test.ts -t a model lookup that finishes --maxWorkers=1
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science
+
+ ❯ |node| tests/runtime/model-routing-audit.test.ts (9 tests | 1 failed | 8 skipped) 59ms
+   × a model lookup that finishes after its owner was replaced cannot update that session or its saved route 59ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/model-routing-audit.test.ts > a model lookup that finishes after its owner was replaced cannot update that session or its saved route
+AssertionError: expected undefined to be an instance of Error
+ ❯ tests/runtime/model-routing-audit.test.ts:94:26
+     92|  try{
+     93|   await rt.stop('owner');await rt.start({...spec,resume:true});finish(…
+     94|   expect(await changing).toBeInstanceOf(Error)
+       |                          ^
+     95|   expect(rt.currentModel('owner')).toEqual(initial)
+     96|   await rt.stop('owner');await rt.start({...spec,resume:true})
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  04:31:30
+   Duration  1.62s (transform 653ms, setup 0ms, import 1.47s, tests 59ms, environment 0ms)
+

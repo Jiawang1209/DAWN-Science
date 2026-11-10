@@ -1,0 +1,61 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/provider-routing-audit.spec.ts
+
+Running 1 test using 1 worker
+
+(node:23240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62746/e0c4b0b4-aa5e-4bbb-b031-383b39efabcd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62763/e439b6e8-c6a1-4427-b2f8-90a820020148
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/provider-routing-audit.spec.ts:27:1 › selecting DeepSeek overrides old Kimi ordering for new tasks and survives application restart (29.7s)
+
+
+  1) e2e/provider-routing-audit.spec.ts:27:1 › selecting DeepSeek overrides old Kimi ordering for new tasks and survives application restart 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.composer .model-pill')
+    Expected substring: "deepseek-flash"
+    Received string:    "Kkimi-mock"
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 25000ms
+      - waiting for locator('.composer .model-pill')
+        54 × locator resolved to <div class="pill model-pill">…</div>
+           - unexpected value "Kkimi-mock"
+
+
+      43 |  page=await dawn.重开()
+      44 |  await page.locator('.session-list .sess-item').filter({hasText:/DeepSeek select/}).locator('.row').first().click()
+    > 45 |  await expect(page.locator('.composer .model-pill')).toContainText('deepseek-flash')
+         |                                                      ^
+      46 |  await send(page,'After actual restart',dawn.requests)
+      47 |  await expect.poll(()=>(dawn.requests.at(-1) as any)?.body?.model).toBe('deepseek-flash')
+      48 |  await page.screenshot({path:join(evidence,'deepseek-after-restart.png')})
+        at /Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/e2e/provider-routing-audit.spec.ts:45:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/provider-routing-audit-sel-b726a-urvives-application-restart/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/provider-routing-audit-sel-b726a-urvives-application-restart/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/provider-routing-audit-sel-b726a-urvives-application-restart/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/provider-routing-audit-sel-b726a-urvives-application-restart/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/provider-routing-audit-sel-b726a-urvives-application-restart/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e/provider-routing-audit.spec.ts:27:1 › selecting DeepSeek overrides old Kimi ordering for new tasks and survives application restart 

@@ -1,0 +1,43 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/state/model-route-audit.test.ts --maxWorkers=1
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science
+
+ ❯ |ui| tests/ui/state/model-route-audit.test.ts (6 tests | 1 failed) 7ms
+   × a passive model observation does not invalidate the overview reading the same session 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| tests/ui/state/model-route-audit.test.ts > a passive model observation does not invalidate the overview reading the same session
+AssertionError: expected undefined to deeply equal { model: 'deepseek-fixture', …(2) }
+
+- Expected:
+{
+  "bytes": {
+    "history": 7,
+    "system": 1,
+    "tools": 2,
+  },
+  "model": "deepseek-fixture",
+  "provider": "deepseek",
+}
+
++ Received:
+undefined
+
+ ❯ tests/ui/state/model-route-audit.test.ts:37:30
+     35|  const usage={model:'deepseek-fixture',provider:'deepseek',bytes:{syst…
+     36|  resolve(usage);await pending
+     37|  expect($contextUsage.get()).toEqual(usage)
+       |                              ^
+     38|  expect($sessionModels.get().owner).toEqual({model:'deepseek-fixture',…
+     39| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  03:28:32
+   Duration  1.31s (transform 354ms, setup 589ms, import 4ms, tests 7ms, environment 612ms)
+

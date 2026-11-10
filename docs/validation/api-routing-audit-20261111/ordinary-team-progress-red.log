@@ -1,0 +1,35 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/runtime/model-routing-audit.test.ts -t real ordinary team progress --maxWorkers=1
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science
+
+ ❯ |node| tests/runtime/model-routing-audit.test.ts (8 tests | 1 failed | 7 skipped) 58ms
+   × real ordinary team progress resets repeated waits, while timestamp-only updates cannot bypass the loop guard 58ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/model-routing-audit.test.ts > real ordinary team progress resets repeated waits, while timestamp-only updates cannot bypass the loop guard
+AssertionError: expected '检测到重复调用：最近 16 批里，同一组工具调用（team_wait）以完…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"检测到重复调用：最近 16 批里，同一组工具调用（team_wait）以完全相同的参数出现了 5 次，没有产生新进展，已中断以免继续消耗额度。通常是模型退化——可以换更强的模型，或换一种问法再试。"
+
+ ❯ tests/runtime/model-routing-audit.test.ts:80:30
+     78|   for(let i=0;i<4;i++)expect(guard.check(calls)).toBeUndefined()
+     79|   team.scheduler.改(team.current.id,(value:any)=>{value.tasks[0].status…
+     80|   expect(guard.check(calls)).toBeUndefined()
+       |                              ^
+     81|   for(let i=0;i<3;i++)expect(guard.check(calls)).toBeUndefined()
+     82|   team.scheduler.改(team.current.id,(value:any)=>{value.updatedAt=Date.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  03:11:07
+   Duration  1.74s (transform 734ms, setup 0ms, import 1.58s, tests 58ms, environment 0ms)
+

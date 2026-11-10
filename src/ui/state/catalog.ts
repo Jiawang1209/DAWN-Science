@@ -197,13 +197,29 @@ export interface CurrentModel {
 }
 
 export const $sessionModels = atom<Readonly<Record<string, CurrentModel>>>({})
+const modelVersions = new Map<string, number>()
 
 export function setSessionModel(sessionId: string, model: string, provider?: string): void {
+  modelVersions.set(sessionId, (modelVersions.get(sessionId) ?? 0) + 1)
+  writeSessionModel(sessionId, model, provider)
+}
+
+function writeSessionModel(sessionId: string, model: string, provider?: string): void {
   const prev = $sessionModels.get()
   const now: CurrentModel = { ...(provider ? { provider } : {}), model }
   const was = prev[sessionId]
   if (was && was.model === now.model && was.provider === now.provider) return
   $sessionModels.set({ ...prev, [sessionId]: now })
+}
+
+/** Even reselecting the same model revokes earlier observations. Scope is per chat. */
+export function sessionModelSnapshotWriter(sessionId: string): (usage: Pick<ContextUsage, "model" | "provider">) => boolean {
+  const version = modelVersions.get(sessionId)
+  return usage => {
+    if (modelVersions.get(sessionId) !== version) return false
+    if (usage.model) writeSessionModel(sessionId, usage.model, usage.provider ?? $sessionModels.get()[sessionId]?.provider)
+    return true
+  }
 }
 
 /** 当前会话的上下文用量（①-B″ · U3）。后端权威，这里只是缓存 */

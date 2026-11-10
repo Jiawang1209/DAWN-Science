@@ -11,6 +11,7 @@
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "scripts": {
+    "pretest": "npm run build:electron",
     "postinstall": "node scripts/fix-node-pty.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -130,6 +131,7 @@
     "uuid": "^11.1.1",
     "katex": "$katex",
     "undici@>=8 <9": "^8.12.2",
-    "image-size": "^2.0.3"
+    "image-size": "^2.0.3",
+    "minimatch@>=7.0.0 <11.0.1": "11.0.1"
   }
 }

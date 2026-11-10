@@ -49,15 +49,9 @@ test.describe("启动时一个 provider 覆盖都没有", () => {
 
     await page.getByRole("button", { name: "返回" }).click()
 
-    /**
-     * **从空态里挑它开第一个会话。**
-     *
-     * 不走「新建会话」：那个按钮用的是列表里的第一个 agent（`ds-chat`／deepseek），
-     * 而这个用例刻意没有基底目录、也没给 deepseek 填过 key——
-     * 拿它开会话本来就该失败。**要验的是 `late` 这一条路。**
-     */
-    // 2026-08-11：这颗从「换一个 agent」改叫「换一个 LLM」——DAWN 自己才是那个 agent
-    await page.getByRole("button", { name: /切换服务|选择 agent|ds-chat|DeepSeek/ }).click()
+    // Saving a service makes it the next-task default. Open the same empty-state
+    // model menu by its stable control, then explicitly pick the newly added endpoint.
+    await page.locator(".agent-pill").getByRole("button").click()
     await page.getByRole("menuitem", { name: "late" }).click()
     await 等进了对话(page)
     // **模型选择的地方有它**——作者说的正是这一句

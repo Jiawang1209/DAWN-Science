@@ -1,0 +1,28 @@
+npm notice run dawn-science@0.0.44 pretest
+npm notice run npm run build:electron
+npm notice run dawn-science@0.0.44 build:electron
+npm notice run node scripts/build-electron.mjs
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:338:17:
+      338 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval
+
+build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/
+build-electron: 自带技能已拷进 dist/skills
+build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --maxWorkers=4
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  737 passed (737)
+      Tests  7194 passed | 11 skipped (7205)
+   Start at  04:32:29
+   Duration  266.85s (transform 11.62s, setup 45.58s, import 171.14s, tests 559.25s, environment 85.84s)
+

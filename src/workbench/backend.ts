@@ -1391,6 +1391,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    * 那时同名的可能已是 `providers.yaml` 里手写的——那是人的声明，不归这里收。
    */
   const 自动造的 = new Map<string, unknown>()
+  // Explicit user intent, rather than credential insertion order, controls new chats.
+  // Existing conversations and frozen execution plans keep their own route.
+  let preferredProvider = settings?.get("model.newTaskProvider")
+  let providerIntent = 0
+  const credentialGeneration = new Map<string, number>()
+  function rememberProvider(provider: string | undefined, intent: number): void {
+    if (!provider || intent !== providerIntent) return
+    preferredProvider = provider
+    try { settings?.set("model.newTaskProvider", provider, new Date().toISOString()) }
+    catch (error) { console.error("[模型] 新任务服务偏好未持久化", error) }
+  }
   /** 显式配置的模型优先；目录合并顺序不能改变用户的选择。 */
   function 首选连接模型(providerId: string, list: string[]): string | undefined {
     const selected = registry.providers?.[providerId]?.models
@@ -2493,8 +2504,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         (d): d is Extract<typeof d, { kind: "native" }> => d.kind === "native",
       )
       const used = [...new Set(nativeAgents.map((d) => d.provider))].sort()
+      const agentEntries = Object.entries(registry.agents)
+      const hasDeclaredNative = agentEntries.some(([id, def]) => def.kind === "native" && 自动造的.get(id) !== def)
+      // Older profiles have no preference. Only automatically synthesized agents may
+      // use the latest added credential; an explicit native declaration keeps its order.
+      const defaultProvider = preferredProvider ?? (!hasDeclaredNative
+        ? [...credentials.configured()].reverse().find(id => nativeAgents.some(a => a.provider === id))
+        : undefined)
       return {
-        agents: Object.entries(registry.agents).map(([agentId, def]) => ({
+        agents: agentEntries.sort(([,a],[,b]) =>
+          Number(b.kind === "native" && b.provider === defaultProvider) - Number(a.kind === "native" && a.provider === defaultProvider)
+        ).map(([agentId, def]) => ({
           agentId,
           kind: def.kind,
           ...(def.kind === "acp" ? { remoteCapable: def.remoteCapable, catalogKey: createHash("sha256").update(JSON.stringify([def.command, def.args])).digest("hex") } : {}),
@@ -2566,6 +2586,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     setCredential: async ({ providerId, secret }) => {
+      const intent = ++providerIntent
+      const generation = (credentialGeneration.get(providerId) ?? 0) + 1
+      credentialGeneration.set(providerId, generation)
       credentials.set(providerId, secret)
       // 凭证变了必须让 pi 侧的缓存失效，否则刚填的 key 不会生效
       // （缓存的存在理由见 credential-store.ts：一次会话 202 次 read）
@@ -2586,14 +2609,17 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       if (askOnce && models?.available) {
         const 还没地址 = (await models.needsBaseUrl?.().catch((): string[] => []))?.includes(providerId) ?? false
         const model = 还没地址 ? undefined : 首选连接模型(providerId, await models.available(providerId).catch(() => []))
+        if (credentialGeneration.get(providerId) !== generation) return {}
         if (model) {
           const r = await 验一次key(askOnce, { provider: providerId, model }, keyCheckTimeoutMs)
+          if (credentialGeneration.get(providerId) !== generation) return {}
           if (r.kind !== "ok") {
             key验证结果.set(providerId, r)
             console.error(`[凭证] ${providerId} 的 key 验证${r.kind === "hard" ? "失败" : "没能判定"}：${"detail" in r ? r.detail : `等了 ${r.seconds} 秒没回话`}`)
           }
         }
       }
+      if (key验证结果.get(providerId)?.kind !== "hard") rememberProvider(providerId, intent)
       return {}
     },
 
@@ -2626,6 +2652,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     deleteCredential: async ({ providerId }) => {
+      credentialGeneration.set(providerId, (credentialGeneration.get(providerId) ?? 0) + 1)
       credentials.delete(providerId)
       invalidateCredentials?.(providerId)
       key验证结果.delete(providerId)
@@ -4494,6 +4521,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     setSessionModel: async ({ sessionId, provider, model }) => {
+      const intent = ++providerIntent
       try {
         // **provider 对 cli 会话没有意义**（外部 CLI 没这个概念），
         // 放宽之后这里给空串——运行时那边也只是为了签名一致才留着这个参数
@@ -4503,6 +4531,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
         // 界面要原样把理由说给人听，所以不能吞成一句「操作失败」
         throw fault原样("conflict", err instanceof Error ? err.message : String(err))
       }
+      rememberProvider(provider, intent)
       return {}
     },
 

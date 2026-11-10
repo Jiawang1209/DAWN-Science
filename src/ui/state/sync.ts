@@ -40,6 +40,7 @@ import {
   sessionTitleSnapshotMerger,
   setTempSessions,
   setProviders,
+  sessionModelSnapshotWriter,
   setContextUsage,
   标记待批准,
   type ArtifactList,
@@ -165,16 +166,25 @@ export const loadContextUsage = async (
   // 没有会话就把它清掉。**留着上一个会话的数字是最坏的一种**——
   // 它看起来是真的
   if (!sessionId) return setContextUsage(undefined)
+  const applyModel = sessionModelSnapshotWriter(sessionId)
   await c
     .get<import("../panels.js").ContextUsage>("getContextUsage", { sessionId })
     // 身份守卫(审查 debug I3):快点两会话时,A 的用量回来晚了不许写进 B 的面板。
     // 与 resyncSession 同一道防线——比对这条响应属于的会话是否还是当前活跃的那个。
-    .then((v) => { if (sessionId === $activeSessionId.get()) setContextUsage(v) })
+    .then((v) => {
+      if (sessionId !== $activeSessionId.get()) return
+      if (applyModel(v)) setContextUsage(v)
+    })
     .catch(fail)
 }
 
-export const loadProviders = (c: WorkbenchClient): Promise<void> =>
-  c.get<Providers>("getProviders").then(setProviders).catch(fail)
+let providerCatalogGeneration = 0
+export const loadProviders = (c: WorkbenchClient): Promise<void> => {
+  const generation = ++providerCatalogGeneration
+  return c.get<Providers>("getProviders")
+    .then(value => { if (generation === providerCatalogGeneration) setProviders(value) })
+    .catch(error => { if (generation === providerCatalogGeneration) fail(error) })
+}
 
 export const loadSessions = (c: WorkbenchClient, projectId: string): Promise<void> => {
   const merge = sessionTitleSnapshotMerger<SessionSummary>()

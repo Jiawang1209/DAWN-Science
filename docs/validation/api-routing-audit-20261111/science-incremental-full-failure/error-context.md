@@ -1,0 +1,522 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: science-incremental.spec.ts >> visibly reuses accepted A and reruns failed B through actual parent tools and Pi
+- Location: e2e/science-incremental.spec.ts:4:1
+
+# Error details
+
+```
+TimeoutError: locator.screenshot: Timeout 29996.346000000136ms exceeded.
+Call log:
+  - taking element screenshot
+  - waiting for fonts to load...
+  - fonts loaded
+  - attempting scroll into view action
+    2 × waiting for element to be stable
+      - element is not visible
+    - retrying scroll into view action
+    - waiting 20ms
+    2 × waiting for element to be stable
+      - element is not visible
+    - retrying scroll into view action
+      - waiting 100ms
+    56 × waiting for element to be stable
+       - element is not visible
+     - retrying scroll into view action
+       - waiting 500ms
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=f3e3]:
+  - generic [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - button "DAWN Science" [ref=f3e7] [cursor=pointer]
+      - button "收起侧边栏" [expanded] [ref=f3e10] [cursor=pointer]
+      - button "快捷键速查" [ref=f3e13] [cursor=pointer]
+    - generic [ref=f3e17]:
+      - tablist "同一处的会话" [ref=f3e21]:
+        - generic [ref=f3e22]:
+          - tab "科研批量验收：先按批准的均值方法处理样地" [selected] [ref=f3e23] [cursor=pointer]
+          - button "关掉「科研批量验收：先按批准的均值方法处理样地」（收进归档）" [ref=f3e26] [cursor=pointer]
+        - button "在这里再开一段" [ref=f3e29] [cursor=pointer]
+      - generic:
+        - banner
+    - button "面板：团队" [expanded] [ref=f3e33] [cursor=pointer]
+  - generic [ref=f3e34]:
+    - complementary [ref=f3e35]:
+      - button "新建任务" [ref=f3e37] [cursor=pointer]
+      - separator [ref=f3e42]
+      - generic [ref=f3e43]:
+        - generic [ref=f3e44]: 工作区
+        - generic [ref=f3e45]:
+          - button "搜索" [ref=f3e46] [cursor=pointer]
+          - button "添加工作区文件夹" [ref=f3e49] [cursor=pointer]
+      - generic [ref=f3e53]:
+        - paragraph [ref=f3e54]:
+          - button "项目 1" [expanded] [ref=f3e55] [cursor=pointer]:
+            - generic [ref=f3e60]: 项目
+            - generic [ref=f3e61]: "1"
+          - button "多选项目" [ref=f3e62] [cursor=pointer]: 多选
+        - list [ref=f3e63]:
+          - listitem [ref=f3e64]:
+            - generic [ref=f3e65]:
+              - button "workspace" [ref=f3e66] [cursor=pointer]
+              - generic [ref=f3e75]:
+                - button "在「workspace」里开一段新对话" [ref=f3e76] [cursor=pointer]
+                - button "项目操作：workspace" [ref=f3e80] [cursor=pointer]: ⋯
+            - list [ref=f3e81]:
+              - listitem [ref=f3e82]:
+                - button "科研批量验收：先按批准的均值方法处理样地 刚刚" [ref=f3e83]:
+                  - generic [ref=f3e84]: 科研批量验收：先按批准的均值方法处理样地
+                  - generic [ref=f3e88]: 刚刚
+                - button "会话操作：科研批量验收：先按批准的均值方法处理样地" [ref=f3e90] [cursor=pointer]: ⋯
+        - region "服务器" [ref=f3e91]:
+          - generic [ref=f3e92]:
+            - button "服务器" [expanded] [ref=f3e93] [cursor=pointer]
+            - button "添加服务器" [ref=f3e102] [cursor=pointer]
+          - paragraph [ref=f3e105]: 还没有服务器
+      - generic [ref=f3e106]:
+        - button "定时" [ref=f3e107] [cursor=pointer]
+        - button "设置" [ref=f3e112] [cursor=pointer]
+    - separator "调整侧栏宽度" [ref=f3e116]
+    - main [ref=f3e117]:
+      - button "打开协作：8 项任务 · 6 项验收通过" [ref=f3e119] [cursor=pointer]:
+        - strong [ref=f3e122]: 协作
+        - generic [ref=f3e123]: 本轮成果已验收
+        - generic [ref=f3e124]: 8 项任务 · 6 项验收通过
+        - generic [ref=f3e125]: ›
+      - generic [ref=f3e126]:
+        - toolbar "会话工具栏" [ref=f3e127]:
+          - group "会话操作：科研批量验收：先按批准的均值方法处理样地" [ref=f3e129]:
+            - button "查找当前对话" [ref=f3e131] [cursor=pointer]
+            - button "导出对话" [ref=f3e135] [cursor=pointer]
+        - button "合成数据批量 已交付 1 / 1" [ref=f3e138] [cursor=pointer]:
+          - generic [ref=f3e139]: 合成数据批量
+          - generic [ref=f3e140]: 已交付 1 / 1
+        - generic [ref=f3e143]:
+          - generic [ref=f3e144]:
+            - generic [ref=f3e145]: 你
+            - generic [ref=f3e147]:
+              - paragraph [ref=f3e151]: 科研批量验收：先按批准的均值方法处理样地 A 和 B，结果须独立核验。
+              - generic [ref=f3e152]:
+                - time [ref=f3e153]: 2026-11-11 03:47
+                - button "复制我说的这段" [ref=f3e154] [cursor=pointer]
+                - button "修改" [ref=f3e160] [cursor=pointer]
+                - button "回到这句之前" [ref=f3e164] [cursor=pointer]
+          - button "已完成 用时 0.4 秒 2 步" [expanded] [ref=f3e167] [cursor=pointer]:
+            - generic [ref=f3e170]: 已完成
+            - generic [ref=f3e171]: 用时 0.4 秒
+            - generic [ref=f3e172]: 2 步
+          - button "✓ 调用了 1 次 update_analysis_route、调用了 1 次 start_science_batch" [ref=f3e174] [cursor=pointer]:
+            - generic [ref=f3e177]: ✓
+            - generic [ref=f3e178]: 调用了 1 次 update_analysis_route、调用了 1 次 start_science_batch
+          - generic [ref=f3e179]:
+            - generic [ref=f3e180]: 子 agent 5/5
+            - generic [ref=f3e181]:
+              - button "✓ check · p-0-a-check-0-0 完成" [ref=f3e183] [cursor=pointer]:
+                - text: ✓ check · p-0-a-check-0-0
+                - generic [ref=f3e184]: 完成
+              - button "✓ analyze · p-0-a-analyze-0-1 完成" [ref=f3e186] [cursor=pointer]:
+                - text: ✓ analyze · p-0-a-analyze-0-1
+                - generic [ref=f3e187]: 完成
+              - button "✓ review · p-0-a-review-0-2 完成" [ref=f3e189] [cursor=pointer]:
+                - text: ✓ review · p-0-a-review-0-2
+                - generic [ref=f3e190]: 完成
+              - button "✓ check · p-1-b-check-0-0 完成" [ref=f3e192] [cursor=pointer]:
+                - text: ✓ check · p-1-b-check-0-0
+                - generic [ref=f3e193]: 完成
+              - generic [ref=f3e194]:
+                - button "✗ analyze · p-1-b-analyze-0-1 失败" [ref=f3e195] [cursor=pointer]:
+                  - text: ✗ analyze · p-1-b-analyze-0-1
+                  - generic [ref=f3e196]: 失败
+                - paragraph [ref=f3e197]: 宿主可执行验收未通过：均值核验 期望 3，实际 999；回执均值核验 期望 3，实际 999
+          - generic [ref=f3e198]:
+            - generic [ref=f3e199]:
+              - generic [ref=f3e200]: D
+              - generic [ref=f3e201]: DeepSeek
+            - generic [ref=f3e202]:
+              - paragraph [ref=f3e206]: 批量状态与产物以宿主回执为准；本次为合成软件验收。
+              - note [ref=f3e207]:
+                - generic [ref=f3e208]: 本轮产出未知
+                - text: 远端会话或非 git 工作区，探针没跑
+              - generic [ref=f3e209]:
+                - button "复制这段回答" [ref=f3e210] [cursor=pointer]
+                - paragraph [ref=f3e216]: 输入 12 · 输出 8 · 缓存 0 token
+          - generic [ref=f3e217]:
+            - generic [ref=f3e218]: 你
+            - generic [ref=f3e220]:
+              - paragraph [ref=f3e224]: 局部重跑：B 的生成错误已修正，请派生新批次，复用满足全部条件的历史项，只重跑必要项。
+              - generic [ref=f3e225]:
+                - time [ref=f3e226]: 2026-11-11 03:47
+                - button "复制我说的这段" [ref=f3e227] [cursor=pointer]
+                - button "修改" [ref=f3e233] [cursor=pointer]
+                - button "回到这句之前" [ref=f3e237] [cursor=pointer]
+          - button "已完成 用时 0.7 秒 2 步" [expanded] [ref=f3e240] [cursor=pointer]:
+            - generic [ref=f3e243]: 已完成
+            - generic [ref=f3e244]: 用时 0.7 秒
+            - generic [ref=f3e245]: 2 步
+          - button "✓ 调用了 1 次 science_batch_status、调用了 1 次 start_science_batch" [ref=f3e247] [cursor=pointer]:
+            - generic [ref=f3e250]: ✓
+            - generic [ref=f3e251]: 调用了 1 次 science_batch_status、调用了 1 次 start_science_batch
+          - generic [ref=f3e252]:
+            - generic [ref=f3e253]: 子 agent 4/4
+            - generic [ref=f3e254]:
+              - button "✓ check · p-1-b-check-0-0 完成" [ref=f3e256] [cursor=pointer]:
+                - text: ✓ check · p-1-b-check-0-0
+                - generic [ref=f3e257]: 完成
+              - button "✓ analyze · p-1-b-analyze-0-1 完成" [ref=f3e259] [cursor=pointer]:
+                - text: ✓ analyze · p-1-b-analyze-0-1
+                - generic [ref=f3e260]: 完成
+              - button "✓ review · p-1-b-review-0-2 完成" [ref=f3e262] [cursor=pointer]:
+                - text: ✓ review · p-1-b-review-0-2
+                - generic [ref=f3e263]: 完成
+              - button "✓ aggregate · batch-summary-0 完成" [ref=f3e265] [cursor=pointer]:
+                - text: ✓ aggregate · batch-summary-0
+                - generic [ref=f3e266]: 完成
+          - generic [ref=f3e267]:
+            - generic [ref=f3e268]:
+              - generic [ref=f3e269]: D
+              - generic [ref=f3e270]: DeepSeek
+            - generic [ref=f3e271]:
+              - paragraph [ref=f3e275]: 批量状态与产物以宿主回执为准；本次为合成软件验收。
+              - note [ref=f3e276]:
+                - generic [ref=f3e277]: 本轮产出未知
+                - text: 远端会话或非 git 工作区，探针没跑
+              - generic [ref=f3e278]:
+                - button "复制这段回答" [ref=f3e279] [cursor=pointer]
+                - paragraph [ref=f3e285]: 输入 12 · 输出 8 · 缓存 0 token
+        - generic [ref=f3e286]:
+          - generic [ref=f3e287]:
+            - generic [ref=f3e288]:
+              - button "工作目录：/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-e2e-vLadJn/workspace" [ref=f3e290] [cursor=pointer]:
+                - generic [ref=f3e293]: workspace
+              - generic [ref=f3e296]: 本机
+            - textbox "输入问题，@ 引用文件，/ 使用指令" [ref=f3e302]
+            - generic [ref=f3e303]:
+              - generic [ref=f3e304]:
+                - button "添加内容" [ref=f3e306] [cursor=pointer]
+                - button "终端面板" [ref=f3e309] [cursor=pointer]
+                - button "完全访问" [ref=f3e313] [cursor=pointer]
+              - generic [ref=f3e318]:
+                - button "上下文 <1%" [ref=f3e320] [cursor=pointer]: <1%
+                - button "当前模型：deepseek-flash。点击切换" [ref=f3e325] [cursor=pointer]:
+                  - generic [ref=f3e326]: deepseek-flash
+                - button "发送" [active] [ref=f3e329] [cursor=pointer]
+          - generic "这一整段对话累计" [ref=f3e334]: 2 轮 · 工具 4 次 1.0 s · 输入 24 · 输出 16 · 缓存 0 · 命中 0%
+    - complementary "团队" [ref=f3e335]:
+      - separator "调整面板宽度" [ref=f3e336]
+      - generic [ref=f3e337]:
+        - tablist "面板" [ref=f3e338]:
+          - tab "文件" [ref=f3e339] [cursor=pointer]
+          - tab "产物" [ref=f3e340] [cursor=pointer]:
+            - text: 产物
+            - generic [ref=f3e341]: "8"
+          - tab "笔记本" [ref=f3e342] [cursor=pointer]
+          - tab "团队" [selected] [ref=f3e343] [cursor=pointer]
+        - button "更多面板" [ref=f3e345] [cursor=pointer]: ⋯
+        - button "关闭面板" [ref=f3e346] [cursor=pointer]
+      - generic [ref=f3e350]:
+        - region "运行总览" [ref=f3e351]:
+          - generic [ref=f3e352]:
+            - generic [ref=f3e353]:
+              - text: 对话协作台
+              - heading "协作" [level=3] [ref=f3e354]
+            - generic [ref=f3e355]:
+              - button "打开编排视图" [ref=f3e356] [cursor=pointer]: 编排视图
+              - button "刷新运行记录" [ref=f3e357] [cursor=pointer]
+          - region "协作成果" [ref=f3e358]:
+            - generic [ref=f3e359]:
+              - generic [ref=f3e360]: 任务目标
+              - heading "approved mean" [level=3] [ref=f3e361]
+              - generic [ref=f3e362]: 当前阶段 · 独立审阅
+            - generic [ref=f3e363]:
+              - heading "本轮成果已验收" [level=4] [ref=f3e364]
+              - paragraph [ref=f3e365]: 验收对应宿主回执中的内容版本。
+            - generic [ref=f3e366]:
+              - generic [ref=f3e367]: 下一步 · 查看对应任务的证据与记录
+              - button "查看验收成果" [ref=f3e368] [cursor=pointer]
+            - group [ref=f3e369]:
+              - generic "成果版本与执行额度" [ref=f3e370] [cursor=pointer]
+            - button "展开流程工作台" [ref=f3e372] [cursor=pointer]
+          - paragraph [ref=f3e373]: 来自当前会话的统一编排；每两秒刷新
+          - generic [ref=f3e374]:
+            - strong [ref=f3e375]: 8 项任务
+            - generic [ref=f3e376]: 6 项验收通过
+            - generic [ref=f3e377]: 0 项活跃
+          - generic [ref=f3e378]:
+            - generic [ref=f3e379]:
+              - heading "任务板" [level=4] [ref=f3e380]
+              - button "样地 A · 数据核查 · 修正 0" [ref=f3e381] [cursor=pointer]
+              - button "样地 A · 分析执行 · 修正 0" [ref=f3e382] [cursor=pointer]
+              - button "样地 A · 独立审阅 · 修正 0" [ref=f3e383] [cursor=pointer]
+              - button "样地 B · 数据核查 · 修正 0" [ref=f3e384] [cursor=pointer]
+              - button "样地 B · 分析执行 · 修正 0" [ref=f3e385] [cursor=pointer]
+              - button "样地 B · 独立审阅 · 修正 0" [ref=f3e386] [cursor=pointer]
+              - button "固定宿主汇总" [ref=f3e387] [cursor=pointer]
+            - generic "协作任务" [ref=f3e388]:
+              - button "pipeline-check" [pressed] [ref=f3e390] [cursor=pointer]:
+                - generic [ref=f3e391]: P
+                - generic [ref=f3e392]:
+                  - strong [ref=f3e393]: pipeline-check
+                  - generic [ref=f3e394]: 执行完成
+                  - generic [ref=f3e395]:
+                    - generic [ref=f3e396]:
+                      - generic [ref=f3e397]: 上次上下文 · 历史（估算）
+                      - generic [ref=f3e398]: 29 tokens
+                    - generic [ref=f3e399]:
+                      - generic [ref=f3e400]: 已结算累计
+                      - generic [ref=f3e401]: 80 tokens
+                - generic [ref=f3e402]:
+                  - generic [ref=f3e403]: 团队成员
+                  - generic [ref=f3e404]: 累计结算 1.1 秒
+              - button "pipeline-analyze" [ref=f3e406] [cursor=pointer]:
+                - generic [ref=f3e407]: P
+                - generic [ref=f3e408]:
+                  - strong [ref=f3e409]: pipeline-analyze
+                  - generic [ref=f3e410]: 执行失败
+                  - generic [ref=f3e411]:
+                    - generic [ref=f3e412]:
+                      - generic [ref=f3e413]: 上次上下文 · 历史（估算）
+                      - generic [ref=f3e414]: 44 tokens
+                    - generic [ref=f3e415]:
+                      - generic [ref=f3e416]: 已结算累计
+                      - generic [ref=f3e417]: 160 tokens
+                - generic [ref=f3e418]:
+                  - generic [ref=f3e419]: 团队成员
+                  - generic [ref=f3e420]: 累计结算 3.4 秒
+              - button "pipeline-review" [ref=f3e422] [cursor=pointer]:
+                - generic [ref=f3e423]: P
+                - generic [ref=f3e424]:
+                  - strong [ref=f3e425]: pipeline-review
+                  - generic [ref=f3e426]: 执行完成
+                  - generic [ref=f3e427]:
+                    - generic [ref=f3e428]:
+                      - generic [ref=f3e429]: 上次上下文 · 历史（估算）
+                      - generic [ref=f3e430]: 29 tokens
+                    - generic [ref=f3e431]:
+                      - generic [ref=f3e432]: 已结算累计
+                      - generic [ref=f3e433]: 80 tokens
+                - generic [ref=f3e434]:
+                  - generic [ref=f3e435]: 团队成员
+                  - generic [ref=f3e436]: 累计结算 0.7 秒
+              - button "science-host-summary" [ref=f3e438] [cursor=pointer]:
+                - generic [ref=f3e439]: S
+                - generic [ref=f3e440]:
+                  - strong [ref=f3e441]: science-host-summary
+                  - generic [ref=f3e442]: 尚未执行
+                  - generic [ref=f3e443]:
+                    - generic [ref=f3e444]:
+                      - generic [ref=f3e445]: 当前上下文
+                      - generic [ref=f3e446]: 未知
+                    - generic [ref=f3e447]:
+                      - generic [ref=f3e448]: 已结算累计
+                      - generic [ref=f3e449]: 尚未结算
+                - generic [ref=f3e450]:
+                  - generic [ref=f3e451]: 团队成员
+                  - generic [ref=f3e452]: 耗时未知
+              - button "pipeline-check" [ref=f3e454] [cursor=pointer]:
+                - generic [ref=f3e455]: P
+                - generic [ref=f3e456]:
+                  - strong [ref=f3e457]: pipeline-check
+                  - generic [ref=f3e458]: 执行完成
+                  - generic [ref=f3e459]:
+                    - generic [ref=f3e460]:
+                      - generic [ref=f3e461]: 上次上下文 · 历史（估算）
+                      - generic [ref=f3e462]: 29 tokens
+                    - generic [ref=f3e463]:
+                      - generic [ref=f3e464]: 已结算累计
+                      - generic [ref=f3e465]: 40 tokens
+                - generic [ref=f3e466]:
+                  - generic [ref=f3e467]: 团队成员
+                  - generic [ref=f3e468]: 累计结算 0.6 秒
+              - button "pipeline-analyze" [ref=f3e470] [cursor=pointer]:
+                - generic [ref=f3e471]: P
+                - generic [ref=f3e472]:
+                  - strong [ref=f3e473]: pipeline-analyze
+                  - generic [ref=f3e474]: 执行完成
+                  - generic [ref=f3e475]:
+                    - generic [ref=f3e476]:
+                      - generic [ref=f3e477]: 上次上下文 · 历史（估算）
+                      - generic [ref=f3e478]: 29 tokens
+                    - generic [ref=f3e479]:
+                      - generic [ref=f3e480]: 已结算累计
+                      - generic [ref=f3e481]: 80 tokens
+                - generic [ref=f3e482]:
+                  - generic [ref=f3e483]: 团队成员
+                  - generic [ref=f3e484]: 累计结算 1.8 秒
+              - button "pipeline-review" [ref=f3e486] [cursor=pointer]:
+                - generic [ref=f3e487]: P
+                - generic [ref=f3e488]:
+                  - strong [ref=f3e489]: pipeline-review
+                  - generic [ref=f3e490]: 执行完成
+                  - generic [ref=f3e491]:
+                    - generic [ref=f3e492]:
+                      - generic [ref=f3e493]: 上次上下文 · 历史（估算）
+                      - generic [ref=f3e494]: 29 tokens
+                    - generic [ref=f3e495]:
+                      - generic [ref=f3e496]: 已结算累计
+                      - generic [ref=f3e497]: 80 tokens
+                - generic [ref=f3e498]:
+                  - generic [ref=f3e499]: 团队成员
+                  - generic [ref=f3e500]: 累计结算 0.7 秒
+              - button "science-host-summary" [ref=f3e502] [cursor=pointer]:
+                - generic [ref=f3e503]: S
+                - generic [ref=f3e504]:
+                  - strong [ref=f3e505]: science-host-summary
+                  - generic [ref=f3e506]: 执行完成
+                  - generic [ref=f3e507]:
+                    - generic [ref=f3e508]:
+                      - generic [ref=f3e509]: 当前上下文
+                      - generic [ref=f3e510]: 未知
+                    - generic [ref=f3e511]:
+                      - generic [ref=f3e512]: 已结算累计
+                      - generic [ref=f3e513]: 输入或输出未记录
+                - generic [ref=f3e514]:
+                  - generic [ref=f3e515]: 团队成员
+                  - generic [ref=f3e516]: 累计结算 0.4 秒
+            - generic [ref=f3e517]:
+              - generic [ref=f3e519]:
+                - strong [ref=f3e520]: pipeline-check
+                - generic [ref=f3e521]: 类型 team · 执行代次 2
+              - tablist "任务详情" [ref=f3e522]:
+                - tab "过程" [selected] [ref=f3e523] [cursor=pointer]
+                - tab "交接" [ref=f3e524] [cursor=pointer]
+                - tab "产物" [ref=f3e525] [cursor=pointer]
+                - tab "记录" [ref=f3e526] [cursor=pointer]
+              - tabpanel "过程" [ref=f3e527]:
+                - generic [ref=f3e528]:
+                  - generic [ref=f3e529]:
+                    - generic [ref=f3e530]: 上次上下文 · 历史（估算）
+                    - generic [ref=f3e531]: 29 tokens
+                  - generic [ref=f3e532]:
+                    - generic [ref=f3e533]: 已结算累计
+                    - generic [ref=f3e534]: 80 tokens
+                  - group [ref=f3e535]:
+                    - generic "查看观测来源与覆盖" [ref=f3e536] [cursor=pointer]
+                - region "任务轨迹" [ref=f3e537]:
+                  - generic [ref=f3e538]:
+                    - strong [ref=f3e539]: 任务轨迹
+                    - generic [ref=f3e540]: 执行完成
+                  - list [ref=f3e541]:
+                    - listitem [ref=f3e542]:
+                      - time [ref=f3e543]: 03:47:40
+                      - generic [ref=f3e544]: 开始执行
+                    - listitem [ref=f3e545]:
+                      - time [ref=f3e546]: 03:47:40
+                      - generic [ref=f3e547]: 核验冻结输入
+                    - listitem [ref=f3e548]:
+                      - time [ref=f3e549]: 03:47:40
+                      - generic [ref=f3e550]: 后端执行
+                    - listitem [ref=f3e551]:
+                      - time [ref=f3e552]: 03:47:41
+                      - generic [ref=f3e553]: 宿主验收
+                    - listitem [ref=f3e554]:
+                      - time [ref=f3e555]: 03:47:41
+                      - generic [ref=f3e556]: 执行已结算
+                      - generic [ref=f3e557]: 宿主验收通过
+                  - button "查看 1 条工具记录" [ref=f3e559] [cursor=pointer]
+                - paragraph [ref=f3e560]: 普通委派任务
+                - paragraph [ref=f3e561]: 宿主验收通过
+              - region "成员会话与操作" [ref=f3e562]:
+                - generic [ref=f3e563]:
+                  - strong [ref=f3e564]: 成员会话与操作
+                  - generic [ref=f3e565]: pipeline-check
+                - generic [ref=f3e566]:
+                  - generic [ref=f3e567]:
+                    - term [ref=f3e568]: 当前状态
+                    - definition [ref=f3e569]: 执行完成
+                  - generic [ref=f3e570]:
+                    - term [ref=f3e571]: 验收
+                    - definition [ref=f3e572]: 通过
+                  - generic [ref=f3e573]:
+                    - term [ref=f3e574]: 文件版本
+                    - definition [ref=f3e575]: 输入 1 · 产物 0
+                - paragraph [ref=f3e576]: 没有可精确关联的当前成员，不能借用同名成员的消息或会话。
+          - region "自动安排" [ref=f3e577]:
+            - heading "自动安排" [level=4] [ref=f3e578]
+            - group [ref=f3e579]:
+              - generic "科研任务约束" [ref=f3e580] [cursor=pointer]
+              - option "不关联路线" [selected]
+              - option "mean"
+            - paragraph [ref=f3e581]: 描述具体任务，DAWN 会根据目标、数据和依赖决定怎样拆分与分工。无需预先填写任务数量。
+            - generic [ref=f3e582]:
+              - generic [ref=f3e583]:
+                - text: 任务目标
+                - textbox "任务目标" [ref=f3e584]
+              - generic [ref=f3e585]:
+                - text: 调整要求（可选）
+                - textbox "调整要求（可选）" [ref=f3e586]:
+                  - /placeholder: 例如：合并前两步，保留独立审阅
+              - button "生成安排" [disabled] [ref=f3e588]
+            - paragraph [ref=f3e589]: 先出方案期间只读查看；采纳后才进入原有执行与验收流程。
+          - generic [ref=f3e590]:
+            - group [ref=f3e591]:
+              - generic "查看额度" [ref=f3e592] [cursor=pointer]
+            - group [ref=f3e593]:
+              - generic "会话完整执行记录" [ref=f3e594] [cursor=pointer]
+        - group [ref=f3e595]:
+          - generic "团队管理与原始记录" [ref=f3e596] [cursor=pointer]
+  - contentinfo "应用状态" [ref=f3e597]:
+    - button "还没有填任何 API key，暂时不能对话——点这里填一个" [ref=f3e599] [cursor=pointer]
+    - generic [ref=f3e600]:
+      - generic [ref=f3e601]:
+        - button "当前模型：deepseek-flash" [ref=f3e602] [cursor=pointer]:
+          - generic [ref=f3e606]: deepseek-flash
+        - button "R：未配置" [ref=f3e607] [cursor=pointer]:
+          - generic [ref=f3e609]: R
+          - generic [ref=f3e610]: 未配置
+        - button "Python：未配置" [ref=f3e611] [cursor=pointer]:
+          - generic [ref=f3e613]: Python
+          - generic [ref=f3e614]: 未配置
+      - generic [ref=f3e615]:
+        - generic [ref=f3e616]:
+          - button "插件 8" [ref=f3e617] [cursor=pointer]:
+            - generic [ref=f3e620]: 插件
+            - generic [ref=f3e621]: "8"
+          - button "Skills 9" [ref=f3e622] [cursor=pointer]:
+            - generic [ref=f3e626]: Skills
+            - generic [ref=f3e627]: "9"
+          - button "MCP 0" [ref=f3e628] [cursor=pointer]:
+            - generic [ref=f3e631]: MCP
+            - generic [ref=f3e632]: "0"
+          - button "子 Agent 25" [ref=f3e633] [cursor=pointer]:
+            - generic [ref=f3e636]: 子 Agent
+            - generic [ref=f3e637]: "25"
+        - button "版本 v0.0.44" [ref=f3e638] [cursor=pointer]: v0.0.44
+```
+
+# Test source
+
+```ts
+  1  | import {mkdirSync,writeFileSync,readFileSync,readdirSync} from 'node:fs';import {join,resolve} from 'node:path'
+  2  | import {test,expect,在项目里开会话,进坞} from './fixtures.js'
+  3  | test.use({dawnOptions:{scienceBatch:'incremental'}})
+  4  | test('visibly reuses accepted A and reruns failed B through actual parent tools and Pi',async({dawn})=>{
+  5  |  const {page,workspace}=dawn,dir=resolve(process.env.DAWN_SCIENCE_DEMO_DIR??'docs/validation/incremental-science-20261105/demo');mkdirSync(dir,{recursive:true});mkdirSync(join(workspace,'.dawn','agents'),{recursive:true});for(const file of ['in.csv','other.csv'])writeFileSync(join(workspace,file),'x\n1\n2\n3\n4\n5\n')
+  6  |  for(const stage of ['check','analyze','review'])writeFileSync(join(workspace,'.dawn','agents',`pipeline-${stage}.md`),`---\nname: pipeline-${stage}\ndescription: ${stage}\ntools: read, write, bash\n---\nUse frozen contract and submit_task_result.`)
+  7  |  const readTeam=()=>{for(const id of readdirSync(join(workspace,'.dawn','sessions'))){try{const session=join(workspace,'.dawn','sessions',id),current=readFileSync(join(session,'teams/current'),'utf8').trim();return{team:JSON.parse(readFileSync(join(session,'teams',current,'team.json'),'utf8')),file:join(session,'teams',current,'team.json')}}catch{}}}
+  8  |  await 在项目里开会话(page);await page.getByPlaceholder(/输入问题/).fill('科研批量验收：先按批准的均值方法处理样地 A 和 B，结果须独立核验。');await page.getByRole('button',{name:'发送',exact:true}).click()
+  9  |  await expect.poll(()=>readTeam()?.team.scienceBatch?.status,{timeout:45000}).toBe('blocked');const source=readTeam()!,sourceBytes=readFileSync(source.file,'utf8');expect(source.team.scienceBatch.items[0].completed.status).toBe('completed')
+  10 |  await 进坞(page,'团队');await expect(page.locator('.science-acceptance-status').first()).toContainText('期望 3，实际 999');await page.screenshot({path:join(dir,'03-source-blocked.png'),fullPage:true})
+  11 |  // Wait for the captain turn to finish before taking the actual incremental request delta.
+  12 |  await expect(page.getByRole('button',{name:'发送',exact:true})).toBeEnabled();const before=dawn.requests.length
+  13 |  await page.getByPlaceholder(/输入问题/).fill('局部重跑：B 的生成错误已修正，请派生新批次，复用满足全部条件的历史项，只重跑必要项。');await page.getByRole('button',{name:'发送',exact:true}).click()
+  14 |  await expect.poll(()=>{const next=readTeam()?.team;return next?.id!==source.team.id?next?.scienceBatch?.status:undefined},{timeout:45000}).toBe('completed');const derived=readTeam()!.team
+  15 |  expect(derived.scienceBatch.items.map((i:any)=>i.reuse.mode)).toEqual(['reused','rerun']);expect(readFileSync(source.file,'utf8')).toBe(sourceBytes)
+> 16 |  await expect(page.locator('.science-reuse-status')).toContainText('复用 1 项，重跑 1 项');await page.locator('.science-reuse-status').scrollIntoViewIfNeeded();await page.screenshot({path:join(dir,'04-derived-full.png'),fullPage:true});await page.locator('.science-reuse-status').screenshot({path:join(dir,'04-derived-decisions.png')})
+     |                                                                                                                                                                                                                                                                                  ^ TimeoutError: locator.screenshot: Timeout 29996.346000000136ms exceeded.
+  17 |  const summary=readFileSync(join(workspace,derived.scienceBatch.summaryOutputs[0]),'utf8');writeFileSync(join(dir,'derived-summary.json'),summary)
+  18 |  const evidence={conditions:'localhost deterministic inference; actual Electron/Pi/Python/files; synthetic inputs',initialRequests:before,recoveryRequestsIncludingCaptain:dawn.requests.length-before,source:{teamId:source.team.id,status:'blocked',items:source.team.scienceBatch.items.map((i:any)=>({id:i.id,status:i.completed?.status??'blocked'}))},derived:{teamId:derived.id,status:'completed',items:derived.scienceBatch.items.map((i:any)=>({id:i.id,reuse:i.reuse,outputs:i.definition.outputs})),executedAnalysisTasks:derived.tasks.filter((t:any)=>!t.reusedFrom&&t.contract?.resultType==='model-metrics').length,historicalTasks:derived.tasks.filter((t:any)=>t.reusedFrom).length},sourcePreserved:true}
+  19 |  writeFileSync(join(dir,'incremental-electron.json'),JSON.stringify(evidence,null,2)+'\n')
+  20 | })
+  21 | 
+```

@@ -1,0 +1,11 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run tests/ui/state/model-route-audit.test.ts --maxWorkers=1
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  03:29:08
+   Duration  1.05s (transform 379ms, setup 579ms, import 5ms, tests 5ms, environment 376ms)
+

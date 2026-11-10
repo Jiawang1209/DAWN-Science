@@ -47,6 +47,7 @@ export function createSciencePipelineTools(opts:Options){
   },
  })
  const start=async(args:z.output<typeof PipelineStartRequestSchema>,callId:string,signal?:AbortSignal,batch?:ScienceBatchRequest)=>{
+   const defaultModel=opts.defaultModel
    if(opts.remote)throw new Error('远端严格科研流程尚不支持')
    const id='pipeline-'+createHash('sha256').update(JSON.stringify([opts.sessionId,callId])).digest('hex').slice(0,24)
    const fingerprint=createHash('sha256').update(JSON.stringify([args,batch])).digest('hex')
@@ -75,8 +76,8 @@ export function createSciencePipelineTools(opts:Options){
    for(const stage of ['check','analyze','review'] as const){
     const choice=args.executors[stage],key=choice.botId?'bot:'+choice.botId:'agent:'+choice.agent
     const duplicate=seen.get(key);if(duplicate){members[stage]=duplicate;continue}
-    if(choice.botId){const bot=opts.resolveBot?.(choice.botId);if(!bot||!bot.enabled||bot.archivedAt)throw new Error('Bot 不存在或未启用');const model=bot.model??opts.defaultModel;if(model&&!catalog.some(m=>m.provider===model.provider&&m.model===model.model))throw new Error('Bot 模型不在已知目录');加成员(team,{name:stage,agent:'bot-'+bot.id,botId:bot.id,botInstructions:botInstructions(bot),...(bot.scopeKey?{botScopeKey:bot.scopeKey}:{}),...(model?{provider:model.provider,model:model.model}:{})})}
-    else{const def=opts.定义().find(d=>d.name===choice.agent&&!d.disabled);if(!def)throw new Error(`没有启用的子 agent：${choice.agent}`);const model=opts.defaultModel?{provider:opts.defaultModel.provider,model:def.model??opts.defaultModel.model}:undefined;if(model&&!catalog.some(m=>m.provider===model.provider&&m.model===model.model))throw new Error('子 agent 模型不在已知目录');加成员(team,{name:stage,agent:def.name,...(model?{provider:model.provider,model:model.model}:{})}).frozenAgentDefinition=structuredClone(def)}
+    if(choice.botId){const bot=opts.resolveBot?.(choice.botId);if(!bot||!bot.enabled||bot.archivedAt)throw new Error('Bot 不存在或未启用');const model=bot.model??defaultModel;if(model&&!catalog.some(m=>m.provider===model.provider&&m.model===model.model))throw new Error('Bot 模型不在已知目录');加成员(team,{name:stage,agent:'bot-'+bot.id,botId:bot.id,botInstructions:botInstructions(bot),...(bot.scopeKey?{botScopeKey:bot.scopeKey}:{}),...(model?{provider:model.provider,model:model.model}:{})})}
+    else{const def=opts.定义().find(d=>d.name===choice.agent&&!d.disabled);if(!def)throw new Error(`没有启用的子 agent：${choice.agent}`);const model=defaultModel?{provider:defaultModel.provider,model:def.model??defaultModel.model}:undefined;if(model&&!catalog.some(m=>m.provider===model.provider&&m.model===model.model))throw new Error('子 agent 模型不在已知目录');加成员(team,{name:stage,agent:def.name,...(model?{provider:model.provider,model:model.model}:{})}).frozenAgentDefinition=structuredClone(def)}
     seen.set(key,stage);members[stage]=stage
    }
    const requestedInputs=batch?[...new Set(batch.items.flatMap(i=>i.inputs))]:args.inputs

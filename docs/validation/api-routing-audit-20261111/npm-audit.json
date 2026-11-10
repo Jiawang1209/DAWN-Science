@@ -1,0 +1,184 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@earendil-works/pi-coding-agent": {
+      "name": "@earendil-works/pi-coding-agent",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "minimatch"
+      ],
+      "effects": [],
+      "range": "<=1.4.0",
+      "nodes": [
+        "node_modules/@earendil-works/pi-coding-agent"
+      ],
+      "fixAvailable": {
+        "name": "@earendil-works/pi-coding-agent",
+        "version": "1.5.2",
+        "isSemVerMajor": true
+      }
+    },
+    "@electron/universal": {
+      "name": "@electron/universal",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "minimatch"
+      ],
+      "effects": [
+        "app-builder-lib"
+      ],
+      "range": "1.5.0 || 2.0.0 - 3.0.3",
+      "nodes": [
+        "node_modules/@electron/universal"
+      ],
+      "fixAvailable": {
+        "name": "electron-builder",
+        "version": "25.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "app-builder-lib": {
+      "name": "app-builder-lib",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@electron/universal",
+        "dmg-builder",
+        "electron-builder-squirrel-windows",
+        "minimatch"
+      ],
+      "effects": [
+        "dmg-builder",
+        "electron-builder",
+        "electron-builder-squirrel-windows"
+      ],
+      "range": ">=24.13.4-alpha.0",
+      "nodes": [
+        "node_modules/app-builder-lib"
+      ],
+      "fixAvailable": {
+        "name": "electron-builder",
+        "version": "25.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "dmg-builder": {
+      "name": "dmg-builder",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "app-builder-lib"
+      ],
+      "effects": [
+        "app-builder-lib",
+        "electron-builder"
+      ],
+      "range": "24.13.4-alpha.0 - 25.0.6 || >=25.1.2",
+      "nodes": [
+        "node_modules/dmg-builder"
+      ],
+      "fixAvailable": {
+        "name": "electron-builder",
+        "version": "25.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "electron-builder": {
+      "name": "electron-builder",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "app-builder-lib",
+        "dmg-builder"
+      ],
+      "effects": [],
+      "range": "19.25.0 || 24.13.4-alpha.0 - 25.0.6 || >=25.1.2",
+      "nodes": [
+        "node_modules/electron-builder"
+      ],
+      "fixAvailable": {
+        "name": "electron-builder",
+        "version": "25.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "electron-builder-squirrel-windows": {
+      "name": "electron-builder-squirrel-windows",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "app-builder-lib"
+      ],
+      "effects": [
+        "app-builder-lib"
+      ],
+      "range": "24.13.4-alpha.0 - 25.0.6 || >=25.1.2",
+      "nodes": [
+        "node_modules/electron-builder-squirrel-windows"
+      ],
+      "fixAvailable": {
+        "name": "electron-builder",
+        "version": "25.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    "minimatch": {
+      "name": "minimatch",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1244623,
+          "name": "minimatch",
+          "dependency": "minimatch",
+          "title": "minimatch has potential denial of service via globparts amplification",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-405"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=7.0.0 <11.0.1"
+        }
+      ],
+      "effects": [
+        "@earendil-works/pi-coding-agent",
+        "@electron/universal",
+        "app-builder-lib"
+      ],
+      "range": "7.0.0 - 11.0.0",
+      "nodes": [
+        "node_modules/@electron/universal/node_modules/minimatch",
+        "node_modules/minimatch"
+      ],
+      "fixAvailable": {
+        "name": "@earendil-works/pi-coding-agent",
+        "version": "1.5.2",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 7,
+      "high": 0,
+      "critical": 0,
+      "total": 7
+    },
+    "dependencies": {
+      "prod": 597,
+      "dev": 367,
+      "optional": 113,
+      "peer": 17,
+      "peerOptional": 0,
+      "total": 1004
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "base": "c79c2450afbf6a1d879012bf5406e3ec7c225503",
+  "branch": "codex/api-routing-audit-20261111",
+  "finalSourceDigest": "346f79795070973c3e55a5c399776e5a3802170028e642576a29ca76451eee95",
+  "typecheck": "pass",
+  "build": "pass",
+  "vitest": {
+    "filesPassed": 737,
+    "testsPassed": 7194,
+    "testsSkipped": 11,
+    "seconds": 266.85,
+    "log": "vitest-final-verified.log"
+  },
+  "fullDesktop": {
+    "candidate": "dcf939568159595c05af11b8645f68c90afbe626db85f8ec3d4764a8634ac659",
+    "passed": 953,
+    "failed": 3,
+    "skipped": 2,
+    "total": 958,
+    "allThreeFailuresFixedAndRechecked": true,
+    "log": "desktop-full.log"
+  },
+  "finalTargetedDesktop": {
+    "passed": 47,
+    "failed": 0,
+    "log": "desktop-final-targets.log"
+  },
+  "finalRealKernel": {
+    "passed": 6,
+    "failed": 0,
+    "log": "kernel-final.log"
+  },
+  "finalPerformance": {
+    "passed": 3,
+    "failed": 0,
+    "typingP95Ms": 28.4,
+    "ipcBytes": 7682,
+    "log": "perf-final.log"
+  },
+  "newVitestTests": 23,
+  "newDesktopTests": 1,
+  "npmAudit": {
+    "beforeModerate": 7,
+    "afterVulnerabilities": 0
+  },
+  "realModelRequests": 0,
+  "historicalOpen": [
+    "intermittent exit timeout",
+    "long Bot/MCP teardown",
+    "PTY cleanup"
+  ],
+  "final958AllGreenClaimed": false,
+  "unverified": [
+    "release installation/update",
+    "signing/notarization",
+    "cross-platform",
+    "real model cloud",
+    "real SSH/SaaS"
+  ]
+}

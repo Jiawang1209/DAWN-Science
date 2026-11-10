@@ -174,7 +174,7 @@ import type {
 } from "./types.js"
 import { 检查点存档, 回退不了 } from "../project/checkpoints.js"
 import { 给模型的回退话 } from "./rewind-note.js"
-import { 续接或新建 } from "./pi-resume.js"
+import { 续接或新建, 读会话模型 } from "./pi-resume.js"
 
 /** 工具结果正文的截断长度。完整内容留在 pi 的会话记录里，事件流只带摘要 */
 
@@ -1765,6 +1765,7 @@ export class NativeRuntime implements AgentRuntime {
     orchestration.subscribeObservation(stamp=>{
       if(this.orchestrations.get(spec.sessionId)===orchestration)this.emit({kind:'run_overview_changed',sessionId:spec.sessionId,...stamp})
     })
+    const currentRoute = () => this.currentModel(spec.sessionId) ?? native
     const 子任务资源 = childResourceFactory(this.opts, spec)
     const 子agent选项: Parameters<typeof createSubagentTool>[0] = {
       orchestration,
@@ -1785,8 +1786,8 @@ export class NativeRuntime implements AgentRuntime {
       }),
       context: {
         recordReceipt:receipt=>receipt.versions&&this.opts.artifactCapture?{...receipt,versions:this.opts.artifactCapture.recordTaskVersions(spec.sessionId,receipt.versions)}:receipt,
-        provider: native.provider,
-        model: native.model,
+        get provider() { return currentRoute().provider },
+        get model() { return currentRoute().model },
         cwd: spec.workspace,
         // **当前生效的那一份**，不是构造时的——见 `useModelsPath`
         ...(this.modelsPath ? { modelsPath: this.modelsPath } : {}),
@@ -1852,7 +1853,7 @@ export class NativeRuntime implements AgentRuntime {
     }
     let 团队轮序 = 0
     const 团队轮标识 = new Map<string, number>()
-    let 流程进展版本: string | undefined
+    let 团队进展版本: string | undefined
     let projection:SciencePipelineProjection|undefined
     const 调度器 = new 团队调度器({
       orchestration,
@@ -1866,8 +1867,8 @@ export class NativeRuntime implements AgentRuntime {
       跑: {
         childOf: () => ({ command: process.execPath, args: [entry], env: { [RUN_AS_NODE]: "1" } }),
         context: {
-          provider: native.provider,
-          model: native.model,
+          get provider() { return currentRoute().provider },
+          get model() { return currentRoute().model },
           cwd: spec.workspace,
           authorize:(name,params)=>{const decision=this.opts.gate?.(name,params,{workspace:spec.workspace,sessionId:spec.sessionId});return decision&&decision.kind!=='allow'?decision.reason:undefined},
           ...(子任务资源 ? {resources: 子任务资源} : {}),
@@ -1882,9 +1883,12 @@ export class NativeRuntime implements AgentRuntime {
       onChange: (team) => {
         if(this.orchestrations.get(spec.sessionId)===orchestration){
         orchestration.invalidateObservation()
-        // A durable stage/recovery transition is real progress; repeated status reads are not.
-        const progress=team.pipeline?`${team.id}:${team.pipeline.stateRevision}:${team.scienceBatch?.stateRevision}`:undefined
-        if(progress&&progress!==流程进展版本){流程进展版本=progress;this.sessions.get(spec.sessionId)?.stuck.reset()}
+        // Ordinary Bot/team completions are progress too. Timestamps, observations and
+        // mailbox read markers must not let repeated status reads bypass the guard.
+        const progress=JSON.stringify([team.id,team.pipeline?.stateRevision,team.scienceBatch?.stateRevision,
+          team.tasks.map(task=>[task.id,task.status,task.attempt,task.attemptId,task.assignee]),
+          team.members.map(member=>[member.name,member.status,member.turns])])
+        if(progress!==团队进展版本){团队进展版本=progress;this.sessions.get(spec.sessionId)?.stuck.reset()}
         projection?.schedule(team)
         for (const member of team.members) if (!orchestration.isClosed && member.status !== "removed") orchestration.register(member.botId ? "bot" : "team", [team.id, member.name, memberGeneration(member)], member.agent)
         this.emit({ kind: "team_changed", sessionId: spec.sessionId, team: this.botTeamSnapshot(spec.sessionId, team) as never })
@@ -1942,7 +1946,7 @@ export class NativeRuntime implements AgentRuntime {
       当前:{get:()=>当前团队.id,set:id=>{记当前团队(spec.sessionDir,id);当前团队.id=id;if(this.orchestrations.get(spec.sessionId)===orchestration)orchestration.invalidateObservation()}},
       已知模型:async()=>(await this.runtime()).getModels().map(m=>({provider:m.provider,model:m.id})),
       recordInputs:inputs=>this.opts.artifactCapture?.recordTaskVersions(spec.sessionId,{version:1,inputs,outputs:[]}).inputs??inputs,
-      route:()=>this.routeBooks.get(spec.sessionId)?.book?.read(),remote:Boolean(spec.remote),defaultModel:{provider:native.provider,model:native.model},
+      route:()=>this.routeBooks.get(spec.sessionId)?.book?.read(),remote:Boolean(spec.remote),get defaultModel(){return currentRoute()},
       freeze:(member,contract)=>resolveTaskSettings(contract,this.opts.permissionTier?.取(spec.sessionId)??this.opts.permissionTier?.全局()??'ask-risky',member.botId?undefined:(member.frozenAgentDefinition??定义().find(d=>d.name===member.agent))?.tools),
     })
     const botListTool = this.botBridge ? [{ name: "bot_list", label: "bot_list", description: "列出用户配置的专业 Bot。用户要求组建 Bot Team 时，先查名册，按职责自动选择成员，用 team_create 的 botId 分工；依赖按顺序，最后汇总真实脚本、图表与说明。", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text" as const, text: JSON.stringify(this.botBridge!.list().filter(b => b.enabled && !b.archivedAt).map(({id,name,role,model}) => ({id,name,role,model}))) }], details: undefined }) }] : []
@@ -2032,6 +2036,8 @@ export class NativeRuntime implements AgentRuntime {
   }
 
   private async 启动一次(spec: SessionSpec): Promise<SessionHandle> {
+    const savedRoute = spec.resume ? 读会话模型(spec.sessionDir) : undefined
+    if (savedRoute) spec = { ...spec, native: savedRoute }
     const native = spec.native
     if (!native) {
       throw new Error(`native 运行时需要 provider 与 model，会话 "${spec.sessionId}" 未提供`)
@@ -3693,10 +3699,21 @@ ${描述}`
     if (s.inFlight > 0) {
       throw new Error("这一轮还没说完。等它结束或先中止，再换模型")
     }
+    const generation = s.停止代
+    const assertCurrent = () => {
+      if (this.sessions.get(sessionId) !== s || s.停止代 !== generation || this.停中.has(sessionId)) {
+        throw new UserFacingError("模型切换已取消，会话已停止或替换；请在当前会话重新选择模型")
+      }
+    }
 
     const model = await this.resolveModel(provider, modelId)
+    assertCurrent()
+    if(this.方案答中.has(sessionId))throw new UserFacingError('正在处理方案，处理完再修改模型')
+    if(s.inFlight > 0)throw new Error("这一轮还没说完。等它结束或先中止，再换模型")
     try {
-      await s.session.setModel(model)
+      await s.session.setModel(model, { persist: true })
+      await s.session.settingsManager.flush()
+      assertCurrent()
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       if (/no api key/i.test(msg)) {

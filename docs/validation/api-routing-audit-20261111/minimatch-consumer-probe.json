@@ -1,0 +1,9 @@
+{
+  "version": "11.0.1",
+  "glob": true,
+  "match": true,
+  "builderPatterns": [
+    "**/*.js",
+    "**/*.map"
+  ]
+}

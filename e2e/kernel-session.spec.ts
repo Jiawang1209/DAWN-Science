@@ -266,7 +266,7 @@ test.describe("R 内核会话", () => {
  * 少了第一步，「只有配置了才能调用」就没被验证过——
  * 而那正是这条机制与「扫描出一个默认」的全部区别。
  */
-const PY_PATH = join(process.cwd(), ".venv-kernel", "bin", "python")
+const PY_PATH = process.env.DAWN_TEST_PYTHON ?? join(process.cwd(), ".venv-kernel", "bin", "python")
 const 有PY = existsSync(PY_PATH)
 
 test.describe("由配置的解释器路径起内核", () => {

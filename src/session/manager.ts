@@ -27,7 +27,7 @@ import type {
 } from "../runtime/types.js"
 import { UserFacingError } from "../errors.js"
 import { LeaseManager, type Holder } from "./lease.js"
-import { 读最后模型切换, 续接哪份 } from "../runtime/pi-resume.js"
+import { 读最后模型切换, 读会话模型, 续接哪份 } from "../runtime/pi-resume.js"
 
 export type PtyAgentDef = Extract<AgentDef, { kind: "pty" }>
 
@@ -286,20 +286,18 @@ export class SessionManager {
       ...(forkTranscript ? { forkFrom: forkTranscript } : {}),
     }
     if (def.kind === "native") {
+      const route = (forkTranscript ? 读最后模型切换(forkTranscript) : undefined) ?? {provider:def.provider,model:def.model}
       // 凭证的有无在这里检查，而不是加载配置时：**桌面应用不该因为还没填 key 就起不来**，
       // 但也不该带着空 key 去发请求。这里是真正要用它的时刻，报错也才有可操作性。
-      if (this.hasCredential && !this.hasCredential(def.provider)) {
+      if (this.hasCredential && !this.hasCredential(route.provider)) {
         // 已落库的记录要收尾，不能留在 starting
         this.store.updateState(id, "exited", { exitCode: -1 })
         throw new UserFacingError(
-          `provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`,
+          `provider "${route.provider}" 未配置凭证——请在设置里填写它的 API key`,
         )
       }
       // provider 的合法性已由 config/loader 的 assertProviders 在加载期保证
-      spec.native = (forkTranscript ? 读最后模型切换(forkTranscript) : undefined) ?? {
-        provider: def.provider,
-        model: def.model,
-      }
+      spec.native = route
     }
 
     /**
@@ -479,8 +477,9 @@ export class SessionManager {
     if (def.kind !== "native") {
       throw new UserFacingError(`「${rec.agentId}」这类会话还不支持接着上一次聊`)
     }
-    if (this.hasCredential && !this.hasCredential(def.provider)) {
-      throw new UserFacingError(`provider "${def.provider}" 未配置凭证——请在设置里填写它的 API key`)
+    const route = 读会话模型(rec.sessionDir) ?? {provider:def.provider,model:def.model}
+    if (this.hasCredential && !this.hasCredential(route.provider)) {
+      throw new UserFacingError(`provider "${route.provider}" 未配置凭证——请在设置里填写它的 API key`)
     }
 
     const botPath = join(rec.sessionDir, "bot-context.json")
@@ -491,7 +490,7 @@ export class SessionManager {
       ...(bot ? {bot} : {}),
       workspace: rec.workspace,
       sessionDir: rec.sessionDir,
-      native: { provider: def.provider, model: def.model },
+      native: route,
       resume: true,
       ...(remote ? { remote: { ...remote } } : {}),
     }

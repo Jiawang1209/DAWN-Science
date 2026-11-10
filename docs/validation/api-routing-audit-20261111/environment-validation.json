@@ -1,0 +1,26 @@
+{
+  "node": "v22.23.0",
+  "npm": "12.0.1",
+  "platform": "macOS local development",
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "node-pty": "1.1.0",
+    "zeromq": "6.5.0",
+    "esbuild": "0.28.2",
+    "electron": "43.8.4",
+    "electron-builder": "26.15.3"
+  },
+  "python": {
+    "path": "/Users/liuyue/Desktop/Github_repos/dawn-science/.venv-kernel/bin/python",
+    "version": "3.11.15",
+    "ipykernel": "7.3.0"
+  },
+  "R": {
+    "path": "/usr/local/bin/R",
+    "version": "4.6.1",
+    "IRkernel": "1.3.2"
+  },
+  "environmentInstalled": false,
+  "formalAppInstalledOrReplaced": false,
+  "modelRequests": 0
+}

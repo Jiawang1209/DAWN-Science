@@ -1,0 +1,18 @@
+{
+  "fullDesktopCandidate": "dcf939568159595c05af11b8645f68c90afbe626db85f8ec3d4764a8634ac659",
+  "finalCandidate": "346f79795070973c3e55a5c399776e5a3802170028e642576a29ca76451eee95",
+  "fullDesktopProductSource": "45ef6ed0b231808209efab96f680f30208cf13076e33afd18e1810e6c88c5ab0",
+  "finalProductSource": "442741db03159ed85106338f1f9c9f7619999dbb9ac199d352bb070e509de68a",
+  "changedFiles": [
+    "e2e/cross-service-switch.spec.ts",
+    "e2e/kernel-session.spec.ts",
+    "e2e/late-endpoint.spec.ts",
+    "e2e/science-incremental.spec.ts",
+    "src/runtime/native.ts",
+    "src/ui/state/catalog.ts",
+    "tests/runtime/model-routing-audit.test.ts",
+    "tests/ui/state/model-route-audit.test.ts"
+  ],
+  "buildReplacedDuringFullDesktop": false,
+  "finalVerification": "Latest source passed full Vitest, typecheck/build, 47 targeted desktop, 6 real kernel and 3 performance tests; full 958 desktop run belongs to candidate A."
+}

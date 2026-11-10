@@ -117,6 +117,7 @@ export {
   setProviders,
   setCredentials,
   setSessionModel,
+  sessionModelSnapshotWriter,
   setContextUsage,
   type RunDetail,
   type Providers,

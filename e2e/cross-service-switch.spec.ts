@@ -43,6 +43,11 @@ test("**换到另一家，对话不断**", async ({ dawn }) => {
   // 开一段 DeepSeek 的对话，先说一句
   await 开一段临时会话(page)
   await 等进了对话(page)
+  // Saving a service now makes it the next-task default. Establish this test's
+  // DeepSeek starting point explicitly, then retain all cross-service assertions.
+  await page.locator(".model-pill .model-trigger").click()
+  await page.getByRole("menuitem", { name: new RegExp(本来的) }).click()
+  await expect(page.locator(".composer .model-pill")).toContainText(本来的)
   const statusbar = page.getByRole("contentinfo", { name: "应用状态" })
   await expect(statusbar.getByRole("button", { name: `当前模型：${本来的}`, exact: true })).toBeVisible()
   await expect(statusbar.locator('[data-service-mark="deepseek"]')).toBeVisible()

@@ -370,6 +370,7 @@ export class 团队调度器 {
   }
 
   private async 起一轮(teamId: string, member: string, 任务: { taskId: string; attemptId: string } | undefined, prompt: string, collaboration?: BotMemberRun["collaboration"], conversation?: BotMemberRun["conversation"]): Promise<void> {
+    const routeContext = { ...this.opts.跑.context }
     const key = `${teamId}/${member}`
     const ctrl = new AbortController()
     const runId = randomUUID()
@@ -430,7 +431,7 @@ export class 团队调度器 {
             },
             {
               childOf: this.opts.跑.childOf,
-              context: this.opts.跑.context,
+              context: routeContext,
               signal: runSignal,
               timeoutMs: this.opts.turnTimeoutMs ?? 30 * 60_000,
               onCall: (name, params) => this.答成员(teamId, member, name, params),

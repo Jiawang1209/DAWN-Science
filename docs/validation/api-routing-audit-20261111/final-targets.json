@@ -1,0 +1,30 @@
+{
+  "specs": [
+    "e2e/provider-routing-audit.spec.ts",
+    "e2e/cross-service-switch.spec.ts",
+    "e2e/late-endpoint.spec.ts",
+    "e2e/science-incremental.spec.ts",
+    "e2e/model-switch.spec.ts",
+    "e2e/model-pill.spec.ts",
+    "e2e/model-menu-shortcuts.spec.ts",
+    "e2e/model-error.spec.ts",
+    "e2e/model-identity-in-prompt.spec.ts",
+    "e2e/no-stale-model-env.spec.ts",
+    "e2e/session-resume.spec.ts",
+    "e2e/session-recovery.spec.ts",
+    "e2e/side-session.spec.ts",
+    "e2e/bot-team.spec.ts",
+    "e2e/context-usage.spec.ts",
+    "e2e/artifact-retention.spec.ts",
+    "e2e/collaboration-network.spec.ts",
+    "e2e/approved-plan-execution.spec.ts",
+    "e2e/terminal-history-resume.spec.ts"
+  ],
+  "outputDirectoryOverrides": [
+    "DAWN_APPROVED_PLAN_EVIDENCE_DIR",
+    "DAWN_COLLABORATION_EVIDENCE_DIR",
+    "DAWN_SCIENCE_DEMO_DIR"
+  ],
+  "python": "/Users/liuyue/Desktop/Github_repos/dawn-science/.venv-kernel/bin/python",
+  "R": "/usr/local/bin/R"
+}

@@ -207,6 +207,7 @@ import {
   setActiveProjectId,
   setActiveSessionId,
   setSessionModel,
+  sessionModelSnapshotWriter,
   setSessions,
   $dockOpen,
   $dockSessionId,
@@ -984,6 +985,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * **对话恢复出来了，人却打不了字**。
      */
     void resyncSession(client, sessionId).then(() => {
+      void loadContextUsage(client, sessionId)
       // 直接调用而不是依赖上面的 `重取会话`：它定义在后面，
       // 而这个 effect 要早于它——**这三行就是它做的事**
       const pid = $activeProjectId.get()
@@ -4514,6 +4516,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           .then(() => {
             setSwitchProblem(s.sessionId, undefined)
             setSessionModel(s.sessionId, 第一个, providerId)
+            void loadProviders(client).catch(fail)
           })
           .catch((e: unknown) => {
             setSwitchProblem(s.sessionId, e instanceof Error ? e.message : String(e))
@@ -4558,6 +4561,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           .then(() => {
             setSwitchProblem(s.sessionId, undefined)
             setSessionModel(s.sessionId, c.model, c.provider)
+            if (c.provider) void loadProviders(client).catch(fail)
           })
           .catch((e: unknown) => {
             setSwitchProblem(s.sessionId, e instanceof Error ? e.message : String(e))
@@ -4672,7 +4676,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        */
       ...(s.kind === "native"
         ? {
-            取上下文用量: () => client.get<import("./panels.js").ContextUsage>("getContextUsage", { sessionId: s.sessionId }),
+            取上下文用量: async () => {
+              const applyModel = sessionModelSnapshotWriter(s.sessionId)
+              const usage = await client.get<import("./panels.js").ContextUsage>("getContextUsage", { sessionId: s.sessionId })
+              applyModel(usage)
+              return usage
+            },
             onCompact: (instructions?: string) => 压缩(s.sessionId, instructions),
           }
         : {}),

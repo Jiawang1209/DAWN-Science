@@ -1,0 +1,240 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'playwright' test e2e/provider-routing-audit.spec.ts e2e/cross-service-switch.spec.ts e2e/late-endpoint.spec.ts e2e/science-incremental.spec.ts e2e/model-switch.spec.ts e2e/model-pill.spec.ts e2e/model-menu-shortcuts.spec.ts e2e/model-error.spec.ts e2e/model-identity-in-prompt.spec.ts e2e/no-stale-model-env.spec.ts e2e/session-resume.spec.ts e2e/session-recovery.spec.ts e2e/side-session.spec.ts e2e/bot-team.spec.ts e2e/context-usage.spec.ts e2e/artifact-retention.spec.ts e2e/collaboration-network.spec.ts e2e/approved-plan-execution.spec.ts e2e/terminal-history-resume.spec.ts
+
+Running 47 tests using 1 worker
+
+(node:73047) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:50569/caedb44c-c07f-4439-8d2e-295ff3ea7c46
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50604/644fcadb-2833-499e-a337-6fd3d5b77e6a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/approved-plan-execution.spec.ts:8:1 › approved arrangement starts the frozen DAG, exposes real receipts and returns from the expanded view (10.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请为以下具体任务自动安排。先只读理解目标」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:50614/01b6f5ab-31d0-4c61-adf0-20a28a2fcf0b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50641/6e14b7dd-0766-4ffa-94fc-b3589d14f0d7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/approved-plan-execution.spec.ts:116:2 › stopping bound work › stops the approved task, drains its process and never replays it after reopening (11.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「生成一份分析结果」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50654/1fce9278-570e-47e8-81c6-bf3892ceaa24
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/artifact-retention.spec.ts:16:3 › automatic artifact sources and explicit result retention › saved output survives live overwrite and opens through the project retention panel (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 “Generate a sample re” is done — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50673/9ab9feb7-59ba-4c48-a605-c453e7438f28
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/artifact-retention.spec.ts:86:3 › automatic artifact sources and explicit result retention › one-click retention and history stay usable in a narrow English dock (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50687/862e2073-0042-40e4-98f1-05fbcc54246f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/artifact-retention.spec.ts:152:3 › automatic artifact sources and explicit result retention › source query leaves old files untouched; preserving current content is explicitly late capture (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50699/265990c9-4e21-4225-85f7-310f51b1f5e9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/artifact-retention.spec.ts:191:3 › automatic artifact sources and explicit result retention › actual interpreter snapshots belong to each Python/R notebook execution (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 一段对话做完了 — 已检查数据：[质量报告](results/quality.json) [检查说明](notes/data.md)
+[主进程] [桌面通知·假] #1 一段对话做完了 — 已执行统计：[分析脚本](scripts/model.py) [系数表](results/model.csv) [方法说明](notes/method.md)
+[主进程] Debugger ending on ws://127.0.0.1:50735/3c405069-8348-488e-863c-e042632b900b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/bot-team.spec.ts:11:1 › native captain selects configured Bots and delivers executed dependency results (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「展示八项真实委派」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:50754/1bbe3539-2782-45b6-b03e-66c2e39faefa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/collaboration-network.spec.ts:10:1 › renders a complete dark workflow workbench from eight real child executions, with linked selection and filters (15.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50808/582a09c1-f1d0-472d-856e-ff4847e776ea
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/context-usage.spec.ts:12:1 › 说过一句话之后，上下文面板给出真实的 token 数 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50818/4e3a2b1e-a732-4c6d-9858-511804e515b5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/context-usage.spec.ts:44:1 › **下表明写「按字节」** —— 不写清楚，人会把它当成 token 分解 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50829/fe176f2b-2706-491b-b70a-e957bf906b47
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/cross-service-switch.spec.ts:27:1 › **换到另一家，对话不断** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50841/11674e3e-13de-458e-b03e-1e19554f4c52
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/cross-service-switch.spec.ts:101:1 › **一颗 pill 里两家都在**，厂家写在组头上 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50853/5aa82dcb-4a55-4899-8f6c-44439bf40bc4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/late-endpoint.spec.ts:29:3 › 启动时一个 provider 覆盖都没有 › **中途加一个自定义端点，当场就能选到、能对话** —— 不用重启 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「新会话」出错了 — 模型调用失败：401: {"message":"mock：这个 key 不对","type":"invalid_request_error"}
+[主进程] Debugger ending on ws://127.0.0.1:50867/c97af824-9256-4cf2-9354-a29ce6c1b269
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/model-error.spec.ts:21:3 › key 不对的时候 › **说出来，并且把对方的原话带上** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「新会话」出错了 — 模型调用失败：401: {"message":"mock：这个 key 不对","type":"invalid_request_error"}
+[主进程] Debugger ending on ws://127.0.0.1:50879/91f0f84d-0c1a-4cd2-b8e0-17e9ea6209cd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/model-error.spec.ts:36:3 › key 不对的时候 › **它不混进回复里** —— 那不是模型说的话 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50891/60845058-d072-41d0-bc1d-0dc449d2f525
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/model-identity-in-prompt.spec.ts:16:1 › **提示词里写着当前模型** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50902/a53454f1-d0b1-4cb1-8689-71432fba32f7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/model-identity-in-prompt.spec.ts:44:1 › **换模型之后，下一次请求里写的是新模型，并带着「换人了」那一句** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50915/fda17b36-7e0c-43d2-80d9-a2b61bff10d0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/model-menu-shortcuts.spec.ts:28:1 › LLM名称不换行，超长名称省略，菜单和类型标记保持紧凑 (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50924/b253f838-68c5-4753-9134-3201ee80c579
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/model-menu-shortcuts.spec.ts:63:1 › 快捷键速查为独立键帽、清晰分组，窄窗可滚动且焦点保留 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50933/fd31d0a2-dc32-40e1-b8f5-3c63cba3af86
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/model-pill.spec.ts:19:1 › **输入卡右下角只有一颗 pill** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50941/428cfea2-24c6-4b28-b9c7-aa47df9dc47f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/model-pill.spec.ts:33:1 › **点开是按服务分组的模型列表，当前那条打勾** (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50949/d6778f20-88ed-47cf-82e2-f3d4c1548b77
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/model-pill.spec.ts:55:1 › **「配置自定义模型」真的把人送到设置** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50961/0475fbea-b9a1-4f57-8bd6-89f270242f5e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/model-pill.spec.ts:76:1 › **不出现倍率与活动徽标** —— 那些数字我们没有 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50969/55a0663c-3d94-4f0b-ad23-9fd841dca0d2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/model-switch.spec.ts:47:1 › pill 显示当前模型，且能列出同 provider 的其它模型 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50977/a851c659-6f64-4e31-a76b-700e4b8fc7f7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/model-switch.spec.ts:57:1 › **换完之后，下一次请求真的打到新模型** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:50988/c48a9a4b-9ffb-4c50-a592-d71dc94c3d2c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/model-switch.spec.ts:88:1 › **composer 上只有一个菜单，不会按错** (1.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「看看环境」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:51000/e217179f-9863-4d0e-93f0-7ac41db05b77
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/no-stale-model-env.spec.ts:25:3 › 命令环境 › **`env` 里没有 PI_MODEL / PI_PROVIDER** —— 没有快照可念 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51014/16b4a6db-3a18-473d-b36a-ce0158e695e9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51024/f1d68532-185a-4088-8009-97d72e00edd1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/provider-routing-audit.spec.ts:27:1 › selecting DeepSeek overrides old Kimi ordering for new tasks and survives application restart (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] [桌面通知·假] #1 「科研批量验收：先按批准的均值方法处理样地」做完了 — 批量状态与产物以宿主回执为准；本次为合成软件验收。
+[主进程] Debugger ending on ws://127.0.0.1:51039/cec717f6-8382-4ce9-aa67-2527e4b58ea4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/science-incremental.spec.ts:4:1 › visibly reuses accepted A and reruns failed B through actual parent tools and Pi (13.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51092/bdbb6047-f563-46d9-a4c7-c6e136026660
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/session-recovery.spec.ts:37:1 › 同库第二实例被拒绝，正在聊的远端会话仍 alive 且可发送 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51110/fdc4776e-ffee-450f-a69c-24de11f4662c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/session-recovery.spec.ts:59:1 › 远端恢复失败显示真原因，服务器 ready 后原对话自动恢复并保留草稿 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51120/4234b03e-4a91-42b3-84ad-ac72e23231de
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51131/2afe14e0-5251-43a7-91fa-97d595a79e50
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  32 e2e/session-resume.spec.ts:18:1 › **关掉再打开，那段对话还在，而且还能说** (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:51142/bfba008d-1a8e-444f-bf67-e8be5d82fea8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  33 e2e/side-session.spec.ts:60:3 › 侧边对话 · native › **两段同时跑不串台**；坞里问进度真调到 read_main_session、读到的是主对话此刻的 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:51159/fef86597-a0d3-4438-8532-ee66f0db528e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/side-session.spec.ts:97:3 › 侧边对话 · native › **坞里那段长得像主区**：输入卡看得出边、一行头（标题 + 用量 + 导出对话 + 换到主区 + ×）、刻度尺放得下才画 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:51173/a597f85a-5cd8-481f-bc71-29112f74d55f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  35 e2e/side-session.spec.ts:166:3 › 侧边对话 · native › **换到主区 / 从坞里拿下**，三颗按钮都看得见（opacity 1） (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51187/ca321c59-d7d0-4b65-84a2-4369ab5db1a2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  36 e2e/side-session.spec.ts:215:3 › 侧边对话 · 临时会话 › 主区是临时会话：坞里「另开一段」看得见、建出一段临时会话，主区不动 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51200/a796793f-6742-49ec-8444-fbf053c37548
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  37 e2e/side-session.spec.ts:264:3 › 侧边对话 · ACP › **ACP 那段挂进坞，直说它看不见主对话** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:51211/96a9b141-8d13-4d28-8532-e2485dcab14f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  38 e2e/side-session.spec.ts:309:3 › 侧边对话 · 团队 chip › **点坞里的团队 chip → 团队格是坞里那段的队，并写明来源；从标签栏进回到主区那段** (5.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51232/5946b9ca-db6e-4e62-af89-ea15c68d0a65
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  39 e2e/side-session.spec.ts:356:1 › **新建任务那一屏：坞里另开一段是普通对话，不带文件夹** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51241/2d5ba413-3efa-465d-a43c-dd36d2938f2b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  40 e2e/side-session.spec.ts:374:3 › **1280 宽：窄栏工具可分行，输入正文同高、底边对齐** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51256/6d68e6cd-5466-469a-98cc-3c6c5c25d023
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  41 e2e/side-session.spec.ts:374:3 › **1920 宽：窄栏工具可分行，输入正文同高、底边对齐** (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] Debugger ending on ws://127.0.0.1:51272/13d14d8d-737b-4abb-8230-fa437b0769fe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  42 e2e/terminal-history-resume.spec.ts:47:1 › CLI resume restores the original conversation, original image and GUI continuation after closing its last terminal (10.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] Debugger ending on ws://127.0.0.1:51313/adcfd568-e3c5-4ecf-9535-8ef23535ce1a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  43 e2e/terminal-history-resume.spec.ts:69:1 › dawn --resume picker cancels without a new task, then explicit CLI resume restores the original ID (12.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] Debugger ending on ws://127.0.0.1:51361/8d638820-9967-4930-9e98-42317dd99e49
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [store] 已把 1 段会话迁成任务（老记录一条都没动）
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:51394/10177020-d765-4090-baf9-e9230fdd2640
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  44 e2e/terminal-history-resume.spec.ts:97:1 › restarting the desktop preserves the original image context and restores the same saved conversation (13.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] Debugger ending on ws://127.0.0.1:51418/e369098b-8020-402c-8a2e-e0b0086a8523
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  45 e2e/terminal-history-resume.spec.ts:113:1 › history follows a real Shell cd and does not offer conversations from the old directory (8.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] [桌面通知·假] #1 「HISTORY_ORIGINAL」做完了 — 假模型已应答：我收到了 2 张图。
+[主进程] Debugger ending on ws://127.0.0.1:51452/b540102f-4967-49dd-a9ac-26dd21939372
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  46 e2e/terminal-history-resume.spec.ts:134:1 › an unsupported old image preview warns while the same conversation and original model image context remain usable (9.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-api-routing-audit-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「CURRENT_OWNER_HISTORY」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] [桌面通知·假] #1 「CURRENT_OWNER_HISTORY」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] [桌面通知·假] #2 「CURRENT_OWNER_HISTORY」做完了 — 假模型已应答：我收到了 1 张图。
+[主进程] Debugger ending on ws://127.0.0.1:51493/51d7e966-1943-4b8d-984e-8bfc15ba3274
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  47 e2e/terminal-history-resume.spec.ts:158:1 › the current owner can close its last resumed terminal, reopen directly and continue the original image without reconnecting the GUI (15.3s)
+
+  47 passed (3.5m)

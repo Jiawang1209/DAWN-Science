@@ -11,7 +11,7 @@
  *   过滤防不了什么，只会在普通对话选了文件夹之后**一份都对不上、悄悄新开一段**：界面上话还在，模型全忘了。
  * - **不变式挂在**：`tests/ui/design-contract.test.ts`「续接不走 continueRecent」——`src/` 里不许再出现它。
  */
-import { closeSync, openSync, readdirSync, readSync, statSync } from "node:fs"
+import { closeSync, openSync, readdirSync, readSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { SessionManager } from "@earendil-works/pi-coding-agent"
 
@@ -43,6 +43,23 @@ export function 续接哪份(dir: string): string | undefined {
 export function 续接或新建(cwd: string, dir: string): SessionManager {
   const f = 续接哪份(dir)
   return f ? SessionManager.open(f, dir, cwd) : SessionManager.create(cwd, dir)
+}
+
+/** Only this session's SDK state is eligible; never inherit another chat's defaults. */
+export function 读会话模型(sessionDir: string): { provider: string; model: string } | undefined {
+  const transcript = 续接哪份(join(sessionDir, "pi", "sessions"))
+  const recorded = transcript ? 读最后模型切换(transcript) : undefined
+  if (recorded) return recorded
+  // pi buffers transcript entries until a response completes. setModel persists settings
+  // even before the first response, so a restart must also respect that explicit choice.
+  try {
+    const value = JSON.parse(readFileSync(join(sessionDir, "pi", "settings.json"), "utf8"))
+    if (typeof value.defaultProvider === "string" && value.defaultProvider.trim() &&
+        typeof value.defaultModel === "string" && value.defaultModel.trim()) {
+      return { provider: value.defaultProvider, model: value.defaultModel }
+    }
+  } catch { /* no persisted selection */ }
+  return undefined
 }
 
 /** 分叉会话优先沿用当前分支最后一次显式模型切换，再回退到最近回复的实际模型。 */

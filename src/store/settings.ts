@@ -16,6 +16,7 @@ import type Database from "better-sqlite3"
 
 /** 认得的设置键。**闭集**——写进一个拼错的键等于静默丢配置 */
 export type SettingKey =
+  | "model.newTaskProvider"
   /**
    * 远程助理 · 微信（2026-08-21）。**token 不在这儿**——它进钥匙串（`weixin:botToken`）。
    * 这几个都不是秘密：绑定的 bot / 用户 id、账号基址、长轮询游标、最近一条的

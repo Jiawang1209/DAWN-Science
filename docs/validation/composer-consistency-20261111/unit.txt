@@ -8,4 +8,3 @@ npm notice run 'vitest' run tests/electron/text-context-menu.test.ts tests/ui/co
       Tests  194 passed (194)
    Start at  18:54:08
    Duration  3.93s (transform 7.14s, setup 7.78s, import 6.41s, tests 4.33s, environment 10.89s)
-

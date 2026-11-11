@@ -1,0 +1,11 @@
+{
+  "name": "build",
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "startedAt": "2026-11-11T01:45:01.141269+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T01:45:04.266272+00:00"
+}

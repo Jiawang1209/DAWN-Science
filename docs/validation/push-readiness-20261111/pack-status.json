@@ -1,0 +1,14 @@
+{
+  "name": "pack",
+  "command": [
+    "npm",
+    "run",
+    "pack",
+    "--",
+    "--publish",
+    "never"
+  ],
+  "startedAt": "2026-11-11T02:41:00.570829+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T02:41:51.516311+00:00"
+}

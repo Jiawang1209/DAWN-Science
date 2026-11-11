@@ -1,0 +1,12 @@
+{
+  "name": "unit-full",
+  "command": [
+    "npm",
+    "test",
+    "--",
+    "--maxWorkers=4"
+  ],
+  "startedAt": "2026-11-11T01:40:24.511370+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T01:45:01.140878+00:00"
+}

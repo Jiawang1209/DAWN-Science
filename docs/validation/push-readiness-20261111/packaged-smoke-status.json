@@ -1,0 +1,11 @@
+{
+  "name": "packaged-smoke",
+  "command": [
+    "npm",
+    "run",
+    "test:packaged"
+  ],
+  "startedAt": "2026-11-11T02:41:53.659993+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T02:42:05.966520+00:00"
+}

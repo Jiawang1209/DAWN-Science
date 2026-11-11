@@ -1,0 +1,33 @@
+npm notice run dawn-science@0.0.44 test:e2e:kernel
+npm notice run playwright test -c playwright.kernel.config.ts --output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/kernel-results
+
+Running 6 tests using 1 worker
+
+(node:33752) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59651/325962c9-7589-4db8-896a-562f148c51e1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/kernel-session.spec.ts:43:3 › 内核会话 › 执行一段代码 → **结构化输出**出现在对话里 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59680/c8d24945-2095-4ad5-a5dd-0744c68eb93f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/kernel-session.spec.ts:156:3 › 内核执行的账本 › **跑挂的代码在账本上是 failed，且带着原因** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59702/11b49932-af14-4b16-ba39-00ba7816ddc1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/kernel-session.spec.ts:192:3 › 内核执行的账本 › **跑得通的代码是 completed** —— 不能一律记成失败 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59725/78f97ee6-a6e5-4dda-9b51-37642fe5ae81
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/kernel-session.spec.ts:226:3 › R 内核会话 › **同一条代码路径**：执行、报错、活会话、变量面板 (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59757/8f4fb94a-0ab4-4e4c-8893-b94bcddfca8d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/kernel-session.spec.ts:282:3 › 由配置的解释器路径起内核 › **没配就明说没配，配完就能跑** (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59783/96f99db3-5e39-4e6a-870e-c0988b3e3662
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/kernel-session.spec.ts:377:3 › 内核会话 · ACP 借我们的内核 › **它跑的是我们的内核，账本上记的是「执行了一段代码」** (3.2s)
+
+  6 passed (17.1s)

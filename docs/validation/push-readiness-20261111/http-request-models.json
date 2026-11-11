@@ -1,0 +1,14 @@
+[
+  {
+    "url": "/v1/chat/completions",
+    "model": "deepseek-flash"
+  },
+  {
+    "url": "/v1/chat/completions",
+    "model": "deepseek-flash"
+  },
+  {
+    "url": "/v1/chat/completions",
+    "model": "deepseek-flash"
+  }
+]

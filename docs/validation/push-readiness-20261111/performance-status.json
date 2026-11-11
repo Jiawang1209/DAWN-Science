@@ -1,0 +1,13 @@
+{
+  "name": "performance",
+  "command": [
+    "npm",
+    "run",
+    "perf:streaming",
+    "--",
+    "--output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/performance-results"
+  ],
+  "startedAt": "2026-11-11T02:39:11.831635+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T02:40:35.529320+00:00"
+}

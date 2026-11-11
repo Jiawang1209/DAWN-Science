@@ -1,0 +1,9 @@
+{
+  "command": "npm ls --all --json",
+  "exitCode": 0,
+  "rootName": "dawn-science",
+  "rootVersion": "0.0.44",
+  "topLevelDependencies": 66,
+  "problems": [],
+  "fullTreeRetainedLocally": "npm-ls.json"
+}

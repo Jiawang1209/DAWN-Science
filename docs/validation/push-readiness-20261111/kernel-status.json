@@ -1,0 +1,13 @@
+{
+  "name": "kernel",
+  "command": [
+    "npm",
+    "run",
+    "test:e2e:kernel",
+    "--",
+    "--output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/kernel-results"
+  ],
+  "startedAt": "2026-11-11T02:38:54.219307+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T02:39:11.831246+00:00"
+}

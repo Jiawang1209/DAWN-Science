@@ -1,0 +1,15 @@
+{
+  "node": "v22.23.0",
+  "npm": "12.0.1",
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.86.1",
+    "@earendil-works/pi-ai": "0.86.1",
+    "electron": "43.8.4",
+    "electron-builder": "26.15.3",
+    "better-sqlite3": "13.0.3",
+    "node-pty": "1.1.0",
+    "zeromq": "6.5.0"
+  },
+  "python": "Python 3.11.15",
+  "R": "R version 4.6.1 (2026-06-24) -- \"Happy Hop\""
+}

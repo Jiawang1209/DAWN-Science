@@ -1,0 +1,24 @@
+npm notice run dawn-science@0.0.44 npx
+npm notice run 'vitest' run --project node tests/evaluation/research-runner.test.ts -t counts a correctly blocked single trial
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science
+
+ ❯ |node| tests/evaluation/research-runner.test.ts (16 tests | 1 failed | 15 skipped) 75ms
+   × counts a correctly blocked single trial whose real input read used an absolute path 74ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/evaluation/research-runner.test.ts > counts a correctly blocked single trial whose real input read used an absolute path
+Error: ENOENT: no such file or directory, open '/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/dist/electron/subagent-child.js'
+ ❯ runResearchEvaluation scripts/evaluate-research.ts:55:136
+
+ ❯ tests/evaluation/research-runner.test.ts:32:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  09:38:27
+   Duration  2.04s (transform 771ms, setup 0ms, import 1.85s, tests 75ms, environment 0ms)
+

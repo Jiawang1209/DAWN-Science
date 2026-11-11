@@ -42,5 +42,7 @@ jobs:
       # 也就是说不是「某条测试很慢」，而是 **ui 那组跑到一半整个 runner 不动了**。
       # 同一份代码在 macOS runner 上 2 分 34 秒跑完全绿。下一步：把 ui 那个 project 单独跑、
       # 或 `--pool=forks --poolOptions.forks.singleFork` 看是不是 worker 池死锁。
-      - run: npx vitest run --project node --project ui
+      # npm test runs pretest first: real child integration tests need the
+      # compiled subagent entry even on a completely clean checkout.
+      - run: npm test -- --project node --project ui
         timeout-minutes: 20

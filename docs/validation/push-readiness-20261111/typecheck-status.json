@@ -1,0 +1,11 @@
+{
+  "name": "typecheck",
+  "command": [
+    "npm",
+    "run",
+    "typecheck"
+  ],
+  "startedAt": "2026-11-11T01:40:18.648905+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T01:40:24.510873+00:00"
+}

@@ -1,0 +1,13 @@
+npm notice run dawn-science@0.0.44 test:packaged
+npm notice run node scripts/test-packaged.mjs
+[packaged-cli] --help passed: /Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/release/mac-arm64/DAWN Science.app/Contents/Resources/app
+[packaged] 起 /Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/release/mac-arm64/DAWN Science.app/Contents/MacOS/DAWN Science
+  ✓ 窗口起来、数据库开了（better-sqlite3）
+  ✓ 自带技能与子 agent 从磁盘读到了（/ 菜单有条目）
+  ✓ 发一句收到假回复（pi 链路 + 子进程）
+  ✓ 终端起得来（node-pty spawn-helper）
+    python 候选 20 条，R 候选 2 条
+  ✓ 探测本机解释器不炸（首启向导用；走登录 shell 的 which）
+  ✓ 设置 → 内核 列得出来（zeromq / kernelspec 扫描不炸）
+[packaged] 截图：/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-packaged-qeZffQ/packaged.png
+[packaged] 全部通过

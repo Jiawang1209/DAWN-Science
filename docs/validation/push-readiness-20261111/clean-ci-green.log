@@ -1,0 +1,26 @@
+npm notice run dawn-science@0.0.44 pretest
+npm notice run npm run build:electron
+npm notice run dawn-science@0.0.44 build:electron
+npm notice run node scripts/build-electron.mjs
+▲ [WARNING] Using direct eval with a bundler is not recommended and may cause problems [direct-eval]
+
+    src/tools/browser/tools.ts:338:17:
+      338 │           return eval(code)
+          ╵                  ~~~~
+
+  You can read more about direct eval and bundling here: https://esbuild.github.io/link/direct-eval
+
+build-electron: DAWN 的 MCP 服务器已拷进 dist/electron/
+build-electron: 自带技能已拷进 dist/skills
+build-electron: dist/electron/main.js + subagent-child.js + preload.cjs 已生成
+npm notice run dawn-science@0.0.44 test
+npm notice run vitest run --project node tests/ci-config.test.ts tests/evaluation/research-runner.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science
+
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  09:39:02
+   Duration  68.70s (transform 814ms, setup 0ms, import 1.69s, tests 66.99s, environment 0ms)
+

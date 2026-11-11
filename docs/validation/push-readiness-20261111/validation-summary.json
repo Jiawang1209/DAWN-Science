@@ -1,0 +1,200 @@
+{
+  "base": "8ffba22ae56fc1e423fb380022cf55b8b628ecd2",
+  "branch": "codex/push-readiness-20261111",
+  "frozenSourceDigest": "d785d4bc18a4c928111300cec46766444f2279505b6b845e736afb799c27ec17",
+  "sourceUnchangedAfterAllChecks": true,
+  "typecheck": "pass",
+  "build": "pass",
+  "dependencyTree": "pass",
+  "npmAuditVulnerabilities": 0,
+  "cleanCheckoutReproduction": "ENOENT dist/electron/subagent-child.js before CI fix",
+  "targetedAfterCiFix": {
+    "passed": 17
+  },
+  "unit": {
+    "filesPassed": 738,
+    "passed": 7196,
+    "skipped": 10,
+    "total": 7206,
+    "seconds": 275.27
+  },
+  "desktop": {
+    "passed": 957,
+    "failed": 0,
+    "skipped": 1,
+    "total": 958,
+    "minutes": 53.3,
+    "skip": "sidebar-collapse intentionally abandoned animation rule"
+  },
+  "kernel": {
+    "passed": 6,
+    "failed": 0,
+    "seconds": 17.1
+  },
+  "performance": {
+    "passed": 3,
+    "failed": 0,
+    "typingP95Ms": 15.7,
+    "typingBudgetMs": 150,
+    "ipcBytes": 7246,
+    "ipcBudgetBytes": 1000000
+  },
+  "visual": {
+    "passed": 10,
+    "baselinesChanged": false
+  },
+  "packaged": {
+    "platform": "macOS arm64",
+    "directoryBuild": "pass",
+    "signatureIntegrity": "pass",
+    "cliSmoke": "pass",
+    "uiNativeSmokeChecksPassed": 6,
+    "installed": false,
+    "published": false
+  },
+  "exitDiagnostics": {
+    "diagnosticFiles": 995,
+    "asyncStarts": 108,
+    "drained": 108,
+    "badEvents": [],
+    "historicalIssuesClosed": false
+  },
+  "historicalOpen": [
+    "intermittent exit timeout",
+    "long Bot/MCP teardown",
+    "PTY cleanup"
+  ],
+  "unverified": [
+    "real cloud models",
+    "real SSH/SaaS accounts",
+    "Windows/Linux native devices and remote CI",
+    "Developer ID signing/notarization",
+    "formal installed upgrade"
+  ],
+  "realModelRequests": 0,
+  "checks": {
+    "npm-ci": {
+      "exitCode": 0,
+      "log": "npm-ci.log"
+    },
+    "npm-ls": {
+      "exitCode": 0,
+      "log": "npm-ls.json"
+    },
+    "npm-audit": {
+      "exitCode": 0,
+      "log": "npm-audit.json"
+    },
+    "typecheck": {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "startedAt": "2026-11-11T01:40:18.648905+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T01:40:24.510873+00:00"
+    },
+    "unit-full": {
+      "name": "unit-full",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--maxWorkers=4"
+      ],
+      "startedAt": "2026-11-11T01:40:24.511370+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T01:45:01.140878+00:00"
+    },
+    "build": {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "startedAt": "2026-11-11T01:45:01.141269+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T01:45:04.266272+00:00"
+    },
+    "desktop-full": {
+      "name": "desktop-full",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/desktop-results"
+      ],
+      "startedAt": "2026-11-11T01:45:30.538671+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T02:38:54.218593+00:00"
+    },
+    "kernel": {
+      "name": "kernel",
+      "command": [
+        "npm",
+        "run",
+        "test:e2e:kernel",
+        "--",
+        "--output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/kernel-results"
+      ],
+      "startedAt": "2026-11-11T02:38:54.219307+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T02:39:11.831246+00:00"
+    },
+    "performance": {
+      "name": "performance",
+      "command": [
+        "npm",
+        "run",
+        "perf:streaming",
+        "--",
+        "--output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/performance-results"
+      ],
+      "startedAt": "2026-11-11T02:39:11.831635+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T02:40:35.529320+00:00"
+    },
+    "pack": {
+      "name": "pack",
+      "command": [
+        "npm",
+        "run",
+        "pack",
+        "--",
+        "--publish",
+        "never"
+      ],
+      "startedAt": "2026-11-11T02:41:00.570829+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T02:41:51.516311+00:00"
+    },
+    "package-signature": {
+      "name": "package-signature",
+      "command": [
+        "/usr/bin/codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "--verbose=2",
+        "/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/release/mac-arm64/DAWN Science.app"
+      ],
+      "startedAt": "2026-11-11T02:41:51.517106+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T02:41:53.659567+00:00"
+    },
+    "packaged-smoke": {
+      "name": "packaged-smoke",
+      "command": [
+        "npm",
+        "run",
+        "test:packaged"
+      ],
+      "startedAt": "2026-11-11T02:41:53.659993+00:00",
+      "exitCode": 0,
+      "finishedAt": "2026-11-11T02:42:05.966520+00:00"
+    }
+  }
+}

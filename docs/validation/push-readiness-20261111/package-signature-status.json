@@ -1,0 +1,14 @@
+{
+  "name": "package-signature",
+  "command": [
+    "/usr/bin/codesign",
+    "--verify",
+    "--deep",
+    "--strict",
+    "--verbose=2",
+    "/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/release/mac-arm64/DAWN Science.app"
+  ],
+  "startedAt": "2026-11-11T02:41:51.517106+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T02:41:53.659567+00:00"
+}

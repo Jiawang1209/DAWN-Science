@@ -1,0 +1,19 @@
+{
+  "mainHead": "c79c2450afbf6a1d879012bf5406e3ec7c225503",
+  "mainClean": true,
+  "priorAuditHead": "8ffba22ae56fc1e423fb380022cf55b8b628ecd2",
+  "priorAuditClean": true,
+  "profiles": [
+    {
+      "profile": "DAWN Science",
+      "providersYamlUnchanged": true
+    },
+    {
+      "profile": "dawn-science",
+      "providersYamlUnchanged": true
+    }
+  ],
+  "formalCredentialsDecrypted": false,
+  "formalAppInstalledOrReplaced": false,
+  "realModelRequests": 0
+}

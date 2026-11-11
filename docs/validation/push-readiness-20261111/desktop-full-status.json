@@ -1,0 +1,12 @@
+{
+  "name": "desktop-full",
+  "command": [
+    "npx",
+    "playwright",
+    "test",
+    "--output=/Users/liuyue/.codex/worktrees/dawn-push-readiness-20261111/dawn-science/docs/validation/push-readiness-20261111/desktop-results"
+  ],
+  "startedAt": "2026-11-11T01:45:30.538671+00:00",
+  "exitCode": 0,
+  "finishedAt": "2026-11-11T02:38:54.218593+00:00"
+}

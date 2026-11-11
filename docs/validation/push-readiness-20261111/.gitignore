@@ -1,0 +1,17 @@
+*
+!.gitignore
+!report.md
+!plan-status.json
+!validation-summary.json
+!source-manifest.json
+!protected-state.json
+!artifact-isolation.json
+!*-status.json
+!npm-audit.json
+!screenshots/
+!screenshots/*.png
+!exit-diagnostics-summary.json
+!environment.json
+!http-request-models.json
+!dependency-tree-summary.json
+!process-observation.json

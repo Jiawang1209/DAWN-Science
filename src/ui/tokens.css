@@ -465,6 +465,7 @@
    */
   --dawn-chat-leading: calc(var(--dawn-chat-size) * 1.75);
   --dawn-composer-field-min-h: max(44px, calc(var(--dawn-chat-leading) + var(--dawn-space-4)));
+  --dawn-composer-field-h: calc(3 * var(--dawn-chat-leading) + var(--dawn-space-4));
   /**
    * 代码比正文小两号、行距也更紧。量来的：WorkBuddy `13px / 1.6`。
    *

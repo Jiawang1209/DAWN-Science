@@ -1,29 +1,25 @@
 import { test, expect, 在项目里开会话 } from "./fixtures.js"
 
-test("输入区随内容增高，达到上限才滚动，清空后收回", async ({ dawn }) => {
+test("输入区高度固定，文本换行并在框内滚动，清空不跳动", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)
   const input = page.locator(".composer-box textarea").first()
   const measure = () => input.evaluate((el: HTMLTextAreaElement) => ({
-    height: el.clientHeight,
-    scrollHeight: el.scrollHeight,
-    maxHeight: parseFloat(getComputedStyle(el).maxHeight),
+    height: el.clientHeight, scrollHeight: el.scrollHeight,
+    cardHeight: el.closest(".composer-card")!.getBoundingClientRect().height,
+    lineHeight: parseFloat(getComputedStyle(el).lineHeight),
+    whiteSpace: getComputedStyle(el).whiteSpace,
   }))
-  await input.fill("一句话")
-  const short = await measure()
-  await input.fill(Array(3).fill("这是测试用的一行文字").join("\n"))
-  const medium = await measure()
-  expect(medium.height).toBeGreaterThan(short.height)
-  expect(medium.scrollHeight).toBeLessThanOrEqual(medium.height + 1)
-  await input.fill(Array(40).fill("这是测试用的一行文字").join("\n"))
-  const long = await measure()
-  expect(long.height).toBeLessThanOrEqual(121)
-  expect(long.height).toBeLessThanOrEqual(long.maxHeight + 1)
-  expect(long.scrollHeight).toBeGreaterThan(long.height)
-  await input.fill("")
-  expect((await measure()).height).toBe(short.height)
-  const boxHeight = await page.locator(".composer-box").first().evaluate(el => el.clientHeight)
-  expect(boxHeight).toBeLessThan(136)
+  const empty = await measure()
+  expect(empty.height).toBeGreaterThanOrEqual(empty.lineHeight * 3)
+  for (const text of ["一句话", "第一行\n第二行\n第三行", "长文本需要在框内自动换行".repeat(40), Array(40).fill("这是测试用的一行文字").join("\n"), ""]) {
+    await input.fill(text)
+    const current = await measure()
+    expect(current.height).toBe(empty.height)
+    expect(current.cardHeight).toBe(empty.cardHeight)
+    expect(current.whiteSpace).toBe("pre-wrap")
+    if (text.length > 100) expect(current.scrollHeight).toBeGreaterThan(current.height)
+  }
 })
 
 test("换行在输入、发送请求和用户气泡里都保留", async ({ dawn }) => {

@@ -1,0 +1,251 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/composer-sizing.spec.ts e2e/side-session.spec.ts e2e/text-context-menu.spec.ts --grep 高度固定|输入整卡同高|原生编辑菜单|正文选区
+
+Running 5 tests using 1 worker
+
+(node:56925) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58017/7e59e1a2-1209-4f07-bb00-db21a4d52004
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  1 e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 (3.7s)
+(node:57037) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58049/8f6e6158-8b20-44a0-b00b-16d74097dcfc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  2 e2e/side-session.spec.ts:374:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (32.4s)
+(node:57300) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58217/3066c19e-69e4-4bcc-8e1a-f0474d541096
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  3 e2e/side-session.spec.ts:374:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (11.4s)
+(node:57482) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58269/54389158-ff8b-48af-87f7-c51731e4ef89
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  4 e2e/text-context-menu.spec.ts:37:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 (5.0s)
+(node:57685) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「正文右键复制测试」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:58313/dd82f88f-8844-4739-81bb-2435bd4f5271
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  5 e2e/text-context-menu.spec.ts:91:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 (4.7s)
+
+
+  1) e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 ────────────────────────────────────
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 89.25
+    Received:    46
+
+      12 |   }))
+      13 |   const empty = await measure()
+    > 14 |   expect(empty.height).toBeGreaterThanOrEqual(empty.lineHeight * 3)
+         |                        ^
+      15 |   for (const text of ["一句话", "第一行\n第二行\n第三行", "长文本需要在框内自动换行".repeat(40), Array(40).fill("这是测试用的一行文字").join("\n"), ""]) {
+      16 |     await input.fill(text)
+      17 |     const current = await measure()
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/composer-sizing.spec.ts:14:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/composer-sizing-输入区高度固定，文本换行并在框内滚动，清空不跳动/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/composer-sizing-输入区高度固定，文本换行并在框内滚动，清空不跳动/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/composer-sizing-输入区高度固定，文本换行并在框内滚动，清空不跳动/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/composer-sizing-输入区高度固定，文本换行并在框内滚动，清空不跳动/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/side-session.spec.ts:374:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ─────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 30000ms exceeded.
+    Call log:
+      - waiting for locator('main.main').getByPlaceholder(/输入问题/)
+
+
+      385 |     const input = 框(坞(page))
+      386 |     const 空高 = await input.evaluate(el => el.getBoundingClientRect().height)
+    > 387 |     const 主高 = await 框(主区(page)).evaluate(el => el.getBoundingClientRect().height)
+          |                                  ^
+      388 |     expect(空高).toBe(主高)
+      389 |     for (const text of ["第一行\n第二行\n第三行", "移动分栏后文字继续换行".repeat(60), ""]) {
+      390 |       await input.fill(text)
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/side-session.spec.ts:387:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) e2e/side-session.spec.ts:374:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ─────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "底差": 0,
+    -   "高差": 0,
+    +   "高差": 44,
+      }
+
+    Call Log:
+    - Timeout 10000ms exceeded while waiting on the predicate
+
+      382 |       return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.bottom - 侧.bottom)) } : undefined
+      383 |     }
+    > 384 |     await expect.poll(量, { timeout: 10_000 }).toEqual({ 高差: 0, 底差: 0 })
+          |                                               ^
+      385 |     const input = 框(坞(page))
+      386 |     const 空高 = await input.evaluate(el => el.getBoundingClientRect().height)
+      387 |     const 主高 = await 框(主区(page)).evaluate(el => el.getBoundingClientRect().height)
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/side-session.spec.ts:384:47
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) e2e/text-context-menu.spec.ts:37:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 ─────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 30
+    + Received  +  1
+
+    - Array [
+    -   Object {
+    -     "enabled": true,
+    -     "role": "undo",
+    -   },
+    -   Object {
+    -     "enabled": false,
+    -     "role": "redo",
+    -   },
+    -   Object {
+    -     "enabled": true,
+    -     "role": "cut",
+    -   },
+    -   Object {
+    -     "enabled": true,
+    -     "role": "copy",
+    -   },
+    -   Object {
+    -     "enabled": true,
+    -     "role": "paste",
+    -   },
+    -   Object {
+    -     "enabled": true,
+    -     "role": "delete",
+    -   },
+    -   Object {
+    -     "enabled": true,
+    -     "role": "selectall",
+    -   },
+    - ]
+    + Array []
+
+    Call Log:
+    - Timeout 3000ms exceeded while waiting on the predicate
+
+      47 |       await input.selectText()
+      48 |       await input.click({ button: "right" })
+    > 49 |       await expect.poll(() => items(app), { timeout: 3000 }).toEqual([
+         |                                                              ^
+      50 |         { role: "undo", enabled: true }, { role: "redo", enabled: false },
+      51 |         { role: "cut", enabled: true }, { role: "copy", enabled: true },
+      52 |         { role: "paste", enabled: true }, { role: "delete", enabled: true },
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/text-context-menu.spec.ts:49:62
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/text-context-menu-选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/text-context-menu-选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/text-context-menu-选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/text-context-menu-选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) e2e/text-context-menu.spec.ts:91:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 ──────────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 6
+    + Received  + 1
+
+    - Array [
+    -   Object {
+    -     "enabled": true,
+    -     "role": "copy",
+    -   },
+    - ]
+    + Array []
+
+    Call Log:
+    - Timeout 3000ms exceeded while waiting on the predicate
+
+      100 |     await text.selectText()
+      101 |     await text.click({ button: "right" })
+    > 102 |     await expect.poll(() => items(app), { timeout: 3000 }).toEqual([{ role: "copy", enabled: true }])
+          |                                                            ^
+      103 |     await clickRole(app, "copy")
+      104 |     expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe("正文右键复制测试")
+      105 |     await page.evaluate(() => window.getSelection()?.removeAllRanges())
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/text-context-menu.spec.ts:102:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/text-context-menu-正文选区右键只能复制，原有会话右键菜单继续可用/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/text-context-menu-正文选区右键只能复制，原有会话右键菜单继续可用/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/text-context-menu-正文选区右键只能复制，原有会话右键菜单继续可用/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/text-context-menu-正文选区右键只能复制，原有会话右键菜单继续可用/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 ─────────────────────────────────────
+    e2e/side-session.spec.ts:374:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ──────────────────────────────
+    e2e/side-session.spec.ts:374:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ──────────────────────────────
+    e2e/text-context-menu.spec.ts:37:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 ──────────────────────────────
+    e2e/text-context-menu.spec.ts:91:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 ───────────────────────────────────

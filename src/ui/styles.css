@@ -1115,13 +1115,16 @@ pre {
  * 是按 `\binput\b` 匹配的，`-input` 会被它命中。
  * 规则说的是「加 class，不要抄属性」，这里正是在加 class。
  *
- * 文本区随 DOM 内容增高，到 120px（小窗口为视口的 15%）后才滚动。
- * 使用浏览器原生内容尺寸，中文组词、外部草稿写回和宽度变化都会直接参与布局。
+ * 主区与侧边都固定容纳三行正文；变窄时文字换行，超出部分在框内滚动。
+ * 空草稿、组词和外部写回不改变高度，引用镜像层共用同一几何。
  */
 .composer-field {
-  field-sizing: content;
-  min-height: var(--dawn-composer-field-min-h); /* 一行文字与上下内距；15px 时仍为 44px。 */
-  max-height: max(var(--dawn-composer-field-min-h), min(120px, 15vh));
+  field-sizing: fixed;
+  height: var(--dawn-composer-field-h);
+  min-height: var(--dawn-composer-field-h);
+  max-height: var(--dawn-composer-field-h);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   overflow-y: auto;
   padding: var(--dawn-space-2);
   border: 0;
@@ -1129,13 +1132,6 @@ pre {
   resize: none;
   font-size: var(--dawn-chat-size);
   line-height: var(--dawn-chat-leading);
-}
-/* 占位文字折行不撑高空输入框；真实输入继续使用上面的原生自动高度。 */
-.composer-field:placeholder-shown {
-  field-sizing: fixed;
-  height: var(--dawn-composer-field-min-h);
-  white-space: pre;
-  overflow: hidden;
 }
 .composer-field:focus-visible { outline: none; }
 .abort { margin-left: auto; }
@@ -7454,7 +7450,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   overflow: hidden;
   color: transparent;
   white-space: pre-wrap;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   resize: none;
 }
 /* 灰底圆角只垫在字形正下方（不加内距——加了就和 textarea 的排版错位）；折行时两截各自圆角 */
@@ -8498,10 +8494,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-location { display: inline-flex; align-items: center; gap: var(--dawn-space-2); min-width: 0; }
 .composer-location > .icon { flex: 0 0 auto; }
 .composer-location > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.composer-card > .composer-box { border-radius: 0; padding-top: 0; padding-bottom: calc(var(--dawn-space-6) + var(--dawn-space-4)); }
+.composer-card > .composer-box { border-radius: 0; padding-top: 0; padding-bottom: var(--dawn-space-2); }
 .composer-footer {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   background: var(--dawn-surface-sidebar);
   padding: var(--dawn-space-1) var(--dawn-space-3);
@@ -8516,7 +8512,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-tools .enhance-word { display: inline; }
 .composer-footer .composer-status { display: flex; flex-wrap: nowrap; min-height: var(--composer-footer-row); margin-left: 0; padding: 0; gap: var(--dawn-space-1); }
 .composer-footer .composer-status:empty { display: none; }
-.composer-footer .composer-controls { flex: 1 1 auto; justify-content: flex-end; margin-left: auto; }
+.composer-footer .composer-controls { flex: 1 1 100%; justify-content: flex-end; margin-left: auto; }
 .composer-tools .attach-trigger { width: 36px; height: 36px; }
 .composer-tools .attach-trigger > .icon,
 .composer-tools .dock-toggle > .icon { color: var(--dawn-accent); }
@@ -8560,12 +8556,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .composer-footer .model-trigger .svc-mark { display: none; }
   .composer-footer .send-btn { margin-left: 0; }
 }
-/* 极窄侧栏带推理/适配器开关时，为模型保留完整可点击空间。 */
+/* 两行底栏在所有宽度保持一致；极窄时只缩短模型文字，不再增加一行。 */
 @container (max-width: 360px) {
-  .composer-footer:has(.config-pill, .composer-status:not(:empty)) { flex-wrap: wrap; }
-  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .composer-controls { flex-basis: 100%; margin-left: 0; flex-wrap: wrap; }
-  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .composer-controls > .ctx-meter { flex-basis: 100%; justify-content: flex-end; }
-  .composer-footer:has(.config-pill, .composer-status:not(:empty)) .model-trigger { min-width: 5rem; }
+  .composer-footer .composer-controls { gap: var(--dawn-space-1); }
+  .composer-footer .composer-controls > .model-pill,
+  .composer-footer .composer-controls > .agent-pill { flex: 0 1 auto; }
+  .composer-footer .model-trigger { min-width: 0; }
+  .composer-footer .config-pill .sess-config-trigger { padding-inline: var(--dawn-space-1); }
   .composer-footer .composer-status { flex: 1 1 0; min-width: 0; }
   .composer-footer .composer-status > .sess-config { min-width: 0; max-width: 100%; }
   .composer-footer .composer-status .sess-config-trigger { max-width: 100%; overflow: hidden; white-space: nowrap; }
@@ -8894,10 +8891,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-controls > .ctx-meter { position: static; display: flex; align-items: center; flex: 0 0 auto; }
 .composer-controls > .ctx-meter .ctx-meter-pop { right: var(--dawn-space-3); width: min(20rem, calc(100% - var(--dawn-space-6))); }
 .composer-tools > .dock-toggle { flex: 0 0 auto; width: 36px; height: 36px; }
-@container (max-width: 600px) {
-  .composer-footer { flex-wrap: wrap; }
-  .composer-footer .composer-controls { flex-basis: 100%; margin-left: auto; }
-}
 /* Short windows still need a transcript viewport beside the complete composer. */
 @media (max-height: 600px) {
   .conversation .turns { padding-block: var(--dawn-space-2); }

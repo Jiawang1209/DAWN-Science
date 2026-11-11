@@ -1,0 +1,19 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/side-session.spec.ts --grep 输入整卡同高
+
+Running 2 tests using 1 worker
+
+(node:66444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60897/9bdcfb4e-a35d-49da-8262-a8d4caf1759e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/side-session.spec.ts:373:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60934/47b7ebca-d327-4e37-8367-f3c517c2b042
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/side-session.spec.ts:373:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (4.3s)
+
+  2 passed (9.0s)

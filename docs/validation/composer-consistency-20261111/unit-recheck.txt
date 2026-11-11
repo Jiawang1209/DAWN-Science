@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/electron/text-context-menu.test.ts tests/ui/composer-field.test.tsx tests/ui/composer-layout.test.tsx tests/ui/composer-highlight.test.tsx tests/ui/composer-paste.test.tsx tests/ui/composer-config-pills.test.tsx tests/ui/composer-callback.test.tsx tests/ui/composer-compact.test.tsx tests/ui/composer-redirect.test.tsx tests/ui/ime.test.ts tests/ui/design-contract.test.ts tests/ui/theme.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science
+
+
+ Test Files  12 passed (12)
+      Tests  194 passed (194)
+   Start at  22:11:19
+   Duration  5.16s (transform 9.19s, setup 11.70s, import 7.33s, tests 4.10s, environment 15.37s)

@@ -367,37 +367,76 @@ test("**新建任务那一屏：坞里另开一段是普通对话，不带文件
 
 /**
  * **坞里的输入卡与主区同高、底边对齐**（2026-09-29，作者选的「底边对齐 + 同高」）。
- * 笔记本屏（坞开着）主区附栏折两行，坞里也两行；大屏主区一行放得下，坞里跟着排成一行（「上传文件」只留图标）。
- * 两种宽度都量：只量一种的话，另一种会悄悄错开一行（实测 1920 下 203 vs 176）。
+ * 量完整外卡（含工具栏）；不同草稿、宽度与拖动都不能让两侧再错开一行。
  */
 for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
-  test(`**${宽} 宽：窄栏工具可分行，输入正文同高、底边对齐**`, async ({ dawn }) => {
+  test(`**${宽} 宽：输入整卡同高，拖动分栏与不同草稿不改变高度**`, async ({ dawn }) => {
     const { page, app } = dawn
     await app.evaluate(({ BrowserWindow }, [w, h]) => BrowserWindow.getAllWindows()[0]!.setContentSize(w!, h!), [宽, 高])
     await 开一段临时会话(page, "你好")
     await 坞里另开一段(page)
     const 量 = async () => {
-      const measure = (area: import("@playwright/test").Locator) => area.locator(".composer-card").evaluate(el => {const card=el.getBoundingClientRect(),footer=el.querySelector(".composer-footer")!.getBoundingClientRect();return {height:card.height-footer.height,bottom:card.bottom}})
+      const measure = (area: import("@playwright/test").Locator) => area.locator(".composer-card").evaluate(el => {const card=el.getBoundingClientRect();return {height:card.height,bottom:card.bottom}})
       const [主,侧] = await Promise.all([measure(主区(page)),measure(坞(page))])
       return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.bottom - 侧.bottom)) } : undefined
     }
     await expect.poll(量, { timeout: 10_000 }).toEqual({ 高差: 0, 底差: 0 })
-    // 空占位文字不撑高；真实内容仍能增高，清空后收回。
     const input = 框(坞(page))
     const 空高 = await input.evaluate(el => el.getBoundingClientRect().height)
-    const 一行高度 = await input.evaluate(el => {
-      const s = getComputedStyle(el)
-      return Math.max(44, parseFloat(s.lineHeight) + parseFloat(s.paddingTop) + parseFloat(s.paddingBottom))
-    })
-    expect(空高).toBeCloseTo(一行高度, 1)
-    expect(await input.evaluate(el => el.scrollHeight)).toBeLessThanOrEqual(
-      await input.evaluate(el => el.clientHeight + 1),
-    )
-    await input.fill("第一行\n第二行\n第三行")
-    await expect.poll(() => input.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(空高)
+    const 主高 = await 主区(page).locator("textarea.composer-field").evaluate(el => el.getBoundingClientRect().height)
+    expect(空高).toBe(主高)
+    for (const text of ["第一行\n第二行\n第三行", "移动分栏后文字继续换行".repeat(60), ""]) {
+      await input.fill(text)
+      expect(await input.evaluate(el => el.getBoundingClientRect().height)).toBe(空高)
+      await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+    }
+    const sash = 坞(page).getByRole("separator", { name: "调整面板宽度" })
+    const dragTo = async (width: number) => {
+      // aria-valuenow updates before the grid transition finishes; hit the sash
+      // at its settled position rather than the preceding animation frame.
+      await page.locator(".body").evaluate(async el => { await Promise.all(el.getAnimations().map(a => a.finished.catch(() => {}))) })
+      const grip = (await sash.boundingBox())!
+      const previous = Number(await sash.getAttribute("aria-valuenow"))
+      const x = grip.x + grip.width / 2, y = grip.y + grip.height / 2
+      await page.mouse.move(x, y)
+      await page.mouse.down()
+      await page.mouse.move(x + previous - width, y, { steps: 8 })
+      await page.mouse.up()
+      await expect(sash).toHaveAttribute("aria-valuenow", String(width))
+    }
+    // The 1280px window caps its dock at 600px to reserve the main conversation.
+    for (const sideWidth of (宽 === 1920 ? [280, 360, 440, 600, 720] : [280, 360, 440, 600])) {
+      await dragTo(sideWidth)
+      await input.fill("只在侧边输入的长草稿".repeat(80))
+      await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+      expect(await input.evaluate(el => el.getBoundingClientRect().height)).toBe(空高)
+      expect(await input.evaluate(el => el.scrollHeight)).toBeGreaterThan(空高)
+    }
+    await dragTo(480)
     await input.fill("")
-    await expect.poll(() => input.evaluate(el => el.getBoundingClientRect().height)).toBe(空高)
     await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+    await 主区(page).locator("textarea.composer-field").fill("主区与侧边保持相同高度，文字可以自动换行。")
+    await input.fill("侧边输入较长的文字，也在相同高度的框内换行和滚动。".repeat(12))
+    await input.evaluate(el => { el.scrollTop = 0; el.dispatchEvent(new Event("scroll", { bubbles: true })) })
+    const geometry = await page.locator(".composer-card").evaluateAll(cards => cards.map(card => {
+      const field = card.querySelector("textarea")!, rect = card.getBoundingClientRect()
+      return { width: rect.width, height: rect.height, fieldHeight: field.clientHeight, scrollHeight: field.scrollHeight }
+    }))
+    const geometryPath = test.info().outputPath("composer-geometry.json")
+    writeFileSync(geometryPath, JSON.stringify(geometry, null, 2))
+    await test.info().attach("composer-geometry", { path: geometryPath, contentType: "application/json" })
+    const clip = await page.locator(".composer-card").evaluateAll(cards => {
+      const boxes = cards.map(card => card.getBoundingClientRect())
+      const x = Math.min(...boxes.map(b => b.x)), y = Math.min(...boxes.map(b => b.y))
+      return { x, y, width: Math.max(...boxes.map(b => b.right)) - x, height: Math.max(...boxes.map(b => b.bottom)) - y }
+    })
+    for (const theme of ["light", "dark"]) {
+      await page.evaluate(theme => { document.documentElement.classList.toggle("dawn-dark", theme === "dark"); document.documentElement.classList.toggle("dawn-light", theme === "light") }, theme)
+      const screenshotPath = test.info().outputPath(`composer-cards-${theme}.png`)
+      await page.screenshot({ path: screenshotPath, clip, animations: "disabled", scale: "css" })
+      await test.info().attach(`composer-cards-${theme}`, { path: screenshotPath, contentType: "image/png" })
+      await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+    }
     await test.info().attach("aligned-composers", { body: await page.screenshot(), contentType: "image/png" })
   })
 }

@@ -29,6 +29,7 @@ import { 托盘图标 } from "./tray-icon.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
 import { acquireDatabaseInstance } from "./single-instance.js"
 import { installAppExitDiagnostics } from "./exit-diagnostics.js"
+import { textContextMenuItems } from "./text-context-menu.js"
 
 const exitDiagnostic=installAppExitDiagnostics(app,process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR)
 
@@ -275,6 +276,12 @@ function createWindow(): void {
       // 隐藏窗口不该被降频——见上面 `show` 那段
       backgroundThrottling: false,
     },
+  })
+
+  win.webContents.on("context-menu", (_event, params) => {
+    const items = textContextMenuItems(params)
+    if (items.length === 0) return
+    Menu.buildFromTemplate(items).popup({ window: win, x: params.x, y: params.y })
   })
 
   /**

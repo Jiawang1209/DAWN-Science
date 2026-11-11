@@ -1,0 +1,48 @@
+npm run typecheck
+npm notice run dawn-science@0.0.45 typecheck
+npm notice run tsc --noEmit
+
+npx vitest run tests/electron/text-context-menu.test.ts tests/ui/composer-field.test.tsx tests/ui/composer-layout.test.tsx tests/ui/ime.test.ts
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/electron/text-context-menu.test.ts tests/ui/composer-field.test.tsx tests/ui/composer-layout.test.tsx tests/ui/ime.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+   Start at  22:13:43
+   Duration  3.25s (transform 2.21s, setup 2.66s, import 1.14s, tests 462ms, environment 2.19s)
+
+npx playwright test e2e/composer-sizing.spec.ts e2e/side-session.spec.ts e2e/text-context-menu.spec.ts --grep '高度固定|输入整卡同高|原生编辑菜单|正文选区'
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/composer-sizing.spec.ts e2e/side-session.spec.ts e2e/text-context-menu.spec.ts --grep 高度固定|输入整卡同高|原生编辑菜单|正文选区
+
+Running 5 tests using 1 worker
+
+(node:91274) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64083/a2657c18-dd28-4e2c-87e6-e3893ec6eb37
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:64095/5985bd0f-0a28-4c40-869c-f3ffb077f220
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/side-session.spec.ts:373:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:64127/19f1f7b4-83ad-4761-90dc-d7bbb40bb1c9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/side-session.spec.ts:373:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (4.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64206/75ee9bf7-1e78-4202-8af0-c3353a29278c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/text-context-menu.spec.ts:51:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64245/999c5ae1-5a8e-47a6-9bf1-95be930fd048
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/text-context-menu.spec.ts:105:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 (2.0s)
+
+  5 passed (15.9s)

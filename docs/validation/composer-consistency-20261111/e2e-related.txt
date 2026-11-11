@@ -1,0 +1,246 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/composer-sizing.spec.ts e2e/composer-layout.spec.ts e2e/composer-config-layout.spec.ts e2e/composer-highlight.spec.ts e2e/composer-paste.spec.ts e2e/composer-history-copy.spec.ts e2e/side-session.spec.ts e2e/text-context-menu.spec.ts
+
+Running 35 tests using 1 worker
+
+(node:60802) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59665/dc9a2a00-a865-405b-a7ca-cb651e0aa893
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/composer-config-layout.spec.ts:19:1 › 280px侧栏同时有模型、推理和适配器配置时，按钮不压扁且各菜单可用 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59698/232e8a9f-ac01-4074-a64d-f699e0e9b03f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/composer-highlight.spec.ts:7:1 › 首页Markdown高亮保留原文，光标选区与撤销正常 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59717/3ae15693-bfc5-4489-917a-9e755aec3b38
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/composer-highlight.spec.ts:38:1 › 会话Markdown滚动对齐、组词原生绘制，发送内容不含额外标记 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59736/2ea29a8d-a6fa-491c-82bf-8bc016356dab
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/composer-highlight.spec.ts:72:1 › 主对话与窄坞输入共用高亮，亮暗主题切换保留草稿 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59764/bb08fb56-8f26-4ed0-a766-9b8b4b2d117b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/composer-history-copy.spec.ts:15:1 › **↑ 翻回上一句，↓ 翻回没发出去的那半句** (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59774/11e884cf-8904-4054-b5e9-10479acb85f7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/composer-history-copy.spec.ts:40:1 › **多行草稿里按 ↑ 是上移一行，不是换掉整段** (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59791/9f2efacf-df59-4b75-a44d-314f8e2efc9b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/composer-history-copy.spec.ts:58:1 › **一键复制**：复制的是原文，且看得见它复制成功了 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59804/e15d7cce-01b1-4c33-8b11-1ab8e8c8ae0b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/composer-history-copy.spec.ts:85:1 › **修改 → 发送**：新说一句，原来那句留在原处 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59822/fb20d479-6bef-4abc-a31d-0a4aa5666c49
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/composer-history-copy.spec.ts:105:1 › **取消就是取消**：一个字都不发出去 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59839/387de9f1-edf4-4afb-a75b-2f584407b3aa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/composer-history-copy.spec.ts:121:1 › **操作在这一段下面**，不是浮在右上角 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59853/eb2640a1-7f6f-47aa-8bd3-595e0159c2e0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/composer-history-copy.spec.ts:140:1 › **动作行靠右、不撑宽气泡**：一个字的气泡比它下面那行窄 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59870/c00738c7-136e-4a71-b1c4-e9b94e791104
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/composer-history-copy.spec.ts:176:1 › **七个字的问题占一行**，不被从中间折断 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:59884/a9bb2d01-ce04-4d49-9148-90454e8e28fe
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/composer-history-copy.spec.ts:198:1 › **坞里那段的「回到这句之前」**：整颗看得见，不把对话区撑出横向滚动 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59901/f80d7390-575a-46cf-9d40-5ac39f2706a7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/composer-layout.spec.ts:47:1 › 首页添加菜单支持键盘，方案状态可见，草稿不丢失 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59917/b03d694d-80f4-4699-a29d-4ff3bc0e9767
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/composer-layout.spec.ts:112:1 › 项目目录、文件选择、方案提交、普通发送与亮暗主题 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59943/17e50409-31f7-49bd-80f2-ba82cc7bd0d3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/composer-layout.spec.ts:160:1 › 主侧对话输入区在窄栏可操作且不横向溢出 (3.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「上下文配色检查」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59958/6d6f4bb5-3d59-42da-ab00-4b9a66d00e77
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/composer-layout.spec.ts:220:1 › 终端跟随强调色，上下文平时透明悬停有反馈，菜单跟随主题色 (5.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59997/cdbbc4e0-d835-4b04-a5a5-77fe62023a21
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/composer-paste.spec.ts:4:3 › 文本粘贴遵守光标与选区 · welcome (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60012/ce2b481c-95ab-4292-9524-c4eea335002c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/composer-paste.spec.ts:4:3 › 文本粘贴遵守光标与选区 · conversation (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60026/ffe7aaad-b3e0-4467-b34e-b959f514ba0d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/composer-paste.spec.ts:30:1 › 延迟识别期间在重复字符前键入，粘贴锚点跟随真实编辑选区 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60042/029553f0-e4d2-4be0-b620-a899e70c79b0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/composer-paste.spec.ts:49:1 › 侧边会话的选区替换独立于主会话草稿 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60054/d3c79149-0334-45a9-a19e-308f81ee6e4d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60082/3f0ef704-d376-46ca-b5a4-bdca46909979
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/composer-sizing.spec.ts:25:1 › 换行在输入、发送请求和用户气泡里都保留 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60094/bf4480d6-41d2-4b10-a488-efad6fe3fcf2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/composer-sizing.spec.ts:45:1 › 主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:60108/f0efcaa7-8c2b-4025-a377-57b1420c431d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/side-session.spec.ts:60:3 › 侧边对话 · native › **两段同时跑不串台**；坞里问进度真调到 read_main_session、读到的是主对话此刻的 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:60128/ee89640f-1180-4a57-b777-4aab0eebbc54
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/side-session.spec.ts:97:3 › 侧边对话 · native › **坞里那段长得像主区**：输入卡看得出边、一行头（标题 + 用量 + 导出对话 + 换到主区 + ×）、刻度尺放得下才画 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] Debugger ending on ws://127.0.0.1:60150/9bdf07d6-89e6-496e-a0dd-e3e5e409d027
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/side-session.spec.ts:166:3 › 侧边对话 · native › **换到主区 / 从坞里拿下**，三颗按钮都看得见（opacity 1） (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60164/7f8f367c-1f01-4ed1-a07f-361c6d76255c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/side-session.spec.ts:215:3 › 侧边对话 · 临时会话 › 主区是临时会话：坞里「另开一段」看得见、建出一段临时会话，主区不动 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60181/95554e7c-79b5-4e59-a806-b15f5a1714be
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/side-session.spec.ts:264:3 › 侧边对话 · ACP › **ACP 那段挂进坞，直说它看不见主对话** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [渲染进程] file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html:0 ResizeObserver loop completed with undelivered notifications.
+[主进程] [桌面通知·假] #0 「/team 审一遍这个仓库」做完了 — 先提出任务划分，等待你调整或采纳。
+[主进程] Debugger ending on ws://127.0.0.1:60197/c6c19793-5e37-42e6-839b-37a55dfa7927
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/side-session.spec.ts:309:3 › 侧边对话 · 团队 chip › **点坞里的团队 chip → 团队格是坞里那段的队，并写明来源；从标签栏进回到主区那段** (5.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60221/9b47132d-da57-4e00-9d4c-5bfa29de47e7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/side-session.spec.ts:356:1 › **新建任务那一屏：坞里另开一段是普通对话，不带文件夹** (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60233/e2010407-6224-4d34-9df3-bac9c017b178
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  32 e2e/side-session.spec.ts:373:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (27.7s)
+(node:65172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60384/510e5257-35f8-4255-afa2-6160c84ae24b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✘  33 e2e/side-session.spec.ts:373:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** (27.9s)
+(node:65528) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60537/685d6e4d-16dd-48f4-bd2f-bbe4938f103f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/text-context-menu.spec.ts:51:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60553/dd706542-3d7b-4024-90b5-f2e81335af00
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  35 e2e/text-context-menu.spec.ts:105:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 (2.0s)
+
+
+  1) e2e/side-session.spec.ts:373:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ─────────────────────────────
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('aside.right-dock').getByRole('separator', { name: '调整面板宽度' })
+    Expected: "360"
+    Received: "280"
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 25000ms
+      - waiting for locator('aside.right-dock').getByRole('separator', { name: '调整面板宽度' })
+        54 × locator resolved to <div tabindex="0" role="separator" aria-label="调整面板宽度" aria-valuenow="280" aria-valuemin="280" aria-valuemax="720" class="side-sash edge lead" aria-orientation="vertical"></div>
+           - unexpected value "280"
+
+
+      400 |       await page.mouse.move(x + previous - width, y, { steps: 8 })
+      401 |       await page.mouse.up()
+    > 402 |       await expect(sash).toHaveAttribute("aria-valuenow", String(width))
+          |                          ^
+      403 |     }
+      404 |     for (const sideWidth of [280, 360, 440, 600, 720]) {
+      405 |       await dragTo(sideWidth)
+        at dragTo (/Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/side-session.spec.ts:402:26)
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/side-session.spec.ts:405:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/side-session--1280-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e/side-session.spec.ts:373:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ─────────────────────────────
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('aside.right-dock').getByRole('separator', { name: '调整面板宽度' })
+    Expected: "360"
+    Received: "280"
+    Timeout:  25000ms
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 25000ms
+      - waiting for locator('aside.right-dock').getByRole('separator', { name: '调整面板宽度' })
+        54 × locator resolved to <div tabindex="0" role="separator" aria-label="调整面板宽度" aria-valuenow="280" aria-valuemin="280" aria-valuemax="720" class="side-sash edge lead" aria-orientation="vertical"></div>
+           - unexpected value "280"
+
+
+      400 |       await page.mouse.move(x + previous - width, y, { steps: 8 })
+      401 |       await page.mouse.up()
+    > 402 |       await expect(sash).toHaveAttribute("aria-valuenow", String(width))
+          |                          ^
+      403 |     }
+      404 |     for (const sideWidth of [280, 360, 440, 600, 720]) {
+      405 |       await dragTo(sideWidth)
+        at dragTo (/Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/side-session.spec.ts:402:26)
+        at /Users/liuyue/.codex/worktrees/dawn-composer-consistency-20261111/dawn-science/e2e/side-session.spec.ts:405:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/side-session--1920-宽：输入整卡同高，拖动分栏与不同草稿不改变高度-/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    e2e/side-session.spec.ts:373:3 › **1280 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ──────────────────────────────
+    e2e/side-session.spec.ts:373:3 › **1920 宽：输入整卡同高，拖动分栏与不同草稿不改变高度** ──────────────────────────────
+  33 passed (2.3m)

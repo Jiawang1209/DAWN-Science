@@ -26,10 +26,12 @@ test("非法日期、无时区时刻和超范围周期被 IPC 拒绝，修改失
     const updates = []
     for (const schedule of invalid) updates.push(await bridge.invoke("updateSchedule", { id, schedule }))
     const after = (await bridge.invoke("listSchedules", {})).data as { schedules: unknown[] }
-    return { creates, updates, saved: saved.data, after: after.schedules }
+    const boundary = await bridge.invoke("updateSchedule", { id, status: "paused", schedule: { kind: "once", at: "-271821-04-19T12:00:00-12:00", timeZone: "UTC" } })
+    return { creates, updates, saved: saved.data, after: after.schedules, boundary }
   }, dawn.workspace)
   for (const response of [...result.creates, ...result.updates]) expect(response).toMatchObject({ ok: false, error: { code: "invalid_request" } })
   expect(result.after).toEqual([result.saved])
+  expect(result.boundary).toMatchObject({ ok: true, data: { status: "paused", schedule: { at: "-271821-04-19T12:00:00-12:00" } } })
 })
 
 test("**建一条、立即跑一次、记录成功、会话留在项目里；暂停与删除**", async ({ dawn }) => {

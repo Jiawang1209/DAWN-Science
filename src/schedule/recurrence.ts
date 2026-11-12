@@ -33,8 +33,13 @@ const 周期可表示 = (n: number, unit: number): boolean => Number.isSafeInteg
 function 可表示ISO(ms: number): string | null { return 时刻可表示(ms) ? new Date(ms).toISOString() : null }
 
 function 日历日期合法(value: string): boolean {
-  const date = new Date(`${value}T00:00:00.000Z`)
-  return Number.isFinite(date.getTime()) && date.toISOString().split("T")[0] === value
+  const parts = /^(\d{4}|[+-]\d{6})-(\d{2})-(\d{2})$/.exec(value)
+  if (!parts || parts[1] === "-000000") return false
+  const year = Number(parts[1]), month = Number(parts[2]), day = Number(parts[3])
+  const equivalentYear = year - Math.floor((year - 2000) / 400) * 400
+  // 日历日可位于 UTC 范围外，但其带偏移的真实时刻仍可表示；在安全周期验证日期。
+  const date = new Date(Date.UTC(equivalentYear, month - 1, day))
+  return date.getUTCFullYear() === equivalentYear && date.getUTCMonth() + 1 === month && date.getUTCDate() === day
 }
 
 function 时刻合法(value: string): boolean {

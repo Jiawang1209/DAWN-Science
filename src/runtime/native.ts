@@ -1001,6 +1001,8 @@ export class NativeRuntime implements AgentRuntime {
    * 并发第二次调用等同一个,而不是再起一段。
    */
   private readonly 起中 = new Map<SessionId, Promise<SessionHandle>>()
+  /** Public startup includes cancellation/cleanup; stop waits only for initialization to avoid a cycle. */
+  private readonly 启动结果 = new Map<SessionId, Promise<SessionHandle>>()
   /** A closing generation owns all cleanup until it drains; reopening cannot overwrite its maps or files. */
   private readonly 停中 = new Map<SessionId, Promise<void>>()
   /**
@@ -2008,10 +2010,16 @@ export class NativeRuntime implements AgentRuntime {
       throw new UserFacingError(`会话 "${id}" 已经在运行了，不能重复开(先停掉它再开)`)
     }
     // 已经有人在起同一段:并发第二次调用等同一个 promise,不再起第二段(E4)
-    const 在起 = this.起中.get(id)
+    const 在起 = this.启动结果.get(id)
     if (在起) return 在起
     const p = this.启动一次(spec)
     this.起中.set(id, p)
+    const result = this.完成启动(id, p)
+    this.启动结果.set(id, result)
+    return result
+  }
+
+  private async 完成启动(id: SessionId, p: Promise<SessionHandle>): Promise<SessionHandle> {
     try {
       const handle = await p
       // 启动过程中有人请求停 → 立刻把刚起来的这段停掉,别让它漏成孤儿(E5)
@@ -2032,6 +2040,9 @@ export class NativeRuntime implements AgentRuntime {
       throw error
     } finally {
       this.起中.delete(id)
+      this.启动结果.delete(id)
+      // A failed initialization must not leave a stop request for the next generation.
+      this.已请求停.delete(id)
     }
   }
 

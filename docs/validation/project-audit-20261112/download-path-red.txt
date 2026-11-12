@@ -1,0 +1,217 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/update/download-path.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science
+
+ ❯ |node| tests/update/download-path.test.ts (10 tests | 10 failed) 43ms
+   × a release filename cannot remove a file outside the update directory before a network failure 6ms
+   × rejects non-filename release metadata before any I/O: "" 2ms
+   × rejects non-filename release metadata before any I/O: "." 2ms
+   × rejects non-filename release metadata before any I/O: ".." 1ms
+   × rejects non-filename release metadata before any I/O: "../pkg.zip" 19ms
+   × rejects non-filename release metadata before any I/O: "..\\pkg.zip" 4ms
+   × rejects non-filename release metadata before any I/O: "/tmp/pkg.zip" 2ms
+   × rejects non-filename release metadata before any I/O: "C:pkg.zip" 3ms
+   × rejects non-filename release metadata before any I/O: "C:\\pkg.zip" 3ms
+   × rejects non-filename release metadata before any I/O: "bad\u0000.zip" 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > a release filename cannot remove a file outside the update directory before a network failure
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/update/download-path.test.ts:14:33
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: ""
+AssertionError: expected [Function] to throw error matching /文件名/ but got 'Path is a directory: rm returned EISD…'
+
+- Expected:
+/文件名/
+
++ Received:
+"Path is a directory: rm returned EISDIR (is a directory) /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-hHWQCg/updates"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "."
+AssertionError: expected [Function] to throw error matching /文件名/ but got 'Path is a directory: rm returned EISD…'
+
+- Expected:
+/文件名/
+
++ Received:
+"Path is a directory: rm returned EISDIR (is a directory) /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-sW19nz/updates"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: ".."
+AssertionError: expected [Function] to throw error matching /文件名/ but got 'Path is a directory: rm returned EISD…'
+
+- Expected:
+/文件名/
+
++ Received:
+"Path is a directory: rm returned EISDIR (is a directory) /var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-aPk9Lx"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "../pkg.zip"
+AssertionError: promise resolved "'/var/folders/2t/y0qcl9r50cv427189l7px…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-A6v3W7/pkg.zip"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "..\\pkg.zip"
+AssertionError: promise resolved "'/var/folders/2t/y0qcl9r50cv427189l7px…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-uWKOND/updates/..\\pkg.zip"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "/tmp/pkg.zip"
+AssertionError: expected [Function] to throw error matching /文件名/ but got '下载中断：ENOENT: no such file or director…'
+
+- Expected:
+/文件名/
+
++ Received:
+"下载中断：ENOENT: no such file or directory, open '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-2Vxna0/updates/tmp/pkg.zip'（读到 4 / 共 4 字节）"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "C:pkg.zip"
+AssertionError: promise resolved "'/var/folders/2t/y0qcl9r50cv427189l7px…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-kQgYUB/updates/C:pkg.zip"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "C:\\pkg.zip"
+AssertionError: promise resolved "'/var/folders/2t/y0qcl9r50cv427189l7px…'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-ZFNhBv/updates/C:\\pkg.zip"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  |node| tests/update/download-path.test.ts > rejects non-filename release metadata before any I/O: "bad\u0000.zip"
+AssertionError: expected [Function] to throw error matching /文件名/ but got 'The argument \'path\' must be a strin…'
+
+- Expected:
+/文件名/
+
++ Received:
+"The argument 'path' must be a string, Uint8Array, or URL without null bytes. Received '/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-download-name-oW9pDK/updates/bad\\x00.zip'"
+
+ ❯ tests/update/download-path.test.ts:26:165
+     24|   const fetcher = vi.fn(async () => new Response("test"))
+     25|   try {
+     26|     await expect(下载到({ 资源: { name, size: 4, url: "https://example.inva…
+       |                                                                                                                                                                     ^
+     27|     expect(existsSync(target)).toBe(false)
+     28|     expect(fetcher).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  11:38:54
+   Duration  186ms (transform 17ms, setup 0ms, import 27ms, tests 43ms, environment 0ms)

@@ -30,6 +30,8 @@ export interface 下载参数 {
 }
 
 export async function 下载到({ 资源, 目录, 进度, signal, fetch: 取 = fetch }: 下载参数): Promise<string> {
+  // Release metadata supplies a filename, never a path. Validate before removing any old file.
+  if (!资源.name || 资源.name === "." || 资源.name === ".." || /[/\\:\0]/.test(资源.name)) throw new Error("更新资源文件名不合法，未下载或更改文件")
   await mkdir(目录, { recursive: true })
   const 落点 = join(目录, 资源.name)
   // 上一次留下的（成功的或半截的）一律先清掉：这一次要下的东西自己说了算

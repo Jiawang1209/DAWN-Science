@@ -48,6 +48,8 @@ export function 校验计划(p: 计划): string | undefined {
   if (p.kind === "everyDays") {
     if (!Number.isInteger(p.everyDays) || p.everyDays < 1) return "每几天至少 1 天"
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.start)) return `起点要写成 YYYY-MM-DD，给的是 ${p.start}`
+    const date = new Date(`${p.start}T00:00:00.000Z`)
+    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== p.start) return `起点不是有效日期：${p.start}`
   }
   return undefined
 }

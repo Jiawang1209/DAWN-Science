@@ -1,0 +1,56 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/runtime/native-start-cancellation.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science
+
+ ❯ |node| tests/runtime/native-start-cancellation.test.ts (2 tests | 2 failed) 62ms
+   × cancelled startup rejects every concurrent caller and allows a clean retry (deepseek-flash) 41ms
+   × cancelled startup rejects every concurrent caller and allows a clean retry (missing-model) 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/native-start-cancellation.test.ts > cancelled startup rejects every concurrent caller and allows a clean retry (deepseek-flash)
+AssertionError: expected [ 'rejected', 'fulfilled' ] to deeply equal [ 'rejected', 'rejected' ]
+
+- Expected
++ Received
+
+  [
+    "rejected",
+-   "rejected",
++   "fulfilled",
+  ]
+
+ ❯ tests/runtime/native-start-cancellation.test.ts:20:50
+     18|     await runtime.stop(spec.sessionId)
+     19|     const results = await starts
+     20|     expect(results.map(result => result.status)).toEqual(["rejected", …
+       |                                                  ^
+     21|     if (initialModel === "deepseek-flash") for (const result of result…
+     22|     expect(() => runtime.write(spec.sessionId, "must not be sent")).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/runtime/native-start-cancellation.test.ts > cancelled startup rejects every concurrent caller and allows a clean retry (missing-model)
+AssertionError: promise rejected "UserFacingError: 会话 "starting" 在启动过程中被停止了 { userFacing: true }" instead of resolving
+ ❯ tests/runtime/native-start-cancellation.test.ts:23:38
+     21|     if (initialModel === "deepseek-flash") for (const result of result…
+     22|     expect(() => runtime.write(spec.sessionId, "must not be sent")).to…
+     23|     await expect(runtime.start(spec)).resolves.toMatchObject({ session…
+       |                                      ^
+     24|   } finally {
+     25|     await runtime.stop(spec.sessionId)
+
+Caused by: UserFacingError: 会话 "starting" 在启动过程中被停止了
+ ❯ NativeRuntime.start src/runtime/native.ts:2020:15
+ ❯ tests/runtime/native-start-cancellation.test.ts:23:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { userFacing: true }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  11:33:10
+   Duration  2.77s (transform 1.33s, setup 0ms, import 2.60s, tests 62ms, environment 0ms)

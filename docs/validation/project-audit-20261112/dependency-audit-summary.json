@@ -1,0 +1,38 @@
+{
+  "production": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 598,
+      "dev": 364,
+      "optional": 113,
+      "peer": 17,
+      "peerOptional": 0,
+      "total": 1002
+    }
+  },
+  "all": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 598,
+      "dev": 364,
+      "optional": 113,
+      "peer": 17,
+      "peerOptional": 0,
+      "total": 1002
+    }
+  }
+}

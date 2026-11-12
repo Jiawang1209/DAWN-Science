@@ -1,0 +1,72 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/invalid-calendar.test.ts tests/workbench/schedule-ops.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science
+
+ ❯ |node| tests/schedule/invalid-calendar.test.ts (8 tests | 5 failed) 18ms
+   × rejects an impossible recurring start date instead of silently moving it: 2026-02-29 16ms
+   × rejects an impossible recurring start date instead of silently moving it: 2026-02-30 0ms
+   × rejects an impossible recurring start date instead of silently moving it: 2026-04-31 0ms
+   × rejects an impossible recurring start date instead of silently moving it: 2026-13-01 0ms
+   × rejects an impossible recurring start date instead of silently moving it: 2026-01-00 0ms
+ ❯ |node| tests/workbench/schedule-ops.test.ts (13 tests | 1 failed) 1140ms
+     × 不存在的起始日期被拒绝，不能静默保存为另一个日期 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > rejects an impossible recurring start date instead of silently moving it: 2026-02-29
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > rejects an impossible recurring start date instead of silently moving it: 2026-02-30
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > rejects an impossible recurring start date instead of silently moving it: 2026-04-31
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > rejects an impossible recurring start date instead of silently moving it: 2026-13-01
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > rejects an impossible recurring start date instead of silently moving it: 2026-01-00
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ tests/schedule/invalid-calendar.test.ts:5:102
+      3|
+      4| it.each(["2026-02-29", "2026-02-30", "2026-04-31", "2026-13-01", "2026…
+      5|   expect(校验计划({ kind: "everyDays", start, everyDays: 2, time: "08:00",…
+       |                                                                                                      ^
+      6| })
+      7|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |node| tests/workbench/schedule-ops.test.ts > 定时任务 > 不存在的起始日期被拒绝，不能静默保存为另一个日期
+AssertionError: promise resolved "{ …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "agentId": "ds-chat",
++   "createdAt": "2026-11-12T03:35:36.400Z",
++   "id": "sch-b09ae420-952d-4180-b65f-abb18847a0ad",
++   "name": "无效日期",
++   "nextAt": "2026-11-13T00:00:00.000Z",
++   "permission": "deny-risky",
++   "prompt": "看看数据",
++   "revision": 1,
++   "schedule": {
++     "everyDays": 2,
++     "kind": "everyDays",
++     "start": "2026-02-30",
++     "time": "08:00",
++     "timeZone": "Asia/Shanghai",
++   },
++   "status": "active",
++   "updatedAt": "2026-11-12T03:35:36.400Z",
++   "where": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-sch-RBZM2i",
++   "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-sch-RBZM2i",
+  }
+
+ ❯ tests/workbench/schedule-ops.test.ts:94:226
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 15 passed (21)
+   Start at  11:35:34
+   Duration  3.00s (transform 911ms, setup 0ms, import 1.81s, tests 1.16s, environment 0ms)

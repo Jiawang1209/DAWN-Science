@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/invalid-calendar.test.ts tests/schedule/recurrence.test.ts tests/schedule/scheduler.test.ts tests/workbench/schedule-ops.test.ts tests/acp/schedule-tools.test.ts tests/ui/skill-discovery.test.tsx tests/runtime/native-start-cancellation.test.ts tests/runtime/native.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science
+
+
+ Test Files  8 passed (8)
+      Tests  79 passed (79)
+   Start at  11:37:12
+   Duration  4.46s (transform 6.11s, setup 1.36s, import 10.83s, tests 2.37s, environment 589ms)

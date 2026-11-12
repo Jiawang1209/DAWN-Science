@@ -1,0 +1,22 @@
+{
+  "primary_before": {
+    "problemCounts": {
+      "invalid": 2
+    },
+    "problems": [
+      "invalid: minimatch@10.2.6 /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/minimatch",
+      "invalid: minimatch@9.0.9 /Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/@electron/universal/node_modules/minimatch"
+    ]
+  },
+  "clean_install": {
+    "problemCounts": {},
+    "problems": []
+  },
+  "primary_after": {
+    "problems": [],
+    "packageAndLockHashes": {
+      "package.json": "8c3d56800e35625ce2319e3d79c99500ccb4b952a0d2924e04f7d266d6b57659",
+      "package-lock.json": "56829ece1ff89f35a55088144908bfa318b24db171a6db170d00d1a064ebae0a"
+    }
+  }
+}

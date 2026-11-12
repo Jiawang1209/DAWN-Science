@@ -1,0 +1,73 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/visual.spec.ts --grep (空态|对话|命令面板|概览|设置栏|坞里的对话) · (亮色|暗色) --update-snapshots=changed --output=/tmp/dawn-audit-20261112-visual-update-output --reporter=list,json
+
+Running 12 tests using 1 worker
+
+(node:21763) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/空态-亮色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62763/3dba9d70-7587-432d-bbc7-a6970cc9001d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/visual.spec.ts:289:5 › 空态 · 亮色 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/对话-亮色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62774/f4744b5a-b6df-4c89-b869-e6b4ae7dce65
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/visual.spec.ts:289:5 › 对话 · 亮色 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/命令面板-亮色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62787/c60a00eb-6106-425c-83a6-3b061707160e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/visual.spec.ts:289:5 › 命令面板 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/概览-亮色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62798/0e520575-d1a1-421e-a956-c4ae16a32278
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/visual.spec.ts:289:5 › 概览 · 亮色 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/设置栏-亮色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62810/9f52c915-f40a-49cd-ab94-0416417393d6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/visual.spec.ts:289:5 › 设置栏 · 亮色 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/坞里的对话-亮色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62819/81936d38-b259-46e6-97b5-be2db265c121
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/空态-暗色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62837/e6b9fa17-03ad-4509-bb8a-f968f2ab67b9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/visual.spec.ts:289:5 › 空态 · 暗色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/对话-暗色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62848/92627bdd-e3db-4ac7-a449-bd4e2d6c9425
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/visual.spec.ts:289:5 › 对话 · 暗色 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/命令面板-暗色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62864/18d88838-d4e5-436c-9ed6-22d6af61d6bc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/visual.spec.ts:289:5 › 命令面板 · 暗色 (3.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/概览-暗色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62878/8c89a164-c836-4999-bd60-0cb4284b6439
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/visual.spec.ts:289:5 › 概览 · 暗色 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/设置栏-暗色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62898/297e2b6b-4333-4fa0-bd1e-001650391036
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/visual.spec.ts:289:5 › 设置栏 · 暗色 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/e2e/__screenshots__/坞里的对话-暗色-darwin.png is re-generated, writing actual.
+[主进程] Debugger ending on ws://127.0.0.1:62912/c2936e70-184d-42ed-b675-bcb0d17a2ebf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 (4.3s)
+
+  12 passed (34.9s)

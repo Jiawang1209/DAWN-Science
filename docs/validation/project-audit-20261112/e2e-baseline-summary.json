@@ -1,0 +1,188 @@
+{
+  "stats": {
+    "startTime": "2026-11-12T03:29:53.256Z",
+    "duration": 3250425.2130000005,
+    "expected": 944,
+    "skipped": 2,
+    "unexpected": 14,
+    "flaky": 0
+  },
+  "nonPassing": [
+    {
+      "file": "artifact-retention.spec.ts",
+      "title": "actual interpreter snapshots belong to each Python/R notebook execution",
+      "status": "skipped",
+      "results": [
+        {
+          "status": "skipped",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "file": "attach.spec.ts",
+      "title": "输入卡：环境在顶部，添加与权限在左，模型发送在右，同排且不溢出",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m2\u001b[39m\nReceived:    \u001b[31m44\u001b[39m"
+        }
+      ]
+    },
+    {
+      "file": "markdown-render.spec.ts",
+      "title": "**代码块的每一行是一行** —— 塌成一行的代码没法读",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: 退出码为零仍需检查收尾到期、失败、兜底或诊断缺失，不能把它们算成正常排空\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"shutdown-diagnostics-unavailable\",\u001b[39m\n\u001b[31m+ ]\u001b[39m"
+        }
+      ]
+    },
+    {
+      "file": "sidebar-collapse.spec.ts",
+      "title": "**展开的过程中同样不被压**（已按取舍放弃：见上）",
+      "status": "skipped",
+      "results": [
+        {
+          "status": "skipped",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "空态 · 亮色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  78417 pixels (ratio 0.08 of all image pixels) are different.\n\n  Snapshot: 空态-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(空态-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 78416 pixels (ratio 0.08 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "对话 · 亮色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  44348 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: 对话-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(对话-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 44348 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "命令面板 · 亮色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  145569 pixels (ratio 0.15 of all image pixels) are different.\n\n  Snapshot: 命令面板-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(命令面板-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 145569 pixels (ratio 0.15 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b["
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "概览 · 亮色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  51176 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: 概览-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(概览-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 51176 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "设置栏 · 亮色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  51176 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: 设置栏-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(设置栏-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 51176 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "坞里的对话 · 亮色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  28067 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-亮色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-亮色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 24066 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b["
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "空态 · 暗色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  101246 pixels (ratio 0.10 of all image pixels) are different.\n\n  Snapshot: 空态-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(空态-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 101243 pixels (ratio 0.10 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "对话 · 暗色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  94482 pixels (ratio 0.10 of all image pixels) are different.\n\n  Snapshot: 对话-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(对话-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 94482 pixels (ratio 0.10 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "命令面板 · 暗色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  136991 pixels (ratio 0.14 of all image pixels) are different.\n\n  Snapshot: 命令面板-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(命令面板-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 136991 pixels (ratio 0.14 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b["
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "概览 · 暗色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  56741 pixels (ratio 0.06 of all image pixels) are different.\n\n  Snapshot: 概览-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(概览-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 56741 pixels (ratio 0.06 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "设置栏 · 暗色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  56758 pixels (ratio 0.06 of all image pixels) are different.\n\n  Snapshot: 设置栏-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(设置栏-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 56741 pixels (ratio 0.06 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  "
+        }
+      ]
+    },
+    {
+      "file": "visual.spec.ts",
+      "title": "坞里的对话 · 暗色",
+      "status": "unexpected",
+      "results": [
+        {
+          "status": "failed",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  47621 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: 坞里的对话-暗色.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(坞里的对话-暗色.png)\" with timeout 25000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 43829 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b["
+        }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,7 @@ An open-source, local-first AI workbench where multiple agents collaborate with 
 
 ## What it is
 
-An **open-source, local-first desktop environment for research work**. You talk to a model; the model runs Python / R in a **persistent kernel** — variables survive across conversations and restarts — and you can keep typing into the same kernel from a notebook pane, with your cells recorded in the conversation. A project is a folder; a server becomes a remote workspace with nothing installed on it but `sshd`.
+An **open-source, local-first desktop environment for research work**. You talk to a model; the model runs Python / R in a **persistent kernel** — variables remain across executions while that conversation’s kernel is running — and you can keep typing into the same kernel from a notebook pane, with your cells recorded in the conversation. A project is a folder; a server becomes a remote workspace with nothing installed on it but `sshd`.
 
 **The idea:**
 
@@ -74,7 +74,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 | | |
 |---|---|
 | **Kernel in the conversation** | The model calls `run_code`; you watch every cell stream by in the dock's *Notebook* pane, type into the same kernel yourself, and your cells land in the conversation |
-| **Persistent kernels** | Variables survive across conversations and restarts, and can be interrupted; close the chat and `df` is still there |
+| **Persistent kernels** | Variables remain across cells and view switches while the kernel is running. Stopping the conversation/kernel or quitting DAWN ends local kernel memory |
 | **Remote workspaces** | Add a server over SSH — sessions, kernels, files and terminals run there; zero dependencies on the server |
 | **Right dock** | Files (local / remote), transfers, notebook, generated artifacts, web preview, watching the agent's browser |
 | **`@` references** | `@` a workspace file in the input box — path and type are passed, not contents |
@@ -94,7 +94,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 
 ### D · Data
 
-Persistent Python and R kernels (variables kept across cells, sessions and restarts; interruptible) · database connections and schema browsing · standardized artifact schemas (tables carry structure, charts carry data source and metric meaning, models carry hyper-parameters and evaluation metrics).
+Persistent Python and R kernels (variables kept across cells and view switches until the kernel stops; interruptible) · database connections and schema browsing · standardized artifact schemas (tables carry structure, charts carry data source and metric meaning, models carry hyper-parameters and evaluation metrics).
 
 ### A · Agent
 
@@ -104,7 +104,7 @@ An agent that plans, calls tools, executes and reports — not just chats. By de
 
 A project is bound to a folder; configuration, knowledge and kernels hang off the project · local / WSL / SSH / GPU runtimes · run management for long jobs (pre-flight checks, heartbeats, bounded logs, environment snapshots).
 
-**Key structure: the kernel outlives the session.** Close a conversation and `df` is still in Python.
+**Key structure: the conversation and notebook share a live kernel.** Switching views keeps its variables available. Stopping the conversation/kernel or quitting DAWN closes local kernels; save scripts and outputs to reproduce the analysis after restarting.
 
 ### N · Notebook
 
@@ -260,7 +260,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 
 ## 这是什么
 
-一个**开源、本地优先的桌面科研工作环境**。你在里面和模型对话，模型在**同一台内核**里跑 Python / R——变量跨对话、跨重启保留；你可以在旁边的笔记本里接着敲，敲的记进对话。项目绑定文件夹，服务器只要一个 sshd 就能成为远端工作区。
+一个**开源、本地优先的桌面科研工作环境**。你在里面和模型对话，模型在**同一台内核**里跑 Python / R——该对话的内核运行期间，变量在连续执行之间保留；你可以在旁边的笔记本里接着敲，敲的记进对话。项目绑定文件夹，服务器只要一个 sshd 就能成为远端工作区。
 
 **设计理念：**
 
@@ -318,7 +318,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 | | |
 |---|---|
 | **对话里的内核** | 模型调 `run_code`，你在坞里的「笔记本」格看它的每个 cell 流过；在同一台内核里自己敲，敲的记进对话 |
-| **持久内核** | 变量跨对话、跨重启保留，可中断；关掉对话，Python 里的 `df` 仍在 |
+| **持久内核** | 内核运行期间，变量在连续 cell 和视图切换之间保留，可中断；停止对话/内核或退出应用会结束本地内核内存状态 |
 | **远端工作区** | 加一台服务器（SSH），会话、内核、文件、终端都在那边跑；本机零依赖 |
 | **右侧坞** | 文件（本地/远端）、传输、笔记本、产物清单、网页预览、agent 浏览器旁观 |
 | **`@` 引用** | 输入框里 `@` 工作区文件——喂路径和类型，不喂内容 |
@@ -338,7 +338,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 
 ### D · Data
 
-Python 与 R 持久内核（变量跨 cell、跨会话、跨重启保留，且**可中断**）· 数据库连接与 schema 浏览 · 产物 schema 标准化（表格附固定结构、图表附数据源与指标含义、模型附超参与评估指标）。
+Python 与 R 持久内核（内核运行期间变量跨 cell 和视图切换保留，且**可中断**）· 数据库连接与 schema 浏览 · 产物 schema 标准化（表格附固定结构、图表附数据源与指标含义、模型附超参与评估指标）。
 
 ### A · Agent
 
@@ -348,7 +348,7 @@ Python 与 R 持久内核（变量跨 cell、跨会话、跨重启保留，且**
 
 Project 绑定文件夹，配置、知识与内核都挂在 Project 上 · 本地 / WSL / SSH / GPU 执行环境 · 长任务的 Run 管理（提交前预检、心跳、有界日志、环境快照）。
 
-**关键结构：内核的生命周期长于会话。** 关掉一个对话，Python 里的 `df` 仍在。
+**关键结构：对话与笔记本共用运行中的内核。** 切换视图保留变量；停止对话/内核或退出应用会关闭本地内核，重启后应通过保存的脚本和结果重现分析。
 
 ### N · Notebook
 

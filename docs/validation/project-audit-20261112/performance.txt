@@ -1,0 +1,332 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test -c playwright.perf.config.ts --output=/tmp/dawn-audit-20261112-performance-output --reporter=list,json
+
+Running 3 tests using 1 worker
+
+(node:24416) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+
+==== audit-20261112 · 重画 ====
+[
+  {
+    "历史轮数": 0,
+    "cpu降速": "1x",
+    "墙钟毫秒": 5934,
+    "提交次数": 224,
+    "组件总数": 813,
+    "每次提交平均重跑": 47,
+    "重跑总数": 10470,
+    "输入卡表面重跑次数": 4,
+    "重跑最多的组件": {
+      "Gu": 1858,
+      "H": 1740,
+      "(匿名)": 656,
+      "ad": 300,
+      "j3": 199,
+      "Gd": 197,
+      "iF": 189,
+      "Block": 132,
+      "rd": 126,
+      "e4": 118,
+      "qd": 113,
+      "Ad": 112
+    },
+    "提交的花样": {
+      "(空提交)": 96,
+      "(匿名)+Ad+B4+Block+Cf+CopyIcon+DownloadIcon+E3": 26,
+      "e4": 18,
+      "(匿名)+Ad+B4+Block+Cf+E3+Gd+Gu": 15,
+      "(匿名)+Ad+B4+Block+Cf+Dd+E3+Gd": 15,
+      "(匿名)+Ad+Block+CopyIcon+DownloadIcon+E3+Gd+Gu": 15,
+      "Ad+Die+Gd+Gu+H+Jd+Jne+LU": 8,
+      "CopyIcon+DownloadIcon+_N+aN+nN+xN+xU": 5
+    }
+  },
+  {
+    "历史轮数": 1,
+    "cpu降速": "4x",
+    "墙钟毫秒": 5628,
+    "提交次数": 221,
+    "组件总数": 1462,
+    "每次提交平均重跑": 48,
+    "重跑总数": 10676,
+    "输入卡表面重跑次数": 3,
+    "重跑最多的组件": {
+      "Gu": 1874,
+      "H": 1776,
+      "(匿名)": 640,
+      "ad": 297,
+      "j3": 247,
+      "Gd": 226,
+      "iF": 177,
+      "TU": 125,
+      "wU": 125,
+      "rd": 123,
+      "Block": 120,
+      "e4": 116
+    },
+    "提交的花样": {
+      "(空提交)": 97,
+      "(匿名)+Ad+B4+Block+Cf+CopyIcon+DownloadIcon+E3": 27,
+      "(匿名)+Ad+Block+CopyIcon+DownloadIcon+E3+Gd+Gu": 18,
+      "e4": 17,
+      "(匿名)+Ad+B4+Block+Cf+Dd+E3+Gd": 13,
+      "Ad+Die+Gd+Gu+H+Jd+Jne+Ku": 12,
+      "(匿名)+Ad+B4+Block+Cf+E3+Gd+Gu": 12,
+      "CopyIcon+DownloadIcon+_N+aN+nN+xN+xU": 5
+    }
+  },
+  {
+    "历史轮数": 10,
+    "cpu降速": "1x",
+    "墙钟毫秒": 5558,
+    "提交次数": 149,
+    "组件总数": 7191,
+    "每次提交平均重跑": 93,
+    "重跑总数": 13863,
+    "输入卡表面重跑次数": 3,
+    "重跑最多的组件": {
+      "H": 2351,
+      "Gu": 2156,
+      "(匿名)": 730,
+      "j3": 641,
+      "Gd": 514,
+      "TU": 322,
+      "wU": 322,
+      "ad": 297,
+      "y3": 231,
+      "Qu": 231,
+      "iF": 221,
+      "Block": 164
+    },
+    "提交的花样": {
+      "(空提交)": 48,
+      "(匿名)+Ad+B4+Block+CopyIcon+DownloadIcon+E3+Gd": 27,
+      "(匿名)+Ad+Block+CopyIcon+DownloadIcon+E3+Gd+Gu": 22,
+      "(匿名)+Ad+B4+Block+Cf+E3+Gd+Gu": 19,
+      "Ad+Die+Gd+Gu+H+Jd+Jne+Ku": 11,
+      "(匿名)+Ad+Block+E3+Gd+Gu+H+M3": 8,
+      "(匿名)+Ad+B4+Block+E3+Gd+Gu+H": 3,
+      "mre": 2
+    }
+  },
+  {
+    "历史轮数": 11,
+    "cpu降速": "4x",
+    "墙钟毫秒": 5997,
+    "提交次数": 128,
+    "组件总数": 7826,
+    "每次提交平均重跑": 102,
+    "重跑总数": 13090,
+    "输入卡表面重跑次数": 4,
+    "重跑最多的组件": {
+      "H": 2242,
+      "Gu": 1980,
+      "(匿名)": 661,
+      "j3": 661,
+      "Gd": 536,
+      "TU": 332,
+      "wU": 332,
+      "ad": 264,
+      "y3": 253,
+      "Qu": 253,
+      "iF": 199,
+      "Block": 142
+    },
+    "提交的花样": {
+      "(空提交)": 37,
+      "(匿名)+Ad+B4+Block+CopyIcon+DownloadIcon+E3+Gd": 24,
+      "(匿名)+Ad+Block+CopyIcon+DownloadIcon+E3+Gd+Gu": 17,
+      "(匿名)+Ad+B4+Block+Cf+E3+Gd+Gu": 15,
+      "Ad+Die+Gd+Gu+H+Jd+Jne+Ku": 11,
+      "(匿名)+Ad+Block+E3+Gd+Gu+H+M3": 9,
+      "mre": 3,
+      "(匿名)+Ad+B4+Block+Cf+Dd+E3+Gd": 3
+    }
+  },
+  {
+    "历史轮数": 30,
+    "cpu降速": "1x",
+    "墙钟毫秒": 5856,
+    "提交次数": 150,
+    "组件总数": 12879,
+    "每次提交平均重跑": 109,
+    "重跑总数": 16379,
+    "输入卡表面重跑次数": 3,
+    "重跑最多的组件": {
+      "H": 2960,
+      "Gu": 2341,
+      "j3": 1045,
+      "Gd": 816,
+      "(匿名)": 609,
+      "TU": 524,
+      "wU": 524,
+      "y3": 434,
+      "Qu": 434,
+      "ad": 294,
+      "$u": 218,
+      "ed": 218
+    },
+    "提交的花样": {
+      "(空提交)": 49,
+      "(匿名)+Ad+Block+CopyIcon+DownloadIcon+E3+Gd+Gu": 47,
+      "(匿名)+Ad+B4+Block+Cf+E3+Gd+Gu": 18,
+      "(匿名)+Ad+Block+E3+Gd+Gu+H+M3": 12,
+      "Ad+Die+Gd+Gu+H+Jd+Jne+Ku": 11,
+      "mre": 3,
+      "(匿名)+Ad+B4+Block+Cf+Dd+E3+Gd": 3,
+      "Ad+B4+Cf+Dd+E3+Gd+Gu+H": 2
+    }
+  },
+  {
+    "历史轮数": 31,
+    "cpu降速": "4x",
+    "墙钟毫秒": 5882,
+    "提交次数": 100,
+    "组件总数": 12880,
+    "每次提交平均重跑": 140,
+    "重跑总数": 13955,
+    "输入卡表面重跑次数": 3,
+    "重跑最多的组件": {
+      "H": 2481,
+      "Gu": 1801,
+      "j3": 985,
+      "Gd": 786,
+      "(匿名)": 599,
+      "TU": 494,
+      "wU": 494,
+      "y3": 434,
+      "Qu": 434,
+      "$u": 218,
+      "ed": 218,
+      "V2": 216
+    },
+    "提交的花样": {
+      "(匿名)+Ad+Block+CopyIcon+DownloadIcon+E3+Gd+Gu": 33,
+      "(空提交)": 30,
+      "Ad+Die+Gd+Gu+H+Jd+Jne+Ku": 11,
+      "(匿名)+Ad+Block+E3+Gd+Gu+H+M3": 8,
+      "(匿名)+Ad+B4+Block+Cf+E3+Gd+Gu": 6,
+      "Ad+B4+Cf+Dd+E3+Gd+Gu+H": 2,
+      "(匿名)+Ad+Block+E3+Gd+Gu+H+MarkdownLi": 2,
+      "mre": 2
+    }
+  }
+]
+[主进程] Debugger ending on ws://127.0.0.1:63420/f7a5a3e1-8798-4c32-9da6-2fd02a28a864
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/streaming.perf.ts:257:1 › 回复时的重画次数 (40.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+
+==== audit-20261112 · 时间 ====
+[
+  {
+    "历史轮数": 0,
+    "cpu降速": "1x",
+    "墙钟毫秒": 5938,
+    "长任务数": 0,
+    "长任务总毫秒": 0,
+    "最长任务毫秒": 0,
+    "主线程被占比例": "0%",
+    "帧数": 710,
+    "帧间隔p50": 8,
+    "帧间隔p95": 9,
+    "帧间隔最大": 17,
+    "卡帧数_超50ms": 0
+  },
+  {
+    "历史轮数": 1,
+    "cpu降速": "4x",
+    "墙钟毫秒": 5633,
+    "长任务数": 1,
+    "长任务总毫秒": 52,
+    "最长任务毫秒": 52,
+    "主线程被占比例": "1%",
+    "帧数": 647,
+    "帧间隔p50": 8,
+    "帧间隔p95": 9,
+    "帧间隔最大": 75,
+    "卡帧数_超50ms": 2
+  },
+  {
+    "历史轮数": 10,
+    "cpu降速": "1x",
+    "墙钟毫秒": 5553,
+    "长任务数": 0,
+    "长任务总毫秒": 0,
+    "最长任务毫秒": 0,
+    "主线程被占比例": "0%",
+    "帧数": 660,
+    "帧间隔p50": 8,
+    "帧间隔p95": 9,
+    "帧间隔最大": 25,
+    "卡帧数_超50ms": 0
+  },
+  {
+    "历史轮数": 11,
+    "cpu降速": "4x",
+    "墙钟毫秒": 5858,
+    "长任务数": 11,
+    "长任务总毫秒": 793,
+    "最长任务毫秒": 83,
+    "主线程被占比例": "14%",
+    "帧数": 523,
+    "帧间隔p50": 8,
+    "帧间隔p95": 25,
+    "帧间隔最大": 92,
+    "卡帧数_超50ms": 12
+  },
+  {
+    "历史轮数": 30,
+    "cpu降速": "1x",
+    "墙钟毫秒": 5847,
+    "长任务数": 0,
+    "长任务总毫秒": 0,
+    "最长任务毫秒": 0,
+    "主线程被占比例": "0%",
+    "帧数": 664,
+    "帧间隔p50": 8,
+    "帧间隔p95": 9,
+    "帧间隔最大": 42,
+    "卡帧数_超50ms": 0
+  },
+  {
+    "历史轮数": 31,
+    "cpu降速": "4x",
+    "墙钟毫秒": 5688,
+    "长任务数": 15,
+    "长任务总毫秒": 1739,
+    "最长任务毫秒": 156,
+    "主线程被占比例": "31%",
+    "帧数": 328,
+    "帧间隔p50": 8,
+    "帧间隔p95": 49,
+    "帧间隔最大": 167,
+    "卡帧数_超50ms": 16
+  }
+]
+[主进程] Debugger ending on ws://127.0.0.1:63550/1e0f26e6-0430-4fb8-9fee-ea6a73347543
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/streaming.perf.ts:272:1 › 回复时的卡顿（时间） (39.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+
+==== audit-20261112 · 预算 ====
+[
+  {
+    "typingP95Ms": 15.9,
+    "ipcBytes": 7398,
+    "inputSamples": 23,
+    "budget": {
+      "typingP95Ms": 150,
+      "ipcBytes": 1000000
+    },
+    "ipcMetric": "UTF-8 JSON payload bytes received on the session event IPC channel",
+    "typingMetric": "p95 input-event to double-requestAnimationFrame latency"
+  }
+]
+[主进程] Debugger ending on ws://127.0.0.1:63701/41b90923-9f53-46bf-9703-1c8ab8cfb86d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/streaming.perf.ts:277:1 › 流式回复期间的输入延迟与单轮事件 IPC 字节数 (3.0s)
+
+  3 passed (1.4m)

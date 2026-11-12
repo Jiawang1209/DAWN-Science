@@ -189,10 +189,10 @@ const 撤回的话 = z
 /* ── 定时任务的形状（7.19） ── */
 const 时间HHmm = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
 export const ScheduleSpecSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("once"), at: z.string().min(1), timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("once"), at: z.string().min(1).describe("ISO 日期（UTC 零点），或带 Z/时区偏移的 ISO 日期时间，例如 2026-12-01T08:00:00+08:00。timeZone 不能代替时刻中的偏移。"), timeZone: z.string().min(1) }).strict(),
   z.object({ kind: z.literal("daily"), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
   z.object({ kind: z.literal("weekly"), weekdays: z.array(z.enum(["MO", "TU", "WE", "TH", "FR", "SA", "SU"])).min(1), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
-  z.object({ kind: z.literal("interval"), everyMinutes: z.int().min(1), anchor: z.string().min(1), timeZone: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal("interval"), everyMinutes: z.int().min(1), anchor: z.string().min(1).describe("ISO 日期（UTC 零点），或带 Z/时区偏移的 ISO 日期时间；不可省略日期时间中的时区。"), timeZone: z.string().min(1) }).strict(),
   z.object({ kind: z.literal("monthly"), day: z.int().min(1).max(31), time: 时间HHmm, timeZone: z.string().min(1) }).strict(),
   z.object({ kind: z.literal("everyDays"), everyDays: z.int().min(1), time: 时间HHmm, start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), timeZone: z.string().min(1) }).strict(),
 ])

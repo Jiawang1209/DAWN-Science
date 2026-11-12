@@ -1,0 +1,50 @@
+{
+  "numTotalTests": 7282,
+  "numPassedTests": 7272,
+  "numPendingTests": 10,
+  "numFailedTests": 0,
+  "success": true,
+  "testFileCount": 736,
+  "skipped": [
+    {
+      "file": "remote-kernel.test.ts",
+      "title": "连上就跑：扫残留不该杀掉刚起的那一台 扫完了才起内核，起来的那一台不会被自己人杀掉"
+    },
+    {
+      "file": "wiring.test.ts",
+      "title": "远端会话的解释器（远程内核） 没配 → 探测；唯一 → 写进这台服务器的配置并出声"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · 接回要认的几条 扫残留带名单：名单上那台的进程也真的没被杀"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · 杀掉所有假内核（模拟 OOM） 真 SIGKILL 掉起过的内核，connection.json 留着不删"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · R 事实脚本里报得出这条 R——否则界面会说「这台机器上没装 R」，而那是假的"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · R 探测那条真去 spawn 它：拿得到版本，且 IRkernel 判成 present（退出码 0）"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · R 挑端口 + 写连接文件：真写出来了，五个端口回得来，权限是 0600"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · R 起内核：真 spawn 一台 IRkernel，进程真活着，收摊之后文件与进程都没了"
+    },
+    {
+      "file": "fake-ssh-kernel.test.ts",
+      "title": "假机器 · R 扫残留：R 的那台也真被杀、文件真被删（装机 id 认得出来）"
+    },
+    {
+      "file": "fake-ssh.test.ts",
+      "title": "假服务器 · 内核那几条（远程内核，2026-09-03） 真起一台本机 ipykernel：拿到 connection.json、forwardOut 直连、停掉后进程没了"
+    }
+  ]
+}

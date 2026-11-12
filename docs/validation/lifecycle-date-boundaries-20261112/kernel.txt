@@ -1,0 +1,31 @@
+
+Running 6 tests using 1 worker
+
+(node:42034) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54353/91b3d3a3-7379-4e19-9b33-66ee85871e8a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/kernel-session.spec.ts:43:3 › 内核会话 › 执行一段代码 → **结构化输出**出现在对话里 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54381/9c0b14d1-77f5-4ef9-9bb8-9308d5c91df1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/kernel-session.spec.ts:156:3 › 内核执行的账本 › **跑挂的代码在账本上是 failed，且带着原因** (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54413/51b49ab1-c153-46e4-9b54-b539fccafc57
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/kernel-session.spec.ts:192:3 › 内核执行的账本 › **跑得通的代码是 completed** —— 不能一律记成失败 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54436/fa2166ed-0802-46e4-a148-bbe24d646b8d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/kernel-session.spec.ts:226:3 › R 内核会话 › **同一条代码路径**：执行、报错、活会话、变量面板 (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54463/5d911590-3a3e-4141-bc3b-316ee1c0d611
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/kernel-session.spec.ts:282:3 › 由配置的解释器路径起内核 › **没配就明说没配，配完就能跑** (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54485/ef397bd3-43eb-4731-8601-d4aab274b202
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/kernel-session.spec.ts:377:3 › 内核会话 · ACP 借我们的内核 › **它跑的是我们的内核，账本上记的是「执行了一段代码」** (3.2s)
+
+  6 passed (16.6s)

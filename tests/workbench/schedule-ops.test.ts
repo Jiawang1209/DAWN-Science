@@ -91,6 +91,44 @@ describe("定时任务", () => {
   const 计划 = { kind: "daily" as const, time: "08:00", timeZone: "Asia/Shanghai" }
 
   it.each([
+    { kind: "interval", everyMinutes: 1e12, anchor: "2026-01-01T00:00:00Z", timeZone: "UTC" },
+    { kind: "everyDays", everyDays: 1e9, start: "2026-01-01", time: "08:00", timeZone: "UTC" },
+  ] as const)("$kind 超范围周期在保存前拒绝，历史记录不拖垮列表", async schedule => {
+    await expect(ctx.backend.createSchedule({ name: "超范围", prompt: "看看数据", schedule, agentId: "ds-chat" })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+    expect(ctx.schedules.list()).toHaveLength(0)
+    const saved = await ctx.backend.createSchedule({ name: "历史超范围", prompt: "看看数据", schedule: 计划, agentId: "ds-chat" }) as { id: string }
+    ctx.schedules.put({ ...ctx.schedules.get(saved.id)!, schedule })
+    await expect(ctx.backend.listSchedules({})).resolves.toMatchObject({ schedules: [{ id: saved.id }] })
+  })
+
+  for (const value of [" 2026-02-30 ", "2026/02/30 08:00:00 GMT", "Feb 30, 2026 08:00:00 GMT", "2026-12-01T08:00:00"]) {
+    it.each(["once", "interval"] as const)(`%s 创建和替换拒绝有歧义的时刻 ${JSON.stringify(value)}`, async kind => {
+      const schedule = kind === "once" ? { kind, at: value, timeZone: "UTC" } as const : { kind, everyMinutes: 30, anchor: value, timeZone: "UTC" } as const
+      await expect(ctx.backend.createSchedule({ name: "拒绝猜日期", prompt: "看看数据", schedule, agentId: "ds-chat" })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+      expect(ctx.schedules.list()).toHaveLength(0)
+      const saved = await ctx.backend.createSchedule({ name: "保留原任务", prompt: "看看数据", schedule: 计划, agentId: "ds-chat" }) as { id: string }
+      const before = ctx.schedules.list()
+      await expect(ctx.backend.updateSchedule({ id: saved.id, schedule })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+      expect(ctx.schedules.list()).toEqual(before)
+    })
+  }
+
+  it.each([
+    { kind: "once", at: "March 1, 2099 08:00:00 GMT", timeZone: "UTC" },
+    { kind: "interval", everyMinutes: 60, anchor: "2099/03/01 08:00:00 GMT", timeZone: "UTC" },
+  ] as const)("已保存的 $kind 历史时刻仍能读取、改名、暂停及显式替换为 ISO", async legacy => {
+    const saved = await ctx.backend.createSchedule({ name: "历史任务", prompt: "看看数据", schedule: 计划, agentId: "ds-chat" }) as { id: string }
+    ctx.schedules.put({ ...ctx.schedules.get(saved.id)!, schedule: legacy })
+    const list = await ctx.backend.listSchedules({}) as { schedules: { nextAt?: string }[] }
+    expect(list.schedules[0]!.nextAt).toBe("2099-03-01T08:00:00.000Z")
+    await expect(ctx.backend.updateSchedule({ id: saved.id, name: "历史任务改名", status: "paused" })).resolves.toMatchObject({ revision: 2, schedule: legacy, status: "paused" })
+    const schedule = legacy.kind === "once"
+      ? { kind: "once", at: "2099-03-01T08:00:00Z", timeZone: "UTC" } as const
+      : { kind: "interval", everyMinutes: 60, anchor: "2099-03-01T08:00:00Z", timeZone: "UTC" } as const
+    await expect(ctx.backend.updateSchedule({ id: saved.id, schedule })).resolves.toMatchObject({ revision: 3, schedule })
+  })
+
+  it.each([
     { kind: "once", at: "2026-02-30T08:00:00Z", timeZone: "UTC" },
     { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00Z", timeZone: "UTC" },
   ] as const)("$kind 的不存在日期在创建和修改时均被拒绝，不改动已保存任务", async schedule => {

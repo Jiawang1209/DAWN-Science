@@ -4838,13 +4838,15 @@ ${描述}`
     const closing = this.停中.get(sessionId)
     if (closing) return closing
     const starting = this.启动结果.get(sessionId)
-    const work = this.停止一次(sessionId).finally(async () => {
+    const gate = Promise.withResolvers<void>()
+    // 清理依赖可能同步回调 stop；先登记屏障，再进入清理，且保留同步撤销写入的行为。
+    this.停中.set(sessionId, gate.promise)
+    void this.停止一次(sessionId).finally(async () => {
       // 新一代只能在旧初始化的失败/取消清理也排空后启动。
       await starting?.catch(() => {})
-      if (this.停中.get(sessionId) === work) this.停中.delete(sessionId)
-    })
-    this.停中.set(sessionId, work)
-    return work
+      if (this.停中.get(sessionId) === gate.promise) this.停中.delete(sessionId)
+    }).then(gate.resolve, gate.reject)
+    return gate.promise
   }
 
   private async 停止一次(sessionId: SessionId): Promise<void> {

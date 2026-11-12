@@ -1,0 +1,142 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/date-range.test.ts tests/workbench/schedule-ops.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science
+
+ ❯ |node| tests/schedule/date-range.test.ts (9 tests | 9 failed) 21ms
+   × 'interval': rejects periods larger than the complete supported calendar span 16ms
+   × 'everyDays': rejects periods larger than the complete supported calendar span 1ms
+   × 'interval': legacy oversized periods have no next representable occurrence instead of throwing 1ms
+   × 'everyDays': legacy oversized periods have no next representable occurrence instead of throwing 1ms
+   × 'interval': stops at the maximum JS date and retains its final due occurrence 0ms
+   × 'everyDays': stops at the maximum JS date and retains its final due occurrence 0ms
+   × 'daily': stops at the maximum JS date and retains its final due occurrence 0ms
+   × 'monthly': stops at the maximum JS date and retains its final due occurrence 0ms
+   × invalid reference clocks produce no occurrence 1ms
+stderr | tests/workbench/schedule-ops.test.ts > 定时任务 > 'interval' 超范围周期在保存前拒绝，历史记录不拖垮列表
+[定时] pump 失败：Invalid time value
+
+stderr | tests/workbench/schedule-ops.test.ts > 定时任务 > 'everyDays' 超范围周期在保存前拒绝，历史记录不拖垮列表
+[定时] pump 失败：Invalid time value
+
+ ❯ |node| tests/workbench/schedule-ops.test.ts (27 tests | 2 failed) 1214ms
+     × 'interval' 超范围周期在保存前拒绝，历史记录不拖垮列表 24ms
+     × 'everyDays' 超范围周期在保存前拒绝，历史记录不拖垮列表 5ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > 'interval': rejects periods larger than the complete supported calendar span
+ FAIL  |node| tests/schedule/date-range.test.ts > 'everyDays': rejects periods larger than the complete supported calendar span
+AssertionError: expected undefined to be defined
+ ❯ tests/schedule/date-range.test.ts:10:22
+      8|
+      9| it.each(huge)("$kind: rejects periods larger than the complete support…
+     10|   expect(校验计划(plan)).toBeDefined()
+       |                      ^
+     11| })
+     12|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > 'interval': legacy oversized periods have no next representable occurrence instead of throwing
+RangeError: Invalid time value
+ ❯ 下一次 src/schedule/recurrence.ts:123:32
+    121|     if (a < 锚) return new Date(锚).toISOString()
+    122|     const n = Math.floor((a - 锚) / 步) + 1
+    123|     return new Date(锚 + n * 步).toISOString()
+       |                                ^
+    124|   }
+    125|   const [h, mi] = p.time.split(":").map(Number) as [number, number]
+ ❯ tests/schedule/date-range.test.ts:14:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > 'everyDays': legacy oversized periods have no next representable occurrence instead of throwing
+RangeError: Invalid time value
+ ❯ 本地分量 src/schedule/recurrence.ts:81:21
+
+ ❯ 显示时刻 src/schedule/recurrence.ts:91:15
+ ❯ src/schedule/recurrence.ts:95:44
+ ❯ 本地时刻转UTC src/schedule/recurrence.ts:95:35
+ ❯ 候选 src/schedule/recurrence.ts:133:14
+ ❯ 下一次 src/schedule/recurrence.ts:135:15
+ ❯ tests/schedule/date-range.test.ts:14:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > 'interval': stops at the maximum JS date and retains its final due occurrence
+RangeError: Invalid time value
+ ❯ 下一次 src/schedule/recurrence.ts:123:32
+    121|     if (a < 锚) return new Date(锚).toISOString()
+    122|     const n = Math.floor((a - 锚) / 步) + 1
+    123|     return new Date(锚 + n * 步).toISOString()
+       |                                ^
+    124|   }
+    125|   const [h, mi] = p.time.split(":").map(Number) as [number, number]
+ ❯ tests/schedule/date-range.test.ts:25:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > 'everyDays': stops at the maximum JS date and retains its final due occurrence
+RangeError: Invalid time value
+ ❯ 本地分量 src/schedule/recurrence.ts:81:21
+
+ ❯ 显示时刻 src/schedule/recurrence.ts:91:15
+ ❯ src/schedule/recurrence.ts:95:44
+ ❯ 本地时刻转UTC src/schedule/recurrence.ts:95:35
+ ❯ 候选 src/schedule/recurrence.ts:133:14
+ ❯ 下一次 src/schedule/recurrence.ts:135:15
+ ❯ tests/schedule/date-range.test.ts:25:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > 'daily': stops at the maximum JS date and retains its final due occurrence
+ FAIL  |node| tests/schedule/date-range.test.ts > 'monthly': stops at the maximum JS date and retains its final due occurrence
+RangeError: Invalid time value
+ ❯ 本地分量 src/schedule/recurrence.ts:81:21
+
+ ❯ 显示时刻 src/schedule/recurrence.ts:91:15
+ ❯ src/schedule/recurrence.ts:95:44
+ ❯ 本地时刻转UTC src/schedule/recurrence.ts:95:35
+ ❯ 下一次 src/schedule/recurrence.ts:143:16
+ ❯ tests/schedule/date-range.test.ts:25:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > invalid reference clocks produce no occurrence
+RangeError: Invalid time value
+ ❯ 本地分量 src/schedule/recurrence.ts:81:21
+
+ ❯ 下一次 src/schedule/recurrence.ts:126:13
+ ❯ tests/schedule/date-range.test.ts:32:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |node| tests/workbench/schedule-ops.test.ts > 定时任务 > 'interval' 超范围周期在保存前拒绝，历史记录不拖垮列表
+ FAIL  |node| tests/workbench/schedule-ops.test.ts > 定时任务 > 'everyDays' 超范围周期在保存前拒绝，历史记录不拖垮列表
+AssertionError: expected RangeError: Invalid time value to match object { workbenchCode: 'invalid_request' }
+
+- Expected
++ Received
+
+- {
+-   "workbenchCode": "invalid_request",
++ RangeError {
++   "message": "Invalid time value",
+  }
+
+ ❯ tests/workbench/schedule-ops.test.ts:97:108
+     95|     { kind: "everyDays", everyDays: 1e9, start: "2026-01-01", time: "0…
+     96|   ] as const)("$kind 超范围周期在保存前拒绝，历史记录不拖垮列表", async schedule => {
+     97|     await expect(ctx.backend.createSchedule({ name: "超范围", prompt: "看看…
+       |                                                                                                            ^
+     98|     expect(ctx.schedules.list()).toHaveLength(0)
+     99|     const saved = await ctx.backend.createSchedule({ name: "历史超范围", pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed | 25 passed (36)
+   Start at  13:34:38
+   Duration  3.21s (transform 804ms, setup 0ms, import 1.95s, tests 1.23s, environment 0ms)

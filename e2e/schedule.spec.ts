@@ -5,15 +5,19 @@
  */
 import { test, expect, CANNED_REPLY, 在项目里开会话 } from "./fixtures.js"
 
-test("一次性和间隔任务的不存在日期通过真实 IPC 被拒绝，修改失败保留原计划", async ({ dawn }) => {
+test("非法日期、无时区时刻和超范围周期被 IPC 拒绝，修改失败保留原计划", async ({ dawn }) => {
   const result = await dawn.page.evaluate(async workspace => {
     const bridge = (window as unknown as { dawn: { invoke: (op: string, request: unknown) => Promise<{ ok: boolean; data?: unknown; error?: { code: string } }> } }).dawn
     const providers = (await bridge.invoke("getProviders", {})).data as { agents: { agentId: string }[] }
     const base = { name: "日期回归", prompt: "只验证计划，不执行", agentId: providers.agents[0]!.agentId, workspace }
-    const invalid = [
-      { kind: "once", at: "2026-02-30T08:00:00Z", timeZone: "UTC" },
-      { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00Z", timeZone: "UTC" },
-    ]
+    const invalid: unknown[] = ["2026-02-30T08:00:00Z", " 2026-02-30 ", "2026/02/30 08:00:00 GMT", "Feb 30, 2026 08:00:00 GMT", "2026-12-01T08:00:00"].flatMap(value => [
+      { kind: "once", at: value, timeZone: "UTC" },
+      { kind: "interval", everyMinutes: 30, anchor: value, timeZone: "UTC" },
+    ])
+    invalid.push(
+      { kind: "interval", everyMinutes: 1e12, anchor: "2026-01-01T00:00:00Z", timeZone: "UTC" },
+      { kind: "everyDays", everyDays: 1e9, start: "2026-01-01", time: "08:00", timeZone: "UTC" },
+    )
     const creates = []
     for (const schedule of invalid) creates.push(await bridge.invoke("createSchedule", { ...base, schedule }))
     const saved = await bridge.invoke("createSchedule", { ...base, schedule: { kind: "once", at: "2099-02-28T08:00:00Z", timeZone: "UTC" } })

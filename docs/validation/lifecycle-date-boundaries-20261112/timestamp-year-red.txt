@@ -1,0 +1,193 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/timestamp-contract.test.ts tests/schedule/calendar-years.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science
+
+ ❯ |node| tests/schedule/calendar-years.test.ts (9 tests | 7 failed) 23ms
+   × converts the literal calendar year 0000 without adding 1900 17ms
+   × converts the literal calendar year 0001 without adding 1900 1ms
+   × converts the literal calendar year 0099 without adding 1900 1ms
+   × everyDays calculation agrees with the accepted start year 0000 1ms
+   × everyDays calculation agrees with the accepted start year 0001 1ms
+   × everyDays calculation agrees with the accepted start year 0099 0ms
+   × daily, weekly and monthly use the same literal-year calendar 1ms
+ ❯ |node| tests/schedule/timestamp-contract.test.ts (35 tests | 13 failed) 392ms
+   × once: refuses ambiguous or non-ISO new timestamps (" 2026-02-30 ") 15ms
+   × once: refuses ambiguous or non-ISO new timestamps ("2026/02/30 08:00:00 GMT") 0ms
+   × once: refuses ambiguous or non-ISO new timestamps ("Feb 30, 2026 08:00:00 GMT") 0ms
+   × once: refuses ambiguous or non-ISO new timestamps ("2026-12-01T08:00:00") 0ms
+   × once: refuses ambiguous or non-ISO new timestamps ("Sat, 28 Feb 2026 08:00:00 GMT") 0ms
+   × interval: refuses ambiguous or non-ISO new timestamps (" 2026-02-30 ") 0ms
+   × interval: refuses ambiguous or non-ISO new timestamps ("2026/02/30 08:00:00 GMT") 0ms
+   × interval: refuses ambiguous or non-ISO new timestamps ("Feb 30, 2026 08:00:00 GMT") 0ms
+   × interval: refuses ambiguous or non-ISO new timestamps ("2026-12-01T08:00:00") 1ms
+   × interval: refuses ambiguous or non-ISO new timestamps ("Sat, 28 Feb 2026 08:00:00 GMT") 0ms
+   × new timestamp admission and explicit instants are independent of host TZ=UTC 173ms
+   × new timestamp admission and explicit instants are independent of host TZ=America/Los_Angeles 100ms
+   × new timestamp admission and explicit instants are independent of host TZ=Asia/Shanghai 98ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > converts the literal calendar year 0000 without adding 1900
+AssertionError: expected '1900-01-01T08:00:00.000Z' to be '0000-01-01T08:00:00.000Z' // Object.is equality
+
+Expected: "0000-01-01T08:00:00.000Z"
+Received: "1900-01-01T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:5:53
+      3|
+      4| it.each(["0000", "0001", "0099", "0100", "2026"])("converts the litera…
+      5|   expect(本地时刻转UTC(Number(year), 1, 1, 8, 0, "UTC")).toBe(`${year}-01-0…
+       |                                                     ^
+      6| })
+      7|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > converts the literal calendar year 0001 without adding 1900
+AssertionError: expected '1901-01-01T08:00:00.000Z' to be '0001-01-01T08:00:00.000Z' // Object.is equality
+
+Expected: "0001-01-01T08:00:00.000Z"
+Received: "1901-01-01T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:5:53
+      3|
+      4| it.each(["0000", "0001", "0099", "0100", "2026"])("converts the litera…
+      5|   expect(本地时刻转UTC(Number(year), 1, 1, 8, 0, "UTC")).toBe(`${year}-01-0…
+       |                                                     ^
+      6| })
+      7|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > converts the literal calendar year 0099 without adding 1900
+AssertionError: expected '1999-01-01T08:00:00.000Z' to be '0099-01-01T08:00:00.000Z' // Object.is equality
+
+Expected: "0099-01-01T08:00:00.000Z"
+Received: "1999-01-01T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:5:53
+      3|
+      4| it.each(["0000", "0001", "0099", "0100", "2026"])("converts the litera…
+      5|   expect(本地时刻转UTC(Number(year), 1, 1, 8, 0, "UTC")).toBe(`${year}-01-0…
+       |                                                     ^
+      6| })
+      7|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > everyDays calculation agrees with the accepted start year 0000
+AssertionError: expected '1901-01-02T08:00:00.000Z' to be '0000-01-01T08:00:00.000Z' // Object.is equality
+
+Expected: "0000-01-01T08:00:00.000Z"
+Received: "1901-01-02T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:11:45
+      9|   const p = { kind: "everyDays" as const, start: `${year}-01-01`, ever…
+     10|   expect(校验计划(p)).toBeUndefined()
+     11|   expect(下一次(p, `${year}-01-01T00:00:00Z`)).toBe(`${year}-01-01T08:00:…
+       |                                             ^
+     12|   expect(下一次(p, `${year}-01-01T08:00:00Z`)).toBe(`${year}-01-04T08:00:…
+     13|   expect(最近一次到期(p, `${year}-01-04T07:00:00Z`)).toBe(`${year}-01-01T08:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > everyDays calculation agrees with the accepted start year 0001
+AssertionError: expected '1901-01-01T08:00:00.000Z' to be '0001-01-01T08:00:00.000Z' // Object.is equality
+
+Expected: "0001-01-01T08:00:00.000Z"
+Received: "1901-01-01T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:11:45
+      9|   const p = { kind: "everyDays" as const, start: `${year}-01-01`, ever…
+     10|   expect(校验计划(p)).toBeUndefined()
+     11|   expect(下一次(p, `${year}-01-01T00:00:00Z`)).toBe(`${year}-01-01T08:00:…
+       |                                             ^
+     12|   expect(下一次(p, `${year}-01-01T08:00:00Z`)).toBe(`${year}-01-04T08:00:…
+     13|   expect(最近一次到期(p, `${year}-01-04T07:00:00Z`)).toBe(`${year}-01-01T08:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > everyDays calculation agrees with the accepted start year 0099
+AssertionError: expected '1999-01-01T08:00:00.000Z' to be '0099-01-01T08:00:00.000Z' // Object.is equality
+
+Expected: "0099-01-01T08:00:00.000Z"
+Received: "1999-01-01T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:11:45
+      9|   const p = { kind: "everyDays" as const, start: `${year}-01-01`, ever…
+     10|   expect(校验计划(p)).toBeUndefined()
+     11|   expect(下一次(p, `${year}-01-01T00:00:00Z`)).toBe(`${year}-01-01T08:00:…
+       |                                             ^
+     12|   expect(下一次(p, `${year}-01-01T08:00:00Z`)).toBe(`${year}-01-04T08:00:…
+     13|   expect(最近一次到期(p, `${year}-01-04T07:00:00Z`)).toBe(`${year}-01-01T08:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  |node| tests/schedule/calendar-years.test.ts > daily, weekly and monthly use the same literal-year calendar
+AssertionError: expected '1999-01-01T08:00:00.000Z' to be '0099-01-02T08:00:00.000Z' // Object.is equality
+
+Expected: "0099-01-02T08:00:00.000Z"
+Received: "1999-01-01T08:00:00.000Z"
+
+ ❯ tests/schedule/calendar-years.test.ts:17:90
+     15|
+     16| it("daily, weekly and monthly use the same literal-year calendar", () …
+     17|   expect(下一次({ kind: "daily", time: "08:00", timeZone: "UTC" }, "0099-…
+       |                                                                                          ^
+     18|   expect(下一次({ kind: "weekly", weekdays: ["MO"], time: "08:00", timeZo…
+     19|   expect(下一次({ kind: "monthly", day: 31, time: "08:00", timeZone: "UTC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: refuses ambiguous or non-ISO new timestamps (" 2026-02-30 ")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: refuses ambiguous or non-ISO new timestamps ("2026/02/30 08:00:00 GMT")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: refuses ambiguous or non-ISO new timestamps ("Feb 30, 2026 08:00:00 GMT")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: refuses ambiguous or non-ISO new timestamps ("2026-12-01T08:00:00")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: refuses ambiguous or non-ISO new timestamps ("Sat, 28 Feb 2026 08:00:00 GMT")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: refuses ambiguous or non-ISO new timestamps (" 2026-02-30 ")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: refuses ambiguous or non-ISO new timestamps ("2026/02/30 08:00:00 GMT")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: refuses ambiguous or non-ISO new timestamps ("Feb 30, 2026 08:00:00 GMT")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: refuses ambiguous or non-ISO new timestamps ("2026-12-01T08:00:00")
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: refuses ambiguous or non-ISO new timestamps ("Sat, 28 Feb 2026 08:00:00 GMT")
+AssertionError: expected undefined to be defined
+ ❯ tests/schedule/timestamp-contract.test.ts:16:31
+     14|     "2026-02-28T08:00:00Z\n", "Sat, 28 Feb 2026 08:00:00 GMT",
+     15|   ])(`${kind}: refuses ambiguous or non-ISO new timestamps (%j)`, valu…
+     16|     expect(校验计划(plan(value))).toBeDefined()
+       |                               ^
+     17|   })
+     18|   it.each([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > new timestamp admission and explicit instants are independent of host TZ=UTC
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > new timestamp admission and explicit instants are independent of host TZ=America/Los_Angeles
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > new timestamp admission and explicit instants are independent of host TZ=Asia/Shanghai
+AssertionError: expected { ambiguousRejected: false, …(2) } to deeply equal { ambiguousRejected: true, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "ambiguousRejected": true,
++   "ambiguousRejected": false,
+    "dateOnly": "2026-12-01T00:00:00.000Z",
+    "offset": "2026-12-01T00:00:00.000Z",
+  }
+
+ ❯ tests/schedule/timestamp-contract.test.ts:35:18
+     33|       dateOnly:下一次(plan("2026-12-01"),"2026-11-30T00:00:00Z")}));`
+     34|   const result = JSON.parse(execFileSync(process.execPath, ["--import"…
+     35|   expect(result).toEqual({ ambiguousRejected: true, offset: "2026-12-0…
+       |                  ^
+     36| })
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  20 failed | 24 passed (44)
+   Start at  13:23:49
+   Duration  526ms (transform 44ms, setup 0ms, import 62ms, tests 415ms, environment 0ms)

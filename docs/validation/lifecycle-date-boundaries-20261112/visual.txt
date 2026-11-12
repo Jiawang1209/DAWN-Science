@@ -1,0 +1,69 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/visual.spec.ts --output=/tmp/dawn-boundaries-20261112-visual-output --reporter=list,json
+
+Running 14 tests using 1 worker
+
+(node:42460) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54644/3268b738-a7a6-4b59-820a-8b70089be311
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/visual.spec.ts:289:5 › 空态 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54660/68be5315-0bb6-4e83-89a1-c5d4371858e2
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/visual.spec.ts:289:5 › 对话 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54670/33a3760d-353d-48b2-a5af-b05acbefbd78
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/visual.spec.ts:289:5 › 设置 · 亮色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54682/5d1263fd-671d-49c6-b716-e53d7c08ca22
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/visual.spec.ts:289:5 › 命令面板 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54696/aa367fa3-6a49-409e-9e6c-7c16f33f5277
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/visual.spec.ts:289:5 › 概览 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54713/966d0307-6cc5-488e-a314-7ba4b1ec4842
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/visual.spec.ts:289:5 › 设置栏 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54732/e8bfba21-b03f-430f-a475-99b496f4b425
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54753/7fd4ae0a-2024-4772-8df3-8dd1ff944724
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/visual.spec.ts:289:5 › 空态 · 暗色 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54764/98b41e76-bc0f-4ae3-9e00-a25778263d5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/visual.spec.ts:289:5 › 对话 · 暗色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54777/40a71aa1-4d69-44c4-afe5-8a84d6a52451
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/visual.spec.ts:289:5 › 设置 · 暗色 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54792/0828fce1-2f38-4ce6-8be8-e3fcd9d3859d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/visual.spec.ts:289:5 › 命令面板 · 暗色 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54810/56f3778a-cbff-46b3-8a39-7684830ecde3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/visual.spec.ts:289:5 › 概览 · 暗色 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:54823/51a8de0c-f1fd-4dcf-b41f-c3340054ca76
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/visual.spec.ts:289:5 › 设置栏 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:54831/2ee14b7d-d4ef-4c07-83ce-8228ccfdfdba
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 (5.4s)
+
+  14 passed (33.8s)

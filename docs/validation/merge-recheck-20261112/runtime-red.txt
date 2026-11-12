@@ -1,0 +1,32 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/runtime/native-stop-immediate-restart.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science
+
+ ❯ |node| tests/runtime/native-stop-immediate-restart.test.ts (2 tests | 1 failed) 52ms
+   × stop completion permits an immediate new generation without waiting for old start callers (deepseek-flash) 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/runtime/native-stop-immediate-restart.test.ts > stop completion permits an immediate new generation without waiting for old start callers (deepseek-flash)
+AssertionError: promise rejected "UserFacingError: 会话 "restarting" 在启动过程中被停… { userFacing: true }" instead of resolving
+ ❯ tests/runtime/native-stop-immediate-restart.test.ts:19:38
+     17|   try {
+     18|     await runtime.stop(spec.sessionId)
+     19|     await expect(runtime.start(spec)).resolves.toMatchObject({ session…
+       |                                      ^
+     20|     expect((await original)[0]!.status).toBe("rejected")
+     21|   } finally {
+
+Caused by: UserFacingError: 会话 "restarting" 在启动过程中被停止了
+ ❯ NativeRuntime.完成启动 src/runtime/native.ts:2028:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { userFacing: true }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  13:02:04
+   Duration  2.28s (transform 697ms, setup 0ms, import 2.13s, tests 52ms, environment 0ms)

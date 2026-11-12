@@ -2022,9 +2022,9 @@ export class NativeRuntime implements AgentRuntime {
   private async 完成启动(id: SessionId, p: Promise<SessionHandle>): Promise<SessionHandle> {
     try {
       const handle = await p
-      // 启动过程中有人请求停 → 立刻把刚起来的这段停掉,别让它漏成孤儿(E5)
+      // 请求停止的一方已经等着初始化结果并负责回收；这里不能反过来等待 stop，
+      // 否则 stop 等完整启动收尾时会形成循环等待。
       if (this.已请求停.delete(id)) {
-        await this.stop(id).catch(() => {})
         throw new UserFacingError(`会话 "${id}" 在启动过程中被停止了`)
       }
       return handle
@@ -4837,7 +4837,10 @@ ${描述}`
   stop(sessionId: SessionId): Promise<void> {
     const closing = this.停中.get(sessionId)
     if (closing) return closing
-    const work = this.停止一次(sessionId).finally(() => {
+    const starting = this.启动结果.get(sessionId)
+    const work = this.停止一次(sessionId).finally(async () => {
+      // 新一代只能在旧初始化的失败/取消清理也排空后启动。
+      await starting?.catch(() => {})
       if (this.停中.get(sessionId) === work) this.停中.delete(sessionId)
     })
     this.停中.set(sessionId, work)
@@ -4858,16 +4861,16 @@ ${描述}`
     const coordinator = this.orchestrations.get(sessionId)
     const coordinationClosing = (controls ? controls.mailbox.close() : coordinator?.close())?.catch(error => {coordinationError ??= error})
     // 启动还没完成就被停(E5):会话还没登记进 sessions,直接返回会让它「起完就漏」。
-    // 记一笔并等启动结束——start() 的收尾会据此把刚起来的立刻停掉。
+    // 记一笔并等原始初始化结束，再由下面的停止路径回收刚登记的会话。
     if (this.起中.has(sessionId) && !this.sessions.has(sessionId)) {
       this.已请求停.add(sessionId)
       await this.起中.get(sessionId)!.catch(() => {})
-      // 到这里 start() 的收尾要么已经把它停干净(下面 get 拿不到直接返回),要么启动失败了
+      // 初始化成功时会话已登记；失败时下面 get 拿不到，仍要等完整启动收尾。
     }
     const s = this.sessions.get(sessionId)
     if (!s) { await projectionClosing;await coordinationClosing; this.retireOrchestration(sessionId,coordinator); if(this.orchestrationControls.get(sessionId)===controls)this.orchestrationControls.delete(sessionId); await 内核收尾; if (coordinationError) throw coordinationError; return }
-    // **同步认领**:先从表里摘掉,一个并发的 stop() 就 get 不到、直接返回——避免两条路都 dispose
-    // 同一段(start 启动期收尾的那次 stop 与外部那次 stop 会撞在一起)导致 double-dispose(E5 连带)。
+    // 先从表里摘掉，使停止期间的新写入立即被拒绝；后续 await 负责排空旧会话。
+    // 停中继续持有完整关闭过程，直到初始化和资源清理结束才允许同 id 重开。
     this.interruptAnalysisRoute(sessionId, '会话已停止')
     this.sessions.delete(sessionId)
     this.botTeams.delete(sessionId)

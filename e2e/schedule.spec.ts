@@ -5,6 +5,29 @@
  */
 import { test, expect, CANNED_REPLY, 在项目里开会话 } from "./fixtures.js"
 
+test("一次性和间隔任务的不存在日期通过真实 IPC 被拒绝，修改失败保留原计划", async ({ dawn }) => {
+  const result = await dawn.page.evaluate(async workspace => {
+    const bridge = (window as unknown as { dawn: { invoke: (op: string, request: unknown) => Promise<{ ok: boolean; data?: unknown; error?: { code: string } }> } }).dawn
+    const providers = (await bridge.invoke("getProviders", {})).data as { agents: { agentId: string }[] }
+    const base = { name: "日期回归", prompt: "只验证计划，不执行", agentId: providers.agents[0]!.agentId, workspace }
+    const invalid = [
+      { kind: "once", at: "2026-02-30T08:00:00Z", timeZone: "UTC" },
+      { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00Z", timeZone: "UTC" },
+    ]
+    const creates = []
+    for (const schedule of invalid) creates.push(await bridge.invoke("createSchedule", { ...base, schedule }))
+    const saved = await bridge.invoke("createSchedule", { ...base, schedule: { kind: "once", at: "2099-02-28T08:00:00Z", timeZone: "UTC" } })
+    if (!saved.ok) throw new Error(JSON.stringify(saved.error))
+    const id = (saved.data as { id: string }).id
+    const updates = []
+    for (const schedule of invalid) updates.push(await bridge.invoke("updateSchedule", { id, schedule }))
+    const after = (await bridge.invoke("listSchedules", {})).data as { schedules: unknown[] }
+    return { creates, updates, saved: saved.data, after: after.schedules }
+  }, dawn.workspace)
+  for (const response of [...result.creates, ...result.updates]) expect(response).toMatchObject({ ok: false, error: { code: "invalid_request" } })
+  expect(result.after).toEqual([result.saved])
+})
+
 test("**建一条、立即跑一次、记录成功、会话留在项目里；暂停与删除**", async ({ dawn }) => {
   const { page } = dawn
   await 在项目里开会话(page)

@@ -162,7 +162,7 @@ export function 工具清单(有内核: boolean): 网关工具[] {
       name: "dawn_schedule_create",
       description:
         "建一条 DAWN 定时任务：到点了会开一段全新的会话（跑在当前这段会话所在的项目 / 服务器上，用同一个 agent），把 prompt 发给它。" +
-        "prompt 要自包含——那段会话记不得现在这段对话。计划四选一：daily（time）/ weekly（weekdays + time）/ interval（everyMinutes）/ once（at，ISO）/ monthly（day + time）/ everyDays（everyDays + start + time）。" +
+        "prompt 要自包含——那段会话记不得现在这段对话。计划可选：daily（time）/ weekly（weekdays + time）/ interval（everyMinutes）/ once（at，ISO）/ monthly（day + time）/ everyDays（everyDays + start + time）。" +
         "当前会话是「拦危险的」档时，建出来是暂停的，要用户到「定时」里按恢复——告诉用户这一点。",
       schema: {
         type: "object",
@@ -173,7 +173,7 @@ export function 工具清单(有内核: boolean): 网关工具[] {
           time: { type: "string", description: "HH:mm（daily / weekly / monthly / everyDays）" },
           weekdays: { type: "array", items: { type: "string", enum: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] }, description: "weekly 用" },
           everyMinutes: { type: "integer", description: "interval 用，最小 1" },
-          at: { type: "string", description: "once 用，ISO 时刻" },
+          at: { type: "string", description: "once 用，ISO 日期（UTC 零点）或带 Z/时区偏移的 ISO 日期时间，例如 2026-12-01T08:00:00+08:00；不能省略日期时间中的时区" },
           day: { type: "integer", description: "monthly 用，1–31" },
           everyDays: { type: "integer", description: "everyDays 用" },
           start: { type: "string", description: "everyDays 用，YYYY-MM-DD 起点" },

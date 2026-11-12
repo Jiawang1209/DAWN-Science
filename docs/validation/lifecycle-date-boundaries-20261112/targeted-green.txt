@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule tests/workbench/schedule-ops.test.ts tests/acp/schedule-tools.test.ts tests/runtime/native-reentrant-stop.test.ts tests/runtime/native-start-callbacks.test.ts tests/runtime/native-start-cancellation.test.ts tests/runtime/native-stop-immediate-restart.test.ts tests/runtime/native.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science
+
+
+ Test Files  13 passed (13)
+      Tests  175 passed (175)
+   Start at  13:52:49
+   Duration  3.94s (transform 5.23s, setup 0ms, import 16.19s, tests 2.66s, environment 1ms)

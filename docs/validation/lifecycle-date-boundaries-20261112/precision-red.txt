@@ -1,0 +1,54 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/date-range.test.ts -t millisecond precision
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science
+
+ ❯ |node| tests/schedule/date-range.test.ts (12 tests | 2 failed | 10 skipped) 5ms
+   × millisecond precision survives a full-span subtraction (period=1 minutes) 4ms
+   × millisecond precision survives a full-span subtraction (period=288000000000 minutes) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > millisecond precision survives a full-span subtraction (period=1 minutes)
+AssertionError: expected null to be '+275760-09-12T23:59:00.001Z' // Object.is equality
+
+- Expected:
+"+275760-09-12T23:59:00.001Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:49:51
+     47|   const p = { kind: "interval", everyMinutes, anchor: new Date(first).…
+     48|   const expected = everyMinutes === 1 ? new Date(last - 59_999).toISOS…
+     49|   expect(最近一次到期(p, new Date(last).toISOString())).toBe(expected)
+       |                                                   ^
+     50|   expect(下一次(p, expected)).toBeNull()
+     51| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > millisecond precision survives a full-span subtraction (period=288000000000 minutes)
+AssertionError: expected null to be '-271821-04-20T00:00:00.001Z' // Object.is equality
+
+- Expected:
+"-271821-04-20T00:00:00.001Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:49:51
+     47|   const p = { kind: "interval", everyMinutes, anchor: new Date(first).…
+     48|   const expected = everyMinutes === 1 ? new Date(last - 59_999).toISOS…
+     49|   expect(最近一次到期(p, new Date(last).toISOString())).toBe(expected)
+       |                                                   ^
+     50|   expect(下一次(p, expected)).toBeNull()
+     51| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  13:41:16
+   Duration  151ms (transform 27ms, setup 0ms, import 37ms, tests 5ms, environment 0ms)

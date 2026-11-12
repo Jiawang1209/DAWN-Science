@@ -1,0 +1,30 @@
+Running 6 tests using 1 worker
+
+(node:2843) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61580/3b0c5612-8fbb-49b5-a070-f61adefe5234
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/kernel-session.spec.ts:43:3 › 内核会话 › 执行一段代码 → **结构化输出**出现在对话里 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61609/a89acac9-32cb-4efe-ad9f-729a754c6fd5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/kernel-session.spec.ts:156:3 › 内核执行的账本 › **跑挂的代码在账本上是 failed，且带着原因** (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61637/7a910158-5505-4a47-9f6a-5a918fe05630
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/kernel-session.spec.ts:192:3 › 内核执行的账本 › **跑得通的代码是 completed** —— 不能一律记成失败 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61665/127d9e4a-d0a5-4f00-878a-13e4de4d5727
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/kernel-session.spec.ts:226:3 › R 内核会话 › **同一条代码路径**：执行、报错、活会话、变量面板 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61708/19d3bb4e-6d61-4a58-964f-4766401bbe33
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/kernel-session.spec.ts:282:3 › 由配置的解释器路径起内核 › **没配就明说没配，配完就能跑** (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61731/c4785208-ad7a-4a32-91df-d3ec62e3653a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/kernel-session.spec.ts:377:3 › 内核会话 · ACP 借我们的内核 › **它跑的是我们的内核，账本上记的是「执行了一段代码」** (3.4s)
+
+  6 passed (17.3s)

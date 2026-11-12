@@ -1,0 +1,151 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/date-range.test.ts -t calendar limits
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science
+
+ ❯ |node| tests/schedule/date-range.test.ts (21 tests | 7 failed | 12 skipped) 30ms
+   × calendar limits respect the local clock in UTC at 8:00 4ms
+   × calendar limits respect the local clock in UTC at 23:00 2ms
+   × calendar limits respect the local clock in Etc/GMT-14 at 8:00 1ms
+   × calendar limits respect the local clock in Etc/GMT-14 at 23:00 1ms
+   × calendar limits respect the local clock in Etc/GMT+12 at 0:00 1ms
+   × calendar limits respect the local clock in Etc/GMT+12 at 8:00 1ms
+   × calendar limits respect the local clock in Etc/GMT+12 at 23:00 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in UTC at 8:00
+AssertionError: expected null to be '+275760-09-12T08:00:00.000Z' // Object.is equality
+
+- Expected:
+"+275760-09-12T08:00:00.000Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:72:28
+     70|     }
+     71|     const p = { kind: "everyDays", start: "9999-01-01", everyDays: 1, …
+     72|     expect(最近一次到期(p, max)).toBe(iso(latest))
+       |                            ^
+     73|   })
+     74| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in UTC at 23:00
+AssertionError: expected null to be '+275760-09-12T23:00:00.000Z' // Object.is equality
+
+- Expected:
+"+275760-09-12T23:00:00.000Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:72:28
+     70|     }
+     71|     const p = { kind: "everyDays", start: "9999-01-01", everyDays: 1, …
+     72|     expect(最近一次到期(p, max)).toBe(iso(latest))
+       |                            ^
+     73|   })
+     74| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in Etc/GMT-14 at 8:00
+AssertionError: expected '+275760-09-11T18:00:00.000Z' to be '+275760-09-12T18:00:00.000Z' // Object.is equality
+
+Expected: "+275760-09-12T18:00:00.000Z"
+Received: "+275760-09-11T18:00:00.000Z"
+
+ ❯ tests/schedule/date-range.test.ts:67:30
+     65|     ] as const) {
+     66|       expect(下一次(p, max)).toBeNull()
+     67|       expect(最近一次到期(p, max)).toBe(iso(latest))
+       |                              ^
+     68|       expect(下一次(p, min)).toBe(iso(first))
+     69|       expect(最近一次到期(p, min)).toBe(iso(candidates(-limit).find(t => t =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in Etc/GMT-14 at 23:00
+AssertionError: expected null to be '+275760-09-12T09:00:00.000Z' // Object.is equality
+
+- Expected:
+"+275760-09-12T09:00:00.000Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:72:28
+     70|     }
+     71|     const p = { kind: "everyDays", start: "9999-01-01", everyDays: 1, …
+     72|     expect(最近一次到期(p, max)).toBe(iso(latest))
+       |                            ^
+     73|   })
+     74| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in Etc/GMT+12 at 0:00
+AssertionError: expected null to be '-271821-04-20T12:00:00.000Z' // Object.is equality
+
+- Expected:
+"-271821-04-20T12:00:00.000Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:68:27
+     66|       expect(下一次(p, max)).toBeNull()
+     67|       expect(最近一次到期(p, max)).toBe(iso(latest))
+     68|       expect(下一次(p, min)).toBe(iso(first))
+       |                           ^
+     69|       expect(最近一次到期(p, min)).toBe(iso(candidates(-limit).find(t => t =…
+     70|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in Etc/GMT+12 at 8:00
+AssertionError: expected null to be '-271821-04-20T20:00:00.000Z' // Object.is equality
+
+- Expected:
+"-271821-04-20T20:00:00.000Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:68:27
+     66|       expect(下一次(p, max)).toBeNull()
+     67|       expect(最近一次到期(p, max)).toBe(iso(latest))
+     68|       expect(下一次(p, min)).toBe(iso(first))
+       |                           ^
+     69|       expect(最近一次到期(p, min)).toBe(iso(candidates(-limit).find(t => t =…
+     70|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |node| tests/schedule/date-range.test.ts > calendar limits respect the local clock in Etc/GMT+12 at 23:00
+AssertionError: expected null to be '-271821-04-20T11:00:00.000Z' // Object.is equality
+
+- Expected:
+"-271821-04-20T11:00:00.000Z"
+
++ Received:
+null
+
+ ❯ tests/schedule/date-range.test.ts:68:27
+     66|       expect(下一次(p, max)).toBeNull()
+     67|       expect(最近一次到期(p, max)).toBe(iso(latest))
+     68|       expect(下一次(p, min)).toBe(iso(first))
+       |                           ^
+     69|       expect(最近一次到期(p, min)).toBe(iso(candidates(-limit).find(t => t =…
+     70|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed | 12 skipped (21)
+   Start at  13:48:18
+   Duration  152ms (transform 23ms, setup 0ms, import 31ms, tests 30ms, environment 0ms)

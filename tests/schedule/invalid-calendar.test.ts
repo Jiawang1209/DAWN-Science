@@ -1,5 +1,16 @@
 import { expect, it } from "vitest"
-import { 校验计划 } from "../../src/schedule/recurrence.js"
+import { 校验计划, 下一次, 最近一次到期 } from "../../src/schedule/recurrence.js"
+
+it("previously persisted impossible ISO dates do not become due on a normalized date", () => {
+  for (const p of [
+    { kind: "once", at: "2026-02-30T08:00:00Z", timeZone: "UTC" },
+    { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00Z", timeZone: "UTC" },
+    { kind: "everyDays", everyDays: 2, start: "2026-02-30", time: "08:00", timeZone: "UTC" },
+  ] as const) {
+    expect(下一次(p, "2026-02-28T00:00:00Z")).toBeNull()
+    expect(最近一次到期(p, "2026-03-03T00:00:00Z")).toBeNull()
+  }
+})
 
 for (const kind of ["once", "interval"] as const) {
   const plan = (value: string) => kind === "once"

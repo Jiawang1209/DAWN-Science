@@ -1,0 +1,94 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/timestamp-contract.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-lifecycle-date-boundaries-20261112/dawn-science
+
+ ❯ |node| tests/schedule/timestamp-contract.test.ts (47 tests | 4 failed) 345ms
+   × once: retains supported ISO dates and explicit offsets (-271821-04-19T12:00:00-12:00) 2ms
+   × once: retains supported ISO dates and explicit offsets (+000001-01-01T00:00:00Z) 0ms
+   × interval: retains supported ISO dates and explicit offsets (-271821-04-19T12:00:00-12:00) 0ms
+   × interval: retains supported ISO dates and explicit offsets (+000001-01-01T00:00:00Z) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: retains supported ISO dates and explicit offsets (-271821-04-19T12:00:00-12:00)
+AssertionError: expected '时刻要用有效 ISO 日期或带时区的 ISO 时间：-271821-04-…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"时刻要用有效 ISO 日期或带时区的 ISO 时间：-271821-04-19T12:00:00-12:00"
+
+ ❯ tests/schedule/timestamp-contract.test.ts:25:31
+     23|     "-271821-04-19T12:00:00-12:00", "+275760-09-13T14:00:00+14:00", "+…
+     24|   ])(`${kind}: retains supported ISO dates and explicit offsets (%s)`,…
+     25|     expect(校验计划(plan(value))).toBeUndefined()
+       |                               ^
+     26|   })
+     27| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > once: retains supported ISO dates and explicit offsets (+000001-01-01T00:00:00Z)
+AssertionError: expected '时刻要用有效 ISO 日期或带时区的 ISO 时间：+000001-01-…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"时刻要用有效 ISO 日期或带时区的 ISO 时间：+000001-01-01T00:00:00Z"
+
+ ❯ tests/schedule/timestamp-contract.test.ts:25:31
+     23|     "-271821-04-19T12:00:00-12:00", "+275760-09-13T14:00:00+14:00", "+…
+     24|   ])(`${kind}: retains supported ISO dates and explicit offsets (%s)`,…
+     25|     expect(校验计划(plan(value))).toBeUndefined()
+       |                               ^
+     26|   })
+     27| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: retains supported ISO dates and explicit offsets (-271821-04-19T12:00:00-12:00)
+AssertionError: expected '锚点要用有效 ISO 日期或带时区的 ISO 时间：-271821-04-…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"锚点要用有效 ISO 日期或带时区的 ISO 时间：-271821-04-19T12:00:00-12:00"
+
+ ❯ tests/schedule/timestamp-contract.test.ts:25:31
+     23|     "-271821-04-19T12:00:00-12:00", "+275760-09-13T14:00:00+14:00", "+…
+     24|   ])(`${kind}: retains supported ISO dates and explicit offsets (%s)`,…
+     25|     expect(校验计划(plan(value))).toBeUndefined()
+       |                               ^
+     26|   })
+     27| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |node| tests/schedule/timestamp-contract.test.ts > interval: retains supported ISO dates and explicit offsets (+000001-01-01T00:00:00Z)
+AssertionError: expected '锚点要用有效 ISO 日期或带时区的 ISO 时间：+000001-01-…' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"锚点要用有效 ISO 日期或带时区的 ISO 时间：+000001-01-01T00:00:00Z"
+
+ ❯ tests/schedule/timestamp-contract.test.ts:25:31
+     23|     "-271821-04-19T12:00:00-12:00", "+275760-09-13T14:00:00+14:00", "+…
+     24|   ])(`${kind}: retains supported ISO dates and explicit offsets (%s)`,…
+     25|     expect(校验计划(plan(value))).toBeUndefined()
+       |                               ^
+     26|   })
+     27| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 43 passed (47)
+   Start at  14:07:13
+   Duration  477ms (transform 25ms, setup 0ms, import 34ms, tests 345ms, environment 0ms)

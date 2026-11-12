@@ -1,0 +1,69 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/visual.spec.ts --output=/tmp/dawn-boundaries-20261112-main-visual-output --reporter=list,json
+
+Running 14 tests using 1 worker
+
+(node:3291) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61861/9db1305b-af6e-4185-bdc7-bedc1f12b71c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/visual.spec.ts:289:5 › 空态 · 亮色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61872/15ec81c8-95cb-4c3d-934e-d869076406e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/visual.spec.ts:289:5 › 对话 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61882/c55e41a0-a309-4504-b05d-8b43ce8ff2f5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/visual.spec.ts:289:5 › 设置 · 亮色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61893/58a930bc-1ae5-4974-a2ec-a2e9f1efd3f9
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/visual.spec.ts:289:5 › 命令面板 · 亮色 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61913/d67d397c-37b0-4ec7-974f-c3c9cfbdff71
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/visual.spec.ts:289:5 › 概览 · 亮色 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61927/dea319ef-c113-46ef-95f0-207311b7631b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/visual.spec.ts:289:5 › 设置栏 · 亮色 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61938/9440de89-a3b3-49d0-87e1-2b81891e455e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/visual.spec.ts:289:5 › 坞里的对话 · 亮色 (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61963/950dea9d-98d5-4c30-b7e1-38e528af230f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/visual.spec.ts:289:5 › 空态 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61979/670fe56f-688a-4985-83ba-a0de47887ff4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/visual.spec.ts:289:5 › 对话 · 暗色 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62001/66e38efe-fc46-4077-bb03-34d100c30cda
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/visual.spec.ts:289:5 › 设置 · 暗色 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62012/98f52e42-55c7-44e9-b147-f34906861946
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/visual.spec.ts:289:5 › 命令面板 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62034/375b3efc-c16a-4450-b92b-04cfdf9b675c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/visual.spec.ts:289:5 › 概览 · 暗色 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62047/5ab7a3f9-0d35-4e13-83b0-43826dbd003a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/visual.spec.ts:289:5 › 设置栏 · 暗色 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「请说一句话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] [桌面通知·假] #1 「你好」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:62061/d88996d8-87b3-4c2b-86d9-3f917a12c8aa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/visual.spec.ts:289:5 › 坞里的对话 · 暗色 (4.3s)
+
+  14 passed (33.6s)

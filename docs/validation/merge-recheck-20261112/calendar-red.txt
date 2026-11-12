@@ -1,0 +1,41 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule/invalid-calendar.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science
+
+ ❯ |node| tests/schedule/invalid-calendar.test.ts (24 tests | 8 failed) 21ms
+   × once: rejects an impossible ISO calendar date (2026-02-29T12:00:00Z) 15ms
+   × once: rejects an impossible ISO calendar date (2026-02-30T23:00:00-05:00) 0ms
+   × once: rejects an impossible ISO calendar date (2026-04-31T00:00:00+14:00) 0ms
+   × once: rejects an impossible ISO calendar date (2026-02-30) 0ms
+   × interval: rejects an impossible ISO calendar date (2026-02-29T12:00:00Z) 1ms
+   × interval: rejects an impossible ISO calendar date (2026-02-30T23:00:00-05:00) 0ms
+   × interval: rejects an impossible ISO calendar date (2026-04-31T00:00:00+14:00) 0ms
+   × interval: rejects an impossible ISO calendar date (2026-02-30) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > once: rejects an impossible ISO calendar date (2026-02-29T12:00:00Z)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > once: rejects an impossible ISO calendar date (2026-02-30T23:00:00-05:00)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > once: rejects an impossible ISO calendar date (2026-04-31T00:00:00+14:00)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > once: rejects an impossible ISO calendar date (2026-02-30)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > interval: rejects an impossible ISO calendar date (2026-02-29T12:00:00Z)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > interval: rejects an impossible ISO calendar date (2026-02-30T23:00:00-05:00)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > interval: rejects an impossible ISO calendar date (2026-04-31T00:00:00+14:00)
+ FAIL  |node| tests/schedule/invalid-calendar.test.ts > interval: rejects an impossible ISO calendar date (2026-02-30)
+AssertionError: expected undefined to be defined
+ ❯ tests/schedule/invalid-calendar.test.ts:10:31
+      8|
+      9|   it.each(["2026-02-29T12:00:00Z", "2026-02-30T23:00:00-05:00", "2026-…
+     10|     expect(校验计划(plan(value))).toBeDefined()
+       |                               ^
+     11|   })
+     12|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 16 passed (24)
+   Start at  13:03:23
+   Duration  165ms (transform 22ms, setup 0ms, import 31ms, tests 21ms, environment 0ms)

@@ -1,0 +1,92 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/workbench/schedule-ops.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science
+
+ ❯ |node| tests/workbench/schedule-ops.test.ts (15 tests | 2 failed) 1185ms
+     × 'once' 的不存在日期在创建和修改时均被拒绝，不改动已保存任务 30ms
+     × 'interval' 的不存在日期在创建和修改时均被拒绝，不改动已保存任务 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| tests/workbench/schedule-ops.test.ts > 定时任务 > 'once' 的不存在日期在创建和修改时均被拒绝，不改动已保存任务
+AssertionError: promise resolved "{ …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "agentId": "ds-chat",
++   "createdAt": "2026-11-12T05:04:14.725Z",
++   "id": "sch-a343d5f6-e8da-46f2-b250-f7ea9e73cf22",
++   "name": "无效日期",
++   "permission": "deny-risky",
++   "prompt": "看看数据",
++   "revision": 1,
++   "schedule": {
++     "at": "2026-02-30T08:00:00Z",
++     "kind": "once",
++     "timeZone": "UTC",
++   },
++   "status": "active",
++   "updatedAt": "2026-11-12T05:04:14.725Z",
++   "where": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-sch-CS9Zga",
++   "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-sch-CS9Zga",
+  }
+
+ ❯ tests/workbench/schedule-ops.test.ts:97:126
+     95|     { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00…
+     96|   ] as const)("$kind 的不存在日期在创建和修改时均被拒绝，不改动已保存任务", async schedule => {
+     97|     await expect(ctx.backend.createSchedule({ name: "无效日期", prompt: "看…
+       |                                                                                                                              ^
+     98|     expect(ctx.schedules.list()).toHaveLength(0)
+     99|     const saved = await ctx.backend.createSchedule({ name: "保留原计划", pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |node| tests/workbench/schedule-ops.test.ts > 定时任务 > 'interval' 的不存在日期在创建和修改时均被拒绝，不改动已保存任务
+AssertionError: promise resolved "{ …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "agentId": "ds-chat",
++   "createdAt": "2026-11-12T05:04:14.735Z",
++   "id": "sch-374e2357-d3c0-4d84-93c8-945423a19363",
++   "name": "无效日期",
++   "nextAt": "2026-11-12T05:30:00.000Z",
++   "permission": "deny-risky",
++   "prompt": "看看数据",
++   "revision": 1,
++   "schedule": {
++     "anchor": "2026-02-30T08:00:00Z",
++     "everyMinutes": 30,
++     "kind": "interval",
++     "timeZone": "UTC",
++   },
++   "status": "active",
++   "updatedAt": "2026-11-12T05:04:14.735Z",
++   "where": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-sch-kQ21kn",
++   "workspace": "/var/folders/2t/y0qcl9r50cv427189l7px1000000gn/T/dawn-sch-kQ21kn",
+  }
+
+ ❯ tests/workbench/schedule-ops.test.ts:97:126
+     95|     { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00…
+     96|   ] as const)("$kind 的不存在日期在创建和修改时均被拒绝，不改动已保存任务", async schedule => {
+     97|     await expect(ctx.backend.createSchedule({ name: "无效日期", prompt: "看…
+       |                                                                                                                              ^
+     98|     expect(ctx.schedules.list()).toHaveLength(0)
+     99|     const saved = await ctx.backend.createSchedule({ name: "保留原计划", pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+   Start at  13:04:13
+   Duration  2.83s (transform 797ms, setup 0ms, import 1.57s, tests 1.19s, environment 0ms)

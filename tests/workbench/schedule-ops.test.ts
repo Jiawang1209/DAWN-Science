@@ -90,6 +90,18 @@ describe("定时任务", () => {
   })
   const 计划 = { kind: "daily" as const, time: "08:00", timeZone: "Asia/Shanghai" }
 
+  it.each([
+    { kind: "once", at: "2026-02-30T08:00:00Z", timeZone: "UTC" },
+    { kind: "interval", everyMinutes: 30, anchor: "2026-02-30T08:00:00Z", timeZone: "UTC" },
+  ] as const)("$kind 的不存在日期在创建和修改时均被拒绝，不改动已保存任务", async schedule => {
+    await expect(ctx.backend.createSchedule({ name: "无效日期", prompt: "看看数据", schedule, agentId: "ds-chat", workspace: repo })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+    expect(ctx.schedules.list()).toHaveLength(0)
+    const saved = await ctx.backend.createSchedule({ name: "保留原计划", prompt: "看看数据", schedule: 计划, agentId: "ds-chat", workspace: repo }) as { id: string }
+    const before = ctx.schedules.list()
+    await expect(ctx.backend.updateSchedule({ id: saved.id, schedule })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+    expect(ctx.schedules.list()).toEqual(before)
+  })
+
   it("不存在的起始日期被拒绝，不能静默保存为另一个日期", async () => {
     await expect(ctx.backend.createSchedule({ name: "无效日期", prompt: "看看数据", schedule: { kind: "everyDays", everyDays: 2, start: "2026-02-30", time: "08:00", timeZone: "Asia/Shanghai" }, agentId: "ds-chat", workspace: repo })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
     expect(ctx.schedules.list()).toHaveLength(0)

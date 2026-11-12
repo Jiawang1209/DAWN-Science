@@ -1,0 +1,31 @@
+
+Running 6 tests using 1 worker
+
+(node:79678) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60967/4c0867cc-f867-4338-a0f7-8785a18aa285
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/kernel-session.spec.ts:43:3 › 内核会话 › 执行一段代码 → **结构化输出**出现在对话里 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61032/22b6d047-4cb5-4bc5-9a35-3ea2c23598ad
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/kernel-session.spec.ts:156:3 › 内核执行的账本 › **跑挂的代码在账本上是 failed，且带着原因** (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61074/d1af6dc7-404c-4dae-a16e-aa2185678271
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/kernel-session.spec.ts:192:3 › 内核执行的账本 › **跑得通的代码是 completed** —— 不能一律记成失败 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61113/ef7b5fa1-093c-4c7a-b73a-10a9d5bfb06a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/kernel-session.spec.ts:226:3 › R 内核会话 › **同一条代码路径**：执行、报错、活会话、变量面板 (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61166/2975105c-eb95-4b87-931f-c6bd465e8fce
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/kernel-session.spec.ts:282:3 › 由配置的解释器路径起内核 › **没配就明说没配，配完就能跑** (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61196/9375c507-921e-4521-a69b-6c26524e85cc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/kernel-session.spec.ts:377:3 › 内核会话 · ACP 借我们的内核 › **它跑的是我们的内核，账本上记的是「执行了一段代码」** (3.7s)
+
+  6 passed (19.6s)

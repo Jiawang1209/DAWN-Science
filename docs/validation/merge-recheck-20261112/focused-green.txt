@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/schedule tests/workbench/schedule-ops.test.ts tests/acp/schedule-tools.test.ts tests/runtime/native-stop-immediate-restart.test.ts tests/runtime/native-start-cancellation.test.ts tests/runtime/native.test.ts
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science
+
+
+ Test Files  8 passed (8)
+      Tests  92 passed (92)
+   Start at  13:04:42
+   Duration  3.18s (transform 2.95s, setup 0ms, import 8.37s, tests 1.75s, environment 0ms)

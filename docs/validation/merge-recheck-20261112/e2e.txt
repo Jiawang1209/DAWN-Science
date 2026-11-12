@@ -1,0 +1,171 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/boot.spec.ts e2e/exit-lifecycle.spec.ts e2e/session-recovery.spec.ts e2e/session-resume.spec.ts e2e/chat.spec.ts e2e/schedule.spec.ts e2e/update.spec.ts e2e/skill-discovery.spec.ts e2e/composer-sizing.spec.ts e2e/composer-config-layout.spec.ts e2e/text-context-menu.spec.ts e2e/subagent-shutdown.spec.ts e2e/collaboration-stopping.spec.ts --output=/tmp/dawn-merge-recheck-20261112-e2e-output --reporter=list,json
+
+Running 34 tests using 1 worker
+
+(node:40049) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58949/46fb64fa-abb0-40c5-a65d-046a4396c77a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/boot.spec.ts:14:1 › 全新配置目录能起来，且落在对话首页 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58960/28907c27-9689-4309-a9b0-c5687b052729
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/boot.spec.ts:30:1 › 默认工作区自动就绪，不要求先选文件夹 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58971/019f2639-0121-4b00-a17d-fa9b6958ddf3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/boot.spec.ts:40:1 › 配置文件被自动写出，且是一份带注释的模板 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58981/74bb865f-4a3c-4f00-9854-b7e963fcac0c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/boot.spec.ts:48:1 › 没有全屏遮罩挡着 —— 连上之后就该让人干活 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:58989/a2247c00-b381-48d8-83fe-fa4bd77d7a33
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/chat.spec.ts:24:1 › 说一句话 → 界面上出现回复 → 账本上留下记录 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59004/356720b3-3a0d-4548-934a-3e1171d64226
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/chat.spec.ts:46:1 › 回复是 markdown 而不是一坨纯文本 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59024/1dc9e7af-244a-48a9-9c61-41e1494220a8
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/chat.spec.ts:68:1 › 空白内容不发送 —— 不往账本上记一条什么都没有的回合 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59050/055c7368-1fb5-4c58-99bf-299d14c0929b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/collaboration-stopping.spec.ts:12:1 › shows host-verified cancellation after actual owned CLI termination; transient stopping is not a screenshot claim (3.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59076/f2f2d0ba-3190-4805-abf8-9b267ef7e594
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/composer-config-layout.spec.ts:19:1 › 280px侧栏同时有模型、推理和适配器配置时，按钮不压扁且各菜单可用 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59130/3fb9e643-cd0f-4540-9b22-675bde61b3c5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59155/865f9327-16bb-48e0-abf6-84481c0b02e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/composer-sizing.spec.ts:25:1 › 换行在输入、发送请求和用户气泡里都保留 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59170/114c89c1-f37b-401e-bf7b-5e3187d64fa6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/composer-sizing.spec.ts:45:1 › 主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59204/60961569-a24e-4236-ae40-e0b2c9387618
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59224/70886ada-5faf-4800-a518-536eb753d3eb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › single quit during a root bash task drains its owned process before restart (4.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59244/80bdb10b-cdad-40c4-b98a-31ef9f87826e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59271/509ed9c4-92dd-411c-8b15-d4494dd092c6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › repeated quit during a root bash task drains its owned process before restart (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59322/09b24953-6fad-4fe4-a9d0-20874c713e74
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59419/d7726517-37c2-4fbb-ab11-14d969cd3b1a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/exit-lifecycle.spec.ts:47:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59437/9af75b91-955f-49f6-ac41-811ca1a661be
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/schedule.spec.ts:8:1 › 一次性和间隔任务的不存在日期通过真实 IPC 被拒绝，修改失败保留原计划 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「早报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59457/10b83ab8-3fb4-4ea9-a67d-4317adfe2a5c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/schedule.spec.ts:31:1 › **建一条、立即跑一次、记录成功、会话留在项目里；暂停与删除** (5.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59520/16e09a5c-b547-4914-bcba-dbec8fbda187
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/schedule.spec.ts:80:1 › **坏输入当场说**：没填说明、每周一天没选 (2.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59559/3b750387-8ee3-4bf6-95ca-8aa77981fcaa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/schedule.spec.ts:119:3 › 对话里建 › **agent 调 dawn_schedule_create → 建成暂停的、回话说清 → 「定时」里按恢复** (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「月报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:59594/4ac45a06-1b90-498c-9851-1e3f4fad126c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/schedule.spec.ts:145:1 › **第二档的计划与筛**：每月、每 N 天、权限档标签、记录按状态筛 (5.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「整轮结算验收」跑完了 — 最终回复：分析请求已完整结束
+[主进程] Debugger ending on ws://127.0.0.1:59652/2dd8c1ba-009c-41aa-b9dd-ba193608af0a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/schedule.spec.ts:193:5 › 完整回合结算 › 两次模型迭代后才报成功，摘要使用最终回复 (6.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「整轮结算验收」失败了 — 模型调用失败：401: {"message":"mock：定时工具之后模型失败","type":"invalid_request_error"}
+[主进程] Debugger ending on ws://127.0.0.1:59704/764d8f9b-700e-4d43-ad55-1c7fba8e8034
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/schedule.spec.ts:193:5 › 完整回合结算 › 工具后的模型失败记为失败，中间回复不提前报成功 (4.7s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「整轮结算验收」取消了 — 用户已停止本次定时运行
+[主进程] Debugger ending on ws://127.0.0.1:59746/f981101a-f228-4006-81b1-089062a94e13
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/schedule.spec.ts:193:5 › 完整回合结算 › 在定时会话停止后记录取消，不能报成功 (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59869/8fab40ae-c110-4dd2-8ce1-8c6527501190
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/session-recovery.spec.ts:37:1 › 同库第二实例被拒绝，正在聊的远端会话仍 alive 且可发送 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59916/0acfdfee-8fbe-41ea-b1ea-921c559323a4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/session-recovery.spec.ts:59:1 › 远端恢复失败显示真原因，服务器 ready 后原对话自动恢复并保留草稿 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59952/3cec45e4-f9aa-465b-bf3f-1a53ac223b3a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59974/b8326087-b0a5-4255-8d48-3efe8f94edc3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/session-resume.spec.ts:18:1 › **关掉再打开，那段对话还在，而且还能说** (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59989/ed5d08c4-d264-4d97-8aac-d5f52866fbf1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:59999/6eb0a612-b0fe-4d2e-a334-c3d0ddf44ddd
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/skill-discovery.spec.ts:50:1 › Discover searches declared sources, previews full package, installs and retains offline origin after restart (3.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60018/75d514ac-5aff-40a4-a270-ceffb65b7c9d
+[主进程] For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/skill-discovery.spec.ts:111:1 › GitHub file URL selects one package and refuses an existing name without changing its files (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60441/247eb282-f86b-4567-9495-782c3ba807cb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/skill-discovery.spec.ts:145:1 › Discovery details remain usable in the compact Settings column (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60457/01f5d0dd-e665-4882-a3b6-a3417435d8ca
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60480/67d5385c-19da-4e41-9c50-0bc544259477
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/subagent-shutdown.spec.ts:7:1 › app quit drains an active delegated process before restart and retains the frozen context (4.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60488/931d4263-732a-427f-8d04-0aadfbc881b3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/text-context-menu.spec.ts:51:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60511/7b1a880c-77ae-4d8d-bb5f-abc6c062a2e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  32 e2e/text-context-menu.spec.ts:105:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60526/0a820d10-f4b7-4aa7-9433-87919349eee7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  33 e2e/update.spec.ts:15:1 › 侧栏长出「有新版本」，点开能下、下完能装 (7.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60580/0ae15ab3-062d-4250-a1f7-893780c8105d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-merge-recheck-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60636/20e30a7e-7f2a-4629-bcbe-f07062d4f924
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/update.spec.ts:64:1 › 说了「这一版不再提醒」之后那一行就没了，重开也不回来 (16.3s)
+
+  34 passed (2.2m)

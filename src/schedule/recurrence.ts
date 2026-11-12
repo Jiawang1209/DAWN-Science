@@ -24,6 +24,19 @@ const 星期序: 星期[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
 
 const 时间格式 = /^(?:[01]\d|2[0-3]):[0-5]\d$/
 
+function 日历日期合法(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
+function 时刻合法(value: string): boolean {
+  if (!Number.isFinite(Date.parse(value))) return false
+  // Date.parse 会把 ISO 中的 2 月 30 日滚到三月。检验原始日历日，
+  // 不能直接比较 UTC 日期：合法的时区偏移也可能跨日。保留既有非 ISO 解析兼容。
+  const day = /^(\d{4}-\d{2}-\d{2})(?:T|\s|$)/i.exec(value)?.[1]
+  return !day || 日历日期合法(day)
+}
+
 /** 认不认识这个 IANA 时区 */
 export function 时区合法(zone: string): boolean {
   try {
@@ -37,10 +50,10 @@ export function 时区合法(zone: string): boolean {
 /** 回一句毛病；没毛病回 undefined */
 export function 校验计划(p: 计划): string | undefined {
   if (!时区合法(p.timeZone)) return `不认识的时区：${p.timeZone}`
-  if (p.kind === "once") return Number.isNaN(Date.parse(p.at)) ? `时刻不是 ISO：${p.at}` : undefined
+  if (p.kind === "once") return 时刻合法(p.at) ? undefined : `时刻不是有效日期或 ISO 时间：${p.at}`
   if (p.kind === "interval") {
     if (!Number.isInteger(p.everyMinutes) || p.everyMinutes < 1) return "间隔至少 1 分钟"
-    return Number.isNaN(Date.parse(p.anchor)) ? `锚点不是 ISO：${p.anchor}` : undefined
+    return 时刻合法(p.anchor) ? undefined : `锚点不是有效日期或 ISO 时间：${p.anchor}`
   }
   if (!时间格式.test(p.time)) return `时间要写成 HH:mm（24 小时），给的是 ${p.time}`
   if (p.kind === "weekly" && p.weekdays.length === 0) return "每周至少选一个星期"
@@ -48,8 +61,7 @@ export function 校验计划(p: 计划): string | undefined {
   if (p.kind === "everyDays") {
     if (!Number.isInteger(p.everyDays) || p.everyDays < 1) return "每几天至少 1 天"
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.start)) return `起点要写成 YYYY-MM-DD，给的是 ${p.start}`
-    const date = new Date(`${p.start}T00:00:00.000Z`)
-    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== p.start) return `起点不是有效日期：${p.start}`
+    if (!日历日期合法(p.start)) return `起点不是有效日期：${p.start}`
   }
   return undefined
 }

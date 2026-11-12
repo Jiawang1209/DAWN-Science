@@ -183,9 +183,9 @@ it("moves keyboard focus to selected details even after a long catalog", async (
     problems: [],
   }));
   await showPreview(a);
-  expect(document.activeElement).toBe(
+  await waitFor(() => expect(document.activeElement).toBe(
     screen.getByRole("region", { name: "技能详情" }),
-  );
+  ));
 });
 
 async function pendingInstallation() {

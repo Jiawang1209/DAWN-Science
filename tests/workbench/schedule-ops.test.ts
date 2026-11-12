@@ -90,6 +90,11 @@ describe("定时任务", () => {
   })
   const 计划 = { kind: "daily" as const, time: "08:00", timeZone: "Asia/Shanghai" }
 
+  it("不存在的起始日期被拒绝，不能静默保存为另一个日期", async () => {
+    await expect(ctx.backend.createSchedule({ name: "无效日期", prompt: "看看数据", schedule: { kind: "everyDays", everyDays: 2, start: "2026-02-30", time: "08:00", timeZone: "Asia/Shanghai" }, agentId: "ds-chat", workspace: repo })).rejects.toMatchObject({ workbenchCode: "invalid_request" })
+    expect(ctx.schedules.list()).toHaveLength(0)
+  })
+
   it("建 / 改 / 列 / 删：改了版本号 +1；列表带下一次；删了定义记录还在", async () => {
     const d = (await ctx.backend.createSchedule({ name: "早报", prompt: "看看数据", schedule: 计划, agentId: "ds-chat", workspace: repo })) as { id: string; revision: number; nextAt?: string; where: string }
     expect(d).toMatchObject({ revision: 1, where: repo })

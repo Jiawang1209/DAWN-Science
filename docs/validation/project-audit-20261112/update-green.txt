@@ -1,0 +1,10 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/update
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science
+
+
+ Test Files  10 passed (10)
+      Tests  72 passed (72)
+   Start at  11:39:13
+   Duration  404ms (transform 664ms, setup 0ms, import 842ms, tests 208ms, environment 2ms)

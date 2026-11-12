@@ -1,0 +1,33 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'vitest' run tests/runtime/native-start-cancellation.test.ts tests/runtime/native.test.ts tests/schedule/invalid-calendar.test.ts tests/schedule/recurrence.test.ts tests/schedule/scheduler.test.ts tests/workbench/schedule-ops.test.ts tests/acp/schedule-tools.test.ts tests/ui/skill-discovery.test.tsx tests/update --maxWorkers=4 --reporter=default --reporter=json --outputFile=/tmp/dawn-audit-20261112-main-unit.json
+
+ RUN  v4.1.12 /Users/liuyue/Desktop/Github_repos/dawn-science
+
+ ✓ |node| tests/schedule/recurrence.test.ts (15 tests) 30ms
+ ✓ |node| tests/update/检查.test.ts (13 tests) 5ms
+ ✓ |node| tests/update/换包.test.ts (7 tests) 14ms
+ ✓ |node| tests/update/资源.test.ts (11 tests) 4ms
+ ✓ |node| tests/schedule/scheduler.test.ts (9 tests) 433ms
+     ✓ 超过50条跳过记录后仍记住最早未结束的运行  379ms
+ ✓ |node| tests/update/下载.test.ts (4 tests) 64ms
+ ✓ |node| tests/update/交接.test.ts (8 tests) 13ms
+ ✓ |node| tests/update/发布源.test.ts (6 tests) 4ms
+ ✓ |node| tests/update/download-path.test.ts (10 tests) 12ms
+ ✓ |node| tests/update/服务.test.ts (3 tests) 3ms
+ ✓ |node| tests/update/版本.test.ts (6 tests) 4ms
+ ✓ |node| tests/acp/schedule-tools.test.ts (4 tests) 9ms
+ ✓ |node| tests/update/状态存储.test.ts (4 tests) 7ms
+ ✓ |node| tests/schedule/invalid-calendar.test.ts (8 tests) 17ms
+ ✓ |node| tests/runtime/native-start-cancellation.test.ts (2 tests) 64ms
+ ✓ |node| tests/runtime/native.test.ts (21 tests) 490ms
+     ✓ read 成功 → 发一条四个空数组的 tool_files(确认没写,不是猜);write 仍走探针  321ms
+ ✓ |ui| tests/ui/skill-discovery.test.tsx (7 tests) 417ms
+ ✓ |node| tests/workbench/schedule-ops.test.ts (13 tests) 1148ms
+     ✓ **立即运行走完整条路**：全新会话、标题带任务名、摘要是 agent 那一轮的话、会话留在项目里  318ms
+
+ Test Files  18 passed (18)
+      Tests  151 passed (151)
+   Start at  12:35:55
+   Duration  3.95s (transform 3.02s, setup 711ms, import 7.46s, tests 2.74s, environment 806ms)
+
+JSON report written to /tmp/dawn-audit-20261112-main-unit.json

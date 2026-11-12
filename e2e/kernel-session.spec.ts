@@ -22,11 +22,11 @@
  */
 import { test, expect, readRuns, 开一段临时会话, 等进了对话 , 进设置, 用某个agent开一段, 进坞 } from "./fixtures.js"
 import { existsSync } from "node:fs"
-import { homedir } from "node:os"
 import { join } from "node:path"
+import { discoverKernelSpecs } from "../src/kernel/specs.js"
 
 const KERNEL = "dawn-spike"
-const 有 = existsSync(join(homedir(), "Library", "Jupyter", "kernels", KERNEL))
+const 有 = discoverKernelSpecs().specs.some(spec => spec.name === KERNEL)
 
 const PROVIDERS = `agents:
   py:
@@ -136,7 +136,7 @@ test.describe("内核会话", () => {
  * 那句话要么被测试盯着，要么迟早变成「只有 Python 能用」。
  */
 const R_KERNEL = "ir"
-const 有R = existsSync(join(homedir(), "Library", "Jupyter", "kernels", R_KERNEL))
+const 有R = discoverKernelSpecs().specs.some(spec => spec.name === R_KERNEL)
 
 /**
  * **账本要如实**（②-B 前置 · 2026-08-11）。**跑真实构建产物。**

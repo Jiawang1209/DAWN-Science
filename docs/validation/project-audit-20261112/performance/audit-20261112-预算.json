@@ -1,0 +1,13 @@
+[
+  {
+    "typingP95Ms": 15.9,
+    "ipcBytes": 7398,
+    "inputSamples": 23,
+    "budget": {
+      "typingP95Ms": 150,
+      "ipcBytes": 1000000
+    },
+    "ipcMetric": "UTF-8 JSON payload bytes received on the session event IPC channel",
+    "typingMetric": "p95 input-event to double-requestAnimationFrame latency"
+  }
+]

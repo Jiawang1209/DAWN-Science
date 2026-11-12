@@ -1,0 +1,48 @@
+npm notice run dawn-science@0.0.45 npx
+npm notice run 'playwright' test e2e/boot.spec.ts e2e/composer-sizing.spec.ts e2e/text-context-menu.spec.ts --output=/tmp/dawn-audit-20261112-main-e2e-output --reporter=list,json
+
+Running 9 tests using 1 worker
+
+(node:25832) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Downloading Electron binary...
+(node:25843) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64138/1bfd8776-0343-405a-b00d-f7095be0496b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  1 e2e/boot.spec.ts:14:1 › 全新配置目录能起来，且落在对话首页 (5.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64152/a5911505-74db-43bc-8284-93a60e748f24
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  2 e2e/boot.spec.ts:30:1 › 默认工作区自动就绪，不要求先选文件夹 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64160/beca3ab0-b57f-411d-bdfe-bf386f10bab5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  3 e2e/boot.spec.ts:40:1 › 配置文件被自动写出，且是一份带注释的模板 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64168/d694172a-2176-4e4d-88ad-9393d8a3a9c3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  4 e2e/boot.spec.ts:48:1 › 没有全屏遮罩挡着 —— 连上之后就该让人干活 (1.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64176/d73c7150-57de-4e74-83df-35fb800d3a41
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  5 e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 (1.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64184/2010e2b1-a8ec-41b1-9285-caa00a502524
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  6 e2e/composer-sizing.spec.ts:25:1 › 换行在输入、发送请求和用户气泡里都保留 (1.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64197/440fb712-edcc-4fde-8408-4e4850932398
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  7 e2e/composer-sizing.spec.ts:45:1 › 主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64208/99b01cfe-958d-49ec-b24b-f6f71bc8bd6f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  8 e2e/text-context-menu.spec.ts:51:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/Desktop/Github_repos/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:64219/9fa1dfa4-b164-4503-920a-eee1c968c2fa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  9 e2e/text-context-menu.spec.ts:105:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 (2.0s)
+
+  9 passed (21.0s)

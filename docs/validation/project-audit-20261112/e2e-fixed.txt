@@ -1,0 +1,181 @@
+
+Running 37 tests using 1 worker
+
+(node:12463) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60917/68c5874e-da89-4d89-8f24-2b4fc8b67c36
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   1 e2e/artifact-retention.spec.ts:16:3 › automatic artifact sources and explicit result retention › saved output survives live overwrite and opens through the project retention panel (3.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 “Generate a sample re” is done — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:60956/78eb987c-8f53-4b60-a774-3a8f996b7cb4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   2 e2e/artifact-retention.spec.ts:86:3 › automatic artifact sources and explicit result retention › one-click retention and history stay usable in a narrow English dock (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60976/76285e67-20d6-4d36-8876-d964a2755028
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   3 e2e/artifact-retention.spec.ts:152:3 › automatic artifact sources and explicit result retention › source query leaves old files untouched; preserving current content is explicitly late capture (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:60991/05f61153-61b4-4058-86b8-61d195130d6c
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   4 e2e/artifact-retention.spec.ts:191:3 › automatic artifact sources and explicit result retention › actual interpreter snapshots belong to each Python/R notebook execution (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61077/f1b30f90-9e34-4074-a3f1-b0247683efcc
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   5 e2e/attach.spec.ts:575:1 › 输入卡：环境在顶部，工具与模型固定两行，各行对齐且不溢出 (2.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61092/a6b4048f-9666-4153-a4a0-9b885c965b1d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   6 e2e/boot.spec.ts:14:1 › 全新配置目录能起来，且落在对话首页 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61102/aaaa77a1-f239-470f-9ec0-dc517dfab30a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   7 e2e/boot.spec.ts:30:1 › 默认工作区自动就绪，不要求先选文件夹 (1.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61113/70abe2a7-9863-498a-a82c-38364ebb32b3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   8 e2e/boot.spec.ts:40:1 › 配置文件被自动写出，且是一份带注释的模板 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61129/a7a35df8-e54f-4e91-81bb-1da634f21eaa
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓   9 e2e/boot.spec.ts:48:1 › 没有全屏遮罩挡着 —— 连上之后就该让人干活 (1.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61138/3886b07f-41e7-4774-96d9-8322417e9acb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  10 e2e/chat.spec.ts:24:1 › 说一句话 → 界面上出现回复 → 账本上留下记录 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61152/659834f7-df1c-4725-9a16-b85c1eeb05a6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  11 e2e/chat.spec.ts:46:1 › 回复是 markdown 而不是一坨纯文本 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61179/4060a897-89a4-47ac-a76e-2b2109f48fc0
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  12 e2e/chat.spec.ts:68:1 › 空白内容不发送 —— 不往账本上记一条什么都没有的回合 (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61201/055797ee-17cb-47cf-ba86-5f9f2a348d8e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  13 e2e/composer-config-layout.spec.ts:19:1 › 280px侧栏同时有模型、推理和适配器配置时，按钮不压扁且各菜单可用 (3.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61242/85aa22ab-e287-421c-85fc-5d47e6c1895b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  14 e2e/composer-sizing.spec.ts:3:1 › 输入区高度固定，文本换行并在框内滚动，清空不跳动 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61257/454693d5-7b84-44e8-9a24-4fb5c4994b01
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  15 e2e/composer-sizing.spec.ts:25:1 › 换行在输入、发送请求和用户气泡里都保留 (2.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61283/f908fe29-307e-49e5-be67-98b0dce4f534
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  16 e2e/composer-sizing.spec.ts:45:1 › 主区与窄侧边：顶部环境、底栏工具与发送不溢出，添加菜单留在窗口内 (2.8s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61301/b857af1f-5888-4c0b-88ef-0169d41a7b69
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61329/75911ece-a37f-4856-835e-94210b233b32
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  17 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › single quit during a root bash task drains its owned process before restart (4.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61349/42d7454d-f331-41cd-9e10-b7662a650be4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61375/ee2151ee-f419-434b-9a0d-25341b7e176f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  18 e2e/exit-lifecycle.spec.ts:12:38 › root task shutdown › repeated quit during a root bash task drains its owned process before restart (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61418/47628a24-66e3-4029-8af1-2d21a8661ce3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61485/f4998eca-b33f-45ed-a73a-dc4806ab04f1
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  19 e2e/exit-lifecycle.spec.ts:47:1 › diagnoses a deliberately vetoed quit while the native process is still alive (9.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「给我一段 markdown」做完了 — # 一级标题 这是一段正文，里面有 `行内代码`、**加粗**、*斜体* 和[一个链接](https://example.com)。 ## 二级标题 1. 有序的第一项 2. 有序的第二项 - 嵌套的无序项 - 又一项 ### 三级标题 -…
+[主进程] Debugger ending on ws://127.0.0.1:61503/89cb1ceb-4903-4531-a6d5-58a3a0638ed3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  20 e2e/markdown-render.spec.ts:29:1 › **代码块的每一行是一行** —— 塌成一行的代码没法读 (3.4s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「早报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61524/e6c9a0be-164b-4e71-8056-31a5f5db768e
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  21 e2e/schedule.spec.ts:8:1 › **建一条、立即跑一次、记录成功、会话留在项目里；暂停与删除** (5.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61560/afca1ac3-6fcc-4f75-a745-0b66a7e92adf
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  22 e2e/schedule.spec.ts:57:1 › **坏输入当场说**：没填说明、每周一天没选 (2.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61574/d58b7790-782c-4970-8501-822a1e1e5b2f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  23 e2e/schedule.spec.ts:96:3 › 对话里建 › **agent 调 dawn_schedule_create → 建成暂停的、回话说清 → 「定时」里按恢复** (3.9s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「月报」跑完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61594/7aae11f9-073f-4f79-aa34-5d8a6785fc8d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  24 e2e/schedule.spec.ts:122:1 › **第二档的计划与筛**：每月、每 N 天、权限档标签、记录按状态筛 (7.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「整轮结算验收」跑完了 — 最终回复：分析请求已完整结束
+[主进程] Debugger ending on ws://127.0.0.1:61624/dc01f1bf-046a-4c0c-9d6f-8a415b73001a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  25 e2e/schedule.spec.ts:170:5 › 完整回合结算 › 两次模型迭代后才报成功，摘要使用最终回复 (7.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「整轮结算验收」失败了 — 模型调用失败：401: {"message":"mock：定时工具之后模型失败","type":"invalid_request_error"}
+[主进程] Debugger ending on ws://127.0.0.1:61653/9ab27947-de49-4be0-b277-9e37b6522af6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  26 e2e/schedule.spec.ts:170:5 › 完整回合结算 › 工具后的模型失败记为失败，中间回复不提前报成功 (5.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 定时「整轮结算验收」取消了 — 用户已停止本次定时运行
+[主进程] Debugger ending on ws://127.0.0.1:61720/da30793b-10ab-4fbf-b5d4-00a1b51ba26d
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  27 e2e/schedule.spec.ts:170:5 › 完整回合结算 › 在定时会话停止后记录取消，不能报成功 (5.1s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] [桌面通知·假] #0 「保留在原对话里的话」做完了 — 假模型已应答：DAWN 的整条链路是通的。
+[主进程] Debugger ending on ws://127.0.0.1:61800/f6753741-5b0f-445a-8081-7af71c40d463
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  28 e2e/session-recovery.spec.ts:37:1 › 同库第二实例被拒绝，正在聊的远端会话仍 alive 且可发送 (3.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61868/2597768e-4b5c-46c2-ba4a-b1715d7e8ad6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  29 e2e/session-recovery.spec.ts:59:1 › 远端恢复失败显示真原因，服务器 ready 后原对话自动恢复并保留草稿 (2.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61908/55d3c576-7d6c-49ca-ae0a-2e9dd06072e4
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61947/ecef3079-91bd-4855-ae1c-7a2f807ffbda
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  30 e2e/session-resume.spec.ts:18:1 › **关掉再打开，那段对话还在，而且还能说** (4.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:61995/eb277687-f66e-4f9d-8c7a-085e26784ac5
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62044/942ab7ce-e8b9-431a-b52b-9f9d492431d6
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  31 e2e/skill-discovery.spec.ts:50:1 › Discover searches declared sources, previews full package, installs and retains offline origin after restart (4.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62073/fc190c24-d49a-4813-ae82-e428624ae7f3
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  32 e2e/skill-discovery.spec.ts:111:1 › GitHub file URL selects one package and refuses an existing name without changing its files (2.2s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62101/6c1bee4d-897a-4493-beaa-5407735fe985
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  33 e2e/skill-discovery.spec.ts:145:1 › Discovery details remain usable in the compact Settings column (2.6s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62130/c9b99c2f-84a4-4f78-a8a0-9cfe9c8278eb
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  34 e2e/text-context-menu.spec.ts:51:1 › 选中文字右键出现原生编辑菜单，复制剪切粘贴与撤销同步草稿 (3.0s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62215/3f2f9706-446f-4815-812e-801c52072980
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  35 e2e/text-context-menu.spec.ts:105:1 › 正文选区右键只能复制，原有会话右键菜单继续可用 (2.3s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62293/ac979e1e-6ef4-495b-9606-1334e777e84f
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  36 e2e/update.spec.ts:15:1 › 侧栏长出「有新版本」，点开能下、下完能装 (7.5s)
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62526/1c94d734-276c-42c1-9c42-b6e1fe853cb7
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[主进程] [页面加载失败] （-3）file:///Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/dist/ui/index.html
+[主进程] Debugger ending on ws://127.0.0.1:62631/a95e0007-b378-4af3-8dec-536cb4e2d784
+For help, see: https://nodejs.org/learn/getting-started/debugging
+  ✓  37 e2e/update.spec.ts:64:1 › 说了「这一版不再提醒」之后那一行就没了，重开也不回来 (16.0s)
+
+  37 passed (2.4m)

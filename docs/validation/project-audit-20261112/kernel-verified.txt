@@ -1,0 +1,42 @@
+
+ RUN  v4.1.12 /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science
+
+ ✓ |kernel| tests/kernel/channel.integration.test.ts (3 tests) 4599ms
+     ✓ execute_request → iopub 输出全程可测，且**退出码为 0**  2193ms
+     ✓ execute_request → iopub 输出全程可测，且**退出码为 0**  1302ms
+     ✓ 拿一份现成的 connection.json 接通道：与 launch 同一套握手与执行  1103ms
+ ✓ |kernel| tests/kernel/variables.integration.test.ts (10 tests) 1704ms
+stdout | tests/kernel/port-collision.integration.test.ts > real R recovers a lost port race, reaps the failed process and executes user code once
+Controlled real R port collision: {"blockerPid":20649,"launches":[{"pid":20652,"port":9002},{"pid":20708,"port":9003}],"recovered":true}
+
+ ✓ |kernel| tests/kernel/port-collision.integration.test.ts (3 tests) 11528ms
+   ✓ real R recovers a lost port race, reaps the failed process and executes user code once  4246ms
+   ✓ persistent real R bind collisions stop after three attempts with process/port evidence and no secret  5470ms
+   ✓ non-port real R startup failures retain their cause and do not retry  1810ms
+ ✓ |kernel| tests/kernel/outputs.integration.test.ts (5 tests) 887ms
+ ✓ |kernel| tests/kernel/environment.integration.test.ts (12 tests) 2287ms
+ ✓ |kernel| tests/kernel/artifact-capture.integration.test.ts (2 tests) 3242ms
+     ✓ python: real files, declared input, code and retained version  1869ms
+     ✓ R: real files, declared input, code and retained version  1373ms
+ ✓ |kernel| tests/kernel/runtime.integration.test.ts (7 tests) 2330ms
+     ✓ **中断之后内核还活着**（K3 的判据，在会话这一层再验一次）  1246ms
+ ✓ |kernel| tests/kernel/launch.integration.test.ts (4 tests) 15045ms
+     ✓ **解释器在、ipykernel 没装 → 说的是「装包」**  8483ms
+     ✓ **程序不存在 → 说的是「重装 kernelspec」**  5309ms
+     ✓ 起内核 → 执行 → 关停，且 kernelInstanceId 每次都不同  1250ms
+ ✓ |kernel| tests/kernel/interrupt.integration.test.ts (2 tests) 4472ms
+     ✓ **打断长任务之后，内核还能算对一道题**（判据不看回复长什么样）  2256ms
+     ✓ **打断长任务之后，内核还能算对一道题**（判据不看回复长什么样）  2215ms
+ ✓ |kernel| tests/kernel/bot-native.integration.test.ts (1 test) 1374ms
+   ✓ Bot 的真实 run_code 内核在所属 scope 执行并与主会话隔离  1373ms
+ ✓ |kernel| tests/kernel/heartbeat.integration.test.ts (1 test) 761ms
+     ✓ 回声在 → true；回声没了 → 超时内 false；回声回来 → 又 true  760ms
+ ✓ |kernel| tests/kernel/closed-channel.integration.test.ts (1 test) 1102ms
+   ✓ a closed failed channel never delivers its queued handshake to a replacement endpoint  1101ms
+
+ Test Files  12 passed (12)
+      Tests  51 passed (51)
+   Start at  12:28:44
+   Duration  53.14s (transform 1.04s, setup 0ms, import 2.57s, tests 49.33s, environment 1ms)
+
+JSON report written to /tmp/dawn-audit-20261112-kernel-verified.json

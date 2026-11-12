@@ -1,0 +1,18 @@
+{
+  "success": false,
+  "startTime": 1794454167055,
+  "numTotalTests": 7158,
+  "numPassedTests": 7147,
+  "numFailedTests": 1,
+  "numPendingTests": 10,
+  "files": 727,
+  "failures": [
+    {
+      "file": "/Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/tests/ui/skill-discovery.test.tsx",
+      "name": "moves keyboard focus to selected details even after a long catalog",
+      "failure": [
+        "AssertionError: expected <body><div>…(1)</div></body> to be <section tabindex=\"-1\" …(2)>…(10)</section> // Object.is equality\n    at /Users/liuyue/.codex/worktrees/dawn-project-audit-20261112/dawn-science/tests/ui/skill-discovery.test.tsx:186:34\n    at async file:///Users/liuyue/Desktop/Github_repos/dawn-science/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+      ]
+    }
+  ]
+}

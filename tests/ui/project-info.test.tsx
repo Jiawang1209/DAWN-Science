@@ -82,3 +82,41 @@ it("固定查看一个项目时，其他项目的悬停不会叠加卡片或夺�
     expect(document.activeElement).toBe(card)
   } finally { vi.useRealTimers() }
 })
+it("会话标题更新变长后仍将信息卡限制在窗口内", () => {
+  const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    const height = this.classList.contains("project-info-card") ? (this.textContent?.includes("很长的标题") ? 400 : 220) : 32
+    return { x: 0, y: 500, left: 0, top: 500, right: 360, bottom: 500 + height, width: 360, height, toJSON: () => ({}) }
+  })
+  try {
+    const view = render(<SessionSidebar {...base} tasks={tasks.slice(0, 1)} sessionOf={sessionOf} />)
+    const card = open()
+    expect(Number.parseFloat(card.style.top) + 220).toBeLessThanOrEqual(innerHeight - 8)
+    view.rerender(<SessionSidebar {...base} tasks={tasks.slice(0, 1)} sessionOf={id => ({ ...sessionOf(id), title: "很长的标题".repeat(20) })} />)
+    expect(Number.parseFloat(card.style.top) + 400).toBeLessThanOrEqual(innerHeight - 8)
+  } finally { rect.mockRestore() }
+})
+it("会话数量更新不会夺走卡片内的键盘焦点", () => {
+  const view = render(<SessionSidebar {...base} tasks={tasks.slice(0, 1)} sessionOf={sessionOf} onPickTask={vi.fn()} />)
+  const card = open()
+  const recent = within(card).getByRole("button", { name: "打开会话：会话0" })
+  act(() => recent.focus())
+  view.rerender(<SessionSidebar {...base} tasks={tasks.slice(0, 2)} sessionOf={sessionOf} onPickTask={vi.fn()} />)
+  expect(document.activeElement).toBe(recent)
+})
+it("操作菜单打开时取消尚未弹出的悬停信息卡", () => {
+  vi.useFakeTimers()
+  try {
+    const view = render(<SessionSidebar {...base} tasks={tasks} sessionOf={sessionOf} />)
+    fireEvent.mouseEnter(view.container.querySelector(".proj-head")!)
+    fireEvent.click(screen.getByRole("button", { name: "项目操作：soil" }))
+    expect(screen.getByRole("menu")).toBeTruthy()
+    act(() => vi.advanceTimersByTime(420))
+    expect(screen.queryByRole("dialog")).toBeNull()
+    expect(screen.getByRole("menu")).toBeTruthy()
+    fireEvent.mouseLeave(view.container.querySelector(".proj-head")!)
+    fireEvent.mouseEnter(view.container.querySelector(".proj-head")!)
+    act(() => vi.advanceTimersByTime(420))
+    expect(screen.queryByRole("dialog")).toBeNull()
+    expect(screen.getByRole("menu")).toBeTruthy()
+  } finally { vi.useRealTimers() }
+})

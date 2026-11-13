@@ -31,6 +31,7 @@ export function ProjectInfo({ name, workspace, tasks, sessionOf, onPick, childre
   }
   const show = (mode: "hover" | "explicit") => {
     cancel()
+    if (mode === "hover" && anchor.current?.querySelector('[aria-haspopup="menu"][aria-expanded="true"]')) return
     if (activeInfo && activeInfo.card !== card.current) {
       if (mode === "hover" && (activeInfo.explicit || activeInfo.card.contains(document.activeElement))) return
       activeInfo.dismiss()
@@ -43,23 +44,40 @@ export function ProjectInfo({ name, workspace, tasks, sessionOf, onPick, childre
       if (!card.current?.contains(document.activeElement)) setOpen(undefined)
     }, 180)
   }
+  const recent = tasks.map(task => {
+    const session = task.sessionId ? sessionOf?.(task.sessionId) : undefined
+    return { task, title: session?.title ?? task.title ?? t("新任务"), at: session?.lastActiveAt ?? session?.createdAt ?? task.createdAt }
+  }).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 5)
+  const recentContent = JSON.stringify(recent.map(({ title, at }) => [title, at]))
   useEffect(() => () => clearTimeout(timer.current), [])
   useLayoutEffect(() => {
     if (!open || !anchor.current || !card.current) return
     const record = { card: card.current, explicit: open === "explicit", dismiss: () => close() }
     activeInfo = record
-    const row = anchor.current.getBoundingClientRect()
-    const side = anchor.current.closest(".sidebar")?.getBoundingClientRect() ?? row
-    const bounds = card.current.getBoundingClientRect()
-    const right = side.right + 8
-    const left = right + bounds.width <= window.innerWidth - 8 ? right : row.left - bounds.width - 8
-    setPosition({
-      left: Math.max(8, Math.min(left, window.innerWidth - bounds.width - 8)),
-      top: Math.max(8, Math.min(row.top, window.innerHeight - bounds.height - 8)),
-    })
     if (open === "explicit") card.current.focus({ preventScroll: true })
     return () => { if (activeInfo === record) activeInfo = undefined }
-  }, [open, name, workspace, tasks.length])
+  }, [open])
+  useLayoutEffect(() => {
+    if (!open || !card.current) return
+    const reposition = () => {
+      if (!anchor.current || !card.current) return
+      const row = anchor.current.getBoundingClientRect()
+      const side = anchor.current.closest(".sidebar")?.getBoundingClientRect() ?? row
+      const bounds = card.current.getBoundingClientRect()
+      const right = side.right + 8
+      const left = right + bounds.width <= window.innerWidth - 8 ? right : row.left - bounds.width - 8
+      const next = {
+        left: Math.max(8, Math.min(left, window.innerWidth - bounds.width - 8)),
+        top: Math.max(8, Math.min(row.top, window.innerHeight - bounds.height - 8)),
+      }
+      setPosition(previous => previous.left === next.left && previous.top === next.top ? previous : next)
+    }
+    reposition()
+    const observer = new ResizeObserver(reposition)
+    observer.observe(card.current)
+    return () => observer.disconnect()
+  }, [open, name, workspace, tasks.length, recentContent])
+
   useEffect(() => {
     if (!open) return
     const outside = (e: Event) => {
@@ -86,14 +104,11 @@ export function ProjectInfo({ name, workspace, tasks, sessionOf, onPick, childre
       window.removeEventListener("scroll", scroll, true)
     }
   }, [open])
-  const recent = tasks.map(task => {
-    const session = task.sessionId ? sessionOf?.(task.sessionId) : undefined
-    return { task, title: session?.title ?? task.title ?? t("新任务"), at: session?.lastActiveAt ?? session?.createdAt ?? task.createdAt }
-  }).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 5)
+
   return <div ref={anchor} className="proj-head" onMouseEnter={() => {
     cancel()
     if (!open) timer.current = setTimeout(() => show("hover"), 420)
-  }} onMouseLeave={leave}>
+  }} onMouseLeave={leave} onFocusCapture={cancel}>
     {children(() => show("explicit"))}
     {open ? createPortal(<div ref={card} className="project-info-card" role="dialog" aria-label={tf("项目信息：{0}", name)}
       lang={$lang.get()} tabIndex={-1} style={position} onMouseEnter={cancel} onMouseLeave={leave}>

@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { test, expect } from "./fixtures.js"
+import { WORKBENCH_PROTOCOL_VERSION } from "../src/protocol/index.js"
 
 test("项目卡可悬停及键盘打开，显示历史会话并跳转，适配亮暗及窄窗口", async ({ dawn }, info) => {
   const { page, workspace } = dawn
@@ -64,4 +65,48 @@ test("项目卡可悬停及键盘打开，显示历史会话并跳转，适配�
   await expect(card).toContainText("7 段对话")
   await page.locator(".topbar .brand").click()
   await expect(card).toHaveCount(0)
+})
+
+test("打开后会话数据更新仍保持窗口内布局与键盘焦点", async ({ dawn }) => {
+  const { page, workspace } = dawn
+  await page.setViewportSize({ width: 900, height: 650 })
+  const ids = await page.evaluate(async workspace => {
+    const invoke = async (op: string, req: unknown) => {
+      const r = await window.dawn!.invoke(op, req)
+      if (!r.ok) throw new Error(r.error?.message)
+      return r.data as any
+    }
+    const { agents } = await invoke("getProviders", {})
+    const ids: string[] = []
+    for (let i = 0; i < 5; i++) {
+      const task = await invoke("createTask", { agentId: agents[0].agentId, workspace })
+      await invoke("renameSession", { sessionId: task.sessionId, title: `检查${i}` })
+      ids.push(task.sessionId)
+    }
+    return { sessions: ids, agentId: agents[0].agentId }
+  }, workspace)
+  await page.reload()
+  await page.getByRole("button", { name: /^项目操作：/ }).click()
+  await page.getByRole("menuitem", { name: "项目信息", exact: true }).click()
+  const card = page.locator(".project-info-card")
+  const close = card.getByRole("button", { name: "收起信息卡", exact: true })
+  await close.focus()
+  const longTitle = "核对土壤剖面图像、理化指标和独立验证结果。".repeat(6)
+  await page.evaluate(async ({ ids, workspace, longTitle }) => {
+    const renamed = await window.dawn!.invoke("renameSession", { sessionId: ids.sessions[4], title: longTitle })
+    if (!renamed.ok) throw new Error(renamed.error?.message)
+    const created = await window.dawn!.invoke("createTask", { agentId: ids.agentId, workspace })
+    if (!created.ok) throw new Error(created.error?.message)
+  }, { ids, workspace, longTitle })
+  // renameSession is request/response; model title changes arrive via this separate push channel.
+  await dawn.app.evaluate(({ BrowserWindow }, update) => {
+    BrowserWindow.getAllWindows()[0]!.webContents.send("dawn:workbench:event", update)
+  }, { workbenchProtocolVersion: WORKBENCH_PROTOCOL_VERSION, sessionId: ids.sessions[4]!, revision: 1, type: "title", title: longTitle })
+  await expect(card).toContainText(longTitle)
+  await expect(card).toContainText("6 段对话")
+  await expect(close).toBeFocused()
+  await expect.poll(async () => {
+    const bounds = (await card.boundingBox())!
+    return bounds.y + bounds.height
+  }).toBeLessThanOrEqual(642)
 })

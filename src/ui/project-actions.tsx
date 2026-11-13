@@ -5,8 +5,9 @@ import { 新建会话图标 } from "./icons.js"
 import { t, tf } from "./i18n/index.js"
 
 /** 项目行直接新建会话；管理菜单沿用原删除确认流程。 */
-export function ProjectActions({ name, onNew, onDelete }: {
+export function ProjectActions({ name, onNew, onDelete, onInfo }: {
   name: string
+  onInfo?: (() => void) | undefined
   onNew?: (() => void) | undefined
   onDelete?: (() => void) | undefined
 }) {
@@ -40,14 +41,14 @@ export function ProjectActions({ name, onNew, onDelete }: {
       window.removeEventListener("scroll", scroll, true)
     }
   }, [open])
-  if (!onNew && !onDelete) return null
+  if (!onNew && !onDelete && !onInfo) return null
   return <div className="row-actions project-actions">
     {onNew ? <Button variant="ghost" size="inline" className="project-new" aria-label={tf("在「{0}」里开一段新对话", name)} onClick={() => { setOpen(false); onNew() }}><新建会话图标 /></Button> : null}
-    {onDelete ? <Button ref={trigger} variant="ghost" size="row-action" className="row-more" aria-label={tf("项目操作：{0}", name)} aria-haspopup="menu" aria-expanded={open}
+    {onDelete || onInfo ? <Button ref={trigger} variant="ghost" size="row-action" className="row-more" aria-label={tf("项目操作：{0}", name)} aria-haspopup="menu" aria-expanded={open}
       onClick={() => setOpen(!open)} onKeyDown={e => {
         if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true) }
       }}>⋯</Button> : null}
-    {open && onDelete ? createPortal(<div ref={menu} className="project-actions-menu" role="menu" aria-label={tf("项目操作：{0}", name)} style={position}
+    {open && (onDelete || onInfo) ? createPortal(<div ref={menu} className="project-actions-menu" role="menu" aria-label={tf("项目操作：{0}", name)} style={position}
       onKeyDown={e => {
         if (e.key === "Escape" || e.key === "Tab") {
           if (e.key === "Escape") e.preventDefault()
@@ -60,6 +61,7 @@ export function ProjectActions({ name, onNew, onDelete }: {
           items[(index + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus()
         }
       }}>
+      {onInfo ? <Button variant="ghost" size="sm" role="menuitem" onClick={() => { setOpen(false); onInfo() }}>{t("项目信息")}</Button> : null}
       {onDelete ? <Button variant="ghost" size="sm" role="menuitem" className="menu-danger" aria-label={tf("删除项目：{0}", name)} onClick={() => { setOpen(false); onDelete() }}>{t("移除项目")}</Button> : null}
     </div>, document.body) : null}
   </div>

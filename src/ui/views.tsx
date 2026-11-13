@@ -27,6 +27,7 @@ import { dockTabOrder, useDockTabs } from "./dock-tabs.js"
 import rpIcon from "../../packaging/icon.svg"
 import { buildServerGroups } from "./server-navigation.js"
 import { ServerSidebar, type ServerSidebarProps } from "./server-sidebar.js"
+import { ProjectInfo } from "./project-info.js"
 import { ProjectActions } from "./project-actions.js"
 import type { RemoteConnection } from "../protocol/index.js"
 import type { View } from "./state/view.js"
@@ -2289,7 +2290,10 @@ export function SessionSidebar({
               const 展开 = 手动展开.get(路径) ?? 里面的.some((t) => t.taskId === activeTaskId)
               return (
                 <li key={路径} className={`proj-item${展开 ? " current" : ""}`}>
-                  <div className="proj-head">
+                  <ProjectInfo name={基名(路径)} workspace={路径}
+                    tasks={(tasks ?? []).filter(task => task.workspace === 路径 && !task.connectionId)}
+                    sessionOf={sessionOf} onPick={onPickTask}>
+                    {showInfo => <>
                     {选项目中 ? (
                       <input
                         type="checkbox"
@@ -2309,21 +2313,6 @@ export function SessionSidebar({
                       active={展开}
                       /* 多选时点行仍是展开/收起，选整组只靠前面那颗勾选框——与机器那一行同一套（2026-08-23 作者定的） */
                       onClick={() => 设展开(路径, !展开)}
-                      /**
-                       * **行上只留名字，路径与对话数进悬停卡**（2026-08-21，作者给了 Codex 那张图）。
-                       * 08-13 那版把全路径常驻一行，理由是「同名文件夹到处都是」——
-                       * 那个理由没变，答案换了地方：悬停就看得到，不再占一行。
-                       */
-                      {...浮层事件(
-                        设浮着的,
-                        基名(路径),
-                        undefined,
-                        [
-                          { 图: "文件夹", 文: 路径 },
-                          { 图: "对话", 文: tf("{0} 段对话", 里面的.length) },
-                        ],
-                        "文件夹",
-                      )}
                     >
                       <span className="sess">
                         <span className="name">
@@ -2338,10 +2327,12 @@ export function SessionSidebar({
                     </Row>
                     <ProjectActions
                       name={基名(路径)}
+                      onInfo={() => { 设浮着的(undefined); showInfo() }}
                       onNew={onNewTaskIn ? () => { 设展开(路径, true); onNewTaskIn(路径) } : undefined}
                       onDelete={onDeleteProject && projectId ? () => onDeleteProject(projectId) : undefined}
                     />
-                  </div>
+                    </>}
+                  </ProjectInfo>
                   {展开 ? (
                     <ul className="proj-session-list">
                       {/* 归「项目」那一轮多选管（`任务行` 按列判），「会话」那一轮仍管不着它们 */}

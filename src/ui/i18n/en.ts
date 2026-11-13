@@ -16,6 +16,11 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "收起信息卡": "Dismiss project information",
+  "项目信息": "Project information",
+  "项目信息：{0}": "Project information: {0}",
+  "最近会话": "Recent conversations",
+  "打开会话：{0}": "Open conversation: {0}",
   "打开编排视图": "Open workflow view",
   "编排视图": "Workflow view",
   "返回 DAWN 对话": "Return to DAWN conversation",

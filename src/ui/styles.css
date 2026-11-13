@@ -9747,3 +9747,34 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .planning-contract-source p { overflow-wrap:anywhere; }
 .planning-contract-source > label, .planning-contract-options label { display:inline-flex; align-items:center; gap:6px; }
 .planning-contract-source input[type="checkbox"] { width:auto; flex:none; margin:0; }
+
+/* Project identity and recent conversations, outside the scrolling sidebar. */
+.project-info-card {
+  position: fixed;
+  z-index: var(--z-modal-popover);
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: var(--dawn-space-3);
+  color: var(--dawn-text-1);
+  background: var(--dawn-surface-elevated);
+  border: var(--dawn-hairline) solid var(--dawn-stroke-float);
+  border-radius: var(--dawn-radius-md);
+  box-shadow: var(--dawn-shadow-float);
+  font-size: var(--dawn-fs-sub);
+}
+.project-info-head { display: flex; align-items: flex-start; gap: var(--dawn-space-2); }
+.project-info-head > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: var(--dawn-weight-medium); line-height: 1.5; }
+.project-info-card .row-icon { flex: 0 0 auto; margin-top: 3px; color: var(--dawn-text-3); }
+.project-info-head .btn { flex: 0 0 auto; }
+.project-info-count, .project-info-path { display: flex; align-items: flex-start; gap: var(--dawn-space-2); margin: var(--dawn-space-2) 0 0; color: var(--dawn-text-2); }
+.project-info-path { padding-top: var(--dawn-space-2); border-top: var(--dawn-hairline) solid var(--dawn-stroke-4); }
+.project-info-path > span { min-width: 0; overflow-wrap: anywhere; user-select: text; }
+.project-info-label { margin: var(--dawn-space-3) 0 var(--dawn-space-1); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); font-weight: var(--dawn-weight-medium); }
+.project-info-sessions { list-style: none; padding: 0; margin: 0; }
+.project-info-sessions .btn { width: 100%; height: auto; justify-content: flex-start; align-items: flex-start; text-align: start; gap: var(--dawn-space-2); padding: var(--dawn-space-2); white-space: normal; }
+.project-info-session { display: flex; flex-direction: column; min-width: 0; gap: var(--dawn-space-1); }
+.project-info-session > span { overflow-wrap: anywhere; }
+.project-info-session time, .project-info-empty { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.project-info-empty { margin: var(--dawn-space-2) 0; }

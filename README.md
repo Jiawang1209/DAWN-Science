@@ -16,7 +16,7 @@ An open-source, local-first AI workbench where multiple agents collaborate with 
 
 ## What it is
 
-An **open-source, local-first desktop environment for research work**. You talk to a model; the model runs Python / R in a **persistent kernel** — variables remain across executions while that conversation’s kernel is running — and you can keep typing into the same kernel from a notebook pane, with your cells recorded in the conversation. A project is a folder; a server becomes a remote workspace with nothing installed on it but `sshd`.
+An **open-source, local-first desktop environment for research work**. You talk to a model; the model runs Python / R in a **persistent kernel** — variables remain across executions while that conversation’s kernel is running — and you can keep typing into the same kernel from a notebook pane, with your cells recorded in the conversation. A project is a folder; a server becomes a remote workspace over SSH, without installing a DAWN service. Remote Python/R execution uses the interpreters and kernel packages configured on that server.
 
 **The idea:**
 
@@ -24,7 +24,7 @@ An **open-source, local-first desktop environment for research work**. You talk 
 question  →  plan  →  call tools  →  run  →  traceable result
 ```
 
-The last step is what sets it apart from other AI tools — **not faster, but more trustworthy**.
+The goal is to make the result **inspectable: what ran, which files it used, and what was actually checked**.
 
 **Domains:** data science · ecology · environmental science · bioinformatics
 
@@ -47,7 +47,7 @@ The last step is what sets it apart from other AI tools — **not faster, but mo
 
 ## Install
 
-Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). **This is an early build (0.0.x) and the installers are unsigned**, so the first launch takes one extra click:
+Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). **This is an early build (0.0.x): macOS uses ad-hoc signing without Developer ID notarization, and Windows installers are not Authenticode-signed**, so the first launch takes one extra click:
 
 | Platform | Install | First launch |
 |---|---|---|
@@ -64,7 +64,7 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 | Notebook / run Python | Python 3 + `pip install ipykernel` |
 | R kernel | R + `IRkernel` |
 | Git facts about a project | git |
-| Remote workspace | `sshd` on the server — **nothing else is placed on the server** |
+| Remote workspace | SSH access; Python/R execution also needs the corresponding interpreter and `ipykernel` / `IRkernel` on the server. No DAWN service is installed |
 | Hand work to Claude Code / Codex | The respective CLI installed locally (nice-to-have; chat works without it) |
 
 ---
@@ -75,17 +75,22 @@ Download from [Releases](https://github.com/Jiawang1209/DAWN-Science/releases). 
 |---|---|
 | **Kernel in the conversation** | The model calls `run_code`; you watch every cell stream by in the dock's *Notebook* pane, type into the same kernel yourself, and your cells land in the conversation |
 | **Persistent kernels** | Variables remain across cells and view switches while the kernel is running. Stopping the conversation/kernel or quitting DAWN ends local kernel memory |
-| **Remote workspaces** | Add a server over SSH — sessions, kernels, files and terminals run there; zero dependencies on the server |
+| **Remote workspaces** | SSH files, terminals, transfers and configured Python/R kernels, without a DAWN service on the server |
+| **Project information** | Hover over a sidebar project or choose *Project information* from its menu to see the directory, conversation count and five recent conversations; select one to open it |
 | **Right dock** | Files (local / remote), transfers, notebook, generated artifacts, web preview, watching the agent's browser |
 | **`@` references** | `@` a workspace file in the input box — path and type are passed, not contents |
-| **Multi-agent** | 22 bundled sub-agents; team mode with a lead, resumable members and a task board with dependencies |
+| **Multi-agent** | Bundled sub-agents, reusable Bots, resumable team members and dependency-aware tasks; review a proposed arrangement before approving execution |
+| **Research workflows** | Versioned recipes for tabular ecology and figure reproduction; check → analyze → independent review, with input versions, executable acceptance checks and explicit blocked/revision states |
 | **Professional Bots** | Manage reusable native/API assistants in the Bot dock, chat privately within a workspace, dispatch with `/`, discuss in one shared chat with individual avatars and bubbles, follow up with peers, hand off work and accept user intervention, or let the main conversation form a team and collect verified scripts, notes and figures with inline previews |
 | **Three permission levels** | Allow all / ask / block, plus a hard-deny list |
-| **Skills & plugins** | Skills with three-level toggles, local import and [public GitHub discovery / pinned installation](docs/skills.md); Office (Word/Excel/PowerPoint/PDF, 14 tools), browser (15 tools) and long-term memory (three-track confirmation) plugins |
+| **Skills & plugins** | Skills with three-level toggles, local import and [public GitHub discovery / pinned installation](docs/skills.md); Office (Word/Excel/PowerPoint/PDF), browser and long-term memory (three-track confirmation) plugins |
 | **Remote assistant** | WeChat / Feishu channels — scan a QR code, keep asking from your phone |
 | **Scheduled tasks** | At the set time, open a fresh session and run the task description |
-| **Artifacts** | `GENERATED · N` in the conversation, live list in the dock |
-| **Any provider** | 40+ via `pi`'s provider layer; or switch to a locally installed Claude Code / Codex (ACP) |
+| **Artifacts & evidence** | Generated-file previews plus task/tool evidence, input/output fingerprints, acceptance details and retained historical copies where available |
+| **File rewind** | Preview and restore tracked workspace file changes from a conversation turn; raw data and approved plans are excluded, and files outside retention limits are reported |
+| **Scientific sources** | Optional OpenAlex, Crossref, GEO, SRA and UniProt plugins for literature/data lookup and saving records actually returned by those sources |
+| **App updates** | Check for releases in Settings → About; supported packaged installations can download, install and restart. Portable Windows and Linux deb installations use manual updates |
+| **Any provider** | Through `pi`'s provider layer; or switch to a locally installed Claude Code / Codex (ACP) |
 | **Appearance** | Light / dark, one-click accent color, Chinese / English UI |
 
 ---
@@ -133,14 +138,15 @@ agent says "mergeable", diff ≠ plan             → back to REWORKING
 
 ## Status
 
-**Early release: usable day to day, interfaces still moving.** The local and remote main paths work and have been verified on real machines. Packaged for three platforms; signing and auto-update are not done yet.
+**Early release (0.0.x), with interfaces still changing.** This README describes the current source checkout; an installed release may not include every change yet. Application updates and task evidence/version checks are implemented. Developer ID signing/notarization and Windows Authenticode signing remain unfinished.
 
 | | |
 |---|---|
-| Source | ~77k lines of TypeScript |
-| Tests | 197 unit/integration test files (vitest) + 107 e2e cases (Playwright, against the real build) + 10 pixel-exact visual baselines |
-| Changelog | [485 entries](docs/DEVELOPMENT_HISTORY.md), each with motivation and verification |
-| Next | signing & auto-update · artifact provenance / versions / annotations |
+| Validation | Vitest node/UI/kernel groups; Electron, real-kernel, visual and streaming-performance checks. See the dated [project audit](docs/validation/project-audit-20261112/README.md) and [project information validation](docs/validation/project-info-20261113/README.md) for actual results and limits |
+| Platforms | Packaging targets macOS, Windows and Linux. Recent validation is primarily on macOS; packaging success does not establish Windows/Linux real-machine compatibility |
+| Research evidence | Frozen task contracts, file fingerprints, host acceptance and independent review support inspection. A passed check is limited to its configured rules and does not certify scientific correctness |
+| Real-model evaluation | A [bounded single-/multi-agent comparison](docs/validation/research-budget-300-20261108/README.md) completed both delivery paths on one synthetic task; it does not establish general quality, cost or speed gains |
+| History | [Development history](docs/DEVELOPMENT_HISTORY.md) and [review records](docs/reviews/) document individual changes and verification |
 
 ---
 
@@ -186,14 +192,14 @@ Cross-compiling and Linux build deps: [打包与发布](docs/打包与发布.md)
 | Layer | Choice |
 |---|---|
 | Core | TypeScript / Node |
-| LLM providers | `@earendil-works/pi-ai` (40+ providers, DeepSeek / Kimi / Qwen native) |
+| LLM providers | `@earendil-works/pi-ai` (including DeepSeek / Kimi / Qwen) |
 | Agent loop | `@earendil-works/pi-agent-core` |
 | Kernels | `enchannel-zmq-backend` + `@nteract/messaging` + `spawnteract` (Jupyter protocol — one stack for R and Python) |
 | Terminal | `node-pty` + `xterm.js` |
 | Tool protocol | `@modelcontextprotocol/sdk` (server + client) |
 | Persistence | SQLite (`better-sqlite3`, WAL) |
 | Shell | Electron |
-| Front-end | React + Vite · CodeMirror 6 · Plotly.js · TanStack Table |
+| Front-end | React + Vite · Streamdown / Shiki / KaTeX · xterm.js |
 
 ---
 
@@ -208,6 +214,8 @@ Most docs are in Chinese.
 | [Master roadmap](docs/superpowers/plans/2026-08-08-master-roadmap.md) | Order of work, decision gates, risks |
 | [Design contract](docs/DESIGN.md) | How the UI looks and why |
 | [Reference map](docs/REFERENCES.md) | Which project to read for which component |
+| [Skills](docs/skills.md) / [MCP](docs/mcp.md) | Configure extensions, tool results, cancellation and recovery |
+| [Project audit](docs/validation/project-audit-20261112/README.md) | Dated local validation results and platform limits |
 | [Packaging & release](docs/打包与发布.md) | How to package and install on a fresh machine |
 | [Development history](docs/DEVELOPMENT_HISTORY.md) | Every change and its reason |
 
@@ -260,7 +268,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 
 ## 这是什么
 
-一个**开源、本地优先的桌面科研工作环境**。你在里面和模型对话，模型在**同一台内核**里跑 Python / R——该对话的内核运行期间，变量在连续执行之间保留；你可以在旁边的笔记本里接着敲，敲的记进对话。项目绑定文件夹，服务器只要一个 sshd 就能成为远端工作区。
+一个**开源、本地优先的桌面科研工作环境**。你在里面和模型对话，模型在**同一台内核**里跑 Python / R——该对话的内核运行期间，变量在连续执行之间保留；你可以在旁边的笔记本里接着敲，敲的记进对话。项目绑定文件夹，通过 SSH 使用远端工作区，不需要安装 DAWN 服务；远端 Python/R 执行使用服务器上配置的解释器和内核包。
 
 **设计理念：**
 
@@ -268,7 +276,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 问题  →  规划  →  调用工具  →  执行流程  →  产生可追溯结果
 ```
 
-最后一环是这个项目区别于其它 AI 工具的地方——**不是更快，是更可信**。
+目标是让结果**可以检查：执行了什么、用了哪些文件、实际通过了哪些核验**。
 
 **领域定位：** 数据科学 · 生态学 · 环境科学 · 生物信息
 
@@ -291,7 +299,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 
 ## 安装
 
-去 [Releases](https://github.com/Jiawang1209/DAWN-Science/releases) 下载对应平台的包。**当前是早期版本（0.0.x），安装包未签名**，第一次打开要多点一步：
+去 [Releases](https://github.com/Jiawang1209/DAWN-Science/releases) 下载对应平台的包。**当前是早期版本（0.0.x）：macOS 使用 ad-hoc 签名，尚无 Developer ID 签名及公证；Windows 安装包尚无 Authenticode 签名**，第一次打开要多点一步：
 
 | 平台 | 安装 | 第一次打开 |
 |---|---|---|
@@ -308,7 +316,7 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 | 笔记本 / 跑 Python | Python 3 + `pip install ipykernel` |
 | R 内核 | R + `IRkernel` |
 | 项目的 git 事实 | git |
-| 远端工作区 | 服务器上只要 sshd，**服务器上不放任何文件** |
+| 远端工作区 | SSH 访问；运行 Python/R 还需服务器上对应的解释器及 `ipykernel` / `IRkernel`。无需安装 DAWN 服务 |
 | 借用 Claude Code / Codex 干活 | 自己装好对应 CLI（锦上添花，不装不影响对话） |
 
 ---
@@ -319,17 +327,22 @@ Third-party dependencies (`pi` etc.) are MIT / Apache-2.0, compatible with AGPL.
 |---|---|
 | **对话里的内核** | 模型调 `run_code`，你在坞里的「笔记本」格看它的每个 cell 流过；在同一台内核里自己敲，敲的记进对话 |
 | **持久内核** | 内核运行期间，变量在连续 cell 和视图切换之间保留，可中断；停止对话/内核或退出应用会结束本地内核内存状态 |
-| **远端工作区** | 加一台服务器（SSH），会话、内核、文件、终端都在那边跑；本机零依赖 |
+| **远端工作区** | 通过 SSH 使用文件、终端、传输和已配置的 Python/R 内核，无需在服务器上安装 DAWN 服务 |
+| **项目信息** | 悬停侧栏项目，或点击「⋯ → 项目信息」，查看目录、会话数及最近 5 段会话，并直接打开会话 |
 | **右侧坞** | 文件（本地/远端）、传输、笔记本、产物清单、网页预览、agent 浏览器旁观 |
 | **`@` 引用** | 输入框里 `@` 工作区文件——喂路径和类型，不喂内容 |
-| **多智能体** | 22 份自带子 agent 名册；团队模式：队长 + 可续聊成员 + 带依赖的任务板 |
+| **多智能体** | 自带子 agent、可复用 Bot、可续聊团队成员及依赖任务；先查看安排方案，再批准执行 |
+| **科研流程** | 版本化的生态表格分析与图表复现模板；核查 → 分析 → 独立审阅，绑定输入版本、宿主可执行验收及明确的阻塞/修正状态 |
 | **专业 Bot** | 坞中管理固定职责助手、按工作区直接交流；主对话自动从已配置 Bot 组队，`/` 随时派单；成员在同一团队对话中追问/交接，用户随时插话；独立头像、名字、专业角色及消息气泡展示交流，汇总已核验脚本、说明及图表，成果可在消息内展开预览并用 × 收起。首版支持 native/API，ACP/CLI 不作为 Bot 成员 |
 | **权限三档** | 全放行 / 问一句 / 拦下；硬拒清单 |
-| **技能与插件** | 技能三档开关、导入；Office（Word/Excel/PPT/PDF 14 工具）、浏览器（15 工具）、记忆（三轨确认制）插件 |
+| **技能与插件** | 技能三档开关、导入及[公开 GitHub 发现与固定版本安装](docs/skills.md)；Office（Word/Excel/PPT/PDF）、浏览器、记忆（三轨确认制）插件 |
 | **远程助理** | 微信 / 飞书通道，扫码接入，手机上继续问 |
 | **定时任务** | 到点开一段全新会话跑任务说明 |
-| **产物** | 对话里 `GENERATED · N`，坞里实时清单 |
-| **多服务商** | 走 `pi` 的 provider 层，40+ 家；也可切到本机的 Claude Code / Codex（ACP） |
+| **产物与证据** | 生成文件预览、任务与工具证据、输入/输出指纹、逐项验收详情，以及已有留存的历史副本 |
+| **文件回退** | 预览并恢复一轮对话中跟踪到的工作区文件改动；原始数据与已批准方案除外，超出留存限制的文件明确提示 |
+| **科研来源** | 可选 OpenAlex、Crossref、GEO、SRA、UniProt 插件，检索文献/数据并保存实际返回的记录 |
+| **应用更新** | 在「设置 → 关于」检查新版；支持的打包安装可下载、安装并重启。Windows 便携版与 Linux deb 版需手动更新 |
+| **多服务商** | 走 `pi` 的 provider 层；也可切到本机的 Claude Code / Codex（ACP） |
 | **外观** | 明暗主题、一键换主题色、中英文界面 |
 
 ---
@@ -377,14 +390,15 @@ agent 说「可合并」，但 diff 与计划不一致     → 回到 REWORKING
 
 ## 当前状态
 
-**早期版本，日常可用，接口仍在变。** 单机与远端主链路都跑通并在真机上验过；打包三平台，签名与自动更新还没有。
+**早期版本（0.0.x），接口仍在调整。** 本文描述当前源码，已安装的发布版可能尚未包含全部变更。应用更新、任务证据和版本核验已经实现；正式 Developer ID 签名、公证及 Windows Authenticode 签名尚未完成。
 
 | | |
 |---|---|
-| 源码 | 约 7.7 万行 TypeScript |
-| 测试 | 197 个单元/集成测试文件（vitest）+ 107 个 e2e 用例（Playwright，驱动真实构建产物）+ 10 张逐像素视觉基线 |
-| 变更记录 | [485 条](docs/DEVELOPMENT_HISTORY.md)，每条写明动机与验证方式 |
-| 下一步 | 签名与自动更新 · 产物的来源/版本/批注 |
+| 验证 | Vitest 的 node/UI/kernel 分组，以及 Electron、真实内核、视觉和流式性能检查。实际结果与边界见带日期的[项目审查](docs/validation/project-audit-20261112/README.md)和[项目信息验证](docs/validation/project-info-20261113/README.md) |
+| 平台 | 提供 macOS、Windows、Linux 打包目标；近期验证主要在 macOS，打包成功不等于 Windows/Linux 真机兼容性已验收 |
+| 科研证据 | 冻结任务契约、文件指纹、宿主验收和独立审阅支持追溯；通过仅表示满足已配置规则，不等于科学结论已获认证 |
+| 真实模型评测 | [有界的单/多执行者对照](docs/validation/research-budget-300-20261108/README.md)已在一个自制任务上走通两条交付路径，不能据此宣称普遍的质量、费用或速度收益 |
+| 记录 | [开发历史](docs/DEVELOPMENT_HISTORY.md)与[审查记录](docs/reviews/)保存各次改动及验证依据 |
 
 ---
 
@@ -430,14 +444,14 @@ Normal 就是原来的 Shell；输入 `dawn` 进入 Agent，`/exit` 返回。CLI
 | 层 | 选型 |
 |---|---|
 | 核心 | TypeScript / Node |
-| LLM provider | `@earendil-works/pi-ai`（40+ provider，含 DeepSeek / Kimi / Qwen 原生） |
+| LLM provider | `@earendil-works/pi-ai`（含 DeepSeek / Kimi / Qwen） |
 | Agent loop | `@earendil-works/pi-agent-core` |
 | 科学内核 | `enchannel-zmq-backend` + `@nteract/messaging` + `spawnteract`（Jupyter 协议，一套通吃 R 与 Python） |
 | 终端 | `node-pty` + `xterm.js` |
 | 工具协议 | `@modelcontextprotocol/sdk`（server + client 双向） |
 | 持久化 | SQLite（`better-sqlite3`，WAL） |
 | 桌面壳 | Electron |
-| 前端 | React + Vite · CodeMirror 6 · Plotly.js · TanStack Table |
+| 前端 | React + Vite · Streamdown / Shiki / KaTeX · xterm.js |
 
 ---
 
@@ -450,6 +464,8 @@ Normal 就是原来的 Shell；输入 `dawn` 进入 Agent，`/exit` 返回。CLI
 | [主开发规划](docs/superpowers/plans/2026-08-08-master-roadmap.md) | 按什么顺序、在哪停下判断、风险怎么应对 |
 | [视觉与交互契约](docs/DESIGN.md) | 界面怎么长、为什么 |
 | [参考地图](docs/REFERENCES.md) | 实现某个部件时，去读哪个项目的哪一段 |
+| [技能](docs/skills.md) / [MCP](docs/mcp.md) | 扩展配置、工具结果、取消与恢复 |
+| [项目审查](docs/validation/project-audit-20261112/README.md) | 带日期的本地验证结果及平台边界 |
 | [打包与发布](docs/打包与发布.md) | 怎么打包、装到新电脑 |
 | [开发历史](docs/DEVELOPMENT_HISTORY.md) | 每次变更与其理由 |
 

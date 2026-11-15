@@ -24,6 +24,10 @@ jobs:
           - { os: ubuntu-22.04-arm, name: linux-arm64, cmd: "npx electron-builder --linux --arm64 --publish never" }
     runs-on: ${{ matrix.os }}
     steps:
+      # 必须在 checkout 前开启，否则验证记录的深层路径会让 Windows 检出失败。
+      - name: Enable Windows long paths
+        if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }

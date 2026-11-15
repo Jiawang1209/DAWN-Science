@@ -109,6 +109,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
     if (!doc.selection || !onAsk) return
     try {
       const request = store.prepareEdit(doc.id, path)
+      if (doc.scope.kind === 'native' && doc.scope.sessionId) store.linkScript(doc.id, doc.path ?? path)
       onAsk(request.prompt)
       setLocalError(undefined)
       setNotice(t("完整草稿与选区已带入当前对话，填写修改要求后发送"))

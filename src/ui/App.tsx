@@ -1,3 +1,4 @@
+import { LinkedScript, followEditorScript, openEditorFile } from "./linked-script.js"
 import {createAutoArrangementRequester,stopAutoArrangement} from './auto-arrangement-request.js'
 import { CodeEditingContext } from './code-editing-context.js'
 import { scriptEditForReply, scriptEditReplyHasContext } from './code-editor-ai.js'
@@ -3881,21 +3882,22 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     },
     reviewCode: ({ requestId, code, language }: { requestId: string; code: string; language: string }) => {
       if (editorScopeRef.current?.key !== editorScope.key) return
-      try { codeEditor.reviewEdit(requestId, editorScope.key, code, language); showCodeEditor() }
+      try { codeEditor.reviewEdit(requestId, editorScope.key, code, language); followEditorScript(codeEditor, editorScope.key); showCodeEditor() }
       catch (error) { fail(error) }
     },
     returnToScript: (requestId: string) => {
       if (editorScopeRef.current?.key !== editorScope.key) return
-      try { codeEditor.returnToEditedDocument(requestId, editorScope.key); showCodeEditor() }
+      try { codeEditor.returnToEditedDocument(requestId, editorScope.key); followEditorScript(codeEditor, editorScope.key); showCodeEditor() }
       catch (error) { fail(error) }
     },
     openCode: ({ code, language, source }: { code: string; language: string; source: string }) => {
-      codeEditor.openSource(editorScope, source, code, language); showCodeEditor()
+      if (editorScopeRef.current?.key !== editorScope.key) return
+      codeEditor.openSource(editorScope, source, code, language); followEditorScript(codeEditor, editorScope.key); showCodeEditor()
     },
     openFile: (path: string) => {
       const scope = editorScope
-      void codeEditor.openFile(scope, path).then(() => {
-        if (editorScopeRef.current?.key === scope.key) showCodeEditor()
+      void openEditorFile(codeEditor, scope, path, () => editorScopeRef.current?.key === scope.key).then(opened => {
+        if (opened) showCodeEditor()
       }).catch(fail)
     },
   } : undefined
@@ -5883,6 +5885,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 on跳完={跳完}
                 /* 发送、中止、权限卡、换模型……这一段自己的那套回调，与坞格共用一份（`对话回调`） */
                 {...对话回调(session, 主槽)}
+                prepareMessage={session.kind === "native" && editorScope ? text => {
+                  if (parseBotCommand(text)) return text
+                  if (editorScopeRef.current?.key !== editorScope.key) throw new Error(t("会话工作区已变化，请在当前会话重新发送"))
+                  return codeEditor.prepareLinkedEdit(editorScope.key, text)
+                } : undefined}
+                scriptContext={session.kind === "native" && editorScope ? <LinkedScript store={codeEditor} scopeKey={editorScope.key} onOpen={showCodeEditor} onEnd={() => { if (rightDockTenant === "code") closeCodeEditor() }} /> : undefined}
+
                 onNewSession={async () => {
                   const connectionId = session.remote?.connectionId
                   if (connectionId) {

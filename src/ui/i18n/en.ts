@@ -16,6 +16,20 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "会话工作区已变化，请在当前会话重新发送": "The conversation workspace changed. Send again in the current conversation.",
+  "当前对话关联的脚本：{0}。以下是本次发送时的完整草稿（包含未保存修改），请以此为准，不要使用历史回复中的旧版本。": "Script connected to this conversation: {0}. The following is the complete draft at submission, including unsaved edits. Treat it as authoritative instead of older replies.",
+  "请根据本条用户消息回答。用户要求修改脚本时，请只返回一个与原脚本语言一致的代码块，内容是修改后的完整脚本，不要省略未修改部分，保留无关代码。用户询问解释或其他问题时，请正常回答。不要调用工具、写入文件或运行代码；脚本修改由我查看差异后手动应用到原脚本。": "Answer the current user message. When asked to change the script, return one code block in the original language containing the complete updated script. Preserve unrelated code and omit no unchanged sections. For explanations or other questions, answer normally. Do not call tools, write files, or run code; I will review the diff and manually apply changes to the original draft.",
+  "基于发送时的完整草稿": "Based on the complete draft at submission",
+  "会话关联脚本": "Script connected to this conversation",
+  "正在修改": "Editing",
+  "发送时附上最新草稿 · 修改先审阅": "Latest draft attached on send · Review changes first",
+  "打开关联脚本：{0}": "Open connected script: {0}",
+  "结束脚本联动": "End script connection",
+  "原脚本草稿已改变，请在对话中重新提出修改要求，避免覆盖后续修改": "The original draft changed. Ask again in the conversation to preserve your later edits.",
+  "当前会话不支持关联脚本": "This conversation does not support script connections",
+  "关联的脚本草稿不存在，请重新关联": "The connected script draft is unavailable. Open it in the editor again.",
+  "本轮脚本快照：{0}": "Script snapshot for this turn: {0}",
+  "请只填写本轮要求，脚本草稿会自动附上": "Enter only your current request; the script draft will be attached automatically.",
   "请先选择要修改的代码": "Select the code you want to change first",
   "选区已变化，请重新选择代码后带入对话": "The selection changed. Select the code again before adding it to the conversation.",
   "脚本过大，无法完整带入对话（上限 128 KiB）": "The script is too large to attach in full (128 KiB limit)",

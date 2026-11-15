@@ -50,9 +50,9 @@ export function CodeEditorDiff({ request, code, onApply, onClose, problem, targe
     </header>
     <div className="code-editor-diff-meta">
       <span>{tf("修改目标：{0}", targetLabel ?? request.label)}</span>
-      <span>{tf("原选区：L{0}–{1}", fromLine, toLine)}</span>
+      <span>{request.source === 'linked' ? t("基于发送时的完整草稿") : tf("原选区：L{0}–{1}", fromLine, toLine)}</span>
     </div>
-    <fieldset className="code-editor-diff-modes">
+    {request.source !== 'linked' ? <fieldset className="code-editor-diff-modes">
       <legend>{t("应用范围")}</legend>
       <label>
         <input type="radio" name={`script-edit-mode-${request.id}`} checked={mode === 'document'} onChange={() => setMode('document')} />
@@ -62,7 +62,7 @@ export function CodeEditorDiff({ request, code, onApply, onClose, problem, targe
         <input type="radio" name={`script-edit-mode-${request.id}`} checked={mode === 'selection'} onChange={() => setMode('selection')} />
         {t("仅替换所选代码")}
       </label>
-    </fieldset>
+    </fieldset> : null}
     {failure ? <p className="field-error" role="alert">{failure}</p> : null}
     {!failure && !review.changed ? <p role="status">{t("AI 回复与原脚本相同，没有可应用的修改")}</p> : null}
     {review.changed && review.lines ? <>

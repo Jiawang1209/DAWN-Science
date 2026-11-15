@@ -24,6 +24,13 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('script modification review', () => {
+  it('reviews linked revisions as a whole script without referring to a selection', () => {
+    render(<CodeEditorDiff request={{ ...request, source: 'linked' }} code={revised} onApply={() => {}} onClose={() => {}} />)
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.getByText('基于发送时的完整草稿')).toBeTruthy()
+    expect(screen.queryByText('原选区：L3–3')).toBeNull()
+  })
+
   it('shows the original destination and actual line diff before allowing an explicit apply', () => {
     const onApply = vi.fn(), onClose = vi.fn()
     const { container } = render(<CodeEditorDiff request={request} code={revised} onApply={onApply} onClose={onClose} />)

@@ -28,6 +28,15 @@ function setup() {
 }
 
 describe('chat-first editor', () => {
+  it('selection handoff keeps this script connected for subsequent plain chat messages', () => {
+    const { store, id } = setup()
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} onAsk={() => {}} />)
+    act(() => store.setSelection(id, { from: 6, to: 14, text: 'print(x)' }))
+    fireEvent.click(screen.getByRole('button', { name: /^带入对话$/ }))
+    expect(store.linkedScript('s')?.document.id).toBe(id)
+    expect(screen.queryByRole('button', { name: /^关联当前会话$/ })).toBeNull()
+  })
+
   it('reviews the current saved path when a draft receives its first filename while AI is replying', async () => {
     const { store, id } = setup()
     store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })

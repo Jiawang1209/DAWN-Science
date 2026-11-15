@@ -1,3 +1,4 @@
+import { splitLinkedScriptPrompt } from "./code-editor-ai.js"
 import { KernelPlotImage } from './kernel-plot-image.js'
 import { isKernelPlotMediaType } from './kernel-plot-model.js'
 import {autoArrangementRequestPrefix} from '../protocol/task-arrangement.js'
@@ -3797,6 +3798,8 @@ export function ConversationView({
   models,
   model,
   onSend: onSendAction,
+  prepareMessage,
+  scriptContext,
   allowBotDispatch = false,
   onEcho,
   onPickModel,
@@ -3982,6 +3985,9 @@ export function ConversationView({
   analysisRoute?: AnalysisRoute | undefined
   onOpenRoute?: (() => void) | undefined
   allowBotDispatch?: boolean | undefined
+  /** Snapshot linked editor context before clear/echo/queue; a thrown error preserves input. */
+  prepareMessage?: ((text: string) => string) | undefined
+  scriptContext?: React.ReactNode
   onSend: (
     text: string,
     images?: readonly 图片来源[],
@@ -5201,6 +5207,16 @@ export function ConversationView({
            * 而不是内部那个布尔值：内核会话的 `busy` 恒为真却从不显示「停止」，
            * 上一版只写 `busy` 当场误伤了它，两条内核 e2e 全红。
            */
+          if (prepareMessage && !原话.startsWith("/")) {
+            try { text = prepareMessage(text) }
+            catch (error) {
+              设发送出错(error instanceof Error ? error.message : String(error))
+              return
+            }
+          }
+          // Resolve attachment tokens only in the instruction; source snapshots are immutable.
+          const preparedScript = splitLinkedScriptPrompt(text)
+          const scriptEnvelope = preparedScript ? text.slice(preparedScript.instruction.length) : undefined
           const 忙着 = busy && !!onAbort
           const 送法 = 忙着 ? (要调整 && canRedirect ? ("redirect" as const) : ("followUp" as const)) : undefined
 
@@ -5246,7 +5262,7 @@ export function ConversationView({
              */
             // 先切好开关再发：这一句要在方案期里被模型读到。切不成就整句不发（下面 catch 把原话还回去）
             if (先开方案) await onSetPlan!(true)
-            let 终文 = text
+            let 终文 = preparedScript?.instruction ?? text
             // **令牌还在草稿里的才落盘**：引用栏 ×掉的（令牌被抠掉）就当没发生过——磁盘无痕
             const 活的 = 这次的文件.filter((f) => 终文.includes(`@${f.令牌}`))
             if (活的.length > 0) {
@@ -5276,6 +5292,7 @@ export function ConversationView({
              * 在调用点上不是：多一个 `undefined` 会让所有
              * 「这一句是怎么发出去的」的断言都要跟着改，而它们关心的不是这个。
              */
+            if (scriptEnvelope) 终文 += scriptEnvelope
             return 这次的图.length > 0
               ? onSend(终文, 这次的图.map(报给协议), ...(送法 ? [送法] : []))
               : 送法
@@ -5315,6 +5332,7 @@ export function ConversationView({
               />
             ) : null}
         </ComposerEnvironment>
+        {scriptContext}
         {onResume && (disabled || recovery?.pending || recovery?.error) ? (
           <div className="session-recovery" role="status">
             <span>{recovery?.error ?? (recovery?.pending ? t("正在恢复原会话…") : t("会话已暂停，可以接着聊"))}</span>
@@ -6119,6 +6137,7 @@ function TranscriptRowImpl({
   }
   if (item.type === "question") return <QuestionSummary record={item} expanded={搜索命中} />
   const mine = item.who === "user"
+  const linkedPrompt = mine ? splitLinkedScriptPrompt(item.text) : undefined
 
   /**
    * **一个字都没说的发言，不画**（2026-08-12，作者截图标红的那一块）。
@@ -6313,11 +6332,15 @@ function TranscriptRowImpl({
          */}
         <AgentMarkdown
           sourceId={item.id}
-          text={mine ? displayRouteMessage(item.text) : item.text}
+          text={mine ? linkedPrompt ? displayRouteMessage(linkedPrompt.instruction) : displayRouteMessage(item.text) : item.text}
           streaming={!mine && !item.final}
           {...(mine ? { className: "text" } : {})}
           {...(onOpenWeb ? { onOpenLocal: onOpenWeb } : {})}
         />
+        {linkedPrompt ? <details className="linked-script-snapshot">
+          <summary>{tf("本轮脚本快照：{0}", linkedPrompt.label)}</summary>
+          <pre>{linkedPrompt.context}</pre>
+        </details> : null}
         {/**
           * **消息底下那张「网页预览」卡**（批 2，形状照作者的截图）。
           *

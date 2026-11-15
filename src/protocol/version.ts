@@ -611,7 +611,8 @@
 /** 8.51: accepted task artifact sources and explicit content checks. */
 /** 8.53: optional explicit missing-unit facts in confirmed templates and scientific acceptance. */
 /** 8.54: explicit user file browsing beyond the workspace, with canonical directory identity. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.54"
+/** 8.55: complete code document reads and optimistic, atomic human saves. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.55"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

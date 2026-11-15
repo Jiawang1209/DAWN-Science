@@ -3,8 +3,8 @@ import { OPERATIONS, 只读模式该拦 } from '../../src/protocol/operations.js
 import { WORKBENCH_PROTOCOL_VERSION } from '../../src/protocol/version.js'
 
 describe('user browser protocol', () => {
-  it('registers the additive 8.54 browser operations with one explicit owner', () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.54')
+  it('registers the browser operations with one explicit owner', () => {
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.55')
     for (const op of ['browseDirectory', 'readBrowserFile', 'searchBrowserFiles'] as const) {
       const request = OPERATIONS[op].request
       const fields = { path: '/tmp/data.txt', ...(op === 'searchBrowserFiles' ? { query: 'data' } : {}) }
@@ -31,5 +31,24 @@ describe('user browser protocol', () => {
     expect(OPERATIONS.openBrowserFile.request.safeParse({ connectionId: 'c', path: '/tmp/file.txt' }).success).toBe(false)
     expect(OPERATIONS.openBrowserFile.mutating).toBe(false)
     expect(只读模式该拦('openBrowserFile')).toBe(true)
+  })
+})
+
+describe('code document protocol', () => {
+  it('requires one explicit owner, full text and expected version; blocks saves in readonly mode', () => {
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.55')
+    for (const owner of [{ projectId: 'p' }, { sessionId: 's' }, { connectionId: 'c' }]) {
+      expect(OPERATIONS.readCodeDocument.request.safeParse({ ...owner, path: '/tmp/x.py' }).success).toBe(true)
+      expect(OPERATIONS.saveCodeDocument.request.safeParse({ ...owner, path: 'x.py', text: '', expectedVersion: null }).success).toBe(true)
+    }
+    for (const op of ['readCodeDocument', 'saveCodeDocument'] as const) {
+      const fields = op === 'saveCodeDocument' ? { text: '', expectedVersion: null } : {}
+      expect(OPERATIONS[op].request.safeParse({ path: 'x', ...fields }).success).toBe(false)
+      expect(OPERATIONS[op].request.safeParse({ projectId: 'p', sessionId: 's', path: 'x', ...fields }).success).toBe(false)
+    }
+    expect(OPERATIONS.saveCodeDocument.request.safeParse({ projectId: 'p', path: 'x', text: '' }).success).toBe(false)
+    expect(OPERATIONS.saveCodeDocument.request.safeParse({ projectId: 'p', path: 'x', text: '', expectedVersion: 'x' }).success).toBe(true)
+    expect(只读模式该拦('saveCodeDocument')).toBe(true)
+    expect(只读模式该拦('readCodeDocument')).toBe(false)
   })
 })

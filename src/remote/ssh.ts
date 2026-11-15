@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 /**
  * 远端执行器（②-B · R1）。
  *
@@ -688,6 +689,40 @@ export class RemoteExecutor {
     })
   }
 
+  /** Bounded full-document read: the extra byte detects growth/oversize without downloading the rest. */
+  async readFileBounded(path: string, maxBytes: number): Promise<Buffer> {
+    const s = await this.sftp()
+    const stream = s.createReadStream(path, { start: 0, end: maxBytes })
+    const chunks: Buffer[] = []
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk))
+    return Buffer.concat(chunks)
+  }
+
+  async writeFileExclusive(path: string, data: Buffer, mode = 0o600): Promise<void> {
+    const s = await this.sftp()
+    const stream = s.createWriteStream(path, { flags: 'wx', mode })
+    let created = false
+    stream.once('open', () => { created = true })
+    try {
+      await transferStream(Readable.from([data]), stream, { idleMs: this.opts.idleTimeoutMs ?? 60_000, progress: () => {} })
+    } catch (error) {
+      // A failed exclusive open owns nothing; never unlink a pre-existing temporary name.
+      if (created) {
+        try { await this.unlink(path) } catch (cleanup) {
+          if (!missingFile(cleanup)) throw new Error(`${String(error)}；临时文件清理失败：${path}：${String(cleanup)}`)
+        }
+      }
+      throw error
+    }
+  }
+
+  /** Standard SFTP rename cannot replace safely; fail visibly when the extension is unavailable. */
+  async replaceFileAtomic(from: string, to: string): Promise<void> {
+    const s = await this.sftp()
+    try { await this.io<void>(cb => s.ext_openssh_rename(from, to, cb)) }
+    catch (error) { throw new Error(`远端安全覆盖需要 posix-rename@openssh.com，目标文件未删除：${String(error)}`) }
+  }
+
   async writeFile(path: string, data: string | Buffer): Promise<void> {
     const s = await this.sftp()
     return new Promise((resolve, reject) => {
@@ -704,10 +739,10 @@ export class RemoteExecutor {
     const st = await this.io<import("ssh2").Stats>(cb => s.stat(path, cb))
     return { directory: st.isDirectory(), size: st.size, ...(st.mtime ? { modifiedAt: new Date(st.mtime * 1000) } : {}) }
   }
-  async lstat(path: string): Promise<{ kind: "directory" | "file" | "other"; size: number; mtime: number }> {
+  async lstat(path: string): Promise<{ kind: "directory" | "file" | "other"; size: number; mtime: number; mode: number }> {
     const s = await this.sftp()
     const st = await this.io<import("ssh2").Stats>(cb => s.lstat(path, cb))
-    return { kind: st.isDirectory() ? "directory" : st.isFile() ? "file" : "other", size: st.size, mtime: st.mtime }
+    return { kind: st.isDirectory() ? "directory" : st.isFile() ? "file" : "other", size: st.size, mtime: st.mtime, mode: st.mode }
   }
   async realpath(path: string): Promise<string> {
     const s = await this.sftp(); return this.io<string>(cb => s.realpath(path, cb))

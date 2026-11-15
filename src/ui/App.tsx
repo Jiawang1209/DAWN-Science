@@ -1,4 +1,6 @@
 import {createAutoArrangementRequester,stopAutoArrangement} from './auto-arrangement-request.js'
+import { CodeEditingContext } from './code-editing-context.js'
+import { createCodeEditorStore, editorDocumentPath, type EditorScope } from './state/code-editor.js'
 import {$collaborationReturn,takeCollaborationReturn,clearCollaborationReturn,pruneCollaborationReturn} from './state/collaboration-return.js'
 import {restoreCollaborationView} from './state/collaboration-view.js'
 import { recentWorkspacePaths, type WorkspaceMenuData } from "./workspace-menu.js"
@@ -40,7 +42,7 @@ import { 拆模型名 } from "./format.js"
  *
  * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
  */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import rpIcon from "../../packaging/icon.svg"
 import { 图廊根 } from "./case-cards.js"
 import { useStore } from "@nanostores/react"
@@ -278,6 +280,8 @@ type 撤回的话 = { text: string; images?: 退回的图[] }
  *   真机后果是渲染进程 18 秒吃满 4 GB。而 419 个测试全都显式传了 client，
  *   **那条生产环境唯一走的默认路径从来没被跑过**。见 tests/ui/app-default-client.test.tsx。
  */
+const CodeEditorPanel = lazy(() => import('./code-editor.js').then(module => ({ default: module.CodeEditorPanel })))
+
 export function App({ client: injected }: { client?: WorkbenchClient }) {
   const client = useMemo(() => injected ?? createClient(), [injected])
 
@@ -3845,6 +3849,40 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [filePath, 文件面板身份, 设树记忆])
 
   const browserOwner = useMemo(() => 文件所在 ? { connectionId: 文件所在.connectionId } : sessionId ? { sessionId } : projectId ? { projectId } : undefined, [文件所在?.connectionId, sessionId, projectId])
+  const codeEditor = useMemo(() => createCodeEditorStore({
+    read: (scope, path) => client.get('readCodeDocument', { ...scope.owner, path: editorDocumentPath(scope, path) }),
+    save: (scope, path, text, expectedVersion) => client.get('saveCodeDocument', { ...scope.owner, path: editorDocumentPath(scope, path), text, expectedVersion }),
+    run: (scope, language, code) => client.get('runInKernel', { sessionId: scope.sessionId!, language, code }),
+  }), [client])
+  const editorScope: EditorScope | undefined = browserOwner ? {
+    key: JSON.stringify([sessionId, projectId, 文件所在?.connectionId, 文件所在?.cwd, 当前工作区路径 ?? currentWorkspace]),
+    owner: browserOwner, sessionId, kind: session?.kind,
+    label: 文件所在?.label ?? t("本机"), cwd: 文件所在?.cwd,
+  } : undefined
+  const editorScopeRef = useRef(editorScope); editorScopeRef.current = editorScope
+  const editorReturnTenant = useRef<import('./state/right-dock.js').坞房客>('files')
+  const showCodeEditor = () => {
+    if ($rightDockTenant.get() !== 'code') editorReturnTenant.current = $rightDockTenant.get()
+    坞上位(); setRightDockTenant('code'); setRightDockOpen(true)
+    if (rightDockWidth < RIGHT_DOCK_DEFAULT) setRightDockWidth(RIGHT_DOCK_DEFAULT, 侧栏此刻多宽)
+  }
+  const closeCodeEditor = () => { setRightDockOpen(false); setRightDockTenant(editorReturnTenant.current) }
+  const codeEditing = editorScope ? {
+    openCode: ({ code, language, source }: { code: string; language: string; source: string }) => {
+      codeEditor.openSource(editorScope, source, code, language); showCodeEditor()
+    },
+    openFile: (path: string) => {
+      const scope = editorScope
+      void codeEditor.openFile(scope, path).then(() => {
+        if (editorScopeRef.current?.key === scope.key) showCodeEditor()
+      }).catch(fail)
+    },
+  } : undefined
+  useEffect(() => {
+    if ($rightDockTenant.get() === 'code' && (!editorScope || !codeEditor.current(editorScope.key))) {
+      setRightDockOpen(false); setRightDockTenant(editorReturnTenant.current)
+    }
+  }, [editorScope?.key, codeEditor])
   const loadBrowserDirectory = useCallback(async (path: string): Promise<BrowserDirectory> => {
     if (!browserOwner) throw new Error(t("还没有选中项目"))
     return client.get<BrowserDirectory>("browseDirectory", { ...browserOwner, path, ...(文件所在 ? { initialPath: 文件所在.cwd } : {}) })
@@ -3910,6 +3948,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 会跨着两种排布留下来，看起来像树自己动了。
    */
   const 造文件面板 = (铺开: boolean) => (
+    <CodeEditingContext.Provider value={codeEditing}>
       <FilesView
         previewOpen={filePreviewOpen}
         onClosePreview={() => setFilePreviewOpen(false)}
@@ -4014,6 +4053,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             }
           : {})}
       />
+    </CodeEditingContext.Provider>
   )
 
   /**
@@ -5811,6 +5851,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   坞上位();setRightDockTenant("bot");setRightDockOpen(true)
                 }}/>
               <CollaborationSummary key={session.sessionId} client={client} sessionId={session.sessionId} onOpen={()=>{看团队(session.sessionId);坞上位();setRightDockTenant("team");setRightDockOpen(true)}}/>
+              <CodeEditingContext.Provider value={codeEditing}>
               <ConversationView
                 headerTarget={conversationHeaderTarget}
                 headerHasTabs={Boolean(会话页签)}
@@ -5878,6 +5919,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 kernelInstanceId={kernelInstanceId}
                 currentKernels={对话内核}
               />
+              </CodeEditingContext.Provider>
             </>
           ) : 向导中 && !跳过向导 ? (
             <SetupWizard
@@ -6133,7 +6175,18 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              */
             onPick={setRightDockTenant}
           >
-            {rightDockTenant === "review" ? (
+            {rightDockTenant === "code" ? (
+              <Suspense fallback={<Loader label={t("正在打开代码编辑器")} />}>
+              <CodeEditorPanel store={codeEditor} scopeKey={editorScope?.key ?? ''} cells={笔记本cells} onClose={closeCodeEditor}
+                onAsk={text => {
+                  if (!sessionId || editorScopeRef.current?.key !== editorScope?.key) return
+                  const current = draftOf(sessionId)
+                  setDraft(sessionId, current ? `${current}\n\n${text}` : text)
+                }}
+                onInterrupt={language => sessionId ? client.get('interruptKernel', { sessionId, language }) : Promise.reject(new Error(t("没有会话，跑不了")))}
+              />
+              </Suspense>
+            ) : rightDockTenant === "review" ? (
               <>
                 {/**
                   * **「跟 git HEAD 比，改了什么」**（2026-08-18）。

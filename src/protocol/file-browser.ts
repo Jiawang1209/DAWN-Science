@@ -34,6 +34,16 @@ export const BrowserSearchSchema = z.object({
 
 /** Dedicated UI operations. Do not expose these through agent tool registries. */
 export const fileBrowserOperations = {
+  readCodeDocument: {
+    request: z.object({ ...owner, path: z.string().min(1) }).strict().refine(oneOwner, ownerMessage),
+    response: z.object({ path: z.string().min(1), text: z.string(), version: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+    mutating: false,
+  },
+  saveCodeDocument: {
+    request: z.object({ ...owner, path: z.string().min(1), text: z.string(), expectedVersion: z.string().nullable() }).strict().refine(oneOwner, ownerMessage),
+    response: z.object({ path: z.string().min(1), version: z.string().regex(/^[a-f0-9]{64}$/), bytes: z.int().min(0) }).strict(),
+    mutating: true,
+  },
   browseDirectory: {
     request: z.object({
       ...owner,

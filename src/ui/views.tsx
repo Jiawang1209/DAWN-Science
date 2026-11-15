@@ -1073,12 +1073,14 @@ export { SideSash }
  * 抄成两份，改一个名字就会有一处忘了改，而那时它们指的是同一个东西。
  */
 export function 房客名(who: 坞房客): string {
+  if (who === 'code') return t("代码编辑")
   return who === "route" ? t("路线") : who === "bot" ? "Bot" : who === "review" ? t("审阅") : who === "artifacts" ? t("产物") : who === "notebook" ? t("笔记本") : who === "web" ? t("网页") : who === "overview" ? t("概览") : who === "subagent" ? t("子 agent") : who === "team" ? t("团队") : who === "chat" ? t("对话") : t("文件")
 }
 
 /** Mac 用 ⌘，其余用 Ctrl。**打包成三平台的软件，符号不能写死** */
 const 是Mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent)
 export function 房客快捷键(who: 坞房客): string {
+  if (who === 'code') return ''
   if (who === "review") return 是Mac ? "⌃⇧G" : "Ctrl+Shift+G"
   // **网页、概览、产物、笔记本、对话暂时不给快捷键**：给一个记不住的组合键，等于多一条没人走的路
   if (who === "route" || who === "bot" || who === "web" || who === "overview" || who === "artifacts" || who === "notebook" || who === "chat" || who === "subagent") return ""
@@ -1222,7 +1224,7 @@ export function RightDock({
         label={t("调整面板宽度")}
       />
       {/* 只调整入口数量；所有标签保留真实尺寸用于测量，溢出项由更多菜单承接。 */}
-      <header ref={head} className="dock-head">
+      {tenant !== 'code' ? <header ref={head} className="dock-head">
         <div className="dock-tabs-row" role="tablist" aria-label={t("面板")}>
           {dockTabOrder.map((who) => (
             <Button
@@ -1271,7 +1273,7 @@ export function RightDock({
         >
           <关闭图标 />
         </Button>
-      </header>
+      </header> : null}
       {/* 一格一个的边界，按房客给 key：切走再切回来就是一次重试（dock-polish ⑥） */}
       <div className="dock-body">
         <PaneBoundary key={tenant} 名={房客名(tenant)}>
@@ -6308,6 +6310,7 @@ function TranscriptRowImpl({
          * 包一层就会把里面段落的外边距一起算进去。
          */}
         <AgentMarkdown
+          sourceId={item.id}
           text={mine ? displayRouteMessage(item.text) : item.text}
           streaming={!mine && !item.final}
           {...(mine ? { className: "text" } : {})}

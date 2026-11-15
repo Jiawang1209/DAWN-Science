@@ -984,7 +984,9 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     // 单文件与目录下载必须保留清晰名称；相关 Electron 查询均用 exact。
     // 用户明确指定终端按钮提示为“返回会话”；它与设置页的“返回”分属不同输入面。
     // 终端用例限定 .dock 并使用 exact: true，保留指定措辞而不绕过扫描。
-    const 放行 = new Set(["设置|去设置", "文件|上传文件", "跳过|先跳过", "下载|下载文件夹", "上传文件|上传文件夹", "返回|返回会话"])
+    // Approved chat-first editor labels belong to the editor/code-block surfaces.
+    // Their UI/Electron tests query within the surface and/or use exact accessible names.
+    const 放行 = new Set(["设置|去设置", "文件|上传文件", "跳过|先跳过", "下载|下载文件夹", "上传文件|上传文件夹", "返回|返回会话", "编辑|收起代码编辑区", "编辑|在旁边编辑", "编辑|编辑脚本", "保存|保存脚本"])
     const 撞的: string[] = []
     for (const a of 名字) {
       for (const b of 名字) {

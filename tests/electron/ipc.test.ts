@@ -15,6 +15,8 @@ function backend(): WorkbenchBackend {
     getRunOverview:async({sessionId})=>({ownerSessionId:sessionId,source:"disk",runs:[]}),
     getToolRecord:async()=>({state:'unavailable'}),
     setRunBudget:async()=>{throw new Error('Budget unavailable in this fixture')},
+    readCodeDocument: async () => ({ path: '/w/code.py', text: '', version: '0'.repeat(64) }),
+    saveCodeDocument: async () => ({ path: '/w/code.py', version: '0'.repeat(64), bytes: 0 }),
     browseDirectory: async () => ({ path: '/w', parentPath: '/', projectPath: '/w', entries: [], ignored: 0, omitted: 0 }),
     readBrowserFile: async () => ({ kind: 'text', mediaType: 'text/plain', text: '', bytes: 0 }),
     searchBrowserFiles: async () => ({ matches: [], visited: 0, skippedDirs: 0, unreadable: 0 }),

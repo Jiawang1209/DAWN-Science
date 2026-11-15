@@ -1,6 +1,8 @@
-import { Fragment, useEffect, useState, type CSSProperties } from "react"
+import { Fragment, useContext, useEffect, useState, type CSSProperties } from "react"
 import type { BundledLanguage, ThemedTokenWithVariants } from "shiki"
 import { t } from "./i18n/index.js"
+import { CodeEditingContext } from './code-editing-context.js'
+import { Button } from './primitives.js'
 
 const languages: Record<string, BundledLanguage> = {
   r: "r", py: "python", pyw: "python", js: "javascript", mjs: "javascript", cjs: "javascript", jsx: "jsx",
@@ -15,6 +17,7 @@ const mediaLanguages: Record<string, BundledLanguage> = {
 
 /** 两个坞入口共用的只读脚本预览：异步上色，原文始终可读。 */
 export function ScriptPreview({ path, text, mediaType, wrap = true }: { path: string; text: string; mediaType: string; wrap?: boolean }) {
+  const editing = useContext(CodeEditingContext)
   const extension = path.split(/[\\/]/).pop()?.split(".").pop()?.toLowerCase() ?? ""
   const language = languages[extension] ?? mediaLanguages[mediaType]
   const [result, setResult] = useState<{ text: string; language: string; tokens?: ThemedTokenWithVariants[]; failed?: boolean }>()
@@ -44,6 +47,7 @@ export function ScriptPreview({ path, text, mediaType, wrap = true }: { path: st
     } as CSSProperties}>{token.content}</span></Fragment>
   })
   return <>
+    {editing ? <div className="script-edit-entry"><Button variant="ghost" size="sm" onClick={() => editing.openFile(path)}>{t("编辑脚本")}</Button></div> : null}
     <pre className="preview-text preview-code" role="region" aria-label={path} data-language={language} data-highlighted={Boolean(colored)} style={{ whiteSpace: wrap ? "pre-wrap" : "pre", wordBreak: wrap ? "break-word" : "normal", overflowWrap: wrap ? "anywhere" : "normal" }} tabIndex={0}>
       <code>{colored ? <>{colored}{text.slice(end)}</> : text}</code>
     </pre>

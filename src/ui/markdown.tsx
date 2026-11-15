@@ -52,12 +52,19 @@ import "katex/dist/katex.min.css"
 import { 像本机地址吗 } from "../policy/local-url.js"
 import { observeCodeBlockVisibility } from "./code-block-visibility.js"
 import { CODE_LANGUAGES } from "./code-languages.js"
+import { CodeEditingContext } from './code-editing-context.js'
+import { Button } from './primitives.js'
 import { fileReferencePlugin, markdownFilePath, MarkdownFileImage, type MarkdownFileContext } from './markdown-files.js'
 
 const MarkdownStreamingContext = createContext(false)
+const MarkdownCodeSourceContext = createContext('')
 
 function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps) {
   const waitForTurn = useContext(MarkdownStreamingContext)
+  const editing = useContext(CodeEditingContext)
+  const prefix = useContext(MarkdownCodeSourceContext)
+  // Stable across transcript remounts/session switches; identical blocks in one message share a draft.
+  const source = JSON.stringify([prefix, language, code])
   const element = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -67,6 +74,7 @@ function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps)
   }, [visible])
 
   const deferHighlight = waitForTurn || isIncomplete || !visible
+  const edit = editing ? <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete} onClick={() => editing.openCode({ code, language: language ?? 'text', source })}>{t("在旁边编辑")}</Button> : null
   return (
     <div data-code-highlighted={String(!deferHighlight)} ref={element}>
       {deferHighlight ? (
@@ -74,6 +82,7 @@ function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps)
           <CodeBlockHeader language={language} />
           <div>
             <div data-streamdown="code-block-actions">
+              {edit}
               <CodeBlockDownloadButton code={code} language={language} />
               <CodeBlockCopyButton code={code} />
             </div>
@@ -82,6 +91,7 @@ function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps)
         </CodeBlockContainer>
       ) : (
         <CodeBlock code={code} language={language}>
+          {edit}
           <CodeBlockDownloadButton code={code} language={language} />
           <CodeBlockCopyButton code={code} />
         </CodeBlock>
@@ -205,6 +215,7 @@ export function AgentMarkdown({
   className,
   onOpenLocal,
   file,
+  sourceId,
 }: {
   text: string
   streaming: boolean
@@ -214,6 +225,7 @@ export function AgentMarkdown({
    */
   onOpenLocal?: (url: string) => void
   file?: MarkdownFileContext | undefined
+  sourceId?: string | undefined
   /**
    * 额外的类名，落在**同一个元素**上（2026-08-14）。
    *
@@ -235,6 +247,7 @@ export function AgentMarkdown({
     <div className={className ? `md ${className}` : "md"}>
       <渲染兜底 text={text}>
         <MarkdownStreamingContext.Provider value={streaming}>
+        <MarkdownCodeSourceContext.Provider value={sourceId ?? text}>
           <Streamdown
             key={fileIdentity.current.revision}
             // File documents parse as a whole so reference-style links can use definitions below.
@@ -253,6 +266,7 @@ export function AgentMarkdown({
           >
             {text}
           </Streamdown>
+        </MarkdownCodeSourceContext.Provider>
         </MarkdownStreamingContext.Provider>
       </渲染兜底>
     </div>

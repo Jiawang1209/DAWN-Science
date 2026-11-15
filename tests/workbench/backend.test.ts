@@ -476,6 +476,47 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(mixed.ok).toBe(false)
   })
 
+  it('code documents resolve authoritative local owners, return complete text, detect conflicts and enforce readonly', async () => {
+    const sid = await 开一段(repo)
+    const owner = { sessionId: sid }
+    const text = '# full document\n' + 'x'.repeat(600_000)
+    const save = await ctx.server.handle('saveCodeDocument', { ...owner, path: 'editor.py', text, expectedVersion: null })
+    expect(save).toMatchObject({ ok: true, data: { path: join(realpathSync(repo), 'editor.py'), bytes: Buffer.byteLength(text) } })
+    if (!save.ok) throw new Error('save failed')
+    expect(await ctx.server.handle('readCodeDocument', { ...owner, path: 'editor.py' })).toMatchObject({ ok: true, data: { path: (save.data as { path: string }).path, text, version: (save.data as { version: string }).version } })
+    const saved = save.data as { path: string; version: string }
+    writeFileSync(join(repo, 'editor.py'), 'external')
+    expect(await ctx.server.handle('saveCodeDocument', { ...owner, path: 'editor.py', text: 'mine', expectedVersion: saved.version })).toMatchObject({ ok: false, error: { code: 'conflict' } })
+    const readonly = new WorkbenchServer(ctx.backend, { readOnly: true })
+    expect(await readonly.handle('readCodeDocument', { ...owner, path: 'editor.py' })).toMatchObject({ ok: true, data: { text: 'external' } })
+    expect(await readonly.handle('saveCodeDocument', { ...owner, path: 'readonly.py', text: 'x', expectedVersion: null })).toMatchObject({ ok: false, error: { code: 'invalid_request' } })
+    expect(existsSync(join(repo, 'readonly.py'))).toBe(false)
+    expect(await ctx.server.handle('readCodeDocument', { sessionId: 'missing', path: 'editor.py' })).toMatchObject({ ok: false, error: { code: 'not_found' } })
+    vi.spyOn(ctx.sessions, 'get').mockReturnValue({ ...ctx.sessions.get(sid)!, connectionId: 'remote' })
+    expect(await ctx.server.handle('readCodeDocument', { ...owner, path: 'editor.py' })).toMatchObject({ ok: false, error: { code: 'invalid_request' } })
+    expect(await ctx.server.handle('saveCodeDocument', { ...owner, path: 'editor.py', text: 'x', expectedVersion: saved.version })).toMatchObject({ ok: false, error: { code: 'invalid_request' } })
+  })
+
+  it('code documents use the connected executor and expose remote read/save failures', async () => {
+    const executor = {
+      realpath: vi.fn(async (path: string) => path),
+      lstat: vi.fn(async (path: string) => ({ kind: path === '/work' ? 'directory' : 'file', size: 3, mtime: 1 })),
+      readFileBounded: vi.fn(async () => Buffer.from('old')),
+      writeFileExclusive: vi.fn(async () => {}),
+      replaceFileAtomic: vi.fn(async () => { throw new Error('posix-rename@openssh.com unavailable') }),
+      unlink: vi.fn(async () => {}),
+    }
+    ctx = make(undefined, { store: {} as never, manager: { executorOf: () => executor } as never })
+    const read = await ctx.server.handle('readCodeDocument', { connectionId: 'r', path: '/work/x.py' })
+    expect(read).toMatchObject({ ok: true, data: { path: '/work/x.py', text: 'old' } })
+    if (!read.ok) throw new Error('read failed')
+    const data = read.data as { version: string }
+    expect(await ctx.server.handle('saveCodeDocument', { connectionId: 'r', path: '/work/x.py', text: 'new', expectedVersion: data.version })).toMatchObject({ ok: false, error: { message: expect.stringContaining('posix-rename@openssh.com') } })
+    executor.readFileBounded.mockRejectedValueOnce(new Error('remote permission denied'))
+    expect(await ctx.server.handle('readCodeDocument', { connectionId: 'r', path: '/work/x.py' })).toMatchObject({ ok: false, error: { message: expect.stringContaining('remote permission denied') } })
+    expect(await ctx.server.handle('saveCodeDocument', { connectionId: 'r', path: 'draft.py', text: 'x', expectedVersion: null })).toMatchObject({ ok: false, error: { message: expect.stringContaining('绝对路径') } })
+  })
+
   it("browser operations resolve session workspace and can browse/read/search a sibling without changing legacy guards", async () => {
     const sid = await 开一段()
     const originalWorkspace = ctx.sessionStore.get(sid)!.workspace

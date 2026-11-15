@@ -1,3 +1,5 @@
+import { CodeDocumentConflict, readLocalCodeDocument, saveLocalCodeDocument } from '../files/code-document.js'
+import { readRemoteCodeDocument, saveRemoteCodeDocument } from '../remote/code-document.js'
 import { browseLocalDirectory, readLocalBrowserFile, resolveLocalBrowserFile, searchLocalBrowserFiles } from '../files/browser.js'
 import {projectAcceptedArtifacts,checkAcceptedArtifact} from '../orchestration/accepted-artifacts.js'
 import {readToolRecord} from './tool-record.js'
@@ -5241,6 +5243,29 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
       const listing = await 远端列目录(connectionId, canonical)
       const parentPath = posix.dirname(canonical)
       return { ...listing, path: canonical, parentPath: parentPath === canonical ? null : parentPath, projectPath }
+    },
+
+    readCodeDocument: async ({ projectId, sessionId, connectionId, path }) => {
+      const workspace = connectionId ? undefined : browserWorkspace({ projectId, sessionId })
+      const executor = connectionId ? 连着的(connectionId) : undefined
+      try {
+        return executor ? await readRemoteCodeDocument(executor, path) : await readLocalCodeDocument(workspace!, path)
+      } catch (error) {
+        if (error instanceof UserFacingError) throw error
+        throw new UserFacingError(error instanceof Error ? error.message : String(error))
+      }
+    },
+
+    saveCodeDocument: async ({ projectId, sessionId, connectionId, path, text, expectedVersion }) => {
+      const workspace = connectionId ? undefined : browserWorkspace({ projectId, sessionId })
+      const executor = connectionId ? 连着的(connectionId) : undefined
+      try {
+        return executor ? await saveRemoteCodeDocument(connectionId!, executor, path, text, expectedVersion) : await saveLocalCodeDocument(workspace!, path, text, expectedVersion)
+      } catch (error) {
+        if (error instanceof CodeDocumentConflict) throw fault("conflict", "保存冲突：文件已改变或已存在，请重新打开后再保存")
+        if (error instanceof UserFacingError) throw error
+        throw new UserFacingError(error instanceof Error ? error.message : String(error))
+      }
     },
 
     readBrowserFile: async ({ projectId, sessionId, connectionId, path }) => {

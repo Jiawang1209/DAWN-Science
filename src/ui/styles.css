@@ -9799,3 +9799,33 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .project-info-session > span { overflow-wrap: anywhere; }
 .project-info-session time, .project-info-empty { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .project-info-empty { margin: var(--dawn-space-2) 0; }
+
+/* Conversation stays in place; this surface is opened only from an explicit code/file action. */
+.right-dock .dock-body:has(> .code-editor-panel) { display: flex; min-height: 0; padding: 0; overflow: hidden; }
+.code-editor-panel { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--dawn-surface-panel); }
+.code-editor-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); padding: var(--dawn-space-3); border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-3); }
+.code-editor-name { min-width: 0; overflow-wrap: anywhere; font: var(--dawn-fs-sub) var(--dawn-font-mono); }
+.code-editor-actions { display: flex; align-items: center; gap: var(--dawn-space-1); flex-shrink: 0; }
+.code-editor-dirty, .code-editor-stale { color: var(--dawn-warning); }
+.code-editor-location { display: flex; flex-wrap: wrap; gap: var(--dawn-space-2); padding: var(--dawn-space-2) var(--dawn-space-3); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.code-editor-location > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-editor-save-path { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); padding: var(--dawn-space-2) var(--dawn-space-3); font-size: var(--dawn-fs-meta); }
+.code-editor-save-path .control { flex: 1; min-width: 8rem; }
+.code-editor-code { flex: 1; min-height: 8rem; min-width: 0; overflow: hidden; }
+.code-editor-code .cm-editor { height: 100%; background: var(--dawn-surface-panel); color: var(--dawn-text-1); }
+.code-editor-code .cm-scroller { overflow: auto; font: var(--dawn-fs-meta)/1.8 var(--dawn-font-mono); }
+.code-editor-code .cm-content { padding-block: var(--dawn-space-3); caret-color: var(--dawn-text-1); }
+.code-editor-code .cm-line { padding-inline: var(--dawn-space-3); }
+.code-editor-code .cm-gutters { border: 0; background: var(--dawn-surface-panel); color: var(--dawn-text-3); }
+.code-editor-code .cm-activeLine, .code-editor-code .cm-activeLineGutter { background: var(--dawn-row-hover); }
+.code-editor-code .cm-selectionBackground, .code-editor-code .cm-focused .cm-selectionBackground { background: var(--dawn-accent-soft) !important; }
+.code-editor-code .cm-cursor { border-left-color: var(--dawn-text-1); }
+.code-editor-code .cm-panels, .code-editor-code .cm-tooltip { background: var(--dawn-surface-elevated); color: var(--dawn-text-1); border-color: var(--dawn-stroke-2); }
+.code-editor-code .cm-textfield { background: var(--dawn-surface-input); color: var(--dawn-text-1); border-color: var(--dawn-stroke-2); }
+.code-editor-selection { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); padding: var(--dawn-space-1) var(--dawn-space-3); color: var(--dawn-accent); background: var(--dawn-accent-soft); font-size: var(--dawn-fs-meta); }
+.code-editor-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); padding: var(--dawn-space-1) var(--dawn-space-3); border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
+.code-editor-note { margin: 0; padding: var(--dawn-space-2) var(--dawn-space-3); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
+.code-editor-output { flex: 0 1 auto; max-height: 40%; overflow: auto; padding: var(--dawn-space-3); border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); }
+.code-editor-output > header { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.script-edit-entry { display: flex; justify-content: flex-end; padding: var(--dawn-space-1) var(--dawn-space-2); }
+.md [data-streamdown="code-block-actions"] .code-edit-action { width: auto; height: auto; padding-inline: var(--dawn-space-2); font-size: var(--dawn-fs-meta); color: var(--dawn-accent); }

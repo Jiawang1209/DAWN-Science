@@ -1,7 +1,7 @@
 /** Real SSH + PTY fixture. It owns only a temporary directory and a random loopback port. */
 import { generateKeyPairSync } from "node:crypto"
 import { mkdtemp, realpath, rm } from "node:fs/promises"
-import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, writeSync, type Stats } from "node:fs"
+import { closeSync, constants, fstatSync, linkSync, lstatSync, openSync, readSync, unlinkSync, writeSync, type Stats } from "node:fs"
 import { tmpdir } from "node:os"
 import { isAbsolute, join, relative, resolve, sep } from "node:path"
 import { spawn } from "node:child_process"
@@ -83,7 +83,19 @@ function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
     const absolute = checkedPath(path)
     sftp.name(id, [{ filename: absolute, longname: absolute, attrs: attrs(lstatSync(absolute)) }])
   }))
-  for (const event of ["FSETSTAT", "OPENDIR", "READDIR", "REMOVE", "RMDIR", "READLINK", "SETSTAT", "MKDIR", "RENAME", "SYMLINK", "EXTENDED"]) {
+  // File-only SFTP v3 commit: refuse an existing destination, including concurrent creators.
+  sftp.on("RENAME", (id, from, to) => request(id, () => {
+    const source = checkedPath(from), target = checkedPath(to, true)
+    if (!lstatSync(source).isFile()) throw denied()
+    linkSync(source, target)
+    unlinkSync(source)
+    sftp.status(id, STATUS_CODE.OK)
+  }))
+  sftp.on("REMOVE", (id, path) => request(id, () => {
+    unlinkSync(checkedPath(path))
+    sftp.status(id, STATUS_CODE.OK)
+  }))
+  for (const event of ["FSETSTAT", "OPENDIR", "READDIR", "RMDIR", "READLINK", "SETSTAT", "MKDIR", "SYMLINK", "EXTENDED"]) {
     sftp.on(event, (id: number) => sftp.status(id, STATUS_CODE.OP_UNSUPPORTED))
   }
   const close = () => {

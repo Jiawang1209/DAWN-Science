@@ -1,10 +1,12 @@
-import { mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, readdir, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it } from 'vitest'
 import { Client } from 'ssh2'
 import { RemoteExecutor } from '../../src/remote/ssh.js'
 import { startLoopbackSsh } from '../helpers/loopback-ssh.js'
+import { readRemoteCodeDocument, saveRemoteCodeDocument } from '../../src/remote/code-document.js'
+import { createHash } from 'node:crypto'
 
 it('reads and writes Chinese temporary paths over real loopback SFTP on the existing SSH connection', async () => {
   const fixture = await startLoopbackSsh()
@@ -51,4 +53,41 @@ it('rejects absolute and parent escapes, sibling prefix paths and file/directory
     await executor.writeFile('still-safe.txt', 'still connected')
     expect(await readFile(join(fixture.workspace, 'still-safe.txt'), 'utf8')).toBe('still connected')
   } finally { executor.close(); await fixture.close(); await rm(outside, { recursive: true, force: true }); await rm(sibling, { recursive: true, force: true }) }
+})
+
+
+it('bounds code reads, creates temps exclusively and reports missing safe replacement support on real SFTP', async () => {
+  const fixture = await startLoopbackSsh()
+  const executor = new RemoteExecutor({ config: fixture, createClient: () => new Client() })
+  try {
+    await executor.connect()
+    const path = join(fixture.workspace, '代码.py')
+    await executor.writeFileExclusive(path, Buffer.from('abcdef'))
+    await expect(executor.writeFileExclusive(path, Buffer.from('clobber'))).rejects.toThrow()
+    expect((await executor.readFileBounded(path, 3)).toString()).toBe('abcd')
+    const temp = join(fixture.workspace, 'temp.py')
+    await executor.writeFileExclusive(temp, Buffer.from('new'))
+    await expect(executor.replaceFileAtomic(temp, path)).rejects.toThrow(/posix-rename@openssh.com/)
+    expect(await readFile(path, 'utf8')).toBe('abcdef')
+    expect(await readFile(temp, 'utf8')).toBe('new')
+    expect(fixture.connections).toBe(1)
+  } finally { executor.close(); await fixture.close() }
+})
+
+
+it('creates a full UTF8 code document over real SFTP and preserves it when atomic replacement is unsupported', async () => {
+  const fixture = await startLoopbackSsh()
+  const executor = new RemoteExecutor({ config: fixture, createClient: () => new Client() })
+  try {
+    await executor.connect()
+    const path = join(fixture.workspace, '完整代码.py')
+    const text = '# 中文🌿\n' + 'x'.repeat(700_000)
+    const version = createHash('sha256').update(text).digest('hex')
+    expect(await saveRemoteCodeDocument('loopback', executor, path, text, null)).toEqual({ path, bytes: Buffer.byteLength(text), version })
+    expect(await readRemoteCodeDocument(executor, path)).toEqual({ path, text, version })
+    await expect(saveRemoteCodeDocument('loopback', executor, path, 'new', version)).rejects.toThrow(/posix-rename@openssh.com/)
+    expect(await readFile(path, 'utf8')).toBe(text)
+    expect(await readdir(fixture.workspace)).toEqual(['完整代码.py'])
+    expect(fixture.connections).toBe(1)
+  } finally { executor.close(); await fixture.close() }
 })

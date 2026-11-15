@@ -38,7 +38,7 @@ import { SIDEBAR_MIN } from "./sidebar.js"
  * **`browser` 现在不在这个联合里**——它一点都还没有（全项目 0 处 `webview`），
  * 摆一个点开是空的房客，比不摆更坏。它单开一轮，那时再加进来。
  */
-export type 坞房客 = "route" | "review" | "files" | "artifacts" | "notebook" | "overview" | "web" | "subagent" | "team" | "chat" | "bot"
+export type 坞房客 = "route" | "review" | "files" | "artifacts" | "notebook" | "overview" | "web" | "subagent" | "team" | "chat" | "bot" | "code"
 
 /**
  * **「概览」2026-08-20 从整屏搬进坞**（作者定的：「换个入口……
@@ -196,6 +196,8 @@ export function setRightDockWidth(px: number, 侧栏宽度?: number, 记住 = tr
 
 export function setRightDockTenant(who: 坞房客): void {
   setValue($rightDockTenant, who)
+  // An editor is opened by a code/file action, never restored as a global preference.
+  if (who === 'code') return
   try {
     localStorage.setItem(RIGHT_DOCK_TENANT_KEY, who)
   } catch (e) {

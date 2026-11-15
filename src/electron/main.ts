@@ -29,6 +29,7 @@ import { 托盘图标 } from "./tray-icon.js"
 import { CHILD_ENTRY } from "../subagent/protocol.js"
 import { acquireDatabaseInstance } from "./single-instance.js"
 import { installAppExitDiagnostics } from "./exit-diagnostics.js"
+import { guardStandardPipes } from "./standard-pipes.js"
 import { textContextMenuItems } from "./text-context-menu.js"
 
 const exitDiagnostic=installAppExitDiagnostics(app,process.env.DAWN_ELECTRON_EXIT_DIAGNOSTICS_DIR)
@@ -160,6 +161,7 @@ function 启动日志(行: string): void {
     /* 见上 */
   }
 }
+guardStandardPipes(process.stdout, process.stderr, stream => 启动日志(`启动器的 ${stream} 管道已关闭，继续使用文件日志`))
 启动日志(`主进程模块已加载 · ${process.platform}/${process.arch} · electron ${process.versions.electron} · packaged=${app.isPackaged} · exe=${process.execPath}`)
 // 必须在迁移、打开数据库和启动对账之前；第二实例不能写第一实例的状态。
 if (!acquireDatabaseInstance(app, DB)) {

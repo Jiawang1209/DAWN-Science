@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { EditorView } from '@codemirror/view'
 import { undo } from '@codemirror/commands'
+import { closeCompletion, completionStatus, currentCompletions, startCompletion } from '@codemirror/autocomplete'
 import { describe, expect, it, vi } from 'vitest'
 import { CodeEditorPanel } from '../../src/ui/code-editor.js'
 import { createCodeEditorStore, type EditorScope } from '../../src/ui/state/code-editor.js'
@@ -23,6 +24,34 @@ function setup() {
 }
 
 describe('chat-first editor', () => {
+  it.each([['python', 'shared_value = 42\npri', 'print'], ['R', 'shared_value <- 42\nmea', 'mean']])('completes %s builtins and document identifiers without saving or running', async (language, text, builtin) => {
+    const { store, save, run } = setup()
+    const id = store.openSource(scope, 'completion', text, language)
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    const editor = screen.getByRole('textbox', { name: '脚本代码编辑器' })
+    const view = EditorView.findFromDOM(editor)!
+    act(() => { view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus(); startCompletion(view) })
+    await waitFor(() => expect(currentCompletions(view.state).some(c => c.label === builtin)).toBe(true))
+    fireEvent.keyDown(editor, { key: 'Tab', code: 'Tab', keyCode: 9 })
+    expect(store.$documents.get()[id]?.text.endsWith(builtin)).toBe(true)
+    act(() => { undo(view); closeCompletion(view); view.dispatch({ changes: { from: view.state.doc.line(2).from, to: view.state.doc.length, insert: 'shared_v' }, selection: { anchor: view.state.doc.line(2).from + 8 } }); startCompletion(view) })
+    await waitFor(() => expect(currentCompletions(view.state).some(c => c.label === 'shared_value')).toBe(true))
+    expect(save).not.toHaveBeenCalled(); expect(run).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['python', '# pri'], ['python', 'text = "pri'],
+    ['R', '# mea'], ['R', 'text <- "mea'], ['R', 'text <- r"(first "\nmea'],
+  ])('does not offer completions inside %s comments or literal text: %s', async (language, text) => {
+    const { store } = setup()
+    store.openSource(scope, 'no-completion', text, language)
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))!
+    act(() => { view.dispatch({ selection: { anchor: view.state.doc.length } }); view.focus(); startCompletion(view) })
+    await waitFor(() => expect(completionStatus(view.state)).toBeNull())
+    expect(currentCompletions(view.state)).toEqual([])
+  })
+
   it.each([
     ['r', '', '(', ')'], ['R', '--', '(', ')'],
     ['r', '', '[', ']'], ['R', '-', '[', ']'],

@@ -7,6 +7,7 @@ import { bracketMatching, foldGutter, foldKeymap, indentOnInput, indentUnit, syn
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
 import { codeHighlighting, codeLanguage, tidyCodeIndentation } from './code-editor-extensions.js'
+import { codeCompletion } from './code-editor-completion.js'
 import { Button, EmptyState } from './primitives.js'
 import { 关闭图标 } from './icons.js'
 import { KernelOutputRow } from './views.js'
@@ -32,7 +33,7 @@ function CodeInput({ document, store, onSave, onRun, editor }: {
         EditorState.tabSize.of(document.language === 'R' ? 2 : 4),
         lineNumbers(), history(), drawSelection(), highlightActiveLine(), highlightActiveLineGutter(),
         bracketMatching(), closeBrackets(), foldGutter(), indentOnInput(), highlightSelectionMatches(),
-        syntaxHighlighting(codeHighlighting), language,
+        syntaxHighlighting(codeHighlighting), language, codeCompletion(document.language),
         EditorView.contentAttributes.of({ role: 'textbox', 'aria-label': t("脚本代码编辑器"), 'aria-multiline': 'true', spellcheck: 'false' }),
         keymap.of([
           { key: 'Mod-s', run: () => { if (!view.composing) callbacks.current.onSave(); return true } },

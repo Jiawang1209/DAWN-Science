@@ -85,6 +85,14 @@ async function startSession(page: Page, 首句 = "开始") {
   await expect(page.locator('.session-list .sess-item[data-state="alive"]')).toBeVisible()
 }
 
+/** Suggestions arrive after the existing debounce; capture one deterministic idle state. */
+async function waitForMockSuggestion(area: Page | Locator) {
+  const input = area.locator('textarea.composer-field')
+  await expect(input).toHaveAttribute('data-ghost', 'true')
+  await expect(input).toHaveAttribute('placeholder', '检查缺失值并说明处理方法')
+  await expect(input).toHaveValue('')
+}
+
 /**
  * 分类列上那四个计数的**当前值**。整页和窄栏都要等它们，**而这张表只有一份**——
  * 两处各抄一份的话，哪天数据变了只改一处，另一处会绿着说谎（本项目那条
@@ -142,6 +150,7 @@ const SCREENS: {
     go: async (page) => {
       await startSession(page, "请说一句话")
       await expect(page.getByText(CANNED_REPLY).last()).toBeVisible()
+      await waitForMockSuggestion(page.locator('main.main'))
     },
   },
   {
@@ -271,6 +280,8 @@ const SCREENS: {
       await expect(坞.locator(".side-chat-title")).toHaveText("你好")
       /** 两段都停下：停止键消失、发送键回来，截的是静止态 */
       await expect(page.getByRole("button", { name: "停止", exact: true })).toHaveCount(0)
+      await waitForMockSuggestion(主区)
+      await waitForMockSuggestion(坞)
     },
     mask: (page) => [
       /** 工作目录那颗 chip 写的是夹具的临时目录（`/var/folders/…/dawn-e2e-XXXX/workspace`）：换台机器、换一次跑就不同 */

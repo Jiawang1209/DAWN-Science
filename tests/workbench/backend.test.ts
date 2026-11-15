@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import Database from "better-sqlite3"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, existsSync, readFileSync, symlinkSync, realpathSync, mkdirSync } from "node:fs"
+import { mkdtempSync, writeFileSync, existsSync, readFileSync, symlinkSync, realpathSync, mkdirSync, lstatSync, statSync, readdirSync, unlinkSync, rmdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionTranscripts } from "../../src/workbench/events.js"
@@ -587,6 +587,47 @@ describe("真实后端 · 经服务端端到端", () => {
     const w = await ctx.server.handle("writeToSession", { sessionId: sid, data: "hi", as: "user" })
     expect(w.ok).toBe(false)
     if (!w.ok) expect(w.error.code).toBe("conflict")
+  })
+
+  it.each([
+    ["root", ""], ["nested", ""], ["dangling", ""],
+    ["root", "/"], ["root", "///"], ["root", "/."], ["root", "/./"], ["root", "/.."],
+  ])("remote deletion safely handles a %s directory symlink with suffix %j", async (placement, suffix) => {
+    const root = mkdtempSync(join(tmpdir(), "dawn-delete-link-"))
+    try {
+      const target = join(root, "research")
+      const container = join(root, "selected")
+      mkdirSync(target)
+      mkdirSync(container)
+      writeFileSync(join(target, "data.csv"), "original research data")
+      const alias = join(container, "directory-link")
+      symlinkSync(placement === "dangling" ? join(target, "missing") : target, alias, process.platform === "win32" ? "junction" : "dir")
+      const executor = {
+        stat: vi.fn(async (path: string) => { const st = statSync(path); return { directory: st.isDirectory(), size: st.size } }),
+        lstat: vi.fn(async (path: string) => { const st = lstatSync(path); return { kind: st.isDirectory() ? "directory" : st.isFile() ? "file" : "other", size: st.size, mtime: st.mtimeMs } }),
+        readdir: vi.fn(async (path: string) => readdirSync(path, { withFileTypes: true }).map(entry => ({ name: entry.name, directory: entry.isDirectory(), size: 0, mtimeMs: 0 }))),
+        unlink: vi.fn(async (path: string) => { unlinkSync(path) }),
+        rmdir: vi.fn(async (path: string) => { rmdirSync(path) }),
+      }
+      const linked = make(undefined, { store: {} as never, manager: { executorOf: () => executor } as never })
+      try {
+        const selected = (placement === "nested" ? container : alias) + suffix
+        if (suffix.includes(".")) {
+          await expect(linked.backend.pathInfo({ connectionId: "r", path: selected })).rejects.toThrow()
+          await expect(linked.backend.deletePath({ connectionId: "r", path: selected })).rejects.toThrow()
+          expect(readFileSync(join(target, "data.csv"), "utf8")).toBe("original research data")
+          expect(lstatSync(alias).isSymbolicLink()).toBe(true)
+          expect(executor.readdir).not.toHaveBeenCalled()
+          return
+        }
+        const info = placement !== "nested" ? await linked.backend.pathInfo({ connectionId: "r", path: selected }) : undefined
+        await linked.backend.deletePath({ connectionId: "r", path: selected })
+        expect(readFileSync(join(target, "data.csv"), "utf8")).toBe("original research data")
+        expect(() => lstatSync(alias)).toThrow(/ENOENT/)
+        expect(executor.readdir).not.toHaveBeenCalledWith(alias)
+        if (info) expect(info).toMatchObject({ directory: false, files: 1, counted: "complete" })
+      } finally { linked.db.close() }
+    } finally { rmSync(root, { recursive: true, force: true }) }
   })
 
   it("取得租约后写入成功", async () => {

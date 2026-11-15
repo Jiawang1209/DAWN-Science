@@ -17,6 +17,7 @@
  * 否则验一次「换包」就要动 `/Applications`。
  */
 import { dirname, join } from "node:path"
+import { randomUUID } from "node:crypto"
 import type { 换包方式 } from "../protocol/entities.js"
 
 export interface 换包依赖 {
@@ -60,10 +61,16 @@ export async function 换包(p: 换包参数, 依赖: 换包依赖): Promise<voi
   }
 
   if (p.方式 === "appimage") {
-    await 依赖.拷贝(p.包路径, p.应用路径)
-    // **执行位不能少**：少了它下一次根本起不来，而那时应用已经退了，
-    // 人看到的只是「点了没反应」
-    await 依赖.chmod(p.应用路径, 0o755)
+    // Stage beside the installed executable: a failed copy/chmod leaves the old
+    // binary intact, and the final rename stays on the same filesystem.
+    const 暂存 = `${p.应用路径}.dawn-update-${randomUUID()}`
+    try {
+      await 依赖.拷贝(p.包路径, 暂存)
+      await 依赖.chmod(暂存, 0o755)
+      await 依赖.改名(暂存, p.应用路径)
+    } finally {
+      await 依赖.删(暂存)
+    }
     return
   }
 

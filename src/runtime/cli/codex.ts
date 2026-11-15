@@ -25,6 +25,7 @@
  * 重开应用之后靠它接上上一次的对话。
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
+import { trackCliProcess } from "./process.js"
 import type { AgentEvent, SessionId } from "../types.js"
 import { translateCodexEvent, type CodexTranslateState } from "./codex-translate.js"
 
@@ -54,6 +55,9 @@ const EXEC_ARGS = ["--json", "--skip-git-repo-check"]
 export class CodexDriver {
   private readonly st: CodexTranslateState
   private child: ChildProcessWithoutNullStreams | undefined
+  private stopChild: (() => Promise<void>) | undefined
+  private stopping: Promise<void> | undefined
+  private generation = 0
   private buf = ""
   private stderrTail = ""
   private settled = false
@@ -72,6 +76,8 @@ export class CodexDriver {
   }
 
   async startTurn(text: string): Promise<void> {
+    if (this.stopping) await this.stopping
+    const generation = ++this.generation
     const before = this.st.threadId
     // **有 thread_id 就 resume**：没有的话每一轮都是全新的对话，
     // 而它看起来是好的（每轮都答得出话），只是不记得上文——**那种坏法最难被发现**
@@ -90,31 +96,35 @@ export class CodexDriver {
         child = spawn(this.opts.command, args, {
           cwd: this.opts.cwd,
           stdio: ["pipe", "pipe", "pipe"],
+          ...(process.platform === "win32" ? {} : { detached: true }),
         })
       } catch (err) {
         this.fatal(`起不来外部 CLI「${this.opts.command}」：${message(err)}`)
         return resolve()
       }
       this.child = child
+      this.stopChild = trackCliProcess(child).stop
 
       child.stdout.setEncoding("utf8")
       child.stderr.setEncoding("utf8")
-      child.stdout.on("data", (d: string) => this.onStdout(d))
+      child.stdout.on("data", (d: string) => { if (this.child === child) this.onStdout(d) })
       /**
        * **stderr 不是失败**（Spike G 第 3 条实测）：codex 每轮都往 stderr 打
        * `models cache` 与 `HTTP 502` 的噪声，**而退出码是 0**。
        * 把它当失败会让每一轮都被误报成出错。只在真失败时作为诊断附带上去。
        */
-      child.stderr.on("data", (d: string) => (this.stderrTail = (this.stderrTail + d).slice(-2000)))
+      child.stderr.on("data", (d: string) => { if (this.child === child) this.stderrTail = (this.stderrTail + d).slice(-2000) })
       child.stdin.on("error", () => {})
       child.stdin.end()
 
       child.on("error", (e) => {
-        this.fatal(`起不来外部 CLI「${this.opts.command}」：${e.message}`)
+        if (this.child === child) this.fatal(`起不来外部 CLI「${this.opts.command}」：${e.message}`)
         resolve()
       })
       child.on("close", (code) => {
+        if (this.child !== child) { resolve(); return }
         this.child = undefined
+        this.stopChild = undefined
         // **这一轮已经正常收口的话，进程怎么退都不再多报一次失败**
         if (!this.settled && code !== 0) {
           const tail = this.stderrTail.trim()
@@ -130,7 +140,7 @@ export class CodexDriver {
     })
 
     // 第一轮之后 thread_id 才有；**变了就报给上层落库**
-    if (this.st.threadId && this.st.threadId !== before) this.opts.onThreadId(this.st.threadId)
+    if (this.generation === generation && this.st.threadId && this.st.threadId !== before) this.opts.onThreadId(this.st.threadId)
   }
 
   /** 换模型。**下一轮生效**——这一轮的进程已经带着旧参数起来了 */
@@ -138,8 +148,8 @@ export class CodexDriver {
     this.model = model
   }
 
-  abortTurn(): void {
-    this.child?.kill("SIGKILL")
+  abortTurn(): Promise<void> {
+    return this.close()
   }
 
   /**
@@ -147,8 +157,16 @@ export class CodexDriver {
    * 之后仍然可以再说话——这正是它与 claude 的形状差异。
    */
   async close(): Promise<void> {
-    this.child?.kill("SIGKILL")
+    const stop = this.stopChild
     this.child = undefined
+    this.stopChild = undefined
+    if (!stop) return this.stopping
+    const needsIdle = !this.settled
+    this.settled = true
+    const stopping = stop()
+    this.stopping = stopping
+    try { await stopping } finally { if (this.stopping === stopping) this.stopping = undefined }
+    if (needsIdle) this.opts.emit({ kind: "idle", sessionId: this.opts.sessionId })
   }
 
   private onStdout(chunk: string): void {

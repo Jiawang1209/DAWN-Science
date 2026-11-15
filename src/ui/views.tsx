@@ -61,7 +61,7 @@ import { 子转录id, 执行那句 } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
-import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 退回输入框, 领退回的图 } from "./state/view.js"
+import { $drafts, $slashItems, $退回的图, $failedDrafts, clearDraft, setDraft, restoreFailedDraft, takeFailedDraft, togglePalette, 退回输入框, 领退回的图, type ComposerImageAttachment, type ComposerFileAttachment } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
 import { 方案卡 } from "./plan-card.js"
@@ -872,10 +872,7 @@ function ComposerTerminalButton({ onToggle, open }: { onToggle?: (() => void) | 
  * 从磁盘挑的有路径（主进程去读），粘贴板里的只有字节（它压根不是磁盘上的文件）。
  * `名` 只用来在 chip 上显示。
  */
-type 待发的图 = { 名: string; 预览?: string } & (
-  | { from: "path"; path: string }
-  | { from: "bytes"; data: string; mimeType: string }
-)
+type 待发的图 = ComposerImageAttachment
 
 /** 协议 4.13 里 `images` 那一项的形状。**渲染侧只认这两种来源** */
 export type 图片来源 =
@@ -965,14 +962,7 @@ function 补预览(批: readonly 待发的图[], 设: (f: (前: 待发的图[]) 
 
 /** 这一次粘贴里有没有图片。**两处 composer 共用同一个判据** */
 /** 排队中的外部文件（2026-08-25，学自 dsh-paste-input）：源路径与字节二选一，发送才落盘 */
-export interface 排队的外部文件 {
-  名: string
-  /** 进 `@` 令牌的名字（空白与分隔符已换 `_`）：粘贴时插进草稿的是 `@令牌`，发送时换写成落盘后的真实路径 */
-  令牌: string
-  字节数: number
-  file?: File | undefined
-  源路径?: string | undefined
-}
+export type 排队的外部文件 = ComposerFileAttachment
 
 /** 与 files/attachments.ts 的 `安全文件名` 同一套规则（客户端不 import node 模块，抄规则不抄实现） */
 export function 可令牌名(名: string): string {
@@ -4139,6 +4129,7 @@ export function ConversationView({
    * 剪贴板来的没有路径，握着 File 等发送时取字节。
    */
   const [待发文件, 设待发文件] = useState<排队的外部文件[]>([])
+  const failedDraft = useStore($failedDrafts)[session.sessionId]
   /** 点开看大图的那张（2026-08-25，学 Codex）；undefined = 没开 */
   const [看大图, 设看大图] = useState<待发的图 | undefined>(undefined)
   /** 引用高亮层要跟着 textarea 内部滚动（2026-08-25） */
@@ -4317,6 +4308,15 @@ export function ConversationView({
   const [斜杠关了, 设斜杠关了] = useState(false)
   // `@` 菜单：光标位置由输入框报（onSelect），选中下标与 `/` 那份同理由输入框管
   const 输入框 = useRef<HTMLTextAreaElement>(null)
+  const restoreFailures = useCallback(() => {
+    if (输入框.current?.dataset.composing === 'true') return
+    const returned = takeFailedDraft(session.sessionId)
+    if (!returned) return
+    设待发图(current => [...returned.images, ...current])
+    设待发文件(current => [...returned.files, ...current])
+    补预览(returned.images, 设待发图)
+  }, [session.sessionId])
+  useEffect(() => { if (failedDraft) restoreFailures() }, [failedDraft, restoreFailures])
   const [光标, 设光标] = useState(0)
   const [艾特选中, 设艾特选中] = useState(0)
   const [艾特关了, 设艾特关了] = useState(false)
@@ -5164,7 +5164,7 @@ export function ConversationView({
               设发送出错(undefined)
               void onSetPlan(true).catch((e: unknown) => {
                 设发送出错(e instanceof Error ? e.message : String(e))
-                setDraft(session.sessionId, 原话)
+                restoreFailedDraft(session.sessionId, 原话)
               })
               return
             }
@@ -5181,7 +5181,7 @@ export function ConversationView({
             设发送出错(undefined)
             void onCompact(压缩令.instructions).catch((e: unknown) => {
               设发送出错(e instanceof Error ? e.message : String(e))
-              setDraft(session.sessionId, text)
+              restoreFailedDraft(session.sessionId, text)
             })
             return
           }
@@ -5307,9 +5307,7 @@ export function ConversationView({
             撤回显?.()
             设发送出错(e instanceof Error ? e.message : String(e))
             // **原样还回去**：人不该为一次失败重打一遍、重挑一遍（`/plan` 那句连前缀一起还）
-            setDraft(session.sessionId, 原话)
-            设待发图(这次的图)
-            设待发文件(这次的文件)
+            restoreFailedDraft(session.sessionId, 原话, 这次的图, 这次的文件)
           })
         }}
       >
@@ -5432,6 +5430,7 @@ export function ConversationView({
               onAbort,
               onSetPlan,
               onCompact,
+              restoreFailures,
               onOpenReference,
             ]}
           >
@@ -5441,6 +5440,7 @@ export function ConversationView({
             ref={输入框}
             className="control composer-field"
             值={draft}
+            onCompositionEnd={restoreFailures}
             suggestion={nextPrompt}
             on值变={(v, 光标位) => { setDraft(session.sessionId, v); 设光标(光标位); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
             onSelect={(e) => 设光标(e.currentTarget.selectionStart)}
@@ -7259,6 +7259,19 @@ export function EmptyConversation({
   const [空态图, 设空态图] = useState<待发的图[]>([])
   /** 空态排队的外部文件（2026-08-25 作者实测在空态粘 / 拖没反应——原来的「空态不收」边界撤了） */
   const [空态文件, 设空态文件] = useState<排队的外部文件[]>([])
+  const welcomeRecoveries = useRef<{ text?: string | undefined; images: readonly 待发的图[]; files: readonly 排队的外部文件[] }[]>([])
+  const flushWelcomeRecoveries = () => {
+    if (输入框.current?.dataset.composing === 'true' || !welcomeRecoveries.current.length) return
+    const returned = welcomeRecoveries.current
+    welcomeRecoveries.current = []
+    设草稿(current => [...returned.map(value => value.text ?? ''), current].filter(value => value.trim()).join("\n\n"))
+    设空态图(current => [...returned.flatMap(value => value.images), ...current])
+    设空态文件(current => [...returned.flatMap(value => value.files), ...current])
+  }
+  const recoverWelcome = (text: string | undefined, images: readonly 待发的图[], files: readonly 排队的外部文件[]) => {
+    welcomeRecoveries.current.push({ text, images, files })
+    flushWelcomeRecoveries()
+  }
   const [空看大图, 设空看大图] = useState<待发的图 | undefined>(undefined)
   const [空高亮滚, 设空高亮滚] = useState(0)
   const 空插令牌 = useCallback((令牌们: readonly string[]) => {
@@ -7374,8 +7387,7 @@ export function EmptyConversation({
           : onStart(agent, 文本, 工作目录),
     ).catch((e: unknown) => {
       设开场出错(e instanceof Error ? e.message : String(e))
-      设空态图(这次的图)
-      设空态文件(这次的文件)
+      recoverWelcome(undefined, 这次的图, 这次的文件)
     })
   }
   return (
@@ -7504,9 +7516,7 @@ export function EmptyConversation({
                     : onStart(first, t || undefined, 工作目录),
               ).catch((e: unknown) => {
                 设开场出错(e instanceof Error ? e.message : String(e))
-                设草稿(原话)
-                设空态图(这次的图)
-                设空态文件(这次的文件)
+                recoverWelcome(原话, 这次的图, 这次的文件)
               })
             }}
           >
@@ -7574,6 +7584,7 @@ export function EmptyConversation({
                 ref={输入框}
                 className="control composer-field"
                 值={草稿}
+                onCompositionEnd={flushWelcomeRecoveries}
                 autoFocus
                 on值变={(v, 光标位) => { 设草稿(v); 设光标(光标位); 设斜杠选中(0); 设斜杠关了(false); 设艾特选中(0); 设艾特关了(false) }}
                 onSelect={(e) => 设光标(e.currentTarget.selectionStart)}

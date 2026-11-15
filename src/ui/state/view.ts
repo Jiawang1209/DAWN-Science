@@ -189,6 +189,38 @@ export function clearDraft(sessionId: string): void {
   $drafts.set(next)
 }
 
+export type ComposerImageAttachment = { 名: string; 预览?: string } & 退回的图
+export interface ComposerFileAttachment {
+  名: string
+  /** Draft @ token; keep its identity until attachment saving resolves the real path. */
+  令牌: string
+  字节数: number
+  file?: File | undefined
+  源路径?: string | undefined
+}
+type FailedDraft = { texts: readonly string[]; images: readonly ComposerImageAttachment[]; files: readonly ComposerFileAttachment[] }
+/** Failed submissions can outlive their composer or finish during IME input. Claim each recovery once when the original session can accept it. */
+export const $failedDrafts = atom<Readonly<Record<string, FailedDraft>>>({})
+
+export function restoreFailedDraft(sessionId: string, text: string, images: readonly ComposerImageAttachment[] = [], files: readonly ComposerFileAttachment[] = []): void {
+  const previous = $failedDrafts.get()
+  const pending = previous[sessionId]
+  $failedDrafts.set({ ...previous, [sessionId]: { texts: [...(pending?.texts ?? []), text], images: [...(pending?.images ?? []), ...images], files: [...(pending?.files ?? []), ...files] } })
+}
+
+export function takeFailedDraft(sessionId: string): FailedDraft | undefined {
+  const previous = $failedDrafts.get()
+  const failed = previous[sessionId]
+  if (!failed) return undefined
+  const next = { ...previous }
+  delete next[sessionId]
+  $failedDrafts.set(next)
+  // Claim only after composition ends, when its final DOM text has reached the store.
+  // Keep original instructions intact, including pasted-reference guards.
+  setDraft(sessionId, [...failed.texts, draftOf(sessionId)].filter(value => value.trim()).join("\n\n"))
+  return failed
+}
+
 /**
  * 命令面板（①-B″ · U1）。
  *

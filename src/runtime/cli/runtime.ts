@@ -32,7 +32,7 @@ import type {
 /** driver 的公共能力。**按能力定义，不按进程生命周期**（计划 §3） */
 interface Driver {
   startTurn(text: string): Promise<void>
-  abortTurn(): void
+  abortTurn(): void | Promise<void>
   close(): Promise<void>
   /** 换模型。**两个 driver 的代价完全不同**，差异留在各自实现里（Spike H） */
   setModel(model: string): Promise<void>
@@ -64,6 +64,9 @@ interface Live {
    * 于是**任何时候都换不了模型**，而界面只表现为「点了没反应」。
    */
   inFlight: number
+  /** Abort/stop revoke queued invocations before the driver can be called again. */
+  epoch: number
+  stopped: boolean
 }
 
 export class CliRuntime implements AgentRuntime {
@@ -109,7 +112,7 @@ export class CliRuntime implements AgentRuntime {
       )
     }
 
-    this.sessions.set(spec.sessionId, { driver, pending: undefined, inFlight: 0 })
+    this.sessions.set(spec.sessionId, { driver, pending: undefined, inFlight: 0, epoch: 0, stopped: false })
     const pid = this.nextPid++
     this.emit({ kind: "started", sessionId: spec.sessionId, pid })
     return { sessionId: spec.sessionId, pid }
@@ -131,25 +134,26 @@ export class CliRuntime implements AgentRuntime {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`会话 "${sessionId}" 未启动`)
     // **不 await**：见文件头。失败经事件流出声，不静默吞
+    const epoch = s.epoch
     s.inFlight += 1
-    const run = s.driver
-      .startTurn(data)
-      .catch((err: unknown) => {
-      this.emit({
-        kind: "notice",
-        sessionId,
-        text: "外部 CLI 这一轮没跑起来",
-        rawError: err instanceof Error ? err.message : String(err),
-        failed: true,
-      })
+    const invoke = async () => {
+      if (s.stopped || s.epoch !== epoch) return
+      try { await s.driver.startTurn(data) } catch (err: unknown) {
+        if (s.stopped || s.epoch !== epoch) return
+        this.emit({
+          kind: "notice",
+          sessionId,
+          text: "外部 CLI 这一轮没跑起来",
+          rawError: err instanceof Error ? err.message : String(err),
+          failed: true,
+        })
         // **收口**：不发 idle 的话，账本上那条回合会永远 running
         this.emit({ kind: "idle", sessionId })
-      })
-      .finally(() => {
-        s.inFlight -= 1
-      })
-    // 串起来而不是覆盖：连发两轮时等待必须覆盖两轮
-    s.pending = s.pending ? s.pending.then(() => run) : run
+      }
+    }
+    // Queue the invocation itself, not a promise for a turn already launched.
+    const run = s.pending ? s.pending.then(invoke) : invoke()
+    s.pending = run.finally(() => { s.inFlight -= 1 })
     void s.pending
   }
 
@@ -190,14 +194,22 @@ export class CliRuntime implements AgentRuntime {
   }
 
   async abort(sessionId: SessionId): Promise<void> {
-    this.sessions.get(sessionId)?.driver.abortTurn()
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    s.epoch += 1
+    const pending = s.pending
+    await s.driver.abortTurn()
+    await pending
   }
 
   async stop(sessionId: SessionId): Promise<void> {
     const s = this.sessions.get(sessionId)
     if (!s) return
+    s.stopped = true
+    s.epoch += 1
     this.sessions.delete(sessionId)
     await s.driver.close()
+    await s.pending
     this.emit({ kind: "exited", sessionId, exitCode: 0 })
   }
 

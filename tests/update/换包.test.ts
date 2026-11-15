@@ -103,9 +103,12 @@ describe("AppImage", () => {
       },
       依赖,
     )
-    expect(账).toContain("拷贝 /tmp/dl/new.AppImage → /home/u/DAWN.AppImage")
+    const 暂存 = 账[0]!.split(" → ")[1]!
+    expect(暂存).toMatch(/^\/home\/u\/DAWN\.AppImage\.dawn-update-/)
+    expect(账[0]).toBe(`拷贝 /tmp/dl/new.AppImage → ${暂存}`)
     // 少了执行位，下一次它就再也起不来了——而那时应用已经退了，人只看到「点了没反应」
-    expect(账).toContain("chmod 755 /home/u/DAWN.AppImage")
+    expect(账[1]).toBe(`chmod 755 ${暂存}`)
+    expect(账[2]).toBe(`改名 ${暂存} → /home/u/DAWN.AppImage`)
   })
 })
 

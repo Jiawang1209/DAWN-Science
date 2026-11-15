@@ -119,6 +119,28 @@ describe("换工作目录", () => {
     expect(rec.projectId).toBe("p-new")
   })
 
+  it("serializes overlapping workspace changes so history, store and runtime finish in the same directory", async () => {
+    const ctx = 造()
+    try {
+      const s = await ctx.mgr.create("ds-agent", 旧)
+      const original = ctx.store.get(s.id)!.sessionDir
+      mkdirSync(original, { recursive: true })
+      writeFileSync(join(original, "session.jsonl"), '{"role":"user","content":"keep this history"}\n')
+      const lastWorkspace = join(新, "second")
+      mkdirSync(lastWorkspace)
+
+      await Promise.all([ctx.mgr.rehome(s.id, 新), ctx.mgr.rehome(s.id, lastWorkspace)])
+
+      const saved = ctx.store.get(s.id)!
+      expect(saved.workspace).toBe(lastWorkspace)
+      expect(ctx.起过.at(-1)!.workspace).toBe(lastWorkspace)
+      expect(ctx.起过.at(-1)!.sessionDir).toBe(saved.sessionDir)
+      expect(readFileSync(join(saved.sessionDir, "session.jsonl"), "utf8")).toContain("keep this history")
+      expect(existsSync(join(新, ".dawn", "sessions", s.id))).toBe(false)
+      expect(existsSync(original)).toBe(false)
+    } finally { await ctx.mgr.stopAll(); ctx.db.close() }
+  })
+
   it("**搬到原地就什么都不做** —— 白重启一次会平白丢掉运行时状态", async () => {
     const ctx = 造()
     const s = await ctx.mgr.create("ds-agent", 旧)

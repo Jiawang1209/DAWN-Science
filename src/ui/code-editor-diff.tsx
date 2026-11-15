@@ -19,9 +19,16 @@ export function CodeEditorDiff({ request, code, onApply, onClose, problem, targe
   useEffect(() => { setMode('document') }, [request.id, code])
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : undefined
+    // Lazy highlighting can replace the trigger's inner subtree while this modal is open.
+    const openerBlock = opener?.closest<HTMLElement>('[data-code-highlighted]')
     const node = dialog.current
     node?.showModal()
-    return () => { node?.close(); if (opener?.isConnected) opener.focus() }
+    return () => {
+      node?.close()
+      const target = opener?.isConnected ? opener : openerBlock?.isConnected
+        ? openerBlock.querySelector<HTMLButtonElement>('button.code-edit-action:not(:disabled)') : undefined
+      target?.focus()
+    }
   }, [])
   const review = useMemo(() => {
     try {

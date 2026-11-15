@@ -2653,6 +2653,8 @@ pre {
   flex: 0 1 auto;
   min-width: 0;
   overflow: auto;
+  /* Scrollbar chrome must not add height to this nested scroller and lift its buttons above ×. */
+  scrollbar-width: none;
   align-items: center;
   gap: var(--dawn-space-1);
   margin-inline-start: auto;
@@ -2664,6 +2666,7 @@ pre {
   min-width: 3ch;
   white-space: nowrap;
   overflow: auto;
+  scrollbar-width: none;
   overflow-wrap: normal;
 }
 .preview-script > .hint { flex: 0 0 auto; }

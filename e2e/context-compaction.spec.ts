@@ -164,8 +164,10 @@ test.describe("窄附栏", () => {
     await 说完(坞, "你好")
     const 钮 = 仪表(坞)
     await expect(钮).toHaveAccessibleName(/^上下文 <1%$/)
-    // 2026-09-28 起处处只写环 + 数：「上下文」三个字不画——量画出来的字，不信 toBeVisible（opacity 那类坑）
-    expect(await 钮.evaluate((el) => (el as HTMLElement).innerText.trim())).toBe("<1%")
+    // DESIGN.md 2026-11-15: below 440px retain the ring and full accessible usage,
+    // hiding the number to keep tools/model/send in one usable row.
+    await expect(钮.locator(".ctx-meter-ring")).toBeVisible()
+    await expect(钮.locator(".ctx-meter-value")).toBeHidden()
     const 卡 = await 坞.locator(".composer-card").boundingBox()
     const 权限 = await 坞.locator(".composer-tools .perm-pill").boundingBox()
     expect(卡 && 权限).toBeTruthy()
@@ -183,6 +185,7 @@ test.describe("窄附栏", () => {
     await 钮.click()
     const 弹层 = 坞.getByRole("dialog", { name: "上下文", exact: true })
     await expect(弹层).toBeVisible()
+    await expect(弹层).toContainText(/tokens/)
     const 弹层盒 = (await 弹层.boundingBox())!
     const 窗口 = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }))
     expect(弹层盒.x).toBeGreaterThanOrEqual(0)

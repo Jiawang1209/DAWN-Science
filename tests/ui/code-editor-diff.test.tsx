@@ -1,7 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CodeEditorDiff } from '../../src/ui/code-editor-diff.js'
+import { AgentMarkdown } from '../../src/ui/markdown.js'
+import { CodeEditingContext } from '../../src/ui/code-editing-context.js'
+import * as codeVisibility from '../../src/ui/code-block-visibility.js'
 import type { ScriptEditRequest } from '../../src/ui/code-editor-ai.js'
 
 const baseline = 'library(ggplot2)\np <- ggplot(iris)\nprint(p)\n'
@@ -97,5 +100,55 @@ describe('script modification review', () => {
     fireEvent.click(screen.getByRole('button', { name: /^收起差异预览$/ }))
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(document.activeElement).toBe(opener)
+  })
+
+  it('restores the actual markdown review trigger after a pointer click that leaves the composer focused', async () => {
+    function Host() {
+      const [open, setOpen] = useState(false)
+      return <>
+        <textarea aria-label="Draft composer" />
+        <CodeEditingContext.Provider value={{ openCode: () => {}, openFile: () => {}, editReply: () => ({ status: 'pending', requestId: request.id }), reviewCode: () => setOpen(true) }}>
+          <AgentMarkdown streaming={false} sourceId="review-reply" text={`\`\`\`r\n${revised}\`\`\``} />
+        </CodeEditingContext.Provider>
+        {open ? <CodeEditorDiff request={request} code={revised} onApply={() => {}} onClose={() => setOpen(false)} /> : null}
+      </>
+    }
+    render(<Host />)
+    const opener = await screen.findByRole('button', { name: /^查看差异$/ })
+    screen.getByRole('textbox', { name: 'Draft composer' }).focus()
+    // fireEvent.click leaves focus where it was, as macOS pointer activation can.
+    fireEvent.click(opener)
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(opener)
+  })
+
+  it('restores the replacement review trigger when deferred highlighting replaces its inner subtree while the dialog is open', async () => {
+    const reveals = new Map<Element, () => void>()
+    vi.spyOn(codeVisibility, 'observeCodeBlockVisibility').mockImplementation((element, visible) => { reveals.set(element, visible); return () => {} })
+    function Host() {
+      const [open, setOpen] = useState(false)
+      return <>
+        <CodeEditingContext.Provider value={{ openCode: () => {}, openFile: () => {}, editReply: () => ({ status: 'pending', requestId: request.id }), reviewCode: () => setOpen(true) }}>
+          <AgentMarkdown streaming={false} sourceId="unrelated-reply" text={'```python\nprint("unrelated")\n```'} />
+          <AgentMarkdown streaming={false} sourceId="lazy-review-reply" text={`\`\`\`r\n${revised}\`\`\``} />
+        </CodeEditingContext.Provider>
+        {open ? <CodeEditorDiff request={request} code={revised} onApply={() => {}} onClose={() => setOpen(false)} /> : null}
+      </>
+    }
+    render(<Host />)
+    const original = (await screen.findAllByRole('button', { name: /^查看差异$/ }))[1]!
+    const wrapper = original.closest('[data-code-highlighted]')!
+    expect(wrapper.getAttribute('data-code-highlighted')).toBe('false')
+    fireEvent.click(original)
+    act(() => { reveals.get(wrapper)!() })
+    expect(original.isConnected).toBe(false)
+    expect(wrapper.isConnected).toBe(true)
+    expect(wrapper.getAttribute('data-code-highlighted')).toBe('true')
+    const replacement = screen.getAllByRole('button', { name: /^查看差异$/ })[1]!
+    expect(replacement).not.toBe(original)
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(replacement)
   })
 })

@@ -585,6 +585,7 @@ const diff行上界 = 2000
 
 /** 这几件是 `RemoteExecutor` 上我们用到的。**收窄成接口**，这一层不该认识整个执行器 */
 interface RemoteExecutorLike {
+  lstat(path: string): Promise<{ kind: "directory" | "file" | "other"; size: number }>
   readdir(path: string): Promise<{ name: string; directory: boolean; size: number; mtimeMs: number }[]>
   unlink(path: string): Promise<void>
   rmdir(path: string): Promise<void>
@@ -1094,6 +1095,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
    */
   const 数到这儿为止 = 5000
 
+  /** A trailing slash/dot can make lstat follow a directory link. Keep interior path semantics intact. */
+  const 远端条目路径 = (path: string) => {
+    const entry = path.replace(/\/+$/, "") || (path.startsWith("/") ? "/" : "")
+    if (!entry || /(?:^|\/)\.\.?$/.test(entry)) throw fault("invalid_request", "远端操作需要具体条目路径，末尾不能是 . 或 ..")
+    return entry
+  }
+
   const 数一个本地目录 = (dir: string) => {
     let files = 0
     let bytes = 0
@@ -1140,7 +1148,8 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   const 递归删远端 = async (e: RemoteExecutorLike, dir: string): Promise<void> => {
     for (const x of await e.readdir(dir)) {
       const 全 = `${dir}/${x.name}`
-      if (x.directory) await 递归删远端(e, 全)
+      // Directory links are entries to unlink, never permission to traverse their targets.
+      if ((await e.lstat(全)).kind === "directory") await 递归删远端(e, 全)
       else await e.unlink(全)
     }
     await e.rmdir(dir)
@@ -4933,11 +4942,12 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     pathInfo: async ({ projectId, connectionId, path }) => {
       if (connectionId) {
+        path = 远端条目路径(path)
         const e = 连着的(connectionId)
-        const st = await e.stat(path).catch((err: unknown) => {
+        const st = await e.lstat(path).catch((err: unknown) => {
           throw fault("invalid_request", "找不到 {0}：{1}", path, err instanceof Error ? err.message : String(err))
         })
-        if (!st.directory) return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
+        if (st.kind !== "directory") return { directory: false, files: 1, bytes: st.size, counted: "complete" as const }
         const 数 = await 数一个远端目录(e, path)
         return { directory: true, ...数 }
       }
@@ -4962,8 +4972,9 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
        * 写成一支再分叉的话，迟早有人把「删」当成一件事来改。
        */
       if (connectionId) {
+        path = 远端条目路径(path)
         const e = 连着的(connectionId)
-        const st = await e.stat(path).catch((err: unknown) => {
+        const st = await e.lstat(path).catch((err: unknown) => {
           throw fault("invalid_request", "找不到 {0}：{1}", path, err instanceof Error ? err.message : String(err))
         })
         /**
@@ -4972,7 +4983,7 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
          * 半路失败**不回滚**——删掉的就是删掉了，假装回滚只会让人
          * 以为什么都没发生。如实把失败那一句抛出去。
          */
-        await (st.directory ? 递归删远端(e, path) : e.unlink(path)).catch((err: unknown) => {
+        await (st.kind === "directory" ? 递归删远端(e, path) : e.unlink(path)).catch((err: unknown) => {
           // **权限不够要说得出是权限不够**，不笼统地说「删不掉」
           throw fault("invalid_request", "删不掉 {0}：{1}", path, err instanceof Error ? err.message : String(err))
         })

@@ -23,6 +23,7 @@
  * 误判成收工——而那之后的回复会被算进下一轮，表现是「答非所问」。
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
+import { trackCliProcess } from "./process.js"
 import type { AgentEvent, SessionId } from "../types.js"
 import { translateClaudeEvent, type ClaudeTranslateState } from "./claude-translate.js"
 
@@ -47,6 +48,8 @@ const HEADLESS_ARGS = [
 
 export class ClaudeDriver {
   private child: ChildProcessWithoutNullStreams | undefined
+  private stopChild: (() => Promise<void>) | undefined
+  private stopping: Promise<void> | undefined
   private buf = ""
   private readonly st: ClaudeTranslateState = { unknownKinds: new Map(), toolNames: new Map() }
   /** 当前这一轮的收尾钩子。**一轮至多一个**——claude 的 stdin 是串行的 */
@@ -56,17 +59,10 @@ export class ClaudeDriver {
    * 下一次起进程时要用的模型。**缺省 = 用 CLI 自己的默认**，不替它选一个。
    */
   private model: string | undefined
-  /**
-   * 这次进程结束是**我们为了换模型主动杀的**，不是它自己死的。
-   *
-   * 没有这个区分的话，`close` 回调会把换模型当成意外退出：标 `dead`、
-   * 发 `exited`、下一轮直接抛「进程已结束」。**换模型于是变成了结束会话。**
-   */
-  private restarting = false
-
   constructor(private readonly opts: ClaudeDriverOptions) {}
 
   async startTurn(text: string): Promise<void> {
+    if (this.stopping) await this.stopping
     if (this.dead) {
       // **死过之后要明确失败**，不静静地什么都不做——
       // 后者的表现是「我说了话它没反应」，而用户无从知道进程早没了
@@ -99,40 +95,42 @@ export class ClaudeDriver {
    */
   async setModel(model: string): Promise<void> {
     this.model = model
-    const child = this.child
+    const stop = this.stopChild
     this.child = undefined
-    // **不置 `dead`**：会话没结束，只是换了个模型重开
-    if (child) {
-      this.restarting = true
-      child.kill("SIGKILL")
-    }
+    this.stopChild = undefined
+    // The replacement can start only after this process and its inherited pipes drain.
+    if (!stop) return this.stopping
+    const stopping = stop()
+    this.stopping = stopping
+    try { await stopping } finally { if (this.stopping === stopping) this.stopping = undefined }
   }
 
-  abortTurn(): void {
+  abortTurn(): Promise<void> {
     // claude 的 headless 模式没有「中断当前轮」的入口，只能整个停掉。
     // **如实反映**：这会结束会话，不是中断一轮
-    void this.close()
+    return this.close()
   }
 
   async close(): Promise<void> {
-    const child = this.child
+    const stop = this.stopChild
     this.child = undefined
+    this.stopChild = undefined
     this.dead = true
-    if (!child) return
-    child.kill("SIGKILL")
+    if (!stop) return this.stopping
+    const stopping = stop()
+    this.stopping = stopping
     /**
      * **杀完进程要亲手收口**（审查 debug H3）。SIGKILL 之后 `on("close")` 因
      * `this.dead` 提前 return（那是对的——不该把用户主动的停当成坏消息报错），
      * 于是 `settle()` 再没人调,`startTurn` 的 promise 永远挂着:
      * `CliRuntime.write` 的 `finally` 不跑 → `inFlight` 永远 ≥1 → `setModel` 永抛
      * 「这一轮还没说完」、`waitForIdle` 永挂、账本那条回合永远 running。
-     * codex driver 的 abort 走 fatal 收得干净,claude 这条一直空着。
-     * 发一条 idle(不是 error——用户自己停的),再 settle。
+     * 先释放 pending；资源排空后再发 exited，让观察者收到的是实际停止。
      */
-    if (this.pending) {
-      this.opts.emit({ kind: "exited", sessionId: this.opts.sessionId, exitCode: 0 })
-      this.settle()
-    }
+    const needsExit = !!this.pending
+    this.settle()
+    try { await stopping } finally { if (this.stopping === stopping) this.stopping = undefined }
+    if (needsExit) this.opts.emit({ kind: "exited", sessionId: this.opts.sessionId, exitCode: 0 })
   }
 
   private spawnChild(): void {
@@ -147,16 +145,20 @@ export class ClaudeDriver {
       child = spawn(this.opts.command, [...this.opts.args, ...HEADLESS_ARGS, ...resumeArgs, ...modelArgs], {
         cwd: this.opts.cwd,
         stdio: ["pipe", "pipe", "pipe"],
+        ...(process.platform === "win32" ? {} : { detached: true }),
       })
     } catch (err) {
       this.fatal(`起不来外部 CLI「${this.opts.command}」：${message(err)}`)
       return
     }
     this.child = child
+    this.stopChild = trackCliProcess(child).stop
+    this.buf = ""
+    this.stderrTail = ""
 
     child.stdout.setEncoding("utf8")
     child.stderr.setEncoding("utf8")
-    child.stdout.on("data", (d: string) => this.onStdout(d))
+    child.stdout.on("data", (d: string) => { if (this.child === child) this.onStdout(d) })
     /**
      * **stderr 不是失败**（Spike G 第 3 条实测）。
      *
@@ -164,17 +166,12 @@ export class ClaudeDriver {
      * claude 也会打警告。**把 stderr 非空当失败会让每一轮都被误报成出错。**
      * 它只在真失败（非 0 退出）时作为诊断附带上去。
      */
-    child.stderr.on("data", (d: string) => (this.stderrTail = (this.stderrTail + d).slice(-2000)))
+    child.stderr.on("data", (d: string) => { if (this.child === child) this.stderrTail = (this.stderrTail + d).slice(-2000) })
     // 进程立刻退出时写 stdin 会撞 EPIPE，那是次生信号；真正的原因由 close 分支报
     child.stdin.on("error", () => {})
-    child.on("error", (e) => this.fatal(`起不来外部 CLI「${this.opts.command}」：${e.message}`))
+    child.on("error", (e) => { if (this.child === child) this.fatal(`起不来外部 CLI「${this.opts.command}」：${e.message}`) })
     child.on("close", (code) => {
-      if (this.restarting) {
-        // 换模型主动杀的。**不是坏消息**，下一轮会带着 `--resume` 重开
-        this.restarting = false
-        return
-      }
-      if (this.dead) return // 我们自己 close 掉的，不必再报
+      if (this.child !== child || this.dead) return
       const tail = this.stderrTail.trim()
       this.fatal(
         `外部 CLI 进程以退出码 ${code} 结束${tail ? `：${tail.split("\n").slice(-3).join(" ")}` : ""}`,
@@ -217,6 +214,7 @@ export class ClaudeDriver {
   private fatal(text: string, exitCode = 1): void {
     this.dead = true
     this.child = undefined
+    this.stopChild = undefined
     this.opts.emit({ kind: "notice", sessionId: this.opts.sessionId, text })
     this.opts.emit({ kind: "exited", sessionId: this.opts.sessionId, exitCode })
     this.settle()

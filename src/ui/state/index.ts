@@ -254,6 +254,7 @@ import {
   $activeProjectId,
   $activeSessionId,
   $drafts,
+  $failedDrafts,
   $paletteOpen,
   $paletteQuery,
   $view,
@@ -302,6 +303,7 @@ export function resetAllState(): void {
   $activeSessionId.set(undefined)
   $view.set("conversation")
   $drafts.set({})
+  $failedDrafts.set({})
   $paletteOpen.set(false)
   $paletteQuery.set("")
   $items.set([])

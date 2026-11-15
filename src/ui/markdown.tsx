@@ -77,10 +77,14 @@ function LazyCodeRenderer({ code, language: rawLanguage, isIncomplete }: CustomR
   const deferHighlight = waitForTurn || isIncomplete || !visible
   const reply = editing?.editReply?.(prefix)
   const editLabel = reply?.status === 'expired' ? t("修改请求已失效") : reply?.status === 'applied' ? t("回到原脚本") : t("查看差异")
-  const edit = editing ? reply ? <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete || reply.status === 'expired'} onClick={() => {
+  const edit = editing ? reply ? <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete || reply.status === 'expired'} onClick={event => {
     if (!reply.requestId) return
     if (reply.status === 'applied') editing.returnToScript?.(reply.requestId)
-    else editing.reviewCode?.({ requestId: reply.requestId, code, language: language ?? 'text' })
+    else {
+      // macOS pointer clicks may leave the composer focused. Give the dialog its actual return target.
+      event.currentTarget.focus({ preventScroll: true })
+      editing.reviewCode?.({ requestId: reply.requestId, code, language: language ?? 'text' })
+    }
   }}>{editLabel}</Button> : <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete} onClick={() => editing.openCode({ code, language: language ?? 'text', source })}>{t("在旁边编辑")}</Button> : null
   return (
     <div data-code-highlighted={String(!deferHighlight)} ref={element}>

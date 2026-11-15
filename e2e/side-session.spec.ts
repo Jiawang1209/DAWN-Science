@@ -367,20 +367,64 @@ test("**新建任务那一屏：坞里另开一段是普通对话，不带文件
 
 /**
  * **坞里的输入卡与主区同高、底边对齐**（2026-09-29，作者选的「底边对齐 + 同高」）。
- * 量完整外卡（含工具栏）；不同草稿、宽度与拖动都不能让两侧再错开一行。
+ * 文字区与底边固定；Nov15约定仅允许极窄容器的工具栏多一行，常规宽度仍量完整外卡同高。
  */
 for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
-  test(`**${宽} 宽：输入整卡同高，拖动分栏与不同草稿不改变高度**`, async ({ dawn }) => {
+  test(`**${宽} 宽：输入正文同高且底边对齐，拖动分栏仅允许极窄底栏折行**`, async ({ dawn }) => {
     const { page, app } = dawn
     await app.evaluate(({ BrowserWindow }, [w, h]) => BrowserWindow.getAllWindows()[0]!.setContentSize(w!, h!), [宽, 高])
     await 开一段临时会话(page, "你好")
     await 坞里另开一段(page)
+    const measure = (area: import("@playwright/test").Locator) => area.locator(".composer-card").evaluate(el => {
+      const card = el.getBoundingClientRect()
+      const footer = el.querySelector<HTMLElement>(".composer-footer")!
+      const foot = footer.getBoundingClientRect()
+      const field = el.querySelector<HTMLTextAreaElement>("textarea.composer-field")!
+      const body = el.querySelector<HTMLElement>(".composer-input-wrap")!
+      // Container queries use the nearest size container's content width, not the dock/screen width.
+      let container = footer.parentElement!
+      while (getComputedStyle(container).containerType === "normal") container = container.parentElement!
+      const style = getComputedStyle(container)
+      const width = container.clientWidth - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight)
+      const extraConfig = Boolean(footer.querySelector(".config-pill, .composer-status:not(:empty)"))
+      const mayWrap = width <= 320 || (width <= 360 && extraConfig)
+      const rows: { center: number; height: number }[] = []
+      for (const child of Array.from(footer.children)) {
+        const rect = child.getBoundingClientRect()
+        if (!rect.width || !rect.height) continue
+        const center = (rect.top + rect.bottom) / 2
+        const row = rows.find(row => Math.abs(row.center - center) <= 4)
+        if (row) row.height = Math.max(row.height, rect.height)
+        else rows.push({ center, height: rect.height })
+      }
+      const footStyle = getComputedStyle(footer)
+      const naturalHeight = rows.reduce((sum, row) => sum + row.height, 0) + Math.max(0, rows.length - 1) * Number.parseFloat(footStyle.rowGap)
+        + Number.parseFloat(footStyle.paddingTop) + Number.parseFloat(footStyle.paddingBottom)
+        + Number.parseFloat(footStyle.borderTopWidth) + Number.parseFloat(footStyle.borderBottomWidth)
+      const buttons = Array.from(footer.querySelectorAll("button")).map(button => button.getBoundingClientRect()).filter(rect => rect.width && rect.height)
+      return {
+        height: card.height, bottom: card.bottom, footerHeight: foot.height,
+        fieldHeight: field.getBoundingClientRect().height, bodyHeight: body.getBoundingClientRect().height,
+        width, rows: rows.length, mayWrap, naturalFooter: Math.round(foot.height - naturalHeight) === 0,
+        contained: buttons.length > 0 && buttons.every(rect => rect.left >= foot.left && rect.right <= foot.right && rect.top >= foot.top && rect.bottom <= foot.bottom)
+          && footer.scrollWidth <= footer.clientWidth && footer.scrollHeight <= footer.clientHeight,
+      }
+    })
+    const initial = await Promise.all([measure(主区(page)), measure(坞(page))])
     const 量 = async () => {
-      const measure = (area: import("@playwright/test").Locator) => area.locator(".composer-card").evaluate(el => {const card=el.getBoundingClientRect();return {height:card.height,bottom:card.bottom}})
-      const [主,侧] = await Promise.all([measure(主区(page)),measure(坞(page))])
-      return 主 && 侧 ? { 高差: Math.round(Math.abs(主.height - 侧.height)), 底差: Math.round(Math.abs(主.bottom - 侧.bottom)) } : undefined
+      const pair = await Promise.all([measure(主区(page)), measure(坞(page))])
+      const [主, 侧] = pair
+      return {
+        主体高差: Math.round(Math.abs((主.height - 主.footerHeight) - (侧.height - 侧.footerHeight))),
+        底差: Math.round(Math.abs(主.bottom - 侧.bottom)),
+        输入高度固定: pair.every((card, i) => card.fieldHeight === initial[i]!.fieldHeight && card.bodyHeight === initial[i]!.bodyHeight)
+          && 主.fieldHeight === 侧.fieldHeight && 主.bodyHeight === 侧.bodyHeight,
+        底栏合规: pair.every(card => card.contained && card.naturalFooter && (card.rows === 1 || (card.mayWrap && card.rows === 2))),
+        常规宽整卡同高: 主.mayWrap || 侧.mayWrap || Math.round(Math.abs(主.height - 侧.height)) === 0,
+      }
     }
-    await expect.poll(量, { timeout: 10_000 }).toEqual({ 高差: 0, 底差: 0 })
+    const expectedGeometry = { 主体高差: 0, 底差: 0, 输入高度固定: true, 底栏合规: true, 常规宽整卡同高: true }
+    await expect.poll(量, { timeout: 10_000 }).toEqual(expectedGeometry)
     const input = 框(坞(page))
     const 空高 = await input.evaluate(el => el.getBoundingClientRect().height)
     const 主高 = await 主区(page).locator("textarea.composer-field").evaluate(el => el.getBoundingClientRect().height)
@@ -388,7 +432,7 @@ for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
     for (const text of ["第一行\n第二行\n第三行", "移动分栏后文字继续换行".repeat(60), ""]) {
       await input.fill(text)
       expect(await input.evaluate(el => el.getBoundingClientRect().height)).toBe(空高)
-      await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+      await expect.poll(量).toEqual(expectedGeometry)
     }
     const sash = 坞(page).getByRole("separator", { name: "调整面板宽度" })
     const dragTo = async (width: number) => {
@@ -408,13 +452,13 @@ for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
     for (const sideWidth of (宽 === 1920 ? [280, 360, 440, 600, 720] : [280, 360, 440, 600])) {
       await dragTo(sideWidth)
       await input.fill("只在侧边输入的长草稿".repeat(80))
-      await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+      await expect.poll(量).toEqual(expectedGeometry)
       expect(await input.evaluate(el => el.getBoundingClientRect().height)).toBe(空高)
       expect(await input.evaluate(el => el.scrollHeight)).toBeGreaterThan(空高)
     }
     await dragTo(480)
     await input.fill("")
-    await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+    await expect.poll(量).toEqual(expectedGeometry)
     await 主区(page).locator("textarea.composer-field").fill("主区与侧边保持相同高度，文字可以自动换行。")
     await input.fill("侧边输入较长的文字，也在相同高度的框内换行和滚动。".repeat(12))
     await input.evaluate(el => { el.scrollTop = 0; el.dispatchEvent(new Event("scroll", { bubbles: true })) })
@@ -435,7 +479,7 @@ for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
       const screenshotPath = test.info().outputPath(`composer-cards-${theme}.png`)
       await page.screenshot({ path: screenshotPath, clip, animations: "disabled", scale: "css" })
       await test.info().attach(`composer-cards-${theme}`, { path: screenshotPath, contentType: "image/png" })
-      await expect.poll(量).toEqual({ 高差: 0, 底差: 0 })
+      await expect.poll(量).toEqual(expectedGeometry)
     }
     await test.info().attach("aligned-composers", { body: await page.screenshot(), contentType: "image/png" })
   })

@@ -194,6 +194,8 @@ export class SessionManager {
   private readonly bound = new Map<SessionId, AgentRuntime>()
   /** Fresh and resumed starts stay visible until their runtime binding settles. */
   private readonly resuming = new Map<SessionId, Promise<SessionRecord>>()
+  /** Read the current directory only after the preceding move has finished. */
+  private readonly rehoming = new Map<SessionId, Promise<SessionRecord>>()
   private readonly exitListeners = new Map<SessionId, () => void>()
   private admissionClosed=false
 
@@ -920,6 +922,13 @@ export class SessionManager {
    * 先搬后停的话，进程还开着那个目录，搬到一半会是什么样没人说得准。
    */
   async rehome(sessionId: SessionId, workspace: string, projectId?: string): Promise<SessionRecord> {
+    const previous = this.rehoming.get(sessionId) ?? Promise.resolve()
+    const moving = previous.catch(() => {}).then(() => this.rehomeOnce(sessionId, workspace, projectId))
+    this.rehoming.set(sessionId, moving)
+    try { return await moving } finally { if (this.rehoming.get(sessionId) === moving) this.rehoming.delete(sessionId) }
+  }
+
+  private async rehomeOnce(sessionId: SessionId, workspace: string, projectId?: string): Promise<SessionRecord> {
     const rec = this.store.get(sessionId)
     if (!rec) throw new UserFacingError(`没有这个会话：${sessionId}`)
     if (rec.connectionId) {

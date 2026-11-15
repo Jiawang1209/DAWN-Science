@@ -38,6 +38,7 @@ export class 更新管家 {
   /** 最近一次查到的那条。`设偏好` 要靠它就地重算，不必再联网 */
   private 最近: 发布一条 | undefined
   private readonly 现在: () => number
+  private 检查中: Promise<更新状态> | undefined
 
   constructor(private readonly o: 管家选项) {
     this.现在 = o.现在 ?? (() => Date.now())
@@ -56,11 +57,21 @@ export class 更新管家 {
    * @param 自动 启动时那次（受「auto」开关与 1 小时节流约束）；false = 人自己点的
    */
   async 检查({ 自动 }: { 自动: boolean }): Promise<更新状态> {
+    // A second check must not replace a download's state or race an older response.
+    if (this.状态.阶段 === "downloading") return this.状态
+    if (this.检查中) return this.检查中
     const 盘 = this.盘()
     if (自动) {
       if (!盘.auto) return this.状态
       if (盘.lastCheckedAt !== undefined && this.现在() - 盘.lastCheckedAt < 自动检查间隔) return this.状态
     }
+    const checking = this.查一次()
+    this.检查中 = checking
+    try { return await checking }
+    finally { if (this.检查中 === checking) this.检查中 = undefined }
+  }
+
+  private async 查一次(): Promise<更新状态> {
     this.状态 = { 阶段: "checking", 当前: this.o.当前版本 }
     let 一条: 发布一条 | undefined
     try {
@@ -76,9 +87,11 @@ export class 更新管家 {
       return this.状态
     }
     const 查于 = this.现在()
-    this.o.写状态({ ...盘, lastCheckedAt: 查于 })
+    // Preferences may have changed while the network request was pending.
+    const 最新盘 = this.盘()
+    this.o.写状态({ ...最新盘, lastCheckedAt: 查于 })
     this.最近 = 一条
-    this.状态 = this.算(一条, 查于, 盘.ignored)
+    this.状态 = this.算(一条, 查于, 最新盘.ignored)
     return this.状态
   }
 

@@ -6,12 +6,13 @@ import { 关闭图标 } from './icons.js'
 import { t, tf } from './i18n/index.js'
 
 /** Review changes to an existing draft; this surface never saves or executes code. */
-export function CodeEditorDiff({ request, code, onApply, onClose, problem }: {
+export function CodeEditorDiff({ request, code, onApply, onClose, problem, targetLabel }: {
   request: ScriptEditRequest
   code: string
   onApply: (mode: 'document' | 'selection') => void
   onClose: () => void
   problem?: string | undefined
+  targetLabel?: string | undefined
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [mode, setMode] = useState<'document' | 'selection'>('document')
@@ -48,7 +49,7 @@ export function CodeEditorDiff({ request, code, onApply, onClose, problem }: {
       <Button variant="ghost" size="icon" aria-label={t("收起差异预览")} onClick={onClose}><关闭图标 /></Button>
     </header>
     <div className="code-editor-diff-meta">
-      <span>{tf("修改目标：{0}", request.label)}</span>
+      <span>{tf("修改目标：{0}", targetLabel ?? request.label)}</span>
       <span>{tf("原选区：L{0}–{1}", fromLine, toLine)}</span>
     </div>
     <fieldset className="code-editor-diff-modes">

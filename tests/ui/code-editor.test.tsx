@@ -28,6 +28,19 @@ function setup() {
 }
 
 describe('chat-first editor', () => {
+  it('reviews the current saved path when a draft receives its first filename while AI is replying', async () => {
+    const { store, id } = setup()
+    store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })
+    const request = store.prepareEdit(id, 'before-saving.py')
+    // A first save assigns this same document its canonical filesystem identity.
+    await store.save(id, 'analysis.py')
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    act(() => store.reviewEdit(request.id, 's', 'x = 1\nprint(x + 1)', 'python'))
+    expect(screen.getByRole('dialog', { name: /^审阅脚本修改$/ }).textContent).toContain('修改目标：/workspace/analysis.py')
+    expect(store.$editRequests.get()[0]?.label).toBe('before-saving.py')
+    expect(store.current('s')?.id).toBe(id)
+  })
+
   it('reviews an AI revision then applies one undoable edit to the original named draft', async () => {
     const { store, id, save, run } = setup()
     await store.save(id, 'analysis.py')

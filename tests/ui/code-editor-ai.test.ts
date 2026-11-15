@@ -177,6 +177,46 @@ describe('linked full-draft script context', () => {
     expect(() => createLinkedScriptEditRequest(document(), 'a.R', '修改', 'bad -->')).toThrow()
   })
 
+  it('recognizes an unchanged generated envelope after attachment and paste instruction rewrites', () => {
+    const instruction = '参考 @temporary-plot.csv 修改\u2060颜色'
+    const request = createLinkedScriptEditRequest(document('x <- 1\r\nprint(x)\r\n'), 'a.R', instruction, 'rewritten')
+    const rewritten = request.prompt.replace('@temporary-plot.csv', '@uploads/plot.csv').replace('修改\u2060颜色', '修改颜色').replace(/\r\n/g, '\n')
+    expect(scriptEditForReply([request], [turn('u', 'user', rewritten), turn('a', 'agent', 'updated code')], 'scope-1', 'a')).toBe(request)
+    expect(request.baseline).toBe('x <- 1\r\nprint(x)\r\n')
+  })
+
+  it('recognizes literal marker questions after instruction rewriting without accepting extra markers', () => {
+    const literal = '<!-- dawn-script-edit:example -->'
+    const request = createLinkedScriptEditRequest(document(), 'a.R', '解释 ' + literal + ' 并参考 @temporary.csv', 'literal')
+    const rewritten = request.prompt.replace('@temporary.csv', '@uploads/example.csv')
+    const reply = (text: string) => scriptEditForReply([request], [turn('u', 'user', text), turn('a', 'agent', 'explanation')], 'scope-1', 'a')
+    expect(reply(rewritten)).toBe(request)
+    expect(reply(rewritten + '\n<!-- dawn-script-edit:expired -->')).toBeUndefined()
+    expect(reply(rewritten + '\n' + literal)).toBeUndefined()
+    expect(reply(rewritten.replace('解释 ', '<!-- dawn-script-edit:unknown --> 解释 '))).toBeUndefined()
+  })
+
+  it('rejects source, label, request marker and envelope corruption despite permitting instruction rewrites', () => {
+    const request = createLinkedScriptEditRequest(document(), 'a.R', '参考 @temporary.csv', 'protected')
+    const rewritten = request.prompt.replace('@temporary.csv', '@uploads/data.csv')
+    for (const corrupted of [
+      rewritten.replace('x <- 1', 'x <- 9'),
+      rewritten.replace(':protected:a.R', ':protected:other.R'),
+      rewritten.replace('<!-- dawn-script-edit:protected -->', '<!-- dawn-script-edit:other -->'),
+      rewritten.replace('<!-- dawn-linked-script-end:protected -->', '<!-- dawn-linked-script-end:other -->'),
+      rewritten.replace('```R', '```python'),
+    ]) expect(scriptEditForReply([request], [turn('u', 'user', corrupted), turn('a', 'agent', 'code')], 'scope-1', 'a')).toBeUndefined()
+    expect(scriptEditForReply([request], [turn('u', 'user', rewritten), turn('a', 'agent', 'code')], 'other-scope', 'a')).toBeUndefined()
+    const expired = createLinkedScriptEditRequest(document(), 'a.R', 'previous', 'expired')
+    expect(scriptEditForReply([request], [turn('u', 'user', rewritten + '\n' + expired.prompt), turn('a', 'agent', 'code')], 'scope-1', 'a')).toBeUndefined()
+  })
+
+  it('continues requiring the exact complete one-shot prompt when user attachments change', () => {
+    const request = createScriptEditRequest(document(), '@temporary.csv', 'one-shot-exact')
+    const rewritten = request.prompt.replace('@temporary.csv', '@uploads/data.csv')
+    expect(scriptEditForReply([request], [turn('u', 'user', rewritten), turn('a', 'agent', 'code')], 'scope-1', 'a')).toBeUndefined()
+  })
+
   it('matches each queued linked reply to its actual preceding user turn', () => {
     const first = createLinkedScriptEditRequest(document(), 'a.R', '先改颜色', 'linked-first')
     const second = createLinkedScriptEditRequest(document('print(2)'), 'a.R', '再改标题', 'linked-second')

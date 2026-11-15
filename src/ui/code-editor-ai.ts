@@ -151,11 +151,30 @@ export function scriptEditForReply(requests: readonly ScriptEditRequest[], items
   // Canonicalize the comparison only; the original script snapshot remains byte-exact.
   const canonical = (text: string) => text.replace(/\r\n?/g, '\n')
   const userText = canonical(user.text)
-  const matching = requests.filter(request => request.scopeKey === scopeKey && userText.includes(canonical(request.prompt)))
+  const matching = requests.flatMap(request => {
+    if (request.scopeKey !== scopeKey) return []
+    const linked = request.source === 'linked' ? splitLinkedScriptPrompt(request.prompt) : undefined
+    if (request.source === 'linked' && !linked) return []
+    // Composer attachment references may change in the instruction. The generated snapshot stays exact.
+    const context = canonical(linked ? request.prompt.slice(linked.instruction.length) : request.prompt)
+    if (!userText.includes(context)) return []
+    return [{ request, context, instruction: linked?.instruction }]
+  })
   if (matching.length !== 1) return undefined
-  const request = matching[0]!
-  // More than one attached context, including an expired/unknown context, is ambiguous.
-  if (anyMarker.test(userText.replace(canonical(request.prompt), ''))) return undefined
+  const { request, context, instruction } = matching[0]!
+  if (userText.indexOf(context) !== userText.lastIndexOf(context)) return undefined
+  const outside = userText.replace(context, '')
+  // A literal marker in the original instruction is prose, not a second attached request.
+  // Count occurrences so extra expired/unknown contexts (including duplicate markers) still fail closed.
+  if (instruction !== undefined) {
+    const markers = (text: string): string[] => text.match(/<!-- dawn-script-edit:[A-Za-z0-9_-]+ -->/g) ?? []
+    const allowed = markers(instruction)
+    for (const marker of markers(outside)) {
+      const index = allowed.indexOf(marker)
+      if (index < 0) return undefined
+      allowed.splice(index, 1)
+    }
+  } else if (anyMarker.test(outside)) return undefined
   return request
 }
 

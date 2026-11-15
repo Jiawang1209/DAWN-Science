@@ -1,3 +1,5 @@
+import { splitLinkedScriptPrompt } from '../protocol/script-context.js'
+export { splitLinkedScriptPrompt } from '../protocol/script-context.js'
 import { diffLines } from 'diff'
 import type { TranscriptItem } from '../protocol/index.js'
 import type { CodeDocument, CodeSelection } from './state/code-editor.js'
@@ -82,23 +84,6 @@ export function createLinkedScriptEditRequest(doc: CodeDocument, label: string, 
   ].join('\n\n')
   const prompt = `${instruction}\n\n${start}${encodeURIComponent(label)} -->\n\n${context}\n\n${end}`
   return { id, documentId: doc.id, scopeKey: doc.scope.key, sessionId: doc.scope.sessionId, language: doc.language, label, baseline: doc.text, selection, source: 'linked', prompt }
-}
-
-/** Parse only the generated outer envelope, leaving user/source lookalikes inside intact. */
-export function splitLinkedScriptPrompt(text: string): { instruction: string; context: string; label: string } | undefined {
-  const ending = /\n\n<!-- dawn-linked-script-end:([A-Za-z0-9_-]{1,128}) -->$/.exec(text)
-  if (!ending) return undefined
-  const id = ending[1]!
-  const prefix = `\n\n<!-- dawn-linked-script:${id}:`
-  const from = text.indexOf(prefix)
-  if (from < 0 || text.indexOf(prefix, from + prefix.length) !== -1) return undefined
-  const labelFrom = from + prefix.length
-  const labelTo = text.indexOf(' -->\n\n', labelFrom)
-  if (labelTo < 0) return undefined
-  const context = text.slice(labelTo + ' -->\n\n'.length, ending.index)
-  if (!context.endsWith(marker(id))) return undefined
-  try { return { instruction: text.slice(0, from), context, label: decodeURIComponent(text.slice(labelFrom, labelTo)) } }
-  catch { return undefined }
 }
 
 export function createScriptEditRequest(doc: CodeDocument, label: string, id: string = crypto.randomUUID()): ScriptEditRequest {

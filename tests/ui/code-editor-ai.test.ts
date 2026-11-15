@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { 剥掉粘贴标记, 展开引用 } from '../../src/files/mentions.js'
 import type { TranscriptItem } from '../../src/protocol/index.js'
 import type { CodeDocument } from '../../src/ui/state/code-editor.js'
 import { createLinkedScriptEditRequest, splitLinkedScriptPrompt, createScriptEditRequest, scriptEditDiff, scriptEditForReply, scriptEditReplyHasContext, scriptEditResult } from '../../src/ui/code-editor-ai.js'
@@ -215,6 +216,24 @@ describe('linked full-draft script context', () => {
     const request = createScriptEditRequest(document(), '@temporary.csv', 'one-shot-exact')
     const rewritten = request.prompt.replace('@temporary.csv', '@uploads/data.csv')
     expect(scriptEditForReply([request], [turn('u', 'user', rewritten), turn('a', 'agent', 'code')], 'scope-1', 'a')).toBeUndefined()
+  })
+
+  it('preserves source Unicode and reply association through transcript stripping and model reference expansion', async () => {
+    const source = '# @source.csv\nvalue <- "word\u2060joiner"\nprint(value)\n'
+    const request = createLinkedScriptEditRequest(document(source), 'a.R', '参考 @typed.csv 和 @\u2060pasted.csv 修改', 'unicode-pipeline')
+    const original = splitLinkedScriptPrompt(request.prompt)!
+    const envelope = request.prompt.slice(original.instruction.length)
+    const echoed = 剥掉粘贴标记(request.prompt)
+    const model = 剥掉粘贴标记((await 展开引用(request.prompt, async () => 'file')).text)
+    for (const text of [echoed, model]) {
+      const parsed = splitLinkedScriptPrompt(text)!
+      expect(text.slice(parsed.instruction.length)).toBe(envelope)
+      expect(parsed.context).toContain(source)
+      expect(scriptEditForReply([request], [turn('u', 'user', text), turn('a', 'agent', 'code')], 'scope-1', 'a')).toBe(request)
+    }
+    expect(splitLinkedScriptPrompt(model)?.instruction).toContain('<workspace-reference path="typed.csv" kind="file" />')
+    expect(splitLinkedScriptPrompt(model)?.instruction).not.toContain('path="source.csv"')
+    expect(splitLinkedScriptPrompt(model)?.instruction).not.toContain('path="pasted.csv"')
   })
 
   it('matches each queued linked reply to its actual preceding user turn', () => {

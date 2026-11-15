@@ -1,3 +1,4 @@
+import { splitLinkedScriptPrompt } from "../protocol/script-context.js"
 import { 认内核快捷, type 快捷语言 } from "../kernel/shortcuts.js"
 
 /**
@@ -37,6 +38,7 @@ const 尾随标点 = /[.,;:!?。，；：！？)）\]】」』>]+$/
  * 只认形状，不验存在——存在与否在发送那一刻问文件系统。
  */
 export function 扫引用(text: string): 引用[] {
+  text = splitLinkedScriptPrompt(text)?.instruction ?? text
   const 见过 = new Set<string>()
   const 出: 引用[] = []
   for (const m of text.matchAll(引用令牌)) {
@@ -86,7 +88,10 @@ export async function 展开引用(text: string, 查: 查路径, host?: string):
     refs.push({ path: r.path, kind })
   }
   if (refs.length === 0) return { text, refs }
-  return { text: `${text}\n\n${refs.map((r) => 引用标记(r, host)).join("\n")}`, refs }
+  const linked = splitLinkedScriptPrompt(text)
+  const instruction = linked?.instruction ?? text
+  const envelope = linked ? text.slice(instruction.length) : ""
+  return { text: `${instruction}\n\n${refs.map((r) => 引用标记(r, host)).join("\n")}${envelope}`, refs }
 }
 
 /* ---------- 第二档（学 dsh-at-file）：粘贴的 `@` 不算；文件名过滤 ---------- */
@@ -101,8 +106,11 @@ export const 粘贴标记 = "⁠"
 export function 护住粘贴的艾特(text: string): string {
   return text.replace(/@(?=[^\s@])/g, `@${粘贴标记}`)
 }
+/** 生成的脚本包保存原始代码；其中的 word-joiner 不是输入框粘贴标记。 */
 export function 剥掉粘贴标记(text: string): string {
-  return text.replaceAll(粘贴标记, "")
+  const linked = splitLinkedScriptPrompt(text)
+  if (!linked) return text.replaceAll(粘贴标记, "")
+  return linked.instruction.replaceAll(粘贴标记, "") + text.slice(linked.instruction.length)
 }
 
 /** 一条文件名过滤规则：精确文件名（不含路径分隔符）或正则；都只看文件名，不看父目录 */
@@ -143,6 +151,7 @@ export function 编文件规则(rules: readonly 文件规则[]): (name: string) 
 
 /** 手动内核入口；粘贴保护、邮箱、代码示例及带路径的文件名不触发。 */
 export function 扫内核指令(text: string) {
+  text = splitLinkedScriptPrompt(text)?.instruction ?? text
   let fence: { char: string; length: number } | undefined
   const masked = text.split(/(?<=\n)/).map(line => {
     const run = /^ {0,3}(`{3,}|~{3,})/.exec(line)

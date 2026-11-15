@@ -2,8 +2,9 @@
  * `@路径` 引用（2026-08-23，学自 dsh-at-file）。
  * 三件事：识别什么、不识别什么；发送前怎么展开；展开不碰原文。
  */
-import { describe, expect, it } from "vitest"
-import { 扫引用, 展开引用, 引用标记, 护住粘贴的艾特, 剥掉粘贴标记, 粘贴标记, 编文件规则, 规则的毛病 } from "../../src/files/mentions.js"
+import { describe, expect, it, vi } from "vitest"
+import { splitLinkedScriptPrompt } from "../../src/protocol/script-context.js"
+import { 扫引用, 展开引用, 引用标记, 护住粘贴的艾特, 剥掉粘贴标记, 粘贴标记, 编文件规则, 规则的毛病, 扫内核指令 } from "../../src/files/mentions.js"
 
 describe("扫引用 · 识别语法", () => {
   it("`@路径` 一串没有空白的字；首次出现去重", () => {
@@ -100,5 +101,46 @@ describe("第二档 · 文件名过滤规则", () => {
 describe("内核快捷入口不是文件引用", () => {
   it("保留三个入口，显式相对路径与同名前缀仍是文件", () => {
     expect(扫引用("@R @Py @Python @RPython @./R @R.csv @Py/" ).map(r => r.path)).toEqual(["./R", "R.csv", "Py"])
+  })
+})
+
+
+describe("关联脚本上下文保持原文", () => {
+  function linked(instruction: string, source = '# @snapshot.csv\n@R\nword\u2060joiner\n') {
+    const envelope = '\n\n<!-- dawn-linked-script:unicode:a.R -->\n\n当前脚本 @label.csv，入口 @Py\n\n```R\n' + source + '```\n\n<!-- dawn-script-edit:unicode -->\n\n<!-- dawn-linked-script-end:unicode -->'
+    return { text: instruction + envelope, envelope }
+  }
+
+  it("粘贴标记只从本轮要求剥掉，转录与模型两次处理都保留脚本中的真实 Unicode", () => {
+    const { text, envelope } = linked('解释 @\u2060pasted.csv')
+    const transcript = 剥掉粘贴标记(text)
+    expect(transcript).toBe('解释 @pasted.csv' + envelope)
+    expect(剥掉粘贴标记(transcript)).toBe(transcript)
+    expect(splitLinkedScriptPrompt(transcript)?.instruction).toBe('解释 @pasted.csv')
+  })
+
+  it("脚本和标签中的引用不是本轮文件或内核手势", async () => {
+    const { text } = linked('解释代码')
+    const 查 = vi.fn(async () => 'file' as const)
+    expect(扫引用(text)).toEqual([])
+    expect(扫内核指令(text)).toEqual([])
+    expect(await 展开引用(text, 查)).toEqual({ text, refs: [] })
+    expect(查).not.toHaveBeenCalled()
+  })
+
+  it("本轮输入的引用在不可变脚本包之前展开，远端引用和识别坐标保留原语义", async () => {
+    const instruction = '请用 @Py 看 @typed.csv'
+    const { text, envelope } = linked(instruction)
+    const 查 = vi.fn(async () => 'file' as const)
+    expect(扫引用(text)).toEqual([{ path: 'typed.csv', start: instruction.indexOf('@typed.csv'), end: instruction.length }])
+    expect(扫内核指令(text)).toMatchObject([{ token: 'Py', start: 3, end: 6 }])
+    const expanded = await 展开引用(text, 查, 'remote-1')
+    const reference = '<workspace-reference path="typed.csv" kind="file" host="remote-1" />'
+    expect(expanded).toEqual({ text: instruction + '\n\n' + reference + envelope, refs: [{ path: 'typed.csv', kind: 'file' }] })
+    expect(查.mock.calls).toEqual([['typed.csv']])
+    const parsed = splitLinkedScriptPrompt(expanded.text)!
+    expect(parsed.instruction).toBe(instruction + '\n\n' + reference)
+    expect(expanded.text.slice(parsed.instruction.length)).toBe(envelope)
+    expect(剥掉粘贴标记(expanded.text)).toBe(expanded.text)
   })
 })

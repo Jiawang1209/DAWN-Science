@@ -190,3 +190,127 @@ describe('conversation code document lifecycle', () => {
     expect(store.current(scope.key)).toMatchObject({ text: 'x = 2\n', savedText: 'x = 2\n', version: 'v2' })
   })
 })
+
+
+describe('chat script associations', () => {
+  it('keeps its original document through visible switches and snapshots the latest unsaved edits after apply', () => {
+    const api = services(), store = createCodeEditorStore(api)
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'analysis.py')
+    expect(store.$linkedScripts.get()[scope.key]).toEqual({ documentId: id, label: 'analysis.py' })
+    const firstPrompt = store.prepareLinkedEdit(scope.key, '改为 2')
+    const first = store.$editRequests.get().at(-1)!
+    expect(firstPrompt).toBe(first.prompt)
+    store.reviewEdit(first.id, scope.key, 'print(2)', 'python')
+    store.applyEdit(first.id, scope.key, 'print(2)', 'document', (_before, after) => store.edit(id, after))
+    store.edit(id, 'print(2)\n# 手动调整')
+    const visible = store.openSource(scope, 'other', 'unrelated', 'python')
+    expect(store.current(scope.key)?.id).toBe(visible)
+    expect(store.linkedScript(scope.key)?.document.id).toBe(id)
+    store.prepareLinkedEdit(scope.key, '继续改标题')
+    const second = store.$editRequests.get().at(-1)!
+    expect(second).toMatchObject({ documentId: id, baseline: 'print(2)\n# 手动调整', source: 'linked' })
+    expect(store.linkedScript(scope.key)?.document.id).toBe(id)
+    expect(api.save).not.toHaveBeenCalled(); expect(api.run).not.toHaveBeenCalled()
+  })
+
+  it('leaves ordinary text untouched without a binding, after unlink, and with explicit one-shot context', () => {
+    const store = createCodeEditorStore(services())
+    expect(store.prepareLinkedEdit(scope.key, '普通问题')).toBe('普通问题')
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    store.setSelection(id, { from: 0, to: 8, text: 'print(1)' })
+    const oneShot = store.prepareEdit(id, 'a.py')
+    expect(store.prepareLinkedEdit(scope.key, oneShot.prompt + '\n改颜色')).toBe(oneShot.prompt + '\n改颜色')
+    expect(store.$editRequests.get()).toEqual([oneShot])
+    store.unlinkScript(scope.key)
+    expect(store.linkedScript(scope.key)).toBeUndefined()
+    expect(store.prepareLinkedEdit(scope.key, '普通问题')).toBe('普通问题')
+  })
+
+  it('supports empty drafts and uses the saved path as its current label', async () => {
+    const api = services(), store = createCodeEditorStore(api)
+    const id = store.openSource(scope, 'linked-empty', '', 'python')
+    store.linkScript(id, '未命名脚本')
+    store.prepareLinkedEdit(scope.key, '创建脚本')
+    expect(store.$editRequests.get().at(-1)?.baseline).toBe('')
+    await store.save(id, 'analysis.py')
+    expect(store.linkedScript(scope.key)?.label).toBe('/work/a.py')
+    store.prepareLinkedEdit(scope.key, '继续')
+    expect(store.$editRequests.get().at(-1)?.label).toBe('/work/a.py')
+  })
+
+  it('isolates associations by full scope and rejects non-native sessions', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    const remote = { ...scope, key: 'remote-same-session', owner: { ...scope.owner, connectionId: 'remote' } }
+    store.openSource(remote, 'linked', 'print(2)', 'python')
+    expect(store.linkedScript(remote.key)).toBeUndefined()
+    expect(store.prepareLinkedEdit(remote.key, 'remote message')).toBe('remote message')
+    store.$linkedScripts.set({ ...store.$linkedScripts.get(), [remote.key]: { documentId: id, label: 'a.py' } })
+    expect(store.linkedScript(remote.key)).toBeUndefined()
+    expect(() => store.prepareLinkedEdit(remote.key, 'remote message')).toThrow()
+    store.unlinkScript(remote.key)
+    const terminal = store.openSource({ ...scope, key: 'terminal', kind: 'pty' }, 'linked', 'print(1)', 'python')
+    expect(() => store.linkScript(terminal, 'a.py')).toThrow()
+    const noSession = store.openSource({ ...scope, key: 'no-session', sessionId: undefined }, 'linked', '', 'python')
+    expect(() => store.linkScript(noSession, 'a.py')).toThrow()
+    const freshWindow = createCodeEditorStore(services())
+    expect(freshWindow.linkedScript(scope.key)).toBeUndefined()
+  })
+
+  it('retains independent pending requests, including linked requests when a one-shot request is prepared', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    store.prepareLinkedEdit(scope.key, 'first')
+    const first = store.$editRequests.get().at(-1)!
+    store.prepareLinkedEdit(scope.key, 'second')
+    const second = store.$editRequests.get().at(-1)!
+    store.setSelection(id, { from: 0, to: 8, text: 'print(1)' })
+    const oneShot = store.prepareEdit(id, 'a.py')
+    expect(store.$editRequests.get()).toEqual([first, second, oneShot])
+    store.reviewEdit(first.id, scope.key, 'print(2)', 'python')
+    store.applyEdit(first.id, scope.key, 'print(2)', 'document', (_before, after) => store.edit(id, after))
+    expect(store.editProblem(second.id, scope.key)).toBe('原脚本草稿已改变，请在对话中重新提出修改要求，避免覆盖后续修改')
+    expect(store.$editRequests.get()).toEqual([second, oneShot])
+  })
+
+  it('bounds retained requests and keeps each latest snapshot intact', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', '', 'python')
+    store.linkScript(id, 'a.py')
+    for (let i = 0; i < 35; i++) { store.edit(id, String(i)); store.prepareLinkedEdit(scope.key, 'modify ' + i) }
+    expect(store.$editRequests.get()).toHaveLength(32)
+    expect(store.$editRequests.get()[0]?.baseline).toBe('3')
+    expect(store.$editRequests.get().at(-1)?.baseline).toBe('34')
+  })
+
+  it('fails before submission for invalid associations, busy documents or oversized drafts', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    store.edit(id, '研'.repeat(50_000))
+    expect(() => store.prepareLinkedEdit(scope.key, '修改')).toThrow(/128/)
+    expect(store.$editRequests.get()).toEqual([])
+    store.edit(id, 'print(1)')
+    store.$documents.set({ ...store.$documents.get(), [id]: { ...store.$documents.get()[id]!, running: true } })
+    expect(() => store.prepareLinkedEdit(scope.key, '修改')).toThrow()
+    store.$documents.set({})
+    expect(() => store.prepareLinkedEdit(scope.key, '修改')).toThrow()
+  })
+
+  it('returning to the association invalidates an in-flight file selection', async () => {
+    const api = services(), store = createCodeEditorStore(api)
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    const pending = deferred<{ path: string; text: string; version: string }>()
+    api.read = vi.fn(() => pending.promise)
+    const opening = store.openFile(scope, 'other.py')
+    store.openLinkedScript(scope.key)
+    pending.resolve({ path: '/work/other.py', text: 'unrelated', version: 'v1' })
+    await opening
+    expect(store.current(scope.key)?.id).toBe(id)
+  })
+})

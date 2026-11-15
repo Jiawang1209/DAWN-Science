@@ -4,6 +4,7 @@ import type { CodeDocument, CodeSelection } from './state/code-editor.js'
 import { t, tf } from './i18n/index.js'
 
 export interface ScriptEditRequest {
+  source?: 'linked'
   id: string
   documentId: string
   scopeKey: string
@@ -29,6 +30,8 @@ const encoder = new TextEncoder()
 const marker = (id: string) => `<!-- dawn-script-edit:${id} -->`
 const anyMarker = /<!-- dawn-script-edit:[A-Za-z0-9_-]+ -->/
 
+export function hasScriptEditContext(text: string): boolean { return anyMarker.test(text) }
+
 /** CodeMirror positions count a CRLF separator as one character, unlike the raw source. */
 function rawOffset(text: string, position: number): number {
   if (!Number.isSafeInteger(position) || position < 0) throw new Error(t("选区已变化，请重新选择代码后带入对话"))
@@ -51,10 +54,56 @@ function fenced(text: string, language: string, fence: string): string {
   return `${fence}${language}\n${text}${text.endsWith('\n') ? '' : '\n'}${fence}`
 }
 
-export function createScriptEditRequest(doc: CodeDocument, label: string, id: string = crypto.randomUUID()): ScriptEditRequest {
-  if (!doc.selection || doc.selection.to <= doc.selection.from) throw new Error(t("请先选择要修改的代码"))
+function validateContext(doc: CodeDocument, id: string) {
   if (encoder.encode(doc.text).byteLength > MAX_CONTEXT_BYTES) throw new Error(t("脚本过大，无法完整带入对话（上限 128 KiB）"))
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) throw new Error(t("代码修改请求无效"))
+}
+
+function contextFormat(doc: CodeDocument) {
+  const fence = '`'.repeat((doc.text.match(/`+/g) ?? []).reduce((length, run) => Math.max(length, run.length + 1), 3))
+  const language = /^[A-Za-z0-9_+.-]{1,32}$/.test(doc.language) ? doc.language : 'text'
+  return { fence, language }
+}
+
+/** A fresh snapshot for a single composer submission; it never changes the document. */
+export function createLinkedScriptEditRequest(doc: CodeDocument, label: string, instruction: string, id: string = crypto.randomUUID()): ScriptEditRequest {
+  validateContext(doc, id)
+  // Generated IDs cannot occur in user/source boundaries. Fail closed for a supplied colliding ID.
+  const start = `<!-- dawn-linked-script:${id}:`
+  const end = `<!-- dawn-linked-script-end:${id} -->`
+  if ([instruction, doc.text, label].some(text => text.includes(start) || text.includes(end))) throw new Error(t("代码修改请求无效"))
+  const { fence, language } = contextFormat(doc)
+  const selection = { from: 0, to: doc.text.replace(/\r\n/g, '\n').length, text: doc.text }
+  const context = [
+    tf("当前对话关联的脚本：{0}。以下是本次发送时的完整草稿（包含未保存修改），请以此为准，不要使用历史回复中的旧版本。", JSON.stringify(label)),
+    fenced(doc.text, language, fence),
+    t("请根据本条用户消息回答。用户要求修改脚本时，请只返回一个与原脚本语言一致的代码块，内容是修改后的完整脚本，不要省略未修改部分，保留无关代码。用户询问解释或其他问题时，请正常回答。不要调用工具、写入文件或运行代码；脚本修改由我查看差异后手动应用到原脚本。"),
+    marker(id),
+  ].join('\n\n')
+  const prompt = `${instruction}\n\n${start}${encodeURIComponent(label)} -->\n\n${context}\n\n${end}`
+  return { id, documentId: doc.id, scopeKey: doc.scope.key, sessionId: doc.scope.sessionId, language: doc.language, label, baseline: doc.text, selection, source: 'linked', prompt }
+}
+
+/** Parse only the generated outer envelope, leaving user/source lookalikes inside intact. */
+export function splitLinkedScriptPrompt(text: string): { instruction: string; context: string; label: string } | undefined {
+  const ending = /\n\n<!-- dawn-linked-script-end:([A-Za-z0-9_-]{1,128}) -->$/.exec(text)
+  if (!ending) return undefined
+  const id = ending[1]!
+  const prefix = `\n\n<!-- dawn-linked-script:${id}:`
+  const from = text.indexOf(prefix)
+  if (from < 0 || text.indexOf(prefix, from + prefix.length) !== -1) return undefined
+  const labelFrom = from + prefix.length
+  const labelTo = text.indexOf(' -->\n\n', labelFrom)
+  if (labelTo < 0) return undefined
+  const context = text.slice(labelTo + ' -->\n\n'.length, ending.index)
+  if (!context.endsWith(marker(id))) return undefined
+  try { return { instruction: text.slice(0, from), context, label: decodeURIComponent(text.slice(labelFrom, labelTo)) } }
+  catch { return undefined }
+}
+
+export function createScriptEditRequest(doc: CodeDocument, label: string, id: string = crypto.randomUUID()): ScriptEditRequest {
+  if (!doc.selection || doc.selection.to <= doc.selection.from) throw new Error(t("请先选择要修改的代码"))
+  validateContext(doc, id)
   rawRange(doc.text, doc.selection)
   const logicalText = doc.text.replace(/\r\n/g, '\n')
   const selection = {
@@ -62,8 +111,7 @@ export function createScriptEditRequest(doc: CodeDocument, label: string, id: st
     fromLine: logicalText.slice(0, doc.selection.from).split('\n').length,
     toLine: logicalText.slice(0, doc.selection.to - 1).split('\n').length,
   }
-  const fence = '`'.repeat((doc.text.match(/`+/g) ?? []).reduce((length, run) => Math.max(length, run.length + 1), 3))
-  const language = /^[A-Za-z0-9_+.-]{1,32}$/.test(doc.language) ? doc.language : 'text'
+  const { fence, language } = contextFormat(doc)
   const prompt = [
     tf("请基于当前脚本的完整草稿修改选中的代码：{0}，L{1}–{2}。", JSON.stringify(label), selection.fromLine, selection.toLine),
     t("完整草稿（包含未保存修改）："),

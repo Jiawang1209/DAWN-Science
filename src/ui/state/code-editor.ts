@@ -1,7 +1,7 @@
 import { atom } from 'nanostores'
 import { t } from '../i18n/index.js'
 import { isAbsoluteFilePath } from '../file-navigation.js'
-import { createScriptEditRequest, scriptEditResult, type ScriptEditRequest } from '../code-editor-ai.js'
+import { createLinkedScriptEditRequest, createScriptEditRequest, hasScriptEditContext, scriptEditResult, type ScriptEditRequest } from '../code-editor-ai.js'
 
 export type CodeOwner = { projectId?: string; sessionId?: string; connectionId?: string }
 export interface EditorScope {
@@ -56,6 +56,7 @@ export function createCodeEditorStore(services: EditorServices) {
   const $active = atom<Readonly<Record<string, string>>>({})
   // One display preference per application window, shared across script documents.
   const $wordWrap = atom(true)
+  const $linkedScripts = atom<Readonly<Record<string, { documentId: string; label: string }>>>({})
   const $editRequests = atom<readonly ScriptEditRequest[]>([])
   const $appliedEdits = atom<readonly ScriptEditRequest[]>([])
   const $editPreview = atom<{ request: ScriptEditRequest; code: string } | undefined>()
@@ -81,16 +82,50 @@ export function createCodeEditorStore(services: EditorServices) {
     const { request, doc } = editRequest(requestId, scopeKey)
     if ($active.get()[scopeKey] !== doc.id) throw new Error(t("请先回到这次修改对应的原脚本"))
     if (doc.saving || doc.running) throw new Error(t("脚本正在保存或运行，请稍后应用修改"))
-    if (doc.text !== request.baseline) throw new Error(t("原脚本草稿已改变，请重新带入对话，避免覆盖后续修改"))
+    if (doc.text !== request.baseline) throw new Error(request.source === 'linked' ? t("原脚本草稿已改变，请在对话中重新提出修改要求，避免覆盖后续修改") : t("原脚本草稿已改变，请重新带入对话，避免覆盖后续修改"))
     return { request, doc }
   }
+  const linkedScript = (scopeKey: string) => {
+    const binding = $linkedScripts.get()[scopeKey]
+    if (!binding) return undefined
+    const document = $documents.get()[binding.documentId]
+    if (!document || document.scope.key !== scopeKey || document.scope.kind !== 'native' || !document.scope.sessionId) return undefined
+    return { document, label: document.path ?? binding.label }
+  }
   return {
-    $documents, $active, $wordWrap, $editRequests, $appliedEdits, $editPreview,
+    $documents, $active, $wordWrap, $linkedScripts, $editRequests, $appliedEdits, $editPreview,
+    linkScript(id: string, label: string) {
+      const doc = get(id)
+      if (doc.scope.kind !== 'native' || !doc.scope.sessionId) throw new Error(t("当前会话不支持关联脚本"))
+      $linkedScripts.set({ ...$linkedScripts.get(), [doc.scope.key]: { documentId: id, label: doc.path ?? label } })
+    },
+    unlinkScript(scopeKey: string) {
+      const next = { ...$linkedScripts.get() }
+      delete next[scopeKey]
+      $linkedScripts.set(next)
+    },
+    linkedScript,
+    openLinkedScript(scopeKey: string) {
+      const linked = linkedScript(scopeKey)
+      if (!linked) throw new Error(t("关联的脚本草稿不存在，请重新关联"))
+      ticket(scopeKey)
+      select(scopeKey, linked.document.id)
+    },
+    prepareLinkedEdit(scopeKey: string, text: string) {
+      if (!$linkedScripts.get()[scopeKey] || hasScriptEditContext(text)) return text
+      const linked = linkedScript(scopeKey)
+      if (!linked) throw new Error(t("关联的脚本草稿不存在，请重新关联"))
+      const doc = linked.document
+      if (doc.saving || doc.running) throw new Error(t("脚本正在保存或运行，请稍后带入对话"))
+      const request = createLinkedScriptEditRequest(doc, linked.label, text)
+      $editRequests.set([...$editRequests.get().slice(-31), request])
+      return request.prompt
+    },
     prepareEdit(id: string, label: string) {
       const doc = get(id)
       if (doc.saving || doc.running) throw new Error(t("脚本正在保存或运行，请稍后带入对话"))
       const request = createScriptEditRequest(doc, doc.path ?? label)
-      $editRequests.set([...$editRequests.get().filter(r => r.documentId !== id), request])
+      $editRequests.set([...$editRequests.get().filter(r => r.documentId !== id || r.source === 'linked').slice(-31), request])
       $editPreview.set(undefined)
       return request
     },

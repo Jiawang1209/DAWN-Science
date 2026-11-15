@@ -1,3 +1,5 @@
+import { KernelPlotImage } from './kernel-plot-image.js'
+import { isKernelPlotMediaType } from './kernel-plot-model.js'
 import {autoArrangementRequestPrefix} from '../protocol/task-arrangement.js'
 import { SkillReadSummary, SkillReadDetails } from "./skill-read-record.js"
 import { ServiceMark } from "./service-mark.js"
@@ -6613,7 +6615,7 @@ export function KernelOutputRow({
           这份 {o.mediaType} 输出有 {formatBytes(o.bytes)}，超过上限没有显示。
         </p>
       ) : (
-        <RichOutput mediaType={o.mediaType} data={o.data} />
+        <RichOutput mediaType={o.mediaType} data={o.data} imageId={item.id} />
       )}
       {o.truncated ? (
         <p className="kout-note">
@@ -6691,7 +6693,8 @@ function KernelErrorBlock({
  * **认不出的 mime 原样当文本显示，并说清它是什么**——
  * 不猜一个渲染方式，猜错了画出来是乱码。
  */
-function RichOutput({ mediaType, data }: { mediaType: string; data: string }) {
+function RichOutput({ mediaType, data, imageId }: { mediaType: string; data: string; imageId: string }) {
+  if (isKernelPlotMediaType(mediaType) && data) return <KernelPlotImage mediaType={mediaType} data={data} imageId={imageId} />
   if (mediaType.startsWith("image/")) {
     // Jupyter 给的是 base64。**不写 alt=""**——读屏用户要知道这里有一张图
     return <img className="kout-img" src={`data:${mediaType};base64,${data}`} alt={t("内核输出的图")} />

@@ -16,6 +16,23 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "导出图片": "Export image",
+  "放大图形": "Enlarge figure",
+  "已发起图片导出": "Image export requested",
+  "图形预览": "Figure preview",
+  "适应窗口": "Fit to window",
+  "实际尺寸": "Original size",
+  "关闭图形预览": "Dismiss figure preview",
+  "上一张图": "Previous figure",
+  "下一张图": "Next figure",
+  "会话图形历史": "Conversation figure history",
+  "图形列表": "Figure list",
+  "语言未记录": "Language not recorded",
+  "选择历史图形": "Choose a figure from history",
+  "会话图形 · 执行 {0} · {1}": "Conversation figure · Execution {0} · {1}",
+  "图形 {0} · 执行 {1} · {2}": "Figure {0} · Execution {1} · {2}",
+  "查看绘图代码": "View figure code",
+
   "保存冲突：文件已改变或已存在，请重新打开后再保存": "Save conflict: the file changed or already exists. Reopen it before saving.",
   "没有会话，跑不了": "No conversation is available to run code",
   "脚本代码编辑器": "Script source editor",

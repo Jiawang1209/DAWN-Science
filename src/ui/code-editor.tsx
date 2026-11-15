@@ -11,6 +11,8 @@ import { codeCompletion } from './code-editor-completion.js'
 import { Button, EmptyState } from './primitives.js'
 import { 关闭图标 } from './icons.js'
 import { KernelOutputRow } from './views.js'
+import { KernelPlotGallery } from './kernel-plot-gallery.js'
+import { isKernelPlotOutput } from './kernel-plot-model.js'
 import { t, tf } from './i18n/index.js'
 import type { Cell } from '../protocol/notebook-cells.js'
 import type { CodeDocument, CodeEditorStore } from './state/code-editor.js'
@@ -123,7 +125,8 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
       <header><span>{doc.lastRun?.selection ? t("选区执行") : t("脚本执行")}</span>{doc.running && doc.lastRun && onInterrupt ? <Button size="sm" onClick={() => void onInterrupt(doc.lastRun!.language).catch(error => { if (currentId.current === doc.id) setLocalError(String(error)) })}>{t("中断")}</Button> : null}</header>
       {doc.running ? <p role="status">{t("正在当前会话内核中执行…")}</p> : null}
       {!doc.lastRun ? <p className="hint">{t("运行后在这里查看输出")}</p> : null}
-      {cell?.outputs.map(output => <KernelOutputRow key={output.id} item={output} interrupted={cell.interrupted === true} />)}
+      <KernelPlotGallery key={scopeKey} cells={cells} />
+      {cell?.outputs.filter(output => !isKernelPlotOutput(output)).map(output => <KernelOutputRow key={output.id} item={output} interrupted={cell.interrupted === true} />)}
       {cell?.status === 'error' ? <p className="field-error">{t("执行失败，请检查当前会话中的错误详情")}</p> : null}
       {cell?.interrupted ? <p>{t("（已中断）")}</p> : null}
       {cell?.status === 'ok' && !cell.outputs.length ? <p className="hint">{t("执行完成，无输出")}</p> : null}

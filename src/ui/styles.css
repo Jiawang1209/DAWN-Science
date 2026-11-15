@@ -9842,3 +9842,26 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .code-editor-output > header { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .script-edit-entry { display: flex; justify-content: flex-end; padding: var(--dawn-space-1) var(--dawn-space-2); }
 .md [data-streamdown="code-block-actions"] .code-edit-action { width: auto; height: auto; padding-inline: var(--dawn-space-2); font-size: var(--dawn-fs-meta); color: var(--dawn-accent); }
+
+/* Kernel plots stay in their conversation; inspecting one never replaces the editor. */
+.kernel-plot-image { min-width: 0; }
+.kernel-plot-trigger { display: block; max-width: 100%; cursor: zoom-in; }
+.kernel-plot-trigger .kout-img { display: block; }
+.kernel-plot-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--dawn-space-2); }
+.kernel-plot-notice { margin: var(--dawn-space-1) 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-sub); }
+.kernel-plot-gallery { min-width: 0; margin-block: var(--dawn-space-3); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-sub); }
+.kernel-plot-gallery > header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-2); color: var(--dawn-text-3); margin-bottom: var(--dawn-space-2); }
+.kernel-plot-gallery .kout-img { max-height: 18vh; object-fit: contain; }
+.kernel-plot-navigation { display: flex; align-items: center; justify-content: center; gap: var(--dawn-space-2); }
+.kernel-plot-count { color: var(--dawn-text-3); white-space: nowrap; }
+.kernel-plot-gallery > select { width: 100%; margin-block: var(--dawn-space-2); }
+.kernel-plot-code { margin-block: var(--dawn-space-2); color: var(--dawn-text-3); }
+.kernel-plot-code summary { cursor: pointer; }
+.kernel-plot-code pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--dawn-text-1); }
+.kernel-plot-dialog { width: min(1120px, calc(100vw - var(--dawn-space-8))); max-height: calc(100vh - var(--dawn-space-8)); padding: var(--dawn-space-4); border: var(--dawn-hairline) solid var(--dawn-stroke-float); border-radius: var(--dawn-radius-lg); background: var(--dawn-surface-sidebar); color: var(--dawn-text-1); box-shadow: var(--dawn-shadow-float); font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-sub); }
+.kernel-plot-dialog::backdrop { background: var(--dawn-fill-3); }
+.kernel-plot-dialog > header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-3); margin-bottom: var(--dawn-space-3); }
+.kernel-plot-stage { max-height: 70vh; overflow: auto; display: flex; justify-content: center; }
+.kernel-plot-stage img { display: block; max-width: 100%; max-height: 70vh; object-fit: contain; }
+.kernel-plot-original { display: block; }
+.kernel-plot-original img { max-width: none; max-height: none; }

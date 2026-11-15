@@ -1,0 +1,18 @@
+# Plot viewing, history and export
+
+**Goal:** Complete the approved conversation-first plotting flow on `codex/ide-capability-research`: click to enlarge, browse figure history, export the original image.
+
+**Design:** Retain the existing chat and optional side editor. Images in kernel output use a shared clickable preview with a native modal dialog (fit-to-window / original-size view, Escape/backdrop/close, restored focus) and export. Side-editor results derive a compact plot gallery from the current conversation's existing cells; history is not a new byte cache or global preference. Show execution/language provenance, default to newest, retain a deliberately selected older image while new results arrive, and reset navigation across conversations. Multiple plots per execution remain distinct. Text/errors/oversized-output notices stay visible; a prior plot is clearly labeled with its source execution when a new run has no image. History follows persisted transcript availability.
+
+**Export:** Download the original PNG/JPEG/SVG data via an explicit user click and a generated safe filename. Reuse Electron's native image-download save dialog; introduce no backend/protocol or credential changes. Do not claim a completed save before an OS download completes. Preserve original bytes/resolution; vector/PDF re-rendering from ggplot objects is outside this change.
+
+**Files:** new `src/ui/kernel-plot*.tsx` / plot model as needed; integrate `views.tsx` and `code-editor.tsx`; existing tokens, translations and DESIGN.md. Tests for model, view/history/modal, export and real R desktop flow. Root owns E2E and running preview updates.
+
+- [x] Add failing tests and implement shared image viewer/export plus session-derived gallery with independent scope/history state.
+- [x] Complete integration, styling, translations and design documentation; pass targeted tests/typecheck/build.
+- [x] Review spec and quality, then validate real R multi-plot runs, history, enlargement/focus and byte-exact export through Electron.
+- [x] Preserve the active experience drafts and update its renderer; prepare a separate R plotting experience session without replacing existing drafts. Commit on the current branch and leave it running.
+
+Validation: 222 focused UI/protocol checks across ten files passed, as did typecheck and UI build. Seven desktop scenarios passed, including the prior editor/completion flows and a real-R gallery scenario. The gallery scenario checks two images from one execution, pinned older figures while new output arrives, no-image/error console preservation, same-window modal navigation, native Tab confinement/Escape/focus restoration, byte-identical PNG and SVG downloads, cancellation without a false save claim, chat-image enlargement, narrow layout, scope isolation and history reconstruction after renderer reload. Spec and independent quality reviews approved the final implementation. Visual inspection prompted the compact toolbar above the thumbnail; a regression and actual visible-bounds check cover it.
+
+Experience: the existing isolated branch window was updated with original documents/baselines restored and compared. The separate `R 绘图完整体验` session has a saved `plot-experience/绘图体验.R` script and three real R figures across two executions, ready for manual browsing/enlargement/export. Original Python draft text, path, saved baseline and version were verified unchanged. Its recovery copy is `/tmp/dawn-plot-gallery-recovery-20261115.json`. The experience window still uses a local fixed model reply; R execution and image generation are real. Export preserves the kernel's existing image bytes and resolution; it does not synthesize higher resolution or re-render vector formats.

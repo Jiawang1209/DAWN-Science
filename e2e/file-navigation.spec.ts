@@ -2,6 +2,23 @@ import { test, expect, 进坞, 在项目里开会话 } from "./fixtures.js"
 import { mkdirSync, writeFileSync, realpathSync } from "node:fs"
 import { join } from "node:path"
 
+test("POSIX 文件名中的反斜杠不会被改成目录分隔符", async ({ dawn }) => {
+  test.skip(process.platform === "win32", "Windows does not permit literal backslashes in filenames")
+  const { page, app, workspace } = dawn
+  const directory = join(workspace, "folder\\name")
+  mkdirSync(directory)
+  writeFileSync(join(directory, "run\\final.csv"), "name,value\nliteral-backslash,7\n")
+  await 进坞(page, "文件")
+  const files = page.locator(".files-view")
+  await files.getByRole("button", { name: "在此处浏览：folder\\name", exact: true }).click()
+  await expect(files.locator('.files-breadcrumbs [aria-current="location"]')).toHaveText("folder\\name")
+  await files.getByRole("button", { name: /^run\\final\.csv/ }).click()
+  await expect(files.locator(".table-preview")).toContainText("literal-backslash")
+  await files.getByRole("button", { name: "复制当前目录完整路径", exact: true }).click()
+  await expect(files.getByRole("status")).toContainText("已复制绝对路径")
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe(realpathSync(directory))
+})
+
 test("文件导航跨项目浏览、复制路径并保留会话工作目录", async ({ dawn }, testInfo) => {
   const { page, app, workspace, dir } = dawn
   const sibling = join(dir, "sibling")

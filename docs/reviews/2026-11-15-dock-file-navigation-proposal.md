@@ -108,3 +108,20 @@
 本地验证日志和实际界面截图保存在 `output/playwright/file-navigation/`，包括 `build.log`、`unit-regression.log`、`desktop-regression.log`、`navigation-light.png` 和 `navigation-dark.png`。构建存在原有 direct-eval 与大体积 chunk 提示；本次构建退出码为 0。
 
 最终结果：类型检查通过；25 个 Vitest 文件共 430 项测试通过；24 项 Electron 回归通过；补充远端场景通过。最后一次历史游标修正后，4 项导航状态测试和完整跨项目导航桌面验收再次通过。后端与界面均完成范围及代码质量审查，发现的问题已修正并复核。
+
+## 合并 main 后复核
+
+用户确认后，先获取远端引用，确认本地 `main` 与 `origin/main` 均为 `7ba9824b`，工作区干净；合并前 6 个测试文件的 20 项关键测试通过。随后将 `codex/dock-file-navigation` 的 `44414b8f` 快进合并至本地 `main`，未推送，保留原功能分支。
+
+合并后的独立审查与真实文件复现发现一处 P2 路径问题：POSIX 文件名可包含反斜杠，原来的通用 Windows 规范化会将 `run\final.csv` 改成目录路径 `run/final.csv`，导致预览失败。已改为根据 Windows 盘符/UNC 根与 POSIX 根区分路径语义；POSIX 名称中的反斜杠、以盘符样式开头的名称及末尾反斜杠均保留，Windows 路径分隔符仍正常规范化。
+
+先补测试确认失败，再修正并验证通过。新增 Electron 用例实际创建 `folder\name/run\final.csv`，验证目录导航、表格预览和剪贴板原文；该用例在不允许这些名称的 Windows 上明确跳过。
+
+复核结果：
+
+- 合并后的原有 24 项 Electron 回归全部通过。
+- 修正后的类型检查、完整构建通过；25 个相关 Vitest 文件共 431 项测试通过。
+- 修正后的新增 POSIX 边界用例与完整跨项目导航用例共 2 项 Electron 验收通过。
+- 修正经独立复审通过；在本次检查范围内未发现其他新增问题。
+
+日志位于 `output/playwright/file-navigation/`：`main-build.log`、`main-desktop-regression.log`、`main-fixed-build.log`、`main-fixed-unit-regression.log`、`main-posix-acceptance.log`。原生 Windows 与真实 SSH 服务器仍不属于本次实际运行的验证环境。

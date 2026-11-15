@@ -4,7 +4,8 @@ export function isAbsoluteFilePath(path: string): boolean {
 }
 
 export function normalizeFilePath(path: string): string {
-  const slash = path.replace(/\\/g, "/")
+  // Backslashes are legal POSIX filename characters; only Windows roots give them separator semantics.
+  const slash = /^(?:[a-z]:[\\/]|\\\\|\/\/)/i.test(path) ? path.replace(/\\/g, "/") : path
   if (/^[a-z]:\/+$/i.test(slash)) return `${slash.slice(0, 2)}/`
   return slash.replace(/\/+$/, "") || (slash.startsWith("/") ? "/" : "")
 }
@@ -21,7 +22,9 @@ export function parentFilePath(input: string): string | null {
 }
 
 export function absoluteFilePath(path: string, project: string): string {
-  return isAbsoluteFilePath(path) ? normalizeFilePath(path) : normalizeFilePath(`${project.replace(/[\\/]+$/, "")}/${path}`)
+  const root = normalizeFilePath(project)
+  const windows = /^(?:[a-z]:\/|\/\/)/i.test(root)
+  return path.startsWith("/") || (windows && isAbsoluteFilePath(path)) ? normalizeFilePath(path) : normalizeFilePath(`${root.replace(/\/+$/, "")}/${path}`)
 }
 
 /** undefined means a different workspace; empty string is the workspace itself. */

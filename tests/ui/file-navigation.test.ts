@@ -1,5 +1,15 @@
 import { expect, it } from "vitest"
-import { absoluteFilePath, fileAncestors, parentFilePath, relativeFilePath, browserWorkspacePath, toggleExpandedFiles } from "../../src/ui/file-navigation.js"
+import { absoluteFilePath, fileAncestors, parentFilePath, relativeFilePath, browserWorkspacePath, toggleExpandedFiles, normalizeFilePath } from "../../src/ui/file-navigation.js"
+
+it("preserves literal backslashes and drive-like names on POSIX while normalizing Windows paths", () => {
+  expect(normalizeFilePath("/work/project/run\\final.csv")).toBe("/work/project/run\\final.csv")
+  expect(absoluteFilePath("run\\final.csv", "/work/project")).toBe("/work/project/run\\final.csv")
+  expect(absoluteFilePath("C:\\result.csv", "/work/project")).toBe("/work/project/C:\\result.csv")
+  expect(absoluteFilePath("a.csv", "/work/project\\")).toBe("/work/project\\/a.csv")
+  expect(fileAncestors("/work/folder\\name").at(-1)).toEqual({ label: "folder\\name", path: "/work/folder\\name" })
+  expect(absoluteFilePath("results\\a.csv", "C:\\Project")).toBe("C:/Project/results/a.csv")
+  expect(absoluteFilePath("D:\\Other\\a.csv", "C:/Project")).toBe("D:/Other/a.csv")
+})
 
 it("maps canonical browser paths back to the original workspace, including macOS /var aliases", () => {
   expect(browserWorkspacePath("/private/var/proj", "/var/proj", "/var/proj", "/private/var/proj/data/a.csv")).toBe("data/a.csv")

@@ -224,7 +224,7 @@ test.describe('real R original-script execution', () => {
     await expect.poll(() => gallery.locator('img.kout-img').evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
     await selectLastLine(editor)
     await pane.getByRole('button', { name: '运行选区', exact: true }).click()
-    await expect(pane.getByText('选区执行', { exact: true })).toBeVisible()
+    await expect(pane.getByText('选区执行', { exact: true })).toHaveCount(0)
     await expect(pane.getByText('正在当前会话内核中执行…', { exact: true })).toHaveCount(0, { timeout: 45000 })
     await gallery.getByRole('button', { name: '图形列表', exact: true }).click()
     await expect(gallery.getByRole('combobox', { name: '选择历史图形', exact: true }).locator('option')).toHaveCount(2)

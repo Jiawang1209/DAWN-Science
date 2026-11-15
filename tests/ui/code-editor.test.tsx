@@ -43,6 +43,17 @@ describe('chat-first editor', () => {
     expect(container.querySelector('.code-editor-panel [data-testid="script-context"]')).toBeTruthy()
   })
 
+  it('shows selection output without a duplicate execution heading and retains the top run action', async () => {
+    const { store, id } = setup()
+    store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })
+    await store.run(id, store.current('s')!.selection)
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    expect(screen.queryByText('选区执行', { exact: true })).toBeNull()
+    expect(screen.queryByText('脚本执行', { exact: true })).toBeNull()
+    expect(screen.getByRole('button', { name: /^运行选区$/ })).toBeTruthy()
+    expect(screen.getByText('执行已记录，正在同步输出')).toBeTruthy()
+  })
+
   it('reviews the current saved path when a draft receives its first filename while AI is replying', async () => {
     const { store, id } = setup()
     store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })

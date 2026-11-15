@@ -157,7 +157,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
     {editPreview && editPreview.request.scopeKey === scopeKey && editPreview.request.documentId === doc.id ? <CodeEditorDiff key={editPreview.request.id} request={editPreview.request} code={editPreview.code} targetLabel={doc.path ?? editPreview.request.label} onApply={applyAI} onClose={() => store.closeEditReview()} problem={store.editProblem(editPreview.request.id, scopeKey) ?? editApplyError} /> : null}
     {doc.lastRun && doc.lastRun.snapshot !== doc.text ? <p className="code-editor-note code-editor-stale" role="status">{t("代码已修改，结果待更新")}</p> : null}
     {doc.outputOpen ? <section className="code-editor-output" aria-label={t("运行结果")}>
-      <header><span>{doc.lastRun?.selection ? t("选区执行") : t("脚本执行")}</span>{doc.running && doc.lastRun && onInterrupt ? <Button size="sm" onClick={() => void onInterrupt(doc.lastRun!.language).catch(error => { if (currentId.current === doc.id) setLocalError(String(error)) })}>{t("中断")}</Button> : null}</header>
+      {doc.running && doc.lastRun && onInterrupt ? <header><Button size="sm" onClick={() => void onInterrupt(doc.lastRun!.language).catch(error => { if (currentId.current === doc.id) setLocalError(String(error)) })}>{t("中断")}</Button></header> : null}
       {doc.running ? <p role="status">{t("正在当前会话内核中执行…")}</p> : null}
       {!doc.lastRun ? <p className="hint">{t("运行后在这里查看输出")}</p> : null}
       <KernelPlotGallery key={scopeKey} cells={cells} />

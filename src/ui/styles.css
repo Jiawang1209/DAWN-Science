@@ -9847,7 +9847,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .code-editor-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); padding: var(--dawn-space-1) var(--dawn-space-3); border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-3); }
 .code-editor-note { margin: 0; padding: var(--dawn-space-2) var(--dawn-space-3); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
 .code-editor-output { flex: 0 1 auto; max-height: 40%; overflow: auto; padding: var(--dawn-space-3); border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); }
-.code-editor-output > header { display: flex; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
+.code-editor-output > header { display: flex; align-items: center; justify-content: flex-end; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); }
 .script-edit-entry { display: flex; justify-content: flex-end; padding: var(--dawn-space-1) var(--dawn-space-2); }
 .md [data-streamdown="code-block-actions"] .code-edit-action { width: auto; height: auto; padding-inline: var(--dawn-space-2); font-size: var(--dawn-fs-meta); color: var(--dawn-accent); }
 

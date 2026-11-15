@@ -114,8 +114,6 @@ export const EN: Readonly<Record<string, string>> = {
   "已保存": "Saved",
   "运行结果": "Execution output",
   "代码已修改，结果待更新": "Code changed; previous output is out of date",
-  "选区执行": "Selection execution",
-  "脚本执行": "Script execution",
   "正在当前会话内核中执行…": "Executing in this conversation's kernel…",
   "运行后在这里查看输出": "Output appears here after execution",
   "执行失败，请检查当前会话中的错误详情": "Execution failed. See the error details in this conversation.",

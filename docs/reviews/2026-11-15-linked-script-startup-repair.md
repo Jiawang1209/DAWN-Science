@@ -23,3 +23,9 @@ The real preview exposed two independent failures. Its launch environment used `
 The user rejected a permanent script-connection row inside the composer. All connection controls now live in the side editor below the file location. When the editor closes, the conversation header exposes one compact filename entry to reopen it. The composer contains no connection controls in either state; automatic linking and request preparation are unchanged.
 
 Placement validation: 167 targeted UI/i18n/design tests, typecheck/UI build, and three Electron cases passed. Independent review approved. Live renderer refresh restored exact text, path, saved baseline, version, requests and association; the R kernel and plot history remained alive. Verified one editor control row while open, one header entry while closed, zero rows inside the composer, and working reopen.
+
+## Repeated execution title removal
+
+The user confirmed removing only the redundant lower “选区执行／脚本执行” heading, retaining graphs and actual output. The upper Run selection/script action stays unchanged; interruption remains available while running. Removed the now-unused translations and changed the real-R E2E to assert the heading is absent while selection execution still produces plot history.
+
+Verification: 159 UI/i18n/design tests passed; after correcting a test-only role-query type, the 45 editor tests and typecheck passed again. UI build and all six original-script/real-R/plot gallery E2Es passed. Live refresh preserved the latest editor snapshot and same backend kernel, with zero repeated titles, one upper selection-run action, the current plot still present, and zero script controls inside the composer.

@@ -61,7 +61,7 @@ import { 子转录id, 执行那句 } from "../protocol/index.js"
 import { 没说话 } from "../protocol/events.js"
 import { TerminalPane } from "./terminal.js"
 import { Button, EmptyState, Loader, Row, 导出提示, type 导出提示态 } from "./primitives.js"
-import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 领退回的图 } from "./state/view.js"
+import { $drafts, $slashItems, $退回的图, clearDraft, setDraft, togglePalette, 退回输入框, 领退回的图 } from "./state/view.js"
 import { PermissionPill, type 权限档 } from "./permission-pill.js"
 import { SlashMenu, 在打斜杠, 斜杠选完, 筛斜杠, 按能压滤, 是方案前缀, 去掉方案前缀 } from "./slash-menu.js"
 import { 方案卡 } from "./plan-card.js"
@@ -4111,7 +4111,7 @@ export function ConversationView({
     () =>
       items
         .filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user")
-        .map((x) => x.text)
+        .map((x) => splitLinkedScriptPrompt(x.text)?.instruction ?? x.text)
         .filter((t) => t.trim()),
     [items],
   )
@@ -4512,13 +4512,17 @@ export function ConversationView({
       设位置(-1)
     },
     onResend: (text) => {
-      // 回显（A1）：不忙时与手打同样先画出来；忙着时这句会进待发条，不回显
-      const 撤 = busy && onAbort ? undefined : onEcho?.(剥掉粘贴标记(text))
-      // 失败要出声（2026-08-23 审查抓的：此前不接 promise，发失败就什么都没发生）
-      void Promise.resolve(onSend(text)).catch((e: unknown) => {
-        撤?.()
-        设发送出错(e instanceof Error ? e.message : String(e))
-      })
+      const instruction = splitLinkedScriptPrompt(text)?.instruction ?? text
+      const restore = (error: unknown) => {
+        退回输入框(session.sessionId, [{ text: instruction }])
+        设发送出错(error instanceof Error ? error.message : String(error))
+      }
+      let prepared: string
+      try { prepared = prepareMessage && !instruction.trimStart().startsWith("/") ? prepareMessage(instruction) : instruction }
+      catch (error) { restore(error); return }
+      // A historical edit is a new manual request: use the current draft for both echo and send.
+      const 撤 = busy && onAbort ? undefined : onEcho?.(剥掉粘贴标记(prepared))
+      void (async () => onSend(prepared))().catch((error: unknown) => { 撤?.(); restore(error) })
       设位置(-1)
     },
     onRewind: (id) => onRewind?.(id),
@@ -6434,7 +6438,7 @@ function TranscriptRowImpl({
               size="icon"
               className="edit-btn"
               aria-label={t("修改")}
-              onClick={() => 设编辑(item.text)}
+              onClick={() => 设编辑(linkedPrompt?.instruction ?? item.text)}
             >
               <铅笔图标 />
             </Button>

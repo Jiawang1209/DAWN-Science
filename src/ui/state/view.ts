@@ -7,6 +7,7 @@
  * 与之相对，`catalog.ts` 里的每一样都是后端权威的缓存。
  * 分清这两者是 Hermes「按权威决定状态归属」的全部内容。
  */
+import { splitLinkedScriptPrompt } from "../../protocol/script-context.js"
 import { atom } from "nanostores"
 import { setValue } from "./identity.js"
 
@@ -161,7 +162,7 @@ export const $退回的图 = atom<Readonly<Record<string, readonly 退回的图[
 export function 退回输入框(sessionId: string, 话们: readonly { text: string; images?: readonly 退回的图[] | undefined }[]): void {
   if (话们.length === 0) return
   const 原有 = draftOf(sessionId)
-  const 文 = [原有, ...话们.map((x) => x.text)].filter((x) => x.trim()).join("\n\n")
+  const 文 = [原有, ...话们.map((x) => splitLinkedScriptPrompt(x.text)?.instruction ?? x.text)].filter((x) => x.trim()).join("\n\n")
   setDraft(sessionId, 文)
   const 图 = 话们.flatMap((x) => x.images ?? [])
   if (图.length === 0) return

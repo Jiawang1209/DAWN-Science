@@ -9805,7 +9805,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .code-editor-panel { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--dawn-surface-panel); }
 .code-editor-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); padding: var(--dawn-space-3); border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-3); }
 .code-editor-name { min-width: 0; overflow-wrap: anywhere; font: var(--dawn-fs-sub) var(--dawn-font-mono); }
-.code-editor-actions { display: flex; align-items: center; gap: var(--dawn-space-1); flex-shrink: 0; }
+.code-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-1); }
 .code-editor-dirty, .code-editor-stale { color: var(--dawn-warning); }
 .code-editor-location { display: flex; flex-wrap: wrap; gap: var(--dawn-space-2); padding: var(--dawn-space-2) var(--dawn-space-3); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
 .code-editor-location > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -9813,7 +9813,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .code-editor-save-path .control { flex: 1; min-width: 8rem; }
 .code-editor-code { flex: 1; min-height: 8rem; min-width: 0; overflow: hidden; }
 .code-editor-code .cm-editor { height: 100%; background: var(--dawn-surface-panel); color: var(--dawn-text-1); }
-.code-editor-code .cm-scroller { overflow: auto; font: var(--dawn-fs-meta)/1.8 var(--dawn-font-mono); }
+.code-editor-code .cm-scroller { overflow: auto; font: var(--dawn-fs-sub)/1.8 var(--dawn-font-mono); }
+.code-editor-code .cm-code-keyword { color: var(--dawn-code-keyword); }
+.code-editor-code .cm-code-string { color: var(--dawn-code-string); }
+.code-editor-code .cm-code-number { color: var(--dawn-code-number); }
+.code-editor-code .cm-code-function { color: var(--dawn-code-function); }
+.code-editor-code .cm-code-type { color: var(--dawn-code-type); }
+.code-editor-code .cm-code-comment { color: var(--dawn-code-comment); }
+.code-editor-code .cm-matchingBracket { background: var(--dawn-accent-soft); outline: var(--dawn-hairline) solid var(--dawn-stroke-accent); }
+.code-editor-code .cm-selectionMatch { background: var(--dawn-accent-soft); }
+.code-editor-code .cm-foldPlaceholder { background: var(--dawn-control-rest); color: var(--dawn-text-2); border-color: var(--dawn-stroke-2); }
 .code-editor-code .cm-content { padding-block: var(--dawn-space-3); caret-color: var(--dawn-text-1); }
 .code-editor-code .cm-line { padding-inline: var(--dawn-space-3); }
 .code-editor-code .cm-gutters { border: 0; background: var(--dawn-surface-panel); color: var(--dawn-text-3); }

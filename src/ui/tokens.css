@@ -200,6 +200,20 @@
   --dawn-text-3: color-mix(in srgb, var(--theme-base) var(--mix-text-3), transparent);
   --dawn-text-4: color-mix(in srgb, var(--theme-base) var(--mix-text-4), transparent);
 
+  /* Script syntax has its own semantic palette, independent of user accent. */
+  --theme-code-keyword: #7b2fa1;
+  --theme-code-string: #216c43;
+  --theme-code-number: #945016;
+  --theme-code-function: #1f62a5;
+  --theme-code-type: #90552e;
+  --theme-code-comment: #63756b;
+  --dawn-code-keyword: var(--theme-code-keyword);
+  --dawn-code-string: var(--theme-code-string);
+  --dawn-code-number: var(--theme-code-number);
+  --dawn-code-function: var(--theme-code-function);
+  --dawn-code-type: var(--theme-code-type);
+  --dawn-code-comment: var(--theme-code-comment);
+
   /* ── 面：直接取种子。派生层保持存在，是为了让 .dawn-dark 只需覆盖种子 ── */
   --dawn-surface-app: var(--theme-surface-app);
   --dawn-surface-sidebar: var(--theme-surface-sidebar);
@@ -702,6 +716,12 @@
  * 改成由前景色派生之后就不必了：暗色前景近白，同样的百分比自然更亮。
  */
 :root.dawn-dark {
+  --theme-code-keyword: #c69cf0;
+  --theme-code-string: #98cb8b;
+  --theme-code-number: #e7b77b;
+  --theme-code-function: #8dbaf3;
+  --theme-code-type: #dfad81;
+  --theme-code-comment: #94a49c;
   color-scheme: dark;
 
   --theme-base: var(--theme-gray-100);

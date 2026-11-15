@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { useStore } from '@nanostores/react'
 import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view'
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap, indentWithTab, isolateHistory } from '@codemirror/commands'
 import { bracketMatching, foldGutter, foldKeymap, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language'
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
@@ -13,6 +13,7 @@ import { 关闭图标 } from './icons.js'
 import { KernelOutputRow } from './views.js'
 import { KernelPlotGallery } from './kernel-plot-gallery.js'
 import { isKernelPlotOutput } from './kernel-plot-model.js'
+import { CodeEditorDiff } from './code-editor-diff.js'
 import { t, tf } from './i18n/index.js'
 import type { Cell } from '../protocol/notebook-cells.js'
 import type { CodeDocument, CodeEditorStore } from './state/code-editor.js'
@@ -75,16 +76,22 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
 }) {
   const docs = useStore(store.$documents), active = useStore(store.$active)
   const wordWrap = useStore(store.$wordWrap)
+  const editPreview = useStore(store.$editPreview)
   const doc = docs[active[scopeKey] ?? '']
   const currentId = useRef(doc?.id); currentId.current = doc?.id
   const editor = useRef<EditorView | null>(null)
   const [path, setPath] = useState('analysis.py')
   const [notice, setNotice] = useState<string>()
   const [localError, setLocalError] = useState<string>()
+  const [editApplyError, setEditApplyError] = useState<string>()
+  useEffect(() => { setEditApplyError(undefined) }, [editPreview?.request.id, editPreview?.code])
   useEffect(() => {
     setPath(doc?.language === 'R' ? 'analysis.R' : doc?.language === 'python' ? 'analysis.py' : 'script.txt')
     setNotice(undefined); setLocalError(undefined)
   }, [doc?.id])
+  useEffect(() => {
+    if (editPreview && (editPreview.request.scopeKey !== scopeKey || editPreview.request.documentId !== doc?.id)) store.closeEditReview()
+  }, [scopeKey, doc?.id, editPreview?.request.id, store])
   if (!doc) return <div className="code-editor-panel"><header className="code-editor-header"><span>{t("代码编辑")}</span><Button variant="ghost" size="icon" aria-label={t("收起代码编辑区")} onClick={onClose}><关闭图标 /></Button></header><EmptyState title={t("从当前对话或脚本预览打开代码")} /></div>
   const selected = Boolean(doc.selection && doc.selection.to > doc.selection.from)
   const language = doc.language === 'python' || doc.language === 'R' ? doc.language : undefined
@@ -100,11 +107,27 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
   }
   const ask = () => {
     if (!doc.selection || !onAsk) return
-    const from = doc.selection.fromLine ?? doc.text.slice(0, doc.selection.from).split('\n').length
-    const to = doc.selection.toLine ?? doc.text.slice(0, doc.selection.to).split('\n').length
-    const fence = '`'.repeat(Math.max(3, ...(doc.selection.text.match(/`+/g) ?? []).map(s => s.length + 1)))
-    onAsk(tf("请帮我检查这段代码：{0}，L{1}–{2}（当前草稿）", doc.path ?? path, from, to) + `\n\n${fence}${doc.language}\n${doc.selection.text}\n${fence}\n\n`)
-    setNotice(t("选区已带入当前对话，填写要求后发送"))
+    try {
+      const request = store.prepareEdit(doc.id, path)
+      onAsk(request.prompt)
+      setLocalError(undefined)
+      setNotice(t("完整草稿与选区已带入当前对话，填写修改要求后发送"))
+    } catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
+  }
+  const applyAI = (mode: 'document' | 'selection') => {
+    if (!editPreview) return
+    try {
+      store.applyEdit(editPreview.request.id, scopeKey, editPreview.code, mode, (before, after) => {
+        const view = editor.current
+        if (!view || view.composing || view.state.sliceDoc() !== before) throw new Error(t("编辑器内容已变化，请重新带入对话"))
+        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: after }, selection: { anchor: 0 }, annotations: isolateHistory.of('full'), userEvent: 'input.aiEdit' })
+        view.focus()
+      })
+      setLocalError(undefined)
+      setEditApplyError(undefined)
+      setNotice(t("AI 修改已应用到原脚本草稿，可撤销；保存和运行仍由你操作"))
+      queueMicrotask(() => editor.current?.focus())
+    } catch (error) { setEditApplyError(error instanceof Error ? error.message : String(error)) }
   }
   return <section className="code-editor-panel" aria-label={t("代码编辑区")}>
     <header className="code-editor-header">
@@ -128,6 +151,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
     {selected && onAsk ? <div className="code-editor-selection"><span>{tf("已选 {0} 个字符", doc.selection!.text.length)}</span><Button variant="ghost" size="sm" onClick={ask}>{t("带入对话")}</Button></div> : null}
     <footer className="code-editor-footer"><span>{doc.text === doc.savedText ? t("已保存") : t("未保存修改")}</span><Button size="sm" variant="ghost" aria-expanded={doc.outputOpen} onClick={() => store.toggleOutput(doc.id)}>{t("运行结果")}</Button></footer>
     {notice ? <p className="code-editor-note" role="status">{notice}</p> : null}
+    {editPreview && editPreview.request.scopeKey === scopeKey && editPreview.request.documentId === doc.id ? <CodeEditorDiff key={editPreview.request.id} request={editPreview.request} code={editPreview.code} onApply={applyAI} onClose={() => store.closeEditReview()} problem={store.editProblem(editPreview.request.id, scopeKey) ?? editApplyError} /> : null}
     {doc.lastRun && doc.lastRun.snapshot !== doc.text ? <p className="code-editor-note code-editor-stale" role="status">{t("代码已修改，结果待更新")}</p> : null}
     {doc.outputOpen ? <section className="code-editor-output" aria-label={t("运行结果")}>
       <header><span>{doc.lastRun?.selection ? t("选区执行") : t("脚本执行")}</span>{doc.running && doc.lastRun && onInterrupt ? <Button size="sm" onClick={() => void onInterrupt(doc.lastRun!.language).catch(error => { if (currentId.current === doc.id) setLocalError(String(error)) })}>{t("中断")}</Button> : null}</header>

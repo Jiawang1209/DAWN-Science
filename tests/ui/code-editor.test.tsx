@@ -15,6 +15,10 @@ Object.defineProperties(Range.prototype, {
   getClientRects: { configurable: true, value: () => [] },
   getBoundingClientRect: { configurable: true, value: () => new DOMRect() },
 })
+Object.defineProperties(HTMLDialogElement.prototype, {
+  showModal: { configurable: true, value(this: HTMLDialogElement) { this.open = true } },
+  close: { configurable: true, value(this: HTMLDialogElement) { this.open = false } },
+})
 function setup() {
   const run = vi.fn(async () => ({ cellId: 'cell-1' }))
   const save = vi.fn(async () => ({ path: '/workspace/analysis.py', version: 'v1', bytes: 8 }))
@@ -24,6 +28,46 @@ function setup() {
 }
 
 describe('chat-first editor', () => {
+  it('reviews an AI revision then applies one undoable edit to the original named draft', async () => {
+    const { store, id, save, run } = setup()
+    await store.save(id, 'analysis.py')
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} onAsk={() => {}} />)
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))!
+    act(() => {
+      view.dispatch({ changes: { from: 4, to: 5, insert: '2' } })
+      view.dispatch({ selection: { anchor: 6, head: 14 } })
+    })
+    const before = store.$documents.get()[id]!
+    const request = store.prepareEdit(id, 'analysis.py')
+    act(() => store.reviewEdit(request.id, 's', 'x = 2\nprint(x + 1)\n', 'python'))
+    expect(screen.getByRole('dialog', { name: /^审阅脚本修改$/ })).toBeTruthy()
+    expect(store.$documents.get()[id]?.text).toBe(before.text)
+    fireEvent.click(screen.getByRole('button', { name: /^应用到原脚本$/ }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(store.$documents.get()[id]).toMatchObject({ path: '/workspace/analysis.py', version: 'v1', savedText: 'x = 1\nprint(x)', text: 'x = 2\nprint(x + 1)' })
+    expect(store.current('s')?.id).toBe(id)
+    expect(Object.keys(store.$documents.get())).toEqual([id])
+    expect(save).toHaveBeenCalledTimes(1); expect(run).not.toHaveBeenCalled()
+    expect(EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))).toBe(view)
+    act(() => { undo(view) })
+    expect(store.$documents.get()[id]?.text).toBe(before.text)
+    act(() => { undo(view) })
+    expect(store.$documents.get()[id]?.text).toBe('x = 1\nprint(x)')
+  })
+
+  it('blocks applying a reply when the original draft changes while its diff is open', () => {
+    const { store, id } = setup()
+    store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })
+    const request = store.prepareEdit(id, 'analysis.py')
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    act(() => store.reviewEdit(request.id, 's', 'x = 1\nprint(x + 2)', 'python'))
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))!
+    act(() => view.dispatch({ changes: { from: 4, to: 5, insert: '3' } }))
+    expect(screen.getByRole('button', { name: /^应用到原脚本$/ }).hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: /^应用到原脚本$/ }))
+    expect(store.$documents.get()[id]?.text).toBe('x = 3\nprint(x)')
+  })
+
   it('toggles visual wrapping without changing draft bytes, selection, undo or selected execution', async () => {
     const { store, save, run } = setup()
     const original = 'x = 1\r\nprint("' + 'long text '.repeat(20) + '")'
@@ -239,6 +283,28 @@ describe('chat-first editor', () => {
 })
 
 describe('editor entry points', () => {
+  it.each([['R', 'r'], ['Python', 'python'], ['PYTHON', 'python']])('keeps the review action for a real-model %s code fence', async (fenceLanguage, language) => {
+    const reviewCode = vi.fn()
+    render(<CodeEditingContext.Provider value={{ openCode: vi.fn(), openFile: vi.fn(), editReply: () => ({ status: 'pending', requestId: 'case-edit' }), reviewCode }}><AgentMarkdown streaming={false} sourceId="case-reply" text={'```' + fenceLanguage + '\nprint(42)\n```'} /></CodeEditingContext.Provider>)
+    fireEvent.click(await screen.findByRole('button', { name: /^查看差异$/ }))
+    expect(reviewCode).toHaveBeenCalledWith({ requestId: 'case-edit', code: 'print(42)\n', language })
+  })
+
+  it('routes linked replies into diff review and keeps applied or expired replies out of new drafts', async () => {
+    const openCode = vi.fn(), reviewCode = vi.fn(), returnToScript = vi.fn()
+    const actions = { openCode, openFile: vi.fn(), editReply: () => ({ status: 'pending' as const, requestId: 'edit-1' }), reviewCode, returnToScript }
+    const panel = render(<CodeEditingContext.Provider value={actions}><AgentMarkdown streaming={false} sourceId="reply-1" text={'```r\nprint(p)\n```'} /></CodeEditingContext.Provider>)
+    fireEvent.click(await screen.findByRole('button', { name: /^查看差异$/ }))
+    expect(reviewCode).toHaveBeenCalledWith({ requestId: 'edit-1', code: 'print(p)\n', language: 'r' })
+    expect(openCode).not.toHaveBeenCalled()
+    panel.rerender(<CodeEditingContext.Provider value={{ ...actions, editReply: () => ({ status: 'applied', requestId: 'edit-1' }) }}><AgentMarkdown streaming={false} sourceId="reply-1" text={'```r\nprint(p)\n```'} /></CodeEditingContext.Provider>)
+    fireEvent.click(await screen.findByRole('button', { name: /^回到原脚本$/ }))
+    expect(returnToScript).toHaveBeenCalledWith('edit-1')
+    panel.rerender(<CodeEditingContext.Provider value={{ ...actions, editReply: () => ({ status: 'expired' }) }}><AgentMarkdown streaming={false} sourceId="reply-1" text={'```r\nprint(p)\n```'} /></CodeEditingContext.Provider>)
+    expect((await screen.findByRole('button', { name: /^修改请求已失效$/ })).hasAttribute('disabled')).toBe(true)
+    expect(openCode).not.toHaveBeenCalled()
+  })
+
   it('opens complete conversation code with stable source identity but disables partial streaming code', async () => {
     const openCode = vi.fn(), actions = { openCode, openFile: vi.fn() }
     const view = render(<CodeEditingContext.Provider value={actions}><AgentMarkdown text={'```python\nprint(42)\n```'} streaming={false} /></CodeEditingContext.Provider>)

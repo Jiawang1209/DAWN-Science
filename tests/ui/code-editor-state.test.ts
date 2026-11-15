@@ -10,6 +10,61 @@ const services = (): EditorServices => ({
 function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>(r => { resolve = r }); return { promise, resolve } }
 
 describe('conversation code document lifecycle', () => {
+  it('binds a selected edit request to the full unsaved document without saving it', () => {
+    const api = services(), store = createCodeEditorStore(api)
+    const text = 'library(ggplot2)\np <- 1\nprint(p)'
+    const id = store.openSource(scope, 'ai-source', text, 'R')
+    store.setSelection(id, { from: text.indexOf('print'), to: text.length, text: 'print(p)' })
+    const request = store.prepareEdit(id, 'analysis.R')
+    expect(request).toMatchObject({ documentId: id, scopeKey: scope.key, baseline: text, label: 'analysis.R' })
+    expect(request.prompt).toContain(text)
+    expect(store.$editRequests.get()).toEqual([request])
+    expect(Object.keys(store.$documents.get())).toEqual([id])
+    expect(api.save).not.toHaveBeenCalled(); expect(api.run).not.toHaveBeenCalled()
+  })
+
+  it('applies a reviewed reply to the original document and preserves its disk identity and save baseline', async () => {
+    const api = services(), store = createCodeEditorStore(api)
+    const id = await store.openFile(scope, 'a.py')
+    store.setSelection(id, { from: 0, to: 5, text: 'x = 1' })
+    const request = store.prepareEdit(id, 'a.py')
+    store.reviewEdit(request.id, scope.key, 'x = 2\n', 'python')
+    expect(store.$documents.get()[id]?.text).toBe('x = 1\n')
+    store.applyEdit(request.id, scope.key, 'x = 2\n', 'document', (_before, after) => store.edit(id, after))
+    expect(store.$documents.get()[id]).toMatchObject({ id, path: '/work/a.py', version: 'v1', text: 'x = 2\n', savedText: 'x = 1\n' })
+    expect(store.current(scope.key)?.id).toBe(id)
+    expect(store.$editPreview.get()).toBeUndefined()
+    expect(() => store.applyEdit(request.id, scope.key, 'x = 2\n', 'document', vi.fn())).toThrow()
+    expect(api.save).not.toHaveBeenCalled(); expect(api.run).not.toHaveBeenCalled()
+  })
+
+  it('rejects stale edits both during AI generation and after a diff has been opened', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'ai-stale', 'print(1)', 'python')
+    store.setSelection(id, { from: 0, to: 8, text: 'print(1)' })
+    const request = store.prepareEdit(id, 'a.py')
+    store.reviewEdit(request.id, scope.key, 'print(2)', 'python')
+    store.edit(id, 'print(3)')
+    const commit = vi.fn()
+    expect(store.editProblem(request.id, scope.key)).toMatch(/改变|变化/)
+    expect(() => store.applyEdit(request.id, scope.key, 'print(2)', 'document', commit)).toThrow()
+    expect(commit).not.toHaveBeenCalled()
+    expect(store.current(scope.key)?.text).toBe('print(3)')
+  })
+
+  it('rejects other scopes, mismatched languages, superseded requests and in-flight documents', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'ai-scope', 'print(1)', 'python')
+    store.setSelection(id, { from: 0, to: 8, text: 'print(1)' })
+    const first = store.prepareEdit(id, 'a.py')
+    expect(() => store.reviewEdit(first.id, 'other-session', 'print(2)', 'python')).toThrow()
+    expect(() => store.reviewEdit(first.id, scope.key, 'print(2)', 'R')).toThrow()
+    const latest = store.prepareEdit(id, 'a.py')
+    expect(() => store.reviewEdit(first.id, scope.key, 'print(2)', 'python')).toThrow()
+    store.$documents.set({ ...store.$documents.get(), [id]: { ...store.$documents.get()[id]!, saving: true } })
+    expect(() => store.applyEdit(latest.id, scope.key, 'print(2)', 'document', vi.fn())).toThrow()
+  })
+
   it('preserves canonical document paths and anchors remote relative drafts to their session cwd', () => {
     expect(editorDocumentPath(scope, '/work/a.py')).toBe('/work/a.py')
     expect(editorDocumentPath(scope, 'C:/project/a.py')).toBe('C:/project/a.py')

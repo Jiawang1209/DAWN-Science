@@ -76,7 +76,13 @@ test('real R plots keep session history, enlarge with keyboard access, and expor
     await editor.fill(script + '\n' + code)
     await editor.press(`${modifier}+a`)
     await editor.press('ArrowRight')
-    await editor.press('Shift+Home')
+    // Home stops at a visual wrap boundary. Select the whole logical line instead.
+    await editor.press(process.platform === 'darwin' ? 'Control+l' : 'Alt+l')
+    const selected = await editor.evaluate(el => {
+      const view = (el as HTMLElement & { cmTile: { root: { view: { state: { selection: { main: { from: number; to: number } }; sliceDoc(from: number, to: number): string } } } } }).cmTile.root.view
+      return view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)
+    })
+    expect(selected).toBe(code)
     await pane.getByRole('button', { name: '运行选区', exact: true }).click()
   }
   const history = async () => {

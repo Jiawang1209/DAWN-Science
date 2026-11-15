@@ -59,7 +59,8 @@ import { fileReferencePlugin, markdownFilePath, MarkdownFileImage, type Markdown
 const MarkdownStreamingContext = createContext(false)
 const MarkdownCodeSourceContext = createContext('')
 
-function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps) {
+function LazyCodeRenderer({ code, language: rawLanguage, isIncomplete }: CustomRendererProps) {
+  const language = rawLanguage.toLowerCase()
   const waitForTurn = useContext(MarkdownStreamingContext)
   const editing = useContext(CodeEditingContext)
   const prefix = useContext(MarkdownCodeSourceContext)
@@ -74,7 +75,13 @@ function LazyCodeRenderer({ code, language, isIncomplete }: CustomRendererProps)
   }, [visible])
 
   const deferHighlight = waitForTurn || isIncomplete || !visible
-  const edit = editing ? <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete} onClick={() => editing.openCode({ code, language: language ?? 'text', source })}>{t("在旁边编辑")}</Button> : null
+  const reply = editing?.editReply?.(prefix)
+  const editLabel = reply?.status === 'expired' ? t("修改请求已失效") : reply?.status === 'applied' ? t("回到原脚本") : t("查看差异")
+  const edit = editing ? reply ? <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete || reply.status === 'expired'} onClick={() => {
+    if (!reply.requestId) return
+    if (reply.status === 'applied') editing.returnToScript?.(reply.requestId)
+    else editing.reviewCode?.({ requestId: reply.requestId, code, language: language ?? 'text' })
+  }}>{editLabel}</Button> : <Button className="code-edit-action" variant="ghost" size="sm" disabled={waitForTurn || isIncomplete} onClick={() => editing.openCode({ code, language: language ?? 'text', source })}>{t("在旁边编辑")}</Button> : null
   return (
     <div data-code-highlighted={String(!deferHighlight)} ref={element}>
       {deferHighlight ? (
@@ -104,7 +111,7 @@ const MARKDOWN_PLUGINS = {
   // Keep math in Streamdown's parser so inline/fenced code stays literal.
   // KaTeX's default trust=false also applies to model-provided formulas.
   math: createMathPlugin({ singleDollarTextMath: true, errorColor: "var(--dawn-danger)" }),
-  renderers: [{ language: ["", "plain", "plaintext", "text", "txt", ...CODE_LANGUAGES], component: LazyCodeRenderer }],
+  renderers: [{ language: [...new Set(["", "plain", "plaintext", "text", "txt", ...CODE_LANGUAGES].flatMap(language => [language, language.toUpperCase(), language.charAt(0).toUpperCase() + language.slice(1)]))], component: LazyCodeRenderer }],
 }
 
 /**

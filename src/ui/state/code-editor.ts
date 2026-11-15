@@ -1,6 +1,7 @@
 import { atom } from 'nanostores'
 import { t } from '../i18n/index.js'
 import { isAbsoluteFilePath } from '../file-navigation.js'
+import { createScriptEditRequest, scriptEditResult, type ScriptEditRequest } from '../code-editor-ai.js'
 
 export type CodeOwner = { projectId?: string; sessionId?: string; connectionId?: string }
 export interface EditorScope {
@@ -55,6 +56,9 @@ export function createCodeEditorStore(services: EditorServices) {
   const $active = atom<Readonly<Record<string, string>>>({})
   // One display preference per application window, shared across script documents.
   const $wordWrap = atom(true)
+  const $editRequests = atom<readonly ScriptEditRequest[]>([])
+  const $appliedEdits = atom<readonly ScriptEditRequest[]>([])
+  const $editPreview = atom<{ request: ScriptEditRequest; code: string } | undefined>()
   const requests = new Map<string, number>()
   const ticket = (scope: string) => { const n = (requests.get(scope) ?? 0) + 1; requests.set(scope, n); return n }
   const put = (doc: CodeDocument) => $documents.set({ ...$documents.get(), [doc.id]: doc })
@@ -66,8 +70,59 @@ export function createCodeEditorStore(services: EditorServices) {
   const patch = (id: string, fields: Partial<CodeDocument>) => put({ ...get(id), ...fields })
   const select = (scope: string, id: string) => $active.set({ ...$active.get(), [scope]: id })
   const message = (error: unknown) => error instanceof Error ? error.message : String(error)
+  const editRequest = (requestId: string, scopeKey: string) => {
+    const request = $editRequests.get().find(r => r.id === requestId)
+    if (!request) throw new Error(t("这次脚本修改请求已失效，请重新带入对话"))
+    const doc = get(request.documentId)
+    if (request.scopeKey !== scopeKey || doc.scope.key !== scopeKey || doc.scope.sessionId !== request.sessionId) throw new Error(t("这份修改不属于当前脚本会话"))
+    return { request, doc }
+  }
+  const checkEdit = (requestId: string, scopeKey: string) => {
+    const { request, doc } = editRequest(requestId, scopeKey)
+    if ($active.get()[scopeKey] !== doc.id) throw new Error(t("请先回到这次修改对应的原脚本"))
+    if (doc.saving || doc.running) throw new Error(t("脚本正在保存或运行，请稍后应用修改"))
+    if (doc.text !== request.baseline) throw new Error(t("原脚本草稿已改变，请重新带入对话，避免覆盖后续修改"))
+    return { request, doc }
+  }
   return {
-    $documents, $active, $wordWrap,
+    $documents, $active, $wordWrap, $editRequests, $appliedEdits, $editPreview,
+    prepareEdit(id: string, label: string) {
+      const doc = get(id)
+      if (doc.saving || doc.running) throw new Error(t("脚本正在保存或运行，请稍后带入对话"))
+      const request = createScriptEditRequest(doc, doc.path ?? label)
+      $editRequests.set([...$editRequests.get().filter(r => r.documentId !== id), request])
+      $editPreview.set(undefined)
+      return request
+    },
+    reviewEdit(requestId: string, scopeKey: string, code: string, language: string) {
+      const { request, doc } = editRequest(requestId, scopeKey)
+      if (!['', 'text', 'plain', 'plaintext'].includes(language.toLowerCase()) && codeLanguage(language) !== request.language) throw new Error(t("AI 回复的代码语言与原脚本不一致"))
+      ticket(scopeKey)
+      select(scopeKey, doc.id)
+      $editPreview.set({ request, code })
+    },
+    returnToEditedDocument(requestId: string, scopeKey: string) {
+      const request = $appliedEdits.get().find(r => r.id === requestId)
+      if (!request || request.scopeKey !== scopeKey || get(request.documentId).scope.key !== scopeKey) throw new Error(t("这份修改不属于当前脚本会话"))
+      ticket(scopeKey)
+      select(scopeKey, request.documentId)
+    },
+    closeEditReview() { $editPreview.set(undefined) },
+    editProblem(requestId: string, scopeKey: string) {
+      try { checkEdit(requestId, scopeKey); return undefined }
+      catch (error) { return message(error) }
+    },
+    applyEdit(requestId: string, scopeKey: string, code: string, mode: 'document' | 'selection', commit: (before: string, after: string) => void) {
+      const { request, doc } = checkEdit(requestId, scopeKey)
+      if ($editPreview.get()?.request.id !== requestId || $editPreview.get()?.code !== code) throw new Error(t("请先查看这份修改的差异"))
+      const after = scriptEditResult(request, code, mode)
+      if (after === doc.text) throw new Error(t("AI 回复与原脚本相同，没有可应用的修改"))
+      commit(doc.text, after)
+      if (get(doc.id).text !== after) throw new Error(t("编辑器未应用修改，已保留原请求"))
+      $appliedEdits.set([...$appliedEdits.get().slice(-31), request])
+      $editRequests.set($editRequests.get().filter(r => r.id !== requestId))
+      $editPreview.set(undefined)
+    },
     current(scope: string) { const id = $active.get()[scope]; return id ? $documents.get()[id] : undefined },
     openSource(scope: EditorScope, source: string, text: string, language: string) {
       ticket(scope.key)

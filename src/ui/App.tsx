@@ -1,5 +1,6 @@
 import {createAutoArrangementRequester,stopAutoArrangement} from './auto-arrangement-request.js'
 import { CodeEditingContext } from './code-editing-context.js'
+import { scriptEditForReply, scriptEditReplyHasContext } from './code-editor-ai.js'
 import { createCodeEditorStore, editorDocumentPath, type EditorScope } from './state/code-editor.js'
 import {$collaborationReturn,takeCollaborationReturn,clearCollaborationReturn,pruneCollaborationReturn} from './state/collaboration-return.js'
 import {restoreCollaborationView} from './state/collaboration-view.js'
@@ -3854,6 +3855,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     save: (scope, path, text, expectedVersion) => client.get('saveCodeDocument', { ...scope.owner, path: editorDocumentPath(scope, path), text, expectedVersion }),
     run: (scope, language, code) => client.get('runInKernel', { sessionId: scope.sessionId!, language, code }),
   }), [client])
+  const scriptEditRequests = useStore(codeEditor.$editRequests)
+  const appliedScriptEdits = useStore(codeEditor.$appliedEdits)
   const editorScope: EditorScope | undefined = browserOwner ? {
     key: JSON.stringify([sessionId, projectId, 文件所在?.connectionId, 文件所在?.cwd, 当前工作区路径 ?? currentWorkspace]),
     owner: browserOwner, sessionId, kind: session?.kind,
@@ -3866,8 +3869,26 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     坞上位(); setRightDockTenant('code'); setRightDockOpen(true)
     if (rightDockWidth < RIGHT_DOCK_DEFAULT) setRightDockWidth(RIGHT_DOCK_DEFAULT, 侧栏此刻多宽)
   }
-  const closeCodeEditor = () => { setRightDockOpen(false); setRightDockTenant(editorReturnTenant.current) }
+  const closeCodeEditor = () => { codeEditor.closeEditReview(); setRightDockOpen(false); setRightDockTenant(editorReturnTenant.current) }
   const codeEditing = editorScope ? {
+    editReply: (replyId: string) => {
+      const items = 主槽.$items.get()
+      const pending = scriptEditForReply(scriptEditRequests, items, editorScope.key, replyId)
+      if (pending) return { status: 'pending' as const, requestId: pending.id }
+      const applied = scriptEditForReply(appliedScriptEdits, items, editorScope.key, replyId)
+      if (applied) return { status: 'applied' as const, requestId: applied.id }
+      return scriptEditReplyHasContext(items, replyId) ? { status: 'expired' as const } : undefined
+    },
+    reviewCode: ({ requestId, code, language }: { requestId: string; code: string; language: string }) => {
+      if (editorScopeRef.current?.key !== editorScope.key) return
+      try { codeEditor.reviewEdit(requestId, editorScope.key, code, language); showCodeEditor() }
+      catch (error) { fail(error) }
+    },
+    returnToScript: (requestId: string) => {
+      if (editorScopeRef.current?.key !== editorScope.key) return
+      try { codeEditor.returnToEditedDocument(requestId, editorScope.key); showCodeEditor() }
+      catch (error) { fail(error) }
+    },
     openCode: ({ code, language, source }: { code: string; language: string; source: string }) => {
       codeEditor.openSource(editorScope, source, code, language); showCodeEditor()
     },

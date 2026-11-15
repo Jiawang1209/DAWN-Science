@@ -5890,7 +5890,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                   if (editorScopeRef.current?.key !== editorScope.key) throw new Error(t("会话工作区已变化，请在当前会话重新发送"))
                   return codeEditor.prepareLinkedEdit(editorScope.key, text)
                 } : undefined}
-                scriptContext={session.kind === "native" && editorScope ? <LinkedScript store={codeEditor} scopeKey={editorScope.key} onOpen={showCodeEditor} onEnd={() => { if (rightDockTenant === "code") closeCodeEditor() }} /> : undefined}
+                scriptContext={session.kind === "native" && editorScope && !(rightDockOpen && rightDockTenant === "code") ? <LinkedScript store={codeEditor} scopeKey={editorScope.key} placement="header" onOpen={showCodeEditor} /> : undefined}
 
                 onNewSession={async () => {
                   const connectionId = session.remote?.connectionId
@@ -6208,6 +6208,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             {rightDockTenant === "code" ? (
               <Suspense fallback={<Loader label={t("正在打开代码编辑器")} />}>
               <CodeEditorPanel store={codeEditor} scopeKey={editorScope?.key ?? ''} cells={笔记本cells} onClose={closeCodeEditor}
+                scriptContext={session?.kind === "native" && editorScope ? <LinkedScript store={codeEditor} scopeKey={editorScope.key} onOpen={showCodeEditor} onEnd={closeCodeEditor} /> : undefined}
                 onAsk={text => {
                   if (!sessionId || editorScopeRef.current?.key !== editorScope?.key) return
                   const current = draftOf(sessionId)

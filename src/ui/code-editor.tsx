@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useStore } from '@nanostores/react'
 import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view'
@@ -66,11 +66,12 @@ function CodeInput({ document, store, wordWrap, onSave, onRun, editor }: {
   return <div className="code-editor-code" ref={host} />
 }
 
-export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInterrupt }: {
+export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInterrupt, scriptContext }: {
   store: CodeEditorStore
   scopeKey: string
   cells: readonly Cell[]
   onClose: () => void
+  scriptContext?: ReactNode
   onAsk?: ((text: string) => void) | undefined
   onInterrupt?: ((language: 'python' | 'R') => Promise<unknown>) | undefined
 }) {
@@ -142,6 +143,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
       </div>
     </header>
     <div className="code-editor-location"><span>{doc.scope.label}</span><span title={doc.path}>{doc.path ?? t("来自当前对话")}</span><span>{doc.language === 'python' ? t("Python · 4 空格") : doc.language === 'R' ? t("R · 2 空格") : doc.language}</span></div>
+    {scriptContext}
     {!doc.path ? <label className="code-editor-save-path">
       {t("脚本保存路径")}
       <input className="control" aria-label={t("脚本保存路径")} value={path} onChange={e => setPath(e.target.value)} placeholder="analysis.py" />

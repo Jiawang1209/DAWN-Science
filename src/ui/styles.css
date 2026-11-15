@@ -9892,7 +9892,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .code-editor-diff-line[data-kind="add"] .code-editor-diff-sign { color: var(--dawn-success); }
 .code-editor-diff-line[data-kind="del"] .code-editor-diff-sign { color: var(--dawn-danger); }
 
-/* Linked drafts stay visible beside the composer without occupying the chat transcript. */
+/* Linked draft controls live in the editor; a compact header entry survives closing it. */
 .linked-script { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-2); margin-inline: var(--dawn-space-3); padding-block: var(--dawn-space-2); border-top: var(--dawn-hairline) solid var(--dawn-stroke-3); font-size: var(--dawn-fs-meta); color: var(--dawn-text-2); }
 .linked-script > .field-error { flex-basis: 100%; margin: 0; }
 .linked-script-snapshot { color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); margin-top: var(--dawn-space-2); }
@@ -9900,3 +9900,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .linked-script-snapshot pre { max-height: 20rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: var(--dawn-fs-meta)/1.6 var(--dawn-font-mono); color: var(--dawn-text-2); }
 
 .linked-script-file { flex: 1; min-width: 0; justify-content: flex-start; color: var(--dawn-accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.linked-script--header { flex: 0 1 16rem; flex-wrap: nowrap; min-width: 0; max-width: min(16rem, 28vw); margin: 0; padding: 0; border: 0; }
+.linked-script--header .linked-script-file { display: block; max-width: 100%; }

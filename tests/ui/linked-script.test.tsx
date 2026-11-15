@@ -57,6 +57,18 @@ describe('chat script association', () => {
     fireEvent.click(screen.getByRole('button', { name: '结束脚本联动' }))
     expect(screen.queryByLabelText('会话关联脚本')).toBeNull()
   })
+  it('keeps connection controls outside the composer, in the editor or compact conversation header', () => {
+    const { store, scope, id } = setup()
+    followEditorScript(store, scope.key)
+    const session = { sessionId: 's', projectId: 'p', agentId: 'ds-chat', kind: 'native' as const, pinned: false, sortOrder: 1, state: 'alive' as const, createdAt: '' }
+    const { container, rerender } = render(<ConversationView session={session} items={[]} onSend={() => {}} scriptContext={<LinkedScript store={store} scopeKey={scope.key} placement="header" onOpen={() => {}} />} />)
+    expect(container.querySelector('.composer .linked-script')).toBeNull()
+    expect(container.querySelector('.conv-head .linked-script')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '结束脚本联动' })).toBeNull()
+    rerender(<ConversationView session={session} items={[]} onSend={() => {}} scriptContext={undefined} />)
+    expect(container.querySelector('.linked-script')).toBeNull()
+  })
+
   it('collapses exact attached source in the user turn and displays the modification request first', () => {
     const { store, scope, id } = setup()
     const req = createLinkedScriptEditRequest(store.$documents.get()[id]!, '/work/project/plot.R', '请更改标题', 'collapse')

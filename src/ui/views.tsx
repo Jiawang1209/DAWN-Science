@@ -4804,6 +4804,7 @@ export function ConversationView({
             <h1 className="conv-title" title={session.title ?? t("新对话")}>{session.title ?? t("新对话")}</h1>
           </>}
         </div> : null}
+        {scriptContext}
         {!主顶栏 ? <Button ref={会话搜索按钮} variant="ghost" size="sm" className="conv-search-toggle" aria-label={t("查找内容")}
             aria-expanded={会话搜索开} onClick={() => 会话搜索开 ? 关会话搜索() : 开会话搜索()}>{t("查找内容")}</Button> : null}
         {/**
@@ -5332,7 +5333,6 @@ export function ConversationView({
               />
             ) : null}
         </ComposerEnvironment>
-        {scriptContext}
         {onResume && (disabled || recovery?.pending || recovery?.error) ? (
           <div className="session-recovery" role="status">
             <span>{recovery?.error ?? (recovery?.pending ? t("正在恢复原会话…") : t("会话已暂停，可以接着聊"))}</span>

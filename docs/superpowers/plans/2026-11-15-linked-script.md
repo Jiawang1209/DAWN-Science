@@ -25,7 +25,7 @@ Files: `e2e/code-editor-ai.spec.ts` or a new focused spec, `docs/DESIGN.md`, `do
 - [x] E2E: two linked rounds without reselection, manual edits between rounds, review/apply into original draft, stale refusal, detach returns to ordinary chat, close/reopen and session boundaries.
 - [x] Independent spec review then quality review; resolve concrete findings.
 - [x] Full build, node/UI tests and serial focused editor/composer/plot E2Es. Record actual validation and limits.
-- [ ] Preserve all live dirty drafts/composer text before any preview restart. **Main remains untouched and five drafts were backed up; the isolated preview process is launched but awaits the user's macOS keychain authorization.** Keep real-model profile/credential source. Never auto-save user files. Launch verified branch only if state can be safely preserved; no merge or push in this task.
+- [x] Preserve all live dirty drafts/composer text before any preview restart. **Main remains untouched. The user authorized the repaired profile; real cloud generation and revisions plus R execution were verified.** Keep real-model profile/credential source. Never auto-save user files. Launch verified branch only if state can be safely preserved; no merge or push in this task.
 
 ## Accepted UX refinement
 
@@ -40,3 +40,7 @@ The user explicitly preferred and approved “打开哪个，关联哪个”. Th
 - Diff/apply, word wrap, syntax/completion, keyboard undo, saved file protection and real R/Python kernels: existing focused E2Es.
 - Literal markers, malformed/copied contexts, oversized drafts, removed attachment tokens and pasted `@` text: helper/composer regression tests.
 - Visual QA: compact composer strip, collapsed per-turn source, full diff modal, light/dark and narrow editor screenshots. No reference snapshots updated.
+
+## User placement correction
+
+Connection controls moved entirely out of the composer: editor controls when open, compact filename entry in the conversation header when closed. Input space is preserved. Current runtime uses the isolated writable encrypted DeepSeek store with persistent file logging; the earlier read-only save/EPIPE startup failure was repaired and verified.

@@ -21,7 +21,7 @@ export async function openEditorFile(store: CodeEditorStore, scope: EditorScope,
 }
 
 /** Association survives closing the editor; entering another script editor replaces its target. */
-export function LinkedScript({ store, scopeKey, onOpen, onEnd }: { store: CodeEditorStore; scopeKey: string; onOpen: () => void; onEnd?: (() => void) | undefined }) {
+export function LinkedScript({ store, scopeKey, onOpen, onEnd, placement = 'editor' }: { store: CodeEditorStore; scopeKey: string; onOpen: () => void; onEnd?: (() => void) | undefined; placement?: 'editor' | 'header' | undefined }) {
   const links = useStore(store.$linkedScripts)
   const docs = useStore(store.$documents)
   const [error, setError] = useState<string>()
@@ -29,13 +29,13 @@ export function LinkedScript({ store, scopeKey, onOpen, onEnd }: { store: CodeEd
   if (!link) return null
   const doc = docs[link.documentId]
   const label = doc?.path ?? link.label
-  return <div className="linked-script" aria-label={t("会话关联脚本")} aria-description={t("发送时附上最新草稿 · 修改先审阅")}>
-    <span>{t("正在修改")}</span>
+  return <div className={`linked-script linked-script--${placement}`} aria-label={t("会话关联脚本")} aria-description={t("发送时附上最新草稿 · 修改先审阅")}>
+    {placement === 'editor' ? <span>{t("正在修改")}</span> : null}
     <Button className="linked-script-file" variant="ghost" size="inline" aria-label={tf("打开关联脚本：{0}", label)} onClick={() => {
       try { store.openLinkedScript(scopeKey); setError(undefined); onOpen() }
       catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)) }
     }}>{label.split(/[\\/]/).pop() || t("未保存脚本")}</Button>
-    <Button variant="ghost" size="inline" onClick={() => { store.unlinkScript(scopeKey); setError(undefined); onEnd?.() }}>{t("结束脚本联动")}</Button>
+    {placement === 'editor' ? <Button variant="ghost" size="inline" onClick={() => { store.unlinkScript(scopeKey); setError(undefined); onEnd?.() }}>{t("结束脚本联动")}</Button> : null}
     {error ? <p className="field-error" role="alert">{error}</p> : null}
   </div>
 }

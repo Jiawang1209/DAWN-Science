@@ -37,6 +37,12 @@ describe('chat-first editor', () => {
     expect(screen.queryByRole('button', { name: /^关联当前会话$/ })).toBeNull()
   })
 
+  it('places the script connection controls inside the side editor', () => {
+    const { store } = setup()
+    const { container } = render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} scriptContext={<div data-testid="script-context">link controls</div>} />)
+    expect(container.querySelector('.code-editor-panel [data-testid="script-context"]')).toBeTruthy()
+  })
+
   it('reviews the current saved path when a draft receives its first filename while AI is replying', async () => {
     const { store, id } = setup()
     store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })

@@ -2,7 +2,7 @@
 
 ## Result and accepted behavior
 
-User approved “打开哪个，关联哪个”: entering side-by-side script editing automatically connects that document to the current chat. Opening another script editor replaces the target while preserving old drafts. Read-only file previews do not retarget. Closing the editor keeps the connection; the compact composer strip reopens the exact document or ends connection and closes the editor. Other session/workspace/connection scopes remain independent. There is no extra association button.
+User approved “打开哪个，关联哪个”: entering side-by-side script editing automatically connects that document to the current chat. Opening another script editor replaces the target while preserving old drafts. Read-only file previews do not retarget. Closing the editor keeps the connection; the editor controls reopen the exact document or end connection and close the editor; a compact conversation-header filename entry remains when the editor is closed. Other session/workspace/connection scopes remain independent. There is no extra association button.
 
 Each ordinary primary native composer submission captures the current complete unsaved draft. Reply matching uses an exact immutable context envelope, independently of attachment path substitutions in the instruction. Source remains collapsed in the user turn. Existing one-shot selected edits take precedence. Code responses still require diff review and explicit application into the original draft, with one undo step and post-send stale protection. Saving and running remain manual.
 
@@ -31,6 +31,6 @@ Independent spec and quality reviews approved after these fixes. Reviews were re
 
 Association, pending request baselines and unsaved drafts are window-lifetime state. Restart persistence and cross-restart undo history are not claimed. Context is complete up to 128 KiB and is refused explicitly above that limit. At most 32 pending snapshots and 32 applied request records are retained.
 
-The existing main experience window and its five draft documents (four dirty) remain untouched. An isolated branch profile was created from a consistent read-only SQLite backup. Real-model startup uses the existing read-only Electron credential source; no mock model override or credential gate bypass is enabled. The new process currently waits for the user's macOS keychain authorization, which the computer-use tool prohibits operating. No cloud response verification or automatic user-file save/run is claimed for the new branch.
+The existing main experience window and its five draft documents (four dirty) remain untouched. An isolated branch profile was created from a consistent read-only SQLite backup. Startup configuration was subsequently corrected to use a profile-owned writable encrypted DeepSeek copy, preserving the original credentials. The user completed macOS keychain authorization. Actual cloud generation, two continuous revisions, saved demo and real R plotting/selection execution were verified; see `2026-11-15-linked-script-startup-repair.md`. No mock model override or credential gate bypass is enabled. Composer controls were moved into the IDE/header at the user's request.
 
 No merge or push is authorized by this feature request; keep work on `codex/editor-linked-script`.

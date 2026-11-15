@@ -24,6 +24,46 @@ function setup() {
 }
 
 describe('chat-first editor', () => {
+  it('toggles visual wrapping without changing draft bytes, selection, undo or selected execution', async () => {
+    const { store, save, run } = setup()
+    const original = 'x = 1\r\nprint("' + 'long text '.repeat(20) + '")'
+    const id = store.openSource(scope, 'wrapped-selection', original, 'python')
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))!
+    const toggle = screen.getByRole('button', { name: /^自动换行$/ })
+    expect(toggle.getAttribute('aria-pressed')).toBe('true')
+    expect(view.contentDOM.classList.contains('cm-lineWrapping')).toBe(true)
+    act(() => {
+      view.dispatch({ changes: { from: 4, to: 5, insert: '2' } })
+      view.dispatch({ selection: { anchor: view.state.doc.line(2).from, head: view.state.doc.length } })
+    })
+    const edited = store.$documents.get()[id]!
+    const selection = view.state.selection.main
+    fireEvent.click(toggle)
+    expect(view.contentDOM.classList.contains('cm-lineWrapping')).toBe(false)
+    fireEvent.click(toggle)
+    expect(view.contentDOM.classList.contains('cm-lineWrapping')).toBe(true)
+    expect(EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))).toBe(view)
+    expect(store.$documents.get()[id]?.text).toBe(edited.text)
+    expect(view.state.selection.main.eq(selection)).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: /^运行选区$/ }))
+    await waitFor(() => expect(run).toHaveBeenCalledWith(scope, 'python', original.split('\r\n')[1]))
+    expect(save).not.toHaveBeenCalled()
+    act(() => { undo(view) })
+    expect(store.$documents.get()[id]?.text).toBe(original)
+  })
+
+  it('remembers the wrap choice when the editor is reopened and another language is opened', () => {
+    const { store } = setup()
+    const panel = render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /^自动换行$/ }))
+    panel.unmount()
+    store.openSource(scope, 'another-language', 'print("long R line")', 'R')
+    render(<CodeEditorPanel store={store} scopeKey="s" cells={[]} onClose={() => {}} />)
+    expect(screen.getByRole('button', { name: /^自动换行$/ }).getAttribute('aria-pressed')).toBe('false')
+    expect(EditorView.findFromDOM(screen.getByRole('textbox', { name: '脚本代码编辑器' }))!.contentDOM.classList.contains('cm-lineWrapping')).toBe(false)
+  })
+
   it.each([['python', 'shared_value = 42\npri', 'print'], ['R', 'shared_value <- 42\nmea', 'mean']])('completes %s builtins and document identifiers without saving or running', async (language, text, builtin) => {
     const { store, save, run } = setup()
     const id = store.openSource(scope, 'completion', text, language)

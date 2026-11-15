@@ -53,6 +53,8 @@ export function editorDocumentPath(scope: EditorScope, path: string): string {
 export function createCodeEditorStore(services: EditorServices) {
   const $documents = atom<Readonly<Record<string, CodeDocument>>>({})
   const $active = atom<Readonly<Record<string, string>>>({})
+  // One display preference per application window, shared across script documents.
+  const $wordWrap = atom(true)
   const requests = new Map<string, number>()
   const ticket = (scope: string) => { const n = (requests.get(scope) ?? 0) + 1; requests.set(scope, n); return n }
   const put = (doc: CodeDocument) => $documents.set({ ...$documents.get(), [doc.id]: doc })
@@ -65,7 +67,7 @@ export function createCodeEditorStore(services: EditorServices) {
   const select = (scope: string, id: string) => $active.set({ ...$active.get(), [scope]: id })
   const message = (error: unknown) => error instanceof Error ? error.message : String(error)
   return {
-    $documents, $active,
+    $documents, $active, $wordWrap,
     current(scope: string) { const id = $active.get()[scope]; return id ? $documents.get()[id] : undefined },
     openSource(scope: EditorScope, source: string, text: string, language: string) {
       ticket(scope.key)

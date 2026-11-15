@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { useStore } from '@nanostores/react'
-import { EditorSelection, EditorState } from '@codemirror/state'
+import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, foldGutter, foldKeymap, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language'
@@ -17,10 +17,11 @@ import { t, tf } from './i18n/index.js'
 import type { Cell } from '../protocol/notebook-cells.js'
 import type { CodeDocument, CodeEditorStore } from './state/code-editor.js'
 
-function CodeInput({ document, store, onSave, onRun, editor }: {
-  document: CodeDocument; store: CodeEditorStore; onSave: () => void; onRun: () => void; editor: RefObject<EditorView | null>
+function CodeInput({ document, store, wordWrap, onSave, onRun, editor }: {
+  document: CodeDocument; store: CodeEditorStore; wordWrap: boolean; onSave: () => void; onRun: () => void; editor: RefObject<EditorView | null>
 }) {
   const host = useRef<HTMLDivElement>(null)
+  const wrapping = useRef(new Compartment())
   const callbacks = useRef({ onSave, onRun }); callbacks.current = { onSave, onRun }
   useEffect(() => {
     if (!host.current) return
@@ -30,6 +31,7 @@ function CodeInput({ document, store, onSave, onRun, editor }: {
       doc: document.text,
       ...(selection ? { selection: EditorSelection.range(selection.from, selection.to) } : {}),
       extensions: [
+        wrapping.current.of(wordWrap ? EditorView.lineWrapping : []),
         EditorState.lineSeparator.of(document.text.includes('\r\n') ? '\r\n' : '\n'),
         indentUnit.of(document.language === 'R' ? '  ' : '    '),
         EditorState.tabSize.of(document.language === 'R' ? 2 : 4),
@@ -54,8 +56,12 @@ function CodeInput({ document, store, onSave, onRun, editor }: {
     }) })
     editor.current = view
     return () => { editor.current = null; view.destroy() }
-    // The view owns its draft while mounted. Parent rerenders must not reset undo or selection.
+    // The view owns its draft while mounted. Wrapping is reconfigured separately below;
+    // changing a display preference must not reset undo or selection.
   }, [document.id, document.language, document.reloadRevision, store, editor])
+  useEffect(() => {
+    editor.current?.dispatch({ effects: wrapping.current.reconfigure(wordWrap ? EditorView.lineWrapping : []) })
+  }, [wordWrap, editor])
   return <div className="code-editor-code" ref={host} />
 }
 
@@ -68,6 +74,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
   onInterrupt?: ((language: 'python' | 'R') => Promise<unknown>) | undefined
 }) {
   const docs = useStore(store.$documents), active = useStore(store.$active)
+  const wordWrap = useStore(store.$wordWrap)
   const doc = docs[active[scopeKey] ?? '']
   const currentId = useRef(doc?.id); currentId.current = doc?.id
   const editor = useRef<EditorView | null>(null)
@@ -103,6 +110,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
     <header className="code-editor-header">
       <span className="code-editor-name">{doc.path?.split('/').pop() ?? t("未保存脚本")}{doc.text !== doc.savedText ? <span className="code-editor-dirty" aria-label={t("未保存修改")}> •</span> : null}</span>
       <div className="code-editor-actions">
+        <Button size="sm" variant="ghost" className="code-editor-wrap" aria-pressed={wordWrap} onClick={() => store.$wordWrap.set(!wordWrap)}>{t("自动换行")}</Button>
         <Button size="sm" variant="ghost" disabled={!language} aria-description={t("按语法整理选中行或整个脚本的缩进（Mod+Shift+F）")} onClick={() => { if (editor.current) tidyCodeIndentation(editor.current) }}>{t("整理缩进")}</Button>
         <Button size="sm" variant="ghost" aria-label={t("保存脚本")} disabled={doc.saving} onClick={() => void save()}>{doc.saving ? t("保存中…") : t("保存")}</Button>
         <Button size="sm" variant="primary" aria-label={selected ? t("运行选区") : t("运行脚本")} disabled={doc.running || !!runReason || !doc.text.trim()} onClick={() => void run()}>{doc.running ? t("运行中…") : selected ? t("运行选区") : t("运行")}</Button>
@@ -116,7 +124,7 @@ export function CodeEditorPanel({ store, scopeKey, cells, onClose, onAsk, onInte
     </label> : null}
     {runReason ? <p className="code-editor-note">{runReason}</p> : null}
     {(localError ?? doc.error) ? <div className="code-editor-note"><p className="field-error" role="alert">{localError ?? doc.error}</p>{doc.path ? <Button size="sm" variant="ghost" onClick={() => void store.reload(doc.id).then(() => { if (currentId.current === doc.id) { setLocalError(undefined); setNotice(undefined) } }).catch(error => { if (currentId.current === doc.id) setLocalError(String(error)) })}>{t("放弃草稿并重读")}</Button> : null}</div> : null}
-    <CodeInput document={doc} store={store} editor={editor} onSave={() => void save()} onRun={() => void run()} />
+    <CodeInput document={doc} store={store} wordWrap={wordWrap} editor={editor} onSave={() => void save()} onRun={() => void run()} />
     {selected && onAsk ? <div className="code-editor-selection"><span>{tf("已选 {0} 个字符", doc.selection!.text.length)}</span><Button variant="ghost" size="sm" onClick={ask}>{t("带入对话")}</Button></div> : null}
     <footer className="code-editor-footer"><span>{doc.text === doc.savedText ? t("已保存") : t("未保存修改")}</span><Button size="sm" variant="ghost" aria-expanded={doc.outputOpen} onClick={() => store.toggleOutput(doc.id)}>{t("运行结果")}</Button></footer>
     {notice ? <p className="code-editor-note" role="status">{notice}</p> : null}

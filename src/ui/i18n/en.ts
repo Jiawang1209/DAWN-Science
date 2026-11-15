@@ -36,6 +36,7 @@ export const EN: Readonly<Record<string, string>> = {
   "保存冲突：文件已改变或已存在，请重新打开后再保存": "Save conflict: the file changed or already exists. Reopen it before saving.",
   "没有会话，跑不了": "No conversation is available to run code",
   "脚本代码编辑器": "Script source editor",
+  "自动换行": "Word wrap",
   "整理缩进": "Tidy indentation",
   "按语法整理选中行或整个脚本的缩进（Mod+Shift+F）": "Use syntax-aware indentation for selected lines or the whole script (Mod+Shift+F)",
   "Python · 4 空格": "Python · 4 spaces",

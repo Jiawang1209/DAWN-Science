@@ -9813,6 +9813,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .code-editor-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--dawn-space-2); padding: var(--dawn-space-3); border-bottom: var(--dawn-hairline) solid var(--dawn-stroke-3); }
 .code-editor-name { min-width: 0; overflow-wrap: anywhere; font: var(--dawn-fs-sub) var(--dawn-font-mono); }
 .code-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dawn-space-1); }
+.code-editor-wrap[aria-pressed="true"] { color: var(--dawn-accent); background: var(--dawn-accent-soft); }
 .code-editor-dirty, .code-editor-stale { color: var(--dawn-warning); }
 .code-editor-location { display: flex; flex-wrap: wrap; gap: var(--dawn-space-2); padding: var(--dawn-space-2) var(--dawn-space-3); color: var(--dawn-text-3); font-size: var(--dawn-fs-meta); overflow-wrap: anywhere; }
 .code-editor-location > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

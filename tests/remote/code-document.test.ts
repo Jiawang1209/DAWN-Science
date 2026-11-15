@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mkdtemp, mkdir, readFile, writeFile, realpath, lstat, rename, unlink, readdir, rm, symlink } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, writeFile, realpath, lstat, rename, unlink, readdir, rm, symlink, chmod, open } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -14,7 +14,7 @@ async function fixture() {
     realpath,
     async lstat(path: string) { const st = await lstat(path); return { kind: st.isFile() ? 'file' : st.isDirectory() ? 'directory' : 'other', size: st.size, mtime: st.mtimeMs, mode: st.mode } },
     readFileBounded: vi.fn(async (path: string, max: number) => (await readFile(path)).subarray(0, max + 1)),
-    writeFileExclusive: vi.fn(async (path: string, data: Buffer, mode?: number) => { await writeFile(path, data, { flag: 'wx', ...(mode === undefined ? {} : { mode }) }) }),
+    writeFileExclusive: vi.fn(async (path: string, data: Buffer, mode?: number) => { const handle = await open(path, 'wx', 0o600); try { await handle.chmod(mode ?? 0o600); await handle.writeFile(data) } finally { await handle.close() } }),
     replaceFileAtomic: vi.fn(rename),
     rename: vi.fn(async (from: string, to: string) => { try { await lstat(to) } catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') return rename(from, to); throw e }; throw Object.assign(new Error('exists'), { code: 'EEXIST' }) }),
     unlink: vi.fn(unlink),
@@ -45,6 +45,12 @@ describe('remote human code documents', () => {
     await writeFile(file, 'old', { mode: 0o755 })
     await documents.saveRemoteCodeDocument('c', executor, file, 'new', hash('old'))
     expect((await lstat(file)).mode & 0o777).toBe(0o755)
+  })
+  it('preserves permission bits masked by the process umask when replacing a remote script', async () => {
+    const { root, executor } = await fixture(); const file = join(root, 'shared.py')
+    await writeFile(file, 'old'); await chmod(file, 0o666)
+    await documents.saveRemoteCodeDocument('c', executor, file, 'new', hash('old'))
+    expect((await lstat(file)).mode & 0o777).toBe(0o666)
   })
   it('refuses relative remote paths and symlink replacement and detects writes during upload', async () => {
     const { root, executor } = await fixture(); const file = join(root, 'x.py'); await writeFile(file, 'old'); await symlink(file, join(root, 'link.py'))

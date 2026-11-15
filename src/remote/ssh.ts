@@ -1,4 +1,4 @@
-import { Readable } from 'node:stream'
+import { Readable, Writable } from 'node:stream'
 /**
  * 远端执行器（②-B · R1）。
  *
@@ -694,25 +694,45 @@ export class RemoteExecutor {
     const s = await this.sftp()
     const stream = s.createReadStream(path, { start: 0, end: maxBytes })
     const chunks: Buffer[] = []
-    for await (const chunk of stream) chunks.push(Buffer.from(chunk))
+    await transferStream(stream, new Writable({
+      write(chunk: Buffer, _encoding, callback) { chunks.push(Buffer.from(chunk)); callback() },
+    }), { idleMs: this.opts.idleTimeoutMs ?? 60_000, progress: () => {}, settleOnAbort: true })
     return Buffer.concat(chunks)
   }
 
+  /** Exclusive creation succeeds only after restoring the exact requested permission bits. */
   async writeFileExclusive(path: string, data: Buffer, mode = 0o600): Promise<void> {
     const s = await this.sftp()
-    const stream = s.createWriteStream(path, { flags: 'wx', mode })
-    let created = false
-    stream.once('open', () => { created = true })
+    // Own the handle before chmod: ssh2's automatic stream chmod silently ignores failures.
+    let openAbandoned = false
+    const handle = await this.io<Buffer>(cb => s.open(path, 'wx', 0o600, (error, opened) => {
+      if (error || !openAbandoned) { cb(error, opened); return }
+      // A deadline cannot cancel the SFTP OPEN. Only its late success owns this path;
+      // close/unlink through the same captured connection, even if the executor reconnects.
+      void this.io<void>(done => s.close(opened, done)).finally(async () => {
+        try { await this.io<void>(done => s.unlink(path, done)) }
+        catch (cleanup) { if (!missingFile(cleanup)) throw cleanup }
+      }).catch(cleanup => console.error(`远端超时临时文件清理失败：${path}：${String(cleanup)}`))
+    })).catch(error => { openAbandoned = true; throw error })
+    let streamOwnsHandle = false
     try {
+      await this.io<void>(cb => s.fchmod(handle, mode, cb))
+      const stat = await this.io<import("ssh2").Stats>(cb => s.fstat(handle, cb))
+      if (!stat.isFile() || (stat.mode & 0o777) !== (mode & 0o777)) throw new Error('远端临时文件权限与原文件不一致，未提交')
+      // Passing the owned handle skips ssh2's unchecked path-based chmod fallback.
+      const stream = s.createWriteStream(path, { handle, autoClose: true })
+      streamOwnsHandle = true
       await transferStream(Readable.from([data]), stream, { idleMs: this.opts.idleTimeoutMs ?? 60_000, progress: () => {} })
     } catch (error) {
-      // A failed exclusive open owns nothing; never unlink a pre-existing temporary name.
-      if (created) {
-        try { await this.unlink(path) } catch (cleanup) {
-          if (!missingFile(cleanup)) throw new Error(`${String(error)}；临时文件清理失败：${path}：${String(cleanup)}`)
-        }
+      let failure = error
+      if (!streamOwnsHandle) {
+        try { await this.io<void>(cb => s.close(handle, cb)) }
+        catch (cleanup) { failure = new Error(`${String(error)}；临时文件句柄关闭失败：${String(cleanup)}`) }
       }
-      throw error
+      try { await this.unlink(path) } catch (cleanup) {
+        if (!missingFile(cleanup)) throw new Error(`${String(failure)}；临时文件清理失败：${path}：${String(cleanup)}`)
+      }
+      throw failure
     }
   }
 

@@ -10,6 +10,7 @@ export interface CodeDocumentExecutor {
   realpath(path: string): Promise<string>
   lstat(path: string): Promise<RemoteStat>
   readFileBounded(path: string, maxBytes: number): Promise<Buffer>
+  /** Own the exclusive temporary file; restore exact mode despite umask or fail and clean it up. */
   writeFileExclusive(path: string, data: Buffer, mode?: number): Promise<void>
   replaceFileAtomic(from: string, to: string): Promise<void>
   /** SFTP v3 rename refuses an existing destination. */

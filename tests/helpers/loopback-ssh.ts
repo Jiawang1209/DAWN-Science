@@ -1,7 +1,7 @@
 /** Real SSH + PTY fixture. It owns only a temporary directory and a random loopback port. */
 import { generateKeyPairSync } from "node:crypto"
 import { mkdtemp, realpath, rm } from "node:fs/promises"
-import { closeSync, constants, fstatSync, linkSync, lstatSync, openSync, readSync, unlinkSync, writeSync, type Stats } from "node:fs"
+import { closeSync, constants, fchmodSync, fstatSync, linkSync, lstatSync, openSync, readSync, unlinkSync, writeSync, type Stats } from "node:fs"
 import { tmpdir } from "node:os"
 import { isAbsolute, join, relative, resolve, sep } from "node:path"
 import { spawn } from "node:child_process"
@@ -12,7 +12,9 @@ const { Server } = ssh2
 const { OPEN_MODE, STATUS_CODE } = ssh2.utils.sftp
 
 /** Test-only file transport: reject every symlink component, even links back inside. */
-function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
+type FileRequestEvent = 'OPEN' | 'READ' | 'CLOSE'
+type FileRequestStall = { next: Set<FileRequestEvent>; pending: (() => void)[] }
+function serveFiles(sftp: SFTPWrapper, workspace: string, fileModeChanges: boolean, stall: FileRequestStall): () => void {
   const handles = new Map<string, number>()
   const denied = () => Object.assign(new Error("Outside isolated SFTP workspace or symlink"), { code: "EACCES" })
   const checkedPath = (requested: string, create = false) => {
@@ -34,7 +36,11 @@ function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
     return path
   }
   const attrs = (st: Stats) => ({ mode: st.mode, uid: st.uid, gid: st.gid, size: st.size, atime: Math.floor(st.atimeMs / 1000), mtime: Math.floor(st.mtimeMs / 1000) })
-  const request = (id: number, operation: () => void) => {
+  const request = (id: number, operation: () => void, event?: FileRequestEvent) => {
+    if (event !== undefined && stall.next.delete(event)) {
+      stall.pending.push(() => request(id, operation))
+      return
+    }
     try { operation() } catch (error) {
       const code = (error as NodeJS.ErrnoException).code
       sftp.status(id, code === "ENOENT" ? STATUS_CODE.NO_SUCH_FILE : code === "EACCES" || code === "ELOOP" ? STATUS_CODE.PERMISSION_DENIED : STATUS_CODE.FAILURE)
@@ -58,13 +64,13 @@ function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
     const handle = Buffer.from(String(fd))
     handles.set(handle.toString("hex"), fd)
     sftp.handle(id, handle)
-  }))
+  }, 'OPEN'))
   sftp.on("READ", (id, handle, offset, length) => request(id, () => {
     const data = Buffer.alloc(Math.min(length, 64 * 1024))
     const bytes = readSync(descriptor(handle), data, 0, data.length, offset)
     if (bytes) sftp.data(id, data.subarray(0, bytes))
     else sftp.status(id, STATUS_CODE.EOF)
-  }))
+  }, 'READ'))
   sftp.on("WRITE", (id, handle, offset, data) => request(id, () => {
     const fd = descriptor(handle)
     let written = 0
@@ -74,7 +80,7 @@ function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
   sftp.on("CLOSE", (id, handle) => request(id, () => {
     closeSync(descriptor(handle)); handles.delete(handle.toString("hex"))
     sftp.status(id, STATUS_CODE.OK)
-  }))
+  }, 'CLOSE'))
   sftp.on("FSTAT", (id, handle) => request(id, () => sftp.attrs(id, attrs(fstatSync(descriptor(handle))))))
   for (const event of ["STAT", "LSTAT"] as const) {
     sftp.on(event, (id: number, path: string) => request(id, () => sftp.attrs(id, attrs(lstatSync(checkedPath(path))))))
@@ -95,7 +101,13 @@ function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
     unlinkSync(checkedPath(path))
     sftp.status(id, STATUS_CODE.OK)
   }))
-  for (const event of ["FSETSTAT", "OPENDIR", "READDIR", "RMDIR", "READLINK", "SETSTAT", "MKDIR", "SYMLINK", "EXTENDED"]) {
+  sftp.on("FSETSTAT", (id, handle, changes) => request(id, () => {
+    if (!fileModeChanges) { sftp.status(id, STATUS_CODE.OP_UNSUPPORTED); return }
+    if (changes.mode === undefined) throw new Error("Unsupported attribute change")
+    fchmodSync(descriptor(handle), changes.mode)
+    sftp.status(id, STATUS_CODE.OK)
+  }))
+  for (const event of ["OPENDIR", "READDIR", "RMDIR", "READLINK", "SETSTAT", "MKDIR", "SYMLINK", "EXTENDED"]) {
     sftp.on(event, (id: number) => sftp.status(id, STATUS_CODE.OP_UNSUPPORTED))
   }
   const close = () => {
@@ -107,7 +119,8 @@ function serveFiles(sftp: SFTPWrapper, workspace: string): () => void {
   return close
 }
 
-export async function startLoopbackSsh() {
+export async function startLoopbackSsh(options: { fileModeChanges?: boolean; stallNextFileRequests?: readonly FileRequestEvent[] } = {}) {
+  const stall: FileRequestStall = { next: new Set(options.stallNextFileRequests), pending: [] }
   const workspace = await realpath(await mkdtemp(join(tmpdir(), "dawn-loopback-ssh-")))
   const host = "127.0.0.1", username = "dawn-test", password = "isolated-test-password"
   const env = {
@@ -196,7 +209,7 @@ export async function startLoopbackSsh() {
           channel.on("error", stop)
         })
         session.on("sftp", acceptSftp => {
-          const sftp = acceptSftp(), close = serveFiles(sftp, workspace), untrack = track(close)
+          const sftp = acceptSftp(), close = serveFiles(sftp, workspace, options.fileModeChanges ?? true, stall), untrack = track(close)
           sftp.on("close", untrack)
         })
       })
@@ -213,6 +226,8 @@ export async function startLoopbackSsh() {
   let closing: Promise<void> | undefined
   return {
     port: address.port, host, username, password, workspace,
+    /** Deliver a deliberately withheld protocol response, allowing late stream cleanup to complete. */
+    releaseFileRequests() { for (const complete of stall.pending.splice(0)) complete() },
     /** Total accepted SSH connections, so multiplexing tests can detect reconnects. */
     get connections() { return connections },
     close(): Promise<void> {
